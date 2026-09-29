@@ -17,7 +17,7 @@ import io
 import json
 import re
 import zipfile
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
@@ -91,11 +91,30 @@ def _ext(name: str) -> str:
     return name[dot:].lower() if dot > 0 else ""
 
 
+
+def _is_stale_copy(name: str) -> bool:
+    """A stale copy of a project document that nothing reads.
+
+    `.bak` — pre-#2333 `.mcpb` builds wrote one beside the tree. #2333 stopped
+    writing them; it did not delete the ones already on disk, and they ship
+    UNREDACTED because _redact_living only rewrites the two canonical
+    filenames. `.tmp-` — before the ProjectStore seam, atomicWriteJson wrote
+    `<path>.tmp-<uuid>`, *not* dot-prefixed, so a crash between write and
+    rename leaves one behind that the dot-skip does not catch. (The current
+    tmpSibling in fs-project-store.ts is dot-prefixed and already skipped.)
+
+    Skipped rather than redacted: nothing reads them, and redacting would mean
+    a second tree parser. Mirror of
+    apps/electron/src/main/feedback.ts::isStaleCopy.
+    """
+    return name.endswith(".bak") or ".tmp-" in name
+
 async def _walk_project(sandbox) -> list[tuple[str, bytes]]:
     """(relativePath, bytes) for every file under PROJECT_DIR, recursively.
 
-    Matches the Electron walker: skips dotfiles and dot-directories, and skips
-    any single file over the per-file cap. Previously this returned only
+    Matches the Electron walker: skips dotfiles and dot-directories, skips the
+    stale copies _is_stale_copy names, and skips any single file over the
+    per-file cap. Previously this returned only
     research.json / tree.gedcomx.json / results/*.json, which meant a web case
     could not reproduce anything touching the rest of the project (uploads,
     CLAUDE.md, images). DirEntry carries no size, so the read is what tells us
@@ -105,7 +124,7 @@ async def _walk_project(sandbox) -> list[tuple[str, bytes]]:
 
     async def walk(dir_path: str, prefix: str) -> None:
         for entry in await sandbox.list_dir(dir_path):
-            if entry.name.startswith("."):
+            if entry.name.startswith(".") or _is_stale_copy(entry.name):
                 continue
             rel = f"{prefix}{entry.name}"
             if entry.is_dir:
@@ -132,15 +151,71 @@ LIVING_GIVEN = "Living"
 LIVING_SURNAME_FALLBACK = "Unknown"
 
 
-def _is_living(person: dict) -> bool:
+PRESUMED_LIVING_YEARS = 110
+# Mirrors DEATH_FACT_TYPES / BIRTH_FACT_TYPES (eval/harness/e2e/author.py) and
+# EMBEDDED_YEAR_RE (eval/harness/harness/dates.py). Neither app may import eval
+# code, so the rule is written inline here and in the Electron copy.
+DEATH_FACT_TYPES = frozenset({"Death", "Burial", "Cremation"})
+BIRTH_FACT_TYPES = frozenset({"Birth", "Christening", "Baptism"})
+_EMBEDDED_YEAR_RE = re.compile(r"\b(1\d{3}|20\d{2})\b")
+
+
+def _birth_year(facts: list[dict]) -> int | None:
+    """The first parseable 4-digit year on a birth-type fact, or None.
+
+    Mirrors _birth_year (eval/harness/e2e/author.py): a birth fact whose dates
+    do not parse falls through to the *next* birth fact rather than ending the
+    search. Callers pass dicts only.
+    """
+    for fact in facts:
+        if str(fact.get("type", "")) not in BIRTH_FACT_TYPES:
+            continue
+        for value in (fact.get("standard_date"), fact.get("date")):
+            match = _EMBEDDED_YEAR_RE.search(str(value or ""))
+            if match:
+                return int(match.group(1))
+    return None
+
+
+def _is_living(person: dict, now: date | None = None) -> bool:
     """Whether a tree person must be treated as living.
 
-    Same rule as the e2e fixture gate (eval/harness/e2e/author.py::living_gate):
-    **absent is not deceased.** `living` is optional in simplified GedcomX, and
-    defaulting a missing flag to "probably dead" is exactly the wrong bet for a
-    bundle that is about to leave the user's machine.
+    Mirrors apps/electron/src/main/feedback.ts::isLiving.
+
+    When `living` is **present** this is the pre-#2988 rule verbatim — living
+    unless exactly `False` — so no present value changes behaviour, including
+    the non-boolean ones (`None`, `0`, `"true"`).
+
+    When the key is **absent** the old rule blanked everyone: a tree built by
+    `tree_edit` carries no flag at all, so bundle #2932 shipped 11
+    19th-century ancestors as `Living <Surname>` with no facts. So an absent
+    flag now means deceased on a Death/Burial/Cremation fact, or on a birth
+    more than PRESUMED_LIVING_YEARS years before `now`; otherwise living, as
+    before.
+
+    Deliberately **one year more conservative** than the e2e fixture gate
+    (eval/harness/e2e/author.py::living_gate), which presumes living only when
+    `year > current_year - 110` and so treats someone born exactly 110 years
+    ago as deceased — this still redacts them. The gate is also stricter about
+    a missing flag, because fixtures are committed to a public repo; a bundle
+    goes only to maintainers.
+
+    The key-absent branch must not raise: an exception here reaches
+    _redact_living's `except`, which ships the whole tree UNREDACTED.
     """
-    return person.get("living") is not False
+    if "living" in person:
+        return person.get("living") is not False
+    try:
+        facts = person.get("facts")
+        objects = [f for f in facts if isinstance(f, dict)] if isinstance(facts, list) else []
+        if any(str(f.get("type", "")) in DEATH_FACT_TYPES for f in objects):
+            return False
+        born = _birth_year(objects)
+        if born is not None and (now or date.today()).year - born > PRESUMED_LIVING_YEARS:
+            return False
+    except Exception:  # noqa: BLE001 — must never reach _redact_living's except
+        return True
+    return True
 
 
 def _redact_person(person: dict) -> dict:
@@ -167,7 +242,9 @@ def _redact_person(person: dict) -> dict:
     return out
 
 
-def _redact_living(files: list[tuple[str, bytes]]) -> tuple[list[tuple[str, bytes]], int]:
+def _redact_living(
+    files: list[tuple[str, bytes]], now: date | None = None
+) -> tuple[list[tuple[str, bytes]], int]:
     """Redact living persons out of the bundled tree before it leaves the sandbox.
 
     FamilySearch's terms forbid sharing living people's details, and a feedback
@@ -202,7 +279,7 @@ def _redact_living(files: list[tuple[str, bytes]]) -> tuple[list[tuple[str, byte
             living_ids = set()
             new_persons = []
             for person in persons:
-                if isinstance(person, dict) and _is_living(person):
+                if isinstance(person, dict) and _is_living(person, now):
                     living_ids.add(person.get("id"))
                     new_persons.append(_redact_person(person))
                     file_redacted += 1
@@ -638,8 +715,8 @@ def _feedback_markdown(
             "",
             f"{redacted_living} living-person record(s) across the project's tree "
             "files (`tree.gedcomx.json` and, when present, `starting-tree.gedcomx.json`) "
-            "were living or not "
-            "marked deceased, so their given names, dates and places were replaced "
+            "are living, or with no living flag and no evidence of death, "
+            "so their given names, dates and places were replaced "
             f"with `{LIVING_GIVEN} <Surname>` before this bundle was created. Their "
             "ids and relationships are intact, so the case still reproduces. This is "
             "expected — not corrupt data.",

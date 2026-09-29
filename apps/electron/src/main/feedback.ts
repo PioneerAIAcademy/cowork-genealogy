@@ -51,16 +51,72 @@ const REDACTED_TREE_FILENAMES = [TREE_FILENAME, STARTING_TREE_FILENAME]
 const LIVING_GIVEN = 'Living'
 const LIVING_SURNAME_FALLBACK = 'Unknown'
 
+/** FamilySearch presumes a person living for this many years after birth. */
+const PRESUMED_LIVING_YEARS = 110
+/** Mirrors DEATH_FACT_TYPES (eval/harness/e2e/author.py). */
+const DEATH_FACT_TYPES = new Set(['Death', 'Burial', 'Cremation'])
+/** Mirrors BIRTH_FACT_TYPES (eval/harness/e2e/author.py). */
+const BIRTH_FACT_TYPES = new Set(['Birth', 'Christening', 'Baptism'])
+/** Mirrors EMBEDDED_YEAR_RE (eval/harness/harness/dates.py). */
+const EMBEDDED_YEAR_RE = /\b(1\d{3}|20\d{2})\b/
+
+/**
+ * The first parseable 4-digit year on a birth-type fact, or null.
+ *
+ * Mirrors _birth_year (eval/harness/e2e/author.py): a birth fact whose dates do
+ * not parse falls through to the *next* birth fact rather than ending the
+ * search. Callers pass objects only.
+ */
+function birthYear(facts: Record<string, unknown>[]): number | null {
+  for (const fact of facts) {
+    if (!BIRTH_FACT_TYPES.has(String(fact.type ?? ''))) continue
+    for (const value of [fact.standard_date, fact.date]) {
+      const match = EMBEDDED_YEAR_RE.exec(String(value ?? ''))
+      if (match) return Number(match[1])
+    }
+  }
+  return null
+}
+
 /**
  * Whether a tree person must be treated as living.
  *
- * Same rule as the e2e fixture gate (eval/harness/e2e/author.py::living_gate):
- * **absent is not deceased.** `living` is optional in simplified GedcomX, and
- * defaulting a missing flag to "probably dead" is exactly the wrong bet for a
- * bundle that is about to leave the user's machine.
+ * Mirrors apps/server/app/feedback.py::_is_living. Neither app may import eval
+ * code, so the rule is written inline in both.
+ *
+ * When `living` is **present** this is the pre-#2988 rule verbatim — living
+ * unless exactly `false` — so no present value changes behaviour, including
+ * the non-boolean ones (`null`, `0`, `"true"`).
+ *
+ * When the key is **absent** the old rule blanked everyone: a tree built by
+ * `tree_edit` carries no flag at all, so bundle #2932 shipped 11 19th-century
+ * ancestors as `Living <Surname>` with no facts. So an absent flag now means
+ * deceased on a Death/Burial/Cremation fact, or on a birth more than
+ * PRESUMED_LIVING_YEARS years before `now`; otherwise living, as before.
+ *
+ * Deliberately **one year more conservative** than the e2e fixture gate
+ * (eval/harness/e2e/author.py::living_gate), which presumes living only when
+ * `year > currentYear - 110` and so treats someone born exactly 110 years ago
+ * as deceased — this still redacts them. The gate is also stricter about a
+ * missing flag, because fixtures are committed to a public repo; a bundle goes
+ * only to maintainers.
+ *
+ * The key-absent branch must not throw: a throw here reaches redactOneTree's
+ * catch, which ships the whole tree UNREDACTED.
  */
-function isLiving(person: Record<string, unknown>): boolean {
-  return person.living !== false
+function isLiving(person: Record<string, unknown>, now?: Date): boolean {
+  if ('living' in person) return person.living !== false
+  try {
+    const facts = Array.isArray(person.facts) ? person.facts : []
+    const objects = facts.filter((f): f is Record<string, unknown> => !!f && typeof f === 'object')
+    if (objects.some((f) => DEATH_FACT_TYPES.has(String(f.type ?? '')))) return false
+    const born = birthYear(objects)
+    const year = (now ?? new Date()).getFullYear()
+    if (born !== null && year - born > PRESUMED_LIVING_YEARS) return false
+  } catch {
+    return true
+  }
+  return true
 }
 
 /**
@@ -106,11 +162,14 @@ function redactPerson(person: Record<string, unknown>): Record<string, unknown> 
  * this is a privacy filter, not a validator, and it must never be the reason a
  * report fails to send.
  */
-function redactLivingPersons(selected: { relativePath: string; buf: Buffer }[]): number {
+export function redactLivingPersons(
+  selected: { relativePath: string; buf: Buffer }[],
+  now?: Date
+): number {
   let total = 0
   for (const name of REDACTED_TREE_FILENAMES) {
     const entry = selected.find((s) => s.relativePath === name)
-    if (entry) total += redactOneTree(entry)
+    if (entry) total += redactOneTree(entry, now)
   }
   return total
 }
@@ -119,7 +178,7 @@ function redactLivingPersons(selected: { relativePath: string; buf: Buffer }[]):
  *  parse failure or unexpected shape leaves the file untouched and returns 0, so
  *  a file that fails partway never contributes a count for bytes it did not
  *  rewrite. */
-function redactOneTree(entry: { relativePath: string; buf: Buffer }): number {
+function redactOneTree(entry: { relativePath: string; buf: Buffer }, now?: Date): number {
   try {
     const tree = JSON.parse(entry.buf.toString('utf-8')) as Record<string, unknown>
     const persons = tree.persons
@@ -128,7 +187,7 @@ function redactOneTree(entry: { relativePath: string; buf: Buffer }): number {
     const livingIds = new Set<unknown>()
     let redacted = 0
     tree.persons = persons.map((p) => {
-      if (p && typeof p === 'object' && isLiving(p as Record<string, unknown>)) {
+      if (p && typeof p === 'object' && isLiving(p as Record<string, unknown>, now)) {
         livingIds.add((p as Record<string, unknown>).id)
         redacted++
         return redactPerson(p as Record<string, unknown>)
@@ -170,6 +229,24 @@ export type ProjectFile = {
   isText: boolean
 }
 
+/**
+ * A stale copy of a project document that nothing reads.
+ *
+ * `.bak` — pre-#2333 `.mcpb` builds wrote one beside the tree. #2333 stopped
+ * writing them; it did not delete the ones already on disk, and they ship
+ * UNREDACTED because redactOneTree only rewrites the two canonical filenames.
+ * `.tmp-` — before the ProjectStore seam, atomicWriteJson wrote
+ * `<path>.tmp-<uuid>`, *not* dot-prefixed, so a crash between write and rename
+ * leaves one behind that the dot-skip below does not catch. (The current
+ * tmpSibling in fs-project-store.ts is dot-prefixed and already skipped.)
+ *
+ * Skipped rather than redacted: nothing reads them, and redacting would mean a
+ * second tree parser. Mirror of apps/server/app/feedback.py::_is_stale_copy.
+ */
+function isStaleCopy(name: string): boolean {
+  return name.endsWith('.bak') || name.includes('.tmp-')
+}
+
 export async function walkProject(folder: string): Promise<ProjectFile[]> {
   const out: ProjectFile[] = []
 
@@ -177,6 +254,7 @@ export async function walkProject(folder: string): Promise<ProjectFile[]> {
     const entries = await fs.readdir(dir, { withFileTypes: true })
     for (const entry of entries) {
       if (entry.name.startsWith('.')) continue
+      if (isStaleCopy(entry.name)) continue
       if (entry.isSymbolicLink()) continue
       const full = path.join(dir, entry.name)
       if (entry.isDirectory()) {
@@ -842,9 +920,9 @@ export function renderFeedbackMarkdown(args: {
       '## Living people redacted',
       '',
       `${redactedLiving} living-person record(s) across the project's tree files ` +
-        `(\`${TREE_FILENAME}\` and, when present, \`${STARTING_TREE_FILENAME}\`) are living ` +
-        `or not marked ` +
-        `deceased, so their given names, dates and places were replaced with ` +
+        `(\`${TREE_FILENAME}\` and, when present, \`${STARTING_TREE_FILENAME}\`) are ` +
+        `living, or with no living flag and no evidence of death, ` +
+        `so their given names, dates and places were replaced with ` +
         `\`${LIVING_GIVEN} <Surname>\` before this bundle was created. Their ids and ` +
         `relationships are intact, so the case still reproduces. This is expected — ` +
         `not corrupt data.`

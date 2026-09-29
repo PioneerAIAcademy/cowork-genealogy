@@ -46,11 +46,34 @@ never reaches the Drive folder at all.
 Implemented as `_redact_living` (`apps/server/app/feedback.py`) and
 `redactLivingPersons` (`apps/electron/src/main/feedback.ts`). The rule:
 
-- **A person is living unless `living` is exactly `false`.** A *missing* flag
-  counts as living. `living` is optional in simplified GedcomX, and defaulting
-  an absent flag to "probably deceased" is the wrong bet for data about to
-  leave the machine. This is the same rule as the e2e fixture gate
-  (`eval/harness/e2e/author.py::living_gate`).
+- **A person whose `living` key is present is living unless it is exactly
+  `false`.** Every present value keeps this rule, including the non-boolean
+  ones (`null`, `0`, `"true"`) — `living` is optional in simplified GedcomX and
+  its type is not enforced, so an unexpected value must not be read as a
+  licence to un-redact.
+- **A person with no `living` key is deceased only on evidence**: a `Death`,
+  `Burial` or `Cremation` fact, or a birth more than 110 years ago. Otherwise
+  they are living, as before. A tree built by `tree_edit` carries no flag on
+  any person, so the older "absent counts as living" rule blanked every person
+  in such a bundle — in one reported case all 11 of a project's 19th-century
+  ancestors — which made those bundles useless for triage.
+- This **deliberately differs** from the e2e fixture gate
+  (`eval/harness/e2e/author.py::living_gate`) in two ways, and the two are not
+  being brought back into line. The gate refuses a missing flag outright,
+  because fixtures are committed to a public repo; a bundle goes only to
+  maintainers. And the gate presumes living only when
+  `birth_year > current_year - 110`, so it treats a person born exactly 110
+  years ago as deceased, where the redactor still redacts them — one year more
+  conservative, on the side that protects.
+- **Stale copies of a tree are skipped by the walker, not redacted**: any name
+  ending `.bak`, and any name containing `.tmp-`. Neither is rewritten by the
+  redaction pass, which only touches the two canonical filenames, so both
+  would otherwise ship with every living person's name, dates and `ark`
+  intact. `.bak` files were written by older `.mcpb` builds; `.tmp-<uuid>`
+  files are crash residue from the pre-ProjectStore `atomicWriteJson`, whose
+  temp name was not dot-prefixed. Neither is written any more, but neither is
+  deleted from project folders that already hold one. Skipping rather than redacting is deliberate:
+  nothing reads them, and redacting would mean a second tree parser.
 - A redacted person keeps `id` — relationships reference it, so removing the
   person would dangle every edge — and keeps `gender`.
 - Their `names` become a single `{id, given: "Living", surname}` placeholder,

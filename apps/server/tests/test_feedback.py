@@ -6,7 +6,9 @@ import base64
 import io
 import json
 import zipfile
+from datetime import date
 
+import pytest
 from fastapi.testclient import TestClient
 
 import app.feedback as fb
@@ -666,8 +668,10 @@ def test_redact_strips_living_person_name_facts_and_ark():
     assert count == 2
 
 
-def test_missing_living_flag_counts_as_living():
-    """Absent is not deceased — same rule as the e2e fixture gate."""
+def test_missing_living_flag_still_redacts_when_nothing_says_they_died():
+    """Issue #2988 narrowed this: an absent flag is no longer living
+    *unconditionally*, but P3 has only a Birth 1990 — no death fact and no
+    110-year age — so the outcome is unchanged."""
     tree, _, _ = _redact_tree(_TREE)
     assert _person(tree, "P3")["names"][0]["given"] == fb.LIVING_GIVEN
     assert _person(tree, "P3")["facts"] == []
@@ -1001,3 +1005,229 @@ def test_redact_api_keys_str():
 def test_redact_api_keys_str_passthrough():
     text = "normal text with no keys"
     assert fb._redact_api_keys_str(text) == text
+
+
+# --------------------------------------------------------------------------
+# Issue #2988 — an absent `living` flag is no longer "living" unconditionally.
+# Mirrors the Electron suite's describe block of the same name.
+# --------------------------------------------------------------------------
+
+_NOW = date(2026, 1, 1)
+_BIRTH_1990 = {"id": "b", "type": "Birth", "date": "3 March 1990"}
+
+
+def _p(**extra):
+    return {
+        "id": "X1",
+        "gender": "Male",
+        "names": [{"id": "nx", "given": "Ada Test", "surname": "Sample"}],
+        **extra,
+    }
+
+
+def _redacts(person, now=_NOW):
+    """1 when the person was redacted, 0 when they shipped unredacted."""
+    tree = {"persons": [person], "relationships": [], "sources": []}
+    files = [("tree.gedcomx.json", json.dumps(tree).encode("utf-8"))]
+    _, count = fb._redact_living(files, now)
+    return count
+
+
+# 1-3: each death-type fact alone decides it. Birth 1990 keeps the age
+# heuristic out of the way, so exactly one fact type is under test.
+def _with_death_fact(fact_type):
+    return _p(facts=[{"id": "f", "type": fact_type, "date": "1994"}, _BIRTH_1990])
+
+
+def test_2988_case_1_no_flag_with_a_death_fact_ships_unredacted():
+    assert _redacts(_with_death_fact("Death")) == 0
+
+
+def test_2988_case_2_no_flag_with_a_burial_fact_ships_unredacted():
+    assert _redacts(_with_death_fact("Burial")) == 0
+
+
+def test_2988_case_3_no_flag_with_a_cremation_fact_ships_unredacted():
+    assert _redacts(_with_death_fact("Cremation")) == 0
+
+
+def test_2988_case_4_no_flag_born_1823_ships_unredacted():
+    assert _redacts(_p(facts=[{"id": "b", "type": "Birth", "date": "14 May 1823"}])) == 0
+
+
+def test_2988_case_5_no_flag_born_1990_still_redacted():
+    assert _redacts(_p(facts=[_BIRTH_1990])) == 1
+
+
+# 6: `living` is 4-valued in the wild. Every PRESENT value keeps the pre-#2988
+# behaviour, so a non-boolean flag must not fall into the heuristic and
+# un-redact someone the old code protected.
+@pytest.mark.parametrize("value", [None, 0, "true", []])
+def test_2988_case_6_present_but_non_boolean_living_flag_still_redacted(value):
+    person = _p(
+        living=value,
+        facts=[{"id": "f", "type": "Death", "date": "1994"}, _BIRTH_1990],
+    )
+    assert _redacts(person) == 1
+
+
+def test_2988_case_7_living_true_wins_over_a_death_fact():
+    """The flag comes from FamilySearch; a privacy filter must not argue."""
+    person = _p(living=True, facts=[{"id": "f", "type": "Death", "date": "1994"}, _BIRTH_1990])
+    assert _redacts(person) == 1
+
+
+def test_2988_case_8_facts_null_does_not_throw_the_file_past_the_redactor():
+    """_redact_living's `except` ships the file UNTOUCHED, so a raise here would
+    leak every living person in it. Asserting the bytes changed is what
+    separates "the helper coped" from "the except swallowed it"."""
+    tree = {
+        "persons": [
+            _p(id="BAD", facts=None),
+            _p(
+                id="LIVE",
+                living=True,
+                names=[{"id": "n2", "given": "Jane Marie", "surname": "Sample"}],
+            ),
+        ],
+        "relationships": [],
+        "sources": [],
+    }
+    raw = json.dumps(tree).encode("utf-8")
+    out, count = fb._redact_living([("tree.gedcomx.json", raw)], _NOW)
+    after = dict(out)["tree.gedcomx.json"]
+
+    assert count == 2
+    assert after != raw
+    assert b"Jane Marie" not in after
+
+
+def test_2988_case_9_a_malformed_fact_is_skipped_not_fatal():
+    person = _p(facts=[None, {"id": "f", "type": "Death", "date": "1994"}, _BIRTH_1990])
+    assert _redacts(person) == 0
+
+
+# 10-11: the only pair that can tell `> 110` from `>= 110`. Deliberately one
+# year more conservative than living_gate, which would ship the 110-year-old.
+def test_2988_case_10_born_exactly_110_years_ago_is_still_redacted():
+    year = _NOW.year - fb.PRESUMED_LIVING_YEARS
+    assert _redacts(_p(facts=[{"id": "b", "type": "Birth", "date": f"1 July {year}"}])) == 1
+
+
+def test_2988_case_11_born_111_years_ago_ships_unredacted():
+    year = _NOW.year - fb.PRESUMED_LIVING_YEARS - 1
+    assert _redacts(_p(facts=[{"id": "b", "type": "Birth", "date": f"1 July {year}"}])) == 0
+
+
+def test_2988_birth_year_falls_through_an_unparseable_birth_fact():
+    """Mirrors _birth_year: an unparseable birth fact falls through to the next
+    one rather than ending the search."""
+    person = _p(
+        facts=[
+            {"id": "b1", "type": "Birth", "date": "date unknown"},
+            {"id": "b2", "type": "Christening", "standard_date": "+1823-05-14"},
+        ]
+    )
+    assert _redacts(person) == 0
+
+
+def test_2988_defaults_to_the_real_clock_when_no_now_is_passed():
+    """The production caller passes nothing; only the tests pin a date."""
+    tree = {"persons": [_p(facts=[_BIRTH_1990])], "relationships": [], "sources": []}
+    _, count = fb._redact_living([("tree.gedcomx.json", json.dumps(tree).encode("utf-8"))])
+    assert count == 1
+
+
+# --------------------------------------------------------------------------
+# Issue #2988 — stale tree copies never reach the bundle.
+# --------------------------------------------------------------------------
+
+_STALE_TMP = "tree.gedcomx.json.tmp-0b5f1c2e-9a44-4d1e-8f77-2c6d3e9a1b04"
+
+
+def _walk(names):
+    files = {f"{PROJECT_DIR}/{n}": b"{}" for n in names}
+    return [rel for rel, _ in asyncio.run(fb._walk_project(_FakeSandbox(files)))]
+
+
+def test_2988_case_12_a_bak_beside_the_tree_is_not_walked():
+    """Pre-#2333 .mcpb builds wrote one. It is never redacted, because
+    _redact_living only rewrites the two canonical filenames."""
+    walked = _walk(["tree.gedcomx.json", "tree.gedcomx.json.bak"])
+    assert "tree.gedcomx.json" in walked
+    assert "tree.gedcomx.json.bak" not in walked
+
+
+def test_2988_case_13_a_non_dot_prefixed_tmp_copy_is_not_walked():
+    """Before the ProjectStore seam, atomicWriteJson wrote this shape, so a
+    crash between write and rename leaves one the dot-skip does not catch."""
+    assert _STALE_TMP not in _walk(["tree.gedcomx.json", _STALE_TMP])
+
+
+def test_2988_stale_skip_spares_look_alike_names_at_any_depth():
+    """The other direction: names that merely resemble the patterns must
+    survive, or the skip is silently eating real project files."""
+    walked = _walk(
+        [
+            "results/log_001.json.bak",
+            "results/log_001.json",
+            "backup-notes.md",
+            "tmp-plan.md",
+        ]
+    )
+    assert "results/log_001.json.bak" not in walked
+    assert "results/log_001.json" in walked
+    assert "backup-notes.md" in walked
+    assert "tmp-plan.md" in walked
+
+
+def test_2988_bundle_2932_shape_end_to_end():
+    """No living flag anywhere — exactly what tree_edit produces, and what
+    blanked all 11 persons in bundle #2932."""
+    tree = {
+        "persons": [
+            {
+                "id": "M1", "gender": "Female",
+                "names": [{"id": "n1", "given": "Mary Hales", "surname": "Hales"}],
+                "facts": [
+                    {"id": "f1", "type": "Birth", "date": "1823",
+                     "place": "Sheffield, Yorkshire"},
+                    {"id": "f2", "type": "Death", "date": "1853"},
+                    {"id": "f3", "type": "Burial", "date": "1853"},
+                ],
+            },
+            {
+                "id": "M2", "gender": "Male",
+                "names": [{"id": "n2", "given": "Bobby Living", "surname": "Hales"}],
+                "facts": [{"id": "f4", "type": "Birth", "date": "1990",
+                           "place": "Riverside, CA"}],
+            },
+        ],
+        "relationships": [],
+        "sources": [],
+    }
+    raw = json.dumps(tree).encode("utf-8")
+    files = {
+        f"{PROJECT_DIR}/research.json": b"{}",
+        f"{PROJECT_DIR}/tree.gedcomx.json": raw,
+        f"{PROJECT_DIR}/tree.gedcomx.json.bak": raw,
+        f"{PROJECT_DIR}/{_STALE_TMP}": raw,
+    }
+    walked = asyncio.run(fb._walk_project(_FakeSandbox(files)))
+    out, _ = fb._redact_living(walked, _NOW)
+    bundled = dict(out)
+
+    assert not [n for n in bundled if n.endswith(".bak") or ".tmp-" in n]
+
+    result = json.loads(bundled["tree.gedcomx.json"])
+    mary = _person(result, "M1")
+    bobby = _person(result, "M2")
+    assert mary["names"][0]["given"] == "Mary Hales"
+    assert len(mary["facts"]) == 3
+    assert bobby["names"][0]["given"] == fb.LIVING_GIVEN
+    assert bobby["facts"] == []
+
+    for name, buf in bundled.items():
+        if name == "tree.gedcomx.json":
+            continue
+        assert b"Bobby Living" not in buf
