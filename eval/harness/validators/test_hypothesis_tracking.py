@@ -19,6 +19,8 @@ on `test["tags"]`.
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from validators_lib import (
@@ -281,4 +283,49 @@ def test_h001_not_ruled_out_when_adding_identity_hypotheses(
     assert h001.get("ruled_out") is not True, (
         "h_001 had ruled_out=true set while adding alternative identity "
         "hypotheses."
+    )
+
+
+# --- Step 0 scope gate: hand back, write nothing (tag-gated) ---
+
+_HANDBACK_TAG_PREFIX = "handback-to-"
+
+
+def test_scope_handback_writes_nothing(tool_calls, before_state, after_state, text_response, test):
+    """Tag-gated (`scope-handback`): the agent's Step 0 gate on an
+    out-of-scope delegation.
+
+    The deterministic verdict for the direct hand-back test that replaced the
+    three description-routing negatives deleted in issue #2792. Step 0 answers
+    an out-of-scope delegation with one line, "Hand-back: <name> — <clause>",
+    and makes no tool call, so the invariant is state plus the named
+    destination. The destination comes from a `handback-to-<name>` tag, so the
+    validator stays generic across the three Step 0 rows.
+
+    Fails iff the run:
+      - made a `research_append` call,
+      - changed `research.json` at all, or
+      - did not name the tagged destination in a `Hand-back:` line.
+    """
+    tags = test.get("tags", [])
+    if "scope-handback" not in tags:
+        pytest.skip("not a scope-handback scenario")
+
+    writes = [tc for tc in (tool_calls or []) if tc.get("tool", "").endswith("research_append")]
+    assert not writes, (
+        "an out-of-scope delegation must be handed back, not worked; got "
+        f"research_append call(s) with args: {[c.get('args') for c in writes]}"
+    )
+    assert before_state.get("research_json") == after_state.get("research_json"), (
+        "an out-of-scope delegation must leave research.json unchanged"
+    )
+
+    destinations = [t[len(_HANDBACK_TAG_PREFIX):] for t in tags if t.startswith(_HANDBACK_TAG_PREFIX)]
+    assert len(destinations) == 1, (
+        f"a scope-handback test needs exactly one `{_HANDBACK_TAG_PREFIX}<name>` tag; got {destinations}"
+    )
+    expected = destinations[0]
+    named = re.findall(r"Hand-back:\s*`?([a-z][a-z0-9-]*)", text_response or "")
+    assert expected in named, (
+        f"expected a `Hand-back: {expected}` line; the reply named {named or 'no hand-back'}"
     )
