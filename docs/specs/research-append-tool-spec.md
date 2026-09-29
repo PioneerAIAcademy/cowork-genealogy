@@ -1857,11 +1857,17 @@ and no genealogist sign-off gates them.
 
 | Record type | Fact class | informant | proximity | quality |
 |---|---|---|---|---|
-| obituary | the decedent's biography, including the death date and place | the obituary's author (usually unnamed family) | `family_not_present` | `secondary` |
-| obituary | a survivor's name and residence | the obituary's author | `family_not_present` | `secondary` |
+| obituary | **recent family knowledge:** the decedent's name, the death date and place, residence at death, the funeral and burial (date, place, cemetery), the surviving spouse's name, and each survivor's name and residence | the obituary's author (usually unnamed family) | `household_member` | `indeterminate` |
+| obituary | **life history:** birth, parents, the marriage date, occupation, military service, church membership | the obituary's author | `family_not_present` | `secondary` |
 
 When `informant.name` is present it replaces the generic informant string, as
 on every row.
+
+The obituary split is the genealogist's ruling (2026-09-29, option C). What the
+family knew firsthand and recently is `household_member`, and `indeterminate`
+because the notice does not say who was present. Life history is secondhand
+recollection. The surviving spouse's **name** is recent knowledge, but the
+**marriage date** is life history.
 
 **The table may key on a specific field, not only on a fact class.** One rule
 already needs it: on a census, a parent's or grandparent's birthplace is
