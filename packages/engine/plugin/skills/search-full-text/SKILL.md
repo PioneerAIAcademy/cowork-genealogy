@@ -248,8 +248,8 @@ each record is already attached to a tree person.
 - **Attached to a different person** → flag as potentially relevant.
 - **Unattached** → prioritize for extraction — this is new evidence.
 
-Present triage with match quality, document role, and attachment
-status, ordered so the prioritized records come first.
+Present triage to the user with match quality, document role, and
+attachment status. Let the user confirm which records to examine.
 
 ### 7. Retain results and write the log entry
 

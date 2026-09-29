@@ -24,6 +24,19 @@ const OFFER = /(Would you like me to|Shall I continue|Let the user confirm|Would
 const KNOWN: Record<string, string> = {
   "skills/search-records/SKILL.md": "PR #2971 owns this file; batched behind it",
   "skills/search-external-sites/SKILL.md": "batched with phase 3's errand — same passage (R5)",
+  // MEASURED 2026-09-29: these two offers are load-bearing STOPS, not politeness.
+  // Removing the question let each skill run on into the next skill's work, and
+  // the eval caught it three ways in one run (v1_2026-09-29_15-00-30):
+  //   ut_search_full_text_013  ownership validator — wrote `assertions`,
+  //     `sources` and tree `persons`/`sources`, all record-extraction's.
+  //   ut_search_full_text_006  performed question-selection's task itself.
+  //   ut_conflict_resolution_015  fabricated and resolved a conflict on a
+  //     fixture whose per-test context says no conflict exists.
+  // All three passed before the edit and failed after, so the offer is what was
+  // holding the boundary. Reverted; removing either needs a replacement stop
+  // rather than a reworded closing line, and that is its own paid slot.
+  "skills/search-full-text/SKILL.md": "offer is a load-bearing stop — see note above",
+  "skills/conflict-resolution/SKILL.md": "offer is a load-bearing stop — see note above",
   "agents/person-evidence.md": "PR #2992 owns this file; batched behind it",
 };
 
