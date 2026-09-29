@@ -27,14 +27,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN python3 -m pip install --break-system-packages \
         "claude-agent-sdk==0.2.128" "psycopg[binary]>=3.2,<4"
 
-# Engine: the production tree only. `npm ci --omit=dev` keeps the OPTIONAL dependencies
-# (pg, @aws-sdk/client-s3, @smithy/node-http-handler) -- hosted-stdio.js needs them.
-COPY packages/engine/mcp-server/package.json      /opt/genealogy/engine/package.json
-COPY packages/engine/mcp-server/package-lock.json /opt/genealogy/engine/package-lock.json
-COPY packages/engine/mcp-server/build             /opt/genealogy/engine/build
-COPY packages/engine/mcp-server/config            /opt/genealogy/engine/config
-RUN cd /opt/genealogy/engine && npm ci --omit=dev --ignore-scripts
-
 # Plugin: 26 skills + 9 agents + the shipped PreToolUse hook (python3 runs it).
 COPY packages/engine/plugin /opt/genealogy/plugin
 
