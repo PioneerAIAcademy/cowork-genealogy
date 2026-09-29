@@ -888,6 +888,11 @@ _OTHERS = {"research", "timeline", "record-extraction"}
         "I'm sorry, but I only handle genealogy research tasks — looking up "
         "Albert Einstein on Wikipedia falls outside that scope.",
         "This request is outside this toolkit's scope. I build a timeline of events.",
+        # The other direction for the markup arm: emphasis around an ordinary
+        # English use is still ordinary English. Widening the class until these
+        # matched would re-break the decline the arm exists to allow.
+        "This agent handles genealogy **research** tasks such as lookups.",
+        "She has good research skills and reads Latin.",
     ],
 )
 def test_a_one_word_skill_name_used_as_english_is_not_routing(text):
@@ -904,6 +909,11 @@ def test_a_one_word_skill_name_used_as_english_is_not_routing(text):
         "That belongs to the research skill.",
         "The timeline agent handles that one.",
         "This is a record-extraction job.",
+        # Closing markup between the name and "skill". The suffix arm matched
+        # only an unadorned name, so these two -- the common way a decline names
+        # the lane it hands off to -- were scored substantive.
+        "That belongs to the **timeline** skill.",
+        'Try the "research" skill.',
     ],
 )
 def test_a_skill_name_written_as_a_name_is_still_routing(text):

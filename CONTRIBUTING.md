@@ -24,8 +24,10 @@ Constraints to keep in mind:
   positive-trigger + negative-guard pattern most of the existing
   skills use). `record-extraction/SKILL.md` is a good template for the
   richer pattern, as is `agents/citation.md` for an agent's own
-  `description`; `agents/search-wikipedia.md` is intentionally minimal as a
-  copy-from starter.
+  `description`; `agents/search-images.md` is the smallest copy-from starter
+  that carries the `summary_for_user` return contract. Do not start from
+  `agents/search-wikipedia.md` — it is exempt from that contract, and a copy
+  fails `agent-return-contract.test.ts`.
 - **The researcher profile is extensible.** If your skill needs new
   per-project context (e.g., `dna_companies` for a DNA-specialty
   skill, or `region_focus` for a regional researcher's profile),

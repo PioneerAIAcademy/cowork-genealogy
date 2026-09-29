@@ -322,11 +322,14 @@ def test_na_rule_coercion_flips_an_out_of_scope_negative_outcome():
     whether the model declined cleanly or answered the request itself.
 
     **The corpus no longer carries such a test.** `ut_search_wikipedia_008`
-    was the only one, and issue #2795 reshaped it into a direct decline test
-    (`type: positive`, no `negative` block) when the skill it belonged to
-    became an agent — so this gate is now pinned synthetically, by the spec
-    built below, and by nothing in the corpus. That is the reason to keep it:
-    a gate with no instance is exactly the one an edit can silently retire.
+    was the only one. Issue #2795 made it a DIRECT test when the skill it
+    belonged to became an agent, and it stayed a `negative` carrying
+    `grade_on_invariant` (Richard's ruling, 2026-09-28) — so its outcome is
+    decided by the tag-gated validator before any dimension is read, and this
+    NA-coercion gate no longer fires on it. The gate is now pinned
+    synthetically, by the spec built below, and by nothing in the corpus. That
+    is the reason to keep it: a gate with no instance is exactly the one an
+    edit can silently retire.
 
     The behaviour it pins is unchanged. On an out-of-scope negative, making
     zero MCP tool calls is correct, which coerces Tool Arguments to null; a

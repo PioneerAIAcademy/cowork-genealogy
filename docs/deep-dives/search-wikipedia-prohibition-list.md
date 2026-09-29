@@ -7,8 +7,13 @@
 > the template is inlined in the agent body rather than read from
 > `templates/wiki-summary.md`; the scope guard's second arm is now a **hand-back**
 > that names the owning agent rather than a decline; and the old "step 5, one
-> sentence only" is the agent's `## Return contract`, one caller-facing line
-> followed by `---` and the two `summary_for_user` paragraphs. Rule 18's
+> sentence only" is the agent's `## Return contract`, which is **one line naming
+> the saved file and nothing else** -- or, on a decline or hand-back, the two
+> short sentences from the scope section. The agent carries no `---` separator
+> and no `summary_for_user` paragraphs: it is on the PENDING list in
+> `tests/packaging/agent-return-contract.test.ts`, because two paragraphs of
+> researcher-facing prose written straight after reading the article measured as
+> space the extract flowed into. Rule 18's
 > no-narration instrument is unchanged and still the reason this agent carries no
 > `**Narration:**` line. Section and rule numbering is left as it was — this is a
 > dated audit record, not a live spec.
@@ -104,9 +109,8 @@ rebuilding it.**
     The no-narration half of this rule is now **explicit in the body**, in two
     places rather than inferred from "One sentence only": a standalone line at
     the top of `## What to do` ("Do not announce a step before doing it") and a
-    clause under `## Return contract` (since #2795: the return is "the only
-    thing you say", and the `next_step` sentence is forbidden the step-announcing
-    shape outright). It sits in both
+    clause under `## Return contract` (since #2795: the return is exactly one
+    line, "not a list, not a heading, not a second sentence"). It sits in both
     because every observed violation is a `Now I'll …` preamble emitted while
     executing steps 3–4, i.e. before the model reaches step 5.
 

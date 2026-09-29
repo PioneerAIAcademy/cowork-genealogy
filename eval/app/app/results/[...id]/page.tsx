@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { parseAgentReturns, splitAgentReturns } from '@/lib/agentReturns';
 import Link from 'next/link';
 import {
   Accordion,
@@ -862,6 +863,12 @@ const TracePane = memo(function TracePane({
     [output],
   );
 
+  // Hook, so it must sit above the `if (!run)` early return with the others.
+  // The graded/ungraded split is a plain derivation further down, where
+  // `testInput` exists. Both live in lib/agentReturns.ts so the gating rule is
+  // unit-tested: a mislabelled panel reads exactly like a correct one.
+  const agentReturns = useMemo(() => parseAgentReturns(output?.agent_returns), [output]);
+
   // Hooks must run unconditionally; we early-return below if !run.
   const testJson = useMemo(
     () => findTestJson(files, skill, entry.test_id),
@@ -914,7 +921,28 @@ const TracePane = memo(function TracePane({
     (testJson?.input as Record<string, unknown> | undefined)?.scenario_notes as string | undefined;
   const judgeContext = (testJson?.judge_context as string[] | undefined) ?? [];
 
+  // What the JUDGE actually graded.
+  //
+  // On a direct-agent test the judge scores the agent's own return, not
+  // `text_response` -- which is the main thread relaying it, and which
+  // paraphrases. An annotator shown only the relay is confirming a score
+  // against text the grader never saw: in v1_2026-09-28_17-09-14 the relay for
+  // `_009` restates the whole Kirchenbuch article while the graded text is one
+  // line. That applies to every suite with direct tests, not just this one.
+  //
+  // The rule here is the judge's own (`orchestrator.py` ->
+  // `skill_runner.agent_return_text`): only a DIRECT test, and only returns
+  // from the agent under test. A routed run can spawn agents too
+  // (`ut_timeline_008` spawns `record-extractor`) and the judge still grades
+  // `text_response` there, so gating on "any agent return" would mislabel it.
+  const { graded: gradedReturns, other: otherReturns } = splitAgentReturns(
+    agentReturns,
+    typeof testInput?.delegation === 'string',
+    skill,
+  );
+
   const defaultOpen = ['user', 'tools', 'response'];
+  if (gradedReturns.length > 0) defaultOpen.push('agent-return');
   if (judgeContext.length > 0) defaultOpen.push('judge');
   if (filesCreated.length > 0) defaultOpen.push('files');
 
@@ -1049,14 +1077,55 @@ const TracePane = memo(function TracePane({
           </Accordion.Panel>
         </Accordion.Item>
 
+        {gradedReturns.length > 0 ? (
+          <Accordion.Item value="agent-return">
+            <Accordion.Control>Agent return (what the judge graded)</Accordion.Control>
+            <Accordion.Panel>
+              <Stack gap={6}>
+                {gradedReturns.map((r, i) => (
+                  <Code key={i} block style={{ whiteSpace: 'pre-wrap' }}>
+                    {r.text}
+                  </Code>
+                ))}
+              </Stack>
+            </Accordion.Panel>
+          </Accordion.Item>
+        ) : null}
+
         <Accordion.Item value="response">
-          <Accordion.Control>Text response</Accordion.Control>
+          <Accordion.Control>
+            {gradedReturns.length > 0
+              ? 'Text response (main-thread relay \u2014 not graded)'
+              : 'Text response'}
+          </Accordion.Control>
           <Accordion.Panel>
             <Code block style={{ whiteSpace: 'pre-wrap' }}>
               {text}
             </Code>
           </Accordion.Panel>
         </Accordion.Item>
+
+        {otherReturns.length > 0 ? (
+          <Accordion.Item value="other-returns">
+            <Accordion.Control>
+              Other agent returns (not graded) ({otherReturns.length})
+            </Accordion.Control>
+            <Accordion.Panel>
+              <Stack gap={6}>
+                {otherReturns.map((r, i) => (
+                  <div key={i}>
+                    <Text size="xs" c="dimmed">
+                      {r.subagent_type}
+                    </Text>
+                    <Code block style={{ whiteSpace: 'pre-wrap' }}>
+                      {r.text}
+                    </Code>
+                  </div>
+                ))}
+              </Stack>
+            </Accordion.Panel>
+          </Accordion.Item>
+        ) : null}
 
         {filesCreated.length > 0 ? (
           <Accordion.Item value="files">

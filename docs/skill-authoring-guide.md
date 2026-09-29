@@ -10,8 +10,10 @@ the doc index at the end.
 Two other things write toward this guide, so keep it current:
 
 - Anyone scaffolding a new capability from
-  `packages/engine/plugin/agents/search-wikipedia.md` needs this guide for body
-  style and frontmatter limits.
+  `packages/engine/plugin/agents/search-images.md` needs this guide for body
+  style and frontmatter limits. Do not scaffold from
+  `agents/search-wikipedia.md`: it is exempt from the `summary_for_user` return
+  contract, so a copy fails `agent-return-contract.test.ts`.
 - The skill-improver loop (see [`docs/skill-lifecycle.md`](skill-lifecycle.md))
   proposes edits to existing skills and is told to write toward this
   standard.

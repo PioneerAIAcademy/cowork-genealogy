@@ -366,7 +366,14 @@ def _names_skill(text: str, skill: str) -> bool:
     return re.search(
         r"`/?" + escaped + r"`"
         r"|/" + escaped + r"\b"
-        r"|\b" + escaped + r"\s+(?:skill|agent)\b",
+        # `[*_"'`]*` before the space: closing markup sits between the name
+        # and "skill", so `That belongs to the **timeline** skill` and
+        # `Try the "research" skill.` read as routing again. Without it the
+        # suffix arm matched only an unadorned name, and bold or quoted
+        # mentions -- the common way a decline names the lane it hands off
+        # to -- scored substantive. Replayed over all 2,469 committed runs:
+        # no `activated` value changes.
+        r"|\b" + escaped + r"[*_\"'`]*\s+(?:skill|agent)\b",
         text,
         re.IGNORECASE,
     ) is not None

@@ -11,7 +11,8 @@ contract`, exactly one line naming the saved file. It carries no
 negative, so every validator below that skips non-positive tests skips it, and
 `test_no_wiki_no_write` alone decides it. The `scope-decline` skips below only
 fire on a positive decline test, which the corpus does not carry today; they
-stay because the shape of `_008` is an open question for the lead.
+stay because a future suite may add one, and because removing them would make
+the tag silently inert.
 
 Mechanical checks live here; narrative judgment lands on the
 search-wikipedia `rubric.md` dimensions plus the base Correctness +
@@ -29,6 +30,8 @@ import re
 import unicodedata
 
 import pytest
+
+from harness.skill_runner import agent_return_text
 
 
 # --- Tool-allowlist enforcement ---------------------------------------
@@ -108,7 +111,8 @@ def test_no_wiki_no_write(tool_calls, before_state, after_state, test):
     that workflow, whatever the delegation asserts.
 
     This is the whole deterministic verdict for `ut_search_wikipedia_008`, the
-    direct decline test (issue #2795, lead ruling 2026-09-24). It used to gate
+    direct decline test (issue #2795; Richard's ruling of 2026-09-28 kept it a
+    `grade_on_invariant` negative). It used to gate
     a routed `grade_on_invariant` negative, where routing was the unstable part
     and the state-harm invariant the stable one; the direct arm has no router
     at all, so the invariant is not merely the reliable half — it is the only
@@ -136,10 +140,21 @@ def test_no_wiki_no_write(tool_calls, before_state, after_state, test):
         f"wikipedia_search call(s) with args: {[c.get('args') for c in wiki_calls]}"
     )
 
-    # 2. No markdown summary saved.
-    new_md = [p for p in _files_created(before_state, after_state) if p.endswith(".md")]
-    assert not new_md, (
-        f"out-of-scope request must not save a Wikipedia summary; wrote: {new_md}"
+    # 2. No file saved -- ANY file, not just a .md.
+    #
+    # Richard's ruling is "no lookup, no file saved", and this assertion is the
+    # WHOLE verdict for ut_search_wikipedia_008: `_compute_outcome` returns on
+    # `grade_on_invariant` before a judge dimension is read. The agent now holds
+    # `Write`, and _008's prompt asks for a Python function, so an extension
+    # filter would pass a run that saved `parse_csv.py` -- the exact harm, in
+    # the exact shape this test's prompt invites.
+    #
+    # Of 455 committed negative runs, one created a file and it was a `.md`, so
+    # widening changes no committed outcome.
+    new_files = _files_created(before_state, after_state)
+    assert not new_files, (
+        "out-of-scope request must not save a Wikipedia summary or any other "
+        f"file; wrote: {new_files}"
     )
 
 
@@ -454,7 +469,7 @@ def _graded_reply(agent_returns, text_response: str) -> str:
     On the direct arm `text_response` belongs to the MAIN THREAD, which is a
     dispatcher relaying the agent's return -- it paraphrases, and what it writes
     is not the subject under test. `agent_returns` carries the agent's own text,
-    so it wins whenever the run spawned one.
+    so it wins whenever the agent under test returned any.
 
     Measured on `v1_2026-09-28_09-49-04` plus a live capture of
     `ut_search_wikipedia_002` the same day, one run, two texts:
@@ -464,14 +479,15 @@ def _graded_reply(agent_returns, text_response: str) -> str:
                      Einstein** on Wikipedia and saved the article summary ...
 
     The agent obeyed its one-line contract; the dispatcher did not, and the
-    dispatcher is what the suite had been failing. Falls back to
-    `text_response` so a ROUTED run -- which spawns nothing and whose reply IS
-    the subject's -- keeps grading exactly as before.
+    dispatcher is what the suite had been failing.
+
+    Selection is `skill_runner.agent_return_text`, the SAME call the judge
+    makes. It used to take the first match here and join every match there, so
+    a clean first return hid a narrating second one from this validator but not
+    from the judge. Falls back to `text_response` when this agent returned
+    nothing -- a routed run, whose reply IS the subject's.
     """
-    for entry in agent_returns or []:
-        if entry.get("subagent_type") == "search-wikipedia" and entry.get("text"):
-            return entry["text"]
-    return text_response or ""
+    return agent_return_text(agent_returns, "search-wikipedia") or (text_response or "")
 
 
 def test_reply_does_not_narrate_pending_step(agent_returns, text_response, test):

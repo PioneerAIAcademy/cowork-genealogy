@@ -2025,8 +2025,9 @@ def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monk
 # flag_routing_negative_judge_fail, so a fixture carrying it is exempt from the
 # coercion and would make this test pass for the wrong reason. (The example
 # this comment used to cite was search-wikipedia's three negatives; issue #2795
-# deleted two of them and reshaped the third into a direct decline test, so
-# that suite has no negative at all now.) 81 of the committed negative
+# deleted two of them and made the third — `ut_search_wikipedia_008` — a DIRECT
+# negative that still carries `grade_on_invariant`, so it is exempt from the
+# coercion for that reason rather than for having ceased to be a negative.) 81 of the committed negative
 # fixtures qualify; this one is
 # picked because its scenario exists and OrchestratorPaths resolves it.
 NEGATIVE_TEST_PATH = (

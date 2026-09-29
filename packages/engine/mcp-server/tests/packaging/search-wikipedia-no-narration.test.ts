@@ -1,9 +1,11 @@
 /**
  * `agents/search-wikipedia.md` must carry no `**Narration:**` line.
  *
- * Every skill body opens with one, and so does every other agent body, so the
- * natural thing for an authoring PR to do is "fix" the one that doesn't. That
- * would permanently disarm the only validator watching this behaviour.
+ * Every skill body opens with one, so the natural thing for an authoring PR to
+ * do is "fix" the agent that doesn't. That would permanently disarm the only
+ * validator watching this behaviour. (Not every *agent* carries the line --
+ * `gps-mentor`, `image-reader` and `record-extractor` do not. What makes
+ * `search-wikipedia` different is that its absence is a RULE, pinned here.)
  *
  * The Narration line's own fallback is "a one-line preamble per action". All of
  * this agent's tests run with no scenario, so the
@@ -24,10 +26,13 @@
  * `docs/deep-dives/search-wikipedia-prohibition-list.md`); this is the anchor
  * that makes it fail rather than be read past.
  *
- * Both complements are asserted — that every skill carries the line, and that
- * every OTHER agent does. Without them a rename of the exempt file (or a glob
- * that quietly matches nothing) would leave this file green while scanning
+ * Two anti-vacuity arms sit under it: every skill carries the line, and at
+ * least one OTHER agent does. Without them a rename of the exempt file (or a
+ * glob that quietly matches nothing) would leave this file green while scanning
  * nothing, which is CLAUDE.md's "a check that cannot fail reads as coverage".
+ * The agent-side arm is deliberately "some other agent", not "every other
+ * agent": three carry no line, so the stronger claim would be a lint failing on
+ * the corpus it ships with.
  */
 
 import { describe, expect, it } from "vitest";

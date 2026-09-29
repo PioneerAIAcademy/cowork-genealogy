@@ -537,7 +537,7 @@ def test_every_corpus_grade_on_invariant_test_has_a_live_validator(path):
         # gate runs ahead of the grade_on_invariant one, so the assertions above
         # would pass on a fixture that is ALSO vacuous -- the very class this
         # file exists for, hidden by the carve-out. Measured: dropping
-        # `no-wiki-no-write` from ut_search_wiki_004's tags left this test green.
+        # `no-wiki-search` (ut_search_wiki_004's gating tag) left this green.
         # So re-run the check with only the conversion obstacle removed, and
         # require the rest of the gate to pass exactly as it does for every
         # other fixture.

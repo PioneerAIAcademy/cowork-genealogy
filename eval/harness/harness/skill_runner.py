@@ -448,6 +448,27 @@ def strip_agent_return_trailer(text: str) -> str:
     return text.strip()
 
 
+def agent_return_text(agent_returns: list[dict[str, Any]] | None, agent: str) -> str:
+    """Every return `agent` made this run, joined -- the text a direct test grades.
+
+    ONE definition, called by both graders. They had two: the judge joined every
+    return from `spec.skill` while the narration validator took the FIRST match,
+    so a clean first return hid a narrating second one from the validator and not
+    from the judge -- the two could disagree about the same run with nothing
+    saying so.
+
+    Returns "" when the agent made none, which is the caller's signal to fall
+    back to `text_response`. A ROUTED run can spawn agents too
+    (`ut_timeline_008` spawns `record-extractor`), so the filter is on the
+    agent NAME, never on "did anything spawn".
+    """
+    return "\n\n".join(
+        entry["text"]
+        for entry in (agent_returns or [])
+        if entry.get("subagent_type") == agent and entry.get("text")
+    )
+
+
 def _tool_result_text(content: Any) -> str:
     """Flatten a ToolResultBlock's content to text.
 
@@ -655,7 +676,9 @@ class SkillRunResult:
     # gating universal validators read them, so this field now decides outcomes.
     builtin_tool_calls: list[dict[str, Any]] = field(default_factory=list)
     # What each spawned subagent RETURNED, as {"subagent_type", "text"}, in call
-    # order. Empty on a routed test, which spawns nothing.
+    # order. Empty when the agent under test returned nothing. A ROUTED run
+    # CAN spawn agents (`ut_timeline_008` spawns `record-extractor`), so a
+    # non-empty list does not mean the run was direct.
     #
     # `text_response` is the MAIN THREAD's text, and on the direct arm the main
     # thread is a dispatcher relaying someone else's work -- so every reply-shape

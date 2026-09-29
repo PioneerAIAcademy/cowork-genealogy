@@ -334,7 +334,7 @@
           }
         },
         "agent_returns": {
-          "description": "What each spawned subagent returned, in call order. On the direct-agent arm this is the AGENT's own text, where `text_response` is the main-thread dispatcher relaying it. Absent on a routed run, which spawns nothing.",
+          "description": "What each spawned subagent returned, in call order. On the direct-agent arm this is the AGENT's own text, where `text_response` is the main-thread dispatcher relaying it. Absent on a run where the agent under test returned nothing. A ROUTED run can spawn agents too (`ut_timeline_008` spawns `record-extractor`), and the judge still grades `text_response` there -- so presence of this field is not the same as \"this run was direct\".",
           "type": "array",
           "items": {
             "type": "object",

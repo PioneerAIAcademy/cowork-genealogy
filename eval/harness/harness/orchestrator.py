@@ -50,6 +50,7 @@ from harness.skill_runner import (
     DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
     SKILL_TOOL_NAME_KEYS,
     SkillRunResult,
+    agent_return_text,
     direct_dispatch_prompt,
     run_skill,
     spawn_prompts,
@@ -1916,13 +1917,11 @@ def _run_judge(
         # Falls back to `text_response` when the spawn returned nothing, so a
         # run whose agent produced no text is still graded on what there is
         # rather than on silence.
-        _returns = [
-            entry.get("text", "")
-            for entry in (getattr(result, "agent_returns", None) or [])
-            if entry.get("subagent_type") == spec.skill and entry.get("text")
-        ]
+        _returns = agent_return_text(
+            getattr(result, "agent_returns", None), spec.skill
+        )
         if _returns:
-            judge_text = "\n\n".join(_returns)
+            judge_text = _returns
     else:
         judge_user_message = spec.user_message
         judge_ran = result.skills_invoked

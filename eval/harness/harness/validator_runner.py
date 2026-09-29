@@ -105,7 +105,9 @@ def run_validators(
         # What each spawned subagent returned. On the direct arm this is the
         # AGENT's own text, where `text_response` is the dispatcher relaying
         # it -- a reply-shape check must read this one or it grades the
-        # dispatcher. Empty on a routed test, which spawns nothing.
+        # dispatcher. Empty when the agent under test returned nothing; a
+        # ROUTED run can spawn agents too, so a non-empty list is not a
+        # direct-arm signal.
         "agent_returns": list(agent_returns or []),
         # Main-thread calls to subagent-only tools that the PreToolUse hook
         # denied (harness.context_policy). Non-empty means the skill broke the

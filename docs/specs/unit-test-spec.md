@@ -657,9 +657,10 @@ must be deleted or re-shaped, not converted.
 `grade_on_invariant` negative.** `ut_search_wikipedia_008` is the worked case:
 the off-topic prompt moves into `input.delegation`, the `negative` block keeps
 `grade_on_invariant: true`, and the test gains `scope-decline` beside
-`direct-arm`. Its verdict is the tag-gated no-harm validator
-(`test_no_wiki_no_write`: no `wikipedia_search` call, no new `.md`) plus the
-base dimensions. As a *routed* negative it would abort `skill not found` the
+`direct-arm`. Its verdict is the tag-gated no-harm validator **alone**
+(`test_no_wiki_no_write`: no `wikipedia_search` call and no new file of any
+kind) -- `_compute_outcome` returns on `grade_on_invariant` before a judge
+dimension is read, so the base scores are diagnostic and gate nothing. As a *routed* negative it would abort `skill not found` the
 moment the skill directory is deleted.
 
 **Do not re-shape a decline into a positive test.** A positive direct test is
@@ -671,8 +672,11 @@ twice over:
   one-sentence decline leaves `activated` false. Measured on
   `v1_2026-09-27_22-55-04`: `ut_search_wikipedia_008` failed on activation with
   every judge dimension at 3 or null.
-- Under `_SUBSTANTIVE_MIN_WORDS_LONG` (30 words) it scans the reply for any
-  **shipped skill name** and classifies a match as routing. Measured on
+- Under `_SUBSTANTIVE_MIN_WORDS_LONG` (30 words) it scans the reply for a
+  **shipped skill name written as a name** -- backticked, slash-prefixed, or
+  followed by "skill"/"agent", optionally through closing markup -- and
+  classifies that as routing. A hyphenated name still counts bare. It used to
+  match a one-word name anywhere, which is the bug measured on
   `v1_2026-09-28_09-49-04`: a correct 25-word decline reading "This agent
   handles genealogy **research** tasks …" scored `activated: false` because
   `research` is a skill directory. Padding a decline past 30 words to clear the
@@ -685,8 +689,9 @@ that made `_008` a positive test predates both measurements.
 
 Because the test is a negative, every validator gated on `type == "positive"`
 skips it, including `test_only_wikipedia_search_called` and
-`test_reply_does_not_narrate_pending_step`. The decline's reply is graded by the
-judge's base dimensions, not by the narration check.
+`test_reply_does_not_narrate_pending_step`. The judge's base dimensions still
+run on the decline, but they are **diagnostic only**: `grade_on_invariant`
+decides the outcome before they are read.
 
 On a direct test the harness:
 
@@ -724,9 +729,18 @@ off the message stream — the `PreToolUse` hook that fills `builtin_tool_calls`
 fires *before* a tool runs and structurally cannot carry a result — and the
 runtime's own trailers (`agentId: …`, `<usage>…</usage>`) are stripped at
 capture by `strip_agent_return_trailer`, since a grader reading them raw sees
-extra lines and fails a one-line return. A validator that grades reply shape
-reads `agent_returns` and falls back to `text_response`, so a **routed** test,
-whose reply genuinely is the subject's, is unaffected.
+extra lines and fails a one-line return.
+
+The judge reads it on every direct test. **Validators do not yet, uniformly.**
+`search-wikipedia`'s narration check reads it (via
+`skill_runner.agent_return_text`, the same call the judge makes) and falls back
+to `text_response`, so a **routed** test -- whose reply genuinely is the
+subject's -- is unaffected. `research-exhaustiveness`'s
+`test_refusal_names_the_blocking_plan_item` still reads `text_response`
+directly, so on that suite's direct tests it grades the dispatcher's relay. It
+is named here rather than fixed because it belongs to that suite's eval slot;
+any validator grading reply shape on a direct test should move to
+`agent_return_text`.
 
 **The dispatcher prompt cannot be constrained from a test.** `DIRECT_DISPATCH_PROMPT`
 is harness-owned precisely so "no test can weaken the relay instruction", so
@@ -1149,7 +1163,7 @@ For each run, the harness computes a derived boolean `output.activated` per the 
 
 1. **Owned-section writes.** The skill wrote to any section it owns per the ownership table in `research-schema-spec.md` Section 4. Examples: conflict-resolution wrote to `conflicts`; record-extraction wrote to `assertions` or `sources`.
 2. **Files created or modified.** The skill created or modified files in `cwd` other than those it normally reads (for stateless skills, e.g., search-wikipedia writing a markdown file in the user's working folder).
-3. **Substantive response.** The skill produced a response that is either (a) ≥10 words long, OR (b) does not pattern-match as a routing acknowledgement — short responses must not mention any other skill name. This catches legitimate concise outputs like `convert-dates` → `"1850-03-15"` while excluding "I see you're asking about X, but Y skill handles this" pure-routing.
+3. **Substantive response.** The skill produced a response that is either (a) at least `_SUBSTANTIVE_MIN_WORDS_LONG` (30) words long, OR (b) does not pattern-match as a routing acknowledgement — short responses must not mention any other skill name. This catches legitimate concise outputs like `convert-dates` → `"1850-03-15"` while excluding "I see you're asking about X, but Y skill handles this" pure-routing.
 
 **Why `skills_invoked` is required:** Activation derivation has access to file changes, tool calls, and text responses, but no per-side-effect attribution to a specific skill. `skills_invoked` is the harness's authoritative per-skill signal. Tool-call evidence is intentionally NOT used as a corroboration channel: shared tools (notably `validate_research_schema`, present in 14 of 23 skill allowlists) appear in many skills' `allowed-tools`; treating them as corroboration would mis-attribute a correctly-routed sibling skill's tool calls and file writes to the skill under test on negative tests. Prior versions of this spec included a fourth rule ("characteristic tool call activates") and a corroboration variant ("char tool unlocks file-change attribution"); both were removed because they produced false positives on negative tests where the routed-to skill calls a shared tool and writes to `research.json`.
 

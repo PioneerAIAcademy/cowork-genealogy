@@ -656,8 +656,10 @@ just `packages/engine/plugin/skills/<skill>/SKILL.md`).
 
 Occasionally you're not fixing a skill but creating one — though under the
 lead's 2026-09-22 ruling a new capability is an **agent**. For a new
-tool-wrapping body, copy `packages/engine/plugin/agents/search-wikipedia.md` —
-the canonical minimal example of the full pipeline — and write to the prose
+tool-wrapping body, copy `packages/engine/plugin/agents/search-images.md` —
+the smallest agent carrying the `summary_for_user` return contract; **not**
+`search-wikipedia.md`, whose exemption from it fails
+`agent-return-contract.test.ts` on a copy — and write to the prose
 standard in [`docs/skill-authoring-guide.md`](skill-authoring-guide.md). (That
 guide's "What kind of skill are you writing?" section covers whether it should
 be a skill at all, and which of the three kinds — workflow, reference, or
@@ -720,7 +722,7 @@ hand-catching the same class of issue ten rounds in, the loop isn't learning.
 | 6 Verify | ⌨️ terminal | `make gate-skill SKILL=<name> TEST=<id>` | `eval\GateSkill.bat` |
 | 7 Confirm in Cowork | 🖥️ Cowork | `make plugin`, `make mcpb`, then reinstall | `eval\BuildPlugin.bat`, `eval\BuildMcpb.bat` |
 | 8 Re-run + grade + PR | ⌨️ terminal → 🌐 → GitHub | `make eval-skill`, grade all, commit, PR | `eval\RunTests.bat`, then GitHub Desktop |
-| *(side)* new capability | 🤖 Claude Code | the authoring guide + copy `agents/search-wikipedia.md` | same |
+| *(side)* new capability | 🤖 Claude Code | the authoring guide + copy `agents/search-images.md` | same |
 | *(side)* description | ⌨️ terminal | `make optimize-skill SKILL=<name>` | `eval\OptimizeSkill.bat` |
 
 **To run the improver on skill `X`:** it needs an *active*, *annotated* run
