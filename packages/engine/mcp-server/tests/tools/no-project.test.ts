@@ -158,7 +158,7 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
   },
   {
     tool: "person_warnings",
-    call: (projectPath) => personWarningsTool({ projectPath, personId: "I1" } as any, LOCAL),
+    call: (projectPath) => personWarningsTool({ projectPath, personId: "I1" } as any),
   },
 ];
 
