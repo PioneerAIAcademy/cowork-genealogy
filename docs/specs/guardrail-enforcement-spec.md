@@ -870,9 +870,9 @@ author, so the rule is decidable from the project documents alone. It refuses
 rather than corrects: overwriting `query` would erase the only evidence of how
 often a caller misstates its filters, which an audit trail exists to keep.
 
-It is a preflight, run over every op before any op is applied, because
-finalizing a staged handle deletes it and a later refusal would cost the retry
-its handle. No override (ADR-0011).
+It is a preflight, run over every op before any op is applied, so the refusal
+comes before any op writes a sidecar. (No refusal consumes a staged handle: the
+staged file is removed only after research.json commits.) No override (ADR-0011).
 
 Its limit is the ground truth itself. A nil search stages nothing, and neither
 does a search made without a `projectPath`, so neither is judged, and the eval's
