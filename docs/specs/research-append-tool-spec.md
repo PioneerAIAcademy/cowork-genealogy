@@ -1709,9 +1709,9 @@ would say how many entries landed without saying what they say.
 
 ### 11.7 Document mode — an unindexed source extracted in code
 
-> **Status:** specified, not built. Lands after §11.5.
+> **Status:** specified, not built. Lands after §11.6.
 
-§11.5 extracts a FamilySearch record from its `record_read` sidecar. Document
+§11.6 extracts a FamilySearch record from its `record_read` sidecar. Document
 mode runs **the same extractor** on a source that has no index: an image
 transcription, a full-text hit, an external site, pasted prose. The
 `record-structurer` agent (`record-structurer-agent-spec.md`) reads the text
@@ -1721,14 +1721,14 @@ layers, field expansion and the census relationship doctrine all go through one
 code path whether the record was indexed or not.
 
 **Entered on `logEntryId` + `document`.** `logEntryId` with no `document` is
-§11.5. `document` with no `logEntryId` is refused: every extraction cites the
-log entry that produced it. `ops` sent with either is refused, as in §11.5.
+§11.6. `document` with no `logEntryId` is refused: every extraction cites the
+log entry that produced it. `ops` sent with either is refused, as in §11.6.
 
 **Inline, not staged.** A model cannot stage a sidecar. `results_ref` is
 host-written only (`finalizeStagedResults` in `results-staging.ts`), so the
 document travels as a tool parameter.
 
-#### Inputs added to §11.5's
+#### Inputs added to §11.6's
 
 | Parameter | Required | Meaning |
 |---|---|---|
@@ -1736,7 +1736,7 @@ document travels as a tool parameter.
 | `transcriptionRef` | no | A `results/` ref holding a `StagedTranscription`. When given, the source's `transcription` is copied from that element **by the tool**, so the verbatim text is never re-emitted by a model. The ref can be a staged handle or a finalized sidecar (`readStagedResults` accepts both). |
 | `imageFilename` | no | Written to the source's `image_filename`. It is `image_transcribe`'s `imageRef`, relayed. §5.4's warning still fires when a transcription lands without one. |
 
-`recordId`, `questionIds` and `absentPersons` keep their §11.5 meaning.
+`recordId`, `questionIds` and `absentPersons` keep their §11.6 meaning.
 `recordId` is the `capture:<descriptive>`, `ancestry:<collection>:<id>` or
 ARK the router already uses for that source.
 
@@ -1809,16 +1809,16 @@ tries to classify is refused by the schema. It is not left to a prompt.
 | record type | `recordType` | Taken as given. `detectRecordType` is not run: there is no collection title to read. |
 | census column | `census.jurisdiction`, `census.year` | `censusStatedRelationships`, unchanged. When the table says the schedule had no column, every `statedRelation` is **ignored and named in `notes`**. A model cannot bring a relationship in through a column the schedule did not have. |
 | order | array order of `persons` | Replaces `FS_SORT_KEY`. |
-| roles | `recordType`, `principal`, `statedRelation`, relationships | §11.5's rules. Where those name a party only as `other_N` or `witness_N`, a `statedRelation` is mapped through `roleFromRelationship` instead: `son_in_law_1`, `consent_signer_1`, `neighbor_1`. An `obituary` principal is `deceased`. |
-| `record_basis` | `computed` | `inferred` for a computed attribute, `stated` otherwise. A fact whose attributes differ in mark is **split**, one assertion per group. This is §11.5's birth split, now keyed on the mark and no longer on record type. |
+| roles | `recordType`, `principal`, `statedRelation`, relationships | §11.6's rules. Where those name a party only as `other_N` or `witness_N`, a `statedRelation` is mapped through `roleFromRelationship` instead: `son_in_law_1`, `consent_signer_1`, `neighbor_1`. An `obituary` principal is `deceased`. |
+| `record_basis` | `computed` | `inferred` for a computed attribute, `stated` otherwise. A fact whose attributes differ in mark is **split**, one assertion per group. This is §11.6's birth split, now keyed on the mark and no longer on record type. |
 | `date_certainty` | `computed` includes `date` | `approximate`. |
-| information layer | the §11.5 table | The table keyed on record type × role family × fact class, with two document-only overrides. (1) `informant.name`, when present, replaces the table's generic informant string. (2) `uncertain` lowers `primary` to `indeterminate`: a doubted reading is not firsthand information. |
+| information layer | the §11.6 table | The table keyed on record type × role family × fact class, with two document-only overrides. (1) `informant.name`, when present, replaces the table's generic informant string. (2) `uncertain` lowers `primary` to `indeterminate`: a doubted reading is not firsthand information. |
 | `informant_bias_notes` | `note` | Copied verbatim. |
 | `source_classification` | `documentForm` | `page_image`, `verbatim_transcript` → `original`. `index_entry`, `abstract` → `derivative`. `compiled_work` → `authored`. |
-| relationship assertions | `relationships` | §11.5's arms, plus `sibling`. Census: none from edges, as §11.5. |
+| relationship assertions | `relationships` | §11.6's arms, plus `sibling`. Census: none from edges, as §11.6. |
 | `record_persona_id` | — | **Never set.** Local ids name nothing outside the document. |
 | negative evidence | both `absentPersons` lists | Merged. The caller's entries come first, and duplicates by `name` are dropped. |
 
 #### Return
 
-§11.5's `extraction` echo, plus `documentMode: true`.
+§11.6's `extraction` echo, plus `documentMode: true`.

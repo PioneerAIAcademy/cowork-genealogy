@@ -23,7 +23,7 @@ Key: **code** = #2937's `record-extract.ts` / `extraction-append.ts`.
 | Data boundary | agent §4 | Issue #2485. The pin in `tests/packaging/` that guards the fence is repointed to the new body. |
 | GPS foundation 1 — faithful capture | agent §4 | |
 | GPS foundation 2 — objectivity | agent §4 | This is "extract contradicting facts equally". The agent emits every stated value. |
-| GPS foundation 3 — per-layer independence | code | The layers are separate columns of the §11.5 table. |
+| GPS foundation 3 — per-layer independence | code | The layers are separate columns of the §11.6 table. |
 | Step 1 — `source_classification` rules | §11.7 | Decided from `documentForm`. "An image you examined is original" (issue #2475) is in agent §4. |
 | Step 1 — source entry fields | code | `buildExtractionOps`, fed from `document.source`. |
 | Step 1 — "original not examined" | §11.7 | `index_entry` / `abstract` → `derivative`. The reason goes in `source.notes`. |
@@ -48,9 +48,9 @@ Key: **code** = #2937's `record-extract.ts` / `extraction-append.ts`.
 | Step 3 — `structured_value`; no `_inferred` | code | |
 | Step 3 — sex for every persona | agent §4, code | |
 | Step 3 — `standard_place` | code | The writer resolves it. |
-| Layer 2 — decision tree and informant rules | code | The §11.5 table. Two §11.7 overrides: a named informant, and `uncertain` lowers `primary`. |
-| Layer 2 — census / death / marriage / christening informant tables | code | The §11.5 table rows. |
-| Layer 2 — funeral director scoped; burial index has no informant | **code, gap** | See "Found while walking" 1. |
+| Layer 2 — decision tree and informant rules | code | The §11.6 table. Two §11.7 overrides: a named informant, and `uncertain` lowers `primary`. |
+| Layer 2 — census / death / marriage / christening informant tables | code | The §11.6 table rows. |
+| Layer 2 — funeral director scoped; burial index has no informant | code | The burial row, added on #2979 (commit 9c726c709). |
 | Layer 2 — evidence independence (shared informant) | dropped | Needs a cross-source view one record does not have. It is `conflict-resolution`'s independence analysis. |
 | Layer 3 — `record_basis` doctrine, "was it in a field?" | §11.7 | Becomes the `computed` mark's definition in agent §4. |
 | Epistemic cap — `[?]` and the caller's doubt | agent §4, §11.7 | Widened to self-noticed (lead, 2026-09-27). |
@@ -61,7 +61,7 @@ Key: **code** = #2937's `record-extract.ts` / `extraction-append.ts`.
 | Step 4 — correcting via `update` | dropped | Document mode appends. A correction is a re-extraction (see open question 2). |
 | Step 4 — cannot write `person_evidence`; identity goes in the summary | code; agent §3 | The section allowlist enforces the first half. |
 | Negative evidence | code, agent §4 | Code builds the entries. The agent reads "preceded in death" and blank-where-expected. |
-| Match checking | dropped | The match tools key on a FamilySearch record ARK, which a text source does not carry. See "Found while walking" 3. |
+| Match checking | dropped | The match tools key on a FamilySearch record ARK, which a text source does not carry. On the FamilySearch path the router runs them (#2979, commit e2a20b090). |
 | Re-invocation and classification refinement | **open question 2** | |
 | Return contract, `summary_for_user` | agent §3 | Unchanged. |
 
@@ -82,20 +82,16 @@ disposition for that family, and it is not deleted by this card.
 
 ## Found while walking
 
-1. **Burial index vs. death certificate, on #2937's table too.** The table
-   types `death` and `burial` alike, so a burial index's death date gets
-   `official_duty` / `primary`. `burial-index-parents-indirect.json` pins
-   `unknown` / `indeterminate`, and `record-extractor.md` says a burial index
-   "identifies no informant at all". This belongs on PR #2979, not here.
+1. **Burial index vs. death certificate.** Fixed on #2979 (9c726c709): burial
+   has its own unknown/indeterminate row, and a record carrying both a Death and
+   a Burial fact is typed by its collection title.
 2. **Classification refinement has no home once the agent goes.**
    `classification-refinement-informant.json` asks "primary or secondary?" of an
    existing assertion. Classification is now a table, so the choices are: (a)
    re-extract, which gives the same answer, (b) explain the table's row, or (c)
    treat a disagreement as a genealogist row fix. This is for the lead.
-3. **Match checks on the indexed path.** After #2937, `SKILL.md` still says
-   match checks "belong to the extractor", which the FamilySearch path no longer
-   spawns. `record-person-matches.json` and `record-record-matches.json`
-   exercise it. Check this on PR #2979.
+3. **Match checks on the indexed path.** Fixed on #2979 (e2a20b090): the
+   router runs them after `extraction_append`.
 4. **Obituary classification row.** `obituary` is a new `RecordType` here. With
    no row it takes the default and warns. The proposal is `family_not_present`
    / `secondary` for the biography, pending genealogist sign-off.

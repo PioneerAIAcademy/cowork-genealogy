@@ -1,7 +1,7 @@
 # Specification: Record Structurer Agent
 
 > **Status:** specified, not built. Replaces `record-extractor`
-> once it lands, and needs the §11.5 extractor merged first.
+> once it lands, and needs the §11.6 extractor merged first.
 
 A Cowork plugin subagent that **reads** one unindexed source and returns its
 content as structure. It reads; code classifies. The document it emits and the
@@ -11,7 +11,7 @@ code that turns it into assertions are specified in
 ## 1. Purpose
 
 Every FamilySearch-indexed record is now extracted in code
-(`research-append-tool-spec.md` §11.5), because the model disagreed with itself
+(`research-append-tool-spec.md` §11.6), because the model disagreed with itself
 across repeat runs: on the same persona's role 37.1% of the time, on
 `record_basis` 15.6%, on `informant_proximity` 22.6%. The remaining 13.3% of
 corpus assertions come from sources with no index: image transcriptions,
