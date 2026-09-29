@@ -41,9 +41,14 @@ services:
   # with no cached image -- every fresh clone, every CI runner. quay.io serves the SAME
   # tags and is MinIO's own second registry. Verified 2026-09-24 for both.
   minio:
-    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    # bitnamilegacy, not minio/minio: as of 2026-09 the upstream image is refused
+    # anonymously from EVERY registry we tried -- quay.io (401), Docker Hub, ghcr.io,
+    # public.ecr.aws and mirror.gcr.io -- under both the pinned tag and `latest`.
+    # Bitnami's legacy repo still serves it. This image runs its OWN entrypoint, so it
+    # takes no `command:`, stores data under /bitnami/minio/data, runs as uid 1001, and
+    # ships curl but NOT mc (hence the HTTP healthcheck below rather than `mc ready`).
+    image: bitnamilegacy/minio:latest
     container_name: proto-minio
-    command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: proto
       MINIO_ROOT_PASSWORD: protoproto
@@ -51,16 +56,17 @@ services:
       - "9000:9000"
       - "9001:9001"
     volumes:
-      - proto-minio:/data
+      - proto-minio:/bitnami/minio/data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9000/minio/health/live || exit 1"]
       interval: 2s
       timeout: 5s
       retries: 30
 
   # One-shot: creates the `projects` bucket, then exits 0.
   minio-init:
-    image: quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z
+    # Same reason as the server image above; this one carries `mc`.
+    image: bitnamilegacy/minio-client:latest
     container_name: proto-minio-init
     depends_on:
       minio:
