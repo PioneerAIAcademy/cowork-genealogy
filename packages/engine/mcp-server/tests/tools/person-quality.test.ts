@@ -196,8 +196,9 @@ describe("personQualityTool", () => {
     expect(url).toBe(
       "https://sg30p0.familysearch.org/service/tree/tree-data/quality/person/KD96-TV2/scores",
     );
-    expect(opts.headers.Authorization).toBe("Bearer test-token");
-    expect(opts.headers["User-Agent"]).toContain("Mozilla/5.0");
+    const hdrs = new Headers(opts.headers as HeadersInit);
+    expect(hdrs.get("Authorization")).toBe("Bearer test-token");
+    expect(hdrs.get("User-Agent")).toContain("Mozilla/5.0");
   });
 
   it("treats a clean person (personScores present, no issues) as zero issues", async () => {

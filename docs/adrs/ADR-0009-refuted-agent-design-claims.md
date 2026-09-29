@@ -82,7 +82,7 @@ failure rather than into a vacuum.
 | The ferber agent escalated permissions and "**only then**" wrote raw | The first raw `Edit` (idx 33) precedes every denied settings attempt (idx 46, 102); 9 of 13 writes precede the last one. Escalation was interleaved with the writes, not a prelude — a tidier story than the log supports, the same failure mode this ledger exists to catch |
 | "46 MCP tools" / "all 26 skills with suites" | 49 (`allToolSchemas`) and 25 (27 skills − `research` − `forget-and-rederive`) |
 | "a tool call is a turn," stated as law | The cited plan's own data: ~2.1 calls/turn, with parallel calls amortizing. Direction right, arithmetic wrong |
-| The unconditional `same_person` gate (P0) and the 16-violation arm read as pure doctrine gap | The owning skill's contract exempts FTS-/image-/PDF-sourced links (`packages/engine/plugin/skills/person-evidence/SKILL.md`, its `match_score` typing) and the no-candidate stub path; the detector enforces the router's broader paraphrase. Conditions added in rev. 3's P0; the canonical-doctrine decision moved into the calibration exit |
+| The unconditional `same_person` gate (P0) and the 16-violation arm read as pure doctrine gap | The owning agent's contract exempts FTS-/image-/PDF-sourced links (`packages/engine/plugin/agents/person-evidence.md`, its `match_score` typing) and the no-candidate stub path; the detector enforces the router's broader paraphrase. Conditions added in rev. 3's P0; the canonical-doctrine decision moved into the calibration exit |
 
 ### rev. 3 claims, refuted in the rev. 4 pass
 
