@@ -56,7 +56,7 @@ window," not "URLs of a specific record category."
 
 Validation:
 
-- `standardPlace` must be a non-empty string; the tool resolves it to a place ID via `standardPlaceToPlaceId` and throws `Could not resolve "<name>" ...` when it cannot (unresolvable or ambiguous).
+- `standardPlace` must be a non-empty string; the tool resolves it to a place ID via `resolveStandardPlaceToPlaceId` and throws a discriminated error: `Could not resolve "<name>" ...` when unresolvable, or a candidate-naming error when ambiguous (see Error Handling).
 - `startYear` and `endYear` are optional integers in `[1500, 2100]`.
 - When both years are provided, `endYear >= startYear` is enforced
   inside the handler — the JSON Schema reports the range constraints,
@@ -284,6 +284,8 @@ project convention:
 |-----------|------------------|
 | `startYear`/`endYear` provided but non-numeric | Throw: `"startYear and endYear must be numeric when provided. Re-read the tool's input schema and retry with corrected arguments."` |
 | `endYear < startYear` (both provided) | Throw: `"endYear must be greater than or equal to startYear. Re-read the tool's input schema and retry with corrected arguments."` |
+| `standardPlace` resolves to NOTHING | Throw: `"Could not resolve \"<name>\" to a FamilySearch place. Use place_search to get a standard place name first."` |
+| `standardPlace` resolves to SEVERAL distinct places | Throw, naming them: `"\"<name>\" matches more than one place: <candidate>; <candidate>. Pass one of these exactly as listed, including the parenthesised type, as standardPlace, or call place_search to see the full list."` Each candidate is `fullName (type)`, one per distinct placeId, capped at 8. The parenthesised `(Type)` suffix is the disambiguation grammar: passing `"Baltimore, Maryland, United States (Independent City)"` resolves to the city's placeId. |
 | HTTP 403 | Throw: `"FamilySearch rejected the request (403 Forbidden). This usually means a User-Agent block — check that the MCP server is running an unmodified build."` |
 | HTTP 429 | Retried by `fetchWithRetry` (up to 3 attempts, 10s budget). If still 429 after exhaustion, throw: `"FamilySearch rate limit reached and did not clear within the retry budget. Wait 60 seconds and retry once. If it persists, surface this to the user."` |
 | Other non-2xx | Throw: `"FamilySearch external-links API error: ${status} ${statusText}."` |

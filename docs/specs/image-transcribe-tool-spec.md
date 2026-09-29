@@ -912,16 +912,15 @@ and the answer splits on whether the server is a process a user installed or a p
 something else starts. Where a user installed it, the config is the file they own.
 Where an orchestrator starts it — the hosted sandbox, the e2e harness — that
 orchestrator writes the file before the server runs. Where the server is a **container**
-(the two search-agent prototype entrypoints), the entrypoint builds the config from its
+(the search-agent prototype's `build/http.js`), the entrypoint builds the config from its
 own environment before constructing the server, because a container receives a secret
-as environment and not as a file baked into an image — and `hosted-stdio.js` receives
-it per TURN, from the worker, which no file could do:
+as environment and not as a file baked into an image:
 
 | Runtime | Server runs | How `openRouterApiKey` reaches `config.json` |
 |---|---|---|
 | **Cowork desktop** | host (`.mcpb`) | the user edits `~/.familysearch-mcp/config.json` directly |
 | **Hosted web** | inside the E2B sandbox | Fly secret `OPENROUTER_API_KEY` → `config.py` `Settings.openrouter_api_key` → a `write_config(sandbox, {openRouterApiKey})` sibling of `fs_oauth.write_tokens`, written into the sandbox's `~/.familysearch-mcp/config.json` at session create (`sessions.py`) |
-| **Search-agent prototype** | a container (`build/http.js`, the shared compose `tools` service; `build/hosted-stdio.js`, the worker's per-turn fork) | compose passes the stack's `OPENROUTER_API_KEY` to the service, and the worker passes it to each fork; both entrypoints layer it and the other three per-user keys over whatever config they start from (`src/hosted-config-env.ts`) before building the server |
+| **Search-agent prototype** | a container (`build/http.js`, the shared compose `tools` service) | compose passes the stack's `OPENROUTER_API_KEY` to the service; the entrypoint layers it and the other three per-user keys over the config it starts from (`src/hosted-config-env.ts`) before building the server |
 | **e2e harness** | node subprocess of the harness | the harness reads `OPENROUTER_API_KEY` from `eval/.env` and stages `openRouterApiKey` into the `~/.familysearch-mcp/config.json` the subprocess reads (consistent with e2e already depending on the developer's real `tokens.json` there) |
 
 So in every runtime the env var is **bridged into the config** rather than consulted
@@ -929,8 +928,7 @@ when the key is needed: no tool reads a credential from the environment, and
 `getOpenRouterApiKey` stays the single resolution point with a single source. That is
 what the "no env-var fallback" rule protects, and it holds. What does **not** hold, and
 was claimed here until 2026-09-20, is the stronger sentence that the server makes zero
-`process.env` reads: `hosted-stdio.ts` has read these four since the D9–10 engine half,
-`http.ts` since the tool-server default moved to it, and a shipped tool
+`process.env` reads: `http.ts` reads these four, and a shipped tool
 (`research-append.ts`) reads two debug-hold variables. The bridge is at the
 **entrypoint** for a container and at the **orchestrator** for a sandbox; both are
 outside the tool, which is the line that matters. The hosted-path

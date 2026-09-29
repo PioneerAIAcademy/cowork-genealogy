@@ -9069,7 +9069,7 @@
         "person-quality-clean-LZNY-P7Q",
         "person-quality-clean-LZNY-R4T"
       ],
-      "outcome": "xpass",
+      "outcome": "pass",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [

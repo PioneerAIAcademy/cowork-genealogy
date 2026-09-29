@@ -59,12 +59,13 @@ def _fixture(tmp_path: Path):
     return load_fixture(fixture_dir)
 
 
-def _drive(tmp_path, monkeypatch, *, judge, final_tree):
+def _drive(tmp_path, monkeypatch, *, judge, final_tree, usage=None):
     """Run `run_e2e_test` with everything but the judge branch stubbed out.
 
     `judge` is installed as `judge_module.run_judge` — pass a callable that
     raises to exercise the failure branch. `final_tree` of None is the treeless
-    (agent-crashed) case the `skipped` verdict exists for.
+    (agent-crashed) case the `skipped` verdict exists for. `usage` is what the
+    fake `_run_agent` returns as its usage dict (default empty).
     """
     fixture = _fixture(tmp_path)
     workspace = tmp_path / "ws"
@@ -76,7 +77,7 @@ def _drive(tmp_path, monkeypatch, *, judge, final_tree):
         # (tool_calls, narration, usage, aborted, error, blocked_tree_reads,
         #  blocked_context_calls, guardrail_shadow_violations,
         #  unnamed_delegate_violations)
-        return ([], [], {}, None, None, [], [], [], [])
+        return ([], [], dict(usage or {}), None, None, [], [], [], [])
 
     monkeypatch.setattr(orchestrator, "load_fixture", lambda _dir: fixture)
     monkeypatch.setattr(orchestrator, "build_workspace", lambda *a, **k: workspace)
