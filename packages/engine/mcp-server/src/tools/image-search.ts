@@ -24,7 +24,8 @@ function headers(token: string): Record<string, string> {
 
 async function resolveGroupId(
   imageGroupNumber: string,
-  token: string
+  token: string,
+  timeoutMs?: number
 ): Promise<string> {
   if (imageGroupNumber.includes("_")) {
     const parts = imageGroupNumber.split("_");
@@ -35,7 +36,8 @@ async function resolveGroupId(
   try {
     response = await fetchWithRetry(
       `${GROUP_SERVICE_BASE}/group/${encodeURIComponent(imageGroupNumber)}/apid`,
-      { headers: headers(token) }
+      { headers: headers(token) },
+      timeoutMs
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -55,13 +57,15 @@ async function resolveGroupId(
 
 async function fetchChildren(
   groupId: string,
-  token: string
+  token: string,
+  timeoutMs?: number
 ): Promise<ChildrenNamesResponse> {
   let response: Response;
   try {
     response = await fetchWithRetry(
       `${ARTIFACT_BASE}/artifact/group/${encodeURIComponent(groupId)}/children/names`,
-      { headers: headers(token) }
+      { headers: headers(token) },
+      timeoutMs
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -112,16 +116,20 @@ function usableImageIds(data: ChildrenNamesResponse): {
 
 export async function imageSearchTool(
   input: ImageSearchInput,
-  principal: Principal
+  principal: Principal,
+  /** Lower the per-attempt fetch budget. The 30s default, doubled by the
+   *  defect-retry path, would spend Cowork's whole 60s call ceiling on the
+   *  resolve alone (volume-bisect-tool-spec.md §8). */
+  opts: { timeoutMs?: number } = {}
 ): Promise<ImageSearchResult> {
   if (!input.imageGroupNumber) {
     throw new Error("image_search requires an imageGroupNumber.");
   }
 
   const token = await getValidToken(principal);
-  const groupId = await resolveGroupId(input.imageGroupNumber, token);
+  const groupId = await resolveGroupId(input.imageGroupNumber, token, opts.timeoutMs);
 
-  let best = usableImageIds(await fetchChildren(groupId, token));
+  let best = usableImageIds(await fetchChildren(groupId, token, opts.timeoutMs));
 
   // One re-request when the response was defective. The same group returned a
   // complete set on every other call, so a retry is what recovers the lost
@@ -133,7 +141,7 @@ export async function imageSearchTool(
   // tie, so a clean-but-shorter retry can never displace a longer one.
   if (best.dropped > 0) {
     try {
-      const retry = usableImageIds(await fetchChildren(groupId, token));
+      const retry = usableImageIds(await fetchChildren(groupId, token, opts.timeoutMs));
       if (
         retry.imageIds.length > best.imageIds.length ||
         (retry.imageIds.length === best.imageIds.length &&

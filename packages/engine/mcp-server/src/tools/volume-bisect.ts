@@ -1,0 +1,326 @@
+/**
+ * Bisect a browse-only image volume toward a target year, ONE probe per call.
+ *
+ * Stateless by design: Cowork's device bridge aborts every MCP call at 60s, and
+ * ten sequential OCR probes is p50 ~190s, so a host-side loop would be aborted
+ * with its result discarded in the one environment the plugin ships into. See
+ * docs/specs/volume-bisect-tool-spec.md §2.
+ */
+import type { Principal } from "../auth/principal.js";
+import { getOpenRouterApiKey, getOpenRouterModel } from "../auth/config.js";
+import { imageSearchTool } from "./image-search.js";
+import { resolveFsImageInput, fetchFsImageBytes } from "../utils/fs-image-fetch.js";
+import { runOcr } from "../utils/ocr.js";
+import { recordBrowseAndCheckBudget } from "../utils/browse-budget.js";
+import type {
+  VolumeBisectInput,
+  VolumeBisectReading,
+  VolumeBisectResult,
+  VolumeBisectBracket,
+} from "../types/volume-bisect.js";
+
+/** A split Natural Group: `{prefix}_{part}_{naturalId}`. A bare prefix names a
+ *  whole film, across which year is NOT monotone (spec §3). */
+const SPLIT_GROUP = /^\d+_\d+_[A-Za-z0-9-]+$/;
+
+/** Register years. The ceiling is load-bearing: every archival target card on
+ *  this corpus carries a "DEC 2 . 1952" filming stamp, which a wider range reads
+ *  as the page year (spec §6). */
+const YEAR_MIN = 1500;
+const YEAR_MAX = 1950;
+
+/** Three legs must sum under Cowork's 60s abort (spec §8). Bounds, not measured
+ *  latencies — measure with dev/try-volume-bisect.ts before treating them so. */
+const IMAGE_SEARCH_TIMEOUT_MS = 10_000;
+const DOWNLOAD_TIMEOUT_MS = 15_000;
+const PROBE_OCR_TIMEOUT_MS = 20_000;
+
+/** A year-only answer is a handful of tokens; the full-page budget is not wanted. */
+const PROBE_MAX_TOKENS = 32;
+
+/** Consecutive blank leaves before the tool stops rather than walking forever. */
+const MAX_CONSECUTIVE_NULL_READINGS = 3;
+
+const PROBE_PROMPT =
+  "Read only the year this register page covers. Look for a year heading, a " +
+  "column header, or the year written at the head of the first entry. Reply " +
+  "with that year as four digits and nothing else. If the page shows no year " +
+  "— a cover, a blank leaf, an index, a filming target card — reply exactly " +
+  "NO YEAR.";
+
+/**
+ * Scan maximal digit runs left to right and take the FIRST whose value is in
+ * range, ignoring runs outside it — not "the first run, rejected if out of
+ * range", which differ on any page whose heading follows a page number. Never
+ * `Number.parseInt`, which reads 16 out of "16xx".
+ */
+export function parseProbeYear(text: string): number | null {
+  for (const m of text.matchAll(/\d+/g)) {
+    if (m[0].length !== 4) continue;
+    const n = Number(m[0]);
+    if (n >= YEAR_MIN && n <= YEAR_MAX) return n;
+  }
+  return null;
+}
+
+function validateReadings(
+  readings: VolumeBisectReading[],
+  imageIds: string[],
+): void {
+  const seen = new Set<number>();
+  for (const r of readings) {
+    if (!Number.isInteger(r.position) || r.position < 0 || r.position >= imageIds.length) {
+      throw new Error(
+        `A reading names position ${r.position}, which is outside this sub-volume's ` +
+          `${imageIds.length} images. Positions index the sub-volume's own ordered list.`,
+      );
+    }
+    if (seen.has(r.position)) {
+      throw new Error(`Position ${r.position} appears twice in readings.`);
+    }
+    seen.add(r.position);
+    if (imageIds[r.position] !== r.imageId) {
+      throw new Error(
+        `The volume list changed between calls, re-seed: position ${r.position} was ` +
+          `probed as ${r.imageId} and now names ${imageIds[r.position]}. Discard the ` +
+          `readings and start again from an empty list.`,
+      );
+    }
+    if (r.year !== null) {
+      if (!Number.isInteger(r.year) || r.year < YEAR_MIN || r.year > YEAR_MAX) {
+        throw new Error(
+          `A reading carries year ${r.year}, outside ${YEAR_MIN}-${YEAR_MAX}. Use null ` +
+            `for a page with no year rather than a sentinel value.`,
+        );
+      }
+    }
+  }
+}
+
+/** The bracket the dated readings imply, seeded from the sub-volume's own ends
+ *  (spec §9) rather than from volume_search's catalogue span. */
+function bracketFrom(
+  readings: VolumeBisectReading[],
+  targetYear: number,
+  lastPosition: number,
+): VolumeBisectBracket {
+  const dated = readings
+    .filter((r): r is VolumeBisectReading & { year: number } => r.year !== null)
+    .sort((a, b) => a.position - b.position);
+  let low: VolumeBisectReading & { year: number } | undefined;
+  let high: VolumeBisectReading & { year: number } | undefined;
+  for (const r of dated) {
+    if (r.year <= targetYear) low = r;
+    if (r.year >= targetYear && high === undefined) high = r;
+  }
+  return {
+    lowPosition: low?.position ?? 0,
+    lowYear: low?.year ?? null,
+    highPosition: high?.position ?? lastPosition,
+    highYear: high?.year ?? null,
+  };
+}
+
+/** A dated reading that contradicts the bracket it falls inside. Inside one
+ *  sub-volume that means year headings are not resolving the volume, and another
+ *  probe cannot fix it (spec §6). */
+function firstContradiction(
+  readings: VolumeBisectReading[],
+): [VolumeBisectReading, VolumeBisectReading] | undefined {
+  const dated = readings
+    .filter((r): r is VolumeBisectReading & { year: number } => r.year !== null)
+    .sort((a, b) => a.position - b.position);
+  for (let i = 1; i < dated.length; i++) {
+    if (dated[i].year < dated[i - 1].year) return [dated[i - 1], dated[i]];
+  }
+  return undefined;
+}
+
+/** The midpoint, stepped outward to the first position not already probed, so a
+ *  run of blank leaves walks instead of re-probing one image. */
+function nextPosition(
+  bracket: VolumeBisectBracket,
+  probed: Set<number>,
+  lastPosition: number,
+): number | undefined {
+  const mid = Math.floor((bracket.lowPosition + bracket.highPosition) / 2);
+  for (let step = 0; step <= lastPosition; step++) {
+    for (const cand of [mid - step, mid + step]) {
+      if (cand >= 0 && cand <= lastPosition && !probed.has(cand)) return cand;
+    }
+  }
+  return undefined;
+}
+
+function trailingNullRun(readings: VolumeBisectReading[]): number {
+  let n = 0;
+  for (let i = readings.length - 1; i >= 0 && readings[i].year === null; i--) n++;
+  return n;
+}
+
+export async function volumeBisectTool(
+  input: VolumeBisectInput,
+  principal: Principal,
+): Promise<VolumeBisectResult> {
+  const groupName = (input.imageGroupNumber ?? "").trim();
+  if (!SPLIT_GROUP.test(groupName)) {
+    throw new Error(
+      `"${groupName}" is not a sub-volume name. A bare image-group prefix names a whole ` +
+        `film, which concatenates bound books — year is not monotone across it, so a ` +
+        `bisect converges on the wrong book with a plausible reading at every step. Call ` +
+        `volume_search for this film and pass one of its Natural Group names ` +
+        `(e.g. 004516861_001_M9S4-SQB).`,
+    );
+  }
+  if (
+    !Number.isInteger(input.targetYear) ||
+    input.targetYear < YEAR_MIN ||
+    input.targetYear > YEAR_MAX
+  ) {
+    throw new Error(`targetYear must be an integer in ${YEAR_MIN}-${YEAR_MAX}.`);
+  }
+
+  // Resolve credentials BEFORE reading bytes, so a missing key fails fast rather
+  // than after a download.
+  const apiKey = await getOpenRouterApiKey(principal);
+  const model = await getOpenRouterModel(principal);
+
+  const { imageIds } = await imageSearchTool(
+    { imageGroupNumber: groupName },
+    principal,
+    { timeoutMs: IMAGE_SEARCH_TIMEOUT_MS },
+  );
+  if (imageIds.length === 0) {
+    throw new Error(`${groupName} returned no images.`);
+  }
+  const lastPosition = imageIds.length - 1;
+
+  const readings = input.readings ?? [];
+  validateReadings(readings, imageIds);
+
+  const contradiction = firstContradiction(readings);
+  if (contradiction) {
+    const [a, b] = contradiction;
+    return {
+      bracket: bracketFrom(readings, input.targetYear, lastPosition),
+      confidence: "non-monotonic",
+      stopped:
+        `Position ${a.position} reads ${a.year} but the later position ${b.position} ` +
+        `reads ${b.year}. Year headings are not resolving this sub-volume, so a further ` +
+        `probe cannot narrow it — read the bracket by hand or pivot to the indexed route.`,
+    };
+  }
+
+  if (trailingNullRun(readings) >= MAX_CONSECUTIVE_NULL_READINGS) {
+    return {
+      bracket: bracketFrom(readings, input.targetYear, lastPosition),
+      confidence: "inconclusive",
+      stopped:
+        `${MAX_CONSECUTIVE_NULL_READINGS} consecutive probes found no year (covers, ` +
+        `blank leaves or target cards). Stopping rather than walking the volume a page ` +
+        `at a time.`,
+    };
+  }
+
+  const probed = new Set(readings.map((r) => r.position));
+  const bracketBefore = bracketFrom(readings, input.targetYear, lastPosition);
+  const position = nextPosition(bracketBefore, probed, lastPosition);
+  if (position === undefined) {
+    return {
+      bracket: bracketBefore,
+      confidence: "resolved",
+      stopped: "Every image in this sub-volume has been probed.",
+    };
+  }
+
+  const imageId = imageIds[position];
+  const resolved = resolveFsImageInput({ imageId }, "volume_bisect");
+  const fetched = await fetchFsImageBytes(
+    resolved.url,
+    resolved.fallbackUrl,
+    principal,
+    resolved.memoryShape,
+    { timeoutMs: DOWNLOAD_TIMEOUT_MS },
+  );
+  const ocr = await runOcr({
+    bytes: fetched.bytes,
+    contentType: fetched.contentType,
+    sizeBytes: fetched.bytes.length,
+    prompt: PROBE_PROMPT,
+    apiKey,
+    model,
+    timeoutMs: PROBE_OCR_TIMEOUT_MS,
+    maxTokens: PROBE_MAX_TOKENS,
+  });
+
+  const reading: VolumeBisectReading = {
+    position,
+    imageId,
+    year: parseProbeYear(ocr.text),
+  };
+  const all = [...readings, reading];
+  const bracket = bracketFrom(all, input.targetYear, lastPosition);
+  const browseBudget = recordBrowseAndCheckBudget(imageId, input.projectPath, "bisect");
+
+  const after = firstContradiction(all);
+  if (after) {
+    const [a, b] = after;
+    return {
+      bracket,
+      confidence: "non-monotonic",
+      reading,
+      ...(browseBudget ? { browseBudget } : {}),
+      stopped:
+        `Position ${a.position} reads ${a.year} but the later position ${b.position} ` +
+        `reads ${b.year}. Year headings are not resolving this sub-volume.`,
+    };
+  }
+
+  const nextPos = nextPosition(bracket, new Set(all.map((r) => r.position)), lastPosition);
+  return {
+    bracket,
+    confidence: reading.year === null ? "inconclusive" : "converging",
+    reading,
+    ...(nextPos !== undefined ? { nextImageId: imageIds[nextPos] } : {}),
+    ...(browseBudget ? { browseBudget } : {}),
+  };
+}
+
+export const volumeBisectSchema = {
+  name: "volume_bisect",
+  description:
+    "Bisect a browse-only image volume toward a target year. Reads ONE page per " +
+    "call and returns the narrowed year bracket plus the next image to read — " +
+    "echo the returned `reading` back in `readings` on the next call. Takes a " +
+    "sub-volume (Natural Group) name from volume_search, never a bare image-group " +
+    "prefix: year is not monotone across a whole film.",
+  inputSchema: {
+    type: "object" as const,
+    properties: {
+      imageGroupNumber: {
+        type: "string",
+        description:
+          "A split Natural Group name from volume_search, e.g. 004516861_001_M9S4-SQB.",
+      },
+      targetYear: { type: "number", description: "The year to reach (1500-1950)." },
+      readings: {
+        type: "array",
+        description: "Probes so far; echo each returned `reading` back here.",
+        items: {
+          type: "object",
+          properties: {
+            position: { type: "number" },
+            imageId: { type: "string" },
+            year: { type: ["number", "null"] },
+          },
+          required: ["position", "imageId", "year"],
+        },
+      },
+      projectPath: {
+        type: "string",
+        description: "Charges the browse budget to this project.",
+      },
+    },
+    required: ["imageGroupNumber", "targetYear"],
+  },
+};

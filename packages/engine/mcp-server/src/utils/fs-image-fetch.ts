@@ -217,7 +217,8 @@ interface FetchAttempt {
 async function attemptFsImageFetch(
   url: string,
   token: string | null,
-  memoryShape: boolean
+  memoryShape: boolean,
+  timeoutMs: number = IMAGE_FETCH_TIMEOUT_MS
 ): Promise<FetchAttempt> {
   const response = await fetchWithTimeout(
     url,
@@ -233,7 +234,7 @@ async function attemptFsImageFetch(
         "User-Agent": BROWSER_USER_AGENT,
       },
     },
-    IMAGE_FETCH_TIMEOUT_MS
+    timeoutMs
   );
   if (!response.ok) {
     return { ok: false, status: response.status, statusText: response.statusText };
@@ -279,16 +280,20 @@ export async function fetchFsImageBytes(
   url: string,
   fallbackUrl: string | undefined,
   principal: Principal,
-  memoryShape = false
+  memoryShape = false,
+  /** Lower the per-attempt budget. A probe must fit inside Cowork's 60s call
+   *  abort alongside two other legs (volume-bisect-tool-spec.md §8); the default
+   *  is a hang-catcher sized for a multi-MB scan, not for a probe. */
+  opts: { timeoutMs?: number } = {}
 ): Promise<FetchedFsImage> {
   // A memory artifact needs no credential (measured), and asking for one would
   // make a public read fail for an unauthenticated caller with an auth error.
   const token = memoryShape ? null : await getValidToken(principal);
 
-  let attempt = await attemptFsImageFetch(url, token, memoryShape);
+  let attempt = await attemptFsImageFetch(url, token, memoryShape, opts.timeoutMs);
   let resolvedUrl = url;
   if (!attempt.ok && fallbackUrl) {
-    attempt = await attemptFsImageFetch(fallbackUrl, token, memoryShape);
+    attempt = await attemptFsImageFetch(fallbackUrl, token, memoryShape, opts.timeoutMs);
     resolvedUrl = fallbackUrl;
   }
 

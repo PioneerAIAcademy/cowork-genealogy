@@ -485,6 +485,18 @@ export const CALL_PLAN: readonly SmokeStep[] = [
       return reauth(res, ctx);
     },
   },
+  {
+    // Same key-before-fetch ordering as image_transcribe. Deliberately given a
+    // BARE prefix: the refusal is argument validation and returns before any
+    // network leg, so the smoke never spends a billed OCR probe. The happy path
+    // needs a real Natural Group name and is dev/try-volume-bisect.ts's job.
+    tool: "volume_bisect",
+    args: () => ({ imageGroupNumber: "004516861", targetYear: 1695 }),
+    expect: (res) => ({
+      ok: res.isError === true && carries(res, "volume_search"),
+      detail: brief(res),
+    }),
+  },
 
   // Public-network tools: no token, must succeed.
   { tool: "wikipedia_search", args: () => ({ query: "Genealogy" }), expect: noError },

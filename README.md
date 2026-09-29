@@ -54,7 +54,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 48 tools.
+The MCP server exposes 49 tools.
 
 ### FamilySearch records and places
 
@@ -77,6 +77,7 @@ The MCP server exposes 48 tools.
 | `person_ancestors` | FamilySearch Family Tree pedigree — a person (or, when no ID is given, the logged-in user) plus up to N generations of ancestors, each tagged with its Ahnentafel (ascendancy) number; relationships are endpoint-closed, and `notes[]` reports any edge dropped for naming a person not returned | OAuth |
 | `source_attachments` | Check whether source ARKs are already attached to tree persons | OAuth |
 | `volume_search` | Search FamilySearch's Records Management Service for digitized volumes (image groups) by place and year range, optionally filtered to one or more `recordTypeGroups` (selecting a group also returns the groups nested beneath it) — returns coverage metadata, `recordSearchablePercent`, and `fulltextSearchable` per volume | OAuth |
+| `volume_bisect` | Bisect a browse-only image volume toward a target year — reads **one** page per call, folds its year into the bracket built from the readings so far, and returns the narrowed bracket plus the next image to probe. Refuses a bare image-group prefix (use `volume_search` to pick a sub-volume first) | OAuth + OpenRouter |
 | `external_links_search` | FS-curated third-party genealogy URLs by place; optional year filter | None |
 
 ### FamilySearch Wiki content
@@ -476,7 +477,7 @@ then narrows the search.
 
 What's shipped:
 
-- **48 MCP tools.** See the tables above for the full catalog, by category:
+- **49 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
 - **27 shipped skills.** Full GPS research cycle from `init-project`

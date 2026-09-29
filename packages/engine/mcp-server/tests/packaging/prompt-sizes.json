@@ -86,6 +86,7 @@
     "tool:tree_edit": 5643,
     "tool:tree_forget": 6066,
     "tool:validate_research_schema": 479,
+    "tool:volume_bisect": 994,
     "tool:volume_search": 2653,
     "tool:wiki_place_page": 951,
     "tool:wiki_read": 465,
