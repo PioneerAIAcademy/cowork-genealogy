@@ -2445,3 +2445,87 @@ def test_the_direct_test_discriminator_is_untouched_by_the_widening():
         aborted_reason=None, activated=False, skills_invoked=[],
         agents_spawned=None, agents_spawned_all=["person-evidence"],
     ) == "pass"
+
+
+# --- Backoff must outlast the condition it is retrying (sdk_stream_silence) ---
+#
+# The retry backoff is 1s -> 2s -> 4s, so all three attempts land within ~7
+# seconds. But `sdk_stream_silence` is only raised after the watchdog has waited
+# 180s for ANY SDK message: by the time it fires, the upstream has been silent for
+# three minutes, and retrying one second later retries into the same bad state.
+# That is why ut_research_plan_wzk has burned all three attempts repeatedly rather
+# than recovering on the second.
+#
+# The threshold is NOT the problem and must not be raised: across every committed
+# unit run log, the non-API gap in SUCCESSFUL runs peaks at 58.7s, nowhere near
+# 180s. A 180s silence is a genuine stall, not a tight limit.
+
+def test_a_stall_backs_off_far_longer_than_an_ordinary_error():
+    from harness.orchestrator import retry_delay_for
+    assert retry_delay_for("sdk_stream_silence", 1.0) > retry_delay_for("error", 1.0) * 10
+
+
+def test_a_stall_backs_off_for_a_meaningful_fraction_of_the_silence_window():
+    """Retrying inside a few seconds of a three-minute silence is retrying into the
+    same stalled upstream. The floor is tied to the window that declared it."""
+    from harness.orchestrator import retry_delay_for
+    from harness.skill_runner import DEFAULT_SDK_MESSAGE_SILENCE_SECONDS
+    assert retry_delay_for("sdk_stream_silence", 1.0) >= DEFAULT_SDK_MESSAGE_SILENCE_SECONDS / 6
+
+
+def test_an_ordinary_error_keeps_its_fast_retry():
+    """An `error` abort is a blip and recovers immediately; slowing it down would
+    add minutes to every flaky suite for no gain."""
+    from harness.orchestrator import retry_delay_for
+    assert retry_delay_for("error", 1.0) == 1.0
+    assert retry_delay_for(None, 1.0) == 1.0
+
+
+def test_an_unknown_reason_is_not_given_the_stall_treatment():
+    """Only the reason we measured gets the long wait. A new abort kind must not
+    silently inherit minutes of delay."""
+    from harness.orchestrator import retry_delay_for
+    assert retry_delay_for("some_future_reason", 1.0) == 1.0
+
+
+def test_the_retry_loop_actually_waits_out_a_stall(tmp_path, monkeypatch):
+    """The WIRING, not the helper. `retry_delay_for` being correct is worth nothing
+    if the loop never calls it -- a correct function nothing invokes looks identical
+    to a working fix from outside, which is how an unguarded hunk shipped earlier on
+    this branch.
+
+    Drives the real loop, captures what it actually sleeps, and asserts a stall waits
+    far longer than an ordinary error does.
+    """
+    from harness.skill_runner import DEFAULT_SDK_MESSAGE_SILENCE_SECONDS
+    _stub_workspace_helpers(monkeypatch)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    def _slept_for(reason):
+        calls, naps = {"n": 0}, []
+
+        async def fake_run_skill(**kwargs):
+            calls["n"] += 1
+            return _retry_stub_result(aborted_reason=reason if calls["n"] < 2 else None)
+
+        async def fake_sleep(d):
+            naps.append(d)
+
+        monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+        monkeypatch.setattr(orchestrator.asyncio, "sleep", fake_sleep)
+        asyncio.run(orchestrator._execute_skill_with_retry(
+            run_index=0, spec=_positive_spec(), paths=paths,
+            skill_baseline=["Read"], auth=auth, model="claude-sonnet-4-6",
+            base_delay=1.0,
+        ))
+        return naps
+
+    stall = _slept_for("sdk_stream_silence")
+    blip = _slept_for("error")
+    assert stall and blip, "both cases must have retried at least once"
+    assert stall[0] >= DEFAULT_SDK_MESSAGE_SILENCE_SECONDS / 6, (
+        f"the loop slept {stall[0]}s after a 180s silence -- it is not calling "
+        f"retry_delay_for"
+    )
+    assert blip[0] == 1.0, "an ordinary error must keep its fast retry"

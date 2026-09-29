@@ -860,6 +860,30 @@ DEFAULT_SKILL_RUN_ATTEMPTS = 3
 _ALWAYS_RETRYABLE_ABORTS = {"error", "sdk_stream_silence"}
 
 
+# A stall is not a blip, and must not be retried like one. `sdk_stream_silence` is
+# raised only after the watchdog has waited DEFAULT_SDK_MESSAGE_SILENCE_SECONDS for
+# ANY message, so by the time it fires the upstream has been quiet for three
+# minutes. With the ordinary 1s base the three attempts all land within ~7 seconds,
+# straight back into the same bad state -- which is why ut_research_plan_wzk burns
+# all three attempts rather than recovering on the second.
+#
+# The silence THRESHOLD is deliberately not raised: across every committed unit run
+# log the non-API gap in SUCCESSFUL runs peaks at 58.7s, nowhere near 180s, so a
+# 180s silence is a genuine stall and a longer window would only mask it.
+_STALL_ABORTS = {"sdk_stream_silence"}
+
+
+def retry_delay_for(aborted_reason: str | None, base_delay: float) -> float:
+    """The FIRST backoff before re-running after `aborted_reason`.
+
+    Only the reason measured to need it gets the long wait; an unknown reason keeps
+    the fast retry rather than silently inheriting minutes of delay.
+    """
+    if aborted_reason in _STALL_ABORTS:
+        return max(base_delay, DEFAULT_SDK_MESSAGE_SILENCE_SECONDS / 6)
+    return base_delay
+
+
 def _is_zero_progress_timeout(result) -> bool:
     """A `max_wall_clock_seconds` abort where the run never got going.
 
@@ -959,6 +983,7 @@ async def _execute_skill_with_retry(
 
     Returns (SkillRunResult, before_snapshot, after_snapshot).
     """
+    # Set per attempt from the reason that actually aborted it, not once up front.
     delay = base_delay
     result: SkillRunResult | None = None
     before_snapshot: dict[str, Any] = {}
@@ -1052,8 +1077,8 @@ async def _execute_skill_with_retry(
             f"(attempt {attempt + 2}/{attempts})",
             file=sys.stderr,
         )
-        await asyncio.sleep(delay)
-        delay *= 2
+        await asyncio.sleep(retry_delay_for(result.aborted_reason, delay))
+        delay = retry_delay_for(result.aborted_reason, delay) * 2
 
     # Unreachable: the final attempt always returns above. Present so
     # type-checkers see a definite return.
