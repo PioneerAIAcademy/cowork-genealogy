@@ -357,8 +357,9 @@ bare form was live on 2026-08-04/05 but absent in the later censuses, so a green
 proves binding for one spelling at one moment, not in general.
 
 **Never hardcode a qualified name in a ToolSearch query.** Cowork defers the
-genealogy tool schemas above a size threshold and offers no control over it, so
-ToolSearch is the real load path there. Search by bare tool name —
+genealogy tool schemas above a size threshold (Claude Code exempts `ALWAYS_LOAD`
+in `src/tool-schemas.ts`; Cowork is unverified), so ToolSearch is the load path.
+Search by bare tool name —
 `query: "+research_append"` — which matches whatever prefix the session exposes.
 The same packaging test fails any `select:mcp__…` in a plugin body.
 
@@ -395,7 +396,7 @@ Per-project context about the researcher lives in a `researcher_profile`
 section of `research.json`. `init-project` writes a fixed profile at
 project start (`experience_level: "novice"` and one house-style
 `narration_guidance` string) and asks nothing about the researcher; the
-only opening-turn question is the research objective, non-blocking. 26 of the 27 skills
+only opening-turn question is the research objective, non-blocking. 25 of the 26 skills
 carry a one-line `**Narration:**` instruction that tells Claude to read
 `researcher_profile.narration_guidance` and apply it as the narration
 style for that invocation. `search-wikipedia` is the deliberate
