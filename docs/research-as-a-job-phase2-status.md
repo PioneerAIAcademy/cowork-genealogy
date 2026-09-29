@@ -1,7 +1,7 @@
 # Research as a job — phase 2 status log
 
 **Branch:** `research-as-a-job-phase2` (pushed to origin; **no PR yet, by instruction**).
-**Last updated:** 2026-09-29. Update this file whenever the branch moves.
+**Last updated:** 2026-09-29 (R4 complete). Update this file whenever the branch moves.
 
 This is a status log, not a plan. The plan is
 [`docs/plan/research-as-a-job-phase2.md`](./plan/research-as-a-job-phase2.md); the parent
@@ -21,7 +21,10 @@ still block it, and one of them is not ours to close (#2927).
 | `5d9c53e70` | Harness: an agent SPAWN now counts toward a negative test's routing verdict; plus a `main`-red fix in `setup-feedback-case.sh` |
 | `28f4041a6` | `export.py` writes the feed a hosted reader saw; plan revised to the system-prompt carrier |
 | `7e3b9914a` | **R1**: router re-entry on every turn's system prompt, and the ledger now records which skill was called |
-| (latest) | Guard for `export`'s `main()` wiring |
+| `0538d487d` | Guard for `export`'s `main()` wiring |
+| `c7b63b350` | R4 carrier ruled (user): a second dedicated tool; build spec pinned |
+| `ed159989c` | **R4 worker half** — `delivered` outcome, hook arm, browser label |
+| `beeb69742` | **R4 engine half** — the `research_delivered` MCP tool + spec |
 
 Three offer-removal commits were made and then **reverted** (`a262fcac0`, `9ec112c13`) —
 see findings below. That is deliberate, not unfinished work.
@@ -54,12 +57,12 @@ see findings below. That is deliberate, not unfinished work.
 
 | Item | State | Needs |
 |---|---|---|
-| R4 `delivered` outcome | Value/slot/label pinned; **carrier ruled: a second dedicated tool** | Build it |
+| R4 `delivered` outcome | **BUILT** end to end — tool, hook arm, outcome, label, spec | Nothing. No skill body instructs its use yet (the enforcement half) |
 | "Not every turn is a job" finish line | Not started | R4's tool first |
-| Capture a real feed | Code half done (`export.py`) | A live hosted run; token supplied 2026-09-29 |
+| Capture a real feed | Code half done (`export.py`) | A live hosted run. **Deferred by the user 2026-09-29** — do it when someone can watch the result. Token supplied; the stack is down |
 | `sdk_stream_silence` | Diagnosed, not fixed | Decide: retry budget or per-test cap for 400s+ suites |
-| #2927 | **OPEN — blocking dependency** | `research` and `project-status` both claim "drive the workflow forward" |
-| #2793 | OPEN | Replace `project-status` skill with an agent |
+| #2927 | **OPEN — do NOT fix here.** Its own board note says it is moot once #2793 lands, and the small patch would edit the file #2793 deletes | Cia-3 (asked to prioritise 2026-09-29) |
+| #2793 | OPEN, **assigned to Cia-3**, must land serially with #2792 and #2798 | Cia-3 |
 
 ## Process notes worth keeping
 
