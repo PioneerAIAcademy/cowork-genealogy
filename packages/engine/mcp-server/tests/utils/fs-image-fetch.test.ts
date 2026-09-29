@@ -229,8 +229,8 @@ describe("fs-image-fetch — memory artifacts", () => {
   it("sends NO Authorization header for a memory artifact", async () => {
     mockTypedResponse("image/jpeg");
     await fetchFsImageBytes(ARTIFACT, undefined, LOCAL, true);
-    const headers = mockFetch.mock.calls[0][1].headers;
-    expect(headers.Authorization).toBeUndefined();
+    const headers = new Headers(mockFetch.mock.calls[0][1].headers as HeadersInit);
+    expect(headers.get("Authorization")).toBeNull();
     // and it never even asks for a token, so an unauthenticated caller works
     expect(mockedGetValidToken).not.toHaveBeenCalled();
   });
@@ -239,7 +239,8 @@ describe("fs-image-fetch — memory artifacts", () => {
     mockedGetValidToken.mockResolvedValue("tok");
     mockTypedResponse("image/jpeg");
     await fetchFsImageBytes("https://example.org/x", undefined, LOCAL);
-    expect(mockFetch.mock.calls[0][1].headers.Authorization).toBe("Bearer tok");
+    const headers = new Headers(mockFetch.mock.calls[0][1].headers as HeadersInit);
+    expect(headers.get("Authorization")).toBe("Bearer tok");
   });
 
   it("accepts application/pdf for a memory artifact", async () => {

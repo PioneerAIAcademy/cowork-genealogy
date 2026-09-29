@@ -1563,9 +1563,9 @@ in `apps/web`.
 > **Don't restate the section count as a literal anywhere.** It has been written
 > as 11, 13 and 14 in four documents at once. `ls
 > packages/viewer-ui/src/components/sections/*.tsx` is the answer, and it cannot
-> go stale. `hosted-web-workbench-spec.md` and `docs/plan/3-pane-workbench-ui.md`
-> still carry 11, but only where it is the historically correct count for the
-> date they describe, and each says so at the site.
+> go stale. `hosted-web-workbench-spec.md` still carries
+> 11, but only where it is the historically correct count for the date it
+> describes, and it says so at the site.
 
 ### 7.2 The sandbox is the per-session server
 
