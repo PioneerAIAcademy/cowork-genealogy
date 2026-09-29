@@ -1405,6 +1405,9 @@ A human grade is a per-run annotation committed **beside the run log it grades**
 }
 ```
 
+A prototype run has no run log; its grade sits beside the `run-<ts>.final-*` files
+copied from its export (`/grade-e2e-run`, "Grading a prototype run").
+
 | Field | Required | Notes |
 |-------|----------|-------|
 | `per_finding` | yes | `true` / `partial` / `false` per fixture finding id — the recall gate. For an `avoid` finding, `true` = correctly avoided (§3.4.1). |

@@ -5,9 +5,9 @@
 // duplicating the token/UA/content-type plumbing.
 
 import type { Principal } from "../auth/principal.js";
-import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithTimeout } from "./http.js";
+import { fsFetchWithTimeout } from "./fs-fetch.js";
 import { toArk, arkToUrl, isDocumentImageArk, findDocumentImageArk } from "./ark.js";
 
 // fetchWithTimeout's budget covers headers and body together, and a full-size
@@ -216,25 +216,21 @@ interface FetchAttempt {
 
 async function attemptFsImageFetch(
   url: string,
-  token: string | null,
+  principal: Principal | null,
   memoryShape: boolean
 ): Promise<FetchAttempt> {
-  const response = await fetchWithTimeout(
-    url,
-    {
-      headers: {
-        // A memory artifact is served publicly: measured 2026-09-15, the same
-        // artifact returned 200 with no headers at all, with a UA only, and
-        // with bearer+UA alike. No token is requested for this shape, so a
-        // caller with no FamilySearch session can still read one -- and no
-        // credential is sent to a URL that arrived in a response body.
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        Accept: memoryShape ? "image/*,application/pdf,*/*" : "image/*,*/*",
-        "User-Agent": BROWSER_USER_AGENT,
-      },
-    },
-    IMAGE_FETCH_TIMEOUT_MS
-  );
+  // A memory artifact is served publicly: measured 2026-09-15, the same
+  // artifact returned 200 with no headers at all, with a UA only, and
+  // with bearer+UA alike. No token is requested for this shape, so a
+  // caller with no FamilySearch session can still read one -- and no
+  // credential is sent to a URL that arrived in a response body.
+  const fetchHeaders: Record<string, string> = {
+    Accept: memoryShape ? "image/*,application/pdf,*/*" : "image/*,*/*",
+    "User-Agent": BROWSER_USER_AGENT,
+  };
+  const response = principal
+    ? await fsFetchWithTimeout(principal, url, { headers: fetchHeaders }, IMAGE_FETCH_TIMEOUT_MS)
+    : await fetchWithTimeout(url, { headers: fetchHeaders }, IMAGE_FETCH_TIMEOUT_MS);
   if (!response.ok) {
     return { ok: false, status: response.status, statusText: response.statusText };
   }
@@ -283,12 +279,12 @@ export async function fetchFsImageBytes(
 ): Promise<FetchedFsImage> {
   // A memory artifact needs no credential (measured), and asking for one would
   // make a public read fail for an unauthenticated caller with an auth error.
-  const token = memoryShape ? null : await getValidToken(principal);
+  const authedPrincipal = memoryShape ? null : principal;
 
-  let attempt = await attemptFsImageFetch(url, token, memoryShape);
+  let attempt = await attemptFsImageFetch(url, authedPrincipal, memoryShape);
   let resolvedUrl = url;
   if (!attempt.ok && fallbackUrl) {
-    attempt = await attemptFsImageFetch(fallbackUrl, token, memoryShape);
+    attempt = await attemptFsImageFetch(fallbackUrl, authedPrincipal, memoryShape);
     resolvedUrl = fallbackUrl;
   }
 
