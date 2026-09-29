@@ -11,9 +11,9 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 25 skills and 8 agents. Besides the `research` orchestrator itself, its routing
+There are 24 skills and 9 agents. Besides the `research` orchestrator itself, its routing
 table names 13 of them, and 5 more are reached by delegation from a skill the table does
-name. The remaining 14 fire only when the user asks — see
+name. The remaining 13 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
 likely to surprise you.
 
@@ -23,15 +23,12 @@ likely to surprise you.
 
 **Thin router + agent.** The skill resolves the request to one id, delegates, and relays
 the result. It reads almost nothing and writes nothing; the agent holds the judgment and
-the writer tool. Four pairs today: `record-extraction` → `record-extractor`,
-`research-exhaustiveness` → `research-exhaustiveness`,
-`person-evidence` → `person-evidence` (paired 2026-09-09),
-and `search-images` → `search-images` (paired 2026-09-21). The first three split
+the writer tool. Five pairs today: `record-extraction` → `record-extractor`,
+`research-exhaustiveness` → `research-exhaustiveness`, `proof-conclusion` →
+`proof-conclusion`, `person-evidence` → `person-evidence` (paired 2026-09-09),
+and `search-images` → `search-images` (paired 2026-09-21). The first four split
 because only an agent carries an `agent_id`, which is what lets the `PreToolUse`
-hook route a section's writes to exactly one caller. `proof-conclusion` was a
-fifth pair until issue #2822 deleted its skill half on 2026-09-26; the agent is
-now reached from the routing table and from its own `description`, with no skill
-in front of it. `search-images` is the first
+hook route a section's writes to exactly one caller. `search-images` is the first
 split for **cost and context** instead: it writes no hook-routed section, and what
 it buys is 15 KB off the orchestrator and a step dense enough (55.4 tool calls per
 episode) to be worth a `model:` pin.
@@ -93,9 +90,10 @@ flowchart TD
     EX ==> EXA["research-exhaustiveness · agent<br/>questions[].exhaustive_declaration"]
     EXA -- "gap remains" --> RP
     EXA -- "FAN pivot" --> QS
-    EXA -- "declared" --> PCA
+    EXA -- "declared" --> PC
 
-    PCA["proof-conclusion · agent<br/>proof_summaries[] · resolves the question<br/>encodes the conclusion in the tree"]
+    PC["proof-conclusion<br/>thin router"]
+    PC ==> PCA["proof-conclusion · agent<br/>proof_summaries[] · resolves the question<br/>encodes the conclusion in the tree"]
     PCA --> GM["gps-mentor · agent<br/>evaluations[]"]
     GM --> GATE{"all questions resolved,<br/>tree encoded,<br/>critique on record?"}
     GATE -- no --> QS
@@ -202,7 +200,7 @@ sibling skill.
 | **`historical-context`** | "why does this record look like this", boundary and naming questions | Narrative context — what the sources say, kept distinct from what it merely believes | `wiki_search`, `wiki_read`, `wikipedia_search`, `place_search`, `place_search_all`, `place_population` | Nothing |
 | **`convert-dates`** | Julian/Gregorian, Old Style, Quaker months, double dating | Identifying the calendar regime; the arithmetic belongs to the tool | `convert_calendar` | Nothing — and **nothing downstream persists the converted date** |
 | **`search-familysearch-wiki`** | Any "how do I find [record type]" question | Wiki guidance, synthesized only from returned chunks | `wiki_search` (hosted wiki API) | `<topic-slug>.md` in the working folder. **Not logged to `log[]`** |
-| **`search-wikipedia`** | A single-article encyclopedia lookup | The verbatim article extract — no paraphrase | `wikipedia_search` | `<title-slug>.md` in the working folder. **Not logged to `log[]`** |
+| **`search-wikipedia`** (an AGENT since issue #2795, not a skill) | A single-article encyclopedia lookup | The verbatim article extract — no paraphrase | `wikipedia_search` | `<title-slug>.md` in the working folder. **Not logged to `log[]`** |
 | **`validate-schema`** | "validate", "check the files" | Relaying validator errors in plain terms with a non-regressing fix each | `validate_research_schema` | Nothing. Never edits a file to fix an error |
 | **`forget-and-rederive`** | Practice mode — the researcher asks for a known answer to be stripped | Removing a tree slice with cascade so it must be re-derived from records, and holding the rederivation to account | `project_context`; a `dryRun` read-back. **Forbidden** from reading `tree.gedcomx.json` | Tree slice removed and `.tree-before-forget.gedcomx.json` written — `tree_forget`. Touches no `research.json` |
 
@@ -243,7 +241,7 @@ Two consequences worth holding onto:
   and the `PreToolUse` hook. (`disallowedTools:` was deleted from every agent
   on 2026-08-30 — it only restated the `tools:` omission.)
 - **Only three skills hold `research_query`** — `research`, `search-records`,
-  `person-evidence` — and three of the eight agents. Everything else that needs project
+  `search-external-sites` — and five of the nine agents. Everything else that needs project
   state does a whole-file `Read`, which is the thing the orchestrator forbids for itself
   because `research.json` reaches 100+ assertions by late run.
 - **The hook carries exactly four rules**, in
@@ -335,22 +333,23 @@ No routing-table row names these, so an autonomous `/research` run never enters 
 `search-full-text` · `timeline` · `check-warnings` · `translation` ·
 `historical-context` · `convert-dates` · `tree-edit` · `validate-schema` ·
 `forget-and-rederive` · `project-status` · `search-familysearch-wiki` ·
-`search-wikipedia` · `source-evaluation` · `init-project` (named in prose, not in the table)
+`source-evaluation` · `init-project` (named in prose, not in the table)
 
-`citation` left this list on 2026-09-23 by ceasing to be a skill (issue #2799). It is
-now an agent, and an agent is auto-delegated from its own `description` rather than
-from a routing-table row — so the row's absence no longer implies it cannot fire.
+`citation` left this list on 2026-09-23 by ceasing to be a skill (issue #2799), and
+`search-wikipedia` on 2026-09-27 (issue #2795). Both are now agents, and an agent is
+auto-delegated from its own `description` rather than from a routing-table row — so
+the row's absence no longer implies either cannot fire.
 **Whether it actually fires in an autonomous run is unmeasured**, and it will stay
 unmeasured until a committed e2e run postdates the conversion. Do not read its removal
 from this list as evidence either way.
 
-The one remaining **thin skill half** of a paired row joins this list. Row 10
-routes to `@plugin:research-exhaustiveness`, so `skills/research-exhaustiveness/`
-is no longer on the in-loop route — it stays on disk as the direct-user entry
-point and as the unit-eval entry point, and an autonomous run never enters it.
-Rows 7 and 11 were the other two thin halves: `skills/person-evidence/` and
-`skills/proof-conclusion/` have both been deleted (issues #2821 and #2822), so
-each agent is now its own direct entry point and unit-eval entry point.
+The two **thin skill halves** of the paired rows join this list. Rows 10
+and 11 route to `@plugin:<agent>`, so `skills/research-exhaustiveness/` and
+`skills/proof-conclusion/` are no longer on the in-loop route — they stay on
+disk as the direct-user entry point and as the unit-eval entry point, and an
+autonomous run never enters them. (Row 7 was the third thin half; its
+`skills/person-evidence/` directory has been deleted — the agent is now the
+direct entry point and the unit-eval entry point.)
 
 For most of them that is the intent — they are utilities the researcher asks for. Four
 are not obviously intentional:
