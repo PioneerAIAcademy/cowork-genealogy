@@ -5,7 +5,7 @@
     "regenerate": "UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts"
   },
   "prompts": {
-    "CLAUDE.md": 56069,
+    "CLAUDE.md": 56111,
     "packages/engine/plugin/agents/citation.md": 44479,
     "packages/engine/plugin/agents/gps-mentor.md": 40242,
     "packages/engine/plugin/agents/image-reader.md": 9101,
@@ -62,7 +62,7 @@
     "tool:person_read": 1265,
     "tool:person_record_matches": 1115,
     "tool:person_search": 7970,
-    "tool:person_warnings": 1400,
+    "tool:person_warnings": 640,
     "tool:place_distance": 630,
     "tool:place_population": 906,
     "tool:place_search": 1027,
