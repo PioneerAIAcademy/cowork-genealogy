@@ -430,9 +430,10 @@ const pluginGrants = readPluginGrants();
  * that tool only. An `agentCallers` entry counts only for the tools it names.
  *
  * **An `agent:` caller is tool-scoped, and has to be (issue #2822).** A
- * converted skill's agent must appear in `callers`, because `writer_sets`
- * (`harness/ownership.py`) reads that field and no other, so the unit plane
- * cannot authorize the agent's writes on its own suite otherwise. But unlike a
+ * converted skill's agent appears in `callers`, which `writer_sets`
+ * (`harness/ownership.py`) reads alongside `hookCallers` and `unitCallers`
+ * since issue #2821, so the unit plane can authorize the agent's writes on
+ * its own suite. But unlike a
  * skill, an agent's lane is statically known: the plugin hook confines each
  * agent's `research_append` to `AGENT_WRITABLE_SECTIONS`, so reading its
  * `callers` entry as a claim on EVERY `writerTools` entry over-states it.
