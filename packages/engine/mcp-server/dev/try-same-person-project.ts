@@ -142,8 +142,8 @@ async function main(): Promise<void> {
     const treeSide = new Mob(TREE, "I1").matchSubset().gedcomx;
 
     const [a, b] = await Promise.all([
-      scorePair(withAge, "principal", treeSide, "I1", token),
-      scorePair(withoutAge, "principal", treeSide, "I1", token),
+      scorePair(withAge, "principal", treeSide, "I1", LOCAL),
+      scorePair(withoutAge, "principal", treeSide, "I1", LOCAL),
     ]);
 
     console.log("\n── B. does the projected Age fact help? ──");
@@ -161,7 +161,7 @@ async function main(): Promise<void> {
         RECORD_ID,
       ),
     );
-    const c = await scorePair(absurd, "principal", treeSide, "I1", token);
+    const c = await scorePair(absurd, "principal", treeSide, "I1", LOCAL);
     console.log(`absurd Age=999: score=${c.score}  confidence=${c.confidence ?? "(none)"}`);
 
     // Same question for `marriage`, the other type the projection admits and the
@@ -181,8 +181,8 @@ async function main(): Promise<void> {
       ),
     );
     const [m1, m2] = await Promise.all([
-      scorePair(withMarriage, "principal", treeSide, "I1", token),
-      scorePair(withWrongMarriage, "principal", treeSide, "I1", token),
+      scorePair(withMarriage, "principal", treeSide, "I1", LOCAL),
+      scorePair(withWrongMarriage, "principal", treeSide, "I1", LOCAL),
     ]);
     console.log("\n── C. does the projected Marriage fact participate? ──");
     console.log(`plausible marriage: score=${m1.score}`);

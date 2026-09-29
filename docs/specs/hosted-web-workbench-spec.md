@@ -827,9 +827,6 @@ every healthy session.
 > new session auto-sends an opening turn that triggers `init-project` (§0.5) —
 > and the §7.4 this section twice points at **does not exist**; the spec has no
 > §7.4. It means §0.5's onboarding bullet.
->
-> `docs/plan/3-pane-workbench-ui.md` proposes replacing this two-pane layout; as
-> of this audit none of that plan has landed.
 
 ---
 

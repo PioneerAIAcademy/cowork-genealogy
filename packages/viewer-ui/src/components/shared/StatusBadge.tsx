@@ -75,11 +75,12 @@ const statusColorMap: Record<string, BadgeColor> = {
 }
 
 interface StatusBadgeProps {
-  value: string
+  value?: string | null
   color?: BadgeColor
 }
 
-export default function StatusBadge({ value, color }: StatusBadgeProps): React.JSX.Element {
+export default function StatusBadge({ value, color }: StatusBadgeProps): React.JSX.Element | null {
+  if (value == null) return null
   const resolvedColor = color ?? statusColorMap[value] ?? 'gray'
   return (
     <span className={`${styles.badge} ${styles[resolvedColor]}`}>{value.replace(/_/g, ' ')}</span>
