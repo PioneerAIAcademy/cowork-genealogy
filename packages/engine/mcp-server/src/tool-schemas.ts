@@ -4,6 +4,7 @@
 // assert manifest.tools stays in sync with what's registered. Keeping it
 // in its own module means the test can read the list without importing
 // index.ts, which connects the stdio transport as a side effect.
+import { researchDeliveredSchema } from "./tools/research-delivered.js";
 import { wikipediaSearchSchema } from "./tools/wikipedia.js";
 import {
   placeSearchToolSchema,
@@ -59,6 +60,7 @@ import { sidecarReadSchema } from "./tools/sidecar-read.js";
 
 export const allToolSchemas = [
   wikipediaSearchSchema,
+  researchDeliveredSchema,
   placeSearchToolSchema,
   placeSearchAllToolSchema,
   loginToolSchema,

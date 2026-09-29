@@ -15,67 +15,180 @@
   },
   "homepage": "https://github.com/PioneerAIAcademy/cowork-genealogy",
   "license": "Apache-2.0",
-  "keywords": ["genealogy", "familysearch", "family-history", "mcp", "research"],
+  "keywords": [
+    "genealogy",
+    "familysearch",
+    "family-history",
+    "mcp",
+    "research"
+  ],
   "server": {
     "type": "node",
     "entry_point": "build/index.js",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/build/index.js"]
+      "args": [
+        "${__dirname}/build/index.js"
+      ]
     }
   },
   "tools": [
-    { "name": "wikipedia_search" },
-    { "name": "place_search" },
-    { "name": "place_search_all" },
-    { "name": "login" },
-    { "name": "logout" },
-    { "name": "auth_status" },
-    { "name": "collections_search" },
-    { "name": "wiki_search" },
-    { "name": "place_distance" },
-    { "name": "place_population" },
-    { "name": "external_links_search" },
-    { "name": "image_read" },
-    { "name": "image_transcribe" },
-    { "name": "record_search" },
-    { "name": "person_search" },
-    { "name": "person_ancestors" },
-    { "name": "same_person" },
-    { "name": "person_record_matches" },
-    { "name": "record_person_matches" },
-    { "name": "person_person_matches" },
-    { "name": "record_record_matches" },
-    { "name": "person_read" },
-    { "name": "record_read" },
-    { "name": "fulltext_search" },
-    { "name": "wiki_read" },
-    { "name": "wiki_place_page" },
-    { "name": "validate_research_schema" },
-    { "name": "source_attachments" },
-    { "name": "image_search" },
-    { "name": "person_warnings" },
-    { "name": "person_quality" },
-    { "name": "merge_warnings" },
-    { "name": "volume_search" },
-    { "name": "merge_tree_persons" },
-    { "name": "research_log_append" },
-    { "name": "convert_calendar" },
-    { "name": "build_external_search_url" },
-    { "name": "tree_edit" },
-    { "name": "tree_correct" },
-    { "name": "tree_forget" },
-    { "name": "research_append" },
-    { "name": "rank_search_matches" },
-    { "name": "project_context" },
-    { "name": "materialize_facts" },
-    { "name": "extraction_append" },
-    { "name": "research_query" },
-    { "name": "project_create" },
-    { "name": "sidecar_read" }
+    {
+      "name": "wikipedia_search"
+    },
+    {
+      "name": "place_search"
+    },
+    {
+      "name": "place_search_all"
+    },
+    {
+      "name": "login"
+    },
+    {
+      "name": "logout"
+    },
+    {
+      "name": "auth_status"
+    },
+    {
+      "name": "collections_search"
+    },
+    {
+      "name": "wiki_search"
+    },
+    {
+      "name": "place_distance"
+    },
+    {
+      "name": "place_population"
+    },
+    {
+      "name": "external_links_search"
+    },
+    {
+      "name": "image_read"
+    },
+    {
+      "name": "image_transcribe"
+    },
+    {
+      "name": "record_search"
+    },
+    {
+      "name": "person_search"
+    },
+    {
+      "name": "person_ancestors"
+    },
+    {
+      "name": "same_person"
+    },
+    {
+      "name": "person_record_matches"
+    },
+    {
+      "name": "record_person_matches"
+    },
+    {
+      "name": "person_person_matches"
+    },
+    {
+      "name": "record_record_matches"
+    },
+    {
+      "name": "person_read"
+    },
+    {
+      "name": "record_read"
+    },
+    {
+      "name": "fulltext_search"
+    },
+    {
+      "name": "wiki_read"
+    },
+    {
+      "name": "wiki_place_page"
+    },
+    {
+      "name": "validate_research_schema"
+    },
+    {
+      "name": "source_attachments"
+    },
+    {
+      "name": "image_search"
+    },
+    {
+      "name": "person_warnings"
+    },
+    {
+      "name": "person_quality"
+    },
+    {
+      "name": "merge_warnings"
+    },
+    {
+      "name": "volume_search"
+    },
+    {
+      "name": "merge_tree_persons"
+    },
+    {
+      "name": "research_log_append"
+    },
+    {
+      "name": "convert_calendar"
+    },
+    {
+      "name": "build_external_search_url"
+    },
+    {
+      "name": "tree_edit"
+    },
+    {
+      "name": "tree_correct"
+    },
+    {
+      "name": "tree_forget"
+    },
+    {
+      "name": "research_append"
+    },
+    {
+      "name": "rank_search_matches"
+    },
+    {
+      "name": "project_context"
+    },
+    {
+      "name": "materialize_facts"
+    },
+    {
+      "name": "extraction_append"
+    },
+    {
+      "name": "research_query"
+    },
+    {
+      "name": "project_create"
+    },
+    {
+      "name": "sidecar_read"
+    },
+    {
+      "name": "research_delivered"
+    }
   ],
   "compatibility": {
-    "platforms": ["darwin", "win32", "linux"],
-    "runtimes": { "node": ">=18.0.0" }
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
   }
 }

@@ -13,6 +13,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema
 } from "@modelcontextprotocol/sdk/types.js";
+import { researchDelivered, type ResearchDeliveredInput } from "./tools/research-delivered.js";
 import { wikipediaSearch, type WikipediaSearchInput } from "./tools/wikipedia.js";
 import {
   placeSearchTool,
@@ -142,6 +143,15 @@ export function createServer(principal: Principal): Server {
   // Nothing downstream parses the formatting; a human debugging a transcript can
   // pipe it through `jq`. See docs/plan/research-performance-2026-07-27.md §C6.
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    if (request.params.name === "research_delivered") {
+      // A signal, not an action: the hosted PreToolUse hook ends the turn on this
+      // tool's NAME before it executes, so this arm runs only where no hook binds.
+      const args = request.params.arguments as unknown as ResearchDeliveredInput;
+      return {
+        content: [{ type: "text", text: JSON.stringify(researchDelivered(args)) }]
+      };
+    }
+
     if (request.params.name === "wikipedia_search") {
       try {
         const args = request.params.arguments as unknown as WikipediaSearchInput;

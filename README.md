@@ -54,7 +54,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 48 tools.
+The MCP server exposes 49 tools.
 
 ### FamilySearch records and places
 
@@ -119,6 +119,7 @@ way project state changes.
 | Tool | Purpose | Auth |
 |------|---------|------|
 | `wikipedia_search` | Wikipedia article summary lookup | None |
+| `research_delivered` | Signal that a bounded request has been delivered, so a managed run stops instead of continuing past what was asked | None |
 | `place_population` | Historical population data + indexed record counts | None |
 | `place_distance` | Distance between two FamilySearch places | None |
 | `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) or by ark (a document-image ARK, resolver URL, or resolved distribution URL) and return bytes + metadata; optional `projectPath` saves the scan and returns `imageRef`. Refuses scans over ~700 KB raw. Kept for the Issue #28 OCR-comparison pipeline — no skill or agent calls it, and the eval harness denies it on the main thread. | OAuth |
@@ -476,7 +477,7 @@ then narrows the search.
 
 What's shipped:
 
-- **48 MCP tools.** See the tables above for the full catalog, by category:
+- **49 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
 - **27 shipped skills.** Full GPS research cycle from `init-project`
