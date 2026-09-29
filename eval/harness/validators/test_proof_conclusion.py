@@ -1,4 +1,4 @@
-"""Skill-specific validators for the proof-conclusion skill.
+"""Validators for the proof-conclusion agent (its routing skill was deleted, issue #2822).
 
 proof-conclusion keeps its `rubric.md` — all three dimensions (Tier
 justification, Narrative standalone, Evidence completeness) are GPS
