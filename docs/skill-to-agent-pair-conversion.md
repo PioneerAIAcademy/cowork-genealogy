@@ -21,8 +21,8 @@ path that is the orchestrator or the main thread.
 `record-extraction` (ruled 2026-09-21), and `forget-and-rederive` (ruled
 2026-09-25, issue #2791), whose confirmation step and its rule never to read
 the FamilySearch tree for the rest of the project must bind the main thread
-after setup, which an agent's single return cannot do. They stay until a
-replacement architecture exists (ruling 2026-09-29, PR #3000).
+after setup, which an agent's single return cannot do. Whether they survive
+"no skills at all" is the lead's call and is open on PR #3000.
 
 **Two rationales reach a pair, and they buy different work.** This document was
 written for the first:

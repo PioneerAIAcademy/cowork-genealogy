@@ -1468,7 +1468,7 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
 }
 
 /** A new question may not be created while a question it `depends_on` has an
- *  active-plan item `in_progress` (lead ruling, 2026-09-29, option B). The
+ *  active-plan item `in_progress` (option B, 2026-09-29). The
  *  dependency's search is still running, so the new question would be built on
  *  a finding the project does not have yet. Measured on
  *  `ut_question_selection_d01`: a delegation saying "the probate search is
@@ -1478,6 +1478,10 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
  *
  *  Scoped to `depends_on`, not to every in-flight item in the project, so a
  *  FAN pivot or an unrelated question is never blocked by someone else's search.
+ *  A project-wide refusal was considered and rejected on measurement: it fails
+ *  `ut_question_selection_003`, which expects a conflict-resolving question
+ *  while the blocked question's search is running, and it would stall the FAN
+ *  pivot in the state where exhaustiveness also cannot declare.
  *  Same snapshot and active-plan discipline as `planCompleteInvariants`: the
  *  item's completion is the search work's step, and a superseded plan's items
  *  are frozen. Escapable once the search finishes, since the search skills own
