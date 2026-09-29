@@ -1,0 +1,118 @@
+{
+  "run_log": "v2_2026-09-28_23-51-46.json",
+  "annotator": "edmondoware70@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_gps_mentor_k4p",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_gps_mentor_k4p",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_gps_mentor_k4p",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_gps_mentor_k4p",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool work: reading the state the verdict rests on",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool work: reading the state the verdict rests on",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity and citation discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
+      "dimension_source": "rubric",
+      "dimension_name": "Focus discipline and refusal",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_gps_mentor_k4p",
+      "dimension_source": "rubric",
+      "dimension_name": "Focus discipline and refusal",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The refusal is correct, but the narrative runs three paragraphs rather than the one line the rule asks for. It also offers a conclusion readiness review that would itself refuse, since q_001 is still in progress."
+    },
+    {
+      "test_id": "ut_gps_mentor_k4p",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity and citation discipline",
+      "llm_score": 3,
+      "corrected_score": null,
+      "comment": "No findings were produced, so there is nothing to grade. The judge itself wrote that the dimension does not apply."
+    },
+    {
+      "test_id": "ut_gps_mentor_k4p",
+      "dimension_source": "rubric",
+      "dimension_name": "Mentor voice and actionability",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The refusal names the gap and next step, but in schema vocabulary such as proof_summaries[] and count: 0. A researcher would have to decode it."
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The reply says a proof critique evaluation is already on record, but ev_001 is an on demand craft read, as the sidecar the agent just read shows. The findings about the prose itself check out."
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
+      "dimension_source": "rubric",
+      "dimension_name": "Mentor voice and actionability",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The voice suits a colleague, but each issue field runs two or three sentences and the narrative repeats them. The agent body asks for terse pointers and the prose only once."
+    }
+  ]
+}
