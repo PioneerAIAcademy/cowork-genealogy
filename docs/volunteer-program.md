@@ -227,9 +227,8 @@ Already vetted and junior-sized, from a real tester complaint. Add the
 
 **Touches:** `packages/viewer-ui/src/components/**/__tests__/`
 
-HypothesesSection, PlansSection, ProofSummariesSection, `layout/Header`,
-`layout/ProgressPipeline`, `shared/CrossLink`, DetailPanel, StatusBadge.
-After V14, which edits StatusBadge and ProofSummariesSection.
+HypothesesSection, PlansSection, `layout/Header`,
+`layout/ProgressPipeline`, `shared/CrossLink`, DetailPanel.
 
 #### V16. Print stylesheet for the viewer
 
