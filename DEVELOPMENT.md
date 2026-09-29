@@ -119,7 +119,7 @@ Example: adding a "list providers" feature.
    - Add its schema to `allToolSchemas` in `packages/engine/mcp-server/src/tool-schemas.ts`
      and its dispatch case to the `CallTool` handler in
      `packages/engine/mcp-server/src/server.ts` (`createServer`; the entrypoints
-     `src/index.ts`, `src/hosted-stdio.ts` and `src/http.ts` only bind a principal),
+     `src/index.ts` and `src/http.ts` only bind a principal),
      plus a row in `packages/engine/mcp-server/dev/smoke-calls.ts` — `make engine-smoke-http`
      fails on an advertised tool it neither calls nor lists as an exclusion (it needs
      the compose store up, `make proto-up-store`, so Docker)
@@ -335,8 +335,7 @@ since mid-2026 was verified without one. Verification is automated:
    test`**, which is `test-js` + `server-test` and reaches neither the
    harness nor the engine.
 4. **The transport smokes** — `make engine-smoke-stdio` drives the built
-   server over stdio and calls every offline tool once (`make engine-smoke-stdio-pg`
-   does the same through `build/hosted-stdio.js` on Postgres + minio);
+   server over stdio and calls every offline tool once;
    `make engine-smoke-http` starts `build/http.js` on the compose Postgres + minio
    store (`make proto-up-store`, so Docker), calls every advertised tool but the
    four auth exclusions over Streamable HTTP under a fresh `smoke-<uuid>` project id

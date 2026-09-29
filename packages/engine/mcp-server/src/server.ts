@@ -1,10 +1,9 @@
 // The tool server: one `Server` carrying the ListTools handler and the whole
-// CallTool dispatch chain, built for a given principal. Three entrypoints share
+// CallTool dispatch chain, built for a given principal. Two entrypoints share
 // it — src/index.ts (the shipped .mcpb: stdio, one desktop user per process,
-// binds LOCAL), src/hosted-stdio.ts (the search-agent prototype's per-turn
-// tool server, which binds the bearer the worker hands it) and src/http.ts
-// (the prototype's Streamable HTTP tool server: one Server per POST, bound to
-// that request's bearer — src/http-server.ts). A new tool's dispatch arm goes
+// binds LOCAL) and src/http.ts (the search-agent prototype's Streamable HTTP
+// tool server: one Server per POST, bound to that request's bearer —
+// src/http-server.ts). A new tool's dispatch arm goes
 // here, in the chain below, never in an entrypoint.
 
 import type { Principal } from "./auth/principal.js";
