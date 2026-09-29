@@ -25,6 +25,7 @@
   "mcp_fixtures": [
     "place-search-schuylkill-county",
     "place-search-schuylkill-by-id",
+    "place-search-any",
     "collections-search-schuylkill",
     "collections-search-pennsylvania",
     "external-links-search-schuylkill",

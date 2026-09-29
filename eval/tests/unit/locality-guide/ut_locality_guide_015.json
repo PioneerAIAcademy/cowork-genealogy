@@ -26,6 +26,7 @@
   },
   "mcp_fixtures": [
     "place-search-philadelphia",
+    "place-search-any",
     "collections-search-pennsylvania",
     "wikipedia-search-philadelphia-yellow-fever",
     "wiki-search-philadelphia-yellow-fever",

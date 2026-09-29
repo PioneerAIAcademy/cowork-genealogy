@@ -27,6 +27,7 @@
   "mcp_fixtures": [
     "place-search-pennsylvania",
     "place-search-pennsylvania-by-name",
+    "place-search-any",
     "collections-search-pennsylvania",
     "wikipedia-search-quakers-pennsylvania",
     "wiki-search-pennsylvania-quaker-records",

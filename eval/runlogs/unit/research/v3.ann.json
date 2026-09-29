@@ -1,22 +1,22 @@
 {
-  "run_log": "v2_2026-09-28_14-49-49.json",
+  "run_log": "v3.json",
   "annotator": "florencemashipei4@gmail.com",
   "corrections": [
     {
       "test_id": "ut_research_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "the project was not actually completed due to the unresolved completion gate."
     },
     {
       "test_id": "ut_research_005",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "the final required project closure step was not successfully completed."
     },
     {
       "test_id": "ut_research_005",
@@ -28,6 +28,54 @@
     },
     {
       "test_id": "ut_research_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -35,7 +83,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_001",
+      "test_id": "ut_research_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -43,9 +91,49 @@
       "comment": null
     },
     {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "the mother remained unidentified, so the full research objective was not completed."
+    },
+    {
       "test_id": "ut_research_001",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -54,22 +142,6 @@
       "test_id": "ut_research_012",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_012",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_012",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -101,7 +173,7 @@
     {
       "test_id": "ut_research_011",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -117,23 +189,7 @@
     {
       "test_id": "ut_research_011",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_014",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_014",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -147,9 +203,25 @@
       "comment": null
     },
     {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
       "test_id": "ut_research_015",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -165,7 +237,23 @@
     {
       "test_id": "ut_research_015",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -177,70 +265,6 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
-    },
-    {
-      "test_id": "ut_research_002",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_002",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "it does not clearly complete the GPS workflow for q_003 before providing the answer."
-    },
-    {
-      "test_id": "ut_research_001",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The workflow and research plan were handled well, but the response incorrectly said log_002 had no linked assertions, contradicting the tool data. This made the cross-reference analysis inaccurate."
-    },
-    {
-      "test_id": "ut_research_003",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "No research was performed. It gave generic suggestions instead of using the available project state and tools to identify Patrick Flynn’s wife."
-    },
-    {
-      "test_id": "ut_research_003",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "No records or project sources were searched, and no wife was identified."
-    },
-    {
-      "test_id": "ut_research_004",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "No actual investigation or new searches were performed, so the requested Irish origin and immigration research was not addressed."
-    },
-    {
-      "test_id": "ut_research_004",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "Most of the existing evidence and project status are accurate, but it makes an unsupported inference that Patrick may have been born in Pennsylvania based on the 1841 baptism. The accepted birthplace remains Ireland."
     }
   ]
 }

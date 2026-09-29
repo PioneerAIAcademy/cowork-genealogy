@@ -28,6 +28,7 @@
   "mcp_fixtures": [
     "place-search-new-orleans",
     "place-search-louisiana",
+    "place-search-any",
     "collections-search-louisiana",
     "wikipedia-search-new-orleans",
     "wikipedia-search-orleans-parish",

@@ -27,6 +27,7 @@
   "mcp_fixtures": [
     "place-search-pittsburgh",
     "place-search-pennsylvania",
+    "place-search-any",
     "collections-search-pennsylvania",
     "wikipedia-search-pittsburgh",
     "wiki-search-pittsburgh-steel-industry",

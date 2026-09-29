@@ -27,6 +27,7 @@
   "mcp_fixtures": [
     "place-search-arkansas",
     "place-search-louisiana",
+    "place-search-any",
     "collections-search-arkansas",
     "collections-search-louisiana",
     "wikipedia-search-arkansas",

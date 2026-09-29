@@ -27,6 +27,7 @@
   },
   "mcp_fixtures": [
     "place-search-california",
+    "place-search-any",
     "collections-search-california",
     "wikipedia-search-california-gold-rush",
     "wiki-search-california-gold-rush",

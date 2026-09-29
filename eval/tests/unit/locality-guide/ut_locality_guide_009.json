@@ -26,6 +26,7 @@
   },
   "mcp_fixtures": [
     "place-search-virginia",
+    "place-search-any",
     "collections-search-virginia",
     "wikipedia-search-virginia",
     "wiki-search-virginia-revolutionary-war",

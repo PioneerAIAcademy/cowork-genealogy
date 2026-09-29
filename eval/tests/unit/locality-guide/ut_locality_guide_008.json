@@ -26,6 +26,7 @@
   },
   "mcp_fixtures": [
     "place-search-new-york-city",
+    "place-search-any",
     "collections-search-new-york",
     "wikipedia-search-new-york-city",
     "wikipedia-search-new-york-colonial",

@@ -37,7 +37,8 @@
     "place-search-all-any",
     "wiki-search-any",
     "wikipedia-search-any",
-    "place-search-cook-county"
+    "place-search-cook-county",
+    "place-search-any"
   ],
   "judge_context": [
     "Must mention record loss due to the fire. Must highlight substitutes (church registers, insurance claims, reconstructed deeds). Newspaper collections documented the fire and its aftermath and are a valuable source for this period. Must not suggest uninterrupted civil records.",

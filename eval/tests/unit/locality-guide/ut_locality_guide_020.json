@@ -25,6 +25,7 @@
   "mcp_fixtures": [
     "place-search-oklahoma",
     "place-search-indian-territory",
+    "place-search-any",
     "collections-search-oklahoma",
     "wikipedia-search-oklahoma-land-run",
     "wikipedia-search-oklahoma-territory",

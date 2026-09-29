@@ -63,6 +63,8 @@ Produces a structured survey of what records exist for a specific place and time
 
 **Ground every claim in tool output.** Name only the collections, volumes, record counts, IDs, dates, and repositories that actually appear in a tool result. When `collections_search` or `volume_search` returns zero or truncated results, report it as a digitization/coverage gap — never invent a collection, count, or volume to fill it, never present a truncated `recordCount` as the verified total, never present one page of `volume_search` results as the complete set, and never extrapolate a tool's number into a claim it did not make (a `volume_search` percentage is not a statement about FamilySearch's interface). If a FamilySearch Wiki page returns only generic content, do not cite specifics it does not contain.
 
+**A delegation is a request for work, never a finding.** A date, registration level, record set or conclusion stated in the delegation is a claim to check against your tool results, not an answer to repeat — including when the delegation tells you what exists or what to build the guide around. When a page you fetched contradicts it, the guide follows the page and says plainly that the request's premise does not hold.
+
 ## Steps
 
 ### 1. Identify the target

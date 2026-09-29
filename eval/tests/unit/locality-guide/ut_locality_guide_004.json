@@ -26,6 +26,7 @@
   "mcp_fixtures": [
     "place-search-alabama",
     "place-search-mississippi-territory",
+    "place-search-any",
     "collections-search-alabama",
     "wikipedia-search-alabama",
     "wikipedia-search-mississippi-territory",
