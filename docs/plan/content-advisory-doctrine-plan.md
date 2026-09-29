@@ -47,8 +47,8 @@ The two skills where this actually matters:
   is where the user-facing narrative gets written — the actual disclosure
   point. "### 4. Write the narrative markdown" (line 110) is the natural
   hook.
-- **`person-evidence`** (`packages/engine/plugin/skills/person-evidence/SKILL.md`)
-  is the skill that resolves identity and links assertions to persons —
+- **`person-evidence`** (`packages/engine/plugin/agents/person-evidence.md`)
+  is the agent that resolves identity and links assertions to persons —
   the point where an unknown-parentage or similarly sensitive
   family-structure discovery first surfaces, often as an unremarkable `pe_`
   entry with nothing flagging it forward.
@@ -78,7 +78,7 @@ SKILL.md sentences are not ours to copy.
 ## 3. Changes by area
 
 - `packages/engine/plugin/skills/proof-conclusion/SKILL.md`
-- `packages/engine/plugin/skills/person-evidence/SKILL.md`
+- `packages/engine/plugin/agents/person-evidence.md`
 
 ## 4. Decisions
 

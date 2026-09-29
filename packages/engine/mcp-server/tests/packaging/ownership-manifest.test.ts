@@ -75,6 +75,12 @@ interface OwnershipRow {
    * (`harness/ownership.py:writer_tool_sets`).
    */
   toolAuthorized?: string[];
+  /**
+   * Agent callers authorized on this row for the unit plane only.
+   * `listed_writers` (e2e) does not read this field; `writer_sets` (unit) does.
+   * Used when a skill→agent conversion should not widen e2e attribution.
+   */
+  unitCallers?: string[];
 }
 
 /**
@@ -982,11 +988,18 @@ describe("ownership manifest — every name resolves", () => {
   });
 
   it("lists a non-null owner among its own callers", () => {
-    // `callers` is the set the checks enforce. An owner outside it is a
-    // declaration that the owning skill may not write its own section.
+    // The owner must appear in at least one caller field that `writer_sets`
+    // reads (callers, hookCallers, or unitCallers). An owner absent from all
+    // three is a declaration that the owning agent may not write its own section.
     const bad = rows
-      .filter((r) => r.owner !== null && !r.callers.includes(r.owner as string))
-      .map((r) => `${key(r)}: owner '${r.owner}' not in callers`);
+      .filter(
+        (r) =>
+          r.owner !== null &&
+          !r.callers.includes(r.owner as string) &&
+          !(r.hookCallers ?? []).includes(r.owner as string) &&
+          !(r.unitCallers ?? []).includes(r.owner as string),
+      )
+      .map((r) => `${key(r)}: owner '${r.owner}' not in callers, hookCallers, or unitCallers`);
     expect(bad).toEqual([]);
   });
 
@@ -1019,8 +1032,15 @@ describe("ownership manifest — every name resolves", () => {
   it("does not claim a plane for a row with no writers at all", () => {
     // A row nobody may write cannot be enforced: there is no correct call for
     // the check to permit, so claiming a plane overstates coverage.
+    // A row has writers if any of callers, hookCallers, or unitCallers is non-empty.
     const bad = rows
-      .filter((r) => r.callers.length === 0 && r.enforceableAt.length > 0)
+      .filter(
+        (r) =>
+          r.callers.length === 0 &&
+          (r.hookCallers ?? []).length === 0 &&
+          (r.unitCallers ?? []).length === 0 &&
+          r.enforceableAt.length > 0,
+      )
       .map((r) => key(r));
     expect(bad).toEqual([]);
   });

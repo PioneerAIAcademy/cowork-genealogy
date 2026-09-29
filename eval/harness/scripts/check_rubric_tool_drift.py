@@ -132,36 +132,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "eval/tests/unit/init-project/check-warnings-relative-impossibility.json",
-        "tool": "person_quality",
-        "quotes": [
-            "check-warnings' own doctrine skips `person_quality` silently for a non-FamilySearch-PID-shaped id. Only the offline `person_warnings` half is expected to have run.",
-        ],
-        "reason": (
-            "cross-owner: both are check-warnings' tools, and "
-            "check-warnings is a stub_skill in this test's execution block "
-            "- 'check-warnings' own doctrine skips `person_quality` "
-            "silently for a non-FamilySearch-PID-shaped id. Only the "
-            "offline `person_warnings` half is expected to have run.' "
-            "init-project never makes either call"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/init-project/check-warnings-relative-impossibility.json",
-        "tool": "person_warnings",
-        "quotes": [
-            "check-warnings' own doctrine skips `person_quality` silently for a non-FamilySearch-PID-shaped id. Only the offline `person_warnings` half is expected to have run.",
-        ],
-        "reason": (
-            "cross-owner: both are check-warnings' tools, and "
-            "check-warnings is a stub_skill in this test's execution block "
-            "- 'check-warnings' own doctrine skips `person_quality` "
-            "silently for a non-FamilySearch-PID-shaped id. Only the "
-            "offline `person_warnings` half is expected to have run.' "
-            "init-project never makes either call"
-        ),
-    },
-    {
         "file": "eval/tests/unit/init-project/rubric.md",
         "tool": "validate_research_schema",
         "quotes": [
@@ -172,32 +142,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
             "schema-validation tool in its `allowed-tools`, so this is "
             "graded by reading the file against the schema, not by "
             "expecting a `validate_research_schema` call'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/person-evidence/baptism-parentage-links-only-defers-relationship.json",
-        "tool": "tree_correct",
-        "quotes": [
-            "nothing in this skill's toolset can raise the gender afterwards, since `tree_correct update_person` is not granted to it",
-        ],
-        "reason": (
-            "negative mention: names the tool to say the skill lacks it - "
-            "'nothing in this skill's toolset can raise the gender "
-            "afterwards, since `tree_correct update_person` is not granted "
-            "to it'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/person-evidence/patronymic-mismatch-caps-confidence.json",
-        "tool": "record_search",
-        "quotes": [
-            "this assertion is record_search-sourced (record_persona_id CP1 is non-null), so same_person is available here",
-        ],
-        "reason": (
-            "descriptive provenance, not a call: names where the assertion "
-            "came from - 'this assertion is record_search-sourced "
-            "(record_persona_id CP1 is non-null), so same_person is "
-            "available here'"
         ),
     },
     {

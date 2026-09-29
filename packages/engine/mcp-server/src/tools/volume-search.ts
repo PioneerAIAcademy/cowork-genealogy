@@ -1,13 +1,12 @@
 import type { Principal } from "../auth/principal.js";
-import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithRetry } from "../utils/http.js";
+import { fsFetch } from "../utils/fs-fetch.js";
 import {
   RECORD_TYPE_GROUP_NAMES,
   assertKnownGroupNames,
   conceptIdsForGroups,
 } from "../utils/record-type-groups.js";
-import { resolveStandardPlaceToPlaceId, placeIdToRepIds } from "../utils/place-resolver.js";
+import { resolveStandardPlaceToPlaceId, placeIdToRepIds, ambiguousPlaceError } from "../utils/place-resolver.js";
 import { fetchFulltextSearchable } from "../utils/fulltext-searchable.js";
 import { formatYearRange } from "../utils/search-helpers.js";
 import type {
@@ -98,25 +97,22 @@ function validate(input: VolumeSearchInput): void {
   }
 }
 
-function rmsHeaders(token: string): Record<string, string> {
-  return {
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
-    Accept: "application/json",
-    "User-Agent": BROWSER_USER_AGENT,
-    "FS-User-Agent-Chain": "chesworth",
-  };
-}
+const RMS_HEADERS: Record<string, string> = {
+  "Content-Type": "application/json",
+  Accept: "application/json",
+  "User-Agent": BROWSER_USER_AGENT,
+  "FS-User-Agent-Chain": "chesworth",
+};
 
 async function callGroupSearch(
   body: MetadataRmsSearchRequest,
-  token: string
+  principal: Principal,
 ): Promise<MetadataRmsSearchResponse> {
   let response: Response;
   try {
-    response = await fetchWithRetry(RMS_SEARCH_URL, {
+    response = await fsFetch(principal, RMS_SEARCH_URL, {
       method: "PUT",
-      headers: rmsHeaders(token),
+      headers: RMS_HEADERS,
       body: JSON.stringify(body),
     });
   } catch (error) {
@@ -259,9 +255,8 @@ export async function volumeSearchTool(
 ): Promise<VolumeSearchResult> {
   validate(input);
 
-  // Auth first, so an unauthenticated user always gets the login-instruction
-  // error (rather than a "could not resolve" message) regardless of the place.
-  const token = await getValidToken(principal);
+  // fsFetch handles auth internally; the first FS call will surface a login
+  // error if needed. Place resolution runs first (no auth required).
 
   // Resolve the standard place name -> placeId -> all of its representation
   // IDs. The two failures are answered separately: a name that matches nothing
@@ -270,16 +265,7 @@ export async function volumeSearchTool(
   // among them -- that researches the wrong jurisdiction silently.
   const resolution = await resolveStandardPlaceToPlaceId(input.standardPlace);
   if (resolution.kind === "ambiguous") {
-    // The candidates go in the message because the caller demonstrably does not
-    // notice a bare failure: in the session behind issue #1988 the agent neither
-    // retried nor called place_search, and Franklin County was dropped from the
-    // research while the agent reported having searched it.
-    throw new Error(
-      `"${input.standardPlace}" matches more than one place: ` +
-        `${resolution.candidates.join("; ")}. ` +
-        "Pass one of these exactly as listed, including the parenthesised type, " +
-        "as standardPlace, or call place_search to see the full list."
-    );
+    throw ambiguousPlaceError(input.standardPlace, resolution.candidates);
   }
   if (resolution.kind === "unresolved") {
     throw new Error(
@@ -326,13 +312,13 @@ export async function volumeSearchTool(
     ...(input.pageToken ? { nextPageToken: input.pageToken } : {}),
   };
 
-  const response = await callGroupSearch(body, token);
+  const response = await callGroupSearch(body, principal);
 
   const groups = response.groups ?? [];
   const groupNames = groups.map((g) => g.groupName);
 
   const fulltextSet = groupNames.length > 0
-    ? await fetchFulltextSearchable(groupNames, token)
+    ? await fetchFulltextSearchable(groupNames, principal)
     : new Set<string>();
 
   const results = groups.map((g) => mapGroup(g, fulltextSet));
