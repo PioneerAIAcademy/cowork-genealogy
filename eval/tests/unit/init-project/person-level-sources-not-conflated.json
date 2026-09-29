@@ -30,6 +30,7 @@
     "Should still perform and report the documented error-detection checks (birth-after-death, age gaps, place/jurisdiction consistency, sibling birth spacing) — staying within the list is not the same as skipping the analysis."
   ],
   "execution": {
+    "max_wall_clock_seconds": 600,
     "stub_skills": [
       {
         "skill": "question-selection",

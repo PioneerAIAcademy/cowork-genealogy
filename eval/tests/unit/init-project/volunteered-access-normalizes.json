@@ -29,6 +29,7 @@
     "Should still create both research.json and tree.gedcomx.json in a single pass and seed the Patrick Flynn stub from person-read-flynn -- volunteered access must not stop or delay the initialization"
   ],
   "execution": {
+    "max_wall_clock_seconds": 600,
     "stub_skills": [
       {
         "skill": "question-selection",
