@@ -265,6 +265,53 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
+  // Added with the agent conversion (issue #1852), which folded the skill verbatim.
+  "check-warnings -> conflict-resolution": {
+    pins: [
+      {
+        side: "caller",
+        excerpt: "do **not** read the tree, and do **not** analyze the discrepancy",
+      },
+      {
+        side: "caller",
+        excerpt: "passing `projectPath` and the user's description of the disagreement, and relay its return as-is",
+      },
+    ],
+    exempt: {
+      side: "agent",
+      reason:
+        "Same agent body as research -> conflict-resolution, whose exempt entry gives the reason: " +
+        "the fold states no caller-pressure rule, and what binds until the next paid run adds " +
+        "one is the write boundary — the resolution-kind precondition and the hook's claim route.",
+    },
+  },
+  "research -> conflict-resolution": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "caller",
+        excerpt: "Relay the agent's return as-is.",
+      },
+    ],
+    exempt: {
+      // Staleness here is NOT detected beyond the idiom check below — pin the
+      // agent's rule and delete this entry when the body gains one.
+      side: "agent",
+      reason:
+        "conflict-resolution.md is the skill folded verbatim, and the fold states no " +
+        "caller-pressure rule: the skill was always entered by the researcher's own words, " +
+        "never by a delegation that could pre-state a winner. The conversion adds no doctrine " +
+        "(the first body change after the unchanged-fold run is naming the resolution kind), " +
+        "so the rule is owed to the next paid run of this agent. Until then what binds is the " +
+        "write boundary, not the prose: research_append refuses a resolve that does not say " +
+        "how it was settled, and the plugin hook routes a conflict's analysis to this agent alone.",
+    },
+  },
+
   "research -> person-evidence": {
     pins: [
       {
@@ -360,7 +407,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // prose arm only since issue #2822 deleted the routing skill and made the
   // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
   // is a delegation being silenced -- verified per file before listing.
-  ["conflict-resolution -> proof-conclusion", ""],
   ["hypothesis-tracking -> proof-conclusion", ""],
   ["project-status -> proof-conclusion", ""],
   ["question-selection -> proof-conclusion", ""],
@@ -368,6 +414,19 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["timeline -> proof-conclusion", ""],
   ["tree-edit -> proof-conclusion", ""],
   ["validate-schema -> proof-conclusion", ""],
+  // Bare-name mentions of `conflict-resolution`, visible to the prose arm since
+  // issue #1852 deleted the skill and made the name unambiguous. Each is boundary
+  // prose ("use conflict-resolution", "route to conflict-resolution") and none
+  // spells `@plugin:conflict-resolution`, so none is a delegation being silenced
+  // -- verified per file before listing. `check-warnings`' is a Skill-tool
+  // hand-off to a name that no longer exists as a skill; issue #2118 (PR #2981)
+  // converts that skill and its agent names the conflict-resolution agent.
+  ["historical-context -> conflict-resolution", ""],
+  ["hypothesis-tracking -> conflict-resolution", ""],
+  ["project-status -> conflict-resolution", ""],
+  ["search-records -> conflict-resolution", ""],
+  ["source-evaluation -> conflict-resolution", ""],
+  ["timeline -> conflict-resolution", ""],
   // `search-wikipedia` (issue #2795) is the reverse of the `citation` shape: its
   // name is not an ordinary English word, so the arm DOES discriminate for it,
   // and both mentions below are boundary prose telling the reader this is the
@@ -392,7 +451,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // every SKILL.md that references it now needs a registration. All are
   // bare-name mentions — none spell `@plugin:person-evidence`.
   ["check-warnings -> person-evidence", ""],
-  ["conflict-resolution -> person-evidence", ""],
   ["forget-and-rederive -> person-evidence", ""],
   ["project-status -> person-evidence", ""],
   ["record-extraction -> person-evidence", ""],
@@ -584,6 +642,8 @@ describe("agent delegation framing", () => {
   // fails here and the author says in the diff which it was.
   const PROSE_ARM_COVERS = [
     "citation",
+    // ARRIVED when issue #1852 deleted skills/conflict-resolution/.
+    "conflict-resolution",
     "convert-dates",
     "gps-mentor",
     "image-reader",

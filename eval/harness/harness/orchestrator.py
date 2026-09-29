@@ -2176,6 +2176,10 @@ def _summarize_before_state_conflicts(
             "preferred": _resolve_assertion(c.get("preferred_assertion_id"), index)
             if c.get("preferred_assertion_id")
             else None,
+            # How a resolve was settled: without it a `tree` or `synthesis`
+            # resolve reaches the judge as `preferred: None` and nothing more.
+            "resolution_kind": c.get("resolution_kind"),
+            "resolved_value": c.get("resolved_value"),
             "competing": [
                 _resolve_assertion(cid, index)
                 for cid in (c.get("competing_assertion_ids") or [])

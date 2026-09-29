@@ -91,6 +91,7 @@ flagged. (One row below is the exception, and says so.)
 | `record_basis` | `stated`, `inferred`, `absent` | assertions |
 | `conflict_type` | `fact`, `identity` | conflicts |
 | `conflict_status` | `unresolved`, `resolved`, `moot` | conflicts |
+| `resolution_kind` | `competitor`, `tree`, `synthesis` | conflicts — how a `resolved` conflict was settled |
 | `hypothesis_status` | `active`, `supported`, `ruled_out` | hypotheses |
 | `proof_tier` | `proved`, `probable`, `possible`, `not_proved`, `disproved` | proof_summaries |
 | `proof_shortfall` | `ceiling`, `gap`, `conflict`, `none` | proof_summaries |
@@ -798,12 +799,16 @@ Array of conflict objects. Conflicts are both fact-level (three different birthp
 | `competing_assertion_ids` | string[] | yes | `a_` references. At least 2 for `fact` conflicts (two assertions disagree). At least 1 for `identity` conflicts (a single assertion whose person linkage is uncertain). |
 | `independence_analysis` | string or null | no | Analysis of whether the competing sources are independent |
 | `weighing_analysis` | string or null | no | Application of the preponderance hierarchy |
-| `preferred_assertion_id` | string or null | no | `a_` reference to the favored assertion |
-| `resolution_rationale` | string or null | no | Why the preferred assertion was chosen |
+| `preferred_assertion_id` | string or null | no | `a_` reference to the favored assertion. Required, and one of `competing_assertion_ids`, when `resolution_kind` is `competitor` |
+| `resolution_rationale` | string or null | no | Why the conflict was settled as it was. When `resolution_kind` is `synthesis` it cites at least two distinct `src_`/`a_` ids — the records the value is built from |
+| `resolution_kind` | `resolution_kind` or null | no | How a `resolved` conflict was settled: `competitor` (one competing assertion wins, named in `preferred_assertion_id`), `tree` (the tree's existing conclusion stands against the competing records), or `synthesis` (no single assertion wins; the value is built from several). Required on a resolve by `research_append` (research-append-tool-spec.md §5); absent on conflicts resolved before it existed |
+| `resolved_value` | string or null | no | The value a `synthesis` resolution settles on, which no competing assertion states (e.g. "about 1844"). Required when `resolution_kind` is `synthesis` |
 | `status` | `conflict_status` | yes | Current status |
 | `blocks_question_ids` | string[] | yes | Question IDs blocked by this unresolved conflict (may be empty) |
 
 `independence_analysis` and `weighing_analysis` are kept as separate fields because source independence is a distinct analytical step from evidence weighing per the GPS.
+
+`resolution_kind` exists because a resolved conflict's winner is not always one of the competing assertions. A genealogist's reading of the eleven committed conflicts resolved without a winner found two where the tree's pre-existing value stood, five where the winning value was built from several records, three where a competitor did win but was not named, and one that was not resolved at all. Before the field, the schema could record only the first shape, so a resolve naming no winner said nothing about which of the others it was. Both new fields are optional in the schema and nullable, so a conflict resolved before they existed stays valid; the writer tool requires the kind on each new resolve.
 
 ### 5.9 `hypotheses`
 
@@ -1074,7 +1079,7 @@ evaluations
 
 **Why timelines are keyed by ID and label, not by person ID.** Timeline construction is itself an identity-resolution exercise. You build a candidate timeline to test whether records cohere into one life. Keying by person ID forces you to decide identity before testing it. A labeled timeline like "John Smith assuming Augusta = Rockingham" can aggregate multiple GedcomX person IDs that might merge.
 
-**Why `independence_analysis` and `weighing_analysis` are separate fields.** Source independence is a distinct analytical step in the GPS. Two derivative indexes of the same original record are not independent sources — determining this requires analysis separate from weighing the evidence. Keeping them separate forces the conflict-resolution skill to actually perform both steps rather than folding independence into general weighing prose.
+**Why `independence_analysis` and `weighing_analysis` are separate fields.** Source independence is a distinct analytical step in the GPS. Two derivative indexes of the same original record are not independent sources — determining this requires analysis separate from weighing the evidence. Keeping them separate forces the conflict-resolution agent to actually perform both steps rather than folding independence into general weighing prose.
 
 **Why `log` is append-only but other sections are mutable.** The log is the primary audit trail for "reasonably exhaustive" claims. If log entries could be edited or deleted, the exhaustive search declaration would be unfalsifiable. Other sections allow updates (refining a citation, revising a classification, resolving a conflict) because analytical conclusions legitimately evolve. But no section allows deletion — entries are superseded with status fields.
 
@@ -1956,6 +1961,7 @@ This section documents what changed from the earlier pre-implementation draft an
 | `external_site` added to log entries | Tracks the generate-click-capture-analyze workflow for commercial sites |
 | `conflict_type` and `identity_question` added to conflicts | Supports identity-level conflicts, not just fact-level |
 | `resolution_rationale` added to conflicts | Captures why the preferred assertion was chosen |
+| `resolution_kind` and `resolved_value` added to conflicts | A winner is not always a competing assertion: the tree's value can stand, or the value can be built from several records |
 | Timelines keyed by `t_` ID with label, not person ID | Timeline construction is itself identity resolution; labels support hypothesis testing |
 | `hypothesis_id` and `person_ids` added to timelines | Connects timelines to the hypotheses they test |
 | `fan_evidence_ids` removed from hypotheses | FAN findings are regular assertions; no special entity needed |

@@ -86,9 +86,9 @@ resolve," not "is not a standard place."
 
 ## 6. Consumers
 
-- **Skills:** `timeline/SKILL.md`, `conflict-resolution/SKILL.md`.
-- **Agents:** `gps-mentor.md`, `person-evidence.md`.
-- **Shared reference:** `references/places-guidance.md` (carried by 9
+- **Skills:** `timeline/SKILL.md`.
+- **Agents:** `conflict-resolution.md`, `gps-mentor.md`, `person-evidence.md`.
+- **Shared reference:** `references/places-guidance.md` (carried by 8
   skills).
 - **Persisted field:** `distance_from_previous_km` in timeline events
   (`research-schema-spec.md`): great-circle distance in km from the

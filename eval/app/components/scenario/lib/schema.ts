@@ -10,6 +10,7 @@ export type PlanItemStatus = 'planned' | 'in_progress' | 'completed' | 'skipped'
 export type LogOutcome = 'positive' | 'negative' | 'partial' | 'error'
 export type SourceClassification = 'original' | 'derivative' | 'authored'
 export type InformationQuality = 'primary' | 'secondary' | 'indeterminate'
+export type ResolutionKind = 'competitor' | 'tree' | 'synthesis'
 export type RecordBasis = 'stated' | 'inferred' | 'absent'
 export type ProofShortfall = 'ceiling' | 'gap' | 'conflict' | 'none'
 export type ConflictType = 'fact' | 'identity'
@@ -226,6 +227,8 @@ export interface Conflict {
   weighing_analysis: string | null
   preferred_assertion_id: string | null
   resolution_rationale: string | null
+  resolution_kind?: ResolutionKind | null
+  resolved_value?: string | null
   status: ConflictStatus
   blocks_question_ids: string[]
 }

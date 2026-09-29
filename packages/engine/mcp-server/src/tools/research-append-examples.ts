@@ -21,6 +21,8 @@
  */
 
 /** Section → a single worked `entry` payload, as pretty JSON. */
+import { VALIDATOR_ENUMS } from "../validation/validator.js";
+
 const EXAMPLES: Record<string, string> = {
   // No "gedcomx_source_description_id" here on purpose: the composite form
   // below supplies "sourceDescription", which CREATES the tree's S entry and
@@ -285,6 +287,41 @@ function plansBatchExample(): string {
 }
 
 /**
+ * One worked resolve per `resolution_kind`, as the `fields` of a `conflicts`
+ * update (research_append's resolution-kind precondition). Each names the kind,
+ * carries the three analyses every resolve owes, and adds what that kind
+ * requires. Validated by the worked-examples test against a fixture conflict
+ * over a_013 / a_025.
+ */
+const RESOLVE_EXAMPLES: Record<"competitor" | "tree" | "synthesis", string> = {
+  competitor: `{
+  "status": "resolved",
+  "resolution_kind": "competitor",
+  "independence_analysis": "The 1850 census age came from a household informant; the delayed birth certificate was sworn by Patrick himself in 1915. Different informants, no shared derivation.",
+  "weighing_analysis": "The certificate is an original record, but its information is secondary: Patrick was reporting his own birth sixty years on. The census was taken five years after the event.",
+  "preferred_assertion_id": "a_013",
+  "resolution_rationale": "The 1850 census age (a_013) is preferred: it is closer to the event, and the delayed certificate's 1843 is the kind of self-reported drift the other censuses do not repeat."
+}`,
+  tree: `{
+  "status": "resolved",
+  "resolution_kind": "tree",
+  "independence_analysis": "Both records derive from the same family informant, so they are not independent of each other.",
+  "weighing_analysis": "Neither record outweighs the tree's existing birth year, which rests on a baptism already attached as a source.",
+  "preferred_assertion_id": null,
+  "resolution_rationale": "The tree's existing conclusion (baptism, 1844) stands: both competing records trace to one informant and neither outweighs the baptism."
+}`,
+  synthesis: `{
+  "status": "resolved",
+  "resolution_kind": "synthesis",
+  "independence_analysis": "The census (src_001) and the certificate (src_004) have different informants and no shared derivation.",
+  "weighing_analysis": "Each bounds the year from one side; neither alone fixes it.",
+  "preferred_assertion_id": null,
+  "resolved_value": "about 1844",
+  "resolution_rationale": "Neither assertion wins outright: the census age (a_013, src_001) places the birth in 1844-1845 and the certificate (a_025, src_004) in 1843-1844, so the year both allow is about 1844."
+}`,
+};
+
+/**
  * A worked `research_append` call for `section`, or null when the section has
  * no example. `op` selects the call shape (`plan_items` needs a `planId`).
  */
@@ -372,6 +409,23 @@ export function exampleFor(
   }
 })`;
     }
+    // A refused resolve is taught the three kinds, one worked resolve each,
+    // rather than the generic skeleton: the resolution-kind precondition is the
+    // refusal a resolve now meets first, and "only the fields you are changing"
+    // teaches none of what it asks for.
+    if (section === "conflicts" && fieldsNamed.some((f) => RESOLUTION_FIELDS.has(f))) {
+      return ([...VALIDATOR_ENUMS.resolution_kind] as Array<keyof typeof RESOLVE_EXAMPLES>)
+        .map(
+          (kind) => `research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "conflicts",
+  op: "update",
+  entryId: "<existing-c_-id>",
+  fields: ${RESOLVE_EXAMPLES[kind].split("\n").join("\n  ")}
+})`,
+        )
+        .join("\n");
+    }
     return `research_append({
   projectPath: "<absolute-path-to-project-directory>",
   section: "${section}",
@@ -447,4 +501,14 @@ export function exampleHints(
   return hints;
 }
 
-export const __testing = { EXAMPLES };
+/** The `conflicts` fields a resolve names; a refused update naming one is
+ *  shown the three worked resolves. */
+const RESOLUTION_FIELDS = new Set([
+  "status",
+  "resolution_kind",
+  "preferred_assertion_id",
+  "resolved_value",
+  "resolution_rationale",
+]);
+
+export const __testing = { EXAMPLES, RESOLVE_EXAMPLES };

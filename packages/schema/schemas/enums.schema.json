@@ -33,6 +33,10 @@
     "conflict_status": {
       "enum": ["unresolved", "resolved", "moot"]
     },
+    "resolution_kind": {
+      "description": "How a resolved conflict was settled: `competitor` — one of the competing assertions wins (`preferred_assertion_id` names it); `tree` — the tree's existing conclusion stands against the competing records; `synthesis` — no single assertion wins and the resolution is a value built from several (`resolved_value`, with a `resolution_rationale` citing at least two `src_`/`a_` ids).",
+      "enum": ["competitor", "tree", "synthesis"]
+    },
     "hypothesis_status": {
       "enum": ["active", "supported", "ruled_out"]
     },

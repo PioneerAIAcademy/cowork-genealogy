@@ -136,6 +136,35 @@ OWNED_DECLARATIONS = {("questions", "exhaustive_declaration"): "research-exhaust
 # presence is the right key.
 OWNED_FIELDS = {("project", "status"): "proof-conclusion"}
 
+# Claim-scoped routing over SEVERAL fields: section -> (the BARE agent name that
+# may make the claim, the fields whose truthy value is the claim, the status
+# value that is the claim). Fourth granularity, and why none of the three above
+# holds it.
+#
+# `conflicts` cannot be a whole-section route: six skills legitimately OPEN a
+# conflict writing only the schema's required fields, and a section route denies
+# every one (53 of 218 landed corpus `conflicts` ops). `OWNED_DECLARATIONS` keys
+# on one field set to one value; the conflict's analytical product is spread over
+# six fields and a status. So the rule keys on the PRODUCT: an op that sets
+# `status: "resolved"`, or carries any analysis field truthy. A skeleton open, and
+# a re-open that sets `status: "unresolved"` and clears the analysis, claim
+# nothing and pass. `resolution_kind` and `resolved_value` are listed so a write
+# carrying only those cannot slip past as a non-claim.
+OWNED_CLAIMS = {
+    "conflicts": (
+        "conflict-resolution",
+        (
+            "independence_analysis",
+            "weighing_analysis",
+            "preferred_assertion_id",
+            "resolution_rationale",
+            "resolution_kind",
+            "resolved_value",
+        ),
+        "resolved",
+    ),
+}
+
 # The reverse direction: the sections each named agent MAY write. Rows come from
 # the same manifest -- every section whose `callers` names that agent's skill.
 #
@@ -149,9 +178,11 @@ OWNED_FIELDS = {("project", "status"): "proof-conclusion"}
 # `disallowedTools:` cannot express that: the granularity there is the tool, and
 # the tool was the right one. Only a section-level check reaches it.
 #
-# A section owned by a SKILL cannot be enforced through OWNED_SECTIONS -- there
-# is no agent to permit, so a permit-the-owner rule would deny the owning
-# skill's own write. `conflicts` is that shape, which is why it is covered here.
+# `conflicts` used to be covered only here, because it was owned by a SKILL and a
+# permit-the-owner rule would have denied that skill's own write. Since the
+# conflict-resolution agent replaced the skill, the analytical product is routed
+# to it by OWNED_CLAIMS above, and this map keeps every OTHER agent off the
+# section entirely -- the 2026-08-19 proof-conclusion write is still refused.
 AGENT_WRITABLE_SECTIONS = {
     "proof-conclusion": frozenset({"proof_summaries", "questions", "project"}),
     # research-exhaustiveness writes one field on one question and nothing else.
@@ -177,6 +208,10 @@ AGENT_WRITABLE_SECTIONS = {
     # citation refines `citation` / `citation_detail` on source entries that
     # already exist, and writes nothing else in research.json.
     "citation": frozenset({"sources"}),
+    # conflict-resolution opens, analyses and settles conflicts, and writes
+    # nothing else in research.json. A hypothesis or question change its finding
+    # implies is handed back to the main thread, not made here.
+    "conflict-resolution": frozenset({"conflicts"}),
 }
 
 # The deny NAMES THE ROUTE OUT, and that is load-bearing rather than polite.
@@ -210,6 +245,16 @@ OWNED_FIELD_REASON = (
     "`@plugin:{agent}` and let it make the research_append call. Only this "
     "field is routed — every other write to `{section}`, including the "
     "`updated` activity ping, is unaffected."
+)
+
+CLAIM_REASON = (
+    "Recording a conflict's analysis or resolution from here is disabled — "
+    "settling `{section}` (a `status: \"resolved\"`, or any of {fields}) is owned "
+    "by the {agent} agent, which weighs source independence and the "
+    "preponderance of evidence before it decides. Delegate it: invoke "
+    "`@plugin:{agent}` and let it make the research_append call. Only the "
+    "analysis is routed — opening a conflict with just its required fields, and "
+    "re-opening one as `unresolved`, are both unaffected."
 )
 
 OUT_OF_LANE_REASON = (
@@ -296,19 +341,46 @@ def protected_target(tool_name: str, tool_input: dict) -> str | None:
     return None
 
 
+def _decoded(value):
+    """`value` parsed from JSON when it is a string, else `value` unchanged.
+
+    `research_append` runs `coerceJsonArg` on `ops`, `entry` and `fields`, so a
+    stringified argument is parsed and applied there. Reading only lists and
+    dicts here let the same write through unexamined. Never raises: a string
+    that does not parse is returned as-is and matches nothing.
+    """
+    if not isinstance(value, str):
+        return value
+    try:
+        return json.loads(value)
+    except (ValueError, RecursionError):
+        return value
+
+
+def _with_payloads_decoded(op: dict) -> dict:
+    """`op` with its `fields` and `entry` decoded, for the same reason."""
+    out = dict(op)
+    for key in ("fields", "entry"):
+        if key in out:
+            out[key] = _decoded(out[key])
+    return out
+
+
 def _ops(tool_input: dict):
     """Every op in a `research_append` call, batch or single.
 
     A batch puts them in `ops`; a single call carries `section` at the top
-    level. Both shapes reach the same sections, so both are walked.
+    level. Both shapes reach the same sections, so both are walked. Each is read
+    after `_decoded`, as the tool reads it.
     """
-    ops = (tool_input or {}).get("ops")
+    ops = _decoded((tool_input or {}).get("ops"))
     if isinstance(ops, list):
         for op in ops:
+            op = _decoded(op)
             if isinstance(op, dict):
-                yield op
+                yield _with_payloads_decoded(op)
     elif tool_input:
-        yield tool_input
+        yield _with_payloads_decoded(tool_input)
 
 
 def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | None:
@@ -322,7 +394,10 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
     the sections its own skill is a declared caller for. `declaration` and
     `owned_field` return a dotted `section.field`, which is a key in neither
     `OWNED_SECTIONS` nor `AGENT_WRITABLE_SECTIONS`, so every consumer must
-    branch on `rule` and never on the shape of the first element.
+    branch on `rule` and never on the shape of the first element. A fifth,
+    `claim`, returns the bare section of an `OWNED_CLAIMS` route: a conflict's
+    analytical product (a resolve, or any analysis field), reached by anyone
+    but its owning agent.
 
     `proof_summaries` is owned by `proof-conclusion`
     (`docs/specs/schemas/ownership.json`). Measured over the committed corpus,
@@ -420,6 +495,23 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
         # A known agent reaching outside its own set.
         if writable is not None and section not in writable:
             return (section, "out_of_lane", caller)
+        # A routed CLAIM spread over several fields, reached by anyone but its
+        # owning agent. After the lane check, so an agent with no business in
+        # the section at all is told that, not that the claim belongs
+        # elsewhere. Both payload keys, for the same fail-open reason as the two
+        # loops above. A moot is claimed too: the tool refuses one without a
+        # `resolution_rationale`, which is a claim field.
+        claim = OWNED_CLAIMS.get(section)
+        if claim is not None and caller != claim[0]:
+            _owner, claim_fields, claim_status = claim
+            for key in ("fields", "entry"):
+                payload_obj = op.get(key)
+                if not isinstance(payload_obj, dict):
+                    continue
+                if payload_obj.get("status") == claim_status or any(
+                    payload_obj.get(f) for f in claim_fields
+                ):
+                    return (section, "claim", caller)
     return None
 
 
@@ -443,6 +535,13 @@ def decision(payload: dict) -> dict:
                 section=owned_section,
                 field=field,
                 agent=OWNED_DECLARATIONS[(owned_section, field)],
+            )
+        elif rule == "claim":
+            owner, claim_fields, _status = OWNED_CLAIMS[section]
+            reason = CLAIM_REASON.format(
+                section=section,
+                fields=", ".join(f"`{f}`" for f in claim_fields),
+                agent=owner,
             )
         elif rule == "owned_field":
             owned_section, _, field = section.partition(".")

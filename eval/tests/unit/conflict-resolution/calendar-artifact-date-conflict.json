@@ -9,11 +9,12 @@
       "fact-conflict",
       "calendar",
       "date-artifact",
-      "calendar-from-tool"
+      "calendar-from-tool",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "The Bolton-le-Moors register has Sarah Hollins baptised 14 February 1746 (a_001) but the printed transcript of the same register says 14 February 1747 (a_002). Same day, same month, same parish, same father. Is that a real conflict in the evidence, and which year should I record?",
+    "delegation": "The Bolton-le-Moors register has Sarah Hollins baptised 14 February 1746 (a_001) but the printed transcript of the same register says 14 February 1747 (a_002). Same day, same month, same parish, same father. Is that a real conflict in the evidence, and which year should I record?\n\nassertionIds: a_001, a_002\nprojectPath: <workspace>",
     "scenario": "english-old-style-date-conflict"
   },
   "judge_context": [

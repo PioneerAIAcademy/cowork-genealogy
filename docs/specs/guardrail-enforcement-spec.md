@@ -152,11 +152,13 @@ depends on another shipping first.
 | §5 | `person_evidence` requires a recorded score | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` **append** for a reachable persona with no `same_person` score recorded for that pairing in `results/.scores/`, or any link the tool can prove circular at write time that nonetheless CARRIES a score | **enforcing** (since 2026-09-24). The fabrication arm is deliberately NOT gated on reachability: a score on a provably circular pairing is wrong however the record was retrieved, and gating it left `ut_person_evidence_014` permanently uncatchable because its assertion is full-text sourced. Matched by an exact lookup on `(assertion_id, tree_person_id)`, the pair both the writer and the reader always hold. Keying on the party could not see a score written by `same_person`'s fetched route, which resolves a real `persons[].id` where the assertion carries null. ADR-0009 constraint 3 holds because an assertion is a (record, party) pair, so a second persona is a second assertion, and the tree person keeps the two links of a relationship assertion apart |
 | §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which since 2026-08-23 calls the shipped predicate rather than its own copy (the "neither harness" this row used to claim was stale from Phase 3, which added the e2e arm); **and the unit harness since 2026-09-02**, where the deny is gated by `test_no_out_of_lane_section_writes` | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload; the **hosted** binding of this arm is proven by `make hook-smoke` (§6.4)) |
 | §6 | Field ownership by caller (`project.status`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which calls the shipped predicate rather than a copy; **and the unit harness** via `test_no_out_of_lane_section_writes`, which is rule-agnostic and so gates this arm with no edit | a `project.status` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, from either the `fields` or `entry` key, on append **and** update. Keyed on presence, not on a value: any write of the field asserts the project's state. The co-written rest of `project` — including the `updated` activity ping — is untouched | **enforcing** (since 2026-09-24). **Nothing proves this arm binds in Cowork**, which is true of every hook arm (`docs/architecture.md` §9.4 gap 1); the **hosted** binding is provable by `make hook-smoke` (§6.4), which no CI job runs |
+| §6 | Claim ownership by caller (`conflicts`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which calls the shipped predicate rather than a copy; **and the unit harness** via `test_no_out_of_lane_section_writes`, which is rule-agnostic | a `conflicts` op from anything but the `conflict-resolution` agent that sets `status: "resolved"` or `"moot"` with its rationale, or sets any of `independence_analysis`, `weighing_analysis`, `preferred_assertion_id`, `resolution_rationale`, `resolution_kind` or `resolved_value` truthy — single-op or `ops[]`, `fields` or `entry`, stringified or not. A skeleton open (the schema's required fields only) and a re-open to `unresolved` claim nothing and pass, because six skills open conflicts | **enforcing** (since 2026-09-29). Nothing proves this arm binds in Cowork (`docs/architecture.md` §9.4 gap 1); the **hosted** binding is provable by `make hook-smoke` (§6.4), which no CI job runs |
 | below | Section ownership | unit harness only, and only inside a paid per-skill run | a skill writing a section of either project document that it does not own | **enforcing there, nowhere else** |
 | below | Staged-search backlog note | engine (MCP tool) — so Cowork, hosted, both harnesses | a search whose staged response no `research.json` log entry accounts for, and a nil search on a project path | **advisory only — reports, refuses nothing** (since 2026-08-31; from an alpha-feedback session where 11 `record_search` calls and one skill invocation produced zero log entries). Detection, not enforcement: whether it becomes a refusal wants the run-log rate first, which needs the deferred e2e detector. A nil search stages nothing, so the backlog half is structurally blind to it |
 | §5 | Completion gate: blocking conflicts | engine (MCP tool) — so Cowork, hosted, both harnesses | `project.status: "completed"` while an unresolved conflict blocks a question — it names one, is an identity conflict, or disputes an assertion a question was built on | **enforcing** (the two declared arms shipped first, motivated by the `wilkins-death-kentucky` finding of 2026-07-15; the derived arm widens them. refuses 11 of 128 (9%) completed corpus runs against the previous 5, measured at f459af71b; all 11 refusals read individually per ADR-0011 limit 2 and all are true positives) |
 | §5 | Core-identifier contradiction caps the tier | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` entry at `confident`/`probable` whose record states a birth place or a birth/christening date contradicting what the tree person attests, or which declares `core_identifier_conflict` | **enforcing** (since 2026-09-24). **Refuses 0 of 323** committed confident/probable entries. Reaching zero took four genealogical scopings, each measured: comparing any place refuses 274 (a census place is not a birthplace); birth-type only refuses 38; excluding secondary/no-proximity informants clears 35 of those (a death record's birthplace, senior genealogist ruling 2026-09-23) and excluding christening PLACE clears the other 3 (you are christened where the church is); scoping to the linked party clears 16 more and excluding two-party relationship assertions the last 14 (a son's birth year is not a contradiction for his father). All 38 of the un-gated arm were read individually per ADR-0011 limit 2 and every one was a false positive. Its limit: it cannot bind a link made through a relationship assertion, because which of the two people the link is about is not decidable from the documents |
 | §5 | A logged query names only filters its search sent | engine (MCP tool) — so Cowork, hosted, both harnesses | a `research_log_append` op whose explicit `query` names a filter key, with a value, that its staged `record_search` or `fulltext_search` never sent. A differing value is allowed (mostly place normalization, observed by the eval `report_*` validators instead), as are descriptive keys, plumbing and paging. A nil search stages nothing and is never judged | **enforcing** (refuses 18 of 358 paired staged ops, 15 distinct claims, all read individually per ADR-0011 limit 2 and all true positives, measured at a1960c5af by `packages/engine/mcp-server/dev/measure-log-query-claims.ts`; 0 of the 121 paired unit-eval ops, whose misstatements were filled from a staged payload the eval mock built from a fixture's recorded query, fixed at the mock. Unstaged entries — nil searches, searches made without a `projectPath` — and external-site entries are seen only by the eval `report_*` observers in `test_search_records.py` and `test_search_external_sites.py`) |
+| §5 | A resolve names how it was settled | engine (MCP tool) — so Cowork, hosted, both harnesses | a `conflicts` write landing `resolved`, or an update touching its resolution, with no `resolution_kind`, or with `competitor` and no winner among `competing_assertion_ids`, or with `synthesis` and no `resolved_value` or a rationale citing fewer than two distinct `src_`/`a_` ids. `tree` owes nothing more. An unrelated edit to a conflict resolved before the rule is not re-judged | **enforcing** (since 2026-09-29; lead ruling 2026-09-25, which shipped the gate with the agent conversion; the kinds from the 2026-09-07 ruling on the eleven winnerless resolves). No committed op carries the kind, so the replay reports three numbers rather than a refusal rate, measured at 76a923448 by `eval/harness/scripts/measure_resolution_kind.py`: of 138 landed resolve ops, 70 name a winner among the competitors and pass as `competitor` once they name it; 68 name none and need `tree` or `synthesis`; of those 68, only 5 rationales already cite two ids. Final states: 68 resolved conflicts, 12 with no winner, 2 of those citing two ids. Read against the genealogist adjudication of the eleven winnerless resolves, the two it labels `tree` pass once named, the five it labels `synthesis` cite 0 or 1 ids and are refused until the rationale names its records — the intended cost, recovered by the refusal text, which names all three kinds and shows one worked resolve for each |
 | §5 | Set-once project fields | engine (MCP tool) — so Cowork, hosted, both harnesses | a rewrite of `objective`, `title` or `subject_person_ids` after project creation | **enforcing** |
 | §5 | Hypothesis `supported` evidence floor | engine (MCP tool) — so Cowork, hosted, both harnesses | a hypothesis set to `status: "supported"` while a conflict naming its own supporting/contradicting assertions is unresolved, or with neither ≥1 `record_basis: "stated"` supporting assertion nor ≥2 at `record_basis: "inferred"` citing ≥2 distinct sources | **enforcing** (since 2026-09-16, lead ruling 2026-09-07; forward direction only. **Refuses 0 of 9** landed `supported` writes in the calibration corpus — 17 ops attempt it across 13 run logs, 7 refused for unrelated reasons and 1 capture-stripped, so 9 are writes — and 0 of 44 `supported` hypotheses across 276 committed final states and fixtures. **Measured at 587d3c98d**, 2026-09-17, `eval/harness/scripts/count_supported_floor.py`. Mirrors the eval validator `test_supported_requires_evidence_floor`, which stays; the rule now sits on four planes with nothing that can see them disagree — the cross-plane parity work owns that) |
 | §5 | Plan-phase gate on `tree_forget` | engine (MCP tool) — so Cowork, hosted, both harnesses | `tree_forget` called after `research.json` already holds a non-empty `plans` array | **enforcing** |
@@ -882,6 +884,33 @@ the call's own arguments for `record_search` and `fulltext_search`, as productio
 does; before it did, it staged a fixture's recorded query, and every unit-eval
 misstatement the observers first reported was an entry filled from one.
 
+### A resolve names how it was settled
+
+`research_append` refuses a conflict write that lands `resolved` — an append, or
+an update touching its status, kind, winner, value or rationale — unless
+`resolution_kind` says how it was settled and the write carries what that kind
+requires (`research-append-tool-spec.md` §5). `competitor`: the winning
+assertion, one of `competing_assertion_ids`. `tree`: the tree's existing
+conclusion stands; nothing more. `synthesis`: a `resolved_value` no single
+assertion states, and a rationale citing at least two distinct `src_`/`a_` ids.
+
+Before it, a resolve could name no winner and say nothing about why. The
+conflict-resolution body already said a resolved conflict always names a winner,
+and that rule was prose; a genealogist's reading of the eleven committed
+winnerless resolves then showed the winner is often not a competing assertion at
+all — the tree's value, or a value built from several records — so requiring a
+winner outright would have been a false deny on seven of them. The kind is what
+lets the rule refuse only a resolve that says nothing. `synthesis` is not free:
+it owes the records it was built from, or it would be the label an agent reaches
+for to dodge naming a winner.
+
+Scoped like the place-containment rule on the same section, so a conflict
+resolved before the rule existed can still take an unrelated edit. No override
+(ADR-0011, 2026-08-24). What it cannot see: whether the kind named is the right
+one — a `tree` claim is taken at its word, since which value the tree held is not
+recorded on the conflict. The eval validator in `test_conflict_resolution.py`
+applies the same per-kind requirements to a run's final state.
+
 ### Plan-phase gate on `tree_forget`
 
 `tree_forget` refuses when `research.json` holds any `plans[]` entry. The
@@ -1335,12 +1364,16 @@ accepted.
 **Both halves read the pre-call snapshot**, per ADR-0011's criterion — snapshot
 when the precondition must be satisfied by someone else. `ownership.json` gives
 `hypotheses.callers` as `["skill:hypothesis-tracking"]`, while `conflicts`
-belongs to `skill:conflict-resolution` and `assertions` to
+belongs to `agent:conflict-resolution` and `assertions` to
 `skill:record-extraction`; neither satisfying write is this author's own prior
-step, and both those sections are `enforceableAt: ["unit"]` only — no hook arm,
-no tool arm. Under a live read, nothing in production would stop a session from
-writing the satisfying conflict or assertion in the same `research_append` batch
-as the promote, clearing the gate from inside the call it gates. A same-batch
+step. `assertions` is `enforceableAt: ["unit"]` only. `conflicts` has had a hook
+arm since the conflict-resolution agent landed (a resolve from the main thread is
+denied in Cowork and hosted), but the harnesses' unit plane records the hook
+verdict rather than binding it, and the criterion is who must satisfy the
+precondition, not which plane happens to catch a bypass. Under a live read, a
+session could write the satisfying conflict or assertion in the same
+`research_append` batch as the promote, clearing the gate from inside the call it
+gates. A same-batch
 resolve-then-promote is therefore refused, and the refusal tells the agent to
 settle the conflict **in an earlier call** rather than retrying the batch.
 

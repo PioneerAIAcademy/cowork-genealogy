@@ -249,11 +249,13 @@ def report_unsourced_year_in_response(tool_calls, text_response, test):
 # --- V3: Conflict-resolution handoff is completely silent ---
 
 def test_conflict_resolution_handoff_is_silent(
-    tool_calls, text_response, skills_invoked, test
+    tool_calls, text_response, skills_invoked, builtin_tool_calls, test
 ):
     """V3: on a conflict-resolution silent-handoff test the run must make zero
-    tool calls, return an empty response, and have 'conflict-resolution' in
-    skills_invoked. All three must hold, or it is a violation.
+    tool calls, return an empty response, and hand off to 'conflict-resolution'.
+    All three must hold, or it is a violation. The hand-off is read through
+    `handoffs`, since conflict-resolution is an agent the router spawns and a
+    spawn never appears in `skills_invoked` (issue #1852).
 
     Tier 1 — gates (test_* prefix). Tag-gated: skips unless the test carries
     the 'silent-handoff' tag. Paired with negative.grade_on_invariant: true on
@@ -262,8 +264,8 @@ def test_conflict_resolution_handoff_is_silent(
     compliant run that occurred in 3 of 5 committed logs.
 
     SKILL.md absolutes:
-      "Invoke the conflict-resolution skill right away ... as your first and
-      only action"
+      "Spawn `@plugin:conflict-resolution` right away as your first and only
+      action"
       "Write no reply of your own — no preamble, no explanation, no summary."
     """
     if "silent-handoff" not in test.get("tags", []):
@@ -278,7 +280,10 @@ def test_conflict_resolution_handoff_is_silent(
         "silent handoff must produce an empty response; "
         f"got {len((text_response or '').strip())} non-whitespace characters"
     )
-    assert "conflict-resolution" in (skills_invoked or []), (
-        "silent handoff must invoke conflict-resolution via the Skill tool; "
-        f"skills_invoked = {skills_invoked!r}"
+    from harness.skill_runner import handoffs
+
+    made = handoffs(skills_invoked, builtin_tool_calls)
+    assert "conflict-resolution" in made, (
+        "silent handoff must spawn the conflict-resolution agent; "
+        f"handoffs = {made!r}"
     )

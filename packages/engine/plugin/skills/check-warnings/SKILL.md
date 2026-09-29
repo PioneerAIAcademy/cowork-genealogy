@@ -44,7 +44,7 @@ Full tag catalog: `references/warning-checks.md`.
 
 **Before anything — is this a warnings task?** If the user is describing a **disagreement between two or more sources** about the same fact (e.g. "one census says County Galway, the death cert says County Clare — flag that mismatch"), that is a **source conflict, not a warning**, and it is **not this skill's job**. **Hand it off silently:**
 
-- **Invoke the `conflict-resolution` skill right away** (the Skill tool) as your first and only action, and let *it* produce the response for the user.
+- **Spawn `@plugin:conflict-resolution` right away** as your first and only action, passing `projectPath` and the user's description of the disagreement, and relay its return as-is.
 - **Write no reply of your own** — no preamble, no explanation, no summary. The handoff runs behind the scenes; conflict-resolution owns the answer the user sees.
 - Do **not** call `person_warnings` or `person_quality`, do **not** read the tree, and do **not** analyze the discrepancy. Any tool call, analysis, or write-up of your own means you wrongly took on conflict-resolution's job.
 

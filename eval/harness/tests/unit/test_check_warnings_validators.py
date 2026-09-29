@@ -24,6 +24,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 
 # Aliased away from the `test_` prefix so pytest does not collect it here.
 from test_check_warnings import (  # noqa: E402
+    test_conflict_resolution_handoff_is_silent as check_silent_handoff,
     test_not_fs_reply_names_no_id as check_not_fs_reply,
 )
 
@@ -180,3 +181,29 @@ def test_no_not_familysearch_answer_passes_without_id_type_wording(reply):
 def test_skips_negative_tests():
     with pytest.raises(pytest.skip.Exception):
         check_not_fs_reply([_not_fs("I1")], "synthetic", {"type": "negative", "tags": []})
+
+
+# --- V3: the silent handoff to conflict-resolution, now an agent (issue #1852) --
+
+SILENT = {"type": "negative", "tags": ["silent-handoff"]}
+_SPAWN = {"tool": "Agent", "args": {"subagent_type": "conflict-resolution", "prompt": "..."}}
+
+
+def test_silent_handoff_passes_on_a_spawn():
+    check_silent_handoff([], "", [], [_SPAWN], SILENT)
+
+
+def test_silent_handoff_fails_with_no_handoff():
+    with pytest.raises(AssertionError, match="spawn the conflict-resolution agent"):
+        check_silent_handoff([], "", [], [], SILENT)
+
+
+def test_silent_handoff_fails_on_a_spawn_made_inside_a_subagent():
+    inner = {**_SPAWN, "agent_id": "a1"}
+    with pytest.raises(AssertionError, match="spawn the conflict-resolution agent"):
+        check_silent_handoff([], "", [], [inner], SILENT)
+
+
+def test_silent_handoff_fails_on_a_reply_beside_the_spawn():
+    with pytest.raises(AssertionError, match="empty response"):
+        check_silent_handoff([], "Handing this to conflict-resolution.", [], [_SPAWN], SILENT)

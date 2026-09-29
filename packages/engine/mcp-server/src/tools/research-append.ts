@@ -401,6 +401,88 @@ function conflictInvariants(entry: any): string[] {
   return errs;
 }
 
+/** The `conflicts` fields a resolve can set. An update naming none of them
+ *  leaves the resolution as it stood, so the kind rule does not re-judge it. */
+const RESOLUTION_FIELDS = [
+  "status",
+  "resolution_kind",
+  "preferred_assertion_id",
+  "resolved_value",
+  "resolution_rationale",
+] as const;
+
+/** Distinct `src_` / `a_` ids a rationale cites. */
+function citedEvidenceIds(text: string): Set<string> {
+  return new Set([...text.matchAll(/\b(?:src|a)_\d+\b/gi)].map((m) => m[0].toLowerCase()));
+}
+
+/** A resolve must say how it was settled (research-append-tool-spec.md §5).
+ *
+ *  `resolution_kind` is required on a conflict that lands `resolved`, and each
+ *  kind carries its own proof: `competitor` names the winning assertion
+ *  (`preferred_assertion_id`, one of `competing_assertion_ids`); `tree` keeps
+ *  the tree's existing conclusion and owes nothing more; `synthesis` builds a
+ *  value no single assertion states (`resolved_value`), and its
+ *  `resolution_rationale` cites at least two distinct `src_`/`a_` ids. Before
+ *  this rule a resolve could name no winner and say nothing about why — 12 of
+ *  68 resolved conflicts in the committed e2e corpus do.
+ *
+ *  Scoped like the place-containment rule below: an append that lands
+ *  resolved, and an update that touches the resolution (status, the kind, the
+ *  winner, the value or the rationale). An unrelated edit to a conflict
+ *  resolved before this rule existed is not refused. `moot` is untouched:
+ *  `conflictInvariants` owns it. No override (ADR-0011, 2026-08-24). */
+function resolutionKindInvariants(entry: any, op: { op: string; fields?: Record<string, unknown> }): string[] {
+  if (entry?.status !== "resolved") return [];
+  const fields = op.fields ?? {};
+  if (op.op !== "append" && !RESOLUTION_FIELDS.some((f) => Object.hasOwn(fields, f))) return [];
+  const requirements =
+    "Name how it was settled with resolution_kind: 'competitor' — one competing assertion wins, " +
+    "named in preferred_assertion_id (one of competing_assertion_ids); 'tree' — the tree's existing " +
+    "conclusion stands and nothing more is owed; 'synthesis' — no single assertion wins, so give the " +
+    "value built from several in resolved_value and cite at least two src_/a_ ids in " +
+    "resolution_rationale.";
+  const kind = entry.resolution_kind;
+  if (!VALIDATOR_ENUMS.resolution_kind.has(kind)) {
+    return [
+      `a resolved conflict requires 'resolution_kind'${kind == null ? "" : ` (got ${JSON.stringify(kind)})`}. ${requirements}`,
+    ];
+  }
+  const competing = Array.isArray(entry.competing_assertion_ids) ? entry.competing_assertion_ids : [];
+  if (kind === "competitor") {
+    const winner = entry.preferred_assertion_id;
+    if (typeof winner !== "string" || winner.trim() === "" || !competing.includes(winner)) {
+      return [
+        "resolution_kind 'competitor' requires preferred_assertion_id naming one of " +
+          `competing_assertion_ids (${competing.join(", ") || "none"}). If no single assertion wins, ` +
+          "use 'tree' (the tree's existing conclusion stands) or 'synthesis' (a value built from " +
+          "several, with resolved_value and a rationale citing at least two src_/a_ ids).",
+      ];
+    }
+    return [];
+  }
+  if (kind === "synthesis") {
+    const errs: string[] = [];
+    const value = entry.resolved_value;
+    if (typeof value !== "string" || value.trim() === "") {
+      errs.push(
+        "resolution_kind 'synthesis' requires resolved_value — the value the evidence supports " +
+          "when no single assertion states it (e.g. \"about 1844\").",
+      );
+    }
+    const rationale = typeof entry.resolution_rationale === "string" ? entry.resolution_rationale : "";
+    const cited = citedEvidenceIds(rationale);
+    if (cited.size < 2) {
+      errs.push(
+        "resolution_kind 'synthesis' requires a resolution_rationale citing at least two distinct " +
+          `src_/a_ ids — the records the value is built from (it cites ${cited.size}).`,
+      );
+    }
+    return errs;
+  }
+  return [];
+}
+
 function planActiveInvariants(entry: any, research: any): string[] {
   if (entry.status !== "active") return [];
   // `p &&`: a legacy `plans: [null]` made this throw
@@ -2814,12 +2896,14 @@ function applyOne(
           `cannot set project.status = "completed": unresolved blocking conflict(s) ${names}. ` +
             "GPS Component 4 requires conflicting evidence to be resolved before concluding. " +
             "Run conflict-resolution for each — set its status to 'resolved' (with " +
-            "independence_analysis, weighing_analysis, and resolution_rationale) or 'moot' " +
-            "(with a rationale for why it no longer matters) — then retry completing the project. " +
-            "A conflict you weighed and could not settle is still recorded as 'resolved' with all " +
-            "three analyses, saying in resolution_rationale why it cannot be settled and what " +
-            "would settle it, and leaving preferred_assertion_id null — a deferral is a finding, " +
-            "not an omission, but it is not 'moot', which means the conflict no longer matters. " +
+            "independence_analysis, weighing_analysis, resolution_rationale and a resolution_kind: " +
+            "'competitor' naming the winning assertion, 'tree' where the tree's existing conclusion " +
+            "stands, or 'synthesis' with a resolved_value) or 'moot' (with a rationale for why it " +
+            "no longer matters) — then retry completing the project. A conflict you weighed and " +
+            "could not settle is still recorded as 'resolved' with all three analyses and " +
+            "resolution_kind 'tree', saying in resolution_rationale why it cannot be settled and " +
+            "what would settle it — a deferral is a finding, not an omission, but it is not " +
+            "'moot', which means the conflict no longer matters. " +
             "A conflict settled in the same batch as this update does not count; complete it in " +
             "a later call.",
         );
@@ -3129,6 +3213,7 @@ function applyOne(
   }
   if (section === "conflicts") {
     invariantErrors.push(...conflictInvariants(resultEntry));
+    invariantErrors.push(...resolutionKindInvariants(resultEntry, op));
     // Place containment: on append, and on an update that (re)sets the pairing.
     // Scoped that way so an unrelated edit to a conflict written before this
     // rule existed is not refused — the freeze #2354 had to design around.

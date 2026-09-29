@@ -2177,7 +2177,7 @@ Unit tests and e2e tests are complementary (see `e2e-test-spec.md`):
 | MCP data | Mocked via fixtures | Live API calls |
 | Grading layers | Deterministic + LLM judge + human | Deterministic + LLM judge + human |
 
-Skill rubric dimensions should align with the e2e base rubric dimensions where they overlap. For example, the conflict-resolution skill rubric's "evidence weighing" dimension corresponds to the e2e base rubric's "conflict handling" dimension. This ensures unit test improvements translate to e2e improvements.
+Skill rubric dimensions should align with the e2e base rubric dimensions where they overlap. For example, the conflict-resolution suite rubric's "evidence weighing" dimension corresponds to the e2e base rubric's "conflict handling" dimension. This ensures unit test improvements translate to e2e improvements.
 
 ---
 

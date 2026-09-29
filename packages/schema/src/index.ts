@@ -25,7 +25,7 @@ import type {
   ProjectStatus, ProofShortfall, ProofTier, ProofVehicle, QuestionStatus, SelectionBasis,
   SourceClassification, Severity, ExternalSite, DateCertaintyTimeline,
   EvaluationFocus, EvaluationTargetType, EvaluationVerdict, ExperienceLevel,
-  Subscription, LocalityPageSection,
+  Subscription, LocalityPageSection, ResolutionKind,
 } from './enums.generated.js'
 
 // ============================================================
@@ -213,6 +213,8 @@ export interface Conflict {
   weighing_analysis?: string | null
   preferred_assertion_id?: string | null
   resolution_rationale?: string | null
+  resolution_kind?: ResolutionKind | null
+  resolved_value?: string | null
   status: ConflictStatus
   blocks_question_ids: string[]
 }
