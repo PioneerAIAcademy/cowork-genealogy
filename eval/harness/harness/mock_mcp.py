@@ -157,6 +157,10 @@ LIVE_TOOLS: set[str] = {
     # network dependency, so a canned fixture would supply the exact URL string
     # search-external-sites' eval exists to measure.
     "build_external_search_url",
+    # Same rationale as convert_calendar: a pure table lookup with no workspace
+    # or network dependency. Nothing calls it until issue #1828; kept live so
+    # that PR's eval doesn't quietly get the answer from a canned fixture.
+    "get_name_variants",
 }
 
 # Path to the compiled MCP server build output, used by live tool handlers.
@@ -1086,6 +1090,7 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "convert_calendar": ("convert-calendar.js", "convertCalendar"),
     "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrl"),
     "sidecar_read": ("sidecar-read.js", "sidecarRead"),
+    "get_name_variants": ("name-variants.js", "getNameVariants"),
 }
 
 #: Compiled tools whose exported function takes a `Principal` as its last

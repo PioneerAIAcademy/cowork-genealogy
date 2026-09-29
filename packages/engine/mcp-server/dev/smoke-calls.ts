@@ -438,6 +438,18 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     args: () => ({ site: "findagrave", attributes: { surname: "Smoke" } }),
     expect: okTrue,
   },
+  {
+    // Exact count pins row-co-occurrence behavior (not the transitive merge
+    // the OLD given-name-variants.json loader does) — proves the bundled
+    // table shipped and the loader read it correctly, not just "non-empty".
+    tool: "get_name_variants",
+    offline: true,
+    args: () => ({ name: "fred" }),
+    expect: (res) => ({
+      ok: !res.isError && Array.isArray(res.body?.variants) && res.body.variants.length === 6,
+      detail: brief(res),
+    }),
+  },
 
   // FamilySearch-token tools: each reaches getValidToken after synchronous
   // arg validation and before any I/O.

@@ -67,7 +67,7 @@ function buildTable(tablePath: string): LoadedTable {
   try {
     table = JSON.parse(raw);
   } catch {
-    return { map, error: `name-variant table is not valid JSON: ${tablePath}` };
+    return { map, error: `name-variant table has invalid JSON syntax: ${tablePath}` };
   }
 
   const en = table.en as Record<string, FormalEntry> | undefined;
@@ -147,6 +147,7 @@ function ensureLoaded(tablePath: string): LoadedTable {
 /** Test-only reset — the cache is module-level and persists across `it()` blocks. */
 export function __clearVariantCacheForTests(): void {
   tables.clear();
+  nicknameTables.clear();
 }
 
 /**
@@ -163,6 +164,94 @@ export function lookupNameFamily(
   const { map, error } = ensureLoaded(tablePath);
   if (error && opts.strict) throw new Error(error);
   return map.get(normalizeString(name)) ?? null;
+}
+
+interface NicknameTable {
+  _meta: Record<string, unknown>;
+  groups: string[][];
+}
+
+interface LoadedNicknameTable {
+  // normalized name -> every other name sharing a group with it, in the
+  // table's own spelling, deduped, first-seen order. NOT transitive: two
+  // names never merge just because each shares a group with some third name.
+  map: Map<string, string[]>;
+  error: string | null;
+}
+
+// Separate cache: this table has no "formal name" concept (fully symmetric
+// groups), so it does not fit LoadedTable/NameFamily above.
+const nicknameTables = new Map<string, LoadedNicknameTable>();
+
+function buildNicknameTable(tablePath: string): LoadedNicknameTable {
+  const map = new Map<string, string[]>();
+
+  let raw: string;
+  try {
+    raw = readFileSync(tablePath, "utf-8");
+  } catch {
+    return { map, error: `name-variant table is missing or unreadable: ${tablePath}` };
+  }
+
+  let table: NicknameTable;
+  try {
+    table = JSON.parse(raw);
+  } catch {
+    return { map, error: `name-variant table has invalid JSON syntax: ${tablePath}` };
+  }
+
+  if (!Array.isArray(table.groups)) {
+    return { map, error: `name-variant table has no "groups" array: ${tablePath}` };
+  }
+
+  for (const group of table.groups) {
+    if (!Array.isArray(group) || group.some((n) => typeof n !== "string" || n.length === 0)) {
+      return { map, error: `name-variant table has a malformed group: ${tablePath}` };
+    }
+    for (const name of group) {
+      const key = normalizeString(name);
+      let variants = map.get(key);
+      if (!variants) {
+        variants = [];
+        map.set(key, variants);
+      }
+      for (const other of group) {
+        if (normalizeString(other) === key) continue;
+        if (!variants.some((v) => normalizeString(v) === normalizeString(other))) {
+          variants.push(other);
+        }
+      }
+    }
+  }
+
+  return { map, error: null };
+}
+
+function ensureNicknameTableLoaded(tablePath: string): LoadedNicknameTable {
+  let loaded = nicknameTables.get(tablePath);
+  if (!loaded) {
+    loaded = buildNicknameTable(tablePath);
+    nicknameTables.set(tablePath, loaded);
+  }
+  return loaded;
+}
+
+/**
+ * Row-co-occurrence lookup for `get_name_variants` (issue #2325): every name
+ * sharing a group with `name` in the table, unioned across every group it
+ * appears in, own form excluded. NOT transitive — two names sharing no group
+ * are never related, even if each relates to some third name. A table that
+ * cannot be loaded degrades to `[]` for every name — unless `strict`, which
+ * throws instead.
+ */
+export function lookupNameVariants(
+  name: string,
+  tablePath: string = NAME_VARIANTS_GIVEN_PATH,
+  opts: { strict?: boolean } = {}
+): string[] {
+  const { map, error } = ensureNicknameTableLoaded(tablePath);
+  if (error && opts.strict) throw new Error(error);
+  return map.get(normalizeString(name)) ?? [];
 }
 
 // Tokens that start with an operator or contain special Lucene syntax
