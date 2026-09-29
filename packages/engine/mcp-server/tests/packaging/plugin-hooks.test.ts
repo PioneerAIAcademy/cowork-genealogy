@@ -125,7 +125,29 @@ function ownedSections(src: string): string[] {
   for (const [, section] of fieldBody.matchAll(/\(\s*["']([^"']+)["']\s*,/g)) {
     if (!sections.includes(section)) sections.push(section);
   }
+
+  for (const [section] of claimRoutes(src)) {
+    if (!sections.includes(section)) sections.push(section);
+  }
   return sections;
+}
+
+/**
+ * `[section, owner]` for each entry in the guard's `OWNED_CLAIMS` — a claim
+ * spread over several fields of one section (`conflicts`), keyed on the
+ * section name with the owning agent first in its tuple.
+ */
+function claimRoutes(src: string): [string, string][] {
+  const body = src.match(/^OWNED_CLAIMS\s*=\s*\{([^}]*)\}/m)?.[1];
+  if (body === undefined) {
+    throw new Error(
+      `OWNED_CLAIMS not found in ${GUARD}. If it was renamed, update this ` +
+        `helper — do not hardcode the section names back into the test.`,
+    );
+  }
+  return [...body.matchAll(/["']([^"']+)["']\s*:\s*\(\s*["']([^"']+)["']/g)].map(
+    (m) => [m[1], m[2]],
+  );
 }
 
 // Resolved once, not per call: probing costs a process launch each time.
@@ -235,6 +257,7 @@ describe("plugin hooks are packaged and wired", () => {
     )) {
       owners[m[1]] = m[2];
     }
+    for (const [section, owner] of claimRoutes(src)) owners[section] = owner;
     for (const row of manifest.rows) {
       if (!(row.enforceableAt ?? []).includes("hook")) continue;
       const fromManifest = (row.hookCallers ?? [])
@@ -681,6 +704,93 @@ describe("the guard script's decisions", () => {
     expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("outside your lane");
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("person_evidence");
+  });
+
+  // ── claim-routed: conflicts (issue #1852) ──
+  //
+  // CLAIM-scoped over several fields, not section-scoped: six skills open a
+  // conflict with only the schema's required fields, and proof-conclusion
+  // re-opens one, so a section route would deny every one of them. The claim is
+  // the analytical product — a resolve, or any analysis field set truthy.
+  const CR_OWNER = "genealogy-research:conflict-resolution";
+  const SKELETON = {
+    conflict_id: "c_001",
+    subject_person_id: "I1",
+    fact_type: "birth_date",
+    competing_assertion_ids: ["a_001", "a_002"],
+    status: "unresolved",
+  };
+
+  it.each([
+    ["a main-thread skeleton open, append", { section: "conflicts", op: "append", entry: SKELETON }],
+    ["a main-thread re-open", { section: "conflicts", op: "update", entryId: "c_001", fields: { status: "unresolved" } }],
+    ["a main-thread moot", { section: "conflicts", op: "update", entryId: "c_001", fields: { status: "moot" } }],
+    // Falsy claim fields claim nothing: clearing a stale winner on a re-open.
+    ["a re-open clearing the winner", { section: "conflicts", op: "update", entryId: "c_001", fields: { status: "unresolved", preferred_assertion_id: null } }],
+  ])("allows research_append on conflicts — %s", (_label, tool_input) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input });
+    expect(out.hookSpecificOutput).toBeUndefined();
+  });
+
+  it.each([
+    ["a resolve, fields", { status: "resolved" }],
+    ["independence_analysis alone", { independence_analysis: "..." }],
+    ["weighing_analysis alone", { weighing_analysis: "..." }],
+    ["preferred_assertion_id alone", { preferred_assertion_id: "a_001" }],
+    ["resolution_rationale alone", { resolution_rationale: "..." }],
+    ["resolution_kind alone", { resolution_kind: "tree" }],
+    ["resolved_value alone", { resolved_value: "1850" }],
+  ])("denies the main thread a conflict claim — %s", (_label, fields) => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: { section: "conflicts", op: "update", entryId: "c_001", fields },
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:conflict-resolution");
+    expect(out.stopReason).toBeUndefined();
+  });
+
+  it.each([
+    ["a resolved append in entry", { section: "conflicts", op: "append", entry: { ...SKELETON, status: "resolved" } }],
+    // The empty-dict shape that defeated the declaration arm until it read both keys.
+    ["empty fields beside a claiming entry", { section: "conflicts", op: "append", fields: {}, entry: { ...SKELETON, weighing_analysis: "..." } }],
+    ["inside a batch whose other op is a skeleton", { ops: [
+      { section: "conflicts", op: "append", entry: SKELETON },
+      { section: "conflicts", op: "update", entryId: "c_002", fields: { status: "resolved" } },
+    ] }],
+  ])("denies the main thread a conflict claim — %s", (_label, tool_input) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+  });
+
+  it.each([
+    ["namespaced agent_type, as production reports it", CR_OWNER],
+    ["bare agent_type", "conflict-resolution"],
+  ])("permits the conflict-resolution agent a resolve — %s", (_label, agent_type) => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: {
+        section: "conflicts",
+        op: "update",
+        entryId: "c_001",
+        fields: { status: "resolved", resolution_kind: "tree", weighing_analysis: "...", independence_analysis: "...", resolution_rationale: "..." },
+      },
+      agent_id: "agent-1",
+      agent_type,
+    });
+    expect(out).toEqual({});
+  });
+
+  it("denies the conflict-resolution agent a section outside its own lane", () => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: { section: "hypotheses", op: "append", entry: {} },
+      agent_id: "agent-1",
+      agent_type: CR_OWNER,
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("outside your lane");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("conflicts");
   });
 
   it("permits the owning agent's real shape — summary + resolve in ONE batch", () => {

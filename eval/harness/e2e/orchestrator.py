@@ -45,6 +45,7 @@ from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
     OWNED_DECLARATIONS as OWNED_DECLARATION_OWNERS,  # the SHIPPED hook's map, not a copy
     OWNED_FIELDS as OWNED_FIELD_OWNERS,  # the SHIPPED hook's map, not a copy
+    OWNED_CLAIMS as OWNED_CLAIM_ROUTES,  # the SHIPPED hook's map, not a copy
     OWNED_SECTIONS as OWNED_SECTION_OWNERS,  # the SHIPPED hook's map, not a copy
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
     is_subagent_call,
@@ -1979,6 +1980,15 @@ async def _run_agent(
                     f"routed to the {agent} agent. Every other write to "
                     f"`{owned_section}` is unaffected; delegate this field rather "
                     "than setting it here."
+                )
+            elif rule == "claim":
+                agent = OWNED_CLAIM_ROUTES[owned][0]
+                text = (
+                    f"`{bare}` denied on `{owned}` — recording a conflict's analysis "
+                    f"or resolution is routed to the {agent} agent. Opening a "
+                    "conflict with its required fields, and re-opening one as "
+                    "`unresolved`, are both unaffected; delegate the analysis "
+                    "rather than writing it here."
                 )
             else:
                 text = (

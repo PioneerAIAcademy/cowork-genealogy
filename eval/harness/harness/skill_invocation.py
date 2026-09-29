@@ -251,7 +251,7 @@ def find_unguarded_protected_writes(
     return violations
 
 
-# The four optional `conflict` fields that are conflict-resolution's analytical
+# The six optional `conflict` fields that are conflict-resolution's analytical
 # PRODUCT rather than the mere record that a conflict exists. Several skills
 # legitimately open a conflicts entry — person-evidence (#738's mandatory entry
 # when identity rests on one uncorroborated read), proof-conclusion,
@@ -259,14 +259,17 @@ def find_unguarded_protected_writes(
 # the schema's required fields (id / conflict_type / description /
 # competing_assertion_ids / status / blocks_question_ids). These four are
 # optional in `research.schema.json` and, across the whole plugin, are written
-# ONLY by `conflict-resolution/SKILL.md` and by `research/SKILL.md` — i.e. the
-# orchestrator that is supposed to *delegate* to it. So their presence is the
-# effect, and their absence is why "a conflict was recorded" alone must not fire.
+# ONLY by the `conflict-resolution` agent — the plugin hook denies them to every
+# other caller (`OWNED_CLAIMS` in guard_project_files.py). So their presence is
+# the effect, and their absence is why "a conflict was recorded" alone must not
+# fire. `resolution_kind` and `resolved_value` joined with the kind gate.
 CONFLICT_ANALYSIS_FIELDS = (
     "independence_analysis",
     "weighing_analysis",
     "preferred_assertion_id",
     "resolution_rationale",
+    "resolution_kind",
+    "resolved_value",
 )
 
 
@@ -1078,6 +1081,11 @@ DEDICATED_AGENT_NAMES = frozenset(
         # folder. Listed because the set is asserted equal to the shipped agent
         # files.
         "search-familysearch-wiki",
+        # The proof-conclusion shape, claim-scoped (issue #1852): the hook
+        # routes a conflict's analytical product -- a resolve, or any of
+        # CONFLICT_ANALYSIS_FIELDS -- to this agent, so every legitimate
+        # resolution now arrives from it.
+        "conflict-resolution",
     }
 )
 
