@@ -11,6 +11,8 @@ corpus grew. This derives the three that live in the narration capture:
   L-plan median minutes into a run at which `Skill:research-plan` first lands
   L-open share of paragraphs opening "Now..." / "Let me..."
         (decides whether the between-actions rule survives)
+  L-yield share of runs that NEVER yield, and the median nudges per run
+        (decides whether a contract may ride the Stop hook at all)
 
 The fourth -- the identifier validator's refusal rate -- is not in this capture
 and is not derived here; see the plan's R7 note.
@@ -49,6 +51,10 @@ def derive(root: Path) -> dict:
     runs_total = runs_with_narration = 0
     paras = no_log_write = openers = 0
     plan_minutes: list[float] = []
+    # Runs carrying `usage.continue_nudges` at all, and how many of those never
+    # yielded. Kept separate because "no counter" and "zero nudges" are different
+    # facts and collapsing them silently inflates or deflates the share.
+    nudge_counts: list[int] = []
 
     for _path, doc in _runs(root):
         runs_total += 1
@@ -60,6 +66,10 @@ def derive(root: Path) -> dict:
             if len(row) > 2 and row[2] and PLAN_SKILL in row[2]:
                 plan_minutes.append(float(row[0]) / 60.0)
                 break
+
+        nudges = (doc.get("usage") or {}).get("continue_nudges")
+        if isinstance(nudges, int):
+            nudge_counts.append(nudges)
 
         narration = doc.get("narration")
         if not narration:
@@ -91,6 +101,7 @@ def derive(root: Path) -> dict:
         "no_log_write": no_log_write,
         "openers": openers,
         "plan_minutes": plan_minutes,
+        "nudge_counts": nudge_counts,
     }
 
 
@@ -124,6 +135,16 @@ def main(argv: list[str]) -> int:
     else:
         print("  L-plan research-plan lands at median ..... NOT MEASURED "
               "(no run's timeline names Skill:research-plan)")
+
+    nc = r["nudge_counts"]
+    if nc:
+        never = sum(1 for n in nc if n == 0)
+        print(f"  L-yield runs that NEVER yield ............ {100.0 * never / len(nc):5.1f}%  "
+              f"({never}/{len(nc)} runs carrying the counter, of {r['runs_total']} total)")
+        print(f"  L-yield median nudges per run ............ {statistics.median(nc):5.1f}")
+    else:
+        print("  L-yield runs that NEVER yield ............ NOT MEASURED "
+              "(no run carries usage.continue_nudges)")
     return 0
 
 
