@@ -2871,3 +2871,86 @@ def test_read_research_and_count_tool_calls_read_the_rows():
     conn.research = None
     assert worker.read_research(conn, "proj-1") is None
 
+
+
+# --- R1: router re-entry rides the per-turn system prompt, not the Stop hook ---
+#
+# CONTINUE_REASON says "invoke the next GPS sub-skill now", never names the router,
+# and rides the Stop hook -- which fires only at a voluntary yield. Derived from the
+# committed e2e corpus (`make e2e-narration-figures`): 31.6% of runs (61 of 193)
+# NEVER yield, so a contract on that carrier is undelivered in a third of runs.
+# `build_worker_options` is rebuilt per attempt, so an append here reaches every turn.
+
+def test_a_resumed_turn_carries_the_router_instruction(tmp_path):
+    opts = _options(config_dir=str(tmp_path), resume="sess-1")
+    assert options.ROUTER_REENTRY in opts.system_prompt["append"]
+
+
+def test_the_opening_turn_does_not_carry_it(tmp_path):
+    """The web tier prefixes a session's FIRST message with OPENING_TURN so
+    init-project runs and consumes the objective. There is no project to route yet,
+    and a routing instruction there is a second, competing 'what to do first' on
+    turn 1 of every web session. `resume is None` is that turn."""
+    opts = _options(config_dir=str(tmp_path))
+    assert opts.resume is None
+    assert options.ROUTER_REENTRY not in opts.system_prompt["append"]
+
+
+def test_the_instruction_bounds_itself_to_research_requests(tmp_path):
+    """Without the scope clause this makes every message a job -- the parent plan
+    pins it: "'Where are we?' is a bounded request whose deliverable is the answer.
+    Whatever re-enters the router must respect this, or every question becomes a
+    job." The clause ships now because the WORDING reaches 100% of turns now, even
+    though the enforcement arm is deferred."""
+    lowered = options.ROUTER_REENTRY.lower()
+    assert "research" in lowered
+    assert "status question" in lowered and "not re-routed" in lowered
+    assert "bounded" in lowered
+
+
+def test_the_standing_project_note_survives_the_append(tmp_path):
+    """The router instruction is added to the platform note, not instead of it."""
+    append = _options(config_dir=str(tmp_path), resume="sess-1").system_prompt["append"]
+    assert "projectPath '/project'" in append and "narration_guidance" in append
+    assert append.index("projectPath") < append.index(options.ROUTER_REENTRY[:24])
+
+
+# --- R1 acceptance: which callee a Skill/Task row names ---
+#
+# "The router entered" was unrecordable. The tool_calls row carries tool_name,
+# input_path, decision, tool_use_id, and input_path() read only file-path keys, so
+# every skill invocation was an indistinguishable tool_name='Skill' row and no
+# corpus predicate could tell a routed run from an unrouted one.
+
+def test_a_skill_call_records_which_skill():
+    assert options.input_path("Skill", {"skill": "research"}, cwd="/w") == "research"
+
+
+def test_a_skill_call_falls_back_to_name():
+    """The SDK has spelled this key both ways; skill_runner.py already codifies the
+    fallback. A moved key silently yielding None is the invisible failure it
+    documents."""
+    assert options.input_path("Skill", {"name": "research"}, cwd="/w") == "research"
+
+
+def test_an_agent_spawn_records_its_subagent_type():
+    assert options.input_path("Task", {"subagent_type": "record-extractor"}, cwd="/w") == "record-extractor"
+    assert options.input_path("Agent", {"subagent_type": "gps-mentor"}, cwd="/w") == "gps-mentor"
+
+
+def test_a_skill_call_naming_nothing_is_none_not_a_guess():
+    assert options.input_path("Skill", {}, cwd="/w") is None
+    assert options.input_path("Skill", {"skill": ""}, cwd="/w") is None
+    assert options.input_path("Skill", {"skill": 7}, cwd="/w") is None
+
+
+def test_the_callee_keys_do_not_leak_into_other_tools():
+    """`name` is a common key. Only Skill/Task/Agent may read it, or an unrelated
+    tool carrying a `name` argument starts writing a bogus path into the ledger."""
+    assert options.input_path("Read", {"name": "research"}, cwd="/w") is None
+    assert options.input_path("Bash", {"skill": "research"}, cwd="/w") is None
+
+
+def test_a_file_path_still_wins_for_file_tools():
+    assert options.input_path("Read", {"file_path": "/a/b.txt"}, cwd="/w") == "/a/b.txt"
+    assert options.input_path("Grep", {"pattern": "x"}, cwd="/w") == "/w"

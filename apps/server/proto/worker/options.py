@@ -317,11 +317,35 @@ def write_mcp_config(config_dir: str, servers: Mapping[str, Any]) -> str:
     return path
 
 
+# The tools whose ``tool_calls`` row names a CALLEE rather than a path. Kept a named
+# set so the arm in ``input_path`` cannot quietly widen to tools that merely carry a
+# ``name`` argument.
+CALLEE_TOOLS = frozenset({"Skill", "Task", "Agent"})
+
+
 def input_path(tool_name: str, tool_input: Mapping[str, Any] | None, *, cwd: str) -> str | None:
-    """The path a call names, for the ``tool_calls`` row: ``file_path`` / ``path`` /
+    """What a call names, for the ``tool_calls`` row: ``file_path`` / ``path`` /
     ``notebook_path`` when present; the working directory for a Grep/Glob that omits its
-    ``path`` (the tool's own default); None otherwise."""
+    ``path`` (the tool's own default); for a ``Skill``/``Task``/``Agent`` call the CALLEE
+    it names; None otherwise.
+
+    The callee arm exists so a corpus can tell a routed run from an unrouted one (R1).
+    Without it every skill invocation is an indistinguishable ``tool_name='Skill'`` row
+    and "did this run enter the router" is recorded nowhere. It is read only for those
+    three tools: ``name`` is a common argument, and letting any tool supply it would
+    write a bogus path into the ledger for every call that happens to carry one.
+
+    Both ``skill`` and ``name`` are tried because the SDK has spelled it both ways --
+    the same fallback ``eval/harness/harness/skill_runner.py`` codifies. A key that
+    moves again yields None here, which the tests pin rather than leave invisible.
+    """
     data = tool_input or {}
+    if tool_name in CALLEE_TOOLS:
+        for key in ("skill", "name", "subagent_type"):
+            value = data.get(key)
+            if isinstance(value, str) and value:
+                return value
+        return None
     for key in ("file_path", "path", "notebook_path"):
         value = data.get(key)
         if isinstance(value, str) and value:
@@ -689,6 +713,24 @@ def check_registration(
     return problems
 
 
+# R1: the router's contracts -- the second question, completion routing -- hold only
+# when the run actually enters `research`. CONTINUE_REASON asks for "the next GPS
+# sub-skill", never names the router, and rides the Stop hook, which fires only at a
+# voluntary yield: 31.6% of runs never yield (61 of 193 committed e2e runs carrying
+# the counter; `make e2e-narration-figures`). Options are rebuilt every attempt, so
+# this reaches every turn instead.
+#
+# The scope clause is not decoration. Without it this makes every message a job --
+# "where are we?" is a bounded request whose deliverable is the answer. The
+# enforcement arm (whether the model OBEYS this) is deliberately deferred and is a
+# separate measurement; what ships here is delivery.
+ROUTER_REENTRY = (
+    "If this message asks for research work, enter it through the `research` skill so "
+    "the run's routing contracts hold. A status question, or a request bounded to one "
+    "deliverable, is answered directly and is not re-routed."
+)
+
+
 def build_worker_options(
     *,
     project_id: str,
@@ -729,6 +771,11 @@ def build_worker_options(
         "apply researcher_profile.narration_guidance from research.json as your "
         "narration style."
     )
+    # NOT on a session's first turn: the web tier prefixes that message with
+    # OPENING_TURN so init-project runs and consumes the objective, and there is no
+    # project to route yet. `resume is None` is exactly that turn.
+    if resume is not None:
+        project_note = f"{project_note}\n\n{ROUTER_REENTRY}"
     env: dict[str, str] = {
         "ENABLE_TOOL_SEARCH": "true",
         "CLAUDE_CONFIG_DIR": config_dir,
