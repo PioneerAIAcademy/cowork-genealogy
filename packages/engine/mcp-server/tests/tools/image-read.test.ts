@@ -268,7 +268,7 @@ describe("imageReadTool — ark input", () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it("rejects an 8-character unprefixed id without fetching", async () => {
+  it("rejects a persona-shaped unprefixed id without fetching", async () => {
     await expect(imageReadTool({ ark: "QPRC-WPBZ" }, LOCAL)).rejects.toThrow(
       /exactly as the user gave it/
     );

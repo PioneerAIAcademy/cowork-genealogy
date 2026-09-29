@@ -35,10 +35,11 @@ const DGS_URL_PATTERN =
   /^https:\/\/(www\.)?familysearch\.org\/das\/v2\/dgs:[^/]+\/dist\.jpg$/;
 
 // An image-ARK id with its `3:1:` prefix dropped, as a delegating agent passed
-// it in the 2026-09-28 run. Only the 4-4-4-1 shape: in the repo corpus 1199
-// prefixed ids of that shape are 3:1: and 3 are 3:2: (all synthetic), while 8-
-// and 11-character bare ids collide with 1:1: persona and 4:1: tree ids. Kept
-// here rather than in ark.ts's toArk, which every ARK consumer shares.
+// it in an alpha-feedback run. Only the 4-4-4-1 shape: in the repo, 161 distinct
+// prefixed ids of that shape are 3:1: and 1 is 3:2: (a test value), while
+// shorter bare ids collide with 1:1: persona ids (XXXX-XXX, XXXX-XXXX) and 4:1:
+// tree ids (XXXX-XXX). Kept here rather than in ark.ts's toArk, which every ARK
+// consumer shares.
 const UNPREFIXED_IMAGE_ID_RE = /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]$/;
 
 // A `3:1:`/`3:2:` ARK is not always self-sufficient: some are waypoints into

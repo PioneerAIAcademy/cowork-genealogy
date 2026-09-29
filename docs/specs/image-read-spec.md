@@ -53,12 +53,16 @@ Accepted forms:
   letters and digits, trimmed), treated as `3:1:` and resolved like any other
   `3:1:` ARK. It exists because a delegating agent dropped the prefix from a
   pasted viewer URL in an alpha-feedback run. The shape is the only one
-  accepted without a prefix: in the repo corpus, 1199 prefixed ids of that shape
-  are `3:1:` and 3 are `3:2:` (all synthetic), and 8- and 11-character ids collide
-  with `1:1:` persona and `4:1:` tree ids. The rule lives in `fs-image-fetch.ts`,
-  not `ark.ts`'s `toArk`, which every ARK consumer shares. **Measured
-  2026-09-28** on `3QS7-89Q6-89S6-Y`: the resolver ignores `i=` and `groupId`
+  accepted without a prefix. On `main` at `3cdfcb6a9`, 161 distinct prefixed ids of
+  that shape are `3:1:` and 1 is `3:2:` (a test value), counted with
+  `git grep -hoE "[0-9]:[0-9]:[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]\b" -- packages/engine docs eval | sort -u | cut -c1-4 | uniq -c`.
+  Shorter ids collide with `1:1:` persona ids (`XXXX-XXX`, `XXXX-XXXX`) and `4:1:`
+  tree ids (`XXXX-XXX`). The rule lives in `fs-image-fetch.ts`, not `ark.ts`'s
+  `toArk`, which every ARK consumer shares. **Measured 2026-09-28 by the issue's
+  review probe** on `3QS7-89Q6-89S6-Y`: the resolver ignores `i=` and `groupId`
   (four query forms return byte-identical images), and the `3:2:` form returns 400.
+  On another login the same page returns 403 in every form, so the page is
+  access-restricted per account.
 - An already-resolved DeepZoomCloud ARK URL (ending in `/$dist`) or DGS
   distribution URL (`dgs:.../dist.jpg`), passed through unchanged —
   the pre-existing shapes from before `imageId` was introduced.
