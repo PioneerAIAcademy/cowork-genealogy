@@ -1131,6 +1131,58 @@ def rule8_annotation_headers(runlogs_dir: Path) -> int:
     return fails
 
 
+def rule9_outcome_enum(runlogs_dir: Path) -> int:
+    """Rule 9 (blocking, corpus-wide): every committed run log's aggregate
+    ``tests[].outcome`` is in the schema enum (pass/partial/fail/aborted).
+
+    Corpus-wide, because the straggler this closes arrives by MERGE, not as a
+    PR-added file. Rule 6 grades only the logs a PR adds, and it reads
+    ``runs[].outcome`` -- it recomputes the aggregate and never validates the
+    STORED ``outcome`` field. So the run-log schema's narrowed ``outcome`` enum
+    (#2842) was enforced only on the harness write path (``validate_run_log``),
+    never on committed logs: a log written before the narrowing, or one landed on
+    main concurrently with it, kept a retired ``xfail``/``xpass`` aggregate that
+    no check could see (a run log carrying one merged clean on this very PR).
+
+    Cheap enough to run unconditionally: a few hundred small files, parse only.
+    Malformed files are skipped, not reported -- JSON validity of a run log is
+    not this rule's contract, and re-running the harness is the only fix anyway.
+    """
+    bad = 0
+    for path in sorted(runlogs_dir.rglob("*.json")):
+        if path.name.endswith(".ann.json"):
+            continue
+        if classify(path.name).kind not in ("released", "candidate"):
+            continue  # scratch / unrecognized: gitignored or not ours
+        rel = _format_path(path)
+        try:
+            log = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+            continue
+        for test in log.get("tests") or []:
+            # Only a PRESENT aggregate outside the enum -- the straggler class is a
+            # retired string value (`xfail`/`xpass`), not a missing field. A
+            # missing/absent `outcome` is a `required`-schema violation the harness
+            # write path (`validate_run_log`) already rejects, so it is out of scope
+            # here; flagging it would also false-fail minimal fixtures that carry
+            # only `runs[]`.
+            if "outcome" not in test:
+                continue
+            outcome = test["outcome"]
+            if outcome not in _RUN_OUTCOMES:
+                gh_error(
+                    f"run log `{rel}` test `{test.get('test_id', '<no id>')}` has "
+                    f"aggregate outcome {outcome!r}, outside the schema enum "
+                    f"{sorted(_RUN_OUTCOMES)}. Suppression of a declared-xfail "
+                    f"failure is read from the `expected_outcome` marker beside it, "
+                    f"not from a distinct outcome value (#2842). Re-run the harness "
+                    f"rather than hand-editing the log.",
+                    file=rel,
+                )
+                bad += 1
+    return bad
+
+
 def main() -> int:
     # The house pattern (`e2e/author.py`). A Windows console defaults to cp1252
     # and dies on the arrows and box glyphs this module prints; the team it is
@@ -1298,6 +1350,11 @@ def main() -> int:
 
     # Rule 8 sweeps the annotation corpus for header-vs-score incoherence.
     fails += rule8_annotation_headers(RUNLOGS_DIR)
+
+    # Rule 9 sweeps the run-log corpus for an aggregate `outcome` outside the
+    # schema enum — the straggler class rule 6 (PR-added logs, per-run field)
+    # cannot see (#2842).
+    fails += rule9_outcome_enum(RUNLOGS_DIR)
 
     # Rule 7 checks that every deleted run log / annotation is a legitimate
     # keep-newest-K prune or a promotion — not a hand-deletion beyond the prune
