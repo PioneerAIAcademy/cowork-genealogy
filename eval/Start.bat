@@ -20,8 +20,12 @@ if errorlevel 1 (
   exit /b 1
 )
 
-if not exist node_modules (
-  echo First run: installing dependencies. This takes a minute.
+REM Test for the workspace link, NOT for the repo-root node_modules: that
+REM folder already exists on every machine set up before eval\app joined the
+REM workspace, so testing it would skip the install for exactly the people who
+REM still need one, and Next then fails on "Can't resolve '@genealogy/schema'".
+if not exist "eval\app\node_modules\@genealogy\schema" (
+  echo First run since the eval app moved into the workspace: installing. This takes a minute.
   call pnpm install
   if errorlevel 1 ( echo ERROR: pnpm install failed. & pause & exit /b 1 )
 )

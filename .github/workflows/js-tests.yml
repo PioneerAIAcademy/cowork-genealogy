@@ -147,7 +147,15 @@ jobs:
           # `eval/Start.bat` moved to the `workspace` job's PATTERNS along with
           # the vitest suite that pins it (wiring.test.ts), so it is not listed
           # here — this job runs Playwright only.
-          PATTERNS: '^eval/app/|^docs/specs/schemas/|^\.github/workflows/js-tests\.yml$'
+          #
+          # The workspace manifests ARE listed. eval/app renders
+          # `@genealogy/schema` types, and its dependency tree is resolved from
+          # the root lockfile, so a change to `packages/schema/`, `pnpm-lock.yaml`,
+          # `package.json` or `pnpm-workspace.yaml` can change what these specs
+          # render while touching nothing under `eval/app/`. Without them this
+          # required check reports success without running — the shape it exists
+          # to prevent.
+          PATTERNS: '^eval/app/|^packages/schema/|^docs/specs/schemas/|^package\.json$|^pnpm-lock\.yaml$|^pnpm-workspace\.yaml$|^\.github/workflows/js-tests\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
@@ -173,11 +181,13 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
 
-      # The root install runs eval/app's postinstall (scripts/gen-zod.ts), which
-      # generates the Zod schemas this app imports.
+      # `--filter …app...` is eval/app plus its workspace dependencies (2 of 6
+      # projects), which skips apps/electron and its binary download. Still runs
+      # eval/app's postinstall (scripts/gen-zod.ts), which generates the Zod
+      # schemas this app imports.
       - name: Install dependencies
         if: steps.scope.outputs.relevant == 'true'
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --filter cowork-genealogy-eval-app...
 
       - name: Install Playwright browsers
         if: steps.scope.outputs.relevant == 'true'

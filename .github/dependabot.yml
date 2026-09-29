@@ -10,7 +10,7 @@
 # uniform, because the ecosystems do not have the same slot demand:
 #
 #   npm              The group covers only minor+patch, so every MAJOR arrives
-#                    as its own PR and competes for a slot. npm also spans three
+#                    as its own PR and competes for a slot. npm also spans two
 #                    directories and holds most of the dependencies. Hence 5.
 #   github-actions   `patterns: "*"` with no update-types, so EVERYTHING —
 #   docker           majors included — collapses into one grouped PR. These two

@@ -26,11 +26,15 @@ const nextConfig = {
   // webpack does not, and fails `next build` with "Can't resolve
   // './enums.generated.js'". Measured, not anticipated (#1488). Keep `.js` last
   // so a genuine .js import still resolves.
+  // Scoped to packages/schema by `include`, not set globally on
+  // `config.resolve`: a top-level extensionAlias would make webpack try `.ts`
+  // ahead of `.js` for every import in the graph, node_modules included.
   webpack: (config) => {
-    config.resolve.extensionAlias = {
-      ...config.resolve.extensionAlias,
-      '.js': ['.ts', '.tsx', '.js'],
-    };
+    config.module.rules.push({
+      test: /\.tsx?$/,
+      include: path.resolve(__dirname, '../../packages/schema'),
+      resolve: { extensionAlias: { '.js': ['.ts', '.tsx', '.js'] } },
+    });
     return config;
   },
 };

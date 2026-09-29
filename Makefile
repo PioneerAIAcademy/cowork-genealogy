@@ -299,7 +299,7 @@ test: ## Quick loop: JS workspace + server tests (a subset of test-all)
 	$(MAKE) server-test
 
 .PHONY: test-js
-test-js: $(JS_DEPS) ## JS workspace tests — web, electron, viewer-ui, schema (turbo)
+test-js: $(JS_DEPS) ## JS workspace tests — web, electron, viewer-ui, schema, eval/app (turbo)
 	pnpm test
 
 .PHONY: server-test

@@ -23,6 +23,10 @@ if defined MISSING (
 
 set "NOTINSTALLED="
 if not exist "node_modules" set "NOTINSTALLED=!NOTINSTALLED! node_modules"
+REM The workspace link, not just the root folder: on a checkout that predates
+REM eval\app joining the workspace the root folder exists while eval/app has no
+REM deps, and the turbo suites would fail with a resolution error instead.
+if not exist "eval\app\node_modules\@genealogy\schema" set "NOTINSTALLED=!NOTINSTALLED! eval\app\node_modules"
 if not exist "packages\engine\mcp-server\node_modules" set "NOTINSTALLED=!NOTINSTALLED! packages\engine\mcp-server\node_modules"
 if defined NOTINSTALLED (
     echo ERROR: dependencies are not installed:!NOTINSTALLED!
