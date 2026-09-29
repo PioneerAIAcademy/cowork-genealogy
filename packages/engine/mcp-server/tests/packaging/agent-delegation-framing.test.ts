@@ -164,37 +164,6 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
-  "proof-conclusion -> proof-conclusion": {
-    pins: [
-      {
-        side: "agent",
-        excerpt:
-          "**Including when your own delegation message tells you to write one.** You are\nspawned by a caller that cannot see the evidence and does not run this gate.",
-      },
-    ],
-    exempt: {
-      side: "caller",
-      reason:
-        "The skill's delegation names both outcomes — 'at whatever tier the evidence " +
-        "supports — including `possible` or `not_proved`' — so the instruction this repo " +
-        "ships cannot be read as an expected answer. That construction is the mitigation " +
-        "and is pinned below; the agent-side pin above is the guarantee. Measured limit, " +
-        "recorded rather than hidden: of the 3 real conclusion delegations in the committed " +
-        "corpus only 1 uses the construction, and one run pre-stated the tier itself ('the " +
-        "best achievable tier is Probable given the external site gap'), which is exactly " +
-        "what must not travel. So the mitigation covers the shipped caller text, not every " +
-        "composed message, and agents/proof-conclusion.md carries no explicit instruction " +
-        "to disregard a caller-supplied tier the way image-reader.md and " +
-        "research-exhaustiveness.md do. Shrinking this exemption means adding that " +
-        "instruction and pinning it on the agent side.",
-      mitigation: {
-        side: "caller",
-        excerpt:
-          "run its preconditions gate and then conclude the question at whatever tier the evidence supports** — including `possible` or `not_proved`",
-      },
-    },
-  },
-
   "research-exhaustiveness -> research-exhaustiveness": {
     pins: [
       {
@@ -387,6 +356,32 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["search-records -> citation", ""],
   ["source-evaluation -> citation", ""],
   ["translation -> citation", ""],
+  // Nine "use proof-conclusion" prohibitions in DO NOT clauses, visible to the
+  // prose arm only since issue #2822 deleted the routing skill and made the
+  // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
+  // is a delegation being silenced -- verified per file before listing.
+  ["conflict-resolution -> proof-conclusion", ""],
+  ["hypothesis-tracking -> proof-conclusion", ""],
+  ["project-status -> proof-conclusion", ""],
+  ["question-selection -> proof-conclusion", ""],
+  ["research-exhaustiveness -> proof-conclusion", ""],
+  ["timeline -> proof-conclusion", ""],
+  ["tree-edit -> proof-conclusion", ""],
+  ["validate-schema -> proof-conclusion", ""],
+  // `search-wikipedia` (issue #2795) is the reverse of the `citation` shape: its
+  // name is not an ordinary English word, so the arm DOES discriminate for it,
+  // and all three mentions below are boundary prose telling the reader this is
+  // the other lane — "a general Wikipedia summary of the place (use
+  // search-wikipedia)", "use the `search-wikipedia` skill instead", "→
+  // search-wikipedia, not translation". None is a delegation: under the lead's
+  // 2026-09-23 hand-back ruling nothing spawns this agent from a skill body.
+  // #2795 decided to leave all three wordings alone — the name survives as the
+  // agent's name, and rewording them would flip three more skills' eval
+  // snapshots for no behavioural gain. All three are bare-name mentions, so all
+  // three take `""` and none can suppress a real delegation edge.
+  ["locality-guide -> search-wikipedia", ""],
+  ["search-familysearch-wiki -> search-wikipedia", ""],
+  ["translation -> search-wikipedia", ""],
   // person-evidence gained a skills/<name>/ directory before the agent
   // conversion; when the skill was deleted the name entered agentOnly and
   // every SKILL.md that references it now needs a registration. All are
@@ -579,8 +574,12 @@ describe("agent delegation framing", () => {
     "citation",
     "gps-mentor",
     "image-reader",
+    // ARRIVED when issue #2822 deleted skills/proof-conclusion/. The name is
+    // now unambiguous, so the prose arm starts policing its bare-name mentions.
+    "proof-conclusion",
     "person-evidence",
     "record-extractor",
+    "search-wikipedia",
   ];
 
   it("the prose arm still covers every agent it is relied on to police", () => {
