@@ -5,9 +5,9 @@
  * evidence trail, run live 2026-09-14/15 over 221 memories on three persons.
  * The filter is the lead's ruling of 2026-09-15 (issue #1689).
  */
-import { getValidToken } from "../auth/refresh.js";
 import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
+import { fsFetch } from "./fs-fetch.js";
 import { fetchWithRetry } from "./http.js";
 import { isMemoryArtifactUrl } from "./fs-image-fetch.js";
 
@@ -106,14 +106,11 @@ const RECORD_LANGUAGE = new RegExp(
   "i",
 );
 
-function headers(token: string): Record<string, string> {
-  return {
-    Authorization: `Bearer ${token}`,
-    Accept: ACCEPT_HEADER,
-    "Accept-Language": "en",
-    "User-Agent": BROWSER_USER_AGENT,
-  };
-}
+const FS_HEADERS: Record<string, string> = {
+  Accept: ACCEPT_HEADER,
+  "Accept-Language": "en",
+  "User-Agent": BROWSER_USER_AGENT,
+};
 
 function kindOf(am: Json[] | undefined): Memory["kind"] {
   const s = JSON.stringify(am ?? []);
@@ -159,11 +156,10 @@ function toMemory(sd: Json): Memory {
  * fetch PER RELATIVE, not more than one page for the subject.
  */
 export async function fetchMemories(personId: string, principal: Principal): Promise<Memory[]> {
-  const token = await getValidToken(principal);
   let url: string | undefined = `${API_BASE}/${encodeURIComponent(personId)}/memories`;
   const out: Memory[] = [];
   for (let page = 0; url && page < MAX_PAGES; page++) {
-    const res = await fetchWithRetry(url, { headers: headers(token) });
+    const res = await fsFetch(principal, url, { headers: FS_HEADERS });
     // 204 is the DOCUMENTED last page (see the note above), not an outage --
     // every memory was collected. Warning on it turned the signal below into
     // noise on exactly the memory-rich people this feature exists for: the
@@ -256,10 +252,10 @@ export function rankForTranscription(kept: Memory[]): Memory[] {
  *  failure: a portrait lookup must never fail the read. */
 export async function fetchPortraitId(personId: string, principal: Principal): Promise<string | null> {
   try {
-    const token = await getValidToken(principal);
-    const res = await fetchWithRetry(
+    const res = await fsFetch(
+      principal,
       `${API_BASE}/${encodeURIComponent(personId)}/portrait`,
-      { headers: headers(token), redirect: "manual" },
+      { headers: FS_HEADERS, redirect: "manual" },
     );
     const loc = res.headers.get("location");
     if (!loc) return null;

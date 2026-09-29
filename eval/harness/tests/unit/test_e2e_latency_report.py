@@ -211,3 +211,86 @@ def test_format_skill_phases_no_data_message_for_legacy_run():
     text = format_skill_phases(bd)
     assert "no skill-phase data" in text
     assert "kenneth-quass-death" in text
+
+
+# --- a Windows-slept run (issue #2983): timeline offsets include standby -----
+
+
+def _windows_slept():
+    # Timeline 0 -> 50 s on the raw monotonic clock, 30 s of which was standby
+    # the heartbeat counted, so the persisted active wall-clock is 60 - 30.
+    return _result(
+        usage={
+            **_result()["usage"],
+            "timeline": _SKILL_TIMELINE,
+            "wall_clock_seconds": 30.0,
+            "counted_sleep_seconds": 30.0,
+        }
+    )
+
+
+def test_windows_slept_stall_is_measured_on_the_timeline_clock():
+    bd = analyze_result(_windows_slept())
+    assert bd.counted_sleep_s == 30.0
+    assert bd.timeline_clock_s == 60.0
+    # 60 on the timeline's clock minus a 50 s span, not max(0, 30 - 50) = 0.
+    assert bd.stall_s == 10.0
+
+
+def test_windows_slept_phase_share_never_exceeds_the_run():
+    text = format_skill_phases(analyze_result(_windows_slept()))
+    # person-evidence ran 30 of 60 s on the timeline's clock: 50%, not 100%.
+    assert "50% of wall-clock" in text
+    assert "100% of wall-clock" not in text
+
+
+def test_windows_slept_breakdown_names_the_host_sleep_without_placing_it():
+    text = format_breakdown(analyze_result(_windows_slept()))
+    assert "host sleep:      0.5m" in text
+    # Only a total is persisted: the line must not claim which bucket holds it.
+    host = next(line for line in text.splitlines() if "host sleep" in line)
+    assert "counted in non-tool" not in host
+    assert "tool, non-tool or stall/idle" in host
+    assert "host sleep" not in format_breakdown(analyze_result(_result()))
+
+
+def test_windows_slept_standby_during_a_tool_call_is_not_called_non_tool():
+    # 1200 s standby while record_search was pending: the gap ends at a
+    # tool_result, so the timeline puts it in TOOL time.
+    timeline = [
+        [0.0, "system:init", []],
+        [10.0, "assistant", ["Skill:research"]],
+        [20.0, "assistant", ["record_search"]],
+        [1220.0, "tool_result", []],
+        [1250.0, "assistant", []],
+        [1260.0, "result", []],
+    ]
+    bd = analyze_result(
+        _result(
+            usage={
+                **_result()["usage"],
+                "timeline": timeline,
+                "wall_clock_seconds": 60.0,
+                "counted_sleep_seconds": 1200.0,
+            }
+        )
+    )
+    assert bd.tool_time_s == 1200.0
+    text = format_breakdown(bd)
+    assert "host sleep:      20.0m" in text
+    assert "counted in non-tool" not in text
+
+
+def test_windows_slept_phase_block_names_its_denominator():
+    text = format_skill_phases(analyze_result(_windows_slept()))
+    assert "wall-clock plus 0.5m host sleep" in text
+    assert "host sleep" not in format_skill_phases(
+        analyze_result(_result(usage={**_result()["usage"], "timeline": _SKILL_TIMELINE}))
+    )
+
+
+def test_a_counted_sleep_under_a_minute_is_still_shown():
+    # The detector's floor is gap - tick, about 55 s; the line must not hide it.
+    bd = analyze_result(_windows_slept())
+    bd.counted_sleep_s = 55.0
+    assert "host sleep:      0.9m" in format_breakdown(bd)

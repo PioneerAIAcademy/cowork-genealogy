@@ -196,9 +196,8 @@ Tool implementations live in `packages/engine/mcp-server/src/tools/`. Their sche
 listed in `packages/engine/mcp-server/src/tool-schemas.ts` (`allToolSchemas`, the single
 source of truth for the advertised tool list); `src/server.ts`
 (`createServer(principal)`) imports that list and dispatches calls, and the
-entrypoints only connect a transport: `src/index.ts` (stdio, the `.mcpb`),
-`src/hosted-stdio.ts` (the prototype's per-turn stdio server) and `src/http.ts`
-(the prototype's Streamable HTTP server, compose service `tools`, binding each
+entrypoints only connect a transport: `src/index.ts` (stdio, the `.mcpb`) and
+`src/http.ts` (the prototype's Streamable HTTP server, compose service `tools`, binding each
 request's `Authorization: Bearer` and a `PgS3ProjectStore` from its
 `X-Genealogy-Project-Id` header). Per-tool
 behavioral contracts are in
@@ -396,7 +395,7 @@ Per-project context about the researcher lives in a `researcher_profile`
 section of `research.json`. `init-project` writes a fixed profile at
 project start (`experience_level: "novice"` and one house-style
 `narration_guidance` string) and asks nothing about the researcher; the
-only opening-turn question is the research objective, non-blocking. 26 of the 27 skills
+only opening-turn question is the research objective, non-blocking. 25 of the 26 skills
 carry a one-line `**Narration:**` instruction that tells Claude to read
 `researcher_profile.narration_guidance` and apply it as the narration
 style for that invocation. `search-wikipedia` is the deliberate
@@ -600,8 +599,7 @@ single function and its schema. Add the schema to `allToolSchemas` in
 packaging drift test checks), add the call dispatch to `src/server.ts`,
 and add the tool name to `manifest.json`'s `tools` array. Dispatch lives in
 `src/server.ts` (`createServer(principal)`); `src/index.ts` is the shipped stdio
-entrypoint binding `LOCAL`, `src/hosted-stdio.ts` the prototype's per-turn one
-binding a bearer, `src/http.ts` the prototype's Streamable HTTP one binding each
+entrypoint binding `LOCAL`, `src/http.ts` the prototype's Streamable HTTP one binding each
 request's `Authorization: Bearer` (never `LOCAL`) and a `PgS3ProjectStore` from its
 `X-Genealogy-Project-Id` header, and a new tool's arm goes in
 `server.ts`, never in an entrypoint. A new tool also needs a row in
@@ -809,6 +807,16 @@ Where to look first:
   round-trip to first byte. A body still streaming when the clock fires is
   aborted mid-read, and the wrapper turns that into the same readable error,
   so call sites never handle it themselves.
+- **`src/utils/fs-fetch.ts`** — `fsFetch()` and `fsFetchWithTimeout()` are the
+  standard way to call an authenticated FamilySearch endpoint. They call
+  `getValidToken(principal)` internally, set `Authorization: Bearer`, and
+  delegate to `fetchWithRetry` / `fetchWithTimeout` respectively. On a 401
+  under `LOCAL`, they re-read `tokens.json` once and retry if the token
+  changed (the control plane may have pushed a fresh one). They never refresh
+  on a 401. Use `fsFetch` for most FS endpoints; `fsFetchWithTimeout` for
+  `match-engine.ts` and `fs-image-fetch.ts` which manage their own retry.
+  Non-FS services (wiki, Pop Stats, OpenRouter) keep using `fetchWithRetry` /
+  `fetchWithTimeout` directly.
 - **`src/utils/place-resolver.ts`** — the shared resolver between a
   `standardPlace` name and FamilySearch IDs: `resolveStandardPlace`,
   `standardPlaceToRepId`, `repIdToStandardPlace`, `standardPlaceToPlaceId`

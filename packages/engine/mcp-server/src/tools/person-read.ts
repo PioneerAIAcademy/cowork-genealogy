@@ -1,8 +1,7 @@
 import type { Principal } from "../auth/principal.js";
 import { dropDanglingEdges, describeDroppedEdges } from "../utils/tree-graph.js";
-import { getValidToken } from "../auth/refresh.js";
 import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
-import { fetchWithRetry } from "../utils/http.js";
+import { fsFetch } from "../utils/fs-fetch.js";
 import {
   fetchMemories,
   fetchPortraitId,
@@ -103,13 +102,12 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
       "The person_read tool requires a non-empty personId string (e.g., \"KNDX-MKG\").",
     );
   }
-  const token = await getValidToken(principal);
   // Anchored HERE, before the tree read, so the read and the memories paging
   // are spent inside the same budget the 60s bridge abort measures.
   const deadline = Date.now() + OCR_PHASE_BUDGET_MS;
   const pid = personId.trim();
   const { result, resolvedId } = await fetchAndConvert(
-    token,
+    principal,
     pid,
     relatives,
     sourceDescriptions,
@@ -408,7 +406,7 @@ function toTreeSource(m: Memory): TreeSource {
  * resolved id or it silently addresses a person who is not in the response.
  */
 async function fetchAndConvert(
-  token: string,
+  principal: Principal,
   pid: string,
   relatives: boolean,
   sourceDescriptions: boolean,
@@ -417,9 +415,8 @@ async function fetchAndConvert(
   deadline: number,
 ): Promise<{ result: PersonReadResult; resolvedId: string }> {
   const url = buildUrl(pid, relatives, sourceDescriptions);
-  const res = await fetchWithRetry(url, {
+  const res = await fsFetch(principal, url, {
     headers: {
-      Authorization: `Bearer ${token}`,
       Accept: ACCEPT_HEADER,
       "Accept-Language": "en",
     },
@@ -446,7 +443,7 @@ async function fetchAndConvert(
       );
     }
     return fetchAndConvert(
-      token,
+      principal,
       newId,
       relatives,
       sourceDescriptions,
@@ -490,7 +487,7 @@ async function fetchAndConvert(
   // read back off the raw persons. Merging after conversion would lose all
   // three and mean re-implementing the shape functions by hand.
   const merged = relatives
-    ? await mergeSiblings(token, pid, body, deadline)
+    ? await mergeSiblings(principal, pid, body, deadline)
     : body;
   return {
     result: await convertResponse(merged, relatives, sourceDescriptions, pid),
@@ -581,7 +578,7 @@ function isChildOf(
  *  own redirect chain. Returns null rather than throwing on any dead end: the
  *  fan-out is an enrichment and must never cost the caller their subject. */
 async function followMergedParent(
-  token: string,
+  principal: Principal,
   res: Response,
   followed = 0,
 ): Promise<ParentRead | null> {
@@ -589,15 +586,14 @@ async function followMergedParent(
   const location = res.headers.get("location");
   const newId = location ? extractPersonId(location) : null;
   if (!newId) return null;
-  const next = await fetchWithRetry(buildUrl(newId, true, false), {
+  const next = await fsFetch(principal, buildUrl(newId, true, false), {
     headers: {
-      Authorization: `Bearer ${token}`,
       Accept: ACCEPT_HEADER,
       "Accept-Language": "en",
     },
     redirect: "manual",
   });
-  if (next.status === 301) return followMergedParent(token, next, followed + 1);
+  if (next.status === 301) return followMergedParent(principal, next, followed + 1);
   if (next.status !== 200) return null;
   return { body: (await next.json()) as FSTreeResponse, resolvedId: newId };
 }
@@ -643,7 +639,7 @@ function remapParentRefs(
  * must never cost the caller the person they actually asked for.
  */
 async function mergeSiblings(
-  token: string,
+  principal: Principal,
   pid: string,
   body: FSTreeResponse,
   deadline: number,
@@ -664,9 +660,8 @@ async function mergeSiblings(
       // the subject too.
       if (left <= 0) return null;
       try {
-        const res = await fetchWithRetry(buildUrl(parentId, true, false), {
+        const res = await fsFetch(principal, buildUrl(parentId, true, false), {
           headers: {
-            Authorization: `Bearer ${token}`,
             Accept: ACCEPT_HEADER,
             "Accept-Language": "en",
           },
@@ -675,7 +670,7 @@ async function mergeSiblings(
         // 301 = merged, which is routine and not an error. The subject's own
         // read follows it (`fetchAndConvert`); a parent read that treated it as
         // "no siblings" lost every sibling behind a merge, silently.
-        if (res.status === 301) return await followMergedParent(token, res);
+        if (res.status === 301) return await followMergedParent(principal, res);
         // Anything else that is not a 200 with a body means "no siblings from
         // this parent" -- including 204, which is a living person with no body
         // at all and would throw on .json().

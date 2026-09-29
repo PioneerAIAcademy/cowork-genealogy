@@ -195,8 +195,8 @@ aws elasticbeanstalk create-application-version --application-name $ENV --versio
 
 **8. nginx is in the path.** sqsd POSTs to `http://localhost:80`, the platform's
 nginx, which proxies to the app on :8000 with a default `proxy_read_timeout` of
-60 s. `.platform/nginx/conf.d/01-worker-timeouts.conf` raises it to 36000 s
-(`InactivityTimeout`'s maximum) so nginx is never the binding constraint. If
+60 s. `.platform/nginx/conf.d/01-worker-timeouts.conf` raises it to 43200 s
+(above `InactivityTimeout`'s 36000 s maximum) so nginx is never the binding constraint. If
 experiment 3 shows a `504` in the nginx access log at ≈60 s and a second
 `start` shortly after, the override did not apply: check
 `/aws/elasticbeanstalk/$ENV/var/log/nginx/error.log` and `eb-engine.log`.

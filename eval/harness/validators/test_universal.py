@@ -916,7 +916,7 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
     if not skill_name:
         pytest.skip("skill_frontmatter has no `name` field")
 
-    owners = writer_sets(TREE_GEDCOMX_JSON)
+    owners = writer_sets(TREE_GEDCOMX_JSON, subject=skill_name)
     identity_tools = writer_tool_sets(TREE_GEDCOMX_JSON)
     called = _tools_called(tool_calls)
     modified = _modified_sections(before, after, sorted(owners))
