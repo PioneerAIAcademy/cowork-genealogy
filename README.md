@@ -54,7 +54,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 48 tools.
+The MCP server exposes 49 tools.
 
 ### FamilySearch records and places
 
@@ -126,6 +126,7 @@ way project state changes.
 | `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives. Reads tree.gedcomx.json from the local project — offline | None |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
 | `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with cited sources, sources with record ids) — the context call agents make instead of reading project files | None |
+| `get_name_variants` | Look up a given name's alternate forms (nicknames, diminutives, formal forms) from a bundled bidirectional table. Given names only, no caller yet | None |
 
 ### Auth (FamilySearch OAuth 2.0 + PKCE)
 
@@ -474,7 +475,7 @@ then narrows the search.
 
 What's shipped:
 
-- **48 MCP tools.** See the tables above for the full catalog, by category:
+- **49 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
 - **26 shipped skills.** Full GPS research cycle from `init-project`
