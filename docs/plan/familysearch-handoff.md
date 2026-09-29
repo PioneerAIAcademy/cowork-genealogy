@@ -333,7 +333,7 @@ Nothing scripts it against a deployed stack yet (`make proto-demo` and `make pro
 
 ## Not in scope
 
-- The E2B/Fly/Neon alpha and its refresh-race PR #2973 and PR #2977 (issue #2887 stays open).
+- The E2B/Fly/Neon alpha's token-refresh race (issue #2887): PR #2977 merged 2026-09-29 (engine 401 re-read; it re-reads only under `LOCAL`, so a bearer is unaffected), PR #2973 open.
 - The eval harness: stays ours; U15, U16 port its measurements.
 - `apps/server/dev/p1/` and `apps/server/proto/{seed,export,grade,compare,drive,smoke,turn}.py`: the re-run kit, never deployed.
 - Opaque session tokens replacing the live bearer, unless F8 requires them.

@@ -807,6 +807,16 @@ Where to look first:
   round-trip to first byte. A body still streaming when the clock fires is
   aborted mid-read, and the wrapper turns that into the same readable error,
   so call sites never handle it themselves.
+- **`src/utils/fs-fetch.ts`** — `fsFetch()` and `fsFetchWithTimeout()` are the
+  standard way to call an authenticated FamilySearch endpoint. They call
+  `getValidToken(principal)` internally, set `Authorization: Bearer`, and
+  delegate to `fetchWithRetry` / `fetchWithTimeout` respectively. On a 401
+  under `LOCAL`, they re-read `tokens.json` once and retry if the token
+  changed (the control plane may have pushed a fresh one). They never refresh
+  on a 401. Use `fsFetch` for most FS endpoints; `fsFetchWithTimeout` for
+  `match-engine.ts` and `fs-image-fetch.ts` which manage their own retry.
+  Non-FS services (wiki, Pop Stats, OpenRouter) keep using `fetchWithRetry` /
+  `fetchWithTimeout` directly.
 - **`src/utils/place-resolver.ts`** — the shared resolver between a
   `standardPlace` name and FamilySearch IDs: `resolveStandardPlace`,
   `standardPlaceToRepId`, `repIdToStandardPlace`, `standardPlaceToPlaceId`
