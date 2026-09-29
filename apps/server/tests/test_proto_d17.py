@@ -294,3 +294,47 @@ def test_export_runs_the_ts_side_from_the_engine_dir_with_the_store_env(monkeypa
     assert run["cmd"] == ["npx", "tsx", "dev/export-project.ts"] and run["cwd"] == export.ENGINE_DIR
     assert run["env"]["PROTO_PG_DSN"] == "postgresql://x/y" and run["env"]["PROTO_S3_ENDPOINT"] == "http://s3:9000"
     assert json.loads(run["input"]) == export.manifest("proj_q", tmp_path) and run["encoding"] == "utf-8"
+
+
+# --- The feed the reader actually saw (Before phase 2: "capture a real feed") ---
+#
+# export.py copies the project's DOCUMENTS out, and nothing else. What a hosted
+# reader saw lives in two tables it never reads: `session_events` (the per-session
+# feed) and `turns` (which carries `outcome`, i.e. how each turn ended). So no
+# committed run can show what reached the reader, which is what the plan's
+# "capture a real feed" item is blocked on.
+#
+# These test the PURE seam -- the rows-to-payload shaping -- not psycopg.
+
+def test_feed_payload_carries_events_and_turns_in_order():
+    events = [
+        {"seq": 2, "kind": "text", "payload": {"t": "second"}},
+        {"seq": 1, "kind": "tool", "payload": {"t": "first"}},
+    ]
+    turns = [{"turn_id": "t1", "outcome": "completed", "message": {"text": "hi"}}]
+    out = export.feed_payload("sess_1", "proj_1", events=events, turns=turns)
+    assert out["session_id"] == "sess_1" and out["project_id"] == "proj_1"
+    # Sorted by seq: a feed read out of order is not the feed the reader saw.
+    assert [e["seq"] for e in out["events"]] == [1, 2]
+    assert out["turns"] == turns
+    assert out["counts"] == {"events": 2, "turns": 1}
+
+
+def test_feed_payload_reports_an_empty_feed_as_empty_not_as_absent():
+    """A session that produced no events must be distinguishable from one that was
+    never read. A silent {} would read as 'nothing to see' either way."""
+    out = export.feed_payload("sess_2", "proj_2", events=[], turns=[])
+    assert out["events"] == [] and out["turns"] == []
+    assert out["counts"] == {"events": 0, "turns": 0}
+
+
+def test_feed_path_sits_beside_the_exported_project():
+    assert export.feed_path(Path("/x/exports"), "proj_y") == Path("/x/exports/proj_y/feed.json")
+
+
+def test_feed_payload_does_not_mutate_the_rows_it_is_given():
+    """The caller's list is a psycopg cursor's result; sorting in place would
+    reorder a sequence something else may still read."""
+    events = [{"seq": 3, "kind": "a", "payload": {}}, {"seq": 1, "kind": "b", "payload": {}}]
+    export.feed_payload("s", "p", events=events, turns=[])
+    assert [e["seq"] for e in events] == [3, 1]

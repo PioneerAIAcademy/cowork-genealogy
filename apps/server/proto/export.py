@@ -46,6 +46,60 @@ def resolve_project(dsn: str, session_id: str) -> str | None:
     return str(row[0]) if row and row[0] else None
 
 
+def feed_path(out_dir: Path, project_id: str) -> Path:
+    """Where the feed lands: beside the exported project, not inside its ref tree."""
+    return out_dir / project_id / "feed.json"
+
+
+def feed_payload(
+    session_id: str, project_id: str, *, events: list[dict], turns: list[dict]
+) -> dict:
+    """What the hosted reader actually saw, as a plain document.
+
+    `export()` copies the project's DOCUMENTS; the feed lives in two tables it never
+    reads -- `session_events` (the per-session feed) and `turns` (which carries
+    `outcome`, i.e. how each turn ended). Without this, no committed run can show what
+    reached a reader, which is what "capture a real feed" is blocked on.
+
+    Sorted by `seq`, because a feed read back out of order is not the feed anyone saw.
+    Sorted into a NEW list: the caller passes a cursor's rows, and sorting in place
+    would reorder a sequence something else may still be reading.
+
+    An empty feed is reported as empty rather than omitted -- a session that produced
+    nothing has to stay distinguishable from one that was never read.
+    """
+    return {
+        "session_id": session_id,
+        "project_id": project_id,
+        "events": sorted(events, key=lambda e: e.get("seq", 0)),
+        "turns": list(turns),
+        "counts": {"events": len(events), "turns": len(turns)},
+    }
+
+
+def read_feed(dsn: str, session_id: str, project_id: str) -> dict:
+    """The feed rows for one session. Kept apart from `feed_payload` so the shaping
+    is testable without a database."""
+    with psycopg.connect(dsn) as conn:
+        events = [
+            {"seq": r[0], "kind": r[1], "payload": r[2], "ts": r[3].isoformat() if r[3] else None}
+            for r in conn.execute(
+                "SELECT seq, kind, payload, ts FROM session_events WHERE session_id = %s ORDER BY seq",
+                (session_id,),
+            ).fetchall()
+        ]
+        turns = [
+            {"turn_id": r[0], "message": r[1], "outcome": r[2], "receive_count": r[3],
+             "completed_at": r[4].isoformat() if r[4] else None}
+            for r in conn.execute(
+                "SELECT turn_id, message, outcome, receive_count, completed_at "
+                "FROM turns WHERE session_id = %s ORDER BY enqueued_at",
+                (session_id,),
+            ).fetchall()
+        ]
+    return feed_payload(session_id, project_id, events=events, turns=turns)
+
+
 def export(project_id: str, *, out_dir: Path, pg_dsn: str, s3_endpoint: str) -> int:
     env = {**os.environ, "PROTO_PG_DSN": pg_dsn, "PROTO_S3_ENDPOINT": s3_endpoint}
     proc = subprocess.run(
@@ -82,6 +136,20 @@ def main(argv: list[str] | None = None) -> int:
     print(f"project_id  {project_id}")
     print(f"out         {export_dir(out_dir, project_id)}")
     rc = export(project_id, out_dir=out_dir, pg_dsn=args.pg_dsn, s3_endpoint=args.s3_endpoint)
+
+    # The feed is written even when the document export fails: the two are separate
+    # stores, and a run whose feed survived is worth more than nothing. A feed that
+    # cannot be read must not turn a successful document export into a failure, so it
+    # reports and carries on -- but it never claims to have written a file it did not.
+    try:
+        feed = read_feed(args.pg_dsn, args.session, project_id)
+        dest = feed_path(out_dir, project_id)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(json.dumps(feed, indent=2, default=str), encoding="utf-8")
+        print(f"feed        {dest}  ({feed['counts']['events']} events, "
+              f"{feed['counts']['turns']} turns)")
+    except (psycopg.Error, OSError) as exc:
+        print(f"export: feed not written ({type(exc).__name__}: {exc})", file=sys.stderr)
     return 1 if rc else 0
 
 
