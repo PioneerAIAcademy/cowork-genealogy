@@ -31,12 +31,23 @@ written for the first:
   `effort:` pin (`docs/architecture.md` §3.5), and a folded body stops occupying
   the orchestrator's context. This buys no attribution and needs none.
 
-A cost-motivated conversion is the cheaper build: **no hook route, no ownership
-row, and no writer-tool precondition.** `AGENT_WRITABLE_SECTIONS.get(caller)` in
+A cost-motivated conversion is the cheaper build: **no hook route and no
+writer-tool precondition.** At runtime, `AGENT_WRITABLE_SECTIONS.get(caller)` in
 `guard_project_files.py` returns `None` for an unlisted agent, so the
 out-of-lane check never fires, and the only routed targets are `proof_summaries`
 and `questions.exhaustive_declaration`. Everything else here — the fold order,
 the baseline, the fixture audit — applies to both.
+
+**It still needs a hook lane and an ownership row — the runtime does not, the
+repo does.** "The guard does not fire" is true and is not the same as "nothing
+requires the declaration": `plugin-hooks.test.ts` fails any agent granted
+`research_append` that has no `AGENT_WRITABLE_SECTIONS` row, and
+`docs/specs/schemas/ownership.json` needs an `agentCallers` entry for it on every
+row it writes. Declaring what an agent writes is a repo requirement independent
+of whether a route enforces it. Say so in a comment beside each, so no reader
+takes the lane for a route. (Measured on #2115, where the card asserted the
+opposite and CI refused it.) The full list of what an added agent trips is
+[below](#what-adding-an-agent-trips).
 
 **The general rule this is a worked instance of is ADR-0011**
 (`docs/adrs/ADR-0011-put-guardrails-at-the-write-boundary.md`), and it applies
@@ -336,6 +347,32 @@ Two things this does NOT close:
 - **The e2e corpus is still the only instrument that sees the real loop.** Its
   attribution reads the agent that made the write
   (`eval/harness/harness/skill_invocation.py`).
+
+## What adding an agent trips
+
+A card's "what proves it" list is written before the agent file exists, and it
+undercounts. #2115's named five checks; CI refused six more, and found them only
+after the one named packaging test had passed locally.
+Every one below fails CI if skipped. Put the whole list in the card.
+
+| register | what it wants |
+|---|---|
+| `tests/packaging/agent-tool-names.test.ts` | the agent registered, every MCP tool under all three spellings, no `Task`/`Agent` grant |
+| `apps/server/proto/worker/worker.py` `EXPECTED_AGENTS` (+ `EXPECTED_SKILLS` when a skill is deleted) | the shipped set, as a literal; `apps/server/tests/test_proto_worker.py` pins it and names the count in a test name |
+| `tests/packaging/agent-delegation-framing.test.ts` | every caller→agent edge in `DELEGATION_EDGES`, with a verbatim pinned sentence |
+| `tests/packaging/plugin-hooks.test.ts` + `guard_project_files.py` | an `AGENT_WRITABLE_SECTIONS` lane for an agent granted `research_append` — see above |
+| `docs/specs/schemas/ownership.json` | an `agentCallers` entry on every row the agent writes |
+| `tests/packaging/enum-drift.test.ts` | any closed-enum declaration the fold moved into the agent body |
+| `tests/packaging/agent-return-contract.test.ts` | a `summary_for_user` return-contract heading, or a `PENDING` entry naming when it lands |
+| `tests/packaging/prompt-sizes.json` | regenerated (`prompt-budget.test.ts`) |
+| `docs/architecture.md`, `docs/skill-dataflow.md` | the agent count and any per-tool agent tally — re-measure, do not increment |
+| `make agent-smoke` | the only check that reads what the runtime resolved; **no CI job runs it** |
+
+These are all local and free. Run the whole packaging suite
+(`npx vitest run tests/packaging` in `packages/engine/mcp-server/`) and
+`apps/server`'s `pytest`, not just the file the card names. A packaging file that
+cannot import (a missing `yaml`, say) reports "no tests" rather than failing, so
+read the file count, not just the red count.
 
 ## The process, in order
 

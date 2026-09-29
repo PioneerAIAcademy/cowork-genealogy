@@ -750,8 +750,11 @@ happily bless a cut that removes something only a multi-hour session needs.
 **Add a plugin agent.** Write the body self-contained (§3.4), spell every
 tool (§5.2), pin `model:` deliberately, and give it an `AGENT_WRITABLE_SECTIONS`
 lane if it holds `research_append` (plus `agentCallers` rows for every writer
-tool it holds — "Give an agent a new tool", §5). Then run `make agent-smoke` (§8) —
-and note that no CI job runs it.
+tool it holds — "Give an agent a new tool", §5). Register it in the worker's
+`EXPECTED_AGENTS`, in `DELEGATION_EDGES`, and in `agent-return-contract.test.ts`
+(heading or `PENDING`), and regenerate `prompt-sizes.json` — the full list, with
+what each wants, is in `docs/skill-to-agent-pair-conversion.md` → "What adding an
+agent trips". Then run `make agent-smoke` (§8) — and note that no CI job runs it.
 
 ---
 
