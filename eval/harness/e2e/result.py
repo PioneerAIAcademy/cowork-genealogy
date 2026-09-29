@@ -77,10 +77,11 @@ from typing import Any
 #       `check_guardrail_compliance` get strictly stricter —
 #       `find_effects_without_invocation` stops crediting a failed `Skill` call,
 #       and `find_person_evidence_missing_same_person` shrinks `scored_ids` — and
-#       both feed `guardrail_bypass_violations`, which sets `compliance: fail` ->
-#       `outcome: fail`. So a run that passed compliance before the join can
-#       hard-fail after it from an identical trace, and `compliance` / `outcome`
-#       are not comparable across it. Measured on the committed corpus, though,
+#       both feed `guardrail_bypass_violations`, which sets `compliance: fail`
+#       (and, through v5 only, `outcome: fail`). So a run that passed compliance
+#       before the join can hard-fail after it from an identical trace, and
+#       `compliance` is not comparable across it. `outcome` IS: since entry 6 it
+#       is the verdict, which these arms never touched. Measured on the committed corpus, though,
 #       that is ~1 entry in 555 runs: see `docs/specs/e2e-test-spec.md` §7.5,
 #       which also explains why `e2e/guardrail_shadow_report.py` does not split
 #       its corpus by version (#911 / #1176 / #1231 read that number).
@@ -123,12 +124,23 @@ from typing import Any
 #       type (string) while its CONTENT widens. A v4 log's `image_transcribe`
 #       summary is capped at 500 chars, though the transcription is often many
 #       times longer (run `make e2e-transcription-join SINCE=all` for the
-#       current count of truncated captures and its window); a v5 log preserves
-#       the full value,
+#       current count of truncated captures and its window); a log at v5 OR
+#       ABOVE preserves the full value,
 #       bypassing both the per-string cap and the `_RUNLOG_MAX_CHARS` backstop.
 #       This makes extraction-accuracy audits possible: the transcription-to-
 #       assertion join (via each assertion's `log_entry_id`) works, but the
 #       truncated transcription made the joined data useless (issue #2561).
+#   6 — `outcome` is the genealogical verdict, full stop. Through v5 it was a
+#       FUSION: `fail` whenever the §8 post-run compliance detectors fired,
+#       else the verdict. Those detectors were demoted from the gate by lead
+#       ruling 2026-09-25 — they still report on the `compliance` axis and no
+#       longer veto. Same shape as entries 2, 4 and 5: the key keeps its name
+#       and type (string) while its MEANING changes, with nothing in the
+#       payload to tell the two apart, which is what the bump is for.
+#       A v1-v5 log therefore stores an `outcome` that this code does not
+#       agree with: `axes_from_runlog` re-derives every vintage under the new
+#       rule and never reads the stored key. 55 of the 56 committed v1+ logs
+#       store `fail`, and 40 of those have a non-`fail` verdict.
 #
 # A change readers can detect from the payload itself does NOT need a bump.
 # `narration` replacing `.transcript.md` is one: the field is a dataclass
@@ -136,9 +148,10 @@ from typing import Any
 # log written since carries the key and every earlier one lacks it. Branch on
 # `"narration" in data`, not on a version. Bump only when a key keeps its name
 # and type while its MEANING changes — that is the case with no structural tell,
-# and entries 2, 4 and 5 above are exactly it: `response_summary` stays a string
-# and `is_error` stays a bool, and only what each one means changes.
-HARNESS_SCHEMA_VERSION = 5
+# and entries 2, 4, 5 and 6 above are exactly it: `response_summary` stays a
+# string, `is_error` stays a bool and `outcome` stays a string, and only what
+# each one means changes.
+HARNESS_SCHEMA_VERSION = 6
 
 
 @dataclass
@@ -154,7 +167,8 @@ class E2eResult:
     # overwritten to "fail" by the guardrail check below, which fused two
     # orthogonal axes into one boolean and made a run that got the genealogy
     # completely right read identically to one that got it wrong (issue #972).
-    # Compliance now lives on its own axis; `outcome` is the combined gate.
+    # Compliance lives on its own axis, and since the §8 detectors were demoted
+    # `outcome` is this verdict rather than a fusion of the two.
     verdict: str
 
     # Why the run stopped. See spec §6.5.
@@ -297,8 +311,9 @@ class E2eResult:
     # only in `axes_from_runlog` as a statement about pre-detector HISTORY.
     compliance: str = field(init=False, default="pass")
 
-    # The explicit overall gate: the genealogical verdict, downgraded to
-    # "fail" when compliance failed. This is what the exit code keys on.
+    # The explicit overall gate: the genealogical verdict. It was downgraded to
+    # "fail" when compliance failed until the §8 detectors were demoted; it no
+    # longer is. This is what the exit code keys on.
     outcome: str = field(init=False, default="pass")
 
     # docs/specs/guardrail-enforcement-spec.md §7 — SHADOW MODE ONLY:
@@ -349,7 +364,17 @@ class E2eResult:
         exactly one mis-assembled field.
         """
         self.compliance = "fail" if self.guardrail_bypass_violations else "pass"
-        self.outcome = "fail" if self.compliance == "fail" else self.verdict
+        # `outcome` IS the verdict. The §8 post-run compliance detectors were
+        # demoted from the gate by lead ruling 2026-09-25: they report on their
+        # own axis and no longer veto. Over the committed corpus the veto had
+        # stopped discriminating — 53 of the 56 v1+ runs failed compliance, and
+        # 25 of those were genealogically `pass`, so the gate carried about one
+        # bit and spent it on the detectors' base rate.
+        #
+        # Accepted cost, stated in the ruling: a run that bypasses a guardrail
+        # now exits green, and the exit code reveals pass/fail to a blind
+        # grader (spec §7.4's residual leak becomes unconditional).
+        self.outcome = self.verdict
 
 
 def timestamp_slug(now: datetime | None = None) -> str:
@@ -395,9 +420,20 @@ def runlog_prefix(verdict: str) -> str:
 
 
 def overall_outcome(verdict: str, compliance: str) -> str:
-    """The combined gate. `not_checked` is NOT a failure — it is an unknown,
-    and it must never be folded into a pass count either (see corpus_report)."""
-    return "fail" if compliance == "fail" else verdict
+    """The gate, which is now the genealogical verdict and nothing else.
+
+    `compliance` is retained in the signature on purpose. Deleting this
+    function and inlining `verdict` at its two call sites was considered and
+    rejected: committed logs keep the `outcome` key forever, so a v6 reader
+    that does read it must get the verdict from somewhere named, and the
+    attribution this will grow when the first check is promoted (issue #2481's
+    pipeline) needs the seam to grow into. It is the one place the gate rule
+    is written down.
+
+    `not_checked` was never a failure — it is an unknown, and must not be
+    folded into a pass count either (see corpus_report).
+    """
+    return verdict
 
 
 def axes_from_runlog(data: dict[str, Any]) -> tuple[str, str, str]:
@@ -410,7 +446,8 @@ def axes_from_runlog(data: dict[str, Any]) -> tuple[str, str, str]:
     2. Pre-v1 with `judge_output.guardrail_bypass_violations` — the guardrail
        check fired, so the top-level `verdict` was overwritten to "fail" and
        the real genealogical verdict survives only inside `judge_output`.
-       Recover it. (4 of the 5 such committed runs are genealogically `pass`.)
+       Recover it. (9 of the 17 such committed runs are genealogically
+       `pass`, 2 `partial`; measured at 2c00dfd76.)
     3. Pre-v1 with no `guardrail_shadow_violations` key — written by code that
        predates the detector entirely (106 of 122 committed runs). It was
        never checked, and saying `pass` here would launder 106 unknowns into
@@ -431,9 +468,13 @@ def axes_from_runlog(data: dict[str, Any]) -> tuple[str, str, str]:
     if "harness_schema_version" in data:
         verdict = str(data.get("verdict") or "skipped")
         compliance = str(data.get("compliance") or "pass")
-        # `.get` with a derivation fallback, not `data["outcome"]` — a
-        # partially-written or future-shaped log must not raise here.
-        outcome = str(data.get("outcome") or overall_outcome(verdict, compliance))
+        # ALWAYS derived, never `data["outcome"]`. 55 of the 56 committed v1+
+        # logs store `outcome: "fail"` under the old fused rule, so reading the
+        # stored value would leave every historical run reading `fail` and make
+        # this change invisible — the suite would pass and the corpus report
+        # would not move. Committed logs are permanent and are never rewritten,
+        # so the new rule has to be applied on read.
+        outcome = overall_outcome(verdict, compliance)
         return verdict, compliance, outcome
 
     # `isinstance`, not `or {}` — a non-dict `judge_output` (a string, a number)
@@ -448,7 +489,10 @@ def axes_from_runlog(data: dict[str, Any]) -> tuple[str, str, str]:
     judge_output = data.get("judge_output")
     if isinstance(judge_output, dict) and "guardrail_bypass_violations" in judge_output:
         verdict = str(judge_output.get("verdict") or "skipped")
-        return verdict, "fail", "fail"
+        # The recovered verdict, not "fail": the whole point of recovering it
+        # is that the gate now reports it. 11 of these 17 logs are `pass` or
+        # `partial` underneath a clobbered top-level `verdict: "fail"`.
+        return verdict, "fail", verdict
 
     # Branches 3 and 4 both land on `not_checked` — pre-detector code never
     # ran the check, and detector-era code ran a version of it we can't pin.

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { configFromEnv, PER_USER_ENV } from "../../src/hosted-config-env.js";
 
-// Both prototype entrypoints build their AppConfig through this, so what it does with an
+// The prototype's HTTP entrypoint builds its AppConfig through this, so what it does with an
 // absent or empty variable decides whether a container silently loses a per-user value.
 
 describe("configFromEnv", () => {
@@ -39,8 +39,8 @@ describe("configFromEnv", () => {
   });
 
   it("names every variable it reads, for the prototype's config test to bind against", () => {
-    // apps/server/tests/test_proto_config.py reads this list out of the source and holds it
-    // equal to the worker's PER_USER_ENV_KEYS and the tools service's environment.
+    // apps/server/tests/test_proto_config.py reads this list out of the source and holds the
+    // tools service's environment to it.
     expect([...PER_USER_ENV]).toEqual([
       "WIKI_API_URL",
       "POP_STATS_URL",

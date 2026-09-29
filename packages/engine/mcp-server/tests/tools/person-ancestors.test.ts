@@ -312,11 +312,12 @@ describe("person_ancestors", () => {
   it("sends Accept fs-v1 + Authorization, and no User-Agent / Accept-Language", async () => {
     mockOk(leanResponse());
     await personAncestorsTool({ personId: "LZJW-C31" }, LOCAL);
-    const headers = lastHeaders();
-    expect(headers.Accept).toBe("application/x-fs-v1+json");
-    expect(headers.Authorization).toBe("Bearer test-token");
-    expect("User-Agent" in headers).toBe(false);
-    expect("Accept-Language" in headers).toBe(false);
+    const rawHeaders = lastHeaders();
+    const headers = new Headers(rawHeaders as HeadersInit);
+    expect(headers.get("Accept")).toBe("application/x-fs-v1+json");
+    expect(headers.get("Authorization")).toBe("Bearer test-token");
+    expect(headers.get("User-Agent")).toBeNull();
+    expect(headers.get("Accept-Language")).toBeNull();
   });
 
   // 9

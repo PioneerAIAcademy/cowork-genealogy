@@ -1,0 +1,94 @@
+{
+  "tool": "record_read",
+  "description": "FamilySearch record_read response for record MXHY-TP4 — the 1850 U.S. Census household of Thomas Flynn, with Patrick Flynn (the searched person) as its second member. Shaped like a live 1850 read: a Census fact on every persona, the head enumerated first, no relationship edges (the schedule has no relationship column), and per-persona indexFields. Persona ids P1/P2 match the search result record-person-matches and record-record-matches hand over.",
+  "args": {
+    "recordId": "~MXHY-TP4"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "P2",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N2",
+            "type": "BirthName",
+            "given": "Thomas",
+            "surname": "Flynn"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Census",
+            "date": "1850",
+            "place": "Branch Township, Schuylkill, Pennsylvania, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1818",
+            "place": "Ireland"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "United States Census, 1850"
+          }
+        ]
+      },
+      {
+        "id": "P1",
+        "ark": "ark:/61903/1:1:MXHY-TP4",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "type": "BirthName",
+            "given": "Patrick",
+            "surname": "Flynn"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Census",
+            "date": "1850",
+            "place": "Branch Township, Schuylkill, Pennsylvania, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1845",
+            "place": "Ireland"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "United States Census, 1850"
+          }
+        ]
+      }
+    ],
+    "relationships": [],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "United States Census, 1850",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MXHY-TP4"
+      }
+    ],
+    "places": [],
+    "indexFields": {
+      "P2": {
+        "sortKey": "0000000001000000_00001_00001_0000000000000001_000",
+        "householdId": "1",
+        "age": "32"
+      },
+      "P1": {
+        "sortKey": "0000000001000000_00001_00001_0000000000000001_001",
+        "householdId": "1",
+        "age": "5"
+      }
+    }
+  }
+}

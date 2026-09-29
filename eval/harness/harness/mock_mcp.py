@@ -53,6 +53,10 @@ Current live tools:
   same live-registration rationale. Kept as a separate tool so a skill's
   allowed-tools can grant additions without granting identity rewrites (the
   record-extractor authority split).
+- person_quality: runs the compiled tool's no-network resolution step against
+  the workspace tree. A person with no FamilySearch link gets the tool's real
+  answer; one that resolves to a FamilySearch id gets the test's fixture keyed on
+  that id, or a refusal naming the missing fixture.
 - project_context: calls the compiled TS tool to project the workspace's
   research.json + tree.gedcomx.json into the compact read-only shape the
   record-extractor agent consumes instead of reading project files. A
@@ -107,9 +111,17 @@ LIVE_TOOLS: set[str] = {
     # (lead ruling on PR #2151): it was fixture-backed, no person-evidence test
     # declared a `person-warnings-*` fixture, so every call in every committed
     # person-evidence run log since August reported the tool missing -- the
-    # skill launched, the check never ran. `person_quality` is NOT here and must
-    # not be: it calls FamilySearch.
+    # skill launched, the check never ran.
     "person_warnings",
+    # Served by its own handler (`_make_person_quality_handler`), registered
+    # outside both loops below. The tool first decides what to score with no
+    # network call: a project's local id is looked up in the workspace tree and
+    # resolved to the person's FamilySearch link; a person with no link gets the
+    # tool's own sentence, which is safe and faithful to run for real. A call that
+    # resolves to a FamilySearch id is answered from the test's person_quality
+    # fixtures keyed on THAT id, or refused. Kept in this set because
+    # allowed_tools' callee-fixture check exempts LIVE_TOOLS members.
+    "person_quality",
     "project_context",
     # Read-only projection over the workspace's own research.json — same shape
     # as project_context, and deterministic, so mocking it would only invite
@@ -363,6 +375,20 @@ def _load_build_tool_catalog_uncached() -> dict[str, dict[str, Any]]:
 # stager) and inject the handle. Without this, the live log tool has no staged
 # source to finalize and errors ("orphan sidecar" / staging error).
 STAGING_SEARCH_TOOLS: set[str] = {"record_search", "fulltext_search", "external_links_search"}
+
+# The search tools whose production response carries `query: echoQuery(input)`
+# (record-search.ts, fulltext-search.ts). person_search echoes too but is
+# served live, never from a fixture here.
+ECHOING_SEARCH_TOOLS: frozenset[str] = frozenset({"record_search", "fulltext_search"})
+
+
+def echo_query(args: dict[str, Any]) -> dict[str, Any]:
+    """Every argument the call sent — `echoQuery`'s semantics
+    (`src/utils/search-helpers.ts`). It drops only `undefined`, which a JSON
+    call cannot carry: an omitted argument is absent here, and one sent as
+    `null` is kept, exactly as production keeps it."""
+    return dict(args)
+
 
 # Verbatim copy of RANKING_SKIPPED_NOTE in
 # packages/engine/mcp-server/src/tools/record-search.ts. The two cannot share a
@@ -671,6 +697,36 @@ def _stage_and_compact_search_results(
         return None, response, [], ranked
 
 
+def _stage_record_read(
+    workspace: Path, args: dict[str, Any], response: dict[str, Any]
+) -> dict[str, Any]:
+    """Stage a canned live `record_read` the way `record-read.ts` does, and
+    return the response with `staged` beside the record.
+
+    The payload is production's: `{ query: { recordId }, results: [{ recordId,
+    gedcomx, indexFields? }] }` under tool `record_read`. It goes through the
+    same compiled `stageSearchResults` the search tools use. A fixture may carry
+    `indexFields` beside the GedcomX (a captured `record_read` sidecar does);
+    it is staged and kept off the inline response, which production never
+    returns it on. On a node failure the read comes back with `staged: null`
+    and a `stagingError`, matching production's best-effort staging.
+    """
+    record_id = str(args.get("recordId") or "").strip()
+    gedcomx = {k: v for k, v in response.items() if k not in ("indexFields", "staged", "imageArk")}
+    element: dict[str, Any] = {"recordId": record_id, "gedcomx": gedcomx}
+    index_fields = response.get("indexFields")
+    if isinstance(index_fields, dict) and index_fields:
+        element["indexFields"] = index_fields
+    payload = {"query": {"recordId": record_id}, "results": [element]}
+    staged, _payload, _unlogged, _ranked = _stage_and_compact_search_results(
+        workspace, "record_read", payload
+    )
+    inline = {k: v for k, v in response.items() if k != "indexFields"}
+    if staged is None:
+        return {**inline, "staged": None, "stagingError": "mock: staging the canned record failed"}
+    return {**inline, "staged": staged}
+
+
 def _unlogged_staged_handles(workspace: Path) -> list[dict[str, Any]]:
     """The staged backlog for a call that stages nothing (a nil search).
 
@@ -759,6 +815,8 @@ def create_mock_server(
 
     tools = []
     for tool_name, bucket in manifest.items():
+        if tool_name == "person_quality":
+            continue  # served by _make_person_quality_handler below
         predicated = list(bucket["predicated"])
         # Input schema precedence: the compiled production schema wins (the
         # single source of truth), so fixture-backed tools advertise exactly
@@ -817,6 +875,19 @@ def create_mock_server(
             ):
                 entry["attested"] = _record_match_score(_workspace, args, response)
 
+            # Production's record_search and fulltext_search return (and stage)
+            # `query: echoQuery(input)` — every argument the call sent — while a
+            # fixture carries whatever query it was recorded with, and a
+            # predicate matches only a subset of the args. Echo the args, so the
+            # staged payload is the ground truth research_log_append checks an
+            # explicit query against, and the query it defaults from.
+            if (
+                _name in ECHOING_SEARCH_TOOLS
+                and isinstance(response, dict)
+                and "error" not in response
+            ):
+                response = {**response, "query": echo_query(args)}
+
             # Stage the canned payload for search tools so the live
             # research_log_append can finalize the sidecar (mirrors the real
             # tool returning staged.resultsRef), then apply the compaction the
@@ -864,6 +935,23 @@ def create_mock_server(
                 _unlogged_staged = _unlogged_staged_handles(_workspace)
             else:
                 _unlogged_staged = []
+
+            # A LIVE record_read given a projectPath stages the record and returns
+            # `staged.resultsRef` beside it, and extraction_append's extractor mode
+            # reads that sidecar. Without this the canned read staged nothing, the
+            # extractor refused ("no results sidecar"), and every FamilySearch
+            # record in the unit suite fell back to record-extractor, so no
+            # committed run could exercise the code path. A read WITH `resultsRef`
+            # is a sidecar read and stages nothing, exactly as production.
+            if (
+                _name == "record_read"
+                and _workspace is not None
+                and "error" not in response
+                and args.get("projectPath")
+                and not args.get("resultsRef")
+                and isinstance(response.get("persons"), list)
+            ):
+                response = _stage_record_read(_workspace, args, response)
 
             # Fold in the ranking the real record_search performs when the
             # caller names a subject. Matched against the test's own
@@ -990,7 +1078,7 @@ def create_mock_server(
     # reason this is a skip rather than a precedence rule -- fixtures are
     # registered above, so the test's own declaration wins.
     fixture_backed = set(manifest.keys())
-    for live_tool_name in sorted(LIVE_TOOLS - fixture_backed):
+    for live_tool_name in sorted(LIVE_TOOLS - fixture_backed - {"person_quality"}):
         live_handler = _make_live_handler(live_tool_name, workspace, call_log)
         description = tool_descriptions.get(
             live_tool_name, f"Live {live_tool_name} — calls real implementation."
@@ -1004,6 +1092,22 @@ def create_mock_server(
         )
         decorated = tool(live_tool_name, description, input_schema)(live_handler)
         tools.append(decorated)
+
+    # person_quality: one handler whether or not the test declared fixtures — it
+    # needs both the real resolution step and the test's fixtures keyed on the
+    # FamilySearch id that step finds.
+    pq_handler = _make_person_quality_handler(
+        workspace,
+        call_log,
+        list((manifest.get("person_quality") or {}).get("predicated") or []),
+    )
+    tools.append(
+        tool(
+            "person_quality",
+            tool_descriptions.get("person_quality", "person_quality — resolves then scores."),
+            (build_catalog.get("person_quality") or {}).get("inputSchema") or _PERMISSIVE_SCHEMA,
+        )(pq_handler)
+    )
 
     server = create_sdk_mcp_server(name="genealogy", version="1.0.0", tools=tools)
     tools_by_name = {t.name: t for t in tools}
@@ -1250,6 +1354,98 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
         }
         call_log.append(entry)
         return _tool_envelope("research_append", response)
+
+    return handler
+
+
+PERSON_QUALITY_REFUSAL = (
+    "person_quality: this person resolves to a FamilySearch id ({fsid}), and the "
+    "unit harness does not contact FamilySearch. Declare a person-quality fixture "
+    "keyed on that id."
+)
+
+
+def _make_person_quality_handler(
+    workspace: Path | None,
+    call_log: list[dict[str, Any]],
+    predicated: list,
+):
+    """Build person_quality's handler.
+
+    (a) Run the compiled tool's `resolvePersonQualityTarget` against the
+    workspace tree — no network, no token, no principal. (b) A person with no
+    FamilySearch link gets that real answer. (c) A person who resolves to a
+    FamilySearch id is answered from the test's person_quality fixtures matched
+    on `{...args without projectPath, personId: <resolved id>}`, so a fixture
+    answers for a FamilySearch person whatever local id reached it; with no match
+    the call is refused.
+
+    Every answer is logged `matched.kind = "live"` with `expected_args = None`:
+    the judge is shown `args` beside `expected_args` and fails a wrong
+    identifier, so a fixture keyed `LZNY-BRF` answering a call made with `I1`
+    must not be presented as an expected-argument mismatch. A refusal is logged
+    `kind = "none"` so the uncovered-call warning names the missing fixture.
+    """
+    pq_js = _MCP_BUILD / "tools" / "person-quality.js"
+
+    async def handler(args, _ws=workspace, _js=pq_js, _pred=predicated):
+        entry: dict[str, Any] = {
+            "tool": "mcp__genealogy__person_quality",
+            "args": dict(args),
+            "expected_args": None,
+            "matched": {"kind": "live", "index": None},
+            "response_fixture": "live:person_quality",
+        }
+        response: dict[str, Any]
+        if not _js.exists():
+            response = {"ok": False, "errors": [f"person_quality: build not found: {_js}"]}
+        else:
+            js_posix = str(_js).replace("\\", "/").replace("'", "\\'")
+            js_url = ("file:///" + js_posix) if sys.platform == "win32" else js_posix
+            input_obj = dict(args)
+            # Rebase only a projectPath the skill actually sent: filling one in
+            # would hide a skill that drops it, which in production quietly
+            # reverts every imported person to the neutral sentence.
+            if _ws is not None and "projectPath" in args:
+                input_obj["projectPath"] = str(_ws).replace("\\", "/")
+            script = (
+                f"import {{ resolvePersonQualityTarget }} from '{js_url}';"
+                " import { readFileSync } from 'node:fs';"
+                " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+                " const r = await resolvePersonQualityTarget(input);"
+                " process.stdout.write(JSON.stringify(r));"
+            )
+            failure: str | None = None
+            target: Any = None
+            try:
+                proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
+                if proc.stdout.strip():
+                    target = json.loads(proc.stdout)
+                else:
+                    failure = (proc.stderr or "").strip()[:500] or f"no output (exit {proc.returncode})"
+            except Exception as e:  # surfaced to the run as an error response
+                failure = str(e)
+            if not isinstance(target, dict):
+                response = {
+                    "ok": False,
+                    "errors": [f"person_quality: resolution failed: {failure or 'unrecognised output'}"],
+                }
+            elif target.get("kind") == "answer":
+                response = target["result"]
+            else:
+                fsid = target.get("familySearchId", "")
+                query = {k: v for k, v in args.items() if k != "projectPath"}
+                query["personId"] = fsid
+                hit = next(((resp, src) for (pred, resp, src) in _pred if matches(pred, query)), None)
+                if hit is not None:
+                    response, entry["response_fixture"] = hit
+                else:
+                    entry["matched"] = {"kind": "none", "index": None}
+                    entry["response_fixture"] = None
+                    response = {"ok": False, "errors": [PERSON_QUALITY_REFUSAL.format(fsid=fsid)]}
+        entry["response"] = response
+        call_log.append(entry)
+        return _tool_envelope("person_quality", response)
 
     return handler
 

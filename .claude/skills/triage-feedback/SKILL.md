@@ -60,9 +60,23 @@ not two bugs. Open both before triaging either.
 ## 1. Report the feedback
 
 The issue body carries the tester's own words — the five prose fields and their
-`worked as expected` verdict. **Read the body; do not download the bundle** unless
-the prose is genuinely insufficient, which is rare and worth saying out loud when
-it happens. The Drive link is in the body when you need it.
+`worked as expected` verdict. **Never triage from the body alone: read the bundle
+first, every item.** The prose hides what matters. A tester's "it couldn't find the
+entry" was a 403 on a Memories artifact, and a "yes, worked well" bundle had its
+whole tree blanked by redaction.
+
+The zip is at `~/Downloads/feedback-<timestamp>.zip`, named in the body's
+`make feedback-case ZIP=...` line. If it is not there, stop and ask the lead to
+download it from the body's Drive link. Unzip it to the scratchpad and read:
+
+- `_feedback/session-log.jsonl` and `_feedback/subagents/*.jsonl`: what the agent
+  actually called, passed and got back. A Cowork bundle has none (its `FEEDBACK.md`
+  says so); read the project state instead.
+- `research.json` (`log[]`, `sources[]`, `plans[]`), `tree.gedcomx.json` and
+  `starting-tree.gedcomx.json`: what the session wrote.
+- `FEEDBACK.md`: the redaction and session-log notes. A redacted person's facts are
+  gone, so compare person and fact counts before trusting the tree. Any other file
+  in the bundle (a stray `.bak`) is a finding in itself.
 
 Give the lead, in this order and nothing else:
 
@@ -86,8 +100,9 @@ For each claim, say which it is:
 - **Confirmed** — you found the code, the doc, or the state that shows it.
 - **Refuted** — the thing the tester says is missing or broken is present and
   working. Then ask what they actually saw, because something did happen.
-- **Unverifiable from here** — needs the bundle, a live session, or a decision.
-  Say so rather than guessing; "unverifiable" is a legitimate report.
+- **Unverifiable from here** — needs a live session or a decision that the bundle
+  cannot settle. Say so rather than guessing, but never call a claim unverifiable
+  before you have read the bundle.
 
 **Name the files you read.** A verdict with no cited path is an opinion.
 
