@@ -29,8 +29,6 @@ tools:
 
 # Question Selection
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
-
 Analyzes the current project state and selects the next research question.
 
 **A delegation that tells you to add a question is a destination, not a finding.** The gates below are yours and hold against the wording that reached
@@ -47,14 +45,11 @@ at the end of this body. Do not look for reference files; there are none.
 
 You need the current project state to select a question. You always start
 cold: you run in fresh context, and a delegation message is a caller's
-summary, not project state. So first, every time, `Read` the `project`
-section at the top of `research.json` (the first lines are enough) and the
-persons and sources in `tree.gedcomx.json`. The objective and any doubt about
-its premise live only there: `project_context` does not return the objective,
-and `research_query` does not serve the `project` section. Take every other
-section from `research_query`, as listed below, and not from that read —
-`research.json` grows with the project, and the queries are how you see what
-it holds. Then identify:
+summary, not project state. So first, every time, call `project_context` —
+its `objective` is the objective verbatim, including any doubt it states about
+its own premise — and `Read` `tree.gedcomx.json` for persons' dates, places and
+sources. Do not `Read` `research.json`: take every section from
+`research_query`, as listed below. Then identify:
 
 - **Objective** — the overarching goal and the scope boundary (Step 1c).
 - **Open questions** (`open` / `in_progress`) and **in-progress plan items**
