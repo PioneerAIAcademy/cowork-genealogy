@@ -10,11 +10,12 @@
       "from-objective",
       "first-question",
       "regression",
-      "premise-question-names-fact"
+      "premise-question-names-fact",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I want to find Rosalind Hartwell's parents. Pick the first research question to investigate.",
+    "delegation": "Select and record the next research question for this project.\n\nThe user said: \"I want to find Rosalind Hartwell's parents. Pick the first research question to investigate.\"\n\nprojectPath: <workspace>",
     "scenario": "premise-surname-origin"
   },
   "judge_context": [

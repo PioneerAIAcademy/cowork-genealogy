@@ -500,3 +500,33 @@ def test_every_suppression_has_a_nonempty_quote() -> None:
                 f'SUPPRESSIONS entry ({entry["file"]}, {entry["tool"]}) has a '
                 f"quote too short to identify a sentence: {quote!r}"
             )
+
+
+def test_an_agent_keyed_suite_is_scanned(tmp_path: Path, monkeypatch) -> None:
+    """A skill folded into an agent and deleted still has a suite to scan.
+
+    Walking SKILLS_DIR alone skipped `citation`'s rubric and judge_context from
+    the day its skill was deleted, with no signal. The suite resolves its
+    declared tools from `agents/<suite>.md`; a suite with neither a skill nor
+    an agent is not a suite.
+    """
+    skills, agents, tests = tmp_path / "skills", tmp_path / "agents", tmp_path / "tests"
+    (skills / "kept").mkdir(parents=True)
+    (skills / "kept" / "SKILL.md").write_text(
+        "---\nname: kept\nallowed-tools:\n  - record_read\n---\n", encoding="utf-8"
+    )
+    agents.mkdir()
+    (agents / "folded.md").write_text(
+        "---\nname: folded\ntools:\n  - mcp__genealogy__research_append\n  - Read\n---\n",
+        encoding="utf-8",
+    )
+    for suite in ("kept", "folded", "orphan"):
+        (tests / suite).mkdir(parents=True)
+    monkeypatch.setattr(check_rubric_tool_drift, "SKILLS_DIR", skills)
+    monkeypatch.setattr(check_rubric_tool_drift, "AGENTS_DIR", agents)
+    monkeypatch.setattr(check_rubric_tool_drift, "TESTS_DIR", tests)
+
+    assert check_rubric_tool_drift.suite_declarations() == [
+        ("folded", {"research_append", "Read"}),
+        ("kept", {"record_read"}),
+    ]

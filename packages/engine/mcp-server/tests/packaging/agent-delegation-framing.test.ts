@@ -195,18 +195,11 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     },
   },
 
-  "question-selection -> question-selection": {
+  // The router that held two caller-side pins here was deleted with the skill
+  // (issue #2115), so the orchestrator is now the only caller and the agent
+  // carries the whole defence. The history below is why that pin is agent-side.
+  "research -> question-selection": {
     pins: [
-      {
-        side: "caller",
-        excerpt:
-          "**Read nothing else, and judge nothing.**",
-      },
-      {
-        side: "caller",
-        excerpt:
-          '**Do not ask it to "add a question."**',
-      },
       // Added after the first direct-arm run (issue #2115). The exemption this
       // replaces claimed the agent needed no rule because the fold was verbatim.
       // The run refuted it: three adversarially-phrased twins ran, and two --
@@ -426,6 +419,20 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["timeline -> person-evidence", ""],
   ["translation -> person-evidence", ""],
   ["tree-edit -> person-evidence", ""],
+  // question-selection's skill was deleted (issue #2115), so the name entered
+  // agentOnly. Every mention below is bare-name boundary or next-step prose;
+  // the one delegation, research's routing table, spells `@plugin:` and is a
+  // registered edge above.
+  ["conflict-resolution -> question-selection", ""],
+  ["forget-and-rederive -> question-selection", ""],
+  ["hypothesis-tracking -> question-selection", ""],
+  ["init-project -> question-selection", ""],
+  ["project-status -> question-selection", ""],
+  ["proof-conclusion -> question-selection", ""],
+  ["research-exhaustiveness -> question-selection", ""],
+  ["research-plan -> question-selection", ""],
+  ["search-full-text -> question-selection", ""],
+  ["timeline -> question-selection", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -606,6 +613,7 @@ describe("agent delegation framing", () => {
     "gps-mentor",
     "image-reader",
     "person-evidence",
+    "question-selection",
     "record-extractor",
   ];
 

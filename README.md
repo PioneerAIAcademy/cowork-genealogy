@@ -159,7 +159,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 26 skills covering the full GPS research cycle. Skills
+The plugin ships 25 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 For a plain-language account of the research method itself — the GPS
 cycle, the judgment made at each stage, and what to expect from a
@@ -178,7 +178,6 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 
 | Skill | What it does | Say this |
 |-------|-------------|----------|
-| **question-selection** | Picks the highest-value next research question. | "What should I research next?" |
 | **research-plan** | Creates a sequenced plan of record sets to search, with repositories, rationale, and fallbacks. | "Plan research for this question" |
 | **research-exhaustiveness** | The gate before proof. Runs *after* all plan items for a question are `completed` or `skipped` and the resulting evidence has been extracted, classified, person-linked, and conflict-resolved. Applies the seven stop criteria; either writes the question's `exhaustive_declaration` or explains what's missing so you can extend the plan (`research-plan`) or pivot to FAN (`question-selection`). | "Is this research exhaustive?" / "Are we done?" / "Can we declare exhaustive?" |
 
@@ -253,7 +252,7 @@ specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships eight Cowork agents. Unlike skills, an agent runs in
+The plugin ships nine Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 at its mentor checkpoint, or by the skill that delegates to it — you
 don't load it explicitly.
@@ -267,13 +266,14 @@ don't load it explicitly.
 | **person-evidence** | Resolves identity for **one** request — evaluates whether a record's person matches a tree person, writes the `person_evidence` links with their confidence and rationale, and creates stub persons when nothing matches. It is the only writer of `person_evidence`. | (spawned by `/research` directly via the agent description) |
 | **search-images** | Browses a digitized FamilySearch volume page by page when the record set is neither indexed nor full-text searchable, and logs the browse. It finds the image groups covering a place and date range, lists the images inside one, and reads each page as text. | "Browse the images" / "page through the film" |
 | **citation** | Polishes the citations on sources that already exist to Evidence Explained standards (Who/What/When/Where/Where-within), and looks up the office that created a probate record on the FamilySearch wiki rather than carrying one jurisdiction's offices in its prompt. It never creates a source entry: asked to add a record, it declines and routes to `record-extraction`. | "Fix citations" / "Cite this source" |
+| **question-selection** | Picks the highest-value next research question. | "What should I research next?" |
 | **image-reader** | Reads **one** FamilySearch image scan and returns a full text transcription (fast, cheap — hosted Gemini Flash OCR). Used when browsing unindexed volumes or extracting from a page image; it keeps the image data out of the main conversation. | (not invoked directly — `record-extraction` and `search-images` delegate) |
 
 ## Recommended workflow
 
 ```
 1. init-project              Start with a FamilySearch person ID
-2. question-selection        "What should I research next?"
+2. question-selection (agent) "What should I research next?"
 3. research-plan             "How do I answer this question?"
 4. search-records            Execute indexed searches on FamilySearch
    search-full-text          ...or full-text search for witnesses/FAN mentions
@@ -477,7 +477,7 @@ What's shipped:
 - **48 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
-- **26 shipped skills.** Full GPS research cycle from `init-project`
+- **25 shipped skills.** Full GPS research cycle from `init-project`
   through `proof-conclusion`, plus reference skills (locality-guide,
   historical-context, translation, search-familysearch-wiki, search-wikipedia)
   and guardrails (validate-schema, check-warnings, convert-dates). The three

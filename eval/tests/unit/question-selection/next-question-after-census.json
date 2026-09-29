@@ -5,10 +5,17 @@
     "name": "Recommend completing in-progress plan before adding new questions",
     "type": "positive",
     "description": "The mid-research-flynn scenario has q_001 (parentage) in_progress with pli_006 (probate search) still in_progress. The skill should recognize that there's pending in-flight work and recommend completing that before formulating a new question. Tests the 'don't churn — finish what's open' aspect of question-selection.",
-    "tags": ["question-selection", "in-progress-work", "no-new-question", "probate-pending", "question-selection-no-new-question"]
+    "tags": [
+      "question-selection",
+      "in-progress-work",
+      "no-new-question",
+      "probate-pending",
+      "question-selection-no-new-question",
+      "direct-arm"
+    ]
   },
   "input": {
-    "user_message": "What should I research next?",
+    "delegation": "Select and record the next research question for this project.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "judge_context": [

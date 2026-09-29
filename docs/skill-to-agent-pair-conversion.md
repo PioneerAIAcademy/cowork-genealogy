@@ -75,6 +75,13 @@ it.
 
 ### A pair-conversion PR does not edit `research/SKILL.md`
 
+**Exception: a conversion that deletes the skill flips the cell in the same
+PR.** The table's rule is that an entry not spelled `@plugin:<name>` is a
+`Skill` call, so a bare cell naming a deleted skill routes production research
+to nothing from merge until the follow-up lands. Pay the `research` run in the
+conversion (issue #2115 is the worked case). The rest of this section is about
+a pair, where the skill survives and the ordering below is safe.
+
 The Invoke cell flips to `@plugin:<agent>` in a **separate PR**, opened after
 the conversion merges. Two reasons, and either alone is sufficient: the
 conversion keeps its own acceptance check instead of sharing one with a routing
@@ -368,7 +375,23 @@ Every one below fails CI if skipped. Put the whole list in the card.
 | `docs/architecture.md`, `docs/skill-dataflow.md` | the agent count and any per-tool agent tally — re-measure, do not increment |
 | `make agent-smoke` | the only check that reads what the runtime resolved; **no CI job runs it** |
 
-These are all local and free. Run the whole packaging suite
+**Deleting the skill trips more, and some of it bills other suites.** Under the
+2026-09-22 ruling every conversion deletes its skill (`citation`,
+`person-evidence` and `question-selection` are the worked cases). On top of
+the table above:
+
+| register | what it wants | paid? |
+|---|---|---|
+| `research/SKILL.md` routing table | any bare cell naming the skill flipped to `@plugin:<agent>` — see the exception in §0 | `research` run |
+| other suites' negatives with `correct_skill` naming the skill | a routed negative counts `Skill` calls only, so an `Agent` spawn never satisfies it and the test aborts `not_runnable` (`runnability.py`). Delete a test whose right answer *is* the agent; trim the name from a multi-target list only when the test is graded on an invariant | one run per suite touched |
+| `execution.stub_skills` naming the skill | nothing — an entry naming an agent stubs its spawn (`stub_agents`) | no |
+| the suite's own routed tests | every `input.user_message` becomes an `input.delegation`, tagged `direct-arm`; a routed original with a same-phrasing twin is deleted | the suite's run |
+| the agent's `description` | the deleted skill's user trigger phrases, now that it is the only thing a user's words match; within 1024 characters (`skill-description-length.test.ts`) | no |
+| `agent-delegation-framing.test.ts` | the router self-edge replaced by the real caller's edge; every bare-name mention in another `SKILL.md` registered in `PROSE_MENTIONS`; the name added to `PROSE_ARM_COVERS` | no |
+| `ownership.json` | `skill:<name>` → `agent:<name>` as owner and caller | no |
+| README, `architecture.md` skill counts; `EXPECTED_SKILLS` | decremented and the row moved to the Agents table | no |
+
+Every check in both tables is local and free to run. Run the whole packaging suite
 (`npx vitest run tests/packaging` in `packages/engine/mcp-server/`) and
 `apps/server`'s `pytest`, not just the file the card names. A packaging file that
 cannot import (a missing `yaml`, say) reports "no tests" rather than failing, so

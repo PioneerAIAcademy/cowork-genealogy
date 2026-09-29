@@ -1255,6 +1255,41 @@ def agent_body_mentions(agent_md: Path, vocabulary: set[str]) -> set[str]:
     return find_mentions(body, vocabulary) - tools - disallowed
 
 
+def suite_declarations() -> list[tuple[str, set[str]]]:
+    """`(suite, declared tools)` for every skill, and for every agent-keyed suite.
+
+    A skill is resolved from its `SKILL.md`, unioned with the tools of any agent
+    it delegates to. A suite whose skill was folded into an agent and deleted
+    (`citation`, `question-selection`) has no skill directory, so walking
+    `SKILLS_DIR` alone skipped its rubric and every judge_context in it with no
+    signal. It is resolved from `agents/<suite>.md` instead, the same fallback
+    the harness's `suite_body_path` makes.
+    """
+    out: list[tuple[str, set[str]]] = []
+    if SKILLS_DIR.is_dir():
+        for skill_dir in sorted(SKILLS_DIR.iterdir()):
+            if not skill_dir.is_dir():
+                continue
+            skill_md = skill_dir / "SKILL.md"
+            out.append(
+                (
+                    skill_dir.name,
+                    set(declared_tools(skill_md)) | delegated_tools(skill_md, AGENTS_DIR),
+                )
+            )
+    if TESTS_DIR.is_dir():
+        for suite_dir in sorted(TESTS_DIR.iterdir()):
+            agent_md = AGENTS_DIR / f"{suite_dir.name}.md"
+            if (
+                suite_dir.is_dir()
+                and not (SKILLS_DIR / suite_dir.name).is_dir()
+                and agent_md.is_file()
+            ):
+                tools, _ = agent_declared_tools(agent_md)
+                out.append((suite_dir.name, tools))
+    return sorted(out)
+
+
 def main() -> int:
     manifest_tools = load_manifest_tools(MANIFEST)
     if manifest_tools is None:
@@ -1265,51 +1300,43 @@ def main() -> int:
     drift_hits = 0
     suppressed_count = 0
 
-    if SKILLS_DIR.is_dir():
-        for skill_dir in sorted(SKILLS_DIR.iterdir()):
-            if not skill_dir.is_dir():
+    for skill, declared in suite_declarations():
+        skill_tests = TESTS_DIR / skill
+
+        rubric_md = skill_tests / "rubric.md"
+        for tool in sorted(rubric_mentions(rubric_md, vocabulary, declared=declared)):
+            rel_file = f"eval/tests/unit/{skill}/rubric.md"
+            if is_suppressed(rel_file, tool):
+                suppressed_count += 1
                 continue
-            skill = skill_dir.name
-            skill_md = skill_dir / "SKILL.md"
-            declared = set(declared_tools(skill_md)) | delegated_tools(
-                skill_md, AGENTS_DIR
+            drift_hits += 1
+            gh_warning(
+                f"skill `{skill}`'s rubric.md mentions `{tool}`, which is "
+                f"not in `{skill}`'s allowed-tools {sorted(declared) or '[]'}. "
+                f"If `{tool}` was folded into another tool, update the "
+                f"grading prose — don't fail runs for not calling a tool "
+                f"the skill can't call.",
+                file=rel_file,
             )
-            skill_tests = TESTS_DIR / skill
 
-            rubric_md = skill_tests / "rubric.md"
-            for tool in sorted(rubric_mentions(rubric_md, vocabulary, declared=declared)):
-                rel_file = f"eval/tests/unit/{skill}/rubric.md"
-                if is_suppressed(rel_file, tool):
-                    suppressed_count += 1
-                    continue
-                drift_hits += 1
-                gh_warning(
-                    f"skill `{skill}`'s rubric.md mentions `{tool}`, which is "
-                    f"not in `{skill}`'s allowed-tools {sorted(declared) or '[]'}. "
-                    f"If `{tool}` was folded into another tool, update the "
-                    f"grading prose — don't fail runs for not calling a tool "
-                    f"the skill can't call.",
-                    file=rel_file,
-                )
-
-            if skill_tests.is_dir():
-                for test_path in sorted(skill_tests.glob("*.json")):
-                    for tool in sorted(
-                        judge_context_mentions(test_path, vocabulary, declared=declared)
-                    ):
-                        rel_file = f"eval/tests/unit/{skill}/{test_path.name}"
-                        if is_suppressed(rel_file, tool):
-                            suppressed_count += 1
-                            continue
-                        drift_hits += 1
-                        gh_warning(
-                            f"test `{test_path.name}` (skill `{skill}`) has a "
-                            f"judge_context mentioning `{tool}`, which is not in "
-                            f"`{skill}`'s allowed-tools {sorted(declared) or '[]'}. "
-                            f"The judge is being told to expect a call the skill "
-                            f"can't make — update judge_context.",
-                            file=rel_file,
-                        )
+        if skill_tests.is_dir():
+            for test_path in sorted(skill_tests.glob("*.json")):
+                for tool in sorted(
+                    judge_context_mentions(test_path, vocabulary, declared=declared)
+                ):
+                    rel_file = f"eval/tests/unit/{skill}/{test_path.name}"
+                    if is_suppressed(rel_file, tool):
+                        suppressed_count += 1
+                        continue
+                    drift_hits += 1
+                    gh_warning(
+                        f"test `{test_path.name}` (skill `{skill}`) has a "
+                        f"judge_context mentioning `{tool}`, which is not in "
+                        f"`{skill}`'s allowed-tools {sorted(declared) or '[]'}. "
+                        f"The judge is being told to expect a call the skill "
+                        f"can't make — update judge_context.",
+                        file=rel_file,
+                    )
 
     if AGENTS_DIR.is_dir():
         for agent_md in sorted(AGENTS_DIR.glob("*.md")):

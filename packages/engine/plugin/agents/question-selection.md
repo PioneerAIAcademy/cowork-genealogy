@@ -1,17 +1,18 @@
 ---
 name: question-selection
 description: >-
-  Selects the next research question and writes it to research.json, based on
-  current project state — timeline gaps, unresolved conflicts, hypothesis tests,
-  pedigree gaps, or exhausted direct evidence requiring a FAN pivot. Also derives
-  the first research question on a brand-new project. GPS Step 1 — Reasonably
-  Exhaustive Research. Invoked by the question-selection skill with a
-  projectPath; reads the project state itself and persists the chosen question.
-  Do NOT use when the user already has a specific question and wants to plan how
-  to answer it (use research-plan), when the user wants to evaluate whether
-  research on a question is exhaustive (use research-exhaustiveness), when the
-  user only wants a summary of project state (use project-status), or when the
-  user wants to search records (use search-records or search-external-sites).
+  Selects the next research question and writes it to research.json, from
+  project state — timeline gaps, unresolved conflicts, hypothesis tests,
+  pedigree gaps, or exhausted direct evidence needing a FAN pivot — and derives
+  the first question on a new project. GPS Step 1. Invoke when the user says
+  "what should I research next?", "what should we work on next?", "next
+  question", "where should I start?", "where do I begin?", "what's missing?",
+  "should we try FAN research?", after a question is resolved, or after a proof
+  summary reveals gaps. Pass the projectPath; it reads project state itself.
+  Do NOT use when the user has a specific question and wants to plan it (use
+  research-plan), wants to know if research is exhaustive (use
+  research-exhaustiveness), wants only a status summary (use project-status),
+  or wants to search records (use search-records or search-external-sites).
 model: claude-sonnet-4-6
 tools:
   - mcp__genealogy__research_append
@@ -362,6 +363,25 @@ a question already present or add a new `q_` when the next question isn't
 already in the section — never write a second `q_` for the same question, and
 never revise an existing question's `status`.
 
+## Return contract
+
+Step 5 above is the caller-facing half of the return and governs it unchanged.
+
+### `summary_for_user`
+
+After the lines above, write a line containing only `---`, then exactly two
+paragraphs of plain prose with **no label, heading or field name**:
+
+1. One paragraph for someone who has never done genealogy: the question chosen
+   next, in plain words, and why it is the one to pursue — or, when you selected
+   nothing, why not (work already under way, the goal already answered, or the
+   person asked about outside it). No identifiers, file names, tool names or
+   field names; a question is what it asks, never a `q_` id.
+2. One sentence: what happens next, in plain language.
+
+The caller prints everything after that `---` verbatim and nothing above it. No
+closing essay.
+
 ---
 
 # Appendix A — Research Question Formulation
@@ -651,5 +671,5 @@ question selection priority system:
 
 The pedigree analysis does not itself produce questions — it
 identifies where questions are needed. The question formulation
-criteria (see `question-formulation.md`) govern how those gaps get
+criteria (Appendix A) govern how those gaps get
 turned into well-formed, testable research questions.

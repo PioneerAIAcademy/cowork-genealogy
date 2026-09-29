@@ -35,11 +35,6 @@ const PENDING: Record<string, string> = {
   "research-exhaustiveness.md": "lands with its next body edit",
   "gps-mentor.md":
     "lands with the narrative_for_user split (spec §8, §11.1) on its next body edit",
-  // Issue #2115 folded this body VERBATIM from the skill, which was never half
-  // of a pair and so carries no return contract. Adding one here would break
-  // the fold-verbatim rule in the same commit that claims the fold is verbatim,
-  // and would land an ungraded body edit. Lands with the pair's own eval slot.
-  "question-selection.md": "lands with the pair's first body edit (issue #2115)",
 };
 
 function stripFences(text: string): string {
