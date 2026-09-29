@@ -5,10 +5,16 @@
     "name": "Narrative citations are copied verbatim from research.json, not paraphrased",
     "type": "positive",
     "description": "DRAFT. Guards the new 'citations must be copied directly from research.json' rule. In bride-surname-illegible-cert-declared, src_001 carries a specific stored citation. When the skill writes the proof narrative, its footnote/inline citation for the 1889 marriage record must reproduce the stored src_001.citation verbatim — not a recalled or paraphrased collection/repository/URL.",
-    "tags": ["proof-conclusion", "verbatim-citation", "citation-fidelity", "regression"]
+    "tags": [
+      "proof-conclusion",
+      "verbatim-citation",
+      "citation-fidelity",
+      "regression",
+      "direct-arm"
+    ]
   },
   "input": {
-    "user_message": "Exhaustiveness is declared for q_001 — write the proof conclusion, with full citations.",
+    "delegation": "Exhaustiveness is declared for q_001. Write the proof conclusion, with full citations.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "bride-surname-illegible-cert-declared"
   },
   "judge_context": [

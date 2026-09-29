@@ -1127,7 +1127,7 @@
       "expected_outcome": "xfail",
       "scenario": "mid-research-flynn",
       "mcp_fixtures": [],
-      "outcome": "xfail",
+      "outcome": "fail",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
@@ -1439,7 +1439,7 @@
       "expected_outcome": "xfail",
       "scenario": "mid-research-flynn",
       "mcp_fixtures": [],
-      "outcome": "xfail",
+      "outcome": "fail",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
@@ -2747,7 +2747,7 @@
       "expected_outcome": "xfail",
       "scenario": "mid-research-flynn",
       "mcp_fixtures": [],
-      "outcome": "xfail",
+      "outcome": "fail",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
@@ -3097,7 +3097,7 @@
       "expected_outcome": "xfail",
       "scenario": "wilkins-first-plan",
       "mcp_fixtures": [],
-      "outcome": "xfail",
+      "outcome": "fail",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
@@ -3518,7 +3518,7 @@
       "expected_outcome": "xfail",
       "scenario": "blyeberg-first-plan",
       "mcp_fixtures": [],
-      "outcome": "xpass",
+      "outcome": "pass",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
@@ -4300,7 +4300,7 @@
       "expected_outcome": "xfail",
       "scenario": "anders-unna-marriage-search",
       "mcp_fixtures": [],
-      "outcome": "xpass",
+      "outcome": "pass",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
@@ -4740,7 +4740,7 @@
       "expected_outcome": "xfail",
       "scenario": "empty-project-just-created",
       "mcp_fixtures": [],
-      "outcome": "xfail",
+      "outcome": "fail",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
@@ -6839,7 +6839,7 @@
       "expected_outcome": "xfail",
       "scenario": "mid-research-flynn",
       "mcp_fixtures": [],
-      "outcome": "xfail",
+      "outcome": "fail",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
