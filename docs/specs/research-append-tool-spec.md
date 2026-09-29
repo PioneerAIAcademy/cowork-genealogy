@@ -1718,38 +1718,49 @@ assertion count, the distinct roles assigned, and any notes. The caller never
 sees the record, so reporting the extraction is its job and `results[]` alone
 would say how many entries landed without saying what they say.
 
-### 11.7 Document mode — an unindexed source extracted in code
+### 11.7 Document mode — unindexed sources extracted in code
 
-> **Status:** specified, not built. Lands after §11.6.
+> **Status:** specified, not built. It lands in the same merge to `main` as §11.6's call shape (lead, 2026-09-29).
 
-§11.6 extracts a FamilySearch record from its `record_read` sidecar. Document
-mode runs **the same extractor** on a source that has no index: an image
-transcription, a full-text hit, an external site, pasted prose. The
-`record-structurer` agent (`record-structurer-agent-spec.md`) reads the text
-and builds a **document**. This tool validates that document, turns it into an
-`ExtractDocument`, and runs `extractRecord`. So roles, the three classification
-layers, field expansion and the census relationship doctrine all go through one
-code path whether the record was indexed or not.
+§11.6 extracts FamilySearch records. Document mode runs **the same extractor** on
+sources with no index: image transcriptions, full-text hits, external sites,
+pasted prose. The `record-structurer` agent (`record-structurer-agent-spec.md`)
+reads the text and builds one **document** per source. This tool validates each
+document, turns it into an `ExtractDocument`, runs `extractRecord`, and writes
+the result. Roles, the three classification layers, field expansion and the
+census relationship doctrine are therefore one code path, indexed or not.
 
-**Entered on `logEntryId` + `document`.** `logEntryId` with no `document` is
-§11.6. `document` with no `logEntryId` is refused: every extraction cites the
-log entry that produced it. `ops` sent with either is refused, as in §11.6.
+**One call per batch.** The agent sends every source it read in one call, and
+the tool writes them all. Nothing calls `research_log_append` first: **this tool
+writes the log entry** for each source, as it does on the FamilySearch path
+(§11.6). It is a writer of the `log` section, with its row in
+`docs/specs/schemas/ownership.json`.
+
+**Entered on `documents`.** Sending `documents` together with `recordIds` (the
+FamilySearch path) or `ops` (the hand-built form) is refused, naming both.
 
 **Inline, not staged.** A model cannot stage a sidecar. `results_ref` is
-host-written only (`finalizeStagedResults` in `results-staging.ts`), so the
+host-written only (`finalizeStagedResults` in `results-staging.ts`), so each
 document travels as a tool parameter.
 
-#### Inputs added to §11.6's
+#### Inputs
 
 | Parameter | Required | Meaning |
 |---|---|---|
-| `document` | yes | The document below. |
-| `transcriptionRef` | no | A `results/` ref holding a `StagedTranscription`. When given, the source's `transcription` is copied from that element **by the tool**, so the verbatim text is never re-emitted by a model. The ref can be a staged handle or a finalized sidecar (`readStagedResults` accepts both). |
-| `imageFilename` | no | Written to the source's `image_filename`. It is `image_transcribe`'s `imageRef`, relayed. §5.4's warning still fires when a transcription lands without one. |
+| `documents` | yes | A non-empty list, one entry per source: `{ recordId, document, transcriptionRef?, imageFilename? }`. |
+| `documents[].recordId` | yes | The `capture:<descriptive>`, `ancestry:<collection>:<id>` or ARK that identifies the source. |
+| `documents[].document` | yes | The document below. |
+| `documents[].transcriptionRef` | no | The `results/` ref of the `StagedTranscription` the agent read. The tool finalizes it into this source's log entry (`tool: "image_transcribe"`, `stagedResultsRef`), and copies its `transcription` into the source entry, so no model re-emits the page text. |
+| `documents[].imageFilename` | no | Written to the source's `image_filename`. It is `image_transcribe`'s `imageRef`, relayed. §5.4's warning still fires when a transcription lands without one. |
+| `questionIds` | no | Stamped on every assertion in the batch, as in §11.6. |
+| `absentPersons` | no | Expected-but-absent persons, keyed by `recordId`, as in §11.6. |
 
-`recordId`, `questionIds` and `absentPersons` keep their §11.6 meaning.
-`recordId` is the `capture:<descriptive>`, `ancestry:<collection>:<id>` or
-ARK the router already uses for that source.
+A source with no `transcriptionRef` (pasted prose, PDF text, external-site text)
+is logged `tool: "user_provided"` with no sidecar.
+
+**All or nothing.** The batch validates as a whole before anything is written.
+One malformed document refuses the call, naming its index and JSON path, so a
+corrected resend cannot duplicate the sources that were valid.
 
 #### The document
 
@@ -1830,6 +1841,32 @@ tries to classify is refused by the schema. It is not left to a prompt.
 | `record_persona_id` | — | **Never set.** Local ids name nothing outside the document. |
 | negative evidence | both `absentPersons` lists | Merged. The caller's entries come first, and duplicates by `name` are dropped. |
 
+#### Classification rows this path adds
+
+The §11.6 table gains the rows this path needs. They are code and ship with it,
+and no genealogist sign-off gates them.
+
+| Record type | Fact class | informant | proximity | quality |
+|---|---|---|---|---|
+| obituary | the decedent's biography, including the death date and place | the obituary's author (usually unnamed family) | `family_not_present` | `secondary` |
+| obituary | a survivor's name and residence | the obituary's author | `family_not_present` | `secondary` |
+
+When `informant.name` is present it replaces the generic informant string, as
+on every row.
+
+**The table may key on a specific field, not only on a fact class.** One rule
+already needs it: on a census, a parent's or grandparent's birthplace is
+`secondary` whoever answered, because no household respondent could have
+witnessed it. The table's format therefore becomes record type × role family ×
+fact class, with an optional field-level override, where a row names the field
+it narrows to.
+
 #### Return
 
-§11.6's `extraction` echo, plus `documentMode: true`.
+The **summary** §11.6 returns, one entry per source, written by code: the
+record, the people on it, the key facts extracted, any defaulted-
+classification warnings, every `[suspicious text …]` marker a document
+carried, and a household head whose surname differs from the principal's. That
+last is a lead for hypothesis-tracking, never a relationship. It is not every assertion and not bare counts. The
+agent returns it verbatim, and the caller relays it and decides what comes
+next without a follow-up read.

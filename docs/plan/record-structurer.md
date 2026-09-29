@@ -1,8 +1,9 @@
 # Plan: the record-structurer agent (issue #2939)
 
-**Status:** not started. Blocked on #2937 (PR #2979). The spec is written:
-`docs/specs/record-structurer-agent-spec.md` and
-`research-append-tool-spec.md` §11.7.
+**Status:** not started. The spec is written, to the lead's 2026-09-29 call
+shape: `docs/specs/record-structurer-agent-spec.md` and
+`research-append-tool-spec.md` §11.7. #2937 and #2939 land on `main` as **one
+merge**, so PR #2979 does not merge on its own first.
 
 This file holds the section walk the issue asks for. It becomes the PR body's
 walk, and the file is deleted when the PR merges.
@@ -17,7 +18,7 @@ Key: **code** = #2937's `record-extract.ts` / `extraction-append.ts`.
 |---|---|---|
 | Intro: classifications are "first and final" | dropped | Code classifies on both paths, so the warning has no one to warn. |
 | No narration preamble | agent | Unchanged. |
-| Invocation contract table | agent §2 | Content arrives as `resultsRef` or inline. `imageFilename` and `documentForm` are added. |
+| Invocation contract table | agent §2 | One spawn per batch. Each source arrives as a `resultsRef` or inline text. `imageFilename` and `documentForm` are added. |
 | Getting-the-record-content preference order | dropped | Its live and sidecar `record_read` arms are #2937's path now. This path reads with `sidecar_read` or takes inline text. |
 | One `project_context` call | dropped | `questionIds` come from the caller. Nothing the agent reads needs project state. |
 | Data boundary | agent §4 | Issue #2485. The pin in `tests/packaging/` that guards the fence is repointed to the new body. |
@@ -29,7 +30,7 @@ Key: **code** = #2937's `record-extract.ts` / `extraction-append.ts`.
 | Step 1 — "original not examined" | §11.7 | `index_entry` / `abstract` → `derivative`. The reason goes in `source.notes`. |
 | Step 2 — role naming convention | code | Plus §11.7's `statedRelation` mapping. |
 | Step 2 — the literal `absent` | code | `absentPersons` builder. |
-| Step 2 — a differently-surnamed head is a FAN lead | agent §3 | A return-summary line. Code sees surnames, not leads. |
+| Step 2 — a differently-surnamed head is a FAN lead | code | The agent's return is now the tool's summary verbatim, so the lead has to come from code: the summary names a head whose surname differs from the principal's. |
 | Step 2 — no pre-1880 relationship assertions | code | `suppressRelationships`, plus §11.7's "statedRelation is ignored when there is no column". |
 | Step 2 — positional roles | code | `positionalCensusRoles`, fed array order. |
 | Step 2 — obituary survivor lists | agent §4 | The in-law and neighbour **roles** come from `statedRelation` in §11.7. |
@@ -54,63 +55,67 @@ Key: **code** = #2937's `record-extract.ts` / `extraction-append.ts`.
 | Layer 2 — evidence independence (shared informant) | dropped | Needs a cross-source view one record does not have. It is `conflict-resolution`'s independence analysis. |
 | Layer 3 — `record_basis` doctrine, "was it in a field?" | §11.7 | Becomes the `computed` mark's definition in agent §4. |
 | Epistemic cap — `[?]` and the caller's doubt | agent §4, §11.7 | Widened to self-noticed (lead, 2026-09-27). |
-| `log_entry_id`; `research_log_append` if no entry | code; dropped | The router always logs first. |
+| `log_entry_id`; `research_log_append` if no entry | code | `extraction_append` writes the log entry itself (lead, 2026-09-29). |
 | `extracted_for_question_ids` | code | From `questionIds`. |
 | Step 4 — one call; evidence-type self-check | agent §3 | The self-check becomes "did I list every computed attribute". |
 | Step 4 — retry on `ok: false` | agent §3 | |
-| Step 4 — correcting via `update` | dropped | Document mode appends. A correction is a re-extraction (see open question 2). |
-| Step 4 — cannot write `person_evidence`; identity goes in the summary | code; agent §3 | The section allowlist enforces the first half. |
+| Step 4 — correcting via `update` | dropped | Document mode appends. A correction is a re-extraction. |
+| Step 4 — cannot write `person_evidence`; identity goes in the summary | code | The section allowlist enforces the first half. An identity puzzle is named in the tool's summary. |
 | Negative evidence | code, agent §4 | Code builds the entries. The agent reads "preceded in death" and blank-where-expected. |
-| Match checking | dropped | The match tools key on a FamilySearch record ARK, which a text source does not carry. On the FamilySearch path the router runs them (#2979, commit e2a20b090). |
-| Re-invocation and classification refinement | **open question 2** | |
-| Return contract, `summary_for_user` | agent §3 | Unchanged. |
+| Match checking | dropped | The match tools key on a FamilySearch record ARK, which a text source does not carry. On the FamilySearch path the caller runs them after `extraction_append`. |
+| Re-invocation and classification refinement | dropped | Lead, 2026-09-29: classification is the table's, so there is no refinement to delegate. `classification-refinement-informant.json` is deleted with it. A disagreement with a row is a row change. |
+| Return contract, `summary_for_user` | dropped | Lead, 2026-09-29: the agent returns `extraction_append`'s code-written summary verbatim. `test_relay_carries_no_caller_facing_lines` is retired with it. |
 
-**`record-extraction/SKILL.md`, moved by this card:**
+**`record-extraction/SKILL.md` is deleted** (lead, 2026-09-29). Routing lives in
+`extraction_append`'s description and this agent's description.
 
 | Section | Goes to |
 |---|---|
-| `<record-data>` fence on delegation | The router keeps it for inline text. The agent's data-boundary rule covers `sidecar_read` output too. |
-| Calendar check (#2256, #2790) | A route to `convert-dates`, which owns the table, and the pre-1752 prose is deleted. |
-| `image_filename` relay | The router passes `imageFilename` to the agent. |
-| Suspect-transcription and Old Style flags | Kept as flags on the new delegation. |
+| Triage: FamilySearch record vs everything else | The two descriptions. |
+| `<record-data>` fence on delegation | The spawner wraps inline `text`. The agent's data-boundary rule covers `sidecar_read` output too. |
+| Log entry, router-side | Dropped: `extraction_append` writes it. |
+| Per-record delegation and position announcements | Dropped: one spawn per batch, and the summary names each record. `multi-record-batch-announces-positions.json` is retargeted to the summary. |
+| Calendar check (#2256, #2790) | A spawner flag. An unflagged date is recorded as written. |
+| `image_filename` relay | The spawner passes `imageFilename` per source. |
+| Suspect-transcription and Old Style flags | Per-source `flags`. |
+| Match checks on the FamilySearch path | The caller, after `extraction_append`. |
+| Present and continue | Dropped: the summary is relayed verbatim. |
 
-**Unreached `references/` files (#2476):** `note-taking-standards.md` and
-`source-classification-guide.md` are deleted. Their reading rules are agent §4
-and their classification rules are code. `places-guidance.md` is pinned
-byte-identical by `skill-guidance.test.ts`. Its row moves under #2092's
-disposition for that family, and it is not deleted by this card.
+**`references/`:** all three files go with the skill. `places-guidance.md`'s
+byte-identical pin in `skill-guidance.test.ts` loses its `record-extraction`
+entry. #2092's disposition for the family is unaffected.
 
 ## Found while walking
 
-1. **Burial index vs. death certificate.** Fixed on #2979 (9c726c709): burial
-   has its own unknown/indeterminate row, and a record carrying both a Death and
-   a Burial fact is typed by its collection title.
-2. **Classification refinement has no home once the agent goes.**
-   `classification-refinement-informant.json` asks "primary or secondary?" of an
-   existing assertion. Classification is now a table, so the choices are: (a)
-   re-extract, which gives the same answer, (b) explain the table's row, or (c)
-   treat a disagreement as a genealogist row fix. This is for the lead.
-3. **Match checks on the indexed path.** Fixed on #2979 (e2a20b090): the
-   router runs them after `extraction_append`.
-4. **Obituary classification row.** `obituary` is a new `RecordType` here. With
-   no row it takes the default and warns. The proposal is `family_not_present`
-   / `secondary` for the biography, pending genealogist sign-off.
+1. **Burial index vs. death certificate.** Fixed on #2979 (9c726c709).
+2. **Classification refinement.** Decided (lead, 2026-09-29): dropped, see the walk.
+3. **Match checks on the indexed path.** Fixed on #2979 (e2a20b090). They move
+   again, to the caller, when the skill is deleted.
+4. **Obituary classification row.** Decided (lead, 2026-09-29): the table rows are
+   ours. The rows are in §11.7, and the table gains a field-level key.
 
 ## Sites
 
 - `packages/engine/mcp-server/src/utils/record-extract.ts`: a document-mode
   options argument, the `computed`-keyed split, `statedRelation` roles, a
-  `sibling` edge arm, the `obituary` type, and the two layer overrides.
-- `packages/engine/mcp-server/src/tools/extraction-append.ts`: the `document`,
-  `transcriptionRef` and `imageFilename` inputs, plus the validator.
+  `sibling` edge arm, the `obituary` type and rows, the field-level table key,
+  the two layer overrides, and the summary writer (shared with §11.6).
+- `packages/engine/mcp-server/src/tools/extraction-append.ts`: the `documents`
+  batch input, all-or-nothing validation, log-entry writing, and the summary
+  return.
+- `docs/specs/schemas/ownership.json`: `extraction_append` as a `log` writer.
 - `packages/engine/mcp-server/src/tools/sidecar-read.ts` and
-  `docs/specs/sidecar-read-tool-spec.md`: accept a `results/` ref only when it
-  holds a `StagedTranscription`, and return its `transcription` paged. §1's
-  "results/ is not this tool's business" narrows to *search* results.
-- `packages/engine/plugin/agents/record-structurer.md` (new);
-  `record-extractor.md` (deleted); `image-reader.md` (returns `resultsRef`).
-- `packages/engine/plugin/skills/record-extraction/SKILL.md`: the delegation,
-  the calendar route, and the reference-file deletions.
+  `docs/specs/sidecar-read-tool-spec.md`: a list of refs, and a `results/` ref
+  accepted only when it holds a `StagedTranscription`, returning its
+  `transcription` paged. §1's "results/ is not this tool's business" narrows to
+  *search* results.
+- `packages/engine/plugin/agents/record-structurer.md` (new, with model and
+  effort in its frontmatter); `record-extractor.md` (deleted); `image-reader.md`
+  (returns `resultsRef`).
+- `packages/engine/plugin/skills/record-extraction/` (deleted), and every
+  `@plugin:record-extractor` / `record-extraction` reference in other skills.
 - `tests/packaging/agent-tool-names.test.ts`: the permission snapshot for the
-  new agent. `prompt-sizes.json`.
-- `eval/tests/unit/record-extraction/`: fixtures retargeted.
+  new agent. `prompt-sizes.json`. `skill-guidance.test.ts`.
+- `eval/tests/unit/record-extraction/`: the text-path fixtures move to a suite
+  that reaches the agent directly. `classification-refinement-informant.json` is
+  deleted. `test_relay_carries_no_caller_facing_lines` is retired.
