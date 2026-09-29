@@ -1,4 +1,4 @@
-"""Skill-specific validators for the conflict-resolution skill.
+"""Suite-specific validators for the conflict-resolution agent.
 
 conflict-resolution keeps its `rubric.md` — all three dimensions
 (Source independence analysis, Evidence weighing, Resolution
@@ -331,7 +331,7 @@ def _conflicts_by_id(state: dict) -> dict:
 def _analysis_written(conflict: dict) -> bool:
     """True when a conflict entry carries resolution work, not just identity.
 
-    The skill's own creation template (conflict-resolution/SKILL.md:148-152)
+    The agent's own creation template (agents/conflict-resolution.md, step 2)
     sets all five to null / "unresolved", so a freshly identified conflict is
     False here and a created-already-resolved one is True.
     """

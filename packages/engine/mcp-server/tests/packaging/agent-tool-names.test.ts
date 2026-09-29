@@ -556,6 +556,26 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // conflict-resolution (issue #1852) holds the six tools the skill it replaced
+  // declared, plus `Read` for research.json. `research_append` is the conflict
+  // write, and the plugin hook routes a conflict's analytical product (a
+  // resolve, or any analysis field) to this agent alone. The research-side place
+  // tools its folded places guidance lists (collections, volumes, external
+  // links, population, wiki place pages) are deliberately absent: it resolves
+  // place names and does not search.
+  "conflict-resolution.md": {
+    tools: [
+      "Read",
+      "convert_calendar",
+      "place_distance",
+      "place_search",
+      "place_search_all",
+      "research_append",
+      "wiki_read",
+    ],
+    denies: [],
+  },
+
   // convert-dates (issue #2790) holds the one tool the skill it replaced
   // declared, `convert_calendar`, plus `Read` for the Narration line's read of
   // research.json. It persists nothing, so it holds no writer tool and no hook

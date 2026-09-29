@@ -22,7 +22,6 @@ const SKILLS_WITH_PLACES_GUIDANCE = [
   "historical-context",
   "search-external-sites",
   "timeline",
-  "conflict-resolution",
   "record-extraction",
   "tree-edit",
   "init-project",

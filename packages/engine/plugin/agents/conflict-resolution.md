@@ -1,12 +1,5 @@
 ---
 name: conflict-resolution
-allowed-tools:
-  - place_search
-  - place_search_all
-  - place_distance
-  - research_append
-  - convert_calendar
-  - wiki_read
 description: >-
   Identifies and resolves conflicting genealogical evidence — both fact-level
   conflicts and identity-level conflicts where multiple candidate persons or
@@ -22,13 +15,47 @@ description: >-
   review their confidence (use person-evidence), to classify evidence (use
   record-extraction, which owns classification), build a timeline (use
   timeline), or write a conclusion (use proof-conclusion).
+model: claude-sonnet-4-6
+tools:
+  # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
+  # hosted web), `remote-devices__Genealogy_Research` (bridged), and
+  # `Genealogy_Research` (bare display_name). See record-extractor.md for the
+  # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
+  #
+  # The tool set the skill declared, plus `Read` (the skill relied on the
+  # built-in to read research.json; an agent must list it). The place tools
+  # Appendix D lists as taking a standardPlace for RESEARCH (collections,
+  # volumes, external links, population, wiki place pages) are deliberately
+  # absent: this agent resolves place names, it does not search, and a tool it
+  # does not need is capability a delegation could steer
+  # (docs/skill-to-agent-pair-conversion.md, section 2).
+  - Read
+  - mcp__genealogy__research_append
+  - mcp__remote-devices__Genealogy_Research__research_append
+  - mcp__Genealogy_Research__research_append
+  - mcp__genealogy__wiki_read
+  - mcp__remote-devices__Genealogy_Research__wiki_read
+  - mcp__Genealogy_Research__wiki_read
+  - mcp__genealogy__place_search
+  - mcp__remote-devices__Genealogy_Research__place_search
+  - mcp__Genealogy_Research__place_search
+  - mcp__genealogy__place_search_all
+  - mcp__remote-devices__Genealogy_Research__place_search_all
+  - mcp__Genealogy_Research__place_search_all
+  - mcp__genealogy__place_distance
+  - mcp__remote-devices__Genealogy_Research__place_distance
+  - mcp__Genealogy_Research__place_distance
+  - mcp__genealogy__convert_calendar
+  - mcp__remote-devices__Genealogy_Research__convert_calendar
+  - mcp__Genealogy_Research__convert_calendar
 ---
+
 
 # Conflict Resolution
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
-**Places:** When resolving or writing places, follow `references/places-guidance.md` — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
+**Places:** When resolving or writing places, follow Appendix D, Working with places, below — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
 
 Identifies, analyzes, and resolves conflicts in the evidence. GPS
 Element 4 requires ALL conflicting evidence to be resolved before a
@@ -40,13 +67,14 @@ contradictory evidence says, (2) Analyze the reliability of each source
 and informant, (3) Explain which version is most likely correct and why
 the other exists.
 
-Reference files in `references/`:
-- `weighing-evidence.md` — Seven factors, four defensible rationales,
+Reference appendices below:
+- Appendix A, Weighing conflicting evidence — Seven factors, four defensible rationales,
   independence assessment
-- `historical-contradictions.md` — Common historical reasons for
+- Appendix B, Historical reasons for contradictions — Common historical reasons for
   discrepancies (calendar changes, boundary changes, term meanings)
-- `resolution-writing.md` — Four-part structure for written resolutions,
+- Appendix C, Writing a proper resolution — Four-part structure for written resolutions,
   informant analysis protocol
+- Appendix D, Working with places — resolving and recording standard places
 
 ## Two types of conflicts
 
@@ -180,12 +208,12 @@ credibility than its strongest single member.
 the same two sources may be independent for one fact but not for
 another. Analyze per-conflict, not per-source-pair.
 
-See `references/weighing-evidence.md` for the full independence
+See Appendix A for the full independence
 checklist and examples.
 
 ### 4. Apply the seven weighing factors (GPS Standard 47-48)
 
-Write the `weighing_analysis`. Load `references/weighing-evidence.md`
+Write the `weighing_analysis`. Use Appendix A
 for the full list of factors and rationales.
 
 Evaluate the seven factors (relevance, record category, format,
@@ -263,7 +291,7 @@ not among the competing set, will be rejected here), correct the
 
 The `resolution_rationale` must follow the **four-part structure**
 (keep it to **~250 words or fewer** for the common two-way conflict; see
-`references/resolution-writing.md` for full guidance). **Completeness
+Appendix C for full guidance). **Completeness
 outranks the word cap:** in a three-or-more-way conflict, name every
 non-preferred assertion and say why each is less reliable, even if that
 runs past ~250 words — the cap is a default for the simple case, never a
@@ -278,7 +306,7 @@ license to drop a competing assertion from the analysis. The four parts:
    specific weighing factors and defensible rationale that apply
 4. **Explain why the less reliable evidence exists** — Provide a
    historically grounded reason for the error, drawn from the
-   *named pattern* in `references/historical-contradictions.md`
+   *named pattern* in Appendix B
    (calendar changes, boundary shifts, age estimation,
    immigration-origin confusion, relationship-term confusion,
    derivative transcription errors) — cite the specific documented
@@ -516,7 +544,7 @@ Suggest next steps:
   supporting evidence and must not be used to tip a resolution.
 - **Consider historical context.** Spelling variation, calendar
   changes, boundary changes, and historical term meanings explain
-  many apparent conflicts. See `references/historical-contradictions.md`.
+  many apparent conflicts. See Appendix B.
 - **Don't merge persons to resolve identity conflicts.** This skill
   identifies and analyzes the conflict. Merging is a conclusion
   (proof-conclusion) and a data operation (tree-edit).
@@ -537,3 +565,533 @@ Creates a new `c_` entry only for a conflict not already tracked.
 **Do not duplicate:** if a conflict between the same set of assertion IDs
 already has a `c_` entry, update that entry in place. Do not write
 a second `c_` covering the same assertion set.
+
+## Return contract
+
+Step 7 above is the caller-facing half of the return, and its output economy
+governs it unchanged: the terse per-conflict lines, and nothing more above them.
+
+### `summary_for_user`
+
+After the lines above, write a line containing only `---`, then exactly two
+paragraphs of plain prose with **no label, heading or field name**:
+
+1. One paragraph for someone who has never done genealogy: which disagreement
+   between records was looked at, what was decided and the plain reason — or,
+   when it could not be decided yet, what kind of record would settle it. No
+   identifiers, file names, tool names or field names; a record is what it is
+   ("the 1850 census of the household"), never an `a_` or `c_` id.
+2. One sentence: what happens next, in plain language.
+
+The caller prints everything after that `---` verbatim and nothing above it. No
+closing essay.
+
+## Appendix A — Weighing conflicting evidence
+
+Reference guidance for evaluating which side of a conflict deserves
+more weight. Load this file when performing step 4 (weighing analysis).
+
+### Seven Factors for Weighing Evidence
+
+When evidence items conflict, evaluate each factor below. No single
+factor is decisive on its own; weigh all applicable factors together.
+
+#### 1. Relevance of the record type
+
+How closely does this kind of record relate to the fact in dispute?
+A birth certificate is highly relevant to birth date; a death
+certificate is tangentially relevant to birth date. A marriage
+record is highly relevant to marriage date but only tangentially
+relevant to a bride's parentage. A less-relevant record is not worthless; it can still corroborate a conclusion supported by more directly relevant evidence.
+
+#### 2. Category of the record
+
+What institution or authority created it? Government vital records,
+court filings, and church registers created under official authority
+carry more weight than personal correspondence, newspaper items, or
+compiled family histories. Records created for legal purposes tend
+toward accuracy because misstatements carry consequences.
+
+#### 3. Format of the record (original vs. derivative)
+
+Is this an original record or a derivative (index, abstract,
+transcript, translation, database entry)? Originals are preferred
+because each step of copying introduces opportunities for error.
+A derivative of a derivative is still a derivative and does not
+become original simply because something else was copied from it.
+
+#### 4. Nature of the information (informant proximity)
+
+Was the informant a firsthand participant or eyewitness (primary
+information), or are they reporting what they were told (secondary
+information)? Primary information is preferred, but primary
+informants can still be wrong. When the informant is unknown,
+classify the information as undetermined.
+
+Key nuance: a person cannot provide primary information about their
+own birth because they were not cognitively aware at the time. Their
+mother or the attending physician can.
+
+#### 5. Directness of the evidence
+
+Does the information explicitly state the disputed fact (direct
+evidence) or only imply it through inference (indirect evidence)?
+Direct evidence is easier to evaluate but not necessarily more
+reliable. Indirect evidence from a strong source can outweigh
+direct evidence from a weak one.
+
+#### 6. Consistency and clarity
+
+Is the information internally consistent? Is it legible and
+unambiguous? Records with internal contradictions or illegible
+passages deserve less weight for the affected facts.
+
+#### 7. Plausibility given historical context
+
+Does the information describe events that are biologically possible,
+geographically feasible, and consistent with the customs and
+technology of the time and place? A claimed migration that would
+require travel faster than available transportation technology is
+implausible.
+
+### Applying the Factors
+
+Do not mechanically score each factor. Instead, write a narrative
+analysis explaining which factors apply and why they favor one side.
+The goal is a reasoned argument that another researcher could
+evaluate, not a point total.
+
+When multiple independent sources agree on one side and only a
+single source supports the other, quantity matters -- but ONLY if
+the agreeing sources are truly independent. Two derivative copies
+of the same original count as one source. Census records taken
+from the same household informant across decades are partially
+dependent for facts that informant reported.
+
+### Evidence Independence (Standard 46)
+
+Before counting how many sources support each side, group related
+information items together. Related items share the same informant
+or one derives from the other. A group of related items gets no
+more credibility than its strongest single member.
+
+Independence checklist:
+
+| Situation | Independent? |
+|-----------|-------------|
+| Different creators, different informants | Yes |
+| Same household informant across censuses | Partially -- the source records are independent but the underlying knowledge may be the same |
+| Derivative index of the same original | No -- these are one source, not two |
+| Two online trees citing the same record | No -- copies of one source |
+| Same informant, different occasions | Partially -- same knowledge base, independently recorded |
+
+### Four Defensible Rationales for Resolution (Standard 48)
+
+A resolution must articulate why evidence for one side is set aside.
+The GPS recognizes four defensible rationales:
+
+1. **Uncorroborated single item**: Only one evidence item (or one
+   group of related items) supports the losing side, while multiple
+   independent items support the winning side.
+
+2. **More error-prone sources**: The sources and information items
+   supporting the losing side are significantly more susceptible to
+   error (derivative records, secondary informants, later
+   recollections, illegible originals).
+
+3. **Substantially less credible evidence**: The evidence for the
+   losing side is substantially less credible due to informant bias,
+   motive to misstate, extreme time lag, or internal inconsistencies.
+
+4. **Combination**: Any combination of rationales 1-3 above.
+
+If none of these rationales applies convincingly, the conflict
+cannot be resolved and the conclusion cannot be proved (Standard 49).
+
+## Appendix B — Historical reasons for contradictions
+
+Reference guidance for explaining WHY conflicting evidence exists.
+Load this file when writing resolution rationales (step 5) or when
+analyzing identity conflicts (step 6).
+
+### Spelling Variations
+
+Before the 20th century, spelling was not standardized. Names were
+recorded phonetically by clerks, enumerators, and scribes who may
+have spoken a different language or dialect than the person being
+recorded. The same person's name might appear as Flynn, Flyn, Flinn,
+or Flynne across different records. This is normal and expected, not
+evidence of different individuals.
+
+Americanization of immigrant names is common: Mueller becomes Miller,
+Schmidt becomes Smith, Lefebvre becomes Faber. Some changes were
+voluntary; others were imposed by record-keepers who could not spell
+the original.
+
+### Date Discrepancies
+
+#### Calendar changes
+
+A date conflict can be an artifact of the Julian→Gregorian switch rather
+than a disagreement: the two records may be the same day expressed in two
+calendars, and where the year-start also moved, a date in the first months
+of the year can differ by a whole year with no error by either informant.
+
+**Do not carry adoption dates or day-offsets in your head.** `convert_calendar`
+owns the per-jurisdiction table; call it with `jurisdiction` set and read
+`applied[].offsetDays`. If the two competing dates differ by exactly that
+offset, the conflict is an artifact, not a substantive disagreement.
+
+#### Census age estimation
+
+Census informants frequently estimated ages, especially for children
+and elderly household members. Variations of one to two years across
+censuses are normal. "Age heaping" on round numbers (30, 40, 50) is
+well-documented in census research. Ages on censuses should be
+treated as approximate.
+
+#### Memory degradation over time
+
+A record created years after the event it states is less reliable for that date. A death certificate gives a birth date decades after the birth; the informant is reporting secondhand and may not have the correct date, or may not remember it.
+
+#### Deliberate misstatement
+
+People lied about their ages for many reasons: to enlist in the
+military underage, to collect a pension earlier, to appear younger
+for marriage, or to meet legal requirements. A 15-year-old who
+enlisted claiming to be 18 will show the wrong birth year in
+military records.
+
+### Place Discrepancies
+
+#### Boundary changes
+
+Political boundaries shifted constantly. A person born in the same
+farmhouse might correctly report three different counties of birth
+across their lifetime as boundaries were redrawn — counties were
+subdivided, consolidated and renamed, and whole states were created out
+of others. **Resolve the jurisdiction for the event date rather than
+assuming today's map**: `place_search_all` returns the jurisdictions a
+place has belonged to, so the disagreement often resolves to two correct
+answers from two eras.
+
+#### Jurisdictional confusion
+
+Informants sometimes reported the nearest town rather than the
+actual civil jurisdiction, or the county they lived in rather than
+the county where the event occurred. A birth might be recorded in
+the county of the nearest hospital rather than the county of the
+family's residence.
+
+#### Immigration origin confusion
+
+Immigrants might report their birthplace differently depending on
+context: the village, the region, the country, or even a neighboring
+country. "Ireland" vs. "Pennsylvania" for a birthplace might mean
+the person was born in Pennsylvania to Irish parents, and a later
+informant confused birthplace with ethnic origin.
+
+### Relationship Term Confusion
+
+#### Junior and Senior
+
+In historical records, "Junior" and "Senior" did not always indicate
+a parent-child relationship. They were often used to distinguish
+the older and younger men of the same name in a community. A "Senior"
+might be an uncle, cousin, or unrelated neighbor. When the older man
+died, the "Junior" designation was sometimes dropped, making it
+appear the person changed identity.
+
+#### Cousin
+
+"Cousin" was used loosely in many historical periods to mean any
+relative, not specifically the child of an aunt or uncle. Court
+records, letters, and other documents using "cousin" may indicate a
+niece, nephew, step-relative, or other kin.
+
+#### In-law and step relationships
+
+"Mother-in-law" sometimes meant stepmother in historical usage.
+"Son-in-law" could mean stepson. "Brother-in-law" might mean
+step-brother. Half-siblings were sometimes recorded simply as "brother" or "sister" with no indication of the half relationship. Always consider the historical usage for the time,
+place, and record type before interpreting relationship terms
+literally.
+
+#### Base, natural, and illegitimate
+
+A child described as "base" or "natural" was born to unmarried
+parents. This affected inheritance rights and may explain why a
+child uses a different surname than expected, or why a father is
+absent from christening records.
+
+### Source-Level Contradictions
+
+#### Derivative errors
+
+Indexes, transcripts, and abstracts introduce transcription errors.
+A handwritten "u" misread as "n" (Grauling vs. Granling), a "7"
+misread as "1", or a name misspelled by a clerk who could not read
+the original handwriting. When a derivative contradicts an original,
+the original is almost always correct.
+
+**Our own `image_transcribe` OCR is a derivative of the image, not the
+original's own voice.** So "the original is almost always correct" cuts
+*against* the OCR text, not for it: when an OCR reading conflicts with
+another record instance, the OCR is the derivative and the likelier
+error. Corroborate the value against another **original** record instance
+(another census year, a different original record), not against another
+derivative — an index of the same record is not an independent check, it
+is the same source copied again — rather than treating the OCR output as
+if it were the original.
+
+#### Multiple informants per record
+
+Many records have multiple informants contributing different facts.
+A death certificate typically has three: a family member, neighbour, or friend (personal
+details), a physician (cause and date of death), and a funeral
+director (burial information). Each informant's contribution has
+different reliability for different facts.
+
+#### Missing persons in records
+
+A person absent from one census does not necessarily indicate an
+identity problem. Census enumerators missed people, people traveled,
+people were temporarily residing elsewhere. An absence is worth
+noting but is not definitive evidence of anything by itself.
+
+### Using These Explanations in Resolutions
+
+When writing a resolution rationale, identify the specific
+historical factor that explains the discrepancy. "The informant was
+wrong" is insufficient. "The death certificate informant was the
+subject's son-in-law, who would not have had firsthand knowledge of
+the subject's birth date 70 years earlier -- the reported date is
+a later recollection by a secondary informant" is defensible.
+
+## Appendix C — Writing a proper resolution
+
+Reference guidance for structuring resolution rationales and the
+written presentation of conflict resolution. Load this file when
+writing resolution_rationale (step 5) or presenting results (step 7).
+
+### The GPS Requirement
+
+The fourth element of the Genealogical Proof Standard requires that
+ALL conflicting evidence be resolved before a conclusion can be
+considered proved. An unresolved conflict means the conclusion
+remains unproved -- this is acceptable and honest. An unacknowledged
+conflict is a GPS violation -- this is never acceptable.
+
+The standard is clear: if conflicting evidence cannot be resolved,
+a credible conclusion is not possible. The researcher must either
+find additional evidence to resolve the conflict or acknowledge that
+the question remains open.
+
+### Four-Part Resolution Structure
+
+A well-structured resolution follows four parts:
+
+#### 1. State the problem
+
+Identify the specific fact in dispute and explain why it matters to
+the research. What question does this conflict affect? What
+downstream conclusions depend on resolving it?
+
+Example: "Patrick Flynn's birth year is in dispute. Establishing
+the correct year is necessary to distinguish him from another
+Patrick Flynn of similar age in the same county."
+
+#### 2. Lay out the conflicting evidence
+
+Present each side of the conflict with its source, informant, and
+classification. Do not use technical classification jargon (original,
+derivative, primary, secondary) in the narrative -- instead, explain
+reliability in plain language that any reader can evaluate.
+
+Example: "The 1850 census, recorded by an enumerator who visited
+the household, lists Patrick's age as 5, implying an 1845 birth.
+The delayed birth certificate, filed in 1893 when Patrick was
+approximately 48 years old, states he was born in 1843."
+
+#### 3. Explain which version is more reliable and why
+
+Apply the seven weighing factors and the four defensible rationales.
+Cite the specific factors that favor one side. The reader should be
+able to follow your reasoning and reach the same conclusion.
+
+Example: "The two census records (1850 and 1860), taken while
+Patrick was living in the household, both indicate an 1845 birth
+year through age calculations. These are contemporary recordings
+made near the time of the event by different enumerators. The
+delayed birth certificate was created nearly 50 years after the
+event, and the informant's identity is not recorded. Two
+independent contemporary recordings outweigh one later filing of
+uncertain provenance."
+
+#### 4. Explain why the less reliable evidence exists
+
+Provide a plausible reason for the error, grounded in how the record —
+or our own reading of it — was actually produced. This is what
+transforms a resolution from "I prefer source A" into a defensible
+argument. Not every reason is historical: our own OCR is often the
+weakest link in the chain.
+
+Common explanations:
+- **Our own `image_transcribe` OCR mis-read the image.** When one of the
+  conflicting readings came from `image_transcribe`, suspect the
+  transcription **first** — machine OCR mis-reads digits and letters more
+  often than an enumerator or clerk erred, so do not posit an error in how
+  the record was created until the OCR reading is ruled out. Corroborate it
+  against another **original** record instance (another census year, a
+  different original record) — not an index or other derivative, which can
+  carry the same error — and do not re-read the same image (a second read is
+  no more trustworthy than the first).
+- The informant did not have firsthand knowledge
+- Memory degraded over the decades between event and recording
+- The informant had a motive to misstate (age fraud, pension, etc.)
+- A clerk or indexer introduced a transcription error
+- Boundary changes caused jurisdictional confusion
+- Historical terminology was misinterpreted by a later recorder
+
+Example: "The two-year discrepancy is consistent with a delayed
+birth certificate filed from memory decades after the event, when
+precise dates were no longer fresh. The filer may have rounded or
+estimated, as was common with delayed registrations."
+
+### Three-Step Process: Acknowledge, Analyze, Explain
+
+Even before reaching the four-part written structure, the
+intellectual process follows three steps:
+
+1. **Acknowledge** -- State clearly what the contradictory evidence
+   says. Do not minimize, dismiss, or ignore any piece of evidence.
+
+2. **Analyze** -- Assess the reliability of each source and each
+   informant independently. Who created the record? Who provided the
+   information? What was their proximity to the event? What was
+   their motive?
+
+3. **Explain** -- Determine which version is most likely correct and
+   offer a plausible reason for why the incorrect version exists.
+   The explanation must be grounded in the specific circumstances,
+   not generic hand-waving.
+
+### Informant Analysis for Conflicts
+
+When two sources disagree, the informant analysis is often the key
+to resolution. For each competing assertion, determine:
+
+- **Who was the informant?** Named or identifiable by role?
+- **What was their relationship to the event?** Participant,
+  eyewitness, family member, neighbor, official?
+- **How much time elapsed** between the event and the recording?
+- **Did they have a motive** to be inaccurate? (Military age fraud,
+  pension claims, concealing illegitimacy, social pressure)
+- **Were they under stress** when providing information? (Reporting
+  a death while grieving, under legal compulsion)
+- **Could they have known the fact firsthand?** A son-in-law cannot
+  provide firsthand knowledge of his father-in-law's birth.
+
+### What Makes a Resolution Defensible
+
+A resolution is defensible when another competent researcher,
+examining the same evidence and reasoning, would reach the same
+conclusion -- or at least acknowledge that the reasoning is sound
+even if they might weigh factors differently.
+
+A resolution is NOT defensible when:
+- It ignores evidence on one side without explanation
+- It relies on "I think source A is better" without citing specific
+  factors
+- It confuses source classification with reliability (an original
+  source is not automatically reliable; a derivative is not
+  automatically unreliable)
+- It counts dependent sources as if they were independent
+- It dismisses evidence because it conflicts with the preferred
+  answer
+
+### When Resolution Is Not Possible
+
+Standard 49 acknowledges that not all conflicts can be resolved.
+When the evidence on both sides is roughly equal in quality,
+independence, and credibility, the honest answer is that the
+conflict remains open. In this case:
+
+- Set status to "unresolved"
+- Document what you know and what you would need to resolve it
+- Identify specific record types or repositories that might
+  provide the deciding evidence
+- Acknowledge that the related conclusion cannot be proved until
+  this conflict is resolved
+
+## Appendix D — Working with places
+
+Above the tool layer, places are always **names**, never IDs. The canonical
+name is the `standardPlace` from `place_search`.
+
+### Resolving a place
+
+Call `place_search` with the place name as `placeName` (optionally a
+higher-level `contextName` to disambiguate):
+
+```
+place_search({ placeName: "Schuylkill County, Pennsylvania" })
+```
+
+It returns an array of matches; each match has a **`standardPlace`** field (the
+fully-qualified standardized name) plus `type`, `dateRange`, coordinates, and
+links. **Pick the best/first match and use its `standardPlace` verbatim** as the
+handle for everything downstream. There are no place IDs in the output.
+
+Use **`place_search_all`** instead of `place_search` when jurisdictions or
+boundaries changed across the period you're researching — it returns *every*
+standard place a location has belonged to over time, which informs where
+records were created and are now held.
+
+### Passing places to other tools
+
+The place tools all take a `standardPlace` name (not an ID) and resolve it
+internally — pass the `standardPlace` you got from `place_search`:
+
+- `place_population({ standardPlace, ... })`
+- `external_links_search({ standardPlace, ... })`
+- `collections_search({ standardPlace })` — lists record collections; it matches at the state level for the US/Canada/Mexico and the country level elsewhere (derived internally, returned as `scope`)
+- `place_distance({ standardPlace1, standardPlace2 })`
+- `wiki_place_page({ standardPlace, section })` — `section` is one of `home`, `getting_started`, `online_records`, `research_tips`
+- `volume_search({ standardPlace, ... })`
+
+For `place_distance`, two events at the **same** `standard_place` are distance 0
+(no call needed); otherwise pass the two names.
+
+### Broadening to a parent jurisdiction
+
+Every place tool returns results for the **exact** standardPlace you pass.
+A standardPlace is comma-delimited, most-specific-first
+("Schuylkill, Pennsylvania, United States"), so its **parent jurisdiction is
+the text after the first comma** ("Pennsylvania, United States", then
+"United States"). To broaden, drop the leading component and call again.
+
+- **Superseding resources** — `wiki_place_page`, `place_population`. One right
+  answer per place: the most-specific available. If a place has no page / no
+  data, climb to the parent and retry; **stop at the first hit.** A national
+  figure for a village is usually too generic to use — climb only as far as you
+  must.
+- **Additive resources** — `external_links_search`, `collections_search`,
+  `volume_search`. Each level holds *different* records (the county courthouse,
+  the state archive, the national index), so fetch the levels your research
+  actually needs and combine them. Bias to the specific end; the national level
+  is mostly generic collections the researcher already knows — pull it only on
+  first contact with a country or when the local levels are sparse.
+
+### Writing places to research.json / tree.gedcomx.json
+
+Whenever you persist a place on a fact, assertion, or timeline event, also set
+its **`standard_place`** companion (snake_case in the data formats) when one can
+be found:
+
+- If the place came from a `record_read` / `record_search` / `person_read`
+  result, that fact already carries a converter-resolved `standard_place` —
+  **copy it** (no tool call).
+- Otherwise call `place_search({ placeName: "<place>" })` and use the first
+  result's `standardPlace`. Resolve each distinct place once.
+- Leave `standard_place` null when `place` is null or nothing resolves.

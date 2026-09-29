@@ -1079,7 +1079,7 @@ evaluations
 
 **Why timelines are keyed by ID and label, not by person ID.** Timeline construction is itself an identity-resolution exercise. You build a candidate timeline to test whether records cohere into one life. Keying by person ID forces you to decide identity before testing it. A labeled timeline like "John Smith assuming Augusta = Rockingham" can aggregate multiple GedcomX person IDs that might merge.
 
-**Why `independence_analysis` and `weighing_analysis` are separate fields.** Source independence is a distinct analytical step in the GPS. Two derivative indexes of the same original record are not independent sources — determining this requires analysis separate from weighing the evidence. Keeping them separate forces the conflict-resolution skill to actually perform both steps rather than folding independence into general weighing prose.
+**Why `independence_analysis` and `weighing_analysis` are separate fields.** Source independence is a distinct analytical step in the GPS. Two derivative indexes of the same original record are not independent sources — determining this requires analysis separate from weighing the evidence. Keeping them separate forces the conflict-resolution agent to actually perform both steps rather than folding independence into general weighing prose.
 
 **Why `log` is append-only but other sections are mutable.** The log is the primary audit trail for "reasonably exhaustive" claims. If log entries could be edited or deleted, the exhaustive search declaration would be unfalsifiable. Other sections allow updates (refining a citation, revising a classification, resolving a conflict) because analytical conclusions legitimately evolve. But no section allows deletion — entries are superseded with status fields.
 
