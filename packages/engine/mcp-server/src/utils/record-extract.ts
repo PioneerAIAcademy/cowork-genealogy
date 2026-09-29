@@ -606,10 +606,35 @@ interface Classification {
  * informant is often knowable. Genealogists add rows over time; a missing one
  * must show up.
  */
+/**
+ * Whether a burial record is a church burial register or a cemetery/grave
+ * index, from its collection title. The genealogist's ruling (2026-09-29): on a
+ * church register the officiant recorded the burial, so the burial EVENT is
+ * theirs at official_duty/primary, as the christening row reads; a cemetery or
+ * grave index names no informant for anything.
+ *
+ * Cemetery words win over church words, and a title matching neither is read as
+ * an index — the conservative direction, since `unknown` claims less. Over the
+ * 20 burial-typed scorer-corpus records: 12 index (Find a Grave 11, Chile
+ * Cemetery Records 1), 8 register (Norway Burials 2, Costa Rica Catholic 2,
+ * Baden katholische Kirchenbücher, Albacete Catholic, Gloucestershire
+ * Non-Conformist, England Deaths and Burials).
+ */
+const CEMETERY_TITLE = /cemeter|\bgraves?\b|interment|headstone|tombstone|gravestone/i;
+const CHURCH_REGISTER_TITLE =
+  /church|catholic|parish|diocese|kirchenb|protestant|lutheran|reformed|methodist|baptist|conformist|\bburials\b/i;
+
+export function burialSourceKind(title: string | undefined): "church_register" | "cemetery_index" {
+  const t = title ?? "";
+  if (CEMETERY_TITLE.test(t)) return "cemetery_index";
+  return CHURCH_REGISTER_TITLE.test(t) ? "church_register" : "cemetery_index";
+}
+
 function classify(
   recordType: RecordType,
   role: string,
   factClass: FactClass,
+  collection?: string,
 ): Classification {
   const family = roleFamily(role);
 
@@ -661,14 +686,23 @@ function classify(
     };
   }
 
-  // A burial or cemetery index identifies no informant at all — not a funeral
+  // A cemetery or grave index identifies no informant at all — not a funeral
   // director (that row is scoped to a death certificate that names one), not
   // the index compiler, not the cemetery. So every fact on it is unknown /
-  // indeterminate, the death date included. A REAL row, not the default: it is
-  // what the record establishes, and naming it as a gap on every burial would
-  // be noise. Pinned by `burial-index-dates-direct` and
-  // `burial-index-parents-indirect`.
+  // indeterminate, the death date included. A church burial register differs
+  // for the burial EVENT only: the officiant recorded it (`burialSourceKind`).
+  // Everything else on a register stays unknown / indeterminate. Both are REAL
+  // rows, not the default, so neither is named as a gap. The index row is pinned
+  // by `burial-index-dates-direct` and `burial-index-parents-indirect`.
   if (recordType === "burial") {
+    if (factClass === "event" && burialSourceKind(collection) === "church_register") {
+      return {
+        informant: "the officiant",
+        informant_proximity: "official_duty",
+        information_quality: "primary",
+        bias: "the officiant recorded the burial they conducted",
+      };
+    }
     return {
       informant: "unknown",
       informant_proximity: "unknown",
@@ -765,6 +799,7 @@ export function extractRecord(
 ): ExtractResult {
   const gx = doc.gedcomx ?? {};
   const recordType = detectRecordType(gx);
+  const collection = collectionTitle(gx);
   const ps = parties(doc);
   const assertions: ExtractedAssertion[] = [];
   const defaultedClassifications: string[] = [];
@@ -854,7 +889,7 @@ export function extractRecord(
     factClass?: FactClass,
   ) => {
     const role = roles.get(party.id) ?? "other_1";
-    const cls = classify(recordType, role, factClass ?? factClassOf(factType, recordType));
+    const cls = classify(recordType, role, factClass ?? factClassOf(factType, recordType), collection);
     const a: ExtractedAssertion = {
       record_id: doc.recordId,
       record_role: role,
@@ -988,7 +1023,7 @@ export function extractRecord(
   // assertion, which is the pre-1880 outcome applied to a record that does
   // state its relationships.
   for (const members of statedHouseholds) {
-    const head = members.find((m) => /^head|^self/i.test(m.fields?.relationshipToHead ?? ""));
+    const head = members.find((m) => /^head|^self\b/i.test(m.fields?.relationshipToHead ?? ""));
     if (!head) {
       // The head is not among the returned personas — a real shape: a search
       // can hand back a subset of the household. Roles still stand (they are
