@@ -121,6 +121,34 @@ describe("resolveFsImageInput — ark URL query-param forwarding", () => {
   });
 });
 
+describe("resolveFsImageInput — unprefixed image-ARK id", () => {
+  it("treats an XXXX-XXXX-XXXX-X id as 3:1:", () => {
+    const result = resolveFsImageInput({ ark: "3QS7-89Q6-89S6-Y" }, "test");
+    expect(result.url).toBe("https://www.familysearch.org/ark:/61903/3:1:3QS7-89Q6-89S6-Y");
+    expect(result.fallbackUrl).toBeUndefined();
+  });
+
+  it("trims whitespace around the id", () => {
+    const result = resolveFsImageInput({ ark: "  3QS7-89Q6-89S6-Y\n" }, "test");
+    expect(result.url).toBe("https://www.familysearch.org/ark:/61903/3:1:3QS7-89Q6-89S6-Y");
+  });
+
+  it("still resolves an already-prefixed 3:2: id as 3:2:", () => {
+    const result = resolveFsImageInput({ ark: "3:2:3Q9M-CSNL-S98H-M" }, "test");
+    expect(result.url).toBe("https://www.familysearch.org/ark:/61903/3:2:3Q9M-CSNL-S98H-M");
+  });
+
+  it.each([
+    ["an 8-character persona-shaped id", "QPRC-WPBZ"],
+    ["an 11-character id", "KGS8-LY1-XYZ"],
+    ["a lowercase id", "3qs7-89q6-89s6-y"],
+    ["a 5-character last group", "3QS7-89Q6-89S6-YY"],
+  ])("rejects %s and says to pass the link as given", (_label, ark) => {
+    expect(() => resolveFsImageInput({ ark }, "test")).toThrow(/Unrecognized ark/);
+    expect(() => resolveFsImageInput({ ark }, "test")).toThrow(/exactly as the user gave it/);
+  });
+});
+
 describe("fetchFsImageBytes — fallback retry", () => {
   // Regression coverage for the review finding on #1203: forwarding i=/cc=/
   // groupId= unconditionally broke single-image documents where i= is out of

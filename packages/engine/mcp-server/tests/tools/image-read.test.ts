@@ -268,6 +268,22 @@ describe("imageReadTool — ark input", () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
+  it("rejects an 8-character unprefixed id without fetching", async () => {
+    await expect(imageReadTool({ ark: "QPRC-WPBZ" }, LOCAL)).rejects.toThrow(
+      /exactly as the user gave it/
+    );
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("fetches an unprefixed XXXX-XXXX-XXXX-X id as 3:1:", async () => {
+    mockImageResponse();
+
+    await imageReadTool({ ark: "3QS7-89Q6-89S6-Y" }, LOCAL);
+
+    const [fetchedUrl] = mockFetch.mock.calls[0] as [string, RequestInit];
+    expect(fetchedUrl).toBe("https://www.familysearch.org/ark:/61903/3:1:3QS7-89Q6-89S6-Y");
+  });
+
   it("surfaces a non-image resolver response as an error rather than misinterpreting it", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
