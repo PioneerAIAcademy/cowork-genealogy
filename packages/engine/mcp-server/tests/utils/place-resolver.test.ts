@@ -322,6 +322,16 @@ describe("resolveStandardPlaceToPlaceId", () => {
     ).toEqual({ kind: "resolved", placeId: "P2" });
   });
 
+  it("parses a (Type) suffix whose type itself carries parentheses", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Channel Islands", type: "Island(s)", score: 0.9 }),
+      entry({ placeRepId: "2", placeId: "P2", fullName: "Channel Islands", type: "Region", score: 0.9 }),
+    ]);
+    expect(
+      await resolveStandardPlaceToPlaceId("Channel Islands (Island(s))")
+    ).toEqual({ kind: "resolved", placeId: "P1" });
+  });
+
   it("returns unresolved when the (Type) suffix matches no candidate", async () => {
     mockSearchPlace.mockResolvedValue([
       entry({ placeRepId: "1", placeId: "P1", fullName: "Franklin, Virginia, United States", type: "County", score: 0.9 }),

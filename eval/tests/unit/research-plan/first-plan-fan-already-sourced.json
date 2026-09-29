@@ -19,7 +19,8 @@
     "collections-search-schuylkill",
     "collections-search-pennsylvania",
     "external-links-search-schuylkill",
-    "volume-search-schuylkill"
+    "volume-search-schuylkill",
+    "collections-search-us-national"
   ],
   "judge_context": [
     "GENERAL RULE UNDER TEST: before planning new searches, the skill must survey what's already attached to every in-scope FAN-cluster person, not just the subject -- research-plan's own stated inputs include tree.gedcomx.json, which already holds this. Skipping straight to new-record planning without this survey is the specific failure this test guards against.",

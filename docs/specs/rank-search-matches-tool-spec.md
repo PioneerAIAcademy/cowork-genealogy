@@ -101,7 +101,8 @@ snake_case envelope it reads.
    `{ tool, retrieved, returned_count, payload }`; finalized sidecar =
    `{ log_id, tool, retrieved, returned_count, payload }` — read `payload.results`
    from either. The finalized-ref path is only reachable *after* the search is
-   logged (finalize unlinks the staged file); it exists for re-ranking a logged
+   logged (a committed `research_log_append` removes the staged file); it exists
+   for re-ranking a logged
    search.
 2. **Build the subject doc.** Read the project's `tree.gedcomx.json`, locate the
    person whose `id === subjectId`, and assemble a minimal simplified-GedcomX
