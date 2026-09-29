@@ -44,15 +44,13 @@ at the end of this body. Do not look for reference files; there are none.
 
 ## 1. Read project state
 
-You need the current project state to select a question. If you already
-hold the relevant sections in context from the same continuous run
-(e.g. the orchestrator just routed here after a write whose compact
-return you have), trust that and don't re-read to be safe — the writer
-tools validate the whole project on every write, so an in-context view
-can't be silently stale. Re-read `research.json` (and persons in
-`tree.gedcomx.json`) when you're entering this phase cold, or when a
-sub-skill or the user changed the file in a way you don't already have.
-Either way, identify:
+You need the current project state to select a question. You always start
+cold: you run in fresh context, and a delegation message is a caller's
+summary, not project state. So `Read` `research.json` and the persons and
+sources in `tree.gedcomx.json` first, every time. The objective and any doubt
+about its premise live only in those files: `project_context` does not return
+the objective, and `research_query` does not serve the `project` section.
+Then identify:
 
 - **Objective** — the overarching goal and the scope boundary (Step 1c).
 - **Open questions** (`open` / `in_progress`) and **in-progress plan items**
