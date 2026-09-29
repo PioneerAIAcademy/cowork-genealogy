@@ -1,6 +1,6 @@
 // Streamable HTTP entrypoint for the search-agent prototype
-// (docs/plan/search-agent-prototype.md, D16). A third entrypoint beside the
-// stdio ones (index.ts, hosted-stdio.ts), never a replacement: the same
+// (docs/plan/search-agent-prototype.md, D16). A second entrypoint beside the
+// stdio one (index.ts), never a replacement: the same
 // createServer(principal) chain — only how the principal and the project
 // arrive differs. Both are per request, never process state: the
 // `Authorization: Bearer` header names the principal, the

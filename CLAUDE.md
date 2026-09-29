@@ -196,9 +196,8 @@ Tool implementations live in `packages/engine/mcp-server/src/tools/`. Their sche
 listed in `packages/engine/mcp-server/src/tool-schemas.ts` (`allToolSchemas`, the single
 source of truth for the advertised tool list); `src/server.ts`
 (`createServer(principal)`) imports that list and dispatches calls, and the
-entrypoints only connect a transport: `src/index.ts` (stdio, the `.mcpb`),
-`src/hosted-stdio.ts` (the prototype's per-turn stdio server) and `src/http.ts`
-(the prototype's Streamable HTTP server, compose service `tools`, binding each
+entrypoints only connect a transport: `src/index.ts` (stdio, the `.mcpb`) and
+`src/http.ts` (the prototype's Streamable HTTP server, compose service `tools`, binding each
 request's `Authorization: Bearer` and a `PgS3ProjectStore` from its
 `X-Genealogy-Project-Id` header). Per-tool
 behavioral contracts are in
@@ -600,8 +599,7 @@ single function and its schema. Add the schema to `allToolSchemas` in
 packaging drift test checks), add the call dispatch to `src/server.ts`,
 and add the tool name to `manifest.json`'s `tools` array. Dispatch lives in
 `src/server.ts` (`createServer(principal)`); `src/index.ts` is the shipped stdio
-entrypoint binding `LOCAL`, `src/hosted-stdio.ts` the prototype's per-turn one
-binding a bearer, `src/http.ts` the prototype's Streamable HTTP one binding each
+entrypoint binding `LOCAL`, `src/http.ts` the prototype's Streamable HTTP one binding each
 request's `Authorization: Bearer` (never `LOCAL`) and a `PgS3ProjectStore` from its
 `X-Genealogy-Project-Id` header, and a new tool's arm goes in
 `server.ts`, never in an entrypoint. A new tool also needs a row in

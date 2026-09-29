@@ -418,7 +418,7 @@ entry it names.
 |---|---|---|---|---|---|
 | APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). **Integ half: the host we measured (P3c–P3f) is our own 0.12.0 test bed, and tap-agentgateway already has the Messages route map and aliases, so the next message asks for three things: the tap-agentgateway integ URL and a consumer key (`claude-code` or our own) for one parity run; a plan and date for agentgateway ≥ v1.6.0, since `tool_reference` does not parse on the pinned v1.5.0 and tool search fails on its second turn (P3f). Also a heads-up, not an ask: if their planned model allowlist lands, the `us.anthropic.*` ids our worker sends (main thread and subagents, P3h) must be on it. Also ask them to set `frontendPolicies.http.maxBufferSize` (32 MiB was measured to work): at the 2 MiB default a session dies with 413 at its third page scan (P3l). Notes for them: `tool-search-tool-2025-10-19`, in the default Bedrock beta allowlist, is a 400 on Converse through v1.5.0 (measured, P3l re-run); forced `tool_choice` does not reach the model (P3l); and the 1-hour cache TTL is dropped on every agentgateway release (upstream #3670, P3j).** | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | sent, confirmed 2026-09-18; the gateway message is drafted, not sent | — |
 | InfoSec | Prompts and completions go to Langfuse at 100% sampling gateway-wide, and ours carry patron genealogical data and transcribed record images. Is that acceptable for patron data, and if not, what must APT add before go-live. | The security review, raised before it is found in review. | R11 | sent, confirmed 2026-09-18 | — |
-| ACE | What they use for image calls — the SCP does not stop OpenRouter egress, policy may. Whether we want a `bedrock-exception-*` role for local dev and smoke tests, which the SCP would otherwise deny in the product account. | Whether `image_transcribe` keeps its provider; whether P3-style direct calls can run in the product account. | R12 | sent, confirmed 2026-09-18 | — |
+| ACE | What they use for image calls — the SCP does not stop OpenRouter egress, policy may. Whether we want a `bedrock-exception-*` role for local dev and smoke tests, which the SCP would otherwise deny in the product account. Decided 2026-09-29: no role; see the handoff's U21. | Whether `image_transcribe` keeps its provider; whether P3-style direct calls can run in the product account. | R12 | sent, confirmed 2026-09-18 | — |
 | Help team (`fs-eng/help-research-only`) | How they handled DTM concurrency for their SSE emitter, or whether they bypass DTM; whether their frontend reaches it through the public edge. | The only remaining SSE risk, and whether the edge probe is worth commissioning. | R3 | sent, confirmed 2026-09-18 | — |
 | FS platform / DPF | The SSE edge probe with the arm list under R3 — only if the Help team says they bypass DTM. | CloudFront and Imperva behaviour on `text/event-stream`. | R3 | not yet | — |
 
@@ -1139,7 +1139,10 @@ R2: on the autonomous corpus a 5-minute TTL loses 0.4–0.5% of cache reads, 1.5
 run cost, and the corpus's own 1 h writes came from the operator's subscription, which
 production on an API key never gets without the flag. (Corrected 2026-09-24: priced on the main thread alone, as
 `usage.usage` requires, the corpus figure is 2.2–2.3%, and on the arm, whose delegations
-are forced to the foreground, 5.8% and 20.7% — see R2 and D18.)
+are forced to the foreground, 5.8% and 20.7% — see R2 and D18.) (Corrected 2026-09-29:
+forced foreground is not the difference. The corpus delegated in the foreground too — only 81
+of 1,585 delegations in the background, in 20 of 194 runs — and D18 made more and longer
+delegations; see D18.)
 
 The last two are real measurements. The CLI does not strip features on Bedrock; it
 moves interleaved thinking, the 1M-context beta and **tool search** (on in production
@@ -1997,7 +2000,10 @@ without whichever Bedrock refuses.
   day** (`sess_0f079cd03727430c`, the identical message): both calls rewritten, the two
   `Agent` calls blocking for 427 s and 333 s and overlapping, both `task_done`, 2 sources
   and 22 assertions, `receive_count` 1, $1.24. So a background delegation cannot occur in
-  the worker any more: criterion 1's delegation case is the foreground one, which passed on
+  the worker any more (corrected 2026-09-29: it can; the rewrite catches only an explicit
+  `true`, and CLI 2.1.220 also backgrounds a call without the flag, as the 2026-09-21 run's
+  two `record-extractor` calls were): criterion 1's delegation case is the foreground one,
+  which passed on
   2026-09-20 (D14) and on the first 2026-09-23 re-run, and the resume rule keeps covering
   a zero-turn redelivery from any other cause.
   Probe export: `apps/server/proto/exports/proj_bagley-father-1884_5021d9/`.
@@ -2230,7 +2236,10 @@ without whichever Bedrock refuses.
   production does), and a foreground delegation leaves the main thread idle — three
   waits of 1,586 s, 436 s and 710 s each came back with `cache_read` 0 and rewrote the
   context (272 k tokens, 37% of the main thread's writes, ~$1–1.50). Forced foreground
-  delegation (#2852) and the 5-minute TTL are now one measured cost, not two.
+  delegation (#2852) and the 5-minute TTL are now one measured cost, not two. (Corrected
+  2026-09-29: forced foreground is not the difference. The corpus delegated in the
+  foreground too — only 81 of 1,585 delegations in the background, in 20 of 194 runs,
+  counted 2026-09-29 — and this run made more and longer delegations: 21 against 13.)
   **paerai** (`sess_9c8d6603b9e54129`), the first run with the OpenRouter key: 108
   `image_transcribe` calls (the harness run made none) — two delegations browsing the
   Moorea birth-register volumes, a death record extracted from a transcription — and 46
@@ -2271,9 +2280,13 @@ without whichever Bedrock refuses.
     them to the foreground, and the main thread now idles for the whole delegation. The
     TTL is not the lever, though: re-priced under a 1-hour TTL (writes at $6/M, the
     rewrites as reads) bagley costs **+12%** and paerai **−6%**. What costs is the idle
-    main thread, not the window length.
+    main thread, not the window length. (Corrected 2026-09-29: R2's corpus delegated in
+    the foreground too — only 81 of 1,585 delegations in the background, in 20 of 194
+    runs — so PR #2852 is not the difference; the arm made more and longer delegations:
+    21 against 13 on bagley, 46 against 8 on paerai.)
   - **Nothing bounds image browsing** — not the plugin, not the arm. Whether to cap it is
-    the lead's decision, deferred on 2026-09-24.
+    the lead's decision, deferred on 2026-09-24. (Decided 2026-09-29: a hard cap; see the
+    handoff's U25.)
   - **The same-week harness run splits bagley's 3×: 60% plugin, 40% prototype.**
     `make e2e-run TEST=bagley-father-1884` on 2026-09-24, from the prototype runs' own
     commit (`2a553477f`, same engine and plugin), after the dead `wikiApiUrl` override
@@ -2575,6 +2588,8 @@ Beanstalk deployments and **zero** measurements of the six things this produces:
    of runs (1.5–1.7%); human think time between turns is not in the corpus.** Corrected
    2026-09-24: 2.2–2.3% on the main-thread pricing `usage.usage` requires, and 5.8% and
    20.7% on the two D18 runs, whose delegations are forced to the foreground (R2, D18).
+   (Corrected 2026-09-29: forced foreground is not the difference; the corpus delegated in
+   the foreground too, and D18 made more and longer delegations — see D18.)
 3. Where can you actually checkpoint? Answered with the segment distribution rather
    than a grain chosen a priori.
 4. What does an oversized tool result do with no shell? **Measured 2026-09-10 on the
@@ -2660,7 +2675,9 @@ $1.01.** **Superseded for the hosted path on 2026-09-24 (D18):** that corpus del
 the background, and #2852 forces delegations to the foreground, so the main thread now
 idles through each one — measured exactly on the two D18 transcripts, the lost reads are
 5.8% and 20.7% of run cost, all main-thread; the figure here stands as a measurement of
-that corpus, not of the arm. It also rests on `usage.usage`, which is the main thread's
+that corpus, not of the arm. (Corrected 2026-09-29: that corpus delegated in the foreground
+too — only 81 of 1,585 delegations in the background, in 20 of 194 runs — so PR #2852 is not
+the difference; D18 made more and longer delegations. See D18.) It also rests on `usage.usage`, which is the main thread's
 alone (D18), not the run total: `cache_window.py` spread it over subagent calls too, and
 priced on the main thread only (fixed the same day) the corpus reads 0.7% of reads and
 **2.2–2.3%** of run cost — $34.73–35.75 over 177 costed runs, where the unfixed rule on
@@ -2817,7 +2834,7 @@ principal in our account except `tap-gateway-invoke` and `bedrock-exception-*` �
 now whether we want an exception role for local dev and smoke tests (P3's direct calls
 would be denied there). It does not stop egress to non-AWS providers, which is where
 the OpenRouter/Gemini `image_transcribe` path sits — talk to ACE about what they use
-for image calls. *Owner: us.*
+for image calls. *Owner: us.* Decided 2026-09-29: no role; see the handoff's U21.
 
 **R13 — Route changes are image rebuilds.** `config.yaml` is baked into the gateway's
 Docker image and the GitOps end state is not live, so a route tweak is a rebuild and a

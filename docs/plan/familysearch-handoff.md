@@ -1,9 +1,9 @@
 # Handing the search agent to FamilySearch
 
 **Status:** Not started (2026-09-29).
-**Owner:** Dallan. List 1 is our work; lists 2 and 3 are for FamilySearch engineers.
+**Owner:** Dallan. Written for Richard, the FamilySearch employee on the project. List 1 is Dallan's team's work; list 2 is FamilySearch's, routed through Richard; list 3 is for FamilySearch engineers.
 
-See [the prototype report](../search-agent-prototype-report.md) and [the prototype plan](search-agent-prototype.md).
+See [the prototype report](../search-agent-prototype-report.md) (its legend defines D, P and R) and [the prototype plan](search-agent-prototype.md).
 
 ## Bottom line
 
@@ -11,17 +11,18 @@ See [the prototype report](../search-agent-prototype-report.md) and [the prototy
 - **Integration** needs U1–U14 and U23 (U4 only if exposed, U6 only if multi-instance) and F1, F3, F4, F12–F15, F18; **go-live** needs the rest and list 3 passing on FamilySearch integration. Only U3 (~3.5 days) and U6 (1–2 days) are sized, hence no date.
 - **Long lead:** F12 (platform) and F14 (provisioning), not yet asked; R9: "can block for weeks". Go-live's long pole is F17's ARB review: unscheduled, waiting on U22 and U18's scaling metric and packing (which need U13).
 - **First three actions:**
-  1. **U1, send the asks.** The drafted APT gateway message (the plan's "Open asks"), with F4's Sonnet 5 and `model:` questions and F5's scaling question added; F7's correction and retention ask; F8, F9's terms, F12–F16 and F18 (for F15, find the owning team first). File the Bedrock quota increase once F5 names the account; it takes days. Get `proj_bagley-father-1884_40af16` from PR #2870's author (Praise) and locate the D17 and D18 exports (U16; U21 item 7).
+  1. **U1, send the asks:** every unsent list-2 ask. File the Bedrock quota increase once F5 names the account; it takes days.
   2. **Size U2–U13.** Start U2, and U3's dev-key token measurements.
   3. **Build U5.** U6 before any second instance.
+- **Richard decides:** list-2 routing and F15's owner (U1); which tree U16 grades; whose key runs the SDK-bump probes (step 10).
 
 ## What the system is
 
 | Part | Path | State |
 |---|---|---|
-| Engine hosted entrypoints, Postgres/S3 store, bearer principal | `packages/engine/mcp-server/src/{server.ts,http.ts,http-server.ts,store/,auth/principal.ts}` | **Keep.** Harden: U4, U8, U10, U19. |
+| Engine hosted entrypoints, Postgres/S3 store, bearer principal | `packages/engine/mcp-server/src/{server.ts,http.ts,http-server.ts,store/,auth/principal.ts}` | **Keep.** Harden: U4, U8, U10, U19, U25. |
 | Plugin: 27 skills, 8 agents, PreToolUse hook | `packages/engine/plugin/` | **Keep.** |
-| Worker: SDK resume from Postgres, deny-and-log hooks | `apps/server/proto/worker/`, `apps/server/app/agent/{continue_policy,spend,real_agent}.py` | **Prototype-grade:** U5, U6, U7, U11. |
+| Worker: SDK resume from Postgres, deny-and-log hooks | `apps/server/proto/worker/`, `apps/server/app/agent/{continue_policy,spend,real_agent}.py` | **Prototype-grade:** U5, U6, U7, U11, U26. |
 | Web tier: REST, SSE, Stop | `apps/server/proto/web/app.py` | **Prototype-grade:** no auth (U2); uploads, images, logs 501 (U20). |
 | Schema | `apps/server/proto/sql/001_schema.sql`…`007_session_usage_index.sql` | **Keep content.** Applied at service start until U9. |
 | Browser client | `apps/web`, `VITE_SESSION_TRANSPORT=sse` | **Keep.** Not yet built for SSE or mounted (U12). |
@@ -31,20 +32,20 @@ See [the prototype report](../search-agent-prototype-report.md) and [the prototy
 
 Two premises moved since the plan:
 
-- **One message is a whole research run** (PR #2870, merged 2026-09-27; its acceptance run: 6 attempts, 150 min). The auth design assumed "a turn is minutes"; the grain moved further from the review's "one model call per message" (R4).
-- **Forced foreground delegation is prototype-only** (lead ruling 2026-09-23, PR #2852) and FamilySearch inherits it. Main-thread cache rewrites during delegations cost 5.8% and 20.7% of two D18 runs (2026-09-24, n=1 each); the cause is open (U21 item 4).
+- **One message is a whole research run** (PR #2870, merged 2026-09-27; its acceptance run: 6 attempts, 150 min). The auth design assumed "a turn is minutes"; the grain moved further from the review's "one model call per message" (R4). Once [our cost-and-latency plan](cost-latency-10x.md) lands (not started, no date), U26 ends every run at 1,800 s.
+- **Forced foreground delegation is the design** (lead ruling 2026-09-23, PR #2852, reaffirmed 2026-09-29): no agent outlives its turn. The rewrite covers a call with no flag too, which CLI 2.1.220 runs in the background (U27, done in this PR).
 
-## 1. Preconditions we implement and test
+## 1. Preconditions Dallan's team implements and tests
 
-**Blocks:** integ (test patrons), go-live (real patrons); exposed means reachable outside the worker security group.
+**Blocks:** integ (test patrons), go-live (real patrons); exposed means reachable outside the worker security group. Step N means list 3's step N.
 
 | # | Item | Risk | Blocks | Needs |
 |---|---|---|---|---|
-| U1 | Send every unsent list-2 ask | List 2 stalls | integ | — |
+| U1 | Send every unsent list-2 ask, routed by Richard | List 2 stalls | integ | — |
 | U2 | Patron sign-in, owner scoping | One shared user | integ | — |
 | U3 | Multi-patron token custody | R7: impersonation | integ | U2, F15 |
 | U4 | Tool server checks bearer against project | Open tool server | go-live; integ if exposed | F8, F13 |
-| U5 | Attempt deadline, SIGTERM exit, dead-letter close | Two CLIs per session | integ | — |
+| U5 | Interim sqsd settings, SIGTERM exit, dead-letter close | Two CLIs per session | integ | — |
 | U6 | Claim fencing (`claim_epoch`), two-instance test | R8 | integ if multi-instance, else go-live | — |
 | U7 | SigV4-signed SQS client | SQS rejects ours | integ | — |
 | U8 | S3 on instance roles | Static keys required | integ unless F14 allows keys | — |
@@ -55,27 +56,30 @@ Two premises moved since the plan:
 | U13 | Rehearsal deploy in our account, from list 3 only | Untested guide | integ | U2, U3, U5, U7–U12, U23; U4 if exposed; U6 if multi-instance |
 | U14 | Gateway parity probe, one full run | R1, R10 | integ | F1, F3, F4, F13 |
 | U15 | Engine suites and skill runs on Postgres | R14 | go-live (before beta) | — |
-| U16 | Blind human grade, corpus re-baseline | R5: judge-only | go-live | U17; U21 items 1, 6, 7 |
+| U16 | Blind human grade, duplicate count, corpus re-baseline | R5: judge-only | go-live | U17; U25, U26 for the paired runs |
 | U17 | Stop-hook parity | Skews U16 | before U16 | — |
 | U18 | Scaling metric, packing, quota, load test | R2, R4 | go-live; metric, packing before F17 | U13; F1, F5; quota increase |
 | U19 | Operational hardening | Nothing alerts | go-live | F14, F17 |
 | U20 | Product gaps against the alpha | Lost features | go-live | F9 |
-| U21 | Open lead decisions | Items stall | go-live | — |
+| U21 | Lead decisions: all seven decided 2026-09-29 | — | — | — |
 | U22 | Correct the ARB draft (SC-12457) | Wrong premises | go-live; before F17's request | — |
 | U23 | Live Stop, held release, $35 cap, Stop mid-delegation | Bounds untried | integ | — |
 | U24 | Continuous-work behaviour | Turns overrun their deliverable | go-live | — |
+| U25 | Hard image cap (issue #3010) | Image browsing unbounded | go-live (cost) | — |
+| U26 | Session time limit: every run ends within 1,800 s | Multi-hour runs | go-live | `cost-latency-10x.md` lands |
+| U27 | Foreground rewrite covers a flagless delegation | Delegation dies at turn end | **done in this PR** | — |
 
 ### Details
 
-**U1.** Add F4's Sonnet 5 and `model:` questions and F5's scaling question to the APT draft (plan "Open asks"; `cost-latency-10x.md`, 2026-09-27). **Done when:** all but F11 (after F10) and F17 (with U22) have sent dates.
+**U1.** Dallan sends the drafted APT message unless Richard says otherwise, after adding F4's Sonnet 5 and `model:` questions and F5's scaling question (plan "Open asks"; `cost-latency-10x.md`, 2026-09-27). **Done when:** all but F11 (after F10) and F17 (with U22) have sent dates, and ACE knows the role in F9 is withdrawn.
 
-**U2.** Why: all calls run as one user; any client can attach any project. Port the alpha's PKCE flow, encrypted token table and email allowlist; its `projects` table collides with ours. Add an owner column; refuse a `project_id` the caller does not own. **Done when:** a second user gets 404 on every session route; opening a session on another user's project is refused; sign-in works on the U13 host.
+**U2.** Why: all calls run as one user; any client can attach any project. Port the E2B/Fly/Neon alpha's PKCE flow, encrypted token table and email allowlist; its `projects` table collides with ours. Add an owner column; refuse a `project_id` the caller does not own. **Done when:** a second user gets 404 on every session route; opening a session on another user's project is refused; sign-in works on the U13 host.
 
-**U3.** Why: a naive port silently impersonates across patrons; a refresh revokes the prior access token at once (2026-09-23). Build step 19 with a per-patron database lock, not issue #2887's in-process one. Keep the token out of the queue body, which persists in `turns.message` and the DLQ; delete the `FS_ACCESS_TOKEN*` fallbacks. End a run outliving the 24 h token maximum (F15) with a named outcome. Measure first on the dev key: does a second sign-in revoke the first token; one token idle past 8 h, one past 24 h (no `expires_in` in the response). **Done when:** one patron's two live sessions see no mid-attempt refresh; a ceiling-crossing run has zero `reauth_hits`.
+**U3.** Why: a naive port silently impersonates across patrons; a refresh revokes the prior access token at once (2026-09-23). Build list 3's step 19 (Grants) with a per-patron database lock, not issue #2887's in-process one. Keep the token out of the queue body, which persists in `turns.message` and the DLQ; delete the `FS_ACCESS_TOKEN*` fallbacks. End a run whose grant passes its 24 h maximum (F15) with a named outcome. Measure first on the dev key: does a second sign-in revoke the first token; one token idle past 8 h, one past 24 h (no `expires_in` in the response). **Done when:** one patron's two live sessions see no mid-attempt refresh; a resumed run has zero `reauth_hits`.
 
 **U4.** Why: only network placement protects the tool server (step 9). Skip if F8 accepts isolation. **Done when:** a test refuses patron A's bearer naming patron B's project.
 
-**U5.** Why: at the ceiling, which the median run crosses once (139 e2e runs, 2026-09-23), sqsd redelivers while the attempt may still run (step 11): two CLIs on one session. A dead-lettered turn stays open, holding its session (found by reading). A delegation longer than one attempt re-runs every redelivery, unseen by the zero-progress guard. Build: self-kill at `InactivityTimeout` minus a margin (D17's attempt used 1,579 s of 1,800; D18 waited 1,586 s on one delegation; n=1 each); exit on SIGTERM; close dead-lettered turns with a named outcome. **Done when**, in U13 at `InactivityTimeout` 300: one CLI per session, receive 2 resumes, an over-long delegation ends with a named outcome within two attempts, `MaxRetries` 1 plus a 500 closes the turn.
+**U5.** What integration needs until U26. Why: sqsd cuts a POST silently and redelivers while the attempt runs on (step 11): two CLIs on one session. A dead-lettered turn stays open, holding its session and held messages (found by reading). Build: step 11's interim sqsd values, so sqsd cuts only a run past 10 h (D18's spend rates reach the untried $35 cap in ~3–4.5 h, U23; a crashed worker's message can take ~10 h to return); exit cleanly on SIGTERM; close a dead-lettered turn with a named outcome, releasing its held messages. **Done when**, in U13: a run past 1,800 s completes on receive 1; SIGTERM mid-turn exits and the redelivery resumes (answer 500 before exiting, or lower `VisibilityTimeout` for the test); `MaxRetries` 1 plus a 500 closes the turn and releases its held messages.
 
 **U6.** Why: claims have no fencing or expiry; cross-instance write locking is untested. **Done when:** a two-worker test, with a parallel write through two tool servers, makes the stale epoch's writes no-ops.
 
@@ -91,29 +95,51 @@ Two premises moved since the plan:
 
 **U12.** Why: none exist; the review rules Docker out, so start now. Build and test on Node 24 with npm 11.12.x; add `tsx` to engine devDependencies or compile the smoke (acceptance step 2). Vendored bundles must fit 512 MB; installed ones need registry egress. **Done when:** U13 passes.
 
-**U13.** Why: the guide is untrusted until run. Correct list 3 wherever reality differs. Register the rehearsal host's callback on dev key `fs-internal-dev-key-000262` (else F15). Measure step 11's open items, `TMPDIR` size, closed-VPC CLI egress, TLS-enforcing Postgres, and recovery from a kill between a tool result spilling to `mkdtemp` and its read. Departures: stock Beanstalk, no gateway allowlist, self-provisioned stores, `MODEL_PROVIDER=anthropic` (so `ANTHROPIC_API_KEY` from secrets, egress to `api.anthropic.com`, step 1 expects `provider=anthropic`); our hostname and certificate; needs no list-2 answer. **Done when:** the acceptance test passes.
+**U13.** Why: the guide is untrusted until run. Correct list 3 wherever reality differs. Register the rehearsal host's callback on dev key `fs-internal-dev-key-000262` (else F15). Measure step 11's open items, `TMPDIR` size, closed-VPC CLI egress, TLS-enforcing Postgres, and recovery from a kill between a tool result spilling to `mkdtemp` and its read. Departures: stock Beanstalk, no gateway allowlist, self-provisioned stores, `MODEL_PROVIDER=anthropic` (so `ANTHROPIC_API_KEY` from secrets, egress to `api.anthropic.com`, acceptance step 1 expects `provider=anthropic`); our hostname and certificate; needs no list-2 answer. **Done when:** the acceptance test passes.
 
 **U14.** Why: the worker has used the gateway provider once (2 short turns, local copy of TAP's route, no kill; P3k, 2026-09-25); an unmapped agent model silently becomes a general-purpose stand-in (P3h). Run `probe_gateway_parity.py` on the integ route, adding deployed latency and which of four cache points survive. Then one gateway run on a page-scan fixture: a kill inside an image-reading delegation, a forced autocompact, `gps-mentor` on Sonnet 5, cost against a tool-search-on control (prices F2); compose on the VPN suffices (F13). **Done when:** the worker asserts at start that every agent model is in `GATEWAY_AGENT_MODELS` and fails loudly on any `general-purpose` delegation; the probe passes but for known items; the run meets D17 criteria 1–3.
 
 **U15.** Why: the Postgres store test skips 37 of 41 cases in CI (2026-09-29); no workflow runs Postgres. Run the tool suites (1,939 cases, 2026-09-18) under a new `PROTO_STORE=pg` in CI, plus one paid harness run per skill. **Done when:** CI is green, nothing skips, per-skill run logs are committed.
 
-**U16.** Why: no human has graded a prototype tree; the judge over-credited f1 on that fixture (issue #2904). Grade PR #2870's `proj_bagley-father-1884_40af16` first (judge pass, recall 1.00, n=1, 2026-09-24, Anthropic direct), blind, without telling the grader the concern (issue #2904's body did). Count resume-made duplicate assertions, which read as corroboration. Pin SDK and stop policy. **Done when:** a blind `.ann.json`, more than one run per side, and the corpus (136 fixtures, 108 with runs) re-baselined.
+**U16.** Why: no human has graded a prototype tree; the judge over-credited f1 on that fixture (issue #2904). **Tree:** the D17 and D18 exports are on Richard's machine (project files only; transcripts gone), and he decides. D18's `proj_bagley-father-1884_072ee7` pairs like-for-like with the blind-graded harness run of its week and commit (the report's 1.37×); else PR #2870's `proj_bagley-father-1884_40af16` (its author's machine; no same-week partner) or a ~$16 re-run on `main`. **Grade:** someone other than the grader copies the export's `tree.gedcomx.json` and `research.json` into `eval/runlogs/e2e/<fixture>/` as `run-<ts>.final-tree.gedcomx.json` and `run-<ts>.final-research.json`; the grade counts in calibration like any other. The grader names the stem and has not seen the judge's result (the report, this plan, the prototype plan, issue #2904, `proto-grade` or `proto-compare` output); `.claude/skills/grade-e2e-run/SKILL.md` has the rules. **Duplicates:** a dev script over each graded export applies PR #2850's `reextractionKey` with the log entry blanked, image-pass logs excluded; one non-image cross-log duplicate triggers widening the guard's key to ignore the log entry (1–2 days). Pin SDK and stop policy; run both sides under U25's cap and U26's limit. **Done when:** a blind `.ann.json`, more than one run per side, and the corpus (136 fixtures, 108 with runs, 2026-09-29) re-baselined; the duplicate count reported for each graded export.
 
-**U17.** Why: the harness still classifies hand-backs after issue #2292 retired the literal; it answered 1 of 3 bagley nudges "Yes." where the worker sends `CONTINUE_REASON`. Delete the classifier or keep it deliberately. **Done when:** `test_continue_policy_parity.py` passes; no comment calls issue #2292 pending.
+**U17.** Why: the e2e harness's Stop hook still classifies hand-backs (the agent asking the patron), retired by issue #2292; it answered 1 of 3 bagley stops "Yes." where the worker sends `CONTINUE_REASON`. Delete the classifier or keep it deliberately. **Done when:** `test_continue_policy_parity.py` passes; no comment calls issue #2292 pending.
 
-**U18.** Why: ~166k tokens/min per session versus a 2M TPM default (estimate, 2026-09-09); at run grain queue depth "goes to zero exactly when the system is saturated". Measure quota (P3). **Done when:** a proposed scaling metric; packing and the review's ~$0.04 compute estimate re-derived from U13's memory; a gateway load run records TPM, 429s, time to first byte, burndown multiplier, cache-read exemption.
+**U18.** Why: ~166k tokens/min per session versus a 2M TPM default (estimate, 2026-09-09); at run grain queue depth "goes to zero exactly when the system is saturated". Measure quota (P3). **Done when:** a proposed scaling metric; packing and the review's ~$0.04 compute estimate re-derived for U26's 1,800 s runs from U13's memory; a gateway load run records TPM, 429s, time to first byte, burndown multiplier, cache-read exemption.
 
-**U19.** Why: "none exists and nothing alerts" (review item 13). Pool connections; add retention for `session_entries`, `session_events`, `tool_calls`; sweep S3 orphans; fix `delete_session` (drops the whole project without checking for other sessions on it; keeps the SDK transcript, keyed by another id, and the S3 objects; found by reading); alarm on DLQ depth, message age, `no_progress`, reauths, spend, near-ceiling `Agent` calls; reprice cache writes ($6/M, 1 h) for the 5 min TTL. **Done when:** tests pass; U13 has the alarms.
+**U19.** Why: "none exists and nothing alerts" (review item 13). Pool connections; add retention for `session_entries`, `session_events`, `tool_calls`; sweep S3 orphans; fix `delete_session` (drops the whole project without checking for other sessions on it; keeps the SDK transcript, keyed by another id, and the S3 objects; found by reading); alarm on DLQ depth, message age, `no_progress`, reauths, spend, long `Agent` calls; reprice cache writes ($6/M, 1 h) for the 5 min TTL. **Done when:** tests pass; U13 has the alarms.
 
 **U20.** Gaps: uploads, image pane, logs answer 501, sidecar bodies 404; `search-wikipedia` and `search-familysearch-wiki` fail EACCES on the 0555 cwd (PR #2963 may fix one); `research/SKILL.md`'s `evaluations/` gates never match, so gated steps re-delegate to gps-mentor (unmeasured); after the $35 cap the SPA cannot continue the project; without OpenRouter (F9) `image_transcribe` needs a provider. **Done when:** each works here.
 
-**U21.** Decide: (1) cap image browsing (deferred 2026-09-24; D18 paerai, ~$32.21 at list price, passed $35 on the cap's meter); (2) a `bedrock-exception-*` dev role (R12: "decide now"); (3) keep `TOOL_SERVER=stdio`; (4) forced foreground versus holding the SDK client to `task_done`; (5) content dedup before go-live; (6) where prototype `.ann.json` files go (`calibrate_judge` counts `eval/runlogs/e2e` as blind); (7) which machine holds the D17/D18 exports. **Done when:** all are recorded.
+**U21.** Decided 2026-09-29 (lead):
+1. **Image cap:** hard, for continuous single-turn research and cost (U25).
+2. **No `bedrock-exception-*` role** (F9); `MODEL_PROVIDER=bedrock` deleted with this handoff.
+3. **`TOOL_SERVER=stdio`, `src/hosted-stdio.ts`** deleted with this handoff; HTTP only.
+4. **Forced foreground** is the design (PR #2852; U27).
+5. **No content-level dedup** before go-live; U16 counts duplicates.
+6. **Prototype grades** count in calibration (U16).
+7. **The D17/D18 exports:** Richard decides (U16).
 
 **U22.** Why: the 2026-09-07 draft carries none of the report's six corrections (the sixth is the grain). Add them and R6: no shell, WebFetch/WebSearch or device bridge where record text is read. Commit the scripts behind the report's measurement 3 and corrections 2 and 4 first; they never landed. **Done when:** all seven are in and the scripts are in git.
 
-**U23.** Why: Stop and the $35 cap are the patron's only bounds on a multi-hour run; all four have offline tests only. The hooks swallow Postgres errors, so during an outage Stop, the held-message handover and the cap fail open, silently. Also run PR #2870's owed probes: `make proto-probe-resume` (the target exists) and the two SDK questions under "Not covered". **Done when:** each is recorded on compose, then in U13.
+**U23.** Why: until U26, Stop and the $35 cap are the patron's only bounds on a run; all four have offline tests only. The hooks swallow Postgres errors, so during an outage Stop, the held-message handover and the cap fail open, silently. Also run PR #2870's owed probes: `make proto-probe-resume` (its kill now lands in a foregrounded delegation) and the two SDK questions under "Not covered". **Done when:** each is recorded on compose, then in U13.
 
-**U24.** Why: since PR #2870 every browser turn, even a lookup, runs to the proof, the nudge cap or $35; `decision` cannot fire; the web path skips the router about half the time. Build "Before phase 2" of [`research-as-a-job-later.md`](research-as-a-job-later.md) (issue #2921, issue #2927, issue #2932). **Done when:** its Acceptance paragraph passes.
+**U24.** Why: since PR #2870 every browser turn, even a lookup, runs to the proof, the nudge cap or $35; outcome `decision` (ending to ask the patron) never fires; the web path skips the `research` router about half the time. Build "Before phase 2" of [`research-as-a-job-later.md`](research-as-a-job-later.md) (issue #2921, issue #2927, issue #2932). **Done when:** its Acceptance paragraph passes.
+
+**U25.** Issue #3010. Why: nothing bounds image browsing; D18 paerai made 108 `image_transcribe` calls and passed $35 on the cap's meter. From the 21st distinct image per image group per project, `image_transcribe` and `image_read` refuse, on one shared count kept in the project store (the advisory threshold becomes a refusal). The refusal says to log the browse `partial`, try other routes, and link the next unread image in the final summary. Amends ADR-0011's read-tool carve-out and the spec's browse budget. `image-reader` relays a thrown error verbatim, so the cap needs no issue #1546 relay fix. **Done when:** the 21st image of one group is refused across a tools restart, and a delegated read relays it.
+
+**U26.** Blocked on [`cost-latency-10x.md`](cost-latency-10x.md): its median e2e run is 75.7 min, so a 30-minute limit now would cut most runs. Every run (one patron message) ends within 1,800 s, terminated, not resumed. A lost worker instance ends the run too (lead, 2026-09-29): its redelivery arrives past the limit. Either way the patron's next message continues the conversation from Postgres, the resume D17 proved.
+1. The clock starts at the first attempt (Postgres); a resume gets no fresh 1,800 s.
+2. Near 1,500 s, `should_continue_run` stops nudging and asks for the summary; new delegations are denied.
+3. At 1,800 s the worker stops the CLI, closes the turn `budget` with limit `time`, tells the patron where it stopped ("send another message to keep going"), and answers 200 so the message is deleted. A cut delegation's write rolls back (PR #2850).
+4. A redelivery past the limit closes at once as `interrupted` and tells the patron to send another message; `MaxRetries` small.
+5. sqsd `InactivityTimeout` just above the worker's deadline.
+6. The e2e harness gets the same limit (U16).
+7. The next message continues the conversation with a fresh 1,800 s.
+
+**Done when:** acceptance step 5's time-limit form passes on U13's rehearsal host.
+
+**U27.** Done in this PR. The hook rewrote only an explicit `run_in_background: true`, but CLI 2.1.220 backgrounds an `Agent` call with no flag, and the two extractors lost on 2026-09-21 had none. The worker now rewrites every delegation not explicitly `false`; `test_a_delegation_not_explicitly_foreground_is_rewritten` fails on the old rule.
 
 ## 2. Preconditions only FamilySearch can answer or do
 
@@ -125,15 +151,15 @@ Two premises moved since the plan:
 | F4 | APT | If the model allowlist lands, admit `us.anthropic.claude-sonnet-4-6`, `us.anthropic.claude-haiku-4-5-20251001-v1:0`, `us.anthropic.claude-sonnet-5` (P3h). Is Sonnet 5 enabled? Pin no `model:`; it overrides per-agent models (R2) | U14 | integ, once the allowlist lands | Allowlist: drafted, **not sent**. Sonnet 5, `model:`: not yet asked |
 | F5 | APT | Our `tap-gateway-invoke` role and its account (P25, new via GEM, or the review's P20); where quota requests go; gateway scaling after our perf test (R2) | U18 | go-live | Role and account: sent 2026-09-18, unanswered, ETA December (R2). Scaling: not yet asked |
 | F6 | APT | Will you emit `guardContent` for tool results, and when? `guardrailIdentifier` is a placeholder in beta and prod (R6) | ARB injection answer | go-live | Sent 2026-09-18, unanswered |
-| F7 | InfoSec; APT | Langfuse keeps every prompt: patron names and record details as typed or narrated, not tool results or images (one 11-call turn: ~700k characters at a local OTLP collector, not Langfuse; P3l, 2026-09-25, n=1; a full run re-exports the system prompt each call, many times that). Acceptable? What must APT add? Retention? APT: what did Langfuse store for U14's first call? (R11) | Security review | go-live | First ask (wrongly said images leave): sent 2026-09-18, unanswered. Correction, retention, check: **not sent** |
+| F7 | InfoSec; APT | Langfuse keeps every prompt: patron names and record details as typed or narrated, not tool results or images (~700k characters for one 11-call turn at a local collector; P3l, 2026-09-25, n=1; a full run is many times that). Acceptable? What must APT add? Retention? APT: what did Langfuse store for U14's first call? (R11) | Security review | go-live | First ask (wrongly said images leave): sent 2026-09-18, unanswered. Correction, retention, check: **not sent** |
 | F8 | InfoSec | MCP security review (review item 11): a live bearer on every hop, including plain HTTP worker-to-tools? An encrypted grant at rest? Tool-server network isolation enough? | U3 at go-live, U4 | go-live | Not yet asked |
-| F9 | ACE; FS legal/records | Your image provider? The SCP does not block OpenRouter egress, but policy may; the review says "no FamilySearch approval and cannot ship". Custodian terms for third-party OCR. A `bedrock-exception-*` role if U21 wants one (R12) | U20 | go-live; integ runs degraded | Provider, role: sent 2026-09-18, unanswered. Terms: not yet asked |
+| F9 | ACE; FS legal/records | Your image provider? The SCP does not block OpenRouter egress, but policy may; the review says "no FamilySearch approval and cannot ship". Custodian terms for third-party OCR (R12) | U20 | go-live; integ runs degraded | Provider: sent 2026-09-18, unanswered; `bedrock-exception-*` role withdrawn 2026-09-29 (U21), ACE not yet told. Terms: not yet asked |
 | F10 | Help team (`fs-eng/help-research-only`) | How does your SSE emitter handle DTM concurrency, or do you bypass DTM? Does your frontend reach it through the public edge? (R3) | F11, step 16 | go-live | Sent 2026-09-18, unanswered |
 | F11 | FS platform/DPF | The SSE edge probe (R3's arms, prototype plan), only if F10 says they bypass DTM | SSE through the edge | go-live | Not yet asked |
 | F12 | FS platform, DTL | Which Beanstalk platforms (the review says Docker left the 1.1 allow-list)? An AL2023 AMI for Python 3.12, Node 24? Will Blueprint's worker tier take step 11's sqsd values and keep our `.ebextensions` and nginx overrides? (R9) | FS integ deploy; U12's form | integ | **Not yet asked** |
 | F13 | FS platform/network; APT | Account and VPC; worker subnets on the gateway ALB allowlist (R10); step 2's egress; a PyPI/npm mirror? `*.fslocal.org` names to avoid Imperva 403s? HAProxy inactivity timer above 15 s, unbuffered (R3) | U4, U14, step 16 | integ | Not yet asked |
 | F14 | FS platform (Blueprint) | Postgres 16 (RDS or Aurora), S3 bucket, worker queue and DLQ, secrets store, IAM roles; tool-server LB idle timeout ≥ 1800 s (60 s cuts OCR, rolls back writes). Static S3 keys allowed? | FS integ deploy; U19 | integ | **Not yet asked** |
-| F15 | FS OAuth client owners (team unknown) | A client with `https://<integ host>/callback` (F18), later production. Confirm the lead's 8 h idle / 24 h max lifetime and revoke-on-refresh. Re-sign-in when a run outlives 24 h? | U2, U3; step 18 | integ; go-live (production) | Not yet asked |
+| F15 | FS OAuth client owners (team unknown) | A client with `https://<integ host>/callback` (F18), later production. Confirm the lead's 8 h idle / 24 h max lifetime and revoke-on-refresh. Re-sign-in when a session's grant passes 24 h? | U2, U3; step 18 | integ; go-live (production) | Not yet asked |
 | F16 | fs-eng | Host wiki-query-api and Pop Stats (issue #290, closed 2026-09-28: fs-eng's job); defaults point at a developer's Tailscale Funnel host (public, checked 2026-09-29), outside step 2's egress | `WIKI_API_URL`, `POP_STATS_URL` | go-live; meanwhile four tools fail and answers silently thin | Not yet asked |
 | F17 | PM, ARB, InfoSec, Church AI Working Group | CAS/TARS for the email allowlist (review item 16); PRIA (10); AI Working Group (12); ARB review: grain (R4), 3 s SLA exception (9), us-east-1-only DR (18); backup retention and deletion; Dynatrace (13); API service identity (17); mobile scope (PM; F11's mobile arm) | U19 | go-live | Not yet asked; goes with U22's draft |
 | F18 | FS platform/DPF | Web tier public hostname (integ, production), TLS certificate and HTTPS listener on its ALB, edge route (CloudFront, Imperva, HAProxy/DTM); F15's redirect uses it | U2, F15, steps 15–18 | integ | Not yet asked |
@@ -142,7 +168,7 @@ Two premises moved since the plan:
 
 ```
 U2 sign-in ─► U3 custody ─────────┐
-U5, U7–U11, U23 ──────────────────┤
+U5 (interim), U7–U11, U23 ────────┤
 U12 artifacts ────────────────────┴─► U13 rehearsal (our account) ─┐
 F12 platform/AMI, F13 network, F14 provisioning, F18 host/TLS ─────┼─► FS integ deploy (list 3)
 F1 + F3 + F4 + F13 gateway access ─► U14 gateway run ──────────────┘
@@ -152,11 +178,12 @@ U13 rehearsal ─► U18 packing + scaling metric ─┐
 U22 ARB corrections ───────────────────────────┴─► F17 ARB review ─► go-live
 U6 fencing + U18 scaling metric ─► more than one instance
 F5 role (ETA December) ─► U18 load test ─► go-live
-U17 stop parity, U21 decisions 1, 6, 7 ─► U16 quality ─► go-live
-F6, F7, F8, F10 → F11, F16, U24 ─► go-live
+cost-latency-10x.md ─► U26 time limit ─► go-live (U5's interim sqsd values until then)
+U17 stop parity; U25 image cap, U26 for the paired runs ─► U16 quality ─► go-live
+F6, F7, F8, F10 → F11, F16, U24, U25 ─► go-live
 ```
 
-- **To go-live:** F17, after U22 and U18's scaling metric and packing (which need U13). F5's role (December) is the only dated FS input; a load test before it measures TAP's shared pool.
+- F5's role (December) is the only dated FS input; a load test before it measures TAP's shared pool.
 
 ## 3. Deployment guide for FamilySearch
 
@@ -209,24 +236,24 @@ F6, F7, F8, F10 → F11, F16, U24 ─► go-live
 ### Worker tier
 
 10. **Worker environment** (Worker tier, SQS/HTTP, Python 3.12). Image [compose]; platform bundle [untested] (U12).
-    - **Dependencies:** `claude-agent-sdk==0.2.128`, `psycopg[binary]>=3.2,<4`. The SDK bundles CLI 2.1.220: 257 MB on macOS arm64 (2026-09-29); Linux unmeasured.
+    - **Dependencies:** `claude-agent-sdk==0.2.128`, `psycopg[binary]>=3.2,<4`. The SDK bundles CLI 2.1.220: 257 MB on macOS arm64, 272 MB on Linux arm64 (2026-09-29).
     - **Code:** `apps/server/app/` and `apps/server/proto/{worker/,sql/,enqueue.py}` as `<root>/app/` beside `<root>/proto/`, `<root>` on `PYTHONPATH`; `packages/engine/plugin/` at a fixed read-only path. **Run** `python3 proto/worker/worker.py` from `<root>`.
-    - **Recipe:** `apps/server/proto/worker/Dockerfile`; it copies the gitignored engine `build`, so `make engine-build` first. With `TOOL_SERVER=http` it should need no Node (untested; U12).
+    - **Recipe:** `apps/server/proto/worker/Dockerfile`. No Node, engine build or S3 secret (on linux/arm64 it builds and CLI 2.1.220 starts; a full turn, x86_64 and the platform bundle are unchecked; U12).
     - Non-root: the CLI refuses `bypassPermissions` as root. [compose]
     - `/project` exists, empty and read-only (0555), or the CLI will not spawn. [live run]
     - `TMPDIR`: writable tmpfs for one turn's transcript plus spill (compose 1 GB, unmeasured), never persistent. [compose]
-    - No system Claude Code; the SDK pins the CLI. An SDK bump re-runs `make probe-bash-deny`, `probe-registration`, `probe-agent-binding` and `probe_gateway_parity.py`.
+    - No system Claude Code; the SDK pins the CLI. An SDK bump re-runs `make probe-bash-deny`, `probe-registration`, `probe-agent-binding` and `probe_gateway_parity.py`. The first three read `ANTHROPIC_API_KEY`; whose key runs them, or a port to the gateway, is FamilySearch's call.
     - Ship plugin and worker together: `EXPECTED_AGENTS` (8) and `EXPECTED_SKILLS = 27` are literals; a mismatch refuses every turn with 500 before billing. [compose]
 
     **Variables:**
 
     - `PG_DSN`; `QUEUE_URL`: the shared database; step 8's queue, for held-message release
     - `PORT`; `WORKER_CWD`; `ENGINE_PLUGIN_DIR`; `TMPDIR`: default 8080; `/project`; the plugin path; the tmpfs
-    - `MODEL_PROVIDER`: `gateway` [compose] only (P3k, local v1.5.0, 2 turns). `anthropic` [live run]. `bedrock` never ran in the worker [untested].
+    - `MODEL_PROVIDER`: `gateway` [compose] only (P3k, local v1.5.0, 2 turns). `anthropic` [live run].
     - `GATEWAY_BASE_URL`: the `/bedrock` route root. Required under `gateway`.
     - `GATEWAY_API_KEY`: sent as `Authorization`, never `x-api-key`
     - `GATEWAY_TOOL_SEARCH`: `false` until F2 lands agentgateway ≥ v1.6
-    - `TOOL_SERVER`; `TOOL_SERVER_URL`: `http`; `http://<tools host>/mcp`
+    - `TOOL_SERVER_URL`: `http://<tools host>/mcp`
     - `SESSION_SPEND_CAP_USD`: per-session bound, default 35
     - `PRICE_INPUT_PER_MTOK`, `PRICE_CACHE_WRITE_PER_MTOK`, `PRICE_CACHE_READ_PER_MTOK`, `PRICE_OUTPUT_PER_MTOK`: defaults 3.0, 6.0, 0.30, 15.0; recalibrate (U19)
 
@@ -238,14 +265,14 @@ F6, F7, F8, F10 → F11, F16, U24 ─► go-live
     |---|---|---|
     | `HttpPath` | `/turn` | [untested]; the probe used `/`. Other paths 404, which sqsd retries into the DLQ. |
     | `HttpConnections` | `2` | [EB probe]. Memory at 2 concurrent turns unmeasured. |
-    | `InactivityTimeout` | `1800`, the pinned step ceiling | [EB probe] |
-    | `VisibilityTimeout` | `2100`, just above the ceiling | [EB probe] |
-    | `MaxRetries` | Sized in U13 on **receive counts** | Mechanism [EB probe], value [untested]. Completed current-stack runs needed up to six 1800 s attempts (harness $15 cap); D18 paerai used over 14,400 s of attempts (nine-plus at 1800 s), still active. Counts never reset; deploys and crashes add receives. The probe used 10. |
+    | `InactivityTimeout` | Interim (U5): `36000`, Beanstalk's maximum. After U26: just above the worker's 1,800 s deadline | [untested]; `1800` [EB probe] |
+    | `VisibilityTimeout` | Interim `36300`; after U26 just above `InactivityTimeout`. SQS's maximum is `43200`. A crashed worker's message returns only after it | [untested]; `2100` over `1800` [EB probe] |
+    | `MaxRetries` | Small: only crashes and deploys add receives | Mechanism [EB probe], value [untested]. Counts never reset. The probe used 10. |
     | `ErrorVisibilityTimeout` | Sized in U13 with `MaxRetries` | [untested]. AWS documents a retry of a non-200 after this delay (default 2 s). The worker answers 500 whenever it cannot claim the turn in Postgres, so at 2 s a failover can exhaust `MaxRetries` in seconds and dead-letter the turn. |
 
-    Measured (2026-09-11, n=1): at `InactivityTimeout` sqsd cuts the POST **and tells the worker nothing**; the message returns after `VisibilityTimeout`, 300 s dead per crossing. Ids travel in the body (a message attribute was not forwarded); the worker reads `X-Aws-Sqsd-Msgid` and `X-Aws-Sqsd-Receive-Count`. A configuration-only update took 78 s, restarting only sqsd. **Not measured:** sqsd on a worker 500, an app-version deploy mid-turn, the 512 MB bundle cap, the `.ebextensions` naming rule.
+    Measured (2026-09-11, n=1): at `InactivityTimeout` sqsd cuts the POST **and tells the worker nothing**; the message returns after `VisibilityTimeout` (300 s dead at 2100 over 1800). Ids travel in the body (a message attribute was not forwarded); the worker reads `X-Aws-Sqsd-Msgid` and `X-Aws-Sqsd-Receive-Count`. A configuration-only update took 78 s, restarting only sqsd. **Not measured:** sqsd on a worker 500, an app-version deploy mid-turn, the 512 MB bundle cap, the `.ebextensions` naming rule.
 
-12. **nginx override:** `.platform/nginx/conf.d/<name>.conf` with `proxy_read_timeout 36000s;`, or nginx cuts the POST at 60 s. Template: `apps/server/proto/eb-worker-probe/.platform/nginx/conf.d/01-worker-timeouts.conf`. [EB probe] (Python platform).
+12. **nginx override:** `.platform/nginx/conf.d/<name>.conf` with `proxy_read_timeout 43200s;`, or nginx cuts the POST at 60 s. It must exceed `InactivityTimeout`, or nginx's 504 redelivers mid-run. Template: `apps/server/proto/eb-worker-probe/.platform/nginx/conf.d/01-worker-timeouts.conf`. [EB probe] (Python platform).
 13. **One instance each** for worker and tools until U6, not the review's 2. [compose]
 14. **Logs:** `aws:elasticbeanstalk:cloudwatch:logs` `StreamLogs: true` on all three, `DeleteOnTerminate: false`, retention of FamilySearch's choosing. Groups: `/aws/elasticbeanstalk/<env>/var/log/web.stdout.log`, `…/aws-sqsd/default.log`, `…/nginx/access.log`. [EB probe] The worker logs JSON lines: `ev=start` names the provider; `ev=turn`, one per returning attempt, has on 200 `receive_count`, `resumed`, `list_subkeys`; a killed attempt writes none.
 
@@ -289,16 +316,18 @@ Nothing scripts it against a deployed stack yet (`make proto-demo` and `make pro
 4. **Kill mid-delegation** (D17's equivalent). Set `GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS=20000` on tools for this test only, then unset it; without it `extraction_append` commits in ~68 ms (2026-09-20) and the kill lands after the commit. Run `/record-extraction` on a named record. When `tool_calls` shows an `agent_type = 'record-extractor'` row whose `tool_name` ends in `extraction_append`, terminate the worker instance within the hold.
    - Pass: `receive_count` ≥ 2; the redelivery's `ev=turn` has `resumed` true and `list_subkeys` ≥ 1; `completed_at` set, `outcome` not `no_progress`; `research.json` holds the source exactly once.
    - Void if the kill landed before the delegation started or after its `Agent` row had `duration_ms`; if any FamilySearch call got the reconnect instruction; or on more than one kill.
-   - On Beanstalk, redelivery takes up to 35 min (2100 s visibility timeout).
+   - On Beanstalk, redelivery waits out `VisibilityTimeout`; lower step 11's interim values for this test.
    - [live run] on the 2026-09-23 pre-merge build only (D17, n=1, compose, `docker kill`); not re-run on current `main`; Beanstalk [untested].
-5. **Ceiling crossing.** An autonomous run past 1800 s. Pass: `receive_count` ≥ 2, `zero_progress_attempts` 0, completes. [live run] (PR #2870's run, 2026-09-24: 6 attempts, 5 crossings, n=1, compose). Beanstalk needs U5.
+   - Once U26 lands, the redelivery closes the run `interrupted` instead. Pass then: the patron's next message resumes the same SDK session (`resumed` true, `list_subkeys` ≥ 1) and `research.json` holds the source exactly once.
+5. **No mid-run cut** (until U26): an autonomous run past 1,800 s completes on `receive_count` 1. Needs U5. [untested]
+   **Time limit** (once U26 lands): by 1,800 s from its first attempt the run closes `budget` with limit `time`, the patron sees the stop event, the message is deleted, and a next message continues. [untested]
 
-**Not covered** (never run live; U23 runs the first four): Stop during a run; held-message release; the $35 cap firing; Stop or cap during a foreground delegation, with PR #2870's owed SDK questions (does `continue_: False` suppress the Stop dispatch; does a subagent's halt stop the parent); a delegation longer than one attempt (U5).
+**Not covered** (never run live; U23 runs the first four): Stop during a run; held-message release; the $35 cap firing; Stop or cap during a foreground delegation, with PR #2870's owed SDK questions (does `continue_: False` suppress the Stop dispatch; does a subagent's halt stop the parent); the time limit (U26).
 
 ### Go-live gates
 
 - The acceptance test passes on FamilySearch's integration environment.
-- List 1 is closed, including U4, U6 and U15–U24.
+- List 1 is closed, including U4, U6, U15–U20 and U22–U26.
 - List 2 is answered: F2, F5–F10, F11 if F10 says they bypass DTM, F16 and F17.
 - More than one worker or tools instance only after U6, and only once U18 has chosen the scaling metric.
 
