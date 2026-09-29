@@ -4,6 +4,7 @@ import { join } from "path";
 import { tmpdir } from "os";
 import {
   stageSearchResults,
+  consumeStagedResults,
   finalizeStagedResults,
   unloggedStagedSearches,
   stripQueryPlumbing,
@@ -196,13 +197,15 @@ describe("results-staging", () => {
       expect(unlogged.tool).toBe("record_search");
       expect(Date.parse(unlogged.retrieved)).not.toBeNaN();
 
-      // And it is a ref finalizeStagedResults actually accepts.
+      // And it is a ref finalizeStagedResults actually accepts; research_log_append
+      // then consumes it once its research.json write commits.
       await finalizeStagedResults({
         projectPath: dir,
         stagedResultsRef: unlogged.ref,
         logId: "log_009",
         expectedTool: unlogged.tool,
       });
+      await consumeStagedResults(dir, [unlogged.ref]);
       expect(await unloggedStagedSearches(dir)).toHaveLength(0);
     });
 
@@ -211,13 +214,15 @@ describe("results-staging", () => {
       const handle = await stage();
       expect(await unloggedStagedSearches(dir)).toHaveLength(1);
 
-      // The real path: research_log_append finalizes, which unlinks the staged file.
+      // The real path: research_log_append finalizes, commits research.json, and
+      // only then consumes the staged file.
       await finalizeStagedResults({
         projectPath: dir,
         stagedResultsRef: handle!.resultsRef,
         logId: "log_001",
         expectedTool: "record_search",
       });
+      await consumeStagedResults(dir, [handle!.resultsRef]);
       expect(await unloggedStagedSearches(dir)).toHaveLength(0);
     });
 
@@ -330,7 +335,7 @@ describe("results-staging", () => {
   });
 
   describe("finalizeStagedResults", () => {
-    it("wraps the staged file into results/<logId>.json, recomputes count, and unlinks the staged file", async () => {
+    it("wraps the staged file into results/<logId>.json, recomputes count, and KEEPS the staged file", async () => {
       const handle = await stageSearchResults({
         projectPath: dir,
         tool: "record_search",
@@ -351,8 +356,41 @@ describe("results-staging", () => {
       expect(sidecar).toMatchObject({ log_id: "log_005", tool: "record_search", returned_count: 3 });
       expect(sidecar.payload.results).toHaveLength(3);
 
-      // staged file consumed.
+      // Not consumed: research_log_append removes it only after its commit, so a
+      // call refused after finalizing leaves it for the corrected re-send.
+      expect(await stagingFiles()).toHaveLength(1);
+    });
+
+    it("consumeStagedResults removes the staged file, and an absent ref is not an error", async () => {
+      const handle = await stageSearchResults({
+        projectPath: dir,
+        tool: "record_search",
+        response: { query: {}, results: [{ recordId: "A" }] },
+      });
+      await consumeStagedResults(dir, [handle!.resultsRef, `${STAGING_SUBDIR}/never-staged.json`]);
       expect(await stagingFiles()).toEqual([]);
+    });
+
+    it("names what to do when the staged ref is missing, and says invalid JSON when it is unparseable", async () => {
+      await expect(
+        finalizeStagedResults({
+          projectPath: dir,
+          stagedResultsRef: `${STAGING_SUBDIR}/gone.json`,
+          logId: "log_001",
+          expectedTool: "record_search",
+        }),
+      ).rejects.toThrow(/stagedResultsRef '.*gone\.json' is not in results\/\.staging\/ — each staged ref can be logged once/);
+
+      await mkdir(join(dir, STAGING_SUBDIR), { recursive: true });
+      await writeFile(join(dir, STAGING_SUBDIR, "bad.json"), "{not json", "utf-8");
+      await expect(
+        finalizeStagedResults({
+          projectPath: dir,
+          stagedResultsRef: `${STAGING_SUBDIR}/bad.json`,
+          logId: "log_001",
+          expectedTool: "record_search",
+        }),
+      ).rejects.toThrow(/stagedResultsRef '.*bad\.json' is invalid JSON/);
     });
 
     it("rejects a ref outside results/.staging/", async () => {
