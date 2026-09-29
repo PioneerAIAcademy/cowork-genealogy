@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import ProofSummariesSection from '../ProofSummariesSection'
 import type { ResearchData, ProofSummary } from '../../../lib/schema'
 import { patrickFlynnResearch } from '../../../lib/__fixtures__/patrick-flynn'
+import { expandFirstCard } from './expandCard'
 
 vi.mock('../../../contexts/ResearchDataContext', async () => {
   const actual = await vi.importActual<typeof import('../../../contexts/ResearchDataContext')>(
@@ -38,6 +39,34 @@ describe('ProofSummariesSection', () => {
     expect(screen.getByText(/Searched 1850 census/)).toBeInTheDocument()
   })
 
+  it('shows the tier and shortfall as researcher-facing labels', () => {
+    mockResearch()
+    render(<ProofSummariesSection />)
+    expect(screen.getByText('likely')).toBeInTheDocument()
+    expect(screen.getByText('evidence missing')).toBeInTheDocument()
+  })
+
+  it('shows no shortfall badge when the shortfall is none, on the summary or a claim', async () => {
+    const conclusive = {
+      ...patrickFlynnResearch.proof_summaries[0],
+      tier: 'proved',
+      shortfall: 'none',
+      claims: [
+        {
+          claim: 'Father',
+          proof_tier: 'proved',
+          shortfall: 'none',
+          relationship: { type: 'ParentChild', parent: 'I2', child: 'I1' }
+        }
+      ]
+    } as unknown as ProofSummary
+    mockResearch({ proof_summaries: [conclusive] })
+    render(<ProofSummariesSection />)
+    await expandFirstCard()
+    expect(screen.getAllByText('well established')).toHaveLength(2)
+    expect(screen.queryByText('none')).toBeNull()
+  })
+
   it('renders a proof summary missing shortfall without crashing', () => {
     const oldShapeSummary = {
       id: 'ps_001',
@@ -59,6 +88,6 @@ describe('ProofSummariesSection', () => {
   it('shows the empty state when there are no proof summaries', () => {
     mockResearch({ proof_summaries: [] })
     render(<ProofSummariesSection />)
-    expect(screen.getByText(/No proof summaries recorded\./)).toBeInTheDocument()
+    expect(screen.getByText(/No findings yet\./)).toBeInTheDocument()
   })
 })
