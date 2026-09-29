@@ -35,6 +35,13 @@ const KNOWN: Record<string, string> = {
   // All three passed before the edit and failed after, so the offer is what was
   // holding the boundary. Reverted; removing either needs a replacement stop
   // rather than a reworded closing line, and that is its own paid slot.
+  // research-plan's offer showed NO boundary defect (19-20 pass, zero fails across
+  // three runs). It is reverted for a different, measured reason: the gate needs a
+  // red-free run of a suite whose longest tests stall. `sdk_stream_silence` is 100%
+  // research-plan corpus-wide, and it lands on the top-ranked tests by duration --
+  // wzk (424s, rank 1 of 23), 005 (rank 2), 014 (rank 3), 002 (rank 5). Five runs
+  // failed to produce a clean log for a one-line prose change. Fix the stall first.
+  "skills/research-plan/SKILL.md": "reverted — gate blocked by duration-linked stalls, not by the edit",
   "skills/search-full-text/SKILL.md": "offer is a load-bearing stop — see note above",
   "skills/conflict-resolution/SKILL.md": "offer is a load-bearing stop — see note above",
   "agents/person-evidence.md": "PR #2992 owns this file; batched behind it",
@@ -67,19 +74,4 @@ describe("offers the continuous run overrides", () => {
     expect(found.sort()).toEqual(known);
   });
 
-  it("research-plan states the next step instead of offering to start", () => {
-    const text = readFileSync(join(PLUGIN, "skills/research-plan/SKILL.md"), "utf8");
-    // The offer nobody answers, in the spellings it has actually been written in.
-    // Asserted by meaning, not by our sentence: rewording the close must stay green.
-    // Lines that FORBID the offer are not the offer -- the body carries one such rule
-    // ("do not ask 'would you like me to start?' first"), and a bare match flags it.
-    const OFFER = /Would you like me to|Shall I start|Do you want me to start/i;
-    const NEGATED = /do not ask|don't ask|never ask|rather than asking|instead of asking/i;
-    const offering = text.split("\n").filter((l) => OFFER.test(l) && !NEGATED.test(l));
-    expect(offering).toEqual([]);
-    // The handoff stays GATED on the invoking message authorizing execution. Without
-    // this, "Create the first research plan for q_001" would execute the plan it was
-    // asked to write -- which is what made 22 unit tests need callee stubs.
-    expect(text).toMatch(/already authorized execution/);
-  });
 });

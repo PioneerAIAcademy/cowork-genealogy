@@ -541,13 +541,15 @@ re-issue it first. Then present the plan:
 - **If the invoking message already authorized execution** — a phrase
   like "...and start executing it," "...and continue with exhaustive
   research," or "...don't stop to check in with me" — hand off to
-  execution in this same turn: `Skill("search-records")` for FamilySearch
-  items, `Skill("search-external-sites")` for others. If only some items
-  can execute right now (e.g. one repository or tool is unavailable but
-  another isn't), execute those and report the block on the rest — don't
-  let an item that's blocked for any reason hold up items that aren't.
-- **Otherwise close by naming the next step as a statement**, never as a
-  question: "Next: <first item>, in <repository>."
+  execution in this same turn instead of asking: `Skill("search-records")`
+  for FamilySearch items, `Skill("search-external-sites")` for others.
+  If only some items can execute right now (e.g. one
+  repository or tool is unavailable but another isn't), execute those and
+  report the block on the rest — don't let an item that's blocked for any
+  reason hold up items that aren't.
+- Otherwise, suggest next step: "Would you like me to start executing this
+  plan?" (search-records / search-external-sites, depending on
+  the repositories)
 
 ## Example
 
