@@ -416,6 +416,25 @@ DECISION_TOOL = "AskUserQuestion"
 # decision exit, which matches a BUILT-IN the model already has, this costs a real MCP tool.
 DELIVERED_TOOL = "mcp__genealogy__research_delivered"
 
+# When to reach for it. This rides the per-turn system prompt beside ROUTER_REENTRY,
+# NOT the skill bodies: the hook that makes this tool end a turn exists only here, so a
+# skill-body rule would teach 27 skills to call a tool that is inert in Cowork and in
+# the harness that grades them -- at a paid eval run each, in the closing region that
+# regressed three tests this week.
+#
+# Both exclusions are load-bearing. Calling it when the OBJECTIVE is finished would
+# report `delivered` where `completed` is true and the run ends on its own. Calling it
+# instead of asking would swallow a question nobody answers -- an ask waits, a delivery
+# does not, which is why they are separate tools.
+DELIVERY_GUIDANCE = (
+    "When this message asked for one bounded thing and you have produced it, call "
+    "`research_delivered` with a one-sentence summary and stop: a plan the researcher "
+    "asked you to stop after, a single record or lookup, or a status question such as "
+    "\"where are we?\". Do not call it when the project's research objective itself is "
+    "finished -- that run ends on its own -- and do not call it in place of asking the "
+    "researcher a question, which waits for their answer."
+)
+
 DELIVERED_REASON = (
     "You have delivered what this message asked for. Stopping here rather than carrying on: "
     "the work is saved, and the researcher's next message picks up from it."
@@ -815,7 +834,7 @@ def build_worker_options(
     # OPENING_TURN so init-project runs and consumes the objective, and there is no
     # project to route yet. `resume is None` is exactly that turn.
     if resume is not None:
-        project_note = f"{project_note}\n\n{ROUTER_REENTRY}"
+        project_note = f"{project_note}\n\n{ROUTER_REENTRY}\n\n{DELIVERY_GUIDANCE}"
     env: dict[str, str] = {
         "ENABLE_TOOL_SEARCH": "true",
         "CLAUDE_CONFIG_DIR": config_dir,

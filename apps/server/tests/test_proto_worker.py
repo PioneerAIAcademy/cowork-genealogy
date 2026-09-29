@@ -3054,3 +3054,48 @@ def test_a_stop_outranks_a_delivery(turn_env):
     out = asyncio.run(hook({"tool_name": options.DELIVERED_TOOL, "tool_input": {}}, "u1", None))
     assert out.get("stopReason") == "stopped", "a halt must outrank the delivery arm"
     assert TERMINAL_DELIVERED not in str(out)
+
+
+# --- Teaching the agent WHEN to deliver (the enforcement half's prose) ---
+#
+# This rides the same per-turn system prompt as ROUTER_REENTRY, NOT 27 skill
+# bodies. The hook that makes `research_delivered` end a turn exists only in the
+# hosted worker: nothing in packages/engine/plugin/hooks/ or eval/harness/ reads
+# DELIVERED_TOOL. A skill-body instruction would teach skills to call a tool that
+# is inert in the environment where those skills are graded, cost a paid eval run
+# each, and edit the exact closing region that regressed three tests this week.
+
+def test_the_delivery_instruction_rides_the_same_turn_prompt(tmp_path):
+    opts = _options(config_dir=str(tmp_path), resume="sess-1")
+    assert options.DELIVERY_GUIDANCE in opts.system_prompt["append"]
+
+
+def test_the_delivery_instruction_is_absent_on_the_opening_turn(tmp_path):
+    """Same exemption as the router instruction: turn 1 is init-project's, and
+    there is nothing delivered yet."""
+    opts = _options(config_dir=str(tmp_path))
+    assert options.DELIVERY_GUIDANCE not in opts.system_prompt["append"]
+
+
+def test_the_instruction_names_the_tool_it_is_about():
+    """A rule that does not name its tool cannot be followed. The bare name is what
+    appears in the prompt; the hook matches the qualified one."""
+    assert "research_delivered" in options.DELIVERY_GUIDANCE
+    assert options.DELIVERED_TOOL.endswith("research_delivered")
+
+
+def test_the_instruction_draws_both_boundaries():
+    """Two ways this misfires, and both must be excluded in the text itself: calling
+    it when the whole objective is finished (that is `completed`, and the run ends on
+    its own), and calling it instead of asking a question (an ask waits for an
+    answer; a delivery waits for nothing)."""
+    lowered = options.DELIVERY_GUIDANCE.lower()
+    assert "objective" in lowered, "must exclude the project-complete case"
+    assert "question" in lowered or "ask" in lowered, "must exclude the ask case"
+
+
+def test_the_instruction_says_what_a_bounded_request_looks_like():
+    """Without an example this is abstract advice. The three shapes are the ones
+    users actually complained about (#2932, #2921, and 'where are we?')."""
+    lowered = options.DELIVERY_GUIDANCE.lower()
+    assert "plan" in lowered and ("status" in lowered or "where are we" in lowered)
