@@ -1,8 +1,7 @@
-// The Pg/S3 store's configuration as the hosted entrypoints receive it: the
-// worker puts it in the environment (per-turn stdio fork, or the long-lived
-// HTTP server's process). This reads the store variables only; a project id is
-// per turn (`GENEALOGY_PROJECT_ID`, hosted-stdio) or per request (the
-// `X-Genealogy-Project-Id` header, http) and never part of it. No `fs`.
+// The Pg/S3 store's configuration as the hosted entrypoint receives it: the
+// long-lived HTTP server's process environment. This reads the store variables
+// only; a project id is per request (the `X-Genealogy-Project-Id` header) and
+// never part of it. No `fs`.
 
 import type { PgS3BackendOptions } from "./pg-s3-project-store.js";
 
