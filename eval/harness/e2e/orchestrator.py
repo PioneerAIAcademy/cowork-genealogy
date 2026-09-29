@@ -169,8 +169,7 @@ BASELINE_ALLOWED_TOOLS = [
 # records itself); record_person_matches / record_record_matches (keyed
 # off a RECORD the agent already found, not the subject); source_attachments
 # (confirms a found record's attachment — real GPS work); person_warnings
-# WITHOUT `live` (it then reads the local stripped tree, not the live one —
-# a `live: true` call is blocked below, see LIVE_TREE_ARG_TOOLS).
+# (reads the local stripped tree, not the live one).
 #
 # See e2e-test-spec.md §6.1. Matched on the bare tool name (after the
 # `mcp__<server>__` prefix).
@@ -207,12 +206,8 @@ def is_turn_cap_error(detail: str | None) -> bool:
 
 
 # Tools that read the live tree only in one MODE, so the bare name cannot decide
-# it. `person_warnings` is local by default and fetches the subject plus their
-# parents, spouses and children from the live tree when called with `live: true`
-# — and each warning carries `personId`, `personName` and `relatedPersonId`, so
-# on a parents fixture the live mode hands back a stripped relative's name and
-# PID. That is the read `person_read` heads BLOCKED_TREE_TOOLS for.
-LIVE_TREE_ARG_TOOLS = {"person_warnings": "live"}
+# it. Currently empty — kept for the next tool whose block depends on an argument.
+LIVE_TREE_ARG_TOOLS = {}
 
 
 def is_blocked_tree_tool(
