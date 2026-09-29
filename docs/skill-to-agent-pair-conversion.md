@@ -21,8 +21,8 @@ path that is the orchestrator or the main thread.
 `record-extraction` (ruled 2026-09-21), and `forget-and-rederive` (ruled
 2026-09-25, issue #2791), whose confirmation step and its rule never to read
 the FamilySearch tree for the rest of the project must bind the main thread
-after setup, which an agent's single return cannot do. Whether they survive
-"no skills at all" is the lead's call and is open on PR #3000.
+after setup, which an agent's single return cannot do. They stay until a
+replacement architecture exists (ruling 2026-09-29, PR #3000).
 
 **Two rationales reach a pair, and they buy different work.** This document was
 written for the first:
@@ -400,6 +400,44 @@ Every check in both tables is local and free to run. Run the whole packaging sui
 `apps/server`'s `pytest`, not just the file the card names. A packaging file that
 cannot import (a missing `yaml`, say) reports "no tests" rather than failing, so
 read the file count, not just the red count.
+
+## What a cold-started agent gets wrong
+
+Measured on `question-selection` (#2115, five paid runs). None of these showed
+up while the body ran on the main thread, and each cost a run to find.
+
+- **"Trust what you already hold" is false in an agent.** A folded rule saying
+  not to re-read state held "from the same continuous run" made the agent act
+  on the delegation's summary instead. An agent always starts cold; say so.
+- **Check that the agent's tools can return what the body needs.**
+  `project_context` returned no objective, so the only way to see it was to
+  `Read` `research.json` whole — and an agent told to read "only the first
+  lines" paged through the whole file and then skipped the section queries the
+  body requires. Telling it *how* to read does not hold; fix the tool.
+- **The narration line is a file read.** It sends the agent into
+  `research.json` for a fixed house-style string. `record-extractor` carries
+  none; drop it from an agent that should not read that file.
+- **A rule the delegation contradicts loses some of the time.** The agent
+  observed a plan item `in_progress`, said so, and wrote the dependent
+  question anyway because the delegation called the search done — on some runs
+  and not others. Two prose wordings did not hold, so it became a
+  `research_append` precondition. Apply ADR-0011's first question before a
+  second wording.
+- **The return contract changes what the judge should read.** Judge lines
+  written for a router ("gloss the id", "never name a skill") contradict a
+  contract whose caller-facing lines carry ids and a routing hint. Re-point
+  them at the text after the final `---`.
+
+### Proving "consistently"
+
+- **Read every run, not the summary.** With `--runs-per-test 3` the summary
+  table reports each test's majority outcome. 42 runs showed 14/14 pass while
+  three tests had a failed or partial run. Read `tests[].runs[].outcome` and
+  `tests[].flaky`.
+- **Move failing candidate logs out of the suite's run-log directory.** They
+  can never be committed (rule 6) but still occupy keep-newest-5 slots, and
+  the next run's prune then deletes committed, annotated logs (rule 7).
+  Restore any `D` it shows with `git restore`.
 
 ## The process, in order
 

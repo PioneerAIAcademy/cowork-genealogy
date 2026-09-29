@@ -1467,6 +1467,45 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
   ];
 }
 
+/** A new question may not be created while a question it `depends_on` has an
+ *  active-plan item `in_progress` (lead ruling, 2026-09-29, option B). The
+ *  dependency's search is still running, so the new question would be built on
+ *  a finding the project does not have yet. Measured on
+ *  `ut_question_selection_d01`: a delegation saying "the probate search is
+ *  effectively done" made the agent write the dependent question over its own
+ *  observation that the item was still `in_progress`, on some runs and not
+ *  others — a prose rule that loses to the caller.
+ *
+ *  Scoped to `depends_on`, not to every in-flight item in the project, so a
+ *  FAN pivot or an unrelated question is never blocked by someone else's search.
+ *  Same snapshot and active-plan discipline as `planCompleteInvariants`: the
+ *  item's completion is the search work's step, and a superseded plan's items
+ *  are frozen. Escapable once the search finishes, since the search skills own
+ *  the `in_progress` → terminal transition. */
+function newQuestionDependencyInFlightInvariants(entry: any, preCallResearch: any): string[] {
+  const deps: string[] = Array.isArray(entry?.depends_on)
+    ? entry.depends_on.filter((d: unknown): d is string => typeof d === "string")
+    : [];
+  if (deps.length === 0) return [];
+  const inFlight: string[] = [];
+  for (const plan of Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []) {
+    if (!plan || plan.status !== "active" || !deps.includes(plan.question_id)) continue;
+    for (const item of Array.isArray(plan.items) ? plan.items : []) {
+      if (item?.status === "in_progress" && typeof item?.id === "string") {
+        inFlight.push(`${item.id} (on ${plan.question_id})`);
+      }
+    }
+  }
+  if (inFlight.length === 0) return [];
+  const ids = inFlight.sort().join(", ");
+  return [
+    `a new question cannot depend on work still running: ${ids} ` +
+      `${inFlight.length === 1 ? "is" : "are"} still 'in_progress'. The plan says that search ` +
+      "has not finished, whatever the request that reached you says. Write no question now; " +
+      "report the in-flight item as the reason and let the search finish.",
+  ];
+}
+
 /** A plan item may not stand at `completed` unless some `log[]` entry carries
  *  its id in `plan_item_id`. Completing an item asserts the search it names was
  *  done; the log is where a search is recorded, so an item completed with
@@ -3112,6 +3151,9 @@ function applyOne(
       Object.prototype.hasOwnProperty.call(fields, "exhaustive_declaration");
     if (declarationTouchedThisOp) {
       invariantErrors.push(...planCompleteInvariants(resultEntry, preCallResearch));
+    }
+    if (op.op === "append") {
+      invariantErrors.push(...newQuestionDependencyInFlightInvariants(resultEntry, preCallResearch));
     }
     const statusTouchedThisOp =
       op.op === "append" || Object.prototype.hasOwnProperty.call(fields, "status");

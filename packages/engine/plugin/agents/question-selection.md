@@ -284,6 +284,8 @@ do not retry the same payload blindly.
   already resolved).
 - `unblocks`: questions this one's resolution would enable or advance. High
   `unblocks` counts mark gatekeeper questions — prioritize them.
+- A question that verifies another question's premise **unblocks** that
+  question; it does not depend on it.
 - When neither applies (e.g. a first question), set both explicitly to `[]`.
 
 The `exhaustive_declaration` must be unstarted at creation (as shown above:

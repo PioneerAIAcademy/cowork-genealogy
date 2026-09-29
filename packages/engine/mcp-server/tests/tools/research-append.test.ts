@@ -4532,6 +4532,48 @@ describe("research_append (batch ops)", () => {
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
+  // ── A new question may not depend on a search still running (option B) ──
+  // Refuse side, then every accept side the scoping exists for: a guard that
+  // only proves it blocks will be skipped the first time it blocks a FAN pivot.
+  const newDependent = (deps: string[]) => {
+    const { id: _i, created: _c, ...q } = validQuestion("x");
+    return { projectPath: dir, section: "questions", op: "append", entry: { ...q, depends_on: deps } } as any;
+  };
+
+  it("(dep-inflight) refuses a new question depending on a question with an in_progress item — writes nothing", async () => {
+    await writeProject(attrResearch("in_progress", []));
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend(newDependent(["q_001"]));
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/cannot depend on work still running: pli_001 \(on q_001\)/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("(dep-inflight) allows a dependent question when the dependency's items are only planned", async () => {
+    await writeProject(attrResearch("planned", []));
+    expect((await researchAppend(newDependent(["q_001"]))).ok).toBe(true);
+  });
+
+  it("(dep-inflight) allows an unrelated question while another question's search runs (the FAN pivot)", async () => {
+    await writeProject(attrResearch("in_progress", []));
+    expect((await researchAppend(newDependent([]))).ok).toBe(true);
+  });
+
+  it("(dep-inflight) ignores an in_progress item on a superseded plan", async () => {
+    const research = attrResearch("in_progress", []);
+    research.plans[0].status = "superseded";
+    await writeProject(research);
+    expect((await researchAppend(newDependent(["q_001"]))).ok).toBe(true);
+  });
+
+  it("(dep-inflight) does not fire on an update to an existing question", async () => {
+    const research = attrResearch("in_progress", []);
+    research.questions = [{ ...validQuestion("q_001") }, { ...validQuestion("q_002"), depends_on: ["q_001"] }];
+    await writeProject(research);
+    const r = await researchAppend({ projectPath: dir, section: "questions", op: "update", entryId: "q_002", fields: { priority: "low" } } as any);
+    expect(r.ok).toBe(true);
+  });
+
   // BREAK IT MORE THAN ONE WAY. Each of these is a different shape of "no entry
   // names it", and each reaches the helper down a different path.
   it("(d4-logattr) refuses when log[] is empty", async () => {
