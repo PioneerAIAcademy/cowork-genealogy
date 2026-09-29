@@ -15,9 +15,42 @@ It serves the paths `apps/web` already calls, so the SPA is reused verbatim with
 | `GET /api/sessions/{id}/events?after=N` | One-shot poll: `{events, activity, turn_active, next_after}`. `Last-Event-ID` beats `after`. |
 | `GET /api/sessions/{id}/events/stream?after=N` | `text/event-stream`. `retry: 1000`; the catch-up rows after the cursor; the current documents once; then `status turn_active` if a turn is in flight; then a 1 s poll. `: ping` after 15 s idle. |
 | `GET/POST /api/sessions`, `GET/PATCH/DELETE /api/sessions/{id}`, `POST …/resume`, `GET …/state` | Session CRUD in the SPA's `SessionSummary` shape; `/state` reads `documents` (`research.json`, `tree.gedcomx.json`). |
-| `GET /auth/config`, `GET /auth/me`, `POST /auth/dev-login`, `POST /auth/logout` | Stubs: a fixed prototype user. **There is no auth on this tier** — identity is out of the prototype's scope and it binds to localhost. |
+| `GET /auth/config`, `GET /auth/me`, `POST /auth/dev-login`, `POST /auth/logout`, `GET /auth/familysearch/login`, `GET /callback` | Patron sign-in (U2, below). Every `/api/sessions` route needs the session cookie and answers 404 for a session on a project the caller does not own. |
 | `GET …/sidecar/{log_id}` → 404; `GET …/image`, `GET …/logs`, `POST …/files` → 501 | Not in the prototype; each says why. |
 | `POST …/interrupt` → 202 | Stop (PR #2870 item 1c). The worker owns the turn and no control channel reaches it, so this raises a flag on a control-plane row that the worker's `PreToolUse` hook reads before every tool call. |
+
+## Sign-in and ownership (U2)
+
+`web/auth.py` is a vendored port of the alpha's FamilySearch front door (PKCE, a signed
+`wb_session` cookie, the email allowlist, Fernet encryption of the grant). Plan:
+`docs/plan/u2-patron-sign-in.md`.
+
+- **Dev-login** (`POST /auth/dev-login {email}`) is on while FamilySearch sign-in is off
+  and `PUBLIC_URL` is http, which is the default compose stack. Any email signs in, so
+  two emails are two patrons. `seed.py`, `demo.py`, `turn.py` and `drive.py` sign in this
+  way (`--email`, default `dev@localhost`), and `seed.py` hands the project the engine
+  created, which has no owner, to that patron.
+- **Ownership** is `projects.owner_id` (`sql/008_auth_owner.sql`). A NULL owner, which is
+  what the engine writes, is visible to nobody. Opening a session on a supplied
+  `project_id` works only if the caller owns it, or under dev-login if nobody does.
+  Deleting a session drops the project's documents only with its last session.
+- **FamilySearch sign-in**: `docker-compose -f docker-compose.yml -f docker-compose.fs-signin.yml up -d web`
+  publishes the tier on `127.0.0.1:1837`, the dev key's only registered redirect, and
+  turns dev-login off. Put your FamilySearch email in `ALLOWED_EMAILS` first. Open the
+  SPA at `http://127.0.0.1:5173` rather than `localhost`, because cookies are per host.
+  `make e2e-login` needs the same port, so mint the operator token before bringing the
+  override up.
+- **Environment**: `PUBLIC_URL`, `WEB_ORIGIN`, `SESSION_SECRET`, `FS_TOKEN_ENC_KEY`,
+  `ALLOWED_EMAILS`, `FAMILYSEARCH_WEB_ENABLED`, `FAMILYSEARCH_CONFIG` (see the
+  `web/auth.py` docstring). On an https `PUBLIC_URL` the tier refuses to start with a
+  default or empty secret.
+
+**Interim constraint, until U3 merges.** The grant stored at sign-in is written and never
+read. Every turn's FamilySearch calls still run on the operator's token
+(`worker/options.py`). Project data is scoped to its owner, but FamilySearch identity is
+not. The engine only reads from FamilySearch, but those reads run as the operator, so
+allowlist only staff entitled to the operator's FamilySearch access. There is no code
+guard for this, by decision (2026-09-29).
 
 ## The row → wire contract (what the worker writes, what the SPA reads)
 

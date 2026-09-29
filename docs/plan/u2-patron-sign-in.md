@@ -1,6 +1,6 @@
 # U2: Patron sign-in and owner scoping (prototype web tier)
 
-**Status:** Not started (2026-09-29). Plan reviewed by `plan-critic` and a split skeptic; their findings are folded in.
+**Status:** In progress (2026-09-29): code and offline tests on branch `u2-patron-sign-in`; the compose image build, the FamilySearch round-trip on 1837 and the revocation measurement are still to run. Plan reviewed by `plan-critic` and a split skeptic; their findings are folded in.
 
 ## Goal
 This PR replaces the prototype web tier's stub auth with a real FamilySearch sign-in: PKCE, an email allowlist, and each patron's grant stored encrypted in Postgres. It scopes every session route and project to the signed-in owner. It includes no token refresh and does not pass the token to the worker; both belong to U3, which ships as a separate PR after this one. Handoff: [U2](familysearch-handoff.md) in list 1.
