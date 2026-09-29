@@ -221,7 +221,7 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **27** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **26** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
 | **Plugin agents** — `packages/engine/plugin/agents/*.md` | **8** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
 The eight agents are `gps-mentor`, `record-extractor`, `image-reader`,
@@ -350,7 +350,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-16 of the 27 skills carry a `references/` folder, loaded on demand, in-session,
+16 of the 26 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -629,11 +629,10 @@ Architecturally:
   `src/server.ts`'s `CallToolRequestSchema` handler, on its first real
   call with CI green; that is now a CI failure. The chain lives in
   `createServer(principal)` there; `src/index.ts` (the shipped `.mcpb`, binding
-  `LOCAL`), `src/hosted-stdio.ts` (the search-agent prototype's per-turn tool
-  server, binding a bearer) and `src/http.ts` (the prototype's Streamable HTTP
+  `LOCAL`) and `src/http.ts` (the search-agent prototype's Streamable HTTP
   tool server, binding each request's bearer and a `PgS3ProjectStore` from its
   `X-Genealogy-Project-Id` header) are entrypoints that only connect
-  a transport, so a new arm goes in `server.ts` and all three get it. A
+  a transport, so a new arm goes in `server.ts` and both get it. A
   commented-out `case` does not
   count as live, and if dispatch is ever refactored to a lookup map the
   extraction guard fails rather than silently passing.
@@ -1397,8 +1396,8 @@ edit and re-emit.**
 
 > **Today:** `research_query` returns 50 items per call with a `truncated` flag
 > and an `offset` parameter for paging past 50, and covers
-> **11 of the 15** `research.json` sections — missing `project`,
-> `researcher_profile`, `known_holdings`, and `localities`. On the tree side,
+> **12 of the 15** `research.json` sections — missing `project`,
+> `researcher_profile`, and `known_holdings`. On the tree side,
 > `project_context` returns a fixed projection of tree persons (id, name, gender,
 > sourceRefs), but there is **no query surface over `tree.gedcomx.json`** the way
 > `research_query` gives one over `research.json`.
@@ -1447,7 +1446,7 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-26 of the 27 skills carry a `**Narration:**` line (`init-project` spells it
+25 of the 26 skills carry a `**Narration:**` line (`init-project` spells it
 `**Narration**`, without the colon) — 24 of them as the first line of the body,
 the other two further down — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
@@ -1560,9 +1559,9 @@ in `apps/web`.
 > **Don't restate the section count as a literal anywhere.** It has been written
 > as 11, 13 and 14 in four documents at once. `ls
 > packages/viewer-ui/src/components/sections/*.tsx` is the answer, and it cannot
-> go stale. `hosted-web-workbench-spec.md` and `docs/plan/3-pane-workbench-ui.md`
-> still carry 11, but only where it is the historically correct count for the
-> date they describe, and each says so at the site.
+> go stale. `hosted-web-workbench-spec.md` still carries
+> 11, but only where it is the historically correct count for the date it
+> describes, and it says so at the site.
 
 ### 7.2 The sandbox is the per-session server
 
@@ -1604,20 +1603,23 @@ match the flow above. There is no idle-suspend loop, and no Ably code anywhere i
 `apps/server/tests/conftest.py` and `deploy/fly.toml`.
 
 **FamilySearch tokens are injected, and encrypted at rest.**
-`sessions.sync_fs_token` refreshes the user's grant and writes it into the
-sandbox's `~/.familysearch-mcp/tokens.json` on session create *and again on every
+`sessions.sync_fs_token` refreshes the user's grant and writes **an access token
+only** (no refresh token) into the sandbox's
+`~/.familysearch-mcp/tokens.json` on session create *and again on every
 `/connect`*, returning an `ok` / `expired` / `none` state that drives the
 client's "Reconnect FamilySearch" banner. Re-injecting on connect is the only
-path by which a *fresh* login reaches a sandbox that already exists. The stored
-`access_token` / `refresh_token` columns are Fernet-encrypted by
-`crypto.EncryptedStr` at SQLAlchemy's Core layer, so no caller can forget to; a
-decrypt failure soft-fails to `None`, which `auth.fresh_fs_token` turns into
-"expired", so a legacy or wrong-key row self-heals on the next login rather than
-500-ing. **The copy inside the sandbox stays plaintext by design** — the
-in-sandbox MCP needs it, and both copies die on the same FS grant clock (8h idle
-/ 24h absolute). That 24h ceiling is why the at-rest encryption is
-belt-and-braces rather than a gate on anything: it costs nothing at runtime, and
-**it is not a gap and no decision waits on it.**
+path by which a *fresh* login reaches a sandbox that already exists. The control
+plane is the sole refresh owner: concurrent refreshes are serialized with a
+per-user `asyncio.Lock`, and a successful refresh pushes the new token to every
+live sandbox the user has. The stored `access_token` /
+`refresh_token` columns are Fernet-encrypted by `crypto.EncryptedStr` at
+SQLAlchemy's Core layer, so no caller can forget to; a decrypt failure soft-fails
+to `None`, which `auth.fresh_fs_token` turns into "expired", so a legacy or
+wrong-key row self-heals on the next login rather than 500-ing. **The copy inside
+the sandbox stays plaintext by design** — the in-sandbox MCP needs it, and both
+copies die on the same FS grant clock (8h idle / 24h absolute). That 24h ceiling
+is why the at-rest encryption is belt-and-braces rather than a gate on anything:
+it costs nothing at runtime, and **it is not a gap and no decision waits on it.**
 
 **Known gaps:**
 
@@ -1737,7 +1739,7 @@ bridge-free path has never been observed.
 | **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** — the plugin half is the one arm of this column that is **measured**, by `make hook-smoke` (§9.1) | `bypassPermissions`, no allowlist | own stdio registration under `genealogy` |
 | **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — not the plugin's `hooks.json`, but it **imports the shipped predicates**, so the write lockdown and the ownership rules bind (§5.4) | `bypassPermissions` — chosen over `dontAsk` so declared `Write`/`Edit` still work. No MCP tool is blocked: every registered tool is granted, and `test_tool_allowlist` only warns (§5.1) | mock server under `genealogy` |
 | **E2e harness** (`eval/harness/e2e/orchestrator.py`) | staged | staged | **its own `hooks=`** | **`dontAsk`**, which on CLI ≥2.1 denies `Write`/`Edit` outright | live server under `genealogy` |
-| **Search-agent prototype** (`apps/server/proto/`, compose service `tools`) | worker unbuilt (D9–10) | worker unbuilt (D9–10) | worker unbuilt (D9–10) | worker unbuilt (D9–10) | `build/http.js`, Streamable HTTP at `/mcp` — the one non-stdio row; the D9–10 worker registers it under `genealogy` with a per-request `Authorization: Bearer`, never `LOCAL`, and a per-request `X-Genealogy-Project-Id` header that binds a `PgS3ProjectStore` on the worker's own Postgres/S3 store. `build/hosted-stdio.js` is the per-turn stdio alternative |
+| **Search-agent prototype** (`apps/server/proto/`, compose service `tools`) | worker unbuilt (D9–10) | worker unbuilt (D9–10) | worker unbuilt (D9–10) | worker unbuilt (D9–10) | `build/http.js`, Streamable HTTP at `/mcp` — the one non-stdio row; the D9–10 worker registers it under `genealogy` with a per-request `Authorization: Bearer`, never `LOCAL`, and a per-request `X-Genealogy-Project-Id` header that binds a `PgS3ProjectStore` on the stack's Postgres/S3 store |
 
 **The permission-mode column is not a footnote.** It is why the e2e tier and the
 unit tier disagree about raw writes for reasons that have nothing to do with the
@@ -1891,9 +1893,9 @@ lead you to them:**
 
 - **Unit** (`eval/tests/unit/<skill>/`) — mocked MCP fixtures, a per-skill
   `rubric.md`, a deterministic validator per skill, an LLM judge, snapshot-hashed
-  run logs, and negative routing tests across 27 skill suites. **446** committed
+  run logs, and negative routing tests across 26 skill suites. **446** committed
   test definitions (`make eval-inventory`) — one JSON file per test under
-  `eval/tests/unit/` — and across the 27 live suites the latest run log per suite
+  `eval/tests/unit/` — and across the 26 live suites the latest run log per suite
   totals **446 rows, 389 passing (87%)**. Those two numbers count different things
   and can diverge in either direction: a test defined after its suite's last run
   has no row, and a row survives for a test since deleted. Both numbers are facts
@@ -1904,8 +1906,11 @@ lead you to them:**
   human `.ann.json` annotations, and `calibrate_judge` measuring judge-vs-human
   agreement **offline** rather than inferring it from expensive live runs. Three
   axes: `verdict` (genealogical), `compliance` (guardrail), and
-  `outcome` (the gate) — so a run whose answer is right but whose audit trail was
-  not earned **fails**. The tier is sampled on a **fixed four-fixture panel**,
+  `outcome` (the gate, which carries the genealogical verdict) — so a run whose
+  answer is right but whose audit trail was not earned **passes the gate with the
+  bypass recorded on the compliance axis**. It failed until 2026-09-25, when the
+  §8 detectors were demoted for not discriminating; the accepted costs are in
+  `docs/specs/guardrail-enforcement-spec.md` §8. The tier is sampled on a **fixed four-fixture panel**,
   filed one issue per run by `/file-e2e-panel` (on demand, not on a cadence) and
   read by `make e2e-panel`: the fixtures are held constant because fixture difficulty
   varies enough that a changing mix, not a changing system, would explain most of

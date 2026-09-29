@@ -13,7 +13,7 @@
     ]
   },
   "input": {
-    "user_message": "Link assertion a_002 — the Patrick Flynn baptism record — to the right person in the tree.",
+    "delegation": "Link assertion a_002 — the Patrick Flynn baptism record — to the right person in the tree.\n\nprojectPath: <workspace>",
     "scenario": "flynn-birthplace-conflict-stated"
   },
   "mcp_fixtures": [
