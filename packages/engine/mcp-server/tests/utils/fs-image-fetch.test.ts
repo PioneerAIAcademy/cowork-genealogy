@@ -142,11 +142,12 @@ describe("resolveFsImageInput — unprefixed image-ARK id", () => {
     ["a persona-shaped XXXX-XXXX id", "QPRC-WPBZ"],
     ["a tree-shaped XXXX-XXX id", "KGS8-LY1"],
     ["a 4-3-3 id", "KGS8-LY1-XYZ"],
+    ["a 4-4-3 image-shaped id", "33SQ-GYYR-9ZL"],
     ["an id under a non-image type prefix", "1:1:3QS7-89Q6-89S6-Y"],
     ["an id with a character before it", "X3QS7-89Q6-89S6-Y"],
     ["a 4:1: resolver URL", "https://www.familysearch.org/ark:/61903/4:1:3QS7-89Q6-89S6-Y"],
     ["a lowercase id", "3qs7-89q6-89s6-y"],
-    ["a 5-character last group", "3QS7-89Q6-89S6-YY"],
+    ["a 2-character last group", "3QS7-89Q6-89S6-YY"],
   ])("rejects %s and says to pass the link as given", (_label, ark) => {
     expect(() => resolveFsImageInput({ ark }, "test")).toThrow(/Unrecognized ark/);
     expect(() => resolveFsImageInput({ ark }, "test")).toThrow(/exactly as the user gave it/);
