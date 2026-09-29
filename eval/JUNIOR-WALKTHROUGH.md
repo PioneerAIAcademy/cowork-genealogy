@@ -109,6 +109,7 @@ You only do all this once per machine. After this point, daily work uses `Start.
 ```bash
 # Git is usually pre-installed; if not: brew install git (macOS) or apt install git (Linux)
 brew install node                                      # or: nvm install --lts
+npm install -g pnpm@9.15.9                             # same pin as eval/Setup.bat; brew's node has npm, not pnpm
 brew install uv                                        # or: curl -LsSf https://astral.sh/uv/install.sh | sh
 
 git clone <repo-url> ~/cowork-genealogy

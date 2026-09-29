@@ -54,7 +54,12 @@ the e2e benchmark; see
 ## Prerequisites
 
 - **Python 3.12+** with [uv](https://github.com/astral-sh/uv) (`pip install uv` or `brew install uv`).
-- **Node.js 20+** with npm.
+- **Node.js 20+** with npm, plus **pnpm** — the CRUD UI installs from the repo-root
+  pnpm workspace, and Node ships npm only:
+  ```
+  npm install -g pnpm@9.15.9
+  ```
+  `Setup.bat` does this for you on Windows; macOS/Linux users run it once.
 - **Claude Code CLI** — required. The harness drives the [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-python), which spawns the `claude` CLI as a subprocess. Install once:
   ```
   npm install -g @anthropic-ai/claude-code

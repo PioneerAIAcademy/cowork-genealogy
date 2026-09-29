@@ -67,6 +67,7 @@ You only do all this once per machine.
 ```bash
 # Git: usually pre-installed; if not: brew install git (macOS) / apt install git (Linux)
 brew install node                                      # or nvm install --lts
+npm install -g pnpm@9.15.9                             # same pin as eval/Setup.bat; brew's node has npm, not pnpm
 brew install uv                                        # or curl -LsSf https://astral.sh/uv/install.sh | sh
 brew install gh                                        # or follow https://cli.github.com/
 
