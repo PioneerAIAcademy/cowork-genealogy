@@ -375,8 +375,9 @@ consistent across schema, manifest, and skill.)*
 - Exactly one of `imageId` / `ark` / `memoryArtifactUrl` / `file`, checked in the tool
   **before** the shared resolver (which knows only the three FamilySearch shapes). The first two resolve
   **identically to `image_read`** (§8 shares the resolver). Accept the same
-  shapes `image_read` accepts today (`3:1:`/`3:2:` ARKs, resolver URLs,
-  `/$dist`, `dgs:.../dist.jpg`).
+  shapes `image_read` accepts today (`3:1:`/`3:2:` ARKs, an unprefixed
+  `XXXX-XXXX-XXXX-X` id treated as `3:1:`, resolver URLs, `/$dist`,
+  `dgs:.../dist.jpg`).
 - `memoryArtifactUrl` is a person's **memory** artifact, as carried by a
   `person_read` source that came from the memories API — a scanned will,
   certificate, obituary clipping or compiled history uploaded by a relative. It
