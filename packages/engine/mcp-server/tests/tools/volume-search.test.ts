@@ -10,11 +10,15 @@ vi.mock("../../src/auth/refresh.js", () => ({
 const mockResolveStandardPlaceToPlaceId = vi.hoisted(() => vi.fn());
 const mockStandardPlaceToPlaceId = vi.hoisted(() => vi.fn());
 const mockPlaceIdToRepIds = vi.hoisted(() => vi.fn());
-vi.mock("../../src/utils/place-resolver.js", () => ({
-  resolveStandardPlaceToPlaceId: mockResolveStandardPlaceToPlaceId,
-  standardPlaceToPlaceId: mockStandardPlaceToPlaceId,
-  placeIdToRepIds: mockPlaceIdToRepIds,
-}));
+vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
+  const real = await importOriginal<typeof import("../../src/utils/place-resolver.js")>();
+  return {
+    resolveStandardPlaceToPlaceId: mockResolveStandardPlaceToPlaceId,
+    standardPlaceToPlaceId: mockStandardPlaceToPlaceId,
+    placeIdToRepIds: mockPlaceIdToRepIds,
+    ambiguousPlaceError: real.ambiguousPlaceError,
+  };
+});
 
 import { volumeSearchTool } from "../../src/tools/volume-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";

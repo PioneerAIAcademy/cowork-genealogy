@@ -7,7 +7,7 @@ import {
   assertKnownGroupNames,
   conceptIdsForGroups,
 } from "../utils/record-type-groups.js";
-import { resolveStandardPlaceToPlaceId, placeIdToRepIds } from "../utils/place-resolver.js";
+import { resolveStandardPlaceToPlaceId, placeIdToRepIds, ambiguousPlaceError } from "../utils/place-resolver.js";
 import { fetchFulltextSearchable } from "../utils/fulltext-searchable.js";
 import { formatYearRange } from "../utils/search-helpers.js";
 import type {
@@ -270,16 +270,7 @@ export async function volumeSearchTool(
   // among them -- that researches the wrong jurisdiction silently.
   const resolution = await resolveStandardPlaceToPlaceId(input.standardPlace);
   if (resolution.kind === "ambiguous") {
-    // The candidates go in the message because the caller demonstrably does not
-    // notice a bare failure: in the session behind issue #1988 the agent neither
-    // retried nor called place_search, and Franklin County was dropped from the
-    // research while the agent reported having searched it.
-    throw new Error(
-      `"${input.standardPlace}" matches more than one place: ` +
-        `${resolution.candidates.join("; ")}. ` +
-        "Pass one of these exactly as listed, including the parenthesised type, " +
-        "as standardPlace, or call place_search to see the full list."
-    );
+    throw ambiguousPlaceError(input.standardPlace, resolution.candidates);
   }
   if (resolution.kind === "unresolved") {
     throw new Error(

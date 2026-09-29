@@ -55,7 +55,12 @@ def test_tally_counts_each_axis_independently(tmp_path: Path):
 
     assert recall == {"pass": 2, "partial": 1}
     assert compliance == {"fail": 1, "pass": 1, "not_checked": 1}
-    assert gate == {"fail": 1, "pass": 1, "partial": 1}
+    # The gate now equals recall, which is the point of the change: run-1
+    # recovered the answer and bypassed a guardrail, and it is a `pass` on the
+    # gate with the bypass recorded on the compliance axis beside it. The three
+    # axes stay independent — compliance still differs from both.
+    assert gate == {"pass": 2, "partial": 1}
+    assert gate == recall
     assert problems == []
 
 

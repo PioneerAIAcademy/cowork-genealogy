@@ -40,7 +40,7 @@ research_query({
   projectPath: string,
   section: "questions" | "plans" | "log" | "sources" | "assertions"
          | "person_evidence" | "conflicts" | "hypotheses" | "timelines"
-         | "proof_summaries" | "evaluations",
+         | "proof_summaries" | "evaluations" | "localities",
   // well-known filters — only some apply to a given section; see §2.1
   recordId?: string,
   recordRole?: string,
@@ -90,6 +90,20 @@ inspected; `validate_research_schema` remains the diagnosis tool.
 | | `assertionId` | `supporting_assertion_ids` | contains |
 | `evaluations` | `targetId` | `target_id` | exact |
 | | `focus` | `focus` | exact |
+| `localities` | *(none)* | — | — |
+
+**Sections not served, and why.** A completeness test
+(`tests/tools/research-query.test.ts`) derives the list of top-level array
+sections from `docs/specs/schemas/research.schema.json` at runtime and fails if
+any is neither queryable nor named here — so a section added later cannot go
+silently unreadable — the defect that let `localities` stay unreadable long
+enough to reach a user.
+
+| Section | Why not |
+|---|---|
+| `known_holdings` | Write-only, and slated for deletion from the schema — exposing it would create a contract that deletion then has to remove. |
+| `project` | An object, not an array. This tool pages arrays. |
+| `researcher_profile` | An object, not an array. |
 
 Supplying a filter not in this table for the chosen `section` is a rejected
 call (`'<key>' is not a supported filter for section '<section>'`), not a
@@ -139,8 +153,15 @@ whole section, one 50-item page at a time.
   params, not a free-text query language), validated per-section — the same
   reasoning that rejected an open-ended query surface for `project_context`
   would reject one here too. What's different from that prior rejection is
-  scope: ten named parameters across eleven sections, not an arbitrary path
+  scope: ten named parameters across twelve sections, not an arbitrary path
   language.
+- **No filter on `localities`, deliberately.** None of the ten existing
+  filter keys maps onto a locality field, so a filter would mean a new MCP
+  tool parameter; and there is one entry per place-jurisdiction, so the whole
+  section fits inside a single 50-item page. Querying it returns everything,
+  and any filter argument is rejected with the standard "(this section takes
+  no filters)" error.
+
 - **No `superseded_by` filter on `evaluations`, deliberately.** `targetId` +
   `focus` narrow to the verdicts about one target; picking the *live* one
   (`superseded_by: null`) stays the caller's step. The filter layer compares a
@@ -156,7 +177,7 @@ whole section, one 50-item page at a time.
   per the repo's casing rule), this tool returns the underlying section
   entries as-is — the caller is asking "what does research.json currently
   say," not requesting a designed output shape. Renaming per-section fields
-  here would mean maintaining eleven bespoke projections instead of one
+  here would mean maintaining twelve bespoke projections instead of one
   filter layer.
 - **No `tree.gedcomx.json` access.** The observed cost (§1) was
   `research.json` re-reads specifically; tree re-reads were an order of
@@ -192,11 +213,12 @@ whole section, one 50-item page at a time.
 
 | Condition | Behavior |
 |---|---|
-| `section` not one of the eleven supported values | `{ ok: false, errors }` |
+| `section` not one of the twelve supported values | `{ ok: false, errors }` |
 | A supplied filter not in that section's allow-list (§2.1) | `{ ok: false, errors }` naming the filter and the section |
 | `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | `research.json` missing or invalid JSON — with `tree.gedcomx.json` present, i.e. a *broken* project | `{ ok: false, errors }`, loud |
-| The named section is missing or not an array | `{ ok: false, errors }` |
+| An **optional** section (one the schema does not list as `required` — today `localities`) is absent from a `research.json` that is otherwise a well-formed object | `{ ok: true, count: 0, items: [], truncated: false }` — a legitimate answer. `localities` postdates most projects: 90 of the 102 committed fixtures have no such key, and erroring on those is what stopped an agent re-reading locality findings it had just written. |
+| A **required** section is missing, or any section is present but not an array, or `research.json` parses to something that is not an object (`null`, an array, a string, a number) | `{ ok: false, errors }` |
 | No filters supplied | the whole section, one 50-item page (page with `offset` for the rest) |
 | No items match | `{ ok: true, count: 0, items: [] }` — a legitimate answer, not an error |
 | More than 50 matches, no `offset` | `items` is the first 50; `count` is the true total; `truncated: true` |
