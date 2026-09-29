@@ -2,13 +2,11 @@
 
 The genealogy engine (`packages/engine/mcp-server`) on **Streamable HTTP** for the
 search-agent prototype (`docs/plan/search-agent-prototype.md`, Week 4, D16). It is a
-third entrypoint over the one `createServer(principal)` in `src/server.ts`, never a
-replacement: `build/index.js` keeps stdio and the `.mcpb` is unchanged,
-`build/hosted-stdio.js` is the per-turn stdio fork on Postgres/S3 (D9–10), and
+second entrypoint over the one `createServer(principal)` in `src/server.ts`, never a
+replacement: `build/index.js` keeps stdio and the `.mcpb` is unchanged, and
 `build/http.js` runs the same tools over `node:http`. One process serves every patron's
 turns, so the store is bound **per request**: a `PgS3ProjectStore` on the compose
-Postgres/S3 — the same store `hosted-stdio.js` opens per turn — selected by the
-`X-Genealogy-Project-Id` header.
+Postgres/S3, selected by the `X-Genealogy-Project-Id` header.
 
 ## The contract
 
@@ -32,8 +30,8 @@ refreshes and never touches `~/.familysearch-mcp/tokens.json`.
 request, bound with `runWithProjectStore` so every `getProjectStore()` call in the tool
 body, the utils and the validator resolves to it (`src/store/project-store.ts`). One
 `createPgS3Backend` per process, from the five `GENEALOGY_*` store variables plus
-`GENEALOGY_ANCHOR_PATH` (`readPgS3Env`, the same reader `hosted-stdio.js` uses; a missing
-variable is one stderr line and exit 2 before `listen`). The projectPath every call passes
+`GENEALOGY_ANCHOR_PATH` (`readPgS3Env`; a missing variable is one stderr line and exit 2
+before `listen`). The projectPath every call passes
 is the anchor (`/project`). With the header **missing**, the request is bound to an
 `unboundProjectStore` whose every method rejects with an instruction naming the header:
 tools that take no `projectPath` (`convert_calendar`, the FamilySearch searches, …) still
@@ -44,15 +42,13 @@ above.
 
 `baseConfig` is `~/.familysearch-mcp/config.json`, read once at startup with
 `loadConfig(LOCAL)`, and then `WIKI_API_URL`, `POP_STATS_URL`, `OPENROUTER_API_KEY` and
-`OPENROUTER_MODEL` from the environment over it — the same four `hosted-stdio.js` reads,
-and only where set, so an absent one leaves the file's value and then the compiled
-default. In compose the file is `./config.json` (`{"hosted": true}`) mounted read-only
-and the four come from the `tools` service's environment: a container receives a secret
-as environment, not as a file in an image, and since 2026-09-20 the worker's default is
-this service, so `image_transcribe`'s key has to arrive here rather than in the per-turn
-fork that used to carry it. One shared process, so these are per-stack rather than per
-patron — which is what a one-patron prototype wants; per-patron config would have to
-ride the request, as the bearer and the project id do.
+`OPENROUTER_MODEL` from the environment over it (`src/hosted-config-env.ts`), and only
+where set, so an absent one leaves the file's value and then the compiled default. In
+compose the file is `./config.json` (`{"hosted": true}`) mounted read-only and the four
+come from the `tools` service's environment: a container receives a secret as
+environment, not as a file in an image. One shared process, so these are per-stack rather
+than per patron — which is what a one-patron prototype wants; per-patron config would have
+to ride the request, as the bearer and the project id do.
 
 **There is no auth on this service** beyond header → principal, and no check that the
 bearer may reach the project id it names: identity is the web tier's problem and out of the
@@ -70,7 +66,7 @@ smoke names all three.
 
 - **Compose** (`make proto-up`, or `docker-compose -f apps/server/proto/docker-compose.yml up -d --build tools`
   on a machine without the compose plugin): service `tools`, container `proto-tools`,
-  `read_only: true` with `/tmp` the only tmpfs, the worker's `GENEALOGY_*` block verbatim,
+  `read_only: true` with `/tmp` the only tmpfs, the `GENEALOGY_*` store block,
   `depends_on` `postgres` and `minio` `service_healthy`. The image is built from the
   **repo root** (`Dockerfile` here): the root `.dockerignore` already drops
   `node_modules`/`.claude`/`eval`/`releases`, and `src/` is compiled inside the image — the
@@ -109,16 +105,18 @@ mcp_servers={"genealogy": {"type": "http", "url": "http://tools:8787/mcp",
 ```
 
 Both headers are per turn (`proto/worker/options.py`, `tool_server_headers`): the bearer
-from the patron's row, the project id from the turn — the same id the stdio fork gets as
-`GENEALOGY_PROJECT_ID`. The project header is always sent; the bearer only when there is a
-token. Nothing on this service caches either.
+from the patron's row, the project id from the turn. The project header is always sent; the
+bearer only when there is a token. Nothing on this service caches either. This is the
+worker's only tool server; the worker itself carries no Node, no engine and no S3
+credentials.
 
 ## Tests
 
 `apps/server/tests/test_proto_config.py` (`make proto-test`): the service is read-only with
 `/tmp` the only tmpfs (no `/projects`), publishes on loopback only, depends on `postgres`
-and `minio` `service_healthy`, carries the worker's `GENEALOGY_*` values byte for byte (one
-store, two readers), and `proto-up` waits on it while `proto-up-core` does not.
+and `minio` `service_healthy`, reads the Postgres the worker reads (`GENEALOGY_PG_DSN` is
+the worker's `PG_DSN`) under the worker's anchor (`GENEALOGY_ANCHOR_PATH` is its
+`WORKER_CWD`), and `proto-up` waits on it while `proto-up-core` does not.
 `apps/server/tests/test_proto_worker.py` pins the consumer's two headers.
 `packages/engine/mcp-server/tests/http/` covers the server itself (405 guard, `/healthz`,
 no-`LOCAL`, per-request bearers, per-request stores that cannot read each other, the
