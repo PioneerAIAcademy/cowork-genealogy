@@ -1073,6 +1073,11 @@ DEDICATED_AGENT_NAMES = frozenset(
         # row. Listed because the set is asserted equal to the shipped agent
         # files.
         "convert-dates",
+        # Same shape again (issue #2794): a converted skill with no hook route
+        # that writes no project state -- one markdown file in the working
+        # folder. Listed because the set is asserted equal to the shipped agent
+        # files.
+        "search-familysearch-wiki",
     }
 )
 

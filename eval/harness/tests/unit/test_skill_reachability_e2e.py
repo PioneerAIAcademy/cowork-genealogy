@@ -74,13 +74,14 @@ SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 #     for the same reason: issue #2790 deleted the skill. Its successor
 #     `agents/convert-dates.md` is reachable by auto-delegation from its own
 #     description, which this set does not measure.
+#   - `search-familysearch-wiki` left on 2026-09-29, same reason (issue
+#     #2794), NOT re-listed, same caveat for `agents/search-familysearch-wiki.md`.
 DARK_SKILLS_2026_09_01 = frozenset(
     {
         "forget-and-rederive",
         "historical-context",
         "hypothesis-tracking",
         "project-status",
-        "search-familysearch-wiki",
         "source-evaluation",
         "timeline",
         "translation",
