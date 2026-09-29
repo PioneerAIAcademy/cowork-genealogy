@@ -1,0 +1,494 @@
+{
+  "project": {
+    "id": "rp_spriggs_parents_1898",
+    "objective": "Who were the parents of Reuben Spencer Spriggs, born 6 November 1898 in Maddock, Benson County, North Dakota?",
+    "subject_person_ids": [
+      "L64C-QQX"
+    ],
+    "status": "active",
+    "created": "2026-06-23",
+    "updated": "2026-06-23"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Reuben Spencer Spriggs, born 6 November 1898 in Maddock, Benson County, North Dakota?",
+      "rationale": "This is the objective restated as a single parentage fact. Benson County, North Dakota vital records begin in 1907 (late), but federal census records (1900, 1910) and state/territorial records are accessible via FamilySearch. The 1900 census would capture Reuben as an infant in his parents' household; the 1910 census would show him at age 11. Birth certificates for 1898 North Dakota are scarce but may exist through state archives. The Maddock area was settled in the 1880s\u20131890s, so land and local records may also name family members.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-09-28"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-09-28",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Benson County, North Dakota",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "The 1900 federal census is the single highest-value source for this question. Reuben Spencer Spriggs was born 6 November 1898; in June 1900 he would appear as an infant (age 1) in his parents' household, with the head of household relationship naming both parents directly. FamilySearch volume 004120517_002_M9LK-PZ1 covers Benson County at 92% name-indexed \u2014 the best digitization level available for this county and period. The 1890 census was destroyed and does not exist for North Dakota (per loc_001). Search under surname variants Spriggs and Sprigs. This is free, indexed, and has the highest probability of immediately naming both parents.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Benson County, North Dakota",
+          "date_range": "1910",
+          "repository": "FamilySearch",
+          "rationale": "The 1910 federal census will show Reuben at age 11, almost certainly still in his parents' household. This corroborates any parents identified in 1900, adds each parent's age, birthplace, and parents' birthplaces (columns added in 1900 and retained in 1910), and may reveal siblings. If the family relocated or Reuben's surname differs from a parent's (stepparent scenario), the 1910 census will flag it. Search Benson County; also check neighboring Pierce, Ramsey, Towner, Eddy, and Wells counties if not found in Benson.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Benson County, North Dakota",
+          "date_range": "1915",
+          "repository": "FamilySearch",
+          "rationale": "North Dakota conducted a state census in 1915 (FamilySearch collection 2346284, 51\u201355% indexed; also vols. 007637091 and 007637092). Reuben would be ~16 and likely still in the household. The state census lists relationship to head of household and can confirm the parental household established by 1900 and 1910. If Reuben has left home by 1915, the parents' household will still be searchable and can corroborate their names and ages.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Benson County, North Dakota",
+          "date_range": "1880-1910",
+          "repository": "FamilySearch",
+          "rationale": "Dedicated parentage-question item for the candidate parents' marriage to each other. FamilySearch collection 2550852 (North Dakota, County Marriages, 1872\u20132000) covers Benson County with index and images. The parents' marriage record will supply the mother's maiden name (if this was her first marriage), confirm the father's given name, and establish that they were a couple before Reuben's November 1898 birth. Date range 1880\u20131910 spans the plausible pre-birth window (parents could have married as early as the 1880s if older) plus a small buffer. If the parents are identified in the 1900 census, use those names to search this collection. Statewide marriage registration did not begin until 1925; county records from 'late 1800s' are captured in this collection (per loc_001).",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Benson County, North Dakota",
+          "date_range": "1890-1910",
+          "repository": "FamilySearch",
+          "rationale": "The dominant religious group in Benson County was Norwegian/Scandinavian Lutheran (per loc_001). Two digitized Lutheran church volumes cover the county on FamilySearch: Flora Lutheran Church (vol. 100881427, 34% indexed, English/Norwegian, 1820\u20131997) and Esmond Lutheran Church (vol. 100881428, 36% indexed, English/Norwegian, 1830\u20131958). A baptism entry for Reuben Spencer Spriggs (Nov 1898) would name both parents and is direct parentage evidence. The parents' church marriage record (if different from the civil record in pli_004) may also name the mother's father. Browse both volumes; also search the ELCA Records collection on Ancestry (coll. 60722, 1875\u20131940) which includes Flora Lutheran Church. Note: records are partially in Norwegian \u2014 read for patronymic naming conventions if found.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Benson County, North Dakota",
+          "date_range": "1898-1907",
+          "repository": "county_courthouse",
+          "rationale": "Statewide birth registration began in 1907; county-level records begin 'late 1890s' and are held physically at the Benson County Clerk District Court, 311 B Ave Street, Minnewaukan, ND 58351, phone 701.473.5345 (per loc_001). A birth record for Reuben Spencer Spriggs, born 6 November 1898 in Maddock, may exist there \u2014 compliance was low in the late 1890s but not zero. FamilySearch Library has not acquired ND birth records. This requires a direct courthouse inquiry or mail request. Lower probability than census, but if it exists it is direct, original, and names both parents.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "land",
+          "jurisdiction": "Benson County, North Dakota",
+          "date_range": "1883-1920",
+          "repository": "other",
+          "rationale": "FAN item to identify and locate the father. When North Dakota opened for settlement, most land in Benson County was acquired through federal homestead or land patent. The BLM General Land Office Records (glorecords.blm.gov) and USGenWeb Benson County BLM Land Records Index list federal patents by patentee name; a search for Spriggs (and variants) in Benson County will locate any land entry the father made, confirming his presence and first name. This is sized to the father's plausible land-acquiring window (county organized 1883; homestead period active through circa 1915). A homestead entry will not name the mother directly but will anchor the family geographically and corroborate the census household.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "immigration",
+          "jurisdiction": "Benson County, North Dakota",
+          "date_range": "1884-1924",
+          "repository": "FamilySearch",
+          "rationale": "FAN item if the father was foreign-born. Benson County naturalization volumes on FamilySearch (vols. 007785641\u2013007785645, 007785642\u2013007785643) span 1884\u20131955; they are 0% name-indexed but full-text searchable via FamilySearch full-text search. Naturalization declarations and petitions often name the applicant's wife and children, which would be direct parentage evidence for Reuben. Search by surname Spriggs (and Sprigs). If the 1900 or 1910 census shows the father as naturalized or with foreign birthplace, this search becomes higher priority. Also searchable: FamilySearch collection 3241359 (North Dakota Naturalization Records, 1868\u20131924), 1,883 records, indexed + images.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "newspaper",
+          "jurisdiction": "Benson County, North Dakota",
+          "date_range": "1898-1960",
+          "repository": "other",
+          "rationale": "FAN item: obituaries for Reuben Spencer Spriggs or his close family members often explicitly name parents and siblings. Search the NDSU Obituary Index (library.ndsu.edu/db/obituary/), the Genealogy Trails Benson County obituaries transcription (genealogytrails.com/ndak/benson/obits.html), and Chronicling America for Maddock/Benson County newspapers. Date range 1898\u20131960 covers the period when parents, Reuben himself, and siblings would likely die and generate obituaries. A death notice for Reuben's father or mother naming their children is indirect but strong corroborating evidence of parentage. Note there is also the NDDH Public Death Index (1892\u2013present) which can be searched online for parents' death dates before requesting certificates from Ancestry (ND State Death Certificates, 1908\u20132007, coll. 61747) \u2014 those certificates require informant-named parent information from 1923 onward.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-28T09:51:23.250Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "givenName": "Reuben",
+        "sex": "Male",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "residencePlace": "Benson, North Dakota, United States",
+        "recordCountry": "United States",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. Reuben Spriggs not found in Benson County 1900 census by name + county. Subject born Nov 1898 would be age 1 at census time."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-28T09:51:23.250Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "givenName": "Reuben",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "recordCountry": "United States",
+        "recordSubdivision": "North Dakota",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 1,
+      "notes": "One result: Ruben Spriggs (b. Dec 1865, MN) in Grand Forks \u2014 not our subject (born 1898). matchScore 0.001, already attached to another person. Wrong person entirely."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-28T09:51:23.258Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "recordCountry": "United States",
+        "recordSubdivision": "North Dakota",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 5,
+      "notes": "Survey of all Spriggs in ND 1900: only one household exists, headed by Ruben Spriggs (b. Dec 1865) in Grand Forks \u2014 entirely absent from Benson County. No Reuben Spencer Spriggs. Family in Grand Forks has children born 1895, 1896, Sep 1898 (Leroy J) \u2014 none named Reuben Spencer. Benson County has no Spriggs household at all in 1900 index."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-28T09:51:23.266Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "imageGroupNumber": "004120517_002_M9LK-PZ1",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Direct search of Benson County 1900 census volume (imageGroupNumber 004120517_002_M9LK-PZ1) for surname Spriggs returned zero results. Either family absent from Benson County in 1900, or indexed under very different spelling."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-28T09:51:23.266Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Sprigs",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "recordCountry": "United States",
+        "recordSubdivision": "North Dakota",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 5,
+      "notes": "Sprigs variant also returns only the Grand Forks household \u2014 same results as Spriggs. 1900 census exhausted for Benson County. Conclusion: Spriggs family was likely NOT in Benson County in June 1900; may have arrived between 1900 and 1910. Maddock was incorporated only in 1897, so settlement was very new. Will proceed to 1910 census."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_002",
+      "performed": "2026-09-28T10:00:46.714Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "givenName": "Reuben",
+        "residenceYearFrom": 1910,
+        "residenceYearTo": 1910,
+        "recordCountry": "United States",
+        "recordSubdivision": "North Dakota",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 1,
+      "notes": "Narrow search for Reuben Spriggs in North Dakota 1910 census. Single result: Rueben C Spriggs (b. 1866, MN, Grand Forks Ward 5) \u2014 clearly not our subject (b. Nov 1898, Benson County). Broadening search."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_002",
+      "performed": "2026-09-28T10:00:46.719Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "residenceYearFrom": 1910,
+        "residenceYearTo": 1910,
+        "recordCountry": "United States",
+        "recordSubdivision": "North Dakota",
+        "recordType": "census"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 28,
+      "notes": "Broad search all Spriggs in ND 1910 (page 1 of 2, results 1-20 of 28). Key find: Fred Sprigg household, Albert Twp, Benson County \u2014 only Spriggs/Sprigg family in Benson County. Children indexed: Myrtel (b.1900, Iowa), Victor (b.1901, Iowa), Obeorn (b.1902, Iowa). No child named Reuben Spencer (b.1898) in index; full household record image needs examination."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_002",
+      "performed": "2026-09-28T10:00:46.729Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "residenceYearFrom": 1910,
+        "residenceYearTo": 1910,
+        "recordCountry": "United States",
+        "recordSubdivision": "North Dakota",
+        "recordType": "census",
+        "offset": 20
+      },
+      "outcome": "positive",
+      "results_examined": 8,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 28,
+      "notes": "Broad search all Spriggs in ND 1910 (page 2 of 2, results 21-28 of 28). Confirmed remaining Fred Sprigg household members: Geneva (b.1906, Iowa), Earlen (b.1907, ND). Family of 7 enumerated. No Reuben Spencer in index. Remaining results: Spriggle household (Emmons Co.) \u2014 different family. Full record read needed to check for additional household members not captured in index."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": null,
+      "performed": "2026-09-28T10:01:14.150Z",
+      "tool": "external_links_search",
+      "query": {
+        "standardPlace": "Benson, North Dakota, United States",
+        "startYear": 1890,
+        "endYear": 1920
+      },
+      "outcome": "positive",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "External links search conducted during locality guide survey for Benson County, ND 1890\u20131920 (prior session). Staged file expired. Results were used to compile loc_001 locality entry. Ad-hoc locality survey, not tied to a plan item record search."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_002",
+      "performed": "2026-09-28T10:01:23.558Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "residenceYearFrom": 1910,
+        "residenceYearTo": 1910,
+        "recordCountry": "United States",
+        "recordSubdivision": "North Dakota",
+        "recordType": "census"
+      },
+      "outcome": "positive",
+      "results_examined": 28,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 28,
+      "notes": "Prior-session search (staged file expired). All Spriggs in ND 1910. 28 results identified Fred Sprigg household in Albert Twp, Benson County as the only Spriggs family in Benson County. Results superseded by log_007 and log_008 which re-ran the same search with fresh staging."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_002",
+      "performed": "2026-09-28T10:02:39.494Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:MLGX-FCZ"
+      },
+      "outcome": "negative",
+      "results_examined": 7,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "notes": "Read full GEDCOMX of Fred Sprigg household (Albert Twp, Benson County \u2014 only Spriggs/Sprigg household in Benson County in 1910). Seven persons indexed: Fred (b.1874 Iowa), Emma (b.1875 Iowa), Myrtel (b.1900 Iowa), Victor (b.1901 Iowa), Obeorn (b.1902 Iowa), Geneva (b.1906 Iowa), Earlen (b.1907 ND). All parent-child relationships complete. Reuben Spencer Spriggs (b. Nov 1898, Maddock) is absent. Conclusion: this household is not the parents-of-subject record, OR Reuben had died or was away before 1910. The surname 'Sprigg' (no terminal s) may indicate a distinct family from 'Spriggs'. pli_002 exhausted for 1910 census \u2014 no record places subject with parents."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-28T10:05:12.439Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "residenceYearFrom": 1915,
+        "residenceYearTo": 1915,
+        "collectionId": "2346284"
+      },
+      "outcome": "positive",
+      "results_examined": 24,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 24,
+      "notes": "1915 ND state census, all Spriggs in ND (collection 2346284). 24 results. Key find: Fred E Spriggs household in Benson County (ark:/61903/1:2:Q283-F1GJ) \u2014 8 members: Fred E, Emma B, Myrtle E, C Victor D, Roy O, Geneva E, Freddie E, Leo E. This is almost certainly the same family as the 1910 Fred Sprigg (Benson County) household. No person named Reuben Spencer indexed. Need image (ark:/61903/3:1:3QS7-99LJ-Y9M5-D) to see ages and confirm household composition."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-28T10:05:12.449Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QK94-K514"
+      },
+      "outcome": "partial",
+      "results_examined": 8,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "notes": "GEDCOMX for Fred E Spriggs 1915 household: 8 persons indexed but no birth year/place data in this collection. Cannot confirm ages from GEDCOMX alone. Image must be transcribed to see ages and confirm whether Reuben Spencer (b.1898, age ~16-17 in 1915) is a household member not captured in the index."
+    }
+  ],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Benson, North Dakota, United States",
+      "for_place": "Maddock, Benson County, North Dakota",
+      "time_period": "1890-1920",
+      "jurisdictions": [
+        {
+          "name": "Benson, Dakota Territory, United States",
+          "date_range": "1883-1889"
+        },
+        {
+          "name": "Benson, North Dakota, United States",
+          "date_range": "1889-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "3241319",
+          "title": "North Dakota and South Dakota Naturalization Records, 1851-1924",
+          "date_range": "1851-1924"
+        },
+        {
+          "id": "1451475",
+          "title": "North Dakota, Cemetery Records, 1877-1999",
+          "date_range": "1877-1999"
+        },
+        {
+          "id": "2346284",
+          "title": "North Dakota, Census, 1915",
+          "date_range": "1915-1915"
+        },
+        {
+          "id": "2550852",
+          "title": "North Dakota, County Marriages, 1872-2000",
+          "date_range": "1872-2000"
+        },
+        {
+          "id": "2443935",
+          "title": "North Dakota, Manifests of Immigrant Arrivals, 1910-1952",
+          "date_range": "1910-1952"
+        },
+        {
+          "id": "3241359",
+          "title": "North Dakota, Naturalization Records, 1868-1924",
+          "date_range": "1868-1924"
+        },
+        {
+          "id": "3155904",
+          "title": "North Dakota, Red River Valley Genealogical Society, Pioneer Files, 1880-1953",
+          "date_range": "1880-1953"
+        }
+      ],
+      "quirks": [
+        "The 1890 federal census for North Dakota did not survive \u2014 the 1900 census is the earliest available federal census for Benson County.",
+        "Birth registration: statewide began 1907 (general compliance 1924); Benson County Clerk District Court holds births from 'late 1890s' in physical records only \u2014 FamilySearch Library has not acquired ND birth or death records. A birth in November 1898 may or may not have a surviving county record.",
+        "Death registration: statewide began 1907 (compliance 1924); county deaths from 1895 are held physically at the Benson County Courthouse.",
+        "Marriage registration: statewide began 1925; county records from late 1800s. FamilySearch collection 2550852 (North Dakota, County Marriages, 1872-2000) covers Benson County with index and images.",
+        "Records created before 2 November 1889 fall under Dakota Territory \u2014 use 'Benson, Dakota Territory, United States' as the jurisdiction when searching pre-statehood volumes.",
+        "Dominant ethnic group in Benson County was Norwegian/Scandinavian settlers; church records (Lutheran) in Flora and Esmond are digitized on FamilySearch with English/Norwegian language content \u2014 read carefully for Norwegian naming patterns.",
+        "Benson County naturalization volumes (1884\u20131955) on FamilySearch are 0% name-indexed but full-text searchable \u2014 use fulltext_search tool, not record_search.",
+        "Neighboring counties Eddy, Nelson, Pierce, Ramsey, Towner, and Wells may hold relevant records if the family lived near a county border.",
+        "Benson County Courthouse (Clerk District Court), 311 B Ave Street, Minnewaukan, ND 58351, phone 701.473.5345, holds birth records (late 1890s onward), marriage records (late 1800s onward), probate/court records (1883 onward), and land records."
+      ],
+      "guide_markdown": "## Locality Guide: Maddock, Benson County, North Dakota (1890\u20131920)\n\n### Jurisdictional Context\nBenson County organized 9 March 1883 from DeSmet and Ramsey Counties (Dakota Territory). North Dakota statehood: 2 November 1889. County seat: Minnewaukan. No courthouse disasters recorded.\n\nNeighboring counties: Eddy, Nelson, Pierce, Ramsey, Towner, Wells.\n\n### Vital Records\n- **Birth (statewide):** 1907 (compliance 1924). County: 'late 1890s' (physical only, courthouse). FamilySearch has not acquired ND birth records. An 1898 birth certificate may exist at the courthouse but is not online.\n- **Death (statewide):** 1907 (compliance 1924). County: 1895 (physical, courthouse).\n- **Marriage (statewide):** 1925. County: late 1800s. FS coll. 2550852 (1872\u20132000), indexed + images.\n\n### Census Records\n- 1890 federal: destroyed \u2014 no records survive for ND.\n- **1900 federal: 92% name-indexed on FamilySearch** (vol. 004120517_002_M9LK-PZ1) \u2014 primary access point for parentage research.\n- 1910 federal: available via standard FS record search.\n- **1915 ND state census: FS coll. 2346284** (51\u201355% indexed); also vols. 007637091, 007637092.\n- 1925 ND state census: FS coll. 2351024.\n\n### Church Records\nLutheran churches dominant (Norwegian settlement). Flora Lutheran Church (vol. 100881427, 34% indexed, English/Norwegian) and Esmond Lutheran Church (vol. 100881428, 36% indexed) are on FamilySearch. Also: US ELCA Church Records 1875\u20131940 on Ancestry (coll. 60722).\n\n### Naturalization Records\nBenson County volumes 007785641\u2013007785645 on FamilySearch: 0% name-indexed, full-text searchable. Span 1884\u20131955. Also FS coll. 3241359 (1868\u20131924), indexed + images.\n\n### Land and Homestead\nBLM GLO Records (glorecords.blm.gov) for patents/homesteads. Ancestry: U.S. Homestead Records 1863\u20131908. USGenWeb Benson County BLM Land Records Index.\n\n### Probate\nBenson County probate from 1883 (courthouse). Ancestry: ND & SD Wills and Probate 1800\u20131985.\n\n### Obituaries and Newspapers\nNDSU Obituary Index; Genealogy Trails Benson County obituaries; Chronicling America; GenealogyBank.\n\n### External Repositories\n- Benson County Courthouse, 311 B Ave Street, Minnewaukan ND 58351 (701.473.5345)\n- North Dakota State Archives (pre-1925 marriage index; microfilm)\n- North Dakota State University Archives (biography index, obituary index, naturalization index)\n- State Historical Society of North Dakota (marriage records online index)",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/North_Dakota,_United_States_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/North_Dakota_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/North_Dakota_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/North_Dakota_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-09-28"
+    }
+  ]
+}
