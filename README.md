@@ -160,7 +160,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 22 skills covering the full GPS research cycle. Skills
+The plugin ships 21 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 For a plain-language account of the research method itself — the GPS
 cycle, the judgment made at each stage, and what to expect from a
@@ -205,7 +205,6 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 |-------|-------------|----------|
 | **timeline** | Builds chronological timelines with distances between consecutive events. Surfaces gaps and geographic feasibility (logical impossibilities are check-warnings' job). | "Build a timeline" / "Do these events fit one life?" |
 | **conflict-resolution** | Analyzes conflicting evidence — independence analysis + preponderance hierarchy. | "These sources disagree" |
-| **hypothesis-tracking** | Tracks competing candidates with evidence for/against each. Manages elimination. | "Could this be the same person?" |
 
 ### Concluding
 
@@ -253,7 +252,7 @@ specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships eleven Cowork agents. Unlike skills, an agent runs in
+The plugin ships twelve Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 at its mentor checkpoint, or by the skill that delegates to it — you
 don't load it explicitly.
@@ -271,6 +270,7 @@ don't load it explicitly.
 | **search-familysearch-wiki** | Searches the FamilySearch Research Wiki for **one** genealogy how-to question and saves the guidance as a markdown file in your working folder, citing the wiki pages it came from. Asked for Wikipedia, a locality records survey or narrative history, it does no search and hands the request back by name. | "Search the FamilySearch wiki for how to find Italian birth records" |
 | **search-wikipedia** | Looks **one** topic up on Wikipedia — the general-purpose encyclopedia — and saves the article summary as a markdown file in your working folder. One tool call, a template it carries in its own body, one file. Asked for narrative history, a locality records survey or the FamilySearch wiki, it does no lookup and hands the request back by name. | "Look up Albert Einstein on Wikipedia" |
 | **convert-dates** | Converts **one** date, or compares dates, across calendar systems — Julian/Gregorian, Old Style/New Style year starts, Quaker numbered months, double-dated years — using the `convert_calendar` tool's adoption table for the record's jurisdiction. It writes nothing. Asked why a convention existed, whether a date string passes the schema, or about a same-calendar conflict, it hands the request back by name. | "Convert this date to Gregorian" / "Is 30 February 1712 a real date?" |
+| **hypothesis-tracking** | Tracks competing candidates with evidence for/against each. Manages elimination. | "Could this be the same person?" |
 
 ## Recommended workflow
 
@@ -288,7 +288,7 @@ don't load it explicitly.
 6. citation (agent)          Polish citations to Evidence Explained standards
 7. timeline                  Build chronological timeline, find gaps
 8. conflict-resolution       Resolve disagreements between sources
-9. hypothesis-tracking       Track competing candidates
+9. hypothesis-tracking (agent) Track competing candidates
 10. research-exhaustiveness  Gate before proof — applies the seven
                              stop criteria. If not yet exhaustive, loop
                              back to step 3 (extend plan) or step 2
@@ -480,13 +480,13 @@ What's shipped:
 - **49 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
-- **22 shipped skills.** Full GPS research cycle from `init-project`
+- **21 shipped skills.** Full GPS research cycle from `init-project`
   through the conclusion, plus reference skills (locality-guide,
   historical-context, translation)
   and guardrails (validate-schema, check-warnings). The three
   e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result, grade-e2e-run)
   are repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
-- **11 Cowork agents.** `gps-mentor` (BCG-style senior-genealogist review,
+- **12 Cowork agents.** `gps-mentor` (BCG-style senior-genealogist review,
   invoked by `/research` at GPS checkpoints and on demand), `record-extractor`
   (per-record assertion extraction), `proof-conclusion` (the proof conclusion
   for one question, and the only writer of `proof_summaries`),
@@ -497,8 +497,9 @@ What's shipped:
   `convert-dates` (calendar-system date conversion), `search-images`
   (page-by-page browse of an unindexed volume),
   `search-familysearch-wiki` (FamilySearch Research Wiki how-to guidance saved
-  as a markdown file), `search-wikipedia` (one encyclopedia lookup saved as a markdown file) and
-  `image-reader` (page OCR).
+  as a markdown file), `search-wikipedia` (one encyclopedia lookup saved as a markdown file),
+  `hypothesis-tracking` (competing-candidate hypotheses, and the only writer of
+  `hypotheses`) and `image-reader` (page OCR).
 - **Researcher profile.** `init-project` asks only the research objective, in
   one non-blocking opening turn; the profile itself is fixed (`novice`, one
   house-style narration string) and nothing about the researcher is asked.

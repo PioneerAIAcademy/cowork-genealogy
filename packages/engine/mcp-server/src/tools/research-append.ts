@@ -440,7 +440,7 @@ function planActiveInvariants(entry: any, research: any): string[] {
  *  Reads the **pre-call snapshot**, both halves, per ADR-0011's rule: "Snapshot
  *  when the precondition must be satisfied by someone else. Read live when it is
  *  the same author's own prior step." Neither half is this author's own step —
- *  `ownership.json` gives `hypotheses.callers` as `["skill:hypothesis-tracking"]`
+ *  `ownership.json` gives `hypotheses.callers` as `["agent:hypothesis-tracking"]`
  *  while `conflicts` belongs to `skill:conflict-resolution` and `assertions` to
  *  `skill:record-extraction`. Both of those sections are `enforceableAt:
  *  ["unit"]` only (no hook arm, no tool arm), so under a live read nothing would
@@ -3244,7 +3244,7 @@ function applyOne(
     // found and closed, and it is not hypothetical here either: the skill's own
     // documented re-invocation path writes `fields: {contradicting_assertion_ids:
     // [...]}` and is told to "leave the status unchanged"
-    // (`hypothesis-tracking/SKILL.md`). Gating on `status` alone left three
+    // (`agents/hypothesis-tracking.md`). Gating on `status` alone left three
     // measured calls landing `ok: true` on exactly the state this refuses.
     //
     // Measured at 587d3c98d: 11 corpus update ops touch one of these lists

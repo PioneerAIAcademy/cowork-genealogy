@@ -121,9 +121,9 @@ than trusting it: `npx vitest run tests/validation/validator.test.ts`.
 
 ## 5. Consumers
 
-Skills that call this tool after writing project files:
+Skills and agents that call this tool after writing project files:
 `research/SKILL.md`, `research-plan/SKILL.md`,
-`hypothesis-tracking/SKILL.md`,
+`agents/hypothesis-tracking.md`,
 `tree-edit/SKILL.md`, `timeline/SKILL.md`,
 `validate-schema/SKILL.md`.
 
