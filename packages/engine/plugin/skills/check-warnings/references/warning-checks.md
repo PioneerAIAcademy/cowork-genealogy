@@ -178,6 +178,14 @@ treating as established.
 - `hasBlankName` -- no name on the record.
 - `hasDiffSurnameMale` -- male anchor has surnames that don't match each other (similarity <= 0.5). Suggests records from two same-given-name persons were merged.
 
+### Duplicate children or spouses
+- `similarChildren` -- two children look like the same individual recorded twice (similar names, same gender, dates compatible).
+- `similarChildrenConflictingDates` -- two children have similar names but conflicting dates; likely one child recorded twice.
+- `hasCloseChildBirthsIgnoreSimilarChildren` -- two children not already flagged as similar have exact Birth dates 2 to 240 days apart; possibly two records of one child.
+- `similarSpouses` -- two spouses look like the same individual recorded twice.
+- `similarSpousesConflictingDates` -- two spouses have similar names but conflicting dates; likely one spouse recorded twice.
+- `hasDissimilarSpousesWithSameMarriageYear` -- two spouses share a marriage year but have dissimilar names; possibly two marriage records conflated, or a mis-transcribed name.
+
 ### Extreme lifetimes after specific events
 - `hasDeathAfterChildBirth90` -- died more than 90 years after the earliest child's birth.
 - `hasChildDeathAfterParentBirth200` -- died more than 200 years after the earliest parent's birth.
@@ -226,7 +234,9 @@ them only if the user explicitly asks for an analysis of them.
 - Geographic impossibilities (impossible travel, jurisdiction
   didn't exist, birthplace inconsistencies with parents' residence)
 - Future dates (date is after the current year)
-- Child-spacing (two children born less than 9 months apart)
+- Child spacing outside `hasCloseChildBirthsIgnoreSimilarChildren`'s
+  window (exact Birth dates 2 to 240 days apart): for example two
+  births 8 to 9 months apart, or dates that are not exact
 - Birth before parents' marriage
 - Sibling age gap at the year-by-year level (the tool covers only
   40+ year spans via `childBirthRange40`)
