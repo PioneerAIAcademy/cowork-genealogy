@@ -375,18 +375,18 @@ const DELEGATION_EDGES: Record<string, Edge> = {
 //
 // The arm still earns its place for `gps-mentor`, `image-reader` and
 // `record-extractor`, whose names no one writes by accident. It does not
-// discriminate for `citation`, and each further single-word conversion
-// (`translation` is next, issue #2804) adds another block like this one.
+// discriminate for `citation` and `translation` — both are single-word agent
+// names whose bare form can appear in ordinary prose.
 const PROSE_MENTIONS = new Map<string, string>([
   ["research -> record-extractor", ""],
   ["historical-context -> citation", ""],
+  ["historical-context -> translation", ""],
   ["init-project -> citation", ""],
   ["project-status -> citation", ""],
   ["record-extraction -> citation", ""],
   ["research -> citation", ""],
   ["search-records -> citation", ""],
   ["source-evaluation -> citation", ""],
-  ["translation -> citation", ""],
   // person-evidence gained a skills/<name>/ directory before the agent
   // conversion; when the skill was deleted the name entered agentOnly and
   // every SKILL.md that references it now needs a registration. All are
@@ -398,7 +398,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["record-extraction -> person-evidence", ""],
   ["search-records -> person-evidence", ""],
   ["timeline -> person-evidence", ""],
-  ["translation -> person-evidence", ""],
   ["tree-edit -> person-evidence", ""],
 ]);
 
@@ -581,6 +580,7 @@ describe("agent delegation framing", () => {
     "image-reader",
     "person-evidence",
     "record-extractor",
+    "translation",
   ];
 
   it("the prose arm still covers every agent it is relied on to police", () => {

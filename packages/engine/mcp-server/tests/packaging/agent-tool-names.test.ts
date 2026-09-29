@@ -283,7 +283,7 @@ describe("plugin agent tool names", () => {
 
       for (const key of ["tools", "disallowedTools"] as const) {
         const entries = extractList(text, key).filter((t) => t.startsWith("mcp__"));
-        if (key === "disallowedTools" && entries.length === 0) continue;
+        if (entries.length === 0) continue;
 
         describe(key, () => {
           it("parses at least one MCP entry", () => {
@@ -565,6 +565,11 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "research_log_append",
       "volume_search",
     ],
+    denies: [],
+  },
+
+  "translation.md": {
+    tools: ["Read"],
     denies: [],
   },
 };

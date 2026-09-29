@@ -11,9 +11,9 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 26 skills and 8 agents. Besides the `research` orchestrator itself, its routing
+There are 26 skills and 9 agents. Besides the `research` orchestrator itself, its routing
 table names 13 of them, and 5 more are reached by delegation from a skill the table does
-name. The remaining 14 fire only when the user asks — see
+name. The remaining 13 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
 likely to surprise you.
 
@@ -101,7 +101,7 @@ flowchart TD
 
     subgraph ASK ["Reached only by asking — no routing row"]
         direction LR
-        U1["timeline · check-warnings · translation<br/>historical-context · convert-dates"]
+        U1["timeline · check-warnings · historical-context · convert-dates"]
         U2["tree-edit · validate-schema · project-status<br/>forget-and-rederive · the two wiki searches"]
     end
 
@@ -196,7 +196,7 @@ sibling skill.
 | **`check-warnings`** | After any tree edit or merge; after `person-evidence` mints persons; "check for problems" | Running the offline impossibility check and the live FamilySearch quality score, and interpreting both for a single person's own data. `source-evaluation` also reads that score, for its source-conflict list and to report the profile checklist alongside its audit. Never fixes anything | `person_warnings` (deterministic; offline as the skill calls it, though the tool also has an opt-in live mode), `person_quality` (live FamilySearch; a project id is first resolved to the person's FamilySearch link through the tree, and a person with no link gets one sentence by name); the tree only to resolve a name to an id | Nothing |
 | **`source-evaluation`** | "evaluate / audit / review the sources on this profile", "are these sources right" | Auditing the sources **already attached** to a person: classifying each finding as an index error (re-read and correct), a misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do), and reporting the kind as undecided where the profile alone cannot settle it. A precise source refining a vague conclusion is an improvement, not a finding. A **source-vs-source** disagreement the audit turns up is characterised — both values, both record types, what would settle it — with no winner picked and nothing written; a request to *resolve* one still routes to `conflict-resolution` at the front door. Never fixes anything, never extracts | `person_read` (with `sourceDescriptions`), `record_read`, `source_attachments`, `person_quality` (`detail: true`, FamilySearch-shaped ids only). Reads no images — it holds no image tool, and none of those four returns an image id | Nothing |
 | **`tree-edit`** | Direct user correction; a merge after a conclusion established identity at probable or better | Out-of-pipeline tree changes and person merges | `tree.gedcomx.json`; `place_search`, `person_record_matches`, `person_person_matches` | Tree `persons`, `relationships`, `facts`, `names`, `sources` — `tree_edit` / `tree_correct`. A merge via `merge_tree_persons` **also rewrites `research.json`** ids (see the discrepancies below) |
-| **`translation`** | A non-English record or term; handoff from `historical-context` | Transcription, translation as an explicitly derivative rendering, and paleography | The text or an image already in the conversation. **No MCP tool at all** | Nothing |
+| **`translation`** (an AGENT since issue #2804, not a skill) | A non-English record or term; handoff from `historical-context` | Transcription, translation as an explicitly derivative rendering, and paleography | The text or an image path in the delegation. **No MCP tool at all** | Nothing |
 | **`historical-context`** | "why does this record look like this", boundary and naming questions | Narrative context — what the sources say, kept distinct from what it merely believes | `wiki_search`, `wiki_read`, `wikipedia_search`, `place_search`, `place_search_all`, `place_population` | Nothing |
 | **`convert-dates`** | Julian/Gregorian, Old Style, Quaker months, double dating | Identifying the calendar regime; the arithmetic belongs to the tool | `convert_calendar` | Nothing — and **nothing downstream persists the converted date** |
 | **`search-familysearch-wiki`** | Any "how do I find [record type]" question | Wiki guidance, synthesized only from returned chunks | `wiki_search` (hosted wiki API) | `<topic-slug>.md` in the working folder. **Not logged to `log[]`** |
@@ -330,10 +330,10 @@ touch either side.
 
 No routing-table row names these, so an autonomous `/research` run never enters them:
 
-`search-full-text` · `timeline` · `check-warnings` · `translation` ·
-`historical-context` · `convert-dates` · `tree-edit` · `validate-schema` ·
-`forget-and-rederive` · `project-status` · `search-familysearch-wiki` ·
-`search-wikipedia` · `source-evaluation` · `init-project` (named in prose, not in the table)
+`search-full-text` · `timeline` · `check-warnings` · `historical-context` ·
+`convert-dates` · `tree-edit` · `validate-schema` · `forget-and-rederive` ·
+`project-status` · `search-familysearch-wiki` · `search-wikipedia` ·
+`source-evaluation` · `init-project` (named in prose, not in the table)
 
 `citation` left this list on 2026-09-23 by ceasing to be a skill (issue #2799). It is
 now an agent, and an agent is auto-delegated from its own `description` rather than
@@ -342,13 +342,18 @@ from a routing-table row — so the row's absence no longer implies it cannot fi
 unmeasured until a committed e2e run postdates the conversion. Do not read its removal
 from this list as evidence either way.
 
-The two **thin skill halves** of the paired rows join this list. Rows 10
-and 11 route to `@plugin:<agent>`, so `skills/research-exhaustiveness/` and
-`skills/proof-conclusion/` are no longer on the in-loop route — they stay on
-disk as the direct-user entry point and as the unit-eval entry point, and an
-autonomous run never enters them. (Row 7 was the third thin half; its
-`skills/person-evidence/` directory has been deleted — the agent is now the
-direct entry point and the unit-eval entry point.)
+`translation` left this list on 2026-09-29 by ceasing to be a skill (issue #2804). It is
+now an agent, and an agent is auto-delegated from its own `description` rather than
+from a routing-table row — so the row's absence no longer implies it cannot fire.
+**Whether it actually fires in an autonomous run is unmeasured**, and it will stay
+unmeasured until a committed e2e run postdates the conversion. Do not read its removal
+from this list as evidence either way.
+
+The three **thin skill halves** of the paired rows join this list. Rows 7, 10
+and 11 route to `@plugin:<agent>`, so `skills/person-evidence/`,
+`skills/research-exhaustiveness/` and `skills/proof-conclusion/` are no longer
+on the in-loop route — they stay on disk as the direct-user entry point and as
+the unit-eval entry point, and an autonomous run never enters them.
 
 For most of them that is the intent — they are utilities the researcher asks for. Four
 are not obviously intentional:
@@ -373,7 +378,3 @@ are not obviously intentional:
 Nothing compares the routing table's Invoke column against the skills directory, so a
 skill can become unreachable and every suite stays green. Adding that check is the
 `nothing-checks` half of issue #1860.
-- **`translation`** is unreachable from the loop, so a foreign-language register page goes
-  `image-reader` → `record-extractor` and is never handed to the skill that reads
-  Kurrentschrift. Its own description claims `record-extraction` routes to it; that skill
-  does not mention translation at all.

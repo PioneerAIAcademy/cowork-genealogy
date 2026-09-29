@@ -1,12 +1,12 @@
-"""Skill-specific validators for the translation skill.
+"""Agent-specific validators for the translation agent.
 
 translation is a pure model task — it translates foreign-language record
 text and explains genealogically significant terms. Narrative quality
 (accuracy, notation of uncertainty, cultural context, date formatting)
 lives in the rubric — graded by the LLM judge.
 
-Three mechanical checks: the skill doesn't call MCP tools (it has none
-in its allowed-tools frontmatter and shouldn't need any), every full
+Three mechanical checks: the agent doesn't call MCP tools (it has none
+in its tools frontmatter and shouldn't need any), every full
 translation ends with both workflow hand-off offers, and a response
 carrying prose dates carries at least one ISO 8601 date.
 
@@ -52,7 +52,7 @@ def test_no_mcp_tools_called(tool_calls, test):
     commit 861d3c9 it's the built-in schema verifier any skill may
     call, not a research tool."""
     if test.get("type") != "positive":
-        pytest.skip("negative tests are graded by routing, not tool use")
+        pytest.skip("negative tests are not applicable to the direct-arm agent")
     mcp_calls = [
         tc for tc in tool_calls
         if tc.get("tool", "").startswith("mcp__")
@@ -73,14 +73,14 @@ def test_no_mcp_tools_called(tool_calls, test):
 
 
 def test_next_step_offers(text_response: str, test: dict) -> None:
-    """SKILL.md Step 5 requires both workflow handoff offers after every
+    """The agent body requires both workflow handoff offers after every
     positive translation.  The canonical phrases are:
       - "Extract assertions from this record?"  (record-extraction)
       - "Link [person] to the tree?"            (person-evidence)
     9 of 10 positive tests in v1_2026-07-27 omit the person-evidence offer,
     substituting open-ended genealogical research suggestions instead.
 
-    SKILL.md Step 5 carves out one case: a response that is a bare
+    The agent body carves out one case: a response that is a bare
     word-definition or date conversion *with no extracted record*. That is
     the condition to gate on, and `single-term` is not a proxy for it.
     The tag describes what a test probes — one vocabulary term the user is
@@ -104,7 +104,7 @@ def test_next_step_offers(text_response: str, test: dict) -> None:
     re-run plus re-annotation. Validators are not in the snapshot.
     """
     if test.get("type") != "positive":
-        pytest.skip("negative tests are graded by routing, not response content")
+        pytest.skip("negative tests are not applicable to the direct-arm agent")
     if "no-record-lookup" in (test.get("tags") or []):
         pytest.skip(
             "no-record lookups are exempt per SKILL.md Step 5 — a bare "
@@ -124,8 +124,8 @@ def test_next_step_offers(text_response: str, test: dict) -> None:
 
 
 def test_iso_date_formatting(text_response: str, test: dict) -> None:
-    """SKILL.md requires ISO 8601 dates (YYYY-MM-DD) alongside prose dates in
-    assertions sections.  5 of 10 positive tests in v1_2026-07-27 write dates
+    """The agent body requires ISO 8601 dates (YYYY-MM-DD) alongside prose dates
+    in assertions sections.  5 of 10 positive tests in v1_2026-07-27 write dates
     like '14 March 1843' with no ISO parenthetical; correct form is
     '14 March 1843 (1843-03-14)'.
 
@@ -134,18 +134,18 @@ def test_iso_date_formatting(text_response: str, test: dict) -> None:
     formatting" dimension grades the rest — whether every date carries its
     ISO form, the partial case this check cannot see.
 
-    A partial ISO date counts. SKILL.md tells the skill to give only what
-    the record states when the day or month is unknown (1789-03, or 1789),
+    A partial ISO date counts. The agent body tells the agent to give only
+    what the record states when the day or month is unknown (1789-03, or 1789),
     so YYYY-MM satisfies this check as fully as YYYY-MM-DD; failing a
     response for obeying that rule would be a defect in the check. A bare
     YYYY is not recognised — it cannot be told apart from the year in the
     prose date beside it — so a record stating only a year is left to the
     rubric dimension.
 
-    SKILL.md's pre-Gregorian carve-out is an exemption, not a violation to
-    catch: where the jurisdiction had not adopted the Gregorian calendar at
+    The agent body's pre-Gregorian carve-out is an exemption, not a violation
+    to catch: where the jurisdiction had not adopted the Gregorian calendar at
     that date, or the record names no province and the calendar cannot be
-    determined, the skill is *required* to withhold the ISO form and say so
+    determined, the agent is *required* to withhold the ISO form and say so
     instead. Absence of ISO is the correct behaviour there, so this floor
     must not fire — ut_translation_011 (Dutch Reformed, 1698, no province
     named) is the case that forced it. Exempting the whole response is
@@ -154,7 +154,7 @@ def test_iso_date_formatting(text_response: str, test: dict) -> None:
     all — the rubric dimension grades each date individually and this cannot.
     """
     if test.get("type") != "positive":
-        pytest.skip("negative tests are graded by routing, not response content")
+        pytest.skip("negative tests are not applicable to the direct-arm agent")
     MONTH = (
         r"January|February|March|April|May|June|"
         r"July|August|September|October|November|December"
@@ -189,5 +189,5 @@ def test_iso_date_formatting(text_response: str, test: dict) -> None:
     assert iso_dates, (
         f"response contains {len(prose_dates)} prose date(s) "
         f"({prose_dates[:2]}) but no ISO 8601 dates (YYYY-MM-DD). "
-        "SKILL.md requires the ISO form alongside every prose date."
+        "The agent body requires the ISO form alongside every prose date."
     )

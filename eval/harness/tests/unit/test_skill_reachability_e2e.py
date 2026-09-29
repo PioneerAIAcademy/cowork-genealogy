@@ -77,7 +77,6 @@ DARK_SKILLS_2026_09_01 = frozenset(
         "search-wikipedia",
         "source-evaluation",
         "timeline",
-        "translation",
         "tree-edit",
         "validate-schema",
     }
