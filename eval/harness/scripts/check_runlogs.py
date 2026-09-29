@@ -776,10 +776,11 @@ def rule6_outcomes(
     remove, because a suite carrying reds cannot answer "did my refactor break
     something", which is the one question it exists to answer.
 
-    Resolution is from `runs[].outcome`, whose enum is pass/partial/fail/aborted,
-    so this never meets the aggregate's xfail/xpass remap. Aggregation is
-    `harness.outcomes.aggregate_per_run_outcome` -- the same function the runner
-    uses, so the gate and `run_tests.py` cannot drift.
+    Resolution is from `runs[].outcome`, whose enum is pass/partial/fail/aborted.
+    The aggregate `outcome` shares that enum — suppression is read from the
+    `expected_outcome` marker beside it, not from a distinct outcome value.
+    Aggregation is `harness.outcomes.aggregate_per_run_outcome` -- the same
+    function the runner uses, so the gate and `run_tests.py` cannot drift.
 
     `partial` never blocks (lead ruling 2026-09-18: "tests must pass, or
     partial, consistently"). An `expected_outcome: xfail` marker declares a known

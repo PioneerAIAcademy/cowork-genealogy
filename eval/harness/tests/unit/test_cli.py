@@ -214,14 +214,18 @@ def test_main_runs_per_test_end_to_end(
     assert names and names[0].startswith("scratch_") is want_scratch
 
 
-def _stub_log(test_id, skill, outcome, aborted_reason=None):
+def _stub_log(test_id, skill, outcome, expected_outcome="pass", aborted_reason=None):
     """Return a minimal test ENTRY for exit-code logic tests.
 
     The harness CLI accumulates per-test entries and writes one envelope
     per skill at the end; what matters here is the fields the CLI loop
-    reads (outcome, totals, runs[0].aborted_reason). The `skill` parameter
-    is preserved on the loop's `per_skill_entries` bucket — passed via the
-    spec, not the entry.
+    reads (outcome, expected_outcome, totals, runs[0].aborted_reason). The
+    `skill` parameter is preserved on the loop's `per_skill_entries` bucket —
+    passed via the spec, not the entry.
+
+    Suppression (issue #2842) is read from `expected_outcome` beside the real
+    outcome, not from a distinct outcome value — so a declared-xfail case is
+    `outcome="fail"/"pass"` with `expected_outcome="xfail"`.
     """
     # Normalize the synthetic outcomes so callers can write expressive
     # cases ("aborted_exec", "aborted_nr") and the entry still has a valid
@@ -230,15 +234,18 @@ def _stub_log(test_id, skill, outcome, aborted_reason=None):
     return {
         "test_id": test_id,
         "outcome": actual_outcome,
+        "expected_outcome": expected_outcome,
         "runs": [{"aborted_reason": aborted_reason}],
         "totals": {"total_cost_usd": 0.0},
     }
 
 
 def test_exit_code_zero_when_all_pass(tmp_path, monkeypatch):
-    _run_with_stubbed_outcomes(tmp_path, monkeypatch, ["pass", "partial", "xfail"])
-    # Cannot use process exit; check the returned code from main().
-    # _run_with_stubbed_outcomes returns the exit code.
+    # The last item is a declared-xfail test that failed as declared — exit 0.
+    rc = _run_with_stubbed_outcomes(
+        tmp_path, monkeypatch, ["pass", "partial", ("fail", "xfail")]
+    )
+    assert rc == 0
 
 
 def _stub_anthropic_ok(monkeypatch):
@@ -291,9 +298,16 @@ def _run_with_stubbed_outcomes(tmp_path, monkeypatch, outcomes):
     counter = {"n": 0}
 
     def fake_run(spec, **kwargs):
-        outcome = outcomes[counter["n"]]
+        item = outcomes[counter["n"]]
         counter["n"] += 1
+        # An item may be a plain outcome string, or a (outcome, expected_outcome)
+        # tuple to express a declared-xfail case (issue #2842).
+        if isinstance(item, tuple):
+            outcome, expected_outcome = item
+        else:
+            outcome, expected_outcome = item, "pass"
         return _stub_log(spec.id, spec.skill, outcome,
+                          expected_outcome=expected_outcome,
                           aborted_reason="max_turns" if outcome == "aborted_exec"
                                         else "not_runnable" if outcome == "aborted_nr"
                                         else "unmatched_tool_call" if outcome == "aborted_umc"
@@ -324,8 +338,11 @@ def _run_with_stubbed_outcomes(tmp_path, monkeypatch, outcomes):
     ])
 
 
-def test_exit_zero_for_all_pass_partial_xfail(tmp_path, monkeypatch):
-    rc = _run_with_stubbed_outcomes(tmp_path, monkeypatch, ["pass", "partial", "xfail"])
+def test_exit_zero_for_pass_partial_and_declared_xfail_failure(tmp_path, monkeypatch):
+    # A declared-xfail test that failed as declared does not fail the suite.
+    rc = _run_with_stubbed_outcomes(
+        tmp_path, monkeypatch, ["pass", "partial", ("fail", "xfail")]
+    )
     assert rc == 0
 
 
@@ -334,8 +351,10 @@ def test_exit_one_for_fail(tmp_path, monkeypatch):
     assert rc == 1
 
 
-def test_exit_one_for_xpass(tmp_path, monkeypatch):
-    rc = _run_with_stubbed_outcomes(tmp_path, monkeypatch, ["xpass"])
+def test_exit_one_for_declared_xfail_that_unexpectedly_passed(tmp_path, monkeypatch):
+    # A declared-xfail test that passed (a stale marker) fails the suite — the
+    # old `xpass` row, now read from the marker beside a real `pass` (#2842).
+    rc = _run_with_stubbed_outcomes(tmp_path, monkeypatch, [("pass", "xfail")])
     assert rc == 1
 
 
@@ -1199,13 +1218,13 @@ def test_summary_tolerates_a_row_with_no_reason_key(capsys):
 def test_summary_counts_every_outcome_and_reconciles(capsys):
     rows = [
         {"test_id": "a", "skill": "s", "outcome": "pass", "reason": ""},
-        {"test_id": "b", "skill": "s", "outcome": "xfail", "reason": ""},
-        {"test_id": "c", "skill": "s", "outcome": "xpass", "reason": ""},
+        {"test_id": "b", "skill": "s", "outcome": "partial", "reason": ""},
+        {"test_id": "c", "skill": "s", "outcome": "fail", "reason": ""},
         {"test_id": "d", "skill": "s", "outcome": "aborted", "reason": "error"},
     ]
     out = _summary(rows, capsys)
-    # xfail/xpass are real outcomes; a four-value tally would under-sum here.
-    for token in ("1 pass", "1 xfail", "1 xpass", "1 aborted", "of 4 test(s)"):
+    # All four real outcomes are tallied; the sum must reconcile to the total.
+    for token in ("1 pass", "1 partial", "1 fail", "1 aborted", "of 4 test(s)"):
         assert token in out, token
 
 
