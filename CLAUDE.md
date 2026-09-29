@@ -396,7 +396,7 @@ Per-project context about the researcher lives in a `researcher_profile`
 section of `research.json`. `init-project` writes a fixed profile at
 project start (`experience_level: "novice"` and one house-style
 `narration_guidance` string) and asks nothing about the researcher; the
-only opening-turn question is the research objective, non-blocking. 25 of the 26 skills
+only opening-turn question is the research objective, non-blocking. 24 of the 25 skills
 carry a one-line `**Narration:**` instruction that tells Claude to read
 `researcher_profile.narration_guidance` and apply it as the narration
 style for that invocation. `search-wikipedia` is the deliberate

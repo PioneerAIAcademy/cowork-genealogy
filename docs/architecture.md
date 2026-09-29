@@ -350,7 +350,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-16 of the 26 skills carry a `references/` folder, loaded on demand, in-session,
+16 of the 25 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -1460,7 +1460,7 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-25 of the 26 skills carry a `**Narration:**` line (`init-project` spells it
+24 of the 25 skills carry a `**Narration:**` line (`init-project` spells it
 `**Narration**`, without the colon) — 24 of them as the first line of the body,
 the other two further down — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
@@ -1909,7 +1909,7 @@ lead you to them:**
 
 - **Unit** (`eval/tests/unit/<skill>/`) — mocked MCP fixtures, a per-skill
   `rubric.md`, a deterministic validator per skill, an LLM judge, snapshot-hashed
-  run logs, and negative routing tests across 26 skill suites. **446** committed
+  run logs, and negative routing tests across 25 skill suites. **446** committed
   test definitions (`make eval-inventory`) — one JSON file per test under
   `eval/tests/unit/` — and across the 26 live suites the latest run log per suite
   totals **446 rows, 389 passing (87%)**. Those two numbers count different things
