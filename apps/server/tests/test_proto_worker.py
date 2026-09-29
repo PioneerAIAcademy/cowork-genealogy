@@ -673,7 +673,7 @@ def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
     assert options.check_registration(None, expected_agents=AGENTS, expected_skills=22)
 
 
-def test_the_plugin_ships_ten_agents_and_twenty_three_skills():
+def test_the_plugin_ships_eleven_agents_and_twenty_two_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
@@ -703,7 +703,7 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
     loaded = set(load_agent_definitions(copy))
     assert loaded == AGENTS - {"gps-mentor"} and loaded != worker.EXPECTED_AGENTS
     agents, error = worker.load_plugin_agents(str(copy))
-    assert agents is None, "nine agents must not become the expectation"
+    assert agents is None, "ten agents must not become the expectation"
     assert error == f"plugin agents ['gps-mentor'] missing under {copy}/agents"
     # An agent the plugin does not ship is named too (the name is the frontmatter's,
     # not the file's), so a mis-typed `name:` shows both halves.

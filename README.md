@@ -253,7 +253,7 @@ specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships ten Cowork agents. Unlike skills, an agent runs in
+The plugin ships eleven Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 at its mentor checkpoint, or by the skill that delegates to it — you
 don't load it explicitly.
@@ -486,7 +486,7 @@ What's shipped:
   and guardrails (validate-schema, check-warnings). The three
   e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result, grade-e2e-run)
   are repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
-- **10 Cowork agents.** `gps-mentor` (BCG-style senior-genealogist review,
+- **11 Cowork agents.** `gps-mentor` (BCG-style senior-genealogist review,
   invoked by `/research` at GPS checkpoints and on demand), `record-extractor`
   (per-record assertion extraction), `proof-conclusion` (the proof conclusion
   for one question, and the only writer of `proof_summaries`),
