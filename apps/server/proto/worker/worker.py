@@ -111,6 +111,7 @@ from proto.worker.options import (  # noqa: E402
     RESUME_CONTINUE_TEXT,
     HANDOVER_REASON,
     TERMINAL_DECISION,
+    TERMINAL_DELIVERED,
     SPEND_CAP_REASON,
     STOP_REASON,
     TERMINAL_BUDGET,
@@ -938,10 +939,18 @@ async def run_turn(
             terminal["halted"] = True
             log(ev="decision_exit", turn_id=turn_id, session_id=session_id)
 
+        def on_delivered() -> None:
+            """The agent delivered what a bounded request asked for. The turn ends
+            `delivered`, not `completed`: the ask was met while the PROJECT is still
+            open, and calling it complete would read as a finished project."""
+            terminal["reason"] = TERMINAL_DELIVERED
+            terminal["halted"] = True
+            log(ev="delivered_exit", turn_id=turn_id, session_id=session_id)
+
         hook = make_pretool_hook(
             turn_id=turn_id, session_id=session_id, cwd=WORKER_CWD,
             config_root=lambda: config_root["path"], record=record, log=log, blocked=_BLOCKED,
-            halt=halt, on_decision=on_decision,
+            halt=halt, on_decision=on_decision, on_delivered=on_delivered,
         )
 
         def finish(tool_use_id: str) -> None:

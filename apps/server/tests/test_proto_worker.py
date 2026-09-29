@@ -2954,3 +2954,103 @@ def test_the_callee_keys_do_not_leak_into_other_tools():
 def test_a_file_path_still_wins_for_file_tools():
     assert options.input_path("Read", {"file_path": "/a/b.txt"}, cwd="/w") == "/a/b.txt"
     assert options.input_path("Grep", {"pattern": "x"}, cwd="/w") == "/w"
+
+
+# --- R4: the `delivered` exit (ruled 2026-09-29: a second dedicated tool) ---
+#
+# The hook vetoes every stop until project.status is 'completed', so a bounded
+# request -- "create a plan but leave it at that" (#2932), a single christening
+# lookup (#2921), "where are we?" -- runs to the proof, the nudge cap or $35.
+# `delivered` is how a turn says it did the thing that was asked and stopped on
+# purpose. It is a NEW value, not `ok`: `ok` means "a turn ended with no terminal
+# reason" and chatEvents renders it as nothing, while a delivery has something to
+# report.
+
+def test_a_delivered_turn_does_not_continue():
+    from app.agent.continue_policy import should_continue_run
+    assert should_continue_run(
+        research={"project": {"status": "active"}}, nudges_used=0, max_nudges=60,
+        tool_count=1, tool_count_at_last_nudge=0, delivered=True,
+    ) is False
+
+
+def test_delivered_is_the_reason_and_sits_after_decision_before_completed():
+    """Clause position is semantics, not detail. A delivery arriving with a patron
+    message already QUEUED reads as `queued` -- the researcher moved on -- and a
+    delivery on a COMPLETED project still reads as delivered, because the request
+    was met before the project finished."""
+    from app.agent.continue_policy import (
+        TERMINAL_DELIVERED, TERMINAL_DECISION, TERMINAL_QUEUED, terminal_reason,
+    )
+    done = {"project": {"status": "completed"}}
+    active = {"project": {"status": "active"}}
+    assert terminal_reason(research=active, nudges_used=0, max_nudges=60,
+                           delivered=True) == TERMINAL_DELIVERED
+    # queued and decision both outrank it
+    assert terminal_reason(research=active, nudges_used=0, max_nudges=60,
+                           delivered=True, pending_user_message=True) == TERMINAL_QUEUED
+    assert terminal_reason(research=active, nudges_used=0, max_nudges=60,
+                           delivered=True, pending_decision=True) == TERMINAL_DECISION
+    # ...and it outranks completion
+    assert terminal_reason(research=done, nudges_used=0, max_nudges=60,
+                           delivered=True) == TERMINAL_DELIVERED
+
+
+def test_an_ordinary_turn_is_untouched_by_the_new_clause():
+    """The arm that is easy to skip: not calling the tool must change nothing, or
+    an ordinary run is quietly re-routed through a new exit."""
+    from app.agent.continue_policy import should_continue_run, TERMINAL_BUDGET, terminal_reason
+    assert should_continue_run(
+        research={"project": {"status": "active"}}, nudges_used=0, max_nudges=60,
+        tool_count=1, tool_count_at_last_nudge=0,
+    ) is True
+    assert terminal_reason(research={"project": {"status": "active"}}, nudges_used=60,
+                           max_nudges=60) == TERMINAL_BUDGET
+
+
+def test_the_delivered_tool_name_is_pinned():
+    assert options.DELIVERED_TOOL == "mcp__genealogy__research_delivered"
+
+
+def test_a_turn_that_delivers_is_recorded_as_delivered(turn_env):
+    """End to end through the REAL hook, for the same reason the decision test is:
+    the hook-level tests cannot see the worker's closure, and a break test that sets
+    the closure to the wrong outcome leaves them all green. This is the assertion
+    that a bounded request reads as 'done, that's what you asked for' rather than
+    running on to the proof, the nudge cap or $35."""
+    from app.agent.continue_policy import TERMINAL_DELIVERED
+    summary = _run(turn_env, [
+        _init(), ToolCall("mcp__genealogy__research_query"),
+        ToolCall(options.DELIVERED_TOOL),
+        _result(num_turns=2),
+    ])
+    assert summary["outcome"] == TERMINAL_DELIVERED, (
+        f"a turn that delivered recorded {summary['outcome']!r}"
+    )
+    _, params = next((sql, p) for sql, p in turn_env["conn"].executed
+                     if sql.startswith("UPDATE turns SET completed_at"))
+    assert params[0] == TERMINAL_DELIVERED, "and the row says so too"
+
+
+def test_a_turn_that_never_delivers_is_untouched_by_the_exit(turn_env):
+    """The arm that is easy to skip. Adding an exit must not re-route the ordinary
+    run through it."""
+    from app.agent.continue_policy import TERMINAL_DELIVERED
+    summary = _run(turn_env, [
+        _init(), ToolCall("mcp__genealogy__research_query"),
+        ToolCall("mcp__genealogy__record_read"),
+        _result(num_turns=2),
+    ])
+    assert summary["outcome"] != TERMINAL_DELIVERED
+
+
+def test_a_stop_outranks_a_delivery(turn_env):
+    """Same precedence the decision exit follows: the researcher's own stop wins."""
+    from app.agent.continue_policy import TERMINAL_DELIVERED
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda row: None, halt=lambda: "stopped",
+    )
+    out = asyncio.run(hook({"tool_name": options.DELIVERED_TOOL, "tool_input": {}}, "u1", None))
+    assert out.get("stopReason") == "stopped", "a halt must outrank the delivery arm"
+    assert TERMINAL_DELIVERED not in str(out)

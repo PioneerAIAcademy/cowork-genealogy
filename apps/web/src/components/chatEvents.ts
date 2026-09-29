@@ -45,6 +45,10 @@ export const TURN_OUTCOME_LABELS: Record<string, string> = {
   budget: 'Paused: this run reached its step budget. Send a message to carry on.',
   no_progress: 'Paused: the agent stopped making progress. Send a message to carry on.',
   decision: 'Waiting on you — see the question above.',
+  // R4: the ask was met and the JOB is still open. It must not read like
+  // `completed` ('Research complete.'), or a plan-only request looks like a
+  // finished project.
+  delivered: "Done — that's what you asked for. Send a message to carry on.",
   mcp_unavailable: 'Paused: the genealogy tools became unavailable.'
 }
 
