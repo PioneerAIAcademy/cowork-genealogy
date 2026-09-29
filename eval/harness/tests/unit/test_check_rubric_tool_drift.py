@@ -502,31 +502,28 @@ def test_every_suppression_has_a_nonempty_quote() -> None:
             )
 
 
-def test_an_agent_keyed_suite_is_scanned(tmp_path: Path, monkeypatch) -> None:
-    """A skill folded into an agent and deleted still has a suite to scan.
+def test_agent_keyed_suites_are_scanned_once(monkeypatch) -> None:
+    """A skill folded into an agent and deleted still has a suite to scan, once.
 
     Walking SKILLS_DIR alone skipped `citation`'s rubric and judge_context from
-    the day its skill was deleted, with no signal. The suite resolves its
-    declared tools from `agents/<suite>.md`; a suite with neither a skill nor
-    an agent is not a suite.
+    the day its skill was deleted, with no signal. Two fixes for that landed
+    independently (issues #2115 and #2822) and briefly coexisted after a merge,
+    which scans every agent-keyed suite twice and doubles its hit count. Both
+    directions are pinned: agent-keyed suites produce hits, and no (file, tool)
+    pair is warned about more than once.
     """
-    skills, agents, tests = tmp_path / "skills", tmp_path / "agents", tmp_path / "tests"
-    (skills / "kept").mkdir(parents=True)
-    (skills / "kept" / "SKILL.md").write_text(
-        "---\nname: kept\nallowed-tools:\n  - record_read\n---\n", encoding="utf-8"
-    )
-    agents.mkdir()
-    (agents / "folded.md").write_text(
-        "---\nname: folded\ntools:\n  - mcp__genealogy__research_append\n  - Read\n---\n",
-        encoding="utf-8",
-    )
-    for suite in ("kept", "folded", "orphan"):
-        (tests / suite).mkdir(parents=True)
-    monkeypatch.setattr(check_rubric_tool_drift, "SKILLS_DIR", skills)
-    monkeypatch.setattr(check_rubric_tool_drift, "AGENTS_DIR", agents)
-    monkeypatch.setattr(check_rubric_tool_drift, "TESTS_DIR", tests)
-
-    assert check_rubric_tool_drift.suite_declarations() == [
-        ("folded", {"research_append", "Read"}),
-        ("kept", {"record_read"}),
-    ]
+    monkeypatch.setattr(check_rubric_tool_drift, "SUPPRESSIONS", [])
+    check_rubric_tool_drift.main()
+    emitted = []
+    for f, m in _recorded():
+        match = re.search(r"mention(?:s|ing) `(\w+)`", m)
+        if f is not None and match:
+            emitted.append((f, match.group(1)))
+    _reset()
+    agent_suite_files = {
+        f for f, _ in emitted
+        if f.startswith(("eval/tests/unit/citation/", "eval/tests/unit/question-selection/"))
+    }
+    assert agent_suite_files, "no agent-keyed suite produced a hit: the scan skips them"
+    duplicates = sorted({p for p in emitted if emitted.count(p) > 1})
+    assert duplicates == [], duplicates
