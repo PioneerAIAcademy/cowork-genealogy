@@ -207,21 +207,19 @@ const DELEGATION_EDGES: Record<string, Edge> = {
         excerpt:
           '**Do not ask it to "add a question."**',
       },
+      // Added after the first direct-arm run (issue #2115). The exemption this
+      // replaces claimed the agent needed no rule because the fold was verbatim.
+      // The run refuted it: three adversarially-phrased twins ran, and two --
+      // d01 (told to add while work was in flight) and d04 (told to pursue an
+      // explicitly out-of-scope person) -- complied. All 11 routed originals
+      // passed, so the caller-side rule alone was invisible to the suite. The
+      // agent now carries its own, on the research-exhaustiveness pattern.
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that tells you to add a question is a destination, not a finding.**",
+      },
     ],
-    exempt: {
-      side: "agent",
-      reason:
-        "The agent body was folded VERBATIM from a skill that was never half of a pair " +
-        "(issue #2115), so it carries no delegation-framing sentence to pin -- it was " +
-        "written for a caller that was the user, not a router. Inventing one here would " +
-        "break the fold-verbatim rule the conversion process exists to enforce, and would " +
-        "do it in the same commit that claims the fold is verbatim. The caller-side pins " +
-        "carry the guarantee instead: the router is forbidden to read or judge, and " +
-        "forbidden to phrase the delegation as an instruction to add, which is the " +
-        "construction that would override the agent's own stop conditions. If a later " +
-        "card edits the agent body for its own reasons, an agent-side pin belongs with " +
-        "that edit rather than with the fold.",
-    },
   },
   "research-exhaustiveness -> research-exhaustiveness": {
     pins: [
