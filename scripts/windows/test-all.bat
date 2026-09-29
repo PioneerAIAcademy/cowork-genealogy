@@ -24,7 +24,6 @@ if defined MISSING (
 set "NOTINSTALLED="
 if not exist "node_modules" set "NOTINSTALLED=!NOTINSTALLED! node_modules"
 if not exist "packages\engine\mcp-server\node_modules" set "NOTINSTALLED=!NOTINSTALLED! packages\engine\mcp-server\node_modules"
-if not exist "eval\app\node_modules" set "NOTINSTALLED=!NOTINSTALLED! eval\app\node_modules"
 if defined NOTINSTALLED (
     echo ERROR: dependencies are not installed:!NOTINSTALLED!
     echo Run scripts\windows\install.bat first.
@@ -40,7 +39,8 @@ call :suite "Typecheck (turbo)"            "%~dp0typecheck.bat"
 call :suite "JS workspace tests (turbo)"   "%~dp0test-js.bat"
 call :suite "Control-plane tests (pytest)" "%~dp0server-test.bat"
 call :suite "MCP server tests (vitest)"    "%~dp0engine-test.bat"
-call :suite "Eval app tests (vitest)"      "%~dp0eval-ui-test.bat"
+REM No separate eval/app suite: it is a pnpm workspace member (#1488), so the
+REM turbo typecheck and test-js suites above already cover it.
 
 REM harness-test.bat builds the engine first, and that build is a real
 REM dependency: the harness's mock MCP server shells out to the COMPILED

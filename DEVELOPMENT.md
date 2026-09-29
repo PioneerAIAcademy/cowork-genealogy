@@ -300,7 +300,6 @@ After any dependency bump, re-run the audits and update
 
 ```bash
 (cd packages/engine/mcp-server && npm audit)
-(cd eval/app && npm audit)
 pnpm audit
 ```
 
@@ -309,7 +308,7 @@ dev-only, and the omitting forms report zero for trees that have open advisories
 Re-run with `--omit=dev` / `--prod` afterwards to sort what ships from what does not;
 the "Reachability" paragraph in the register does that triage.
 
-These cover the three JS trees only. The two Python trees (`apps/server/uv.lock`,
+These cover the two JS trees only. The two Python trees (`apps/server/uv.lock`,
 `eval/harness/uv.lock`) have no audit command here — Dependabot alerts are their only
 signal, and the register's backlog section carries the query.
 

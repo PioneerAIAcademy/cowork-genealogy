@@ -34,6 +34,16 @@ COPY apps/web/package.json apps/web/
 # apps/electron is a workspace member but the web build does not need it; a
 # frozen install still resolves it from the lockfile without building it.
 COPY apps/electron/package.json apps/electron/
+# eval/app became a member in #1488, so it is listed here alongside the others.
+# MEASURED, so nobody re-derives it: this COPY is NOT currently load-bearing.
+# `--filter web...` scopes the importer check to that subgraph, so stage 1 still
+# installs with this line removed — and with the apps/electron line above
+# removed too (both checked with `make deploy-preflight`, pnpm 9.15.9). It is
+# here for consistency with every other member and because that scoping is a
+# pnpm implementation detail a version bump could tighten. Nothing in CI builds
+# this image (js-tests.yml header), so `make deploy-preflight` is the only check
+# either way.
+COPY eval/app/package.json eval/app/
 RUN pnpm install --frozen-lockfile --filter web...
 
 COPY packages/viewer-ui packages/viewer-ui

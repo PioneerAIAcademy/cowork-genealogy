@@ -58,7 +58,7 @@ You'll install three things outside the repo, then run a single batch file insid
    Setup.bat
    ```
 
-   Either way, the script installs `uv`, runs `npm install` in `eval/app/`, runs `uv sync` in `eval/harness/`, and prompts for your Anthropic API key (saved to `eval/.env`).
+   Either way, the script installs `uv` and `pnpm`, runs `pnpm install` at the repo root, runs `uv sync` in `eval/harness/`, and prompts for your Anthropic API key (saved to `eval/.env`).
 
 You only do all this once per machine.
 
@@ -74,7 +74,7 @@ gh auth login                                          # GitHub.com → HTTPS �
 
 git clone <repo-url> ~/cowork-genealogy
 cd ~/cowork-genealogy/eval/harness && uv sync
-cd ~/cowork-genealogy/eval/app && npm install
+cd ~/cowork-genealogy && pnpm install
 echo "ANTHROPIC_API_KEY=sk-ant-..." > ~/cowork-genealogy/eval/.env
 ```
 
@@ -119,10 +119,10 @@ The CI `check-runlogs` action has already verified: ≤1 new released `v{N}.json
 
 A browser tab opens at <http://127.0.0.1:3000>; keep the command-prompt window open while reviewing — closing it stops the app.
 
-**macOS / Linux:** from `eval/app/`:
+**macOS / Linux:** from the repo root:
 
 ```bash
-npm run dev
+pnpm --filter cowork-genealogy-eval-app dev
 ```
 
 Then open <http://localhost:3000/results>. Find the skill the PR touches.

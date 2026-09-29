@@ -29,18 +29,22 @@ EVAL_ENV := $(CURDIR)/eval/.env
 ENGINE_DIR    := packages/engine/mcp-server
 ENGINE_BUILD  := $(ENGINE_DIR)/build/index.js
 ENGINE_DEPS   := $(ENGINE_DIR)/node_modules/.make-installed
-EVAL_APP_DEPS := eval/app/node_modules/.make-installed
 JS_DEPS       := node_modules/.make-installed
 
-# Root pnpm workspace (web, electron, viewer-ui, schema). Reinstall when the
+# Root pnpm workspace (web, electron, viewer-ui, schema, eval/app). Reinstall when the
 # root manifest, the lockfile, the member list, or ANY member's manifest
 # changes. A member's package.json is listed because it carries that member's
 # lifecycle scripts, which the root two do not see: #1271 added a `postinstall`
 # to packages/schema and touched neither, so every existing checkout kept a
 # stamp newer than both prerequisites, never reinstalled, and never ran the
 # generator that postinstall exists to run.
+# eval/app/package.json is named explicitly rather than matched by a glob: it is
+# a member (#1488) but sits under eval/, which `packages/*`/`apps/*` do not
+# reach. Omitting it reproduces #1271 — every existing checkout keeps a stamp
+# newer than its prerequisites, never reinstalls, and never runs the gen-zod
+# postinstall the tests import.
 $(JS_DEPS): package.json pnpm-lock.yaml pnpm-workspace.yaml \
-            $(wildcard packages/*/package.json apps/*/package.json)
+            $(wildcard packages/*/package.json apps/*/package.json eval/app/package.json)
 	pnpm install
 	@touch $@
 
@@ -75,11 +79,6 @@ $(ENGINE_DEPS): $(ENGINE_DIR)/package.json $(ENGINE_DIR)/package-lock.json
 $(ENGINE_BUILD): $(ENGINE_DEPS) $(shell find $(ENGINE_DIR)/src -type f 2>/dev/null)
 	cd $(ENGINE_DIR) && npm run build
 
-# Eval CRUD UI deps.
-$(EVAL_APP_DEPS): eval/app/package.json
-	cd eval/app && npm install
-	@touch $@
-
 .PHONY: engine-build
 engine-build: $(ENGINE_BUILD) ## Build the genealogy engine (mcp-server) — real-agent local runs need it
 
@@ -90,7 +89,7 @@ help: ## Show this menu
 
 # ── Setup ────────────────────────────────────────────────────────
 .PHONY: install
-install: $(JS_DEPS) server-install $(ENGINE_BUILD) $(EVAL_APP_DEPS) ## Install EVERYTHING: pnpm workspace, server venv, engine build, eval-ui deps, git hooks
+install: $(JS_DEPS) server-install $(ENGINE_BUILD) ## Install EVERYTHING: pnpm workspace (incl. eval-ui), server venv, engine build, git hooks
 	@# Leading `-`: a clone whose hooks belong to other tooling makes install-hooks
 	@# exit 1 by design (it refuses to clobber). That must not fail the whole
 	@# install — it just means this clone opts out and uses `make worktree-link`
@@ -99,7 +98,7 @@ install: $(JS_DEPS) server-install $(ENGINE_BUILD) $(EVAL_APP_DEPS) ## Install E
 	@# positive test in a harness run fails on a judge error after the suite has
 	@# already been paid for.
 	-@$(MAKE) --no-print-directory install-hooks
-	@echo "✓ install complete (pnpm workspace + server venv + engine build + eval-ui deps + git hooks)"
+	@echo "✓ install complete (pnpm workspace incl. eval-ui + server venv + engine build + git hooks)"
 
 .PHONY: server-install
 server-install: ## Create the server venv and install FastAPI deps (uv)
@@ -272,19 +271,16 @@ typecheck: $(JS_DEPS) ## Typecheck the whole JS workspace (turbo)
 	pnpm typecheck
 
 .PHONY: lint
-lint: $(JS_DEPS) $(EVAL_APP_DEPS) ## ESLint — the two workspaces that have a config (apps/electron, eval/app)
+lint: $(JS_DEPS) ## ESLint — the two workspaces that have a config (apps/electron, eval/app)
 	# Not `pnpm -r lint`: only these two declare a lint script, and `-r` would
 	# report success for every workspace that simply has none. Named explicitly
 	# so adding a third config is a visible edit here rather than a silent
 	# no-op.
 	pnpm --filter @genealogy/electron lint
-	# eval/app is NOT a pnpm workspace member (same carve-out as the engine), so
-	# it is reached with npm from its own directory — exactly as eval-ui-test
-	# does. `pnpm --filter` matches no project here and exits non-zero.
-	cd eval/app && npm run lint
+	pnpm --filter cowork-genealogy-eval-app lint
 
 .PHONY: test-all
-test-all: ## Run EVERY check before a PR: typecheck + JS + server + engine + CRUD UI + eval harness. Alias for scripts/test.sh
+test-all: ## Run EVERY check before a PR: typecheck + JS (incl. CRUD UI) + server + engine + eval harness. Alias for scripts/test.sh
 	# One command, one contract. scripts/test.sh owns the implementation
 	# because it reports every failure instead of stopping at the first.
 	# Everything it runs is offline and deterministic — keep it that way; a
@@ -1297,17 +1293,21 @@ e2e-scratch: $(ENGINE_BUILD) ## Set up a throwaway dir (outside the repo) to run
 	cd eval/harness && uv run python -m e2e.scratch --test $(TEST) --launch
 
 .PHONY: eval-ui
-eval-ui: $(EVAL_APP_DEPS) ## Launch the Eval CRUD UI dev server — eval/app (Next.js, :3000)
-	cd eval/app && npm run dev
+eval-ui: $(JS_DEPS) ## Launch the Eval CRUD UI dev server — eval/app (Next.js, :3000)
+	pnpm --filter cowork-genealogy-eval-app dev
 
 .PHONY: eval-ui-test
-eval-ui-test: $(EVAL_APP_DEPS) ## Eval CRUD UI tests — eval/app (vitest)
-	cd eval/app && npm test
+eval-ui-test: $(JS_DEPS) ## Eval CRUD UI tests — eval/app (vitest + tsc)
+	# The typecheck is not the #1488 drift guard — `make typecheck` (turbo) now
+	# covers eval/app too. It is here so the standalone target compiles the app
+	# rather than only running its vitest, which it never did before.
+	pnpm --filter cowork-genealogy-eval-app typecheck
+	pnpm --filter cowork-genealogy-eval-app test
 
 .PHONY: eval-ui-e2e
-eval-ui-e2e: $(EVAL_APP_DEPS) ## Eval CRUD UI e2e tests — eval/app (Playwright, boots Next.js)
-	cd eval/app && npx playwright install --with-deps chromium
-	cd eval/app && npm run test:e2e
+eval-ui-e2e: $(JS_DEPS) ## Eval CRUD UI e2e tests — eval/app (Playwright, boots Next.js)
+	pnpm --filter cowork-genealogy-eval-app exec playwright install --with-deps chromium
+	pnpm --filter cowork-genealogy-eval-app test:e2e
 
 .PHONY: feedback-case
 feedback-case: ## Unpack a submitted alpha-feedback zip into a working project dir: make feedback-case ZIP=~/Downloads/feedback-….zip [DEST=~/feedback/<slug>] [FORCE=1]

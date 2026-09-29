@@ -31,18 +31,9 @@ REM running cmd session won't see it. Add uv's install dir to PATH for the
 REM rest of this script so the "uv sync" step below can find it.
 set "PATH=%USERPROFILE%\.local\bin;%PATH%"
 
-echo.
-echo Installing Node.js dependencies...
-cd app
-call npm install
-if errorlevel 1 (
-  echo.
-  echo ERROR: npm install failed. Setup aborted.
-  cd ..
-  pause
-  exit /b 1
-)
-cd ..
+REM No separate eval\app install: it is a pnpm workspace member (#1488) and the
+REM "pnpm install" step further down covers it. npm cannot parse its
+REM "workspace:*" dependency and would fail with EUNSUPPORTEDPROTOCOL.
 
 echo.
 echo Installing MCP server dependencies...

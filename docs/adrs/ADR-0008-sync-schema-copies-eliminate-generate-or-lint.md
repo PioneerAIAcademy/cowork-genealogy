@@ -25,13 +25,17 @@ the field allow-lists in `tree-shape.ts`, prose tables in specs and skill bodies
 and, until this ADR landed, five literal enum arrays inside MCP tool input
 schemas.
 
-**Nothing can import its way out of this.** Four dependency islands: the pnpm
-workspace (`packages/schema`, `packages/viewer-ui`, `apps/web`, `apps/electron`);
-the engine, excluded by the `!packages/engine/**` negation in
+**Nothing can import its way out of this.** Three dependency islands: the pnpm
+workspace (`packages/schema`, `packages/viewer-ui`, `apps/web`, `apps/electron`,
+`eval/app`); the engine, excluded by the `!packages/engine/**` negation in
 `pnpm-workspace.yaml` so its shipped artifacts keep installing from its own npm
-lockfile; `eval/app`, with
-its own `package-lock.json` and not a workspace member; and Python
-(`eval/harness`, `apps/server`). No TS import crosses a boundary.
+lockfile; and Python (`eval/harness`, `apps/server`). No TS import crosses a
+boundary.
+
+*(Four when this ADR landed. `eval/app` was the fourth, with its own
+`package-lock.json`; #1488 made it a member and deleted its forked copy of the
+types outright — the "Revisit when" trigger below, fired. See the row on
+**One shared TS module** in Alternatives, whose evidence that change reverses.)*
 
 The copies are not equivalent, so one blanket answer is wrong for some of them:
 
@@ -108,10 +112,10 @@ explicit `&&` — a `prebuild` hook would silently never fire.
 |---|---|---|
 | Generate every copy, engine included | The engine's copies are either eliminable (tool schemas — import the const) or are LLM-actionable error prose wrapped around the values, which is not generatable output. It would also add a pre-step to two independent build entry points that must each keep it | `validator.ts` bespoke error strings; `scripts/build-mcpb.mjs`'s `sh("npm run build", ENGINE)`, `apps/server/sandbox/build-image.sh:41` — feasible, so this is a cost/benefit rejection, not a mechanical one |
 | Generate with a **committed** artifact plus a regenerate-and-diff CI check | That check is a lint with a writer bolted on, and it adds a stale-commit failure mode that gitignored output does not have | argued, not measured |
-| Generate with a **manual** regenerate command | A step a human must remember is exactly the risk this ADR exists to avoid. The repo's one instance already documents the workaround its own users need when the hook is skipped | `eval/app/scripts/gen-zod.ts` header; `eval/app/package.json:15-16` |
+| Generate with a **manual** regenerate command | A step a human must remember is exactly the risk this ADR exists to avoid. The repo's one instance already documents the workaround its own users need when the hook is skipped | `eval/app/scripts/gen-zod.ts` header; the `gen-zod`/`postinstall` pair in `eval/app/package.json` |
 | Invert the master: define in Zod/TypeBox, emit JSON Schema | The JSON Schema files are reviewed spec artifacts carrying prose `description`s and `examples`-based **open** enums (`*_recommended`); zod-emitted schema is not reviewable as a spec and loses that structure. Two of four islands (Python, the engine) consume the JSON directly | `enums.schema.json` — 10 of 35 `$defs` are open `*_recommended`/`iso_*`; `eval/harness/harness/schema_validator.py` |
 | Runtime schema loading; derive the value sets at startup and drop the TS copies | Runtime data cannot produce compile-time types, so the unions stay generated or hand-written either way. It reaches only the `Set`-shaped copies, which are already the best-guarded | `validator.ts`; argued, not measured |
-| One shared TS module every consumer imports | No import crosses the island boundaries: the engine is out of the pnpm workspace for `.mcpb` reasons, `eval/app` has its own lockfile, and two consumers are Python | `pnpm-workspace.yaml`, `eval/app/package-lock.json` |
+| One shared TS module every consumer imports | Rejected when this ADR landed, and **partly reversed 2026-09 by #1488**: `eval/app` was cited here as an island with its own lockfile, and it turned out the lockfile was the only thing making it one. Joining the pnpm workspace let it import `@genealogy/schema`, so its 451-line forked copy was deleted rather than guarded — tier 1, for that consumer. The rejection still holds for the two boundaries that are real: the engine is out of the workspace for `.mcpb` reasons and cannot import TS from it, and two consumers are Python | `pnpm-workspace.yaml`; #1488 (the `eval/app` reversal) |
 | Leave the copies unguarded and rely on the multi-site edit lists in `CLAUDE.md` | Measured failure: `packages/schema/src/index.ts` had two interface fields silently drifted, and five closed enums had no TS union at all | #1165; `date_certainty` typed `string` in `packages/schema/src/index.ts`; missing — `date_certainty_timeline`, `severity`, `external_site`, `gender`, `relationship_type` |
 | `--ignore-scripts` on the shipping builds makes engine codegen impossible | **Factually wrong**, recorded so it is not re-derived: those installs run against an already-compiled tree; the engine's own `npm run build` runs earlier with scripts enabled | `scripts/build-mcpb.mjs`'s `sh("npm run build", ENGINE)`, `apps/server/sandbox/build-image.sh:41` |
 | Lint single-value prose mentions (`` `evidence_type: indirect` ``) alongside the full value lists | Guards a failure mode that has never occurred: replaying all 16 commits that have touched `enums.schema.json`, a closed-enum value has been removed or renamed **zero** times. Both changes ever were additions, which the full-list lint already covers, and the asymmetry is the point — an addition bites silently, while a rename is a deliberate act by someone already holding the old string. The scan also cannot be made clean: 16 of its 18 failures are the one `severity` collision, and clearing it means renaming a tool output field the model reads across two tools, their type file, three test files, two specs and five plugin bodies — a product-visible change made for a lint's benefit. One line in the schema-change rules requiring a repo-wide grep on removal catches the same failure at the only moment it can be caught | #1013, #1015; 38 single-value mentions, 20 correct, 18 failing, 16 of those the check-warnings tool's `error`/`warning` against the schema's `high` / `medium` / `low`; the rule as landed in `CLAUDE.md` § "New value on a closed enum" and `docs/specs/research-schema-spec.md` |
@@ -150,9 +154,12 @@ hand-edits `validator.ts` and the prose tables, so the three-case edit table in
 `CLAUDE.md` stays. The pnpm side now has a build-order dependency that did not
 exist before — `packages/schema`'s `typecheck` runs its own generator, a future
 task added there must keep the `&&` chain, and a new app, or a new script that
-starts vite outside turbo, has to chain it too. `eval/app` is not a pnpm
-member, so its forked unions are reached by neither tier and stay hand-written
-until that fork is resolved.
+starts vite outside turbo, has to chain it too. `eval/app` **is** a pnpm member
+as of #1488, so its formerly hand-written unions are now tier 2 for free — it
+re-exports `@genealogy/schema` and declares no types of its own. Membership
+carries two obligations a new member also inherits: `deploy/Dockerfile` must
+COPY its `package.json` before `pnpm install --frozen-lockfile`, and
+`$(JS_DEPS)` in the `Makefile` must list its manifest as a prerequisite.
 
 **Risks.** A lint that passes on arrival reads as coverage; each new one must be
 broken by hand before commit and its failure message recorded (this repo produced
@@ -211,14 +218,17 @@ and a closed enum typed as bare `string` in `packages/schema/src/index.ts`
 inline `items` objects rather than a `$def`, which no half of the lint reaches;
 the enum tables in
 `docs/specs/research-schema-spec.md`, whose markdown-table format needs its own
-parser; and the `eval/app` fork.
+parser. The `eval/app` fork was on this list until #1488 deleted it.
 
 *Linted: every path in this section must resolve.*
 
 ## Revisit when
 
-- **`eval/app` joins the pnpm workspace**, or its fork of `packages/viewer-ui` is
-  resolved — its hand-written unions then fall inside tier 2 for free.
+- ~~**`eval/app` joins the pnpm workspace**~~ — **fired 2026-09 (#1488).** It is a
+  member, `components/scenario/lib/schema.ts` is a re-export, and its unions are
+  tier 2. Its fork of `packages/viewer-ui` is **not** resolved: the scenario
+  viewer still carries 11 hand-maintained section components against
+  `packages/viewer-ui`'s 14, which no tier reaches.
 - **`packages/schema`'s interfaces start drifting faster than #1165's lint
   catches**, which would make generating them — and moving their doc comments
   into `research.schema.json`, where Python and the fixtures would also see them

@@ -110,7 +110,9 @@ in the sense that they cannot.
 
 This repo is also a pnpm + turborepo monorepo for the hosted web product —
 `packages/schema`, `packages/viewer-ui`, `apps/electron`, `apps/web`,
-`apps/server`. Two rules bind when you touch it:
+`apps/server` — plus `eval/app`, the eval CRUD UI, a member so that it imports
+`@genealogy/schema` rather than hand-forking the types. Two rules bind when you
+touch it:
 
 - **Keep the engine out of the pnpm workspace.** `pnpm-workspace.yaml` carries a
   `!packages/engine/**` negation. Both shipped artifacts install their production

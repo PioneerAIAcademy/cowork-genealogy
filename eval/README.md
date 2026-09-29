@@ -117,13 +117,12 @@ Tests run serially (~30s/test). Scope runs with `--skill`, `--test`, or `--tag` 
 ### CRUD UI
 
 ```bash
-cd eval/app
-
-# One-time setup (installs deps + generates Zod schemas)
-npm install
+# One-time setup, from the repo root (installs deps + generates Zod schemas).
+# eval/app is a pnpm workspace member, so it installs with everything else.
+pnpm install
 
 # Launch the dev server
-npm run dev
+pnpm --filter cowork-genealogy-eval-app dev
 ```
 
 Then open <http://127.0.0.1:3000>. The CRUD UI reads + writes the same `eval/` tree the harness writes to — keep them on the same filesystem checkout.
@@ -164,10 +163,10 @@ E2E tests at `eval/harness/tests/e2e/` hit the real Anthropic API and are desele
 The CRUD UI has Vitest unit + integration tests:
 
 ```bash
-cd eval/app
-npm test                # one-shot
-npm run test:watch      # watch mode
-npm run typecheck       # tsc --noEmit
+# From the repo root:
+pnpm --filter cowork-genealogy-eval-app test        # one-shot
+pnpm --filter cowork-genealogy-eval-app test:watch  # watch mode
+pnpm --filter cowork-genealogy-eval-app typecheck   # tsc --noEmit
 ```
 
 ## Run log naming
