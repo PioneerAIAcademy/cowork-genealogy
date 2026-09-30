@@ -111,9 +111,8 @@ year-range filters, a known `imageGroupNumber`, or a `collectionId` taken from
   Jarmon". Search both explicitly.
 - **No abbreviation expansion** in `keywords` and `place` fields.
   `Wm`≠`William`, `Jno`≠`John`, `Jas`≠`James`, `Thos`≠`Thomas`. Run
-  separate queries. The `name` field auto-expands recognized English
-  given names with historical diminutives (do not use `+` in the `name`
-  field — it disables expansion).
+  separate queries. Call `get_name_variants` first to build an explicit
+  given-name variant list; run each variant as a separate query.
 - **Case insensitive** — confirmed.
 - **Diacritic insensitivity** — partial; generally works for
   Spanish/Portuguese but coverage is uneven.

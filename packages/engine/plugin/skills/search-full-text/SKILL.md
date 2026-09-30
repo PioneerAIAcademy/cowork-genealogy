@@ -136,8 +136,7 @@ Read `references/query-syntax.md` for operator details and wildcards.
 **Critical rules:**
 - **Always use `+` to require terms in `keywords`.** Default is OR,
   which returns millions of irrelevant results. Do NOT use `+` in the
-  `name` field — it disables auto-expansion of diminutives, and terms
-  are already required by `m.queryRequireDefault`.
+  `name` field — terms there are already required by `m.queryRequireDefault`.
 - **Search by name only first.** Do NOT send `recordPlace0/1/2/3`,
   `yearFrom`/`yearTo`, or `recordType` on the first `fulltext_search`
   call for a query — whether as `keywords` text or a structured
@@ -173,9 +172,8 @@ Read `references/query-syntax.md` for operator details and wildcards.
   co-occurrence still covers that case, and the phrase form still
   misses the parentage records you want. See `references/query-syntax.md`
   for escalation once the mother's fuller form is known.
-- **Abbreviations must be searched explicitly** in `keywords` and
-  `place` fields. FTS does not auto-expand (Wm/William, Thos/Thomas)
-  there. The `name` field auto-expands recognized English given names.
+- **Abbreviations must be searched explicitly** in all fields. FTS does not auto-expand (Wm/William, Thos/Thomas).
+  Use `get_name_variants` to build an explicit given-name variant set and run each as a separate query.
 - **Mine prior records for known surname variants before querying.**
   Scan existing `research.json` assertions and log entries for the
   target surname. If prior records show a transcription variant,

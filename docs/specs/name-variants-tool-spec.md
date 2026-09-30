@@ -105,7 +105,7 @@ It does not touch `expandNameForFulltext`/`expandLookingFor` or their table.
   does not change `config/given-name-variants.json` or
   `tests/packaging/name-variant-drift.test.ts` in any way.
 - Does not add the result to a search query itself — the caller does that.
-- Not called by any skill or agent yet (see Status above).
+- Called by the `search-full-text` skill to build an explicit given-name variant set before constructing a query.
 
 ## 5. Deferred
 

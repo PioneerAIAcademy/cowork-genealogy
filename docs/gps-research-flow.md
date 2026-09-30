@@ -151,7 +151,7 @@ all, principal included, in a paragraph-style record that was never
 name-indexed. It behaves nothing like an indexed search: no fuzzy matching,
 no Soundex, no abbreviation expansion in `keywords`/`place` — *Wm* and
 *William* are separate `keywords` searches (the `name` field
-auto-expands recognized English given names). Three rules come from repeated failures:
+does not auto-expand given names — use `get_name_variants` first). Three rules come from repeated failures:
 
 - Search by **name only**, then filter for place. Putting the place in the
   query matches the collection's description, not the document.

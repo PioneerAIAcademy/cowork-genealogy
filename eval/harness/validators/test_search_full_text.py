@@ -352,31 +352,49 @@ def test_first_fulltext_search_call_is_unscoped(tool_calls):
 
 def test_fulltext_search_never_scopes_to_collection_id(tool_calls):
     """collectionId is allowed only when a prior fulltext_search call in
-    the same turn sent includeFacets=true. A borrowed collectionId (no prior
-    facet call) silently excludes the FTS partition holding the answer.
+    the same turn sent includeFacets=true AND the value matches a filterParam
+    from that response's facets array. A borrowed collectionId silently
+    excludes the FTS partition holding the answer.
     Safe path: pass includeFacets=true on the first call and use the
     filterParam values from the response's facets array on a follow-up."""
     calls = _fts_tool_calls(tool_calls)
     if not calls:
         pytest.skip("no fulltext_search calls this turn")
 
-    # facets_seen is per-turn, not per-topic. A false negative is possible if
-    # topic A's includeFacets=true call is followed by a borrowed collectionId
+    # facets_seen is per-turn, not per-topic. A false negative is still possible
+    # if topic A's includeFacets=true call is followed by a borrowed collectionId
     # for unrelated topic B. That case is not detectable without topic-boundary
-    # parsing (which would require reading query semantics, not just arguments).
+    # parsing. The filterParam check below catches the most common case: using
+    # an ID that was never returned in any prior facet response this turn.
     facets_seen = False
+    allowed_filter_params: set = set()
     errors = []
     for c in calls:
         args = c["args"]
-        if "collectionId" in args and not facets_seen:
-            errors.append(
-                f"fulltext_search sent collectionId={args['collectionId']!r} "
-                f"without a prior includeFacets=true call in this turn "
-                f"(query: {(args.get('keywords') or args.get('nlQuery'))!r})"
-            )
+        if "collectionId" in args:
+            cid = args["collectionId"]
+            if not facets_seen:
+                errors.append(
+                    f"fulltext_search sent collectionId={cid!r} "
+                    f"without a prior includeFacets=true call in this turn "
+                    f"(query: {(args.get('keywords') or args.get('nlQuery'))!r})"
+                )
+            elif allowed_filter_params and cid not in allowed_filter_params:
+                errors.append(
+                    f"fulltext_search sent collectionId={cid!r} which was not "
+                    f"among the filterParam values from any prior includeFacets "
+                    f"response this turn (allowed: {sorted(allowed_filter_params)!r}; "
+                    f"query: {(args.get('keywords') or args.get('nlQuery'))!r})"
+                )
         if args.get("includeFacets"):
             facets_seen = True
-    assert not errors, "collectionId used without prior includeFacets call:\n  - " + "\n  - ".join(errors)
+            resp = c.get("response") or {}
+            for group in (resp.get("facets") or []):
+                for item in (group.get("items") or []):
+                    fp = item.get("filterParam")
+                    if fp:
+                        allowed_filter_params.add(fp)
+    assert not errors, "collectionId not from a prior filterParam:\n  - " + "\n  - ".join(errors)
 
 
 # --- A plan item only completes via its own search ----------------------

@@ -384,6 +384,49 @@ def test_collection_id_check_skips_when_no_fulltext_search_was_called():
         check_never_scopes_to_collection_id([])
 
 
+def facets_call(keywords, filter_params=None):
+    """Build a call dict for an includeFacets=true fulltext_search with a mocked response."""
+    items = [{"filterParam": fp} for fp in (filter_params or [])]
+    return {
+        "tool": "mcp__genealogy__fulltext_search",
+        "args": {"keywords": keywords, "includeFacets": True},
+        "response": {"facets": [{"name": "Collection", "count": 1, "items": items}]},
+    }
+
+
+def scoped_call(keywords, collection_id):
+    return {"tool": "mcp__genealogy__fulltext_search", "args": {"keywords": keywords, "collectionId": collection_id}}
+
+
+def test_collection_id_check_passes_when_id_matches_prior_filter_param():
+    calls = [
+        facets_call("+Flynn +Patrick", filter_params=["2220359", "2017696"]),
+        scoped_call("+Flynn +Patrick", "2220359"),
+    ]
+    check_never_scopes_to_collection_id(calls)
+
+
+def test_collection_id_check_fires_when_id_not_in_prior_filter_params():
+    calls = [
+        facets_call("+Flynn +Patrick", filter_params=["2220359"]),
+        scoped_call("+Flynn +Patrick", "9999999"),
+    ]
+    with pytest.raises(AssertionError) as e:
+        check_never_scopes_to_collection_id(calls)
+    assert "9999999" in str(e.value)
+    assert "2220359" in str(e.value)
+
+
+def test_collection_id_check_allows_any_id_when_prior_response_had_no_filter_params():
+    """If the facets response returned no filterParam items (e.g. no results),
+    we cannot check the ID — any value is allowed rather than blocking the call."""
+    calls = [
+        facets_call("+Flynn +Patrick", filter_params=[]),
+        scoped_call("+Flynn +Patrick", "9999999"),
+    ]
+    check_never_scopes_to_collection_id(calls)
+
+
 # --- test_wiki_prework_fetch_runs_when_required ------------------------
 # Added with the #2253 wiki move. Tag-gated on `wiki-prework`; the two
 # tests carrying that tag today are latin-american-notarial.json and

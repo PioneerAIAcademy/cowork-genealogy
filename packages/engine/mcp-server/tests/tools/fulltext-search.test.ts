@@ -602,7 +602,7 @@ describe("fulltextSearchTool facets", () => {
     expect(group.name).toBe("Collection");
     expect(group.count).toBe(3);
     expect(group.items).toEqual([
-      { name: "Ireland Wills", count: 10, filterParam: "f.collectionId=111" },
+      { name: "Ireland Wills", count: 10, filterParam: "111" },
     ]);
   });
 

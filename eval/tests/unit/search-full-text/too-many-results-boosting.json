@@ -8,7 +8,7 @@
     "tags": ["fulltext", "boosting", "too-many-results", "includeFacets", "collection-scoping"]
   },
   "input": {
-    "user_message": "Search the full-text index for Thomas Flynn in Pennsylvania land records. There are likely many results — please start with includeFacets: true to see collection breakdowns, then narrow to the most relevant collection on a follow-up call using the collection ID from the facets.",
+    "user_message": "Search the full-text index for Thomas Flynn in Pennsylvania land records.",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
@@ -21,9 +21,9 @@
     "max_wall_clock_seconds": 600
   },
   "judge_context": [
-    "The first fulltext_search call returns 847 total results plus a facets array. The user explicitly asked for includeFacets: true on the first call. A skill that ignores this instruction and does not send includeFacets on its first call scores PARTIAL on Query construction.",
+    "The first fulltext_search call returns 847 total results plus a facets array. The skill is expected to handle a result set this large by narrowing — either via boosting terms per the too-many-results ladder (search-strategies.md) or by using includeFacets to identify the best collection and scoping a follow-up call.",
     "The facets show two collections: Pennsylvania Land Records (623 results, filterParam 2220359) and Pennsylvania Wills and Probate Records (224 results, filterParam 2017696). The skill should pick one and scope the follow-up call using that filterParam as the collectionId.",
-    "QUERY-CONSTRUCTION GRADING NOTE: The follow-up call's collectionId MUST come from the facets returned by the first call — this is the safe scoping pattern. If the skill uses a collectionId that was NOT present in the facets (i.e., borrowed from elsewhere), that scores FAIL on collection scoping per rubric. A skill that narrows only by adding boost terms (without a collectionId) is acceptable but scores PARTIAL since the user explicitly requested the facets-scoped approach.",
+    "QUERY-CONSTRUCTION GRADING NOTE: If the skill uses includeFacets and then a follow-up collectionId, that collectionId MUST come from the facets returned by the first call — the safe scoping pattern from query-syntax.md. A skill that narrows only via boost terms (no collectionId) is also acceptable. A borrowed collectionId (not from any facet response) scores FAIL on collection scoping per rubric.",
     "The scoped follow-up returns 12 results from Pennsylvania Land Records — the skill should triage these against Thomas Flynn's identity using names, dates, and places in the result stubs.",
     "RESULT TRIAGE: The scoped results include both Flynn-as-witness and Flynn-as-principal records. The skill should note which records name Thomas Flynn directly (as opposed to other family members) when triaging match quality."
   ]

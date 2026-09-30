@@ -1,10 +1,8 @@
 # Full-Text Search Strategies — FamilySearch
 
 Strategies for constructing and iterating `fulltext_search` queries.
-FTS `keywords` and `place` fields do not auto-expand abbreviations or
-apply phonetic matching — the agent must generate variants explicitly
-for those fields. The `name` field auto-expands recognized English
-given names with historical diminutives.
+No field auto-expands abbreviations or applies phonetic matching. Use `get_name_variants`
+first to build an explicit given-name variant set and run each as a separate query.
 
 ## When to use FTS vs. indexed Records search
 
@@ -53,10 +51,10 @@ collection-metadata matching.
 - Fall back to manual image browsing
 - Log negative result with exact query
 
-## Name variant queries for keywords/place (must run explicitly — no auto-expansion)
+## Name variant queries (must run explicitly — no auto-expansion)
 
-The `name` field auto-expands recognized given names. The table below
-applies only to `keywords` and `place` searches.
+No field auto-expands. Use `get_name_variants` for given-name variants. The table below
+covers common abbreviations for `keywords` searches.
 
 | Formal | Abbreviations to search separately |
 |---|---|

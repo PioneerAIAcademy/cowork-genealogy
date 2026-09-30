@@ -82,8 +82,7 @@ function buildUrl(input: FulltextSearchInput): string {
   add("offset", input.offset ?? 0);
 
   // m.queryRequireDefault=on requires at least one of the listed terms/phrases
-  // to appear in the document. With quoted-phrase expansion this gives the
-  // desired OR behaviour: any variant matching satisfies the name field.
+  // to appear in the document.
   add("m.queryRequireDefault", "on");
 
   if (input.includeFacets) {
@@ -140,6 +139,11 @@ function mapEntry(entry: FSFulltextEntry): FulltextResult | null {
   return result;
 }
 
+function parseFilterParam(raw: string): string {
+  const m = raw.match(/^f\.collectionId=(.+)$/);
+  return m ? m[1] : raw;
+}
+
 function mapFacets(raw: FSFulltextFacetItem[]): FulltextFacet[] {
   return raw
     .filter((f) => f.displayName && f.facets?.length)
@@ -152,7 +156,7 @@ function mapFacets(raw: FSFulltextFacetItem[]): FulltextFacet[] {
         .map((item) => ({
           name: item.displayName!,
           count: item.count,
-          filterParam: item.params ?? "",
+          filterParam: parseFilterParam(item.params ?? ""),
         })),
     }));
 }
