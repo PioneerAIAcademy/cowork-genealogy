@@ -285,6 +285,24 @@ def test_rule2_blocks_without_cosmetic_skip(monkeypatch, capsys):
     # Tells the senior the exact per-skill label, and how to create it.
     assert "`eval-cosmetic-skip:demo`" in out
     assert "gh label create eval-cosmetic-skip:demo" in out
+    assert "waives nothing" not in out
+
+
+def test_rule2_error_names_the_blocked_skills_own_label(monkeypatch, capsys):
+    monkeypatch.delenv("COSMETIC_SKIP_LABELS", raising=False)
+    check_runlogs.rule2_active("research-plan", _INACTIVE_LOG, "v1.json")
+    out = capsys.readouterr().out
+    assert "`eval-cosmetic-skip:research-plan`" in out
+    assert "eval-cosmetic-skip:demo" not in out
+
+
+def test_rule2_other_namespaced_label_naming_the_skill_does_not_waive(monkeypatch, capsys):
+    """Only the eval-cosmetic-skip: namespace waives; `cluster:demo` or a bare
+    `demo` label must not."""
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", "demo\ncluster:demo")
+    rc = check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v1.json")
+    assert rc == 1
+    assert "NOT active" in capsys.readouterr().out
 
 
 def test_rule2_bypassed_by_its_own_skill_label(monkeypatch, capsys):

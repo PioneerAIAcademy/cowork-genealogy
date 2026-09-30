@@ -289,7 +289,7 @@ rejected: ~20 of ~25 skills' latest run logs are already stale on `main` from
 prior fixture drift, and `mid-research-flynn` alone is referenced by 20 skills,
 so the first fixture-only PR under a blocking gate would fire a ~$160–240 /
 20-annotation re-run wave — and the cheapest way out would be
-`eval-cosmetic-skip`, which is documented for behavior-neutral edits only. A
+an `eval-cosmetic-skip:<skill>` label, which is documented for behavior-neutral edits only. A
 gate too expensive to satisfy trains people to bypass it on exactly the edits
 that are *not* neutral, which is worse than no gate. Blocking only on *new*
 staleness (warning the pre-existing baseline, blocking a fixture edit that

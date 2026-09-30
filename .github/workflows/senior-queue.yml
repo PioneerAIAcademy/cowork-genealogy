@@ -327,7 +327,7 @@ jobs:
             // A sha keeps EVERY check run ever attached to it, and
             // `checks.listForRef`'s default `latest` filter dedupes per check
             // SUITE, not per check NAME. Re-triggering a workflow on the same
-            // commit — which is exactly what applying `eval-cosmetic-skip` does —
+            // commit — which is exactly what applying an `eval-cosmetic-skip:<skill>` label does —
             // opens a second suite, so the first run's `failure` stays visible
             // forever and this workflow reads the sha as failing however many
             // times CI is re-run green. Add-only labelling means nothing ever

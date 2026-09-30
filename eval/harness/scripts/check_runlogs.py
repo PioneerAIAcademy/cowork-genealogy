@@ -111,8 +111,8 @@ FIXTURE_PATH_RE = re.compile(r"^eval/fixtures/(scenarios|mcp)/([^/]+?)(?:/.*|\.j
 # Skills exempt from the per-skill runlog rules (2 + 3) — skills that by design
 # have no unit suite, so they have no `eval/tests/unit/<skill>/` scaffolding and
 # no `eval/runlogs/unit/<skill>/` dir. Without this exemption, any edit to the
-# skill body hard-fails with "no run logs" and the `eval-cosmetic-skip` label
-# can't clear it — that escape hatch only relaxes rule 2 once a runlog dir
+# skill body hard-fails with "no run logs" and no `eval-cosmetic-skip:<skill>`
+# label can clear it — that escape hatch only relaxes rule 2 once a runlog dir
 # already exists.
 #
 # Currently one skill:
@@ -441,7 +441,7 @@ def rule2_fixture_touched(
     skills' latest run logs are already stale on `main` from prior fixture
     drift, and `mid-research-flynn` alone is referenced by 20 skills, so a
     blocking gate would fire a ~$160-240 / 20-annotation re-run wave on the
-    first fixture-only PR and train `eval-cosmetic-skip` misuse on edits that
+    first fixture-only PR and train `eval-cosmetic-skip:<skill>` misuse on edits that
     are *not* behavior-neutral. Blocking only on *new* staleness (leaving the
     pre-existing baseline as warnings) is the named target end-state; it needs
     a frozen-baseline anchor not yet designed and is deferred to #1242.
