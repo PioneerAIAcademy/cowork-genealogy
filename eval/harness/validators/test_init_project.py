@@ -26,15 +26,41 @@ import pytest
 
 # --- Both files exist after init ---------------------------------------
 
-def test_both_project_files_created(before_state, after_state, test):
+def _paused_to_ask(builtin_tool_calls) -> bool:
+    """Whether this run stopped to ask the researcher something it cannot answer.
+
+    Phase 4 made one opening question BLOCKING, which the two file-existence rules
+    below were written on the assumption that none was. When `person_search` cannot
+    pick -- tens of thousands of matches with the top candidates tied on score -- the
+    skill must ASK rather than choose, because a wrong pick spends a whole job. There
+    is legitimately no project yet at that point: building one on the wrong person is
+    the failure the ask exists to prevent.
+
+    Narrow on purpose. A run that merely produced no files still fails; only one that
+    asked AND produced none is excused, so "did nothing" cannot pass as "asked".
+    """
+    return any(
+        (c.get("tool") or c.get("name")) == "AskUserQuestion"
+        for c in (builtin_tool_calls or [])
+        if isinstance(c, dict)
+    )
+
+
+def test_both_project_files_created(before_state, after_state, test, builtin_tool_calls):
     """init-project positive tests must produce BOTH research.json and
     tree.gedcomx.json. Either file missing is a structural failure even
     if the other validates. Per issue #1510, every opening-turn question
     (objective, experience level, access) is non-blocking and defaults
     silently if unanswered, so a positive test always completes in one
-    pass -- there is no longer a premature-write exception to gate."""
+    pass -- there is no longer a premature-write exception to gate.
+
+    THAT PREMISE NO LONGER HOLDS IN ONE CASE, 2026-09-30. Phase 4 made the person
+    pick blocking when `person_search` reports it cannot choose, so a run that
+    correctly asks has no project yet, by design."""
     if test.get("type") != "positive":
         pytest.skip("file-existence rules apply only to positive tests")
+    if _paused_to_ask(builtin_tool_calls) and after_state.get("research_json") is None:
+        pytest.skip("run paused to ask the researcher which person; no project yet, by design")
     if after_state.get("research_json") is None:
         assert False, "init-project did not create research.json"
     if after_state.get("tree_gedcomx_json") is None:
@@ -229,7 +255,7 @@ def test_init_empty_sections(after_state, test, tool_calls):
 
 # --- The write PATH, not just the resulting state ----------------------
 
-def test_project_files_written_through_the_writer_tools(tool_calls, after_state, test):
+def test_project_files_written_through_the_writer_tools(tool_calls, after_state, test, builtin_tool_calls):
     """init-project must create the project by CALLING `project_create`.
 
     One assertion, on one tool, because `project_create` writes BOTH documents
@@ -261,6 +287,8 @@ def test_project_files_written_through_the_writer_tools(tool_calls, after_state,
     """
     if test.get("type") != "positive":
         pytest.skip("write-path rules apply only to positive tests")
+    if _paused_to_ask(builtin_tool_calls) and after_state.get("research_json") is None:
+        pytest.skip("run paused to ask which person; project_create legitimately not reached")
 
     called = {(call.get("tool") or "").rsplit("__", 1)[-1] for call in tool_calls or []}
 

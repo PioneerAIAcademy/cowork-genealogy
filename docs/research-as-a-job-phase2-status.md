@@ -163,6 +163,62 @@ each one changed: [`docs/research-as-a-job-decisions.md`](./research-as-a-job-de
 Read it before re-opening a settled question — several were answered once and are easy to
 re-litigate from a diff alone.
 
+## Phase 4 acceptance: the init-project suite is green on three separate causes
+
+`ut_init_project_012` (the new non-decisive-pick test) failed on its first run, and
+chasing it surfaced two older reds nobody had separated. All three are now closed, and
+none of the three was a defect in the skill:
+
+9. **012 was an eval defect, not a skill defect.** The run behaved exactly as phase 4
+   specifies -- `person_search` only, no `person_read`, `AskUserQuestion` raised, no
+   project built, and no judge dimension below 3. Two validators failed it for having no
+   project files. Their premise, stated in `test_both_project_files_created`'s own
+   docstring, was that *every* opening question is non-blocking, "so a positive test
+   always completes in one pass". Phase 4 made one question blocking: when the search
+   cannot pick, building a project on the wrong person is the failure the ask exists to
+   prevent. Both rules now stand down **only** when the run asked AND produced nothing --
+   never for a run that merely produced nothing, so "did nothing" cannot pass as "asked".
+10. **`ut_init_project_001`'s xfail marker was stale, and an xpass is exit-1.** The marker
+   (issue #1689) waited on init-project "reliably" writing no source entry for an
+   untranscribed memory. The fixture still carries that headstone, the rule is stated
+   unconditionally at SKILL.md line 227, and `sources` is empty in all four committed runs
+   v3-v6 -- mechanism, not just outcome. The failing run the marker cites,
+   `v4_2026-09-25_16-03-09`, is not in the record at all; the released v4 is a later run
+   and passes. Marker removed. Issue #1689 stays open -- this closes one symptom of it.
+11. **`ut_init_project_vqx` was a judge-context gap, both halves.** The judge docked
+   Correctness to 2 for (a) "fabricating" a first research question and (b) "inventing"
+   that a census source was never read directly. Both are instructed, supported behaviour:
+   SKILL.md's closing step is to *name* the first research question and go on to it
+   (line 299), and `person_read` populates `text` only when it transcribed a source -- no
+   source in this fixture has one. The run persisted the user's own words as the objective
+   and wrote no research-question entry, which is correct. Two judge_context lines added,
+   each also pinning the converse (persisting a question is still wrong; claiming a source
+   *was* examined is still wrong) so the context cannot excuse a real regression.
+
+12. **`rejected_links` shipped with three of its documentation sites missing.** The full
+   harness suite (not `-x`) turned up two reds in `test_ownership_manifest.py` that the
+   phase 3 item 3 commit had left: a new section is a *declaration*, and that module
+   deliberately reddens on any addition so a widening has to be written down. Fixing it
+   showed the section had also never reached `docs/specs/research-schema-spec.md` at all —
+   no ownership-table row, no §5 section schema, no cross-reference map entry — though
+   `ownership.json`, both schema trees, the validator, the web mirror, the hook and
+   `research_query` were all correct. CLAUDE.md's new-section site list names the prose
+   table; the commit followed the code half of the list and not the prose half.
+
+   The declaration also needed a *kind* the module did not have. `NEWLY_ENFORCED` means a
+   row already in the frozen table that was never evaluated; `rejected_links` did not exist
+   when the table was frozen. Added as `ADDED`, separate so the failure message still says
+   which kind of change moved, and `test_the_only_newly_enforced_section_is_localities` was
+   renamed — it asserted two things while its name claimed one.
+
+**A skip inside a validator silently disarms `pytest.raises` in its unit test.** Adding the
+ask exemption gave `validators/test_init_project.py` a `pytest.skip` path, and a skip raised
+inside a validator propagates out of the calling test -- so pytest marks that test *skipped*
+rather than failed, and every `with pytest.raises(AssertionError)` in
+`tests/unit/test_init_project_validator.py` stopped asserting. Mutation M1 (exemption always
+fires) survived because of it. Replaced with a `must_fail` helper that turns a skip into an
+explicit failure; all four mutations now die.
+
 ## Process notes worth keeping
 
 - **`mutation-check.sh` restores from git.** Never run it in the background while

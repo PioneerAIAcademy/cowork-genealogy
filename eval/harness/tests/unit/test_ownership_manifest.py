@@ -88,6 +88,18 @@ NEWLY_ENFORCED = {"localities"}
 #: body edit is a separate, eval-gated change.
 WIDENED: dict[str, set[str]] = {"questions": {"proof-conclusion"}}
 
+#: `rejected_links` is a section that did not exist when the literal above was
+#: frozen, so it is declared here rather than pasted into it — a section ADDED is
+#: a different decision from `NEWLY_ENFORCED`, where the row already sat in the
+#: table and merely went unevaluated.
+#:
+#: It is `person-evidence`'s alone. A rejection is its own record: when that skill
+#: rules a candidate record out, the reasoning has to survive so a later pass does
+#: not re-open the same link and spend the search again. No other skill produces
+#: that judgement, so no other skill may write it — and a sole owner is the
+#: narrow direction, which cannot newly fail another skill's test.
+ADDED: dict[str, set[str]] = {"rejected_links": {"person-evidence"}}
+
 #: `assertions` loses `convert-dates`. The grant was dead on arrival: the skill's
 #: only tool is `convert_calendar`, it holds no writer tool, and its own body
 #: says it writes nothing. A narrowing is the direction that CAN break a run, so
@@ -141,6 +153,8 @@ def expected_research_owners() -> dict[str, set[str]]:
         expected[section] |= added
     for section, removed in NARROWED.items():
         expected[section] -= removed
+    for section, owners in ADDED.items():
+        expected[section] = set(owners)
     return expected
 
 
@@ -155,16 +169,23 @@ def test_tree_owners_match_the_frozen_table():
     assert writer_sets(TREE_GEDCOMX_JSON, UNIT_PLANE) == expected_tree_owners()
 
 
-def test_the_only_newly_enforced_section_is_localities():
+def test_the_enforced_section_set_grew_by_exactly_what_was_declared():
     """The set of enforced sections grew by exactly what was declared.
 
     Separate from the mapping check above so the failure message says *which*
     kind of change happened — a new section being enforced and an owner being
     added to an existing one are different decisions with different costs.
+
+    Two declared growths, and they are not the same kind. `NEWLY_ENFORCED` names
+    a row that was already in the frozen table and simply never evaluated;
+    `ADDED` names a section that did not exist when the table was frozen. Keeping
+    them apart is what lets the failure message say which one moved. (Renamed
+    2026-09-30 — it said `..._is_localities` while asserting two.)
     """
-    before = set(FROZEN_OWNERSHIP_TABLE) - NEWLY_ENFORCED
+    declared = NEWLY_ENFORCED | set(ADDED)
+    before = set(FROZEN_OWNERSHIP_TABLE) - declared
     after = set(writer_sets(RESEARCH_JSON, UNIT_PLANE, subject=SUBJECT))
-    assert after - before == NEWLY_ENFORCED
+    assert after - before == declared
     assert before - after == set()
 
 

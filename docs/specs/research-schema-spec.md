@@ -251,6 +251,7 @@ described under "Who actually writes a row" below.
 | `proof_summaries` | proof-conclusion | (terminal) | Mutable (tier, narrative can be revised) |
 | `evaluations` | **the gps-mentor agent** | proof-conclusion, question-selection | Retire an entry by pointing `superseded_by` at its replacement; never delete. The owner is an agent, and the harness ownership check keys on the calling *skill's* name — so this row cannot be enforced there, and is declared unenforceable rather than left to look covered |
 | `localities` | locality-guide | research-plan (+ the Research Viewer) | Mutable; never delete — a re-survey of the same place refreshes the existing `loc_` entry in place (there is no status field to supersede). Optional section — absent on projects that predate it. `search-records` does NOT read it (research-plan pre-translates the fact into `plan_item.rationale`) |
+| `rejected_links` | person-evidence | any caller via `research_query` | Mutable (`reason` may be filled in later); never delete — the whole point is that the record outlives the session that made it. Optional section — absent on projects that predate it. Sole owner: ruling a candidate link out is `person-evidence`'s judgement and no other skill produces it. **No skill body reads this section**: the re-link refusal is a `research_append` precondition, not a rule anyone has to remember (ADR-0011). It is queryable so an agent can *explain* a refusal, not so it can enforce one |
 
 `research_append` also accepts a `plan_items` pseudo-section, which addresses
 `plans[].items[]` rather than a top-level property of this file. It carries the
@@ -972,6 +973,42 @@ written as free text in the plan item that uses it. The section shipped with
 a viewer Localities tab; `search-records` deliberately stays general (see the
 consumer table above).
 
+### 5.14 `rejected_links`
+
+Array of person-links the researcher ruled out. Written exclusively by the
+`person-evidence` skill.
+
+**Nothing reads it in order to obey it.** Whether a pair was rejected is decidable
+from `research.json` alone, so per ADR-0011 the rule lives in `research_append`,
+which refuses to re-link the exact pair — a precondition binds everywhere, where a
+line in a skill body is a rule the model may not follow. The refusal names the
+researcher's own reason when they gave one, since a refusal they cannot trace back
+to their decision reads as a broken tool. It refuses that pair and no more:
+rejecting "this record is not Mary" says nothing about her sister, nor about a
+different record for Mary.
+
+The section is exposed through `research_query` so an agent can **explain** a
+refusal, not so it can enforce one. No skill body names it.
+
+**Its own section rather than a fourth `person_evidence.confidence` value.** That
+field says how sure we are a link **is** a match; a rejection is the opposite
+claim, not a weaker version of it. Folding the two would make "we checked and it
+is not him" indistinguishable from "we have not checked."
+
+**Kept, never deleted.** A rejection that disappears buys nothing: the next pass
+re-opens the same pair and spends the search again. Deleting is also how a
+disagreement gets erased rather than answered.
+
+**Optional section** (not in `required`): absent on projects that predate it.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | yes | `rj_` prefix, `^rj_[0-9]{3}$` |
+| `assertion_id` | string | yes | `^a_[0-9]{3}$` — the assertion proposing the link |
+| `person_id` | string | yes | The tree person the assertion was proposed against |
+| `reason` | string or null | no | Why it was rejected. Optional on purpose: **a rejection is never a demand for the right answer.** Requiring a reason would push a researcher who simply knows it is wrong into inventing a justification, and a fabricated reason is worse than none |
+| `created` | string | yes | Tool-stamped ISO 8601 date |
+
 ---
 
 ## 6. Cross-Reference Map
@@ -1030,6 +1067,10 @@ evaluations
   ├─ target_id (when target_type == "question") ─► questions[].id
   ├─ target_id (when target_type == "proof_summary") ► proof_summaries[].id
   └─ superseded_by ──────────────────────────────► evaluations[].id
+
+rejected_links
+  ├─ assertion_id ───────────────────────────────► assertions[].id
+  └─ person_id ──────────────────────────────────► tree.gedcomx.json persons[].id
 ```
 
 ---
