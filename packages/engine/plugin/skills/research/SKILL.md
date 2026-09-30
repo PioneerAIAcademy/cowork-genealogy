@@ -233,14 +233,12 @@ regardless of how directly the request named the destination.
      `informant_bias_notes`.
 
    A front-loaded plan is a **prioritized list, not a checklist to
-   drain** — but the gate reads the **active** plan, and an item left
-   `planned` there blocks the declaration. Consult
-   `@plugin:research-exhaustiveness` as soon as analyzed evidence
-   plausibly answers the active question; when it names items still
-   open, close them out through the skill that owns each rather than
-   reflexively executing them — a moot item is `skipped` with a reason,
-   and a plan new information has invalidated is superseded via
-   `research-plan`. Exhaustiveness is the
+   drain.** Consult `@plugin:research-exhaustiveness` as soon as analyzed
+   evidence plausibly answers the active question — do not reflexively
+   execute the remaining `planned` items first. When it names items
+   still open, close them out through the skill that owns each: a moot
+   item is `skipped` with a reason, a plan new information has
+   invalidated is superseded via `research-plan`. Exhaustiveness is the
    stop gate: it weighs the question against the 7-point stop criteria,
    assessed in order and stopping at the first that fails, and either
    declares the search reasonably
