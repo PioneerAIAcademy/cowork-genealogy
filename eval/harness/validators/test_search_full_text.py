@@ -132,10 +132,11 @@ FILTER_KEYS = (
 # The subset SKILL.md's decision ladder adds only after an unfiltered look
 # (step 5: 50-500 hits -> add Year/RecordType; >500 -> add a second term or
 # place). collectionId is deliberately excluded: it is not a "wait, then
-# add" filter at all -- SKILL.md forbids it on every call, full stop ("Do
-# NOT scope a full-text search to a record collectionId"), so it gets its
-# own always-applies check below rather than living in the first-call-only
-# one.
+# add" filter at all. A borrowed collectionId (from record_search or
+# collections_search) is always forbidden; a facet-derived collectionId (taken
+# from a prior includeFacets=true call's response) is conditionally allowed.
+# That conditional is checked by test_fulltext_search_never_scopes_to_collection_id
+# below, so collectionId is not included in the first-call-only guard here.
 POST_SEARCH_FILTER_KEYS = (
     "recordPlace0", "recordPlace1", "recordPlace2", "recordPlace3",
     "recordType", "yearFrom", "yearTo",
@@ -359,6 +360,10 @@ def test_fulltext_search_never_scopes_to_collection_id(tool_calls):
     if not calls:
         pytest.skip("no fulltext_search calls this turn")
 
+    # facets_seen is per-turn, not per-topic. A false negative is possible if
+    # topic A's includeFacets=true call is followed by a borrowed collectionId
+    # for unrelated topic B. That case is not detectable without topic-boundary
+    # parsing (which would require reading query semantics, not just arguments).
     facets_seen = False
     errors = []
     for c in calls:
