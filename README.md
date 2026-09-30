@@ -231,7 +231,6 @@ skills per the validation protocol.
 | Skill | What it does | Triggered by |
 |-------|-------------|-------------|
 | **validate-schema** | Validates both project files against the published schemas. Required fields, enum values, ID prefixes, cross-references. | Every writing skill invokes this after writing. You can also say "validate the files." |
-| **check-warnings** | Flags genealogical impossibilities (married before 12, died after 120, child born after parent's death). | Writing skills invoke after adding assertions/person_evidence. You can say "check for warnings." |
 
 ### Benchmark suite (not shipped — repo-local dev tooling)
 
@@ -266,6 +265,7 @@ don't load it explicitly.
 | **person-evidence** | Resolves identity for **one** request — evaluates whether a record's person matches a tree person, writes the `person_evidence` links with their confidence and rationale, and creates stub persons when nothing matches. It is the only writer of `person_evidence`. | (spawned by `/research` directly via the agent description) |
 | **search-images** | Browses a digitized FamilySearch volume page by page when the record set is neither indexed nor full-text searchable, and logs the browse. It finds the image groups covering a place and date range, lists the images inside one, and reads each page as text. | "Browse the images" / "page through the film" |
 | **citation** | Polishes the citations on sources that already exist to Evidence Explained standards (Who/What/When/Where/Where-within), and looks up the office that created a probate record on the FamilySearch wiki rather than carrying one jurisdiction's offices in its prompt. It never creates a source entry: asked to add a record, it declines and routes to `record-extraction`. | "Fix citations" / "Cite this source" |
+| **check-warnings** | Flags genealogical impossibilities and implausible patterns in one person's own data (married before 12, died after 120, child born after parent's death), deterministically from your local tree. Writes nothing. `init-project` runs it on every imported person, and `tree-edit` after every edit or merge. | "Check for warnings" / "Any problems with his dates?" |
 | **image-reader** | Reads **one** FamilySearch image scan and returns a full text transcription (fast, cheap — hosted Gemini Flash OCR). Used when browsing unindexed volumes or extracting from a page image; it keeps the image data out of the main conversation. | (not invoked directly — `record-extraction` and `search-images` delegate) |
 | **search-familysearch-wiki** | Searches the FamilySearch Research Wiki for **one** genealogy how-to question and saves the guidance as a markdown file in your working folder, citing the wiki pages it came from. Asked for Wikipedia, a locality records survey or narrative history, it does no search and hands the request back by name. | "Search the FamilySearch wiki for how to find Italian birth records" |
 | **search-wikipedia** | Looks **one** topic up on Wikipedia — the general-purpose encyclopedia — and saves the article summary as a markdown file in your working folder. One tool call, a template it carries in its own body, one file. Asked for narrative history, a locality records survey or the FamilySearch wiki, it does no lookup and hands the request back by name. | "Look up Albert Einstein on Wikipedia" |
@@ -483,7 +483,7 @@ What's shipped:
 - **21 shipped skills.** Full GPS research cycle from `init-project`
   through the conclusion, plus reference skills (locality-guide,
   historical-context, translation)
-  and guardrails (validate-schema, check-warnings). The three
+  and guardrails (validate-schema). The three
   e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result, grade-e2e-run)
   are repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
 - **12 Cowork agents.** `gps-mentor` (BCG-style senior-genealogist review,
@@ -496,6 +496,7 @@ What's shipped:
   Explained refinement of citations on sources that already exist),
   `convert-dates` (calendar-system date conversion), `search-images`
   (page-by-page browse of an unindexed volume),
+  `check-warnings` (genealogical-impossibility checks on one person's data),
   `search-familysearch-wiki` (FamilySearch Research Wiki how-to guidance saved
   as a markdown file), `search-wikipedia` (one encyclopedia lookup saved as a markdown file),
   `hypothesis-tracking` (competing-candidate hypotheses, and the only writer of

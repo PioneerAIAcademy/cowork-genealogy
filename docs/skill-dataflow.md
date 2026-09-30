@@ -13,7 +13,7 @@ disagrees with either, they win.
 
 There are 21 skills and 12 agents. Besides the `research` orchestrator itself, its routing
 table names 13 of them, and 5 more are reached by delegation from a skill the table does
-name. The remaining 11 fire only when the user asks — see
+name. The remaining 10 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
 likely to surprise you.
 
@@ -101,7 +101,7 @@ flowchart TD
 
     subgraph ASK ["Reached only by asking — no routing row"]
         direction LR
-        U1["timeline · check-warnings · translation<br/>historical-context · convert-dates"]
+        U1["timeline · translation<br/>historical-context · convert-dates"]
         U2["tree-edit · validate-schema · project-status<br/>forget-and-rederive · the two wiki searches"]
     end
 
@@ -193,7 +193,7 @@ sibling skill.
 | **`project-status`** | "where are we", opening an existing project | The resume summary — plain-language first, then GPS state — plus broken-foreign-key detection | Whole-file `Read` of both project files, deliberately | Nothing |
 | **`timeline`** | "build a timeline"; handoffs from `person-evidence`, `conflict-resolution`, `hypothesis-tracking` | `timelines` — regenerated wholesale, never edited entry by entry — with gaps and geographic feasibility | `research.json` `person_evidence`, `assertions`, `hypotheses`, `timelines`, `conflicts` by whole-file `Read`; `place_search`, `place_distance` | `timelines[]` — `research_append` |
 | **`citation`** (an AGENT since issue #2799, not a skill) | "fix this citation", "format to Evidence Explained" | Refining `citation` and the six `citation_detail` fields on a source that already exists. **Never creates one**. Fetches the creating office for a probate record from `{State}_Probate_Records` rather than carrying one jurisdiction's offices in its body | Whole-file `Read` of `research.json` `sources` and `log`; tree source descriptions; `wiki_read` | `sources[].citation`, `.citation_detail`, `.notes` — `research_append` `op: "update"` only |
-| **`check-warnings`** | After any tree edit or merge; after `person-evidence` mints persons; "check for problems" | Running the offline impossibility check and the live FamilySearch quality score, and interpreting both for a single person's own data. `source-evaluation` also reads that score, for its source-conflict list and to report the profile checklist alongside its audit. Never fixes anything | `person_warnings` (deterministic; offline), `person_quality` (live FamilySearch; a project id is first resolved to the person's FamilySearch link through the tree, and a person with no link gets one sentence by name); the tree only to resolve a name to an id | Nothing |
+| **`check-warnings`** (an AGENT since issue #2118, not a skill) | After any tree edit or merge; on every person `init-project` imports; "check for problems" | Running the offline impossibility check and interpreting it for a single person's own data. Hands a source conflict, a source audit or a schema check back to its owner instead of doing it. Never fixes anything | `person_warnings` (deterministic, offline) for the person ids the caller names; no file reads | Nothing |
 | **`source-evaluation`** | "evaluate / audit / review the sources on this profile", "are these sources right" | Auditing the sources **already attached** to a person: classifying each finding as an index error (re-read and correct), a misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do), and reporting the kind as undecided where the profile alone cannot settle it. A precise source refining a vague conclusion is an improvement, not a finding. A **source-vs-source** disagreement the audit turns up is characterised — both values, both record types, what would settle it — with no winner picked and nothing written; a request to *resolve* one still routes to `conflict-resolution` at the front door. Never fixes anything, never extracts | `person_read` (with `sourceDescriptions`), `record_read`, `source_attachments`, `person_quality` (`detail: true`, FamilySearch-shaped ids only). Reads no images — it holds no image tool, and none of those four returns an image id | Nothing |
 | **`tree-edit`** | Direct user correction; a merge after a conclusion established identity at probable or better | Out-of-pipeline tree changes and person merges | `tree.gedcomx.json`; `place_search`, `person_record_matches`, `person_person_matches` | Tree `persons`, `relationships`, `facts`, `names`, `sources` — `tree_edit` / `tree_correct`. A merge via `merge_tree_persons` **also rewrites `research.json`** ids (see the discrepancies below) |
 | **`translation`** | A non-English record or term; handoff from `historical-context` | Transcription, translation as an explicitly derivative rendering, and paleography | The text or an image already in the conversation. **No MCP tool at all** | Nothing |
@@ -330,7 +330,7 @@ touch either side.
 
 No routing-table row names these, so an autonomous `/research` run never enters them:
 
-`search-full-text` · `timeline` · `check-warnings` · `translation` ·
+`search-full-text` · `timeline` · `translation` ·
 `historical-context` · `tree-edit` · `validate-schema` ·
 `forget-and-rederive` · `project-status` ·
 `source-evaluation` · `init-project` (named in prose, not in the table)
@@ -343,6 +343,10 @@ routing-table row — so the row's absence no longer implies any of them cannot 
 **Whether each actually fires in an autonomous run is unmeasured**, and it will stay
 unmeasured until a committed e2e run postdates each conversion. Do not read their removal
 from this list as evidence either way.
+
+`check-warnings` left it the same way on 2026-09-28 (issue #2118), with the same caveat:
+its callers now spawn it (`init-project`, `tree-edit`), and whether it fires unasked in an
+autonomous run is unmeasured.
 
 The two **thin skill halves** of the paired rows join this list. Rows 10
 and 11 route to `@plugin:<agent>`, so `skills/research-exhaustiveness/` and

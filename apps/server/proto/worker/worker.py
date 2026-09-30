@@ -142,6 +142,7 @@ SCHEMA_RETRIES = 30
 # not shrink the expectation to match (every skill that delegates to the missing agent
 # would then fail silently at delegation time -- the zero-tools class of failure).
 EXPECTED_AGENTS = frozenset({
+    "check-warnings",
     "citation",
     "convert-dates",
     "gps-mentor",
@@ -156,8 +157,8 @@ EXPECTED_AGENTS = frozenset({
     "search-wikipedia",
 })
 # The other half of the same precondition, a literal for the same reason: a count of
-# the directory the SDK loads the plugin from shrinks with it -- an image shipping 21
-# skills registers 21 and passes. test_proto_worker pins this against the repo.
+# the directory the SDK loads the plugin from shrinks with it -- an image shipping 19
+# skills registers 19 and passes. test_proto_worker pins this against the repo.
 EXPECTED_SKILLS = 21
 
 _stdout_lock = threading.Lock()

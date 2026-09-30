@@ -76,7 +76,7 @@ PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
-AGENTS = {"citation", "convert-dates", "gps-mentor", "hypothesis-tracking", "image-reader", "person-evidence", "proof-conclusion", "record-extractor", "research-exhaustiveness", "search-familysearch-wiki", "search-images", "search-wikipedia"}
+AGENTS = {"check-warnings", "citation", "convert-dates", "gps-mentor", "hypothesis-tracking", "image-reader", "person-evidence", "proof-conclusion", "record-extractor", "research-exhaustiveness", "search-familysearch-wiki", "search-images", "search-wikipedia"}
 
 
 # ── fakes ─────────────────────────────────────────────────────────────────────────
@@ -660,17 +660,17 @@ def _info(agents: set[str], skills: int, extra_agents: tuple[str, ...] = ()) -> 
 
 
 def test_registration_passes_with_every_bare_agent_and_every_skill():
-    assert options.check_registration(_info(AGENTS, 22, ("general-purpose", "genealogy-research:gps-mentor")),
-                                      expected_agents=AGENTS, expected_skills=22) == []
+    assert options.check_registration(_info(AGENTS, 21, ("general-purpose", "genealogy-research:gps-mentor")),
+                                      expected_agents=AGENTS, expected_skills=21) == []
 
 
 def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
-    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 22, ("genealogy-research:gps-mentor",)),
-                                          expected_agents=AGENTS, expected_skills=22)
+    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 21, ("genealogy-research:gps-mentor",)),
+                                          expected_agents=AGENTS, expected_skills=21)
     assert problems and "gps-mentor" in problems[0] and "bare" in problems[0]
-    problems = options.check_registration(_info(AGENTS, 21), expected_agents=AGENTS, expected_skills=22)
-    assert problems == ["21 genealogy-research:* commands registered, expected 22"]
-    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=22)
+    problems = options.check_registration(_info(AGENTS, 20), expected_agents=AGENTS, expected_skills=21)
+    assert problems == ["20 genealogy-research:* commands registered, expected 21"]
+    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=21)
 
 
 def test_the_plugin_ships_twelve_agents_and_twenty_one_skills():
