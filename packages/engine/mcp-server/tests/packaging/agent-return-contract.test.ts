@@ -35,6 +35,34 @@ const PENDING: Record<string, string> = {
   "research-exhaustiveness.md": "lands with its next body edit",
   "gps-mentor.md":
     "lands with the narrative_for_user split (spec §8, §11.1) on its next body edit",
+  // NOT "lands with its next body edit" like the three above. This one is a
+  // measured conflict, and the premise of the 2026-09-18 ruling does not hold
+  // for it: that ruling exists because "an agent body without the field is an
+  // agent whose work reaches the researcher as nothing", and this agent's
+  // deliverable is a markdown file the researcher opens, announced by a
+  // caller-facing line the router already relays verbatim.
+  //
+  // Its suite grades reply brevity from three directions at once
+  // (`test_reply_does_not_narrate_pending_step`, the `Reply economy` rubric
+  // dimension, and base Correctness, which failed one test for a single
+  // interpretive clause), so two paragraphs of researcher-facing prose written
+  // straight after reading the article is space the extract flows into.
+  // Measured. The one-line return was clean across the three committed
+  // pre-conversion logs -- v1_2026-07-28_09-35-42 (9 of 9 pass),
+  // v1_2026-08-22_10-20-08 (11 pass, 1 partial) and v1_2026-09-03_11-36-25
+  // (12 of 12) -- with zero fails in any of them. Adding the contract scored 7
+  // fails, and 5 on a second wording, with every score of 1 tracing to article
+  // content in the reply; those two runs are NOT in the corpus, because rule 6
+  // forbids committing a run log carrying a fail, so their figures are quoted
+  // from the PR that measured them rather than from a file here.
+  //
+  // Richard ruled on 2026-09-28 that the exemption stands, on the condition
+  // that new agents are no longer copied from this one -- CLAUDE.md,
+  // DEVELOPMENT.md, docs/architecture.md, docs/skill-lifecycle.md,
+  // docs/skill-authoring-guide.md and CONTRIBUTING.md all point at
+  // agents/search-images.md instead.
+  "search-wikipedia.md":
+    "measured conflict with its own suite's reply-brevity grading; premise of the 2026-09-18 ruling does not hold for a file-deliverable agent (#2795)",
 };
 
 function stripFences(text: string): string {
