@@ -1263,7 +1263,10 @@ export const recordSearchToolSchema = {
     "the span you mean as a range rather than relying on a single year. " +
     "PLACES: pass the full hierarchical standardized string when you have one " +
     "(`'Lehi, Utah County, Utah, United States'`); a non-standardized string " +
-    "falls back to brittle string matching.",
+    "falls back to brittle string matching. Unqualified, a place field matches " +
+    "the place given AND places up to three jurisdiction levels above it, " +
+    "which is why a county scope barely discriminates; whether an `*Exact` " +
+    "place still descends to child localities is NOT established.",
   // The `*Exact` descriptions below state only what is specific to each
   // parameter; the rule they share lives in the tool-level description above and
   // is deliberately not repeated per parameter. They cover the effect on the
@@ -1305,7 +1308,7 @@ export const recordSearchToolSchema = {
       birthYearTo: { type: "number", description: "Upper bound of the birth-year range. 4-digit year (e.g., 1859). Must be paired with `birthYearFrom`." },
       birthYearExact: { type: "boolean", description: "With `true`, only records whose indexed date is inside the range survive. Unqualified, a range also admits records whose estimated date range overlaps it. Records with no indexed date at all are reached by neither." },
       birthPlace: { type: "string", description: "Birth place name (e.g., `'Kentucky'`, `'Hardin, Kentucky, United States'`). For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      birthPlaceExact: { type: "boolean", description: "Stop upward expansion to parent jurisdictions. A different mechanism from the rule above — expansion, not fuzz. Unqualified, a place matches the place given AND places up to three jurisdiction levels above it, which is why a county scope barely discriminates. Whether `.exact` still descends to child localities is NOT established — treat that half as unverified. Large effect on the count; set it when the count must mean something. Ordering effect measured on one target only." },
+      birthPlaceExact: { type: "boolean", description: "Stop upward expansion to parent jurisdictions. A different mechanism from the rule above — expansion, not fuzz. Large effect on the count; set it when the count must mean something. Ordering effect measured on one target only." },
 
       deathYearFrom: { type: "number", description: "Lower bound of the death-year range. 4-digit year (e.g., 1900). Must be paired with `deathYearTo`." },
       deathYearTo: { type: "number", description: "Upper bound of the death-year range. 4-digit year (e.g., 1920). Must be paired with `deathYearFrom`." },

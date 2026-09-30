@@ -152,7 +152,14 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  * The BEFORE pair (15,509 / 3,745) is a property of `origin/main` and cannot drift.
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
-  ["record_search", 14947],
+  // 14947 -> 16605: the tool-level description gained the event-family, date-
+  // granularity and place-expansion rules when issue #2123 deleted
+  // search-records/references/place-date-mechanics.md, which was the only place
+  // that stated them and which no agent can read. Stated once at tool level
+  // rather than per parameter, exactly as the CEILING rule below requires.
+  // Measured independently (2241 tool-level + 14364 params), not copied from the
+  // failure message.
+  ["record_search", 16605],
   // 5292 -> 5302: the tool-level description gained "siblings, " when the
   // sibling fan-out landed (#2593). 5302 -> 5281: it lost " with relatives:
   // true" when person_read started ignoring that flag (#2696). Measured
