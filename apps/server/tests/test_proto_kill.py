@@ -6,6 +6,8 @@ kill is timed on, the evidence block rendered from canned rows, and the arm's ow
 
 from __future__ import annotations
 
+import contextlib
+
 import re
 import subprocess
 import sys
@@ -190,7 +192,7 @@ def test_run_kill_uses_the_input_selector_when_one_is_given(monkeypatch):
         def __enter__(self): return self
         def __exit__(self, *a): return False
         def post(self, *a, **k): raise AssertionError("session creation should not be reached")
-    monkeypatch.setattr(httpx, "Client", lambda **kw: _Client())
+    monkeypatch.setattr(turn, "signed_in_client", lambda base, email, **kw: _Client())
 
     # With a selector -> the input waiter.
     turn.run_kill("http://x", "dsn", 1.0, turn.KillSpec(
@@ -215,7 +217,7 @@ def test_the_evidence_block_names_the_call_the_probe_actually_waited_for(monkeyp
     class _Client:
         def __enter__(self): return self
         def __exit__(self, *a): return False
-    monkeypatch.setattr(httpx, "Client", lambda **kw: _Client())
+    monkeypatch.setattr(turn, "signed_in_client", lambda base, email, **kw: _Client())
 
     spec = turn.KillSpec(kill_on="Agent", kill_on_input={"run_in_background": True},
                          session_id="sess-1")
@@ -457,6 +459,8 @@ def _fake_stack(monkeypatch, order: list[str], wait_outcome: str = "seen") -> No
     turn_done wait times out, so the arm returns at its 'not reached turn_done' branch."""
     monkeypatch.setattr(turn, "one", lambda dsn, sql, params: 7 if "count(*)" in sql else "v")
     monkeypatch.setattr(turn, "post_message", lambda client, base, session_id, text: "turn_x")
+    # U2: the arm signs in before it posts; nothing here may reach a tier.
+    monkeypatch.setattr(turn, "signed_in_client", lambda base, email, **kw: contextlib.nullcontext())
 
     def wait_for_tool_call(dsn, turn_id, tool, deadline_s):
         order.append(f"wait_for_tool_call {tool} deadline={deadline_s}")
@@ -531,3 +535,35 @@ def test_proto_kill_target_passes_args_through_to_the_arm():
     body = "\n".join(_recipe("proto-kill"))
     assert re.search(r'\$\(MAKE\) proto-turn ARGS="--kill .*\$\(ARGS\)"', body), body
     assert re.search(r"\$\(if \$\(SESSION\),\s*--session \$\(SESSION\),\s*\)", body), body
+
+
+def test_signed_in_client_works_inside_with_and_carries_the_cookie():
+    """Every other test here replaces signed_in_client, so the real one was first run
+    against a live stack -- where `with signed_in_client(...)` raised "Cannot open a client
+    instance more than once" because the login had already opened it."""
+    import httpx
+
+    seen: list[tuple[str, str | None]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append((request.url.path, request.headers.get("cookie")))
+        if request.url.path == "/auth/dev-login":
+            return httpx.Response(200, json={"id": "usr_1"}, headers={"set-cookie": "wb_session=abc; Path=/"})
+        return httpx.Response(200, json=[])
+
+    transport = httpx.MockTransport(handler)
+    with turn.signed_in_client("http://tier", "a@x.org", transport=transport) as client:
+        client.get("http://tier/api/sessions")  # absolute, as turn.py's callers write it
+        client.get("/api/sessions")              # relative, as drive.py writes it
+    assert seen == [("/auth/dev-login", None), ("/api/sessions", "wb_session=abc"), ("/api/sessions", "wb_session=abc")]
+    unentered = turn.signed_in_client("http://tier", transport=transport)
+    assert unentered.get("/api/sessions").status_code == 200
+    unentered.close()
+
+
+def test_signed_in_client_names_the_override_when_dev_login_is_off():
+    import httpx
+
+    transport = httpx.MockTransport(lambda request: httpx.Response(403, json={"detail": "off"}))
+    with pytest.raises(RuntimeError, match="fs-signin"):
+        turn.signed_in_client("http://tier", transport=transport)
