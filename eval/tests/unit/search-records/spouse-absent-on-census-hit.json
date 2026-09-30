@@ -35,7 +35,8 @@
     "Do NOT penalise the skill for noticing that Catherine is absent from a household George heads in 1860 and raising it as an identity or research question. That is sound practice given the scenario tree (Catherine is joined to George by Couple R1 and carries no death fact). It is a bonus, not a requirement, and it must never be resolved by renaming or overwriting Catherine.",
     "Completeness: reporting the hit, its absent-spouse status, and logging the search is a complete answer. Do NOT require extraction, attachment, or a second search.",
     "Tool Arguments: the record_search call must carry a spouse anchor (spouseGivenName 'Catherine' and/or spouseSurname) — that is what makes record_search report relativeTerms at all. A call with projectPath + subjectId is preferred since it folds in ranking, but its absence is not a Tool Arguments defect on its own.",
-    "record_read IS stocked for this test — reading the top hit is normal behavior, not a defect. Score Tool Arguments on the record_search call's arguments."
+    "record_read IS stocked for this test — reading the top hit is normal behavior, not a defect. Score Tool Arguments on the record_search call's arguments.",
+    "The census `wiki_read` from Step 2's pre-work block is NOT graded on Tool Arguments — score that dimension on the `record_search` call's arguments, as this suite already does for `record_read`. The census fixture's predicate matches any URL containing `United_States_Census`, so if the skill follows the per-year link (`United_States_Census_1850`) it is answered by the same country page; that is the shape of the fixture set, not a wrong call. Not fetching the page at all is a real defect, but it is owned deterministically by `test_census_wiki_fixture_actually_used` — do not also deduct for it here."
   ],
   "judge_reads_files": true,
   "execution": {
