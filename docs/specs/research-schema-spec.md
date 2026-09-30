@@ -84,6 +84,7 @@ flagged. (One row below is the exception, and says so.)
 | `question_status` | `open`, `in_progress`, `exhaustive_declared`, `resolved` | questions |
 | `plan_status` | `active`, `completed`, `superseded` | plans |
 | `plan_item_status` | `planned`, `in_progress`, `completed`, `skipped` | plan items |
+| `skip_category` | `unnecessary`, `inaccessible` | plan items, on a `skipped` item |
 | `log_outcome` | `positive`, `negative`, `partial`, `error` | log |
 | `external_site` | `ancestry`, `myheritage`, `findmypast`, `familysearch_web`, `findagrave`, `newspapers`, `chronicling_america`, `digital_newspaper_archive`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `library_archives_canada`, `american_ancestors`, `italian_genealogy` | log entries' `external_site.site` — the sites supported by the generate-click-capture-analyze workflow (Section 5.4) |
 | `source_classification` | `original`, `derivative`, `authored` | sources |
@@ -580,6 +581,8 @@ Array of plan objects. When a plan fails and is re-planned for the same question
 | `rationale` | string | yes | Why this record set for this question |
 | `fallback_for` | string or null | yes | `pli_` ID of the plan item this is a fallback for, or null |
 | `status` | `plan_item_status` | yes | Current status |
+| `skip_category` | `skip_category` | no | On a `skipped` item, whether it was `unnecessary` (a decision was made not to pursue it) or `inaccessible` (it could not be reached, so no decision about its content was possible). These are opposite claims about whether the source was evaluated, and `status` alone cannot tell them apart |
+| `skip_reason` | string | no | One line on why this item was skipped. Distinct from `rationale`, which is why the item was *planned* — without this field that prose lands in `rationale` and corrupts a required one |
 
 ### 5.4 `log`
 

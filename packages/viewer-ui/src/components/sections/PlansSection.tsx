@@ -74,6 +74,16 @@ export default function PlansSection(): React.JSX.Element {
                         {item.rationale && (
                           <div className={styles.itemRationale}><Linkify text={item.rationale} /></div>
                         )}
+                        {item.status === 'skipped' && (item.skip_category || item.skip_reason) && (
+                          <div className={styles.itemRationale}>
+                            {item.skip_category === 'inaccessible'
+                              ? 'Skipped — could not be reached'
+                              : item.skip_category === 'unnecessary'
+                                ? 'Skipped — no longer needed'
+                                : 'Skipped'}
+                            {item.skip_reason && <>: <Linkify text={item.skip_reason} /></>}
+                          </div>
+                        )}
                       </li>
                     ))}
                   </ol>

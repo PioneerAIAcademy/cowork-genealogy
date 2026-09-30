@@ -272,7 +272,9 @@
             { "type": "null" }
           ]
         },
-        "status": { "$ref": "enums.schema.json#/$defs/plan_item_status" }
+        "status": { "$ref": "enums.schema.json#/$defs/plan_item_status" },
+        "skip_category": { "$ref": "enums.schema.json#/$defs/skip_category" },
+        "skip_reason": { "type": "string" }
       }
     },
     "log_entry": {

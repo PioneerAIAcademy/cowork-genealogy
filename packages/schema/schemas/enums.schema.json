@@ -14,6 +14,10 @@
     "plan_item_status": {
       "enum": ["planned", "in_progress", "completed", "skipped"]
     },
+    "skip_category": {
+      "description": "Why a plan item was set to `skipped`, as a machine-readable distinction the exhaustiveness gate can read. `unnecessary`: a decision was made not to pursue it — the question was answered earlier, or findings triggered a pivot that made the item moot. `inaccessible`: no decision about its content was possible because the source could not be reached (browse-only, a subscription wall, or a repository an autonomous run cannot open). The two are opposite claims about whether the source was evaluated, and a bare `skipped` status alone cannot tell them apart. Optional: an item skipped before this field existed carries neither it nor `skip_reason`.",
+      "enum": ["unnecessary", "inaccessible"]
+    },
     "log_outcome": {
       "enum": ["positive", "negative", "partial", "error"]
     },

@@ -39,6 +39,7 @@ const CLOSED_ENUMS = {
   question_status: new Set(["open", "in_progress", "exhaustive_declared", "resolved"]),
   plan_status: new Set(["active", "completed", "superseded"]),
   plan_item_status: new Set(["planned", "in_progress", "completed", "skipped"]),
+  skip_category: new Set(["unnecessary", "inaccessible"]),
   log_outcome: new Set(["positive", "negative", "partial", "error"]),
   source_classification: new Set(["original", "derivative", "authored"]),
   information_quality: new Set(["primary", "secondary", "indeterminate"]),
@@ -552,6 +553,7 @@ export const RESEARCH_SHAPES = {
   plan_item: new Set([
     "id", "sequence", "record_type", "jurisdiction", "date_range",
     "repository", "rationale", "fallback_for", "status",
+    "skip_category", "skip_reason",
   ]),
   log_entry: new Set([
     "id", "plan_item_id", "performed", "tool", "query", "outcome",
@@ -912,6 +914,12 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       }
       if ("status" in item) {
         checkEnum(item.status, "plan_item_status", ip, report);
+      }
+      // Guarded the way `status` is: this field is optional, and checkEnum has
+      // no null/undefined tolerance, so an unguarded call would fault on every
+      // plan item written before the field existed.
+      if ("skip_category" in item) {
+        checkEnum(item.skip_category, "skip_category", ip, report);
       }
     }
   }
