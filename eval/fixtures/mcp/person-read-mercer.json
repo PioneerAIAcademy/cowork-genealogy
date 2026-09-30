@@ -1,0 +1,127 @@
+{
+  "tool": "person_read",
+  "description": "FamilySearch tree person read for Margaret Mercer (the mother) WITH relatives and source descriptions. Her tree holds five children born before the June 1900 census enumeration plus William (b. 1906). Used by the census-deceased-child init-project test: the 1900 (6 born / 5 living) and 1910 (8 born / 7 living) fertility counts arrive via the user message, so born-minus-living names a child dead before 1900 (absent here) and 1910's living count exceeds the tree by one living child.",
+  "args": {
+    "personId": "MRCR-MOM",
+    "relatives": true,
+    "sourceDescriptions": true
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "MRCR-MOM",
+        "ark": "ark:/61903/4:1:MRCR-MOM",
+        "gender": "Female",
+        "living": false,
+        "names": [{ "preferred": true, "given": "Margaret", "surname": "Mercer" }],
+        "facts": [
+          { "type": "Birth", "date": "~1868", "standard_date": "Abt 1868", "place": "Ohio, United States", "standard_place": "Ohio, United States" }
+        ]
+      },
+      {
+        "id": "MRCR-DAD",
+        "ark": "ark:/61903/4:1:MRCR-DAD",
+        "gender": "Male",
+        "living": false,
+        "names": [{ "preferred": true, "given": "Thomas", "surname": "Mercer" }],
+        "facts": [
+          { "type": "Birth", "date": "~1865", "standard_date": "Abt 1865", "place": "Ohio, United States", "standard_place": "Ohio, United States" }
+        ]
+      },
+      {
+        "id": "MRCR-CH1",
+        "ark": "ark:/61903/4:1:MRCR-CH1",
+        "gender": "Female",
+        "living": false,
+        "names": [{ "preferred": true, "given": "Mary", "surname": "Mercer" }],
+        "facts": [
+          { "type": "Birth", "date": "1889", "standard_date": "1889", "place": "Columbus, Franklin County, Ohio, United States", "standard_place": "Columbus, Franklin, Ohio, United States" }
+        ]
+      },
+      {
+        "id": "MRCR-CH2",
+        "ark": "ark:/61903/4:1:MRCR-CH2",
+        "gender": "Male",
+        "living": false,
+        "names": [{ "preferred": true, "given": "John", "surname": "Mercer" }],
+        "facts": [
+          { "type": "Birth", "date": "1891", "standard_date": "1891", "place": "Columbus, Franklin County, Ohio, United States", "standard_place": "Columbus, Franklin, Ohio, United States" }
+        ]
+      },
+      {
+        "id": "MRCR-CH3",
+        "ark": "ark:/61903/4:1:MRCR-CH3",
+        "gender": "Female",
+        "living": false,
+        "names": [{ "preferred": true, "given": "Anna", "surname": "Mercer" }],
+        "facts": [
+          { "type": "Birth", "date": "1893", "standard_date": "1893", "place": "Columbus, Franklin County, Ohio, United States", "standard_place": "Columbus, Franklin, Ohio, United States" }
+        ]
+      },
+      {
+        "id": "MRCR-CH4",
+        "ark": "ark:/61903/4:1:MRCR-CH4",
+        "gender": "Male",
+        "living": false,
+        "names": [{ "preferred": true, "given": "Edward", "surname": "Mercer" }],
+        "facts": [
+          { "type": "Birth", "date": "1896", "standard_date": "1896", "place": "Columbus, Franklin County, Ohio, United States", "standard_place": "Columbus, Franklin, Ohio, United States" }
+        ]
+      },
+      {
+        "id": "MRCR-CH5",
+        "ark": "ark:/61903/4:1:MRCR-CH5",
+        "gender": "Female",
+        "living": false,
+        "names": [{ "preferred": true, "given": "Grace", "surname": "Mercer" }],
+        "facts": [
+          { "type": "Birth", "date": "1898", "standard_date": "1898", "place": "Columbus, Franklin County, Ohio, United States", "standard_place": "Columbus, Franklin, Ohio, United States" }
+        ]
+      },
+      {
+        "id": "MRCR-WM6",
+        "ark": "ark:/61903/4:1:MRCR-WM6",
+        "gender": "Male",
+        "living": false,
+        "names": [{ "preferred": true, "given": "William", "surname": "Mercer" }],
+        "facts": [
+          { "type": "Birth", "date": "1906", "standard_date": "1906", "place": "Columbus, Franklin County, Ohio, United States", "standard_place": "Columbus, Franklin, Ohio, United States" }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "type": "Couple",
+        "person1": "MRCR-DAD",
+        "person2": "MRCR-MOM",
+        "facts": [
+          { "type": "Marriage", "date": "1888", "standard_date": "1888", "place": "Columbus, Franklin County, Ohio, United States", "standard_place": "Columbus, Franklin, Ohio, United States" }
+        ]
+      },
+      { "type": "ParentChild", "parent": "MRCR-DAD", "child": "MRCR-CH1", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "MRCR-MOM", "child": "MRCR-CH1", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "MRCR-DAD", "child": "MRCR-CH2", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "MRCR-MOM", "child": "MRCR-CH2", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "MRCR-DAD", "child": "MRCR-CH3", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "MRCR-MOM", "child": "MRCR-CH3", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "MRCR-DAD", "child": "MRCR-CH4", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "MRCR-MOM", "child": "MRCR-CH4", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "MRCR-DAD", "child": "MRCR-CH5", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "MRCR-MOM", "child": "MRCR-CH5", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "MRCR-DAD", "child": "MRCR-WM6", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "MRCR-MOM", "child": "MRCR-WM6", "subtype": "Biological" }
+    ],
+    "sources": [
+      {
+        "id": "MRCR-S01",
+        "title": "United States Census, 1900, Thomas Mercer household, Columbus, Franklin, Ohio",
+        "citation": "\"United States Census, 1900\", database with images, FamilySearch, Thomas Mercer household, Columbus ward, Franklin, Ohio."
+      },
+      {
+        "id": "MRCR-S02",
+        "title": "United States Census, 1910, Thomas Mercer household, Columbus, Franklin, Ohio",
+        "citation": "\"United States Census, 1910\", database with images, FamilySearch, Thomas Mercer household, Columbus ward, Franklin, Ohio."
+      }
+    ]
+  }
+}

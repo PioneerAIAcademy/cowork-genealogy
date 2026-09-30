@@ -246,6 +246,19 @@ describe("imageTranscribeTool — ark URL query-param forwarding", () => {
       false,
     ]);
   });
+
+  it("fetches an unprefixed XXXX-XXXX-XXXX-X id as its 3:1: resolver URL", async () => {
+    mockOpenRouterOk("some text");
+
+    await transcribe({ ark: "3QS7-89Q6-89S6-Y" }, LOCAL);
+
+    expect(fetchFsImageBytesMock.mock.calls[0]).toEqual([
+      "https://www.familysearch.org/ark:/61903/3:1:3QS7-89Q6-89S6-Y",
+      undefined,
+      LOCAL,
+      false,
+    ]);
+  });
 });
 
 describe("imageTranscribeTool — lookingFor", () => {

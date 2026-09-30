@@ -102,8 +102,7 @@ describe("the HTTP entrypoint's process store", () => {
 describe("the HTTP entrypoint's per-user config", () => {
   it("takes the four keys from the environment over the mounted file, and leaves the rest", () => {
     // One shared process serves every turn, so the OpenRouter key reaches it as environment
-    // the way it reaches hosted-stdio.js — without this, `image_transcribe` loses its key the
-    // moment the worker's TOOL_SERVER default moves to http.
+    // — without this, `image_transcribe` has no key on the prototype's tool server.
     const config = captured.baseConfig as Record<string, unknown>;
     expect(config.openRouterApiKey).toBe("or-key-from-env");
     expect(config.wikiApiUrl).toBe("http://from-the-env:8000");

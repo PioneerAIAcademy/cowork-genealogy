@@ -1,0 +1,50 @@
+{
+  "test": {
+    "id": "ut_init_project_q4v",
+    "skill": "init-project",
+    "name": "Census born-minus-living names a deceased child that is a research target",
+    "type": "positive",
+    "description": "From a tree import plus 1900/1910 US census fertility counts, init-project must find TWO missing children: a child born and died before the June 1900 enumeration (children-born minus children-living), and a living child born between the two censuses. The failure this guards: reading living-count parity with the tree (5 living in 1900 == 5 tree children) as 'accounted for' and never making the pre-1900 deceased child a research target.",
+    "tags": ["from-cowork", "census-deceased-child", "re-invoke-safe"]
+  },
+  "input": {
+    "user_message": "Start a new research project. The subject is my great-grandmother Margaret Mercer, FamilySearch ID MRCR-MOM. Two census records describe her children: the 1900 US census records 6 children born and 5 still living, and the 1910 US census records 8 children born and 7 still living. I want to find the children of hers who are not already in the tree.",
+    "scenario": null
+  },
+  "execution": {
+    "max_wall_clock_seconds": 480,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "mcp_fixtures": [
+    "person-read-mercer",
+    "person-quality-clean-MRCR-MOM",
+    "person-quality-clean-MRCR-DAD",
+    "person-quality-clean-MRCR-CH1",
+    "person-quality-clean-MRCR-CH2",
+    "person-quality-clean-MRCR-CH3",
+    "person-quality-clean-MRCR-CH4",
+    "person-quality-clean-MRCR-CH5",
+    "person-quality-clean-MRCR-WM6"
+  ],
+  "judge_context": [
+    "The Step-5 report presented to the user must name TWO missing children as research targets, not one. Grade the two targets from the presented report / reply: init-project stores `objective` as a single overarching sentence and converting gaps into questions is question-selection's job (stubbed here), so do not require a persisted enumeration of two targets.",
+    "One target is a child BORN AND DIED before the June 1900 enumeration: the 1900 census's 6 children born minus 5 living is one child dead by 1900, and that child is absent from the tree (the five tree children born before 1900 are the survivors, not proof the family is complete).",
+    "The other target is a LIVING child born between July 1900 and April 1910: the 1910 census's 7 living children exceed the 6 children in the tree by one, and William Mercer (b. 1906) is already in the tree, so William is NOT the missing child.",
+    "The 1900-to-1910 delta reasoning (two more births between the censuses, the deceased count holding at one) is correct and must NOT be penalised; the deceased child of 1900 is the same child still counted among the dead in 1910, not a second deceased child.",
+    "Naming only the post-1900 living child while missing the pre-1900 deceased child is a FAIL on the gap dimension, not a partial.",
+    "The deceased child is a research target (born and died before the enumeration), NOT a tree or data error; it must not be presented under obvious-error detection."
+  ]
+}

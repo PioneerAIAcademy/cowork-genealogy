@@ -1347,3 +1347,150 @@ def test_main_expected_findings_or_tree_edit_under_stamped_ann_blocks(tmp_path, 
     monkeypatch.setenv("HEAD_SHA", head)
     assert check_e2e_fixtures.main() == 1
     assert "blind_bundle_digest mismatch" in capsys.readouterr().out
+
+
+# --- Credential gate (blocking): a committed run log must carry no live secret ---
+# The agent's Read of a host credential file (~/.familysearch-mcp/{config,tokens}.json)
+# can land its contents verbatim in response_summary; this backstops the capture-time
+# redactor. All secrets below are FAKE (never a real revoked token).
+
+
+def _write_runlog_body(repo_root: Path, slug: str, ts: str, body: str) -> Path:
+    """Write a run log with an arbitrary raw body (so a test can embed a fake
+    credential shape) and return its repo-relative Path."""
+    d = repo_root / "eval" / "runlogs" / "e2e" / slug
+    d.mkdir(parents=True, exist_ok=True)
+    (d / f"run-{ts}.json").write_text(body, encoding="utf-8")
+    return Path("eval/runlogs/e2e") / slug / f"run-{ts}.json"
+
+
+def _runlog_with_summary(summary: str) -> str:
+    """A minimal run-log JSON whose one tool call carries ``summary`` as its
+    response_summary. ``json.dumps`` escapes the inner quotes exactly as the real
+    persister does, so a credential embedded here lands in the escaped form."""
+    return json.dumps(
+        {"verdict": "pass", "tool_calls": [{"tool": "Read", "response_summary": summary}]}
+    )
+
+
+def test_credential_gate_fails_on_leaked_tokens_json_shape(tmp_path, monkeypatch):
+    """Case (a): the exact shape leaked in commit 805df5003 — a tokens.json Read
+    captured into response_summary."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    summary = (
+        '1\t{\n2\t  "accessToken": "p0-FAKEACCESSTOKEN123",\n'
+        '3\t  "refreshToken": "-9999999-FAKEREFRESH",\n4\t}'
+    )
+    rel = _write_runlog_body(repo, "leaky", TS, _runlog_with_summary(summary))
+    head = commit(rel.as_posix())
+    v = check_e2e_fixtures.check_added_runlogs_no_credentials([rel], head)
+    assert len(v) == 1
+    assert "FS-ACCESS-TOKEN" in v[0] and "FS-REFRESH-TOKEN" in v[0]
+
+
+def test_credential_gate_fails_on_openrouter_key(tmp_path, monkeypatch):
+    """The config.json half of the same leak: an OpenRouter key."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    summary = '1\t{\n2\t  "openRouterApiKey": "sk-or-v1-FAKE0penR0uterKey"\n3\t}'
+    rel = _write_runlog_body(repo, "leaky", TS, _runlog_with_summary(summary))
+    head = commit(rel.as_posix())
+    v = check_e2e_fixtures.check_added_runlogs_no_credentials([rel], head)
+    assert len(v) == 1 and "OPENROUTER-KEY" in v[0]
+
+
+def test_credential_gate_fails_on_nested_stringified_credential(tmp_path, monkeypatch):
+    """Case (b): a credential nested inside a stringified-JSON value within the
+    response_summary (an extra level of escaping)."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    inner = json.dumps({"openRouterApiKey": "sk-or-v1-FAKEnestedKey"})
+    rel = _write_runlog_body(
+        repo, "leaky", TS, _runlog_with_summary(f"read config file: {inner}")
+    )
+    head = commit(rel.as_posix())
+    v = check_e2e_fixtures.check_added_runlogs_no_credentials([rel], head)
+    assert len(v) == 1 and "OPENROUTER-KEY" in v[0]
+
+
+def test_credential_gate_scans_unparseable_log(tmp_path, monkeypatch):
+    """A malformed (non-JSON) run log must still be scanned — the raw-text path
+    must not silently skip it the way a json.loads path would."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _write_runlog_body(repo, "leaky", TS, "not json at all { sk-or-v1-FAKEmalformed")
+    head = commit(rel.as_posix())
+    v = check_e2e_fixtures.check_added_runlogs_no_credentials([rel], head)
+    assert len(v) == 1 and "OPENROUTER-KEY" in v[0]
+
+
+def test_credential_gate_passes_on_clean_run_log(tmp_path, monkeypatch):
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _write_runlog_body(
+        repo, "clean", TS, _runlog_with_summary("a normal search returned three records")
+    )
+    head = commit(rel.as_posix())
+    assert check_e2e_fixtures.check_added_runlogs_no_credentials([rel], head) == []
+
+
+def test_credential_gate_ignores_benign_near_misses(tmp_path, monkeypatch):
+    """Prove the other direction: strings that resemble but are not credentials
+    must not red a legitimate run log."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    summary = "she drank sk-orange-juice; her will mentions a token of affection"
+    rel = _write_runlog_body(repo, "benign", TS, _runlog_with_summary(summary))
+    head = commit(rel.as_posix())
+    assert check_e2e_fixtures.check_added_runlogs_no_credentials([rel], head) == []
+
+
+def test_credential_gate_passes_on_the_real_redacted_tip():
+    """Case (c): the actual committed, already-redacted run log must PASS — its
+    [REDACTED-...] placeholders must not be re-flagged (the regression the
+    negative lookahead in the field patterns guards)."""
+    tip = (
+        check_e2e_fixtures.REPO_ROOT
+        / "eval" / "runlogs" / "e2e" / "hannah-earnest-children"
+        / "run-2026-09-28_17-11-04.json"
+    )
+    if not tip.exists():
+        pytest.skip("redacted tip run log not present")
+    assert check_e2e_fixtures.scan_for_credentials(tip.read_text(encoding="utf-8")) == []
+
+
+def test_credential_gate_sees_a_modified_run_log(tmp_path, monkeypatch):
+    """A credential introduced by EDITING an already-committed run log (net
+    status M) must be caught. AR never reports M; the credential gate reads the
+    ARM set, so this is the fix for that blind spot."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _write_runlog_body(repo, "smith", TS, _runlog_with_summary("a clean summary"))
+    base = commit(rel.as_posix())
+    (repo / rel).write_text(
+        _runlog_with_summary('read config: "openRouterApiKey": "sk-or-v1-FAKEmodified"'),
+        encoding="utf-8",
+    )
+    head = commit(rel.as_posix())
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", head)
+    arm = check_e2e_fixtures.git_arm_e2e_runlogs()
+    assert [p.as_posix() for p in arm] == [rel.as_posix()]  # ARM sees the modify
+    assert check_e2e_fixtures.git_ar_e2e_runlogs() == []  # AR is blind to it
+    v = check_e2e_fixtures.check_added_runlogs_no_credentials(arm, head)
+    assert len(v) == 1 and "OPENROUTER-KEY" in v[0]
+
+
+def test_credential_specs_match_redact_module():
+    """Drift guard: the specs duplicated into check_e2e_fixtures.py must stay
+    byte-identical to the single source of truth in harness/redact.py, and the
+    two scan_for_credentials copies must AGREE on a battery of inputs (so a
+    divergent function body, not just divergent specs, is caught)."""
+    from harness import redact
+
+    assert check_e2e_fixtures.CREDENTIAL_PATTERN_SPECS == redact.CREDENTIAL_PATTERN_SPECS
+    battery = [
+        '{"accessToken": "p0-X", "refreshToken": "-1-Y"}',
+        r'\"openRouterApiKey\": \"sk-or-v1-Z\"',
+        r'\\"accessToken\\": \\"p0-DOUBLE\\"',
+        "sk-ant-FAKE_ant-123",
+        '"accessToken": "[REDACTED-FS-ACCESS-TOKEN]"',
+        "benign sk-orange and a token",
+        "",
+    ]
+    for s in battery:
+        assert check_e2e_fixtures.scan_for_credentials(s) == redact.scan_for_credentials(s), s

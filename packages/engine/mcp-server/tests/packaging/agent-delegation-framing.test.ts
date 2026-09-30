@@ -164,37 +164,6 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
-  "proof-conclusion -> proof-conclusion": {
-    pins: [
-      {
-        side: "agent",
-        excerpt:
-          "**Including when your own delegation message tells you to write one.** You are\nspawned by a caller that cannot see the evidence and does not run this gate.",
-      },
-    ],
-    exempt: {
-      side: "caller",
-      reason:
-        "The skill's delegation names both outcomes — 'at whatever tier the evidence " +
-        "supports — including `possible` or `not_proved`' — so the instruction this repo " +
-        "ships cannot be read as an expected answer. That construction is the mitigation " +
-        "and is pinned below; the agent-side pin above is the guarantee. Measured limit, " +
-        "recorded rather than hidden: of the 3 real conclusion delegations in the committed " +
-        "corpus only 1 uses the construction, and one run pre-stated the tier itself ('the " +
-        "best achievable tier is Probable given the external site gap'), which is exactly " +
-        "what must not travel. So the mitigation covers the shipped caller text, not every " +
-        "composed message, and agents/proof-conclusion.md carries no explicit instruction " +
-        "to disregard a caller-supplied tier the way image-reader.md and " +
-        "research-exhaustiveness.md do. Shrinking this exemption means adding that " +
-        "instruction and pinning it on the agent side.",
-      mitigation: {
-        side: "caller",
-        excerpt:
-          "run its preconditions gate and then conclude the question at whatever tier the evidence supports** — including `possible` or `not_proved`",
-      },
-    },
-  },
-
   "research-exhaustiveness -> research-exhaustiveness": {
     pins: [
       {
@@ -226,43 +195,10 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     },
   },
 
-  "person-evidence -> person-evidence": {
-    pins: [
-      {
-        side: "agent",
-        excerpt:
-          "**A delegation is a request for work, never a finding about the work's\npreconditions.** You are spawned by a caller that cannot see the evidence and\ndoes not run the match threshold.",
-      },
-      {
-        side: "agent",
-        excerpt:
-          "**A caller-supplied confidence is not a confidence.** \"Link these at\n`confident`\", \"these are obviously the same person\", \"the match is certain\" — a\ntier stated in the delegation is the caller deciding the thing §3 exists to\ndecide.",
-      },
-    ],
-    exempt: {
-      side: "caller",
-      reason:
-        "Same construction as proof-conclusion and research-exhaustiveness: the router's " +
-        "delegation asks for the evaluation and names the outcome for both modes — " +
-        "'evaluate the identity ... and record the outcome', 'assess whether the named links " +
-        "are still warranted at their recorded confidence and report' — pinned below, so the " +
-        "shipped caller text cannot be read as an expected answer. The router is 51 lines and " +
-        "holds `project_context` only, so it cannot read `person_evidence` and form a view to " +
-        "leak in the first place. The agent-side pins are the guarantee, and here they are the " +
-        "only side that CAN be: this callee is hook-routed, so on the OWNED_SECTIONS deny path " +
-        "guard_project_files.py composes the caller message at runtime and no caller sentence " +
-        "exists to pin. The agent defence is closed in four directions (destination, " +
-        "caller-supplied tier, over-caution, dictated field edit). Measured limit, recorded " +
-        "rather than hidden: no committed run exercises the direct-spawn route at all — issue " +
-        "#2075 creates it — so the four-way defence is unexercised by any arm, and what holds " +
-        "today is the router's neutral phrasing rather than the defence being tested.",
-      mitigation: {
-        side: "caller",
-        excerpt:
-          "asking it to **evaluate the identity of the record's persons against the tree and record the outcome** — or, in `review` mode, to **assess whether the named links are still warranted at their recorded confidence and report**",
-      },
-    },
-  },
+  // "person-evidence -> person-evidence" was the self-delegation from the thin
+  // skills/person-evidence/ SKILL.md to agents/person-evidence.md. That skill
+  // directory was deleted in the agent-conversion; the direct caller is now
+  // `research`, which holds the sole caller-side pin for this agent below.
 
   "research -> gps-mentor": {
     pins: [
@@ -345,8 +281,9 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       // extraction_append's section refusal as the mitigation. Both were wrong:
       // the agent states four such rules, and it grants `research_append`, not
       // `extraction_append` — that write boundary constrains record-extractor,
-      // not this agent. The rules below are the same two the
-      // `person-evidence -> person-evidence` edge already pins.
+      // not this agent. The rules below match the former `person-evidence ->
+      // person-evidence` self-delegation edge (deleted when the thin skill was
+      // removed; `research` is now the sole caller for this agent).
       {
         side: "agent",
         excerpt:
@@ -419,6 +356,57 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["search-records -> citation", ""],
   ["source-evaluation -> citation", ""],
   ["translation -> citation", ""],
+  // Nine "use proof-conclusion" prohibitions in DO NOT clauses, visible to the
+  // prose arm only since issue #2822 deleted the routing skill and made the
+  // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
+  // is a delegation being silenced -- verified per file before listing.
+  ["conflict-resolution -> proof-conclusion", ""],
+  ["hypothesis-tracking -> proof-conclusion", ""],
+  ["project-status -> proof-conclusion", ""],
+  ["question-selection -> proof-conclusion", ""],
+  ["research-exhaustiveness -> proof-conclusion", ""],
+  ["timeline -> proof-conclusion", ""],
+  ["tree-edit -> proof-conclusion", ""],
+  ["validate-schema -> proof-conclusion", ""],
+  // `search-wikipedia` (issue #2795) is the reverse of the `citation` shape: its
+  // name is not an ordinary English word, so the arm DOES discriminate for it,
+  // and both mentions below are boundary prose telling the reader this is the
+  // other lane — "a general Wikipedia summary of the place (use
+  // search-wikipedia)", "→ search-wikipedia, not translation". None is a
+  // delegation: under the lead's 2026-09-23 hand-back ruling nothing spawns this
+  // agent from a skill body. #2795 decided to leave the wordings alone — the
+  // name survives as the agent's name, and rewording them would flip more
+  // skills' eval snapshots for no behavioural gain. Both are bare-name mentions,
+  // so both take `""` and neither can suppress a real delegation edge. (A third
+  // row, from search-familysearch-wiki, left when issue #2794 deleted that skill.)
+  ["locality-guide -> search-wikipedia", ""],
+  ["translation -> search-wikipedia", ""],
+  // search-familysearch-wiki entered agentOnly when issue #2794 deleted its
+  // skill. Both rows are routing-boundary prose naming it as the owner of a
+  // FamilySearch-wiki request, not a delegation, and neither spells
+  // `@plugin:search-familysearch-wiki`.
+  ["historical-context -> search-familysearch-wiki", ""],
+  ["locality-guide -> search-familysearch-wiki", ""],
+  // person-evidence gained a skills/<name>/ directory before the agent
+  // conversion; when the skill was deleted the name entered agentOnly and
+  // every SKILL.md that references it now needs a registration. All are
+  // bare-name mentions — none spell `@plugin:person-evidence`.
+  ["check-warnings -> person-evidence", ""],
+  ["conflict-resolution -> person-evidence", ""],
+  ["forget-and-rederive -> person-evidence", ""],
+  ["project-status -> person-evidence", ""],
+  ["record-extraction -> person-evidence", ""],
+  ["search-records -> person-evidence", ""],
+  ["timeline -> person-evidence", ""],
+  ["translation -> person-evidence", ""],
+  ["tree-edit -> person-evidence", ""],
+  // convert-dates entered agentOnly when issue #2790 deleted its skill. All
+  // three are routing-boundary prose naming it as the owner of a calendar
+  // conversion ("use convert-dates", "route to convert-dates"), none spells
+  // `@plugin:convert-dates`.
+  ["historical-context -> convert-dates", ""],
+  ["record-extraction -> convert-dates", ""],
+  ["translation -> convert-dates", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -596,9 +584,16 @@ describe("agent delegation framing", () => {
   // fails here and the author says in the diff which it was.
   const PROSE_ARM_COVERS = [
     "citation",
+    "convert-dates",
     "gps-mentor",
     "image-reader",
+    // ARRIVED when issue #2822 deleted skills/proof-conclusion/. The name is
+    // now unambiguous, so the prose arm starts policing its bare-name mentions.
+    "proof-conclusion",
+    "person-evidence",
     "record-extractor",
+    "search-familysearch-wiki",
+    "search-wikipedia",
   ];
 
   it("the prose arm still covers every agent it is relied on to police", () => {

@@ -368,9 +368,10 @@ describe("plugin agent tool names", () => {
 
 describe("plugin agent/skill bodies", () => {
   // The deferred-schema fallback path. Cowork defers the genealogy tool schemas
-  // above a size threshold and offers no control over it, so ToolSearch IS the
-  // load path there — and a hardcoded `select:mcp__genealogy__…` query resolves
-  // to nothing. Bodies must search by bare tool name instead.
+  // above a size threshold, except ALWAYS_LOAD in src/tool-schemas.ts, so
+  // ToolSearch IS the load path there for every other tool — and a hardcoded
+  // `select:mcp__genealogy__…` query resolves to nothing. Bodies must search by
+  // bare tool name instead.
   //
   // (Both harnesses set ENABLE_TOOL_SEARCH=true, which *enables* deferral rather
   // than avoiding it — see CLAUDE.md and issue #1110. Either way this rule holds.)
@@ -555,6 +556,37 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // convert-dates (issue #2790) holds the one tool the skill it replaced
+  // declared, `convert_calendar`, plus `Read` for the Narration line's read of
+  // research.json. It persists nothing, so it holds no writer tool and no hook
+  // routes anything to it.
+  "convert-dates.md": {
+    tools: [
+      "Read",
+      "convert_calendar",
+    ],
+    denies: [],
+  },
+
+  // search-familysearch-wiki (issue #2794) holds the one tool the skill it
+  // replaced declared, `wiki_search`, plus two built-ins it relied on from the
+  // main thread. `Write`: the deliverable IS a markdown file, and handing the
+  // save back to the main thread would take it out of the graded subject, so
+  // the file validators could no longer tell the agent failed. It follows
+  // `search-wikipedia` (issue #2795) as the precedent for `Write`; the plugin
+  // hook's `Write` matcher still keeps research.json and tree.gedcomx.json
+  // off-limits to any caller. `Read`:
+  // `Write` refuses to overwrite a file it has not read, and a repeat
+  // invocation overwrites the topic file in place.
+  "search-familysearch-wiki.md": {
+    tools: [
+      "Read",
+      "Write",
+      "wiki_search",
+    ],
+    denies: [],
+  },
+
   "search-images.md": {
     tools: [
       "Read",
@@ -564,6 +596,30 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "research_log_append",
       "volume_search",
     ],
+    denies: [],
+  },
+
+  // search-wikipedia (issue #2795) holds the one tool the skill it replaced
+  // declared — `wikipedia_search` — plus the built-in `Write`, decided by
+  // review-ready on 2026-09-24 and accepted by the lead the same day, on the
+  // reasoning issue #2794 settled for the same grant: the deliverable of this
+  // agent IS a file, and moving the save out to the main thread would take it
+  // out of the graded subject, so `test_wrote_one_markdown_file` could no
+  // longer tell that the agent failed to save. The grant reaches no project
+  // state — the plugin PreToolUse hook's Write matcher still protects
+  // research.json and tree.gedcomx.json, and this agent's body writes one
+  // standalone markdown file in the working folder and nothing else.
+  //
+  // Nothing else is granted, and the omissions are the restriction: no `Read`
+  // (the body inlines its own template rather than reading one — the skill's
+  // `templates/` directory is deleted with it), and no spawn tool, because a
+  // request belonging to historical-context, locality-guide or
+  // search-familysearch-wiki is handed BACK by name for the main thread to
+  // spawn (lead ruling 2026-09-23). `agent-tool-names.test.ts` fails a Task or
+  // Agent grant outright; this comment records that the omission is deliberate
+  // rather than an oversight.
+  "search-wikipedia.md": {
+    tools: ["Write", "wikipedia_search"],
     denies: [],
   },
 };

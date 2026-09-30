@@ -23,8 +23,8 @@ The real turn: the SDK session id is CHOSEN by the worker at claim time --
 first transcript append can never land under an id no row names -- and passed as
 ``session_id=`` on a fresh session or ``resume=`` when the session store already holds
 entries for it (a mid-turn kill on either path resumes on redelivery); the options from
-``options.py``; ``get_server_info()`` checked for the eight bare agent names
-(``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 27
+``options.py``; ``get_server_info()`` checked for the eleven bare agent names
+(``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 22
 ``genealogy-research:<skill>`` commands (``EXPECTED_SKILLS``, a literal -- never a count
 of the directory the SDK loads from) BEFORE the query bills a token (D15) -- a miss
 is a 500; the CLI's ``system/init`` must arrive and declare the chosen id, or the
@@ -67,11 +67,10 @@ surfaced as an error is redelivered forever, which is the paid loop the guard ex
 prevent.
 
 Env: PG_DSN, PORT (8080), WORKER_CWD (/project -- created empty if missing, never
-written), ENGINE_DIR, ENGINE_PLUGIN_DIR, TMPDIR (per-turn CLAUDE_CONFIG_DIRs go under
-it), MODEL_PROVIDER + ANTHROPIC_API_KEY / the Bedrock variables / GATEWAY_BASE_URL,
-GATEWAY_API_KEY and GATEWAY_TOOL_SEARCH, the GENEALOGY_* store
-variables and FS_ACCESS_TOKEN (see options.py). Startup applies ../sql/*.sql (all
-idempotent) and parses the plugin's agents once. ``GET /healthz`` -> 200.
+written), ENGINE_PLUGIN_DIR, TMPDIR (per-turn CLAUDE_CONFIG_DIRs go under it),
+MODEL_PROVIDER + ANTHROPIC_API_KEY / GATEWAY_BASE_URL, GATEWAY_API_KEY and
+GATEWAY_TOOL_SEARCH, TOOL_SERVER_URL and FS_ACCESS_TOKEN (see options.py). Startup
+applies ../sql/*.sql (all idempotent) and parses the plugin's agents once. ``GET /healthz`` -> 200.
 ThreadingHTTPServer, so a second POST is served while a turn is running.
 """
 
@@ -134,7 +133,6 @@ QUEUE_URL = os.environ.get("QUEUE_URL", "")
 PORT = env_int("PORT", 8080)
 WORKER_CWD = os.environ.get("WORKER_CWD", "/project")
 _REPO = HERE.parents[3]  # apps/server/proto/worker -> the repo root (venv runs only)
-ENGINE_DIR = os.environ.get("ENGINE_DIR", str(_REPO / "packages" / "engine" / "mcp-server"))
 ENGINE_PLUGIN_DIR = os.environ.get("ENGINE_PLUGIN_DIR", str(_REPO / "packages" / "engine" / "plugin"))
 SCHEMA_RETRIES = 30
 
@@ -145,18 +143,21 @@ SCHEMA_RETRIES = 30
 # would then fail silently at delegation time -- the zero-tools class of failure).
 EXPECTED_AGENTS = frozenset({
     "citation",
+    "convert-dates",
     "gps-mentor",
     "image-reader",
     "person-evidence",
     "proof-conclusion",
     "record-extractor",
     "research-exhaustiveness",
+    "search-familysearch-wiki",
     "search-images",
+    "search-wikipedia",
 })
 # The other half of the same precondition, a literal for the same reason: a count of
-# the directory the SDK loads the plugin from shrinks with it -- an image shipping 27
-# skills registers 27 and passes. test_proto_worker pins this against the repo.
-EXPECTED_SKILLS = 27
+# the directory the SDK loads the plugin from shrinks with it -- an image shipping 22
+# skills registers 22 and passes. test_proto_worker pins this against the repo.
+EXPECTED_SKILLS = 22
 
 _stdout_lock = threading.Lock()
 
@@ -752,7 +753,7 @@ def prepare() -> None:
         ev="prepare", step="agents", agents=sorted(_AGENTS or {}),
         skills_on_disk=count_skills(ENGINE_PLUGIN_DIR), skills_expected=EXPECTED_SKILLS,
         blocked_tools=sorted(_BLOCKED), autonomous_max_nudges=_AUTONOMOUS_MAX_NUDGES,
-        error=_AGENTS_ERROR, plugin_dir=ENGINE_PLUGIN_DIR, engine_dir=ENGINE_DIR,
+        error=_AGENTS_ERROR, plugin_dir=ENGINE_PLUGIN_DIR,
         cli_version=cli_version,
     )
 
@@ -991,7 +992,6 @@ async def run_turn(
         options = build_worker_options(
             project_id=project_id,
             cwd=WORKER_CWD,
-            engine_dir=ENGINE_DIR,
             plugin_dir=ENGINE_PLUGIN_DIR,
             agents=agents,
             store=store,
