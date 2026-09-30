@@ -172,7 +172,11 @@ priority level, prefer the one that unblocks the most downstream questions.
 | 7 | A recently extracted assertion opens a new line of inquiry | `new_evidence` |
 
 **Priority 3 detail:** Only fires when `severity == "high"`. Low-severity
-timeline gaps do not trigger it.
+timeline gaps do not trigger it. When it fires, the question targets the
+unsearched record set that spans the gap — its census or vital years — not a
+single record type a proof summary suggests. A proof summary's named source
+does not outrank a high-severity gap: clearing a major unsearched record set
+comes before one targeted record.
 
 **Priority 4 detail:** Fires for the first question on a single-fact objective
 too — there the "decomposition" is one question at the objective's own scope.
@@ -210,6 +214,13 @@ were Thomas Flynn's neighbors in Schuylkill County in 1850?"
 
 See Appendix A for the three criteria (one
 objective, named individual, testable scope) and examples.
+
+Every question seeks information, not confirmation: ask what a record set
+says, not whether it says one thing. "Did Thomas Flynn name Patrick as a son in
+his will?" fails; "Who were the heirs, beneficiaries or children named in
+Thomas Flynn's will or estate records?" asks for the value. The one exception
+is testing a disputed identity assertion already on the tree, framed
+confirm-or-refute (below).
 
 Before formulating, verify the starting-point information is sound. Do not
 build a question on unverified claims from compiled sources (online trees,
