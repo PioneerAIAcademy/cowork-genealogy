@@ -183,7 +183,7 @@ can be overridden per-user via the `popStatsUrl` field in
 | `standardPlace` not provided | Throw error: `"standardPlace is required"` |
 | `standardPlace` resolves to NOTHING | Throw: `"Could not resolve \"<name>\" to a single FamilySearch place. Use place_search to get a standard place name first."` |
 | `standardPlace` resolves to SEVERAL distinct places | Throw, naming them: `"\"<name>\" matches more than one place: <candidate>; <candidate>. Pass one of these exactly as listed, including the parenthesised type, as standardPlace, or call place_search to see the full list."` Each candidate is `fullName (type)`, one per distinct placeId, capped at 8. The parenthesised `(Type)` suffix is the disambiguation grammar. |
-| Pop Stats API unreachable | Throw error: `"Population data service is unavailable. Is the Pop Stats API running?"` |
+| Pop Stats API unreachable | Throw error: `"Population data service is unavailable at {url} ({cause})."` — `{cause}` from `describeFetchError` (`src/utils/http.ts`) |
 | API returns non-OK status | Throw error: `"Population API error: {status} {statusText}"` |
 | API returns 404 / no data | Return the API's response as-is (place info with no population/indexed_records sections) |
 

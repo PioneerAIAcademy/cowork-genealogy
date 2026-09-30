@@ -1,6 +1,7 @@
 import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetch } from "../utils/fs-fetch.js";
+import { describeFetchError } from "../utils/http.js";
 import { arkToUrl } from "../utils/ark.js";
 import type {
   SourceAttachmentsInput,
@@ -37,9 +38,8 @@ async function fetchAttachmentMap(
       body: JSON.stringify({ uris: apiUris }),
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
     throw new Error(
-      `Could not reach FamilySearch attachments API: ${message}.`,
+      `Could not reach FamilySearch attachments API: ${describeFetchError(err)}.`,
     );
   }
 
