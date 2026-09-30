@@ -497,7 +497,8 @@ and nothing is written. The ground truth is the staged payload's `query`, which
 `record_search` and `fulltext_search` fill with their own echo of the call's
 arguments (`search-result-staging-spec.md` §6), so the caller does not author it.
 Those two are the only producers judged: `external_links_search`,
-`image_transcribe` and `record_read` stage no echo of their arguments, and
+`image_transcribe`, `record_read` and `person_read` stage no `echoQuery` of
+their arguments, and
 `person_search` does not stage.
 
 A key is refused only when all four hold: it is an input parameter of the

@@ -6,8 +6,7 @@
 #
 # The suites DELEGATE to their Makefile targets instead of invoking `npm test` /
 # `pnpm test` directly. Those targets carry the dependency prerequisites
-# ($(JS_DEPS) / $(ENGINE_DEPS) / $(EVAL_APP_DEPS)), which install-and-stamp
-# before running. Calling the package manager straight — what this script used
+# ($(JS_DEPS) / $(ENGINE_DEPS)), which install-and-stamp before running. Calling the package manager straight — what this script used
 # to do — is what let an empty packages/engine/mcp-server/node_modules surface
 # as five cryptic TS2307 "Cannot find module" errors instead of "deps not
 # installed".
@@ -72,7 +71,10 @@ run_suite "Typecheck (turbo)"            make -C "$ROOT" typecheck
 run_suite "JS workspace tests (turbo)"   make -C "$ROOT" test-js
 run_suite "Control-plane tests (pytest)" make -C "$ROOT" server-test
 run_suite "MCP server tests (vitest)"    make -C "$ROOT" engine-test
-run_suite "Eval app tests (vitest)"      make -C "$ROOT" eval-ui-test
+# No separate eval/app suite: it is a pnpm workspace member (#1488), so the
+# turbo `typecheck` and `test-js` suites above already cover it. Running
+# `eval-ui-test` here too would execute its vitest twice and report every
+# failure twice. `make eval-ui-test` survives as a standalone target.
 
 # harness-test carries the $(ENGINE_BUILD) prerequisite, and that build is a
 # real dependency: the harness's mock MCP server shells out to the COMPILED
