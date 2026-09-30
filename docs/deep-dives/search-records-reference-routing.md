@@ -218,6 +218,55 @@ indexing began 1860–1870. The plugin ships zero Luxembourg content
 (`grep -rni luxembourg packages/engine/plugin/` → nothing), so the fetch gives
 the agent a locality fact it has never had, for a place nobody pre-wrote.
 
+## `ut_search_records_023` flaps at ~55%, and prose is not the lever
+
+Measured 2026-09-30 across **nine** `--runs-per-test 3` runs on three variants of
+the Norway entry. The test asks the skill to apply that entry's surname
+abbreviation (`Halsteinsdatter` → `Halsteinsdr`); the mock returns the match for
+no other shape.
+
+| Variant of `collection-quirks.md` | per-run | aggregate |
+|---|---|---|
+| As shipped | fail, pass, pass | pass |
+| Pointer moved into `SKILL.md`'s Step 2 pre-work block | fail, fail, pass | fail |
+| Norway entry restructured instruction-first, provenance last | fail, pass, pass | pass |
+
+**5 pass / 4 fail, wording-independent.** Both experimental variants were
+reverted: neither moved the rate, and an unmeasured prose change is not worth a
+paid run.
+
+The behaviour is bimodal with no middle. A passing run makes **1–2**
+`record_search` calls and 12–15 turns; a failing run makes **9–10** calls and
+33–41 turns, wandering the generic lever ladder.
+
+Five explanations were tested and refuted:
+
+| hypothesis | how it was tested | verdict |
+|---|---|---|
+| The reference is never reached | read-rate across all runs | refuted — read in **9/9** |
+| Between-file placement (§3.3's 4/25 point-of-use shape) | moved into the labelled pre-work block | refuted — **worse**, 1/3 |
+| Within-file prominence (rule was the tail clause of a 130-word bullet) | restructured instruction-first | refuted — 2/3, unchanged |
+| Turn or wall-clock budget | `max_turns` vs actual, `aborted_reason` | refuted — runs concluded and escalated, were not truncated |
+| The file is read only after the first nil | read position vs first `record_search` | refuted — read at builtin call 1–3 in **every** run, pass and fail alike |
+
+So the rule is reached, early, in every run, and applied in about half of them.
+That is an instruction-**following** limit, which `docs/skill-lifecycle.md` states
+directly: *"a rule the model reads is not a rule the model follows."*
+
+**What would fix it, and why it is not fixed here.** ADR-0011 and
+`docs/architecture.md` §3.3's 289/289 `craftNotes` result both say the same
+thing: a rule that must hold arrives on a call the agent already makes, or
+becomes a writer-tool precondition. For this rule that means `record_search`
+returning the collection's quirks on a nil that carries a `collectionId`. The
+data source is the blocker — these quirks live in a plugin file the engine may
+not read at runtime (CLAUDE.md, "Don't reference files across the
+`mcp-server` and `plugin` directories at runtime"), and encoding them in the
+engine is the record-type × country table ADR-0012 rejects. That needs its own
+card and a decision, not a fourth prose attempt — filed as issue #3054.
+
+**Read this before re-wording the Norway entry.** Three variants have been
+measured; a fourth needs a mechanism, not a rewrite.
+
 ## What nothing checks
 
 - **That the census fetch fires in production.** ADR-0012's Enforcement is
