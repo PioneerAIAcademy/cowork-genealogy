@@ -7109,6 +7109,23 @@ describe("research_append — detected contradiction, two-party assertions", () 
     expect(r.ok ? [] : failure(r).errors).toEqual([]);
   });
 
+  // Self-review, 2026-09-30. The retirement exemption was keyed on the field,
+  // so an APPEND carrying an invented `superseded_by` skipped the gate on both
+  // arms. Main refused the one-party case; this branch had regressed it.
+
+  it("refuses a confident one-party link APPENDED already carrying superseded_by", async () => {
+    await write();
+    const r = await researchAppend(batch({ ...entry("a_061", "I1", "confident"), superseded_by: "pe_nope" }) as any);
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/christening in 1858/);
+  });
+
+  it("refuses a confident two-party link APPENDED already carrying superseded_by", async () => {
+    await write([{ id: "pe_900", ...entry("a_061", "I1", "speculative") }]);
+    const r = await researchAppend(batch({ ...entry("a_060", "I1", "confident"), superseded_by: "pe_nope" }) as any);
+    expect(r.ok).toBe(false);
+  });
+
   it("does NOT pair with a one-party link the same call supersedes", async () => {
     await write([{ id: "pe_900", ...entry("a_061", "I1", "speculative") }]);
     const r = await researchAppend({

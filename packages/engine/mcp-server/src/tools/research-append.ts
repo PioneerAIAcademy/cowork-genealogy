@@ -768,11 +768,6 @@ export function coreIdentifierContradictionInvariants(
   batchAssertions?: Map<string, any>,
 ): string[] {
   if (entry.confidence !== "confident" && entry.confidence !== "probable") return [];
-  // A superseded link is being retired, not asserted. Refusing it would make a
-  // confident link on a contradicted persona permanently unretractable through
-  // the section 6 supersede pattern (append the corrected link, then set
-  // `superseded_by` on the old one) -- the trap the score gate avoids too.
-  if (entry.superseded_by) return [];
   // Every assertion this call can resolve: the document's, plus this batch's
   // predicted appends. Reading only `research.assertions` let a batch that puts
   // its assertion appends AFTER the person_evidence ops silence this gate, the
@@ -3396,8 +3391,20 @@ function applyOne(
     // `secondary`/`family_not_present`, 3 christening PLACES against a birth
     // place. Both classes are now excluded on genealogical grounds, and the
     // arm refuses 0 of 323 committed confident/probable entries.
+    //
+    // An UPDATE that sets `superseded_by` is retiring a link, not asserting
+    // one. Refusing it would make a confident link on a contradicted persona
+    // permanently unretractable through the section 6 supersede pattern
+    // (append the corrected link, then set `superseded_by` on the old one) --
+    // the trap the score gate avoids too. Keyed on the op, not the field: an
+    // APPEND that arrives already carrying `superseded_by` is a new link, and
+    // exempting it let any confident link on a contradicted persona through
+    // with an invented supersede pointer (the validator does not check that
+    // a person_evidence `superseded_by` names an existing entry).
     invariantErrors.push(
-      ...coreIdentifierContradictionInvariants(resultEntry, research, tree, personLinks, batchAssertions),
+      ...(op.op === "update" && resultEntry.superseded_by
+        ? []
+        : coreIdentifierContradictionInvariants(resultEntry, research, tree, personLinks, batchAssertions)),
     );
     // #1731 step 3. The two halves have different scope, and collapsing them
     // into "append only" left the CIRCULAR arm reachable in two calls: append
