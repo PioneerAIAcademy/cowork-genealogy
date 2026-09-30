@@ -13,6 +13,8 @@ import {
   withOpeningTurn,
   stripOpeningTurn,
   type ChatMessage,
+  type ChatBlock,
+  type ToolChip,
   clearQueued,
   turnOutcomeLabel
 } from './chatEvents'
@@ -135,6 +137,51 @@ export interface UsageDelta {
   inputTokens: number
   outputTokens: number
   estimated: boolean
+}
+
+/** One chip, with both its slots humanized (phase 2 item 2). */
+function ToolChipView({ chip }: { chip: ToolChip }): React.JSX.Element {
+  return (
+    <span className={`toolChip ${chip.done ? 'toolDone' : 'toolRunning'}`}>
+      {chip.done ? '✓' : '⟳'} {chip.agent ? `${chip.agent} · ` : ''}
+      {toolLabel(chip.tool)}: {humanizeToolNames(chip.summary)}
+    </span>
+  )
+}
+
+/**
+ * Chips grouped into the runs they arrived in, so each run sits with its prose.
+ *
+ * The text itself is rendered by the markdown block below; this places only the
+ * chips. A block with no chips contributes nothing, so the markup is unchanged for
+ * a paragraph that had none.
+ */
+function renderChipRuns(blocks: ChatBlock[], tools: ToolChip[]): React.JSX.Element[] {
+  const out: React.JSX.Element[] = []
+  let run: ToolChip[] = []
+  let key = 0
+  const flush = (): void => {
+    if (run.length === 0) return
+    const chips = run
+    out.push(
+      <div className="toolChips" key={`run-${key++}`}>
+        {chips.map((c, i) => (
+          <ToolChipView key={i} chip={c} />
+        ))}
+      </div>
+    )
+    run = []
+  }
+  for (const b of blocks) {
+    if (b.kind === 'chip') {
+      const chip = b.toolIndex !== undefined ? tools[b.toolIndex] : undefined
+      if (chip) run.push(chip)
+    } else {
+      flush()
+    }
+  }
+  flush()
+  return out
 }
 
 export default function ChatPane({
@@ -396,20 +443,20 @@ export default function ChatPane({
           )}
           {messages.map((m, i) => (
             <div key={i} className={m.role === 'user' ? 'msgUser' : 'msgAssistant'}>
-              {m.tools.length > 0 && (
-                <div className="toolChips">
-                  {m.tools.map((t, j) => (
-                    <span key={j} className={`toolChip ${t.done ? 'toolDone' : 'toolRunning'}`}>
-                      {t.done ? '✓' : '⟳'} {t.agent ? `${t.agent} · ` : ''}
-                      {/* Both slots are humanized: 18 chips in the captured session
-                          carry a qualified tool name inside the SUMMARY (ToolSearch
-                          queries), so labelling only the name slot leaves the wire
-                          protocol on screen. */}
-                      {toolLabel(t.tool)}: {humanizeToolNames(t.summary)}
-                    </span>
-                  ))}
-                </div>
-              )}
+              {/* Chips render WHERE THEY ARRIVED, not all above the prose. `blocks`
+                  carries arrival order; without it a turn stacks every chip above
+                  every paragraph -- 36 in one stretch of the captured session. Older
+                  messages have no `blocks`, so they fall back to the flat list and
+                  render exactly as before. */}
+              {m.blocks
+                ? renderChipRuns(m.blocks, m.tools)
+                : m.tools.length > 0 && (
+                    <div className="toolChips">
+                      {m.tools.map((t, j) => (
+                        <ToolChipView key={j} chip={t} />
+                      ))}
+                    </div>
+                  )}
               {showThinking && (m.thinking || m.streamThinking) && (
                 <details className="thinkingBlock">
                   <summary>💭 Model&rsquo;s private reasoning — not its answer</summary>

@@ -10,10 +10,25 @@ export interface ToolChip {
   agent?: string // set when a subagent, not the main agent, made the call
 }
 
+/** One rendered unit, in arrival order. See `blocks` below. */
+export interface ChatBlock {
+  kind: 'text' | 'chip'
+  text?: string
+  tool?: string
+  /** Index into `tools`, so the chip renders with its live done/summary state. */
+  toolIndex?: number
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant'
   text: string
   tools: ToolChip[]
+  // Arrival order of text and chips. `text` accumulates into one string and `tools`
+  // into one array, so the order BETWEEN them is lost -- which is why every chip in a
+  // turn renders above every paragraph, 36 of them in one stretch of the captured
+  // session. This records it. Both fields above are untouched, so every existing
+  // reader keeps working and this stays additive.
+  blocks?: ChatBlock[]
   thinking?: string
   // Partial content streaming in ahead of its canonical block. Held separately
   // so committing the block can't double-render what the deltas already showed.
@@ -180,6 +195,7 @@ export function foldChatEvent(
     // commit it (as its own paragraph) and drop the preview rather than
     // appending both.
     last.text = joinTextBlocks(last.text, text)
+    last.blocks = [...(last.blocks ?? []), { kind: 'text', text }]
     last.streamText = ''
   } else if (kind === 'text_delta') {
     last.streamText = (last.streamText ?? '') + text
@@ -198,6 +214,10 @@ export function foldChatEvent(
     last.text = joinTextBlocks(last.text, (ev.text as string) ?? 'Error')
     last.error = true
   } else if (kind === 'tool_use') {
+    last.blocks = [
+      ...(last.blocks ?? []),
+      { kind: 'chip', tool: ev.tool as string, toolIndex: last.tools.length }
+    ]
     last.tools.push({
       tool: ev.tool as string,
       summary: ev.summary as string,

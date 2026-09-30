@@ -394,3 +394,64 @@ describe('tool chips with several agents in flight', () => {
     expect(tools.filter((t) => !t.done).length).toBe(1)
   })
 })
+
+// --- Ordered blocks, so chips render where they arrived (phase 2 item 3) ---
+//
+// `text` accumulates into one string and `tools` into one array, so the order
+// BETWEEN them is lost and ChatPane can only render every chip above every
+// paragraph. `blocks` records arrival order alongside them; `text`/`tools` are
+// untouched, so every existing reader keeps working.
+
+describe('ordered blocks', () => {
+  it('records text and chips in the order they arrived', () => {
+    let m: ChatMessage[] = []
+    m = foldChatEvent(m, 'text', { text: 'first' })
+    m = foldChatEvent(m, 'tool_use', { tool: 'record_search', summary: 's' })
+    m = foldChatEvent(m, 'text', { text: 'second' })
+
+    const blocks = m[m.length - 1].blocks ?? []
+    expect(blocks.map((b) => b.kind)).toEqual(['text', 'chip', 'text'])
+    expect(blocks[0].text).toBe('first')
+    expect(blocks[1].tool).toBe('record_search')
+    expect(blocks[2].text).toBe('second')
+  })
+
+  it('leaves the existing text and tools fields exactly as they were', () => {
+    let m: ChatMessage[] = []
+    m = foldChatEvent(m, 'text', { text: 'a' })
+    m = foldChatEvent(m, 'tool_use', { tool: 't1', summary: 's' })
+    m = foldChatEvent(m, 'text', { text: 'b' })
+
+    const last = m[m.length - 1]
+    expect(last.text).toBe(joinTextBlocks('a', 'b'))
+    expect(last.tools.map((t) => t.tool)).toEqual(['t1'])
+  })
+
+  it('does not record a block for a tool_result — it closes a chip, it is not new', () => {
+    let m: ChatMessage[] = []
+    m = foldChatEvent(m, 'text', { text: 'x' })
+    m = foldChatEvent(m, 'tool_use', { tool: 't1', summary: 'started' })
+    m = foldChatEvent(m, 'tool_result', { tool: 't1', summary: 'done' })
+
+    const blocks = m[m.length - 1].blocks ?? []
+    expect(blocks.filter((b) => b.kind === 'chip').length).toBe(1)
+  })
+
+  it('each chip block points at ITS OWN entry in tools', () => {
+    // Break-testing found this uncovered: pointing every block at tools[0] passed.
+    // A wrong index renders the wrong tool's label and done-state in that slot.
+    let m: ChatMessage[] = []
+    m = foldChatEvent(m, 'text', { text: 'go' })
+    m = foldChatEvent(m, 'tool_use', { tool: 'first', summary: 'a' })
+    m = foldChatEvent(m, 'tool_use', { tool: 'second', summary: 'b' })
+    m = foldChatEvent(m, 'tool_use', { tool: 'third', summary: 'c' })
+
+    const last = m[m.length - 1]
+    const chipBlocks = (last.blocks ?? []).filter((b) => b.kind === 'chip')
+    expect(chipBlocks.map((b) => last.tools[b.toolIndex as number].tool)).toEqual([
+      'first',
+      'second',
+      'third'
+    ])
+  })
+})
