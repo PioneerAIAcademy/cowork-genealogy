@@ -30,13 +30,50 @@ const YEAR_MIN = 1500;
 const YEAR_MAX = 1950;
 
 /** Three legs must sum under Cowork's 60s abort (spec §8). Bounds, not measured
- *  latencies — measure with dev/try-volume-bisect.ts before treating them so. */
-const IMAGE_SEARCH_TIMEOUT_MS = 10_000;
-const DOWNLOAD_TIMEOUT_MS = 15_000;
-const PROBE_OCR_TIMEOUT_MS = 20_000;
+ *  latencies, except the OCR one, which is now measured: 14.7-18.3s over five
+ *  caps on one page (`dev/probe-volume-bisect-token-cap.ts`), so the 20s it
+ *  carried first was inside the observed spread rather than above it.
+ *
+ *  **Two of the three legs retry, so the sum is per ATTEMPT, not per leg.** The
+ *  first version of this budget multiplied one of them and not the other and
+ *  claimed 55s against a real 70s, over the ceiling the section exists to respect.
+ *  Each count below names the call site that justifies it; `probe-budget.test.ts`
+ *  asserts the total, so adding an attempt anywhere reds a test rather than
+ *  silently spending the bridge's abort. */
+const IMAGE_SEARCH_TIMEOUT_MS = 6_000;
+const DOWNLOAD_TIMEOUT_MS = 10_000;
+const PROBE_OCR_TIMEOUT_MS = 30_000;
 
-/** A year-only answer is a handful of tokens; the full-page budget is not wanted. */
-const PROBE_MAX_TOKENS = 32;
+/** `image-search.ts` re-requests once when the response was defective
+ *  (`if (best.dropped > 0)`). */
+export const IMAGE_SEARCH_ATTEMPTS = 2;
+/** One. `fs-image-fetch.ts` CAN issue a fallback after the primary, but only
+ *  when `resolveFsImageInput` produced a `fallbackUrl`, and it does that for the
+ *  `ark` shape alone. This tool always passes an `imageId`, so the fallback is
+ *  unreachable here. Raise this the moment the tool resolves an ark. */
+export const DOWNLOAD_ATTEMPTS = 1;
+/** `ocr.ts` retries a transport failure, but never a timeout — a full-budget
+ *  first attempt is the worst case, so this leg counts once. */
+export const OCR_ATTEMPTS = 1;
+
+/** Cowork's device bridge aborts every MCP call at this (spec §8). */
+export const COWORK_CALL_ABORT_MS = 60_000;
+
+/** What one `volume_bisect` call can cost when every attempt runs to its bound. */
+export const PROBE_WORST_CASE_MS =
+  IMAGE_SEARCH_ATTEMPTS * IMAGE_SEARCH_TIMEOUT_MS +
+  DOWNLOAD_ATTEMPTS * DOWNLOAD_TIMEOUT_MS +
+  OCR_ATTEMPTS * PROBE_OCR_TIMEOUT_MS;
+
+/** Measured, not reasoned (`dev/probe-volume-bisect-token-cap.ts`, 2026-09-30,
+ *  `google/gemini-3.7-flash` on 004516861_00027). The first value here was 32, on
+ *  the reasoning that a year is a handful of tokens. It is not: reasoning tokens
+ *  count against `max_tokens`, and at 32 AND at 128 the model returned the
+ *  truncated string "18" for a page reading 1821. That is the dangerous shape —
+ *  not an error but a short answer, which `parseProbeYear` reads as NO YEAR, so a
+ *  dated page is recorded null and three of them end the hunt on the blank-run
+ *  rule. 256 was the first cap to return "1821"; 512 is that with margin. */
+const PROBE_MAX_TOKENS = 512;
 
 /** Consecutive blank leaves before the tool stops rather than walking forever. */
 const MAX_CONSECUTIVE_NULL_READINGS = 3;

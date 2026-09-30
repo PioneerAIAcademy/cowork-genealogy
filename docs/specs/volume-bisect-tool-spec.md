@@ -160,27 +160,32 @@ an ark-driven read never advances the budget.
 
 Cowork aborts at 60s, so all three legs are bounded to fit, not just the OCR:
 
-| leg | default | here | why |
-|---|---|---|---|
-| `image_search` | 30s per attempt, ×2 on the null-drop defect retry | **10s** | the default would spend the whole ceiling on the resolve alone |
-| image download | 90s per attempt, plus a fallback attempt | **15s** | a hang-catcher sized for a multi-MB scan, not for a probe |
-| OCR | 180s | **20s** | a year-only answer is a few output tokens |
+**Budget per attempt, not per leg** — and per attempt *this tool can reach*:
 
-Worst case ≈ 55s, inside the ceiling.
+| leg | attempts | why that many | here | worst |
+|---|---|---|---|---|
+| `image_search` | **2** | re-requests once on a defective response (`best.dropped > 0`) | 6s | 12s |
+| image download | **1** | `fs-image-fetch` can issue a fallback, but only when `resolveFsImageInput` returned a `fallbackUrl`, which it does for the `ark` shape alone. This tool always passes an `imageId`. | 10s | 10s |
+| OCR | 1 | retries a transport failure but never a timeout, so a full-budget first attempt is the worst case | 30s | 30s |
 
-**Measured 2026-09-30, live, against `004516861_001_M9S4-SQB`:** three probes at
-**10.7s, 9.0s and 9.0s** whole-call — comfortably inside the 55s worst case and the
-60s ceiling. The first is longer because nothing is warm; the tool is stateless, so
-every call re-runs `image_search` before probing.
+**Worst case 52s**, inside the 60s ceiling with 8s of headroom.
 
-**The per-leg split is still unmeasured.** Those are whole-call figures, so they
-bound all three legs together and do not isolate the OCR one. The 20s OCR figure
-remains reasoned rather than measured — from the full-page whole-call p50 of 18.7s,
-against which a year-only prompt returns a handful of output tokens rather than a
-full page's ~1.6k. What the run does establish is that the three bounds together are
-not the binding constraint.
+Both directions of this sum were got wrong on 2026-09-30 and neither was caught by
+reading. A drift review read `fs-image-fetch.ts`, saw the fallback, and counted the
+download twice — a 70s worst case, over the abort; acting on it shortened three
+timeouts that did not need shortening. The table above is what the call shape
+actually reaches. `tests/tools/probe-budget.test.ts` now asserts the sum, so a
+raised timeout or a changed attempt count reds a test instead of a paragraph.
 
-**The trade this makes, deliberately.** Bounding a leg means a slow-but-genuine
+**The OCR leg is measured now.** `dev/probe-volume-bisect-token-cap.ts` over five
+`max_tokens` values on one page: **14.3-18.3s**. The 20s this leg carried first sat
+*inside* that spread rather than above it, so it was a coin-flip abort, not a
+hang-catcher; it is 30s. Whole-call, a converging run measures 8.7-14.8s per probe
+(seven probes, 2026-09-30).
+
+**The trade this makes, deliberately.** The 2026-09-30 correction cut the download
+leg from 15s to 9s to fit the attempts-inclusive sum, which sharpens this trade
+rather than changing it. Bounding a leg means a slow-but-genuine
 read is *aborted* rather than completed — the opposite of `image_transcribe`'s 180s
 hang-catcher. That is right for a probe and wrong for a transcription: a bisect that
 loses one midpoint probes again, where a transcription that loses a page loses the
@@ -193,15 +198,22 @@ date range. All four sub-volumes of `004514824` return the same coverage — tha
 catalogue span, not a register span, and seeding from it puts the bracket outside
 the book.
 
-**An unseeded start can end the hunt before it begins — measured 2026-09-30.** Run
-cold against `004516861_001_M9S4-SQB` for a 1690s target, the tool probes the
-midpoint and its two neighbours (images 27, 26, 28), reads no year on any of them,
-and stops `inconclusive` on the three-null rule (§6). That is the rule working: the
-group is 54 images of front matter, so there is no year to find and walking it a
-page at a time is the behaviour worth refusing. But it means a cold start on an
-unknown group is a plausible dead end, and the caller's first move should be a
-reading it already has — from a hit, a neighbouring group, or one hand-read page —
-rather than letting the tool pick the midpoint blind.
+**A cold start is survivable; the first attempt at this said otherwise and was
+wrong.** Run cold against `004516861_001_M9S4-SQB` for a 1690s target on
+2026-09-30, the tool probed the midpoint, read no year on three pages and stopped.
+That was recorded here as "the group is 54 images of front matter, so there is no
+year to find". It was not: `PROBE_MAX_TOKENS` was 32, the model spent it reasoning
+and returned the truncated string `"18"` for a page reading **1821**, and §6 reads
+a short answer as no year. Three false nulls then tripped the blank-run rule. With
+the cap measured and raised, the same cold start bisects: 1821 → 1817 → 1815,
+narrowing 0..26 → 0..13 → 0..6 before reaching genuine blank leaves at the front.
+
+**What that run does show is a case-selection trap.** The group covers **1815-1821**;
+the 1690s target the card names is not in it at all. A target outside the
+sub-volume's range walks the bisect to the nearest edge and stops there, which is
+correct but reads as failure. Seed from a reading you already hold, and read the
+bracket's dated end before concluding the tool could not find the year — it may be
+telling you the year is not in this book.
 
 ## 10. What nothing checks
 

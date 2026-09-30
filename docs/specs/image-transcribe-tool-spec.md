@@ -1323,7 +1323,10 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 
 *Extracted for `volume_bisect` — behaviour unchanged, 88/88 of this tool's tests
 passed unedited across the move:*
-- `src/utils/ocr.ts` — the OpenRouter leg, lifted whole
+- `src/utils/ocr.ts` — the OpenRouter leg. The code moved unchanged; the
+  constants' measured derivations (the 126-call `OCR_MAX_TOKENS` scan, the
+  14-25 MiB upload case, the 70/70 and 46/46 transport probes) stayed in this
+  spec rather than travelling with them, so read §5 here for provenance
 - `src/utils/browse-budget.ts` — the browse counter, lifted whole
 - `src/tools/image-transcribe.ts` — imports both; re-exports
   `__clearBrowseBudgetForTests`, `OCR_MAX_TOKENS` and `MAX_OCR_INPUT_BYTES` so
