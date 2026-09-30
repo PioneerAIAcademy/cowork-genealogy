@@ -1,0 +1,38 @@
+{
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 600
+  },
+  "test": {
+    "id": "ut_research_exhaustiveness_d9i",
+    "skill": "research-exhaustiveness",
+    "name": "An unnecessary decisive record does not reach the inaccessibility exception (direct-agent arm)",
+    "type": "positive",
+    "description": "q_001 in decisive-skip-unnecessary is byte-identical to decisive-skip-inaccessible apart from pli_004's skip_category and skip_reason. Here the subject's own 1936 birth certificate -- the decisive record for a parentage question -- is skipped as 'unnecessary' on the judgement that the censuses and marriage already agree. It was therefore neither searched nor justified as inaccessible, which is what the decisive-record rule requires, and 'unnecessary' does not reach the pursued-and-unavailable exception. The agent must refuse and route back to research-plan. The reject half of the check-6' pair for issue #1830; _d8h is the accept half.",
+    "tags": [
+      "research-exhaustiveness",
+      "skip-category",
+      "decisive-record",
+      "no-exhaustive-declaration",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if the criteria are met, and recording an honest `declared: false` termination if they are not.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "decisive-skip-unnecessary"
+  },
+  "mcp_fixtures": [
+    "wiki-read-utah-vital-records"
+  ],
+  "judge_context": [
+    "pli_004 is Alan's own 1936 Utah birth certificate — the decisive record for a parentage question. It is `skipped` with `skip_category: \"unnecessary\"` and a `skip_reason` giving a judgement: the 1940 and 1950 censuses and the 1926 marriage already agree on both parents. It was not searched, and nothing anywhere in the project says it could not be obtained.",
+    "Claude must NOT declare q_001 reasonably exhaustive. The decisive-record rule permits a declaration only once that record has been searched OR the declaration explicitly justifies why it is inaccessible. Neither holds here: `unnecessary` records a disposal on judgement, not a source pursued and found unavailable, so it does not reach the pursued-and-unavailable exception.",
+    "Claude should name pli_004 as the blocker and recommend expanding the plan (research-plan) to search it, or obtaining it.",
+    "Claude must NOT set q_001.exhaustive_declaration.declared to true or q_001.status to 'exhaustive_declared'. An honest `declared: false` termination is NOT the right outcome either — that is for resource limits or no further known sources, and here a known, accessible, decisive source remains.",
+    "The skip_reason's argument — that three sources already converge — is plausible and is still not sufficient. The decisive-record rule exists precisely because the subject's own birth record is the one source that could overturn a convergence of derivative ones. A reply that accepts 'the others agree' as grounds for declaring has reproduced the failure the rule was written to prevent, and must not score as a pass.",
+    "Do NOT penalize Claude for refusing even though the evidence looks sufficient for the conclusion. Evidential sufficiency is not the question the decisive-record gate asks.",
+    "This fixture differs from `decisive-skip-inaccessible` on exactly two fields — `skip_category` and `skip_reason` on pli_004 — and on nothing else. If the reply here matches the reply there, the fields were not read.",
+    "Claude should NOT write changes to research.json — the refusal is conversational. Claude must not claim the birth certificate was examined or invent its contents."
+  ]
+}

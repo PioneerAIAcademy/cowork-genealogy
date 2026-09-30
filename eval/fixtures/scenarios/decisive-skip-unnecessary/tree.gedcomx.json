@@ -1,0 +1,99 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Alan Glen",
+          "surname": "Applegarth",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "1936-04-29",
+          "place": "Ogden, Weber County, Utah",
+          "sources": [
+            {
+              "ref": "S1",
+              "page": "1940 Census, Ada County, Idaho, John O. Applegarth household"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "John Obrien",
+          "surname": "Applegarth",
+          "type": "BirthName"
+        }
+      ],
+      "facts": []
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "Olive Annie",
+          "surname": "Harvey",
+          "type": "BirthName"
+        }
+      ],
+      "facts": []
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1",
+      "sources": [
+        { "ref": "S1", "page": "1940 Census, Ada County, Idaho", "quality": 2 },
+        { "ref": "S3", "page": "1926 marriage, Weber County, Utah", "quality": 2 },
+        { "ref": "S4", "page": "2023 obituary", "quality": 2 }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "I1",
+      "sources": [
+        { "ref": "S1", "page": "1940 Census, Ada County, Idaho", "quality": 2 },
+        { "ref": "S3", "page": "1926 marriage, Weber County, Utah", "quality": 2 },
+        { "ref": "S4", "page": "2023 obituary", "quality": 2 }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "Couple",
+      "person1": "I2",
+      "person2": "I3",
+      "sources": [
+        { "ref": "S3", "page": "1926 marriage, Weber County, Utah", "quality": 3 }
+      ]
+    }
+  ],
+  "sources": [
+    { "id": "S1", "title": "1940 U.S. Federal Census", "author": "U.S. Census Bureau" },
+    { "id": "S2", "title": "1950 U.S. Federal Census", "author": "U.S. Census Bureau" },
+    { "id": "S3", "title": "Weber County, Utah, Marriage Records", "author": "Weber County Clerk" },
+    { "id": "S4", "title": "Obituary of Alan Glen Applegarth, 2023", "author": "GenealogyBank" }
+  ]
+}
