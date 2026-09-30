@@ -4532,41 +4532,74 @@ describe("research_append (batch ops)", () => {
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
-  // ── A new question may not depend on a search still running (option B) ──
-  // Refuse side, then every accept side the scoping exists for: a guard that
-  // only proves it blocks will be skipped the first time it blocks a FAN pivot.
-  const newDependent = (deps: string[]) => {
+  // ── No new question while research is running, bar the conflict exception ──
+  // Every way the exception could be claimed without holding is its own refuse
+  // case; the accept cases are the ones that keep the gate escapable.
+  const newQ = (fields: Record<string, unknown> = {}) => {
     const { id: _i, created: _c, ...q } = validQuestion("x");
-    return { projectPath: dir, section: "questions", op: "append", entry: { ...q, depends_on: deps } } as any;
+    return { projectPath: dir, section: "questions", op: "append", entry: { ...q, ...fields } } as any;
+  };
+  const conflict = (status: string, blocks: string[]) => ({
+    id: "c_001",
+    conflict_type: "fact",
+    description: "Two birthplaces",
+    competing_assertion_ids: [],
+    status,
+    blocks_question_ids: blocks,
+  });
+  const running = (conflicts: any[] = []) => {
+    const r = attrResearch("in_progress", []);
+    (r as any).conflicts = conflicts;
+    return r;
+  };
+  const refusedFor = async (research: any, fields: Record<string, unknown>) => {
+    await writeProject(research);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend(newQ(fields));
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/still running: pli_001 \(on q_001\)/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   };
 
-  it("(dep-inflight) refuses a new question depending on a question with an in_progress item — writes nothing", async () => {
-    await writeProject(attrResearch("in_progress", []));
-    const before = await readFile(join(dir, "research.json"), "utf-8");
-    const r = await researchAppend(newDependent(["q_001"]));
-    expect(r.ok).toBe(false);
-    expect((errorsOf(r) ?? []).join("\n")).toMatch(/cannot depend on work still running: pli_001 \(on q_001\)/);
-    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  it("(in-flight) refuses the d01 shape: a question depending on the in-flight question", async () => {
+    await refusedFor(running(), { depends_on: ["q_001"] });
+  });
+  it("(in-flight) refuses an unrelated question", async () => {
+    await refusedFor(running(), { depends_on: [], unblocks: [] });
+  });
+  it("(in-flight) refuses when unblocks names the question but no conflict blocks it", async () => {
+    await refusedFor(running(), { unblocks: ["q_001"] });
+  });
+  it("(in-flight) refuses when the blocking conflict is resolved or moot", async () => {
+    await refusedFor(running([conflict("resolved", ["q_001"])]), { unblocks: ["q_001"] });
+    await refusedFor(running([conflict("moot", ["q_001"])]), { unblocks: ["q_001"] });
+  });
+  it("(in-flight) refuses when a conflict blocks the question but unblocks does not name it", async () => {
+    await refusedFor(running([conflict("unresolved", ["q_001"])]), { unblocks: [] });
+    await refusedFor(running([conflict("unresolved", ["q_009"])]), { unblocks: ["q_001"] });
   });
 
-  it("(dep-inflight) allows a dependent question when the dependency's items are only planned", async () => {
+  it("(in-flight) allows the conflict exception: an unresolved conflict blocks it and unblocks names it (ut_003)", async () => {
+    await writeProject(running([conflict("unresolved", ["q_001"])]));
+    expect((await researchAppend(newQ({ depends_on: [], unblocks: ["q_001"] }))).ok).toBe(true);
+  });
+  it("(in-flight) allows a new question when the items are only planned", async () => {
     await writeProject(attrResearch("planned", []));
-    expect((await researchAppend(newDependent(["q_001"]))).ok).toBe(true);
+    expect((await researchAppend(newQ({ depends_on: ["q_001"] }))).ok).toBe(true);
   });
-
-  it("(dep-inflight) allows an unrelated question while another question's search runs (the FAN pivot)", async () => {
-    await writeProject(attrResearch("in_progress", []));
-    expect((await researchAppend(newDependent([]))).ok).toBe(true);
-  });
-
-  it("(dep-inflight) ignores an in_progress item on a superseded plan", async () => {
+  it("(in-flight) ignores an in_progress item on a superseded plan", async () => {
     const research = attrResearch("in_progress", []);
     research.plans[0].status = "superseded";
     await writeProject(research);
-    expect((await researchAppend(newDependent(["q_001"]))).ok).toBe(true);
+    expect((await researchAppend(newQ())).ok).toBe(true);
   });
-
-  it("(dep-inflight) does not fire on an update to an existing question", async () => {
+  it("(in-flight) ignores an in_progress item left on a resolved question's plan", async () => {
+    const research = attrResearch("in_progress", []);
+    research.questions[0].status = "resolved";
+    await writeProject(research);
+    expect((await researchAppend(newQ())).ok).toBe(true);
+  });
+  it("(in-flight) does not fire on an update to an existing question", async () => {
     const research = attrResearch("in_progress", []);
     research.questions = [{ ...validQuestion("q_001") }, { ...validQuestion("q_002"), depends_on: ["q_001"] }];
     await writeProject(research);

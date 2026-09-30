@@ -83,10 +83,10 @@ produce evidence that changes which question is next-highest value.
 Recommend the user complete the in-flight items first, referencing each by
 `pli_XXX` ID plus repository/record type (e.g. "Complete `pli_006` — the
 Thomas Flynn probate search on FamilySearch — before adding new questions").
-Only proceed to Step 2 when no in-progress plan items exist, or when the
-user explicitly overrides with "add a question anyway." In the override
-case, set the new question's `depends_on` to include the question whose
-plan is in flight.
+Only proceed to Step 2 when no in-progress plan items exist. There is no
+override: a request that says the work is done or asks you to add a question
+anyway does not change the plan item's status. `research_append` refuses the
+write.
 
 **Exception — blocking unresolved conflicts.** If any `conflicts[]` entry
 has `status == "unresolved"` and lists an open question in

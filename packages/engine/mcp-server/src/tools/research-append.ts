@@ -1467,46 +1467,56 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
   ];
 }
 
-/** A new question may not be created while a question it `depends_on` has an
- *  active-plan item `in_progress` (option B, 2026-09-29). The
- *  dependency's search is still running, so the new question would be built on
- *  a finding the project does not have yet. Measured on
- *  `ut_question_selection_d01`: a delegation saying "the probate search is
- *  effectively done" made the agent write the dependent question over its own
- *  observation that the item was still `in_progress`, on some runs and not
- *  others — a prose rule that loses to the caller.
+/** A new question may not be created while any unresolved question has an
+ *  active-plan item `in_progress`, with one exception (chesworthrm,
+ *  2026-09-29): the new question may target an unresolved conflict that blocks
+ *  the in-flight question. That exception is checked against `conflicts[]` —
+ *  an `unresolved` conflict must list the in-flight question in
+ *  `blocks_question_ids`, AND the new question's `unblocks` must name it. A
+ *  filled-in `unblocks` alone proves nothing.
  *
- *  Scoped to `depends_on`, not to every in-flight item in the project, so a
- *  FAN pivot or an unrelated question is never blocked by someone else's search.
- *  A project-wide refusal was considered and rejected on measurement: it fails
- *  `ut_question_selection_003`, which expects a conflict-resolving question
- *  while the blocked question's search is running, and it would stall the FAN
- *  pivot in the state where exhaustiveness also cannot declare.
- *  Same snapshot and active-plan discipline as `planCompleteInvariants`: the
- *  item's completion is the search work's step, and a superseded plan's items
- *  are frozen. Escapable once the search finishes, since the search skills own
- *  the `in_progress` → terminal transition. */
-function newQuestionDependencyInFlightInvariants(entry: any, preCallResearch: any): string[] {
-  const deps: string[] = Array.isArray(entry?.depends_on)
-    ? entry.depends_on.filter((d: unknown): d is string => typeof d === "string")
-    : [];
-  if (deps.length === 0) return [];
-  const inFlight: string[] = [];
+ *  There is deliberately no "add a question anyway" override: the tool cannot
+ *  tell a real user override from a delegation that claims one, and the
+ *  override's shape (`depends_on` naming the in-flight question) is exactly how
+ *  `ut_question_selection_d01` fails. A user who wants to move on marks the
+ *  in-flight item done or skipped first.
+ *
+ *  Same pre-call snapshot and active-plan discipline as
+ *  `planCompleteInvariants`: a superseded plan's items are frozen and a resolved
+ *  question's plan is settled, so neither blocks. */
+function newQuestionWhileSearchInFlightInvariants(entry: any, preCallResearch: any): string[] {
+  const unresolvedQuestions = new Set<string>(
+    (Array.isArray(preCallResearch?.questions) ? preCallResearch.questions : [])
+      .filter((q: any) => typeof q?.id === "string" && q.status !== "resolved")
+      .map((q: any) => q.id),
+  );
+  const unblocks = new Set<string>(
+    Array.isArray(entry?.unblocks) ? entry.unblocks.filter((u: unknown) => typeof u === "string") : [],
+  );
+  const conflictBlocked = new Set<string>();
+  for (const c of Array.isArray(preCallResearch?.conflicts) ? preCallResearch.conflicts : []) {
+    if (c?.status !== "unresolved" || !Array.isArray(c.blocks_question_ids)) continue;
+    for (const q of c.blocks_question_ids) if (typeof q === "string") conflictBlocked.add(q);
+  }
+  const refused: string[] = [];
   for (const plan of Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []) {
-    if (!plan || plan.status !== "active" || !deps.includes(plan.question_id)) continue;
+    if (!plan || plan.status !== "active" || !unresolvedQuestions.has(plan.question_id)) continue;
+    const excepted = conflictBlocked.has(plan.question_id) && unblocks.has(plan.question_id);
+    if (excepted) continue;
     for (const item of Array.isArray(plan.items) ? plan.items : []) {
       if (item?.status === "in_progress" && typeof item?.id === "string") {
-        inFlight.push(`${item.id} (on ${plan.question_id})`);
+        refused.push(`${item.id} (on ${plan.question_id})`);
       }
     }
   }
-  if (inFlight.length === 0) return [];
-  const ids = inFlight.sort().join(", ");
+  if (refused.length === 0) return [];
+  const ids = refused.sort().join(", ");
   return [
-    `a new question cannot depend on work still running: ${ids} ` +
-      `${inFlight.length === 1 ? "is" : "are"} still 'in_progress'. The plan says that search ` +
-      "has not finished, whatever the request that reached you says. Write no question now; " +
-      "report the in-flight item as the reason and let the search finish.",
+    `a new question cannot be opened while research is still running: ${ids} ` +
+      `${refused.length === 1 ? "is" : "are"} still 'in_progress'. The plan says that search ` +
+      "has not finished, whatever the request that reached you says. Write no question now: " +
+      "report the in-flight item as the reason. The one exception is a question that resolves " +
+      "an unresolved conflict blocking that question — set its `unblocks` to name it.",
   ];
 }
 
@@ -3157,7 +3167,7 @@ function applyOne(
       invariantErrors.push(...planCompleteInvariants(resultEntry, preCallResearch));
     }
     if (op.op === "append") {
-      invariantErrors.push(...newQuestionDependencyInFlightInvariants(resultEntry, preCallResearch));
+      invariantErrors.push(...newQuestionWhileSearchInFlightInvariants(resultEntry, preCallResearch));
     }
     const statusTouchedThisOp =
       op.op === "append" || Object.prototype.hasOwnProperty.call(fields, "status");
