@@ -324,8 +324,9 @@ export type ProjectFile = {
  * leaves one behind that the dot-skip below does not catch. (The current
  * tmpSibling in fs-project-store.ts is dot-prefixed and already skipped.)
  *
- * Skipped rather than redacted: nothing reads them, and redacting would mean a
- * second tree parser. Mirror of apps/server/app/feedback.py::_is_stale_copy.
+ * Dropped rather than merely redacted, because nothing reads them and a bundle
+ * full of duplicate trees is noise a triager has to wade through. Mirror of
+ * apps/server/app/feedback.py::_is_stale_copy.
  */
 function isStaleCopy(name: string): boolean {
   // Lowercased because the genealogist team is on Windows, where a shell or an

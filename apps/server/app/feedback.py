@@ -96,14 +96,15 @@ def _is_stale_copy(name: str) -> bool:
 
     `.bak` — pre-#2333 `.mcpb` builds wrote one beside the tree. #2333 stopped
     writing them; it did not delete the ones already on disk. They would be
-    redacted by shape anyway, so this skip keeps noise out, not living people. `.tmp-` — before the ProjectStore seam, atomicWriteJson wrote
+    redacted by shape anyway, so this skip keeps noise out, not living people.
+    `.tmp-` — before the ProjectStore seam, atomicWriteJson wrote
     `<path>.tmp-<uuid>`, *not* dot-prefixed, so a crash between write and
     rename leaves one behind that the dot-skip does not catch. (The current
     tmpSibling in fs-project-store.ts is dot-prefixed and already skipped.)
 
-    Skipped rather than redacted: nothing reads them, and redacting would mean
-    a second tree parser. Mirror of
-    apps/electron/src/main/feedback.ts::isStaleCopy.
+    Dropped rather than merely redacted, because nothing reads them and a
+    bundle full of duplicate trees is noise a triager has to wade through.
+    Mirror of apps/electron/src/main/feedback.ts::isStaleCopy.
     """
     # Lowercased because the genealogist team is on Windows, where a shell or
     # an editor readily produces `.BAK`; the neighbouring _ext() does the same.
