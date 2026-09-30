@@ -1900,9 +1900,21 @@ and no genealogist sign-off gates them.
 |---|---|---|---|---|
 | obituary | **recent family knowledge:** the decedent's name, the death date and place, residence at death, the funeral and burial (date, place, cemetery), the surviving spouse's name, and each survivor's name and residence | the obituary's author (usually unnamed family) | `household_member` | `indeterminate` |
 | obituary | **life history:** birth, parents, the marriage date, occupation, military service, church membership | the obituary's author | `family_not_present` | `secondary` |
+| probate | **the will's own statements**: the testator's relationships to heirs, heirs' names, residence, bequests | the testator | `self` | `primary` |
+| probate | the will's execution (signing date and place) and the witnesses' names | the witnesses | `witness` | `primary` |
+| probate | the court's acts: will proved, letters granted, date and court | the court clerk | `official_duty` | `primary` |
+| probate | a petition's or administration's statement of the death (date, place) | the petitioner (executor or administrator) | `household_member` | `indeterminate` |
+| probate | heirs named in an intestate petition | the petitioner | `household_member` | `primary` |
 
 When `informant.name` is present it replaces the generic informant string, as
 on every row.
+
+The probate rows are the genealogist's ruling (2026-09-30), split by who
+produced each part of the file. A petitioner's statement of the death follows
+the obituary's reading: family, but the file does not say who was present.
+Heirs named by the petitioner are `primary`, like a marriage party naming their
+own parents. `probate` joins the `RecordType` union, and the rows apply on both
+paths.
 
 The obituary split is the genealogist's ruling (2026-09-29, option C). What the
 family knew firsthand and recently is `household_member`, and `indeterminate`
