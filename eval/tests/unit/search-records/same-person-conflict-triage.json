@@ -14,7 +14,8 @@
       "conflict",
       "rank-search-matches",
       "needs-review",
-      "pre-1880-census-household"
+      "pre-1880-census-household",
+      "topical-fixture-required"
     ]
   },
   "input": {
@@ -25,6 +26,7 @@
     "max_wall_clock_seconds": 600
   },
   "mcp_fixtures": [
+    "wiki-read-united-states-census",
     "record-search-conflict-household-flynn",
     "rank-search-matches-flynn-conflict",
     "record-read-patrick-flynn-cflt-9k2"

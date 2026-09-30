@@ -343,12 +343,20 @@ const CENSUS_AFTER = new RegExp(
 
 /**
  * The first census year whose schedule carries a relationship-to-head column.
- * Sources: search-records/references/census-field-availability.md -- US "1880,
- * the dividing line"; England & Wales "1851 onward -- relationships and exact
- * ages", 1841 having none. Scotland follows E&W. A jurisdiction named but not
- * listed here returns null, which SKIPS the rule rather than guessing: the
- * doctrine is documented for these two only, and a wrong refusal blocks a
- * researcher mid-write.
+ *
+ * Sources, re-pointed by issue #2123 when
+ * search-records/references/census-field-availability.md was deleted: the
+ * FamilySearch wiki, which is now the runtime source for census schedules
+ * (ADR-0012). `United_States_Census` states "Relationships | 1880-1950" in its
+ * Federal Population Census Contents table; `England_Census` lists relationship
+ * to head under "1851-1901" and omits it from "1841". Scotland follows E&W.
+ * Both probed against the sidecar 2026-09-29 at 33,782 and 26,351 chars, and
+ * both are captured in eval/fixtures/mcp/wiki-read-united-states-census.json and
+ * wiki-read-england-census.json.
+ *
+ * A jurisdiction named but not listed here returns null, which SKIPS the rule
+ * rather than guessing: the doctrine is documented for these two only, and a
+ * wrong refusal blocks a researcher mid-write.
  */
 function relationshipColumnFrom(qualifier: string): number | null {
   const q = qualifier.toLowerCase();

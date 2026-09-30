@@ -13,7 +13,8 @@
       "log-quality",
       "log-positive-record-search",
       "rank-search-matches",
-      "pre-1880-census-household"
+      "pre-1880-census-household",
+      "topical-fixture-required"
     ]
   },
   "input": {
@@ -21,6 +22,7 @@
     "scenario": "flynn-record-matching"
   },
   "mcp_fixtures": [
+    "wiki-read-united-states-census",
     "record-search-1850-census-flynn",
     "rank-search-matches-execute-census",
     "record-read-patrick-flynn-mxhy-tp4"

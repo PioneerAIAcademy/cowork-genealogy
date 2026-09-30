@@ -12,7 +12,8 @@
       "name-variation",
       "middle-name",
       "family-surname-as-given",
-      "plan-execution"
+      "plan-execution",
+      "topical-fixture-required"
     ]
   },
   "input": {
@@ -20,6 +21,7 @@
     "scenario": "mullen-price-child-middle-name"
   },
   "mcp_fixtures": [
+    "wiki-read-united-states-census",
     "record-search-1880-census-price-sarah",
     "record-search-1860-census-mullen-sarah",
     "rank-search-matches-price-child-middle-name",

@@ -13,7 +13,8 @@
       "ancestry",
       "nil-exhaustion",
       "live-callee",
-      "caller-callee-seam"
+      "caller-callee-seam",
+      "topical-fixture-required"
     ]
   },
   "input": {
@@ -21,6 +22,7 @@
     "scenario": "flynn-census-nil"
   },
   "mcp_fixtures": [
+    "wiki-read-united-states-census",
     "record-search-patrick-flynn-no-results",
     "record-search-patrick-flinn-no-results",
     "record-search-flynn-any-variant-no-results",

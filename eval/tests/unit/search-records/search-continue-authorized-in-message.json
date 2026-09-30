@@ -5,13 +5,20 @@
     "name": "Don't stop after one search when the plan has more planned items and the message already authorized continuing",
     "type": "positive",
     "description": "An active plan has two `planned` items. The user's message asks to execute both searches and explicitly scopes OUT extraction (to avoid inviting a record-extraction delegation that hits its own harness tool-scoping limits and has twice aborted this test on turns/wall-clock). search-records must execute both planned items in the same turn, not stop after the first to ask 'Shall I continue with the next search?' -- the structural companion to research-plan's Step 7 fix for issue #1319. Hand-authored (not mined from a real case) because neither reproduced feedback case showed search-records itself stalling mid-plan; this test guards the documented Step 9 mechanism directly.",
-    "tags": ["execution", "control-flow", "continuation", "search-continue-authorized-in-message"]
+    "tags": [
+      "execution",
+      "control-flow",
+      "continuation",
+      "search-continue-authorized-in-message",
+      "topical-fixture-required"
+    ]
   },
   "input": {
     "user_message": "Execute both plan items for q_001 -- the census search and the church-records search -- and continue straight from one to the other without stopping to check in with me. Just run the searches and log them; I'll handle extraction myself afterward.",
     "scenario": "search-continue-authorized-in-message"
   },
   "mcp_fixtures": [
+    "wiki-read-united-states-census",
     "record-search-1880-census-sheahan",
     "record-search-church-sheahan-collectionid",
     "record-search-church-sheahan-anyplace"

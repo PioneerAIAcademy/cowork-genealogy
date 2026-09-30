@@ -13,7 +13,8 @@
       "near-match",
       "rank-search-matches",
       "needs-review",
-      "pre-1880-census-household"
+      "pre-1880-census-household",
+      "topical-fixture-required"
     ]
   },
   "input": {
@@ -21,6 +22,7 @@
     "scenario": "flynn-record-matching"
   },
   "mcp_fixtures": [
+    "wiki-read-united-states-census",
     "record-search-near-match-age-off-flynn",
     "rank-search-matches-flynn-near-match",
     "record-read-patrick-flyn-vrnt-7m3"

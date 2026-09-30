@@ -771,3 +771,89 @@ def report_log_query_traces_to_record_search_call(before_state, after_state, too
         for claim in differs:
             errors.append(f"log entry {e.get('id')} ({how}) value differs — {claim}")
     assert not errors, "record_search log queries that do not trace to their call:\n  - " + "\n  - ".join(errors)
+
+
+# --- The census wiki fetch actually fires (issue #2123) ----------------
+
+# Maps a tagged test id to the topical fixture stem its `mcp_fixtures` names.
+# Hardcoded rather than read from the test spec: the `test` fixture only carries
+# the inner "test" block (id/skill/name/type/tags), not top-level
+# `mcp_fixtures` (validator_runner.py). Add an entry here whenever the
+# "topical-fixture-required" tag is added to a test.
+#
+# Every entry is the SAME stem because every census scenario in this suite is a
+# US one. `England_Census` and the other `{Country}_Census` branches of the
+# Step 2 pre-work block therefore ship unexercised by this suite -- recorded
+# here rather than left to look like coverage.
+#
+# The firing set is the tests whose SEARCH is a census search, derived from each
+# test's user_message plus its scenario's census plan item. It is deliberately
+# NOT the `census` tag (10 tests, too few) and NOT "the scenario holds a census
+# plan item" (22, too many -- that set includes ut_search_records_011, a general
+# sibling search, and ut_search_records_025, a marriage search, neither of which
+# runs a census search at all).
+_TOPICAL_FIXTURE_BY_TEST_ID = {
+    "ut_search_records_001": "wiki-read-united-states-census",
+    "ut_search_records_002": "wiki-read-united-states-census",
+    "ut_search_records_010": "wiki-read-united-states-census",
+    "ut_search_records_012": "wiki-read-united-states-census",
+    "ut_search_records_013": "wiki-read-united-states-census",
+    "ut_search_records_014": "wiki-read-united-states-census",
+    "ut_search_records_015": "wiki-read-united-states-census",
+    "ut_search_records_016": "wiki-read-united-states-census",
+    "ut_search_records_017": "wiki-read-united-states-census",
+    "ut_search_records_018": "wiki-read-united-states-census",
+    "ut_search_records_026": "wiki-read-united-states-census",
+    "ut_search_records_027": "wiki-read-united-states-census",
+    "ut_search_records_h4k": "wiki-read-united-states-census",
+    "ut_search_records_t9p": "wiki-read-united-states-census",
+    "ut_search_records_nickname_bitsie": "wiki-read-united-states-census",
+    "ut_search_records_nickname_bitsie_in_record": "wiki-read-united-states-census",
+}
+
+
+def test_census_wiki_fixture_actually_used(tool_calls, test):
+    """A census search must actually fetch the jurisdiction's census page.
+
+    ADR-0012 moves census schedule facts onto the wiki and records its own
+    Enforcement as "None", so without this the move ships while doing nothing:
+    the agent skips the fetch, states the schedule from memory as it does today,
+    and every dimension still grades green. The same failure mode the
+    historical-context validator was written for (issue #2283) -- copied
+    deliberately rather than re-invented.
+
+    Asserts at least one tool call's `response_fixture` is the census page.
+    """
+    tags = test.get("tags", [])
+    test_id = test.get("id")
+    # Check the map -> tag direction BEFORE the skip, or the skip swallows it:
+    # dropping the tag from a test spec would otherwise silently disarm this
+    # guard while the run log still reads `passed`.
+    assert test_id not in _TOPICAL_FIXTURE_BY_TEST_ID or (
+        "topical-fixture-required" in tags
+    ), (
+        f"{test_id} has a _TOPICAL_FIXTURE_BY_TEST_ID entry but no "
+        "'topical-fixture-required' tag - restore the tag or delete the entry"
+    )
+    if "topical-fixture-required" not in tags:
+        pytest.skip("not a topical-fixture-required test")
+    expected = _TOPICAL_FIXTURE_BY_TEST_ID.get(test_id)
+    assert expected is not None, (
+        f"{test_id} carries 'topical-fixture-required' but has no entry in "
+        "_TOPICAL_FIXTURE_BY_TEST_ID -- add one naming its topical fixture stem"
+    )
+    hit_fixtures = [
+        c.get("response_fixture") for c in (tool_calls or []) if c.get("response_fixture")
+    ]
+    # Unlike historical-context, this skip is effectively unreachable here: every
+    # search-records test makes fixture-backed record_search calls, so the guard
+    # stays live rather than being swallowed by a non-activating test.
+    if not hit_fixtures:
+        pytest.skip("no fixture-backed tool calls - non-activation is reported elsewhere")
+    assert expected in hit_fixtures, (
+        f"{test_id}: this is a census search, so Step 2's pre-work block must "
+        f"fetch the jurisdiction's census page, but the fixture '{expected}' "
+        "never matched a call. Either the wiki_read was skipped entirely, or its "
+        "URL missed the fixture's args predicate. "
+        f"Fixtures actually hit: {hit_fixtures or '(none)'}"
+    )

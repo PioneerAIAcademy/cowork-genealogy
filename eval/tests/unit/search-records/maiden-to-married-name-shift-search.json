@@ -13,7 +13,8 @@
       "maiden-name",
       "name-shift",
       "plan-execution",
-      "pre-1880-census-household"
+      "pre-1880-census-household",
+      "topical-fixture-required"
     ]
   },
   "input": {
@@ -24,6 +25,7 @@
     "max_wall_clock_seconds": 600
   },
   "mcp_fixtures": [
+    "wiki-read-united-states-census",
     "record-search-1860-census-mullen-sarah",
     "record-search-price-no-results",
     "rank-search-matches-mullen-1860",

@@ -12,7 +12,8 @@
       "absent-relative",
       "evidence-language",
       "gps-reasoning",
-      "pre-1880-census-household"
+      "pre-1880-census-household",
+      "topical-fixture-required"
     ]
   },
   "input": {
@@ -20,6 +21,7 @@
     "scenario": "census-household-absent-spouse"
   },
   "mcp_fixtures": [
+    "wiki-read-united-states-census",
     "record-search-ackerman-1860-spouse-absent",
     "rank-search-matches-ackerman-1860-spouse-absent",
     "record-read-ackerman-1860-m7qz-8kd"

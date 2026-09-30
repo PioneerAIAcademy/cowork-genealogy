@@ -114,6 +114,12 @@ search through it rather than running it yourself.
 
 ### 2. Construct the search query
 
+**Pre-work — issue this before constructing the query. Do not drop the call.**
+
+- **The search is a census search** (the plan item's `record_type` is `census`, or the user asked for a census): `wiki_read({ url: "https://www.familysearch.org/en/wiki/{Country}_Census" })` for the jurisdiction's country — `United_States_Census`, `England_Census`, `Norway_Census`, `Luxembourg_Census`. Take the country from the jurisdiction string when it names one; when it names only a county and state, resolve the country from those and say which you did. Never state what a census schedule collected from memory.
+- **If that page does not settle which fields the schedule collected for the year you are searching**, follow its own per-year link (`United_States_Census_{year}`) before asserting or denying a field.
+- A constructed URL that 404s, or a page that comes back generic, is a gap to record and report — not a prompt to fill from memory.
+
 **Choose a search strategy:**
 
 - **"Less is more" (broad start):** minimal criteria — surname plus broad location, or surname plus wide date range. Best when the name is uncommon, when you are unsure of details, or when indexing errors are likely.
@@ -493,8 +499,24 @@ candidates; you still confirm the top ones:
   reasoning about were never stated by the record either. Write both in the
   sentence you are already building, not as a fact appended once the
   candidate reasoning is settled.
-  **When a match turns on a field — or before calling one absent — check that
-  year's entry in `references/census-field-availability.md`.**
+  **When a match turns on a field — or before calling one absent — check what
+  that year's schedule actually collected, from the census page fetched in
+  Step 2. Three rules hold whatever the page says:**
+  - **State what the schedule recorded; label everything else inferred, and name
+    what it was inferred from** (surname, age, listing order). This is not only
+    about relationships: any fact the schedule did not collect that year —
+    parents' birthplaces, marital status, years married, exact month of birth —
+    is inferred if you report it at all.
+  - **A missing field is not a defective record and not a reason to downgrade a
+    match.** Check whether the field existed that year first. A field that *did*
+    exist and is genuinely blank is meaningful, and is worth a note.
+  - **A year-of-immigration mismatch across censuses is not automatically a
+    conflict.** Some immigrants made several trips; a later census may record a
+    return rather than the original emigration. Flag it for investigation
+    instead of resolving it.
+  Non-federal **state censuses** follow their own schedules and often carry
+  fields the federal census of that decade lacks — read the collection
+  description rather than assuming the federal pattern.
 - **Cite `matchScore`, never `results[].score` — they are different numbers.** A
   raw search stub's `score` (and `confidence`) is FamilySearch's own *search
   relevance*, the unreliable ordering the match-ranker exists to replace;

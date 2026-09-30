@@ -15,7 +15,8 @@
       "from-cowork",
       "whitfield-1850-household",
       "re-invoke-safe",
-      "pre-1880-census-household"
+      "pre-1880-census-household",
+      "topical-fixture-required"
     ]
   },
   "input": {
@@ -23,6 +24,7 @@
     "scenario": "whitfield-1850-household"
   },
   "mcp_fixtures": [
+    "wiki-read-united-states-census",
     "record-search-whitfield-1850-household"
   ],
   "judge_context": [
