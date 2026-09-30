@@ -80,8 +80,8 @@ Read `research.json` assertions, person_evidence, and timelines.
 directness, informant) as recorded — do NOT re-classify inline, and do
 NOT invoke check-warnings from here. Classifications come from the
 extraction table and are not refined per assertion. If a classification
-looks wrong, proceed with what is recorded, do not weigh the disagreement,
-and name it to the researcher in your summary.
+looks wrong because of evidence outside the record, weigh that evidence here,
+as part of this conflict's analysis, and say so in the rationale.
 
 Look for:
 
