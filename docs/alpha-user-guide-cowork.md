@@ -76,10 +76,10 @@ each one.
 **macOS/Linux:** from the repo folder:
 
 ```bash
-make cowork-install
+node scripts/build-mcpb.mjs && node scripts/package-plugin.mjs
 ```
 
-Both install what they need automatically.
+Both build the two files, and both install what they need automatically.
 
 **After every update, rebuild and reinstall both.** Each time you pull (GitHub
 Desktop's **Fetch origin** / **Pull origin**, or `git pull` from a terminal),
