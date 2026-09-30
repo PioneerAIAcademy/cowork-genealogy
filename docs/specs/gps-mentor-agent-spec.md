@@ -681,7 +681,9 @@ The heading may carry a `q_`/`ps_` id but never a focus name (`proof-critique`,
 `pre-exhaustiveness`, …), which is our vocabulary rather than the researcher's. In the
 narrative a tier is named as the viewer shows it — well established, likely, tentative,
 not established, ruled out (`StatusBadge.tsx`) — and the narrative never says GPS, proof,
-proved or exhaustive (the researcher's `narration_guidance` carries the same rule). Numbered standards stay in the structured `standard` fields, which are for the
+proved or exhaustive. It says genealogy standards, a finding (a conclusion once well
+established), and what we searched and what we could not reach; the researcher's
+`narration_guidance` carries the same rule. Numbered standards stay in the structured `standard` fields, which are for the
 machine; the narrative praises and advises in plain words.
 
 For a craft-only `on-demand` run, the required scope sentence of §6.4 comes first —

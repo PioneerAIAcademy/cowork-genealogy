@@ -372,8 +372,10 @@ would resolve it — omit this section if must_address is empty]
 The heading may carry a `q_`/`ps_` id, never a focus name. In the
 narrative, name a tier as the researcher sees it — well established,
 likely, tentative, not established, ruled out — and never write GPS,
-proof, proved or exhaustive; numbered standards stay in the structured
-`standard` fields.
+proof, proved or exhaustive: say genealogy standards, a finding (a
+conclusion once well established), and what we searched and what we
+could not reach. Numbered standards stay in the structured `standard`
+fields.
 
 Verdicts:
 
