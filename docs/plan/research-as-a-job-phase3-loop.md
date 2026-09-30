@@ -1,9 +1,22 @@
 # Phase 3 — the loop (detailed pass)
 
-**Status:** NOT BUILT. Written 2026-09-30, after phase 2 landed **on the
-`research-as-a-job-phase2` branch (unmerged — `main` has none of it)**. Parent:
-`docs/plan/research-as-a-job-later-REVISED.md`, "## Phase 3 — the loop". Revised after
-plan-critic round 1, which found five blocking defects; all applied.
+**Status:** BUILT EXCEPT ITEM 2, on the `research-as-a-job-phase2` branch (unmerged —
+`main` has none of it). Written 2026-09-30, revised after plan-critic round 1, which found
+five blocking defects; all applied. Parent:
+`docs/plan/research-as-a-job-later-REVISED.md`, "## Phase 3 — the loop".
+
+| Item | State | Commit |
+|---|---|---|
+| 1. The decision card, and the data it needs | **built** | `ddb68837f`, `1edb28362` |
+| 2. Errands / `waiting` | **NOT BUILT — blocked** | rulings recorded in `b7c30c196`; the work needs #1830, assigned to Benter, which the owner sequenced first |
+| 3. A rejection is its own record | **built** | `fdeef5803` (+ the spec sites it missed, `355159302`) |
+| 4. Order the review by consequence | **built** | `0e8683ad6` |
+| 5. Flag a next action that cannot be usable | **built** | `a409637fa` |
+
+**Item 2 is the only open one, and it is blocked rather than pending.** Its five rulings
+are recorded (`docs/research-as-a-job-decisions.md`); what it waits on is #1830, which the
+owner ruled goes first. The acceptance below still describes item 2's unbuilt half — read it
+as the spec for that work, not as a gap in what landed.
 
 **Not blocked by the Before-phase-2 acceptance.** Phase 3 names neither #2927 nor #2793, and
 nothing here needs the three-run measurement.
