@@ -887,9 +887,12 @@ export function extractRecord(
     value: string,
     extra: Partial<ExtractedAssertion> = {},
     factClass?: FactClass,
+    clsOverride?: Classification,
   ) => {
     const role = roles.get(party.id) ?? "other_1";
-    const cls = classify(recordType, role, factClass ?? factClassOf(factType, recordType), collection);
+    const cls =
+      clsOverride ??
+      classify(recordType, role, factClass ?? factClassOf(factType, recordType), collection);
     const a: ExtractedAssertion = {
       record_id: doc.recordId,
       record_role: role,
@@ -1054,6 +1057,85 @@ export function extractRecord(
           },
         },
         "relationship",
+      );
+    }
+  }
+
+  // ── parent birthplaces (genealogist ruling 2026-09-30) ──
+  //
+  // A stated-relationship census carries "father's birthplace" and "mother's
+  // birthplace" columns on each person's line. They are written ONLY when that
+  // parent is in the household, as a birth-place assertion on the parent's own
+  // persona, and always `secondary`: no household respondent could have
+  // witnessed a parent's birth (`record-extractor.md`'s census rule). The parent
+  // is matched from the stated relation alone:
+  //   son / daughter of the head -> the head, or the head's spouse, by sex;
+  //   the head -> the member stated "father" / "mother";
+  //   the head's wife -> the member stated "father-in-law" / "mother-in-law".
+  // Anyone else (grandchild, stepchild, boarder...) writes nothing, and so does
+  // a parent that is missing or matched more than once. Identical claims about
+  // one parent collapse to ONE assertion that says how many lines state it:
+  // repeated cells from one respondent are one piece of evidence. The parent's
+  // own-line birthplace is still written separately, and where the two
+  // disagree the record disagrees with itself.
+  for (const members of statedHouseholds) {
+    const relOf = (m: Party) => (m.fields?.relationshipToHead ?? "").trim().toLowerCase();
+    const head = members.find((m) => /^(head|self)\b/.test(relOf(m)));
+    const only = (re: RegExp): Party | null | "ambiguous" => {
+      const c = members.filter((m) => re.test(relOf(m)));
+      return c.length === 1 ? c[0] : c.length === 0 ? null : "ambiguous";
+    };
+    const claims = new Map<string, { target: Party; place: string; which: string; lines: number }>();
+    let unmatched = 0;
+    for (const m of members) {
+      for (const which of ["father", "mother"] as const) {
+        const place = (which === "father" ? m.fields?.fatherBirthPlace : m.fields?.motherBirthPlace)?.trim();
+        if (!place) continue;
+        const r = relOf(m);
+        let target: Party | null | "ambiguous";
+        if (/^(son|daughter|child)$/.test(r)) {
+          const hs = head ? genderOf(head.person) : "";
+          if (!head || (hs !== "male" && hs !== "female")) target = null;
+          else if ((hs === "male") === (which === "father")) target = head;
+          else target = only(which === "father" ? /^husband$/ : /^wife$/);
+        } else if (/^(head|self)\b/.test(r)) {
+          target = only(which === "father" ? /^father$/ : /^mother$/);
+        } else if (r === "wife") {
+          target = only(which === "father" ? /^father[- ]?in[- ]?law$/ : /^mother[- ]?in[- ]?law$/);
+        } else {
+          continue;
+        }
+        if (target === null || target === "ambiguous") {
+          unmatched += 1;
+          continue;
+        }
+        const key = `${target.id}|${place.toLowerCase()}`;
+        const c = claims.get(key);
+        if (c) c.lines += 1;
+        else claims.set(key, { target, place, which, lines: 1 });
+      }
+    }
+    for (const c of claims.values()) {
+      push(
+        c.target,
+        "birth",
+        c.place,
+        { place: c.place },
+        "identity",
+        {
+          informant: "unknown household member",
+          informant_proximity: "household_member",
+          information_quality: "secondary",
+          bias:
+            `the ${c.which}'s birthplace as stated on ${c.lines} household member line(s); ` +
+            `no household respondent could have witnessed it`,
+        },
+      );
+    }
+    if (unmatched > 0) {
+      notes.push(
+        `${unmatched} parent-birthplace column(s) not written: the parent is not ` +
+          `identifiable in this household from the stated relations`,
       );
     }
   }
