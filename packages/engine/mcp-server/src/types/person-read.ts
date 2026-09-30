@@ -79,10 +79,10 @@ export interface TreeSource {
   /**
    * The memory artifact's own URL, when this source is a memory.
    *
-   * `url` is the human `/memories/<id>` page and is NOT accepted by
-   * `image_transcribe`/`image_read`, so a budget-skipped memory whose note says
-   * to retry with `memoryArtifactUrl` needs the artifact URL to be somewhere in
-   * the response. MUST NEVER REACH `tree.gedcomx.json` -- it is absent from
+   * `url` is the human `/memories/<id>` page. `image_transcribe` now accepts it
+   * as `memoryArtifactUrl` and resolves it; `image_read` still does not. The
+   * artifact URL is kept in the response anyway, because it saves the lookup
+   * and is what a budget-skipped memory's retry note names. MUST NEVER REACH `tree.gedcomx.json` -- it is absent from
    * `TREE_SOURCE_FIELDS`, which is what strips it on the write.
    */
   artifact_url?: string;

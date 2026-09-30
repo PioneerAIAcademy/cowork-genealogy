@@ -44,10 +44,24 @@ if (file && !projectPath) {
   process.exit(1);
 }
 
-// Rough heuristic: an imageId is bare NUMBER_NUMBER; anything else goes as ark.
+// Rough heuristic. An imageId is bare NUMBER_NUMBER. A memory goes as
+// memoryArtifactUrl in EITHER of its two shapes — the direct sg30p0 bytes url,
+// or a familysearch.org page url (photos/artifacts/<id> or memories/<id>) —
+// because routing those to `ark` sends the wrong input and the failure looks
+// like the tool rejecting a url it now accepts. Anything else goes as ark.
 const isImageId = value !== undefined && /^\d+_\d+$/.test(value);
+const isMemory =
+  value !== undefined &&
+  (/^https:\/\/sg30p0\.familysearch\.org\/.+\/dist\.[A-Za-z0-9]+(\?.*)?$/.test(value) ||
+    /^https:\/\/(?:www\.)?familysearch\.org\/(?:photos\/artifacts|memories)\/\d+/.test(value));
 const result = await imageTranscribeTool({
-  ...(file ? { file } : isImageId ? { imageId: value } : { ark: value }),
+  ...(file
+    ? { file }
+    : isImageId
+      ? { imageId: value }
+      : isMemory
+        ? { memoryArtifactUrl: value }
+        : { ark: value }),
   ...(lookingFor ? { lookingFor } : {}),
   ...(projectPath ? { projectPath } : {}),
 }, LOCAL);

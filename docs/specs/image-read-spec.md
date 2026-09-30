@@ -20,6 +20,15 @@ to OCR models. Requires FamilySearch authentication.
 Exactly one of `imageId` or `ark` must be provided. `projectPath` is optional
 and independent of that choice.
 
+**There is deliberately no `memoryArtifactUrl` here.** A FamilySearch Memories
+artifact — and a Memories page URL, `photos/artifacts/<id>` or `/memories/<id>`
+— is read with `image_transcribe`, which accepts both forms. Advertising the
+parameter on this tool as well was considered and declined (lead, 2026-09-29)
+for two reasons: it adds an MCP parameter to every conversation, and this tool
+refuses anything over `MAX_INLINE_IMAGE_BYTES` (700 KB raw), which turns away
+most register photos regardless. `image_transcribe` has no size cap because it
+returns text rather than bytes, so it is the right home for the whole class.
+
 ### imageId format
 
 An `imageId` is an Image Group Number of the form `NUMBER_NUMBER` — an

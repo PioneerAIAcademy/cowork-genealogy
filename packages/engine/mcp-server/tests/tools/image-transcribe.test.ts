@@ -1215,3 +1215,99 @@ describe("imageTranscribeTool — staging producer (#2489 via #2048)", () => {
     expect(result.digest?.id).toBe("capture:scan");
   });
 });
+
+
+describe("imageTranscribeTool — a Memories PAGE url (#2987)", () => {
+  const PAGE = "https://www.familysearch.org/photos/artifacts/117201348";
+  const ABOUT =
+    "https://sg30p0.familysearch.org/service/records/storage/dascloud/patron/v2/TH-7768-103723-9979-62/dist.jpg?ctx=ArtCtxPublic";
+
+  /** The Memories lookup is a plain `fetch`, so it lands on the same global
+   *  stub as the OpenRouter call — first call is the lookup, second the OCR. */
+  function mockLookupThenOcr(text: string): void {
+    mockFetch.mockReset();
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ sourceDescriptions: [{ about: ABOUT }] }), { status: 200 }),
+    );
+    mockOpenRouterOk(text);
+  }
+
+  it("7. resolves the page url, fetches the RESOLVED url, and records both", async () => {
+    mockLookupThenOcr("1468 Anthony Amend with Mary Hales");
+
+    const result = await transcribe({ memoryArtifactUrl: PAGE }, LOCAL);
+
+    // Fetched the resolved artifact url, with memoryShape preserved.
+    const [url, , , memoryShape] = fetchFsImageBytesMock.mock.calls[0];
+    expect(url).toBe(ABOUT);
+    expect(memoryShape, "memoryShape must survive so the PDF path still works").toBe(true);
+    expect(result.transcription).toContain("1468");
+  });
+
+  it("7b. a page-url read and a direct-url read key the same scan", async () => {
+    // `label` is deliberately the RESOLVED url: it feeds imageKey, so reading
+    // one artifact by page url and by direct url must not retain the scan
+    // twice. Asserted through the arguments, since imageRef needs a project.
+    mockLookupThenOcr("text");
+    await transcribe({ memoryArtifactUrl: PAGE }, LOCAL);
+    const viaPage = fetchFsImageBytesMock.mock.calls[0][0];
+
+    fetchFsImageBytesMock.mockClear();
+    mockFetch.mockReset();
+    mockOpenRouterOk("text");
+    await transcribe({ memoryArtifactUrl: ABOUT }, LOCAL);
+    const viaDirect = fetchFsImageBytesMock.mock.calls[0][0];
+
+    expect(viaPage).toBe(viaDirect);
+  });
+
+  it("8. refuses a url that merely contains a FamilySearch page url, before any fetch", async () => {
+    mockFetch.mockReset();
+    await expect(
+      imageTranscribeTool({ memoryArtifactUrl: `https://evil.example.com/r?u=${PAGE}` }, LOCAL),
+    ).rejects.toThrow(/Unrecognized memoryArtifactUrl|Not a FamilySearch Memories page URL/);
+    expect(mockFetch, "a rejected host must never be looked up").not.toHaveBeenCalled();
+    expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
+  });
+
+  it("9. surfaces the resolver's own actionable error, not the generic one", async () => {
+    mockFetch.mockReset();
+    mockFetch.mockResolvedValueOnce(new Response("", { status: 404 }));
+    await expect(imageTranscribeTool({ memoryArtifactUrl: PAGE }, LOCAL)).rejects.toThrow(
+      /Memories lookup failed \(404\)/,
+    );
+    expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
+  });
+
+  it("7c. stages the PAGE url as the source, keyed by the RESOLVED url", async () => {
+    // The two §3 value choices, asserted on the persisted staging envelope —
+    // the only place they are observable. `source` records what the agent
+    // passed, so research_log_append cites the url the researcher will
+    // recognise; `id` is the resolved artifact url, so a page-url read and a
+    // direct-url read of one artifact dedupe to the same retained scan.
+    const dir = await makeProject();
+    try {
+      mockLookupThenOcr("1468 Anthony Amend with Mary Hales");
+      const result = await transcribe({ memoryArtifactUrl: PAGE, projectPath: dir }, LOCAL);
+
+      expect(result.staged).not.toBeNull();
+      const envelope = JSON.parse(
+        await readFile(join(dir, result.staged!.resultsRef), "utf8"),
+      );
+      const staged = envelope.payload.results[0];
+      expect(staged.source.memoryArtifactUrl, "staging records what the agent passed").toBe(PAGE);
+      expect(staged.id, "the scan is keyed by the resolved artifact url").toBe(ABOUT);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("leaves a DIRECT artifact url alone — no lookup at all", async () => {
+    mockFetch.mockReset();
+    mockOpenRouterOk("direct");
+    await transcribe({ memoryArtifactUrl: ABOUT }, LOCAL);
+    expect(fetchFsImageBytesMock.mock.calls[0][0]).toBe(ABOUT);
+    // Only the OCR call; the resolver was never entered.
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+});

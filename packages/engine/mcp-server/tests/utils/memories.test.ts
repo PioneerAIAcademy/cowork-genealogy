@@ -9,7 +9,17 @@ import {
   rankForTranscription,
   hasRecordLanguage,
   fetchStoryText,
+  isMemoryPageUrl,
+  resolveMemoryPageUrl,
 } from "../../src/utils/memories.js";
+import { LOCAL } from "../../src/auth/principal.js";
+
+// Nothing else in this file reads a token, so mocking the whole module is safe.
+const getValidTokenMock = vi.hoisted(() => vi.fn());
+vi.mock("../../src/auth/refresh.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/auth/refresh.js")>();
+  return { ...actual, getValidToken: getValidTokenMock };
+});
 
 type M = Parameters<typeof filterSourceStyle>[0][number];
 
@@ -238,5 +248,153 @@ describe("fetchStoryText — the story leg validates the host the image leg vali
     // must not disagree about what is fetchable.
     await expect(fetchStoryText(story(bad))).resolves.toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+
+describe("resolveMemoryPageUrl — a Memories PAGE url is resolved to the bytes url", () => {
+  // Every url and every `about` below is a shape dev/probe-memory-page.ts saw
+  // live on 2026-09-30 over 5 artifacts, not an invented one.
+  const ABOUT =
+    "https://sg30p0.familysearch.org/service/records/storage/dascloud/patron/v2/TH-7768-103723-9979-62/dist.jpg?ctx=ArtCtxPublic";
+  const PAGE = "https://www.familysearch.org/photos/artifacts/117201348";
+
+  let previousFetch: typeof globalThis.fetch;
+  const fetchMock = vi.fn();
+  beforeEach(() => {
+    previousFetch = globalThis.fetch;
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    fetchMock.mockReset();
+    getValidTokenMock.mockReset();
+    getValidTokenMock.mockResolvedValue("tok");
+  });
+  afterEach(() => {
+    globalThis.fetch = previousFetch;
+  });
+
+  const ok = (about: unknown) =>
+    new Response(JSON.stringify({ sourceDescriptions: [{ about }] }), { status: 200 });
+
+  it("1. resolves a page url to the artifact's `about`", async () => {
+    fetchMock.mockResolvedValue(ok(ABOUT));
+    await expect(resolveMemoryPageUrl(PAGE, LOCAL)).resolves.toBe(ABOUT);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://api.familysearch.org/platform/memories/memories/117201348",
+    );
+  });
+
+  it("2. accepts the bare host as well as www.", async () => {
+    fetchMock.mockResolvedValue(ok(ABOUT));
+    await expect(
+      resolveMemoryPageUrl("https://familysearch.org/photos/artifacts/117201348", LOCAL),
+    ).resolves.toBe(ABOUT);
+  });
+
+  it("3. keeps a query string, fragment and trailing slash out of the id", async () => {
+    for (const suffix of ["/", "?foo=1", "#frag"]) {
+      fetchMock.mockReset();
+      fetchMock.mockResolvedValue(ok(ABOUT));
+      await resolveMemoryPageUrl(`${PAGE}${suffix}`, LOCAL);
+      expect(fetchMock.mock.calls[0][0], `suffix ${suffix}`).toBe(
+        "https://api.familysearch.org/platform/memories/memories/117201348",
+      );
+    }
+  });
+
+  it("4. refuses a url that merely CONTAINS a FamilySearch page url — the anchor", async () => {
+    // The only shape where dropping `^` changes the answer: measured false
+    // anchored, true unanchored. Refused before any network call.
+    const embedded = `https://evil.example.com/r?u=${PAGE}`;
+    expect(isMemoryPageUrl(embedded)).toBe(false);
+    await expect(resolveMemoryPageUrl(embedded, LOCAL)).rejects.toThrow(
+      /Not a FamilySearch Memories page URL/,
+    );
+    expect(fetchMock, "a rejected host must never be looked up").not.toHaveBeenCalled();
+  });
+
+  it("4b. refuses a foreign host — the host literal, NOT the anchor", async () => {
+    // Kept separate on purpose: this is false with AND without `^`, so it can
+    // never red the anchor break and must not be read as anchor coverage.
+    expect(isMemoryPageUrl("https://evil.example/photos/artifacts/1")).toBe(false);
+    await expect(
+      resolveMemoryPageUrl("https://evil.example/photos/artifacts/1", LOCAL),
+    ).rejects.toThrow(/Not a FamilySearch Memories page URL/);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("4c. refuses a host-suffix lookalike", async () => {
+    expect(
+      isMemoryPageUrl("https://www.familysearch.org.evil.com/photos/artifacts/1"),
+    ).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("5. refuses an `about` that is not a memory artifact url", async () => {
+    fetchMock.mockResolvedValue(ok("https://evil.example/not-an-artifact.jpg"));
+    await expect(resolveMemoryPageUrl(PAGE, LOCAL)).rejects.toThrow(/no readable artifact/);
+  });
+
+  it("6. throws an actionable error on a 404 and on empty sourceDescriptions", async () => {
+    fetchMock.mockResolvedValue(new Response("", { status: 404 }));
+    await expect(resolveMemoryPageUrl(PAGE, LOCAL)).rejects.toThrow(
+      /Memories lookup failed \(404\).*call the login tool/s,
+    );
+
+    fetchMock.mockReset();
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ sourceDescriptions: [] }), { status: 200 }),
+    );
+    await expect(resolveMemoryPageUrl(PAGE, LOCAL)).rejects.toThrow(/no readable artifact/);
+  });
+
+  it("resolves for a LOGGED-OUT caller — getValidToken is never reached", async () => {
+    // The whole point of the unauthenticated lookup. An unconditional fsFetch
+    // calls getValidToken FIRST and throws "User is not logged in" before any
+    // request, refusing a logged-out caller an artifact FamilySearch serves
+    // anonymously. Asserted by making a token read fatal, not by inspecting
+    // headers: with an unconditional fsFetch the throw happens before a header
+    // exists for test 12 to look at.
+    getValidTokenMock.mockRejectedValue(
+      new Error("User is not logged in to FamilySearch. Call the login tool."),
+    );
+    fetchMock.mockResolvedValue(ok(ABOUT));
+    await expect(resolveMemoryPageUrl(PAGE, LOCAL)).resolves.toBe(ABOUT);
+    expect(getValidTokenMock).not.toHaveBeenCalled();
+  });
+
+  it("11. accepts the /memories/<id> form person_read hands the agent", async () => {
+    fetchMock.mockResolvedValue(ok(ABOUT));
+    await expect(
+      resolveMemoryPageUrl("https://www.familysearch.org/memories/117201348", LOCAL),
+    ).resolves.toBe(ABOUT);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://api.familysearch.org/platform/memories/memories/117201348",
+    );
+  });
+
+  /** Read a header whatever shape the init used. `Object.keys()` on a `Headers`
+   *  instance returns [], and fsFetch's mergeAuth builds exactly one of those —
+   *  so a naive key check reads as "no token" on the very call that carries it.
+   *  Measured: this assertion was vacuous until it went through `new Headers`. */
+  const authHeaderOf = (call: unknown[]): string | null =>
+    new Headers(((call[1] ?? {}) as RequestInit).headers).get("Authorization");
+
+  it("12. looks up WITHOUT a bearer, and retries with one only on a 403", async () => {
+    // The lookup is anonymous because the probe measured it so; demanding a
+    // token would refuse a logged-out caller a public artifact.
+    fetchMock.mockResolvedValue(ok(ABOUT));
+    await resolveMemoryPageUrl(PAGE, LOCAL);
+    expect(authHeaderOf(fetchMock.mock.calls[0])).toBeNull();
+
+    fetchMock.mockReset();
+    fetchMock
+      .mockResolvedValueOnce(new Response("", { status: 403 }))
+      .mockResolvedValue(ok(ABOUT));
+    await expect(resolveMemoryPageUrl(PAGE, LOCAL)).resolves.toBe(ABOUT);
+    expect(fetchMock.mock.calls.length, "403 must trigger exactly one retry").toBe(2);
+    expect(authHeaderOf(fetchMock.mock.calls[0]), "first call stays anonymous").toBeNull();
+    expect(authHeaderOf(fetchMock.mock.calls[1]), "the retry carries the bearer").toMatch(
+      /^Bearer /,
+    );
   });
 });

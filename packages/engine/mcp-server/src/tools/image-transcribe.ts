@@ -1,5 +1,6 @@
 import type { Principal } from "../auth/principal.js";
 import { getOpenRouterApiKey, getOpenRouterModel } from "../auth/config.js";
+import { isMemoryPageUrl, resolveMemoryPageUrl } from "../utils/memories.js";
 import {
   resolveFsImageInput,
   fetchFsImageBytes,
@@ -372,14 +373,32 @@ export async function imageTranscribeTool(
     sizeBytes = bytes.length;
     label = input.file;
   } else {
-    const resolved = resolveFsImageInput(input, "image_transcribe");
-    label = resolved.label;
-
-    // Resolve credentials/config BEFORE fetching the image: a missing key
+    // Resolve credentials/config BEFORE anything on the network: a missing key
     // should fail fast (and never leave a fetched scan unused). getOpenRouterApiKey
-    // throws an LLM-actionable error naming config.json when absent.
+    // throws an LLM-actionable error naming config.json when absent. This sits
+    // above the Memories lookup below so a page-URL call with no key does not
+    // spend a FamilySearch round trip before reporting it.
     apiKey = await getOpenRouterApiKey(principal);
     model = await getOpenRouterModel(principal);
+
+    // A Memories *page* URL carries no path to the bytes, so it is resolved to
+    // the direct artifact URL first. resolveFsImageInput stays synchronous, and
+    // its MEMORY_ARTIFACT_PATTERN check then runs on the RESOLVED url — that is
+    // the host check, unchanged.
+    const forFetch =
+      input.memoryArtifactUrl !== undefined && isMemoryPageUrl(input.memoryArtifactUrl)
+        ? {
+            ...input,
+            memoryArtifactUrl: await resolveMemoryPageUrl(input.memoryArtifactUrl, principal),
+          }
+        : input;
+
+    const resolved = resolveFsImageInput(forFetch, "image_transcribe");
+    // Deliberately the RESOLVED url: it feeds imageKey and the staged element's
+    // id, so a page-URL read and a direct-URL read of one artifact land on the
+    // same images/<key>.jpg instead of retaining the scan twice. The staged
+    // `source` below keeps the url the agent actually passed.
+    label = resolved.label;
 
     const fetched = await fetchFsImageBytes(
       resolved.url,
@@ -681,7 +700,9 @@ export const imageTranscribeToolSchema = {
     "this for large scans that image_read refuses (over its inline size cap): " +
     "the image is OCR'd host-side and never enters the conversation, so there " +
     "is no size limit. Also transcribes a FamilySearch MEMORY artifact " +
-    "(memoryArtifactUrl), including a PDF, and an UPLOADED image or PDF already " +
+    "(memoryArtifactUrl) — its direct artifact URL or its page URL " +
+    "(familysearch.org/photos/artifacts/<id> or /memories/<id>) — " +
+    "including a PDF, and an UPLOADED image or PDF already " +
     "inside the project folder (file, e.g. uploads/scan.jpg, with projectPath). " +
     "Provide exactly one of imageId, ark, memoryArtifactUrl, or file. Requires " +
     "FamilySearch auth (call login) for imageId/ark only; memoryArtifactUrl and " +
@@ -716,11 +737,13 @@ export const imageTranscribeToolSchema = {
       memoryArtifactUrl: {
         type: "string",
         description:
-          "A FamilySearch memory artifact URL, as carried by a person_read " +
-          "source that came from a person's memories (a scanned will, " +
-          "certificate, obituary clipping or compiled history uploaded by a " +
-          "relative). PDFs are supported here as well as images. Needs no " +
-          "FamilySearch login.",
+          "A FamilySearch memory: a scanned will, certificate, obituary " +
+          "clipping or compiled history uploaded by a relative. Either form " +
+          "works — the direct artifact URL (a person_read source's " +
+          "artifact_url) or the page URL a person sees " +
+          "(familysearch.org/photos/artifacts/<id>, or /memories/<id>, which " +
+          "is that source's url); a page URL is resolved first. PDFs are " +
+          "supported as well as images. Needs no FamilySearch login.",
       },
       file: {
         type: "string",
