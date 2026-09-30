@@ -606,7 +606,7 @@ describe("fulltextSearchTool facets", () => {
     ]);
   });
 
-  it("31. defaults a missing item params to an empty filterParam", async () => {
+  it("31. excludes facet items with no params from the output", async () => {
     mockFetch.mockResolvedValueOnce(
       makeOk({
         results: 1,
@@ -620,13 +620,14 @@ describe("fulltextSearchTool facets", () => {
       keywords: "Flynn",
       includeFacets: true,
     }, LOCAL);
-    expect(result.facets![0].items[0].filterParam).toBe("");
+    expect(result.facets![0].items).toHaveLength(0);
   });
 
   it("32. caps facet items to 20", async () => {
     const items = Array.from({ length: 25 }, (_, i) => ({
       count: i,
       displayName: `c${i}`,
+      params: `f.c=${i}`,
     }));
     mockFetch.mockResolvedValueOnce(
       makeOk({
