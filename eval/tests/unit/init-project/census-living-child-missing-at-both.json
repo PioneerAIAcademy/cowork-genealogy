@@ -1,0 +1,47 @@
+{
+  "test": {
+    "id": "ut_init_project_wm7",
+    "skill": "init-project",
+    "name": "A living child missing at both censuses is one missing child, not two",
+    "type": "positive",
+    "description": "Exercises the living-side de-duplication of the census fertility-gap rule: when a living child is absent from the tree at BOTH the 1900 and 1910 censuses, it is one missing child, not one per census. Guards against double-counting the living-missing figure across the two censuses. Here born equals living at both censuses, so there are no deceased children.",
+    "tags": ["from-review", "census-living-cumulative", "re-invoke-safe"]
+  },
+  "input": {
+    "user_message": "Start a new research project. The subject is my great-grandmother Ellen Brannon, FamilySearch ID BRNN-MOM. Two census records describe her children: the 1900 US census records 3 children born and 3 still living, and the 1910 US census records 4 children born and 4 still living. I want to find any of her children who are not already in the tree.",
+    "scenario": null
+  },
+  "execution": {
+    "max_turns": 30,
+    "max_wall_clock_seconds": 480,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "mcp_fixtures": [
+    "person-read-brannon",
+    "person-quality-clean-BRNN-MOM",
+    "person-quality-clean-BRNN-DAD",
+    "person-quality-clean-BRNN-CH1",
+    "person-quality-clean-BRNN-CH2",
+    "person-quality-clean-BRNN-CH3"
+  ],
+  "judge_context": [
+    "The tree holds three children: James (b. 1892) and Catherine (b. 1895), both born before the 1900 census, and Thomas (b. 1904), born between the censuses. The census counts arrive only in the user message.",
+    "The 1900 census (3 born / 3 living) exceeds the two tree children alive in 1900 by one, and the 1910 census (4 born / 4 living) exceeds the three tree children alive in 1910 by one. The single child accounting for both is the SAME living child — born before 1900 and still alive in 1910 — because only one birth (the 1904 child, already in the tree) falls between the censuses.",
+    "The Step-5 report / reply must identify exactly ONE missing child: a living child born before 1900 who was still alive at the 1910 census. Counting it twice — once as 'missing at 1900' and once as 'missing at 1910' — and reporting two missing living children is the failure this test guards, and is a FAIL, not a partial.",
+    "There are no deceased children to research: children-born equals children-living at both censuses (3/3 and 4/4), so born minus living is zero. The reply must not invent a deceased target.",
+    "Do not penalise correct reasoning about which census window the missing living child belongs to; the graded point is that it is counted once, not two."
+  ]
+}

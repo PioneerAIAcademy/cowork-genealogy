@@ -149,6 +149,10 @@ with no decision behind them, filed there deliberately; `/review-icebox` owns
 that pool and promotes one by removing the label, at which point it ranks here
 normally.
 
+**Exclude `label:contributor` from the Backlog and Ready when ranking and when
+counting the pools.** Those cards are reserved for the Contributors
+(`docs/contributor-program.md`), who take them in their own order.
+
 **Exclude `label:needs-decision` from the Backlog when ranking**, senior or not.
 The lead answers them in `/make-decisions`; the label coming off is what makes
 the item rankable here.
@@ -191,7 +195,7 @@ the ranking. Report the mix; do not swap a card out to hit a number.
 # The first of the two budgeted `item-list` passes (§ 0 "Board facts"). Everything
 # downstream reads this file; do not fetch the board again until the rebuild.
 gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
-jq -r '[ .items[] | select(.status=="Ready" and (.assignees|length)==0) | .labels ]
+jq -r '[ .items[] | select(.status=="Ready" and (.assignees|length)==0 and ((.labels|index("contributor"))|not)) | .labels ]
     | { developer: { total: map(select(index("developer")))|length,
                      senior: map(select((index("developer")) and index("senior")))|length,
                      high_priority: map(select((index("developer")) and index("high-priority")))|length },

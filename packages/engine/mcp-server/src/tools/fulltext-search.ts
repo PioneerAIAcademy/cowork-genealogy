@@ -1,7 +1,6 @@
 import type { Principal } from "../auth/principal.js";
-import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithRetry } from "../utils/http.js";
+import { fsFetch } from "../utils/fs-fetch.js";
 import { toArk } from "../utils/ark.js";
 import { expandNameForFulltext } from "../utils/name-variants.js";
 import type {
@@ -187,19 +186,17 @@ export async function fulltextSearchTool(
   // and stageSearchResults must both see the caller's original input.name.
   const expansion = input.name ? expandNameForFulltext(input.name) : null;
 
-  const token = await getValidToken(principal);
   const url = buildUrl(input, expansion?.expanded);
 
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${token}`,
+  const fetchHeaders: Record<string, string> = {
     Accept: "application/json",
     "User-Agent": BROWSER_USER_AGENT,
   };
   if (input.nlQuery) {
-    headers["X-FS-Feature-Tag"] = "search_naturalLanguageSupport";
+    fetchHeaders["X-FS-Feature-Tag"] = "search_naturalLanguageSupport";
   }
 
-  const response = await fetchWithRetry(url, { headers });
+  const response = await fsFetch(principal, url, { headers: fetchHeaders });
 
   if (!response.ok) {
     if (response.status === 401) {
@@ -309,7 +306,7 @@ export async function fulltextSearchTool(
     // upstream leg, and it buys nothing on a search that returned rows.
     const searchable = await fetchFulltextSearchable(
       [input.imageGroupNumber],
-      token,
+      principal,
     );
     // `null` is UNKNOWN, not false — no note rather than a wrong one.
     if (searchable !== null && !searchable.has(input.imageGroupNumber)) {

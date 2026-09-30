@@ -321,13 +321,23 @@ def test_na_rule_coercion_flips_an_out_of_scope_negative_outcome():
     dimensions are the ONLY outcome signal because "no skill fired" holds
     whether the model declined cleanly or answered the request itself.
 
-    ut_search_wikipedia_008 is the corpus's only such test, and passing
-    means no skill acted — so making zero MCP tool calls is its correct
-    behaviour, and it has made zero in all 8 of its historical run logs.
-    Tool Arguments drew null in every one, so this flip has no instances;
-    it is pinned because a single 1 there would silently turn `fail` into
-    `pass` on the one test whose job is catching a skill that answered
-    something it should have ignored.
+    **The corpus no longer carries such a test.** `ut_search_wikipedia_008`
+    was the only one. Issue #2795 made it a DIRECT test when the skill it
+    belonged to became an agent, and it stayed a `negative` carrying
+    `grade_on_invariant` (Richard's ruling, 2026-09-28) — so its outcome is
+    decided by the tag-gated validator before any dimension is read, and this
+    NA-coercion gate no longer fires on it. The gate is now pinned
+    synthetically, by the spec built below, and by nothing in the corpus. That
+    is the reason to keep it: a gate with no instance is exactly the one an
+    edit can silently retire.
+
+    The behaviour it pins is unchanged. On an out-of-scope negative, making
+    zero MCP tool calls is correct, which coerces Tool Arguments to null; a
+    single 1 there would silently turn `fail` into `pass` on the one shape
+    whose job is catching a skill that answered something it should have
+    ignored. `ut_search_wikipedia_008` made zero calls in all 8 of its
+    historical run logs and drew null every time, so the flip had no
+    instances even while the test existed.
     """
     from harness.orchestrator import _compute_outcome
 
@@ -338,7 +348,7 @@ def test_na_rule_coercion_flips_an_out_of_scope_negative_outcome():
     assert warnings[0]["score"] == 1
 
     spec = _outcome_spec(
-        type="negative", skill="search-wikipedia",
+        type="negative", skill="record-extraction",
         negative={"correct_skill": []},
     )
     kw = dict(

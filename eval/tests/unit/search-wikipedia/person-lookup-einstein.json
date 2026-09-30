@@ -5,13 +5,21 @@
     "name": "Historical person lookup",
     "type": "positive",
     "description": "Wikipedia lookup for a person. Tests the same workflow as place lookups but on a person-shaped article. Slug derived from a two-word name should produce a single hyphen between the words.",
-    "tags": ["wikipedia", "person", "slug-simple", "slug-albert-einstein"]
+    "tags": [
+      "wikipedia",
+      "person",
+      "slug-simple",
+      "slug-albert-einstein",
+      "direct-arm"
+    ]
   },
   "input": {
-    "user_message": "Look up Albert Einstein on Wikipedia",
+    "delegation": "Look up Albert Einstein on Wikipedia\n\ntopic: Albert Einstein",
     "scenario": null
   },
-  "mcp_fixtures": ["wikipedia-search-albert-einstein"],
+  "mcp_fixtures": [
+    "wikipedia-search-albert-einstein"
+  ],
   "judge_context": [
     "Should call `wikipedia_search` with a query targeting the person Albert Einstein (the exact query form matters less than that it would retrieve the Albert Einstein article)",
     "The saved file should follow the template — the article title (Albert Einstein) as the H1, the returned extract, and the source URL (https://en.wikipedia.org/wiki/Albert_Einstein) — with no fabricated content beyond what the tool returned",

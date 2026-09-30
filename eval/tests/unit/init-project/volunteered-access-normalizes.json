@@ -18,18 +18,19 @@
     "scenario": null
   },
   "mcp_fixtures": [
-    "person-read-flynn"
-  ],
+    "person-read-flynn"],
   "judge_context": [
     "`researcher_profile.subscriptions` should contain `Ancestry` and `LibraryAccess`. The family history centre is an access route with its own enum value -- it must not be dropped and must not be flattened to `other`",
     "`researcher_profile.subscriptions` must NOT contain `FamilySearch`. That is not a value on the closed enum; a plain FamilySearch account is the baseline every researcher here has, so it is not recorded at all. Storing it verbatim would fail schema validation",
     "Every value written must be one of the canonical spellings: `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `FamilySearch-Partner`, `LibraryAccess`, `other`, `none`",
     "The skill must NOT ask the user about site access -- the question was dropped. Recording what the user volunteered is correct; prompting for it, or asking a follow-up to confirm it, is not",
     "Dropping the bare FamilySearch mention must not collapse the whole list to `[\"none\"]` or `[]` here, because Ancestry and the family history centre remain",
+    "The exact stored `subscriptions` values are checked by a deterministic validator, not by this judge -- do not re-derive them, and do not lower Correctness for the presence of a correctly-normalized volunteered subscription",
     "`researcher_profile.experience_level` should be `novice` and `narration_guidance` the fixed house-style string. The user's 'some research under my belt' is NOT persisted as a level: the profile is fixed and never asked (lead ruling 2026-09-18).",
     "Should still create both research.json and tree.gedcomx.json in a single pass and seed the Patrick Flynn stub from person-read-flynn -- volunteered access must not stop or delay the initialization"
   ],
   "execution": {
+    "max_wall_clock_seconds": 600,
     "stub_skills": [
       {
         "skill": "question-selection",

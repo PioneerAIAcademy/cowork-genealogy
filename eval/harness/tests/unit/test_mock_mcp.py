@@ -26,6 +26,7 @@ from harness.mock_mcp import (
     _fixture_is_nil,
     _tool_envelope,
     create_mock_server,
+    echo_query,
 )
 from harness.orchestrator import _build_warnings
 from harness.ts_consts import ts_string_list
@@ -501,8 +502,9 @@ def test_staging_tool_sets_agree_across_the_two_copies():
     copy would drift"); this is the third, and it lives in another language.
 
     Compared against the engine's SEARCH set, not its wider `STAGING_CAPABLE_TOOLS`
-    (issue #2048): `image_transcribe` and `record_read` stage in production but
-    their canned fixtures carry no `results[]`, and the mock's nil-search /
+    (issue #2048): `image_transcribe`, `record_read` and `person_read` stage in
+    production but their canned fixtures carry no `results[]` (`person_read` is
+    staged by its own path, `_stage_person_read`, issue #2944), and the mock's nil-search /
     unlogged-search notes are search semantics — keying them on the wider set
     would stamp `nilSearchNeedsLog` onto every transcription fixture. The second
     assertion pins the relation the split relies on: every search producer is a
@@ -531,7 +533,7 @@ def test_staging_tool_sets_agree_across_the_two_copies():
         "so the search producers cannot drop out of the capable set"
     )
     ts_extra = set(re.findall(r'"([a-z_]+)"', capable_body))
-    assert ts_extra == {"image_transcribe", "record_read"}
+    assert ts_extra == {"image_transcribe", "record_read", "person_read"}
 
 
 def test_nil_search_carries_the_negative_log_note(tmp_path):
@@ -620,6 +622,60 @@ def test_fulltext_search_keeps_textDocument_when_not_staged(tmp_path):
     body = _extract_response_dict(result)
     assert "staged" not in body
     assert "textDocument" in body["results"][0]
+
+
+# --- The search response echoes the call's args (mirrors echoQuery) -----------
+
+_ECHO_ARGS = {
+    "surname": "Flynn",
+    "givenName": "Patrick",
+    "recordType": "census",
+    "residencePlace": "Schuylkill, Pennsylvania, United States",
+    "birthPlace": None,
+}
+
+
+def test_record_search_query_echoes_the_call_not_the_fixture(tmp_path):
+    """Production returns `query: echoQuery(input)`. A fixture's canned query was
+    recorded for other args, and its predicate matches only a subset, so serving
+    it verbatim told the agent it sent filters it did not (and hid ones it did)."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(_invoke(tools_by_name, "record_search", dict(_ECHO_ARGS)))
+    assert "error" not in body, body
+    assert body["query"] == _ECHO_ARGS
+
+
+def test_fulltext_search_query_echoes_the_call_not_the_fixture(tmp_path):
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-flynn-witnesses"], FIXTURES_DIR, workspace=tmp_path
+    )
+    args = {"keywords": "+Flynn", "place": "Pennsylvania", "yearFrom": None}
+    body = _extract_response_dict(_invoke(tools_by_name, "fulltext_search", args))
+    assert body["query"] == args
+
+
+@pytest.mark.requires_engine_build
+def test_staged_record_search_payload_carries_the_echoed_query(tmp_path):
+    """The staged payload is research_log_append's ground truth for which filters
+    a call sent; it must be the echo, not the fixture's recorded query."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn"], FIXTURES_DIR, workspace=tmp_path
+    )
+    args = {**_ECHO_ARGS, "projectPath": str(tmp_path)}
+    body = _extract_response_dict(_invoke(tools_by_name, "record_search", args))
+    assert body.get("staged"), "test assumes staging succeeded — check the build"
+    envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
+    assert envelope["payload"]["query"] == args
+
+
+def test_echo_query_keeps_every_sent_argument_including_null():
+    """echoQuery drops only `undefined`; a JSON null reaches it as null and is kept."""
+    args = {"a": None, "b": 0, "c": "", "d": False, "e": "x"}
+    echoed = echo_query(args)
+    assert echoed == args
+    assert echoed is not args  # a copy: the staged payload must not alias the call log
 
 
 # --- Returned-failure visibility (mirrors src/tool-result.ts) ------------------
@@ -974,42 +1030,87 @@ def test_upstream_fetch_timeout_is_not_flagged_as_a_harness_timeout():
     assert not any(w["kind"] == "harness_node_timeout" for w in warnings)
 
 
-def test_compiled_tool_live_mode_is_refused_without_running_node():
-    """The unit suite is hermetic — every response is a fixture. A compiled
-    tool's live mode is real code that makes an authenticated FamilySearch
-    request, and `_COMPILED_TOOLS` runs real code, so nothing else stops it:
-    measured, it really does fetch and return live warnings.
+def _pq_tree(tmp_path, persons):
+    (tmp_path / "tree.gedcomx.json").write_text(json.dumps({"persons": persons}), encoding="utf-8")
 
-    Injecting `projectPath` instead would be worse than refusing. person_warnings
-    rejects projectPath and live together (they read different trees), so a skill
-    that called live mode correctly would be handed an error the judge scores
-    against the skill. The refusal names the harness as the limitation.
 
-    No workspace and no build are passed: reaching either branch means the
-    refusal did not fire first.
-    """
-    import asyncio
+def _pq(tmp_path, fixtures, args):
+    _server, call_log, tools_by_name = create_mock_server(fixtures, FIXTURES_DIR, workspace=tmp_path)
+    text = _invoke(tools_by_name, "person_quality", args)["content"][0]["text"]
+    return json.loads(text), call_log[-1]
 
-    from harness.mock_mcp import (
-        _COMPILED_TOOLS,
-        _COMPILED_TOOLS_WITH_PRINCIPAL,
-        _make_compiled_tool_handler,
-    )
 
-    assert "person_warnings" in _COMPILED_TOOLS_WITH_PRINCIPAL
-    js, sym = _COMPILED_TOOLS["person_warnings"]
-    handler = _make_compiled_tool_handler("person_warnings", js, sym, None, [])
+PATRICK = {"id": "I1", "names": [{"given": "Patrick", "surname": "Flynn", "preferred": True}]}
 
-    result = asyncio.run(handler({"personId": "KD96-TV2", "live": True}))
-    text = result["content"][0]["text"]
-    assert "live mode is not available in the unit harness" in text
-    # Not the "workspace not provided" branch — that would mean the refusal
-    # did not fire and only the missing workspace saved us.
-    assert "workspace not provided" not in text
 
-    # A non-live call still falls through to the ordinary path.
-    plain = asyncio.run(handler({"personId": "I1"}))
-    assert "workspace not provided" in plain["content"][0]["text"]
+def test_person_quality_registration_and_no_principal():
+    """Served by its own handler; never given LOCAL, so no path can read the
+    developer's own FamilySearch tokens."""
+    from harness.mock_mcp import _COMPILED_TOOLS, _COMPILED_TOOLS_WITH_PRINCIPAL, LIVE_TOOLS
+
+    assert "person_quality" in LIVE_TOOLS  # allowed_tools exempts LIVE_TOOLS members
+    assert "person_quality" not in _COMPILED_TOOLS
+    assert "person_quality" not in _COMPILED_TOOLS_WITH_PRINCIPAL
+
+
+def test_person_quality_registered_with_and_without_fixtures(tmp_path):
+    for fixtures in ([], ["person-quality-hole-christian"]):
+        _server, _log, tools_by_name = create_mock_server(fixtures, FIXTURES_DIR, workspace=tmp_path)
+        assert "person_quality" in tools_by_name, fixtures
+
+
+def test_person_quality_unlinked_person_gets_the_tools_real_sentence(tmp_path):
+    _pq_tree(tmp_path, [PATRICK])
+    response, entry = _pq(tmp_path, [], {"personId": "I1", "projectPath": "/p"})
+    assert response["reason"] == "not_familysearch_id"
+    assert response["errors"] == ["Patrick Flynn isn't linked to FamilySearch, so there's no FamilySearch quality score."]
+    assert entry["matched"]["kind"] == "live"
+
+
+def test_person_quality_linked_person_answered_from_a_fixture_keyed_on_the_resolved_id(tmp_path):
+    """The fixture is keyed KD96-TV2; the call is made with I1. It must be
+    logged live with expected_args None — the judge fails a wrong identifier,
+    and I1 is the correct argument here."""
+    _pq_tree(tmp_path, [dict(PATRICK, ark="ark:/61903/4:1:KD96-TV2")])
+    response, entry = _pq(tmp_path, ["person-quality-hole-christian"], {"personId": "I1", "projectPath": "/p"})
+    assert "reason" not in response and "overallScore" in response, response
+    assert entry["matched"]["kind"] == "live"
+    assert entry["expected_args"] is None
+    assert entry["response_fixture"] and not str(entry["response_fixture"]).startswith("live:")
+
+
+def test_person_quality_linked_person_without_a_fixture_is_refused_not_crashed(tmp_path):
+    _pq_tree(tmp_path, [dict(PATRICK, ark="ark:/61903/4:1:MKVT-7XR")])
+    response, entry = _pq(tmp_path, [], {"personId": "I1", "projectPath": "/p"})
+    assert "MKVT-7XR" in response["errors"][0] and "Declare a person-quality fixture" in response["errors"][0]
+    assert "resolution failed" not in response["errors"][0]
+    assert entry["matched"]["kind"] == "none"  # the uncovered-call warning names it
+
+
+def test_person_quality_without_projectpath_does_not_read_the_tree(tmp_path):
+    """The workspace replaces a projectPath the skill sent; it is never
+    supplied for one the skill left out. Otherwise a skill that drops the
+    argument passes every eval while production answers every imported person
+    with the neutral sentence instead of a score."""
+    _pq_tree(tmp_path, [dict(PATRICK, ark="ark:/61903/4:1:KD96-TV2")])
+    response, _entry = _pq(tmp_path, ["person-quality-hole-christian"], {"personId": "I1"})
+    assert response["reason"] == "not_familysearch_id"
+    assert response["errors"] == ["No FamilySearch quality score was retrieved for this person."]
+
+
+def test_person_quality_familysearch_id_uses_its_fixture(tmp_path):
+    """A real FS id still resolves to its captured fixture (the check-warnings
+    tests that scored one were deleted with its person_quality use, #2118)."""
+    response, entry = _pq(tmp_path, ["person-quality-hole-christian"], {"personId": "KD96-TV2"})
+    assert "overallScore" in response
+    assert entry["expected_args"] is None
+
+
+def test_person_quality_familysearch_id_without_a_fixture_is_refused(tmp_path):
+    response, entry = _pq(tmp_path, [], {"personId": "KD96-TV2"})
+    assert "KD96-TV2" in response["errors"][0]
+    assert entry["matched"]["kind"] == "none"
+
 
 def test_stage_and_compact_degrades_on_node_failure(tmp_path, monkeypatch):
     """The `except` arm must ABSORB a node failure, not become one.
@@ -1189,3 +1290,94 @@ def test_same_person_attestation_records_a_projection_route(tmp_path):
     rec = json.loads(written[0].read_text(encoding="utf-8"))
     entry = next(iter(rec["scores"].values()))
     assert entry["record_source"] == "projection"
+
+
+# --- person_read stages its canned response (#2944) ---------------------------
+
+_PERSON_READ_ARGS = {"personId": "LZNY-BRF", "relatives": True, "sourceDescriptions": True}
+
+
+@pytest.mark.requires_engine_build
+def test_person_read_is_staged_when_given_project_path(tmp_path):
+    """Production stages every `person_read` given a projectPath and returns
+    `staged`; the mock does the same through the compiled `stagePersonRead`,
+    so the staged document is the canned response itself."""
+    fixture = json.loads(
+        (FIXTURES_DIR / "person-read-flynn.json").read_text(encoding="utf-8")
+    )["response"]
+    server, call_log, tools_by_name = create_mock_server(
+        ["person-read-flynn"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "person_read",
+            {**_PERSON_READ_ARGS, "projectPath": str(tmp_path)},
+        )
+    )
+    staged = body.get("staged")
+    assert staged, f"no staged handle: {body.get('stagingError')!r}"
+    assert staged["returnedCount"] == 1
+    assert staged["resultsRef"].startswith("results/.staging/")
+    envelope = json.loads((tmp_path / staged["resultsRef"]).read_text(encoding="utf-8"))
+    assert envelope["tool"] == "person_read"
+    assert envelope["payload"]["query"] == _PERSON_READ_ARGS
+    assert envelope["payload"]["results"] == [
+        {"personId": "LZNY-BRF", "gedcomx": fixture}
+    ]
+    # The rest of the response is the fixture, unchanged.
+    assert {k: v for k, v in body.items() if k != "staged"} == fixture
+
+
+@pytest.mark.parametrize("project_path", [None, "", "   "])
+def test_person_read_is_not_staged_without_project_path(tmp_path, project_path):
+    server, call_log, tools_by_name = create_mock_server(
+        ["person-read-flynn"], FIXTURES_DIR, workspace=tmp_path
+    )
+    args = dict(_PERSON_READ_ARGS)
+    if project_path is not None:
+        args["projectPath"] = project_path
+    body = _extract_response_dict(_invoke(tools_by_name, "person_read", args))
+    assert "staged" not in body
+    assert "stagingError" not in body
+    assert not (tmp_path / "results").exists()
+
+
+@pytest.mark.parametrize(
+    "failure",
+    ["raises", "empty_stdout", "nonzero_exit"],
+)
+def test_person_read_staging_degrades_on_node_failure(tmp_path, monkeypatch, failure):
+    """A node fault is a harness fault, not a production staging failure: the
+    canned response comes back unchanged, with no `staged` and no
+    `stagingError` that would tell the agent staging failed."""
+    from harness import mock_mcp
+
+    def _fake_run(*a, **k):
+        if failure == "raises":
+            raise TimeoutError("node did not return in time")
+        return subprocess.CompletedProcess(
+            args=a, returncode=1 if failure == "nonzero_exit" else 0,
+            stdout="" if failure == "empty_stdout" else '{"staged": {"resultsRef": "x", "returnedCount": 1}}',
+            stderr="",
+        )
+
+    # A stub build, so the missing-build early return cannot make this pass
+    # without ever reaching the node call it exists to test.
+    stub_build = tmp_path / "build"
+    (stub_build / "tools").mkdir(parents=True)
+    (stub_build / "tools" / "person-read.js").write_text("", encoding="utf-8")
+    monkeypatch.setattr(mock_mcp, "_MCP_BUILD", stub_build)
+    calls = []
+
+    def _counted(*a, **k):
+        calls.append(1)
+        return _fake_run(*a, **k)
+
+    monkeypatch.setattr(mock_mcp, "_run_node_eval", _counted)
+    response = {"persons": [{"id": "LZNY-BRF"}], "relationships": [], "sources": []}
+    out = mock_mcp._stage_person_read(
+        tmp_path, {**_PERSON_READ_ARGS, "projectPath": str(tmp_path)}, response
+    )
+    assert calls, "the node call was never reached"
+    assert out == response
