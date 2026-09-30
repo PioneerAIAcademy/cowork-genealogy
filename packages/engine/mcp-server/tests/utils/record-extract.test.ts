@@ -343,8 +343,114 @@ describe("burial: church register vs cemetery index (genealogist ruling 2026-09-
   });
 });
 
+describe("census parent birthplaces (genealogist ruling 2026-09-30)", () => {
+  const births = (as: ExtractedAssertion[], name: string) => {
+    const id = as.find((a) => a.fact_type === "name" && a.value === name)?.record_persona_id;
+    return as.filter((a) => a.record_persona_id === id && a.fact_type === "birth");
+  };
+
+  describe("the captured 1880 household, whose children's columns contradict the parents' own lines", () => {
+    const out = run("census-1880-with-relationship-column");
+
+    it("writes ONE secondary claim per parent, counting the lines that state it", () => {
+      const father = births(out.assertions, "Charles Miller").filter((a) => a.information_quality === "secondary");
+      expect(father).toHaveLength(1);
+      expect(father[0].place).toBe("Germany");
+      expect(father[0].informant_bias_notes).toMatch(/12 household member line/);
+      const mother = births(out.assertions, "Theresa Miller").filter((a) => a.information_quality === "secondary");
+      expect(mother).toHaveLength(1);
+      expect(mother[0].place).toBe("France");
+    });
+
+    it("keeps the parent's own-line birthplace as a separate claim, so the disagreement shows", () => {
+      const own = births(out.assertions, "Charles Miller").filter((a) => a.information_quality !== "secondary");
+      expect(own.some((a) => a.place === "France")).toBe(true);
+    });
+
+    it("writes nothing for the head's and wife's own parents, who are not in the household", () => {
+      expect(out.notes.some((n) => /4 parent-birthplace column\(s\) not written/.test(n))).toBe(true);
+    });
+  });
+
+  const household = (rows: [string, string, string, string?, string?][]): ExtractDocument => ({
+    recordId: "rec_c",
+    gedcomx: {
+      sources: [{ resource_type: "http://gedcomx.org/Collection", title: "United States Census, 1900" }],
+      persons: rows.map(([id, given, gender]) => ({
+        id,
+        gender,
+        names: [{ given, surname: "Doyle" }],
+        facts: [{ type: "http://gedcomx.org/Census", date: "1900", place: "Boston, Suffolk, Massachusetts, United States" }],
+      })),
+    },
+    indexFields: Object.fromEntries(
+      rows.map(([id, , , rel, fbp], i) => [
+        id,
+        { relationshipToHead: rel, sortKey: `k_${i}`, householdId: "1", ...(fbp ? { fatherBirthPlace: fbp } : {}) },
+      ]),
+    ),
+  });
+  const secondaryOn = (doc: ExtractDocument, name: string) =>
+    births(extractRecord(doc, { logEntryId: "l_001", questionIds: [] }).assertions, name).filter(
+      (a) => a.information_quality === "secondary",
+    );
+
+  it("gives the head's column to the member stated 'Father'", () => {
+    const doc = household([
+      ["p1", "Thomas", "Male", "Head", "Ireland"],
+      ["p2", "Michael", "Male", "Father"],
+    ]);
+    expect(secondaryOn(doc, "Michael Doyle").map((a) => a.place)).toEqual(["Ireland"]);
+  });
+
+  it("gives the wife's column to the member stated 'Father-in-law'", () => {
+    const doc = household([
+      ["p1", "Thomas", "Male", "Head"],
+      ["p2", "Mary", "Female", "Wife", "Scotland"],
+      ["p3", "Angus", "Male", "Father-in-law"],
+    ]);
+    expect(secondaryOn(doc, "Angus Doyle").map((a) => a.place)).toEqual(["Scotland"]);
+  });
+
+  it("gives a child's father column to the head's husband when the head is female", () => {
+    const doc = household([
+      ["p1", "Mary", "Female", "Head"],
+      ["p2", "Thomas", "Male", "Husband"],
+      ["p3", "John", "Male", "Son", "Ireland"],
+    ]);
+    expect(secondaryOn(doc, "Thomas Doyle").map((a) => a.place)).toEqual(["Ireland"]);
+    expect(secondaryOn(doc, "Mary Doyle")).toEqual([]);
+  });
+
+  it("writes nothing for a grandchild, a stepchild or a boarder", () => {
+    const doc = household([
+      ["p1", "Thomas", "Male", "Head"],
+      ["p2", "Sean", "Male", "Grandson", "Ireland"],
+      ["p3", "Kate", "Female", "Stepdaughter", "Wales"],
+      ["p4", "Peter", "Male", "Boarder", "Canada"],
+    ]);
+    expect(secondaryOn(doc, "Thomas Doyle")).toEqual([]);
+  });
+
+  it("writes nothing, and says so, when the parent is matched twice", () => {
+    const doc = household([
+      ["p1", "Thomas", "Male", "Head", "Ireland"],
+      ["p2", "Michael", "Male", "Father"],
+      ["p3", "Patrick", "Male", "Father"],
+    ]);
+    const out = extractRecord(doc, { logEntryId: "l_001", questionIds: [] });
+    expect(out.assertions.filter((a) => a.information_quality === "secondary")).toEqual([]);
+    expect(out.notes.some((n) => /1 parent-birthplace column/.test(n))).toBe(true);
+  });
+
+  it("writes nothing on a census with no relationship column", () => {
+    const out = run("census-1850-no-relationship-column");
+    expect(out.assertions.some((a) => a.information_quality === "secondary")).toBe(false);
+  });
+});
+
 describe("a stated-relationship census whose head is recorded 'Self'", () => {
-  // The head lookup was `/^head|^self<U+0008>/`: a backspace byte where ``
+  // The head lookup was `/^head|^self<U+0008>/`: a backspace byte where `\b`
   // was meant, so a "Self" head was never found and no relationship was written.
   const doc = load("census-1880-with-relationship-column");
   for (const f of Object.values(doc.indexFields ?? {})) {

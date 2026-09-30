@@ -1669,6 +1669,7 @@ accuracy.
 |---|---|---|---|---|
 | census | residence / the census event | census enumerator | `witness` | `primary` |
 | census | everything else | unknown household member | `household_member` | `indeterminate` |
+| census | a parent's birthplace, from the parent-birthplace columns (see below) | unknown household member | `household_member` | `secondary` |
 | marriage | a party's or parent's facts | the party | `self` | `primary` |
 | marriage | a witness's facts | the witness | `witness` | `primary` |
 | death | the death event | the certifying official | `official_duty` | `primary` |
@@ -1679,6 +1680,28 @@ accuracy.
 | christening / birth | the event | the officiant | `official_duty` | `primary` |
 | christening / birth | everything else | the presenting parent | `household_member` | `primary` |
 | **anything else** | **anything** | **unknown** | **`unknown`** | **`indeterminate`** |
+
+**Parent-birthplace columns** (genealogist ruling, 2026-09-30). A census with a
+relationship column also carries "father's birthplace" and "mother's
+birthplace" on each person's line. These are written **only when that parent
+is in the household**, as a birth-place assertion on the parent's own persona.
+They are always `secondary`, because no household respondent could have
+witnessed a parent's birth. The parent is matched from the stated relation
+alone:
+
+- a son or daughter of the head: the head, or the head's spouse, by sex;
+- the head: the member stated "father" or "mother";
+- the head's wife: the member stated "father-in-law" or "mother-in-law".
+
+Anyone else (grandchild, stepchild, boarder) writes nothing. So does a parent
+who is missing or matched more than once, and the summary says how many
+columns went unwritten. Identical claims about one parent collapse into **one**
+assertion, which names how many lines state it: repeated cells from one
+respondent are one piece of evidence. The parent's own-line birthplace is still
+written separately, so where the two disagree the record is seen disagreeing
+with itself. The captured 1880 household does exactly that: its twelve children's
+columns give the father's and mother's birthplaces the reverse way round from
+the parents' own lines.
 
 The burial rows are real rows, not the default, so neither is listed as a gap.
 A cemetery or grave index names no informant at all (a funeral director is an
