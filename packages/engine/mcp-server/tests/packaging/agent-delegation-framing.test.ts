@@ -295,6 +295,54 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       },
     ],
   },
+  "init-project -> check-warnings": {
+    pins: [
+      {
+        side: "agent",
+        excerpt:
+          "**The tool is the arbiter; don't re-derive.** The tool's output is ground truth.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "check-warnings (issue #2118) writes nothing and holds one MCP tool, the read-only " +
+        "`person_warnings`, whose verdict is computed from tree.gedcomx.json and cannot be " +
+        "moved by delegation wording; the agent-side pin makes that output the ground truth " +
+        "the report is built from. The caller's delegation is specified as person ids " +
+        "only, pinned below; what it can still carry is a verdict in prose, which the " +
+        "pinned sentence does not stop and nothing here measures.",
+      mitigation: {
+        side: "caller",
+        excerpt:
+          "naming the subject and every\nimported relative by their LOCAL tree id from Step 3",
+      },
+    },
+  },
+
+  "tree-edit -> check-warnings": {
+    pins: [
+      {
+        side: "agent",
+        excerpt:
+          "**The tool is the arbiter; don't re-derive.** The tool's output is ground truth.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "check-warnings (issue #2118) writes nothing and holds one MCP tool, the read-only " +
+        "`person_warnings`, whose verdict is computed from tree.gedcomx.json and cannot be " +
+        "moved by delegation wording; the agent-side pin makes that output the ground truth " +
+        "the report is built from. The caller's delegation is specified as person ids, " +
+        "pinned below; what it can still carry is a verdict in prose, which the pinned " +
+        "sentence does not stop and nothing here measures.",
+      mitigation: {
+        side: "caller",
+        excerpt: "naming by id every person the edit touched",
+      },
+    },
+  },
 
 };
 
@@ -391,7 +439,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // conversion; when the skill was deleted the name entered agentOnly and
   // every SKILL.md that references it now needs a registration. All are
   // bare-name mentions — none spell `@plugin:person-evidence`.
-  ["check-warnings -> person-evidence", ""],
   ["conflict-resolution -> person-evidence", ""],
   ["forget-and-rederive -> person-evidence", ""],
   ["project-status -> person-evidence", ""],
@@ -400,6 +447,15 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["timeline -> person-evidence", ""],
   ["translation -> person-evidence", ""],
   ["tree-edit -> person-evidence", ""],
+  // check-warnings (issue #2118): boundary mentions ("use check-warnings",
+  // "that is check-warnings' job"), none a delegation. The two real callers,
+  // init-project and tree-edit, are registered edges above.
+  ["conflict-resolution -> check-warnings", ""],
+  ["hypothesis-tracking -> check-warnings", ""],
+  ["search-records -> check-warnings", ""],
+  ["source-evaluation -> check-warnings", ""],
+  ["timeline -> check-warnings", ""],
+  ["validate-schema -> check-warnings", ""],
   // convert-dates entered agentOnly when issue #2790 deleted its skill. All
   // three are routing-boundary prose naming it as the owner of a calendar
   // conversion ("use convert-dates", "route to convert-dates"), none spells
@@ -583,6 +639,7 @@ describe("agent delegation framing", () => {
   // DELEGATION_EDGES has and PROSE_MENTIONS lacked: a name entering or leaving
   // fails here and the author says in the diff which it was.
   const PROSE_ARM_COVERS = [
+    "check-warnings",
     "citation",
     "convert-dates",
     "gps-mentor",
