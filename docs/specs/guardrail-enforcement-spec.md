@@ -2481,8 +2481,8 @@ this section before reopening one.
   attribution sees it, and that is eval-only. It reaches production for nothing
   today because nothing needs it.
 
-  **Three unit observations under a leading delegation, retired 2026-09-29 (issue
-  #2930).** The `proof-conclusion` pair's direct arm was shown, in three unit
+  **Three unit observations under a leading delegation, retired 2026-09-29 (lead
+  ruling).** The `proof-conclusion` pair's direct arm was shown, in three unit
   tests, to yield to a leading delegation over its own gate: `d1a` declined a
   blocked write in the reply and persisted nothing; `d2b` narrated a refinement
   and issued no `update`; `d6f` tiered a bounded conclusion to `probable` under a
@@ -2497,7 +2497,7 @@ this section before reopening one.
   a write no call made" at step 4, harness-only). Downstream, `d1a` leaves an
   unresolved `c_001` that the completion gate (§5, "Blocking conflicts before
   completion") refuses, so it is caught; `d2b` and `d6f` have no downstream catch
-  once issue #2951 takes `gps-mentor` off the default research path, and that is
+  once `gps-mentor` comes off the default research path, and that is
   accepted (lead, 2026-09-29) because the three standing `xfail` markers carried
   cost the streamlining removes. The three markers and their tests were deleted;
   the routed neutral-wording twins stay and pass.
