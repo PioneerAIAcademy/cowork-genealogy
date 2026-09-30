@@ -206,7 +206,8 @@
         }
       ],
       "writerTools": [
-        "research_log_append"
+        "research_log_append",
+        "extraction_append"
       ],
       "enforceableAt": [
         "unit",
@@ -216,7 +217,10 @@
       "requires": "Append only. Existing entries are never modified or deleted — checked separately by the append-only validator, which this row does not duplicate.",
       "failure": "The log is what makes a search reconstructible, including nil results. A skill that rewrites entries destroys the one record that says what was already tried.",
       "remedy": "Append a new entry. Correct a wrong one by appending the correction, never by editing in place.",
-      "override": "none"
+      "override": "none",
+      "toolAuthorized": [
+        "extraction_append"
+      ]
     },
     {
       "artifact": "research.json",
@@ -245,7 +249,10 @@
       "requires": "record-extraction creates the entry with a working citation and `source_classification`. citation updates `citation` and `citation_detail` on an entry that already exists.",
       "failure": "A second skill minting sources produces duplicate `src_` entries for one record, and every assertion's `source_id` then points at whichever copy that skill happened to make.",
       "remedy": "Add a new record through record-extraction; refine an existing citation through the citation agent.",
-      "override": "none"
+      "override": "none",
+      "toolAuthorized": [
+        "extraction_append"
+      ]
     },
     {
       "artifact": "research.json",
@@ -273,7 +280,10 @@
       "requires": "record-extraction writes the atomic assertions and their three-layer classifications, first and final. No later pass refines them.",
       "failure": "An assertion written outside extraction carries no source, no classification, and no persona link — and the GPS analysis layer treats it as evidence anyway.",
       "remedy": "Extract through record-extraction, which owns classification. Reclassify by re-invoking it on the same record.",
-      "override": "none"
+      "override": "none",
+      "toolAuthorized": [
+        "extraction_append"
+      ]
     },
     {
       "artifact": "research.json",
@@ -577,7 +587,10 @@
       "requires": "record-extraction mints each `S` entry as the mirror of a `src_` it appends to research.json, through `research_append`'s composite source description. An `S` entry means the source was consulted, not that its conclusions are final.",
       "failure": "A source description minted outside extraction has no `src_` behind it, so every `gedcomx_source_description_id` reference into it dangles at upload time.",
       "remedy": "Let record-extraction mint the entry as part of the record's write; cite an existing one by its `S` id.",
-      "override": "none"
+      "override": "none",
+      "toolAuthorized": [
+        "extraction_append"
+      ]
     }
   ]
 }

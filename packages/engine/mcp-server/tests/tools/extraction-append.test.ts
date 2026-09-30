@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { LOCAL } from "../../src/auth/principal.js";
 import { single } from "../helpers/narrow.js";
 import { mkdtemp, writeFile, readFile, rm, mkdir } from "fs/promises";
 import { readFileSync } from "fs";
@@ -14,6 +15,23 @@ import { tmpdir } from "os";
 // there too and research_append imports it, so a bare replacement leaves it
 // `undefined` and any path that reaches it throws a TypeError instead of
 // exercising the guard.
+// A pass-through wrapper, so one test can force `research_append` to refuse ONE
+// record's write and show the others survive. Every other call is untouched.
+const failWriteFor = { recordId: null as string | null };
+vi.mock("../../src/tools/research-append.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/tools/research-append.js")>();
+  return {
+    ...actual,
+    researchAppend: vi.fn(async (input: any, options?: any) => {
+      const target = failWriteFor.recordId;
+      if (target && (input?.ops ?? []).some((o: any) => o?.entry?.record_id === target)) {
+        return { ok: false, errors: [`forced refusal for ${target}`] };
+      }
+      return actual.researchAppend(input, options);
+    }),
+  };
+});
+
 vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/utils/place-resolver.js")>();
   return {
@@ -131,7 +149,7 @@ describe("extraction_append (issue #695 lane enforcement)", () => {
       section,
       op: "append",
       entry: { anything: true },
-    } as any);
+    } as any, LOCAL);
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors.join(" ")).toContain(`section '${section}' is not writable by extraction_append`);
@@ -149,7 +167,7 @@ describe("extraction_append (issue #695 lane enforcement)", () => {
           entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident", rationale: "m", superseded_by: null },
         },
       ],
-    } as any);
+    } as any, LOCAL);
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors.join(" ")).toMatch(/^ops\[1\]: section 'person_evidence' is not writable/);
@@ -163,7 +181,7 @@ describe("extraction_append (issue #695 lane enforcement)", () => {
         { section: "assertions", op: "append", entry: noId(validAssertion("x")) },
         { section: "conflicts", op: "append", entry: { conflict_type: "date", description: "d" } },
       ],
-    } as any);
+    } as any, LOCAL);
     const research = await readResearch();
     expect(research.assertions).toHaveLength(1); // the pre-existing a_001 only
   });
@@ -177,7 +195,7 @@ describe("extraction_append (issue #695 lane enforcement)", () => {
       section: "person_evidence",
       op: "append",
       entry: {},
-    } as any);
+    } as any, LOCAL);
     expect(r.ok).toBe(false);
     if (r.ok) return;
     const text = r.errors.join(" ");
@@ -204,7 +222,7 @@ describe("extraction_append (issue #695 lane enforcement)", () => {
         },
         { section: "project", op: "update", fields: { status: "completed" } },
       ],
-    } as any);
+    } as any, LOCAL);
     expect(r.ok).toBe(false);
     expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
   });
@@ -218,7 +236,7 @@ describe("extraction_append (issue #695 lane enforcement)", () => {
       section: "sources",
       op: "append",
       entry: noId(validSource("x")),
-    } as any);
+    } as any, LOCAL);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(single(r).entryId).toBe("src_002");
@@ -233,7 +251,7 @@ describe("extraction_append (issue #695 lane enforcement)", () => {
         { section: "assertions", op: "append", entry: noId(validAssertion("x", "src_002")) },
         { section: "assertions", op: "append", entry: noId(validAssertion("y", "src_002")) },
       ],
-    } as any);
+    } as any, LOCAL);
     expect(r.ok).toBe(true);
     if (!r.ok || !("results" in r)) return;
     expect(r.results.map((x) => `${x.section}:${x.entryId}`)).toEqual([
@@ -283,7 +301,7 @@ describe("extraction_append (issue #695 lane enforcement)", () => {
     const r = await extractionAppend({
       projectPath: dir,
       ops: [{ section: "sources", op: "append", entry: sourceNoRef }, ...rerun],
-    } as any);
+    } as any, LOCAL);
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors.filter((e) => /already extracted on src_001 under log_001/.test(e))).toHaveLength(12);
@@ -371,7 +389,7 @@ describe("extraction_append (issue #695 lane enforcement)", () => {
         place: "Odessa, Francis No. 127, Saskatchewan, Canada",
         standard_place: "Odessa, Francis No. 127, Saskatchewan, Canada",
       },
-    });
+    }, LOCAL);
 
     expect(r.ok).toBe(true);
     if (!r.ok) return;
@@ -413,8 +431,10 @@ describe("extraction_append debug holds", () => {
     await rm(dir, { recursive: true, force: true });
   });
 
-  const appendSource = (fn: typeof extractionAppend | typeof researchAppend) =>
-    fn({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("src_002")) } as any);
+  const appendSource = (fn: typeof extractionAppend | typeof researchAppend) => {
+    const input = { projectPath: dir, section: "sources", op: "append", entry: noId(validSource("src_002")) } as any;
+    return fn === extractionAppend ? extractionAppend(input, LOCAL) : researchAppend(input);
+  };
 
   it("are inert when unset, zero, or garbage", async () => {
     delete process.env[BEFORE];
@@ -551,7 +571,7 @@ describe("extraction_append — extractor mode", () => {
       logEntryId: "l_001",
       recordId: "MZGS-1BH",
       questionIds: ["q_001"],
-    } as any);
+    } as any, LOCAL);
     expect(r.ok, JSON.stringify(r.errors)).toBe(true);
 
     // The echo — the caller never sees the record, so this is what it reports.
@@ -587,7 +607,7 @@ describe("extraction_append — extractor mode", () => {
       projectPath: dir,
       logEntryId: "l_001",
       recordId: "MZGS-1BH",
-    } as any);
+    } as any, LOCAL);
     expect(r.ok, JSON.stringify(r.errors)).toBe(true);
     const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
     // The record is an 1870 census whose personas carry births from 1791 on.
@@ -605,7 +625,7 @@ describe("extraction_append — extractor mode", () => {
       logEntryId: "l_001",
       recordId: "MZGS-1BH",
       questionIds: [],
-    } as any);
+    } as any, LOCAL);
     expect(r.ok).toBe(true);
     const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
     const personas = new Set(research.assertions.map((a: any) => a.record_persona_id));
@@ -624,7 +644,7 @@ describe("extraction_append — extractor mode", () => {
       recordId: "MZGS-1BH",
       questionIds: [],
       absentPersons: [{ name: "Peter Boyer", note: "Peter Boyer is not in this household" }],
-    } as any);
+    } as any, LOCAL);
     expect(r.ok, JSON.stringify(r.errors)).toBe(true);
     const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
     const absent = research.assertions.filter((a: any) => a.record_role === "absent");
@@ -647,7 +667,7 @@ describe("extraction_append — extractor mode", () => {
       logEntryId: "l_001",
       recordId: "MZGS-1BH",
       ops: [{ section: "sources", op: "append", entry: noId(validSource("x")) }],
-    } as any);
+    } as any, LOCAL);
     expect(r.ok).toBe(false);
     expect(r.errors[0]).toMatch(/logEntryId/);
     expect(r.errors[0]).toMatch(/ops/);
@@ -662,7 +682,7 @@ describe("extraction_append — extractor mode", () => {
       logEntryId: "l_001",
       recordId: "MZGS-1BH",
       ops: [],
-    } as any);
+    } as any, LOCAL);
     expect(r.ok).toBe(false);
     expect(r.errors[0]).toMatch(/logEntryId/);
   });
@@ -675,7 +695,7 @@ describe("extraction_append — extractor mode", () => {
       logEntryId: "l_001",
       recordId: "MZGS-1BH",
       ops: [{ section: "sources", op: "append", entry: noId(validSource("x")) }],
-    } as any);
+    } as any, LOCAL);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
@@ -688,7 +708,7 @@ describe("extraction_append — extractor mode", () => {
       section: "sources",
       op: "append",
       entry: noId(validSource("x")),
-    } as any);
+    } as any, LOCAL);
     expect(r.ok, JSON.stringify(r.errors)).toBe(true);
   });
 
@@ -700,7 +720,7 @@ describe("extraction_append — extractor mode", () => {
       section: "person_evidence",
       op: "append",
       entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident" },
-    } as any);
+    } as any, LOCAL);
     expect(r.ok).toBe(false);
   });
 
@@ -712,7 +732,7 @@ describe("extraction_append — extractor mode", () => {
       projectPath: dir,
       logEntryId: "l_999",
       recordId: "MZGS-1BH",
-    } as any);
+    } as any, LOCAL);
     expect(r.ok).toBe(false);
     expect(r.errors[0]).toMatch(/l_999/);
     expect(r.errors[0]).toMatch(/research_log_append/);
@@ -730,7 +750,7 @@ describe("extraction_append — extractor mode", () => {
       projectPath: dir,
       logEntryId: "l_001",
       recordId: "MZGS-1BH",
-    } as any);
+    } as any, LOCAL);
     expect(r.ok).toBe(false);
     expect(r.errors[0]).toMatch(/resultsRef/);
     expect(r.errors[0]).toMatch(/omitted/i);
@@ -742,7 +762,7 @@ describe("extraction_append — extractor mode", () => {
       projectPath: dir,
       logEntryId: "l_001",
       recordId: "NOT-A-RECORD",
-    } as any);
+    } as any, LOCAL);
     expect(r.ok).toBe(false);
     expect(r.errors[0]).toMatch(/NOT-A-RECORD/);
     expect(r.errors[0]).toMatch(/expected one of/);
@@ -758,7 +778,7 @@ describe("extraction_append — extractor mode", () => {
       projectPath: dir,
       logEntryId: "l_001",
       recordId: "MZGS-1BH",
-    } as any);
+    } as any, LOCAL);
     expect(r.ok, JSON.stringify(r.errors)).toBe(true);
     const warning = r.validation.warnings.find((w: string) => /NO\s+per-person index fields/.test(w));
     expect(warning, "expected the missing-index-fields warning").toBeTruthy();
@@ -771,10 +791,180 @@ describe("extraction_append — extractor mode", () => {
       projectPath: dir,
       logEntryId: "l_001",
       recordId: "MZGS-1BH",
-    } as any);
+    } as any, LOCAL);
     expect(r.ok).toBe(true);
     expect(
       r.validation.warnings.some((w: string) => /per-person index fields/.test(w)),
     ).toBe(false);
+  });
+});
+
+// ─── recordIds and absences (issues #2937 / #2939, PLAN acceptance checks 1–2) ──
+
+import { runExtractionAppend } from "../../src/tools/extraction-append.js";
+import { stageSearchResults } from "../../src/utils/results-staging.js";
+import { arkToBareId } from "../../src/utils/ark.js";
+
+describe("extraction_append: recordIds and absences", () => {
+  const FIX = join(dirname(fileURLToPath(import.meta.url)), "..", "fixtures", "record-extract");
+  const element = (n: string) => JSON.parse(readFileSync(join(FIX, `${n}.json`), "utf8")).element;
+  let dir: string;
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "extraction-batch-test-"));
+    const research = { ...baseResearch(), sources: [], assertions: [] };
+    await writeFile(join(dir, "research.json"), JSON.stringify(research), "utf8");
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify({ persons: [], relationships: [], sources: [] }), "utf8");
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  /** A reader that stages a captured element exactly as a live `record_read`
+   *  would, so `research_log_append`'s stagedResultsRef preflight has a file. */
+  const readerFor = (els: any[], opts: { unstaged?: string[] } = {}) => ({
+    readRecord: async ({ recordId, projectPath }: { recordId: string; projectPath?: string }) => {
+      const el = els.find((e) => arkToBareId(e.recordId) === arkToBareId(recordId));
+      if (!el) throw new Error(`404 for ${recordId}`);
+      if (opts.unstaged?.includes(el.recordId)) return { ...el.gedcomx, staged: null, stagingError: "disk full" };
+      const staged = await stageSearchResults({
+        projectPath: projectPath!,
+        tool: "record_read",
+        response: { query: { recordId }, results: [el] },
+      });
+      return { ...el.gedcomx, staged };
+    },
+  });
+  const research = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf8"));
+
+  it("writes one log entry, source and summary per record", async () => {
+    const census = element("census-1850-no-relationship-column");
+    const death = element("death");
+    const r = await runExtractionAppend(
+      { projectPath: dir, recordIds: [census.recordId, death.recordId] },
+      readerFor([census, death]) as any,
+      LOCAL,
+    );
+    expect(r.ok).toBe(true);
+    expect(r.records.map((o) => o.status)).toEqual(["extracted", "extracted"]);
+    const after = await research();
+    expect(after.log).toHaveLength(2);
+    expect(after.log.every((e: any) => e.tool === "record_read" && e.results_ref)).toBe(true);
+    expect(after.sources).toHaveLength(2);
+    expect(r.records[0].summary).toMatch(/United States, Census, 1850/);
+    expect(r.records[0].summary).toMatch(/Martin Miller \(head_of_household\)/);
+    expect(r.records[1].summary).toMatch(/William Miller \(deceased\)/);
+  });
+
+  it("skips a resend BEFORE any read or log write, and names the existing source", async () => {
+    const census = element("census-1850-no-relationship-column");
+    await runExtractionAppend({ projectPath: dir, recordIds: [census.recordId] }, readerFor([census]) as any, LOCAL);
+    const before = await research();
+    const reads: string[] = [];
+    const counting = {
+      readRecord: async (i: any, p: any) => {
+        reads.push(i.recordId);
+        return readerFor([census]).readRecord(i);
+      },
+    };
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [census.recordId] }, counting as any, LOCAL);
+    expect(r.records[0].status).toBe("already_extracted");
+    expect(r.records[0].summary).toMatch(/already extracted as src_/);
+    expect(reads).toEqual([]);
+    expect(await research()).toEqual(before);
+  });
+
+  it("reports an unstaged read and still extracts the other records", async () => {
+    const census = element("census-1850-no-relationship-column");
+    const death = element("death");
+    const r = await runExtractionAppend(
+      { projectPath: dir, recordIds: [census.recordId, death.recordId] },
+      readerFor([census, death], { unstaged: [death.recordId] }) as any,
+      LOCAL,
+    );
+    expect(r.records.map((o) => o.status)).toEqual(["extracted", "read_failed"]);
+    expect(r.records[1].summary).toMatch(/disk full/);
+    expect((await research()).log).toHaveLength(1);
+  });
+
+  it("leaves the earlier record written when a later one's write is refused", async () => {
+    const census = element("census-1850-no-relationship-column");
+    const death = element("death");
+    failWriteFor.recordId = death.recordId;
+    const r = await runExtractionAppend(
+      { projectPath: dir, recordIds: [census.recordId, death.recordId] },
+      readerFor([census, death]) as any,
+      LOCAL,
+    ).finally(() => {
+      failWriteFor.recordId = null;
+    });
+    expect(r.records[0].status).toBe("extracted");
+    expect(r.records[1].status).toBe("refused");
+    expect((await research()).sources).toHaveLength(1);
+  });
+
+  it("refuses two call shapes together, naming both", async () => {
+    const r = await runExtractionAppend(
+      { projectPath: dir, recordIds: ["X"], absences: [] } as any,
+      readerFor([]) as any,
+      LOCAL,
+    );
+    expect(r.ok).toBe(false);
+    expect((r as any).errors[0]).toMatch(/`recordIds` and `absences`/);
+  });
+
+  describe("absences", () => {
+    const logNil = async () => {
+      const res = await research();
+      res.log.push({
+        id: "log_001",
+        performed: "2026-09-30T00:00:00.000Z",
+        tool: "record_search",
+        query: { surname: "Flynn" },
+        outcome: "negative",
+        results_examined: 0,
+        results_ref: null,
+      });
+      await writeFile(join(dir, "research.json"), JSON.stringify(res), "utf8");
+    };
+
+    it("writes the collection as a source and one fixed-classification negative per person", async () => {
+      await logNil();
+      const r = await runExtractionAppend(
+        {
+          projectPath: dir,
+          absences: [
+            { collection: "United States Census, 1870", place: "Schuylkill, Pennsylvania", name: "Patrick Flynn", logEntryId: "log_001" },
+            { collection: "United States Census, 1870", place: "Schuylkill, Pennsylvania", name: "Bridget Flynn", logEntryId: "log_001" },
+          ],
+        },
+        readerFor([]) as any,
+        LOCAL,
+      );
+      expect(r.ok).toBe(true);
+      const after = await research();
+      expect(after.sources).toHaveLength(1);
+      expect(after.log).toHaveLength(1);
+      const neg = after.assertions;
+      expect(neg).toHaveLength(2);
+      for (const a of neg) {
+        expect(a.record_role).toBe("absent");
+        expect(a.record_basis).toBe("absent");
+        expect(a.informant_proximity).toBe("researcher");
+        expect(a.information_quality).toBe("indeterminate");
+      }
+      expect(neg.map((a: any) => a.value).join(" ")).toMatch(/Patrick Flynn.*Bridget Flynn/);
+    });
+
+    it("refuses an absence whose log entry does not exist", async () => {
+      const r = await runExtractionAppend(
+        { projectPath: dir, absences: [{ collection: "US Census, 1870", name: "Patrick Flynn", logEntryId: "log_404" }] },
+        readerFor([]) as any,
+        LOCAL,
+      );
+      expect(r.ok).toBe(false);
+      expect(r.errors?.[0]).toMatch(/log_404 not found/);
+      expect((await research()).assertions).toEqual([]);
+    });
   });
 });

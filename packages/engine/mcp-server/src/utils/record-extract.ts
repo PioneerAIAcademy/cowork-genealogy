@@ -1243,3 +1243,78 @@ export function extractRecord(
  * cannot drift.
  */
 export const EXTRACTED_SOURCE_CLASSIFICATION = "derivative";
+
+// ─── the summary the caller relays ──────────────────────────────────────────
+
+/**
+ * What one extraction says, written by code for the caller to relay verbatim
+ * (lead, 2026-09-29: "the record, the people on it and the key facts extracted,
+ * plus any defaulted-classification warnings. Not every assertion, and not bare
+ * counts"). The caller never sees the record, so this is the only account of it
+ * that reaches the researcher.
+ */
+export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult): string {
+  const gx = doc.gedcomx ?? {};
+  const title = collectionTitle(gx) ?? `record ${doc.recordId}`;
+  const lines: string[] = [];
+  const kind =
+    result.recordType === "census"
+      ? `census${result.censusStatesRelationships ? ", relationships stated" : ", no relationship column"}`
+      : result.recordType.replace(/_/g, " ");
+  const event = result.assertions.find((a) => a.fact_type === result.recordType && (a.date || a.place));
+  const eventText = event ? `, ${[event.date, event.place].filter(Boolean).join(", ")}` : "";
+  lines.push(`${title} (${kind}${eventText}).`);
+
+  // People, in the record's own order, each with the facts written about them.
+  const byPersona = new Map<string, ExtractedAssertion[]>();
+  for (const a of result.assertions) {
+    const key = a.record_persona_id ?? a.record_role;
+    const arr = byPersona.get(key) ?? [];
+    arr.push(a);
+    byPersona.set(key, arr);
+  }
+  for (const as of byPersona.values()) {
+    const name = as.find((a) => a.fact_type === "name")?.value ?? "(unnamed)";
+    const facts = as
+      .filter((a) => a.fact_type !== "name" && a.fact_type !== "sex")
+      .filter((a) => !(result.recordType === "census" && a.fact_type === "census"))
+      .map((a) => {
+        if (a.fact_type === "relationship") return a.value;
+        if (a.fact_type === "age") return `age ${a.value}`;
+        const label = a.fact_type.replace(/_/g, " ");
+        const own = a.value && a.value !== a.date && a.value !== a.place ? ` ${a.value}` : "";
+        const when = a.date ? ` ${a.date}` : "";
+        const where = a.place ? ` ${a.place}` : "";
+        let body = `${label}${own}${when}${where}`;
+        if (a.record_basis === "inferred") body += " (computed)";
+        if (/household member line/.test(a.informant_bias_notes ?? "")) {
+          body += ` (per ${a.informant_bias_notes!.match(/stated on (\d+)/)?.[1] ?? "other"} household line(s))`;
+        }
+        return body;
+      });
+    lines.push(`- ${name} (${as[0].record_role})${facts.length ? ": " + facts.join("; ") : ""}.`);
+  }
+
+  // A household head whose surname differs from the principal's is a lead for
+  // hypothesis-tracking, never a relationship (walk, record-extractor.md Step 2).
+  if (result.recordType === "census") {
+    const principal = (gx.persons ?? []).find((p) => p.principal === true);
+    const headA = result.assertions.find((a) => a.record_role === "head_of_household" && a.fact_type === "name");
+    const ps = principal?.names?.[0]?.surname?.trim().toLowerCase();
+    const hs = (headA?.structured_value?.surname as string | undefined)?.trim().toLowerCase();
+    if (ps && hs && ps !== hs) {
+      lines.push(
+        `Lead: the head, ${headA!.value}, has a different surname from ${fullName(principal!)}. ` +
+          `Possible kin of unstated relationship; worth a hypothesis, not a conclusion.`,
+      );
+    }
+  }
+  for (const n of result.notes) lines.push(`Note: ${n}.`);
+  if (result.defaultedClassifications.length > 0) {
+    lines.push(
+      `${result.defaultedClassifications.length} fact(s) took the default unknown/indeterminate ` +
+        `classification: no table row covers a ${result.recordType.replace(/_/g, " ")} record yet.`,
+    );
+  }
+  return lines.join("\n");
+}

@@ -5,6 +5,7 @@
 // lane gate instead: it attempts a person_evidence write, which must come back
 // { ok: false } naming only extraction_append and its own two sections.
 //   npx tsx dev/try-extraction-append.ts <projectPath> [--denied]
+import { LOCAL } from "../src/auth/principal.js";
 import { extractionAppend } from "../src/tools/extraction-append.js";
 
 const [projectPath, flag] = process.argv.slice(2);
@@ -44,5 +45,5 @@ const input =
         },
       };
 
-const result = await extractionAppend(input as any);
+const result = await extractionAppend(input as any, LOCAL);
 console.log(JSON.stringify(result, null, 2));

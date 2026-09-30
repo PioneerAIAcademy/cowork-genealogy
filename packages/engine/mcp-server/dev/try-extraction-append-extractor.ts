@@ -101,7 +101,7 @@ async function main(): Promise<void> {
       logEntryId: logId,
       recordId,
       questionIds: ["q_001"],
-    } as any);
+    } as any, LOCAL);
     console.log(`3. extraction_append: ok=${out.ok}`);
     if (!out.ok) {
       for (const e of out.errors ?? []) console.log(`   ERROR ${e}`);
@@ -132,7 +132,7 @@ async function main(): Promise<void> {
       logEntryId: logId,
       recordId,
       ops: [],
-    } as any);
+    } as any, LOCAL);
     console.log(`\nboth logEntryId+ops refused: ok=${both.ok}`);
     if (!both.ok) console.log(`   ${both.errors[0].slice(0, 140)}`);
   } finally {

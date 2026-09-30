@@ -38,6 +38,13 @@ import { readProjectJson } from "../utils/project-io.js";
 import { readStagedResults } from "../utils/results-staging.js";
 import { arkToBareId } from "../utils/ark.js";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
+import type { Principal } from "../auth/principal.js";
+import { recordReadTool } from "./record-read.js";
+import type { RecordReadInput, RecordReadResult } from "../types/record-read.js";
+import { researchLogAppend } from "./research-log-append.js";
+import { mapWithConcurrency } from "../utils/place-resolver.js";
+import { sourceIdsForRecordIds } from "./research-append.js";
+import { summarizeExtraction } from "../utils/record-extract.js";
 
 /** The record-extraction lane: one record's source plus its assertions. */
 export const EXTRACTION_SECTIONS: ReadonlySet<string> = new Set([
@@ -47,9 +54,55 @@ export const EXTRACTION_SECTIONS: ReadonlySet<string> = new Set([
 
 const EXTRACTION_SECTION_LIST = ["sources", "assertions"];
 
-export async function extractionAppend(
+type BatchCall = ExtractionBatchInput & ({ recordIds: string[] } | { absences: AbsenceInput[] });
+type AnyCall = ResearchAppendInput & Partial<ExtractionModeInput> & Partial<ExtractionBatchInput>;
+
+export function extractionAppend(
   input: ResearchAppendInput & Partial<ExtractionModeInput>,
-): Promise<ResearchAppendResult> {
+  principal: Principal,
+): Promise<ResearchAppendResult>;
+export function extractionAppend(input: BatchCall, principal: Principal): Promise<ExtractionBatchResult>;
+export async function extractionAppend(
+  input: AnyCall,
+  principal: Principal,
+): Promise<ResearchAppendResult | ExtractionBatchResult> {
+  return runExtractionAppend(input, DEFAULT_DEPS, principal);
+}
+
+/** `extractionAppend` with its record reader injected. The harness and the tests
+ *  call this; production goes through `extractionAppend`. */
+export function runExtractionAppend(
+  input: ResearchAppendInput & Partial<ExtractionModeInput>,
+  deps: ExtractionAppendDeps,
+  principal: Principal,
+): Promise<ResearchAppendResult>;
+export function runExtractionAppend(
+  input: BatchCall,
+  deps: ExtractionAppendDeps,
+  principal: Principal,
+): Promise<ExtractionBatchResult>;
+export async function runExtractionAppend(
+  input: AnyCall,
+  deps: ExtractionAppendDeps,
+  principal: Principal,
+): Promise<ResearchAppendResult | ExtractionBatchResult> {
+  // Exactly one call shape. Two together describe the same write from different
+  // ends, and silently preferring one would make the ignored half invisible.
+  const shapes = (["recordIds", "absences", "logEntryId", "ops"] as const).filter(
+    (k) => (input as any)[k] !== undefined,
+  );
+  if (shapes.length > 1 && !(shapes.length === 2 && shapes.includes("logEntryId") && shapes.includes("ops"))) {
+    return {
+      ok: false,
+      errors: [
+        `extraction_append received ${shapes.map((k) => `\`${k}\``).join(" and ")} together. Send one: ` +
+          "`recordIds` to extract FamilySearch records in code, or `absences` to record people a " +
+          "search did not find.",
+      ],
+    } as ResearchAppendResult;
+  }
+  if (input.recordIds !== undefined) return recordIdsMode(input as ExtractionBatchInput, deps, principal);
+  if (input.absences !== undefined) return absencesMode(input as ExtractionBatchInput);
   // EXTRACTOR MODE is entered on the presence of `logEntryId`. Supplying `ops`
   // as well is a precondition error naming both: the two describe the same
   // write from opposite ends, and silently preferring one would make the
@@ -192,6 +245,333 @@ async function extractorMode(
       ],
     },
   } as ResearchAppendResult;
+}
+
+// ─── batch modes: `recordIds` and `absences` (issues #2937 / #2939) ─────────
+
+/**
+ * What the record reader must do. Production passes `recordReadTool` (a LIVE
+ * read with `projectPath`, which stages the record exactly as `record_read`
+ * does); the eval harness passes one that serves its `record_read` fixtures.
+ * A function parameter, not a schema field or an env var, so no model can reach
+ * it.
+ */
+export interface ExtractionAppendDeps {
+  readRecord: (input: RecordReadInput, principal: Principal) => Promise<RecordReadResult>;
+}
+
+const DEFAULT_DEPS: ExtractionAppendDeps = { readRecord: recordReadTool };
+
+/** One expected-but-absent person, found by a search that returned no record. */
+export interface AbsenceInput {
+  /** The collection searched (its title), e.g. "United States Census, 1870". */
+  collection: string;
+  /** Where the search was scoped, e.g. "Schuylkill, Pennsylvania". */
+  place?: string;
+  /** Who was expected. */
+  name: string;
+  /** The assertion's value. Defaults to a sentence naming the person. */
+  note?: string;
+  /** The nil search's own log entry. Not written again. */
+  logEntryId: string;
+  questionIds?: string[];
+  /** Defaults to FamilySearch. */
+  repository?: string;
+}
+
+export interface ExtractionBatchInput {
+  projectPath: string;
+  recordIds?: string[];
+  absences?: AbsenceInput[];
+  questionIds?: string[];
+  /** Expected-but-absent persons for a record in `recordIds`, keyed by its id. */
+  absentPersons?: { recordId?: string; name: string; factType?: string; note?: string }[];
+}
+
+export type RecordOutcomeStatus = "extracted" | "already_extracted" | "read_failed" | "refused";
+
+export interface RecordOutcome {
+  recordId: string;
+  status: RecordOutcomeStatus;
+  srcId?: string;
+  logId?: string;
+  /** Code-written, for the caller to relay verbatim. */
+  summary: string;
+  errors?: string[];
+  warnings?: string[];
+}
+
+export interface ExtractionBatchResult {
+  ok: boolean;
+  records: RecordOutcome[];
+  errors?: string[];
+}
+
+const READ_CONCURRENCY = 4;
+
+function srcIdOf(result: ResearchAppendResult): string | undefined {
+  if (!result.ok || !("results" in result)) return undefined;
+  return result.results.find((r) => r.section === "sources")?.entryId;
+}
+
+/**
+ * `recordIds`: read each FamilySearch record live, log every read in ONE
+ * `research_log_append` batch, then persist each record with its OWN
+ * `research_append` call. `research_append` takes exactly one sources append per
+ * call, so a batch-wide write is not available; a refusal on record k leaves the
+ * records before it written, and the resend skip below makes a corrected resend
+ * of the whole batch safe.
+ */
+async function recordIdsMode(
+  input: ExtractionBatchInput,
+  deps: ExtractionAppendDeps,
+  principal: Principal,
+): Promise<ExtractionBatchResult> {
+  const ids = input.recordIds ?? [];
+  if (!Array.isArray(ids) || ids.length === 0 || ids.some((r) => typeof r !== "string" || r.trim() === "")) {
+    return { ok: false, records: [], errors: ["`recordIds` must be a non-empty list of record ids (any ARK form)."] };
+  }
+
+  let research: any;
+  try {
+    research = await readProjectJson(input.projectPath, "research.json");
+  } catch (e) {
+    return { ok: false, records: [], errors: [`could not read research.json: ${e instanceof Error ? e.message : String(e)}`] };
+  }
+
+  // One outcome per DISTINCT record: a repeated id in the call is one record.
+  const seen = new Set<string>();
+  const outcomes: (RecordOutcome & { stagedRef?: string })[] = [];
+  for (const raw of ids) {
+    const bare = arkToBareId(raw.trim());
+    if (seen.has(bare)) continue;
+    seen.add(bare);
+    outcomes.push({ recordId: raw.trim(), status: "extracted", summary: "" });
+  }
+
+  // 1. Resend skip, FIRST — before any read or log write — by the same
+  //    record-id -> source mapping research_append's reuse detection uses.
+  for (const o of outcomes) {
+    const existing = sourceIdsForRecordIds(research, new Set([arkToBareId(o.recordId)]));
+    if (existing.size > 0) {
+      const srcId = [...existing][0];
+      o.status = "already_extracted";
+      o.srcId = srcId;
+      o.summary = `${o.recordId}: already extracted as ${srcId}; nothing written.`;
+    }
+  }
+
+  // 2. Reads, in parallel. An error or an unstaged read is reported and skipped.
+  const toRead = outcomes.filter((o) => o.status === "extracted");
+  await mapWithConcurrency(toRead, READ_CONCURRENCY, async (o) => {
+    try {
+      const r = await deps.readRecord({ recordId: o.recordId, projectPath: input.projectPath }, principal);
+      if (!r.staged) {
+        o.status = "read_failed";
+        o.summary = `${o.recordId}: read, but not staged, so it cannot be extracted: ${r.stagingError ?? "no staging handle returned"}.`;
+      } else {
+        o.stagedRef = r.staged.resultsRef;
+      }
+    } catch (e) {
+      o.status = "read_failed";
+      o.summary = `${o.recordId}: could not be read: ${e instanceof Error ? e.message : String(e)}.`;
+    }
+  });
+
+  const staged = outcomes.filter((o) => o.status === "extracted" && o.stagedRef);
+  if (staged.length > 0) {
+    // 3. ONE log batch for every read.
+    const logged = await researchLogAppend({
+      projectPath: input.projectPath,
+      ops: staged.map((o) => ({
+        tool: "record_read",
+        query: { recordId: o.recordId },
+        outcome: "positive",
+        resultsExamined: 1,
+        stagedResultsRef: o.stagedRef!,
+      })),
+    });
+    if (!logged.ok || !("results" in logged)) {
+      const errs = (logged as any).errors ?? ["research_log_append refused the batch"];
+      for (const o of staged) {
+        o.status = "refused";
+        o.errors = errs;
+        o.summary = `${o.recordId}: not extracted, because logging the read was refused: ${errs.join("; ")}.`;
+      }
+    } else {
+      logged.results.forEach((lr, i) => {
+        staged[i].logId = lr.logId;
+        staged[i].stagedRef = lr.resultsRef ?? staged[i].stagedRef;
+      });
+
+      // 4. One research_append per record.
+      for (const o of staged) {
+        let doc: ExtractDocument | undefined;
+        try {
+          const rows = await readStagedResults(input.projectPath, o.stagedRef!);
+          const key = arkToBareId(o.recordId);
+          doc = rows.find((r: any) => {
+            const id = r?.recordId ?? r?.id;
+            return typeof id === "string" && arkToBareId(id) === key;
+          }) as ExtractDocument | undefined;
+        } catch (e) {
+          o.status = "refused";
+          o.summary = `${o.recordId}: logged as ${o.logId}, but its sidecar could not be read: ${e instanceof Error ? e.message : String(e)}.`;
+          continue;
+        }
+        if (!doc) {
+          o.status = "refused";
+          o.summary = `${o.recordId}: logged as ${o.logId}, but its sidecar does not hold that record.`;
+          continue;
+        }
+        const absent = (input.absentPersons ?? []).filter(
+          (p) => p.recordId !== undefined && arkToBareId(p.recordId) === arkToBareId(o.recordId),
+        );
+        const { ops, sourceDescription, extraction } = buildExtractionOps(
+          { recordId: doc.recordId ?? o.recordId, gedcomx: doc.gedcomx ?? {}, indexFields: doc.indexFields },
+          {
+            projectPath: input.projectPath,
+            logEntryId: o.logId!,
+            recordId: o.recordId,
+            questionIds: input.questionIds,
+            absentPersons: absent,
+          },
+          { id: o.logId! },
+        );
+        const written = await researchAppend(
+          { projectPath: input.projectPath, ops, sourceDescription } as ResearchAppendInput,
+          { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" },
+        );
+        if (!written.ok) {
+          o.status = "refused";
+          o.errors = written.errors;
+          o.summary = `${o.recordId}: read and logged as ${o.logId}, but the write was refused: ${written.errors.join("; ")}.`;
+          continue;
+        }
+        o.srcId = srcIdOf(written);
+        o.summary = summarizeExtraction(doc, extraction);
+        o.warnings = [...written.validation.warnings, ...extraction.defaultedClassifications];
+      }
+    }
+  }
+
+  return {
+    ok: outcomes.some((o) => o.status === "extracted" || o.status === "already_extracted"),
+    records: outcomes.map(({ stagedRef: _s, ...rest }) => rest),
+  };
+}
+
+/**
+ * `absences`: negative evidence from a search that returned no record (the
+ * genealogist's ruling A, 2026-09-30). Code writes the collection as a source
+ * and one negative assertion per person, with the fixed classification a
+ * negative always takes. The log entry is the nil search's own and is not
+ * written again.
+ */
+async function absencesMode(input: ExtractionBatchInput): Promise<ExtractionBatchResult> {
+  const absences = input.absences ?? [];
+  const bad = absences
+    .map((a, i) => (!a || typeof a.collection !== "string" || !a.collection.trim() || typeof a.name !== "string" || !a.name.trim() || typeof a.logEntryId !== "string" || !a.logEntryId.trim() ? i : -1))
+    .filter((i) => i >= 0);
+  if (absences.length === 0 || bad.length > 0) {
+    return {
+      ok: false,
+      records: [],
+      errors: [
+        absences.length === 0
+          ? "`absences` must be a non-empty list."
+          : `absences[${bad.join(", ")}]: each needs \`collection\`, \`name\` and \`logEntryId\` (the nil search's log entry).`,
+      ],
+    };
+  }
+  let research: any;
+  try {
+    research = await readProjectJson(input.projectPath, "research.json");
+  } catch (e) {
+    return { ok: false, records: [], errors: [`could not read research.json: ${e instanceof Error ? e.message : String(e)}`] };
+  }
+  const logIds = new Set((Array.isArray(research.log) ? research.log : []).map((e: any) => e?.id));
+  const missing = [...new Set(absences.map((a) => a.logEntryId).filter((id) => !logIds.has(id)))];
+  if (missing.length > 0) {
+    return {
+      ok: false,
+      records: [],
+      errors: [`log entr${missing.length === 1 ? "y" : "ies"} ${missing.join(", ")} not found. Log the nil search with \`research_log_append\` first, then pass its logId.`],
+    };
+  }
+
+  // One source per (collection, log entry): the thing that was searched.
+  const groups = new Map<string, AbsenceInput[]>();
+  for (const a of absences) {
+    const k = `${a.collection.trim()}|${a.logEntryId}`;
+    groups.set(k, [...(groups.get(k) ?? []), a]);
+  }
+  const records: RecordOutcome[] = [];
+  const accessed = todayIso();
+  for (const group of groups.values()) {
+    const first = group[0];
+    const collection = first.collection.trim();
+    const names = group.map((a) => a.name.trim());
+    const sourceEntry: Record<string, unknown> = {
+      citation: `${collection}${first.place ? `, ${first.place}` : ""}, searched without a match for ${names.join(", ")} (accessed ${accessed}).`,
+      citation_detail: {
+        who: "the searched collection",
+        what: collection,
+        when_created: "unknown",
+        when_accessed: accessed,
+        where: first.place ?? collection,
+        where_within: "searched without a match",
+      },
+      source_classification: EXTRACTED_SOURCE_CLASSIFICATION,
+      repository: first.repository ?? "FamilySearch",
+      access_date: accessed,
+      log_entry_id: first.logEntryId,
+    };
+    const ops: ResearchAppendOp[] = [
+      { section: "sources", op: "append", entry: sourceEntry },
+      ...group.map((a) => ({
+        section: "assertions" as const,
+        op: "append" as const,
+        entry: {
+          record_id: collection,
+          record_role: "absent",
+          fact_type: "name",
+          value:
+            a.note ??
+            `${a.name.trim()} was expected in ${collection}${a.place ? ` (${a.place})` : ""} and is not present`,
+          information_quality: "indeterminate",
+          informant: "the researcher",
+          informant_proximity: "researcher",
+          record_basis: "absent",
+          log_entry_id: a.logEntryId,
+          extracted_for_question_ids: [...(a.questionIds ?? input.questionIds ?? [])],
+        } as Record<string, unknown>,
+      })),
+    ];
+    const written = await researchAppend(
+      { projectPath: input.projectPath, ops, sourceDescription: { title: collection } } as ResearchAppendInput,
+      { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" },
+    );
+    if (!written.ok) {
+      records.push({
+        recordId: collection,
+        status: "refused",
+        errors: written.errors,
+        summary: `${collection}: the absence of ${names.join(", ")} was not written: ${written.errors.join("; ")}.`,
+      });
+      continue;
+    }
+    records.push({
+      recordId: collection,
+      status: "extracted",
+      srcId: srcIdOf(written),
+      logId: first.logEntryId,
+      summary:
+        `${collection}${first.place ? ` (${first.place})` : ""}: searched without a match. ` +
+        `Recorded as negative evidence: ${names.join(", ")} expected and not present.`,
+    });
+  }
+  return { ok: records.some((r) => r.status === "extracted"), records };
 }
 
 // ─── extractor mode (issue #2937) ───────────────────────────────────────────
@@ -436,6 +816,53 @@ function narrowedInputSchema() {
       "as negative evidence (`record_role: \"absent\"`). Yours to supply: the " +
       "extractor never mints an absence, because a claim about who is MISSING " +
       "cannot be read off the document.",
+  };
+
+  // BATCH MODES (issues #2937 / #2939).
+  properties.recordIds = {
+    type: "array",
+    items: { type: "string" },
+    description:
+      "FAMILYSEARCH RECORDS. The records to extract, any ARK form. The tool " +
+      "reads each one live, logs every read, decides roles, classifications and " +
+      "assertions IN CODE, and returns a summary per record for you to relay " +
+      "verbatim. A record already extracted is skipped and named. Send with " +
+      "`questionIds` and, for a person expected on one of these records and not " +
+      "found, `absentPersons` with that record's `recordId`.",
+  };
+  properties.absences = {
+    type: "array",
+    items: {
+      type: "object",
+      properties: {
+        collection: { type: "string", description: "The collection searched, by title." },
+        place: { type: "string", description: "Where the search was scoped." },
+        name: { type: "string", description: "Who was expected and not found." },
+        note: { type: "string", description: "The assertion's value; defaults to a sentence naming the person." },
+        logEntryId: { type: "string", description: "The nil search's own log entry." },
+        questionIds: { type: "array", items: { type: "string" } },
+        repository: { type: "string", description: "Defaults to FamilySearch." },
+      },
+      required: ["collection", "name", "logEntryId"],
+    },
+    description:
+      "NEGATIVE EVIDENCE FROM A NIL SEARCH. People a search expected and did not " +
+      "find, when there is no record to extract. Each is written in code as a " +
+      "negative assertion against the collection searched. Log the nil search " +
+      "with `research_log_append` first and pass its `logEntryId`.",
+  };
+  properties.absentPersons = {
+    ...properties.absentPersons,
+    items: {
+      ...properties.absentPersons.items,
+      properties: {
+        ...properties.absentPersons.items.properties,
+        recordId: {
+          type: "string",
+          description: "With `recordIds`: which of those records this person was expected on.",
+        },
+      },
+    },
   };
 
   properties.ops = {

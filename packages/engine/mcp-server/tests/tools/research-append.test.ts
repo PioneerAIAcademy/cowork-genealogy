@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { LOCAL } from "../../src/auth/principal.js";
 import { singleOk, failure, errorsOf } from "../helpers/narrow.js";
 import { mkdtemp, writeFile, readFile, rm, mkdir, access } from "fs/promises";
 import { join } from "path";
@@ -407,7 +408,7 @@ describe("research_append (Phase 1)", () => {
         op: "update",
         entryId: "a_011",
         fields: { standard_place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
-      });
+      }, LOCAL);
       expect(r.ok).toBe(true);
       if (!r.ok) return;
       expect((await factF4()).standard_place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
@@ -7763,7 +7764,7 @@ describe("research_append — relationship direction and the sibling value (#253
           },
         },
       ],
-    });
+    }, LOCAL);
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(failure(r).errors?.join(" ")).toMatch(/states the subject is a sibling/);
@@ -8346,7 +8347,7 @@ describe("research_append — sources-without-assertions nudge (#1478)", () => {
 
   it("fires through extraction_append with a tool-neutral message", async () => {
     await write(researchWith(3, 0));
-    const r = await extractionAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) });
+    const r = await extractionAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) }, LOCAL);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     const warn = r.validation.warnings.find((w) => WARN.test(w));

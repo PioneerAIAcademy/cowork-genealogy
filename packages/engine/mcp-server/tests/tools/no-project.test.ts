@@ -99,7 +99,7 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
   {
     tool: "extraction_append",
     call: (projectPath) =>
-      extractionAppend({ projectPath, section: "sources", op: "append", entry: { id: "src_001" } } as any),
+      extractionAppend({ projectPath, section: "sources", op: "append", entry: { id: "src_001" } } as any, LOCAL),
   },
   {
     tool: "research_log_append",

@@ -1577,6 +1577,55 @@ heavily favourable — a round trip against an episode — but it is a real addi
 on a card whose warrant is turns and latency, and a reader should see both
 numbers rather than only the saving.
 
+#### The batch call shape (lead, 2026-09-29): `recordIds` and `absences`
+
+The FamilySearch path is **one call**: `extraction_append({ projectPath,
+recordIds, questionIds?, absentPersons? })`. It replaces the three-turn
+`record_read` → `research_log_append` → `extraction_append` sequence. The
+`logEntryId` mode below is its predecessor, and it is removed in the same merge
+as the `record-extraction` skill that calls it.
+
+In order:
+
+1. **Resend skip, first.** Before any read or log write, each id is looked up
+   by `sourceIdsForRecordIds`, the one derivation of "already extracted" that
+   §3.4.1's reuse detection also uses. An id with a source is skipped and named.
+2. **Reads,** in parallel, through `record_read`'s own live code with
+   `projectPath`, so staging is identical. A read that errors, or returns
+   `staged: null`, is reported and skipped; the others proceed.
+3. **One `research_log_append` batch** logs every read (`tool: "record_read"`),
+   finalizing each staged file into its sidecar.
+4. **One `research_append` call per record.** `research_append` accepts exactly
+   one sources append per call, so there is no batch-wide write. A refusal on
+   record *k* leaves the records before it written; the resend skip makes a
+   corrected resend of the whole batch safe.
+
+`absentPersons` entries carry a `recordId`, naming the record the person was
+expected on.
+
+**`absences`** records people a search expected and did not find, when there is
+no record to extract (genealogist ruling, 2026-09-30). Each entry is
+`{ collection, place?, name, note?, logEntryId, questionIds?, repository? }`.
+The nil search's log entry must already exist and is not written again. Code
+writes one source per (collection, log entry) and one negative assertion per
+person, with the fixed classification a negative always takes:
+`record_role: "absent"`, `record_basis: "absent"`, informant "the researcher"
+at `researcher`, `indeterminate`.
+
+**Return:** `{ ok, records: [{ recordId, status, srcId?, logId?, summary,
+errors?, warnings? }] }`. `status` is one of `extracted`, `already_extracted`,
+`read_failed` or `refused`. `summary` is written by code (`summarizeExtraction`)
+for the caller to relay verbatim. It covers what the record is; its event date
+and place; each person by role, with the facts written about them; computed
+values marked; parent-birthplace claims labelled with how many lines state
+them; a differently-surnamed household head as a lead; notes; and a count of
+defaulted classifications. `ok` is true when at least one record was extracted
+or found already extracted.
+
+The reader is injected (`runExtractionAppend(input, deps, principal)`), so the
+eval harness can serve `record_read` fixtures. It is a function parameter, not
+a schema field, so no model can reach it.
+
 #### The census relationship-column year table
 
 | Jurisdiction | Schedule states a relationship from |
