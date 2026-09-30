@@ -3411,12 +3411,10 @@ describe("research_append (project singleton section)", () => {
     expect(research.project.status).toBe("active");
   });
 
-  // ── Completed-gate: the mentor verdict (issue #1490 phase 1) ──
-  // Prose carried this rule since PR #811 ("verify BOTH gates, in order — do
-  // not write completed until both hold"; #1029 touched the file but not that
-  // row) and 29 of 128 completed runs in the committed e2e corpus reach
-  // `completed` with at least one uncritiqued summary anyway — 23%, of which
-  // 23 predate the prose. This is that rule at the write boundary.
+  // ── Completed-gate: no mentor verdict is required (issue #2951) ──
+  // A gps-mentor `proof-critique` verdict used to be a precondition on
+  // `completed`. The mentor now runs only on request, so a proof summary with no
+  // critique must not block completion.
 
   const resolvedQuestion = () => ({
     id: "q_001",
@@ -3443,22 +3441,10 @@ describe("research_append (project singleton section)", () => {
     exhaustive_search_summary: "Every identified repository was searched.",
     narrative_markdown: "The evidence establishes the parentage.",
   });
-  const critique = (targetId = "ps_001", extra: Record<string, unknown> = {}) => ({
-    id: "ev_001",
-    focus: "proof-critique",
-    target_id: targetId,
-    target_type: "proof_summary",
-    verdict: "looks_solid",
-    file_path: "evaluations/proof-critique-ps_001.json",
-    timestamp: "2026-01-02T00:00:00Z",
-    superseded_by: null,
-    ...extra,
-  });
-  const withProof = (evaluations: Record<string, unknown>[] = []) => {
+  const withProof = () => {
     const r = baseResearch();
     r.questions.push(resolvedQuestion());
     r.proof_summaries.push(summary());
-    r.evaluations.push(...evaluations);
     return r;
   };
 
@@ -3527,8 +3513,8 @@ describe("research_append (project singleton section)", () => {
 
   it("allows the summary and the resolve in ONE batch, summary first", async () => {
     // Reads live state on purpose: the summary and the resolve are two halves of
-    // one author's conclusion, unlike the mentor verdict which must come from a
-    // different actor. 7 of 154 corpus resolve-calls do exactly this, all with
+    // one author's conclusion, unlike the exhaustive declaration, which must come
+    // from research-exhaustiveness. 7 of 154 corpus resolve-calls do exactly this, all with
     // the summary ordered first — a pre-call snapshot would refuse all 7.
     const r0 = baseResearch();
     r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
@@ -3573,7 +3559,7 @@ describe("research_append (project singleton section)", () => {
   it("a batch cannot resolve its own blocking conflict and complete", async () => {
     // The conflict gate used to read `research.conflicts` LIVE, and applyOne
     // mutates in place per op — so one batch could settle the conflict and
-    // complete in the same call. Same defect the mentor gate's snapshot avoids.
+    // complete in the same call. Same defect the exhaustive-declaration snapshot avoids.
     await writeProject(withConflict(conflictBase()));
     const r = await researchAppend({
       projectPath: dir,
@@ -3600,23 +3586,12 @@ describe("research_append (project singleton section)", () => {
     expect(research.project.status).toBe("active");
   });
 
-  it("refuses completed when a resolved question's proof summary has no mentor verdict", async () => {
+  it("allows completed when a resolved question's proof summary has no mentor verdict", async () => {
     await writeProject(withProof());
     const r = await complete();
-    expect(r.ok).toBe(false);
-    if (r.ok) return;
-    const msg = r.errors.join(" ");
-    expect(msg).toMatch(/cannot set project\.status/);
-    expect(msg).toMatch(/ps_001/);
-    expect(msg).toMatch(/proof-critique/);
-    const research = await readResearch();
-    expect(research.project.status).toBe("active"); // nothing written
-  });
-
-  it("allows completed once the summary carries a proof-critique verdict", async () => {
-    await writeProject(withProof([critique()]));
-    const r = await complete();
     expect(r.ok).toBe(true);
+    const research = await readResearch();
+    expect(research.project.status).toBe("completed");
   });
 
   // ── Completed-gate: the tree-encoding WARNING (issue #1490 phase 2) ──
@@ -3638,7 +3613,7 @@ describe("research_append (project singleton section)", () => {
   it("warns on completion when a probable conclusion added no tree structure (#1490)", async () => {
     // Baseline == current tree, so I1 (linked to the summary via a_001) gained
     // nothing this session — the conclusion was reached and left un-encoded.
-    await writeProject(withEvidence(withProof([critique()])), baseTree);
+    await writeProject(withEvidence(withProof()), baseTree);
     await writeBaseline(baseTree);
     const r = await complete();
     expect(r.ok).toBe(true);
@@ -3660,7 +3635,7 @@ describe("research_append (project singleton section)", () => {
         },
       ],
     };
-    await writeProject(withEvidence(withProof([critique()])), current);
+    await writeProject(withEvidence(withProof()), current);
     await writeBaseline(baseTree);
     const r = await complete();
     expect(r.ok).toBe(true);
@@ -3671,80 +3646,13 @@ describe("research_append (project singleton section)", () => {
   it("does not warn when the project predates the baseline (fail-open) (#1490)", async () => {
     // No starting-tree.gedcomx.json on disk — a legacy project. The check must
     // fail open (no warning), never treat every fact as new.
-    await writeProject(withEvidence(withProof([critique()])), baseTree);
+    await writeProject(withEvidence(withProof()), baseTree);
     const r = await complete();
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.validation.warnings.join(" ")).not.toMatch(/no tree person it draws evidence from/);
   });
 
-  it("does not count a superseded verdict", async () => {
-    // If a newer verdict replaced it, that one is itself in evaluations[] and
-    // satisfies the gate. If nothing replaced it, the critique no longer stands.
-    await writeProject(withProof([critique("ps_001", { superseded_by: "ev_002" })]));
-    const r = await complete();
-    expect(r.ok).toBe(false);
-    if (r.ok) return;
-    expect(r.errors.join(" ")).toMatch(/ps_001/);
-  });
-
-  it("a batch cannot satisfy its own precondition", async () => {
-    // The critique set is snapshotted before any op applies, so appending the
-    // verdict and completing in one call must still refuse. Read live, the gate
-    // would grade its own homework.
-    await writeProject(withProof());
-    // The tool assigns entry ids, so an append entry must not carry one.
-    const { id: _id, ...critiqueEntry } = critique();
-    const r = await researchAppend({
-      projectPath: dir,
-      ops: [
-        { section: "evaluations", op: "append", entry: critiqueEntry as never },
-        { section: "project", op: "update", fields: { status: "completed" } },
-      ],
-    } as never);
-    expect(r.ok).toBe(false);
-    if (r.ok) return;
-    expect(r.errors.join(" ")).toMatch(/ps_001/);
-    const research = await readResearch();
-    expect(research.project.status).toBe("active");
-  });
-
-  it("a resolved question with no proof summary passes vacuously, on seeded state", async () => {
-    // Still deliberate, but the state is now reachable only by seeding it:
-    // questionResolvedInvariants refuses the transition through the tool. What
-    // this pins is that an already-seeded document still LOADS and completes —
-    // a gate on a transition must not retroactively invalidate documents that
-    // predate it.
-    const r0 = baseResearch();
-    r0.questions.push({ ...resolvedQuestion(), resolution_assertion_ids: [] });
-    await writeProject(r0);
-    const r = await complete();
-    expect(r.ok).toBe(true);
-  });
-
-  it("counts a question resolved by DATE alone toward the critique requirement", async () => {
-    // `resolved` is an ISO date or null, so the old `=== true` never matched and
-    // a date-resolved question's summary escaped the mentor gate entirely.
-    // `question-state.ts` has always read this field as truthy-or-not, so the
-    // two disagreed about the same question.
-    const r0 = baseResearch();
-    r0.questions.push({ ...resolvedQuestion(), status: "exhaustive_declared" });
-    r0.proof_summaries.push(summary());
-    await writeProject(r0);
-    const r = await complete();
-    expect(r.ok).toBe(false);
-    if (r.ok) return;
-    expect(r.errors.join(" ")).toMatch(/ps_001/);
-  });
-
-  it("ignores a summary whose question is not resolved", async () => {
-    const r0 = baseResearch();
-    r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
-    r0.proof_summaries.push(summary());
-    await writeProject(r0);
-    const r = await complete();
-    expect(r.ok).toBe(true);
-  });
 });
 
 // ─── Batch ops ───────────────────────────────────────────────────────────────

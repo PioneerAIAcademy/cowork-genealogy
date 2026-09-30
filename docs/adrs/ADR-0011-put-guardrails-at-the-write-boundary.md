@@ -122,9 +122,10 @@ Concretely, this is a placement question with six answers — **the layer map**:
 **Before answering step 1 "no", try the bridge.** A rule that appears to require
 observing that a step *ran* returns to step 1 the moment the step is made to
 leave a durable artifact, because the artifact is a project document. The shipped
-instance is the mentor gate in `research_append`: it never observes that
-`gps-mentor` ran, only that a `proof-critique` verdict backing each resolved
-question's summary is on record — a foreign-key join over data already in memory.
+instance is the tier gate in `research_append`: it never observes that
+`research-exhaustiveness` ran, only that a `proved` or `probable` summary's
+question already carries `exhaustive_declaration.declared: true` — a read of data
+already in memory.
 So the test is not *"can we see the skill run"*, which nothing in production can.
 It is **"is there a later write to gate, and can the step be made to leave
 something behind."** Ask it before classifying a rule as unreachable; the class
@@ -210,8 +211,8 @@ document, and picking wrong is a silent false-deny or a self-satisfying gate:
 > **Snapshot when the precondition must be satisfied by someone else. Read live
 > when it is the same author's own prior step.**
 
-A `gps-mentor` verdict is not something the writer may append for itself, so the
-mentor gate snapshots. A proof summary and its question's `resolved` flip are two
+An exhaustive-search declaration is `research-exhaustiveness`'s to write, not the
+proof author's, so the tier gate snapshots. A proof summary and its question's `resolved` flip are two
 halves of one author's conclusion, so that gate reads live — measured: 7 of 154
 corpus resolve-calls write both in one batch, all with the summary ordered first,
 so a snapshot would refuse 7 correct writes.
@@ -407,7 +408,7 @@ issues are already closed, each carrying rulings at that level of decay.
 | **A gate ships with no override mechanism** until a false deny is observed in the field. | every gate | 2026-08-24 | this ADR, "Overridable or not" |
 | **Snapshot when the precondition must be satisfied by someone else; read live when it is the same author's own prior step.** | every gate | — | this ADR, "Snapshot or live" |
 | **Coverage follows the artifact, not the agent.** A writer-tool precondition constrains the write, never who made it, so a gate is always "check this section" and never "check this agent". An agent's judgement that never reaches a project document is advice — gate whoever writes it down, or accept it and record what would reopen the question. | reading a gap as "this agent is uncovered" | 2026-09-10 | `docs/specs/schemas/ownership.json`; `record-extractor`'s identity assessment, gated at the `person_evidence` write (#1731, #2409) |
-| **The bridge: require the step to deposit its output, then gate on the output.** A rule that seems to need "did this step run" becomes a step-1 rule when the step must leave a durable artifact — the gate reads the artifact, never the call history. | placement, before calling a rule unreachable | 2026-09-10 | this ADR, "The decision procedure"; the mentor gate in `research_append` |
+| **The bridge: require the step to deposit its output, then gate on the output.** A rule that seems to need "did this step run" becomes a step-1 rule when the step must leave a durable artifact — the gate reads the artifact, never the call history. | placement, before calling a rule unreachable | 2026-09-10 | this ADR, "The decision procedure"; the tier gate's exhaustive-declaration check in `research_append` |
 
 **Promoting one.** When a ruling's reasoning would apply to a gate other than
 the one it was made on, add a row here in the PR that closes the issue, and link
@@ -474,7 +475,8 @@ constant that denies correct work at $7–25 a run — the failure ADR-0009's si
 constraint exists to prevent, and the one issue #1463 caught before it shipped.
 In the other direction, nothing mechanical flags a "must hold" rule that is still
 a sentence — though the two that were prose here have since moved into the tool:
-the mentor gate as a refusal (PR #1685), and the tree-encoding gate as a warning
+the mentor gate as a refusal (PR #1685; removed by issue #2951 when gps-mentor
+came off the default `/research` path), and the tree-encoding gate as a warning
 that diffs the final tree against a write-once opening-tree baseline (issue
 #1490). The tree-encoding half ships warn-only, not as a refusal, per the
 2026-08-24 no-override ruling.

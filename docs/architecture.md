@@ -287,9 +287,10 @@ how to word it:
 | for one delegated agent | **that agent's `tools:`** — omit the capability — or a narrowed tool (§5.3) | `extraction_append` |
 | within a single skill invocation | **skill prose** — this is what prose is *for* | "consult the stop criteria before draining the plan" |
 
-> **Direction.** Both gates the §4 law named have moved into the tool: the
-> **mentor gate** as a refusal, and the **tree-encoding gate** as a warning on
-> `opWarnings` — it diffs the final tree against a write-once
+> **Direction.** Both gates the §4 law named moved into the tool: the
+> **mentor gate** as a refusal — since removed, with gps-mentor off the default
+> `/research` path — and the **tree-encoding gate** as a warning on
+> `opWarnings`, which diffs the final tree against a write-once
 > `starting-tree.gedcomx.json` baseline, and ships warn-only rather than as a
 > refusal per the 2026-08-24 no-override ruling (a shape-match gate cannot
 > hard-block correct work when a wrong refusal has no override). **If you are
@@ -807,25 +808,26 @@ There **is** an orchestrator, and it is a skill:
    places: the trigger list in `research/SKILL.md`'s description, and the
    message the e2e harness and `make proto-demo` still build. So no offline suite
    sees the difference; only the paid eval runs do.
-   **The router does not yield on a mentor verdict.** The one verdict table in the file is advisory
+   **gps-mentor runs only when the user asks for a second opinion, and the router
+   does not yield on its verdict.** The one verdict table in the file is advisory
    — `address_first` is surfaced and recorded, and does not block, re-open a
    resolved question, or force a remediation skill. A second, blocking table
    said the opposite for seven weeks — a merge had restored text that an
    earlier change deliberately deleted — and it was ruled out and removed.
-4. **Completion is gated twice.** Before `project.status = "completed"` is
-   written via `research_append`: the **tree-encoding gate** — every
-   tier-≥-probable conclusion must be encoded in `tree.gedcomx.json`; and the
-   **mentor gate** — every `ps_id` a resolved question references must carry a
-   `focus: "proof-critique"` verdict in `evaluations[]`, written by
-   `@plugin:gps-mentor`. The mentor gate is mandatory to *invoke and record*; its
-   recommendation stays advisory and never forces rework. **`proof-conclusion`
-   owns that write** — ruled 2026-09-01 and applied to `research/SKILL.md` when
+4. **Completion is gated once in the router, once in the tool.** Before
+   `project.status = "completed"` is written via `research_append`, the router
+   checks the **tree-encoding gate** — every tier-≥-probable conclusion must be
+   encoded in `tree.gedcomx.json` — and the tool refuses while a blocking conflict
+   is unresolved. No `proof-critique` verdict is required: gps-mentor is off the
+   default path, and `proof-conclusion`'s completing summary tells the user they
+   can ask for a second opinion. **`proof-conclusion` owns that write** — ruled 2026-09-01 and applied to `research/SKILL.md` when
    continuous work shipped (2026-09-23). Three surfaces already said so and the router
    contradicted all three: `docs/specs/schemas/ownership.json` names
    `skill:init-project` and `skill:proof-conclusion` as the `project` section's
    only callers, `agents/proof-conclusion.md` §8 makes the call, and the
    router's own `allowed-tools` grants no writer tool. The router verifies the
-   two gates and re-invokes `proof-conclusion`; it never writes the status.
+   tree-encoding gate and re-invokes `proof-conclusion`; it never writes the
+   status.
 5. **Stop conditions:** `project.status == "completed"`, an explicit user halt,
    or a genuine logged blocker. Nothing else — finishing a sub-skill is mid-loop.
 

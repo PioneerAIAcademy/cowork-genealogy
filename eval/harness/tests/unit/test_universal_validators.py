@@ -112,8 +112,8 @@ def test_proof_conclusion_may_write_questions():
 def test_a_section_with_no_enforceable_row_is_not_default_denied():
     """`evaluations` is agent-owned, so this tier cannot express its row.
 
-    Default-deny here would fail the mandatory proof critique on every run that
-    has one — 114 of 154 committed runs. Not-checked and denied are different
+    Default-deny here would fail every gps-mentor critique — 114 of 154
+    committed runs carry one. Not-checked and denied are different
     answers, and only one of them is right for a row this plane cannot see.
     """
     check_research(

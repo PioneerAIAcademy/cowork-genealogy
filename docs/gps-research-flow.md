@@ -39,9 +39,9 @@ novel; where the system takes an opinionated position, it says so.
                         │ yes
                         ▼
               Write the conclusion
-                        │
+                        ┆
                         ▼
-            Critique the conclusion
+      Critique the conclusion (only if you ask)
 ```
 
 The plan is not a checklist to be drained. As soon as the evidence in hand
@@ -370,8 +370,8 @@ concluded, not because it is being held back.
 
 ### Critique of the conclusion
 
-Finished conclusions go to a reviewer that reads the written narrative as a
-standalone document. It is the one check that asks whether the prose holds
+On request, a finished conclusion goes to a reviewer that reads the written
+narrative as a standalone document. It is the one check that asks whether the prose holds
 together: whether the summary sentence contradicts the evidence listed under
 it, whether the cited evidence supports the tier claimed, whether hedging
 language sits uneasily against a confident claim.
@@ -379,11 +379,12 @@ language sits uneasily against a confident claim.
 The reviewer has no search tools. It evaluates what was gathered; it cannot
 gather more.
 
-The critique is **mandatory to run and advisory to act on**. It happens
+The critique runs **only when you ask for it** — "second opinion", "review my
+work", "is this defensible?" — including on a finished project; the closing
+summary tells you that you can ask. It is advisory to act on. It happens
 after the conclusion is recorded, so a finding never silently rewrites the
-answer or reopens a settled question. When it raises something substantive
-in an interactive session, the system puts the question to you and waits
-rather than quietly applying its own fix.
+answer or reopens a settled question: the system shows you what the reviewer
+found and you decide whether to act on it.
 
 ---
 

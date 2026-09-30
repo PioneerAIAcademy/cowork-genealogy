@@ -229,19 +229,18 @@ export function questionStatus(research: any, question: any): QuestionStatus {
   else state = "framed";
 
   // Ordered by what blocks what: a conflict has to settle before a conclusion
-  // means anything, and a conclusion has to exist before it can be critiqued.
+  // means anything. A critique is not a step — gps-mentor runs only when the
+  // user asks for one — so `critiqued` never gates what comes next.
   let nextStep: string | null = null;
   const resolved = question?.status === "resolved" || Boolean(question?.resolved);
   if (openConflictIds.length > 0) {
     nextStep = `conflict-resolution — unresolved ${openConflictIds.join(", ")}`;
-  } else if (uncritiqued.length > 0) {
-    nextStep = `gps-mentor (proof-critique) — ${uncritiqued.map((s) => s?.id).join(", ")}`;
-  } else if (state === "critiqued" && !resolved) {
-    // The last rung of the ladder is not the end of the work: the `resolved`
-    // write is still outstanding, and it is the transition no skill body claims.
-    // Reporting null here would tell the router nothing is left to do on the one
-    // step this design most needs routed.
-    nextStep = "question-selection — concluded and critiqued; mark the question resolved";
+  } else if (summaries.length > 0 && !resolved) {
+    // A conclusion is not the end of the work: the `resolved` write is still
+    // outstanding, and it is the transition no skill body claims. Reporting null
+    // here would tell the router nothing is left to do on the one step this
+    // design most needs routed.
+    nextStep = "question-selection — concluded; mark the question resolved";
   } else if (resolved && summaries.length === 0) {
     // Only reachable in a document seeded this way — the resolve gate refuses
     // the transition now. The completion gate still lets it pass.

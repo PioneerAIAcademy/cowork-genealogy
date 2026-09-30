@@ -20,7 +20,11 @@ signature contract.
 
 from __future__ import annotations
 
+import re
+
 import pytest
+
+from harness.skill_runner import agent_return_text
 
 
 # --- Tool allowlist ---
@@ -739,3 +743,42 @@ def test_shortfall_matches_document_state(after_state, test):
         for i, claim in enumerate(ps.get("claims") or []):
             if isinstance(claim, dict) and "shortfall" in claim:
                 _check_ceiling(claim["shortfall"], f" claims[{i}]")
+
+
+# --- summary_for_user on the completing call (issue #2951) -------------
+
+_BANNED_USER_WORDS = re.compile(r"\b(proofs?|GPS|exhaustive(?:ly)?)\b", re.IGNORECASE)
+
+
+def _summary_for_user(text: str) -> str | None:
+    """The text after the last line that is exactly `---`, or None."""
+    lines = text.splitlines()
+    marks = [i for i, line in enumerate(lines) if line.strip() == "---"]
+    if not marks:
+        return None
+    return "\n".join(lines[marks[-1] + 1 :]).strip()
+
+
+def test_completion_summary_offers_second_opinion(after_state, agent_returns, text_response, test):
+    """When the call completes the project, the user-facing summary offers a
+    second opinion — gps-mentor is off the default path, so this sentence is the
+    user's only route to it — and never says "proof", "GPS" or "exhaustive".
+    Reads the agent's own return, not the main thread's relay of it, falling
+    back to `text_response` when the agent returned nothing. Tag-gated on
+    `summary-for-user-completion`."""
+    if "summary-for-user-completion" not in test.get("tags", []):
+        pytest.skip("not a completion-summary test")
+    research = after_state.get("research_json") or {}
+    status = (research.get("project") or {}).get("status")
+    assert status == "completed", (
+        f"concluding the project's only question should set project.status to "
+        f"'completed'; got {status!r}"
+    )
+    reply = agent_return_text(agent_returns, "proof-conclusion") or (text_response or "")
+    summary = _summary_for_user(reply)
+    assert summary, "no summary_for_user: the reply has no line that is exactly `---`"
+    assert re.search(r"second opinion", summary, re.IGNORECASE), (
+        "the completing summary_for_user does not offer a second opinion"
+    )
+    banned = sorted({m.group(0) for m in _BANNED_USER_WORDS.finditer(summary)})
+    assert not banned, f"summary_for_user uses words kept out of user text: {banned}"

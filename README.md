@@ -255,12 +255,12 @@ specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 
 The plugin ships eleven Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
-at its mentor checkpoint, or by the skill that delegates to it — you
+when you ask for a second opinion, or by the skill that delegates to it — you
 don't load it explicitly.
 
 | Agent | What it does | Say this |
 |-------|-------------|----------|
-| **gps-mentor** | A Board for Certification of Genealogists (BCG)-style senior genealogist who reviews your work against GPS standards and returns a structured verdict plus a mentoring narrative. Read-only — it never edits your tree and only appends its verdict to `research.json`. `/research` calls it once per proof, after a conclusion is written; its verdict is advisory and never blocks or re-opens a resolved question. You can also ask for a review at any time. | "Review my work" / "Is this defensible?" / "Am I ready to conclude?" |
+| **gps-mentor** | A Board for Certification of Genealogists (BCG)-style senior genealogist who reviews your work against GPS standards and returns a structured verdict plus a mentoring narrative. Read-only — it never edits your tree and only appends its verdict to `research.json`. It runs only when you ask for it — at any time, including after the research is finished; its verdict is advisory and never blocks or re-opens a resolved question. | "Second opinion" / "Review my work" / "Is this defensible?" |
 | **record-extractor** | Extracts every assertion from **one** record — the source entry, atomic per-fact assertions, and their GPS evidence classifications — in a single validated write. The `record-extraction` skill delegates one of these per record; classifications are set here and are final. | (not invoked directly — `record-extraction` delegates) |
 | **proof-conclusion** | Writes the GPS proof conclusion for **one** question — selects the confidence tier and the proof form, writes the self-contained narrative, and encodes the conclusion into your tree once it reaches Probable or better. `/research` routes to it at the conclusion step, and you can ask for it directly; it is the only caller allowed to write the `proof_summaries` section, which is what keeps a conclusion from being hand-authored around the tier and citation rules. | "Write the conclusion" / "What's the proof?" |
 | **research-exhaustiveness** | Judges whether the research on **one** question is reasonably exhaustive — applies the GPS 5 threshold questions and the 7-point stop criteria, then either declares the question exhaustive or names what is still missing. The `research-exhaustiveness` skill delegates to it; it is the only caller allowed to declare a question exhaustive, which is what keeps that claim from being hand-authored around the criteria it rests on. | (not invoked directly — `research-exhaustiveness` delegates) |
@@ -487,7 +487,7 @@ What's shipped:
   e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result, grade-e2e-run)
   are repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
 - **11 Cowork agents.** `gps-mentor` (BCG-style senior-genealogist review,
-  invoked by `/research` at GPS checkpoints and on demand), `record-extractor`
+  invoked on request, when the user asks for a second opinion), `record-extractor`
   (per-record assertion extraction), `proof-conclusion` (the proof conclusion
   for one question, and the only writer of `proof_summaries`),
   `research-exhaustiveness` (the exhaustiveness judgment for one question, and

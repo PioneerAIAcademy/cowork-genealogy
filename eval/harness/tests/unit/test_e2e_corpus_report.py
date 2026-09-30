@@ -25,7 +25,6 @@ from e2e.pricing import estimate_cost_usd
 from e2e.runlog_selection import all_result_jsons, is_result_json, run_date
 from harness.skill_invocation import (
     find_effects_without_invocation,
-    find_missing_mentor_verdicts,
     find_person_evidence_missing_same_person,
 )
 
@@ -196,13 +195,6 @@ def _detector_messages() -> list[str]:
         *find_person_evidence_missing_same_person(
             [], {"person_evidence": [{"person_id": "I1", "record_persona_id": "r1"}]}, tree
         ),
-        *find_missing_mentor_verdicts(
-            {
-                "questions": [{"status": "resolved", "proof_summary_id": "ps1"}],
-                "proof_summaries": [{"id": "ps1"}],
-                "evaluations": [],
-            }
-        ),
     ]
 
 
@@ -211,9 +203,8 @@ def test_every_live_detector_message_maps_to_a_named_arm():
 
     The comment above VIOLATION_ARMS tells the reader that anything in `other`
     is a message that was reworded. That is only true if every arm the detector
-    can emit today is mapped — `person-evidence` and `proof-critique` were not,
-    so a bypass of the mandatory gps-mentor gate would have surfaced as an
-    unnamed bucket indistinguishable from drift.
+    can emit today is mapped — `person-evidence` once was not, so its bypasses
+    would have surfaced as an unnamed bucket indistinguishable from drift.
     """
     messages = _detector_messages()
     unmapped = [m for m in messages if classify(m) == "other"]
@@ -699,13 +690,12 @@ def test_a_windowed_report_says_so_where_it_states_a_denominator():
 # --- issue #1484: --recompute, the spend split, and the cost estimator ------
 
 
-_MENTOR_GAP_RESEARCH = {
-    # A resolved question whose proof_summary carries no gps-mentor proof-critique
-    # verdict — the shape `find_missing_mentor_verdicts` fires on (mirrors the
-    # `_detector_messages` helper above, so it tracks the real detector).
-    "questions": [{"status": "resolved", "proof_summary_id": "ps1"}],
-    "proof_summaries": [{"id": "ps1"}],
-    "evaluations": [],
+_EXHAUSTIVENESS_GAP_RESEARCH = {
+    # An exhaustive declaration with no research-exhaustiveness invocation in the
+    # run — the shape the exhaustiveness arm fires on from research.json alone
+    # (mirrors the `_detector_messages` helper above, so it tracks the real
+    # detector).
+    "questions": [{"exhaustive_declaration": {"declared": True}}],
 }
 
 
@@ -727,19 +717,19 @@ def _run_with_sidecars(runs_dir: Path, slug: str, final_research: dict, final_tr
 
 def test_recompute_recovers_violations_a_stored_only_read_counts_as_zero(tmp_path: Path):
     runs, fixtures = tmp_path / "runs", tmp_path / "fixtures"
-    run = _run_with_sidecars(runs, "myfix", _MENTOR_GAP_RESEARCH, {"persons": []})
+    run = _run_with_sidecars(runs, "myfix", _EXHAUSTIVENESS_GAP_RESEARCH, {"persons": []})
     (fixtures / "myfix").mkdir(parents=True)
     _write(fixtures / "myfix", "starting-tree.gedcomx.json", {"persons": []})
 
     # Default (stored) path: no guardrail_bypass_violations field -> zero.
     assert sum(tally([run]).arms.values()) == 0
 
-    # --recompute path: the mentor-verdict gap is recovered from the sidecars.
+    # --recompute path: the exhaustiveness gap is recovered from the sidecars.
     rt = recompute_tally([run], fixtures_root=fixtures)
     assert rt.scanned == 1
     assert rt.skipped == []
     assert sum(rt.arms.values()) > 0
-    assert rt.arms.get("mentor verdict", 0) > 0
+    assert rt.arms.get("exhaustiveness", 0) > 0
     # Recompute found MORE than stored (which was absent) -> not a regression.
     assert rt.regressed == []
 
@@ -823,7 +813,7 @@ def test_recompute_arm_order_breaks_ties_alphabetically():
 
 def test_recompute_skips_a_run_whose_fixture_has_no_seed_tree(tmp_path: Path):
     runs, fixtures = tmp_path / "runs", tmp_path / "fixtures"
-    run = _run_with_sidecars(runs, "noseed", _MENTOR_GAP_RESEARCH, {"persons": []})
+    run = _run_with_sidecars(runs, "noseed", _EXHAUSTIVENESS_GAP_RESEARCH, {"persons": []})
     fixtures.mkdir()  # no noseed/ dir -> no starting-tree.gedcomx.json to read
 
     rt = recompute_tally([run], fixtures_root=fixtures)

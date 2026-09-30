@@ -48,8 +48,8 @@ things when the evidence demands it.
 
 ### 3.1 Trigger phrases
 
-The agent is invoked from the `/research` orchestrator skill at defined GPS checkpoints, or
-directly by the user. Trigger phrases for direct invocation:
+The agent is invoked on the user's request — directly, or by the `/research` orchestrator
+skill when the user asks it for a review. Trigger phrases for direct invocation:
 
 - "review my work"
 - "is this defensible?"
@@ -121,18 +121,19 @@ knows what was evaluated.
 
 ### 3.4 Orchestrator checkpoints
 
-`/research` **auto-invokes** gps-mentor at **one** checkpoint, advisory, supplying explicit `focus` and `target_id`:
+`/research` does **not** auto-invoke gps-mentor at any checkpoint. The mentor runs only
+when the user asks for it ("second opinion", "review my work", "is this defensible?"),
+with `focus: "on-demand"`, including on a completed project. `proof-conclusion`'s
+closing summary tells the user they can ask for a second opinion.
 
-| Checkpoint | focus | target_id |
-|------------|-------|-----------|
-| After proof summary written | `proof-critique` | the proof summary's `ps_` ID |
-
-The `pre-exhaustiveness` and `conclusion-readiness` focuses remain supported for **on-demand**
-use ("am I ready to conclude?"), but `/research` no longer auto-gates on them: they duplicated
+All four focuses remain supported for **on-demand** use. `pre-exhaustiveness` and
+`conclusion-readiness` were dropped from auto-gating first: they duplicated
 `research-exhaustiveness`'s own 7-point check and `proof-conclusion`'s tier analysis, the
 read-only mentor cannot verify exhaustiveness without search tools, and their forced rework
-starved the proof step (per the e2e latency analysis).
-The single `proof-critique` gate never
+starved the proof step (per the e2e latency analysis). The `proof-critique` checkpoint after
+each proof summary followed: across 34 committed e2e runs from 2026-09-01 its verdict was
+`address_first` on 27 of 31 live critiques, the router acted on it in only 2 of 28 finished
+runs, and taking it off saves about 6–8% of wall-clock and 3–5% of cost per run. No verdict
 blocks the flow — see §11.
 
 ---
@@ -147,12 +148,9 @@ name: gps-mentor
 description: >-
   BCG-style senior genealogist who reviews research work and tells the
   user what to address to improve it. Returns a structured verdict plus a
-  mentoring narrative. Invoked by /research once per proof — a mandatory
-  `proof-critique` after `proof-conclusion` writes a summary (must be
-  invoked and recorded; its recommendation stays advisory, never forcing
-  rework) — and on-demand when the user says "review my work", "is this
-  defensible?", "mentor", "second opinion", "is this a good read",
-  "polish this for my family". Never modifies research.json
+  mentoring narrative. Invoked on request, when the user says "review my
+  work", "is this defensible?", "mentor", "second opinion",
+  "is this a good read", "polish this for my family". Never modifies research.json
   (except appending to evaluations[]) or tree.gedcomx.json. Do NOT use for
   schema validation (use validate-schema), to execute new searches (use
   search-records or search-external-sites), or to write proof conclusions
@@ -231,7 +229,7 @@ them the agent's only way to see project state was `Read`, and its body told it 
 read `research.json` directly. Measured across 24 e2e runs (2026-07-25 → 07-30), that
 made the mentor the **largest single reader of `research.json` in the system — 112 of
 178 reads (63%), 92 of them hand-paginated**, in a linear front-to-back scan issued
-once per proof, at the point in a run where the file is largest. One captured
+once per proof (when the mentor still ran on every proof summary), at the point in a run where the file is largest. One captured
 delegation (`wilkins-marriage`) spent 15 reads before its single write. In 10 of 10
 captured delegations the agent's first tool call was a bare `Read(research.json)`. The
 grant plus the **Reading project state** section of the agent body replaces that scan.
@@ -806,8 +804,8 @@ run continues.
 
 ### 11.2 Verdict handling (advisory)
 
-The `proof-critique` gate runs *after* the answer is already persisted, so no verdict blocks
-the flow or re-opens the resolved question. After the verdict is returned:
+The mentor runs on request, after any answer it reviews is already persisted, so no verdict
+blocks the flow or re-opens a resolved question. After the verdict is returned:
 
 | Verdict | Orchestrator action |
 |---------|---------------------|
@@ -1032,14 +1030,17 @@ These items are acknowledged but not specified here. They belong in future issue
 |------|-------|
 | Wiring into `/research` orchestrator skill | Depends on `/research` landing on main. DallanQ noted this explicitly in the implementation commit. |
 | Commit pending per-action approval | Not yet understood well enough to specify. Defer to DallanQ for clarification. |
-| Reducing per-gate mentor cost | Largely shipped — see §17.1. Do not defer or sample the surviving `proof-critique` gate to chase speed. |
+| Reducing per-gate mentor cost | Shipped — see §17.1. No mentor gate remains on the default `/research` path. |
 | `narrative-craft` as its own `focus` value | Deferred, not dropped — with a stated trigger for revisiting. See §17.2. |
 
 ### 17.1 Per-gate mentor cost — what shipped, and what is not a lever
 
-**Done.** The three auto-gates were collapsed to the single `proof-critique`
-gate. §3.4 is the current contract, and it records why the two early focuses
-were dropped from auto-gating: they duplicated `research-exhaustiveness`'s own
+**Done.** The three auto-gates were first collapsed to a single `proof-critique`
+gate, and that gate was then taken off the default path too: `/research` no
+longer auto-invokes the mentor at all, and `research_append` no longer requires a
+`proof-critique` verdict before `project.status = "completed"`. §3.4 is the
+current contract, and it records why each auto-gate was dropped. The two early focuses
+were dropped: they duplicated `research-exhaustiveness`'s own
 7-point check and `proof-conclusion`'s tier analysis, the read-only mentor
 cannot verify exhaustiveness without search tools, and their forced rework
 starved the proof step. `pre-exhaustiveness` and `conclusion-readiness` remain
@@ -1050,40 +1051,36 @@ adopted" and prescribed a three-step sequence before it could even be
 considered. Both prerequisites in that sequence had in fact already landed —
 the agent is conformant (§2), and `build_workspace`
 (`eval/harness/e2e/orchestrator.py`) stages `packages/engine/plugin/agents/*.md`
-into the workspace's `.claude/agents/`, so e2e exercises the gate — and the
+into the workspace's `.claude/agents/`, so e2e exercised the gate — and the
 decision step was subsequently taken. That text is removed rather than struck
 through, because a spec section forbidding work that has already shipped reads
 as live policy and will be obeyed as such.
 
-**Also done, and load-bearing for cost:** the gate is invoked at most once per
-proof summary. `/research` first checks `evaluations/` for a
-`proof-critique-<ps_id>-*.json` newer than the last edit to that summary and
-acts on the existing verdict rather than re-invoking. Before that cache, real
+**Historical:** while the gate existed it was invoked at most once per
+proof summary, via a check of `evaluations/` for a
+`proof-critique-<ps_id>-*.json` newer than the last edit to that summary. Before that cache, real
 runs showed **3–4 mentor invocations per answering question at ~40–84 s each
 (≈3.5–4 min per question)** on the critical path, because the parent blocks on
 every gate. The model half of the same lever is banked too: the agent was
 repinned `claude-opus-4-8` → `claude-sonnet-5`.
 
-**Not a lever: the surviving ~138 s `proof-critique` call itself.** It is
-doctrine-required — a real second model call, in fresh context, reviewing the
-written conclusion — and there is no eval judge in production Cowork, so it is
-the only adversarial proof-quality check a real user ever receives. Carry it as
-a known fixed cost in any latency re-measurement rather than mistaking it for
-waste. Do not defer or sample it to chase wall-clock.
+**The ~138 s `proof-critique` call is now on request only.** It remains the only
+adversarial proof-quality check a real user can receive — there is no eval judge
+in production Cowork — so it stays one request away: the user asks for a second
+opinion and gets a fresh-context review of the written conclusion.
 
 ### 17.2 `narrative-craft` as its own focus mode (deferred, not dropped)
 
 The narrative-craft checks of §6.4 could instead have been a fifth `focus`
 value (`"narrative-craft"` or `"publication-readiness"`) alongside the four that
-exist, and — unlike three of those four — one the orchestrator actually invokes
-(§3.4 auto-invokes `proof-critique` only). **Not adopted**, for two reasons:
+exist (§3.4: the orchestrator auto-invokes none of them). **Not adopted**, for two reasons:
 
 1. **`focus` is a closed enum in three places** — `$defs/evaluation_entry.focus`
    in *both* schema trees (§12.5), the `evaluation_focus` set in `validator.ts`
    (§12.6), and the mirrored TS union in `packages/schema/src/index.ts`. That is
    real multi-file cost for a check nobody has run yet.
 2. **It forces a decision too early.** A standing mode has to answer whether it
-   can *block* progress the way `proof-critique`'s `address_first` does. Under
+   can *block* progress, as the `proof-critique` gate's `address_first` was once meant to. Under
    §6.4 the answer is settled and cheap — advisory, always. Deciding "mandatory
    gate or not" before the check has been used once would be assumed, not earned.
 

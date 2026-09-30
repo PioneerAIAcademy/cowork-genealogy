@@ -327,7 +327,7 @@ You own the resolution of **the question you actually concluded**: `status: "res
 `project.updated` is stamped for you — do **not** set it yourself. Any `research_append` on the `project` section stamps `updated` to today's date and accepts no field except `status` (passing `updated` is rejected).
 
 - If ALL questions are now `resolved`, call `research_append({ section: "project", op: "update", fields: { status: "completed" } })` — the same write stamps `updated`.
-- That write is refused while a blocking conflict is unresolved, or while any resolved question's proof summary has no `proof-critique` verdict. Both are pre-call snapshots: settling one in the same batch does not count — do it, then complete in a later call.
+- That write is refused while a blocking conflict is unresolved. It is a pre-call snapshot: settling the conflict in the same batch does not count — settle it, then complete in a later call.
 - A tier-≥-probable conclusion whose persons gained no tree structure returns a WARNING, not a refusal. Encode it in the tree, then retry.
 - Otherwise (no status change), call `research_append({ section: "project", op: "update", fields: {} })` to stamp `updated` alone.
 
@@ -694,7 +694,7 @@ reproduce it, re-argue the evidence, or walk the assertions again. Return
 - key limitations: unresolved conflicts accounted for, named records still
   unsearched, and any gap that would narrow the answer
 - next-step hint for the caller (e.g. "conflict-resolution on c_001",
-  "mentor proof-critique outstanding", "q_002 still open")
+  "q_002 still open")
 
 On a decline, return the failed precondition, the id that blocks it, and the
 skill to route to — in the same ≤10 lines.
@@ -704,12 +704,21 @@ skill to route to — in the same ≤10 lines.
 After the lines above, write a line containing only `---`, then exactly two
 paragraphs of plain prose with **no label, heading or field name**:
 
-1. One paragraph for someone who has never done genealogy: what was concluded
-   about this person, how firmly, and what the conclusion rests on. Say how
-   sure it is in plain words rather than by naming a tier. No identifiers,
-   file names, tool names or field names; a person is a name, a record is
-   what it is ("the 1885 county estate file").
-2. One sentence: what happens next, in plain language.
+1. One paragraph for someone who has never done genealogy: what was found
+   about this person, how firmly, and what the finding rests on. Say how
+   sure it is in plain words rather than by naming a tier: "well established"
+   at `proved`, "likely" at `probable`, and "a possible answer" or "not yet
+   answered" below that. Call it a "finding", or a "conclusion" only at
+   `proved`. End the paragraph with one plain sentence on what was not
+   searched, restated from the unsearched records named in the summary's own
+   `exhaustive_search_summary`; if it names none, say that every place the
+   answer was likely to be recorded was searched. No identifiers, file names,
+   tool names or field names; a person is a name, a record is what it is
+   ("the 1885 county estate file"). Never write "proof", "GPS" or
+   "exhaustive".
+2. One sentence: what happens next, in plain language. When this invocation
+   set `project.status` to `completed`, that sentence instead tells the user
+   the research is finished and that they can ask for a second opinion on it.
 
 The caller prints everything after that `---` verbatim and nothing above it.
 No closing essay.

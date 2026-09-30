@@ -253,7 +253,7 @@ closes the vocabulary gap; what it does not close is everything below.
 | Row | False denies | Why |
 |---|---:|---|
 | `plan_items` absent from the table | **1,134** | the tool defines the section; the table's own comment *blesses* the status flip it would deny |
-| `evaluations` absent | 172 | a schema-required section; denying it kills the mandatory proof-critique |
+| `evaluations` absent | 172 | a schema-required section; denying it kills every `gps-mentor` verdict write |
 | `hypotheses` → `{hypothesis-tracking}` | 31 | that skill is invoked **0 times in 154 runs** |
 | three rows narrower than the prose table they mirror | 72 | incl. `questions` omitting `proof-conclusion` |
 | `known_holdings` absent | 1 | the prose table declares owners; the code row is missing |
@@ -1435,7 +1435,7 @@ Two properties are load-bearing and must survive any refactor:
 What it does not do: validate the *content* of `stop_criteria` or cross-check
 `log_entry_ids` against real `log[]` entries — a declaration can still be
 present-and-empty. And it says nothing about overclaiming language in
-`narrative_markdown`; that is `gps-mentor`'s proof-critique job, checked by §8.
+`narrative_markdown`; that is `gps-mentor`'s proof-critique job, run when the user asks for a second opinion.
 
 ## 6. Raw-write lockdown
 
@@ -2147,11 +2147,11 @@ expectation that it graduates.
 
 ## 8. Post-run compliance detectors
 
-Three non-windowed checks over the final project state and the run's tool-call
+Two non-windowed checks over the final project state and the run's tool-call
 log; any violation sets `compliance: fail`. Specified in full — including the historical
 `not_checked` handling — in `docs/specs/e2e-test-spec.md` §7.5. Implemented in
 `skill_invocation.py` (`find_effects_without_invocation`,
-`find_missing_mentor_verdicts`, `find_person_evidence_missing_same_person`).
+`find_person_evidence_missing_same_person`).
 
 **They report; they do not gate.** A violation moves the `compliance` axis and
 nothing else. Until 2026-09-25 it also forced `outcome: fail` regardless of what
@@ -2183,7 +2183,7 @@ Two further properties worth keeping in view here:
   calls away for a different record. That is precisely what §7 exists to catch
   and why both layers are needed.
 - **A required-tool fingerprint beats a proximity heuristic where one exists.**
-  Check 3 works because `same_person` is a *required call*, so "was it called
+  Check 2 works because `same_person` is a *required call*, so "was it called
   for this person" is a fact — but only where the call is possible. It skips a
   link whose own provenance lane cannot yield a record persona from what the run retained, and counts
   what it skipped (§4, "One class of write genuinely cannot satisfy the gate").
@@ -2317,15 +2317,14 @@ this section before reopening one.
   `probable` tier.
 - **Running the tree-reading §8 arms over a hosted feedback bundle** — cannot be
   done, so the hosted feedback bundle corpus is measured with the transcript-only
-  and `research.json`-only detectors instead. A feedback bundle carries no
+  detector instead. A feedback bundle carries no
   `starting_tree` baseline, and its `tree.gedcomx.json` is redacted before it
   leaves the sandbox (`_redact_person`, `apps/server/app/feedback.py`), so the
   arms that diff the final tree against a seed — `find_effects_without_invocation`
   and `check_guardrail_compliance` — would read every seeded relationship as a
   violation (the same no-baseline defect that killed per-turn scoping, above).
-  Only `find_unguarded_protected_writes` (transcript-only) and
-  `find_missing_mentor_verdicts` (reads `research.json` alone) are valid over a
-  bundle; the adapter and report live in `eval/harness/e2e/`
+  Only `find_unguarded_protected_writes` (transcript-only) is valid over a
+  bundle, and the scan reads no `research.json`; the adapter and report live in `eval/harness/e2e/`
   (`feedback_transcript_adapter.py`, `guardrail_shadow_report.py`).
   **Two of `find_unguarded_protected_writes`' owner arms move their write
   inside an agent, and whether that write is visible is decided per bundle and
@@ -2438,8 +2437,9 @@ this section before reopening one.
   31" and "0 of 123" do not cover the population the rule is aimed at.
 
   The rejection does not rest on the rate. It rests on three things that hold
-  whatever the rate turns out to be: a lost verdict is **caught downstream** by
-  the completion gate as a visible stall rather than silent corruption; the
+  whatever the rate turns out to be: a lost verdict is **visible to the user who
+  asked for it**, since the mentor now runs only on request, rather than silent
+  corruption; the
   sample **grows on its own** now that attribution has shipped, so no monitoring
   task is needed to improve it; and the alternative is a plane that fails open
   and costs a hook invocation per tool call, bought against an unobserved
@@ -2548,9 +2548,6 @@ that outlive any one of them.
   looks identical to the original bug and nothing here catches it — §8 detects
   "skill never invoked," not "skill invoked, its own reference silently
   skipped."
-- **`gps-mentor`'s own gate may be as skippable as the four.** §8 check 2
-  detects a missing verdict after the fact; nothing prevents the router from
-  skipping the invocation under the same context pressure.
 - **`research-append.ts`'s batch ordering was audited for one TOCTOU case
   only** (§5's). Other same-batch orderings that self-satisfy a precondition —
   adding a `person_evidence` link and consuming it for an assertion in one

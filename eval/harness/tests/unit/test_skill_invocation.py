@@ -22,7 +22,6 @@ from harness.skill_invocation import (
     find_citation_nulling_in_tree_sources,
     TREE_CITATION_NULLING_KIND,
     find_effects_without_invocation,
-    find_missing_mentor_verdicts,
     find_person_evidence_missing_same_person,
     find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
@@ -624,57 +623,6 @@ def test_guardrail_skills_tuple_is_exactly_the_four():
         "person-evidence",
         "conflict-resolution",
     }
-
-
-# --- find_missing_mentor_verdicts --------------------------------------------
-
-
-def test_flags_a_resolved_questions_proof_summary_with_no_proof_critique_verdict():
-    research = {
-        "questions": [{"id": "q_001", "status": "resolved"}],
-        "proof_summaries": [{"id": "ps_001", "question_id": "q_001", "tier": "proved"}],
-        "evaluations": [],
-    }
-    violations = find_missing_mentor_verdicts(research)
-    assert len(violations) == 1
-    assert "ps_001" in violations[0]
-
-
-def test_does_not_flag_when_a_matching_proof_critique_verdict_exists():
-    research = {
-        "questions": [{"id": "q_001", "status": "resolved"}],
-        "proof_summaries": [{"id": "ps_001", "question_id": "q_001", "tier": "proved"}],
-        "evaluations": [
-            {"id": "ev_001", "focus": "proof-critique", "target_id": "ps_001", "target_type": "proof_summary"}
-        ],
-    }
-    assert find_missing_mentor_verdicts(research) == []
-
-
-def test_does_not_flag_an_unrelated_evaluation_focus():
-    """A pre-exhaustiveness or on-demand verdict does not satisfy the
-    mandatory proof-critique gate."""
-    research = {
-        "questions": [{"id": "q_001", "status": "resolved"}],
-        "proof_summaries": [{"id": "ps_001", "question_id": "q_001", "tier": "proved"}],
-        "evaluations": [{"id": "ev_001", "focus": "on-demand", "target_id": "ps_001"}],
-    }
-    violations = find_missing_mentor_verdicts(research)
-    assert len(violations) == 1
-
-
-def test_does_not_flag_a_proof_summary_on_an_unresolved_question():
-    research = {
-        "questions": [{"id": "q_001", "status": "in_progress"}],
-        "proof_summaries": [{"id": "ps_001", "question_id": "q_001", "tier": "probable"}],
-        "evaluations": [],
-    }
-    assert find_missing_mentor_verdicts(research) == []
-
-
-def test_empty_research_has_no_violations():
-    assert find_missing_mentor_verdicts({}) == []
-    assert find_missing_mentor_verdicts(None) == []
 
 
 # --- find_person_evidence_missing_same_person --------------------------------

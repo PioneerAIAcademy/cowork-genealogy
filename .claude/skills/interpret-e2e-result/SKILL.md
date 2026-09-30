@@ -174,8 +174,9 @@ shows up in `narration[]` with `kind: "blocked"`.
 Check `compliance` and `guardrail_bypass_violations[]` in `run-<ts>.json`.
 This is a harness check, not a judge grade: it asks whether the agent actually
 invoked the GPS guardrail skills whose effects appear in the final project
-state — `person-evidence`, `conflict-resolution`, `proof-conclusion`,
-`research-exhaustiveness`, and the mandatory `gps-mentor` proof critique.
+state — `person-evidence`, `conflict-resolution`, `proof-conclusion` and
+`research-exhaustiveness`. `gps-mentor` is not among them: it runs only when the
+user asks for a second opinion, so a run with no critique is not a violation.
 
 - **`compliance: "pass"`** — nothing to say.
 - **`compliance: "fail"`** — report each violation string as a fact. This is

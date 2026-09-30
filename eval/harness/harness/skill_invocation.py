@@ -537,46 +537,6 @@ def find_effects_without_invocation(
     return violations
 
 
-def find_missing_mentor_verdicts(research: dict[str, Any] | None) -> list[str]:
-    """Every `ps_id` a resolved question references must carry a matching
-    `evaluations[]` entry (`focus: "proof-critique"`, `target_id: <ps_id>`) —
-    research/SKILL.md's own final completion check, and per docs/plan/
-    guardrail-enforcement-spec.md §8/§10, this gate is itself just
-    another routing-table step the orchestrator could silently skip under the
-    same context pressure as the four guardrail skills.
-
-    Deliberately reads `research.json`'s `evaluations[]` directly rather than
-    inferring from `tool_calls` — the durable record of whether the gate ran
-    IS the evaluations entry (`gps-mentor` writes only there, per the schema
-    spec's "append-only ownership"), so there's no invocation-log inference
-    needed here the way there is for the four in-session guardrail skills.
-    """
-    research = research or {}
-    questions = research.get("questions") if isinstance(research.get("questions"), list) else []
-    proof_summaries = research.get("proof_summaries") if isinstance(research.get("proof_summaries"), list) else []
-    evaluations = research.get("evaluations") if isinstance(research.get("evaluations"), list) else []
-
-    resolved_question_ids = {
-        q.get("id") for q in questions if isinstance(q, dict) and q.get("status") == "resolved"
-    }
-    referenced_ps_ids = {
-        ps.get("id")
-        for ps in proof_summaries
-        if isinstance(ps, dict) and ps.get("question_id") in resolved_question_ids
-    }
-    verdicted_ps_ids = {
-        ev.get("target_id")
-        for ev in evaluations
-        if isinstance(ev, dict) and ev.get("focus") == "proof-critique"
-    }
-    missing = sorted(pid for pid in (referenced_ps_ids - verdicted_ps_ids) if pid)
-    return [
-        f"proof_summaries entry '{ps_id}' is referenced by a resolved question but has no "
-        "'proof-critique' evaluations[] verdict on record (the mandatory gps-mentor gate)"
-        for ps_id in missing
-    ]
-
-
 def same_person_scored_ids(tool_calls: list[dict[str, Any]]) -> set[str]:
     """Every record/tree id a SUCCESSFUL `same_person` call has scored so far.
 
@@ -971,8 +931,7 @@ def check_guardrail_compliance(
 
     docs/specs/guardrail-enforcement-spec.md §8. A guardrail skill's
     effect present in the FINAL project state with no matching successful
-    invocation anywhere in the run, or a resolved question's proof_summary
-    missing its mandatory gps-mentor proof-critique verdict. Mirrors the unit
+    invocation anywhere in the run. Mirrors the unit
     harness's `test_positive_fails_when_skill_not_in_skills_invoked`, which
     had no e2e equivalent. Unlike §4.1's shadow-mode recency check, this only
     asks whether the skill ran AT ALL across the whole run, so it is far less
@@ -989,12 +948,11 @@ def check_guardrail_compliance(
     specific required tool for the specific person instead of the skill's mere
     presence in the run.
 
-    Note this is NOT vacuous on a treeless run: `find_missing_mentor_verdicts`
-    takes no tree at all, and the exhaustiveness arm reads only
-    `research["questions"]`. That is why compliance is always a real result
+    Note this is NOT vacuous on a treeless run: the exhaustiveness arm reads
+    only `research["questions"]`. That is why compliance is always a real result
     and never "not checked" for a run this harness performed.
 
-    Lives here beside the three detectors it composes so `e2e.corpus_report`
+    Lives here beside the two detectors it composes so `e2e.corpus_report`
     can import it without dragging `claude_agent_sdk` into its pure-analysis
     posture (issue #1484); `e2e.orchestrator` re-exports it so `run_e2e_test`
     and the `monkeypatch.setattr(orchestrator, ...)` tests keep resolving it as
@@ -1005,7 +963,6 @@ def check_guardrail_compliance(
         find_effects_without_invocation(
             tool_calls, final_research, final_tree, starting_tree=starting_tree
         )
-        + find_missing_mentor_verdicts(final_research)
         + find_person_evidence_missing_same_person(
             tool_calls, final_research, final_tree, starting_tree=starting_tree
         )
