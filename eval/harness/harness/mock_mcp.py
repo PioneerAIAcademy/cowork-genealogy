@@ -277,8 +277,8 @@ def _run_node_eval(
     """Run a Node ESM ``--eval`` script and return the completed process.
 
     The single choke point for every ``node --input-type=module --eval``
-    invocation in this file (eight call sites as of 2026-09-24 — seven raised to
-    ``NODE_EVAL_TIMEOUT_LONG``, the catalog probe left on the default; three
+    invocation in this file (every call site but the catalog probe raises its
+    timeout to ``NODE_EVAL_TIMEOUT_LONG``; three
     separate code-review passes flagged the hand-duplicated ``subprocess.run(...,
     capture_output=True, text=True, encoding="utf-8", timeout=...)`` shape).
     ``encoding="utf-8"`` is load-bearing, not cosmetic: without it, ``text=True``
@@ -726,6 +726,57 @@ def _unlogged_staged_handles(workspace: Path) -> list[dict[str, Any]]:
         return []
 
 
+def _stage_person_read(
+    workspace: Path, args: dict[str, Any], response: dict[str, Any]
+) -> dict[str, Any]:
+    """Stage a canned `person_read` response the way the real tool does (#2944).
+
+    Production stages every `person_read` given a `projectPath` and returns
+    `staged` (plus `stagingError` when staging failed). The envelope is built by
+    the COMPILED `stagePersonRead`, so its shape has one definition, in
+    person-read.ts. No `resolvedId` is passed: a fixture has no merge redirect,
+    and the export defaults it to the requested id.
+
+    Returns the response with the staging keys merged in, or the response
+    untouched when node is unavailable or fails: a harness fault is not a
+    production staging failure, so it must not surface as `stagingError`.
+    """
+    person_read_js = _MCP_BUILD / "tools" / "person-read.js"
+    if not person_read_js.exists():
+        return response
+
+    posix = str(person_read_js).replace("\\", "/").replace("'", "\\'")
+    url = ("file:///" + posix) if sys.platform == "win32" else posix
+    script = (
+        f"import {{ stagePersonRead }} from '{url}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify(await stagePersonRead(input)));"
+    )
+    input_obj = {
+        "projectPath": str(workspace).replace("\\", "/"),
+        "input": {
+            k: args[k]
+            for k in ("personId", "relatives", "sourceDescriptions")
+            if k in args
+        },
+        "result": response,
+    }
+    try:
+        proc = _run_node_eval(
+            script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG
+        )
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            return response
+        parsed = json.loads(out)
+        if not isinstance(parsed, dict) or "staged" not in parsed:
+            return response
+        return {**response, **parsed}
+    except Exception:
+        return response
+
+
 def create_mock_server(
     fixture_names: list[str],
     fixtures_dir: Path,
@@ -840,6 +891,17 @@ def create_mock_server(
                 and "error" not in response
             ):
                 entry["attested"] = _record_match_score(_workspace, args, response)
+
+            # Production's person_read stages its result whenever it is given a
+            # projectPath (#2944), with the same trimmed gate.
+            if (
+                _name == "person_read"
+                and _workspace is not None
+                and "error" not in response
+                and isinstance(args.get("projectPath"), str)
+                and args["projectPath"].strip()
+            ):
+                response = _stage_person_read(_workspace, args, response)
 
             # Production's record_search and fulltext_search return (and stage)
             # `query: echoQuery(input)` — every argument the call sent — while a
