@@ -156,6 +156,13 @@ gated on #2927 (Cia-3).
    `completed` on the captured project, because a stage is done forever once its section is
    non-empty. Deleted; the plan items already carry the real state.
 
+## Decisions asked and answered
+
+Every question put to the product owner during this work, their answer verbatim, and what
+each one changed: [`docs/research-as-a-job-decisions.md`](./research-as-a-job-decisions.md).
+Read it before re-opening a settled question — several were answered once and are easy to
+re-litigate from a diff alone.
+
 ## Process notes worth keeping
 
 - **`mutation-check.sh` restores from git.** Never run it in the background while
