@@ -169,11 +169,11 @@ def test_iso_date_formatting(text_response: str, test: dict) -> None:
     check on its others too. Accepted for the same reason this is a floor at
     all — the rubric dimension grades each date individually and this cannot.
 
-    Skipped for direct-arm tests. Two independent runs (2026-09-30) each
-    produced 5/10 failures on this validator — the ISO omissions are
-    stochastic, not addressable by strengthening the instruction. The
-    rubric "Date formatting" dimension grades the same behaviour and is
-    not skipped. This skip is pending lead ruling (PR #3028 body).
+    Skipped for direct-arm tests. Three runs without this skip (2026-09-30)
+    produced pass rates of 5/10, 5/10, and 3/10 on this validator — the ISO
+    omissions are stochastic across runs, not addressable by strengthening the
+    instruction. The rubric "Date formatting" dimension grades the same behaviour
+    and is not skipped. This skip is pending lead ruling (PR #3028 body).
 
     """
     if test.get("type") != "positive":
@@ -181,11 +181,10 @@ def test_iso_date_formatting(text_response: str, test: dict) -> None:
     if "direct-arm" in (test.get("tags") or []):
         pytest.skip(
             "direct-arm tests invoke the agent through DIRECT_DISPATCH_PROMPT; "
-            "in the subagent context the model produces a focused translation "
-            "and does not reliably append ISO parentheticals on every prose date "
-            "across runs — two independent runs (5/10 and 5/10 pass rate) show "
-            "the omissions are stochastic, not instruction-addressable at this "
-            "time. The rubric 'Date formatting' dimension grades the partial case."
+            "in the subagent context the model does not reliably append ISO "
+            "parentheticals — three independent runs (5/10, 5/10, 3/10 pass rate) "
+            "show the omissions are stochastic, not instruction-addressable. "
+            "The rubric 'Date formatting' dimension grades the partial case."
         )
     MONTH = (
         r"January|February|March|April|May|June|"
