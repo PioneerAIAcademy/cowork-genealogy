@@ -42,7 +42,7 @@
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so you do not need to re-read research.json to work out what happened or what to do next. Move on to the next step of the workflow if one remains, delegate it once, and when the workflow is done write your summary and stop."
       },
       {
-        "skill": "record-extraction",
+        "skill": "record-structurer",
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so you do not need to re-read research.json to work out what happened or what to do next. Move on to the next step of the workflow if one remains, delegate it once, and when the workflow is done write your summary and stop."
       },
       {

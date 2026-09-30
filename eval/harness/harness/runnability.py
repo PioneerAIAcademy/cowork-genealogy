@@ -31,7 +31,7 @@ from harness.schema_validator import (
     validate_tree_gedcomx_json,
 )
 from harness.skill_stubs import parse_stub_skills
-from harness.workspace import DEFAULT_PLUGIN_AGENTS
+from harness.workspace import DEFAULT_PLUGIN_AGENTS, skill_dir_for
 
 
 # eval/harness/harness/runnability.py -> eval/harness/validators/
@@ -175,7 +175,8 @@ def check_runnable(
     # Gated on `spec.is_direct` deliberately: on a ROUTED test a missing skill
     # directory is still a typo worth catching, and falling through to an agent
     # of the same name would run it by a route the test did not ask for.
-    skill_path = Path(skills_dir) / spec.skill
+    # A test-only skill (eval/skills/) is staged for its own suite only.
+    skill_path = skill_dir_for(spec.skill, Path(skills_dir))
     if not skill_path.is_dir():
         if not spec.is_direct:
             return RunnabilityResult(False, f"skill not found: {skill_path}")

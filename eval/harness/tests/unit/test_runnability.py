@@ -663,3 +663,22 @@ def test_direct_gate_resolves_the_same_agent_file_as_prompt_for():
     prompt = _prompt_for(spec)
     assert "gps-mentor" in prompt
     assert "Critique ps_001." in prompt
+
+
+def test_a_test_only_skill_passes_the_skill_gate():
+    """`eval/skills/<name>` is a skill the harness stages for its own suite, so
+    the gate resolves it the way the workspace does (`skill_dir_for`)."""
+    d = _runnable_test_dict()
+    d["test"]["skill"] = "extraction-append"
+    spec = load_test_from_dict(d)
+    result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS)
+    assert result.reason is None or "skill not found" not in result.reason
+
+
+def test_an_unknown_skill_still_fails_the_skill_gate():
+    d = _runnable_test_dict()
+    d["test"]["skill"] = "no-such-skill-anywhere"
+    spec = load_test_from_dict(d)
+    result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS)
+    assert result.runnable is False
+    assert "skill not found" in result.reason

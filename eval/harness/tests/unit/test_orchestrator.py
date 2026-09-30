@@ -1,5 +1,6 @@
 """Unit tests for orchestrator's pure helpers — outcome computation."""
 
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -2251,7 +2252,14 @@ def test_deterministic_deference_reaches_a_validator_failing_run(tmp_path, monke
     """
     from harness.validator_runner import ValidatorRunResult
 
-    spec = load_test(CLASSIFICATION_TEST_PATH)
+    # A copy under the test-only extraction-append skill: the record-extraction
+    # skill this fixture was written for is retired, and its suite is converted
+    # separately. Only `expected_classifications` matters here.
+    raw = json.loads(CLASSIFICATION_TEST_PATH.read_text(encoding="utf-8"))
+    raw["test"]["skill"] = "extraction-append"
+    copy = tmp_path / "classification-test.json"
+    copy.write_text(json.dumps(raw), encoding="utf-8")
+    spec = load_test(copy)
     assert spec.raw.get("expected_classifications"), (
         "fixture must declare expected_classifications or deference cannot fire"
     )

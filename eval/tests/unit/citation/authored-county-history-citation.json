@@ -29,7 +29,7 @@
     "The reliability half: because the book states its own source for the Fallon entry (Dubuque County marriage register B, page 140 — on file), the citation must carry that source of the source, e.g. a 'citing ...' tail. A published work whose citation omits a stated source of the source fails Mills's reliability test.",
     "The result must be distinguishable from an original record — an authored work cited as if it were an original document (no author, no publication facts) is the exact failure #2542 targets.",
     "Source fidelity: every value must come from the before-state (citation, citation_detail, notes, or the tree source). The before-state carries author, title, place, publisher, year, page, and the stated source of the source, so this test grades those being carried, not unknown-markers. Do not invent any publication fact not on file, in the persisted fields OR in output.text_response.",
-    "Must NOT change source_classification — it stays 'authored' and is record-extraction's field. Citation only sets the citation string and citation_detail.",
+    "Must NOT change source_classification — it stays 'authored' and is extraction's field. Citation only sets the citation string and citation_detail.",
     "Must NOT create a new source entry — refine src_001 in place.",
     "Must call validate_research_schema after writing."
   ]

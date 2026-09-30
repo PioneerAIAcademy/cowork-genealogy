@@ -727,11 +727,11 @@ SUPPRESSIONS: list[dict[str, str]] = [
         "file": "eval/tests/unit/tree-edit/create-sibling-with-parentchild.json",
         "tool": "materialize_facts",
         "quotes": [
-            "materializing sourced facts onto a tree person is person-evidence's materialize_facts (record-extraction is assertion-only), not this ad-hoc tree-edit call",
+            "materializing sourced facts onto a tree person is person-evidence's materialize_facts (extraction is assertion-only), not this ad-hoc tree-edit call",
         ],
         "reason": (
             "cross-owner - 'materializing sourced facts onto a tree person "
-            "is person-evidence's materialize_facts (record-extraction is "
+            "is person-evidence's materialize_facts (extraction is "
             "assertion-only), not this ad-hoc tree-edit call'"
         ),
     },
