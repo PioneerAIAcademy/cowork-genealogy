@@ -187,6 +187,7 @@ reason S5 closes rather than an absence of rules.
 | 2. Correct the live 18% | **done** | `research-as-a-job-later-REVISED.md` — the claim is struck and replaced with the derivation, including the feed/screen split |
 | 3. [R8] three UX items | **done** | see below |
 | 4. Record the two no-ops | **done** | the parent's table now carries `CLOSED, no change, no slot` with the reason for each |
+| 5. Assert the no-op rather than assume it | **done** | `eval/harness/tests/unit/test_house_style_matches_the_skill.py` — nothing tied `_HOUSE_STYLE` to the shipped string, so a divergence could only be found by spending on a run. It is now a free string comparison |
 
 **[R8], all three built** (decided with the owner: build, not file):
 
