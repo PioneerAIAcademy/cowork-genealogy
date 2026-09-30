@@ -128,7 +128,7 @@ Each person object:
 | `living` | boolean | yes | Whether the person is marked as living |
 | `names` | object[] | yes | Every name FamilySearch holds for the person, preferred-first (see "Names" below). At least one — a person FS returns with no name at all gets a single `{ given: "", surname: "" }` placeholder |
 | `facts` | object[] | no | Life facts (birth, death, etc.). Omitted for living persons with no data. |
-| `sources` | object[] | no | The sources FamilySearch attached to this person, as `{ ref, page?, quality? }` refs whose `ref` is an id in this response's `sources[]`. FamilySearch attributes sources at the person level and essentially nowhere else (lead probe, 2026-09-20: 25 of 25 persons, 0 of 157 facts, 0 of 31 names). Its `tags` and attribution metadata are not carried. **Only refs that resolve in `sources[]` are kept**, and the key is omitted when none do: the subject's refs are `#<id>` fragments that all resolve, while a relative's refs are mostly full URLs to descriptions FamilySearch does not send in this body (probe, 2026-09-30: 0 of 102 and 2 of 79 resolved), and a `SD_*` target is filtered out of `sources[]`. A dangling ref would make `project_create` refuse the whole tree. Carrying relatives' own sources is not in scope. |
+| `sources` | object[] | no | The sources FamilySearch attached to this person, as `{ ref, page?, quality? }` refs whose `ref` is an id in this response's `sources[]`. FamilySearch attributes sources at the person level and essentially nowhere else (lead probe, 2026-09-20: 25 of 25 persons, 0 of 157 facts, 0 of 31 names). Its `tags` and attribution metadata are not carried. **Only refs that resolve in `sources[]` are kept**, and the key is omitted when none do: the subject's refs are `#<id>` fragments that all resolve, while a relative's refs are mostly full URLs to descriptions FamilySearch does not send in this body (probe, 2026-09-30: 0 of 102 and 2 of 79 resolved), and a `SD_*` target is filtered out of `sources[]`. A dangling ref would make `project_create` refuse the whole tree. **Relatives' own sources ARE carried**: the ref keeps `descriptionId`, the id FamilySearch sends beside the URL (present on 102/102 and 77/77 URL refs, and equal to the URL's last segment in every one — `dev/probe-relative-sources.json`), and a second per-person read supplies the description so the ref resolves. |
 
 **Names:**
 
@@ -1005,7 +1005,15 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 | 26 | No `staged` key without `projectPath`, or with a blank one | Staging gate |
 | 27 | A staging failure returns the read with `staged: null` + `stagingError`; a missing folder is not created | Staging fail-soft |
 | 28 | A merged subject's staged element carries the post-redirect id | Staging + redirect |
-| 29 | Carries the subject's person-level sources, dropping refs to descriptions not returned (an `SD_*` target, a relative's full-URL ref) | Person-level refs |
+| 29 | Carries the subject's person-level sources, dropping refs to descriptions not returned (an `SD_*` target; a relative's ref when the second read fails) | Person-level refs |
+| 30 | Fetches a relative's attached descriptions and KEEPS the ref that would otherwise dangle | Relatives' sources |
+| 31 | Top level stays exactly `{persons, relationships, sources}` with relatives' sources merged | No discriminator |
+| 32 | A failed relative read returns the tree read unchanged and does not throw | Fail-soft |
+| 33 | A relative with no attached refs costs no call | No speculative reads |
+| 34 | A source shared by two relatives appears once | Dedupe |
+| 35 | The subject's own sources are not re-fetched | Already in the body |
+| 36 | One relative failing does not lose the others' sources | Partial success |
+| 37 | A relative past the shared deadline is skipped, not awaited | Budget |
 | 30 | Never carries FamilySearch's tags or attribution onto a ref | Person-level refs |
 | 31 | The living 204 stub carries no `sources` key | Living person |
 

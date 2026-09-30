@@ -1768,3 +1768,186 @@ describe("personReadTool — person-level source refs (#2696)", () => {
     expect(out.sources).toEqual([]);
   });
 });
+
+// ─── Issue #1689 Half 3 — relatives' attached sources ───────────────────────
+//
+// A relative arrives from the tree read with source REFS but no descriptions: the ref
+// is a full URL to a description the body does not contain, so
+// `keepResolvablePersonSourceRefs` drops it. Half 3 fetches those descriptions and
+// keeps the refs.
+//
+// WHY THESE TESTS EXIST AS A SEPARATE BLOCK. `mockOk` is `mockResolvedValueOnce`, so
+// the relative-sources fetch in every OTHER test in this file falls through to an
+// unmocked `fetch`, fail-softs, and changes nothing — which is correct, and is why all
+// 76 of them stayed green when this feature landed. Green there is not evidence the
+// feature works; only a test that mocks the second endpoint is.
+
+describe("personReadTool relatives' attached sources (#1689 Half 3)", () => {
+  /** A tree body whose child carries a URL-form ref to a description not in the body. */
+  function bodyWithRelativeRef() {
+    return {
+      persons: [
+        {
+          id: "SUBJ-001",
+          // LIVING on purpose. The memories phase runs only for a non-living subject,
+          // and it would consume the next queued mock before the relative-sources
+          // fetch ever reaches it — which is what made the first draft of these tests
+          // fail with "res.text is not a function". Marking the subject living skips
+          // that phase so each test's extra mocks belong to the feature under test.
+          living: true,
+          names: [{ nameForms: [{ parts: [{ type: "http://gedcomx.org/Given", value: "Ann" }] }] }],
+          sources: [{ description: "#SUBJ-SRC", descriptionId: "SUBJ-SRC" }],
+        },
+        {
+          id: "KID-0001",
+          living: false,
+          gender: { type: "http://gedcomx.org/Female" },
+          names: [{ nameForms: [{ fullText: "Bea Child" }] }],
+          sources: [
+            {
+              description: "https://api.familysearch.org/platform/sources/descriptions/REL-9AA",
+              descriptionId: "REL-9AA",
+            },
+          ],
+        },
+      ],
+      // `childAndParentsRelationships`, not `relationships` — the converter builds
+      // ParentChild edges from the former, and a child reachable by neither is dropped
+      // as stranded. The first draft used the latter and the child vanished before the
+      // code under test ever saw it.
+      childAndParentsRelationships: [
+        { parent1: { resourceId: "SUBJ-001" }, child: { resourceId: "KID-0001" } },
+      ],
+      sourceDescriptions: [{ id: "SUBJ-SRC", titles: [{ value: "Subject's own source" }] }],
+    } as never;
+  }
+
+  /** The per-person endpoint's answer for one relative. */
+  function mockRelativeSources(descriptions: unknown[]): void {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ sourceDescriptions: descriptions }),
+      headers: new Headers(),
+    });
+  }
+
+  it("30. fetches a relative's descriptions and KEEPS the ref that used to be dropped", async () => {
+    mockOk(bodyWithRelativeRef());
+    mockRelativeSources([
+      { id: "REL-9AA", titles: [{ value: "Marriage, of Liberty, Amite, Mississippi" }] },
+    ]);
+    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+
+    // The description arrived as an ORDINARY sources[] entry — no discriminator.
+    const rel = out.sources.find((s) => s.id === "REL-9AA");
+    expect(rel).toBeDefined();
+    expect(rel!.title).toMatch(/Mississippi/);
+
+    // And the child's ref now resolves, where before this change it was dropped.
+    const kid = out.persons.find((p) => p.id === "KID-0001")!;
+    expect(kid.sources).toEqual([{ ref: "REL-9AA" }]);
+
+    // Every person-level ref still resolves — the invariant test 29 protects.
+    const ids = new Set(out.sources.map((s) => s.id));
+    for (const p of out.persons) for (const r of p.sources ?? []) expect(ids.has(r.ref)).toBe(true);
+  });
+
+  it("31. the top level is still exactly {persons, relationships, sources}", async () => {
+    // The 2026-08-21 no-discriminator ruling. A new key here is the thing the whole
+    // "ordinary entries" shape exists to prevent.
+    mockOk(bodyWithRelativeRef());
+    mockRelativeSources([{ id: "REL-9AA", titles: [{ value: "x" }] }]);
+    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    expect(Object.keys(out).sort()).toEqual(["persons", "relationships", "sources"]);
+  });
+
+  it("32. a failed relative fetch returns the tree read unchanged, and does not throw", async () => {
+    // Acceptance #5: fail-soft, silent to the agent. This is what test 29 has been
+    // exercising since the feature landed — the fetch falls through and nothing changes.
+    mockOk(bodyWithRelativeRef());
+    mockFetch.mockRejectedValueOnce(new Error("upstream down"));
+    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    expect(out.sources.map((s) => s.id)).toEqual(["SUBJ-SRC"]);
+    const kid = out.persons.find((p) => p.id === "KID-0001")!;
+    expect("sources" in kid).toBe(false);
+  });
+
+  it("33. a relative with no attached sources costs no call", async () => {
+    // Only persons carrying a ref are worth a request; a tree of unsourced relatives
+    // must not pay one each to discover that.
+    const body = bodyWithRelativeRef();
+    (body as { persons: Array<{ sources?: unknown }> }).persons[1].sources = undefined;
+    mockOk(body);
+    await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("34. a source shared by two relatives appears once", async () => {
+    // Measured on a real subject (1 of 79 on KNDX-MKG). A repeated id in sources[]
+    // breaks the tree write.
+    const body = bodyWithRelativeRef() as { persons: Array<Record<string, unknown>>; relationships: unknown[] };
+    body.persons.push({
+      id: "KID-0002",
+      living: false,
+      gender: { type: "http://gedcomx.org/Male" },
+      names: [{ nameForms: [{ fullText: "Cal Child" }] }],
+      sources: [
+        {
+          description: "https://api.familysearch.org/platform/sources/descriptions/REL-9AA",
+          descriptionId: "REL-9AA",
+        },
+      ],
+    });
+    (body as unknown as { childAndParentsRelationships: unknown[] }).childAndParentsRelationships.push({
+      parent1: { resourceId: "SUBJ-001" },
+      child: { resourceId: "KID-0002" },
+    });
+    mockOk(body as never);
+    mockRelativeSources([{ id: "REL-9AA", titles: [{ value: "shared" }] }]);
+    mockRelativeSources([{ id: "REL-9AA", titles: [{ value: "shared" }] }]);
+    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    expect(out.sources.filter((s) => s.id === "REL-9AA")).toHaveLength(1);
+  });
+
+  it("35. the subject's own sources are not re-fetched", async () => {
+    // They are already in the tree body and resolve from it (17/17, 24/24 measured).
+    // One relative carries a ref, so exactly one extra call — not two.
+    mockOk(bodyWithRelativeRef());
+    mockRelativeSources([{ id: "REL-9AA", titles: [{ value: "x" }] }]);
+    await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    const urls = mockFetch.mock.calls.map((c) => String(c[0]));
+    expect(urls.some((u) => u.includes("KID-0001/sources"))).toBe(true);
+    expect(urls.some((u) => u.includes("SUBJ-001/sources"))).toBe(false);
+  });
+});
+
+// The inner fail-soft, tested directly. Through `personReadTool` it is invisible:
+// `mergeRelativeSources` wraps the whole call in its own try/catch, so removing
+// `fetchOne`'s catch leaves every test green (mutation-checked). What the inner one
+// actually buys is PARTIAL success — one unreachable relative must not cost the
+// sources of the others, which the outer catch alone would throw away.
+describe("fetchRelativeSources partial failure (#1689 Half 3)", () => {
+  it("36. one relative failing does not lose the others' sources", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("first relative unreachable"));
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ sourceDescriptions: [{ id: "GOOD-1", titles: [{ value: "kept" }] }] }),
+      headers: new Headers(),
+    });
+    const { fetchRelativeSources } = await import("../../src/utils/relative-sources.js");
+    const out = await fetchRelativeSources(["BAD-0001", "OK-0002"], LOCAL, Date.now() + 30_000);
+    expect(out.descriptions.map((d) => d.id)).toEqual(["GOOD-1"]);
+    expect(out.skipped).toEqual(["BAD-0001"]);
+  });
+
+  it("37. a relative past the deadline is skipped, not awaited", async () => {
+    const { fetchRelativeSources } = await import("../../src/utils/relative-sources.js");
+    const out = await fetchRelativeSources(["A", "B"], LOCAL, Date.now() - 1);
+    expect(out.descriptions).toEqual([]);
+    expect(out.skipped.sort()).toEqual(["A", "B"]);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+});

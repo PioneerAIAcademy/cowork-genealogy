@@ -1,6 +1,9 @@
 import type { Principal } from "../auth/principal.js";
 import { dropDanglingEdges, describeDroppedEdges } from "../utils/tree-graph.js";
-import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
+import {
+  toSimplifiedStandardized,
+  simplifySourceDescription,
+} from "../utils/gedcomx-convert.js";
 import { fsFetch } from "../utils/fs-fetch.js";
 import {
   fetchMemories,
@@ -12,6 +15,7 @@ import {
   rankForTranscription,
   type Memory,
 } from "../utils/memories.js";
+import { fetchRelativeSources } from "../utils/relative-sources.js";
 import { mapWithConcurrency } from "../utils/place-resolver.js";
 import { stageSearchResults } from "../utils/results-staging.js";
 import { imageTranscribeTool } from "./image-transcribe.js";
@@ -71,7 +75,9 @@ export const personReadToolSchema = {
       },
       sourceDescriptions: {
         type: "boolean",
-        description: "Ignored: attached sources are always returned.",
+        description:
+          "Ignored: attached sources are always returned — the subject's, and since "
+          + "#1689 Half 3 the relatives' own attached sources too.",
       },
       projectPath: {
         type: "string",
@@ -129,6 +135,17 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
       projectPath,
     );
   }
+
+  // Issue #1689 Half 3: the relatives' own attached sources. MUST run BEFORE
+  // `keepResolvablePersonSourceRefs` -- that function drops every person-level ref
+  // whose target is not already in `sources[]`, so merging after it would fetch
+  // every relative's sources and then throw them away, with every test still green.
+  result.sources = await mergeRelativeSources(
+    result,
+    resolvedId,
+    principal,
+    deadline,
+  );
 
   keepResolvablePersonSourceRefs(result);
 
@@ -414,6 +431,59 @@ async function mergeMemories(
       `person_read: memories fetch failed for ${pid}, returning tree sources only: ${String(err)}\n`,
     );
     return treeSources;
+  }
+}
+
+/**
+ * Fetch the relatives' attached sources and fold them into `sources[]`.
+ *
+ * Ordinary entries, no discriminator, no new top-level key (lead, 2026-08-27) -- the
+ * same shape memories take. Returns the sources unchanged when there is nothing to add
+ * or the fetch fails, so a failure costs the enrichment and never the read.
+ *
+ * Only relatives are fetched: the subject's own sources are already in the tree-read
+ * body and resolve from it (17/17 and 24/24, probe 2026-09-30).
+ */
+async function mergeRelativeSources(
+  result: PersonReadResult,
+  subjectId: string,
+  principal: Principal,
+  deadline: number,
+): Promise<TreeSource[]> {
+  // Only persons that actually carry a ref are worth a call. On the probed subjects
+  // this is every relative, but a tree where most relatives have nothing attached
+  // should not pay a request each to find that out.
+  const relativeIds = result.persons
+    .filter((p) => p.id !== subjectId && (p.sources?.length ?? 0) > 0)
+    .map((p) => p.id);
+  if (relativeIds.length === 0) return result.sources;
+
+  const have = new Set(result.sources.map((s) => s.id));
+  try {
+    const { descriptions, skipped } = await fetchRelativeSources(
+      relativeIds,
+      principal,
+      deadline,
+    );
+    if (skipped.length > 0) {
+      // stderr, not the response: acceptance #1 pins the top level, and the memories
+      // fail-soft this mirrors reports the same way. A partial read must not look
+      // complete to whoever is reading the logs.
+      process.stderr.write(
+        `person_read: relative sources unread for ${skipped.length} of ` +
+          `${relativeIds.length} relative(s) of ${subjectId}: ${skipped.join(", ")}\n`,
+      );
+    }
+    const added = descriptions
+      .map(simplifySourceDescription)
+      .filter((d): d is TreeSource => typeof d.id === "string" && d.id !== "" && !have.has(d.id));
+    return added.length > 0 ? [...result.sources, ...added] : result.sources;
+  } catch (err) {
+    process.stderr.write(
+      `person_read: relative sources fetch failed for ${subjectId}, ` +
+        `returning tree sources only: ${String(err)}\n`,
+    );
+    return result.sources;
   }
 }
 

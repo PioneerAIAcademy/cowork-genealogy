@@ -378,7 +378,15 @@ function simplifySourceRef(
   ref: GedcomXSourceReference,
 ): SimplifiedSourceReference {
   const out: SimplifiedSourceReference = {};
-  const refId = stripFragment(ref.description);
+  // `descriptionId` first, `description` second. They agree wherever both appear,
+  // but `description` is a full URL on a RELATIVE's ref -- a URL never equals the
+  // bare id a fetched description carries, so `keepResolvablePersonSourceRefs`
+  // (exact string match) would drop every relative source however many we fetch.
+  // Preferring the id upstream already sends is what makes issue #1689 Half 3
+  // work at all, and it cannot drift from the id it names the way parsing the
+  // URL's last segment could. Subject refs are `#<id>` fragments and are
+  // unaffected -- `stripFragment` already produced the same bare id for them.
+  const refId = ref.descriptionId ?? stripFragment(ref.description);
   if (refId !== undefined) out.ref = refId;
 
   const qualifiers = Array.isArray(ref.qualifiers) ? ref.qualifiers : [];
@@ -400,7 +408,10 @@ function simplifySourceRef(
   return out;
 }
 
-function simplifySourceDescription(
+/** Exported for `relative-sources`: a relative's descriptions arrive from a second
+ *  endpoint in the same GedcomX shape, and converting them any other way would be a
+ *  parallel copy of this that drifts. */
+export function simplifySourceDescription(
   desc: GedcomXSourceDescription,
 ): SimplifiedSourceDescription {
   const out: SimplifiedSourceDescription = {};
