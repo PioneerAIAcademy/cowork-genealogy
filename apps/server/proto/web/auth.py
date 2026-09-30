@@ -9,8 +9,8 @@ pass every test (the suite runs from the repo root) and fail only in the contain
 ``test_proto_auth.py`` pins that with an AST check.
 
 What is deliberately NOT here: token refresh and any refresh lock. U3 makes this tier
-the only refresher, under a per-patron database lock; the alpha's in-process
-``asyncio.Lock`` (issue #2887) is the thing U3 exists to replace. Until U3 the worker
+the only refresher, under a per-patron database lock; the alpha's in-process per-user
+lock (issue #2887) is the thing U3 exists to replace. Until U3 the worker
 still runs every turn on the operator's token (``worker/options.py``), so the grant
 stored here is written and never read.
 

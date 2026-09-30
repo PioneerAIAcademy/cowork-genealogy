@@ -23,7 +23,7 @@ See [the prototype report](../search-agent-prototype-report.md) (its legend defi
 | Engine hosted entrypoints, Postgres/S3 store, bearer principal | `packages/engine/mcp-server/src/{server.ts,http.ts,http-server.ts,store/,auth/principal.ts}` | **Keep.** Harden: U4, U8, U10, U19, U25. |
 | Plugin: 27 skills, 8 agents, PreToolUse hook | `packages/engine/plugin/` | **Keep.** |
 | Worker: SDK resume from Postgres, deny-and-log hooks | `apps/server/proto/worker/`, `apps/server/app/agent/{continue_policy,spend,real_agent}.py` | **Prototype-grade:** U5, U6, U7, U11, U26. |
-| Web tier: REST, SSE, Stop | `apps/server/proto/web/app.py` | **Prototype-grade:** no auth (U2, [plan](u2-patron-sign-in.md)); uploads, images, logs 501 (U20). |
+| Web tier: REST, SSE, Stop | `apps/server/proto/web/app.py` | **Prototype-grade:** patron sign-in and owner scoping (U2, [plan](u2-patron-sign-in.md)), but every turn's FamilySearch calls stay on the operator's token until U3; uploads, images, logs 501 (U20). |
 | Schema | `apps/server/proto/sql/001_schema.sql`…`007_session_usage_index.sql` | **Keep content.** Applied at service start until U9. |
 | Browser client | `apps/web`, `VITE_SESSION_TRANSPORT=sse` | **Keep.** Not yet built for SSE or mounted (U12). |
 | Compose, elasticmq, MinIO, Postgres container, sqsd shim | `apps/server/proto/{docker-compose*.yml,elasticmq.conf,shim/}` | **Local only.** Unlike the shim, sqsd never kills the worker (U5). |

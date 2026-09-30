@@ -10,6 +10,11 @@ This PR replaces the prototype web tier's stub auth with a real FamilySearch sig
 2. **The interim operator-token window is covered by a written rule, not a code guard.** The PR body and the web README say: until U3 merges, allowlist only staff entitled to the operator's FamilySearch access (see "Interim constraint").
 3. **The web image builds from the repo root** and copies `packages/engine/mcp-server/config/familysearch.json` in, as the tools image already does (compose `tools` service, `context: ../../..`). There is no bind mount.
 
+### Deviations recorded during implementation
+4. **`PgStore._SELECT` uses `LEFT JOIN projects`, not `JOIN ... USING`.** `001_schema.sql` declares no foreign keys, so a session whose project row is missing must still load, with a NULL owner the route turns into a 404, rather than vanish. `test_pgstore_session_select_carries_the_owner_through_a_left_join` pins it.
+5. **`web/auth.py` falls back to the checkout's `packages/engine/mcp-server/config/familysearch.json`** when `/app/config/familysearch.json` is absent, so the tier also runs from the venv (`make proto-web`). The fallback is added only when that parent path exists: indexing it unguarded crashed the tier at import inside the image, which the compose run found (`test_the_client_config_lookup_survives_the_image_layout`).
+6. **`drive.py` expects the `turn_queued` key** `GET /events` has returned since PR #2870. That is unrelated to U2, but `make proto-drive` was failing on `main` without it, and it is one line.
+
 ## Evidence anchors (verified)
 - **Stub auth:** `PROTO_USER` (app.py:90) and the `/auth/*` stubs (app.py:725-739).
 - **Session gate checks existence only:** `_session()` (app.py:707-711). PATCH and DELETE call their own store methods (app.py:758-773). The store SQL has no owner filter: `list_sessions` 390-393, `get_session` 395-399, `patch_session` 401-409, `delete_session` 411-426. The delete also wipes documents, blobs, staging and projects by project_id (424-425).
