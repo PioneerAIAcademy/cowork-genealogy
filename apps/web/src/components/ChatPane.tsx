@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm'
 import React from 'react'
 import { useResearchDataOptional } from '@genealogy/viewer-ui'
 import { SchemaIdText } from './SchemaIdText'
+import { toolLabel, humanizeToolNames } from './toolLabel'
 import type { SessionConnection, WsMessage } from '../transport/SessionConnection'
 import { api, ApiError } from '../api'
 import {
@@ -400,7 +401,11 @@ export default function ChatPane({
                   {m.tools.map((t, j) => (
                     <span key={j} className={`toolChip ${t.done ? 'toolDone' : 'toolRunning'}`}>
                       {t.done ? '✓' : '⟳'} {t.agent ? `${t.agent} · ` : ''}
-                      {t.tool}: {t.summary}
+                      {/* Both slots are humanized: 18 chips in the captured session
+                          carry a qualified tool name inside the SUMMARY (ToolSearch
+                          queries), so labelling only the name slot leaves the wire
+                          protocol on screen. */}
+                      {toolLabel(t.tool)}: {humanizeToolNames(t.summary)}
                     </span>
                   ))}
                 </div>
