@@ -225,6 +225,9 @@ const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<FilterKey, Fi
   // field, and there is one entry per place-jurisdiction, so the whole section
   // fits inside a single 50-item page. The empty object routes to the
   // "(this section takes no filters)" branch below.
+  // No filters: a rejection is looked up by the pair, which the writer tool does
+  // for itself, and a researcher reading them wants all of them.
+  rejected_links: {},
   localities: {},
 };
 

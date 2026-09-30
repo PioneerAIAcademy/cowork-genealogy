@@ -1,0 +1,228 @@
+{
+  "captured_at": "2026-09-30",
+  "probes": [
+    {
+      "label": "flynn-qualified",
+      "shape": "qualified",
+      "input": {
+        "surname": "Flynn",
+        "givenName": "Patrick",
+        "birthYearFrom": 1840,
+        "birthYearTo": 1850,
+        "birthPlace": "Ireland",
+        "residencePlace": "Schuylkill, Pennsylvania, United States"
+      },
+      "totalMatches": 1281,
+      "returned": 20,
+      "topScores": [
+        5.2936,
+        5.2836003,
+        5.2736,
+        4.9636,
+        4.5136003
+      ],
+      "topConfidences": [
+        4,
+        4,
+        4,
+        4,
+        3
+      ],
+      "firstSecondGap": 0.01,
+      "scoresPresent": 20
+    },
+    {
+      "label": "hales-flood",
+      "shape": "flood",
+      "input": {
+        "surname": "Hales",
+        "givenName": "Mary"
+      },
+      "totalMatches": 35920,
+      "returned": 20,
+      "topScores": [
+        3.6236,
+        3.6236,
+        3.6236,
+        3.6236,
+        3.6236
+      ],
+      "topConfidences": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "firstSecondGap": 0,
+      "scoresPresent": 20
+    },
+    {
+      "label": "smith-flood",
+      "shape": "flood",
+      "input": {
+        "surname": "Smith",
+        "givenName": "John"
+      },
+      "totalMatches": 781746,
+      "returned": 20,
+      "topScores": [
+        3.6236,
+        3.6236,
+        3.6236,
+        3.6236,
+        3.6236
+      ],
+      "topConfidences": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "firstSecondGap": 0,
+      "scoresPresent": 20
+    },
+    {
+      "label": "hales-year",
+      "shape": "middle",
+      "input": {
+        "surname": "Hales",
+        "givenName": "Mary",
+        "birthYearFrom": 1830,
+        "birthYearTo": 1840
+      },
+      "totalMatches": 4356,
+      "returned": 20,
+      "topScores": [
+        4.1236,
+        4.1236,
+        4.1236,
+        4.1236,
+        4.1236
+      ],
+      "topConfidences": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "firstSecondGap": 0,
+      "scoresPresent": 20
+    },
+    {
+      "label": "hales-year-place",
+      "shape": "middle",
+      "input": {
+        "surname": "Hales",
+        "givenName": "Mary",
+        "birthYearFrom": 1830,
+        "birthYearTo": 1840,
+        "birthPlace": "England"
+      },
+      "totalMatches": 1115,
+      "returned": 20,
+      "topScores": [
+        5.1136003,
+        5.1136003,
+        5.1136003,
+        5.1136003,
+        5.1136003
+      ],
+      "topConfidences": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "firstSecondGap": 0,
+      "scoresPresent": 20
+    },
+    {
+      "label": "mcandrew-qualified",
+      "shape": "qualified",
+      "input": {
+        "surname": "McAndrew",
+        "givenName": "Mary",
+        "birthYearFrom": 1845,
+        "birthYearTo": 1852,
+        "birthPlace": "New Brunswick, Canada"
+      },
+      "totalMatches": 54,
+      "returned": 20,
+      "topScores": [
+        5.1186004,
+        4.3878803,
+        4.3778806,
+        3.74288,
+        3.5828803
+      ],
+      "topConfidences": [
+        3,
+        3,
+        3,
+        2,
+        2
+      ],
+      "firstSecondGap": 0.7307,
+      "scoresPresent": 20
+    },
+    {
+      "label": "mogan-middle",
+      "shape": "middle",
+      "input": {
+        "surname": "Mogan",
+        "givenName": "John",
+        "residencePlace": "Detroit, Wayne, Michigan, United States"
+      },
+      "totalMatches": 58,
+      "returned": 20,
+      "topScores": [
+        4.6236,
+        4.6136003,
+        4.1236,
+        4.1236,
+        3.8928802
+      ],
+      "topConfidences": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "firstSecondGap": 0.01,
+      "scoresPresent": 20
+    },
+    {
+      "label": "broyles-middle",
+      "shape": "middle",
+      "input": {
+        "surname": "Broyles",
+        "givenName": "Charles",
+        "birthYearFrom": 1875,
+        "birthYearTo": 1882
+      },
+      "totalMatches": 1508,
+      "returned": 20,
+      "topScores": [
+        4.1186004,
+        4.1186004,
+        4.1186004,
+        4.1186004,
+        4.1086
+      ],
+      "topConfidences": [
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      "firstSecondGap": 0,
+      "scoresPresent": 20
+    }
+  ]
+}

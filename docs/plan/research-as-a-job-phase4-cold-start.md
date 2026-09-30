@@ -49,30 +49,48 @@ changes on probe evidence.
 
 **To pin before building**, with the refuted one removed:
 
-1. What first-vs-second gap, *within one response*, counts as decisive?
-2. Does a high `totalMatches` alone make a pick non-decisive even with a clear leader?
-   (Mary Hales 35,921; Flynn 3.)
-3. What does an ABSENT score mean? Both `score` and `confidence` are optional
-   (`number | undefined`). Proposed default: absent → non-decisive, because a pick the tool
-   cannot justify is exactly the one a person should make.
+All three are now answered by the probe below: the gap is the wrong signal, `totalMatches`
+alone does not separate the cases, and an absent score counts as not decisive.
 
-### Step 0: there is no corpus to derive these from, so build one first
+### Step 0 DONE: probed live, 2026-09-30 — and the rule I proposed was wrong
 
-The plan said "derive from the committed corpus". **That corpus does not exist**, and saying so
-is the point — promising a derivation that cannot be performed is this branch's known failure.
-What exists is: one hand-authored mock fixture whose 4.85/3.21 were *invented to look
-decisive* (so deriving a threshold that must keep it decisive is circular), and one live query
-surviving only as agent prose, with no raw response body anywhere in the capture. The e2e logs
-hold five `person_search` calls, none with a score.
+`dev/probe-person-search-decisiveness.ts`, eight live queries spanning qualified, flood and
+the middle cases, responses committed beside it. What it found:
 
-So the first work item is a probe, following the repo's existing `dev/probe-*.ts` convention:
-`dev/probe-person-search-decisiveness.ts`, over a battery of query shapes — fully qualified,
-name-only namesake flood, and the middle cases that actually decide a threshold — with the
-responses committed. Derive from those.
+| Probe | totalMatches | top-5 scores | tied at top |
+|---|---|---|---|
+| `flynn-qualified` | 1,281 | 5.2936, 5.2836, 5.2736, … | **1** |
+| `mcandrew-qualified` | 54 | 5.1186, 4.3879, 4.3779, … | **1** |
+| `mogan-middle` | 58 | 4.6236, 4.6136, 4.1236, … | **1** |
+| `hales-flood` | 35,920 | 3.6236 × 5 | **5** |
+| `smith-flood` | 781,746 | 3.6236 × 5 | **5** |
+| `hales-year` | 4,356 | 4.1236 × 5 | **5** |
+| `hales-year-place` | 1,115 | 5.1136 × 5 | **5** |
+| `broyles-middle` | 1,508 | 4.1186 × 4 | **4** |
 
-**And `ut_init_project_004`'s fixture is then updated to realistic probed values that the
-threshold classifies decisive.** Not the reverse: bending a threshold to fit invented numbers
-would encode the fiction.
+**The first-second GAP is the wrong signal, and the probe proves it.** `flynn-qualified` — the
+very case `ut_init_project_004` is right to auto-pick — has a gap of **0.01**. Any gap
+threshold above that misclassifies the eval's own case. My proposed rule would have been built
+and then found wrong by a paid run.
+
+**`totalMatches` alone is also wrong.** `flynn-qualified` (1,281) is decisive while
+`broyles-middle` (1,508) is not, so no count threshold separates them.
+
+**The signal is TIES AT THE TOP SCORE**, and it separates all eight cleanly. When several
+candidates score identically the tool has no basis to prefer one — because the same few fields
+matched for all of them — so a person must choose. Under-specified queries produce flat runs of
+identical scores (3.6236 five times); a query with enough to work on produces a strictly
+descending list.
+
+**Derived rule:** decisive iff exactly one candidate holds the top score. An absent score
+counts as not decisive, since a pick the tool cannot justify is exactly the one a person should
+make.
+
+**And the mock fixture is fiction.** `person-search-flynn.json` carries `totalMatches: 3` and
+scores 4.85 / 3.21 / 2.10 — a gap of 1.64 that occurs nowhere in eight live queries, where real
+gaps are 0, 0.01 or 0.73. Deriving a threshold from it would have encoded a world the API does
+not produce. It is updated to probed values, which under the derived rule stays decisive (a
+unique top score) and keeps `ut_init_project_004` passing.
 
 ## Order of work
 
