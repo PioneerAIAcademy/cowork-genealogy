@@ -263,6 +263,78 @@ def test_ordinary_refusal_phrasings_the_first_marker_list_missed():
         check(good, IN_PROGRESS)
 
 
+# --- The #1830 widening: imperative, and `planned` as a status --------------
+#
+# Both arms are derived from ONE recorded reply — `_d1a` in
+# `v1_2026-09-30_18-26-29`, which named pli_005 in four sentences and matched
+# no marker in the pre-#1830 list. `test_every_recorded_refusal_still_passes`
+# is what fails without the widening; these pin WHY each arm is shaped as it
+# is, and the pair below is the same reply's own counterexample.
+
+
+def test_accepts_an_imperative_recommendation():
+    """"Complete X" says X is open as plainly as any adjective.
+
+    The verbatim sentence from the recorded reply, plus the other imperatives
+    a refusal reaches for. Nobody is told to complete what is already done.
+    """
+    for good in (
+        "Complete the death certificate search (`pli_005`).",
+        "Finish the death certificate search first.",
+        "- Complete the death certificate search (pli_005)",
+        "Run the death certificate search before declaring.",
+        "Carry out the death certificate search, then re-assess.",
+    ):
+        check(good, IN_PROGRESS)
+
+
+def test_fires_when_planned_is_the_rationale_not_the_status():
+    """The other direction, from the SAME recorded reply.
+
+    "was explicitly planned because..." says why the item was ever on the
+    plan. It is not a claim that the item is open, and an arm matching bare
+    `planned` anywhere would swallow it — which would let a reply that
+    discusses the blocker's purpose while believing it finished satisfy a
+    guard whose entire job is to tell those apart.
+    """
+    with pytest.raises(AssertionError, match="never says it is still"):
+        check(
+            "The death certificate was explicitly planned because it may name "
+            "the parents directly.",
+            IN_PROGRESS,
+        )
+
+
+def test_accepts_planned_as_a_status():
+    """#1830 made a `planned` item block, so a refusal may now say so."""
+    for good in (
+        "pli_005 is still planned.",
+        "The death certificate search remains planned.",
+        "pli_005 is planned and has not been executed.",
+    ):
+        check(good, IN_PROGRESS)
+
+
+def test_the_imperative_arm_does_not_reopen_the_inversion_hole():
+    """The widening must not defeat the two cases from the PR #2613 review.
+
+    "was completed" contains `complete`, so an unanchored arm would match the
+    exact inversion this guard was built to catch. The arm is segment-initial
+    for that reason, and this pins it.
+    """
+    with pytest.raises(AssertionError, match="never says it is still"):
+        check(
+            "Declaration withheld: you have run out of budget. The death "
+            "certificate search was completed last week, so that is not the "
+            "issue.",
+            IN_PROGRESS,
+        )
+    with pytest.raises(AssertionError, match="never says it is still"):
+        check("The death certificate search will be complete by Friday.", IN_PROGRESS)
+    with pytest.raises(AssertionError, match="never says it is still"):
+        check("We already finished the death certificate search.", IN_PROGRESS)
+
+
 def test_known_conservative_miss_item_and_status_on_separate_lines():
     """Documented limitation, pinned so it is a decision and not a surprise.
 
