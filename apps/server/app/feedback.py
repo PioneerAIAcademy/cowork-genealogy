@@ -95,9 +95,8 @@ def _is_stale_copy(name: str) -> bool:
     """A stale copy of a project document that nothing reads.
 
     `.bak` — pre-#2333 `.mcpb` builds wrote one beside the tree. #2333 stopped
-    writing them; it did not delete the ones already on disk, and they ship
-    UNREDACTED because _redact_living only rewrites the two canonical
-    filenames. `.tmp-` — before the ProjectStore seam, atomicWriteJson wrote
+    writing them; it did not delete the ones already on disk. They would be
+    redacted by shape anyway, so this skip keeps noise out, not living people. `.tmp-` — before the ProjectStore seam, atomicWriteJson wrote
     `<path>.tmp-<uuid>`, *not* dot-prefixed, so a crash between write and
     rename leaves one behind that the dot-skip does not catch. (The current
     tmpSibling in fs-project-store.ts is dot-prefixed and already skipped.)
@@ -360,7 +359,11 @@ def _redact_living(
         # describe the bytes actually written, not the persons visited.
         file_redacted = 0
         try:
-            tree = json.loads(data.decode("utf-8"))
+            # utf-8-sig, not utf-8: a Windows editor readily saves a BOM in
+            # front, and without this the parse raises, the except below ships
+            # the file UNREDACTED, and a living person leaks. _may_be_tree
+            # already skips these bytes, so the file reaches here and fails.
+            tree = json.loads(data.decode("utf-8-sig"))
             persons = tree.get("persons")
             if not isinstance(persons, list):
                 raise ValueError("no persons array")

@@ -1318,6 +1318,27 @@ describe('review findings on the #2988 fix', () => {
     expect(redacts(person)).toBe(0)
   })
 
+  it('redacts a tree saved with a BOM in front', () => {
+    // A Windows editor readily adds one. Without stripping it the parse throws,
+    // redactOneTree's catch ships the file UNREDACTED, and the living person in
+    // it leaks — the fail-open hazard this whole change exists to close.
+    const body = JSON.stringify(
+      {
+        persons: [p({ facts: [{ id: 'b', type: 'Birth', date: '3 March 1990' }] })],
+        relationships: [],
+        sources: []
+      },
+      null,
+      2
+    )
+    const entry = {
+      relativePath: 'tree.gedcomx.json',
+      buf: Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from(body, 'utf-8')])
+    }
+    expect(redactLivingPersons([entry], NOW)).toBe(1)
+    expect(entry.buf.toString('utf-8')).not.toContain('Ada Test')
+  })
+
   it('still redacts someone whose only dated fact is recent', () => {
     // The reverse of the census case: a living person with a 1990 residence
     // must not be shipped by the last-seen-alive rule.

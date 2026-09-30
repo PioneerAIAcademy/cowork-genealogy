@@ -131,8 +131,9 @@ function lastSeenYear(facts: Record<string, unknown>[]): number | null {
  * Whether a tree person must be treated as living.
  *
  * Mirrors apps/server/app/feedback.py::_is_living. Neither app may import eval
- * code, so the rule is written inline in both; tests/parity.test.ts checks the
- * two copies still agree.
+ * code, so the rule is written inline in both;
+ * apps/server/tests/test_feedback.py::test_parity_* checks the two copies
+ * still agree.
  *
  * When `living` is **present** this is the pre-#2988 rule verbatim — living
  * unless exactly `false` — so no present value changes behaviour, including
@@ -258,7 +259,12 @@ function mayBeTree(buf: Buffer): boolean {
 function redactOneTree(entry: { relativePath: string; buf: Buffer }, nowYear: number): number {
   if (!mayBeTree(entry.buf)) return 0
   try {
-    const tree = JSON.parse(entry.buf.toString('utf-8')) as Record<string, unknown>
+    // A Windows editor readily saves a BOM in front. Without stripping it the
+    // parse throws, the catch below ships the file UNREDACTED, and a living
+    // person leaks — mayBeTree already skips these bytes, so the file reaches
+    // here and then fails. \uFEFF rather than a literal, which is invisible.
+    const text = entry.buf.toString('utf-8').replace(/^\uFEFF/, '')
+    const tree = JSON.parse(text) as Record<string, unknown>
     const persons = tree.persons
     if (!Array.isArray(persons)) return 0
 
@@ -311,8 +317,8 @@ export type ProjectFile = {
  * A stale copy of a project document that nothing reads.
  *
  * `.bak` — pre-#2333 `.mcpb` builds wrote one beside the tree. #2333 stopped
- * writing them; it did not delete the ones already on disk, and they ship
- * UNREDACTED because redactOneTree only rewrites the two canonical filenames.
+ * writing them; it did not delete the ones already on disk. They would be
+ * redacted by shape anyway, so this skip keeps noise out, not living people.
  * `.tmp-` — before the ProjectStore seam, atomicWriteJson wrote
  * `<path>.tmp-<uuid>`, *not* dot-prefixed, so a crash between write and rename
  * leaves one behind that the dot-skip below does not catch. (The current

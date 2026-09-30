@@ -92,6 +92,9 @@ Implemented as `_redact_living` (`apps/server/app/feedback.py`) and
   `tree-backup.gedcomx.json` or a Finder duplicate, which no skip rule has any
   reason to drop. `research.json` has no top-level `persons`, so it is
   unaffected; a cheap first-byte check keeps media files away from the parser.
+  A leading byte-order mark is tolerated — a Windows editor readily saves one,
+  and a parse failure here does not fail closed: it falls through to the
+  pass-through below, shipping the file with its living people intact.
 - **Stale copies are additionally skipped by the walker**: any name ending
   `.bak`, and any name ending `.tmp-<hex>`. Matching is case-insensitive,
   because the researcher team is on Windows. `.bak` files were written by older

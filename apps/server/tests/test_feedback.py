@@ -1314,6 +1314,21 @@ def test_review_is_not_fooled_by_a_posthumous_ordinance():
     assert _redacts(person) == 0
 
 
+def test_review_redacts_a_tree_saved_with_a_bom_in_front():
+    """A Windows editor readily adds one. Without utf-8-sig the parse raises,
+    _redact_living's except ships the file UNREDACTED, and the living person in
+    it leaks — the fail-open hazard this whole change exists to close."""
+    tree = {
+        "persons": [_p(facts=[_BIRTH_1990])],
+        "relationships": [],
+        "sources": [],
+    }
+    raw = b"\xef\xbb\xbf" + json.dumps(tree).encode("utf-8")
+    out, count = fb._redact_living([("tree.gedcomx.json", raw)], _NOW)
+    assert count == 1
+    assert b"Ada Test" not in dict(out)["tree.gedcomx.json"]
+
+
 def test_review_still_redacts_someone_whose_only_dated_fact_is_recent():
     """The reverse of the census case: a living person with a 1990 residence
     must not be shipped by the last-seen-alive rule."""
