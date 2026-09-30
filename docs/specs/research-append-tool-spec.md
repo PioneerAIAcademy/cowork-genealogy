@@ -1918,6 +1918,22 @@ on the person whose line states them. The table's format therefore becomes
 record type × role family × fact class, with an optional field-level
 override, where a row names the field it narrows to.
 
+#### Calendar flag
+
+The summary names every date that the calendar route may apply to, on both
+paths (genealogist ruling, 2026-09-30, the broad trigger):
+
+- any date carrying a day and month before 1752, anywhere;
+- any Quaker numbered month ("3rd month");
+- any double-dated year ("1749/50").
+
+A year-only date never fires, because there is no day or month for a
+correction to act on. The extractor holds **no country table**: `convert-dates`
+owns the cutoffs and gives the verdict, and it clears the dates that needed
+nothing, such as a Catholic country's post-1582 dates. The flag tells the
+caller to run `convert-dates` and correct the assertion. It changes no date
+itself.
+
 #### Return
 
 The **summary** §11.6 returns, one entry per source, written by code: the
