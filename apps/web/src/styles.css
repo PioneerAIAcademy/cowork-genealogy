@@ -869,3 +869,16 @@ button {
   font-size: 0.85em;
   opacity: 0.7;
 }
+
+/* Phase 2, "one view of job state": the session list's four states. Two want the
+   reader's attention (working, needs you) and two are resting states. */
+.jobState {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 0.78em;
+  font-weight: 600;
+  margin-right: 6px;
+}
+.jobStateLive { background: var(--accent-soft, #1f6feb22); color: var(--accent, #1f6feb); }
+.jobStateRest { background: var(--bg-muted, #8884); color: var(--text-secondary, #666); }

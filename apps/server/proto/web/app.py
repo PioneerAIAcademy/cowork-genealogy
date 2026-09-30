@@ -82,6 +82,8 @@ import enqueue  # noqa: E402  (the D3 SQS query-API client; reused, not edited)
 log = logging.getLogger("proto.web")
 
 DEFAULT_PG_DSN = "postgresql://postgres:proto@localhost:5434/proto"
+from proto.web.job_state import job_state
+
 DEFAULT_TITLE = "New research session"
 DEFAULT_MODEL = "claude-sonnet-4-6"
 EVENTS_PAGE = 500
@@ -127,6 +129,12 @@ class SessionRow:
     model: str
     created_at: datetime
     updated_at: datetime
+    # What the session list needs to say running / needs you / done / stopped.
+    # Carried on the row rather than fetched per session: a list of N sessions must
+    # not fire N queries.
+    latest_outcome: str | None = None
+    turn_in_flight: bool = False
+    project_completed: bool = False
 
 
 @dataclass(frozen=True)
@@ -234,6 +242,13 @@ def session_out(row: SessionRow) -> dict[str, Any]:
         "title": row.title,
         "model": row.model,
         "status": "active",
+        # The four states the session list shows. `status` above is the legacy field
+        # every existing client reads; this is additive beside it.
+        "job_state": job_state(
+            latest_outcome=row.latest_outcome,
+            turn_in_flight=row.turn_in_flight,
+            project_completed=row.project_completed,
+        ),
         "sandbox_id": "",
         "agent_session_id": None,
         "created": row.created_at.isoformat(),
@@ -366,9 +381,26 @@ class PgStore:
             session_id=r["session_id"], project_id=r["project_id"],
             title=r["title"] or DEFAULT_TITLE, model=r["model"] or DEFAULT_MODEL,
             created_at=r["created_at"], updated_at=r["updated_at"] or r["created_at"],
+            latest_outcome=r.get("latest_outcome"),
+            turn_in_flight=bool(r.get("turn_in_flight")),
+            project_completed=bool(r.get("project_completed")),
         )
 
-    _SELECT = "SELECT session_id, project_id, title, model, created_at, updated_at FROM sessions"
+    # The three job-state facts come from correlated subqueries rather than a second
+    # round trip, so listing N sessions stays one query. `latest_outcome` is the most
+    # recently ENQUEUED turn's outcome -- not the most recently completed, because a
+    # turn still running has none and must not be mistaken for the previous one.
+    _SELECT = (
+        "SELECT s.session_id, s.project_id, s.title, s.model, s.created_at, s.updated_at,"
+        " (SELECT t.outcome FROM turns t WHERE t.session_id = s.session_id"
+        "  ORDER BY t.enqueued_at DESC LIMIT 1) AS latest_outcome,"
+        " EXISTS (SELECT 1 FROM turns t WHERE t.session_id = s.session_id"
+        "  AND t.completed_at IS NULL) AS turn_in_flight,"
+        " COALESCE((SELECT d.doc->'project'->>'status' FROM documents d"
+        "  WHERE d.project_id = s.project_id AND d.name = 'research.json')"
+        "  = 'completed', false) AS project_completed"
+        " FROM sessions s"
+    )
 
     async def create_session(self, title: str, model: str, project_id: str | None = None) -> SessionRow:
         session_id = "sess_" + uuid.uuid4().hex[:16]
@@ -383,18 +415,18 @@ class PgStore:
                     "INSERT INTO sessions (session_id, project_id, title, model) VALUES (%s, %s, %s, %s)",
                     (session_id, project_id, title, model),
                 )
-            cur = await conn.execute(self._SELECT + " WHERE session_id = %s", (session_id,))
+            cur = await conn.execute(self._SELECT + " WHERE s.session_id = %s", (session_id,))
             row = await cur.fetchone()
         return self._row(row)
 
     async def list_sessions(self) -> list[SessionRow]:
         async with await self._connect() as conn:
-            cur = await conn.execute(self._SELECT + " ORDER BY updated_at DESC, created_at DESC")
+            cur = await conn.execute(self._SELECT + " ORDER BY s.updated_at DESC, s.created_at DESC")
             return [self._row(r) for r in await cur.fetchall()]
 
     async def get_session(self, session_id: str) -> SessionRow | None:
         async with await self._connect() as conn:
-            cur = await conn.execute(self._SELECT + " WHERE session_id = %s", (session_id,))
+            cur = await conn.execute(self._SELECT + " WHERE s.session_id = %s", (session_id,))
             row = await cur.fetchone()
         return self._row(row) if row else None
 

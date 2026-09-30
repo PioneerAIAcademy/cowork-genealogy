@@ -51,6 +51,9 @@ T0 = datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
 # api.ts SessionSummary -- every key the SPA types (SessionList dereferences model and last_active).
 SESSION_SUMMARY_KEYS = {
     "id", "title", "model", "status", "sandbox_id", "agent_session_id", "created", "updated", "last_active",
+    # The session list's four job states. `status` above is the legacy field every
+    # existing client reads; this is additive beside it.
+    "job_state",
 }
 
 
