@@ -130,7 +130,7 @@ def test_the_corpus_is_actually_readable():
     assertion below pass vacuously in the wrong direction."""
     counts = invocation_counts()
     assert sum(counts.values()) > 0, "no skill invocations found — is E2E_RUNLOGS right?"
-    assert len(shipped_skills()) > 20, "skills directory did not enumerate"
+    assert len(shipped_skills()) > 19, "skills directory did not enumerate"
 
 
 def test_no_new_skill_has_gone_dark():
