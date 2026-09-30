@@ -259,12 +259,18 @@ first search says what to expect. Eval green: 14 pass, 1 partial, zero reds.
    generalisation. Also: `tiedAtTop` is **20** in a real flood, not 5 — the tool returns
    20 by default and all 20 share the top score.
 
-   **And the flood fixture is unrealistic.** `person-search-hales-namesakes.json` gives
-   its five tied candidates no facts at all, so `ut_init_project_012` measures an ask
-   over five identical blank options. It does not change the rule under test — 
-   decisiveness is computed from scores — only the realism of what is then presented.
-   Correcting it restales the v6 run log and buys another init-project eval, so it is
-   named, not done in passing. **This one needs a spend decision.**
+   **And the flood fixture was unrealistic — now FIXED.**
+   `person-search-hales-namesakes.json` gave its five tied candidates no facts at all,
+   so `ut_init_project_012` measured an ask over five identical blank options. Replaced
+   with a **live capture used verbatim**: 20 tied (not 5), 8 distinct given names, 10 of
+   20 with a birth date, 17 with a residence, and **0 of 20 with no facts at all**. The
+   fixture's own description had claimed its values were "taken from a live probe rather
+   than invented" — true of the scores, false of the candidates. It is true now.
+
+   It never changed the rule under test — decisiveness is computed from scores — only
+   the realism of what the agent then presents. The judge_context moved with it: the
+   "five candidates" line now says twenty, and three lines were added covering what the
+   reply must do with a result set too large for AskUserQuestion's four options.
 
 ## Where init-project's eval stands, and what it is waiting on
 

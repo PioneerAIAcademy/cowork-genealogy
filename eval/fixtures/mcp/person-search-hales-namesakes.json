@@ -1,6 +1,6 @@
 {
   "tool": "person_search",
-  "description": "A namesake flood: tens of thousands of matches, and the top candidates all score identically. Values taken from a live probe (hales-flood) rather than invented -- the run this models stalled at 35,920 matches. `pick.decisive` is false, so the skill must ASK rather than choose.",
+  "description": "A namesake flood: 35,921 matches and the top TWENTY candidates all score identically, so `pick.decisive` is false and the skill must ASK rather than choose. This models the run that stalled at 35,921.\n\nCAPTURED LIVE AND USED VERBATIM (2026-09-30), replacing a hand-written stand-in whose five candidates were all named \"Mary Hales\" and carried NO facts at all. That version measured an ask over five identical blank options -- a question no researcher could answer, and not the one the product faces. It did not change the rule under test (decisiveness is computed from scores), only the realism of what the agent then presents.\n\nWhat a real flood actually looks like, and why it matters here: 20 tied, not 5. Eight DISTINCT given names (Mary, Mary Ann, Mary Jane, Edith Mary, Elizabeth Mary, Mary Catherine, Mary Frances, Mary A.) -- the search matches a given name CONTAINING Mary, so the namesakes are not even all called the same thing. 10 of 20 carry a birth date, 17 a residence. And the top candidate LBF1-LHF carries exactly one fact, a bare `{type: Death}` with no date or place -- a deceased marker, not evidence -- so the hardest case is real but is a minority, not the rule.",
   "args": {
     "surname": "Hales",
     "givenName": "Mary"
@@ -10,108 +10,796 @@
       "surname": "Hales",
       "givenName": "Mary"
     },
-    "totalMatches": 35920,
+    "totalMatches": 35921,
     "paginationCappedAt": 4999,
-    "returned": 5,
+    "returned": 20,
     "offset": 0,
     "hasMore": true,
     "pick": {
       "decisive": false,
-      "tiedAtTop": 5,
-      "reason": "5 candidates share the top score (3.6236) \u2014 the same fields matched for all of them, so choosing between them needs a person."
+      "tiedAtTop": 20,
+      "reason": "20 candidates share the top score (3.6236) — the same fields matched for all of them, so choosing between them needs a person."
     },
     "results": [
       {
-        "personId": "NAMESAKE-00",
+        "personId": "LBF1-LHF",
         "score": 3.6236,
         "confidence": 4,
         "gedcomx": {
           "persons": [
             {
-              "id": "NAMESAKE-00",
+              "id": "LBF1-LHF",
+              "ark": "ark:/61903/4:1:LBF1-LHF",
+              "gender": "Female",
               "names": [
                 {
+                  "preferred": true,
+                  "type": "BirthName",
                   "given": "Mary",
                   "surname": "Hales"
                 }
               ],
-              "facts": []
+              "facts": [
+                {
+                  "type": "Death"
+                }
+              ]
             }
           ]
         }
       },
       {
-        "personId": "NAMESAKE-01",
+        "personId": "GN8W-L97",
         "score": 3.6236,
         "confidence": 4,
         "gedcomx": {
           "persons": [
             {
-              "id": "NAMESAKE-01",
+              "id": "GN8W-L97",
+              "ark": "ark:/61903/4:1:GN8W-L97",
+              "gender": "Female",
               "names": [
                 {
-                  "given": "Mary",
+                  "preferred": true,
+                  "type": "BirthName",
+                  "given": "Edith Mary",
                   "surname": "Hales"
                 }
               ],
-              "facts": []
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1881",
+                  "standard_date": "1881",
+                  "place": "Leighford Stafford, Staffordshire",
+                  "standard_place": "Stafford, Staffordshire, England, United Kingdom"
+                },
+                {
+                  "type": "Death"
+                },
+                {
+                  "type": "Residence",
+                  "date": "1911",
+                  "standard_date": "1911",
+                  "place": "Perry Barr, West Midlands, England, United Kingdom",
+                  "standard_place": "Perry Barr, West Midlands, England, United Kingdom"
+                }
+              ]
             }
           ]
         }
       },
       {
-        "personId": "NAMESAKE-02",
+        "personId": "L8BT-R1N",
         "score": 3.6236,
         "confidence": 4,
         "gedcomx": {
           "persons": [
             {
-              "id": "NAMESAKE-02",
+              "id": "L8BT-R1N",
+              "ark": "ark:/61903/4:1:L8BT-R1N",
+              "gender": "Female",
               "names": [
                 {
-                  "given": "Mary",
+                  "preferred": true,
+                  "type": "BirthName",
+                  "given": "Mary Ann",
                   "surname": "Hales"
                 }
               ],
-              "facts": []
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "3 November 1854",
+                  "standard_date": "3 Nov 1854",
+                  "place": "Lionville, Chester, Pennsylvania, United States",
+                  "standard_place": "Lionville, Chester, Pennsylvania, United States"
+                },
+                {
+                  "type": "Death",
+                  "date": "20 October 1931",
+                  "standard_date": "20 Oct 1931",
+                  "place": "David City, Butler, Nebraska, United States",
+                  "standard_place": "David City, Butler, Nebraska, United States"
+                },
+                {
+                  "type": "Residence",
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Raccoon Township, Beaver, Pennsylvania, United States",
+                  "standard_place": "Raccoon Township, Beaver, Pennsylvania, United States"
+                },
+                {
+                  "type": "Residence",
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Conneaut Township, Crawford, Pennsylvania, United States",
+                  "standard_place": "Conneaut Township, Crawford, Pennsylvania, United States"
+                },
+                {
+                  "type": "Residence",
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Butler, Nebraska, United States",
+                  "standard_place": "Butler, Nebraska, United States"
+                },
+                {
+                  "type": "Residence",
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Olive & Summit Townships, Butler, Nebraska, United States",
+                  "standard_place": "Olive Township, Butler, Nebraska, United States"
+                },
+                {
+                  "type": "Residence",
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Summit, Butler, Nebraska, United States",
+                  "standard_place": "Summit Township, Butler, Nebraska, United States"
+                },
+                {
+                  "type": "Residence",
+                  "date": "1920",
+                  "standard_date": "1920",
+                  "place": "Butler, Nebraska, United States",
+                  "standard_place": "Butler, Nebraska, United States"
+                },
+                {
+                  "type": "Residence",
+                  "date": "1930",
+                  "standard_date": "1930",
+                  "place": "David City, Butler, Nebraska, United States",
+                  "standard_place": "David City, Butler, Nebraska, United States"
+                },
+                {
+                  "type": "Burial",
+                  "place": "David City Cemetery, Butler, Nebraska, United States",
+                  "standard_place": "David City Cemetery, David City, Butler, Nebraska, United States"
+                }
+              ]
             }
           ]
         }
       },
       {
-        "personId": "NAMESAKE-03",
+        "personId": "9ZVY-YS2",
         "score": 3.6236,
         "confidence": 4,
         "gedcomx": {
           "persons": [
             {
-              "id": "NAMESAKE-03",
+              "id": "9ZVY-YS2",
+              "ark": "ark:/61903/4:1:9ZVY-YS2",
+              "gender": "Female",
               "names": [
                 {
-                  "given": "Mary",
+                  "preferred": true,
+                  "type": "BirthName",
+                  "prefix": "Mrs.",
+                  "given": "Mary A.",
                   "surname": "Hales"
                 }
               ],
-              "facts": []
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "       1828",
+                  "standard_date": "1828",
+                  "place": "Eardiston, Shropshire, England",
+                  "standard_place": "Eardiston, Shropshire, England, United Kingdom"
+                },
+                {
+                  "type": "Death"
+                }
+              ]
             }
           ]
         }
       },
       {
-        "personId": "NAMESAKE-04",
+        "personId": "G7FV-ZGD",
         "score": 3.6236,
         "confidence": 4,
         "gedcomx": {
           "persons": [
             {
-              "id": "NAMESAKE-04",
+              "id": "G7FV-ZGD",
+              "ark": "ark:/61903/4:1:G7FV-ZGD",
+              "gender": "Female",
               "names": [
                 {
+                  "preferred": true,
+                  "type": "BirthName",
                   "given": "Mary",
                   "surname": "Hales"
                 }
               ],
-              "facts": []
+              "facts": [
+                {
+                  "type": "Death"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "personId": "G7KM-52R",
+        "score": 3.6236,
+        "confidence": 4,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "G7KM-52R",
+              "ark": "ark:/61903/4:1:G7KM-52R",
+              "gender": "Female",
+              "names": [
+                {
+                  "preferred": true,
+                  "type": "BirthName",
+                  "given": "Mary Ann",
+                  "surname": "Hales"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "20 November 1822",
+                  "standard_date": "20 Nov 1822",
+                  "place": "Georgia, United States",
+                  "standard_place": "Georgia, United States"
+                },
+                {
+                  "type": "Death",
+                  "date": "14 May 1885",
+                  "standard_date": "14 May 1885",
+                  "place": "Walton, Georgia, United States",
+                  "standard_place": "Walton, Georgia, United States"
+                },
+                {
+                  "type": "Residence",
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Bradley, Walton, Georgia, United States",
+                  "standard_place": "Bradley, Walton, Georgia, United States"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "personId": "96D5-H7T",
+        "score": 3.6236,
+        "confidence": 4,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "96D5-H7T",
+              "ark": "ark:/61903/4:1:96D5-H7T",
+              "gender": "Female",
+              "names": [
+                {
+                  "preferred": true,
+                  "type": "BirthName",
+                  "given": "Mary Catherine",
+                  "surname": "Hales"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death"
+                },
+                {
+                  "type": "Christening",
+                  "date": "16 Dec 1868",
+                  "standard_date": "16 Dec 1868",
+                  "place": "Weston, Somerset, England",
+                  "standard_place": "Weston, Somerset, England, United Kingdom"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "personId": "9DSY-BM4",
+        "score": 3.6236,
+        "confidence": 4,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "9DSY-BM4",
+              "ark": "ark:/61903/4:1:9DSY-BM4",
+              "gender": "Female",
+              "names": [
+                {
+                  "preferred": true,
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Hales"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "Abt 1801",
+                  "standard_date": "Abt 1801",
+                  "place": ", Enniskillen, Fermanagh, Ireland",
+                  "standard_place": "Enniskillen, County Fermanagh, Ireland"
+                },
+                {
+                  "type": "Death"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "personId": "GWF7-NBD",
+        "score": 3.6236,
+        "confidence": 4,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "GWF7-NBD",
+              "ark": "ark:/61903/4:1:GWF7-NBD",
+              "gender": "Female",
+              "names": [
+                {
+                  "preferred": true,
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Hales"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "May 1840",
+                  "standard_date": "May 1840",
+                  "place": "Georgia",
+                  "standard_place": "Georgia, United States"
+                },
+                {
+                  "type": "Death"
+                },
+                {
+                  "type": "Residence",
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "District 72, Burke, Georgia, United States",
+                  "standard_place": "District 72, Burke, Georgia, United States"
+                },
+                {
+                  "type": "Residence",
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Militia District 72, Burke, Georgia, United States",
+                  "standard_place": "District 72, Burke, Georgia, United States"
+                },
+                {
+                  "type": "Ethnicity",
+                  "value": "Black or African American"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "personId": "KJ2S-968",
+        "score": 3.6236,
+        "confidence": 4,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "KJ2S-968",
+              "ark": "ark:/61903/4:1:KJ2S-968",
+              "gender": "Female",
+              "names": [
+                {
+                  "preferred": true,
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Hales"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "personId": "MNNG-K17",
+        "score": 3.6236,
+        "confidence": 4,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "MNNG-K17",
+              "ark": "ark:/61903/4:1:MNNG-K17",
+              "gender": "Female",
+              "names": [
+                {
+                  "preferred": true,
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Hales"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "abt. 1670",
+                  "standard_date": "Abt 1670",
+                  "place": "Blakesware, Hertford, Eng.",
+                  "standard_place": "Hertfordshire, England, United Kingdom"
+                },
+                {
+                  "type": "Death"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "personId": "K22S-DG9",
+        "score": 3.6236,
+        "confidence": 4,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "K22S-DG9",
+              "ark": "ark:/61903/4:1:K22S-DG9",
+              "gender": "Female",
+              "names": [
+                {
+                  "preferred": true,
+                  "type": "BirthName",
+                  "given": "Mary Ann",
+                  "surname": "Hales"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death"
+                },
+                {
+                  "type": "Christening",
+                  "date": "28 Aug 1837",
+                  "standard_date": "28 Aug 1837",
+                  "place": "Newcastle-Upon-Tyne, Northumberland, England",
+                  "standard_place": "Newcastle upon Tyne, Northumberland, England, United Kingdom"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "personId": "M1LZ-96N",
+        "score": 3.6236,
+        "confidence": 4,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "M1LZ-96N",
+              "ark": "ark:/61903/4:1:M1LZ-96N",
+              "gender": "Female",
+              "names": [
+                {
+                  "preferred": true,
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Hales"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "personId": "KT7V-V6D",
+        "score": 3.6236,
+        "confidence": 4,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "KT7V-V6D",
+              "ark": "ark:/61903/4:1:KT7V-V6D",
+              "gender": "Female",
+              "names": [
+                {
+                  "preferred": true,
+                  "type": "BirthName",
+                  "given": "Mary Jane",
+                  "surname": "Hales"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "7 March 1895",
+                  "standard_date": "7 Mar 1895",
+                  "place": "Bredgar, Kent, England, United Kingdom",
+                  "standard_place": "Bredgar, Kent, England, United Kingdom"
+                },
+                {
+                  "type": "Death",
+                  "date": "January 1986",
+                  "standard_date": "Jan 1986",
+                  "place": "Bromley, Kent, England, United Kingdom",
+                  "standard_place": "Bromley, Kent, England, United Kingdom"
+                },
+                {
+                  "type": "Residence",
+                  "date": "31 Mar 1901",
+                  "standard_date": "31 Mar 1901",
+                  "place": "Bredgar, Kent, England, United Kingdom",
+                  "standard_place": "Bredgar, Kent, England, United Kingdom"
+                },
+                {
+                  "type": "Residence",
+                  "date": "1911",
+                  "standard_date": "1911",
+                  "place": "Iwade, Kent, England, United Kingdom",
+                  "standard_place": "Iwade, Kent, England, United Kingdom"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "GENERAL SERVANT DOMESTIC"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "personId": "M9GM-VXG",
+        "score": 3.6236,
+        "confidence": 4,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "M9GM-VXG",
+              "ark": "ark:/61903/4:1:M9GM-VXG",
+              "gender": "Female",
+              "names": [
+                {
+                  "preferred": true,
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Hales"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death"
+                },
+                {
+                  "type": "Christening",
+                  "date": "07 SEP 1766",
+                  "standard_date": "7 Sep 1766",
+                  "place": "Darenth,Kent,England",
+                  "standard_place": "Darenth, Kent, England, United Kingdom"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "personId": "MK5Z-K73",
+        "score": 3.6236,
+        "confidence": 4,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "MK5Z-K73",
+              "ark": "ark:/61903/4:1:MK5Z-K73",
+              "gender": "Female",
+              "names": [
+                {
+                  "preferred": true,
+                  "type": "BirthName",
+                  "given": "Elizabeth Mary",
+                  "surname": "Hales"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death"
+                },
+                {
+                  "type": "Christening",
+                  "date": "26 DEC 1830",
+                  "standard_date": "26 Dec 1830",
+                  "place": "Tydd Saint Mary,Lincoln,England",
+                  "standard_place": "Tydd St Mary, Lincolnshire, England, United Kingdom"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "personId": "G5F7-QFB",
+        "score": 3.6236,
+        "confidence": 4,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "G5F7-QFB",
+              "ark": "ark:/61903/4:1:G5F7-QFB",
+              "gender": "Female",
+              "names": [
+                {
+                  "preferred": true,
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Hales"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "personId": "GNV2-69W",
+        "score": 3.6236,
+        "confidence": 4,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "GNV2-69W",
+              "ark": "ark:/61903/4:1:GNV2-69W",
+              "gender": "Female",
+              "names": [
+                {
+                  "preferred": true,
+                  "type": "BirthName",
+                  "given": "Mary Frances",
+                  "surname": "Hales"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "about 1871",
+                  "standard_date": "Abt 1871",
+                  "place": "Market Drayton, Shropshire, England, United Kingdom",
+                  "standard_place": "Market Drayton, Shropshire, England, United Kingdom"
+                },
+                {
+                  "type": "Death"
+                },
+                {
+                  "type": "Residence",
+                  "date": "31 March 1901",
+                  "standard_date": "31 Mar 1901",
+                  "place": "Chester, Cheshire, England, United Kingdom",
+                  "standard_place": "Chester, Cheshire, England, United Kingdom"
+                },
+                {
+                  "type": "Residence",
+                  "date": "1911",
+                  "standard_date": "1911",
+                  "place": "Chester, Cheshire, England, United Kingdom",
+                  "standard_place": "Chester, Cheshire, England, United Kingdom"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "personId": "93PP-HDP",
+        "score": 3.6236,
+        "confidence": 4,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "93PP-HDP",
+              "ark": "ark:/61903/4:1:93PP-HDP",
+              "gender": "Female",
+              "names": [
+                {
+                  "preferred": true,
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Hales"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "personId": "GNXW-SPL",
+        "score": 3.6236,
+        "confidence": 4,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "GNXW-SPL",
+              "ark": "ark:/61903/4:1:GNXW-SPL",
+              "gender": "Female",
+              "names": [
+                {
+                  "preferred": true,
+                  "type": "BirthName",
+                  "given": "Mary Ann",
+                  "surname": "Hales"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1858",
+                  "standard_date": "1858",
+                  "place": "Wittering, Northamptonshire",
+                  "standard_place": "Wittering, Northamptonshire, England, United Kingdom"
+                },
+                {
+                  "type": "Death"
+                },
+                {
+                  "type": "Residence",
+                  "date": "1901",
+                  "standard_date": "1901",
+                  "place": "Morcott, Rutland, England",
+                  "standard_place": "Morcott, Rutland, England, United Kingdom"
+                },
+                {
+                  "type": "Residence",
+                  "date": "1911",
+                  "standard_date": "1911",
+                  "place": "Morcott, Rutland, England, United Kingdom",
+                  "standard_place": "Morcott, Rutland, England, United Kingdom"
+                }
+              ]
             }
           ]
         }

@@ -185,14 +185,27 @@ Adding a signal to `person_search`'s response is not one file:
   candidate) therefore narrows to parents and spouse alone, for the minority of
   candidates that carry no life events. Still deferred, now priced against evidence.
 
-- **The flood fixture is unrealistic, and this probe is what shows it.**
-  `eval/fixtures/mcp/person-search-hales-namesakes.json` gives its five tied candidates
-  **no facts at all**, so `ut_init_project_012` measures an ask over five identical
-  blank options — a question no researcher could answer, and not the one the product
-  will face. It does not change the RULE under test (decisiveness is computed from
-  scores, so `pick.decisive: false` is right either way), only the realism of what the
-  agent then presents. Correcting it restales the v6 run log and buys another
-  init-project eval, so it is named here rather than done in passing.
+- **The flood fixture was unrealistic — FIXED, 2026-09-30.** It gave its five tied
+  candidates **no facts at all**, so `ut_init_project_012` measured an ask over five
+  identical blank options: a question no researcher could answer, and not the one the
+  product faces. Replaced with a **live capture used verbatim** for the same query.
+
+  It never changed the RULE under test — decisiveness is computed from scores, so
+  `pick.decisive: false` was right either way — only the realism of what the agent then
+  presents. What the real response carries, none of which the stand-in did:
+
+  | | hand-written stand-in | live capture |
+  |---|---|---|
+  | tied at top | 5 | **20** |
+  | distinct given names | 1 ("Mary Hales") | **8** (Mary Ann, Mary Jane, Edith Mary, …) |
+  | with a birth date | 0 | **10 of 20** |
+  | with a residence | 0 | **17 of 20** |
+  | candidates with no facts at all | 5 of 5 | **0 of 20** |
+
+  The namesakes are not even all called the same thing: the search matches a given name
+  *containing* Mary. The hardest case is still real and is now a minority rather than
+  the rule — the top-scoring `LBF1-LHF` carries exactly one fact, a bare
+  `{type: Death}` with no date or place, a deceased marker rather than evidence.
 
 ## Acceptance — runnable, with a named test
 

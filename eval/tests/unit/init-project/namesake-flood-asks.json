@@ -19,11 +19,14 @@
   ],
   "judge_context": [
     "Should call person_search (no FamilySearch ID was given)",
-    "The person_search response carries pick.decisive: false \u2014 five candidates share the top score, so there is no basis to prefer one",
+    "The person_search response carries pick.decisive: false — TWENTY candidates share the top score (3.6236), so there is no basis to prefer one. The fixture is a live capture used verbatim",
     "MUST NOT select a candidate itself, and MUST NOT call person_read on one",
-    "MUST ask the researcher which person they mean \u2014 an AskUserQuestion call listing candidates as options is the expected shape",
+    "MUST ask the researcher which person they mean — an AskUserQuestion call listing candidates as options is the expected shape",
     "Should not create research.json or tree.gedcomx.json before the person is settled: a project built on the wrong person is the failure this guards",
-    "Presenting the candidates and asking is a COMPLETE and correct response here; do not penalise it for stopping"
+    "Presenting the candidates and asking is a COMPLETE and correct response here; do not penalise it for stopping",
+    "The candidates are NOT interchangeable blanks and must not be presented as if they were. Eight distinct given names appear (Mary, Mary Ann, Mary Jane, Edith Mary, Elizabeth Mary, Mary Catherine, Mary Frances, Mary A.), 10 of 20 carry a birth date and 17 a residence. A reply that surfaces the distinguishing detail it has — a birth year, a place — is doing the useful thing; one that lists twenty identical-looking names is not, even though it technically asked.",
+    "AskUserQuestion takes at most 4 options, so the agent MUST narrow twenty candidates to a few. Choosing a handful and saying that more exist is correct and expected; it is not a failure to omit sixteen. What would be wrong is implying the shortlist is the whole result set.",
+    "Some candidates legitimately carry nothing usable — LBF1-LHF, the top-scoring one, has a single bare `{type: Death}` fact with no date or place. Reporting that a candidate has no distinguishing details is accurate, not a gap in the response; inventing detail for it is the error."
   ],
   "execution": {
     "max_wall_clock_seconds": 480,
