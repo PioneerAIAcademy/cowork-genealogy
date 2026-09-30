@@ -474,7 +474,7 @@ function uncertainPreferenceInvariants(entry: any, research: any): string[] {
 
 /** Strip [?], collapse whitespace, fold case — for value comparison. */
 function normalizeUncertainValue(v: string): string {
-  return v.replace(/\[?\?\]?/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+  return v.replace(/\[\?\]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
 }
 
 /** True when two sets share at least one element. */
