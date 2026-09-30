@@ -58,6 +58,13 @@
 
 .list {
   list-style: none;
+  /* Not a stray divergence from the viewer-ui copy: that tree's global.css
+     zeroes margin and padding on `*`, and this one's globals.css resets only
+     `html, body` plus box-sizing. Byte-identical CSS therefore renders the UA
+     default 40px indent and 1em block margins here. ProjectOverview,
+     ConflictsSection and PlansSection already carry the same three lines. */
+  padding: 0;
+  margin: 0;
 }
 
 .listItem {

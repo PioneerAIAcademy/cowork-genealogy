@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { useResearchData } from '../../contexts/ResearchDataContext'
 import Card from '../shared/Card'
 import type { Locality, LocalityPageRead } from '../../lib/schema'
@@ -44,7 +43,9 @@ function PageCoverage({ pagesRead }: { pagesRead: LocalityPageRead[] }): React.J
 
 export default function LocalitiesSection(): React.JSX.Element {
   const { research } = useResearchData()
-  const localities = useMemo<Locality[]>(() => research?.localities ?? [], [research?.localities])
+  // Plain `?? []`: the memo fed no hook dependency array, so it bought nothing
+  // over this and cost an import plus a dependency to keep correct.
+  const localities: Locality[] = research?.localities ?? []
 
   if (localities.length === 0) {
     return (
@@ -90,8 +91,8 @@ export default function LocalitiesSection(): React.JSX.Element {
               <div className={styles.block}>
                 <div className={styles.blockLabel}>Jurisdictions</div>
                 <ul className={styles.list}>
-                  {jurisdictions.map((j, i) => (
-                    <li key={i} className={styles.listItem}>
+                  {jurisdictions.map((j) => (
+                    <li key={j.name} className={styles.listItem}>
                       <span className={styles.itemName}>{j.name}</span>
                       {j.date_range && <span className={styles.itemDetail}>{j.date_range}</span>}
                     </li>
@@ -118,8 +119,8 @@ export default function LocalitiesSection(): React.JSX.Element {
               <div className={styles.block}>
                 <div className={styles.blockLabel}>Quirks</div>
                 <ul className={styles.quirkList}>
-                  {quirks.map((q, i) => (
-                    <li key={i} className={styles.quirk}>
+                  {quirks.map((q) => (
+                    <li key={q} className={styles.quirk}>
                       {q}
                     </li>
                   ))}

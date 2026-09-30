@@ -77,11 +77,15 @@ const statusColorMap: Record<string, BadgeColor> = {
 }
 
 interface StatusBadgeProps {
-  value: string
+  /** Nullable: ScenarioViewer casts raw run-log JSON and promises that schema
+   *  drift degrades to blank fields rather than a crash. An evaluations[] entry
+   *  with no `verdict` used to throw inside render and blank the whole panel. */
+  value?: string | null
   color?: BadgeColor
 }
 
-export default function StatusBadge({ value, color }: StatusBadgeProps): React.JSX.Element {
+export default function StatusBadge({ value, color }: StatusBadgeProps): React.JSX.Element | null {
+  if (value == null) return null
   const resolvedColor = color ?? statusColorMap[value] ?? 'gray'
   return (
     <span className={`${styles.badge} ${styles[resolvedColor]}`}>{value.replace(/_/g, ' ')}</span>
