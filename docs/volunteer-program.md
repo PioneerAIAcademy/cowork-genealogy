@@ -277,7 +277,7 @@ this changes every hosted turn.
 
 Add the `volunteer` label to the existing issue. The tool half is pure
 arithmetic with a complete test table. The issue also replaces one section
-of `convert-dates/SKILL.md` and names one `make eval-skill SKILL=convert-dates`
+of `agents/convert-dates.md` and names one `make eval-skill SKILL=convert-dates`
 run; a genealogist reviews that part. A month-2 task.
 
 #### V20. Take issue #2965 (event in a different country)

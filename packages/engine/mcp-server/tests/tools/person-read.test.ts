@@ -1579,3 +1579,103 @@ describe("personReadTool — sibling fan-out", () => {
   });
 });
 
+
+describe("personReadTool — staging the read (#2944)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    const { mkdtemp } = await import("fs/promises");
+    const { tmpdir } = await import("os");
+    const { join } = await import("path");
+    dir = await mkdtemp(join(tmpdir(), "person-read-stage-"));
+  });
+  afterEach(async () => {
+    const { rm } = await import("fs/promises");
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  async function envelopeOf(ref: string) {
+    const { readFile } = await import("fs/promises");
+    const { join } = await import("path");
+    return JSON.parse(await readFile(join(dir, ref), "utf8"));
+  }
+
+  it("stages the read when projectPath is given, and the staged document is what was returned", async () => {
+    mockOk(WITH_RELATIVES);
+    const out = await personReadTool(
+      { personId: " KNDX-MKG ", relatives: true, projectPath: dir },
+      LOCAL,
+    );
+    expect(out.staged).not.toBeNull();
+    expect(out.staged!.resultsRef).toMatch(/^results\/\.staging\/[0-9a-f-]+\.json$/);
+    expect(out.staged!.returnedCount).toBe(1);
+    expect(out.stagingError).toBeUndefined();
+
+    const envelope = await envelopeOf(out.staged!.resultsRef);
+    expect(envelope.tool).toBe("person_read");
+    expect(envelope.returned_count).toBe(1);
+    expect(envelope.payload.query).toEqual({
+      personId: "KNDX-MKG",
+      relatives: true,
+      sourceDescriptions: false,
+    });
+    expect(envelope.payload.results).toHaveLength(1);
+    expect(envelope.payload.results[0].personId).toBe("KNDX-MKG");
+    const { staged: _s, stagingError: _e, ...returned } = out;
+    expect(envelope.payload.results[0].gedcomx).toEqual(returned);
+  });
+
+  it("does not stage without projectPath", async () => {
+    mockOk(PERSON_ONLY);
+    const out = await personReadTool({ personId: "KNDX-MKG" }, LOCAL);
+    expect("staged" in out).toBe(false);
+    expect("stagingError" in out).toBe(false);
+  });
+
+  it.each(["", "   "])("does not stage for a blank projectPath (%j)", async (blank) => {
+    mockOk(PERSON_ONLY);
+    const out = await personReadTool({ personId: "KNDX-MKG", projectPath: blank }, LOCAL);
+    expect("staged" in out).toBe(false);
+    expect("stagingError" in out).toBe(false);
+  });
+
+  it("a staging failure is non-fatal: the person still returns, with staged: null and the reason", async () => {
+    const { writeFile } = await import("fs/promises");
+    const { join } = await import("path");
+    await writeFile(join(dir, "results"), "not a directory");
+    mockOk(PERSON_ONLY);
+    const out = await personReadTool({ personId: "KNDX-MKG", projectPath: dir }, LOCAL);
+    expect(out.persons[0].id).toBe("KNDX-MKG");
+    expect(out.staged).toBeNull();
+    expect(out.stagingError).toMatch(/ENOTDIR|not a directory|EEXIST/i);
+  });
+
+  it("a projectPath that does not exist is a staging failure, not a scaffolded folder", async () => {
+    const { join } = await import("path");
+    const { existsSync } = await import("fs");
+    const missing = join(dir, "no-such-project");
+    mockOk(PERSON_ONLY);
+    const out = await personReadTool({ personId: "KNDX-MKG", projectPath: missing }, LOCAL);
+    expect(out.persons[0].id).toBe("KNDX-MKG");
+    expect(out.staged).toBeNull();
+    expect(out.stagingError).toMatch(/does not exist/);
+    expect(existsSync(missing)).toBe(false);
+  });
+
+  it("keys the staged element by the post-redirect id for a merged person", async () => {
+    mockStatus(301, "https://api.familysearch.org/platform/tree/persons/GDZW-NZZ");
+    mockOk({
+      persons: [
+        {
+          id: "GDZW-NZZ",
+          living: false,
+          gender: { type: "http://gedcomx.org/Male" },
+          names: [{ nameForms: [{ parts: [{ type: "http://gedcomx.org/Given", value: "Resolved" }] }] }],
+        },
+      ],
+    });
+    const out = await personReadTool({ personId: "K2QT-J56", projectPath: dir }, LOCAL);
+    const envelope = await envelopeOf(out.staged!.resultsRef);
+    expect(envelope.payload.query.personId).toBe("K2QT-J56");
+    expect(envelope.payload.results[0].personId).toBe("GDZW-NZZ");
+  });
+});

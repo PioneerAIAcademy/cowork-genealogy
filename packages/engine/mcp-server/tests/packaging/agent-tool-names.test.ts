@@ -556,6 +556,37 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // convert-dates (issue #2790) holds the one tool the skill it replaced
+  // declared, `convert_calendar`, plus `Read` for the Narration line's read of
+  // research.json. It persists nothing, so it holds no writer tool and no hook
+  // routes anything to it.
+  "convert-dates.md": {
+    tools: [
+      "Read",
+      "convert_calendar",
+    ],
+    denies: [],
+  },
+
+  // search-familysearch-wiki (issue #2794) holds the one tool the skill it
+  // replaced declared, `wiki_search`, plus two built-ins it relied on from the
+  // main thread. `Write`: the deliverable IS a markdown file, and handing the
+  // save back to the main thread would take it out of the graded subject, so
+  // the file validators could no longer tell the agent failed. It follows
+  // `search-wikipedia` (issue #2795) as the precedent for `Write`; the plugin
+  // hook's `Write` matcher still keeps research.json and tree.gedcomx.json
+  // off-limits to any caller. `Read`:
+  // `Write` refuses to overwrite a file it has not read, and a repeat
+  // invocation overwrites the topic file in place.
+  "search-familysearch-wiki.md": {
+    tools: [
+      "Read",
+      "Write",
+      "wiki_search",
+    ],
+    denies: [],
+  },
+
   // locality-guide (issue #2117) holds exactly the eleven tools the skill it
   // replaced declared, plus `Read`: Step 6 persists only when research.json
   // exists at the project path, and the narration line reads it.
@@ -586,6 +617,15 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "research_log_append",
       "volume_search",
     ],
+    denies: [],
+  },
+
+  // The folded check-warnings skill (issue #2118). `person_quality` is absent by
+  // lead ruling 2026-09-27. No `Read`: with it the agent read research.json and
+  // the tree and reported what it found there instead of the tool's answer (4
+  // of 39 confirmation runs, 2026-09-28); callers pass person ids. Writes nothing.
+  "check-warnings.md": {
+    tools: ["person_warnings"],
     denies: [],
   },
 

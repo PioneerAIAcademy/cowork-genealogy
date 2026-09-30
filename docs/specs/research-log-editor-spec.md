@@ -426,8 +426,13 @@ Scope, and why it is this narrow:
   The jurisdiction must touch the census token: most non-US words in real notes
   are birthplaces on a US schedule ("1850 US Census, Schuylkill County ... born
   Ireland"), which stays refused.
-- **Undecidable inputs keep the prior behaviour** rather than failing open: when
-  no year binds to a census at all, the whole-note test still applies.
+- **Undecidable inputs skip** rather than guessing: when no year binds to a
+  census at all, the note-only gate does not fire — the same behaviour as an
+  undocumented jurisdiction. What this gives up: an unhedged pre-1880 US census
+  note whose phrasing the adjacency patterns above do not cover (e.g. "The
+  federal census shows Daniel in one dwelling with Margaret and sons Thomas and
+  Stephen; marriage 1871, Adams County"). The staged-payload trigger still fires
+  for `record_search` entries. Decided (lead, 2026-09-29).
 - **The staged search decides when the note does not.** For a `record_search`
   entry with a `stagedResultsRef`, the check reads the staged rows'
   `collectionTitle` — FamilySearch's own words, which the caller does not author.
@@ -445,29 +450,28 @@ Scope, and why it is this narrow:
 - **"Indexed" beside a role word is a hedge** ("Role indexed as 'Head'"), as it
   is in the eval-plane validator. Flagging a *name* as indexed is not.
 
-Measured over the 3,882 distinct `notes` arguments in the committed run logs
-(measured at dc9766b15; re-derive with `dev/measure-census-hedge-refusals.ts`
+Measured over the 4,062 distinct `notes` arguments in the committed run logs
+(measured at c70e0214d; re-derive with `dev/measure-census-hedge-refusals.ts`
 rather than quote — the corpus moves with every committed run, and shrinks as
 well as grows, because a re-run replaces a skill's run log), the note-only rule
-refuses 216 (5.6%). Against the rule before the staged-search trigger (the
-script's `--baseline` flag, given a copy of the earlier module), 4 notes
-are newly allowed, all by the "indexed" hedge, and none newly refused. Of the
-1,789 staged `record_search` entries with a note, 662 pair to the search
+refuses 177 (4.4%). Of the
+1,867 staged `record_search` entries with a note, 738 pair to the search
 response that staged them (e2e run logs keep only a truncated summary, so the
-rest cannot be paired); the staged search newly refuses 4 of those 662 and
-frees none. Two are the `ut_search_records_h4k` note quoted below and the other two
-are different notes of the same shape, a flat household claim with no census
-word. A census named before
-1800 is refused too, which the pre-binding whole-note year test (`18[0-7]\d`)
-could not see and which the rule is squarely for -- the 1790-1840 US schedules
-name only the head of household.
+rest cannot be paired); the staged search refuses 29 of those 738 (3.9%),
+of which 4 are refused only because of the payload (the `h4k` note twice, and
+two more flat household claims with no census word).
+Against the fallback-present baseline (before the 2026-09-29 change deleted the
+whole-note `18[0-7]\d` test), 46 notes are newly freed and 0 newly refused
+(note-only); 12 payload ops are newly freed and 0 newly refused. A census
+named before 1800 is still refused — it is caught by the year-binding branch,
+not by the deleted fallback.
 
 The lead rejected a tool-boundary content gate on 2026-08-27 on three grounds:
 a 41% refusal rate, non-generalizability outside the US, and the signal being
 author-supplied and optional. `requirePre1880CensusHedge`'s docstring in
 `research-log-append.ts` carries the second verbatim, with the issue it was
 ruled on. The binding above answers the first two — the rate
-is 5.6% of notes, and non-US censuses that carry the column are excluded. The
+is 4.4% of notes, and non-US censuses that carry the column are excluded. The
 staged search answers most of the third for `record_search`: the census is read
 from FamilySearch's response, not from the caller. What still stands is the tie:
 a note that omits the census year is not refused, and neither is a note logged
@@ -493,7 +497,8 @@ and nothing is written. The ground truth is the staged payload's `query`, which
 `record_search` and `fulltext_search` fill with their own echo of the call's
 arguments (`search-result-staging-spec.md` §6), so the caller does not author it.
 Those two are the only producers judged: `external_links_search`,
-`image_transcribe` and `record_read` stage no echo of their arguments, and
+`image_transcribe`, `record_read` and `person_read` stage no `echoQuery` of
+their arguments, and
 `person_search` does not stage.
 
 A key is refused only when all four hold: it is an input parameter of the
