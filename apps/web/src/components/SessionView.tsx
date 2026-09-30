@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { App as ViewerApp } from '@genealogy/viewer-ui'
+import { ViewerBody, ResearchDataProvider } from '@genealogy/viewer-ui'
 import { api, type SessionSummary } from '../api'
 import { useAlpha } from '../lib/alpha'
 import { useChatWidth } from '../lib/chatWidth'
@@ -111,7 +111,16 @@ export default function SessionView({
   // query value rather than being read as the URL fragment.
   const reconnectHref = `/auth/familysearch/login?next=${encodeURIComponent(`#/s/${sessionId}`)}`
 
-  return (
+  // The provider is hoisted above BOTH panes so the chat can resolve the schema ids
+  // in its prose against the same data the viewer renders. Nesting a second one
+  // inside ViewerApp would open a second subscription to the same transport, so the
+  // viewer is mounted as ViewerBody (no provider of its own) here; Electron still
+  // renders the self-contained App.
+  //
+  // With no transport there is NO provider, and that is deliberate: the chat reads it
+  // through `useResearchDataOptional`, so identifiers degrade to plain text instead of
+  // taking the pane down.
+  const shell = (
     <div
       className="sessionShell"
       data-dragging={dragging ? 'true' : undefined}
@@ -177,7 +186,7 @@ export default function SessionView({
             tell the embedded viewer to hide its (redundant) sidebar one.
             Electron passes nothing → keeps its toggle (its only one). */}
         {transport && (
-          <ViewerApp transport={transport} showThemeToggle={false} onProjectTitle={setAgentTitle} />
+          <ViewerBody showThemeToggle={false} onProjectTitle={setAgentTitle} />
         )}
       </section>
       {logs && (
@@ -210,6 +219,12 @@ export default function SessionView({
         </div>
       )}
     </div>
+  )
+
+  return transport ? (
+    <ResearchDataProvider transport={transport}>{shell}</ResearchDataProvider>
+  ) : (
+    shell
   )
 }
 

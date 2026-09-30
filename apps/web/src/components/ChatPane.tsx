@@ -1,6 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import React from 'react'
+import { useResearchDataOptional } from '@genealogy/viewer-ui'
+import { SchemaIdText } from './SchemaIdText'
 import type { SessionConnection, WsMessage } from '../transport/SessionConnection'
 import { api, ApiError } from '../api'
 import {
@@ -146,6 +149,51 @@ export default function ChatPane({
 }): React.JSX.Element {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
+  // Phase 2 item 1: schema ids in chat prose become links into the viewer.
+  //
+  // OPTIONAL by design. The provider is hoisted above both panes in SessionView, but
+  // only when a transport exists -- and this pane renders on the socket, which is a
+  // different condition. With no provider, `research` is null, no handler is passed
+  // down, and every id renders as the plain text it is today. The failure mode is
+  // "no link", never a broken bubble.
+  const research = useResearchDataOptional()
+  const openSchemaId = useMemo(
+    () =>
+      research
+        ? (_id: string, section: string): void => research.setActiveSection(section)
+        : undefined,
+    [research]
+  )
+  // react-markdown hands a paragraph's children through; only the STRING children are
+  // prose. Non-string children are already-parsed nodes (emphasis, code, links) and
+  // are passed through untouched, so markdown keeps working exactly as before.
+  const mdComponents = useMemo(
+    () => ({
+      p: ({ children }: { children?: React.ReactNode }): React.JSX.Element => (
+        <p>
+          {React.Children.map(children, (child) =>
+            typeof child === 'string' ? (
+              <SchemaIdText text={child} onOpen={openSchemaId} />
+            ) : (
+              child
+            )
+          )}
+        </p>
+      ),
+      li: ({ children }: { children?: React.ReactNode }): React.JSX.Element => (
+        <li>
+          {React.Children.map(children, (child) =>
+            typeof child === 'string' ? (
+              <SchemaIdText text={child} onOpen={openSchemaId} />
+            ) : (
+              child
+            )
+          )}
+        </li>
+      )
+    }),
+    [openSchemaId]
+  )
   // Reasoning blocks are hidden by default: the lay user never asked for the
   // model's private reasoning, and two alpha testers read the collapsed block's
   // label as a cryptic message. The toggle is for whoever wants to look.
@@ -368,7 +416,9 @@ export default function ChatPane({
               )}
               {m.text && (
                 <div className={`msgText ${m.error ? 'msgError' : ''}`}>
-                  <Markdown remarkPlugins={[remarkGfm]}>{m.text}</Markdown>
+                  <Markdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+                    {m.text}
+                  </Markdown>
                 </div>
               )}
               {/* 1b: the agent is mid-turn, so this one waits for the next step

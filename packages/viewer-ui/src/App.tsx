@@ -191,7 +191,15 @@ export function ErrorNotice(): React.JSX.Element | null {
   )
 }
 
-function AppContent({
+/**
+ * The viewer WITHOUT its provider, for a shell that supplies one itself.
+ *
+ * `App` below stays self-contained (Electron renders it directly). The web shell
+ * hoists `ResearchDataProvider` above BOTH panes so the chat can resolve the schema
+ * ids in its prose against the same data the viewer shows — nesting a second
+ * provider would open a second subscription to the same transport.
+ */
+export function ViewerBody({
   showThemeToggle,
   onProjectTitle
 }: {
@@ -269,7 +277,7 @@ export default function App({
 }): React.JSX.Element {
   return (
     <ResearchDataProvider transport={transport}>
-      <AppContent showThemeToggle={showThemeToggle} onProjectTitle={onProjectTitle} />
+      <ViewerBody showThemeToggle={showThemeToggle} onProjectTitle={onProjectTitle} />
     </ResearchDataProvider>
   )
 }

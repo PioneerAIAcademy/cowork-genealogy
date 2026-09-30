@@ -1,11 +1,12 @@
 // Public surface of the shared viewer. An app mounts <App transport={...} />
 // with a platform ResearchTransport (Electron: IPC; web: WebSocket/pub-sub).
-export { default as App } from './App'
+export { default as App, ViewerBody } from './App'
 
 export { ResearchDataProvider } from './contexts/ResearchDataProvider'
 export type { ResearchDataProviderProps } from './contexts/ResearchDataProvider'
 export {
   useResearchData,
+  useResearchDataOptional,
   ResearchDataContext,
   buildIndex
 } from './contexts/ResearchDataContext'
