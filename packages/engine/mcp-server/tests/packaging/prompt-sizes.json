@@ -6,6 +6,7 @@
   },
   "prompts": {
     "CLAUDE.md": 56972,
+    "packages/engine/plugin/agents/check-warnings.md": 44172,
     "packages/engine/plugin/agents/citation.md": 44479,
     "packages/engine/plugin/agents/convert-dates.md": 11387,
     "packages/engine/plugin/agents/gps-mentor.md": 40242,
@@ -17,12 +18,11 @@
     "packages/engine/plugin/agents/search-familysearch-wiki.md": 8480,
     "packages/engine/plugin/agents/search-images.md": 21550,
     "packages/engine/plugin/agents/search-wikipedia.md": 6843,
-    "packages/engine/plugin/skills/check-warnings/SKILL.md": 22506,
     "packages/engine/plugin/skills/conflict-resolution/SKILL.md": 27656,
     "packages/engine/plugin/skills/forget-and-rederive/SKILL.md": 13208,
     "packages/engine/plugin/skills/historical-context/SKILL.md": 15449,
     "packages/engine/plugin/skills/hypothesis-tracking/SKILL.md": 13498,
-    "packages/engine/plugin/skills/init-project/SKILL.md": 30107,
+    "packages/engine/plugin/skills/init-project/SKILL.md": 30020,
     "packages/engine/plugin/skills/locality-guide/SKILL.md": 20751,
     "packages/engine/plugin/skills/project-status/SKILL.md": 11447,
     "packages/engine/plugin/skills/question-selection/SKILL.md": 20246,
@@ -37,7 +37,7 @@
     "packages/engine/plugin/skills/source-evaluation/SKILL.md": 16823,
     "packages/engine/plugin/skills/timeline/SKILL.md": 21833,
     "packages/engine/plugin/skills/translation/SKILL.md": 10741,
-    "packages/engine/plugin/skills/tree-edit/SKILL.md": 11212,
+    "packages/engine/plugin/skills/tree-edit/SKILL.md": 11427,
     "packages/engine/plugin/skills/validate-schema/SKILL.md": 2873
   },
   "tools": {
