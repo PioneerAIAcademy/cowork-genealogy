@@ -291,6 +291,49 @@ first search says what to expect. Eval green: 14 pass, 1 partial, zero reds.
    the agent can do it.** The rule under test (decisiveness) passed either way; what was
    invisible was everything downstream of the rule.
 
+## The research-plan re-run: the fix held, my diagnosis did not
+
+Run 2026-09-30, 23 tests, $7.90, skill runner on the subscription. **20 pass, 1
+partial, 2 aborted** — both `sdk_stream_silence`.
+
+**The stall fix works.** `ut_research_plan_wzk`, which the orchestrator comment named
+as the test that burns all three attempts, passed on **attempt 1**;
+`ut_research_plan_014`, which aborted on wall clock in the run that motivated this work,
+passed on attempt 3. Seven transient retries rescued four tests.
+
+**But the duration diagnosis is refuted.** It held that `sdk_stream_silence` tracks test
+duration, because `wzk` was the longest of the 23 and the affected tests were in the top
+five. This run says otherwise:
+
+| rank by duration | test | outcome |
+|---|---|---|
+| 1 (548s) | `wzk` | **pass** |
+| 2 (444s) | `014` | pass, 3 attempts |
+| … | | |
+| 14 (229s) | `005` | **aborted** |
+| 15 (201s) | `r3d` | **aborted** |
+
+The longest test passed and the aborts came from the middle of the pack. What actually
+predicts trouble is `skill_attempts`: every test at 3 attempts is either an abort or a
+rescued pass, and every test at 1 attempt passed.
+
+**What is left is an upstream flake, not a threshold error.** An aborted test has been
+silent for 180s on three separate attempts 30s apart, which is a genuine stall — and the
+threshold must stay where it is, since the non-API gap in successful runs peaks at 58.7s.
+It costs **0–2 tests per run**: zero in `v2.json` and its candidate, two in
+`v1_2026-09-17`, two here. `ut_research_plan_005` is the repeat offender — the only test
+aborting in **both** runs that aborted at all.
+
+**Nothing was committed from it.** A run log may not carry a red (rule 6), so the log is
+kept outside the tree as evidence and `v2.json` — released, zero aborts — stays the
+current one. `check_runlogs` confirms research-plan's snapshot is **active**, so no
+re-run is owed for CI; this one was the confirmation owed from the stall work, and it
+gave its answer.
+
+**A further run is a dice roll, not a fix.** The aborting tests move between runs, so
+~$8 buys a chance at a clean log rather than a change in behaviour. The thing that would
+actually help is making `005` reproducible, which is measurement design, not a re-run.
+
 ## Where init-project's eval stands, and what it is waiting on
 
 `v6_2026-09-30_13-45-44.json` is **green** — 14 pass, 1 partial, zero reds — and

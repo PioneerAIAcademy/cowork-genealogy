@@ -864,12 +864,28 @@ _ALWAYS_RETRYABLE_ABORTS = {"error", "sdk_stream_silence"}
 # raised only after the watchdog has waited DEFAULT_SDK_MESSAGE_SILENCE_SECONDS for
 # ANY message, so by the time it fires the upstream has been quiet for three
 # minutes. With the ordinary 1s base the three attempts all land within ~7 seconds,
-# straight back into the same bad state -- which is why ut_research_plan_wzk burns
-# all three attempts rather than recovering on the second.
+# straight back into the same bad state.
 #
 # The silence THRESHOLD is deliberately not raised: across every committed unit run
 # log the non-API gap in SUCCESSFUL runs peaks at 58.7s, nowhere near 180s, so a
 # 180s silence is a genuine stall and a longer window would only mask it.
+#
+# THE BACKOFF WORKS, AND IT IS NOT ABOUT LONG TESTS (measured, research-plan
+# v3_2026-09-30_18-52-12, 23 tests). This comment used to name
+# `ut_research_plan_wzk` as the test that burns all three attempts, and a matching
+# note held that the stall "tracks test duration" because wzk was the longest of the
+# 23. Both are refuted by that run:
+#
+#   - wzk PASSED on attempt 1, and 014 -- which aborted on wall clock the run before
+#     -- passed on attempt 3. Seven transient retries rescued four tests.
+#   - Duration does not predict it. wzk is rank 1 by duration (548s) and passed; the
+#     two aborts were ranks 14 and 15 (229s, 201s).
+#
+# What is left is a genuine upstream flake, not a harness threshold error: an aborted
+# test has been silent for 180s on three separate attempts 30s apart. It costs 0-2
+# tests per run (0 in v2 and its candidate, 2 in v1_2026-09-17 and in
+# v3_2026-09-30), and `ut_research_plan_005` is the repeat offender -- the only test
+# aborting in BOTH runs that aborted at all. Do not re-derive a duration rule here.
 _STALL_ABORTS = {"sdk_stream_silence"}
 
 
