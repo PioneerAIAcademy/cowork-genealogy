@@ -14,6 +14,7 @@
   "mcp_fixtures": [
     "fulltext-search-flynn-principal-deed",
     "fulltext-search-flynn-principal-deed-by-name",
+    "fulltext-search-flinn-variant-zero",
     "wiki-read-any",
     "wiki-search-any"
   ],
