@@ -60,12 +60,12 @@ update/delete (forbidden by Rule 3), and `tree.gedcomx.json`.
 
 | Fact | Source |
 |------|--------|
-| Append-only rule; nil searches still logged; outputs link back via `log_entry_id` | `search-records/SKILL.md` Step 5 (was `references/research-log-protocol.md`, deleted by issue #2123) |
+| Append-only rule; nil searches still logged; outputs link back via `log_entry_id` | `search-records/SKILL.md` Step 5 (formerly `references/research-log-protocol.md`, now deleted) |
 | Log entry fields + `external_site` shape | `docs/specs/research-schema-spec.md` §5.4 |
 | Sidecar shape `{ log_id, tool, retrieved, returned_count, payload }`; nil → no sidecar | `research-schema-spec.md` §5.4.1 |
 | Required log fields, `log_outcome` enum, `external_site` required when `tool==="external_site"`, `EXTERNAL_SITE_VALUES` | `validateResearch`'s log loop (`"tool is 'external_site' but external_site object is null"`, `EXTERNAL_SITE_VALUES`) |
 | Sidecar checks: `log_id`↔entry↔filename, `returned_count`==`payload.results.length`, orphan detection, path-traversal guard, D5 persona resolution | `validateSidecars` (`src/validation/validator.ts`) |
-| The protocol reference formerly duplicated across the writing skills | `*/references/research-log-protocol.md` — **0 copies**; ran 4 → 3 → 1 → 0, the last deleted by issue #2123. Citations to it elsewhere in this spec are historical: the analytical rules are `search-records/SKILL.md` Step 5, and the mechanical half was always `research_log_append`'s |
+| The protocol reference formerly duplicated across the writing skills | `*/references/research-log-protocol.md` — **0 copies**; it ran 4 → 3 → 1 → 0, the last going when its analytical rules moved into the body. Citations to it elsewhere in this spec are historical: those rules are `search-records/SKILL.md` Step 5, and the mechanical half was always `research_log_append`'s |
 
 ---
 

@@ -403,8 +403,8 @@ so a skipped `Read` does leave a trace:
 | a bare noun phrase, not an instruction | `check-warnings/warning-checks.md` | **0/16** |
 | point-of-use, gated on "for that year" | `search-records/census-field-availability.md` | **0/25** |
 
-The last row is a historical measurement: that file was **deleted** by issue
-#2123, which is what the 0/25 argued for. Its census-schedule content is now
+The last row is a historical measurement: that file has since been **deleted**,
+which is what the 0/25 argued for. Its census-schedule content is now
 fetched from the wiki by an unconditional member of a labelled Step 2 pre-work
 block (ADR-0012), and the craft the wiki does not carry was folded into the body.
 The row stays because it is the sharpest measurement of the effect this section
@@ -482,7 +482,7 @@ identically is **physically duplicated** into each one rather than linked.
 
 The other two families are **gone**. `validation-protocol.md` ran 11 → 2 → 1
 (the `citation` copy went) → **0**, and `research-log-protocol.md` 3 → 1 → **0**,
-both retired by issue #2123 deleting the last `search-records` copies. The
+both retiring when the last `search-records` copies were deleted. The
 long-standing note here that "the two surviving `validation-protocol.md` copies
 contradict each other" described a two-file disagreement that no longer has two
 files: what each copy said is now either enforced by the writer tool's own error
@@ -514,7 +514,7 @@ lists, and the test asserts that too.
 > which is the family that has the lint.
 > **Direction:** either lint a shared core plus a
 > per-skill "who calls what" section, or derive each copy at build time from the
-> skill's `allowed-tools`. **The cheapest move is the one issue #2123 took: delete
+> skill's `allowed-tools`. **The cheapest move is the one actually taken: delete
 > them.** `validation-protocol.md` largely restated rules `research_append`'s
 > error contract already enforces at write time, and a rule the tool rejects
 > needs no prose copy at all — so the two unguarded families were removed rather
