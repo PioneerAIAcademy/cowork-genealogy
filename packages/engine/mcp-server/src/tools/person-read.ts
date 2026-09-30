@@ -13,6 +13,7 @@ import {
   type Memory,
 } from "../utils/memories.js";
 import { mapWithConcurrency } from "../utils/place-resolver.js";
+import { stageSearchResults } from "../utils/results-staging.js";
 import { imageTranscribeTool } from "./image-transcribe.js";
 import type {
   GedcomX,
@@ -81,7 +82,7 @@ export const personReadToolSchema = {
           "scan transcribed during this read is saved under images/ and its " +
           "project-relative path returned on that source as image_ref, so a " +
           "retained source can cite it. Without it the scan is transcribed but " +
-          "not kept.",
+          "not kept. The read itself is also staged, returned as `staged`.",
       },
     },
     required: ["personId"],
@@ -142,7 +143,59 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
       projectPath,
     );
   }
+
+  // Staged AFTER the memories merge, so the staged document is exactly what this
+  // call returns. Issue #2944: the staged copy is what `project_create` is to
+  // build the starting tree from (Stage B), instead of the model re-typing it.
+  // Best-effort, like record_read: a staging failure never fails the read.
+  if (typeof projectPath === "string" && projectPath.trim() !== "") {
+    return {
+      ...result,
+      ...(await stagePersonRead({ projectPath, input, resolvedId, result })),
+    };
+  }
   return result;
+}
+
+/**
+ * Stage one `person_read` result to results/.staging/ as a one-element envelope:
+ * `{ query: { personId, relatives, sourceDescriptions }, results: [{ personId, gedcomx }] }`.
+ * The element mirrors `record_read`'s `{ recordId, gedcomx }`; its `personId` is
+ * the POST-redirect id, which differs from `query.personId` for a merged
+ * subject. `resolvedId` defaults to the requested id -- the eval mock omits it,
+ * since a fixture has no redirect. Exported so the mock stages its canned
+ * response through this function rather than restating the shape in Python.
+ *
+ * Never throws: a staging failure comes back as `{ staged: null, stagingError }`.
+ */
+export async function stagePersonRead(args: {
+  projectPath: string;
+  input: PersonReadToolInput;
+  resolvedId?: string;
+  result: PersonReadResult;
+}): Promise<{ staged: PersonReadResult["staged"]; stagingError?: string }> {
+  const { projectPath, input, result } = args;
+  const personId = String(input.personId).trim();
+  try {
+    const staged = await stageSearchResults({
+      projectPath,
+      tool: "person_read",
+      response: {
+        query: {
+          personId,
+          relatives: input.relatives ?? false,
+          sourceDescriptions: input.sourceDescriptions ?? false,
+        },
+        results: [{ personId: args.resolvedId ?? personId, gedcomx: result }],
+      },
+    });
+    return { staged };
+  } catch (error) {
+    return {
+      staged: null,
+      stagingError: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
 
 /**
