@@ -12,7 +12,7 @@ description: >-
   are extracted and need person assignment, or evaluate whether two records are
   the same individual using records in hand — never searching new ones. Do NOT
   use to find or gather more records (use search-records); extract assertions
-  (use record-extraction); resolve a conflict where multiple candidates compete
+  (use extraction_append); resolve a conflict where multiple candidates compete
   (use conflict-resolution); or merge confirmed-identical persons (use tree-edit
   after proof-conclusion).
 allowed-tools:
@@ -42,7 +42,7 @@ One invocation per request. Do not call `research_append`, `tree_edit`, `same_pe
 
 Relay the agent's returned outcome as-is.
 
-Then recommend the next step: links written → proof-conclusion, or record-extraction for the next record; a conflict where multiple candidates genuinely compete → conflict-resolution; a blocker the agent named → the skill it named.
+Then recommend the next step: links written → proof-conclusion, or extraction (`extraction_append` / `@plugin:record-structurer`) for the next record; a conflict where multiple candidates genuinely compete → conflict-resolution; a blocker the agent named → the skill it named.
 
 ## Re-invocation behavior
 

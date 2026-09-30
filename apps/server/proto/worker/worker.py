@@ -147,14 +147,14 @@ EXPECTED_AGENTS = frozenset({
     "image-reader",
     "person-evidence",
     "proof-conclusion",
-    "record-extractor",
+    "record-structurer",
     "research-exhaustiveness",
     "search-images",
 })
 # The other half of the same precondition, a literal for the same reason: a count of
 # the directory the SDK loads the plugin from shrinks with it -- an image shipping 27
-# skills registers 27 and passes. test_proto_worker pins this against the repo.
-EXPECTED_SKILLS = 27
+# skills registers 26 and passes. test_proto_worker pins this against the repo.
+EXPECTED_SKILLS = 26
 
 _stdout_lock = threading.Lock()
 

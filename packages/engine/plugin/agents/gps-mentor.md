@@ -21,7 +21,7 @@ tools:
   # harnesses, .mcp.json, hosted web), `remote-devices__Genealogy_Research`
   # (bridged), and `Genealogy_Research` (bare display_name). Matched
   # exactly with no prefix fallback, and the plugin cannot control which name
-  # the host registers. See record-extractor.md for the full rationale;
+  # the host registers. See CLAUDE.md, "Dual-spelled tool names", for the full rationale;
   # guarded by tests/packaging/agent-tool-names.test.ts.
   - mcp__genealogy__research_query
   - mcp__genealogy__project_context
@@ -433,16 +433,18 @@ plan that was too narrow to begin with.
 0. **Binary precondition check (run first).**
    (a) **Classification —** for every assertion linked to this question,
    confirm `information_quality` and `record_basis` are populated with
-   reasoned values, not left at record-extraction's best-effort default.
+   reasoned values, not left blank or at a placeholder.
    (b) **Identity —** confirm each person the conclusion depends on (the
    subject and any candidate parent/relative) is identified by at least one
    `person_evidence`-linked assertion. `person_evidence` is identity
    resolution; unlinked *fact* and *negative* assertions about an
    already-identified person are advisory, not blockers.
    A classification failure, or a relied-upon *person* with no linked
-   identity assertion, is a `must_address`: cite the specific assertion IDs
-   and set `suggested_skill` to `record-extraction` or
-   `person-evidence`. Do not proceed to checks 1–5 below until this passes;
+   identity assertion, is a `must_address`: cite the specific assertion IDs.
+   For a missing identity link set `suggested_skill` to `person-evidence`. A
+   classification failure has no skill to route to (classifications are set in
+   code at extraction, and none is refined afterwards): say the assertion
+   predates that, and leave `suggested_skill` unset for it. Do not proceed to checks 1–5 below until this passes;
    they assume classified evidence with the relevant persons identified.
 
 1. **Topical breadth (Standard 14).** Get the log for this question —

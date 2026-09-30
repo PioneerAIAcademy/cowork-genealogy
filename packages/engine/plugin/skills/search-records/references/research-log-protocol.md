@@ -89,11 +89,10 @@ stale `stagedResultsRef` (staged result files are pruned after ~24h) is
 the common case: re-run the search to re-stage, then log with the fresh
 `staged.resultsRef`.
 
-## When record-extraction writes log entries
+## When extraction writes log entries
 
-record-extraction writes a log entry **only** when processing a
-record that was not produced by search-records or
-search-external-sites — e.g., a user-provided PDF uploaded directly.
-When a search skill already logged the search, link to that log
-entry by setting `log_entry_id` on each new source and assertion,
-rather than creating a duplicate log entry.
+`extraction_append` writes its own log entry for every record it
+extracts: a `record_read` entry for a FamilySearch record, and an
+`image_transcribe` or `user_provided` entry for a document. Nobody calls
+`research_log_append` for a record before extracting it. A search skill's
+own entry records the search; the extraction's entry records the read.

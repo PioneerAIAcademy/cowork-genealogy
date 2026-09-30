@@ -15,8 +15,8 @@ description: Writes GPS-conformant proof conclusions — selects the tier
   Do NOT use
   when the user wants to resolve a conflict (use conflict-resolution),
   wants to select the next question (use question-selection), wants to
-  classify or reevaluate evidence (use record-extraction), or wants a
-  hypothesis status summary (use hypothesis-tracking).
+  extract a record (use extraction_append), or
+  wants a hypothesis status summary (use hypothesis-tracking).
 allowed-tools:
   - project_context
 ---

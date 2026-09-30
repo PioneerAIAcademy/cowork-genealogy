@@ -227,7 +227,7 @@ def test_blocks_when_stub_skills_names_a_nonexistent_skill(entry):
 
 def test_allows_stub_skills_naming_a_real_skill():
     result = _stub_check(
-        {"stub_skills": ["search-external-sites", {"skill": "record-extraction"}]}
+        {"stub_skills": ["search-external-sites", {"skill": "research-plan"}]}
     )
     assert result.runnable is True
 
@@ -279,7 +279,7 @@ def test_allows_run_skills_and_stub_skills_naming_different_callees():
     test. search-records delegates to several skills and a test may reasonably
     execute one and deny another."""
     result = _stub_check(
-        {"run_skills": ["search-external-sites"], "stub_skills": ["record-extraction"]}
+        {"run_skills": ["search-external-sites"], "stub_skills": ["research-plan"]}
     )
     assert result.runnable is True
 
@@ -328,7 +328,7 @@ def test_blocks_grade_trigger_without_stubbed_callees(execution):
 def test_allows_grade_trigger_with_stubbed_callees():
     """The four shipped grade:trigger fixtures all stub their callees, so this
     is the positive control for that population."""
-    result = _check_with(["grade:trigger"], {"stub_skills": ["record-extraction"]})
+    result = _check_with(["grade:trigger"], {"stub_skills": ["research-plan"]})
     assert result.runnable is True
 
 

@@ -111,7 +111,7 @@
       }
     },
     "known_holding": {
-      "description": "One item the researcher already has on hand (document, prior research, living-relative knowledge), surveyed by init-project before new research begins. Lightweight by design — not a source or assertion. Promoted into proper sources/assertions by record-extraction/citation, which set 'promoted' to true; the entry is never deleted.",
+      "description": "One item the researcher already has on hand (document, prior research, living-relative knowledge), surveyed by init-project before new research begins. Lightweight by design — not a source or assertion. Promoted into proper sources/assertions once the document itself is extracted and cited, which sets 'promoted' to true; the entry is never deleted.",
       "type": "object",
       "required": ["id", "holding_type", "description", "confidence", "promoted", "created"],
       "additionalProperties": false,

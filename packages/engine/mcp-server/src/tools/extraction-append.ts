@@ -1,8 +1,12 @@
-// extraction_append — the record-extraction lane's writer for research.json.
+// extraction_append — extraction in code, for research.json's `sources` and
+// `assertions` sections.
 //
-// Same machinery as `research_append`, restricted to the two sections the
-// record-extractor legitimately owns: `sources` and `assertions`. Everything
-// else — `person_evidence` above all — is not reachable from this tool.
+// Three call shapes, exactly one per call: `recordIds` (FamilySearch records,
+// read live and extracted from the index), `documents` (any other source,
+// structured by the record-structurer agent), and `absences` (negative evidence
+// from a nil search). In every shape the roles and the three classification
+// layers are decided HERE, from the extraction table; no caller supplies them,
+// and the input has nowhere to put them.
 //
 // WHY A SECOND TOOL RATHER THAN A PARAMETER (issue #695): in the birkeland run
 // the router's delegation message instructed the extractor to write
@@ -10,19 +14,16 @@
 // rule, and the agent complied — fabricating a match_score no tool had computed.
 // A lane expressed as prose loses to a caller that prompts against it, and a
 // lane expressed as a tool PARAMETER is forgeable by the caller. A lane
-// expressed as tool identity is not: the agent's `tools:` frontmatter simply
-// omits the broad writer, so there is no call it can emit. The durable record
-// of that reasoning is ADR-0006, "Restrict capability by tool identity, not by
-// prompt or parameter", whose `Applies to:` names this file.
+// expressed as tool identity is not. The durable record of that reasoning is
+// ADR-0006, "Restrict capability by tool identity, not by prompt or parameter",
+// whose `Applies to:` names this file.
 //
-// The restriction is passed as a second function argument to `researchAppend`,
-// NOT as a field on the tool input — see `ResearchAppendOptions` for why that
-// distinction is what makes it unforgeable, and why the gate lives in the module
-// rather than in the `index.ts` dispatch layer.
+// The section restriction is passed as a second function argument to
+// `researchAppend`, NOT as a field on the tool input — see
+// `ResearchAppendOptions` for why that distinction is what makes it unforgeable.
 
 import {
   researchAppend,
-  researchAppendSchema,
   type ResearchAppendInput,
   type ResearchAppendOp,
   type ResearchAppendResult,
@@ -34,7 +35,7 @@ import {
   type ExtractDocument,
   type ExtractResult,
 } from "../utils/record-extract.js";
-import { readProjectJson } from "../utils/project-io.js";
+import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
 import { readStagedResults } from "../utils/results-staging.js";
 import { arkToBareId } from "../utils/ark.js";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
@@ -52,207 +53,73 @@ import {
   type StructuredDocument,
 } from "../utils/structured-document.js";
 
-/** The record-extraction lane: one record's source plus its assertions. */
+/** The sections extraction writes: one record's source plus its assertions. */
 export const EXTRACTION_SECTIONS: ReadonlySet<string> = new Set([
   "sources",
   "assertions",
 ]);
 
-const EXTRACTION_SECTION_LIST = ["sources", "assertions"];
-
 type BatchCall = ExtractionBatchInput &
   ({ recordIds: string[] } | { absences: AbsenceInput[] } | { documents: DocumentInput[] });
-type AnyCall = ResearchAppendInput & Partial<ExtractionModeInput> & Partial<ExtractionBatchInput>;
 
-export function extractionAppend(
-  input: ResearchAppendInput & Partial<ExtractionModeInput>,
-  principal: Principal,
-): Promise<ResearchAppendResult>;
-export function extractionAppend(input: BatchCall, principal: Principal): Promise<ExtractionBatchResult>;
 export async function extractionAppend(
-  input: AnyCall,
+  input: BatchCall,
   principal: Principal,
-): Promise<ResearchAppendResult | ExtractionBatchResult> {
+): Promise<ExtractionBatchResult> {
   return runExtractionAppend(input, DEFAULT_DEPS, principal);
 }
 
 /** `extractionAppend` with its record reader injected. The harness and the tests
  *  call this; production goes through `extractionAppend`. */
-export function runExtractionAppend(
-  input: ResearchAppendInput & Partial<ExtractionModeInput>,
-  deps: ExtractionAppendDeps,
-  principal: Principal,
-): Promise<ResearchAppendResult>;
-export function runExtractionAppend(
+export async function runExtractionAppend(
   input: BatchCall,
   deps: ExtractionAppendDeps,
   principal: Principal,
-): Promise<ExtractionBatchResult>;
-export async function runExtractionAppend(
-  input: AnyCall,
-  deps: ExtractionAppendDeps,
-  principal: Principal,
-): Promise<ResearchAppendResult | ExtractionBatchResult> {
-  // Exactly one call shape. Two together describe the same write from different
-  // ends, and silently preferring one would make the ignored half invisible.
-  const shapes = (["recordIds", "absences", "documents", "logEntryId", "ops"] as const).filter(
-    (k) => (input as any)[k] !== undefined,
-  );
-  if (shapes.length > 1 && !(shapes.length === 2 && shapes.includes("logEntryId") && shapes.includes("ops"))) {
+): Promise<ExtractionBatchResult> {
+  const MODES = ["recordIds", "documents", "absences"] as const;
+  const got = MODES.filter((k) => (input as any)?.[k] !== undefined);
+  // The hand-built forms, in both spellings (`ops`, and one flat op), and the
+  // one-record extractor mode (`logEntryId` + `recordId`).
+  const retired = (["ops", "section", "op", "entry", "entryId", "fields", "logEntryId", "recordId"] as const).filter((k) => (input as any)?.[k] !== undefined);
+  if (retired.length > 0) {
     return {
       ok: false,
+      records: [],
       errors: [
-        `extraction_append received ${shapes.map((k) => `\`${k}\``).join(" and ")} together. Send one: ` +
-          "`recordIds` to extract FamilySearch records in code, or `absences` to record people a " +
-          "search did not find.",
+        `extraction_append no longer takes ${retired.map((k) => `\`${k}\``).join(" or ")}: roles and ` +
+          "classifications are decided in code, so there is nothing for a caller to compose. Send " +
+          "`recordIds` for FamilySearch records, `documents` (from the record-structurer agent) for " +
+          "any other source, or `absences` for people a search did not find. Correcting an " +
+          "existing assertion is not an extraction and is not done here.",
       ],
-    } as ResearchAppendResult;
+    };
   }
-  if (input.recordIds !== undefined) return recordIdsMode(input as ExtractionBatchInput, deps, principal);
-  if (input.absences !== undefined) return absencesMode(input as ExtractionBatchInput);
-  if (input.documents !== undefined) return documentsMode(input as ExtractionBatchInput);
-  // EXTRACTOR MODE is entered on the presence of `logEntryId`. Supplying `ops`
-  // as well is a precondition error naming both: the two describe the same
-  // write from opposite ends, and silently preferring one would make the
-  // ignored half invisible.
-  if (input.logEntryId !== undefined) {
-    if (input.ops !== undefined) {
-      return {
-        ok: false,
-        errors: [
-          "extraction_append received BOTH `logEntryId` (extractor mode, which " +
-            "builds the ops itself from the record's sidecar) and `ops` (the " +
-            "hand-built form). Send one: `logEntryId` + `recordId` to extract a " +
-            "FamilySearch record in code, or `ops` to write assertions you " +
-            "composed yourself.",
-        ],
-        opsReceived: input.ops.length,
-      } as ResearchAppendResult;
-    }
-    return extractorMode(input as ResearchAppendInput & ExtractionModeInput);
-  }
-  return researchAppend(input, {
-    allowedSections: EXTRACTION_SECTIONS,
-    toolName: "extraction_append",
-  });
-}
-
-/** Resolve the record document out of the log entry's sidecar, extract it, and
- *  persist the whole batch through the ordinary writer. */
-async function extractorMode(
-  input: ResearchAppendInput & ExtractionModeInput,
-): Promise<ResearchAppendResult> {
-  const fail = (msg: string): ResearchAppendResult =>
-    ({ ok: false, errors: [msg] }) as ResearchAppendResult;
-
-  let research: any;
-  try {
-    research = await readProjectJson(input.projectPath, "research.json");
-  } catch (e) {
-    return fail(`could not read research.json: ${e instanceof Error ? e.message : String(e)}`);
-  }
-
-  const logEntry = (Array.isArray(research.log) ? research.log : []).find(
-    (e: any) => e && e.id === input.logEntryId,
-  );
-  if (!logEntry) {
-    return fail(
-      `log entry '${input.logEntryId}' does not exist. Extractor mode reads the ` +
-        "record out of that entry's results sidecar, so the search or read must be " +
-        "logged with `research_log_append` first.",
-    );
-  }
-  const ref = logEntry.results_ref;
-  if (typeof ref !== "string" || ref === "") {
-    return fail(
-      `log entry '${input.logEntryId}' has no results sidecar (results_ref is null), ` +
-        "so there is no record document to extract. Re-read the record with " +
-        "`record_read({ recordId, projectPath })` — a LIVE read, with `resultsRef` " +
-        "omitted, since passing one resolves from the search sidecar and stages " +
-        "nothing — then log it with that `staged.resultsRef`.",
-    );
-  }
-
-  let results: unknown[];
-  try {
-    results = await readStagedResults(input.projectPath, ref);
-  } catch (e) {
-    return fail(`could not read sidecar '${ref}': ${e instanceof Error ? e.message : String(e)}`);
-  }
-
-  const key = arkToBareId(String(input.recordId ?? ""));
-  const match = results.find((r: any) => {
-    const id = r?.recordId ?? r?.id;
-    return typeof id === "string" && arkToBareId(id) === key;
-  }) as ExtractDocument | undefined;
-  if (!match) {
-    const known = results
-      .map((r: any) => r?.recordId ?? r?.id)
-      .filter((x: unknown): x is string => typeof x === "string")
-      .slice(0, 5)
-      .join(", ");
-    return fail(
-      `record '${input.recordId}' is not in sidecar '${ref}' — expected one of: ${known}`,
-    );
-  }
-
-  // Not fatal — a non-census record legitimately carries no index fields — but a
-  // multi-person record with none is almost always a `record_search` sidecar,
-  // where only the searched persona has them. Roles would then be assigned from
-  // names and ages alone, silently, for the whole household. Warned rather than
-  // refused, because the caller may legitimately be extracting a record type
-  // that has no index data at all.
-  const sidecarWarnings: string[] = [];
-  if (!match.indexFields && (match.gedcomx?.persons ?? []).length > 1) {
-    sidecarWarnings.push(
-      `record '${input.recordId}' has ${(match.gedcomx?.persons ?? []).length} personas and NO ` +
-        "per-person index fields. That is the shape of a `record_search` sidecar, which carries " +
-        "them for the searched persona only — roles for the other personas are then assigned " +
-        "from names and ages with nothing to say so. If this is a FamilySearch record, re-read it " +
-        "live with `record_read({ recordId, projectPath })`, `resultsRef` OMITTED, and log that " +
-        "read. If it is a record type that simply carries no index data, this is expected.",
-    );
-  }
-
-  const { ops, sourceDescription, extraction } = buildExtractionOps(
-    { recordId: match.recordId ?? input.recordId, gedcomx: match.gedcomx ?? {}, indexFields: match.indexFields },
-    input,
-    logEntry,
-  );
-
-  const result = await researchAppend(
-    { ...input, ops, sourceDescription, logEntryId: undefined } as ResearchAppendInput,
-    { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" },
-  );
-
-  if (!result.ok) return result;
-
-  // Hand back WHAT WAS EXTRACTED, not just that it worked: the caller reports
-  // this and cannot see the record itself. The defaulted classifications ride
-  // on `validation.warnings` because an `unknown` proximity switches off
-  // `contradictionIsCredible`, and a missing table row must be visible rather
-  // than quietly weakening a guard.
-  return {
-    ...result,
-    extraction: {
-      recordType: extraction.recordType,
-      ...(extraction.censusStatesRelationships !== undefined
-        ? { censusStatesRelationships: extraction.censusStatesRelationships }
-        : {}),
-      assertionCount: extraction.assertions.length,
-      roles: [...new Set(extraction.assertions.map((a) => a.record_role))],
-      notes: extraction.notes,
-    },
-    validation: {
-      ...result.validation,
-      warnings: [
-        ...result.validation.warnings,
-        ...sidecarWarnings,
-        ...extraction.defaultedClassifications,
-        ...extraction.notes,
+  if (got.length !== 1) {
+    return {
+      ok: false,
+      records: [],
+      errors: [
+        (got.length === 0
+          ? "extraction_append received none of `recordIds`, `documents` or `absences`. "
+          : `extraction_append received ${got.map((k) => `\`${k}\``).join(" and ")} together. `) +
+          "Send exactly one: `recordIds` to extract FamilySearch records, `documents` for any other " +
+          "source, or `absences` to record people a search did not find.",
       ],
-    },
-  } as ResearchAppendResult;
+    };
+  }
+  // Both documents, before any read or write: a folder that is not a project is
+  // an answer (`reason: "no_project"`), and half a project stays loud, as on
+  // every other writer.
+  try {
+    await readProjectJson(input.projectPath, "research.json");
+    await readProjectJson(input.projectPath, "tree.gedcomx.json");
+  } catch (e) {
+    if (e instanceof NoProjectError) return { ...noProjectResult(), records: [] };
+    return { ok: false, records: [], errors: [e instanceof Error ? e.message : String(e)] };
+  }
+  if (input.recordIds !== undefined) return recordIdsMode(input, deps, principal);
+  if (input.absences !== undefined) return absencesMode(input);
+  return documentsMode(input);
 }
 
 // ─── batch modes: `recordIds` and `absences` (issues #2937 / #2939) ─────────
@@ -329,6 +196,8 @@ export interface ExtractionBatchResult {
   ok: boolean;
   records: RecordOutcome[];
   errors?: string[];
+  /** The one `ok: false` that is an answer: `projectPath` is not a project. */
+  reason?: "no_project";
 }
 
 const READ_CONCURRENCY = 4;
@@ -453,14 +322,7 @@ async function recordIdsMode(
         );
         const { ops, sourceDescription, extraction } = buildExtractionOps(
           { recordId: doc.recordId ?? o.recordId, gedcomx: doc.gedcomx ?? {}, indexFields: doc.indexFields },
-          {
-            projectPath: input.projectPath,
-            logEntryId: o.logId!,
-            recordId: o.recordId,
-            questionIds: input.questionIds,
-            absentPersons: absent,
-          },
-          { id: o.logId! },
+          { logEntryId: o.logId!, questionIds: input.questionIds, absentPersons: absent },
         );
         const written = await researchAppend(
           { projectPath: input.projectPath, ops, sourceDescription } as ResearchAppendInput,
@@ -794,27 +656,16 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
   };
 }
 
-// ─── extractor mode (issue #2937) ───────────────────────────────────────────
+// ─── one FamilySearch record's ops ──────────────────────────────────────────
 
-/**
- * Extractor-mode input. camelCase — these are MCP tool parameters, which sit on
- * the API side of the casing seam (CLAUDE.md, "Identifier casing").
- *
- * Entered when `logEntryId` is present. Everything here is what the record
- * CANNOT supply: which questions the extraction serves and who was expected but
- * absent are both relative to the research question, not to the document.
- */
-export interface ExtractionModeInput {
-  projectPath: string;
-  /** The log entry whose `results_ref` sidecar holds the record. */
+/** What `buildExtractionOps` needs beyond the record: which log entry read it,
+ *  which questions it serves, and who was expected on it and absent. */
+interface ExtractionOpsInput {
   logEntryId: string;
-  /** Which record in that sidecar. Matched ARK-insensitively. */
-  recordId: string;
-  /** Open questions this extraction serves. */
   questionIds?: string[];
   /** Persons expected in this record and NOT found. The extractor never emits
-   *  the literal `record_role: "absent"`; negative evidence is a claim about
-   *  what the record does not contain, which no document can supply. */
+   *  the literal `record_role: "absent"` itself; negative evidence is a claim
+   *  about what the record does not contain, which no document can supply. */
   absentPersons?: {
     name: string;
     factType?: string;
@@ -836,8 +687,7 @@ function todayIso(): string {
  */
 export function buildExtractionOps(
   doc: ExtractDocument,
-  input: ExtractionModeInput,
-  logEntry: { id: string; performed?: string },
+  input: ExtractionOpsInput,
 ): {
   ops: ResearchAppendOp[];
   sourceDescription: { title: string; url?: string };
@@ -966,205 +816,139 @@ function eventYear(gx: SimplifiedGedcomX, recordType: string): string | undefine
 }
 
 
-/** The input surface is `research_append`'s with the two `section` enums
- *  narrowed. DERIVED rather than copied so the shared fields — `ops`,
- *  `sourceDescription`, `projectPath`, the place-resolution echoes — cannot
- *  drift between the two tools as either evolves. */
-function narrowedInputSchema() {
-  const base = researchAppendSchema.inputSchema as any;
-  const sectionDescription =
-    "The research.json section this op writes. This tool writes the " +
-    "record-extraction lane only: `sources` (the record's source entry) and " +
-    "`assertions` (one per extracted fact).";
-
-  const properties: any = { ...base.properties };
-
-  properties.section = {
-    ...base.properties.section,
-    enum: [...EXTRACTION_SECTION_LIST],
-    description: sectionDescription,
-  };
-
-  // EXTRACTOR MODE's inputs, added to (not replacing) the derived surface.
-  // `required` is deliberately untouched — it names only `projectPath`, and
-  // both call shapes are legal.
-  properties.logEntryId = {
-    type: "string",
-    description:
-      "EXTRACTOR MODE. The research-log entry whose results sidecar holds the " +
-      "record to extract. Supplying this switches the tool into extractor mode: " +
-      "roles, classifications and assertions are decided in CODE from the " +
-      "record, and you supply none of them. Requires `recordId`. Do not send " +
-      "`ops` as well — that is the hand-built form and the two are refused " +
-      "together. The sidecar must come from a LIVE `record_read` " +
-      "(`{ recordId, projectPath }`, with `resultsRef` OMITTED): passing " +
-      "`resultsRef` resolves the record from the search sidecar and stages " +
-      "nothing, and a search sidecar carries per-person index fields for the " +
-      "searched persona only, so household roles cannot be assigned from it.",
-  };
-  properties.recordId = {
-    type: "string",
-    description:
-      "EXTRACTOR MODE. Which record in that sidecar. Any ARK form is accepted.",
-  };
-  properties.questionIds = {
-    type: "array",
-    items: { type: "string" },
-    description:
-      "EXTRACTOR MODE. The open questions this extraction serves. Yours to " +
-      "decide — it is relative to the research question, not to the record — " +
-      "and stamped on every assertion written.",
-  };
-  properties.absentPersons = {
-    type: "array",
-    items: {
-      type: "object",
-      properties: {
-        name: { type: "string", description: "Who was expected." },
-        factType: { type: "string", description: "Defaults to `name`." },
-        note: {
-          type: "string",
-          description:
-            "The assertion's value. Keep the person's identity in it rather " +
-            "than a generic phrase shared across several people.",
-        },
-      },
-      required: ["name"],
-    },
-    description:
-      "EXTRACTOR MODE. Persons expected in this record and NOT found, written " +
-      "as negative evidence (`record_role: \"absent\"`). Yours to supply: the " +
-      "extractor never mints an absence, because a claim about who is MISSING " +
-      "cannot be read off the document.",
-  };
-
-  // BATCH MODES (issues #2937 / #2939).
-  properties.recordIds = {
-    type: "array",
-    items: { type: "string" },
-    description:
-      "FAMILYSEARCH RECORDS. The records to extract, any ARK form. The tool " +
-      "reads each one live, logs every read, decides roles, classifications and " +
-      "assertions IN CODE, and returns a summary per record for you to relay " +
-      "verbatim. A record already extracted is skipped and named. Send with " +
-      "`questionIds` and, for a person expected on one of these records and not " +
-      "found, `absentPersons` with that record's `recordId`.",
-  };
-  properties.absences = {
-    type: "array",
-    items: {
-      type: "object",
-      properties: {
-        collection: { type: "string", description: "The collection searched, by title." },
-        place: { type: "string", description: "Where the search was scoped." },
-        name: { type: "string", description: "Who was expected and not found." },
-        note: { type: "string", description: "The assertion's value; defaults to a sentence naming the person." },
-        logEntryId: { type: "string", description: "The nil search's own log entry." },
-        questionIds: { type: "array", items: { type: "string" } },
-        repository: { type: "string", description: "Defaults to FamilySearch." },
-        sourceClassification: {
-          type: "string",
-          enum: [...VALIDATOR_ENUMS.source_classification],
-          description:
-            "What was searched. `derivative` (the default) for an index search; " +
-            "`original` when the page images themselves were browsed.",
-        },
-      },
-      required: ["collection", "name", "logEntryId"],
-    },
-    description:
-      "NEGATIVE EVIDENCE FROM A NIL SEARCH. People a search expected and did not " +
-      "find, when there is no record to extract. Each is written in code as a " +
-      "negative assertion against the collection searched. Log the nil search " +
-      "with `research_log_append` first and pass its `logEntryId`.",
-  };
-  properties.absentPersons = {
-    ...properties.absentPersons,
-    items: {
-      ...properties.absentPersons.items,
-      properties: {
-        ...properties.absentPersons.items.properties,
-        recordId: {
-          type: "string",
-          description: "With `recordIds`: which of those records this person was expected on.",
-        },
-      },
-    },
-  };
-
-  properties.ops = {
-    ...base.properties.ops,
-    items: {
-      ...base.properties.ops.items,
-      properties: {
-        ...base.properties.ops.items.properties,
-        section: {
-          ...base.properties.ops.items.properties.section,
-          enum: [...EXTRACTION_SECTION_LIST],
-          description: sectionDescription,
-        },
-      },
-    },
-  };
-
-  return { ...base, properties };
-}
+const QUESTION_IDS = {
+  type: "array",
+  items: { type: "string" },
+  description:
+    "The open questions this extraction serves. Yours to decide — it is relative to " +
+    "the research question, not to the record — and stamped on every assertion written.",
+};
 
 export const extractionAppendSchema = {
   name: "extraction_append",
   description:
-    "Persist ONE extracted record to research.json — its source entry plus one " +
-    "assertion per extracted fact. This is the record-extraction lane's writer: " +
-    "it writes the `sources` and `assertions` SECTIONS and no others.\n" +
+    "Extract records into research.json IN CODE: each record's source entry plus " +
+    "one assertion per fact, with roles and the three classification layers " +
+    "decided from the extraction table. You compose none of them, and the input " +
+    "has no field for them. Writes the `sources` and `assertions` sections and " +
+    "no others.\n" +
     "\n" +
-    "TWO CALL SHAPES.\n" +
+    "Send EXACTLY ONE of:\n" +
+    "- `recordIds` — FamilySearch records, any ARK form. Each is read live, " +
+    "logged and extracted from the index. A record already extracted is skipped " +
+    "and named.\n" +
+    "- `documents` — any other source (a transcription, an upload, pasted text), " +
+    "as structured by the record-structurer agent. Every document is validated " +
+    "before anything is written; an unknown key is refused.\n" +
+    "- `absences` — people a search expected and did not find, when there is no " +
+    "record to extract. Log the nil search with `research_log_append` first.\n" +
     "\n" +
-    "1. EXTRACTOR MODE — the normal path for a FamilySearch record. Send " +
-    "`logEntryId` + `recordId` (plus `questionIds`, and `absentPersons` if any). " +
-    "The tool reads the record out of that log entry's sidecar and decides the " +
-    "roles, the three classification layers and every assertion IN CODE; you " +
-    "compose nothing. It returns an `extraction` echo — record type, assertion " +
-    "count, the roles assigned, and any notes — which is what you report, since " +
-    "you never see the record yourself. Anything it had to default lands in " +
-    "`validation.warnings` and is worth repeating to the user. The sidecar must " +
-    "come from a LIVE `record_read({ recordId, projectPath })` with " +
-    "`resultsRef` OMITTED.\n" +
-    "\n" +
-    "2. OPS FORM — for a record no sidecar covers (an image, full text, an " +
-    "external site, pasted prose). Supply the entries yourself, as below. " +
-    "Sending `logEntryId` and `ops` together is refused.\n" +
-    "\n" +
-    "THE OPS FORM. Correcting " +
-    "an assertion's place/standard_place/date/value also updates the tree fact " +
-    "materialized from it.\n" +
-    "\n" +
-    "Supply each entry in its persisted snake_case shape WITHOUT an id; the tool " +
-    "assigns the next `<prefix>NNN`, stamps tool-owned timestamps, validates the " +
-    "whole project, and writes atomically. Returns a compact summary; on any " +
-    "failure nothing is written.\n" +
-    "\n" +
-    "To persist a whole record in ONE call, pass an `ops` array (each op is " +
-    "`{ section, op, entry?/entryId?/fields? }`): one sources append plus one " +
-    "assertions append per fact, with the top-level `sourceDescription: { title, " +
-    "author?, url? }`. The tool then creates the tree.gedcomx.json source " +
-    "description (assigning the S id), stamps the source op's " +
-    "`gedcomx_source_description_id` and every assertion's `source_id`, " +
-    "auto-fills/verifies `record_persona_id` and canonicalizes `record_id` " +
-    "against the log entry's results sidecar, resolves `standard_place` for " +
-    "assertion places (echoed in `resolvedPlaces`), validates ONCE, and writes " +
-    "tree.gedcomx.json + research.json together. Source reuse is auto-detected: " +
-    "when the batch's assertions cite a record_id an existing source already " +
-    "covers, the tool updates that source in place (same repository) or reuses " +
-    "its S entry (different repository) instead of duplicating — always supply " +
-    "`sourceDescription` and relay the echoed `sourceReuse` " +
-    "({ action: created | updated_existing | new_source_reused_s, srcId, sId }). " +
-    "To cite a specific known S entry explicitly, omit `sourceDescription` and " +
-    "set the sources op's `gedcomx_source_description_id` to that S id. Batches " +
-    "are all-or-nothing: on failure nothing is written and errors name the " +
-    "failing ops (`ops[i]: <msg>`) plus `opsReceived` so you can confirm no op " +
-    "was dropped.\n" +
-    "\n" +
-    "Identity links (`person_evidence`) are NOT written here — record a persona↔" +
-    "person question in your return summary and let person-evidence resolve it.",
-  inputSchema: narrowedInputSchema(),
+    "Returns one outcome per record, each with a code-written `summary`: relay " +
+    "it verbatim, since you do not see the record yourself. Identity links " +
+    "(`person_evidence`) are NOT written here; a correction to an existing " +
+    "assertion goes through `research_append`.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      projectPath: {
+        type: "string",
+        description: "Absolute path to the project folder holding research.json.",
+      },
+      recordIds: {
+        type: "array",
+        items: { type: "string" },
+        description:
+          "FAMILYSEARCH RECORDS. The records to extract, any ARK form. Send with " +
+          "`questionIds` and, for a person expected on one of these records and not " +
+          "found, `absentPersons` with that record's `recordId`.",
+      },
+      questionIds: QUESTION_IDS,
+      absentPersons: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            recordId: {
+              type: "string",
+              description: "Which of the `recordIds` this person was expected on.",
+            },
+            name: { type: "string", description: "Who was expected." },
+            factType: { type: "string", description: "Defaults to `name`." },
+            note: {
+              type: "string",
+              description:
+                "The assertion's value. Keep the person's identity in it rather " +
+                "than a generic phrase shared across several people.",
+            },
+          },
+          required: ["recordId", "name"],
+        },
+        description:
+          "With `recordIds`: persons expected on one of those records and NOT found, " +
+          "written as negative evidence. Yours to supply, because a claim about who " +
+          "is MISSING cannot be read off the record.",
+      },
+      documents: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            recordId: {
+              type: "string",
+              description:
+                "`capture:<descriptive>`, `ancestry:<collection>:<id>`, or the source's ARK.",
+            },
+            document: {
+              type: "object",
+              description:
+                "The structured document, in the shape the record-structurer agent's " +
+                "instructions give. Validated in code; any other key is refused.",
+            },
+            transcriptionRef: {
+              type: "string",
+              description: "The `results/` ref of the transcription the document was read from.",
+            },
+            imageFilename: {
+              type: "string",
+              description: "`image_transcribe`'s imageRef, when the source is a page image.",
+            },
+          },
+          required: ["recordId", "document"],
+        },
+        description:
+          "ANY OTHER SOURCE. One entry per source, each written as its own source " +
+          "entry and log entry. Send with `questionIds`.",
+      },
+      absences: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            collection: { type: "string", description: "The collection searched, by title." },
+            place: { type: "string", description: "Where the search was scoped." },
+            name: { type: "string", description: "Who was expected and not found." },
+            note: {
+              type: "string",
+              description: "The assertion's value; defaults to a sentence naming the person.",
+            },
+            logEntryId: { type: "string", description: "The nil search's own log entry." },
+            questionIds: QUESTION_IDS,
+            repository: { type: "string", description: "Defaults to FamilySearch." },
+            sourceClassification: {
+              type: "string",
+              enum: [...VALIDATOR_ENUMS.source_classification],
+              description:
+                "What was searched. `derivative` (the default) for an index search; " +
+                "`original` when the page images themselves were browsed.",
+            },
+          },
+          required: ["collection", "name", "logEntryId"],
+        },
+        description:
+          "NEGATIVE EVIDENCE FROM A NIL SEARCH. Each person is written in code as a " +
+          "negative assertion against the collection searched.",
+      },
+    },
+    required: ["projectPath"],
+  },
 };

@@ -15,7 +15,9 @@ argues about *what to move, in what order*.
 
 **Three skills are exempt from the lead's 2026-09-22 ruling that every skill
 becomes an agent and the skill is deleted:** `research` (the orchestrator),
-`record-extraction` (ruled 2026-09-21), and `forget-and-rederive` (ruled
+`record-extraction` (ruled 2026-09-21, and since retired: extraction runs in
+code, through `extraction_append` and the `record-structurer` agent), and
+`forget-and-rederive` (ruled
 2026-09-25, issue #2791), whose confirmation step and its rule never to read
 the FamilySearch tree for the rest of the project must bind the main thread
 after setup, which an agent's single return cannot do.
@@ -380,11 +382,14 @@ Two things this does NOT close:
    the router can copy "everything after the final `---`" without judging what
    is researcher-facing. The router prints only that, verbatim, and appends the
    hand-back literal issue #2292 rules; it never summarizes, and no label or
-   field name reaches the researcher. `agents/record-extractor.md`'s
-   "Return contract" is the worked form, and
+   field name reaches the researcher. `agents/citation.md`'s "Return contract"
+   is the worked form, and
    `packages/engine/mcp-server/tests/packaging/agent-return-contract.test.ts`
    refuses an agent body without the heading once its name leaves that test's
-   pending list.
+   pending list. The exception is an agent whose whole return is a tool's own
+   output: `record-structurer` returns `extraction_append`'s code-written
+   summary verbatim (lead, 2026-09-29), so it has no paragraphs of its own to
+   write and sits in that test's `EXCLUDED` list beside `image-reader`.
    **A request that belongs to another agent is handed back, never spawned**
    (lead ruling 2026-09-23): the agent does none of that work, names the
    owning agent in its caller-facing lines, and the main thread spawns it. The

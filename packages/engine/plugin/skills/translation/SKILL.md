@@ -9,9 +9,9 @@ description: Genealogy-specific translation and paleography assistance for
   "translate this record", "what does this say?", "German church record",
   "Latin abbreviations", "read this handwriting", "French notarial record",
   "what does [foreign word] mean?", when a record is in a non-English
-  Western language, or when record-extraction encounters text it cannot
-  parse due to language or script. Do NOT use when the user wants to
-  extract assertions from an English record (use record-extraction), wants
+  Western language, or when extraction meets text it cannot parse due to
+  language or script. Do NOT use when the user wants to extract assertions
+  from an English record (use the record-structurer agent), wants
   historical context about a place (use historical-context), or wants a
   locality guide (use locality-guide). A Wikipedia lookup is
   search-wikipedia, not translation.
@@ -65,8 +65,8 @@ conversation. It does not fetch images itself.
   paleographic reading directly. No tool call is needed.
 - **Only an image URL, no image** — translation cannot open URLs. Ask
   the user to open the link in the record viewer and paste or attach
-  the image. A record handed off from `record-extraction` arrives with
-  its image already in context.
+  the image. A record handed off for translation arrives with its image
+  already in context.
 
 ## Steps
 
@@ -118,7 +118,7 @@ Highlight:
 End every translation response with both offers, in this exact
 wording — not paraphrased, not replaced by open-ended research
 suggestions:
-- "Extract assertions from this record?" (record-extraction)
+- "Extract assertions from this record?" (`@plugin:record-structurer`, with the translation as its text)
 - "Link [person] to the tree?" (person-evidence)
 
 Substitute the person's name for [person]. Offer both unless the
@@ -155,7 +155,7 @@ reading uncertain — could be *Baver*].
   original form (Johann, not John).
 - The godfather's surname is flagged `[?]`, not silently resolved.
 
-*Next step:* "Extract assertions from this record?" (record-extraction) · "Link [person] to the tree?" (person-evidence)
+*Next step:* "Extract assertions from this record?" (`@plugin:record-structurer`) · "Link [person] to the tree?" (person-evidence)
 
 ## Paleography guidance
 
@@ -207,7 +207,7 @@ These conventions govern how the translation is written up:
 | The record uses regional dialect | Note the dialect and translate based on regional meaning, not standard-language meaning. |
 | User asks "what does [term] mean?" without a full record | Answer directly with the genealogical meaning. Load vocabulary reference if needed. No need to run the full translation workflow. |
 | User wants historical context about WHY a record exists | Hand off to historical-context. This skill translates WHAT the record says. |
-| User wants citation formatting for the translated record | Hand off to citation after record-extraction creates the source entry. |
+| User wants citation formatting for the translated record | Hand off to citation after extraction creates the source entry. |
 
 ## Re-invocation behavior
 

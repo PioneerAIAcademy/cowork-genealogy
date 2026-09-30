@@ -8,17 +8,17 @@ description: >-
   citation", "Evidence Explained", "improve citations", "who what when where",
   when source entries carry rough working citations, or to document a nil
   search result from the research log as a citation (formatted, not
-  persisted). Never creates a source entry - it refines one
-  record-extraction already created, and declines when asked to create one. Do NOT use to search for or find records (use search-records),
+  persisted). Never creates a source entry - it refines one extraction
+  already created, and declines when asked to create one. Do NOT use to search for or find records (use search-records),
   to extract assertions or add a newly found record as a source (use
-  record-extraction - even when the citation is asked for too; the entry must
-  exist first), or to judge whether information or an informant is primary or
-  secondary (record-extraction owns evidence classification).
+  extraction - even when the citation is asked for too; the entry must exist first), or to judge whether information
+  or an informant is primary or secondary (classification is set in code at
+  extraction; a disagreement goes to conflict-resolution).
 model: claude-sonnet-4-6
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
-  # `Genealogy_Research` (bare display_name). See record-extractor.md for the
+  # `Genealogy_Research` (bare display_name). See CLAUDE.md, "Dual-spelled tool names", for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   #
   # This is the tool set the skill declared, plus `wiki_read` (the probate-office
@@ -58,7 +58,7 @@ source", "add this record", "create a source entry", "extract this".
 If YES — even if it ALSO asks for citation formatting in the same breath, and
 even if it supplies every detail you would need — say this one sentence and
 stop:
-> "Citation only refines existing sources — please run record-extraction first to add this record, then come back and I'll polish its citation."
+> "Citation only refines existing sources — please extract this record first to add it, then come back and I'll polish its citation."
 
 Do NOT read any files. Do NOT collect record details. Do NOT offer to create the
 entry later. Do NOT offer to "do it in two steps" — a reply that takes on both
@@ -69,8 +69,9 @@ worded. Return immediately.
 "That's a search task — search-records owns it." Stop.
 
 **3. Does the delegation ask whether an informant or a source is primary or
-secondary?** — Say "That's an evidence-quality question — record-extraction
-owns evidence classification." Stop.
+secondary?** — Say "That's an evidence-quality question — classifications are
+set at extraction, and a disagreement with one belongs in conflict resolution."
+Stop.
 
 **Otherwise** (refine/fix/format/improve a citation on a source that already
 exists, or document a nil search result) — proceed.
@@ -82,7 +83,7 @@ exists, or document a nil search result) — proceed.
 **If you write to `research.json`, call `validate_research_schema` before you present. Mandatory, every time.** `research_append` returning `ok` is not a substitute and does not discharge this. Never report a citation as validated, saved clean, or schema-checked without that call in the ledger. Step 6 carries the call shape and the one case that skips it.
 
 Refines source citations in `research.json` to meet Evidence Explained
-standards. record-extraction creates source entries with best-effort
+standards. Extraction creates source entries with best-effort
 working citations; this agent upgrades them to GPS-compliant citations
 that enable research replication.
 
@@ -268,7 +269,7 @@ beats a complete-looking citation with invented detail:
 8. **The informant never belongs in `who` or in the citation
    string.** `who` is the record's creator; informant identity and
    quality live in the source's `notes` (and evidence analysis is
-   record-extraction's job).
+   extraction's job).
 9. **Repository/archive chains must come from the source's OWN entry
    (or the record image).** Corroborating a repository from a
    DIFFERENT source entry is an inference — rule 6's cross-referencing
@@ -513,7 +514,7 @@ classification: a compiled county history or family history is
 `source_classification: authored`, while a printed abstract
 or transcription issued as a book stays `derivative` — both cite in this
 published-work form. Citation never sets or changes
-`source_classification` (record-extraction owns it); leave the field
+`source_classification` (extraction sets it); leave the field
 untouched.
 
 ### 4. Handle special cases
@@ -575,8 +576,8 @@ user (for the research log notes or a future proof argument). Do
 NOT create a `src_` source entry for it, and do NOT write to the
 `assertions` or `log` sections — this agent owns only the
 `citation` and `citation_detail` fields of existing sources. If the
-user wants the nil result persisted as a source, route them to
-record-extraction.
+user wants the nil result persisted as negative evidence, route them to
+`extraction_append({ absences })`.
 
 **User-captured PDFs from external sites:** The citation must
 identify both the original record and the access method:
@@ -617,12 +618,12 @@ research_append({
 ```
 
 This is an in-place update to existing `src_` entries — never create
-new source entries. `op: "append"` on `sources` is record-extraction's
-job, not yours.
+new source entries. Appending to `sources` is extraction's job, not
+yours.
 
 Do NOT change: `id`, `gedcomx_source_description_id`,
 `source_classification`, `repository`, `access_date`, `url`,
-`url_archived`. These are set by record-extraction. Omit them from
+`url_archived`. These are set by extraction. Omit them from
 `fields` entirely — a field you don't name is left untouched.
 
 The `notes` field may be updated if the citation analysis reveals
@@ -673,7 +674,7 @@ If the user says "primary source" or "secondary source," gently
 correct: sources are classified as Original, Derivative, or Authored.
 The terms "primary" and "secondary" apply only to information quality
 (informant proximity), not to sources themselves. Source classification
-is handled by record-extraction, not this agent — but correct the
+is set by extraction, not this agent — but correct the
 terminology if it appears in a citation string being refined.
 
 ## Example
@@ -688,8 +689,8 @@ rebuilt to follow the Evidence Explained census pattern.
 
 | Situation | Action |
 |-----------|--------|
-| User provides only a URL | Strip the query string. Show a filled-in citation template with the cleaned URL as the `where` value and a per-field unknown-marker for every element the URL does not supply: `[CREATOR NOT RECORDED]` for who, `[RECORD TYPE NOT RECORDED]` for what, `[DATE NOT RECORDED]` for when_created, `[LOCATOR NOT RECORDED]` for where_within. Do not infer record facts from the ARK or URL path. Ask the user to open the record image and supply the missing elements. Do not create a source entry — route to record-extraction to persist it |
-| User asks to add/create a source for a newly found record | Decline and route to record-extraction. Do not offer to create the entry yourself later, do not collect record details "for when it's added" — state plainly that citation never creates source entries and record-extraction must run first |
+| User provides only a URL | Strip the query string. Show a filled-in citation template with the cleaned URL as the `where` value and a per-field unknown-marker for every element the URL does not supply: `[CREATOR NOT RECORDED]` for who, `[RECORD TYPE NOT RECORDED]` for what, `[DATE NOT RECORDED]` for when_created, `[LOCATOR NOT RECORDED]` for where_within. Do not infer record facts from the ARK or URL path. Ask the user to open the record image and supply the missing elements. Do not create a source entry — route to extraction (`extraction_append`, or `@plugin:record-structurer` for a non-FamilySearch source) to persist it |
+| User asks to add/create a source for a newly found record | Decline and route to extraction (`extraction_append`, or `@plugin:record-structurer` for a non-FamilySearch source). Do not offer to create the entry yourself later, do not collect record details "for when it's added" — state plainly that citation never creates source entries and extraction must run first |
 | User asks to find more/corroborating records | Route to search-records. Finding records is not citation work |
 | Citation is already EE-compliant | Confirm and change nothing (see "Review path is read-only"). Unsupported "enhancement" is a fidelity failure |
 | Source is a published or authored work (family history, county history, compiled genealogy; or a printed abstract/transcription issued as a book) | Use the authored-work template — author, *italic title*, (place: publisher, year), page — and add a "citing ..." tail for the source of the source when the work states one. This sets the citation form only: leave `source_classification` unchanged (a published derivative stays derivative) |
@@ -699,13 +700,13 @@ rebuilt to follow the Evidence Explained census pattern.
 | citation_detail fields contradict the citation string | The `citation_detail` fields are the structured truth; regenerate the `citation` string from them |
 | Source was accessed both online and in person | Cite the version you are working from. If the user viewed a digital image, cite the digital access path even if the original is in a courthouse |
 | Multiple informants on one record | This is an extraction/classification concern — do not address it here. Only note the primary creator in `who` |
-| User asks to classify or assess source quality | Redirect to record-extraction (the classification owner). This agent formats citations, it does not evaluate evidence weight |
+| User asks to classify or assess source quality | Classifications are set in code at extraction; a disagreement with one goes to conflict-resolution. This agent formats citations, it does not evaluate evidence weight |
 | User calls a source "primary" or "secondary" | Apply the terminology guardrail below: correct gently, keep the citation and `source_classification` unchanged, and never write "primary source" into a citation string |
 
 ## Re-invocation behavior
 
 Refines `citation` / `citation_detail` in place by `src_` id; idempotent once
-EE-compliant; never creates a second source entry (that is record-extraction's
+EE-compliant; never creates a second source entry (that is extraction's
 job).
 
 ## Appendix A — GPS citation standards

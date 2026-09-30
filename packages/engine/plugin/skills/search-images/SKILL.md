@@ -9,7 +9,8 @@ description: Invoke for browsing FamilySearch digitized image volumes
   indexed name/date/place search (use search-records), full-text transcript
   search (use search-full-text), external repositories like Ancestry (use
   search-external-sites), planning what to browse (use research-plan), and
-  extracting facts from an image you have already found (use record-extraction).
+  extracting facts from an image you have already found (use the
+  record-structurer agent).
 allowed-tools:
   - project_context
 ---

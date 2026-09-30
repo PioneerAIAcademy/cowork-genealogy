@@ -70,7 +70,7 @@ def rows(artifact: str | None = None) -> list[dict[str, Any]]:
 
 
 def skill_name(identifier: str) -> str | None:
-    """`skill:record-extraction` -> `record-extraction`; an agent id -> None."""
+    """`skill:search-records` -> `search-records`; an agent id -> None."""
     if identifier.startswith(_SKILL_PREFIX):
         return identifier[len(_SKILL_PREFIX) :]
     return None
@@ -90,7 +90,7 @@ def writer_tool_sets(artifact: str, plane: str = UNIT_PLANE) -> dict[str, set[st
     tool on a row that authorizes it here needs no caller entry there.
 
     The manifest already uses that reasoning one row over — `person_evidence`'s
-    `requires` records that the record-extraction lane is held off the section
+    `requires` records that extraction is held off the section
     "by tool identity: `extraction_append` does not accept it."
 
     Keyed on the same `enforceableAt` filter as `writer_sets`: a row this plane

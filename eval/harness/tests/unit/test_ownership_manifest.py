@@ -100,6 +100,20 @@ WIDENED: dict[str, set[str]] = {"questions": {"proof-conclusion"}}
 #: departure from it is a line someone had to write.
 NARROWED: dict[str, set[str]] = {"assertions": {"convert-dates"}}
 
+#: `record-extraction` is retired from every row it held. The skill and its
+#: `record-extractor` agent were deleted: a FamilySearch record is extracted by
+#: `extraction_append({ recordIds })` and any other source by the
+#: record-structurer agent's one `extraction_append({ documents })` call. The
+#: sections it wrote are authorized by tool identity (`toolAuthorized`), so no
+#: caller replaces it. `plans` loses it outright: extraction updates no plan item.
+RETIRED: dict[str, set[str]] = {
+    "plans": {"record-extraction"},
+    "log": {"record-extraction"},
+    "sources": {"record-extraction"},
+    "assertions": {"record-extraction"},
+}
+TREE_RETIRED: dict[str, set[str]] = {"sources": {"record-extraction"}}
+
 
 # The suite subject the research.json rows need to resolve (issue #2799). The
 # `sources` row names `agent:citation`, and `writer_sets` reads an `agent:`
@@ -132,6 +146,8 @@ def expected_tree_owners() -> dict[str, set[str]]:
     expected = {k: set(v) for k, v in FROZEN_TREE_OWNERSHIP_TABLE.items()}
     for section, added in TREE_WIDENED.items():
         expected[section] |= added
+    for section, removed in TREE_RETIRED.items():
+        expected[section] -= removed
     return expected
 
 
@@ -140,6 +156,8 @@ def expected_research_owners() -> dict[str, set[str]]:
     for section, added in WIDENED.items():
         expected[section] |= added
     for section, removed in NARROWED.items():
+        expected[section] -= removed
+    for section, removed in RETIRED.items():
         expected[section] -= removed
     return expected
 
@@ -168,7 +186,7 @@ def test_the_only_newly_enforced_section_is_localities():
     assert before - after == set()
 
 
-def test_no_owner_was_dropped_except_the_declared_one():
+def test_no_owner_was_dropped_except_the_declared_ones():
     """Every writer the literals named is still a writer, bar `NARROWED`.
 
     Redundant with the mapping equality above only while that assertion holds
@@ -178,18 +196,19 @@ def test_no_owner_was_dropped_except_the_declared_one():
     allow-list, which is a place a reviewer can look.
     """
     actual = writer_sets(RESEARCH_JSON, UNIT_PLANE, subject=SUBJECT)
+    allowed = {s: NARROWED.get(s, set()) | RETIRED.get(s, set()) for s in FROZEN_OWNERSHIP_TABLE}
     dropped = {
-        section: sorted((frozen - actual.get(section, set())) - NARROWED.get(section, set()))
+        section: sorted((frozen - actual.get(section, set())) - allowed[section])
         for section, frozen in FROZEN_OWNERSHIP_TABLE.items()
-        if (frozen - actual.get(section, set())) - NARROWED.get(section, set())
+        if (frozen - actual.get(section, set())) - allowed[section]
     }
     assert dropped == {}
 
     tree_actual = writer_sets(TREE_GEDCOMX_JSON, UNIT_PLANE)
     tree_dropped = {
-        section: sorted(frozen - tree_actual.get(section, set()))
+        section: sorted(frozen - tree_actual.get(section, set()) - TREE_RETIRED.get(section, set()))
         for section, frozen in FROZEN_TREE_OWNERSHIP_TABLE.items()
-        if frozen - tree_actual.get(section, set())
+        if frozen - tree_actual.get(section, set()) - TREE_RETIRED.get(section, set())
     }
     assert tree_dropped == {}
 

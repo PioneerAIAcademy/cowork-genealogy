@@ -1365,40 +1365,25 @@ def test_live_record_read_stages_the_record_as_production_does(tmp_path):
 
 
 @pytest.mark.requires_engine_build
-def test_staged_record_read_reaches_extractor_mode(tmp_path):
-    """The path the unit eval could not reach: read, log, extract in code."""
+def test_record_ids_are_served_from_record_read_fixtures(tmp_path):
+    """The path the unit eval could not reach: one call reads the record (from
+    its fixture), logs the read, and extracts it in code."""
     _copy_scenario(tmp_path)
     _s, _c, tools_by_name = create_mock_server(
         ["record-read-68Q9-K34P"], FIXTURES_DIR, workspace=tmp_path
     )
-    read = _extract_response_dict(
-        _invoke(tools_by_name, "record_read", {"recordId": "68Q9-K34P", "projectPath": str(tmp_path)})
-    )
-    logged = _extract_response_dict(
-        _invoke(
-            tools_by_name,
-            "research_log_append",
-            {
-                "projectPath": str(tmp_path),
-                "tool": "record_read",
-                "query": {"recordId": "68Q9-K34P"},
-                "outcome": "positive",
-                "resultsExamined": 1,
-                "stagedResultsRef": read["staged"]["resultsRef"],
-            },
-        )
-    )
-    assert logged.get("ok") and logged.get("resultsRef"), logged
     out = _extract_response_dict(
         _invoke(
             tools_by_name,
             "extraction_append",
-            {"projectPath": str(tmp_path), "logEntryId": logged["logId"], "recordId": "68Q9-K34P"},
+            {"projectPath": str(tmp_path), "recordIds": ["68Q9-K34P"]},
         )
     )
     assert out.get("ok"), out.get("errors")
-    assert out["extraction"]["recordType"] == "census"
-    assert out["extraction"]["assertionCount"] > 0
+    [record] = out["records"]
+    assert record["status"] == "extracted", record
+    assert record["logId"] and record["srcId"]
+    assert "census" in record["summary"].lower(), record["summary"]
 
 
 @pytest.mark.requires_engine_build

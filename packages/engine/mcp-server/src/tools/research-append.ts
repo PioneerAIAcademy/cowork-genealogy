@@ -441,8 +441,8 @@ function planActiveInvariants(entry: any, research: any): string[] {
  *  when the precondition must be satisfied by someone else. Read live when it is
  *  the same author's own prior step." Neither half is this author's own step —
  *  `ownership.json` gives `hypotheses.callers` as `["skill:hypothesis-tracking"]`
- *  while `conflicts` belongs to `skill:conflict-resolution` and `assertions` to
- *  `skill:record-extraction`. Both of those sections are `enforceableAt:
+ *  while `conflicts` belongs to `skill:conflict-resolution` and `assertions` is
+ *  written only by `extraction_append`. Both of those sections are `enforceableAt:
  *  ["unit"]` only (no hook arm, no tool arm), so under a live read nothing would
  *  stop a session from writing the satisfying conflict or assertion in the same
  *  batch as the promote and clearing this gate from inside the call it gates.

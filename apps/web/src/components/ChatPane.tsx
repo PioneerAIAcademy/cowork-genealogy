@@ -196,7 +196,7 @@ export default function ChatPane({
     // ends with no content: a Stop taken before the first token.
     if (kind === 'turn_start') return
     // Subagent lifecycle. Not chat content — this drives the status line, so a
-    // long delegation reads as "record-extractor · person_read · 12 tools"
+    // long delegation reads as "record-structurer · sidecar_read · 2 tools"
     // instead of an unattributed spinner.
     if (kind === 'task_started' || kind === 'task_progress') {
       liveTasksRef.current = trackLiveTask(liveTasksRef.current, kind, ev)

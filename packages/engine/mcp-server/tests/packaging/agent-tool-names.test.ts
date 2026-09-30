@@ -217,23 +217,24 @@ describe("plugin agent tool names", () => {
     expect(LOCAL_PREFIX).toBe("mcp__Genealogy_Research__");
   });
 
-  it("record-extractor cannot reach the broad writer", () => {
-    // The lane ADR-0006 defines. It used to be asserted on record-extractor's
-    // `disallowedTools:` block; that block is gone, because the deny only ever
-    // restated the omission (see the header). So assert the thing that actually
-    // binds: `research_append` is absent from the agent's `tools:`.
+  it("record-structurer cannot reach the broad writer", () => {
+    // The lane ADR-0006 defines, carried from record-extractor (deleted
+    // 2026-09-30) to the agent that replaced it. It used to be asserted on
+    // record-extractor's `disallowedTools:` block; that block is gone, because
+    // the deny only ever restated the omission (see the header). So assert the
+    // thing that actually binds: `research_append` is absent from `tools:`.
     //
     // This is not redundant with AGENT_PERMISSIONS below. That snapshot fails on
     // ANY change to the list and says only "the surface moved"; this one names
     // the invariant, so a reviewer reading a red suite is told which rule broke.
     const granted = extractList(
-      readFileSync(join(agentsDir, "record-extractor.md"), "utf8"),
+      readFileSync(join(agentsDir, "record-structurer.md"), "utf8"),
       "tools",
     ).map(bareOrBuiltin);
     expect(
       granted,
-      `record-extractor must not hold the broad research_append — it writes only ` +
-        `sources + assertions, through extraction_append (ADR-0006). A tool omitted ` +
+      `record-structurer must not hold the broad research_append — it writes only ` +
+        `through extraction_append's documents input (ADR-0006). A tool omitted ` +
         `from tools: is absent from the agent even under bypassPermissions ` +
         `(measured 2026-08-30, \`make probe-agent-binding\`); adding it here is what ` +
         `would hand this agent every section.`,
@@ -456,17 +457,11 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     tools: ["image_transcribe"],
     denies: [],
   },
-  "record-extractor.md": {
-    tools: [
-      "extraction_append",
-      "place_search",
-      "place_search_all",
-      "project_context",
-      "record_person_matches",
-      "record_read",
-      "record_record_matches",
-      "research_log_append",
-    ],
+  // Reads text and writes it through extraction_append's `documents` input,
+  // which classifies in code and refuses any classification field (spec §11.7).
+  // No research_log_append: extraction_append writes the log entry itself.
+  "record-structurer.md": {
+    tools: ["extraction_append", "sidecar_read"],
     denies: [],
   },
   // The only caller permitted to set `exhaustive_declaration.declared: true`;
@@ -518,7 +513,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   },
   // The grant is the folded skill's own former allowed-tools plus
   // `image_transcribe` and `Read`. It holds the BROAD `research_append` — unlike
-  // record-extractor above, which is pinned OFF it — and nothing narrows that
+  // record-structurer above, which is pinned OFF it — and nothing narrows that
   // here: this agent writes no hook-routed section, so `AGENT_WRITABLE_SECTIONS`
   // returns None for it and the hook's out-of-lane check never fires. What keeps
   // it to a plan item's `status` is its body's lane rule and this snapshot, which

@@ -68,7 +68,7 @@ describe('AssertionsSection — B1 persona row', () => {
     mockResearch({ assertions: [] })
     render(<AssertionsSection />)
     expect(screen.getByText(/No assertions yet\./)).toBeInTheDocument()
-    expect(screen.getByText(/record-extraction step/)).toBeInTheDocument()
+    expect(screen.getByText(/recorded during the extraction step/)).toBeInTheDocument()
   })
 
   it('renders an assertion missing record_basis without crashing', () => {

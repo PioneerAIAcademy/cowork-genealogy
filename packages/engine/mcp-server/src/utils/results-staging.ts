@@ -40,9 +40,9 @@ export const STAGING_SEARCH_TOOLS = new Set([
  * Every tool that stages: the search producers above plus the two acquisition
  * producers. A transcription and a record fetched by ARK are retained as a
  * ONE-element `results[]` envelope, so finalize needs no second shape. The
- * acquisition producers carry none of the search notes: record-extraction logs
- * an upload as `user_provided` and a `record_read` with no `stagedResultsRef`,
- * so a nag on either would contradict the shipped skill. An unfinalized
+ * acquisition producers carry none of the search notes: `extraction_append`
+ * logs each read it makes with that read's own staged ref, and an upload as
+ * `user_provided`, so there is nothing to nag about. An unfinalized
  * acquisition file is simply TTL-pruned.
  */
 export const STAGING_CAPABLE_TOOLS = new Set([

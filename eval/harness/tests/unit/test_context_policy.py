@@ -338,74 +338,63 @@ def test_real_record_extraction_does_not_declare_image_read():
     )
 
 
-def test_record_extraction_declares_extraction_append():
-    """The inverse of the pin this test used to carry (issue #2937).
+#: The skills whose bodies call `extraction_append` directly: `research` for the
+#: pending records it routes, `search-records` for the records it finds. Every
+#: other caller reaches the writer through @plugin:record-structurer.
+EXTRACTION_APPEND_SKILLS = {"research", "search-records"}
 
-    It previously asserted that NO skill declares `extraction_append`. That was
-    the premise of the #942 guard; the guard is gone, and the declaration is now
-    required rather than forbidden — without it the skill cannot call the tool
-    it routes indexed records through, because `allowed-tools` is a GRANT.
-    Pinned to the real frontmatter so dropping the line fails here rather than
-    at eval time.
 
-    Only `record-extraction` may declare it: a second skill declaring it would
-    be a new main-thread writer nobody reviewed.
+def test_exactly_the_direct_callers_declare_extraction_append():
+    """The declaration is required rather than forbidden: `allowed-tools` is a
+    GRANT, so a skill whose body calls the tool without declaring it cannot make
+    the call. Pinned as an exact set, because a skill declaring it that nobody
+    listed here is a new main-thread writer nobody reviewed.
     """
     from harness.allowed_tools import declared_skill_tools
 
-    declared = declared_skill_tools("record-extraction", _skills_dir())
-    assert "extraction_append" in declared, (
-        "record-extraction must declare extraction_append in its allowed-tools — "
-        "issue #2937 routes every sidecar-backed record through a direct call, "
-        "and `allowed-tools` is a GRANT, so omitting it leaves the skill unable "
-        "to make the call its body prescribes."
+    declaring = {
+        d.name
+        for d in sorted(_skills_dir().iterdir())
+        if (d / "SKILL.md").exists() and "extraction_append" in declared_skill_tools(d.name, _skills_dir())
+    }
+    assert declaring == EXTRACTION_APPEND_SKILLS, (
+        "the skills declaring extraction_append in allowed-tools changed: "
+        f"added {sorted(declaring - EXTRACTION_APPEND_SKILLS)}, "
+        f"dropped {sorted(EXTRACTION_APPEND_SKILLS - declaring)}. A dropped one "
+        "can no longer make the call its body prescribes; an added one is a new writer."
     )
 
-    for skill_dir in sorted(_skills_dir().iterdir()):
-        if not (skill_dir / "SKILL.md").exists():
-            continue
-        if skill_dir.name == "record-extraction":
-            continue
-        other = declared_skill_tools(skill_dir.name, _skills_dir())
-        assert "extraction_append" not in other, (
-            f"{skill_dir.name} declares extraction_append in its allowed-tools — "
-            "only record-extraction may. Every other caller reaches the writer "
-            "through @plugin:record-extractor."
-        )
 
-
-def test_record_extractor_agent_declares_extraction_append():
-    """The other half of the invariant: the tool must live on the record-extractor
-    agent's `tools:` frontmatter, under BOTH server spellings (CLAUDE.md
-    "Dual-spelled tool names"), or the guard would deny a call nobody can
-    legitimately make.
+def test_record_structurer_agent_declares_extraction_append():
+    """The agent half: the tool must live on the record-structurer agent's
+    `tools:` frontmatter under all three server spellings (CLAUDE.md
+    "Dual-spelled tool names"), or the agent cannot make the one call it exists
+    to make.
 
     Checks the qualified `mcp__…` spellings inside the YAML frontmatter — NOT the
-    bare `extraction_append`, which appears throughout the prose body (Step 4).
-    A bare-substring check would still pass if someone deleted the tools: entries
-    (leaving the subagent unable to call it) or dropped one of the two required
-    spellings, so it must key on what actually grants the tool.
+    bare `extraction_append`, which appears throughout the prose body. A
+    bare-substring check would still pass if someone deleted the tools: entries.
     """
     from pathlib import Path
 
     agent = (
         Path(__file__).resolve().parents[4]
-        / "packages/engine/plugin/agents/record-extractor.md"
+        / "packages/engine/plugin/agents/record-structurer.md"
     )
     text = agent.read_text(encoding="utf-8")
     # Isolate the YAML frontmatter (between the first two `---` fences). maxsplit=2
     # keeps any `---` thematic break in the body out of parts[1].
     parts = text.split("---", 2)
-    assert len(parts) >= 3, "record-extractor.md must open with YAML frontmatter"
+    assert len(parts) >= 3, "record-structurer.md must open with YAML frontmatter"
     frontmatter = parts[1]
     for spelling in (
         "mcp__genealogy__extraction_append",
         "mcp__remote-devices__Genealogy_Research__extraction_append",
+        "mcp__Genealogy_Research__extraction_append",
     ):
         assert spelling in frontmatter, (
-            f"record-extractor.md frontmatter must declare {spelling} — the tool "
-            "is held only by this agent, and CLAUDE.md requires both server "
-            "spellings; a prose mention of the bare name does not grant it."
+            f"record-structurer.md frontmatter must declare {spelling}; "
+            "a prose mention of the bare name does not grant it."
         )
 
 

@@ -1026,9 +1026,15 @@ def check_guardrail_compliance(
 # The count is derivable — `ls packages/engine/plugin/agents/*.md` — so this
 # comment does not state one. It said "four" over a set of five for the four
 # days after proof-conclusion was added.
+#: The agents whose `extraction_append` is legitimate. `record-structurer`
+#: ships; `record-extractor` was retired, and stays so that committed runs,
+#: which replay through this detector, keep the verdict they were graded under.
+#: No new run can carry it, because no plugin file declares it.
+EXTRACTION_AGENT_NAMES = frozenset({"record-structurer", "record-extractor"})
+
 DEDICATED_AGENT_NAMES = frozenset(
     {
-        "record-extractor",
+        "record-structurer",
         "image-reader",
         "gps-mentor",
         # Added when proof_summaries moved behind the hook's caller check: the
@@ -1114,36 +1120,22 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     e.g. `find_effects_without_invocation`), and `extraction_append` is not
     one of the four guardrail skills' writes at all — it's hard-restricted at
     the TypeScript layer to exactly `sources`/`assertions`
-    (`extraction-append.ts`), and `record-extractor.md` is the only agent
-    file that even declares the tool. So its legitimate caller is narrower
-    than "any dedicated agent": only `agent_type == "record-extractor"`
-    exactly — a wrong dedicated agent (e.g. `gps-mentor`) holding this tool
-    is not a case any agent's own `tools:`/`disallowedTools` declaration is
-    set up to permit, and is itself worth flagging.
+    (`extraction-append.ts`), and `record-structurer.md` is the only agent
+    file that declares the tool. So its legitimate delegate is narrower than
+    "any dedicated agent": only `agent_type == "record-structurer"` exactly —
+    a wrong dedicated agent (e.g. `gps-mentor`) holding this tool is not a
+    case any agent's own `tools:` declaration is set up to permit, and is
+    itself worth flagging.
 
-    The "or main thread" clause above is, for `extraction_append`, a
-    classification statement (a main-thread call is not an *unnamed-delegate*
-    bypass) — NOT a claim that the record-extraction router may do the
-    extraction itself. It may not: a main-thread `extraction_append` is
-    hard-denied upstream at PreToolUse by the #942 guard
-    (`e2e/orchestrator.py::is_main_thread_subagent_only_tool` in e2e,
-    `context_policy.subagent_only_violation` in the unit harness; e2e-test-spec
-    §6.1.1), so it never executes. The attempt still reaches this function —
-    `tool_calls` is appended before the PreToolUse decision — but it exits at
-    the `agent_id is None` branch on the classification above: a main-thread
-    call (denied or not) is not an *unnamed-delegate* bypass, full stop. It is
-    not counted, and that classification stands on its own regardless of
-    whether the denied call also carries `is_error: true` — this detector
-    reads `is_error` nowhere (issue #1569): the rule here is about who called,
-    not whether the call succeeded, so a caller that should not have made this
-    decision is a violation whether the write landed, was rejected by
-    validation, or was denied outright.
+    The "or main thread" clause is, for `extraction_append`, legitimate work:
+    the research router and search-records call it directly with `recordIds`.
+    This detector reads `is_error` nowhere (issue #1569): the rule is about
+    who called, not whether the call succeeded.
 
-    Note what the two layers do and do not compose to. The main-thread half is
-    DENIED; this delegate half is only LOGGED — it is shadow-mode, deliberately
-    not read by `E2eResult.__post_init__` until its false-positive rate is
-    calibrated. So a `general-purpose` delegate's `extraction_append`
-    still succeeds today; what this detector buys is that it is recorded.
+    It is shadow-mode, deliberately not read by `E2eResult.__post_init__`
+    until its false-positive rate is calibrated. So a `general-purpose`
+    delegate's `extraction_append` still succeeds today; what this detector
+    buys is that it is recorded.
 
     Confirmed live in `ogletree-children/run-2026-07-21_13-24-05.json` (a
     committed, judge-`pass` run): `tool_calls[266]`, an `Agent` call with no
@@ -1167,10 +1159,10 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     calls earlier in the same span (275-277) attach facts to already-known
     `personId`s and are correctly NOT owned by any guardrail skill under
     `owning_skills`'s "no personId == mint" rule; they are not part of this
-    violation. The run's `subagents[12]` (`agent_type: "record-extractor"`,
-    extracting the same death certificate) makes several `extraction_append`
-    calls in the preceding span — a legitimate, correctly-attributed control
-    case this function must NOT flag.
+    violation. The run's `subagents[12]` (the since-retired
+    `record-extractor`, extracting the same death certificate) makes several
+    `extraction_append` calls in the preceding span — a control case that its
+    successor, `record-structurer`, now occupies.
 
     `gps-mentor` legitimately declares `research_append` and uses it in
     dozens of committed runs, but only to append to `evaluations[]` — a
@@ -1185,7 +1177,7 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     This treats ANY of `DEDICATED_AGENT_NAMES` as sufficient for a
     `GUARDRAIL_SKILLS`-owned write, unlike `extraction_append`'s tighter
     single-name check. It was a no-op while the set held only agents that
-    could not reach such a section: `record-extractor` disallows
+    could not reach such a section: `record-structurer` holds no
     `research_append` and never declares `materialize_facts`/`tree_edit`, the
     two image readers hold no writer tool at all, and `gps-mentor`'s only
     writer tool is structurally exempted via the `evaluations[]` carve-out
@@ -1217,36 +1209,37 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
         args = entry.get("args") or {}
         agent_id = entry.get("agent_id")
         agent_type = entry.get("agent_type")
-        # Compare on the namespace-stripped name (Cowork logs "<plugin>:record-extractor";
+        # Compare on the namespace-stripped name (Cowork logs "<plugin>:record-structurer";
         # the harness logs bare) but keep the RAW agent_type in the messages below. See
         # strip_agent_namespace for the #650/#698/#939 rationale and the over-flag safety.
         bare_agent_type = strip_agent_namespace(agent_type)
 
         if bare_tool_name(tool) == "extraction_append":
-            if agent_id is None or bare_agent_type == "record-extractor":
+            if agent_id is None or bare_agent_type in EXTRACTION_AGENT_NAMES:
                 continue
             violations.append(
                 f"tool_calls[{i}] extraction_append was made by agent_type="
                 f"{agent_type!r} (agent_id={agent_id!r}) — only the dedicated "
-                "'record-extractor' agent may hold this tool"
+                "'record-structurer' agent may hold this tool"
             )
             continue
 
         if bare_tool_name(tool) == "research_append":
             # #1273 Item 4: research_append to `sources`/`assertions` is the same
-            # protected write extraction_append is denied for. record-extraction
-            # creates these and citation refines `sources` (ownership.json); because
+            # protected write extraction_append makes. extraction_append creates
+            # these and citation refines `sources` (ownership.json); because
             # owning_skills does not attribute those sections, without this branch an
             # unnamed delegate writes them through the broad tool unflagged. The
             # legitimate callers are exactly the sibling extraction_append arm's: the
             # main thread (agent_id None; citation refines `sources` there, exempt for
-            # free) and the `record-extractor` agent alone — NOT every dedicated
-            # agent, because sources/assertions are not owning_skills sections, so a
+            # free) and the citation agent alone — NOT every dedicated agent,
+            # because sources/assertions are not owning_skills sections, so a
             # gps-mentor/proof-conclusion/research-exhaustiveness delegate writing
-            # them is out of lane exactly as it is for extraction_append (which uses
-            # the same tight `== record-extractor`). Uses `bare_agent_type` (the
-            # shared namespace strip #1856 added) so the namespaced spelling of
-            # record-extractor is exempt too. Shadow only. No `continue`: a batch may
+            # them is out of lane. The retired record-extractor is exempt for the
+            # same replay reason as in EXTRACTION_AGENT_NAMES; record-structurer
+            # holds no research_append. Uses `bare_agent_type` (the shared
+            # namespace strip #1856 added) so a namespaced spelling is matched
+            # too. Shadow only. No `continue`: a batch may
             # ALSO touch an owning_skills section, still checked below. One violation
             # per offending CALL (not per op), matching the sibling arms' granularity
             # so a batch does not inflate the shadow signal.
@@ -1267,9 +1260,8 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
                     violations.append(
                         f"tool_calls[{i}] research_append to {'/'.join(sections)} was "
                         f"made by agent_type={agent_type!r} (agent_id={agent_id!r}) — "
-                        "this is record-extraction/citation's protected write, made "
-                        "by neither the main thread nor the record-extractor or "
-                        "citation agent"
+                        "this is extraction's and citation's protected write, made "
+                        "by neither the main thread nor the citation agent"
                     )
 
         owners = owning_skills(tool, args)

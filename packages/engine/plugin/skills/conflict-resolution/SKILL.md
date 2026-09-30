@@ -19,9 +19,9 @@ description: >-
   research.json, or when timeline impossibilities suggest an identity
   conflict. Do NOT use to add or track candidates when no decision is asked
   for (use hypothesis-tracking), to audit existing person_evidence links or
-  review their confidence (use person-evidence), to classify evidence (use
-  record-extraction, which owns classification), build a timeline (use
-  timeline), or write a conclusion (use proof-conclusion).
+  review their confidence (use person-evidence), to extract a record (use
+  extraction_append), build a timeline (use timeline), or write a conclusion (use
+  proof-conclusion).
 ---
 
 # Conflict Resolution
@@ -78,10 +78,10 @@ fact conflicts which require at least two).
 Read `research.json` assertions, person_evidence, and timelines.
 **Trust the existing assertion classifications** (record_basis,
 directness, informant) as recorded — do NOT re-classify inline, and do
-NOT invoke the record-extraction or check-warnings skills from here.
-If a classification looks wrong and would change the weighing, note it
-and recommend running `record-extraction` (which owns classification
-refinement) as a next step, then proceed with what is recorded.
+NOT invoke check-warnings from here. Classifications come from the
+extraction table and are not refined per assertion. If a classification
+looks wrong because of evidence outside the record, weigh that evidence here,
+as part of this conflict's analysis, and say so in the rationale.
 
 Look for:
 

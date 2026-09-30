@@ -39,6 +39,7 @@ from e2e.runlog_selection import (
 )
 from harness.context_policy import bare_tool_name
 from harness.skill_invocation import (
+    EXTRACTION_AGENT_NAMES,
     DEDICATED_AGENT_NAMES,
     _iter_ops,
     find_effects_without_invocation,
@@ -88,7 +89,7 @@ def _lane_check_old(tool_calls: list[dict[str, Any]]) -> list[str]:
         bare_agent_type = strip_agent_namespace(agent_type)
 
         if bare_tool_name(tool) == "extraction_append":
-            if agent_id is None or bare_agent_type == "record-extractor":
+            if agent_id is None or bare_agent_type in EXTRACTION_AGENT_NAMES:
                 continue
             violations.append(f"tool_calls[{i}] extraction_append by {agent_type!r}")
             continue

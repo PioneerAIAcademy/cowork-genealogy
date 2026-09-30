@@ -13,7 +13,7 @@ description: Direct edits to tree.gedcomx.json — add fact, correct value,
   records (search-records), write a conclusion (proof-conclusion), link
   assertions to persons or build out a household from a record's
   assertions (person-evidence), or extract facts from a newly-found
-  record (record-extraction — sourced facts materialize onto tree
+  record (extraction_append — sourced facts materialize onto tree
   persons via person-evidence, then proof-conclusion sets the concluded
   value).
 allowed-tools:
@@ -97,7 +97,7 @@ Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I
 - **Merges are irreversible in practice.** Present the merge plan and get confirmation before executing: "I will merge I5 (James Flynn, stub) into KWCJ-RN7 (James Patrick Flynn). This will update 3 person_evidence entries and 1 timeline. Proceed?"
 - **Only merge when proof-conclusion confirms identity.** The threshold is a `probable` or higher proof_summary confirming the two persons are the same. Never merge on a speculative link or unresolved hypothesis.
 - **Preserve the more complete record.** Keep the person with more data and the more authoritative ID (FamilySearch ID > synthetic).
-- **Ad-hoc edits should be rare.** Most tree updates come through the formal pipeline — record-extraction (assertions) → person-evidence (materializes sourced evidence facts onto tree persons) → proof-conclusion (sets the concluded `primary`/`preferred` value). Direct tree-edit edits are for ad-hoc corrections and confirmed merges, not for bypassing the GPS process.
+- **Ad-hoc edits should be rare.** Most tree updates come through the formal pipeline — extraction (assertions) → person-evidence (materializes sourced evidence facts onto tree persons) → proof-conclusion (sets the concluded `primary`/`preferred` value). Direct tree-edit edits are for ad-hoc corrections and confirmed merges, not for bypassing the GPS process.
 
 ## Decision rules for ambiguous situations
 
