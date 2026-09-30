@@ -252,7 +252,7 @@
       "notes": "convert-dates held this section in the table this manifest replaced, and the grant was dead: its only tool is `convert_calendar`, it holds no writer tool, and its own body says it writes nothing. Dropped rather than recorded — a declared writer that cannot write reads as coverage in exactly the way an invented owner does. Free: none of the skill's 14 unit tests names `research_append` or `assertions`.",
       "requires": "`extraction_append` writes the atomic assertions and their three-layer classifications, first and final, from the extraction table. No later pass refines them.",
       "failure": "An assertion written outside extraction carries no source, no classification, and no persona link — and the GPS analysis layer treats it as evidence anyway.",
-      "remedy": "Extract through `extraction_append`, or the record-structurer agent for a non-FamilySearch source. A disagreement with a classification, from evidence outside the record, is weighed in conflict-resolution.",
+      "remedy": "Extract through `extraction_append`, or the record-structurer agent for a non-FamilySearch source. A classification that looks wrong is named to the researcher, not rewritten.",
       "override": "none",
       "toolAuthorized": [
         "extraction_append"

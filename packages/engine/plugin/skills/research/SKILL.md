@@ -161,8 +161,8 @@ regardless of how directly the request named the destination.
    pasted text) by **one** `@plugin:record-structurer` spawn for the batch.
    Relay the summary each returns, verbatim. Classifications come from the
    extraction table and are final: never re-derive `record_basis` /
-   `information_quality` yourself. A disagreement based on evidence outside
-   the record goes to conflict-resolution or proof-conclusion.
+   `information_quality` yourself. A classification that looks wrong is named
+   to the researcher, not weighed or rewritten.
 
    **Conflict/hypothesis contract — enforced, not advisory.** Inline
    elimination of a namesake or other candidate, or inline comparison of
