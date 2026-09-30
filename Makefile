@@ -43,8 +43,8 @@ JS_DEPS       := node_modules/.make-installed
 # reach. Omitting it reproduces #1271 — every existing checkout keeps a stamp
 # newer than its prerequisites, never reinstalls, and never runs the gen-zod
 # postinstall the tests import.
-$(JS_DEPS): package.json pnpm-lock.yaml pnpm-workspace.yaml \
-            $(wildcard packages/*/package.json apps/*/package.json eval/app/package.json)
+$(JS_DEPS): package.json pnpm-lock.yaml pnpm-workspace.yaml eval/app/package.json \
+            $(wildcard packages/*/package.json apps/*/package.json)
 	pnpm install
 	@touch $@
 

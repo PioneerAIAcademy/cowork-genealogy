@@ -2,9 +2,14 @@
 /**
  * Generates Zod schemas from docs/specs/schemas/*.schema.json.
  *
- * Runs on postinstall + prebuild. Generated files land in lib/schema/
- * (gitignored). If the install ran with scripts disabled, run
- * `pnpm run gen-zod` manually before `pnpm test` / `tsc`.
+ * Invoked from TWO places in package.json, deliberately — do not "clean up"
+ * either one. `postinstall` covers a plain install (CI, a launcher, a fresh
+ * clone); `build` chains it with `&&` because pnpm 9 defaults
+ * `enable-pre-post-scripts` to false, so the `prebuild` hook this used to rely
+ * on never fires. Drop the chain and `next build` compiles against whatever
+ * lib/schema/ happens to hold; drop the postinstall and `pnpm test` / `tsc`
+ * fail on a fresh tree. Generated files land in lib/schema/ (gitignored). If
+ * the install ran with scripts disabled, run `pnpm run gen-zod` by hand.
  *
  * The output is intentionally permissive: we transform raw JSON Schema
  * to Zod via `json-schema-to-zod`, then write each schema as a named
