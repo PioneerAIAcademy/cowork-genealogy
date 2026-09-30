@@ -1,0 +1,46 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "living": false,
+      "gender": "male",
+      "names": [
+        {
+          "given_name": "Cornelis",
+          "surname": "van Noord"
+        }
+      ],
+      "facts": [
+        {
+          "type": "birth",
+          "date": "1828",
+          "place": "Zuid-Holland, Netherlands",
+          "standard_date": "+1828",
+          "standard_place": "Zuid-Holland, Netherlands"
+        }
+      ],
+      "sources": ["SD-001", "SD-002"]
+    },
+    {
+      "id": "I2",
+      "living": false,
+      "gender": "female",
+      "names": [
+        {
+          "given_name": "Jannetje",
+          "surname": "van Noord",
+          "notes": "First letter uncertain; OCR reads J, user reads T, index reads F"
+        }
+      ],
+      "facts": [],
+      "sources": ["SD-001", "SD-002"]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "parent_child",
+      "person1_id": "I2",
+      "person2_id": "I1"
+    }
+  ]
+}

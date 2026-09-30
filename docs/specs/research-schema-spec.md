@@ -791,6 +791,8 @@ Array of conflict objects. Conflicts are both fact-level (three different birthp
 
 `independence_analysis` and `weighing_analysis` are kept as separate fields because source independence is a distinct analytical step from evidence weighing per the GPS.
 
+**Uncertain-preference invariant.** `preferred_assertion_id` may not name an assertion whose `value` contains `[?]` (the structural doubt marker) unless a corroborating assertion exists. Corroboration requires all four conditions: (1) the corroborator's own `value` carries no `[?]`; (2) it is on a different record, compared as `record_id ?? source_id`; (3) it has the same `fact_type` and its `value` equals the preferred value once `[?]` is removed, whitespace is collapsed and case is folded; (4) it is tied to the same person — it is in the conflict's `competing_assertion_ids`, or a live `person_evidence` row (no `superseded_by`) links it to a `person_id` that a live row also links the preferred assertion to. A null `preferred_assertion_id` (deferral) is always legal.
+
 ### 5.9 `hypotheses`
 
 Array of hypothesis objects.

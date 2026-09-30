@@ -522,6 +522,8 @@ Suggest next steps:
   (proof-conclusion) and a data operation (tree-edit).
 - **Err on the side of leaving conflicts unresolved.** An honest
   "unresolved" is better than a premature resolution (Standard 49).
+- **A reading the user disputes is recorded with [?], and the conflict
+  is settled by another record or by the user.**
 
 ## Re-invocation behavior
 
