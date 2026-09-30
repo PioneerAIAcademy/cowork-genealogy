@@ -1,6 +1,6 @@
 {
   "tool": "person_search",
-  "description": "Nil FamilySearch Family Tree search — no candidates, Brennan. Same purpose as person-search-hennessy-none: makes the no-ID search path reachable so falling back to objective-text stubs is a decision the run demonstrates rather than one the missing tool forces. Per person-search-tool-spec.md a 204 from upstream returns totalMatches 0 with an empty results array.",
+  "description": "Nil FamilySearch Family Tree search \u2014 no candidates, Brennan. Same purpose as person-search-hennessy-none: makes the no-ID search path reachable so falling back to objective-text stubs is a decision the run demonstrates rather than one the missing tool forces. Per person-search-tool-spec.md a 204 from upstream returns totalMatches 0 with an empty results array.",
   "args": {
     "surname": "~Brennan"
   },
@@ -14,6 +14,11 @@
     "returned": 0,
     "offset": 0,
     "hasMore": false,
-    "results": []
+    "results": [],
+    "pick": {
+      "decisive": false,
+      "tiedAtTop": 0,
+      "reason": "No candidates to choose from."
+    }
   }
 }

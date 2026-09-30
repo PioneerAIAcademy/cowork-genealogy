@@ -245,6 +245,7 @@ the person.
 | `query` | object | Echo of the input fields the caller supplied. |
 | `totalMatches` | number | Total tree persons matching the query. |
 | `paginationCappedAt` | number | Hard limit on how deep pagination can reach (4999). When `totalMatches > paginationCappedAt`, the remainder is unreachable — narrow the query. |
+| `pick` | `{ decisive, tiedAtTop, reason }` | Whether these results pick one person or need a human to. **Decisive iff exactly one candidate holds the top score.** Derived from a live probe (`dev/probe-person-search-decisiveness.json`, which carries the queries and the responses), and that probe refuted two other rules: a first-second GAP threshold misclassifies a query the init-project eval correctly auto-picks, and `totalMatches` does not separate the cases in either direction. An under-specified query returns a flat run of identical scores — the same fields matched for every candidate — so the tool has no basis to prefer one. On the RESPONSE, not per candidate: it is a fact about the result set. |
 | `returned` | number | Number of results in this response (≤ `count`). |
 | `offset` | number | Echo of the input offset (0 if not supplied). |
 | `hasMore` | boolean | `true` when more pages are available (response carries `links.next`). |
@@ -259,7 +260,8 @@ Each `PersonSearchResult`:
 | `confidence` | number \| undefined | A 1–5 confidence band (5 highest). Search metadata, not GedcomX. Rank with `score`. |
 | `gedcomx` | SimplifiedGedcomX | The matched person as simplified GedcomX: `id`, `ark`, `gender`, `names` (given/surname), and `facts` (Birth, Death, …) — produced by `toSimplified` (see `simplified-gedcomx-spec.md`). The skill renders its pick-list from this. Relatives are excluded by design (see *Picking a result*). Per-person **source references are also stripped** — they'd be dangling IDs here (the source descriptions aren't included), and the full sources come from `person_read` on the chosen person. |
 
-`personId`, `score`, and `confidence` are the only non-GedcomX fields,
+`personId`, `score`, and `confidence` are the only non-GedcomX fields **on a candidate**
+(`pick` is on the response envelope, not on a result),
 because they are search metadata the endpoint returns at the entry level
 (`entry.id` / `entry.score` / `entry.confidence`) and cannot live inside
 a person's GedcomX. Everything else about the person — name, sex, dates,

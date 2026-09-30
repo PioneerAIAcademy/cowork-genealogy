@@ -1,10 +1,16 @@
 {
   "tool": "person_search",
-  "description": "FamilySearch Family Tree search for Patrick Flynn — 3 ranked candidates, LZNY-BRF as the top match (born 1845 Ireland, Schuylkill County residence). `ark` is the canonical `ark:/61903/...` form `toArk` produces (src/utils/ark.ts) — the resolver-URL prefix is stripped before the value reaches the caller, per simplified-gedcomx-spec.md §4.6.",
-  "args": { "surname": "Flynn", "givenName": "Patrick" },
+  "description": "FamilySearch Family Tree search for Patrick Flynn \u2014 3 ranked candidates, LZNY-BRF as the top match (born 1845 Ireland, Schuylkill County residence). `ark` is the canonical `ark:/61903/...` form `toArk` produces (src/utils/ark.ts) \u2014 the resolver-URL prefix is stripped before the value reaches the caller, per simplified-gedcomx-spec.md \u00a74.6.",
+  "args": {
+    "surname": "Flynn",
+    "givenName": "Patrick"
+  },
   "response": {
-    "query": { "givenName": "Patrick", "surname": "Flynn" },
-    "totalMatches": 3,
+    "query": {
+      "givenName": "Patrick",
+      "surname": "Flynn"
+    },
+    "totalMatches": 1281,
     "paginationCappedAt": 4999,
     "returned": 3,
     "offset": 0,
@@ -12,7 +18,7 @@
     "results": [
       {
         "personId": "LZNY-BRF",
-        "score": 4.85,
+        "score": 5.2936,
         "confidence": 3,
         "gedcomx": {
           "persons": [
@@ -20,11 +26,28 @@
               "id": "LZNY-BRF",
               "ark": "ark:/61903/4:1:LZNY-BRF",
               "gender": "Male",
-              "names": [{ "given": "Patrick", "surname": "Flynn" }],
+              "names": [
+                {
+                  "given": "Patrick",
+                  "surname": "Flynn"
+                }
+              ],
               "facts": [
-                { "type": "Birth", "date": "1845", "place": "Ireland" },
-                { "type": "Residence", "date": "1850", "place": "Branch Township, Schuylkill, Pennsylvania" },
-                { "type": "Death", "date": "1908", "place": "Schuylkill County, Pennsylvania" }
+                {
+                  "type": "Birth",
+                  "date": "1845",
+                  "place": "Ireland"
+                },
+                {
+                  "type": "Residence",
+                  "date": "1850",
+                  "place": "Branch Township, Schuylkill, Pennsylvania"
+                },
+                {
+                  "type": "Death",
+                  "date": "1908",
+                  "place": "Schuylkill County, Pennsylvania"
+                }
               ]
             }
           ]
@@ -32,7 +55,7 @@
       },
       {
         "personId": "LZNY-QRS",
-        "score": 3.21,
+        "score": 5.2836003,
         "confidence": 2,
         "gedcomx": {
           "persons": [
@@ -40,10 +63,23 @@
               "id": "LZNY-QRS",
               "ark": "ark:/61903/4:1:LZNY-QRS",
               "gender": "Male",
-              "names": [{ "given": "Patrick", "surname": "Flynn" }],
+              "names": [
+                {
+                  "given": "Patrick",
+                  "surname": "Flynn"
+                }
+              ],
               "facts": [
-                { "type": "Birth", "date": "1847", "place": "Ireland" },
-                { "type": "Death", "date": "1908", "place": "Schuylkill County, Pennsylvania" }
+                {
+                  "type": "Birth",
+                  "date": "1847",
+                  "place": "Ireland"
+                },
+                {
+                  "type": "Death",
+                  "date": "1908",
+                  "place": "Schuylkill County, Pennsylvania"
+                }
               ]
             }
           ]
@@ -51,7 +87,7 @@
       },
       {
         "personId": "KWCJ-PAT",
-        "score": 2.10,
+        "score": 5.2736,
         "confidence": 1,
         "gedcomx": {
           "persons": [
@@ -59,14 +95,28 @@
               "id": "KWCJ-PAT",
               "ark": "ark:/61903/4:1:KWCJ-PAT",
               "gender": "Male",
-              "names": [{ "given": "Patrick", "surname": "Flynn" }],
+              "names": [
+                {
+                  "given": "Patrick",
+                  "surname": "Flynn"
+                }
+              ],
               "facts": [
-                { "type": "Birth", "date": "1840", "place": "County Cork, Ireland" }
+                {
+                  "type": "Birth",
+                  "date": "1840",
+                  "place": "County Cork, Ireland"
+                }
               ]
             }
           ]
         }
       }
-    ]
+    ],
+    "pick": {
+      "decisive": true,
+      "tiedAtTop": 1,
+      "reason": "One candidate leads on score (5.2936)."
+    }
   }
 }

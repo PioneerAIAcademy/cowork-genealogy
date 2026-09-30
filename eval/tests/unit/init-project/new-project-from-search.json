@@ -22,9 +22,9 @@
     "person-quality-clean-LZNY-BRF"
   ],
   "judge_context": [
-    "Should call person_search (not person_read) first — no FamilySearch ID was provided",
+    "Should call person_search (not person_read) first \u2014 no FamilySearch ID was provided",
     "Should include surname 'Flynn' and given name 'Patrick' in the person_search arguments",
-    "Should select LZNY-BRF as the top candidate (score 4.85, confidence 3, birth 1845 Ireland matching the user's description) and then call person_read with LZNY-BRF",
+    "Should select LZNY-BRF as the top candidate (it alone holds the top score, so the search is decisive) and then call person_read with LZNY-BRF",
     "Should create both research.json and tree.gedcomx.json using the person_read data",
     "Should set the project objective to something like 'Identify the parents of Patrick Flynn'"
   ],
