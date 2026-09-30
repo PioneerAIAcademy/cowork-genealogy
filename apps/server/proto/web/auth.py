@@ -44,12 +44,22 @@ from cryptography.fernet import Fernet, InvalidToken
 from itsdangerous import BadSignature, URLSafeTimedSerializer
 
 PROTO_DIR = Path(__file__).resolve().parent.parent
-# /app/config/familysearch.json in the image (the Dockerfile copies it there); the
-# engine's own file in a checkout, where PROTO_DIR is apps/server/proto.
-CLIENT_CONFIG_CANDIDATES = (
-    PROTO_DIR / "config" / "familysearch.json",
-    PROTO_DIR.parents[2] / "packages" / "engine" / "mcp-server" / "config" / "familysearch.json",
-)
+
+
+def client_config_candidates(proto_dir: Path) -> tuple[Path, ...]:
+    """/app/config/familysearch.json in the image (the Dockerfile copies it there); the
+    engine's own file in a checkout, where proto_dir is apps/server/proto. In the image
+    proto_dir is /app, which has no third parent -- indexing ``parents[2]`` there raised
+    at import and the tier never started, which no offline test could see."""
+    candidates = [proto_dir / "config" / "familysearch.json"]
+    if len(proto_dir.parents) > 2:
+        candidates.append(
+            proto_dir.parents[2] / "packages" / "engine" / "mcp-server" / "config" / "familysearch.json"
+        )
+    return tuple(candidates)
+
+
+CLIENT_CONFIG_CANDIDATES = client_config_candidates(PROTO_DIR)
 
 # The alpha's development defaults, kept identical so ciphertext the alpha wrote under
 # its default key decrypts here too. ``preflight`` refuses both on an https PUBLIC_URL.

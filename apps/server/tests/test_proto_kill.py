@@ -535,3 +535,35 @@ def test_proto_kill_target_passes_args_through_to_the_arm():
     body = "\n".join(_recipe("proto-kill"))
     assert re.search(r'\$\(MAKE\) proto-turn ARGS="--kill .*\$\(ARGS\)"', body), body
     assert re.search(r"\$\(if \$\(SESSION\),\s*--session \$\(SESSION\),\s*\)", body), body
+
+
+def test_signed_in_client_works_inside_with_and_carries_the_cookie():
+    """Every other test here replaces signed_in_client, so the real one was first run
+    against a live stack -- where `with signed_in_client(...)` raised "Cannot open a client
+    instance more than once" because the login had already opened it."""
+    import httpx
+
+    seen: list[tuple[str, str | None]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append((request.url.path, request.headers.get("cookie")))
+        if request.url.path == "/auth/dev-login":
+            return httpx.Response(200, json={"id": "usr_1"}, headers={"set-cookie": "wb_session=abc; Path=/"})
+        return httpx.Response(200, json=[])
+
+    transport = httpx.MockTransport(handler)
+    with turn.signed_in_client("http://tier", "a@x.org", transport=transport) as client:
+        client.get("http://tier/api/sessions")  # absolute, as turn.py's callers write it
+        client.get("/api/sessions")              # relative, as drive.py writes it
+    assert seen == [("/auth/dev-login", None), ("/api/sessions", "wb_session=abc"), ("/api/sessions", "wb_session=abc")]
+    unentered = turn.signed_in_client("http://tier", transport=transport)
+    assert unentered.get("/api/sessions").status_code == 200
+    unentered.close()
+
+
+def test_signed_in_client_names_the_override_when_dev_login_is_off():
+    import httpx
+
+    transport = httpx.MockTransport(lambda request: httpx.Response(403, json={"detail": "off"}))
+    with pytest.raises(RuntimeError, match="fs-signin"):
+        turn.signed_in_client("http://tier", transport=transport)

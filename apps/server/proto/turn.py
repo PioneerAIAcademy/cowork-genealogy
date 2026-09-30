@@ -84,22 +84,25 @@ REAUTH = re.compile(r"reconnect|log ?in|authenticat|unauthori[sz]ed|\b401\b", re
 DEV_LOGIN_EMAIL = "dev@localhost"
 
 
-def signed_in_client(base: str, email: str = DEV_LOGIN_EMAIL, *, timeout: float = 30.0) -> httpx.Client:
-    """An ``httpx.Client`` on ``base`` holding a dev-login session cookie. It takes
-    absolute URLs (``f"{base}/api/..."``) and relative ones alike."""
-    client = httpx.Client(base_url=base, timeout=timeout)
-    try:
-        r = client.post("/auth/dev-login", json={"email": email})
+def signed_in_client(
+    base: str, email: str = DEV_LOGIN_EMAIL, *, timeout: float = 30.0, transport: httpx.BaseTransport | None = None
+) -> httpx.Client:
+    """An UNOPENED ``httpx.Client`` on ``base`` holding a dev-login session cookie, usable
+    with or without ``with``. It takes absolute URLs (``f"{base}/api/..."``) and relative
+    ones alike. The login goes through its own short-lived client: a client that has sent
+    a request refuses ``__enter__``, so logging in on the returned one broke every
+    ``with signed_in_client(...)``. ``transport`` is for tests."""
+    extra: dict[str, Any] = {"transport": transport} if transport is not None else {}
+    with httpx.Client(base_url=base, timeout=timeout, **extra) as login:
+        r = login.post("/auth/dev-login", json={"email": email})
         if r.status_code == 403:
             raise RuntimeError(
                 f"dev-login is disabled at {base} (FamilySearch sign-in is on, or PUBLIC_URL is https); "
                 "run the scripts against the default stack, not docker-compose.fs-signin.yml"
             )
         r.raise_for_status()
-    except BaseException:
-        client.close()
-        raise
-    return client
+        cookies = httpx.Cookies(login.cookies)
+    return httpx.Client(base_url=base, timeout=timeout, cookies=cookies, **extra)
 
 
 def post_message(client: httpx.Client, base: str, session_id: str, text: str) -> str:

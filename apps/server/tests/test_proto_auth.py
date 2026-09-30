@@ -492,3 +492,12 @@ async def test_pgstore_upsert_user_pins_the_familysearch_id(stored, presented, r
     assert user.familysearch_id == (stored or presented)
     assert any(q.startswith("UPDATE users SET familysearch_id") for q in conn.sql) is (stored is None and presented is not None)
     assert conn.params[0][1] == "a@example.org", "emails are stored lower-cased"
+
+
+def test_the_client_config_lookup_survives_the_image_layout():
+    """In the image web/auth.py sits at /app/web/auth.py, so PROTO_DIR is /app and has no
+    third parent. Indexing it unguarded raised IndexError at import: the tier would never
+    start, and every test here ran from a checkout where the index exists."""
+    assert auth.client_config_candidates(Path("/app")) == (Path("/app/config/familysearch.json"),)
+    deep = auth.client_config_candidates(Path("/r/apps/server/proto"))
+    assert deep[1] == Path("/r/packages/engine/mcp-server/config/familysearch.json")
