@@ -219,6 +219,34 @@ rather than failed, and every `with pytest.raises(AssertionError)` in
 fires) survived because of it. Replaced with a `must_fail` helper that turns a skip into an
 explicit failure; all four mutations now die.
 
+## Where init-project's eval stands, and what it is waiting on
+
+`v6_2026-09-30_13-45-44.json` is **green** — 14 pass, 1 partial, zero reds — and
+committed as a **candidate**. It is not released, and releasing it is not mine to do:
+`v5.ann.json` and `v4.ann.json` each carry a real genealogist's address, and every
+release commit in this repo (`7e79d0d97`, `eeff413a0` — the latter is this
+workstream's own phases 0-1) lands `v{N}.json` and `v{N}.ann.json` **together**. So
+the annotation pass comes first.
+
+`check_runlogs.py` therefore still reports one violation — "latest full-skill run log
+`v5.json` is NOT active". That is expected and resolves at release, not before:
+`latest_full_skill_runlog` prefers ANY released `v{N}.json` over every candidate
+(`if released: ... elif candidates:`), so a branch that edits a skill cannot clear it
+until its candidate is released. No PR is open, so nothing is blocked meanwhile.
+
+**Two run-log rules worth knowing before the next run.** A run log may not carry a
+red — rule 6 is explicit, and the red `v6_2026-09-30_13-13-47.json` was committed
+once and had to come back out. And removing a log **re-opens the prune window**: the
+harness had pruned to the newest 5 while the red one still counted, so dropping it
+made `v2_2026-09-21_13-41-40.json`'s deletion stop being a prune. The checker caught
+it; restoring was the fix.
+
+`ut_init_project_vqx` stays `partial` and is now attributable to **issue #1962**
+alone — its two older judge complaints were eval defects and are fixed, which is what
+isolates it. Measurement posted to that card rather than fixed here: its PR 2 is the
+mechanical check, and landing it alone would turn vqx from `partial` into `fail`
+until its PR 5 changes the skill's catalog. Issue #1962 stays open.
+
 ## Process notes worth keeping
 
 - **`mutation-check.sh` restores from git.** Never run it in the background while
