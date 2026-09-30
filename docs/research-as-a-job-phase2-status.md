@@ -10,8 +10,8 @@ is [`docs/plan/research-as-a-job-later-REVISED.md`](./plan/research-as-a-job-lat
 ## Where we are in one line
 
 *Before phase 2* is built and its acceptance is met except the three-run measurement, which
-is blocked on someone else. **Phase 2 is built except two pieces**, both named below, and
-neither is blocked.
+is blocked on someone else. **Phase 2's reading experience is built.** One backend piece remains
+(serving sidecar bodies) and two items are deferred by design; nothing here is blocked.
 
 ## Before phase 2 — built
 
@@ -39,7 +39,7 @@ see findings.
 |---|---|
 | The step is the chat's unit | **DONE** (`41a45a0c4`, `1cce268de`) — chips render where they arrived, not stacked above the prose |
 | Identifiers become links | **DONE** (`f3908a47a`, `eddb86d5c`) — 193 dead ids open their card; provider hoisted above both panes |
-| Tool chips in FamilySearch's words | **LABELS DONE** (`13d6cf010`). **Navigation not done** — the chip opening the card it names is now *unblocked* by the provider hoist |
+| Tool chips in FamilySearch's words | **DONE** — labels (`13d6cf010`) and navigation (`357ddcd75`): 544 of 1,009 chips open the card they name. Still deferred: collapsed-card identity, compaction state, retry state |
 | One view of job state | **DONE** (`537ebcf0a`, `b04873198`) — rail deleted, four states on the list, off-plan group |
 | The job outlives the tab | **DONE** (`61c1c8941`) |
 | Three kinds of nothing | **DEFERRED BY DESIGN** — R5 pins it to phase 3's errand; one semantic, two eval slots if split |
@@ -52,10 +52,8 @@ apart.
 
 ## What is left, and who owns it
 
-1. **Chips open the card they name** — small, unblocked, ours. The provider hoist made it
-   possible; `setActiveSection` is already reachable from the chat.
-2. **Serving sidecar bodies** — a backend feature (blobs through the web tier), ours, larger.
-3. **The three-run acceptance** — blocked on #2793/#2927, **Cia-3's**. R2 wants three
+1. **Serving sidecar bodies** — a backend feature (blobs through the web tier), ours, larger.
+2. **The three-run acceptance** — blocked on #2793/#2927, **Cia-3's**. R2 wants three
    consecutive runs and R3 says #2927 must be fixed first or the measurement means nothing.
 
 ## What we found (each measured, none assumed)
