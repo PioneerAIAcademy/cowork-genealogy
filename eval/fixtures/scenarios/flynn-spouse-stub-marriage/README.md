@@ -32,7 +32,7 @@ relationship factless.
   `relationships` section — the Couple relationship and its marriage fact
   are written later by proof-conclusion → tree-edit. See
   `agents/person-evidence.md` §5/§7 and
-  `agents/tree-edit.md`, Appendix B.
+  `skills/tree-edit/references/relationship-accuracy.md`.
 
 Copied from `flynn-couple-marriage`: `research.json` and the `results/`
 sidecars are unchanged (person_evidence is empty and no entry references
