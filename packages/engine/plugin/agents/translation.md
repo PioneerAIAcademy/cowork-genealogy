@@ -462,12 +462,3 @@ After the genealogical notes, write `---` on its own line, then one
 paragraph in plain language: who is named, what event it records, when
 and where, and any key terms explained. No field names or tool names.
 
-### `next_step`
-
-End the response with the two workflow hand-off offers on their own
-lines:
-
-- Extract assertions from this record?
-- Link [Name] to the tree?
-
-Replace [Name] with the principal person's name from the record.
