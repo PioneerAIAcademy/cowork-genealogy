@@ -232,7 +232,9 @@ interface FetchAttempt {
 async function attemptFsImageFetch(
   url: string,
   principal: Principal | null,
-  memoryShape: boolean
+  memoryShape: boolean,
+  /** Lower the per-attempt budget; defaults to the multi-MB scan size. */
+  timeoutMs: number = IMAGE_FETCH_TIMEOUT_MS
 ): Promise<FetchAttempt> {
   // A memory artifact is served publicly: measured 2026-09-15, the same
   // artifact returned 200 with no headers at all, with a UA only, and
@@ -244,8 +246,8 @@ async function attemptFsImageFetch(
     "User-Agent": BROWSER_USER_AGENT,
   };
   const response = principal
-    ? await fsFetchWithTimeout(principal, url, { headers: fetchHeaders }, IMAGE_FETCH_TIMEOUT_MS)
-    : await fetchWithTimeout(url, { headers: fetchHeaders }, IMAGE_FETCH_TIMEOUT_MS);
+    ? await fsFetchWithTimeout(principal, url, { headers: fetchHeaders }, timeoutMs)
+    : await fetchWithTimeout(url, { headers: fetchHeaders }, timeoutMs);
   if (!response.ok) {
     return { ok: false, status: response.status, statusText: response.statusText };
   }
@@ -290,16 +292,20 @@ export async function fetchFsImageBytes(
   url: string,
   fallbackUrl: string | undefined,
   principal: Principal,
-  memoryShape = false
+  memoryShape = false,
+  /** Lower the per-attempt budget. A probe must fit inside Cowork's 60s call
+   *  abort alongside two other legs (volume-bisect-tool-spec.md §8); the default
+   *  is a hang-catcher sized for a multi-MB scan, not for a probe. */
+  opts: { timeoutMs?: number } = {}
 ): Promise<FetchedFsImage> {
   // A memory artifact needs no credential (measured), and asking for one would
   // make a public read fail for an unauthenticated caller with an auth error.
   const authedPrincipal = memoryShape ? null : principal;
 
-  let attempt = await attemptFsImageFetch(url, authedPrincipal, memoryShape);
+  let attempt = await attemptFsImageFetch(url, authedPrincipal, memoryShape, opts.timeoutMs);
   let resolvedUrl = url;
   if (!attempt.ok && fallbackUrl) {
-    attempt = await attemptFsImageFetch(fallbackUrl, authedPrincipal, memoryShape);
+    attempt = await attemptFsImageFetch(fallbackUrl, authedPrincipal, memoryShape, opts.timeoutMs);
     resolvedUrl = fallbackUrl;
   }
 
