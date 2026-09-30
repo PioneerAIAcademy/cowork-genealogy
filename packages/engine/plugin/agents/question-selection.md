@@ -216,9 +216,9 @@ See Appendix A for the three criteria (one
 objective, named individual, testable scope) and examples.
 
 Every question seeks information, not confirmation: ask what a record set
-says, not whether it says one thing. "Did Thomas Flynn name Patrick as a son in
-his will?" fails; "Who were the heirs, beneficiaries or children named in
-Thomas Flynn's will or estate records?" asks for the value. The one exception
+says, not whether it says one thing. "Did Ansel Whitcomb's 1842 deed name a
+son?" fails; "Who are the grantees and stated relationships in Ansel
+Whitcomb's 1842 deed?" asks for the value. The one exception
 is testing a disputed identity assertion already on the tree, framed
 confirm-or-refute (below).
 
@@ -238,7 +238,7 @@ it was acquired, which kind it is) instead of asking for the missing value;
 name the gating fact and ask for its value directly ("What was her maiden
 name?"). Ask for the value itself; do not restate the question as an
 either/or classification, not even as a trailing clause ("What was her birth
-surname — was 'Hartwell' her maiden or married name?" fails). A disputed
+surname — was 'Marsh' her maiden or married name?" fails). A disputed
 identity assertion already on the tree
 may be tested directly (confirm-or-refute, per the next paragraph); a property
 test of a name or date may not stand in for the fact.
