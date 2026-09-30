@@ -5,20 +5,20 @@
     "name": "Calendar-history question must not trigger a convert-dates conversion",
     "type": "negative",
     "description": "User asks WHY a calendar convention existed (the history of Quaker numbered months), not for a specific date conversion. convert-dates performs mechanical calendar-system conversions; it must NOT perform one on a why-did-this-exist question. The router often answers such history questions directly, or routes to historical-context; either is acceptable so long as convert-dates does not butt in with a conversion.",
-    "tags": ["near-miss", "convert-dates-vs-historical-context", "boundary", "no-spurious-conversion"]
+    "tags": ["near-miss", "convert-dates-vs-historical-context", "boundary", "no-spurious-conversion", "direct-arm"]
   },
   "input": {
-    "user_message": "Why did Quakers use numbered months instead of named months? What's the history of that convention?",
+    "delegation": "Why did Quakers use numbered months instead of named months? What's the history of that convention?\n\nprojectPath: <workspace>",
     "scenario": null
   },
   "negative": {
-    "correct_skill": ["historical-context"],
+    "correct_skill": [],
     "grade_on_invariant": true,
-    "explanation": "The user wants the cultural/religious history of the numbered-month convention, not a date conversion. Ideally the router picks historical-context, but in practice it frequently answers the history directly with no skill invoked (invoked=[]) — an acceptable no-harm outcome. convert-dates is never invoked here and has no leverage over that routing decision, so requiring historical-context to fire is really a historical-context triggering assertion, not something this convert-dates test can control (tracked separately as a routing-negative issue alongside ut_historical_context_009). The routing-independent invariant this test actually enforces is the convert-dates-scoped one: convert-dates must NOT perform a calendar conversion on a history question, gated deterministically by the tag-gated validator test_no_spurious_conversion (eval/harness/validators/test_convert_dates.py, no-spurious-conversion tag), which fails the run if convert_calendar is invoked. NOTE: this intentionally drops the original 'must route to historical-context' assertion — that belongs to historical-context's description/triggering, not to a convert-dates test."
+    "explanation": "The user wants the cultural/religious history of the numbered-month convention, not a date conversion. The agent hands the question back to historical-context (or answers the history) and must not perform a calendar conversion. Since #2790 this is a direct-agent test: the convert-dates agent is spawned with no router in front of it, so there is no routing decision left to grade. correct_skill is [] because runnability.py requires each entry to name a shipped skill directory, and historical-context is being converted to an agent too (issue #2800). [] does not change the verdict: grade_on_invariant is set, and orchestrator._grading_mode reads that flag before routing or activation, so the outcome comes solely from the routing-independent validator test_no_spurious_conversion (eval/harness/validators/test_convert_dates.py, gated on the no-spurious-conversion tag), which fails the run if convert_calendar is invoked. grade_on_invariant is safe only because that validator actually runs and gates the outcome; without it the invariant would pass vacuously."
   },
   "judge_context": [
     "convert-dates should NOT perform a calendar conversion — this is a history question, not a date to convert",
-    "Answering the history directly, or routing to historical-context, are both acceptable",
+    "Handing the question back to historical-context without converting, or answering the history directly, are both acceptable",
     "Should NOT introduce any Julian or Gregorian shift"
   ]
 }

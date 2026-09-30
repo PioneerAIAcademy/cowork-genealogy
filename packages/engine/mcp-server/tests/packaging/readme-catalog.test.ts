@@ -123,6 +123,23 @@ describe("README catalog", () => {
     ).toEqual([]);
   });
 
+  it("states an agent count that matches reality, if it states one at all", () => {
+    // The skill-count test's twin: two PRs converting skills to agents each
+    // made the same 9->10 edit, so a merge kept "ten Cowork agents" while 11
+    // shipped, and nothing read that sentence.
+    const agents = readdirSync(join(pluginRoot, "agents")).filter((f) => f.endsWith(".md"));
+    const WORDS: Record<string, number> = { nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14 };
+    const claims = [
+      ...readme.matchAll(/\b(\d+|nine|ten|eleven|twelve|thirteen|fourteen)\s+(?:Cowork\s+|plugin\s+)?agents\b/gi),
+    ].map((m) => WORDS[m[1].toLowerCase()] ?? Number(m[1]));
+    const wrong = claims.filter((n) => n !== agents.length);
+    expect(
+      wrong,
+      `README.md claims these agent counts, but ${agents.length} ship in ` +
+        `the plugin: ${wrong.join(", ")}.`,
+    ).toEqual([]);
+  });
+
   it("states a skill count that matches reality, if it states one at all", () => {
     // Same failure, one section down: "ships 27 skills" and "26 shipped
     // skills" disagreed with each other in the same document.

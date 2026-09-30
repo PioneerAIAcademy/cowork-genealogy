@@ -138,7 +138,7 @@ Then open <http://127.0.0.1:3000>. The CRUD UI reads + writes the same `eval/` t
 
 ### Harness exit codes
 
-- `0` — every test passed or was an expected xfail.
+- `0` — every test passed, was partial, or was a declared-xfail test that failed as declared.
 - `1` — harness crash, or any test failed or unexpectedly passed. On a crash,
   submission stops but every still-running test is allowed to finish, and the
   completed tests are saved as a `scratch_<ts>.json` run log per skill with the
@@ -194,7 +194,7 @@ Run logs are JSON envelopes validated against [`docs/specs/schemas/run-log.schem
 - `judge_prompt_hash` — SHA-256 of the normalized `eval/harness/judge/prompt.md` at run time (NOT in the snapshot — the judge prompt is project-global, so it's tracked separately so judge edits don't clobber every skill on activate).
 - `snapshot` — `{repo-relative-path: sha256-of-normalized-content}` of every skill-side file used to produce this run (`packages/engine/plugin/skills/<skill>/**`, `eval/tests/unit/<skill>/**`, referenced scenarios + fixtures). Values are digests, not content: git already holds the bytes, and the active-state check only has to compare. MCP source (`packages/engine/mcp-server/src/**`) is **not** tracked — the harness serves tool calls from mock fixtures, so a `src/` change does not make prior run logs inactive.
 - `tests[]` — per-test entries:
-  - `outcome` (`pass | partial | fail | aborted | xfail | xpass`)
+  - `outcome` (`pass | partial | fail | aborted`; suppression of a declared-xfail failure is read from the `expected_outcome` marker beside it)
   - `flaky`, `outcome_summary.aggregated_dimensions[]` (per-dimension scores; `1`–`3`, or `null` for N/A)
   - `runs[]` — per-execution detail: `output.text_response`, `tool_calls`, `validators`, `judge.dimensions[]` with rationales
 - `totals` — token + cost aggregates summed across tests.

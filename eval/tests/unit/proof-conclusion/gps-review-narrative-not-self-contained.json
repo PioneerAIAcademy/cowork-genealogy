@@ -11,11 +11,12 @@
       "gps-review",
       "GPS-step-5",
       "no-new-proof-expected",
-      "narrative-self-containment"
+      "narrative-self-containment",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Does my proof for the parentage question (ps_001) meet the Genealogical Proof Standard? Assess the EXISTING ps_001 against the five GPS components — judge it on the evidence it actually cites. Treat ps_001 as it stands. Any sources or assertions that exist in research.json but are NOT cited in ps_001 are evidence GAPS for the next round of work — flag them and say whether they would change the tier, but do NOT frame them as defects or failures of the current proof.",
+    "delegation": "Assess whether ps_001, the existing proof for the parentage question, meets the Genealogical Proof Standard. Assess the EXISTING ps_001 against the five GPS components — judge it on the evidence it actually cites. Treat ps_001 as it stands. Any sources or assertions that exist in research.json but are NOT cited in ps_001 are evidence GAPS for the next round of work — flag them and say whether they would change the tier, but do NOT frame them as defects or failures of the current proof.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "flynn-proof-bare-ids"
   },
   "judge_context": [
@@ -27,7 +28,7 @@
     "NEUTRALITY — grade the systematic coverage of the checks above, NOT the verdict reached. A review that works through the self-containment check and judges the narrative adequate is not penalized; a review that reaches the 'right' verdict without ever performing the check does not pass. Do not require any particular adjective about narrative quality.",
     "Must NOT write a new proof_summaries entry, and must not create a second entry for q_001 — the prompt asks for an assessment, not a rewrite. Rewriting or updating ps_001 in place is out of scope for this prompt; note it if it happens.",
     "Tool Arguments: the specific assertions cited by ps_001 are fetched with research_query scoped by sourceId or questionId. research_query does NOT support a per-assertion `assertionId` filter. A run that attempts an unsupported filter, receives the error, and recovers with a supported one should be noted but not failed on that basis alone; repeated unsupported calls with no recovery is a fail.",
-    "Invoking validate_research_schema as a final guardrail is acceptable and expected; it does not substitute for the GPS assessment. An assessment that collapses into a bare 'the file is schema-valid' report is a fail — schema validity is not the GPS."
+    "An assessment that collapses into a bare “the file is schema-valid” report is a fail — schema validity is not the GPS."
   ],
   "judge_reads_files": true,
   "execution": {

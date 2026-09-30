@@ -99,10 +99,10 @@ BLOCKED_DENY_REASON = (
 
 
 # The harness's LIVE_TREE_ARG_TOOLS, held equal to it by an AST read in
-# tests/test_proto_worker.py: tools that read the live tree only when the named argument
-# is truthy (`person_warnings` with `live: true` returns the subject's relatives' names
-# and PIDs), so the bare name cannot decide them. Denied whenever BLOCKED_TOOLS is on.
-LIVE_TREE_ARG_TOOLS = {"person_warnings": "live"}
+# tests/test_proto_worker.py: tools that read the live tree only when a named argument
+# is truthy, so the bare name cannot decide them. Denied whenever BLOCKED_TOOLS is on.
+# Currently empty — kept for the next tool whose block depends on an argument.
+LIVE_TREE_ARG_TOOLS = {}
 
 
 def is_blocked_call(tool_name: str, tool_input: Mapping[str, Any], blocked: frozenset[str]) -> bool:
