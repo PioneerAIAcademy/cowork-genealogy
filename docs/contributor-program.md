@@ -1,81 +1,124 @@
-# Volunteer developer program
+# Contributor program
 
-As of 2026-09-29.
+As of 2026-09-30.
 
-Four very junior volunteer developers join for a three-month trial at about
-10 hours a week each (about 120 hours per person), each with a Claude Code
-subscription and FamilySearch and OpenRouter credentials. They get real
-production experience, and we learn whether to hire them next year.
+Up to seven very junior developers, called Contributors, all starting together, each at
+about 10 hours a week for three months, each with a Claude Code subscription
+and FamilySearch and OpenRouter credentials.
+
+The program exists for the Contributors: real production experience, and
+exposure to a mentor who can recommend them. Each Contributor has one assigned
+mentor, a developer on this project who also works at another company. At the
+end, the mentor can recommend them to that company from first-hand
+experience. The program is not a hiring pipeline for this project, and the
+Contributors are not there to lighten their mentors' load.
 
 The issue drafts below are **not filed yet**, so no one on the team picks
-them up by mistake. File them when the volunteers start, then delete the
+them up by mistake. File them when the Contributors start, then delete the
 drafts section from this doc. Holding unfiled issues here is a lead-approved
 exception to the no-queue-file rule in `CLAUDE.md`, and it ends at filing.
 
 ## Summary
 
-- **Months 1–2: their own lane in the hosted web workbench** (`apps/web`,
-  `packages/viewer-ui`), one track per volunteer, plus one server/engine
-  track. It runs locally with no keys (`make server-mock` + `make web-dev`,
-  then "Open a sample project"). Tests are deterministic vitest. A reviewer
-  can judge the work from a screenshot.
-- **Month 3: one real issue each, run end to end** through
-  `docs/task-lifecycle.md`: plan, `/critique-plan`, implement, review. Polish
-  PRs show care; scoping and verifying a real issue shows judgment, which is
-  the hiring signal.
-- **Their cards carry a `volunteer` label**, which `/fill-ready` excludes, so
-  they never enter the team's Ready pools.
-- **Each volunteer has a senior mentor.** A volunteer runs `/review` on their
-  own PR first; the mentor does the second review, and at the end gives the
-  lead a hire / no-hire recommendation.
+- **Each Contributor owns a track** of issues below, and no two tracks touch the
+  same files. Pick each Contributor's track to match the kind of work their
+  mentor's company does: web tracks for a frontend shop, engine and server
+  tracks for a backend one.
+- **Months 1–2: their own track.** Most of it is in the hosted web workbench
+  (`apps/web`, `packages/viewer-ui`), which runs locally with no keys
+  (`make server-mock` + `make web-dev`, then "Open a sample project"), with
+  deterministic vitest tests. Two tracks are server and engine work.
+- **Month 3: one real issue, end to end.** The Contributor runs it through
+  `docs/task-lifecycle.md` themselves: plan, `/critique-plan`, implement,
+  review. Ideally it comes from the mentor's own area of this project.
+- **Every Contributor card carries a `contributor` label**, which `/fill-ready`
+  excludes, so none of it enters the team's Ready pools.
+- **Review:** the Contributor runs `/review` on their own PR first; the mentor
+  does the required second review. Each week, every Contributor also reviews one
+  other Contributor's PR, as practice; that review comments only and gates
+  nothing.
+- **A 30-minute call with the mentor every week**: what they did, what is
+  next, where they are stuck. This is the mentor's main commitment, and it is
+  what the recommendation rests on.
+- **A demo at the end.** In the last week, each Contributor shows the team what
+  they built in ten minutes, with their mentor present.
 
 ## Before week 1 (lead)
 
-- Give the track 4 volunteer an Anthropic API key before month 2, for the
+- Assign each Contributor a mentor and a track (see "Tracks" below). With fewer
+  than seven Contributors, leave the lowest tracks unassigned; their drafts stay
+  unfiled.
+- Brief each mentor on "Work from the mentor" and "What the mentor needs for a
+  recommendation" below.
+- Create the `contributor` label and file the drafts for the assigned tracks.
+- Wait for PR #3004 to merge before V0; it rewrites `DEVELOPMENT.md` and the
+  install path.
+- Give the track F Contributor an Anthropic API key before month 2, for the
   off-topic guardrail's live check.
-- Wait for PR #3004 to merge before the week-1 doc fix; it rewrites
-  `DEVELOPMENT.md` and the install path.
-- Assign each volunteer a senior mentor, who is also their second reviewer.
-- Create the `volunteer` label and file the drafts below.
 
-## Why the web workbench first
+## Work from the mentor
 
-Access is not the constraint; dependency is. Of the 23 open, unassigned
-`developer` issues without `senior` (counted 2026-09-29), about 5 are
-junior-sized leaf work, and the current juniors draw from that pool. Skill
-work shares an eval snapshot with other open issues on the same skill, so a
-slow PR forces someone else's re-run.
+A mentor may also hand their Contributor a piece of their own work, for the
+experience of working inside something real and in flight. It is optional,
+and the Contributor's track comes first. The piece must be something **nothing
+is waiting on**: at 10 hours a week a Contributor can take two weeks, so the
+mentor's own PR must never be blocked on it. Good pieces:
 
-The web lane is not fully isolated. issue #2788 (assigned) edits
-`apps/web/src/styles.css`, which tracks 1 and 2 also touch — a merge nuisance
-only.
+- tests for code the mentor just wrote;
+- a `dev/try-*.ts` smoke script for the mentor's tool;
+- the viewer or web piece of a feature whose engine half the mentor owns;
+- reproducing a bug report and writing down exactly what happens;
+- running the "Done when" check on the mentor's PR, in a browser.
+
+Each is its own issue, labelled `developer` and `contributor`, and its own PR to
+main. Never a branch stacked on the mentor's branch.
+
+Never give a Contributor, from a track or from a mentor:
+
+- anything on a Beta critical path;
+- any SKILL.md or agent-body edit (V19 has the one exception);
+- anything with a `cluster:` label or `needs-decision`;
+- issue #2988 (feedback-bundle redaction): high-priority privacy work;
+- issue #2989 (bare image-ARK input): shares three files with
+  issue #2987 and PR #2977;
+- issue #2965 (person_warnings country rule) until issue #2941 and PR #2994
+  land; then it is draft V20.
 
 ## Needs your decision
 
 - **The issue #2813 design (single-ask users).** Its draft design is marked
   "not approved". Approve items 1, 2 and 5, and they become drafts V21–V23
-  below; items 3 and 4 change agent behaviour and stay with a senior.
+  below, as month-3 issues; items 3 and 4 change agent behaviour and stay
+  with a senior.
 - **A family view in the viewer.** No section shows the tree's people and
-  relationships as a family group or pedigree chart. A strong month-2/3
+  relationships as a family group or pedigree chart. A strong month-3
   project; decide it alongside issue #2813, since both change what the viewer
   leads with.
 - **Hebrew calendar in `convert_calendar`.** Useful for Jewish records and
-  gravestones; it needs a spec before code. Say whether it is wanted.
+  gravestones; it needs a spec before code. If wanted, it is track G's
+  month-3 issue.
 
-## What not to give them
+## Tracks
 
-- issue #2988 (feedback-bundle redaction): high-priority privacy work.
-- issue #2989 (bare image-ARK input): shares three files with
-  issue #2987 and PR #2977.
-- issue #2965 (person_warnings country rule) until issue #2941 and PR #2994
-  land; then it is draft V20.
-- Anything with a `cluster:` label or `needs-decision`, and any SKILL.md or
-  agent-body edit except the one section in draft V19.
+Seven tracks, one per Contributor, listed in the order to assign them. Within a
+track, work top to bottom. Everyone starts with V0.
+
+| Track | Theme | Month 1 | Month 2 | Kind of work |
+|---|---|---|---|---|
+| A | Session list | V1, V2 | V3, V4 | React, accessibility |
+| B | Viewer | V12, V13 | V14, V15 | React, testing |
+| C | Chat pane | V7, V9 | V8, V10 | React, accessibility tooling |
+| D | Web shell | V5, V6 | V6a | Browser testing, responsive CSS |
+| E | Engine | V17 (utilities) | V20 | TypeScript, unit testing |
+| F | Server | V17 (tool error branches) | V18 | Python, prompt work |
+| G | Dates and export | V17 (calendar smoke) | V19, then V11 or V16 | Algorithms, file formats |
+
+Track A and track D both touch `apps/web/src/styles.css`; a merge nuisance
+only. V10 waits on V1, V9 and V12.
 
 ## Issue drafts
 
-All carry `developer` and `volunteer`. Suggested order within each track is
-top to bottom; V0 is everyone's first week.
+All carry `developer` and `contributor`.
 
 ### V0. DEVELOPMENT.md: fix it from a fresh clone
 
@@ -88,10 +131,11 @@ uv); the build example names `tests/tools/places.test.ts`, which is
 `place-search.test.ts`; "four auth exclusions" in `DEVELOPMENT.md` and the
 `smoke-calls.ts` header, where there are three. After PR #3004 merges.
 
-**Done when:** a second volunteer follows the fixed doc from a fresh clone
-without help. One volunteer lands it; the other three review it.
+**Done when:** a second Contributor follows the fixed doc from a fresh clone
+without help. One Contributor lands it; the others each follow it and review
+it.
 
-### Track 1: session list and web shell
+### Session list and web shell
 
 #### V1. Session cards are keyboard-operable
 
@@ -153,13 +197,13 @@ passes again when restored.
 
 The session screen is a fixed three-column grid, and the only media queries
 are for reduced motion. Below about 800px, stack chat and viewer or switch
-between them with tabs. A month-2 project.
+between them with tabs.
 
 **Done when:** a session is usable at 390px wide (iPhone) with no
 horizontal scroll, checked in the browser's device mode and screenshotted
 in the PR.
 
-### Track 2: chat pane and GEDCOM export
+### Chat pane
 
 #### V7. Copy button on assistant messages
 
@@ -188,21 +232,7 @@ after V1, V9 and V12 land so it starts green.
 
 **Done when:** removing one `aria-label` makes it fail.
 
-#### V11. Download the tree as GEDCOM
-
-**Touches:** new `packages/viewer-ui/src/lib/gedcom-export.ts`, a download button in the viewer
-
-Genealogists move research between programs as GEDCOM. Convert
-`tree.gedcomx.json` (`docs/specs/simplified-gedcomx-spec.md`) to GEDCOM 5.5.1
-in the browser. The viewer is shared with Electron, so both get it. Write a
-short spec in `docs/specs/` first, for lead approval. A month-2 project.
-
-**Done when:** the sample project's tree exports, and the file imports
-cleanly into a desktop genealogy program (RootsMagic, Gramps, or
-FamilySearch's GEDCOM upload); unit tests cover names, dates, places,
-families and sources.
-
-### Track 3: research viewer
+### Research viewer
 
 #### V12. Viewer cards are keyboard-operable
 
@@ -221,7 +251,7 @@ list.
 #### V14. Take issue #2493 (plain labels in the viewer)
 
 Already vetted and junior-sized, from a real tester complaint. Add the
-`volunteer` label to the existing issue rather than filing a new one.
+`contributor` label to the existing issue rather than filing a new one.
 
 #### V15. Tests for the viewer components that have none
 
@@ -237,19 +267,38 @@ HypothesesSection, PlansSection, `layout/Header`,
 Hide the sidebar and chat, expand the cards, so a researcher can print or
 save a PDF of their project.
 
-### Track 4: server and engine
+### Export
 
-#### V17. Unit tests for untested engine utilities
+#### V11. Download the tree as GEDCOM
 
-**Touches:** `packages/engine/mcp-server/tests/`
+**Touches:** new `packages/viewer-ui/src/lib/gedcom-export.ts`, a download button in the viewer
 
-`utils/gedcomx-ids.ts`, `utils/source-ref-resolver.ts`,
-`utils/coerce-json-arg.ts`, and the error branches of `tools/wikipedia.ts`
-and `tools/validate-research-schema.ts` have no tests of their own. Add a
-`dev/try-convert-calendar.ts` smoke script (offline; copy
-`try-place-distance.ts`) and list it in `DEVELOPMENT.md`.
+Genealogists move research between programs as GEDCOM. Convert
+`tree.gedcomx.json` (`docs/specs/simplified-gedcomx-spec.md`) to GEDCOM 5.5.1
+in the browser. The viewer is shared with Electron, so both get it. Write a
+short spec in `docs/specs/` first, for lead approval.
 
-#### V18. Keep the hosted agent on genealogy (month 2)
+**Done when:** the sample project's tree exports, and the file imports
+cleanly into a desktop genealogy program (RootsMagic, Gramps, or
+FamilySearch's GEDCOM upload); unit tests cover names, dates, places,
+families and sources.
+
+### Server and engine
+
+#### V17. Unit tests for untested engine code
+
+**Touches:** `packages/engine/mcp-server/tests/`, `packages/engine/mcp-server/dev/`, `DEVELOPMENT.md`
+
+File as three issues, one per track:
+
+- **Track E:** `utils/gedcomx-ids.ts`, `utils/source-ref-resolver.ts` and
+  `utils/coerce-json-arg.ts` have no tests of their own.
+- **Track F:** the error branches of `tools/wikipedia.ts` and
+  `tools/validate-research-schema.ts` have no tests.
+- **Track G:** add a `dev/try-convert-calendar.ts` smoke script (offline;
+  copy `try-place-distance.ts`) and list it in `DEVELOPMENT.md`.
+
+#### V18. Keep the hosted agent on genealogy
 
 **Touches:** `apps/server/app/agent/real_agent.py`, `apps/server/proto/worker/options.py`, their tests
 
@@ -275,17 +324,17 @@ this changes every hosted turn.
 
 #### V19. Take issue #1621 (French Republican calendar)
 
-Add the `volunteer` label to the existing issue. The tool half is pure
+Add the `contributor` label to the existing issue. The tool half is pure
 arithmetic with a complete test table. The issue also replaces one section
 of `agents/convert-dates.md` and names one `make eval-skill SKILL=convert-dates`
-run; a genealogist reviews that part. A month-2 task.
+run; a genealogist reviews that part.
 
 #### V20. Take issue #2965 (event in a different country)
 
 Once issue #2941 and PR #2994 land. Template-like: one more `check*`
 function in `person-warnings.ts`, reusing `countryConsistency`.
 
-### Issue #2813 split (months 2–3, once the lead approves its design)
+### Issue #2813 split (month 3, once the lead approves its design)
 
 These replace issue #2813's viewer half. File them as new issues and close
 issue #2813 into them.
@@ -320,27 +369,33 @@ prepared request to the chat. This needs one new method on
 both the web app and Electron, and a matching check in `contract.ts`; the
 mentor reviews that interface change first.
 
-## Month 3: one real issue each
+## Month 3: one real issue
 
-Each volunteer takes one issue and runs it through `docs/task-lifecycle.md`
-themselves. Candidates:
+Each Contributor takes one real issue and runs it through
+`docs/task-lifecycle.md` themselves: plan, `/critique-plan`, implement,
+review. Best is an issue from the mentor's own area of this project, because
+the mentor then judges the work against something they know well. Otherwise:
 
 - issue #3002 (the eval scenario viewer is missing three sections), after
   PR #3004 merges;
+- one of V21–V23, if the lead approves the issue #2813 design;
+- the family view or the Hebrew calendar, if the lead says yes;
 - a tester-reported web or viewer item from the Feedback column, once
   triaged;
-- a decision from "Needs your decision" above, if the lead says yes;
-- something they found themselves in months 1–2.
+- something they found themselves earlier in the program.
 
-## What mentors watch for the hiring decision
+## What the mentor needs for a recommendation
 
-Each mentor gives the lead a hire / no-hire recommendation at the end of
-month 3. With Claude Code, speed says little. Every PR carries a screenshot and a
-"how I verified this" section. Watch:
+The mentor writes the recommendation to their own company; it is theirs, not
+the lead's. With Claude Code, speed says little. Every PR carries a
+screenshot and a "how I verified this" section. What makes a recommendation
+credible:
 
 - PR size, and whether they split work sensibly;
 - whether they checked the change in a browser, not just in tests;
 - whether they read the tests they changed;
-- how they respond to review;
+- how they respond to review, and how useful their reviews of other
+  Contributors' PRs are;
 - in month 3, whether their plan survives `/critique-plan` and whether they
-  ask the right question when stuck.
+  ask the right question when stuck;
+- the end-of-program demo.
