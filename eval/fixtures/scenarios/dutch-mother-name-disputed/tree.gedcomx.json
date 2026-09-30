@@ -2,45 +2,28 @@
   "persons": [
     {
       "id": "I1",
-      "living": false,
-      "gender": "male",
+      "gender": "Male",
       "names": [
-        {
-          "given_name": "Cornelis",
-          "surname": "van Noord"
-        }
+        { "id": "N1", "preferred": true, "given": "Cornelis", "surname": "van Noord", "type": "BirthName" }
       ],
       "facts": [
-        {
-          "type": "birth",
-          "date": "1828",
-          "place": "Zuid-Holland, Netherlands",
-          "standard_date": "+1828",
-          "standard_place": "Zuid-Holland, Netherlands"
-        }
-      ],
-      "sources": ["SD-001", "SD-002"]
+        { "id": "F1", "type": "Birth", "date": "1828", "place": "Zuid-Holland, Netherlands", "standard_date": "+1828", "standard_place": "Zuid-Holland, Netherlands" }
+      ]
     },
     {
       "id": "I2",
-      "living": false,
-      "gender": "female",
+      "gender": "Female",
       "names": [
-        {
-          "given_name": "Jannetje",
-          "surname": "van Noord",
-          "notes": "First letter uncertain; OCR reads J, user reads T, index reads F"
-        }
+        { "id": "N2", "preferred": true, "given": "Jannetje", "surname": "van Noord", "type": "BirthName" }
       ],
-      "facts": [],
-      "sources": ["SD-001", "SD-002"]
+      "facts": []
     }
   ],
   "relationships": [
-    {
-      "type": "parent_child",
-      "person1_id": "I2",
-      "person2_id": "I1"
-    }
+    { "id": "RT1", "type": "ParentChild", "person1": "I2", "person2": "I1" }
+  ],
+  "sources": [
+    { "id": "S1", "title": "Burgerlijke Stand, Zuid-Holland, birth act no. 42, 1828, Cornelis van Noord" },
+    { "id": "S2", "title": "Tienjarige tafels (ten-year marriage index), Zuid-Holland, 1838-1848, Cornelis van Noord" }
   ]
 }

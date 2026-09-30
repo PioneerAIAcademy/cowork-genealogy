@@ -168,6 +168,9 @@
       "assertion_id": "a_001",
       "person_id": "I1",
       "confidence": "confident",
+      "rationale": "Birth act names Cornelis van Noord as the child; matches tree person I1 exactly.",
+      "match_score": null,
+      "created": "2026-06-01",
       "superseded_by": null
     },
     {
@@ -175,6 +178,9 @@
       "assertion_id": "a_002",
       "person_id": "I2",
       "confidence": "probable",
+      "rationale": "Birth act names the mother; OCR reading uncertain (Jannetje [?]).",
+      "match_score": null,
+      "created": "2026-06-01",
       "superseded_by": null
     },
     {
@@ -182,6 +188,9 @@
       "assertion_id": "a_003",
       "person_id": "I2",
       "confidence": "probable",
+      "rationale": "Ten-year marriage index names the mother as Fannetje van Noord; linked to same person I2.",
+      "match_score": null,
+      "created": "2026-06-10",
       "superseded_by": null
     }
   ],
