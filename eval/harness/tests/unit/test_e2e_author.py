@@ -1122,3 +1122,22 @@ def test_same_relationship_duplicate_fact_id_warns_strip_refuses():
     }
     _, warnings = normalize_tree(raw)
     assert any("duplicate fact id 'F1' on R1" in w for w in warnings)
+
+
+def _drift_tree(sources_key=True, refs=("S1",)):
+    person = _person("KNDX-MKG", "John", "Smith", living=False)
+    if sources_key:
+        person["sources"] = [{"ref": r} for r in refs]
+    return {"persons": [person], "relationships": [],
+            "sources": [{"id": "S1", "title": "A"}, {"id": "S2", "title": "B"}]}
+
+
+def test_drift_ignores_person_refs_a_fixture_never_recorded():
+    """A fixture snapshotted before person_read carried person-level refs has no
+    `sources` key: a fresh snapshot carrying them is not upstream drift."""
+    assert diff_trees(_drift_tree(sources_key=False), _drift_tree()) == []
+
+
+def test_drift_reports_a_person_ref_that_moved_upstream():
+    report = diff_trees(_drift_tree(refs=("S1",)), _drift_tree(refs=("S2",)))
+    assert any("person changed upstream: KNDX-MKG" in line for line in report)

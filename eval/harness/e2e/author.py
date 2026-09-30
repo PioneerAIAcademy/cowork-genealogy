@@ -724,7 +724,12 @@ def diff_trees(old: dict[str, Any], new: dict[str, Any]) -> list[str]:
     for pid in sorted(old_p.keys() - new_p.keys()):
         report.append(f"person gone upstream: {pid} ({_display_name(old_p[pid])})")
     for pid in sorted(old_p.keys() & new_p.keys()):
-        if _comparable_person(old_p[pid]) != _comparable_person(new_p[pid]):
+        old_c, new_c = _comparable_person(old_p[pid]), _comparable_person(new_p[pid])
+        # A fixture snapshotted before person_read carried person-level refs
+        # (#2696) has no `sources` key at all: "not recorded", not a change.
+        if "sources" not in old_p[pid]:
+            new_c = {**new_c, "sources": old_c["sources"]}
+        if old_c != new_c:
             report.append(f"person changed upstream: {pid} ({_display_name(new_p[pid])})")
 
     def rel_map(tree: dict[str, Any]) -> dict[tuple[str, ...], list[tuple[str, ...]]]:

@@ -21,6 +21,8 @@ from __future__ import annotations
 
 import re
 
+from collections import Counter
+
 import pytest
 
 
@@ -470,59 +472,60 @@ def test_person_level_sources_carried(tool_calls, after_state):
     (issue #2696), and init-project re-ids sources to `S1`...; a ref copied over
     unchanged points at nothing, and a dropped one loses the only attribution
     FamilySearch gives. Decidable from the documents alone, so a check rather
-    than prose. Persons are joined by `ark`, sources by title.
+    than prose.
+
+    Persons are joined by `ark`: a returned person whose ark no written person
+    carries was not imported, and V2 fails a run that imports without arks, so
+    that join cannot quietly check nothing. Sources are matched by
+    (title, citation, url) as a multiset, because FamilySearch titles are
+    "Name, \"Collection\"" and two events in one collection share a title.
     """
-    returned = {}
+    tree = _written_tree(after_state)
+    if not tree.get("persons"):
+        pytest.skip("no tree written")
+    by_ark = {
+        p.get("ark"): p for p in tree.get("persons") or [] if isinstance(p, dict)
+    }
+
+    def _key(src):
+        return (src.get("title"), src.get("citation"), src.get("url"))
+
+    tree_sources = {
+        s.get("id"): _key(s) for s in tree.get("sources") or [] if isinstance(s, dict)
+    }
+    checked = 0
+    bad = []
     for response in _responses(tool_calls, "person_read"):
-        titles = {
-            s.get("id"): s.get("title")
+        sources = {
+            s.get("id"): _key(s)
             for s in response.get("sources") or []
-            if isinstance(s, dict)
+            if isinstance(s, dict) and s.get("id")
         }
         for person in response.get("persons") or []:
             if not isinstance(person, dict) or not person.get("id"):
                 continue
-            want = {
-                titles.get(r.get("ref"))
+            want = Counter(
+                sources[r.get("ref")]
                 for r in person.get("sources") or []
-                if isinstance(r, dict) and titles.get(r.get("ref"))
-            }
-            if want:
-                returned.setdefault(person["id"], set()).update(want)
-    if not returned:
-        pytest.skip("no returned person carries person-level sources")
-    tree = _written_tree(after_state)
-    if not tree.get("persons"):
-        pytest.skip("no tree written")
-    tree_titles = {
-        s.get("id"): s.get("title")
-        for s in tree.get("sources") or []
-        if isinstance(s, dict)
-    }
-    by_ark = {
-        p.get("ark"): p for p in tree.get("persons") or [] if isinstance(p, dict)
-    }
-    bad = []
-    matched = 0
-    for pid, want in sorted(returned.items()):
-        written = by_ark.get(f"ark:/61903/4:1:{pid}")
-        if written is None:
-            continue  # not imported; the ark check and the judge cover that
-        matched += 1
-        refs = [r for r in written.get("sources") or [] if isinstance(r, dict)]
-        dangling = [r.get("ref") for r in refs if r.get("ref") not in tree_titles]
-        got = {tree_titles[r.get("ref")] for r in refs if r.get("ref") in tree_titles}
-        missing = sorted(t for t in want if t not in got)
-        if dangling:
-            bad.append(f"{written.get('id')} ({pid}): refs {dangling} name no tree source")
-        if missing:
-            bad.append(f"{written.get('id')} ({pid}): missing person-level sources {missing}")
-    # Joined by ark: with no match at all this would check nothing and pass, so
-    # say so instead (the ark check reports why no ark matched).
-    assert matched, (
-        "no written person carries the ark of a person_read person with "
-        f"person-level sources ({sorted(returned)}), so none could be checked"
-    )
+                if isinstance(r, dict) and r.get("ref") in sources
+            )
+            written = by_ark.get(f"ark:/61903/4:1:{person['id']}")
+            if not want or written is None:
+                continue
+            checked += 1
+            refs = [r for r in written.get("sources") or [] if isinstance(r, dict)]
+            dangling = [r.get("ref") for r in refs if r.get("ref") not in tree_sources]
+            got = Counter(tree_sources[r.get("ref")] for r in refs if r.get("ref") in tree_sources)
+            missing = want - got
+            if dangling:
+                bad.append(f"{written.get('id')} ({person['id']}): refs {dangling} name no tree source")
+            if missing:
+                bad.append(
+                    f"{written.get('id')} ({person['id']}): missing person-level sources "
+                    f"{sorted(k[0] or '' for k in missing.elements())}"
+                )
+    if not checked:
+        pytest.skip("no imported person carries person-level sources")
     assert not bad, (
         "person-level sources returned by person_read did not reach the tree "
         "re-pointed at its source ids: " + "; ".join(bad)

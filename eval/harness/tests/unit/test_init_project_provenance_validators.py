@@ -168,10 +168,31 @@ def test_v1_fires_when_a_ref_points_at_the_wrong_source():
     assert "Civil birth" in msg
 
 
-def test_v1_fails_rather_than_passing_when_no_person_matches_by_ark():
+def test_v1_skips_an_unimported_person_instead_of_failing():
+    """The model read a candidate with person-level refs, then imported someone
+    else: not a V1 failure (V2 fails a run that imports without arks)."""
     tree = _tree_with([{"ref": "S2"}, {"ref": "S3"}])
-    del tree["tree_gedcomx_json"]["persons"][0]["ark"]
-    assert "none could be checked" in _fails(check_person_sources, [_read_with_person_sources()], tree)
+    tree["tree_gedcomx_json"]["persons"][0]["ark"] = "ark:/61903/4:1:OTHR-001"
+    with pytest.raises(pytest.skip.Exception):
+        check_person_sources([_read_with_person_sources()], tree)
+
+
+def test_v1_counts_two_sources_that_share_a_title():
+    """FamilySearch titles are "Name, \"Collection\"": two events in one
+    collection share one. A set compare would hide the dropped second ref."""
+    call = _read_with_person_sources()
+    call["response"]["sources"] = [
+        {"id": "SD01-AAA", "title": "John Smith, \"US Census\"", "citation": "1900"},
+        {"id": "SD01-BBB", "title": "John Smith, \"US Census\"", "citation": "1910"},
+    ]
+    tree = _tree_with(
+        [{"ref": "S2"}],
+        sources=[
+            {"id": "S2", "title": "John Smith, \"US Census\"", "citation": "1900"},
+            {"id": "S3", "title": "John Smith, \"US Census\"", "citation": "1910"},
+        ],
+    )
+    assert "missing person-level sources" in _fails(check_person_sources, [call], tree)
 
 
 def test_v1_skips_when_no_returned_person_carries_sources():

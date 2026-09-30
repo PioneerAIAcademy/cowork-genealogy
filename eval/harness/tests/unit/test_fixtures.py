@@ -260,6 +260,22 @@ def sidecar_problems(name, data):
     return problems
 
 
+def _is_tree_source_ref(ref) -> bool:
+    """Mirrors `isTreeSourceRef` in merge-shared.ts and the tree validator:
+    only ref/page/quality, `ref` a non-empty string, `page` a string, `quality`
+    a QUAY integer 0-3."""
+    if not isinstance(ref, dict) or not set(ref) <= {"ref", "page", "quality"}:
+        return False
+    if not isinstance(ref.get("ref"), str) or not ref["ref"]:
+        return False
+    if "page" in ref and not isinstance(ref["page"], str):
+        return False
+    q = ref.get("quality")
+    if "quality" in ref and (isinstance(q, bool) or not isinstance(q, int) or not 0 <= q <= 3):
+        return False
+    return True
+
+
 def test_person_read_fixture_person_refs_match_the_tool_contract():
     """Person-level `sources` refs are `{ref, page?, quality?}` and every `ref`
     names an id in the response's own `sources[]` (#2696): the tool drops any
@@ -268,19 +284,20 @@ def test_person_read_fixture_person_refs_match_the_tool_contract():
     wrong = []
     for name, data in _person_read_fixtures():
         response = data.get("response") or {}
-        ids = {s.get("id") for s in response.get("sources") or [] if isinstance(s, dict)}
+        ids = {s.get("id") for s in response.get("sources") or [] if isinstance(s, dict) and s.get("id")}
         for person in response.get("persons") or []:
             refs = person.get("sources") if isinstance(person, dict) else None
             if refs is None:
                 continue
-            if not isinstance(refs, list):
-                wrong.append(f"{name}: {person.get('id')} sources is not a list")
+            if not isinstance(refs, list) or not refs:
+                # The tool omits the key rather than sending an empty list.
+                wrong.append(f"{name}: {person.get('id')} sources is not a non-empty list")
                 continue
             for ref in refs:
-                if not isinstance(ref, dict) or not set(ref) <= {"ref", "page", "quality"}:
+                if not _is_tree_source_ref(ref):
                     wrong.append(f"{name}: {person.get('id')} ref {ref!r} is not {{ref, page?, quality?}}")
-                elif ref.get("ref") not in ids:
-                    wrong.append(f"{name}: {person.get('id')} ref {ref.get('ref')!r} names no source")
+                elif ref["ref"] not in ids:
+                    wrong.append(f"{name}: {person.get('id')} ref {ref['ref']!r} names no source")
     assert not wrong, "; ".join(wrong)
 
 

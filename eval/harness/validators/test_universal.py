@@ -781,8 +781,18 @@ def _person_identity(person: dict) -> tuple:
         if isinstance(n, dict)
     )
     # Person-level source refs (#2696) are identity too: a fact rewrite must not
-    # move them.
-    person_refs = tuple(repr(r) for r in (person.get("sources") or []))
+    # move them. Ref STRINGS, sorted, as `_fact_identity` compares, so the
+    # healer's own coercions (a string quality, pruned keys) and a reorder do
+    # not read as a move. The healer also drops a person-level ref naming no
+    # source; that needs a before-tree holding a dangling ref, which the fixture
+    # gate and the runtime validator both reject.
+    person_refs = tuple(
+        sorted(
+            r.get("ref")
+            for r in (person.get("sources") or [])
+            if isinstance(r, dict) and isinstance(r.get("ref"), str)
+        )
+    )
     return (person.get("id"), person.get("gender"), person.get("ark"),
             person.get("living"), names, person_refs)
 
