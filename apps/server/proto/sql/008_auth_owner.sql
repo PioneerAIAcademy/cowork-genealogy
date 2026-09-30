@@ -1,4 +1,4 @@
--- U2: patron sign-in and project ownership (docs/plan/u2-patron-sign-in.md).
+-- U2: patron sign-in and project ownership (docs/plan/familysearch-handoff.md, U2).
 -- Idempotent like every file here: the web tier and the worker apply sql/*.sql at each
 -- start (until U9), and initdb applies it once.
 --

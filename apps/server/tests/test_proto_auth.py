@@ -1,4 +1,4 @@
-"""U2: patron sign-in on the prototype web tier (proto/web/auth.py, docs/plan/u2-patron-sign-in.md).
+"""U2: patron sign-in on the prototype web tier (proto/web/auth.py, docs/plan/familysearch-handoff.md U2).
 
 Offline. The FamilySearch round-trip is monkeypatched at ``auth.exchange_code`` /
 ``auth.fetch_identity``; the routes run against ``FakeStore``. The owner and grant SQL the

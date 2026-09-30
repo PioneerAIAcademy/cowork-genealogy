@@ -22,8 +22,8 @@ It serves the paths `apps/web` already calls, so the SPA is reused verbatim with
 ## Sign-in and ownership (U2)
 
 `web/auth.py` is a vendored port of the alpha's FamilySearch front door (PKCE, a signed
-`wb_session` cookie, the email allowlist, Fernet encryption of the grant). Plan:
-`docs/plan/u2-patron-sign-in.md`.
+`wb_session` cookie, the email allowlist, Fernet encryption of the grant). Handoff:
+U2 in `docs/plan/familysearch-handoff.md`.
 
 - **Dev-login** (`POST /auth/dev-login {email}`) is on while FamilySearch sign-in is off
   and `PUBLIC_URL` is http, which is the default compose stack. Any email signs in, so

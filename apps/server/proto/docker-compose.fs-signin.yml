@@ -1,4 +1,4 @@
-# U2: the FamilySearch sign-in round-trip on compose (docs/plan/u2-patron-sign-in.md).
+# U2: the FamilySearch sign-in round-trip on compose (docs/plan/familysearch-handoff.md, U2).
 #
 #   docker-compose -f docker-compose.yml -f docker-compose.fs-signin.yml up -d web
 #

@@ -1,4 +1,4 @@
-"""Patron sign-in for the prototype web tier (docs/plan/u2-patron-sign-in.md, handoff U2).
+"""Patron sign-in for the prototype web tier (docs/plan/familysearch-handoff.md, U2).
 
 A vendored port of the E2B/Fly/Neon alpha's FamilySearch front door
 (``apps/server/app/{fs_oauth,auth,crypto,config}.py``): PKCE, the signed session cookie,
