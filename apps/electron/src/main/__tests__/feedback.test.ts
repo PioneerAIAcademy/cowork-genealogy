@@ -257,24 +257,26 @@ describe('buildFeedbackZip — size budgets follow the server convention', () =>
     await rm(folder, { recursive: true, force: true })
   })
 
-  // Incompressible payload: DEFLATE would otherwise shrink repetitive filler
-  // far below the cap and the budget logic would never engage.
-  function noise(bytes: number): Buffer {
-    const buf = Buffer.allocUnsafe(bytes)
-    let x = 123456789
-    for (let i = 0; i < bytes; i++) {
-      x = (x * 1103515245 + 12345) & 0x7fffffff
-      buf[i] = x & 0xff
-    }
-    return buf
+  // Compressible filler. This was incompressible pseudo-random bytes, on the
+  // stated grounds that "DEFLATE would otherwise shrink repetitive filler far
+  // below the cap and the budget logic would never engage" — but that is not
+  // how the budget works: `buildFeedbackZip` sums `buf.length` of the files it
+  // read from disk and compares that to ZIP_CAP_BYTES, before anything reaches
+  // the archive, and no cap anywhere measures compressed size. So entropy
+  // bought nothing and cost the whole DEFLATE bill: this test ran 7.6s
+  // standalone and timed out past 30s under the parallel load of
+  // `make test-all`. With filler it is ~3s and the assertions are unchanged.
+  // The 45 MB is still load-bearing — 3 x 15 MB against the 35 MB cap.
+  function filler(bytes: number): Buffer {
+    return Buffer.alloc(bytes, 0x61)
   }
 
   it('drops the largest files instead of throwing when over the archive budget', async () => {
     // 3 x 15 MB = 45 MB against a 35 MB budget: the biggest must go, and the
     // send must still succeed. Previously this threw and produced nothing.
-    await writeFile(join(folder, 'big-a.bin'), noise(15 * 1024 * 1024))
-    await writeFile(join(folder, 'big-b.bin'), noise(15 * 1024 * 1024))
-    await writeFile(join(folder, 'big-c.bin'), noise(15 * 1024 * 1024))
+    await writeFile(join(folder, 'big-a.bin'), filler(15 * 1024 * 1024))
+    await writeFile(join(folder, 'big-b.bin'), filler(15 * 1024 * 1024))
+    await writeFile(join(folder, 'big-c.bin'), filler(15 * 1024 * 1024))
 
     const result = await buildFeedbackZip({ ...makeOptions(folder), includeMedia: true })
 
@@ -287,19 +289,14 @@ describe('buildFeedbackZip — size budgets follow the server convention', () =>
 
     // research.json — the file that actually matters — always survives.
     expect(zip.file('research.json')).not.toBeNull()
-    // Measured, not guessed: this test genuinely zips 45 MB of incompressible
-    // bytes. ~2.4s alone, ~8.4s under `make test-all` (turbo runs every
-    // workspace suite at once), against vitest's 5s default — so it failed on a
-    // clean tree for anyone running the full gate while passing in isolation.
-    // The 45 MB is load-bearing (3 x 15 MB against the 35 MB budget), so the
-    // budget to raise is the clock's. DEFLATE dominates the cost, not the
-    // fixture: generating the noise is only ~340ms of it. The per-test
-    // 30_000 that used to sit here is redundant now that this package's
-    // vitest.config.ts raises testTimeout for the whole suite.
+    // This test zips 45 MB, which is load-bearing (3 x 15 MB against the 35 MB
+    // budget). What is not load-bearing is the entropy of those bytes — see the
+    // `filler` helper above. The suite-wide testTimeout in this package's
+    // vitest.config.ts still covers the remainder.
   })
 
   it('keeps a bundle that fits entirely intact', async () => {
-    await writeFile(join(folder, 'small.bin'), noise(1024))
+    await writeFile(join(folder, 'small.bin'), filler(1024))
     const result = await buildFeedbackZip({ ...makeOptions(folder), includeMedia: true })
     const zip = await JSZip.loadAsync(Buffer.from(result.zipBase64, 'base64'))
     expect(zip.file('small.bin')).not.toBeNull()
