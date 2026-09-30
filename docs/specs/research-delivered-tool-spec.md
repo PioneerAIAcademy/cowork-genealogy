@@ -13,12 +13,12 @@ network.
 
 Since continuous work shipped, the Stop hook vetoes every voluntary stop until
 `project.status` is `completed`. So a request bounded to one deliverable — "create a plan
-but leave it at that" (#2932), a single christening lookup (#2921), "where are we?" — runs
+but leave it at that", a single christening lookup, "where are we?" — runs
 on to the proof, the nudge cap or the spend bound. The finish line has to belong to the
 request that named it.
 
 A hook can match a **tool name** exactly. It cannot rely on prose the model may not honour,
-and #2927 measured prose triggering flipping about half the time. That is the same reason
+and prose triggering has been measured flipping about half the time. That is the same reason
 the decision exit matches `AskUserQuestion`.
 
 ## Why it is not `AskUserQuestion`

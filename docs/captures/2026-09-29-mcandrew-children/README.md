@@ -59,7 +59,7 @@ what the reader sees.
 An earlier version of this file said "282 narration paragraphs" and "36 sub-agents, all
 completed". Both were readings of the FEED, and the feed is not what a reader sees:
 
-- **`chatEvents.ts:154` drops all sub-agent prose.** `real_agent` labels every sub-agent event
+- **`foldChatEvent` (`chatEvents.ts`) drops all sub-agent prose.** `real_agent` labels every sub-agent event
   with `agent`, and canonical `text`/`thinking` carrying that label are dropped —
   *"Subagent prose never reaches the chat"*. So **190** of the 282 paragraphs render; 92 do
   not. Tool chips DO keep their label and render, so chips are multi-source while prose is
