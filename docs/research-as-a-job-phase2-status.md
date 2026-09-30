@@ -336,6 +336,31 @@ actually help is making `005` reproducible, which is measurement design, not a r
 
 ## Where init-project's eval stands, and what it is waiting on
 
+**Decided (owner, 2026-09-30): do NOT annotate v6 yet — annotate last.** An annotation is
+bound to one run log by its `run_log` field, so any later skill edit forces a fresh paid
+run and makes the annotation moot. Annotating now risks paying for the run twice.
+
+Two things make this concrete rather than cautious:
+
+- **Issue #1962's PR 5 is already scheduled to edit `init-project/SKILL.md:243`** (drop
+  three items from "Obvious error detection"), and that card prices its own cost as one
+  `make eval-skill SKILL=init-project` plus an annotation pass. A known, planned change
+  to this exact skill is pending.
+- `ut_init_project_vqx` — the one partial — is failing on precisely what PR 5 addresses,
+  so the run that supersedes v6 is also the run that should clear it.
+
+**The annotation itself is not blocked on anyone.** `docs/per-pr-review-workflow.md` §2.2:
+the `.ann.json` is "written by the team submitting the PR. No second-junior annotation."
+Mercy authored v4's and v5's because she was on those PRs, not because it needs a
+specialist. §2.3: "The CRUD UI generates the file; humans never hand-author it" — the UI
+(`eval/app`, `npm run dev`) pre-fills every `corrected_score` with the judge's and the
+annotator changes only what they disagree with.
+
+**Scope when the time comes: 6 tests, 43 scored dimensions** — the run log already picked
+the sample (seed 2232): `001`, `011`, `012`, `j4n`, `q7b`, `vqx`.
+
+
+
 `v6_2026-09-30_13-45-44.json` is **green** — 14 pass, 1 partial, zero reds — and
 committed as a **candidate**. It is not released, and releasing it is not mine to do:
 `v5.ann.json` and `v4.ann.json` each carry a real genealogist's address, and every
