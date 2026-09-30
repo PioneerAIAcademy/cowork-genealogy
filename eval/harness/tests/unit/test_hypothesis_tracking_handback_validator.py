@@ -59,6 +59,20 @@ def test_fails_on_an_empty_reply():
         check([], STATE, STATE, "", TEST)
 
 
+def test_fails_when_only_the_relay_names_the_destination():
+    returns = [{"subagent_type": "hypothesis-tracking", "text": "I weighed a_002 against a_009."}]
+    with pytest.raises(AssertionError, match="Hand-back: conflict-resolution"):
+        check([], STATE, STATE, REPLY, TEST, agent_returns=returns)
+
+
+def test_passes_when_the_agent_return_names_the_destination():
+    returns = [
+        {"subagent_type": "record-extractor", "text": "unrelated"},
+        {"subagent_type": "hypothesis-tracking", "text": REPLY},
+    ]
+    check([], STATE, STATE, "", TEST, agent_returns=returns)
+
+
 def test_fails_without_a_destination_tag():
     with pytest.raises(AssertionError, match="handback-to-"):
         check([], STATE, STATE, REPLY, {"tags": ["scope-handback"]})

@@ -23,6 +23,7 @@ import re
 
 import pytest
 
+from harness.skill_runner import agent_return_text
 from validators_lib import (
     assert_foreign_keys_valid,
     assert_no_section_deletions,
@@ -291,7 +292,9 @@ def test_h001_not_ruled_out_when_adding_identity_hypotheses(
 _HANDBACK_TAG_PREFIX = "handback-to-"
 
 
-def test_scope_handback_writes_nothing(tool_calls, before_state, after_state, text_response, test):
+def test_scope_handback_writes_nothing(
+    tool_calls, before_state, after_state, text_response, test, agent_returns=None
+):
     """Tag-gated (`scope-handback`): the agent's Step 0 gate on an
     out-of-scope delegation.
 
@@ -305,7 +308,9 @@ def test_scope_handback_writes_nothing(tool_calls, before_state, after_state, te
     Fails iff the run:
       - made a `research_append` call,
       - changed `research.json` at all, or
-      - did not name the tagged destination in a `Hand-back:` line.
+      - did not name the tagged destination in a `Hand-back:` line of the
+        agent's own return (`agent_return_text`, the text the judge grades),
+        falling back to `text_response` only when the agent returned nothing.
     """
     tags = test.get("tags", [])
     if "scope-handback" not in tags:
@@ -325,7 +330,8 @@ def test_scope_handback_writes_nothing(tool_calls, before_state, after_state, te
         f"a scope-handback test needs exactly one `{_HANDBACK_TAG_PREFIX}<name>` tag; got {destinations}"
     )
     expected = destinations[0]
-    named = re.findall(r"Hand-back:\s*`?([a-z][a-z0-9-]*)", text_response or "")
+    reply = agent_return_text(agent_returns, "hypothesis-tracking") or (text_response or "")
+    named = re.findall(r"Hand-back:\s*`?([a-z][a-z0-9-]*)", reply)
     assert expected in named, (
         f"expected a `Hand-back: {expected}` line; the reply named {named or 'no hand-back'}"
     )
