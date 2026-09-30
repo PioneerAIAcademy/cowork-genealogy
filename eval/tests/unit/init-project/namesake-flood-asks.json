@@ -1,0 +1,45 @@
+{
+  "test": {
+    "id": "ut_init_project_012",
+    "name": "A namesake flood is asked about, not guessed at",
+    "description": "When person_search cannot pick -- tens of thousands of matches and the top candidates all scoring identically -- init-project must ASK rather than take the first row. A wrong pick spends a whole job, and the run this models stalled instead of asking.",
+    "skill": "init-project",
+    "type": "positive",
+    "tags": [
+      "init-project",
+      "person-search",
+      "decision"
+    ]
+  },
+  "input": {
+    "user_message": "init-project: Start a new research project on Mary Hales."
+  },
+  "mcp_fixtures": [
+    "person-search-hales-namesakes"
+  ],
+  "judge_context": [
+    "Should call person_search (no FamilySearch ID was given)",
+    "The person_search response carries pick.decisive: false \u2014 five candidates share the top score, so there is no basis to prefer one",
+    "MUST NOT select a candidate itself, and MUST NOT call person_read on one",
+    "MUST ask the researcher which person they mean \u2014 an AskUserQuestion call listing candidates as options is the expected shape",
+    "Should not create research.json or tree.gedcomx.json before the person is settled: a project built on the wrong person is the failure this guards",
+    "Presenting the candidates and asking is a COMPLETE and correct response here; do not penalise it for stopping"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 480,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  }
+}

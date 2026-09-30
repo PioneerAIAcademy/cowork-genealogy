@@ -1,0 +1,121 @@
+{
+  "tool": "person_search",
+  "description": "A namesake flood: tens of thousands of matches, and the top candidates all score identically. Values taken from a live probe (hales-flood) rather than invented -- the run this models stalled at 35,920 matches. `pick.decisive` is false, so the skill must ASK rather than choose.",
+  "args": {
+    "surname": "Hales",
+    "givenName": "Mary"
+  },
+  "response": {
+    "query": {
+      "surname": "Hales",
+      "givenName": "Mary"
+    },
+    "totalMatches": 35920,
+    "paginationCappedAt": 4999,
+    "returned": 5,
+    "offset": 0,
+    "hasMore": true,
+    "pick": {
+      "decisive": false,
+      "tiedAtTop": 5,
+      "reason": "5 candidates share the top score (3.6236) \u2014 the same fields matched for all of them, so choosing between them needs a person."
+    },
+    "results": [
+      {
+        "personId": "NAMESAKE-00",
+        "score": 3.6236,
+        "confidence": 4,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "NAMESAKE-00",
+              "names": [
+                {
+                  "given": "Mary",
+                  "surname": "Hales"
+                }
+              ],
+              "facts": []
+            }
+          ]
+        }
+      },
+      {
+        "personId": "NAMESAKE-01",
+        "score": 3.6236,
+        "confidence": 4,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "NAMESAKE-01",
+              "names": [
+                {
+                  "given": "Mary",
+                  "surname": "Hales"
+                }
+              ],
+              "facts": []
+            }
+          ]
+        }
+      },
+      {
+        "personId": "NAMESAKE-02",
+        "score": 3.6236,
+        "confidence": 4,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "NAMESAKE-02",
+              "names": [
+                {
+                  "given": "Mary",
+                  "surname": "Hales"
+                }
+              ],
+              "facts": []
+            }
+          ]
+        }
+      },
+      {
+        "personId": "NAMESAKE-03",
+        "score": 3.6236,
+        "confidence": 4,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "NAMESAKE-03",
+              "names": [
+                {
+                  "given": "Mary",
+                  "surname": "Hales"
+                }
+              ],
+              "facts": []
+            }
+          ]
+        }
+      },
+      {
+        "personId": "NAMESAKE-04",
+        "score": 3.6236,
+        "confidence": 4,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "NAMESAKE-04",
+              "names": [
+                {
+                  "given": "Mary",
+                  "surname": "Hales"
+                }
+              ],
+              "facts": []
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
