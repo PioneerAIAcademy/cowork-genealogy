@@ -1905,9 +1905,17 @@ and no genealogist sign-off gates them.
 | probate | the court's acts: will proved, letters granted, date and court | the court clerk | `official_duty` | `primary` |
 | probate | a petition's or administration's statement of the death (date, place) | the petitioner (executor or administrator) | `household_member` | `indeterminate` |
 | probate | heirs named in an intestate petition | the petitioner | `household_member` | `primary` |
+| newspaper announcement | **the announced event and its people**: the principals' names and residences, the date and place, officiant, attendants and guests, the parents' names | the announcement's submitter (usually unnamed family) | `household_member` | `indeterminate` |
+| newspaper announcement | **life history**: the principals' birthplaces and birth dates, education, occupations, earlier residences | the announcement's submitter | `family_not_present` | `secondary` |
 
 When `informant.name` is present it replaces the generic informant string, as
 on every row.
+
+The newspaper-announcement rows (birth, engagement, wedding and anniversary
+notices; obituaries have their own) are the genealogist's ruling (2026-09-30),
+following the obituary split. The parents' names sit with the event: the
+submitting family knows them firsthand, as with a surviving spouse's name.
+`newspaper_announcement` joins the `RecordType` union.
 
 The probate rows are the genealogist's ruling (2026-09-30), split by who
 produced each part of the file. A petitioner's statement of the death follows
