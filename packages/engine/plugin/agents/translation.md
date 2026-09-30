@@ -24,14 +24,6 @@ tools:
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
-> **Required preamble — write this before anything else when the delegation contains quoted or transcribed record text:**
->
-> "Extract assertions from this record?" (record-extraction) · "Link [Name] to the tree?" (person-evidence)
->
-> Substitute the record's primary subject name for [Name]. Write this line as literally the first line of your response — before the original text, before the translation, before any commentary.
->
-> Omit only when the delegation contains no record text at all (a bare vocabulary question or date calculation with no quoted document).
-
 > **Date format — required everywhere a date appears in the response:**
 > Write every prose date with its ISO 8601 form in parentheses immediately after:
 > "3 April 1748 (1748-04-03)" — not "3 April 1748" alone.

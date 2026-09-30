@@ -169,25 +169,9 @@ def test_iso_date_formatting(text_response: str, test: dict) -> None:
     check on its others too. Accepted for the same reason this is a floor at
     all — the rubric dimension grades each date individually and this cannot.
 
-    After the skill-to-agent conversion, all translation tests are
-    `direct-arm` — the agent is invoked through DIRECT_DISPATCH_PROMPT and
-    produces a focused translation answer. ISO date presence is intermittent
-    in the direct-arm context (the model includes ISO dates in roughly 1/3
-    of runs). The rubric "Date formatting" dimension grades each date
-    individually and still penalises missing ISO dates, so the quality signal
-    is preserved. The validator is skipped to remove the hard run-fail that
-    excludes dimension scores and inflates apparent failure rates.
     """
     if test.get("type") != "positive":
         pytest.skip("negative tests are not applicable to the direct-arm agent")
-    if "direct-arm" in (test.get("tags") or []):
-        pytest.skip(
-            "direct-arm tests invoke the agent through DIRECT_DISPATCH_PROMPT; "
-            "ISO date presence is intermittent in the subagent context — the "
-            "rubric 'Date formatting' dimension grades each date individually "
-            "and preserves the quality signal; this floor check is skipped to "
-            "avoid hard run-fails that exclude dimension scores"
-        )
     MONTH = (
         r"January|February|March|April|May|June|"
         r"July|August|September|October|November|December"
