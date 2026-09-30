@@ -1855,11 +1855,12 @@ def report_no_internal_identifiers_in_response(text_response, test):
 # --- Lay mode: no GPS vocabulary in user-facing text ----------------------
 
 # Issue #2984 (lead ruling 2026-09-14): "GPS", "proof"/"proved" and
-# "exhaustive" stay out of what the researcher reads. Whole words only, so
-# `improved` and `not_proved` do not count, and the hyphenated agent names
-# (`proof-conclusion`, `proof-critique`, `gps-mentor`) are ours to route by.
+# "exhaustive" stay out of what the researcher reads; `disproved` is the
+# same tier family. Whole words only, so `improved` and `not_proved` do not
+# count, and the hyphenated agent names (`proof-conclusion`, `proof-critique`,
+# `gps-mentor`) are ours to route by.
 _GPS_JARGON_RE = re.compile(
-    r"\b(?:GPS|proofs?|proved|exhaustive)\b(?!-(?:conclusion|critique|mentor))",
+    r"\b(?:GPS|proofs?|(?:dis)?proved|exhaustive)\b(?!-(?:conclusion|critique|mentor))",
     re.IGNORECASE,
 )
 

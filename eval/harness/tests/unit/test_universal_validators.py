@@ -555,6 +555,11 @@ def test_jargon_report_fires_on_not_proved():
     assert msg is not None and "proved" in msg
 
 
+def test_jargon_report_fires_on_disproved():
+    msg = _jargon("That candidate is disproved by the 1850 census.")
+    assert msg is not None and "disproved" in msg
+
+
 def test_jargon_report_fires_on_each_word():
     msg = _jargon(
         "Under the GPS the search is exhaustive, and the proof holds; "
