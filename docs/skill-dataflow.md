@@ -48,11 +48,11 @@ SDK path and depth 3 remain unmeasured (issue #2817).
 `make probe-agent-nesting` is the check that would settle those; no CI job
 runs it.
 
-No shipped prompt claims otherwise any more: the "agents cannot nest" wording
-came out of `packages/engine/plugin/agents/record-extractor.md` in PR #2714.
-It survives only in `docs/lead-themes-2026-09-05.md` (the `record-extraction` /
-#2410 row), deliberately — that file is a dated record of what was believed
-then.
+The "agents cannot nest" wording came out of
+`packages/engine/plugin/agents/record-extractor.md` in PR #2714. It survives
+in `packages/engine/plugin/skills/record-extraction/SKILL.md` and in
+`docs/lead-themes-2026-09-05.md` (the `record-extraction` / #2410 row) — the
+latter deliberately, as a dated record of what was believed then.
 
 While those remain unmeasured, **design as if nesting is
 unavailable** — which is what the `search-images` agent does, calling
