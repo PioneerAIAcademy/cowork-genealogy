@@ -171,7 +171,7 @@ def test_check_warnings_runs_after_any_tree_write(
 
     if before_tree == after_tree:
         pytest.skip("tree.gedcomx.json unchanged -- no edit to validate")
-    if "check-warnings" in handoffs(skills_invoked, builtin_tool_calls):
+    if not test.get("delegation") and "check-warnings" in handoffs(skills_invoked, builtin_tool_calls):
         return
     reply = subject_reply_text(agent_returns, text_response, "tree-edit", test)
     assert _names_check_warnings(reply), (
@@ -247,7 +247,7 @@ def _verdict_units(text: str):
                 yield s.strip()
 
 
-def test_step_reading_leads_when_the_surname_is_unresolved(text_response, test):
+def test_step_reading_leads_when_the_surname_is_unresolved(text_response, test, agent_returns=None):
     """`references/relationship-accuracy.md`, "Guardianship shortly after a
     remarriage": when the record does not say whether the wife's shared
     surname is her maiden or a prior married name, the STEP reading leads
@@ -289,6 +289,8 @@ def test_step_reading_leads_when_the_surname_is_unresolved(text_response, test):
     """
     if "guardianship" not in (test.get("tags") or []):
         pytest.skip("only applies to guardianship tests")
+    from harness.skill_runner import subject_reply_text
+    text_response = subject_reply_text(agent_returns, text_response, "tree-edit", test)
     if not (text_response or "").strip():
         pytest.skip("no reply to weigh")
     offenders = [
@@ -305,7 +307,7 @@ def test_step_reading_leads_when_the_surname_is_unresolved(text_response, test):
     )
 
 
-def test_uncle_reading_is_named_at_all(text_response, test):
+def test_uncle_reading_is_named_at_all(text_response, test, agent_returns=None):
     """The other half of the same sentence in
     `references/relationship-accuracy.md`: "Lead with the step reading, name
     the uncle-by-marriage reading as unresolved, and say what would settle
@@ -328,6 +330,8 @@ def test_uncle_reading_is_named_at_all(text_response, test):
     """
     if "guardianship" not in (test.get("tags") or []):
         pytest.skip("only applies to guardianship tests")
+    from harness.skill_runner import subject_reply_text
+    text_response = subject_reply_text(agent_returns, text_response, "tree-edit", test)
     if not (text_response or "").strip():
         pytest.skip("no reply to weigh")
     assert _UNCLE.search(text_response), (

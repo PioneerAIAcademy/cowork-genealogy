@@ -143,7 +143,15 @@ def test_hand_back_named_by_the_agent_passes(agent_text):
 
 def test_6_a_spawn_seen_by_handoffs_passes_with_no_text():
     before, after = _edited()
-    check_check_warnings(before, after, ["tree-edit", "check-warnings"], DIRECT, None, [], "")
+    check_check_warnings(before, after, ["tree-edit", "check-warnings"], ROUTED, None, [], "")
+
+
+def test_6b_on_the_direct_arm_a_dispatcher_spawn_cannot_pass_a_silent_agent():
+    # The agent's own return is what a direct test grades; a dispatcher that
+    # obeyed the hand-back and spawned check-warnings says nothing about it.
+    before, after = _edited()
+    with pytest.raises(AssertionError):
+        check_check_warnings(before, after, ["tree-edit", "check-warnings"], DIRECT, None, [], "")
 
 
 def test_7_no_op_tree_skips_even_when_silent():

@@ -210,9 +210,6 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 
 ### Concluding
 
-| Skill | What it does | Say this |
-|-------|-------------|----------|
-
 Writing the conclusion itself is an agent rather than a skill — see
 `proof-conclusion` in the agent table below.
 
