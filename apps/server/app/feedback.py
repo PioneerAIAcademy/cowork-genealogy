@@ -163,7 +163,7 @@ LIVING_SURNAME_FALLBACK = "Unknown"
 
 PRESUMED_LIVING_YEARS = 110
 # Neither app may import eval code, so the rule is written inline here and in
-# the Electron copy; tests/test_feedback.py::test_2988_parity_* checks the two
+# the Electron copy; tests/test_feedback.py::test_parity_* checks the two
 # still agree. `Probate` counts as death evidence because it can only follow
 # one; `Will` does not, because a will is written while alive.
 _DEATH_FACT_TYPES = frozenset({"Death", "Burial", "Cremation", "Probate"})
