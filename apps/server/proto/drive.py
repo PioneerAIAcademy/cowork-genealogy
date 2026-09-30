@@ -238,6 +238,10 @@ class Embedded:
         self.dsn = self.pg.get_uri()
         os.environ["PG_DSN"] = self.dsn
         os.environ.pop("QUEUE_URL", None)
+        # U2: the driver signs in through dev-login, which an https PUBLIC_URL or
+        # FamilySearch sign-in would turn off.
+        os.environ.pop("PUBLIC_URL", None)
+        os.environ.pop("FAMILYSEARCH_WEB_ENABLED", None)
         import uvicorn
 
         from web.app import create_app
@@ -274,9 +278,12 @@ def _turn_done_for(turn_id: str, frames) -> bool:
                and d["event"].get("turn_id") == turn_id for d in frames)
 
 
-def run(base: str, dsn: str | None, mode: str, text: str, deadline_s: float = STREAM_DEADLINE_S) -> list[Check]:
+def run(base: str, dsn: str | None, mode: str, text: str, deadline_s: float = STREAM_DEADLINE_S,
+        email: str = "dev@localhost") -> list[Check]:
+    from turn import signed_in_client  # proto/ is on sys.path (HERE, above)
+
     checks: list[Check] = []
-    client = httpx.Client(base_url=base, timeout=10.0)
+    client = signed_in_client(base, email, timeout=10.0)
     health = client.get("/api/health").json()
     ping_s = float(health.get("ping_s", 15.0))
 
@@ -390,7 +397,8 @@ def run(base: str, dsn: str | None, mode: str, text: str, deadline_s: float = ST
         ("turn_done for our turn_id arrived", any(e.get("type") == "agent_event" and e["event"].get("kind") == "turn_done"
                                                   and e["event"].get("turn_id") == turn_id for e in truth_by_seq.values()), ""),
         ("GET /events?after=N is empty and next_after == N", client.get(f"/api/sessions/{sid}/events?after={n}").json() | {"activity": None}
-         == {"events": [], "activity": None, "turn_active": truth["turn_active"], "next_after": n}, ""),
+         == {"events": [], "activity": None, "turn_active": truth["turn_active"],
+             "turn_queued": truth["turn_queued"], "next_after": n}, ""),
         ("turn closed: turn_active is false once turn_done landed", truth["turn_active"] is False, f"turn_active={truth['turn_active']}"),
     ]
     unkeyed = a.unkeyed + b.unkeyed
@@ -416,6 +424,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--worker", action="store_true", help="a worker answers the turn (the D3 stub counts); no seeder")
     p.add_argument("--allow-live-queue", action="store_true", help="run --seed even though the tier has a live queue")
     p.add_argument("--text", default=DEFAULT_TEXT)
+    p.add_argument("--email", default="dev@localhost", help="dev-login as this patron")
     p.add_argument("--deadline-s", type=float, default=STREAM_DEADLINE_S, help="per-stream wall clock before a FAIL")
     args = p.parse_args(argv)
     mode = "worker" if args.worker else "seed"
@@ -437,7 +446,7 @@ def main(argv: list[str] | None = None) -> int:
                   "Use --worker on a stack with a worker, or --allow-live-queue to seed anyway.", file=sys.stderr)
             return 2
         print(f"== drive {mode} against {base} (queue: {queue})", flush=True)
-        checks = run(base, dsn, mode, args.text, deadline_s=args.deadline_s)
+        checks = run(base, dsn, mode, args.text, deadline_s=args.deadline_s, email=args.email)
     finally:
         if embedded:
             embedded.close()

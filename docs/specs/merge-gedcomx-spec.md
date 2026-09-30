@@ -575,11 +575,11 @@ Tool-level (wrappers over the pure core):
   `gedcomx_source_description_id` needs **no** remap: target S-ids are preserved
   and `research.json` never references candidate S-ids.
 
-**Caller (the `tree-edit` skill) still** runs `check-warnings`
+**Caller (the `tree-edit` skill) still** spawns the `check-warnings` agent
 (`relationship-accuracy.md`) after the merge to catch genealogical impossibilities
 it may have introduced (e.g. parent younger than child). The tool does the
 **structural** validate (schema + refs) but **not** the genealogical-plausibility
-checks — those stay a separate skill step. The caller no longer hand-edits
+checks — those stay a separate agent step. The caller no longer hand-edits
 `research.json` refs or calls `validate_research_schema` itself; the tool does
 both.
 

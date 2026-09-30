@@ -16,13 +16,15 @@ import { STAGING_CAPABLE_TOOLS, STAGING_SEARCH_TOOLS } from "../../src/utils/res
 
 describe("results-staging", () => {
   describe("the two producer sets (#2048)", () => {
-    it("every search producer is a capable producer, and the two acquisition producers are capable too", () => {
+    it("every search producer is a capable producer, and the three acquisition producers are capable too", () => {
       for (const t of STAGING_SEARCH_TOOLS) expect(STAGING_CAPABLE_TOOLS.has(t)).toBe(true);
       expect(STAGING_CAPABLE_TOOLS.has("image_transcribe")).toBe(true);
       expect(STAGING_CAPABLE_TOOLS.has("record_read")).toBe(true);
+      expect(STAGING_CAPABLE_TOOLS.has("person_read")).toBe(true);
       // The notes stay search semantics: the acquisition producers are NOT search-shaped.
       expect(STAGING_SEARCH_TOOLS.has("image_transcribe")).toBe(false);
       expect(STAGING_SEARCH_TOOLS.has("record_read")).toBe(false);
+      expect(STAGING_SEARCH_TOOLS.has("person_read")).toBe(false);
     });
   });
 
@@ -175,6 +177,7 @@ describe("results-staging", () => {
       await writeResearch([]);
       await stage("image_transcribe");
       await stage("record_read");
+      await stage("person_read");
       expect(await unloggedStagedSearches(dir)).toEqual([]);
     });
 
