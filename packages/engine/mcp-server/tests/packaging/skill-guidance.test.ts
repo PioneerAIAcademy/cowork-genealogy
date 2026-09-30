@@ -24,7 +24,6 @@ const SKILLS_WITH_PLACES_GUIDANCE = [
   "timeline",
   "conflict-resolution",
   "record-extraction",
-  "tree-edit",
   "init-project",
 ];
 

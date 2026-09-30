@@ -58,7 +58,7 @@ deliberately does NOT:
 - touch `research.json`, the filesystem, or run validation — those belong to the
   **tool wrappers** (§5b), which own persistence and the cross-file remap (§10),
 - run warning checks (`check-warnings` does that after a merge — see
-  `tree-edit/references/relationship-accuracy.md`).
+  `agents/tree-edit.md`, Appendix B).
 
 ---
 

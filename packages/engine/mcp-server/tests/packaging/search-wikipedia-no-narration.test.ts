@@ -70,7 +70,10 @@ describe("the search-wikipedia Narration exception", () => {
   const agents = agentBodies();
 
   it("scans every skill and agent body", () => {
-    expect(skills.length, "skill bodies found").toBeGreaterThan(20);
+    // A floor against an empty scan, not a count: every skill-to-agent conversion
+    // shrinks the set, and research, record-extraction and forget-and-rederive
+    // stay skills (lead ruling 2026-09-22).
+    expect(skills.length, "skill bodies found").toBeGreaterThanOrEqual(3);
     expect(agents.length, "agent bodies found").toBeGreaterThan(5);
     expect(
       agents.map((a) => a.name),

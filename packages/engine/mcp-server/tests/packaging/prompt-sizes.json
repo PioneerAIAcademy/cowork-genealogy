@@ -18,6 +18,7 @@
     "packages/engine/plugin/agents/search-familysearch-wiki.md": 8480,
     "packages/engine/plugin/agents/search-images.md": 21550,
     "packages/engine/plugin/agents/search-wikipedia.md": 6843,
+    "packages/engine/plugin/agents/tree-edit.md": 30669,
     "packages/engine/plugin/skills/conflict-resolution/SKILL.md": 27656,
     "packages/engine/plugin/skills/forget-and-rederive/SKILL.md": 13208,
     "packages/engine/plugin/skills/historical-context/SKILL.md": 15449,
@@ -37,7 +38,6 @@
     "packages/engine/plugin/skills/source-evaluation/SKILL.md": 16823,
     "packages/engine/plugin/skills/timeline/SKILL.md": 21833,
     "packages/engine/plugin/skills/translation/SKILL.md": 10741,
-    "packages/engine/plugin/skills/tree-edit/SKILL.md": 11427,
     "packages/engine/plugin/skills/validate-schema/SKILL.md": 2873
   },
   "tools": {
