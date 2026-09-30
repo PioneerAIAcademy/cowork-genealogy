@@ -48,7 +48,7 @@ Two premises moved since the plan:
 | U5 | Interim sqsd settings, SIGTERM exit, dead-letter close | Two CLIs per session | integ | — |
 | U6 | Claim fencing (`claim_epoch`), two-instance test | R8 | integ if multi-instance, else go-live | — |
 | U7 | SigV4-signed SQS client | SQS rejects ours | integ | — |
-| U8 | S3 on instance roles | Static keys required | integ unless F14 allows keys | — |
+| U8 | S3 on instance roles | Keys optional; instance-profile hop unverified (U13) | integ unless F14 allows keys | — |
 | U9 | Migrations runner | Start-up races | integ | — |
 | U10 | Readiness, `TMPDIR`, transcript checks | Silent transcript loss | integ | — |
 | U11 | Strip dev-only paths | Unauthenticated crash | integ | — |
@@ -85,7 +85,7 @@ Two premises moved since the plan:
 
 **U7.** Why: `enqueue.sqs_call` is unsigned. **Done when:** in U13 the web tier enqueues and the worker releases a held message.
 
-**U8.** Why: static keys are mandatory, the region and path-style hard-coded. Build it even if F14 allows keys. **Done when:** `make proto-store-test` passes on MinIO and U13's tools reach S3 keylessly.
+**U8.** Why: static keys were mandatory, the region and path-style hard-coded (keys optional and both configurable since U8's first half; U13 confirms the hop). Build it even if F14 allows keys. **Done when:** `make proto-store-test` passes on MinIO and U13's tools reach S3 keylessly.
 
 **U9.** Why: every instance applies every schema file at start (review item 15); concurrent starts are untried. **Done when:** empty and 005-level databases reach 007, and simultaneous starts do not race.
 
@@ -198,14 +198,14 @@ F6, F7, F8, F10 → F11, F16, U24, U25 ─► go-live
 
 1. **Answers:** F1, F3, F4, F12–F15, F18; F9 for image transcription; F16 for acceptance step 2. [untested]
 2. **Network.** Private subnets for web, worker, tools; worker subnets inside the gateway ALB's CIDR allowlist. Egress: the gateway `/bedrock` route; `familysearch.org`, `api.familysearch.org`, `www.familysearch.org`, `sg30p0.familysearch.org`, `ident.familysearch.org`; `en.wikipedia.org`; `openrouter.ai` if F9 allows; F16's hosts; AWS `sqs`, `s3` (gateway endpoint; also serves app bundles), `logs`, `secretsmanager` (plus `kms` if customer-managed), `elasticbeanstalk`, `elasticbeanstalk-health`, `cloudformation`, via VPC endpoints or NAT; `pypi.org`, `files.pythonhosted.org`, `registry.npmjs.org` or an F13 mirror, unless U12 vendors dependencies. The CLI's other egress in a closed VPC is unchecked (U13). The tool server sends a browser user agent to FamilySearch (Imperva). [untested]
-3. **IAM.** Instance profile `aws-elasticbeanstalk-ec2-role` with `AWSElasticBeanstalkWorkerTier` and `AWSElasticBeanstalkWebTier`; `aws-elasticbeanstalk-service-role` with `AWSElasticBeanstalkEnhancedHealth` and `AWSElasticBeanstalkManagedUpdatesCustomerRolePolicy`. [EB probe] Web: `sqs:SendMessage`. Worker: the worker-tier policy plus `sqs:SendMessage`. Tools: `s3:PutObject`, `s3:GetObject`, `s3:DeleteObject` on `arn:aws:s3:::<bucket>/*`, and `s3:ListBucket` on `arn:aws:s3:::<bucket>`, without which a missing key is a 403 the store misreads. Each: `secretsmanager:GetSecretValue` on its own secrets (plus `kms:Decrypt` if customer-managed). [untested]
-4. **Secrets:** `GATEWAY_API_KEY`; `OPENROUTER_API_KEY` (if F9 allows); Postgres credentials in `PG_DSN` and `GENEALOGY_PG_DSN`; `GENEALOGY_S3_ACCESS_KEY`, `GENEALOGY_S3_SECRET_KEY` (until U8); the grant-encryption key `FS_TOKEN_ENC_KEY` (U2, U3); the web tier's session-signing secret `SESSION_SECRET` (U2), never the alpha's public default; the web tier also takes `ALLOWED_EMAILS`, `PUBLIC_URL`, `WEB_ORIGIN` and `FAMILYSEARCH_WEB_ENABLED`, and refuses to start on https with a default secret. No service reads a secrets store: deliver each as an environment variable of its reader. The FamilySearch client id ships in `packages/engine/mcp-server/config/familysearch.json`; F15 replaces the dev key. [untested]
+3. **IAM.** Instance profile `aws-elasticbeanstalk-ec2-role` with `AWSElasticBeanstalkWorkerTier` and `AWSElasticBeanstalkWebTier`; `aws-elasticbeanstalk-service-role` with `AWSElasticBeanstalkEnhancedHealth` and `AWSElasticBeanstalkManagedUpdatesCustomerRolePolicy`. [EB probe] Web: `sqs:SendMessage`. Worker: the worker-tier policy plus `sqs:SendMessage`. Tools: `s3:PutObject`, `s3:GetObject`, `s3:DeleteObject` on `arn:aws:s3:::<bucket>/*`, and `s3:ListBucket` on `arn:aws:s3:::<bucket>`, without which a missing key is a 403 the store misreads. This grant is the tool server's S3 credential: with no static keys set (step 9), the store signs through the instance profile. Each: `secretsmanager:GetSecretValue` on its own secrets (plus `kms:Decrypt` if customer-managed). [untested]
+4. **Secrets:** `GATEWAY_API_KEY`; `OPENROUTER_API_KEY` (if F9 allows); Postgres credentials in `PG_DSN` and `GENEALOGY_PG_DSN`; `GENEALOGY_S3_ACCESS_KEY`, `GENEALOGY_S3_SECRET_KEY` only if F14 mandates static keys; the grant-encryption key `FS_TOKEN_ENC_KEY` (U2, U3); the web tier's session-signing secret `SESSION_SECRET` (U2), never the alpha's public default; the web tier also takes `ALLOWED_EMAILS`, `PUBLIC_URL`, `WEB_ORIGIN` and `FAMILYSEARCH_WEB_ENABLED`, and refuses to start on https with a default secret. No service reads a secrets store: deliver each as an environment variable of its reader. The FamilySearch client id ships in `packages/engine/mcp-server/config/familysearch.json`; F15 replaces the dev key. [untested]
 
 ### Data stores
 
 5. **Postgres 16.** Web, worker and tools share **one database**; the engine reads `documents`, `blobs`, `staging` but never creates them. [compose] **TLS** [untested]: RDS for PostgreSQL 15+ enforces it by default (`rds.force_ssl`). Web and worker (psycopg): add `sslmode=require` to `PG_DSN`. Tools (node-postgres): `GENEALOGY_PG_DSN=…?sslmode=verify-full&sslrootcert=<RDS CA bundle path>`, bundle shipped in the tools artifact; `sslmode=require` alone means `verify-full` there (pg-connection-string 2.14.0), and Node does not trust the RDS CA.
 6. **Schema.** Apply `apps/server/proto/sql/001_schema.sql` through `008_auth_owner.sql` in name order, once per deploy, before any service starts; all are idempotent. Until U9, web and worker also apply it at start, so their `PG_DSN` needs the schema-owning role: with a DML-only role the web tier fails to start and the worker logs it and carries on. [compose]
-7. **S3 bucket.** Keys `<projectId>/<ref>/<uuid>`, immutable per write. Block public access; encrypt at rest. No orphan sweeper yet (U19). [compose]
+7. **S3 bucket.** Its region goes in `GENEALOGY_S3_REGION`. Keys `<projectId>/<ref>/<uuid>`, immutable per write. Block public access; encrypt at rest. No orphan sweeper yet (U19). [compose]
 
 ### Queue
 
@@ -223,8 +223,11 @@ F6, F7, F8, F10 → F11, F16, U24, U25 ─► go-live
    **Variables:**
 
    - `GENEALOGY_PG_DSN`: required; the shared database.
-   - `GENEALOGY_S3_ENDPOINT`, `GENEALOGY_S3_BUCKET`: required; step 7's bucket.
-   - `GENEALOGY_S3_ACCESS_KEY`, `GENEALOGY_S3_SECRET_KEY`: required until U8. A missing required variable exits 2 before listening.
+   - `GENEALOGY_S3_BUCKET`: required; step 7's bucket.
+   - `GENEALOGY_S3_REGION`: the bucket's region (default `us-east-1`).
+   - `GENEALOGY_S3_ENDPOINT`, `GENEALOGY_S3_FORCE_PATH_STYLE`: leave unset on AWS (the regional endpoint, virtual-hosted style; step 2's gateway endpoint needs no override).
+   - `GENEALOGY_S3_ACCESS_KEY`, `GENEALOGY_S3_SECRET_KEY`: leave unset; credentials come from step 3's instance profile. Set both only if F14 mandates static keys; exactly one exits 2. A missing required variable, or a `GENEALOGY_S3_FORCE_PATH_STYLE` other than `true`/`false`, exits 2 before listening, and one start-up stderr line names the credential mode (`static keys` or `SDK default chain`). [untested] (U13)
+   - **Metadata hop limit** (U13): in a container with the IMDSv2 hop limit at 1 and IMDSv1 disabled (possible if F12 moves tools onto the Docker platform), the instance profile is unreachable and every S3 call pays a ~1-2 s `CredentialsProviderError`. Raise the hop limit to 2 or run on the Node platform.
    - `GENEALOGY_ANCHOR_PATH`: `/project` (default)
    - `WIKI_API_URL`, `POP_STATS_URL`: F16's hosts; the default is outside step 2's egress.
    - `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`: only if F9 allows. Model default `google/gemini-3.7-flash`.

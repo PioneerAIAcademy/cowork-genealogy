@@ -78,13 +78,21 @@ export interface PgS3BackendOptions {
   /** Postgres connection string, e.g. `postgresql://postgres:proto@localhost:5434/proto`. */
   dsn: string;
   s3: {
-    endpoint: string;
+    /** An S3-compatible endpoint such as MinIO. Absent (or empty): the SDK's
+     *  regional AWS endpoint for `region`. */
+    endpoint?: string;
     bucket: string;
-    accessKeyId: string;
-    secretAccessKey: string;
-    /** The SDK insists on one even for MinIO; defaults to `us-east-1`. */
+    /** Static credentials, as a pair: both or neither. Neither (or empty):
+     *  the client gets no `credentials`, so the AWS SDK default chain (the
+     *  environment, `~/.aws` shared config/SSO, web identity, then ECS/EC2
+     *  instance metadata) supplies them. */
+    accessKeyId?: string;
+    secretAccessKey?: string;
+    /** The SDK insists on one even for MinIO; defaults to `us-east-1`. With no
+     *  endpoint it also picks the AWS host. */
     region?: string;
-    /** `true` for MinIO and every other endpoint that is not AWS's own. */
+    /** `true` for MinIO without virtual-hosted DNS; `false` for AWS's own
+     *  virtual-hosted style. */
     forcePathStyle: boolean;
   };
   /** Override the module's timeout constants (tests point them at a silent
@@ -159,18 +167,23 @@ export class PgS3Backend {
   }
 }
 
-/** Build a backend from connection options. Neither client connects until first use. */
+/** Build a backend from connection options. Neither client connects until
+ *  first use, and keyless credentials resolve on the first S3 call. Throws on
+ *  exactly one of the two keys. */
 export function createPgS3Backend(options: PgS3BackendOptions): PgS3Backend {
   const connectMs = options.timeouts?.connectMs ?? CONNECT_TIMEOUT_MS;
   const s3RequestMs = options.timeouts?.s3RequestMs ?? S3_REQUEST_TIMEOUT_MS;
+  const { endpoint, accessKeyId, secretAccessKey } = options.s3;
+  // `""` counts as absent: the SDK signs with empty keys rather than falling
+  // through to the default chain, and resolves an empty endpoint to real AWS.
+  if (!accessKeyId !== !secretAccessKey) {
+    throw new Error("createPgS3Backend: accessKeyId and secretAccessKey must be set together or not at all");
+  }
   const pool = new pg.Pool({ connectionString: options.dsn, connectionTimeoutMillis: connectMs });
   const s3 = new S3Client({
-    endpoint: options.s3.endpoint,
+    ...(endpoint ? { endpoint } : {}),
     region: options.s3.region ?? "us-east-1",
-    credentials: {
-      accessKeyId: options.s3.accessKeyId,
-      secretAccessKey: options.s3.secretAccessKey,
-    },
+    ...(accessKeyId && secretAccessKey ? { credentials: { accessKeyId, secretAccessKey } } : {}),
     forcePathStyle: options.s3.forcePathStyle,
     // Only the checksums the S3 API itself mandates: the SDK's default
     // opportunistic CRC trailers are an AWS-only feature that S3-compatible
