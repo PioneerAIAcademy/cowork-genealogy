@@ -66,7 +66,7 @@ record persona and has no quality score.
 
 **Why the answer for an unlinked person is a sentence, by name.** A caller relaying
 the answer needs a true reason. With only "no score was retrieved", the check-warnings
-skill supplied its own reason in 4 of 4 runs, in id jargon ("I1 is a local project
+skill (before it dropped this tool) supplied its own reason in 4 of 4 runs, in id jargon ("I1 is a local project
 ID, not a FamilySearch person ID"), and once falsely ("does not have a FamilySearch
 ID"). With the project tree in hand the tool can state the true reason in plain
 words. It names the person, never the id or its type; the name is built from the
@@ -289,8 +289,9 @@ summary or traceability) and this shape + every raw numeric score.
 
 `detail` is **absent** from the result unless the caller passes `detail: true` —
 absent, not empty, so the default payload is byte-identical to what it was before
-the flag existed. That is the whole point of the flag: the summary caller
-(`check-warnings`) wants a lean per-person answer, while a tree audit wants to
+the flag existed. That is the whole point of the flag: a per-person summary wants
+a lean answer, while a tree audit (`source-evaluation`, the tool's only caller since
+check-warnings dropped it) wants to
 know *which fact* and *which source*, and one tool serves both without either
 paying for the other's context.
 
