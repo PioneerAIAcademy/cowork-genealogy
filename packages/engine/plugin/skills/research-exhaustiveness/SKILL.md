@@ -59,5 +59,5 @@ Then recommend the next step: declared exhaustive → proof-conclusion; not decl
 
 - Never write `research.json` yourself — not the declaration, not the question's `status`.
 - Never decide, on the agent's behalf, that a precondition does not apply. If the agent declines and names a blocker, relay that — it is the correct outcome, not a failure to work around.
-- Never clear a blocker the agent reports. A plan item still `in_progress` is finished by the search skill that owns it, an unclassified assertion by record-extraction; flipping a status to unblock a declaration falsifies the record.
+- Never clear a blocker the agent reports. A plan item still `planned` or `in_progress` is finished by the search skill that owns it, an unclassified assertion by record-extraction; flipping a status to unblock a declaration falsifies the record.
 - Never evaluate more than one question per invocation.

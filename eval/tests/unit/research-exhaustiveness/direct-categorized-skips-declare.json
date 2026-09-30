@@ -1,0 +1,36 @@
+{
+  "execution": {
+    "max_wall_clock_seconds": 900
+  },
+  "test": {
+    "id": "ut_research_exhaustiveness_d7g",
+    "skill": "research-exhaustiveness",
+    "name": "Categorized skips still reach a declaration, on opposite arms (direct-agent arm)",
+    "type": "positive",
+    "description": "q_001 in flynn-skip-categorized carries the two skipped items of flynn-skipped-death-cert, each now bearing the skip_category and skip_reason that issue #1830 added to plan_item: pli_005 (death certificate, destroyed in the 1920 courthouse fire) is 'inaccessible', pli_009 (naturalization, low value-add) is 'unnecessary'. The accept-direction twin of _d6f: the new fields are optional and additive, so a question that declared without them must still declare with them. It also pins that the two values land on opposite arms -- 'inaccessible' is eligible for the pursued-and-unavailable exception, 'unnecessary' is not.",
+    "tags": [
+      "research-exhaustiveness",
+      "affirmative-declaration",
+      "skip-category",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if the criteria are met, and recording an honest `declared: false` termination if they are not.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "flynn-skip-categorized"
+  },
+  "mcp_fixtures": [
+    "wiki-read-pennsylvania-vital-records"
+  ],
+  "judge_context": [
+    "Claude should update research.json to set q_001.exhaustive_declaration.declared to true and q_001.status to 'exhaustive_declared', persisted via a research_append op:'update' call on the question. To verify the write happened, check the research_append call's arguments and the resulting research.json state, not a raw file_changes diff.",
+    "The exhaustive_declaration.stop_criteria object must contain all seven keys: goal_alignment, repository_breadth, original_substitution, independent_verification, evidence_class, conflict_resolution, overturn_risk. Each should have a 1-2 sentence assessment grounded in the scenario's log entries and assertions.",
+    "research_append validates-before-persist and writes atomically in a single call, so it alone is the complete and correct persistence step. Do NOT expect a separate validation call, and do NOT penalize Tool Arguments or Completeness for the absence of one.",
+    "pli_005 (death certificate) is `skipped` with `skip_category: \"inaccessible\"`: Schuylkill County's pre-1906 death records burned in the 1920 courthouse fire, the State Archives holds no duplicates, and no access path exists. That is pursued-and-unavailable, not an unsearched gap. Claude should treat it as documented rather than as outstanding work, and should NOT recommend re-attempting it. The limitation belongs in the overturn_risk assessment or a stop_criteria note.",
+    "pli_009 (naturalization) is `skipped` with `skip_category: \"unnecessary\"`: naturalization rarely names children and three independent sources already establish the parentage. This item was disposed of on judgement, not pursued. It needs no inaccessibility exception and Claude should not describe it as one — but it is equally not an unexplained gap, and withholding the declaration over it should not score as a pass.",
+    "Do NOT require Claude to quote the field names `skip_category` or `skip_reason` in its reply. What is graded is whether each skipped item is handled on the right footing — the inaccessible one as documented-and-unobtainable, the unnecessary one as deliberately not pursued — not whether the vocabulary is recited.",
+    "The question is specifically about the FATHER, not both parents. The mother is out of scope; Claude should not refuse to declare because the mother is unidentified.",
+    "Patrick Flynn was born ca. 1845 in Pennsylvania, and Pennsylvania's statewide civil registration began January 1906 — the date the agent reads from the fetched Pennsylvania_Vital_Records page. The absence of the subject's own birth registration is therefore NOT an exhaustiveness gap and must not be cited as one. Issue #2257.",
+    "Church records WERE searched — pli_008 is `completed` and log_008 records the St. John the Baptist (Pottsville) baptismal register read for 1845-1850, negative. A decisive record type searched and not recovered satisfies the gate; only an unsearched one blocks it. Withholding the declaration because the baptism was not found should NOT score as a pass."
+  ]
+}
