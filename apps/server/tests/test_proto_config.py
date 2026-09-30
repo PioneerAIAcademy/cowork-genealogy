@@ -63,6 +63,10 @@ EXPECTED_TABLES = frozenset({
     "session_seq",
     "session_activity",
     "tool_calls",
+    # 008 (U2): patron sign-in.
+    "users",
+    "allowed_emails",
+    "familysearch_tokens",
 })
 
 _CREATE_TABLE = re.compile(r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?\"?(\w+)\"?", re.IGNORECASE)
@@ -467,6 +471,40 @@ def test_schema_creates_every_planned_table():
 
 def test_schema_has_no_committed_batches():
     assert "committed_batches" not in _created_tables()
+
+
+def _statements(path: Path) -> list[str]:
+    """Comment-stripped, whitespace-normalised statements, so a statement reflowed across
+    lines is still the same statement and a comment that says NOT NULL is not one."""
+    body = _strip_line_comments(path.read_text(encoding="utf-8"), ("--",))
+    return [re.sub(r"\s+", " ", s).strip() for s in body.split(";") if s.strip()]
+
+
+def test_008_is_idempotent_and_owner_is_nullable():
+    """Every start re-applies sql/*.sql (web tier, worker, initdb), so 008 must be a no-op
+    the second time. And projects.owner_id must stay NULLABLE: the engine creates projects
+    with the id alone (PgS3ProjectStore.touchProject), so NOT NULL fails every engine
+    write, and nothing but a real engine write on the compose stack would show it."""
+    statements = _statements(SQL_DIR / "008_auth_owner.sql")
+    assert statements, "008_auth_owner.sql has no statements"
+    for stmt in statements:
+        assert re.match(r"(CREATE TABLE IF NOT EXISTS|CREATE INDEX IF NOT EXISTS|ALTER TABLE \w+ ADD COLUMN IF NOT EXISTS) ",
+                        stmt, re.I), f"not idempotent: {stmt}"
+    [owner] = [s for s in statements if re.search(r"ADD COLUMN IF NOT EXISTS owner_id\b", s, re.I)]
+    assert owner.upper().startswith("ALTER TABLE PROJECTS "), owner
+    assert "NOT NULL" not in owner.upper(), f"projects.owner_id must be nullable: {owner}"
+    [tokens] = [s for s in statements if re.search(r"CREATE TABLE IF NOT EXISTS familysearch_tokens\b", s, re.I)]
+    assert re.search(r"\buser_id text PRIMARY KEY\b", tokens), "one grant row per patron: U3 locks it"
+    assert re.search(r"\bgranted_at timestamptz NOT NULL\b", tokens), "U3's 24 h clock"
+
+
+def test_web_dockerfile_installs_auth_deps():
+    """web/auth.py imports these at module scope; the suite runs in a venv that has them,
+    so a missing pip line passes every test and fails only when the image starts."""
+    dockerfile = (PROTO / "web" / "Dockerfile").read_text(encoding="utf-8")
+    pip = " ".join(dockerfile.split("RUN pip install", 1)[1].split("\n\n", 1)[0].split())
+    for dep in ("itsdangerous", "cryptography", "httpx"):
+        assert f'"{dep}' in pip, f"the web image does not install {dep}"
 
 
 # ── D18 grading recipes ─────────────────────────────────────────────────────────
