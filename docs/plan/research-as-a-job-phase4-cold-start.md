@@ -148,8 +148,13 @@ Adding a signal to `person_search`'s response is not one file:
 
 ## Not in this pass
 
-- **The gaps offer** waits on #1689 and #2696, both OPEN: it rests on relatives' attached
-  sources being imported, and they are not.
+- **The gaps offer** waits on **#1689 only** — it rests on relatives' attached sources
+  being imported. Its sibling blocker **#2696 has since CLOSED** ("person_read: carry
+  person-level sources into the tree, always fetch relatives"), so the pair the parent
+  names is now half resolved; this plan said "both OPEN" and that was true when written
+  and is not now. #1689 ("surface relatives' attached sources") is the half that
+  actually carries the offer, so the item stays blocked — but on one issue, not two,
+  and whoever picks it up should re-check #1689 rather than assume two blockers.
 - **Candidate cards carrying parents and spouse** — now MEASURED, and smaller than it
   looked. The parent asks for cards showing what FamilySearch uses to tell namesakes
   apart: lifespan, places, **parents and spouse**. Two of those four already arrive.
