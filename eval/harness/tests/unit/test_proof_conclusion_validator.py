@@ -186,12 +186,13 @@ def test_message_reports_the_conflict_as_resolved_and_points_at_the_ownership_ch
 # --- the tier CEILING: `tier-possible-q001` fixes the tier exactly -----------
 #
 # The bounded validator above owns the FLOOR (a bounded finding may not collapse
-# to `not_proved`), and its ACCEPTED set deliberately admits `probable`. Nothing
-# owned the ceiling, so on 2026-09-19 `ut_proof_conclusion_018` wrote
-# `tier: probable` + `shortfall: gap`, passed every deterministic check, and
-# failed its own answer key — which fixes the tier at exactly `possible`
-# (genealogist ruling 2026-08-21). `tier-possible-q001` now carries both
-# fixtures; these cases pin both directions of the assertion (issue #2604).
+# to `not_proved`), and its ACCEPTED set deliberately admits `probable`. This tag
+# owns the exact-`possible` ceiling and now binds only `_004`
+# (`possible-tier-thin-evidence`). `_018` carried it too until issue #2930
+# relaxed its bounded death to accept `possible` OR `probable` — the 2026-08-21
+# ceiling was un-enforceable behind the delegation boundary — so 018 dropped the
+# tag and now relies on the floor validator alone. The synthetic cases below pin
+# both directions of the assertion (issue #2604), independently of any fixture.
 
 from test_proof_conclusion import (  # noqa: E402
     test_q001_possible_tier as possible_tier,

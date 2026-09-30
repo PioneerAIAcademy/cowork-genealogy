@@ -143,22 +143,17 @@ def test_q001_possible_tier(after_state, test):
     """Tagged `tier-possible-q001`: the proof summary for q_001 must have
     tier == 'possible' EXACTLY — neither a higher tier nor a lower one.
 
-    The assertion is shared; what makes it bind differs per fixture, which is
-    why the tag carries it rather than the scenario name.
+    This tag now binds only `possible-tier-thin-evidence` (_004): a single
+    uncorroborated indirect co-residence (the 1850 census alone) is a credible
+    lead but cannot support 'probable'; it still leans toward Thomas, so it is
+    stronger than 'not_proved'.
 
-    `possible-tier-thin-evidence` (_004): a single uncorroborated indirect
-    co-residence (the 1850 census alone) is a credible lead but cannot support
-    'probable'; it still leans toward Thomas, so it is stronger than
-    'not_proved'.
-
-    `bounded-death-encoded-not-collapsed` (_018): a reachable, unsearched 1880
-    census would halve the bracket, and a gap that NARROWS the answer is a
-    Component 1 failure rather than a corroboration gap (genealogist ruling,
-    2026-08-21). `test_bounded_conclusion_is_tiered_and_encoded`'s ACCEPTED set
-    is a FLOOR — it keeps the finding off `not_proved` and deliberately admits
-    `probable` — so it cannot express this ceiling. This does. Added 2026-09-22
-    after a run wrote `probable` + `shortfall: gap` and passed every
-    deterministic check while failing the key (issue #2604)."""
+    `bounded-death-encoded-not-collapsed` (_018) formerly carried this tag,
+    pinning its bounded death to `possible` (the 2026-08-21 ceiling); issue
+    #2930 relaxed it to accept `possible` OR `probable` — the ceiling was
+    un-enforceable behind the delegation boundary — so 018 dropped the tag and
+    is now guarded by `test_bounded_conclusion_is_tiered_and_encoded`'s floor
+    (off `not_proved`, Death fact encoded) instead."""
     if "tier-possible-q001" not in test.get("tags", []):
         pytest.skip("not a tier-possible-q001 scenario")
     ps = _proof_summary_for_question(after_state, "q_001")

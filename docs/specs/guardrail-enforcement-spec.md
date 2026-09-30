@@ -2481,6 +2481,27 @@ this section before reopening one.
   attribution sees it, and that is eval-only. It reaches production for nothing
   today because nothing needs it.
 
+  **Three unit observations under a leading delegation, retired 2026-09-29 (issue
+  #2930).** The `proof-conclusion` pair's direct arm was shown, in three unit
+  tests, to yield to a leading delegation over its own gate: `d1a` declined a
+  blocked write in the reply and persisted nothing; `d2b` narrated a refinement
+  and issued no `update`; `d6f` tiered a bounded conclusion to `probable` under a
+  delegation that asserted `probable` was correct, where the routed original held
+  `possible` across 15 runs. None meets this item's reopen condition — *a
+  violation observed per-instance on an attributed run.* All three are harness
+  observations produced by adversarial delegation wording written to lead the
+  agent, not violations seen on a production attributed run, and no production
+  delegation has been shown to lead this way. A writer-tool precondition cannot
+  reach `d1a`/`d2b` either: their failure is a write that is never made, and a
+  precondition runs only on a call that is made (ADR-0011 places "the reply claims
+  a write no call made" at step 4, harness-only). Downstream, `d1a` leaves an
+  unresolved `c_001` that the completion gate (§5, "Blocking conflicts before
+  completion") refuses, so it is caught; `d2b` and `d6f` have no downstream catch
+  once issue #2951 takes `gps-mentor` off the default research path, and that is
+  accepted (lead, 2026-09-29) because the three standing `xfail` markers carried
+  cost the streamlining removes. The three markers and their tests were deleted;
+  the routed neutral-wording twins stay and pass.
+
 - **An ark cross-check on `exhaustive_search_summary`** — "every ark named in a proof
   summary's `exhaustive_search_summary` must appear in some `log[].query`." Proposed
   2026-09-17 against a real defect: in the `pedro-chaves-spouse` run of 2026-09-09, call 182
