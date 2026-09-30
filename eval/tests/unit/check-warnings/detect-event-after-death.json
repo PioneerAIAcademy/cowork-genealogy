@@ -10,11 +10,12 @@
       "detection",
       "fundamental",
       "event-after-death",
-      "critical"
+      "critical",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Check Cornelius Brady for any warnings.",
+    "delegation": "Check Cornelius Brady for any warnings.\n\npersonId: I1\n\nprojectPath: <workspace>",
     "scenario": "brady-multiple-warnings"
   },
   "mcp_fixtures": [
@@ -23,7 +24,7 @@
   "judge_context": [
     "Should call the person_warnings tool with personId: 'I1' (Cornelius)",
     "Should report the hasEventAfterDeath1 warning as a Contradiction (the tool emits severity: 'contradiction', which maps to a Fundamental-assumption violation)",
-    "Should recommend investigating the post-death event before assuming the cause. It should NOT claim that post-death events are 'almost always' a same-name individual's records merged in -- that framing ignores legitimate posthumous mentions (a record naming the deceased that was created after their death, e.g., an obituary or descendant's death certificate). It is acceptable for the skill to name identity confusion + wrong death date as common causes, but it should also acknowledge posthumous mention as a third possibility and let the source type guide the recommendation. See references/warnings-as-identity-signals.md for the identity-confusion case.",
+    "Should recommend investigating the post-death event before assuming the cause. It should NOT claim that post-death events are 'almost always' a same-name individual's records merged in -- that framing ignores legitimate posthumous mentions (a record naming the deceased that was created after their death, e.g., an obituary or descendant's death certificate). It is acceptable for the skill to name identity confusion + wrong death date as common causes, but it should also acknowledge posthumous mention as a third possibility and let the source type guide the recommendation. See Appendix B of the agent body for the identity-confusion case.",
     "Should NOT suggest schema-level fixes (validate-schema) or conflict-resolution -- those are different skills",
     "Should NOT manually re-derive the warning by reasoning over the scenario data; the tool is the source of truth"
   ]

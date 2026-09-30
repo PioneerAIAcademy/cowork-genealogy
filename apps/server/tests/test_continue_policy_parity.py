@@ -198,13 +198,18 @@ def test_the_env_guard_is_shared_where_it_can_be_and_only_where_it_can_be():
     belongs in one place -- and it bit once already (#F, the unguarded `int()`).
 
     The web tier is the exception and it is a REAL one, not laziness: `proto/web/Dockerfile`
-    copies only `enqueue.py`, `sql/` and `web/`, so `app` is not importable there. An
-    import would pass every test -- the suite runs from the repo root, where the whole
-    tree is on the path -- and fail only in the deployed container. So it keeps its own
-    copy, and this test pins the reason by reading the Dockerfile."""
+    copies only `enqueue.py`, `sql/`, `web/` and the engine's client config, so `app` is not
+    importable there. An import would pass every test -- the suite runs from the repo root,
+    where the whole tree is on the path -- and fail only in the deployed container. So it
+    keeps its own copy, and this test pins the reason by reading the Dockerfile.
+
+    The build context is the repo root (U2), so every COPY source starts with `apps/`; the
+    question is whether one of them is the `apps/server/app` package or inside it."""
     dockerfile = (REPO / "apps/server/proto/web/Dockerfile").read_text(encoding="utf-8")
-    copied = [ln.split()[1] for ln in dockerfile.splitlines() if ln.startswith("COPY ")]
-    assert not any(c.startswith("app") or "/app" in c for c in copied), (
+    copied = [ln.split()[1].rstrip("/") for ln in dockerfile.splitlines() if ln.startswith("COPY ")]
+    assert copied, "the web Dockerfile copies nothing; this check would pass vacuously"
+    assert not any(c in ("apps/server/app", "apps/server") or c.startswith("apps/server/app/")
+                   for c in copied), (
         f"the web image now copies {copied}; if `app` is in it, proto/web/app.py should "
         f"import the shared env guard instead of keeping its own copy"
     )

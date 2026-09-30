@@ -11,11 +11,12 @@
       "valid",
       "early-marriage",
       "note",
-      "severity-classification"
+      "severity-classification",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Check Cornelius for warnings.",
+    "delegation": "Check Cornelius for warnings.\n\npersonId: I1\n\nprojectPath: <workspace>",
     "scenario": "brady-multiple-warnings"
   },
   "mcp_fixtures": [
@@ -23,9 +24,9 @@
   ],
   "judge_context": [
     "Should call person_warnings on Cornelius (I1)",
-    "Should report the hasEarlyMarriage14 warning as Implausible, NOT Contradiction -- this is a Valid-assumption violation, not a Fundamental one (the tool emits severity: 'implausible')",
+    "Should report the hasEarlyMarriage14 warning at the severity the tool returned (severity: 'implausible', shown as `[!] Implausible`), NOT as a contradiction -- this is a Valid-assumption violation, not a Fundamental one. The `[!]` marker is the agent body's icon for both severities and is not an escalation",
     "Should suggest verifying the marriage record's birth/marriage dates against the original source -- historical child marriages occurred but are rare",
-    "Should NOT auto-escalate to 'two persons merged' -- a single Valid violation on an otherwise clean profile is not enough to suggest identity confusion (see references/warnings-as-identity-signals.md cluster rules)",
+    "Should NOT auto-escalate to 'two persons merged' -- a single Valid violation on an otherwise clean profile is not enough to suggest identity confusion (see Appendix B of the agent body cluster rules)",
     "Should note that a documented exception is possible: if the original record genuinely shows a 13-year-old marriage, that needs documenting, not warning"
   ]
 }

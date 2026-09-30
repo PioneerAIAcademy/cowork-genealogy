@@ -11,11 +11,12 @@
       "fundamental",
       "death-before-child",
       "male-gendered",
-      "critical"
+      "critical",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Check Owen Brady for any warnings.",
+    "delegation": "Check Owen Brady for any warnings.\n\npersonId: I2\n\nprojectPath: <workspace>",
     "scenario": "brady-multiple-warnings"
   },
   "mcp_fixtures": [

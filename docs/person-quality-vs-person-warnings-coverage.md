@@ -110,7 +110,7 @@ All profile-versus-source comparisons, which `person_warnings` never makes.
 | `IMPOSSIBLE_EVENT_ORDER` | Partial | see the breakdown below | yes | Covered in substance, but ours tolerates 1–2 years where FamilySearch's order is strict |
 | `DELAYED_BURIAL` | Partial | `hasDelayedBurial365` | yes | Ours fires above 365 days, as `implausible`; FamilySearch compares against a norm it does not publish. **Naming trap:** `hasBurialAfterDeath31` is the opposite condition, burial *before* death |
 | `OLD_CHRISTENING` | Uncovered | — | yes | `hasEventBeforeChristening365_3` is a different condition |
-| `BORN_BEFORE_PARENTS_MARRIED` | Uncovered | — | yes | Listed under "NOT currently checked" in `warning-checks.md`. **Unsure** whether it should be a warning at all: it is common and often true |
+| `BORN_BEFORE_PARENTS_MARRIED` | Uncovered | — | yes | Listed under "NOT currently checked" in check-warnings' tag catalogue. **Unsure** whether it should be a warning at all: it is common and often true |
 | `CHILD_BORN_BEFORE_MARRIAGE` | Uncovered | — | yes | The same condition from the parent's side |
 | `CHILD_OF_CHILDLESS_COUPLE` | Covered | `hasNoChildrenConflict` | yes | The person is a biological or unspecified child of both partners of a couple marked `CoupleNeverHadChildren` |
 | `NO_CHILDREN_CONFLICT` | Covered | `hasNoChildrenConflict` | yes | The person's own `NoChildren` fact. Adoptive, step, foster and guardian children do not count |
@@ -171,8 +171,8 @@ premise no longer holds. At the lead's request, PR #2994 adds `hasDelayedBurial3
 They run for every person in the project tree, linked to FamilySearch or not.
 
 Still uncovered on purpose: an old christening, and a birth before the parents'
-marriage. The second is common and frequently true, and `warning-checks.md`
-excludes it.
+marriage. The second is common and frequently true, and check-warnings' tag
+catalogue excludes it.
 
 ## The reverse direction: `person_warnings` checks with no FamilySearch counterpart
 
@@ -190,11 +190,11 @@ Context, not gaps. None of these appears among the 58 templates:
 - `hasBurialAfterDeath31` overlaps FamilySearch's strict burial-before-death ordering, with a
   31-day tolerance.
 
-## What this measurement turned up in `warning-checks.md`
+## What this measurement turned up in check-warnings' tag catalogue
 
-`packages/engine/plugin/skills/check-warnings/references/warning-checks.md` is the
-check-warnings skill's tag catalogue. PR #2994 corrects it, with the check-warnings run
-that needs:
+Appendix A of `packages/engine/plugin/agents/check-warnings.md` (formerly
+`skills/check-warnings/references/warning-checks.md`) is check-warnings' tag catalogue.
+PR #2994 corrects it, with the check-warnings run that needs:
 
 - **Its "NOT currently checked" list named child spacing** ("two children born less
   than 9 months apart"), but `hasCloseChildBirthsIgnoreSimilarChildren` checks two exact

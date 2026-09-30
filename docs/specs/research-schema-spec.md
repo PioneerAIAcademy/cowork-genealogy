@@ -880,7 +880,7 @@ Array of timeline objects. Timelines are keyed by a unique ID with a human-reada
 
 Timelines have **no** `impossibilities` field. Detecting a single
 person's logical impossibilities — an event after death, an impossible
-age — is the check-warnings skill's job, done deterministically via
+age — is the check-warnings agent's job, done deterministically via
 `person_warnings`; the timeline skill surfaces such a contradiction in
 its chat reply and recommends a data-integrity check rather than
 persisting it. (Geographic/travel infeasibility, which depends on
@@ -931,6 +931,26 @@ separate paternity/maternity questions remains available, but only when the
 two parents need genuinely different research plans (different jurisdictions,
 different record sets) — not merely different evidence strength, which
 `claims` now covers without forcing a split.
+
+**Display labels — what the researcher reads.** Stored values never change; the viewer
+maps them to these labels (`statusLabelMap` in `packages/viewer-ui/src/components/shared/StatusBadge.tsx`,
+keyed on the value). A value with no row renders with underscores as spaces. No
+viewer label, badge or heading says "proof", "proved", "GPS" or "exhaustive" (lead
+ruling 2026-09-14). Agent-written text the viewer shows verbatim
+(`narrative_markdown`, `exhaustive_search_summary`, question text) and the chat
+are outside this table. **A proof summary is a *finding* below `proved`,
+`disproved` included, and a *conclusion* at `proved`**. "Conclusion" is reserved
+to the top tier, and the section is titled Findings.
+
+| stored value | shown |
+|---|---|
+| `proved` / `probable` / `possible` / `not_proved` / `disproved` | well established / likely / tentative / not established / ruled out |
+| `probable` as a `person_evidence_confidence` | likely (the map is keyed on the value) |
+| `original` / `derivative` / `authored` (`source_classification`) | Record image / Index or transcript / Compiled work |
+| `exhaustive_declared` (question status), and a declared `exhaustive_declaration` | all reachable searched |
+| `ceiling` / `gap` / `conflict` (`shortfall`) | limit of online records / evidence missing / conflicting evidence |
+| `none` (`shortfall`) | no badge |
+| `proof_summaries` (section) | Findings |
 
 ### 5.12 `evaluations`
 

@@ -34,6 +34,14 @@ const ARK_PATTERN = /^https:\/\/sg30p0\.familysearch\.org\/.+\/\$dist$/;
 const DGS_URL_PATTERN =
   /^https:\/\/(www\.)?familysearch\.org\/das\/v2\/dgs:[^/]+\/dist\.jpg$/;
 
+// An image-ARK id with its `3:1:` prefix dropped, as a delegating agent passed
+// it in an alpha-feedback run. Only the 4-4-4-1 shape: in the repo, 161 distinct
+// prefixed ids of that shape are 3:1: and 1 is 3:2: (a test value), while
+// shorter bare ids collide with 1:1: persona ids (XXXX-XXX, XXXX-XXXX) and 4:1:
+// tree ids (XXXX-XXX). Kept here rather than in ark.ts's toArk, which every ARK
+// consumer shares.
+const UNPREFIXED_IMAGE_ID_RE = /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]$/;
+
 // A `3:1:`/`3:2:` ARK is not always self-sufficient: some are waypoints into
 // a multi-image film/register, and the bare resolver redirect can land on an
 // arbitrary image within that group rather than the one the caller means.
@@ -131,11 +139,18 @@ function arkToImageUrl(ark: string): { url: string; fallbackUrl?: string } {
     // there's nothing to strip, primary and fallback would be identical.
     return query ? { url: base + query, fallbackUrl: base } : { url: base };
   }
+  const unprefixed = ark.trim();
+  if (UNPREFIXED_IMAGE_ID_RE.test(unprefixed)) {
+    return { url: arkToUrl(`ark:/61903/3:1:${unprefixed}`) };
+  }
   throw new Error(
     "Unrecognized ark. Expected a FamilySearch document-image ARK " +
-      "(ark:/61903/3:1:... or 3:2:..., a bare 3:1:.../3:2:... id, or a " +
-      "resolver URL for one), a DeepZoomCloud ARK URL (ending in /$dist), " +
-      "or a DGS distribution URL (dgs:.../dist.jpg)."
+      "(ark:/61903/3:1:... or 3:2:..., a bare 3:1:.../3:2:... id, an " +
+      "unprefixed XXXX-XXXX-XXXX-X id (treated as 3:1:), or a resolver URL " +
+      "for one), a DeepZoomCloud ARK URL (ending in /$dist), or a DGS " +
+      "distribution URL (dgs:.../dist.jpg). Pass the FamilySearch page URL or " +
+      "ARK exactly as the user gave it, including its 3:1:/3:2: prefix; do not " +
+      "build an imageId from a groupId or an i= index."
   );
 }
 
@@ -217,7 +232,9 @@ interface FetchAttempt {
 async function attemptFsImageFetch(
   url: string,
   principal: Principal | null,
-  memoryShape: boolean
+  memoryShape: boolean,
+  /** Lower the per-attempt budget; defaults to the multi-MB scan size. */
+  timeoutMs: number = IMAGE_FETCH_TIMEOUT_MS
 ): Promise<FetchAttempt> {
   // A memory artifact is served publicly: measured 2026-09-15, the same
   // artifact returned 200 with no headers at all, with a UA only, and
@@ -229,8 +246,8 @@ async function attemptFsImageFetch(
     "User-Agent": BROWSER_USER_AGENT,
   };
   const response = principal
-    ? await fsFetchWithTimeout(principal, url, { headers: fetchHeaders }, IMAGE_FETCH_TIMEOUT_MS)
-    : await fetchWithTimeout(url, { headers: fetchHeaders }, IMAGE_FETCH_TIMEOUT_MS);
+    ? await fsFetchWithTimeout(principal, url, { headers: fetchHeaders }, timeoutMs)
+    : await fetchWithTimeout(url, { headers: fetchHeaders }, timeoutMs);
   if (!response.ok) {
     return { ok: false, status: response.status, statusText: response.statusText };
   }
@@ -275,16 +292,20 @@ export async function fetchFsImageBytes(
   url: string,
   fallbackUrl: string | undefined,
   principal: Principal,
-  memoryShape = false
+  memoryShape = false,
+  /** Lower the per-attempt budget. A probe must fit inside Cowork's 60s call
+   *  abort alongside two other legs (volume-bisect-tool-spec.md §8); the default
+   *  is a hang-catcher sized for a multi-MB scan, not for a probe. */
+  opts: { timeoutMs?: number } = {}
 ): Promise<FetchedFsImage> {
   // A memory artifact needs no credential (measured), and asking for one would
   // make a public read fail for an unauthenticated caller with an auth error.
   const authedPrincipal = memoryShape ? null : principal;
 
-  let attempt = await attemptFsImageFetch(url, authedPrincipal, memoryShape);
+  let attempt = await attemptFsImageFetch(url, authedPrincipal, memoryShape, opts.timeoutMs);
   let resolvedUrl = url;
   if (!attempt.ok && fallbackUrl) {
-    attempt = await attemptFsImageFetch(fallbackUrl, authedPrincipal, memoryShape);
+    attempt = await attemptFsImageFetch(fallbackUrl, authedPrincipal, memoryShape, opts.timeoutMs);
     resolvedUrl = fallbackUrl;
   }
 

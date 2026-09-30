@@ -17,6 +17,9 @@ import { personReadTool } from "../../src/tools/person-read.js";
 import { LOCAL } from "../../src/auth/principal.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { imageTranscribeTool } from "../../src/tools/image-transcribe.js";
+import { mkdtemp, rm } from "fs/promises";
+import { tmpdir } from "os";
+import { join } from "path";
 
 const PID = "KWCJ-RN4";
 const transcribe = vi.mocked(imageTranscribeTool);
@@ -87,7 +90,12 @@ function route(
 const read = (extra: Record<string, unknown> = {}) =>
   personReadTool({ personId: PID, sourceDescriptions: true, ...extra }, LOCAL);
 
-beforeEach(() => {
+// A real folder, not a literal path: a `projectPath` also stages the read
+// itself (#2944), which writes under it.
+let proj: string;
+
+beforeEach(async () => {
+  proj = await mkdtemp(join(tmpdir(), "person-read-ocr-"));
   vi.mocked(getValidToken).mockResolvedValue("tok");
   previousFetch = globalThis.fetch;
   globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
@@ -95,8 +103,9 @@ beforeEach(() => {
   transcribe.mockReset();
   transcribe.mockResolvedValue({ transcription: "OCR TEXT" } as never);
 });
-afterEach(() => {
+afterEach(async () => {
   globalThis.fetch = previousFetch;
+  await rm(proj, { recursive: true, force: true });
 });
 
 describe("person_read — transcription phase", () => {
@@ -197,8 +206,8 @@ describe("person_read — transcription phase", () => {
       imageRef: "images/d1.jpg",
     } as never);
     route([mem("d1", "image/jpeg", "Document", "Will", "jpg")]);
-    const out = await read({ projectPath: "/tmp/proj" });
-    expect(transcribe.mock.calls[0][0]).toMatchObject({ projectPath: "/tmp/proj" });
+    const out = await read({ projectPath: proj });
+    expect(transcribe.mock.calls[0][0]).toMatchObject({ projectPath: proj });
     expect(out.sources.find((s) => s.id === "d1")?.image_ref).toBe("images/d1.jpg");
   });
 
@@ -208,7 +217,7 @@ describe("person_read — transcription phase", () => {
       imageRef: "images/d1.jpg",
     } as never);
     route([mem("d1", "image/jpeg", "Document", "Will", "jpg")]);
-    await read({ projectPath: "/tmp/proj" });
+    await read({ projectPath: proj });
     // Without this the key is the caller's input verbatim -- a whole URL, which
     // sanitizes to a ~70-character filename carrying the host and ctx param.
     expect(transcribe.mock.calls[0][2]).toMatchObject({ imageKey: "d1" });
@@ -216,7 +225,7 @@ describe("person_read — transcription phase", () => {
 
   it("does NOT retain a memory PDF, because the store writes .jpg only", async () => {
     route([mem("p1", "application/pdf", "Document", "Probate file", "pdf")]);
-    const out = await read({ projectPath: "/tmp/proj" });
+    const out = await read({ projectPath: proj });
     // still transcribed -- the text is the point ...
     expect(out.sources.find((s) => s.id === "p1")?.text).toBe("OCR TEXT");
     // ... but not saved, or it would land under a .jpg name the viewer cannot
@@ -240,5 +249,24 @@ describe("person_read — transcription phase", () => {
     const first = (transcribe.mock.calls[0][0] as { memoryArtifactUrl: string })
       .memoryArtifactUrl;
     expect(first).toBe(ART("jpg", "will"));
+  });
+});
+
+describe("person_read — the staged copy is post-merge (#2944)", () => {
+  it("staged gedcomx equals the returned document when memories merged", async () => {
+    transcribe.mockResolvedValue({
+      transcription: "OCR TEXT",
+      imageRef: "images/d1.jpg",
+    } as never);
+    route([mem("d1", "image/jpeg", "Document", "Will", "jpg")]);
+    const out = await read({ projectPath: proj });
+    // The merge really ran, so the equality below is not equal by construction.
+    expect(out.sources.find((s) => s.id === "d1")?.text).toBe("OCR TEXT");
+    const { readFile } = await import("fs/promises");
+    const envelope = JSON.parse(
+      await readFile(join(proj, out.staged!.resultsRef), "utf8"),
+    );
+    const { staged: _s, stagingError: _e, ...returned } = out;
+    expect(envelope.payload.results[0].gedcomx).toEqual(returned);
   });
 });

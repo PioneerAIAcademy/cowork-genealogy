@@ -7,8 +7,8 @@ No telemetry. No analytics. Offline-first.
 ## What it does
 
 - Watches a project folder for changes to research files
-- Displays research progress through a visual pipeline (Init, Question Selection, Research Plan, Search Records, Extraction, Analysis, Proof Summary)
-- Renders 11 research sections as browsable Notion-style cards: Project Overview, Questions, Plans, Research Log, Sources, Assertions, Person Evidence, Conflicts, Hypotheses, Timelines, Proof Summaries
+- Displays research progress through a visual pipeline (Init, Question Selection, Research Plan, Search Records, Extraction, Analysis, Findings)
+- Renders 11 research sections as browsable Notion-style cards: Project Overview, Questions, Plans, Research Log, Sources, Assertions, Person Evidence, Conflicts, Hypotheses, Timelines, Findings
 - Shows GedcomX persons and relationships in the Project Overview
 - Cross-links between sections (click an assertion ID in a question card to jump to that assertion)
 - Light and dark theme toggle

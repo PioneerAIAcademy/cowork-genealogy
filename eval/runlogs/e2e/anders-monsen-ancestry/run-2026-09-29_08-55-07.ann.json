@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "notes": {
+    "f1": "Not recovered. The tree carries a Couple relationship between LKFW-9XH and KZHH-VTX, but it holds `facts: []` -- no Marriage fact on it or on either person, and so no date and no place. The expected 25 June 1786 at Hamre is absent outright: the string \"1786\" does not occur anywhere in research.json. The search itself was thorough rather than careless -- 23 of the run's 69 log entries work collection 1468080 -- and log_002 records why it could not narrow: 165 \"Anders Monsen\" grooms all scoring identically at matchScore 0.031 because the subject carries candidateFactCount 0. log_003 through log_009 then tried every bride variant (Urna, Udna and Unna against both Halsteinsdr and Halsteinsdatter, and fatherGivenName Halstein with no surname), all nil.",
+    "f2": "Not recovered. No source titled \"Norway, Marriages, 1660-1926\" and no ark 1:1:NW44-PM2 appears in the final tree or in research.json, which holds zero sources, zero assertions and zero proof summaries. The three sources on the tree are a Manger parish death and burial record, a Hamre christening, and \"Norway, Baptisms, 1634-1927\" (ark 1:1:NCJT-Q8X) -- a baptism collection, not the marriage one this finding names. log_069 identifies Digitalarkivet as the sole repository for the register and records a fourth blocked attempt to reach it, WebFetch being denied by environment policy, so the one route left to this source was closed. Worth noting against that terminal item: it names the Voss kirkebok covering 1840-1880, which is neither the right parish nor a range containing 1786, so the fallback was aimed wrongly even had the fetch succeeded."
+  },
+  "annotator": "benter-070",
+  "findings_hash": "bbedf735a335074de029068986ec084ff7cf9b5d997effee5c728690fec8618a",
+  "blind_bundle_digest": "8728e6614b8ae3b7e0cde7a13c74033ef55616773dcc0babc49648b8116faf28"
+}

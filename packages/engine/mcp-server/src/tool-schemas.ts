@@ -4,6 +4,7 @@
 // assert manifest.tools stays in sync with what's registered. Keeping it
 // in its own module means the test can read the list without importing
 // index.ts, which connects the stdio transport as a side effect.
+import { volumeBisectSchema } from "./tools/volume-bisect.js";
 import { wikipediaSearchSchema } from "./tools/wikipedia.js";
 import {
   placeSearchToolSchema,
@@ -56,6 +57,7 @@ import { researchQuerySchema } from "./tools/research-query.js";
 import { projectCreateSchema } from "./tools/project-create.js";
 import { buildExternalSearchUrlSchema } from "./tools/build-external-search-url.js";
 import { sidecarReadSchema } from "./tools/sidecar-read.js";
+import { getNameVariantsSchema } from "./tools/name-variants.js";
 
 // Tools exempt from ToolSearch deferral: their schemas load up front instead of
 // costing a ToolSearch turn each time. Sized against the September 2026 e2e corpus.
@@ -68,6 +70,7 @@ export const ALWAYS_LOAD: ReadonlySet<string> = new Set([
 ]);
 
 export const allToolSchemas = [
+  volumeBisectSchema,
   wikipediaSearchSchema,
   placeSearchToolSchema,
   placeSearchAllToolSchema,
@@ -116,6 +119,7 @@ export const allToolSchemas = [
   projectCreateSchema,
   buildExternalSearchUrlSchema,
   sidecarReadSchema,
+  getNameVariantsSchema,
 ];
 
 // Set in place, not copied: ownership-manifest.test.ts matches schemas by object identity.

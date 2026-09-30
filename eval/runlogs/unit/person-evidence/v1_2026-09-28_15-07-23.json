@@ -4452,7 +4452,7 @@
       "expected_outcome": "xfail",
       "scenario": "census-household-absent-spouse",
       "mcp_fixtures": [],
-      "outcome": "xfail",
+      "outcome": "fail",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
@@ -9402,7 +9402,7 @@
       "expected_outcome": "xfail",
       "scenario": "mid-research-flynn",
       "mcp_fixtures": [],
-      "outcome": "xfail",
+      "outcome": "fail",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
@@ -19424,7 +19424,7 @@
       "mcp_fixtures": [
         "same-person-flynn-degenerate"
       ],
-      "outcome": "xfail",
+      "outcome": "fail",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [

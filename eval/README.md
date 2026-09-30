@@ -54,7 +54,12 @@ the e2e benchmark; see
 ## Prerequisites
 
 - **Python 3.12+** with [uv](https://github.com/astral-sh/uv) (`pip install uv` or `brew install uv`).
-- **Node.js 20+** with npm.
+- **Node.js 20+** with npm, plus **pnpm** — the CRUD UI installs from the repo-root
+  pnpm workspace, and Node ships npm only:
+  ```
+  npm install -g pnpm@9.15.9
+  ```
+  `Setup.bat` does this for you on Windows; macOS/Linux users run it once.
 - **Claude Code CLI** — required. The harness drives the [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-python), which spawns the `claude` CLI as a subprocess. Install once:
   ```
   npm install -g @anthropic-ai/claude-code
@@ -117,13 +122,12 @@ Tests run serially (~30s/test). Scope runs with `--skill`, `--test`, or `--tag` 
 ### CRUD UI
 
 ```bash
-cd eval/app
-
-# One-time setup (installs deps + generates Zod schemas)
-npm install
+# One-time setup, from the repo root (installs deps + generates Zod schemas).
+# eval/app is a pnpm workspace member, so it installs with everything else.
+pnpm install
 
 # Launch the dev server
-npm run dev
+pnpm --filter cowork-genealogy-eval-app dev
 ```
 
 Then open <http://127.0.0.1:3000>. The CRUD UI reads + writes the same `eval/` tree the harness writes to — keep them on the same filesystem checkout.
@@ -138,7 +142,7 @@ Then open <http://127.0.0.1:3000>. The CRUD UI reads + writes the same `eval/` t
 
 ### Harness exit codes
 
-- `0` — every test passed or was an expected xfail.
+- `0` — every test passed, was partial, or was a declared-xfail test that failed as declared.
 - `1` — harness crash, or any test failed or unexpectedly passed. On a crash,
   submission stops but every still-running test is allowed to finish, and the
   completed tests are saved as a `scratch_<ts>.json` run log per skill with the
@@ -164,10 +168,10 @@ E2E tests at `eval/harness/tests/e2e/` hit the real Anthropic API and are desele
 The CRUD UI has Vitest unit + integration tests:
 
 ```bash
-cd eval/app
-npm test                # one-shot
-npm run test:watch      # watch mode
-npm run typecheck       # tsc --noEmit
+# From the repo root:
+pnpm --filter cowork-genealogy-eval-app test        # one-shot
+pnpm --filter cowork-genealogy-eval-app test:watch  # watch mode
+pnpm --filter cowork-genealogy-eval-app typecheck   # tsc --noEmit
 ```
 
 ## Run log naming
@@ -194,7 +198,7 @@ Run logs are JSON envelopes validated against [`docs/specs/schemas/run-log.schem
 - `judge_prompt_hash` — SHA-256 of the normalized `eval/harness/judge/prompt.md` at run time (NOT in the snapshot — the judge prompt is project-global, so it's tracked separately so judge edits don't clobber every skill on activate).
 - `snapshot` — `{repo-relative-path: sha256-of-normalized-content}` of every skill-side file used to produce this run (`packages/engine/plugin/skills/<skill>/**`, `eval/tests/unit/<skill>/**`, referenced scenarios + fixtures). Values are digests, not content: git already holds the bytes, and the active-state check only has to compare. MCP source (`packages/engine/mcp-server/src/**`) is **not** tracked — the harness serves tool calls from mock fixtures, so a `src/` change does not make prior run logs inactive.
 - `tests[]` — per-test entries:
-  - `outcome` (`pass | partial | fail | aborted | xfail | xpass`)
+  - `outcome` (`pass | partial | fail | aborted`; suppression of a declared-xfail failure is read from the `expected_outcome` marker beside it)
   - `flaky`, `outcome_summary.aggregated_dimensions[]` (per-dimension scores; `1`–`3`, or `null` for N/A)
   - `runs[]` — per-execution detail: `output.text_response`, `tool_calls`, `validators`, `judge.dimensions[]` with rationales
 - `totals` — token + cost aggregates summed across tests.
@@ -294,6 +298,22 @@ Seniors need **Triage** or **Write** access on the repo to apply labels.
 > change each time you retry. Clone to a plain local path such as `C:\src\`.
 
 `Setup.bat` performs the one-time setup. Then `Start.bat` launches the CRUD UI and `RunTests.bat` runs the harness against the current corpus.
+
+> **First run on a checkout that predates the eval-app workspace move.** The
+> repo-root `preinstall` deletes the old npm-managed `eval\app\node_modules`
+> once, so pnpm's lockfile wins instead of the stale packages under it. It
+> prints `[preinstall] … removing it` and then installs. If Windows refuses
+> the delete with `EPERM` — an antivirus scan or an open editor holding a file
+> handle — the install **stops** rather than proceeding over a tree it knows is
+> wrong. Close anything sitting in that folder and re-run; if it still fails,
+> delete `eval\app\node_modules` by hand and run again. This is one-time: once
+> the folder is gone the step is a silent no-op forever after.
+>
+> `Start.bat` and `Setup.bat` clear that folder *before* calling pnpm, so they do
+> it in one pass. A bare `pnpm install` cannot: pnpm decides what to link before
+> it runs the hook, so the hook removes the folder and then stops the install on
+> purpose rather than finishing one that would leave `eval\app` unlinked. Run the
+> same command again and it goes through.
 
 ## E2e tests
 

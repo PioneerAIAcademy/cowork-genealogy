@@ -10,11 +10,12 @@
       "detection",
       "relative-mob",
       "valid",
-      "relationship-signal"
+      "relationship-signal",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Check Patrick Flynn for any warnings.",
+    "delegation": "Check Patrick Flynn for any warnings.\n\npersonId: I1\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
@@ -24,7 +25,7 @@
     "Should call person_warnings on Patrick (I1) -- the focal person, not Thomas",
     "Should report the relativesHasAgeRangeGreaterThan120 warning and recognize that personId in the warning is 'I2' (Thomas), not 'I1' (Patrick)",
     "Should frame the report as 'a relative has a problem' rather than 'Patrick has a problem' -- quoting the skill's Step 4 rule on relatives* tags",
-    "Should suggest the appropriate handoff: verify the parent-child link is correct via person-evidence, since the issue may be that Thomas was incorrectly linked as Patrick's father",
+    "Should recommend verifying that the parent-child link is correct before any fix to Thomas's data, since the issue may be that Thomas was incorrectly linked as Patrick's father. Phrase it as a research action; the researcher-facing paragraphs after the final `---` name no skill or agent",
     "Should NOT recommend investigating Patrick's own data when the warning is on a relative -- that would mislead the user",
     "The warning's facts array carries the resolved fact, not a bare id. The skill must name Thomas's Birth fact by its type AND its date exactly as returned (Birth, ~1818), with the id in parentheses. Naming only 'F3', or giving the date in any other form (e.g. 'Abt 1818', '1818'), is a Correctness miss.",
     "Putting the person's name first (Thomas Flynn's Birth, ~1818 (F3)) meets that rule. The tool returns this one fact and no death fact, so the reply is not expected to name a death date or any other fact the tool did not return. Do not mark Correctness down for either."

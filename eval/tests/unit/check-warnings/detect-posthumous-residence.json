@@ -12,11 +12,12 @@
       "event-after-death",
       "posthumous-mention",
       "residence",
-      "critical"
+      "critical",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Check Patrick Flynn for any warnings.",
+    "delegation": "Check Patrick Flynn for any warnings.\n\npersonId: I1\n\nprojectPath: <workspace>",
     "scenario": "flynn-posthumous-residence"
   },
   "mcp_fixtures": [
@@ -26,7 +27,7 @@
     "Should call the person_warnings tool with personId: 'I1' (Patrick) and treat the tool as the source of truth -- it should NOT re-derive the warning by reasoning over the scenario data.",
     "Should report the hasEventAfterDeath1 warning as a Contradiction (the tool emits severity: 'contradiction', which maps to a Fundamental-assumption violation).",
     "The warning's facts names F3. The skill should name that fact in its report -- F3 is a Residence dated 1925 citing source S5 (the obituary of Patrick's daughter Mary (Flynn) Brennan). Identifying it as a Residence sourced from a relative's obituary is the key cue.",
-    "A Residence dated ~17 years after death, sourced from a relative's obituary, is the signature of a POSTHUMOUS MENTION -- a record created after the deceased's death that merely references them (cf. references/warnings-as-identity-signals.md, which calls out exactly this Residence-style posthumous-mention case). The skill should surface posthumous mention as the most likely cause here, not identity confusion. It is acceptable to acknowledge the other causes (wrong death date, same-name identity confusion) as possibilities, but it must NOT assert or default to identity confusion / 'records of a same-name individual merged in', because the Residence-from-a-relative's-obituary evidence points to a posthumous mention.",
+    "A Residence dated ~17 years after death, sourced from a relative's obituary, is the signature of a POSTHUMOUS MENTION -- a record created after the deceased's death that merely references them (cf. Appendix B of the agent body, which calls out exactly this Residence-style posthumous-mention case). The skill should surface posthumous mention as the most likely cause here, not identity confusion. It is acceptable to acknowledge the other causes (wrong death date, same-name identity confusion) as possibilities, but it must NOT assert or default to identity confusion / 'records of a same-name individual merged in', because the Residence-from-a-relative's-obituary evidence points to a posthumous mention.",
     "The recommended action should be to treat the late-dated record as a reference and unlink it from Patrick's own events (it belongs to the relative's record, not Patrick's), NOT to split the profile or rebuild a chronology to separate a same-name individual.",
     "Should NOT suggest schema-level fixes (validate-schema) or conflict-resolution -- those are different skills. It is fine to phrase the unlink as a research action without naming person-evidence to the user.",
     "The cited Birth fact (F1) carries date: null. The skill must not describe it as undated, approximate or unknown, and must not supply a year for it; naming its type and id is the whole of what it may say about that fact."

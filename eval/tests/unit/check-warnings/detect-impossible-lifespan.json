@@ -10,11 +10,12 @@
       "detection",
       "fundamental",
       "lifespan",
-      "critical"
+      "critical",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Run a warnings check on Ambrose Keane.",
+    "delegation": "Run a warnings check on Ambrose Keane.\n\npersonId: I1\nprojectPath: <workspace>",
     "scenario": "keane-impossible-lifespan"
   },
   "mcp_fixtures": [

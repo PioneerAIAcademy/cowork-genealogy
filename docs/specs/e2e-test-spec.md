@@ -936,17 +936,8 @@ The agent must recover everything through **records** (`record_search`,
 because they don't surface the answer off the subject: `record_person_matches`
 / `record_record_matches` (keyed off a *record* the agent already found),
 `source_attachments` (confirms a found record's attachment — real GPS
-work), and `person_warnings` **without** `live` (it then reads the *local*
-stripped tree).
-
-**`person_warnings` with `live: true` IS blocked**, and the block is
-argument-aware rather than name-only — `LIVE_TREE_ARG_TOOLS` in
-`e2e/orchestrator.py`, consulted by `is_blocked_tree_tool`. Live mode fetches
-the subject plus parents, spouses and children from the live tree, and each
-warning carries `personId`, `personName` and `relatedPersonId`, so on a parents
-fixture it hands back a stripped relative's name and PID — exactly the read
-`person_read` heads this list for. The tool is on both lists for different
-argument shapes, which is why the block cannot be a bare name match.
+work), and `person_warnings` (reads the local stripped tree only — no live
+mode; lead ruling 2026-09-27).
 
 > **The block is necessary but not sufficient.** Records that prove the
 > answer may *already be attached* to the live subject, so `record_search`
@@ -1742,8 +1733,8 @@ consulted before a parentage write.** `find_relationship_writes_without_warnings
 `ParentChild`/`Couple` relationship (diffed against the starting tree, so seeded
 relationships do not count) for which `person_warnings` — the cheapest, LLM-free
 guardrail — was never successfully called. It keys on the `person_warnings`
-**tool** across all server spellings, not the `check-warnings` skill, so it
-catches a direct-tool path and a skill that launches but fails before reaching the
+**tool** across all server spellings, not the `check-warnings` agent, so it
+catches a direct-tool path and an agent that launches but fails before reaching the
 tool. Like the citation-nulling check it **logs to
 `guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
 entries carry `kind: "warnings_unchecked"` for its own bucket

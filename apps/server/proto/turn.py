@@ -78,6 +78,33 @@ KILL_TOOL = "place_search"
 REAUTH = re.compile(r"reconnect|log ?in|authenticat|unauthori[sz]ed|\b401\b", re.I)
 
 
+# U2: every /api/sessions route needs a signed-in patron. The scripts sign in through
+# dev-login, which the tier offers only while FamilySearch sign-in is off and PUBLIC_URL is
+# http -- the default compose stack. Distinct emails are distinct patrons.
+DEV_LOGIN_EMAIL = "dev@localhost"
+
+
+def signed_in_client(
+    base: str, email: str = DEV_LOGIN_EMAIL, *, timeout: float = 30.0, transport: httpx.BaseTransport | None = None
+) -> httpx.Client:
+    """An UNOPENED ``httpx.Client`` on ``base`` holding a dev-login session cookie, usable
+    with or without ``with``. It takes absolute URLs (``f"{base}/api/..."``) and relative
+    ones alike. The login goes through its own short-lived client: a client that has sent
+    a request refuses ``__enter__``, so logging in on the returned one broke every
+    ``with signed_in_client(...)``. ``transport`` is for tests."""
+    extra: dict[str, Any] = {"transport": transport} if transport is not None else {}
+    with httpx.Client(base_url=base, timeout=timeout, **extra) as login:
+        r = login.post("/auth/dev-login", json={"email": email})
+        if r.status_code == 403:
+            raise RuntimeError(
+                f"dev-login is disabled at {base} (FamilySearch sign-in is on, or PUBLIC_URL is https); "
+                "run the scripts against the default stack, not docker-compose.fs-signin.yml"
+            )
+        r.raise_for_status()
+        cookies = httpx.Cookies(login.cookies)
+    return httpx.Client(base_url=base, timeout=timeout, cookies=cookies, **extra)
+
+
 def post_message(client: httpx.Client, base: str, session_id: str, text: str) -> str:
     r = client.post(f"{base}/api/sessions/{session_id}/messages", json={"text": text})
     r.raise_for_status()
@@ -116,10 +143,10 @@ def one(dsn: str, sql: str, params: tuple) -> Any:
     return rows[0][0] if rows else None
 
 
-def run(base: str, dsn: str, deadline_s: float) -> tuple[list[Check], dict[str, Any]]:
+def run(base: str, dsn: str, deadline_s: float, email: str = DEV_LOGIN_EMAIL) -> tuple[list[Check], dict[str, Any]]:
     checks: list[Check] = []
     figures: dict[str, Any] = {}
-    with httpx.Client(timeout=30.0) as client:
+    with signed_in_client(base, email) as client:
         session = client.post(f"{base}/api/sessions", json={"title": "proto-turn"}).json()
         session_id = session["id"]
         figures["session_id"] = session_id
@@ -495,14 +522,16 @@ def render_evidence(ev: KillEvidence) -> str:
     return "\n".join(lines)
 
 
-def run_kill(base: str, dsn: str, deadline_s: float, spec: KillSpec) -> tuple[list[Check], dict[str, Any]]:
+def run_kill(
+    base: str, dsn: str, deadline_s: float, spec: KillSpec, email: str = DEV_LOGIN_EMAIL
+) -> tuple[list[Check], dict[str, Any]]:
     """One real turn, the worker container killed ``spec.kill_after_s`` after its first
     ``spec.kill_on`` call starts and started again; the shim's redelivery must resume the
     SDK session and finish. Prints the evidence block after turn_done."""
     checks: list[Check] = []
     figures: dict[str, Any] = {}
     session_id = spec.session_id
-    with httpx.Client(timeout=30.0) as client:
+    with signed_in_client(base, email) as client:
         if session_id is None:
             r = client.post(f"{base}/api/sessions", json={"title": "D14 kill-resume"})
             r.raise_for_status()
@@ -588,6 +617,8 @@ def tokens_filled(t: dict[str, int | None]) -> bool:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--base", default="http://127.0.0.1:8085")
+    p.add_argument("--email", default=DEV_LOGIN_EMAIL,
+                   help="dev-login as this patron; --session must be one this patron owns")
     p.add_argument("--pg-dsn", default="postgresql://postgres:proto@localhost:5434/proto")
     p.add_argument("--deadline-s", type=float, default=300.0,
                    help="wall clock before a FAIL, per wait: on --kill the arm waits it out twice, "
@@ -652,9 +683,9 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     if spec is not None:
-        checks, figures = run_kill(args.base, args.pg_dsn, args.deadline_s, spec)
+        checks, figures = run_kill(args.base, args.pg_dsn, args.deadline_s, spec, args.email)
     else:
-        checks, figures = run(args.base, args.pg_dsn, args.deadline_s)
+        checks, figures = run(args.base, args.pg_dsn, args.deadline_s, args.email)
     width = max(len(c[0]) for c in checks)
     print()
     for name, ok, detail in checks:
