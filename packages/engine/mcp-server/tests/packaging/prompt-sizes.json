@@ -5,7 +5,7 @@
     "regenerate": "UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts"
   },
   "prompts": {
-    "CLAUDE.md": 56849,
+    "CLAUDE.md": 56971,
     "packages/engine/plugin/agents/check-warnings.md": 44172,
     "packages/engine/plugin/agents/citation.md": 44479,
     "packages/engine/plugin/agents/convert-dates.md": 11387,
@@ -18,6 +18,7 @@
     "packages/engine/plugin/agents/search-familysearch-wiki.md": 8480,
     "packages/engine/plugin/agents/search-images.md": 21550,
     "packages/engine/plugin/agents/search-wikipedia.md": 6843,
+    "packages/engine/plugin/agents/tree-edit.md": 30669,
     "packages/engine/plugin/agents/validate-schema.md": 4382,
     "packages/engine/plugin/skills/conflict-resolution/SKILL.md": 27656,
     "packages/engine/plugin/skills/forget-and-rederive/SKILL.md": 13208,
@@ -37,8 +38,7 @@
     "packages/engine/plugin/skills/search-records/SKILL.md": 61270,
     "packages/engine/plugin/skills/source-evaluation/SKILL.md": 16823,
     "packages/engine/plugin/skills/timeline/SKILL.md": 21833,
-    "packages/engine/plugin/skills/translation/SKILL.md": 10741,
-    "packages/engine/plugin/skills/tree-edit/SKILL.md": 11427
+    "packages/engine/plugin/skills/translation/SKILL.md": 10741
   },
   "tools": {
     "tool:auth_status": 274,
@@ -85,6 +85,7 @@
     "tool:tree_edit": 5643,
     "tool:tree_forget": 6066,
     "tool:validate_research_schema": 479,
+    "tool:volume_bisect": 994,
     "tool:volume_search": 2653,
     "tool:wiki_place_page": 951,
     "tool:wiki_read": 465,

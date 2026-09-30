@@ -76,6 +76,8 @@ SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 #     description, which this set does not measure.
 #   - `search-familysearch-wiki` left on 2026-09-29, same reason (issue
 #     #2794), NOT re-listed, same caveat for `agents/search-familysearch-wiki.md`.
+#   - `tree-edit` left on 2026-09-30, same reason (issue #2805), NOT re-listed,
+#     same caveat for `agents/tree-edit.md`.
 #   - `validate-schema` left on 2026-09-30, same reason (issue #2798), NOT
 #     re-listed, same caveat for `agents/validate-schema.md`.
 DARK_SKILLS_2026_09_01 = frozenset(
@@ -87,7 +89,6 @@ DARK_SKILLS_2026_09_01 = frozenset(
         "source-evaluation",
         "timeline",
         "translation",
-        "tree-edit",
     }
 )
 

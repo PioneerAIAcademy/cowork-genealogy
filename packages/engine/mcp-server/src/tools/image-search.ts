@@ -21,6 +21,7 @@ const FS_HEADERS: Record<string, string> = {
 async function resolveGroupId(
   imageGroupNumber: string,
   principal: Principal,
+  timeoutMs?: number,
 ): Promise<string> {
   if (imageGroupNumber.includes("_")) {
     const parts = imageGroupNumber.split("_");
@@ -33,6 +34,16 @@ async function resolveGroupId(
       principal,
       `${GROUP_SERVICE_BASE}/group/${encodeURIComponent(imageGroupNumber)}/apid`,
       { headers: FS_HEADERS },
+      timeoutMs,
+      // Cap the RETRY budget too, not just the per-request timeout. `fsFetch`
+      // delegates to `fetchWithRetry`, whose default budget is 10s across 3
+      // attempts, so a lowered `timeoutMs` bounded each request while the call
+      // still ran to 10s. Measured 2026-09-30 with a hanging `fetch`:
+      // timeoutMs=6000 alone took 10,001ms over 2 requests; with the budget
+      // capped it takes 6,001ms over 1. `volume_bisect` sizes its three-leg
+      // budget on this leg costing `timeoutMs` (volume-bisect-tool-spec §8).
+      // Undefined leaves the default callers on the default budget.
+      timeoutMs === undefined ? undefined : { budgetMs: timeoutMs },
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -53,6 +64,7 @@ async function resolveGroupId(
 async function fetchChildren(
   groupId: string,
   principal: Principal,
+  timeoutMs?: number,
 ): Promise<ChildrenNamesResponse> {
   let response: Response;
   try {
@@ -60,6 +72,16 @@ async function fetchChildren(
       principal,
       `${ARTIFACT_BASE}/artifact/group/${encodeURIComponent(groupId)}/children/names`,
       { headers: FS_HEADERS },
+      timeoutMs,
+      // Cap the RETRY budget too, not just the per-request timeout. `fsFetch`
+      // delegates to `fetchWithRetry`, whose default budget is 10s across 3
+      // attempts, so a lowered `timeoutMs` bounded each request while the call
+      // still ran to 10s. Measured 2026-09-30 with a hanging `fetch`:
+      // timeoutMs=6000 alone took 10,001ms over 2 requests; with the budget
+      // capped it takes 6,001ms over 1. `volume_bisect` sizes its three-leg
+      // budget on this leg costing `timeoutMs` (volume-bisect-tool-spec §8).
+      // Undefined leaves the default callers on the default budget.
+      timeoutMs === undefined ? undefined : { budgetMs: timeoutMs },
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -110,15 +132,19 @@ function usableImageIds(data: ChildrenNamesResponse): {
 
 export async function imageSearchTool(
   input: ImageSearchInput,
-  principal: Principal
+  principal: Principal,
+  /** Lower the per-attempt fetch budget. The 30s default, doubled by the
+   *  defect-retry path, would spend Cowork's whole 60s call ceiling on the
+   *  resolve alone (volume-bisect-tool-spec.md §8). */
+  opts: { timeoutMs?: number } = {}
 ): Promise<ImageSearchResult> {
   if (!input.imageGroupNumber) {
     throw new Error("image_search requires an imageGroupNumber.");
   }
 
-  const groupId = await resolveGroupId(input.imageGroupNumber, principal);
+  const groupId = await resolveGroupId(input.imageGroupNumber, principal, opts.timeoutMs);
 
-  let best = usableImageIds(await fetchChildren(groupId, principal));
+  let best = usableImageIds(await fetchChildren(groupId, principal, opts.timeoutMs));
 
   // One re-request when the response was defective. The same group returned a
   // complete set on every other call, so a retry is what recovers the lost
@@ -130,7 +156,7 @@ export async function imageSearchTool(
   // tie, so a clean-but-shorter retry can never displace a longer one.
   if (best.dropped > 0) {
     try {
-      const retry = usableImageIds(await fetchChildren(groupId, principal));
+      const retry = usableImageIds(await fetchChildren(groupId, principal, opts.timeoutMs));
       if (
         retry.imageIds.length > best.imageIds.length ||
         (retry.imageIds.length === best.imageIds.length &&

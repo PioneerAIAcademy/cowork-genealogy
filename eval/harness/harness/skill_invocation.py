@@ -1082,6 +1082,12 @@ DEDICATED_AGENT_NAMES = frozenset(
         # folder. Listed because the set is asserted equal to the shipped agent
         # files.
         "search-familysearch-wiki",
+        # Same shape as citation (issue #2805): a converted skill, not a
+        # hook-routed pair. It writes tree persons, relationships and sources,
+        # and `ownership.json` names `agent:tree-edit` on those rows as the
+        # subject of its own unit suite. No hook routes anything to it. Listed
+        # because the set is asserted equal to the shipped agent files.
+        "tree-edit",
         # Same shape as convert-dates (issue #2798): a converted skill with no
         # hook route. It writes nothing at all, so `ownership.json` names it on
         # no row. Listed because the set is asserted equal to the shipped agent
