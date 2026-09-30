@@ -7,6 +7,7 @@ import { samePerson, buildRecordedScore } from "../../src/tools/same-person.js";
 import { notHaving } from "../helpers/narrow.js";
 import type { SimplifiedGedcomX } from "../../src/types/gedcomx.js";
 import type { SamePersonApiResponse } from "../../src/types/same-person.js";
+import { socketFetchFailure } from "../helpers/fetch-failed.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -354,7 +355,7 @@ describe("samePerson", () => {
     });
 
     it("wraps a network failure with a helpful message", async () => {
-      mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
+      mockFetch.mockRejectedValueOnce(socketFetchFailure());
 
       await expect(
         samePerson({
@@ -363,7 +364,7 @@ describe("samePerson", () => {
           gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
           primaryId2: "I1",
         }, LOCAL),
-      ).rejects.toThrow(/Could not reach FamilySearch matchTwoExamples API/);
+      ).rejects.toThrow(/Could not reach FamilySearch matchTwoExamples API: fetch failed <- ETIMEDOUT/);
     });
   });
 
