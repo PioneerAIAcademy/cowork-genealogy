@@ -32,7 +32,7 @@ etc.) and is out of scope for v1.
 | `personId` | string | **Yes** | FamilySearch person ID (e.g., `"KNDX-MKG"`). |
 | `relatives` | boolean | No | Include parents, **siblings**, spouses, and children. Defaults to `false`. Siblings are a second hop and cost **one extra request per parent** — see "The sibling fan-out" below. |
 | `sourceDescriptions` | boolean | No | Include attached source citations — and, for a non-living subject, that person's source-style memories. Defaults to `false`. |
-| `projectPath` | string | No | Absolute project-folder path. When set, a memory scan transcribed during the read is retained under `images/` and its ref returned as that source's `image_ref`, **and the read itself is staged** under `results/.staging/` and its handle returned as `staged` (see "Staging the read" below). A path is not a mode flag, so decision 1's "no third flag" does not reach it. Without it, scans are transcribed but not kept and nothing is staged. A blank or whitespace-only value is treated as absent. |
+| `projectPath` | string | No | Absolute project-folder path. When set, a memory scan transcribed during the read is retained under `images/` and its ref returned as that source's `image_ref`, **and the read itself is staged** under `results/.staging/` and its handle returned as `staged` (see "Staging the read" below). A path is not a mode flag, so decision 1's "no third flag" does not reach it. Without it, scans are transcribed but not kept and nothing is staged. An empty value is treated as absent. A whitespace-only value stages nothing, but the retention half still forwards it as a path. |
 
 Examples:
 

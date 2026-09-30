@@ -251,3 +251,22 @@ describe("person_read — transcription phase", () => {
     expect(first).toBe(ART("jpg", "will"));
   });
 });
+
+describe("person_read — the staged copy is post-merge (#2944)", () => {
+  it("staged gedcomx equals the returned document when memories merged", async () => {
+    transcribe.mockResolvedValue({
+      transcription: "OCR TEXT",
+      imageRef: "images/d1.jpg",
+    } as never);
+    route([mem("d1", "image/jpeg", "Document", "Will", "jpg")]);
+    const out = await read({ projectPath: proj });
+    // The merge really ran, so the equality below is not equal by construction.
+    expect(out.sources.find((s) => s.id === "d1")?.text).toBe("OCR TEXT");
+    const { readFile } = await import("fs/promises");
+    const envelope = JSON.parse(
+      await readFile(join(proj, out.staged!.resultsRef), "utf8"),
+    );
+    const { staged: _s, stagingError: _e, ...returned } = out;
+    expect(envelope.payload.results[0].gedcomx).toEqual(returned);
+  });
+});
