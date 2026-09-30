@@ -465,7 +465,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // "that is check-warnings' job"), none a delegation. The two real callers,
   // init-project and tree-edit, are registered edges above.
   ["conflict-resolution -> check-warnings", ""],
-  ["hypothesis-tracking -> check-warnings", ""],
   ["search-records -> check-warnings", ""],
   ["source-evaluation -> check-warnings", ""],
   ["timeline -> check-warnings", ""],

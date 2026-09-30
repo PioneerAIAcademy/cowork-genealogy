@@ -70,7 +70,7 @@ describe("the search-wikipedia Narration exception", () => {
   const agents = agentBodies();
 
   it("scans every skill and agent body", () => {
-    expect(skills.length, "skill bodies found").toBeGreaterThan(20);
+    expect(skills.length, "skill bodies found").toBeGreaterThan(15);
     expect(agents.length, "agent bodies found").toBeGreaterThan(5);
     expect(
       agents.map((a) => a.name),

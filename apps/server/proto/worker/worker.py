@@ -159,7 +159,7 @@ EXPECTED_AGENTS = frozenset({
 # The other half of the same precondition, a literal for the same reason: a count of
 # the directory the SDK loads the plugin from shrinks with it -- an image shipping 19
 # skills registers 19 and passes. test_proto_worker pins this against the repo.
-EXPECTED_SKILLS = 21
+EXPECTED_SKILLS = 20
 
 _stdout_lock = threading.Lock()
 
