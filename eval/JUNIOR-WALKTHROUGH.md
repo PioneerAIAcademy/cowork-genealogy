@@ -71,7 +71,7 @@ You'll install three things outside the repo, then run a single batch file insid
 
    Either way, the script will:
    - Install `uv` (the Python package manager) via PowerShell.
-   - Run `npm install` in `eval/app/` (installs the CRUD UI's dependencies).
+   - Run `pnpm install` at the repo root (installs the CRUD UI's dependencies with the rest of the workspace).
    - Run `npm install` and `npm run build` in `packages/engine/mcp-server/` (compiles the MCP server the harness loads).
    - Run `uv sync` in `eval/harness/` (installs Python dependencies and Python itself if needed).
    - Prompt you for your **Anthropic API key** — paste it in when asked. It gets saved to `eval/.env`.
@@ -109,11 +109,12 @@ You only do all this once per machine. After this point, daily work uses `Start.
 ```bash
 # Git is usually pre-installed; if not: brew install git (macOS) or apt install git (Linux)
 brew install node                                      # or: nvm install --lts
+npm install -g pnpm@9.15.9                             # same pin as eval/Setup.bat; brew's node has npm, not pnpm
 brew install uv                                        # or: curl -LsSf https://astral.sh/uv/install.sh | sh
 
 git clone <repo-url> ~/cowork-genealogy
 cd ~/cowork-genealogy/eval/harness && uv sync
-cd ~/cowork-genealogy/eval/app && npm install
+cd ~/cowork-genealogy && pnpm install
 
 # Save your API key from https://console.anthropic.com/settings/keys
 echo "ANTHROPIC_API_KEY=sk-ant-..." > ~/cowork-genealogy/eval/.env
@@ -205,8 +206,8 @@ Either way, **keep that command-prompt window open** the whole time you work —
 **macOS / Linux:** open a second terminal and run:
 
 ```bash
-cd ~/cowork-genealogy/eval/app
-npm run dev
+cd ~/cowork-genealogy
+pnpm --filter cowork-genealogy-eval-app dev
 ```
 
 **Keep that terminal open** while you work — closing it (or pressing Ctrl-C) stops the app.
