@@ -1,6 +1,6 @@
 # Handing the search agent to FamilySearch
 
-**Status:** In progress (2026-09-29): U2 built (PR #3039); the rest not started.
+**Status:** In progress (2026-09-30): U2 built (PR #3039); U8's code half built (PR #3071; the instance-profile hop waits on U13); the rest not started.
 **Owner:** Dallan. Written for Richard, the FamilySearch employee on the project. List 1 is Dallan's team's work; list 2 is FamilySearch's, routed through Richard; list 3 is for FamilySearch engineers.
 
 See [the prototype report](../search-agent-prototype-report.md) (its legend defines D, P and R) and [the prototype plan](search-agent-prototype.md).
