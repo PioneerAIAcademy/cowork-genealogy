@@ -150,13 +150,49 @@ Adding a signal to `person_search`'s response is not one file:
 
 - **The gaps offer** waits on #1689 and #2696, both OPEN: it rests on relatives' attached
   sources being imported, and they are not.
-- **Candidate cards carrying parents and spouse.** The parent asks for cards showing what
-  FamilySearch uses to tell namesakes apart — lifespan, places, **parents and spouse** — and
-  itself notes that `person_search` strips relatives by design (pinned by test 17). The Mary
-  Hales run shows why it matters: its top candidate had almost no distinguishing data. So
-  step 2 may present candidates a researcher still cannot tell apart. The open mechanism
-  question is enrich `person_search` versus a `person_read` per candidate; deferred, not
-  dropped.
+- **Candidate cards carrying parents and spouse** — now MEASURED, and smaller than it
+  looked. The parent asks for cards showing what FamilySearch uses to tell namesakes
+  apart: lifespan, places, **parents and spouse**. Two of those four already arrive.
+
+  `dev/probe-candidate-distinguishability.ts`, four live queries, responses committed
+  beside it (2026-09-30). Every flood query returned birth/death facts on **5 of 5** of
+  its top candidates, and the top five were distinguishable from one another 4/5
+  (hales-flood), 2/5 (smith-flood) and 5/5 (hales-year-place):
+
+  | Probe | totalMatches | tiedAtTop | top-5 with any fact | distinct life-events |
+  |---|---|---|---|---|
+  | hales-flood | 35,920 | 20 | 5/5 | 4/5 |
+  | smith-flood | 781,745 | 20 | 5/5 | 2/5 |
+  | hales-year-place | 1,020 | 16 | 5/5 | 5/5 |
+  | flynn-qualified (control) | 146 | 1 | 5/5 | 5/5 |
+
+  So **lifespan and places need no enrichment** — `person_search` already carries them,
+  and the ask is answerable today for a researcher who knows roughly where their person
+  was born. What is genuinely absent is parents and spouse, stripped by design.
+
+  Two things the probe also settled, neither of which was known when this section was
+  written:
+
+  - **The Mary Hales claim that "its top candidate had almost no distinguishing data"
+    was right about the top candidate and wrong as a generalisation.** `LBF1-LHF` is
+    indeed blank — and the next three carry a birth year and place, one with a full
+    date and a death. The blanks are a minority, not the rule; smith-flood is the bad
+    case at 4 of 5 blank.
+  - **`tiedAtTop` is 20 in a real flood, not 5** — the tool returns 20 by default and
+    all 20 share the top score.
+
+  The open mechanism question (enrich `person_search` versus a `person_read` per
+  candidate) therefore narrows to parents and spouse alone, for the minority of
+  candidates that carry no life events. Still deferred, now priced against evidence.
+
+- **The flood fixture is unrealistic, and this probe is what shows it.**
+  `eval/fixtures/mcp/person-search-hales-namesakes.json` gives its five tied candidates
+  **no facts at all**, so `ut_init_project_012` measures an ask over five identical
+  blank options — a question no researcher could answer, and not the one the product
+  will face. It does not change the RULE under test (decisiveness is computed from
+  scores, so `pick.decisive: false` is right either way), only the realism of what the
+  agent then presents. Correcting it restales the v6 run log and buys another
+  init-project eval, so it is named here rather than done in passing.
 
 ## Acceptance — runnable, with a named test
 

@@ -249,6 +249,23 @@ first search says what to expect. Eval green: 14 pass, 1 partial, zero reds.
    the worked example, the Mapping Logic top-level list and the two no-match rows of
    the behaviour table. The example a reader would copy carried no `pick`.
 
+16. **The deferred "candidate cards" item is smaller than the parent plan thought, and
+   measured now.** `dev/probe-candidate-distinguishability.ts`, four live queries: every
+   flood query returned birth/death facts on **5 of 5** top candidates, distinguishable
+   4/5 (hales), 2/5 (smith), 5/5 (hales-year-place). So lifespan and places need no
+   enrichment — `person_search` already carries them and the ask is answerable today.
+   Only parents and spouse are genuinely absent. The parent's "its top candidate had
+   almost no distinguishing data" was right about that one candidate and wrong as a
+   generalisation. Also: `tiedAtTop` is **20** in a real flood, not 5 — the tool returns
+   20 by default and all 20 share the top score.
+
+   **And the flood fixture is unrealistic.** `person-search-hales-namesakes.json` gives
+   its five tied candidates no facts at all, so `ut_init_project_012` measures an ask
+   over five identical blank options. It does not change the rule under test — 
+   decisiveness is computed from scores — only the realism of what is then presented.
+   Correcting it restales the v6 run log and buys another init-project eval, so it is
+   named, not done in passing. **This one needs a spend decision.**
+
 ## Where init-project's eval stands, and what it is waiting on
 
 `v6_2026-09-30_13-45-44.json` is **green** — 14 pass, 1 partial, zero reds — and
