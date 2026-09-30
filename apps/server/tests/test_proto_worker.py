@@ -3109,3 +3109,39 @@ def test_the_instruction_says_what_a_bounded_request_looks_like():
     users actually complained about (#2932, #2921, and 'where are we?')."""
     lowered = options.DELIVERY_GUIDANCE.lower()
     assert "plan" in lowered and ("status" in lowered or "where are we" in lowered)
+
+
+# --- Phase 3 item 1: the model marks its recommendation (R9's missing half) ---
+#
+# R9 rules that *not sure* continues on the option the agent RECOMMENDED. The ruling
+# could not be honoured: AskUserQuestion carries no recommendation field, and across
+# the committed unit corpus all 15 unprompted calls mark nothing at all.
+#
+# The tool's own contract already says where a recommendation goes -- first in the
+# list, with "(Recommended)" on the label -- so this asks for the convention the
+# reader looks for, rather than inventing a parallel one.
+
+def test_the_turn_prompt_asks_for_a_marked_recommendation(tmp_path):
+    opts = _options(config_dir=str(tmp_path), resume="sess-1")
+    assert options.DECISION_GUIDANCE in opts.system_prompt["append"]
+
+
+def test_it_is_present_on_the_opening_turn_too(tmp_path):
+    """A turn-1 question is as real as any other; the router exemption does not
+    apply here."""
+    opts = _options(config_dir=str(tmp_path))
+    assert options.DECISION_GUIDANCE in opts.system_prompt["append"]
+
+
+def test_the_guidance_names_the_exact_marker_the_client_reads():
+    """A different spelling would leave the reader falling back to first-position
+    forever, which looks like it works and silently ignores the agent's judgement."""
+    assert "(Recommended)" in options.DECISION_GUIDANCE
+    assert "first" in options.DECISION_GUIDANCE.lower()
+
+
+def test_the_guidance_does_not_encourage_asking_more_often():
+    """The exit is deliberately rare. Guidance on HOW to ask must not become a nudge
+    to ask -- it says to mark a recommendation WHEN asking, not to ask."""
+    lowered = options.DECISION_GUIDANCE.lower()
+    assert "when you ask" in lowered or "when asking" in lowered

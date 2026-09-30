@@ -435,6 +435,21 @@ DELIVERY_GUIDANCE = (
     "researcher a question, which waits for their answer."
 )
 
+# Phase 3 item 1. R9 rules that *not sure* continues on the option the agent
+# RECOMMENDED -- and that ruling could not be honoured, because AskUserQuestion carries
+# no recommendation field and all 15 unprompted calls in the committed unit corpus mark
+# nothing. This asks for the convention the tool's OWN contract already defines, so the
+# client reader and the model are looking at the same place rather than at two.
+#
+# It says how to ask, never to ask more: the decision exit is deliberately rare, and a
+# 133-minute captured run asked nothing at all.
+DECISION_GUIDANCE = (
+    "When you ask the researcher to choose between options, put the one you recommend "
+    "first and end its label with \"(Recommended)\". Say in each option's description "
+    "what you will do if it is chosen. If the researcher answers that they are not "
+    "sure, carry on with the option you recommended rather than stopping."
+)
+
 DELIVERED_REASON = (
     "You have delivered what this message asked for. Stopping here rather than carrying on: "
     "the work is saved, and the researcher's next message picks up from it."
@@ -837,7 +852,7 @@ def build_worker_options(
     # give me a plan" IS a legitimate turn-1 bounded request, and #2932's complaint is
     # exactly a run that would not stop when asked. Binding both to the same condition
     # was over-application.
-    project_note = f"{project_note}\n\n{DELIVERY_GUIDANCE}"
+    project_note = f"{project_note}\n\n{DELIVERY_GUIDANCE}\n\n{DECISION_GUIDANCE}"
     if resume is not None:
         project_note = f"{project_note}\n\n{ROUTER_REENTRY}"
     env: dict[str, str] = {
