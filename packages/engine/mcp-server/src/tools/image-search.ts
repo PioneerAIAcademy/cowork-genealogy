@@ -1,6 +1,7 @@
 import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetch } from "../utils/fs-fetch.js";
+import { describeFetchError } from "../utils/http.js";
 import type {
   ImageSearchInput,
   ImageSearchResult,
@@ -35,9 +36,8 @@ async function resolveGroupId(
       { headers: FS_HEADERS },
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
     throw new Error(
-      `Could not reach FamilySearch image search API: ${message}.`
+      `Could not reach FamilySearch image search API: ${describeFetchError(error)}.`
     );
   }
 
@@ -62,9 +62,8 @@ async function fetchChildren(
       { headers: FS_HEADERS },
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
     throw new Error(
-      `Could not reach FamilySearch image search API: ${message}.`
+      `Could not reach FamilySearch image search API: ${describeFetchError(error)}.`
     );
   }
 

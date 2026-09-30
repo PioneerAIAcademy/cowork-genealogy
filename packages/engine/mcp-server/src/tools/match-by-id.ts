@@ -1,6 +1,7 @@
 import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetch } from "../utils/fs-fetch.js";
+import { describeFetchError } from "../utils/http.js";
 import { toArk } from "../utils/ark.js";
 import type {
   MatchApiEntry,
@@ -77,8 +78,9 @@ async function matchById(
       },
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    throw new Error(`Could not reach FamilySearch match API: ${message}.`);
+    throw new Error(
+      `Could not reach FamilySearch match API: ${describeFetchError(err)}.`,
+    );
   }
 
   if (!response.ok) {
