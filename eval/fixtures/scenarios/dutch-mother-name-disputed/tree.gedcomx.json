@@ -20,7 +20,7 @@
     }
   ],
   "relationships": [
-    { "id": "RT1", "type": "ParentChild", "person1": "I2", "person2": "I1" }
+    { "id": "RT1", "type": "ParentChild", "parent": "I2", "child": "I1" }
   ],
   "sources": [
     { "id": "S1", "title": "Burgerlijke Stand, Zuid-Holland, birth act no. 42, 1828, Cornelis van Noord" },

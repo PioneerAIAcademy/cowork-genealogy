@@ -78,10 +78,12 @@
         "birthDate": "1828",
         "birthPlace": "Zuid-Holland, Netherlands"
       },
-      "filters_applied": [],
-      "results_count": 1,
-      "relevant_results_count": 1,
-      "outcome_summary": "Found the 1828 birth act of Cornelis van Noord."
+      "outcome": "positive",
+      "results_examined": 1,
+      "results_available": 1,
+      "results_ref": "results/log_001.json",
+      "external_site": null,
+      "notes": "Found the 1828 birth act of Cornelis van Noord."
     },
     {
       "id": "log_002",
@@ -94,10 +96,12 @@
         "marriageDate": "1838-1848",
         "marriagePlace": "Zuid-Holland, Netherlands"
       },
-      "filters_applied": [],
-      "results_count": 1,
-      "relevant_results_count": 1,
-      "outcome_summary": "Found the ten-year marriage index entry for Cornelis van Noord."
+      "outcome": "positive",
+      "results_examined": 1,
+      "results_available": 1,
+      "results_ref": "results/log_002.json",
+      "external_site": null,
+      "notes": "Found the ten-year marriage index entry for Cornelis van Noord."
     }
   ],
   "sources": [
@@ -105,7 +109,14 @@
       "id": "src_001",
       "gedcomx_source_description_id": "SD-001",
       "citation": "Burgerlijke Stand, Zuid-Holland, Netherlands, birth act no. 42, 1828, Cornelis van Noord",
-      "citation_detail": "Gemeentearchief, Geboorteakten 1828",
+      "citation_detail": {
+        "who": "Municipal registrar, Zuid-Holland",
+        "what": "Birth act no. 42, Geboorteakten 1828",
+        "when_created": "1828",
+        "when_accessed": "2026-06-01",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Gemeentearchief, Geboorteakten 1828"
+      },
       "source_classification": "original",
       "repository": "FamilySearch",
       "access_date": "2026-06-01"
@@ -114,7 +125,14 @@
       "id": "src_002",
       "gedcomx_source_description_id": "SD-002",
       "citation": "Tienjarige tafels (ten-year marriage index), Zuid-Holland, Netherlands, 1838-1848, Cornelis van Noord",
-      "citation_detail": "Gemeentearchief, Huwelijkse bijlagen",
+      "citation_detail": {
+        "who": "Municipal clerk, Zuid-Holland",
+        "what": "Ten-year marriage index, Huwelijkse bijlagen 1838-1848",
+        "when_created": "1838-1848",
+        "when_accessed": "2026-06-10",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Gemeentearchief, Huwelijkse bijlagen"
+      },
       "source_classification": "original",
       "repository": "FamilySearch",
       "access_date": "2026-06-10"
@@ -130,7 +148,7 @@
       "value": "Cornelis van Noord",
       "information_quality": "primary",
       "informant": "father",
-      "informant_proximity": "family_present",
+      "informant_proximity": "household_member",
       "record_basis": "stated",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -143,7 +161,7 @@
       "value": "Jannetje [?] van Noord",
       "information_quality": "primary",
       "informant": "father",
-      "informant_proximity": "family_present",
+      "informant_proximity": "household_member",
       "record_basis": "stated",
       "informant_bias_notes": "The first letter is unclear in the handwritten act; OCR read it as J but the user sees T. The groom's mother on the same act was also read as Jannetje.",
       "extracted_for_question_ids": ["q_001"]
@@ -157,7 +175,7 @@
       "value": "Fannetje van Noord",
       "information_quality": "secondary",
       "informant": "clerk",
-      "informant_proximity": "official",
+      "informant_proximity": "official_duty",
       "record_basis": "stated",
       "extracted_for_question_ids": ["q_001"]
     }
