@@ -364,21 +364,37 @@ def resolve_latest_runlog(
     return "ok", latest
 
 
+COSMETIC_SKIP_LABEL_PREFIX = "eval-cosmetic-skip:"
+
+
+def cosmetic_skip_label(skill: str) -> str:
+    """The one label that waives rule 2 for `skill` (its run-log directory name)."""
+    return f"{COSMETIC_SKIP_LABEL_PREFIX}{skill}"
+
+
+def cosmetic_skip_labels() -> set[str]:
+    """PR label names from `COSMETIC_SKIP_LABELS`, one per line, as the workflow
+    passes them. Empty on a `synchronize` push, where the workflow does not read
+    the labels at all."""
+    raw = os.environ.get("COSMETIC_SKIP_LABELS", "")
+    return {line.strip() for line in raw.splitlines() if line.strip()}
+
+
 def rule2_active(skill: str, log: dict, filename: str) -> int:
     """Rule 2 (blocking): latest run log's snapshot matches disk.
 
-    Cosmetic-skip escape hatch: when `COSMETIC_SKIP=1` (set by the workflow
-    because a senior applied the `eval-cosmetic-skip` label on this PR), a
-    snapshot mismatch is downgraded to a warning instead of a block — the
-    prior run log + its already-complete annotations stand without a re-run.
-    The bypass can never outlive the commit it was approved for: on a new push
-    the workflow sets COSMETIC_SKIP=0 from the event itself, without consulting
-    the label, so a senior must re-apply after every push. (Until 2026-07-31
-    that was enforced by the workflow deleting the label and re-reading it,
-    which silently did nothing on a fork PR's read-only token — see the header
-    comment in check-runlogs.yml. The label is still removed, by
-    cosmetic-skip-strip.yml, but only so the PR's UI matches; nothing here
-    depends on it.) Only rule 2 is relaxed: rules 1 and 3 still run, so an
+    Cosmetic-skip escape hatch, per skill: when the PR carries the label
+    `eval-cosmetic-skip:<skill>` (applied by a senior, passed in by the
+    workflow as `COSMETIC_SKIP_LABELS`), this skill's snapshot mismatch is
+    downgraded to a warning instead of a block — the prior run log + its
+    already-complete annotations stand without a re-run. Every other touched
+    skill keeps the hard block, and the bare `eval-cosmetic-skip` label waives
+    nothing. The match is exact, so a label for `research-plan` never waives
+    `research`. The bypass can never outlive the commit it was approved for: on
+    a new push the workflow passes no labels at all, decided from the event
+    itself, so a senior must re-apply after every push (see the header comment
+    in check-runlogs.yml; cosmetic-skip-strip.yml removes the labels only so the
+    PR's UI matches). Only rule 2 is relaxed: rules 1 and 3 still run, so an
     unannotated baseline can't be waved through.
     """
     snapshot = log.get("snapshot") or {}
@@ -386,21 +402,30 @@ def rule2_active(skill: str, log: dict, filename: str) -> int:
     if not diffs:
         return 0
     diff_lines = "\n".join(f"  - {p}: {kind}" for p, kind in sorted(diffs.items()))
-    if os.environ.get("COSMETIC_SKIP") == "1":
+    label = cosmetic_skip_label(skill)
+    labels = cosmetic_skip_labels()
+    if label in labels:
         gh_warning(
             f"skill `{skill}`: latest run log `{filename}` differs from the working "
-            f"tree in {len(diffs)} file(s), but the `eval-cosmetic-skip` label "
-            f"bypasses rule 2 for this PR — no re-run required. Confirm the change "
-            f"is behavior-neutral before approving.\n" + diff_lines,
+            f"tree in {len(diffs)} file(s), but the `{label}` label bypasses rule 2 "
+            f"for this skill — no re-run required. Confirm the change is "
+            f"behavior-neutral before approving.\n" + diff_lines,
         )
         return 0
+    bare_note = (
+        " The bare `eval-cosmetic-skip` label on this PR waives nothing: the "
+        "waiver is per skill."
+        if "eval-cosmetic-skip" in labels
+        else ""
+    )
     gh_error(
         f"skill `{skill}`: latest full-skill run log `{filename}` is NOT active — "
         f"{len(diffs)} snapshot file(s) differ from the working tree. Re-run the "
         f"harness (`uv run python eval/harness/run_tests.py --skill {skill}`) so "
-        f"the run log reflects the PR-branch state. If the change is purely "
-        f"cosmetic (no behavior change), a senior can instead apply the "
-        f"`eval-cosmetic-skip` label to this PR.\n" + diff_lines,
+        f"the run log reflects the PR-branch state. If this skill's change is "
+        f"purely cosmetic (no behavior change), a senior can instead apply the "
+        f"`{label}` label to this PR (if the label does not exist yet, an admin "
+        f"runs `gh label create {label}`).{bare_note}\n" + diff_lines,
     )
     return 1
 

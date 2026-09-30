@@ -742,8 +742,9 @@ out of it (§3.1), then run `make eval-skill SKILL=<name>` — **and grade it.**
 > sampling shipped, still owes every dimension of every test.
 > Annotations are written **only** through the CRUD UI (`make
 > eval-ui`); hand-writing them is forbidden. A behavior-neutral edit can instead
-> take the `eval-cosmetic-skip` label from a senior, which relaxes **the snapshot
-> rule only** — the annotation rule still runs against the prior run log — and
+> take the `eval-cosmetic-skip:<skill>` label from a senior for each skill whose
+> change is behavior-neutral, which relaxes **the snapshot rule only**, for that
+> skill only — the annotation rule still runs against the prior run log — and
 > expires on every new push. **`forget-and-rederive` is exempt**
 > (`RUNLOG_GATE_EXEMPT_SKILLS`), because it has no unit suite. `research` was
 > formerly exempt but gained a trigger corpus and is now gated. Full rules:

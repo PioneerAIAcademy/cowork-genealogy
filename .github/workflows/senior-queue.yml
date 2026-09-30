@@ -176,7 +176,7 @@ on:
       - "Eval harness tests"
       - "Server tests"
       - "Check runlog discipline"
-      - "Check e2e fixtures + grading"
+      - "Check e2e fixtures + grading + annotation validation"
       - "check-engine-lockfile"
       - "payload-guard"
     types: [completed]
