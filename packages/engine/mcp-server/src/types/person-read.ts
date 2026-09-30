@@ -18,7 +18,10 @@ import type {
 
 export interface PersonReadToolInput {
   personId: string;
+  /** Accepted and ignored: relatives are always read. */
   relatives?: boolean;
+  /** Accepted and ignored: attached sources (and, for a non-living subject,
+   *  memories) are always read. */
   sourceDescriptions?: boolean;
   /** Absolute project-folder path. When given, a memory scan transcribed during
    *  this read is retained under images/ and its ref returned as the source's
@@ -53,6 +56,13 @@ export interface TreeFact {
   value?: string;
 }
 
+/** A tree source reference: `ref` names an id in the result's `sources[]`. */
+export interface TreeSourceRef {
+  ref: string;
+  page?: string;
+  quality?: number;
+}
+
 export interface TreePerson {
   id: string;
   ark?: string;
@@ -60,6 +70,10 @@ export interface TreePerson {
   living: boolean;
   names: TreeName[];
   facts?: TreeFact[];
+  /** The sources FamilySearch attached to this person, as refs into the
+   *  result's `sources[]`. Only refs that resolve there are kept; absent when
+   *  none do. */
+  sources?: TreeSourceRef[];
 }
 
 export interface TreeRelationship {

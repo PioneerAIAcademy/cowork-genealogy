@@ -460,33 +460,72 @@ def _returned_person_ids(tool_calls):
     return ids
 
 
-# --- V1: both person_read flags -----------------------------------------
+# --- V1 (replaces 'both person_read flags', now ignored): person-level sources
 
-def test_person_read_passes_both_flags(tool_calls):
-    """`relatives` and `sourceDescriptions` both default to false, and without
-    them the call returns the subject alone -- a subject-only tree with no
-    spouse, children or sources (issue #1475). SKILL.md Step 2 marks both
-    required.
+def test_person_level_sources_carried(tool_calls, after_state):
+    """Every person-level source `person_read` returned reaches the written
+    person, re-pointed at the tree's own source ids.
 
-    Unfalsifiable before this: the only `person_read` fixture returned the same
-    bare payload either way, and its `args` predicate -- which IS the Tool
-    Arguments grading target -- named neither flag.
+    `person_read` carries the sources FamilySearch attaches at the person level
+    (issue #2696), and init-project re-ids sources to `S1`...; a ref copied over
+    unchanged points at nothing, and a dropped one loses the only attribution
+    FamilySearch gives. Decidable from the documents alone, so a check rather
+    than prose. Persons are joined by `ark`, sources by title.
     """
-    calls = [c for c in tool_calls or [] if _tool(c) == "person_read"]
-    if not calls:
-        pytest.skip("no person_read call")
+    returned = {}
+    for response in _responses(tool_calls, "person_read"):
+        titles = {
+            s.get("id"): s.get("title")
+            for s in response.get("sources") or []
+            if isinstance(s, dict)
+        }
+        for person in response.get("persons") or []:
+            if not isinstance(person, dict) or not person.get("id"):
+                continue
+            want = {
+                titles.get(r.get("ref"))
+                for r in person.get("sources") or []
+                if isinstance(r, dict) and titles.get(r.get("ref"))
+            }
+            if want:
+                returned.setdefault(person["id"], set()).update(want)
+    if not returned:
+        pytest.skip("no returned person carries person-level sources")
+    tree = _written_tree(after_state)
+    if not tree.get("persons"):
+        pytest.skip("no tree written")
+    tree_titles = {
+        s.get("id"): s.get("title")
+        for s in tree.get("sources") or []
+        if isinstance(s, dict)
+    }
+    by_ark = {
+        p.get("ark"): p for p in tree.get("persons") or [] if isinstance(p, dict)
+    }
     bad = []
-    for call in calls:
-        args = call.get("args") or {}
-        missing = [
-            flag for flag in ("relatives", "sourceDescriptions")
-            if args.get(flag) is not True
-        ]
+    matched = 0
+    for pid, want in sorted(returned.items()):
+        written = by_ark.get(f"ark:/61903/4:1:{pid}")
+        if written is None:
+            continue  # not imported; the ark check and the judge cover that
+        matched += 1
+        refs = [r for r in written.get("sources") or [] if isinstance(r, dict)]
+        dangling = [r.get("ref") for r in refs if r.get("ref") not in tree_titles]
+        got = {tree_titles[r.get("ref")] for r in refs if r.get("ref") in tree_titles}
+        missing = sorted(t for t in want if t not in got)
+        if dangling:
+            bad.append(f"{written.get('id')} ({pid}): refs {dangling} name no tree source")
         if missing:
-            bad.append(f"{args.get('personId')!r} missing {missing}")
+            bad.append(f"{written.get('id')} ({pid}): missing person-level sources {missing}")
+    # Joined by ark: with no match at all this would check nothing and pass, so
+    # say so instead (the ark check reports why no ark matched).
+    assert matched, (
+        "no written person carries the ark of a person_read person with "
+        f"person-level sources ({sorted(returned)}), so none could be checked"
+    )
     assert not bad, (
-        "person_read must pass relatives: true AND sourceDescriptions: true -- "
-        "without them the import is silently subject-only: " + "; ".join(bad)
+        "person-level sources returned by person_read did not reach the tree "
+        "re-pointed at its source ids: " + "; ".join(bad)
     )
 
 
@@ -525,7 +564,7 @@ def test_tree_ark_is_canonical_and_traceable(after_state, tool_calls):
     for pid, name_key in returned.items():
         candidates = written_by_name.get(name_key) or []
         if not candidates:
-            continue  # not imported; V1 and the judge cover what was dropped
+            continue  # not imported; the judge covers what was dropped
         expected = f"ark:/61903/4:1:{pid}"
         # ANY same-named written person carrying this pid's ark satisfies it. A
         # single person per name would blame a Sr./Jr. pair -- or same-named
@@ -666,20 +705,10 @@ def test_every_fact_and_relationship_is_sourced(after_state, test):
     the tree landed with `sources: []` and facts carrying no `sources` key at
     all, in four of four runs.
 
-    KNOWN CONTRADICTION, quality only. `SKILL.md` is unambiguous ("Source every
-    FamilySearch fact with `quality: 1`", and the researcher's own statement the
-    same), and every run in the corpus writes 1 -- but
-    `references/simplified-gedcomx-summary.md` still documents the field as
-    optional and illustrates it with a `2`, since it describes the format
-    generically rather than this skill's use of it. A model that follows the
-    reference instead of the body would fail here.
-
-    Kept strict rather than relaxed, because the presence-and-resolution half is
-    what the defect was and dropping the value check would also stop catching an
-    overstated quality on unverified tree data. Aligning the reference's three
-    example values is the correct companion fix and is DEFERRED: that file is
-    snapshot-tracked, so editing it invalidates the run log this PR bought. It
-    rides the next run that touches the skill dir, together with V7's tag.
+    Kept strict on the value (`quality: 1`, as `SKILL.md` and
+    `references/simplified-gedcomx-summary.md` both say), because dropping the
+    value check would also stop catching an overstated quality on unverified
+    tree data.
     """
     if test.get("type") != "positive":
         pytest.skip("sourcing rules apply only to positive tests")
@@ -805,15 +834,9 @@ def test_search_before_stubs(tool_calls, after_state, test):
     prose would have failed `ut_init_project_002`, which the 2026-08-20
     annotation confirmed as a pass.
 
-    DORMANT ON THE CURRENT SUITE, deliberately: no init-project test carries the
-    tag, so this skips on all twelve. `new-project-from-search`
-    (`ut_init_project_004`) is its right home -- "I don't have his FamilySearch
-    ID", no claim of absence, and it does search -- but adding a tag edits a
-    snapshot-tracked test file, which would invalidate the run log this PR just
-    bought and cost another paid run. Tag it on the next run that touches that
-    file. Until then the firing behaviour is held by the mutation tests rather
-    than by the suite, which is worth knowing when reading a run log where this
-    line says "skipped".
+    Armed on `new-project-from-search` (`ut_init_project_004`): "I don't have his
+    FamilySearch ID", no claim of absence, and it does search. Every other
+    init-project test skips it.
     """
     if "expects-person-search" not in test.get("tags", []):
         pytest.skip("not an expects-person-search scenario")

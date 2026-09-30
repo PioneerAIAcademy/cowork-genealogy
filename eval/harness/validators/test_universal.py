@@ -780,8 +780,11 @@ def _person_identity(person: dict) -> tuple:
         for n in (person.get("names") or [])
         if isinstance(n, dict)
     )
+    # Person-level source refs (#2696) are identity too: a fact rewrite must not
+    # move them.
+    person_refs = tuple(repr(r) for r in (person.get("sources") or []))
     return (person.get("id"), person.get("gender"), person.get("ark"),
-            person.get("living"), names)
+            person.get("living"), names, person_refs)
 
 
 #: Keys `sanitizeTree` may add or remove on its own, so a difference in one is a

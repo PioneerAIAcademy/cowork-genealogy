@@ -103,9 +103,9 @@ DEATH_FACT_TYPES = frozenset({"Death", "Burial", "Cremation"})
 BIRTH_FACT_TYPES = frozenset({"Birth", "Christening", "Baptism"})
 
 # Field allow-lists, in the key order we emit. Mirrors
-# docs/specs/schemas/tree-gedcomx.schema.json. Persons carry no `sources` —
-# in the tree format, source references hang off names/facts/relationships.
-_PERSON_FIELDS = ("id", "ark", "gender", "living", "names", "facts")
+# docs/specs/schemas/tree-gedcomx.schema.json. Persons carry `sources`: the
+# refs FamilySearch attaches at the person level, which person_read carries.
+_PERSON_FIELDS = ("id", "ark", "gender", "living", "names", "facts", "sources")
 _NAME_FIELDS = ("id", "preferred", "given", "surname", "prefix", "suffix", "type", "sources")
 _FACT_FIELDS = (
     "id", "type", "primary", "date", "standard_date", "place",
@@ -288,8 +288,9 @@ def normalize_tree(raw: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
       relationships, which `person_read` does not identify, sometimes for
       facts. Ids are never re-minted; nothing reads meaning out of an id's
       shape (simplified-gedcomx-spec §3);
-    * drops fields the schema forbids (`source.notes`, person-level
-      `sources`, facts on a `ParentChild`);
+    * drops fields the schema forbids (`source.notes`, facts on a
+      `ParentChild`), and source refs (person, name, fact, relationship)
+      whose target is not in `sources`;
     * PascalCases fact types (`move` -> `Move`);
     * drops relationships whose endpoints aren't in `persons`. NOTE the cause
       moved: `person_read --relatives` used to return edges to grandparents and
@@ -381,6 +382,8 @@ def normalize_tree(raw: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
             person["facts"] = facts
         else:
             person.pop("facts", None)
+
+        _fix_source_refs(person, src_map, dropped, f"person {pid}", warnings)
 
         persons.append({k: person[k] for k in _PERSON_FIELDS if k in person})
 
@@ -653,12 +656,13 @@ def render_index(tree: dict[str, Any]) -> str:
         for fact in rel.get("facts") or []:
             lines.append(_fact_line(fact, 6, widths))
 
-    # Back-references, when the tree has any. `person_read` emits none; a
-    # converted project tree can carry them on facts and names.
+    # Back-references, when the tree has any. `person_read` emits them on the
+    # person itself (FamilySearch's attachments); a converted project tree can
+    # also carry them on facts and names.
     cites: dict[str, list[str]] = {}
     for person in persons:
         pid = str(person.get("id", "?"))
-        holders = [*(person.get("names") or []), *(person.get("facts") or [])]
+        holders = [person, *(person.get("names") or []), *(person.get("facts") or [])]
         for holder in holders:
             for ref in holder.get("sources") or []:
                 bucket = cites.setdefault(str(ref.get("ref")), [])
@@ -703,6 +707,9 @@ def _comparable_person(person: dict[str, Any]) -> Any:
             for n in person.get("names") or []
         ),
         "facts": _comparable_facts(person),
+        # Source ids are FamilySearch's, preserved verbatim, so a ref moving
+        # between persons upstream is a real change, not id noise.
+        "sources": sorted(str(r.get("ref")) for r in person.get("sources") or [] if isinstance(r, dict)),
     }
 
 

@@ -27,7 +27,7 @@ from test_init_project import (  # noqa: E402
     _HOUSE_STYLE,
     test_every_fact_and_relationship_is_sourced as check_sourced,
     test_narration_guidance_is_the_house_style as check_narration,
-    test_person_read_passes_both_flags as check_flags,
+    test_person_level_sources_carried as check_person_sources,
     test_init_empty_sections as check_empty,
     test_returned_sources_reach_the_tree_without_notes as check_notes,
     test_search_before_stubs as check_search,
@@ -43,7 +43,7 @@ SEARCH_TAGGED = {"type": "positive", "tags": ["expects-person-search"]}
 # --- helpers: the shape person-read-flynn-family.json returns -------------
 
 def _person_read_call(persons=None, sources=None, **args):
-    call_args = {"personId": "LZNY-BRF", "relatives": True, "sourceDescriptions": True}
+    call_args = {"personId": "LZNY-BRF"}
     call_args.update(args)
     return {
         "tool": "mcp__genealogy__person_read",
@@ -102,27 +102,81 @@ def _fails(check, *args):
     return str(excinfo.value)
 
 
-# --- V1: both person_read flags -----------------------------------------
+# --- V1: person-level sources reach the tree ------------------------------
 
-def test_v1_passes_when_both_flags_are_true():
-    check_flags([_person_read_call()])
+def _read_with_person_sources():
+    """person_read returning a subject with two person-level refs into its own
+    source ids, the shape `person-read-moreau-person-level-sources.json` has."""
+    return {
+        "tool": "mcp__genealogy__person_read",
+        "args": {"personId": "MRQ1-JBM"},
+        "response": {
+            "persons": [{
+                "id": "MRQ1-JBM", "gender": "Male", "living": False,
+                "names": [{"given": "Jean Baptiste", "surname": "Moreau"}],
+                "sources": [{"ref": "SD01-AAA"}, {"ref": "SD01-BBB"}],
+            }],
+            "relationships": [],
+            "sources": [
+                {"id": "SD01-AAA", "title": "Civil birth"},
+                {"id": "SD01-BBB", "title": "Church baptism"},
+            ],
+        },
+    }
 
 
-def test_v1_skips_when_person_read_was_never_called():
+def _tree_with(person_sources, sources=None):
+    return {"tree_gedcomx_json": {
+        "persons": [{
+            "id": "I1", "ark": "ark:/61903/4:1:MRQ1-JBM", "gender": "Male",
+            "names": [{"id": "N1", "given": "Jean Baptiste", "surname": "Moreau"}],
+            **({"sources": person_sources} if person_sources is not None else {}),
+        }],
+        "relationships": [],
+        "sources": sources if sources is not None else [
+            {"id": "S1", "title": "FamilySearch Family Tree"},
+            {"id": "S2", "title": "Civil birth"},
+            {"id": "S3", "title": "Church baptism"},
+        ],
+    }}
+
+
+def test_v1_passes_when_refs_are_remapped_to_the_tree_ids():
+    check_person_sources([_read_with_person_sources()],
+                         _tree_with([{"ref": "S2"}, {"ref": "S3"}]))
+
+
+def test_v1_fires_when_a_person_level_ref_is_dropped():
+    msg = _fails(check_person_sources, [_read_with_person_sources()], _tree_with([{"ref": "S2"}]))
+    assert "Church baptism" in msg
+
+
+def test_v1_fires_when_the_person_loses_the_key_entirely():
+    msg = _fails(check_person_sources, [_read_with_person_sources()], _tree_with(None))
+    assert "Civil birth" in msg and "Church baptism" in msg
+
+
+def test_v1_fires_when_a_ref_is_copied_unchanged_and_dangles():
+    msg = _fails(check_person_sources, [_read_with_person_sources()],
+                 _tree_with([{"ref": "SD01-AAA"}, {"ref": "SD01-BBB"}]))
+    assert "name no tree source" in msg
+
+
+def test_v1_fires_when_a_ref_points_at_the_wrong_source():
+    msg = _fails(check_person_sources, [_read_with_person_sources()],
+                 _tree_with([{"ref": "S1"}, {"ref": "S3"}]))
+    assert "Civil birth" in msg
+
+
+def test_v1_fails_rather_than_passing_when_no_person_matches_by_ark():
+    tree = _tree_with([{"ref": "S2"}, {"ref": "S3"}])
+    del tree["tree_gedcomx_json"]["persons"][0]["ark"]
+    assert "none could be checked" in _fails(check_person_sources, [_read_with_person_sources()], tree)
+
+
+def test_v1_skips_when_no_returned_person_carries_sources():
     with pytest.raises(pytest.skip.Exception):
-        check_flags([{"tool": "mcp__genealogy__place_search", "args": {}}])
-
-
-@pytest.mark.parametrize("dropped", ["relatives", "sourceDescriptions"])
-def test_v1_fires_when_either_flag_is_missing(dropped):
-    call = _person_read_call()
-    del call["args"][dropped]
-    assert dropped in _fails(check_flags, [call])
-
-
-def test_v1_fires_on_an_explicit_false():
-    call = _person_read_call(relatives=False)
-    assert "relatives" in _fails(check_flags, [call])
+        check_person_sources([_person_read_call()], _tree_with(None))
 
 
 # --- V2: ark form and provenance ----------------------------------------
@@ -241,7 +295,7 @@ def _read_two_same_named():
                 "names": [{"given": "Patrick", "surname": "Flynn"}], "facts": []}
     return {
         "tool": "mcp__genealogy__person_read",
-        "args": {"personId": "LZNY-BRF", "relatives": True, "sourceDescriptions": True},
+        "args": {"personId": "LZNY-BRF"},
         "response": {"persons": [p("LZNY-BRF"), p("LZNY-P7Q")],
                      "relationships": [], "sources": []},
     }

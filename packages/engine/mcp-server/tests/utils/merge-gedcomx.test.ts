@@ -554,21 +554,52 @@ describe("mergeGedcomx — mode 2 (same document)", () => {
 // ────────────────────────────────────────────────────────────────────
 
 describe("mergeGedcomx — robustness", () => {
-  it("does not fold candidate person-level source refs — they are not tree format (spec §6.3)", () => {
+  it("folds candidate person-level source refs, remapped and deduped (#2696)", () => {
     const target: SimplifiedGedcomX = {
-      persons: [{ id: "I1" }],
+      persons: [{ id: "I1", sources: [{ ref: "S1" }] }],
       sources: [{ id: "S1", title: "Census" }],
     };
     const candidate: SimplifiedGedcomX = {
-      persons: [{ id: "I1", sources: [{ ref: "S1" }] }],
-      sources: [{ id: "S1", title: "Census" }], // same title → same source
+      persons: [
+        { id: "C1", sources: [{ ref: "X1" }, { ref: "X2", page: "p. 2" }] },
+        { id: "C2", sources: [{ ref: "X2" }] },
+      ],
+      sources: [
+        { id: "X1", title: "Census" }, // same title → S1
+        { id: "X2", title: "Will" }, // new → a fresh S id
+      ],
     };
 
-    const out = mergeGedcomx(target, candidate, [["I1", "I1"]]);
+    const out = mergeGedcomx(target, candidate, [["I1", "C1"]]);
 
-    // The tool layer strips person-level sources before merging; the core
-    // must not re-introduce them from an unsanitized candidate either.
-    expect(out.persons![0].sources).toBeUndefined();
+    const will = out.sources!.find((s) => s.title === "Will")!.id;
+    // Collapsed: the union, with X1 → S1 deduped against the survivor's own ref.
+    expect(out.persons!.find((p) => p.id === "I1")!.sources).toEqual([
+      { ref: "S1" },
+      { ref: will, page: "p. 2" },
+    ]);
+    // Carried: its refs remapped to the new id.
+    const carried = out.persons!.find((p) => p.id !== "I1")!;
+    expect(carried.sources).toEqual([{ ref: will }]);
+    assertIntegrity(out);
+  });
+
+  it("same-document merge keeps the collapsed person's person-level sources (#2696)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "I1", sources: [{ ref: "S1" }] },
+        { id: "I2", sources: [{ ref: "S1" }, { ref: "S2" }] },
+      ],
+      sources: [
+        { id: "S1", title: "Census" },
+        { id: "S2", title: "Will" },
+      ],
+    };
+
+    const out = mergeGedcomx(tree, null, [["I1", "I2"]]);
+
+    expect(out.persons!.map((p) => p.id)).toEqual(["I1"]);
+    expect(out.persons![0].sources).toEqual([{ ref: "S1" }, { ref: "S2" }]);
     assertIntegrity(out);
   });
 

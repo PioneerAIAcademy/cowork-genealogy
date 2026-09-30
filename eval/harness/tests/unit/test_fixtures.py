@@ -260,6 +260,30 @@ def sidecar_problems(name, data):
     return problems
 
 
+def test_person_read_fixture_person_refs_match_the_tool_contract():
+    """Person-level `sources` refs are `{ref, page?, quality?}` and every `ref`
+    names an id in the response's own `sources[]` (#2696): the tool drops any
+    ref that does not resolve, so a fixture carrying one describes a response
+    the tool cannot send."""
+    wrong = []
+    for name, data in _person_read_fixtures():
+        response = data.get("response") or {}
+        ids = {s.get("id") for s in response.get("sources") or [] if isinstance(s, dict)}
+        for person in response.get("persons") or []:
+            refs = person.get("sources") if isinstance(person, dict) else None
+            if refs is None:
+                continue
+            if not isinstance(refs, list):
+                wrong.append(f"{name}: {person.get('id')} sources is not a list")
+                continue
+            for ref in refs:
+                if not isinstance(ref, dict) or not set(ref) <= {"ref", "page", "quality"}:
+                    wrong.append(f"{name}: {person.get('id')} ref {ref!r} is not {{ref, page?, quality?}}")
+                elif ref.get("ref") not in ids:
+                    wrong.append(f"{name}: {person.get('id')} ref {ref.get('ref')!r} names no source")
+    assert not wrong, "; ".join(wrong)
+
+
 def test_person_read_fixture_facts_carry_both_standardized_sidecars():
     """A dated fact from `person_read` carries `standard_date`; a placed one
     carries `standard_place`.

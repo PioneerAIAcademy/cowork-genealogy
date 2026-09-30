@@ -133,10 +133,10 @@ exposed (§5b explains why).
 The internal, side-effect-free merge. Operates on **SimplifiedGedcomX**
 (`{ persons[], relationships[], sources[], places[] }`); any of
 `relationships`/`sources`/`places` may be absent on an input and is treated as
-empty (never throw on a missing array). Candidate `places[]`, person-level
-`sources[]`, and the record-only person/source fields (`principal`,
-`resource_type`, `coverage`) are tolerated on input but never enter the
-result — the persisted tree format has none of them (see §5b.2, §6.3, §6.7),
+empty (never throw on a missing array). Candidate `places[]`, malformed or
+dangling person-level source refs, and the record-only person/source fields
+(`principal`, `resource_type`, `coverage`) are tolerated on input but never
+enter the result — the persisted tree format has none of them (see §5b.2, §6.3, §6.7),
 and the tool layer strips them from candidates with a warning before the merge
 (`sanitizeCandidate`, §5b.2). It is
 **not** advertised as an MCP tool on its own — the two tools in §5b wrap it.
@@ -217,10 +217,11 @@ Sequence inside each tool:
 
 1. Read `tree.gedcomx.json` (and, for `merge_tree_persons`, `research.json`).
    **`merge_record_into_tree` only:** sanitize the inline candidate first —
-   drop top-level `places[]`, person-level `sources[]`, person-level
-   `principal`, and source-level `resource_type`/`coverage` (legal in tool
-   output like `record_read`'s `gedcomx`, not in the tree format) with a
-   warning per stripped kind, then validate the sanitized candidate
+   drop top-level `places[]`, every person-level source ref that is not a
+   well-formed `{ref, page?, quality?}` naming a source in the candidate,
+   person-level `principal`, and source-level `resource_type`/`coverage`
+   (legal in tool output like `record_read`'s `gedcomx`, not in the tree
+   format) with a warning per stripped kind, then validate the sanitized candidate
    (`sanitizeCandidate` + `validateCandidateGedcomx` in `merge-shared.ts`).
    `merge_warnings` sanitizes identically so the dry-run merges the same
    document the writer would.
@@ -349,10 +350,11 @@ survivor (survivor id is kept):
 - **Facts** — union (person facts), then **merge equivalent facts** and **keep
   all distinct facts** (§7.2). For Birth/Death/Christening/Burial, mark the one
   best fact `primary`.
-- **Person source refs** — none. The tree format carries source references on
-  names/facts/relationships, not on persons (`tree-gedcomx.schema.json`
-  `$defs/person` has no `sources`). A candidate persona's person-level refs are
-  stripped by the tool layer with a warning (§5b.2); the core does not fold them.
+- **Person source refs** — union, remapped through the source id map (Mode 1),
+  then deduped by `ref`+`page`, the same rule relationship refs follow. A
+  carried (non-paired) candidate person keeps its remapped refs. Mode 2 folds
+  the collapsed person's refs into the survivor the same way. Only refs that
+  survived the tool layer's candidate sanitize (§5b.2) reach the core.
 
 ### 6.4 Non-paired candidate persons (Mode 1)
 Carried into the result with **remapped** ids — these are the "new relatives."

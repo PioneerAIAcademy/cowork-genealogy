@@ -1077,21 +1077,36 @@ def test_validate_runs_the_integrity_gate_not_just_the_schema(fixtures_root, cap
     assert "dangling" in capsys.readouterr().err
 
 
-def test_person_level_sources_are_dropped_with_a_warning():
-    # Persons carry no `sources` in the tree format — references live on
-    # names/facts/relationships. A candidate document that has them (the old
-    # format allowed them) must shed them loudly, not silently.
+def test_person_level_sources_are_kept_and_dangling_ones_dropped():
+    # Persons carry the refs FamilySearch attaches at the person level (#2696).
+    # A resolving ref survives with its unknown keys (FamilySearch's `tags`)
+    # pruned; a ref to a source not in the tree is dropped with a warning, the
+    # same rule names and facts follow.
     raw = {
         "persons": [
             _person("KNDX-MKG", "John", "Smith", living=False,
-                    sources=[{"ref": "7BL6-KLH"}])
+                    sources=[{"ref": "#7BL6-KLH", "tags": ["Name"]},
+                             {"ref": "ZZZZ-999"}])
         ],
         "relationships": [],
         "sources": [{"id": "7BL6-KLH", "title": "1850 Census"}],
     }
     tree, warnings = normalize_tree(raw)
+    assert tree["persons"][0]["sources"] == [{"ref": "7BL6-KLH"}]
+    assert any("ZZZZ-999" in w and "no such source" in w for w in warnings)
+
+
+def test_person_with_only_dangling_refs_loses_the_key():
+    raw = {
+        "persons": [
+            _person("KNDX-MKG", "John", "Smith", living=False,
+                    sources=[{"ref": "ZZZZ-999"}])
+        ],
+        "relationships": [],
+        "sources": [],
+    }
+    tree, _ = normalize_tree(raw)
     assert "sources" not in tree["persons"][0]
-    assert any("'sources'" in w for w in warnings)
 
 
 def test_same_relationship_duplicate_fact_id_warns_strip_refuses():
