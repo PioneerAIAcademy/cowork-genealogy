@@ -1035,6 +1035,10 @@ async def run_turn(
             tool_names: dict[str, str] = {}
             tasks: dict[str, str] = {}
             live: set[str] = set()
+            # Task tool_use_id -> task_id, so every subagent event carries the id that
+            # tells two tasks apart. The description label cannot: five labels were
+            # each reused by two tasks in the captured session.
+            task_ids: dict[str, str] = {}
 
             async def receive(*, require_init: bool) -> Any:
                 """One query's message stream: every event written as it arrives, every
@@ -1053,7 +1057,7 @@ async def run_turn(
                             )
                     if isinstance(msg, MirrorErrorMessage):
                         raise MirrorError(f"session store append failed: {msg.error or msg.data}")
-                    for event in map_message(msg, tool_names, tasks, live):
+                    for event in map_message(msg, tool_names, tasks, live, task_ids=task_ids):
                         write_event(conn, session_id, event, TRANSIENT_KINDS, counters)
                     if isinstance(msg, ResultMessage):
                         pass_result = msg

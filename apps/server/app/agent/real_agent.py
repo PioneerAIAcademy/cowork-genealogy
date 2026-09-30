@@ -682,6 +682,7 @@ def map_message(
     tool_names: dict[str, str],
     tasks: dict[str, str] | None = None,
     live: set[str] | None = None,
+    task_ids: dict[str, str] | None = None,
 ) -> list[dict]:
     """SDK message → the wire events the UI consumes.
 
@@ -718,11 +719,23 @@ def map_message(
 
     tasks = tasks if tasks is not None else {}
     live = live if live is not None else set()
+    # Task tool_use_id -> task_id. OPTIONAL: a caller that does not pass it gets the
+    # stream exactly as before. Attribution by description STRING cannot tell two
+    # tasks apart -- five labels were each used by two different tasks in the captured
+    # session -- so "which step produced this" needs the id, not the label.
+    task_ids = task_ids if task_ids is not None else {}
 
     def _event_for(msg, kind: str, **kw) -> dict:
-        """Attach the originating subagent's label, when there is one."""
-        agent = tasks.get(getattr(msg, "parent_tool_use_id", None) or "")
-        return _event(kind, **kw, **({"agent": agent} if agent else {}))
+        """Attach the originating subagent's label, and its task id when known."""
+        parent = getattr(msg, "parent_tool_use_id", None) or ""
+        agent = tasks.get(parent)
+        extra: dict = {}
+        if agent:
+            extra["agent"] = agent
+            tid = task_ids.get(parent)
+            if tid:
+                extra["task_id"] = tid
+        return _event(kind, **kw, **extra)
 
     out: list[dict] = []
     if isinstance(message, TaskStartedMessage):
@@ -731,6 +744,7 @@ def map_message(
         # `str | None` — a Task without one simply goes unlabelled.
         if message.tool_use_id:
             tasks[message.tool_use_id] = label
+            task_ids[message.tool_use_id] = message.task_id
         # LIVENESS is keyed on `task_id`, which is a required `str`. These were
         # one dict until review: keying liveness on the optional field meant a
         # Task with no `tool_use_id` registered nothing, so the drainer never

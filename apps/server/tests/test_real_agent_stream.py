@@ -152,3 +152,67 @@ def test_every_streaming_kind_is_marked_transient():
     block = AssistantMessage(content=[TextBlock(text="done")], model="m", parent_tool_use_id=None)
     for ev in map_message(block, {}, {}):
         assert ev["kind"] not in TRANSIENT_KINDS
+
+
+# --- task_id on every subagent event (phase 2 item 3) ---
+#
+# Attribution today is the Task's DESCRIPTION STRING, not an id, and descriptions
+# repeat: in the captured session five labels were each used by two different tasks
+# (docs/captures/2026-09-29-mcandrew-children/). So "which step produced this
+# paragraph" cannot be answered from the stream, and anchoring cannot be built on it.
+#
+# The id map is an OPTIONAL parameter: every existing caller keeps working unchanged
+# and simply gets no task_id, which is what makes this safe to add.
+
+def test_subagent_events_carry_the_task_id_when_the_map_is_supplied():
+    tasks: dict[str, str] = {}
+    task_ids: dict[str, str] = {}
+    map_message(_task_started(), {}, tasks, task_ids=task_ids)
+
+    sub = AssistantMessage(
+        content=[ToolUseBlock(id="b1", name="person_read", input={"personId": "X"})],
+        model="claude-sonnet-4-6", parent_tool_use_id="tu_1",
+    )
+    (ev,) = map_message(sub, {}, tasks, task_ids=task_ids)
+    assert ev["agent"] == "record-extractor"
+    assert ev["task_id"] == "t1", "the id is what disambiguates two tasks sharing a label"
+
+
+def test_two_tasks_sharing_a_description_are_told_apart_by_id():
+    """The shape that makes the label useless on its own."""
+    tasks: dict[str, str] = {}
+    task_ids: dict[str, str] = {}
+    first = TaskStartedMessage(
+        subtype="task_started", data={}, task_id="t1", description="record-extractor",
+        uuid="u1", session_id="s1", tool_use_id="tu_1",
+    )
+    second = TaskStartedMessage(
+        subtype="task_started", data={}, task_id="t2", description="record-extractor",
+        uuid="u2", session_id="s1", tool_use_id="tu_2",
+    )
+    map_message(first, {}, tasks, task_ids=task_ids)
+    map_message(second, {}, tasks, task_ids=task_ids)
+
+    def ev_for(parent):
+        msg = AssistantMessage(
+            content=[ToolUseBlock(id="b", name="person_read", input={})],
+            model="claude-sonnet-4-6", parent_tool_use_id=parent,
+        )
+        (e,) = map_message(msg, {}, tasks, task_ids=task_ids)
+        return e
+
+    a, b = ev_for("tu_1"), ev_for("tu_2")
+    assert a["agent"] == b["agent"] == "record-extractor"
+    assert a["task_id"] == "t1" and b["task_id"] == "t2"
+
+
+def test_omitting_the_id_map_leaves_every_existing_caller_unchanged():
+    tasks: dict[str, str] = {}
+    map_message(_task_started(), {}, tasks)
+    sub = AssistantMessage(
+        content=[ToolUseBlock(id="b1", name="person_read", input={})],
+        model="claude-sonnet-4-6", parent_tool_use_id="tu_1",
+    )
+    (ev,) = map_message(sub, {}, tasks)
+    assert ev["agent"] == "record-extractor"
+    assert "task_id" not in ev, "no map supplied -> no id stamped, and nothing breaks"
