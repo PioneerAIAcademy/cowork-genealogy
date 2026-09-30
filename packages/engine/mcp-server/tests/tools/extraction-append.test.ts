@@ -956,6 +956,54 @@ describe("extraction_append: recordIds and absences", () => {
       expect(neg.map((a: any) => a.value).join(" ")).toMatch(/Patrick Flynn.*Bridget Flynn/);
     });
 
+    it("keeps an index search and a later image browse as two sources, each saying what it was", async () => {
+      await logNil();
+      const res = await research();
+      res.log.push({ ...res.log[0], id: "log_002", tool: "image_search" });
+      await writeFile(join(dir, "research.json"), JSON.stringify(res), "utf8");
+      const c = "United States Census, 1870";
+      await runExtractionAppend(
+        { projectPath: dir, absences: [{ collection: c, name: "Patrick Flynn", logEntryId: "log_001" }] },
+        readerFor([]) as any,
+        LOCAL,
+      );
+      await runExtractionAppend(
+        { projectPath: dir, absences: [{ collection: c, name: "Patrick Flynn", logEntryId: "log_002", sourceClassification: "original" }] },
+        readerFor([]) as any,
+        LOCAL,
+      );
+      const classes = (await research()).sources.map((s: any) => s.source_classification).sort();
+      expect(classes).toEqual(["derivative", "original"]);
+    });
+
+    it("refuses one search given as two kinds of search", async () => {
+      await logNil();
+      const r = await runExtractionAppend(
+        {
+          projectPath: dir,
+          absences: [
+            { collection: "C", name: "A", logEntryId: "log_001" },
+            { collection: "C", name: "B", logEntryId: "log_001", sourceClassification: "original" },
+          ],
+        },
+        readerFor([]) as any,
+        LOCAL,
+      );
+      expect(r.ok).toBe(false);
+      expect(r.errors?.[0]).toMatch(/One search is one kind of search/);
+    });
+
+    it("refuses an unknown sourceClassification", async () => {
+      await logNil();
+      const r = await runExtractionAppend(
+        { projectPath: dir, absences: [{ collection: "C", name: "N", logEntryId: "log_001", sourceClassification: "primary" as any }] },
+        readerFor([]) as any,
+        LOCAL,
+      );
+      expect(r.ok).toBe(false);
+      expect((await research()).sources).toEqual([]);
+    });
+
     it("refuses an absence whose log entry does not exist", async () => {
       const r = await runExtractionAppend(
         { projectPath: dir, absences: [{ collection: "US Census, 1870", name: "Patrick Flynn", logEntryId: "log_404" }] },

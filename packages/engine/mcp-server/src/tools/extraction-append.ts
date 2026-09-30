@@ -277,6 +277,10 @@ export interface AbsenceInput {
   questionIds?: string[];
   /** Defaults to FamilySearch. */
   repository?: string;
+  /** What was searched (genealogist ruling, 2026-09-30, option B): `derivative`
+   *  for an index search (the default), `original` when the images themselves
+   *  were browsed page by page, which is stronger negative evidence. */
+  sourceClassification?: "original" | "derivative" | "authored";
 }
 
 export interface ExtractionBatchInput {
@@ -470,8 +474,20 @@ async function recordIdsMode(
  */
 async function absencesMode(input: ExtractionBatchInput): Promise<ExtractionBatchResult> {
   const absences = input.absences ?? [];
+  const CLASSES = new Set(["original", "derivative", "authored"]);
   const bad = absences
-    .map((a, i) => (!a || typeof a.collection !== "string" || !a.collection.trim() || typeof a.name !== "string" || !a.name.trim() || typeof a.logEntryId !== "string" || !a.logEntryId.trim() ? i : -1))
+    .map((a, i) =>
+      !a ||
+      typeof a.collection !== "string" ||
+      !a.collection.trim() ||
+      typeof a.name !== "string" ||
+      !a.name.trim() ||
+      typeof a.logEntryId !== "string" ||
+      !a.logEntryId.trim() ||
+      (a.sourceClassification !== undefined && !CLASSES.has(a.sourceClassification))
+        ? i
+        : -1,
+    )
     .filter((i) => i >= 0);
   if (absences.length === 0 || bad.length > 0) {
     return {
@@ -480,7 +496,7 @@ async function absencesMode(input: ExtractionBatchInput): Promise<ExtractionBatc
       errors: [
         absences.length === 0
           ? "`absences` must be a non-empty list."
-          : `absences[${bad.join(", ")}]: each needs \`collection\`, \`name\` and \`logEntryId\` (the nil search's log entry).`,
+          : `absences[${bad.join(", ")}]: each needs \`collection\`, \`name\` and \`logEntryId\` (the nil search's log entry), and \`sourceClassification\`, if given, is original, derivative or authored.`,
       ],
     };
   }
@@ -500,11 +516,28 @@ async function absencesMode(input: ExtractionBatchInput): Promise<ExtractionBatc
     };
   }
 
-  // One source per (collection, log entry): the thing that was searched.
+  // One source per (collection, log entry): each nil search is its own source.
+  // The log entry rides in `record_id`, because research_append's source-reuse
+  // detection keys on record_id: keyed on the collection alone, an index search
+  // and a later image browse would merge, and the second would overwrite the
+  // first's source_classification. One search cannot be two kinds of search.
   const groups = new Map<string, AbsenceInput[]>();
   for (const a of absences) {
     const k = `${a.collection.trim()}|${a.logEntryId}`;
     groups.set(k, [...(groups.get(k) ?? []), a]);
+  }
+  for (const group of groups.values()) {
+    const kinds = new Set(group.map((a) => a.sourceClassification ?? "derivative"));
+    if (kinds.size > 1) {
+      return {
+        ok: false,
+        records: [],
+        errors: [
+          `absences for ${group[0].collection} under ${group[0].logEntryId} give ${[...kinds].join(" and ")}. ` +
+            "One search is one kind of search: log an image browse as its own search, with its own logEntryId.",
+        ],
+      };
+    }
   }
   const records: RecordOutcome[] = [];
   const accessed = todayIso();
@@ -522,7 +555,7 @@ async function absencesMode(input: ExtractionBatchInput): Promise<ExtractionBatc
         where: first.place ?? collection,
         where_within: "searched without a match",
       },
-      source_classification: EXTRACTED_SOURCE_CLASSIFICATION,
+      source_classification: first.sourceClassification ?? EXTRACTED_SOURCE_CLASSIFICATION,
       repository: first.repository ?? "FamilySearch",
       access_date: accessed,
       log_entry_id: first.logEntryId,
@@ -533,7 +566,7 @@ async function absencesMode(input: ExtractionBatchInput): Promise<ExtractionBatc
         section: "assertions" as const,
         op: "append" as const,
         entry: {
-          record_id: collection,
+          record_id: `${collection} [${a.logEntryId}]`,
           record_role: "absent",
           fact_type: "name",
           value:
@@ -842,6 +875,13 @@ function narrowedInputSchema() {
         logEntryId: { type: "string", description: "The nil search's own log entry." },
         questionIds: { type: "array", items: { type: "string" } },
         repository: { type: "string", description: "Defaults to FamilySearch." },
+        sourceClassification: {
+          type: "string",
+          enum: ["original", "derivative", "authored"],
+          description:
+            "What was searched. `derivative` (the default) for an index search; " +
+            "`original` when the page images themselves were browsed.",
+        },
       },
       required: ["collection", "name", "logEntryId"],
     },

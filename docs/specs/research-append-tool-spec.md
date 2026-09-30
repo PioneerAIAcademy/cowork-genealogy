@@ -1605,10 +1605,23 @@ expected on.
 
 **`absences`** records people a search expected and did not find, when there is
 no record to extract (genealogist ruling, 2026-09-30). Each entry is
-`{ collection, place?, name, note?, logEntryId, questionIds?, repository? }`.
-The nil search's log entry must already exist and is not written again. Code
-writes one source per (collection, log entry) and one negative assertion per
-person, with the fixed classification a negative always takes:
+`{ collection, place?, name, note?, logEntryId, questionIds?, repository?,
+sourceClassification? }`. The nil search's log entry must already exist and is
+not written again.
+
+`sourceClassification` says what was searched (genealogist ruling,
+2026-09-30, option B): `derivative` (the default) for an index search, and
+`original` when the page images themselves were browsed, which is stronger
+negative evidence.
+
+Each nil search is **its own source**: the assertion's `record_id` is
+`<collection> [<logEntryId>]`. §3.4.1's reuse detection keys on `record_id`,
+so keyed on the collection alone, an index search and a later image browse
+would merge, and the second would overwrite the first's classification. One
+log entry given two classifications is refused.
+
+Code writes one source per (collection, log entry), and one negative
+assertion per person with the fixed classification a negative always takes:
 `record_role: "absent"`, `record_basis: "absent"`, informant "the researcher"
 at `researcher`, `indeterminate`.
 
