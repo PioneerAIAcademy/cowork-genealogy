@@ -88,6 +88,9 @@ export class WsSessionConnection implements SessionConnection {
   private open = false
   private closed = false
   private attempts = 0
+  /** Set by `noteFailure`; read only when the retry ceiling is hit. */
+  private lastFailure: string | null = null
+  private firstFailureAt = 0
   private retryTimer: ReturnType<typeof setTimeout> | null = null
   // Tab-visibility gate: a backgrounded tab must NOT reconnect, because reopening
   // the WS to the sandbox host auto-resumes a paused sandbox (lifecycle.auto_resume),
@@ -186,10 +189,16 @@ export class WsSessionConnection implements SessionConnection {
         if (this.closed || this.hidden) return
         if (err instanceof CredentialsTimeout) {
           this.credentialTimeouts += 1
+          this.noteFailure(`the control plane did not answer within ${CREDENTIALS_TIMEOUT_MS}ms`)
           if (this.credentialTimeouts >= MAX_CREDENTIAL_TIMEOUTS) {
             this.fail('The agent is not responding (connection timed out).')
             return
           }
+        } else {
+          // Whatever `getCredentials` rejected with — a 404 for a session that no
+          // longer exists reads differently from a failed fetch, and that
+          // difference is the whole point of carrying it.
+          this.noteFailure(String((err as Error)?.message ?? err))
         }
         // Every other retrying path tells the UI it is retrying; without this
         // one a failing `/connect` shows the same static line as a healthy
@@ -202,8 +211,16 @@ export class WsSessionConnection implements SessionConnection {
     )
   }
 
+  /** `attempt`/`maxAttempts` ride along so the UI can say WHICH retry this is.
+   *  "Reconnecting…" alone cannot distinguish attempt 2 of 20 from attempt 19:
+   *  one is worth waiting through and the other is about to give up, and the
+   *  user is the one deciding whether to wait. Absent on 'open'. */
   private emitConn(state: 'open' | 'reconnecting'): void {
-    for (const l of [...this.listeners]) l({ type: 'conn_state', state })
+    const msg: WsMessage =
+      state === 'reconnecting'
+        ? { type: 'conn_state', state, attempt: this.attempts + 1, maxAttempts: MAX_RETRIES }
+        : { type: 'conn_state', state }
+    for (const l of [...this.listeners]) l(msg)
   }
 
   /** Surface a terminal connection failure. `chat_error` is what ChatPane turns
@@ -212,10 +229,28 @@ export class WsSessionConnection implements SessionConnection {
     for (const l of [...this.listeners]) l({ type: 'status', state: 'chat_error', message })
   }
 
+  /** Why the most recent attempt failed, for the terminal message. Without it
+   *  every exhaustion reads "Could not reach the agent", which cannot tell a
+   *  sandbox that is GONE from a healthy one this network cannot reach — two
+   *  different faults with two different fixes. Diagnosing one live took a
+   *  process table. */
+  private noteFailure(cause: string): void {
+    this.lastFailure = cause
+    if (this.firstFailureAt === 0) this.firstFailureAt = Date.now()
+  }
+
   private scheduleRetry(): void {
     this.attempts += 1
     if (this.attempts > MAX_RETRIES) {
-      this.fail('Could not reach the agent (connection failed).')
+      const seconds = this.firstFailureAt
+        ? Math.round((Date.now() - this.firstFailureAt) / 1000)
+        : 0
+      const detail = this.lastFailure ? ` Last failure: ${this.lastFailure}.` : ''
+      this.fail(
+        `Could not reach the agent after ${MAX_RETRIES} attempts` +
+          (seconds ? ` over ${seconds}s` : '') +
+          `.${detail}`
+      )
       return
     }
     this.retryTimer = setTimeout(() => {
@@ -230,6 +265,10 @@ export class WsSessionConnection implements SessionConnection {
     ws.onopen = () => {
       this.open = true
       this.attempts = 0
+      // Clear the diagnosis too. Without this, a cause recorded during an outage
+      // an hour ago is reported as the "last failure" of an unrelated one later.
+      this.lastFailure = null
+      this.firstFailureAt = 0
       for (const m of this.outbox) ws.send(m)
       this.outbox = []
       // Synthetic, client-only. Lets the UI tell "the agent is working" apart
@@ -246,10 +285,20 @@ export class WsSessionConnection implements SessionConnection {
       }
       for (const l of [...this.listeners]) l(msg)
     }
-    ws.onclose = () => {
+    ws.onclose = (ev) => {
       this.open = false
       this.ws = null
       if (this.closed) return
+      // 1006 (abnormal, no close frame) is what a socket that never reached the
+      // server looks like; a real code with a reason came FROM the server and
+      // means it was reachable. Opposite faults, so the code is the diagnosis.
+      const code = (ev as CloseEvent | undefined)?.code
+      const reason = (ev as CloseEvent | undefined)?.reason
+      this.noteFailure(
+        code === 1006 || code === undefined
+          ? 'the socket closed without reaching the server (network or sandbox down)'
+          : `the server closed the socket (code ${code}${reason ? `, ${reason}` : ''})`
+      )
       // Backgrounded tab: do NOT reconnect — reopening the WS would auto-resume a
       // paused sandbox, billing compute for a tab nobody is viewing. onVisibility
       // reconnects when the tab is focused again.

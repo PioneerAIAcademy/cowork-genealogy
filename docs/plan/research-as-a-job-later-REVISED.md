@@ -477,10 +477,27 @@ Each is a paid eval run plus a genealogist annotation pass, one per skill at a t
 with PR #2870. S3 is done — PR #2870 removed the literal from `question-selection`, and its
 `q_001` gloss mandate needs no edit. S4 moved, widened, to *Before phase 2*.
 
-| PR | Slot | What |
-|---|---|---|
-| S1 | `init-project` | The between-actions clause, once the feed capture measures it; the cold start's wording, with phase 4. Its identifier clause is phase 2 |
-| S5 | `record-extraction` | Probably no prose change: "a batch is one step" assumed a per-step hand-back, which is gone, and issue #1998 shipped per-record narration with a guard. The relay-leak validator's re-key is phase 2's, and an instrument change needs no paid slot |
+| PR | Slot | What | Outcome |
+|---|---|---|---|
+| S1 | `init-project` | The between-actions clause, once the feed capture measures it; the cold start's wording, with phase 4. Its identifier clause is phase 2 | **CLOSED, no change, no slot** (2026-09-30) |
+| S5 | `record-extraction` | Probably no prose change: "a batch is one step" assumed a per-step hand-back, which is gone, and issue #1998 shipped per-record narration with a guard. The relay-leak validator's re-key is phase 2's, and an instrument change needs no paid slot | **CLOSED, no change, no slot** (2026-09-30) |
+
+**Both slots closed without a prose edit, so phase 5 buys no paid eval run.** Why, so neither
+is re-priced:
+
+- **S1.** Its three parts resolved separately. The cold start's wording landed in **phase 4**
+  (`init-project/SKILL.md:117`). The identifier clause is phase 2's. And the between-actions
+  clause **needs no change**: the string is coherent (see the correction below), and the owner's
+  answer — the researcher should see what was found *and* what happens next — is what it already
+  specifies. Changing it would have cost more than it looked: `_HOUSE_STYLE` in
+  `eval/harness/validators/test_init_project.py:352` pins it **verbatim**, so a rewrite reds
+  every `ut_init_project_*` run, and five further verbatim copies would have gone stale.
+- **S5.** `"a batch is one step"` is gone from the whole plugin, confirmed by grep. What
+  `record-extraction` *does* still carry is `:157`, "**Announce before delegating, not only
+  after**" — a forward-announcement rule of its own. The parent asks such rules be "reconciled
+  with the string in the same change"; there is no string change, so there is nothing to
+  reconcile, and the rule stands as the deliberate local override it is: on a per-record batch,
+  progress is exactly what a reader needs.
 
 **[R10] The bounded-request scenario must name a person the agent can identify.** Run
 2026-09-29 against the live prototype, the original wording — "create a research plan for
@@ -558,8 +575,24 @@ change. **"Do not narrate between actions" is measured before it is rewritten.**
 string already asks for one paragraph per step; whether a continuous turn reads "the step" as
 the whole job is what the feed capture shows. If it goes, replace it with a content rule — one
 paragraph per step that wrote something, what was found and what happens next, no process
-narration — rather than deleting it: "Now…" and "Let me…" open about 18% of corpus paragraphs
-where narration is allowed. Getting this wrong costs a second paid slot on the same skill.
+narration — rather than deleting it. Getting this wrong costs a second paid slot on the same
+skill.
+
+**That sentence used to justify replace-over-delete with "'Now…' and 'Let me…' open about 18%
+of corpus paragraphs". Struck 2026-09-30** — the table above already rules that figure
+"does not hold — about half", so the section was arguing from a number its own plan refutes.
+The replacement figure is **8.8%**, and phase 5 found that even that is a **mixed-population**
+number: it counts sub-agent paragraphs `foldChatEvent` never renders. On the one capture
+measured both ways the feed says 9.2% and the screen says **3.7%**. `make e2e-narration-figures`
+now splits the two and reports the main-thread share as **NOT MEASURED** for every committed
+run, because they predate the thread tag. Do not re-derive an argument from the mixed figure.
+
+**And the clause is not in tension with the sentence beside it** (phase 5, decided with the
+owner 2026-09-30). "Do not narrate between actions; **report once when the step is done**: …
+and what happens next in one sentence" bans *interim* paragraphs while allowing the one
+sanctioned report to close with a forward sentence. The string is **unchanged**, and the cost
+of ever changing it is recorded in `docs/plan/research-as-a-job-phase5-prose.md` — six verbatim
+copies, one of which reds every `ut_init_project_*` run.
 
 **The literal is gone from every body.** PR #2870 removed it from `init-project` and
 `question-selection`, and `test_every_shipped_hand_back_literal_classifies` now asserts zero.

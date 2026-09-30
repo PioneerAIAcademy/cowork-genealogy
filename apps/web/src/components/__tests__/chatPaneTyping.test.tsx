@@ -220,3 +220,49 @@ describe('1c: Stop', () => {
     expect(screen.queryByText(/research complete|stopped|budget|no progress/i)).toBeNull()
   })
 })
+
+// ─── [R8] the reconnect line says which attempt ─────────────────────────────
+
+describe('[R8] Reconnecting shows the attempt number', () => {
+  it('renders "attempt N of M" when the transport sends one', () => {
+    const { conn } = mount()
+    conn.emit({ type: 'conn_state', state: 'reconnecting', attempt: 3, maxAttempts: 20 })
+    expect(screen.getByText(/Reconnecting \(attempt 3 of 20\)/)).toBeTruthy()
+  })
+
+  it('falls back to the bare label when no count is sent', () => {
+    // `SseSessionConnection` emits `conn_state` with no attempt fields. Rendering
+    // "attempt undefined of undefined" there would be worse than saying nothing.
+    const { conn } = mount()
+    conn.emit({ type: 'conn_state', state: 'reconnecting' })
+    const el = screen.getByText(/Reconnecting/)
+    expect(el.textContent).not.toMatch(/undefined|NaN|attempt/)
+  })
+
+  it('the whole reconnect line goes when the attempts are over, not just the count', () => {
+    // What does the work here is `setConnState('open')` on the chat_error path,
+    // which un-renders the line entirely. A separate `setConnAttempt(null)` was
+    // written beside it and then deleted: the count is only ever read while
+    // connState is 'reconnecting', so clearing it was unobservable — the
+    // mutation check caught this test passing for the wrong reason.
+    const { conn } = mount()
+    conn.emit({ type: 'conn_state', state: 'reconnecting', attempt: 19, maxAttempts: 20 })
+    expect(screen.getByText(/attempt 19 of 20/)).toBeTruthy()
+    conn.emit({ type: 'status', state: 'chat_error', message: 'Could not reach the agent.' })
+    expect(screen.queryByText(/Reconnecting/)).toBeNull()
+    expect(screen.queryByText(/attempt 19 of 20/)).toBeNull()
+  })
+
+  it('the terminal error carries the diagnosis the transport put in it', () => {
+    const { conn } = mount()
+    conn.emit({
+      type: 'status',
+      state: 'chat_error',
+      message:
+        'Could not reach the agent after 20 attempts over 42s. ' +
+        'Last failure: the socket closed without reaching the server (network or sandbox down).',
+    })
+    expect(screen.getByText(/without reaching the server/)).toBeTruthy()
+    expect(screen.getByText(/20 attempts/)).toBeTruthy()
+  })
+})

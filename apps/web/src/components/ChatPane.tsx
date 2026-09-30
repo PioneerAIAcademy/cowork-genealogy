@@ -294,6 +294,7 @@ export default function ChatPane({
   // event being folded, not as of the last render. See trackLiveTask.
   const liveTasksRef = useRef<ReadonlySet<string>>(new Set())
   const [connState, setConnState] = useState<'open' | 'reconnecting'>('open')
+  const [connAttempt, setConnAttempt] = useState<{ attempt: number; max: number } | null>(null)
   // 1c: the label for how the last turn ended, or null for an ordinary finish.
   const [outcome, setOutcome] = useState<string | null>(null)
   // The card replaces the one-line outcome label only for a turn that actually ended
@@ -387,7 +388,18 @@ export default function ChatPane({
       // but a reload or a second tab learns it only from here.
       else if (msg.type === 'status' && msg.state === 'turn_queued') setQueuedOnServer(true)
       else if (msg.type === 'status' && msg.state === 'turn_unqueued') setQueuedOnServer(false)
-      else if (msg.type === 'conn_state') setConnState(msg.state as 'open' | 'reconnecting')
+      else if (msg.type === 'conn_state') {
+        setConnState(msg.state as 'open' | 'reconnecting')
+        // Which retry this is. A bare "Reconnecting…" cannot tell attempt 2 of
+        // 20 from attempt 19 — one is worth waiting through, the other is about
+        // to give up. Absent on 'open' and on the SSE transport, which emits no
+        // count, so the render falls back to the bare label rather than "NaN".
+        setConnAttempt(
+          typeof msg.attempt === 'number' && typeof msg.maxAttempts === 'number'
+            ? { attempt: msg.attempt, max: msg.maxAttempts }
+            : null
+        )
+      }
       else if (msg.type === 'status' && msg.state === 'chat_error') {
         setReady(false)
         // Reconnect attempts are over — stop the "Reconnecting…" spinner so the
@@ -540,7 +552,10 @@ export default function ChatPane({
               about; it takes priority over "working" so a stall never masquerades
               as progress (the failure mode that hid the 2026-07-20 disconnect). */}
           {connState === 'reconnecting' ? (
-            <div className="typing">●●● Reconnecting…</div>
+            <div className="typing">
+              ●●● Reconnecting
+              {connAttempt ? ` (attempt ${connAttempt.attempt} of ${connAttempt.max})` : ''}…
+            </div>
           ) : m0Decision && !busy ? (
             // Phase 3 item 1: a turn that ended `decision` gets the CARD, not the
             // one-line "Waiting on you" label. Answering sends the reader's choice

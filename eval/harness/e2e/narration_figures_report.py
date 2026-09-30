@@ -50,6 +50,8 @@ def _runs(root: Path):
 def derive(root: Path) -> dict:
     runs_total = runs_with_narration = 0
     paras = no_log_write = openers = 0
+    paras_main = paras_sub = paras_untagged = 0
+    openers_main = openers_sub = openers_untagged = 0
     plan_minutes: list[float] = []
     # Runs carrying `usage.continue_nudges` at all, and how many of those never
     # yielded. Kept separate because "no counter" and "zero nudges" are different
@@ -84,6 +86,25 @@ def derive(root: Path) -> dict:
             idx = entry.get("tool_calls_before")
             text = entry.get("text") or ""
             paras += 1
+            # Which thread said it. `foldChatEvent` drops all sub-agent prose, so
+            # a share taken over BOTH counts paragraphs no reader ever sees. Runs
+            # captured before the tag existed report as "untagged" and are counted
+            # in NEITHER population -- an untagged paragraph is "not asked", not
+            # "main thread", and silently promoting it is how this figure went
+            # wrong the first time.
+            thread = entry.get("thread")
+            if thread == "main":
+                paras_main += 1
+                if OPENER.match(text):
+                    openers_main += 1
+            elif thread == "sub":
+                paras_sub += 1
+                if OPENER.match(text):
+                    openers_sub += 1
+            else:
+                paras_untagged += 1
+                if OPENER.match(text):
+                    openers_untagged += 1
             if OPENER.match(text):
                 openers += 1
             # Calls made since the previous paragraph. A non-int index means the
@@ -100,6 +121,12 @@ def derive(root: Path) -> dict:
         "paragraphs": paras,
         "no_log_write": no_log_write,
         "openers": openers,
+        "paras_main": paras_main,
+        "paras_sub": paras_sub,
+        "paras_untagged": paras_untagged,
+        "openers_main": openers_main,
+        "openers_sub": openers_sub,
+        "openers_untagged": openers_untagged,
         "plan_minutes": plan_minutes,
         "nudge_counts": nudge_counts,
     }
@@ -127,7 +154,23 @@ def main(argv: list[str]) -> int:
     print(f"  L166   paragraphs following NO log write .. {pct_no_log:5.1f}%  "
           f"({r['no_log_write']}/{r['paragraphs']})")
     print(f"  L-open paragraphs opening Now/Let me ..... {pct_open:5.1f}%  "
-          f"({r['openers']}/{r['paragraphs']})")
+          f"({r['openers']}/{r['paragraphs']})  [ALL THREADS -- see split below]")
+    print()
+    print("  By thread. Only the main-thread share describes what a reader sees:")
+    print("  `foldChatEvent` drops all sub-agent prose, and record-extractor does not")
+    print("  even apply the researcher profile, so a mixed share measures nobody.")
+    for label, np, no in (
+        ("main thread (reaches the screen)", r["paras_main"], r["openers_main"]),
+        ("sub-agent   (dropped, unseen)  ", r["paras_sub"], r["openers_sub"]),
+        ("UNTAGGED    (captured pre-tag) ", r["paras_untagged"], r["openers_untagged"]),
+    ):
+        if np:
+            print(f"    {label} .. {100.0 * no / np:5.1f}%  ({no}/{np})")
+        else:
+            print(f"    {label} .. no paragraphs")
+    if r["paras_untagged"] and not r["paras_main"]:
+        print("    NOTE: every paragraph predates the thread tag, so the main-thread")
+        print("          share is NOT MEASURED here -- re-run the e2e suite to get one.")
     if r["plan_minutes"]:
         med = statistics.median(r["plan_minutes"])
         print(f"  L-plan research-plan lands at median ..... {med:5.1f} min  "

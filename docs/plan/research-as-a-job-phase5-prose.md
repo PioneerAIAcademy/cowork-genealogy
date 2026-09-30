@@ -1,6 +1,6 @@
 # Phase 5 — the remaining prose (detailed pass)
 
-**Status:** NOT BUILT. Written 2026-09-30 on the `research-as-a-job-phase2` branch
+**Status:** BUILT, 2026-09-30 — every step below carries what landed. Written 2026-09-30 on the `research-as-a-job-phase2` branch
 (unmerged), after phase 4 landed. **Revised the same day** after a plan review found
 three blocking defects in the first draft — including one in its central finding — and
 after the product owner answered the two questions it escalated. Parent:
@@ -178,6 +178,29 @@ reason S5 closes rather than an absence of rules.
   left where the parent put it. Nothing in phase 5 depends on it.
 - **Re-splitting committed e2e run logs by thread.** They carry no tag. Step 1 reports
   them as untagged rather than inventing an attribution.
+
+## What landed
+
+| Step | State | Where |
+|---|---|---|
+| 1. Tag the narration capture by thread | **done** | `orchestrator.py:2445` records `thread`; `narration_figures_report.py` splits main / sub / **untagged**, and reports the main-thread share as **NOT MEASURED** for every committed run, because they all predate the tag. New unit suite: `eval/harness/tests/unit/test_narration_figures_report.py` |
+| 2. Correct the live 18% | **done** | `research-as-a-job-later-REVISED.md` — the claim is struck and replaced with the derivation, including the feed/screen split |
+| 3. [R8] three UX items | **done** | see below |
+| 4. Record the two no-ops | **done** | the parent's table now carries `CLOSED, no change, no slot` with the reason for each |
+
+**[R8], all three built** (decided with the owner: build, not file):
+
+- **Attempt count.** `SessionConnection.emitConn` now carries `attempt`/`maxAttempts`;
+  `ChatPane` renders "Reconnecting (attempt 3 of 20)…", and falls back to the bare label
+  when the SSE transport sends no count.
+- **Terminal diagnosis.** `scheduleRetry`'s exhaustion message now names the attempt
+  count, the elapsed seconds and the last cause — and the WebSocket close code separates
+  the two faults that used to read identically: `1006` (never reached the server — network
+  or sandbox down) from a real code (the server closed it, so it was reachable).
+- **Orphan reaping.** `LocalProvider` records each WS server's pid beside its sandbox and
+  reaps what it can **prove** is ours at startup (`factory.py`). The proof matters more
+  than the reaping: pids are reused, so an unverifiable pid is left alone — leaking a
+  process is untidy, killing a stranger's is not recoverable.
 
 ## Acceptance
 

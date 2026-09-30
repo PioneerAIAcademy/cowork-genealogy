@@ -2446,6 +2446,22 @@ async def _run_agent(
                                     "tool_calls_before": len(tool_calls),
                                     "kind": "assistant",
                                     "text": block.text,
+                                    # Which thread said it. `foldChatEvent` drops all
+                                    # sub-agent prose, so a narration figure that mixes
+                                    # the two counts paragraphs no reader ever sees:
+                                    # on the 133-minute McAndrew capture the "opens
+                                    # Now/Let me" share is 9.2% of the feed and 3.7% of
+                                    # the screen, because 19 of its 26 openers are
+                                    # sub-agent. Same tag the usage accounting derives
+                                    # below; recorded here so the two cannot diverge,
+                                    # and so a reader of a committed log can tell
+                                    # "main thread" from "not asked".
+                                    "thread": (
+                                        "main"
+                                        if getattr(message, "parent_tool_use_id", None)
+                                        is None
+                                        else "sub"
+                                    ),
                                 }
                             )
                             one_line = " ".join(block.text.split())
