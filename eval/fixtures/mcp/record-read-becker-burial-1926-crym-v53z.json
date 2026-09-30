@@ -1,0 +1,87 @@
+{
+  "tool": "record_read",
+  "description": "FamilySearch record_read response for record CRYM-V53Z: the cemetery index entry for John Becker (1926), whose spouse Anna is recorded with no surname. Shaped like a live read (a Record and a Collection source description, per-persona indexFields).",
+  "args": {
+    "recordId": "~CRYM-V53Z"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "n_1",
+            "type": "BirthName",
+            "given": "John",
+            "surname": "Becker"
+          }
+        ],
+        "principal": true,
+        "facts": [
+          {
+            "type": "Death",
+            "date": "27 September 1926"
+          },
+          {
+            "type": "Burial",
+            "date": "30 September 1926",
+            "place": "Vine Street Hill Cemetery, Cincinnati, Hamilton, Ohio, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      },
+      {
+        "id": "p_2",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "n_2",
+            "type": "BirthName",
+            "given": "Anna"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "r_1",
+        "type": "Couple",
+        "person1": "p_1",
+        "person2": "p_2"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_1",
+        "resource_type": "Record",
+        "title": "Entry for John Becker, \"Ohio, Hamilton, Cincinnati, Vine Street Hill Cemetery Index of Burials, 1851-1986\"",
+        "citation": "\"Ohio, Hamilton, Cincinnati, Vine Street Hill Cemetery Index of Burials, 1851-1986\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:CRYM-V53Z : accessed 30 September 2026), Entry for John Becker.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:CRYM-V53Z"
+      },
+      {
+        "id": "sd_c_1",
+        "resource_type": "Collection",
+        "title": "Ohio, Hamilton, Cincinnati, Vine Street Hill Cemetery Index of Burials, 1851-1986"
+      }
+    ],
+    "places": [],
+    "indexFields": {
+      "p_1": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_000"
+      },
+      "p_2": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_001"
+      }
+    }
+  }
+}

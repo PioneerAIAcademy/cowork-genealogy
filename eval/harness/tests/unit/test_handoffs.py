@@ -254,8 +254,3 @@ def test_a_stub_that_is_still_a_skill_is_not_stubbed_at_its_spawn():
     assert _stub_agents(spec, REPO_ROOT / "packages" / "engine" / "plugin" / "skills") is None
 
 
-def test_old_style_date_passes_on_a_spawn_and_fails_without_one():
-    mod = _validators("test_record_extraction")
-    mod.test_old_style_date_routes_to_convert_dates([], [_spawn("convert-dates")], OLD_STYLE)
-    with pytest.raises(AssertionError):
-        mod.test_old_style_date_routes_to_convert_dates([], [_spawn("record-extractor")], OLD_STYLE)

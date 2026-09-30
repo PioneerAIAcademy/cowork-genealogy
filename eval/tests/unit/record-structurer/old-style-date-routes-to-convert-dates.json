@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_record_structurer_004",
+    "skill": "record-structurer",
+    "name": "Pre-1752 colonial baptism — resolve the calendar before delegating",
+    "type": "positive",
+    "description": "Converted from ut_record_extraction_030. A March 1750 baptism in British colonial America falls in the Old Style year-start window. Code writes the calendar line into the summary; relaying it verbatim is what reaches the researcher. Graded by test_an_old_style_date_raises_the_calendar_flag.",
+    "tags": [
+      "old-style-date",
+      "colonial-america",
+      "pre-1752",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Structure this source and write it to the project.\n\nprojectPath: <workspace>\nsources:\n- recordId: capture:perry-baptism-1750\n  documentForm: verbatim_transcript\n  text: <record-data>\nRecords of the Reformed Protestant Dutch Church of Albany\nProvince of New York (British colonial America)\nRegister of baptisms, page 214\n\n  Child: John Perry\n  Born: 12 March 1750\n  Baptized: 18 March 1750\n  Father: Jacob Perry, cordwainer, of Albany\n  Mother: Elisabeth Witbeck, of Albany\n  Sponsors: Hendrick Witbeck, Maria Van Deusen\n</record-data>",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "The agent reads the source, makes one extraction_append call carrying one document, and returns the tool's summary verbatim. Roles and classifications are decided in code from the document; grade what the agent READ and whether the reply is the summary, not the classifications."
+  ],
+  "execution": {
+    "max_turns": 12,
+    "max_wall_clock_seconds": 400
+  }
+}

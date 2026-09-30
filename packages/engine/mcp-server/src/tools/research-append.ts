@@ -2734,7 +2734,7 @@ export function relationshipCategory(value: unknown): string | undefined {
 /** The category the VALUE claims for the record subject, or undefined when it
  *  does not speak to the subject's own role. Exported so the cross-language
  *  drift test can pin it against the Python copy in
- *  `eval/harness/validators/test_record_extraction.py`: the rule exists twice
+ *  `eval/harness/validators/extraction_validators.py`: the rule exists twice
  *  because the harness and the engine share no runtime, and nothing else keeps
  *  the two in step. */
 export function subjectRoleInValue(value: string): string | undefined {

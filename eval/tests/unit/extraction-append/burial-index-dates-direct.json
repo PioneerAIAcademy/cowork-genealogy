@@ -1,0 +1,55 @@
+{
+  "test": {
+    "id": "ut_extraction_append_001",
+    "skill": "extraction-append",
+    "name": "Extract assertions from John Becker's 1926 Vine Street Hill burial index entry",
+    "type": "positive",
+    "description": "Converted from ut_record_extraction_023: the record the user pasted is now served as a record_read fixture (the cemetery index entry for John Becker (1926), whose spouse Anna is recorded with no surname), and extraction runs in code. Vine Street Hill Cemetery (Cincinnati, Hamilton County, Ohio) burial index entry for John Becker, buried 30 Sep 1926 (ark:/61903/1:1:CRYM-V53Z). Real record from the Ferber/Becker research (#799). The entry associates John with 'Anna' - part of the unresolved Anna/Mary Kramer name conflict.",
+    "tags": [
+      "extraction",
+      "burial",
+      "cemetery",
+      "ferber-becker"
+    ]
+  },
+  "input": {
+    "user_message": "Extract FamilySearch record ark:/61903/1:1:CRYM-V53Z.",
+    "scenario": "empty-project-just-created"
+  },
+  "mcp_fixtures": [
+    "record-read-becker-burial-1926-crym-v53z"
+  ],
+  "judge_context": [
+    "The skill makes one extraction_append call with the record id and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you."
+  ],
+  "execution": {
+    "max_turns": 10,
+    "max_wall_clock_seconds": 300
+  },
+  "expected_classifications": [
+    {
+      "record_role": "deceased",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "informant_proximity": "unknown",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "death",
+      "attribute": "date",
+      "record_basis": "stated",
+      "informant_proximity": "unknown",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "attribute": "place",
+      "optional": true,
+      "record_basis": "stated",
+      "informant_proximity": "unknown",
+      "information_quality": "indeterminate"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "test": {
+    "id": "ut_record_structurer_001",
+    "skill": "record-structurer",
+    "name": "Obituary survivor list: maiden-surname vs spouse parentheticals, in-law vs child, neighbor vs kin",
+    "type": "positive",
+    "description": "Converted from ut_record_extraction_017. The survivor list uses both parenthetical conventions: a maiden surname (Grace (Whitaker) Tolman) and a spouse's given name (Robert (Linda) Whitaker, Linda (Paul) Merrill). Graded by test_obituary_parentheticals_are_read_as_their_convention on the roles code assigns from the agent's statedRelation values.",
+    "tags": [
+      "obituary",
+      "maiden-name",
+      "in-law",
+      "FAN",
+      "relationship-roles",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Structure this source and write it to the project.\n\nprojectPath: <workspace>\nsources:\n- recordId: capture:whitaker-obituary-2021\n  documentForm: verbatim_transcript\n  text: <record-data>\nHarold Dean Whitaker, 91, of Logan, Cache County, Utah, passed away peacefully on March 14, 2021. He was born January 8, 1930, in Brigham City, Box Elder County, Utah, the son of Walter and Edith Whitaker. On June 3, 1952, he married Ruth Ann Baxter in the Logan LDS Temple.\n\nHarold is survived by his two children, Robert (Linda) Whitaker of Portland, Oregon, and Linda (Paul) Merrill of Twin Falls, Idaho; by seven grandchildren; and by his sister, Grace (Whitaker) Tolman of Ogden, Utah. He wished to thank his longtime neighbor, Karen Foster, who looked in on him daily during his final year. He was preceded in death by his wife, Ruth, and by his parents.\n</record-data>",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "The agent reads the source, makes one extraction_append call carrying one document, and returns the tool's summary verbatim. Roles and classifications are decided in code from the document; grade what the agent READ and whether the reply is the summary, not the classifications."
+  ],
+  "execution": {
+    "max_turns": 12,
+    "max_wall_clock_seconds": 400
+  },
+  "expected_classifications": [
+    {
+      "record_role": "deceased",
+      "fact_type": "name",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Brigham City, Box Elder County, Utah",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "attribute": "date",
+      "record_basis": "stated",
+      "optional": true
+    }
+  ]
+}

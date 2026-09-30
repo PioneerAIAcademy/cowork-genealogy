@@ -1,0 +1,120 @@
+{
+  "tool": "record_read",
+  "description": "FamilySearch record_read response for record CRY7-D9T2: the cemetery index entry for Louise Becker (1941), naming her father and mother. Shaped like a live read (a Record and a Collection source description, per-persona indexFields).",
+  "args": {
+    "recordId": "~CRY7-D9T2"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_1",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "n_1",
+            "type": "BirthName",
+            "given": "Louise",
+            "surname": "Becker"
+          }
+        ],
+        "principal": true,
+        "facts": [
+          {
+            "type": "Death",
+            "date": "2 February 1941"
+          },
+          {
+            "type": "Burial",
+            "date": "4 February 1941",
+            "place": "Vine Street Hill Cemetery, Cincinnati, Hamilton, Ohio, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      },
+      {
+        "id": "p_2",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "n_2",
+            "type": "BirthName",
+            "given": "John",
+            "surname": "Becker"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      },
+      {
+        "id": "p_3",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "n_3",
+            "type": "BirthName",
+            "given": "Mary",
+            "surname": "Kramer"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "r_1",
+        "type": "ParentChild",
+        "parent": "p_2",
+        "child": "p_1"
+      },
+      {
+        "id": "r_2",
+        "type": "ParentChild",
+        "parent": "p_3",
+        "child": "p_1"
+      },
+      {
+        "id": "r_3",
+        "type": "Couple",
+        "person1": "p_2",
+        "person2": "p_3"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_1",
+        "resource_type": "Record",
+        "title": "Entry for Louise Becker, \"Ohio, Hamilton, Cincinnati, Vine Street Hill Cemetery Index of Burials, 1851-1986\"",
+        "citation": "\"Ohio, Hamilton, Cincinnati, Vine Street Hill Cemetery Index of Burials, 1851-1986\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:CRY7-D9T2 : accessed 30 September 2026), Entry for Louise Becker.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:CRY7-D9T2"
+      },
+      {
+        "id": "sd_c_1",
+        "resource_type": "Collection",
+        "title": "Ohio, Hamilton, Cincinnati, Vine Street Hill Cemetery Index of Burials, 1851-1986"
+      }
+    ],
+    "places": [],
+    "indexFields": {
+      "p_1": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_000"
+      },
+      "p_2": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_001"
+      },
+      "p_3": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_002"
+      }
+    }
+  }
+}

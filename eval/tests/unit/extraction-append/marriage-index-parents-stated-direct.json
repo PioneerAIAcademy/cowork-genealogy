@@ -1,0 +1,76 @@
+{
+  "test": {
+    "id": "ut_extraction_append_015",
+    "skill": "extraction-append",
+    "name": "Extract assertions from Frank Becker's 1916 marriage to Catherine Wessel",
+    "type": "positive",
+    "description": "Converted from ut_record_extraction_025: the record the user pasted is now served as a record_read fixture (the 1916 Hamilton County marriage index entry for Frank Becker and Catherine Wessel, naming both sets of parents), and extraction runs in code. 1916 Hamilton County, Ohio marriage of Frank Becker and Catherine Wessel ('Ohio, County Marriages, 1789-2016', ark:/61903/1:1:XZYQ-VYD). Real record from the Ferber/Becker research (#799). Names both parties' parents; Frank's parents are John Becker and Anna Kramer - part of the Anna/Mary Kramer name conflict.",
+    "tags": [
+      "extraction",
+      "marriage-record",
+      "ferber-becker",
+      "direct-vs-indirect"
+    ]
+  },
+  "input": {
+    "user_message": "Extract FamilySearch record ark:/61903/1:1:XZYQ-VYD.",
+    "scenario": "empty-project-just-created"
+  },
+  "mcp_fixtures": [
+    "record-read-becker-wessel-1916-xzyq-vyd"
+  ],
+  "judge_context": [
+    "The skill makes one extraction_append call with the record id and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you."
+  ],
+  "execution": {
+    "max_turns": 10,
+    "max_wall_clock_seconds": 300
+  },
+  "expected_classifications": [
+    {
+      "record_role": "groom",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "informant_proximity": "self"
+    },
+    {
+      "record_role": "bride",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "informant_proximity": "self"
+    },
+    {
+      "record_role": "groom",
+      "fact_type": "birth",
+      "attribute": "date",
+      "optional": true,
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "information_quality": "primary"
+    },
+    {
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "information_quality": "primary"
+    },
+    {
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "optional": true,
+      "record_basis": "stated",
+      "information_quality": "primary"
+    },
+    {
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "optional": true,
+      "record_basis": "stated",
+      "information_quality": "primary"
+    }
+  ]
+}

@@ -321,9 +321,11 @@ function parties(doc: ExtractDocument): Party[] {
 function roleFromRelationship(rel: string, counters: Map<string, number>): string {
   const r = rel.trim().toLowerCase();
   if (/^head|^self\b/.test(r)) return "head_of_household";
-  if (/^wife/.test(r)) return "wife";
-  if (/^husband/.test(r)) return "husband";
-  if (/^son|^dau/.test(r)) return numbered("child", counters);
+  // Whole words only: "son-in-law", "daughter-in-law" and "wife's mother" name
+  // someone else, and fall through to their own slug below.
+  if (/^wife$/.test(r)) return "wife";
+  if (/^husband$/.test(r)) return "husband";
+  if (/^(son|daughter|dau\.?)$/.test(r)) return numbered("child", counters);
   if (/^boarder|^lodger/.test(r)) return numbered("boarder", counters);
   if (/^servant/.test(r)) return numbered("servant", counters);
   // Otherwise the stated relation, numbered — never invented, never dropped.
@@ -573,7 +575,7 @@ function principalRoles(
 // ─── classification ─────────────────────────────────────────────────────────
 
 /** What a fact is ABOUT, for the classification table's third axis. */
-type FactClass = "identity" | "event" | "residence" | "relationship";
+type FactClass = "identity" | "event" | "residence" | "relationship" | "medical";
 
 /** The role's family, for the table's second axis. */
 type RoleFamily = "principal" | "spouse" | "child" | "parent" | "other";
@@ -719,6 +721,16 @@ function classify(
   }
 
   if (recordType === "death") {
+    // The cause and the last illness are the certifying physician's, who is
+    // required to complete that section; the family supplies the rest
+    // (genealogist ruling 2026-09-30, option A).
+    if (factClass === "medical") {
+      return {
+        informant: "the certifying physician",
+        informant_proximity: "official_duty",
+        information_quality: "primary",
+      };
+    }
     if (factClass === "event") {
       return {
         informant: "the certifying official",
@@ -884,6 +896,10 @@ export function normalizeFactType(raw: unknown): string {
 
 function factClassOf(factType: string, recordType: RecordType): FactClass {
   if (factType === "residence") return "residence";
+  // The medical certificate on a death record: the physician's section.
+  if (recordType === "death" && /^(cause_of_death|duration_of_illness|illness_duration)$/.test(factType)) {
+    return "medical";
+  }
   if (factType === "relationship") return "relationship";
   const eventFor: Record<string, RecordType | undefined> = {
     census: "census",
@@ -906,6 +922,20 @@ function fullName(p: SimplifiedPerson): string {
 
 // ─── the extractor ──────────────────────────────────────────────────────────
 
+/** The year of the record's marriage event, on the couple or on a persona. */
+function marriageYearOf(gx: SimplifiedGedcomX): number | undefined {
+  const facts = [
+    ...(gx.relationships ?? []).flatMap((r) => r.facts ?? []),
+    ...(gx.persons ?? []).flatMap((p) => p.facts ?? []),
+  ];
+  for (const f of facts) {
+    if (!/marriage/i.test(String(f.type ?? ""))) continue;
+    const y = String(f.standard_date ?? f.date ?? "").match(/\d{4}/)?.[0];
+    if (y) return Number(y);
+  }
+  return undefined;
+}
+
 export function extractRecord(
   doc: ExtractDocument,
   opts: ExtractOptions,
@@ -915,6 +945,15 @@ export function extractRecord(
   const recordType = mode?.recordType ?? detectRecordType(gx);
   const collection = collectionTitle(gx);
   const ps = parties(doc);
+  // A marriage index's bare birth year is the indexer's arithmetic when it is
+  // the marriage year less the party's stated age, give or take one
+  // (genealogist ruling 2026-09-30).
+  const marriageYear = marriageYearOf(doc.gedcomx ?? {});
+  const yearIsMarriageMinusAge = (date: unknown, age: unknown): boolean => {
+    const years = Number(String(date ?? "").match(/\d{4}/)?.[0]);
+    const n = parseInt(String(age ?? ""), 10);
+    return marriageYear !== undefined && Number.isFinite(years) && Number.isFinite(n) && Math.abs(marriageYear - n - years) <= 1;
+  };
   const assertions: ExtractedAssertion[] = [];
   const defaultedClassifications: string[] = [];
   const notes: string[] = [];
@@ -1147,9 +1186,15 @@ export function extractRecord(
       //
       // Only where the year is genuinely derived. On a birth or christening
       // record the date IS stated — the record is about that event.
+      //
+      // A census date that carries a month was written on the schedule (the
+      // 1900 month-and-year column), so it is stated; only a bare year is the
+      // indexer's arithmetic (genealogist ruling 2026-09-30).
+      const bareYear = /^\s*(?:abt\.?|about|circa|ca?\.)?\s*\d{4}\s*$/i.test(String(f.date ?? ""));
       const yearIsDerived =
         factType === "birth" &&
-        (recordType === "census" || recordType === "death" || recordType === "burial");
+        ((recordType === "census" && bareYear) || recordType === "death" || recordType === "burial") ||
+        (factType === "birth" && recordType === "marriage" && bareYear && yearIsMarriageMinusAge(f.date, party.fields?.age));
 
       if (yearIsDerived && f.date && (f.place || f.standard_place)) {
         const placeExtra: Partial<ExtractedAssertion> = { place: f.place };
@@ -1173,6 +1218,28 @@ export function extractRecord(
         extra.date_certainty = "approximate";
       }
       push(party, factType, String(value), extra);
+    }
+  }
+
+  // ── couple events ──
+  //
+  // A FamilySearch marriage index puts the marriage EVENT on the Couple
+  // relationship, not on either person, so the persona loop above never sees
+  // it. Each such fact is one event assertion per spouse, classified through
+  // the same table as a persona fact.
+  for (const r of gx.relationships ?? []) {
+    if (!/couple/i.test(String(r.type ?? "")) || !(r.facts ?? []).length) continue;
+    const spouses = [r.person1, r.person2]
+      .map((id) => ps.find((q) => q.id === id))
+      .filter((q): q is (typeof ps)[number] => q !== undefined);
+    for (const f of r.facts ?? []) {
+      const factType = normalizeFactType(f.type);
+      if (factType === "") continue;
+      const extra: Partial<ExtractedAssertion> = {};
+      if (f.date) extra.date = f.date;
+      if (f.place) extra.place = f.place;
+      if (f.standard_place) extra.standard_place = f.standard_place;
+      for (const party of spouses) push(party, factType, String(f.value ?? f.date ?? f.place ?? ""), extra);
     }
   }
 
@@ -1485,6 +1552,10 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
         if (a.fact_type === "relationship") return a.value;
         if (a.fact_type === "age") return `age ${a.value}`;
         const label = a.fact_type.replace(/_/g, " ");
+        // A passage flagged as directive-shaped is kept in the assertion and
+        // withheld here: this summary is relayed verbatim into the caller's
+        // context, where it would read as an instruction rather than data.
+        if (/\[suspicious text/i.test(a.informant_bias_notes ?? "")) return `${label} [withheld: suspicious text]`;
         const own = a.value && a.value !== a.date && a.value !== a.place ? ` ${a.value}` : "";
         const when = a.date ? ` ${a.date}` : "";
         const where = a.place ? ` ${a.place}` : "";

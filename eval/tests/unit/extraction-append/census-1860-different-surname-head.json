@@ -1,0 +1,66 @@
+{
+  "test": {
+    "id": "ut_extraction_append_007",
+    "skill": "extraction-append",
+    "name": "Differently-surnamed household head is flagged as a FAN lead, not dismissed as a boardinghouse",
+    "type": "positive",
+    "description": "Converted from ut_record_extraction_014: the record the user pasted is now served as a record_read fixture (the 1860 census household of Silas Kerrigan, Schuylkill County, with the Flynns in it), and extraction runs in code. An 1860-style census household where the subject's family (the Flynns) is enumerated inside a household headed by a man with a different surname (Silas Kerrigan, b. ~1798). The skill must extract the household faithfully AND surface the head as possible kin — the ~24-year age gap to Mary Flynn makes a parent-child relationship plausible, and 'Kerrigan' a candidate maiden name worth investigating — as a lead for hypothesis-tracking, rather than silently assuming a boardinghouse or asserting a specific relationship the record doesn't support. Guards the 'differently-surnamed household head is a FAN lead' rule.",
+    "tags": [
+      "census",
+      "1860",
+      "extraction",
+      "household",
+      "fan-lead",
+      "different-surname-head"
+    ]
+  },
+  "input": {
+    "user_message": "Extract FamilySearch record ark:/61903/1:1:M4XK-2QB.",
+    "scenario": "empty-project-just-created"
+  },
+  "mcp_fixtures": [
+    "record-read-kerrigan-flynn-1860-m4xk-2qb"
+  ],
+  "judge_context": [
+    "The skill makes one extraction_append call with the record id and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you."
+  ],
+  "execution": {
+    "max_turns": 10,
+    "max_wall_clock_seconds": 300
+  },
+  "expected_classifications": [
+    {
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "laborer",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ireland",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "attribute": "date",
+      "record_basis": "inferred",
+      "optional": true
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Pennsylvania",
+      "record_basis": "stated",
+      "optional": true
+    }
+  ]
+}

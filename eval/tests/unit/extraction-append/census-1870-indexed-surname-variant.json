@@ -1,0 +1,220 @@
+{
+  "test": {
+    "id": "ut_extraction_append_008",
+    "skill": "extraction-append",
+    "name": "Extract assertions from the 1870 census — John Baker/Becker Sr. household",
+    "type": "positive",
+    "description": "Converted from ut_record_extraction_022: the record the user pasted is now served as a record_read fixture (the 1870 census household of John Baker, Cincinnati (the Becker family, indexed as Baker)), and extraction runs in code. 1870 U.S. Census household of John Baker (indexed variant of Becker), Cincinnati, Hamilton County, Ohio (ark:/61903/1:1:M62F-BST). Real record from the Ferber/Becker research (#799). Documents John (b. 1845) as a child in his parents' household. Pre-1880 census: no relationship column, so household relationships are inferred.",
+    "tags": [
+      "extraction",
+      "census",
+      "1870",
+      "ferber-becker",
+      "surname-variant"
+    ]
+  },
+  "input": {
+    "user_message": "Extract FamilySearch record ark:/61903/1:1:M62F-BST.",
+    "scenario": "empty-project-just-created"
+  },
+  "mcp_fixtures": [
+    "record-read-baker-1870-m62f-bst"
+  ],
+  "judge_context": [
+    "The skill makes one extraction_append call with the record id and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you."
+  ],
+  "execution": {
+    "max_turns": 10,
+    "max_wall_clock_seconds": 300
+  },
+  "expected_classifications": [
+    {
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Bavaria",
+      "record_basis": "stated",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "attribute": "date",
+      "record_basis": "inferred",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "wife",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "wife",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Bavaria",
+      "optional": true,
+      "record_basis": "stated",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "wife",
+      "fact_type": "birth",
+      "attribute": "date",
+      "optional": true,
+      "record_basis": "inferred",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ohio",
+      "optional": true,
+      "record_basis": "stated",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "attribute": "date",
+      "optional": true,
+      "record_basis": "inferred",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_2",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ohio",
+      "optional": true,
+      "record_basis": "stated",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "attribute": "date",
+      "optional": true,
+      "record_basis": "inferred",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_3",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ohio",
+      "optional": true,
+      "record_basis": "stated",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "attribute": "date",
+      "optional": true,
+      "record_basis": "inferred",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_4",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ohio",
+      "optional": true,
+      "record_basis": "stated",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "attribute": "date",
+      "optional": true,
+      "record_basis": "inferred",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_5",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_5",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ohio",
+      "optional": true,
+      "record_basis": "stated",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_5",
+      "fact_type": "birth",
+      "attribute": "date",
+      "optional": true,
+      "record_basis": "inferred",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_6",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_6",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ohio",
+      "optional": true,
+      "record_basis": "stated",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_6",
+      "fact_type": "birth",
+      "attribute": "date",
+      "optional": true,
+      "record_basis": "inferred",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "optional": true,
+      "information_quality": "primary"
+    }
+  ]
+}

@@ -1735,6 +1735,7 @@ accuracy.
 | marriage | a party's or parent's facts | the party | `self` | `primary` |
 | marriage | a witness's facts | the witness | `witness` | `primary` |
 | death | the death event | the certifying official | `official_duty` | `primary` |
+| death | the cause of death, and the last illness's duration | the certifying physician | `official_duty` | `primary` |
 | death | the decedent's biography | the personal informant | `family_not_present` | `secondary` |
 | burial, church register | the burial event | the officiant | `official_duty` | `primary` |
 | burial, church register | everything else | unknown | `unknown` | `indeterminate` |
@@ -1809,11 +1810,34 @@ exactly the record types — probate, obituary, military — where the informant
 often knowable. About 10% of corpus assertions are on types with no row today;
 genealogists add rows over time, and a missing one must show up.
 
+**The medical section is the physician's** (genealogist ruling, 2026-09-30).
+The law required the attending or examining physician to complete the cause of
+death, so it takes their row even though the FamilySearch index rarely names
+them. Everything else on the certificate stays the personal informant's.
+
 `record_basis` is `stated` for anything the record puts in a field. The one
 `inferred` value is a birth **year** computed from a stated age — and because
 FamilySearch folds that year and the birthplace into one `Birth` fact, the
 extractor splits them: the place is its own `stated` assertion, the year its own
 `inferred` one at `date_certainty: "approximate"`. They cannot share a basis.
+
+Which birth years are computed (genealogist rulings, 2026-09-30):
+
+- **A census:** a bare year (`1845`, `about 1845`) is computed. A date carrying a
+  month (`January 1845`, from the 1900 schedule's month-and-year column) was
+  written on the schedule, and is `stated`.
+- **A death or burial record:** a bare birth year is computed from the age at
+  death.
+- **A marriage record:** a bare birth year is computed only where the party's age
+  is on the record and the year is the marriage year less that age, give or take
+  one. Otherwise it is `stated`: a register can record a year, and nothing shows
+  this one is arithmetic.
+- **A birth or christening record:** the date is the record's own event, and is
+  `stated`.
+
+**Couple events.** A FamilySearch marriage index carries the marriage on the
+Couple relationship, not on either person. Each fact there is written once per
+spouse, through the same rows as a persona fact.
 
 **`source_classification` is `derivative`, always.** What was read is
 FamilySearch's index of the record, not the schedule or register; `original`

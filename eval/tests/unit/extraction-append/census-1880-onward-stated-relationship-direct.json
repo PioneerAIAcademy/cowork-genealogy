@@ -1,0 +1,76 @@
+{
+  "test": {
+    "id": "ut_extraction_append_009",
+    "skill": "extraction-append",
+    "name": "1880+ census: stated relationship-to-head is direct evidence, not inferred",
+    "type": "positive",
+    "description": "Converted from ut_record_extraction_018: the record the user pasted is now served as a record_read fixture (the 1900 census household of George Bennett, Springfield, Illinois, with its relationship-to-head column), and extraction runs in code. Extract from a 1900 census household. Unlike the 1850/1860 census, the 1900 census HAS a relationship-to-head column, so each person's relationship to the head is STATED by the record, not inferred from household position. The parent-child relationship (head/wife -> the stated 'Son') and the spousal relationship (head <-> the stated 'Wife') are therefore DIRECT evidence. The agent must NOT downgrade a stated 'Son'/'Daughter'/'Wife' to indirect on the grounds that a household relationship isn't necessarily biological parentage — from 1880 on the record STATES the relationship, and stated = direct. Mirrors the applegarth-parents-1936 e2e run, where the agent classified a 1940-census stated 'son' as indirect. From senior-genealogist (Shaunese) + Dallan review.",
+    "tags": [
+      "census",
+      "1900",
+      "extraction",
+      "direct-evidence",
+      "relationship-stated",
+      "relationship-roles"
+    ]
+  },
+  "input": {
+    "user_message": "Extract FamilySearch record ark:/61903/1:1:M9PL-7RT.",
+    "scenario": "empty-project-just-created"
+  },
+  "mcp_fixtures": [
+    "record-read-bennett-1900-m9pl-7rt"
+  ],
+  "judge_context": [
+    "The skill makes one extraction_append call with the record id and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you."
+  ],
+  "execution": {
+    "max_turns": 10,
+    "max_wall_clock_seconds": 300
+  },
+  "expected_classifications": [
+    {
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "farmer",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ohio",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "attribute": "date",
+      "record_basis": "inferred",
+      "optional": true
+    },
+    {
+      "record_role": "wife",
+      "fact_type": "age",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "wife",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ohio",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "record_basis": "stated",
+      "optional": true
+    }
+  ]
+}
