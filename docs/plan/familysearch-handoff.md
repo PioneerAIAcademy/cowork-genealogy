@@ -89,7 +89,7 @@ Two premises moved since the plan:
 
 **U9.** Why: every instance applies every schema file at start (review item 15); concurrent starts are untried. **Done when:** empty and 005-level databases reach 007, and simultaneous starts do not race.
 
-**U10.** Why: health checks answer 200 when `prepare()`, Postgres or S3 fail; a read-only config dir (P1) or a mismatched child `CLAUDE_CONFIG_DIR` silently loses the transcript. **Done when** (offline): Postgres down fails all three checks; a bad `TMPDIR` blocks start; a model turn appending no entries fails non-200.
+**U10.** Why: health checks answer 200 when `prepare()`, Postgres or S3 fail; a read-only config dir (P1) or a mismatched child `CLAUDE_CONFIG_DIR` silently loses the transcript. **Done when** (offline): Postgres down fails all three checks; a bad `TMPDIR` blocks start; a model turn appending no entries fails non-200. **Status:** tools half built (`/healthz` checks Postgres, its schema and S3; `docs/plan/u10-tools-readiness.md`); worker and web halves open.
 
 **U11.** Remove or gate: the D3 `behaviour` stub arms (crash is an unauthenticated `os._exit(1)`); `*-unknown` id defaults; `BLOCKED_TOOLS`, `LIVE_TREE_ARG_TOOLS`; token fallbacks (U3); `NullQueue` (U2 removes the auth stubs); the implicit `MODEL_PROVIDER=anthropic`; `GENEALOGY_DEBUG_HOLD_*`; `.fs-token` (not in `.dockerignore`); stale agent and skill counts. **Done when:** a crash POST answers 400; a packaging test rejects dev variables in production config.
 
@@ -218,7 +218,7 @@ F6, F7, F8, F10 → F11, F16, U24, U25 ─► go-live
    - **Run** `node build/http.js --host 0.0.0.0 --port <port>`; no config file.
    - **Node ≥ 22, npm 11.12.x:** `npm install -g npm@11.12.1` (or `corepack enable`) before any `npm ci`, or the engine-strict `.npmrc` refuses Node 22's npm 10. Node 24 untested (U12).
    - **nginx:** the platform's 60 s `proxy_read_timeout` cuts longer tool calls; add step 12's override (≥ 1800 s). [untested]
-   - **Health check** [untested]: `HealthCheckPath` (`aws:elasticbeanstalk:environment:process:default`) `/healthz`; only `/healthz` and `/mcp` exist. `/healthz` checks neither Postgres nor S3 (U10) [compose].
+   - **Health check** [untested]: `HealthCheckPath` (`aws:elasticbeanstalk:environment:process:default`) `/healthz`; only `/healthz` and `/mcp` exist. `/healthz` checks Postgres (schema included) and S3 and answers 503 when either fails [compose]. Keep the ASG `HealthCheckType` at `EC2`, or set generous unhealthy thresholds, or a store outage cycles instances (F12/U13).
 
    **Variables:**
 
@@ -294,7 +294,7 @@ F6, F7, F8, F10 → F11, F16, U24, U25 ─► go-live
 
 Nothing scripts it against a deployed stack yet (`make proto-demo` and `make proto-audit` do on compose; U13 adapts them): run the SQL by hand.
 
-1. **Health.** Web `/api/health`, tools and worker `/healthz` answer 200; tools reports `"tools":48`; `ev=start` shows `provider=gateway`. [compose]
+1. **Health.** Web `/api/health`, tools and worker `/healthz` answer 200; tools reports `"tools":50` (the length of `allToolSchemas`) and ok with both checks; `ev=start` shows `provider=gateway`. [compose]
 2. **Tool transport.** From a worker-security-group bastion with Node ≥ 22, npm 11.12.x, `npm ci` run in a checkout's `packages/engine/mcp-server`, and registry access (`npx` fetches `tsx`; U12). If tools has `OPENROUTER_API_KEY`, write `{"openRouterApiKey":"set"}` to `~/.familysearch-mcp/config.json` and add `--host-config`.
 
    ```
