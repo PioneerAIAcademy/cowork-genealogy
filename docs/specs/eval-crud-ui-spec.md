@@ -243,9 +243,9 @@ because they navigate with `window.location.href`, a full document load that dis
 
 Three testing layers, each covering a different failure class:
 
-1. **Vitest (unit, `npm test`)** runs in Node with no DOM. Covers data-layer logic, API route behavior, snapshot normalization, and schema validation. Cannot render a component or detect layout issues.
+1. **Vitest (unit, `pnpm --filter cowork-genealogy-eval-app test`)** runs in Node with no DOM. Covers data-layer logic, API route behavior, snapshot normalization, and schema validation. Cannot render a component or detect layout issues.
 
-2. **Playwright (e2e, `npm run test:e2e`)** runs in Chromium against a real Next.js dev server pointed at a temp fixture tree (`EVAL_DIR`). Covers layout/CSS bugs that are invisible to the other two layers. The fixture tree is created synchronously at config load time by `createFixtureSync` in `tests/e2e/create-fixture.ts`, before the web server starts, and removed by `globalTeardown`. It is built independently of `tests/helpers/fixtureTree.ts`, whose `makeFixtureTree` is async and so cannot run at config load. Tests never touch repository data.
+2. **Playwright (e2e, `pnpm --filter cowork-genealogy-eval-app test:e2e`)** runs in Chromium against a real Next.js dev server pointed at a temp fixture tree (`EVAL_DIR`). Covers layout/CSS bugs that are invisible to the other two layers. The fixture tree is created synchronously at config load time by `createFixtureSync` in `tests/e2e/create-fixture.ts`, before the web server starts, and removed by `globalTeardown`. It is built independently of `tests/helpers/fixtureTree.ts`, whose `makeFixtureTree` is async and so cannot run at config load. Tests never touch repository data.
 
 3. **Manual browser check** remains necessary for interaction flows (annotation save round-trip, keyboard shortcuts, drag-to-resize) that are not yet automated. One interaction flow is automated: `tests/e2e/holdout-persistence.spec.ts` saves, creates and deletes a test through the UI against the temp tree and asserts the list and edit page show the persisted value on their **first render** — by holding the list's refetch behind a 2 s route delay and asserting with a bounded 1 s timeout, since Playwright's `{ timeout: 0 }` means *no* deadline, not "now".
 

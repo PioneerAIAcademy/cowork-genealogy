@@ -12,6 +12,7 @@
     "scenario": null
   },
   "execution": {
+    "max_turns": 30,
     "max_wall_clock_seconds": 480,
     "stub_skills": [
       {
