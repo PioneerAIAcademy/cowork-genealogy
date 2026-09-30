@@ -464,6 +464,57 @@ describe("a stated-relationship census whose head is recorded 'Self'", () => {
   });
 });
 
+describe("christening and birth rows (genealogist rulings 2026-09-30)", () => {
+  const doc = (title: string, eventType: string): ExtractDocument => ({
+    recordId: "rec_x",
+    gedcomx: {
+      sources: [{ resource_type: "http://gedcomx.org/Collection", title }],
+      persons: [
+        {
+          id: "p1",
+          principal: true,
+          names: [{ given: "Anna", surname: "Berg" }],
+          facts: [{ type: `http://gedcomx.org/${eventType}`, date: "3 May 1850", place: "Oslo, Norway" }],
+        },
+        { id: "p2", gender: "Male", names: [{ given: "Lars", surname: "Berg" }] },
+        { id: "p3", gender: "Male", names: [{ given: "Nils", surname: "Dahl" }] },
+      ],
+      relationships: [{ type: "http://gedcomx.org/ParentChild", parent: "p2", child: "p1" }],
+    },
+  });
+  const find = (d: ExtractDocument, pred: (a: ExtractedAssertion) => boolean) =>
+    extractRecord(d, { logEntryId: "l_001", questionIds: [] }).assertions.find(pred)!;
+
+  it("7b: a godparent on a christening is recorded by the officiant", () => {
+    const d = doc("Norway, Baptisms, 1634-1927", "Christening");
+    const g = find(d, (a) => a.fact_type === "name" && a.value === "Nils Dahl");
+    expect(g.record_role).toMatch(/^other_/);
+    expect(g.informant_proximity).toBe("official_duty");
+    expect(g.information_quality).toBe("primary");
+    const father = find(d, (a) => a.fact_type === "name" && a.value === "Lars Berg");
+    expect(father.informant_proximity).toBe("household_member");
+  });
+
+  it("the christening event itself stays the officiant's", () => {
+    const ev = find(doc("Norway, Baptisms, 1634-1927", "Christening"), (a) => a.fact_type === "christening");
+    expect(ev.informant_proximity).toBe("official_duty");
+  });
+
+  it("7a: a birth record's birth comes from the informant, not the registrar", () => {
+    const ev = find(doc("Norway, Births, 1850-1900", "Birth"), (a) => a.fact_type === "birth");
+    expect(ev.informant_proximity).toBe("household_member");
+    expect(ev.information_quality).toBe("primary");
+  });
+
+  it("7c: a delayed birth record is secondary; an ordinary one is not", () => {
+    const late = find(doc("Arkansas, Delayed Birth Records, 1865-1932", "Birth"), (a) => a.fact_type === "birth");
+    expect(late.information_quality).toBe("secondary");
+    expect(late.informant_bias_notes).toMatch(/delayed/);
+    const name = find(doc("Arkansas, Delayed Birth Records, 1865-1932", "Birth"), (a) => a.fact_type === "name" && a.value === "Anna Berg");
+    expect(name.information_quality).toBe("secondary");
+  });
+});
+
 describe("a christening record", () => {
   const out = run("baptism");
 

@@ -729,8 +729,18 @@ function classify(
     };
   }
 
-  if (recordType === "christening" || recordType === "birth") {
+  // Christening and birth rows (genealogist rulings, 2026-09-30).
+  if (recordType === "christening") {
     if (factClass === "event") {
+      return {
+        informant: "the officiant",
+        informant_proximity: "official_duty",
+        information_quality: "primary",
+      };
+    }
+    // Godparents and sponsors are recorded by the officiant, not reported by the
+    // family: 7b. Every non-family party on a christening is roled `other_N`.
+    if (family === "other") {
       return {
         informant: "the officiant",
         informant_proximity: "official_duty",
@@ -743,6 +753,20 @@ function classify(
       informant: "the presenting parent",
       informant_proximity: "household_member",
       information_quality: "primary",
+    };
+  }
+
+  if (recordType === "birth") {
+    // 7a: the registrar recorded the birth but did not witness it. The birth
+    // itself, like every other fact, comes from the informant, usually a parent.
+    // 7c: a DELAYED certificate, filed long after the birth, is recollection, so
+    // it is `secondary` though the source is original. Told apart by title.
+    const delayed = /delayed/i.test(collection ?? "");
+    return {
+      informant: "the informant (usually a parent)",
+      informant_proximity: "household_member",
+      information_quality: delayed ? "secondary" : "primary",
+      ...(delayed ? { bias: "a delayed birth record, reported long after the birth" } : {}),
     };
   }
 
