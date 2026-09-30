@@ -10,8 +10,9 @@ Decided (lead, 2026-09-27): no live mode — the live mode added for a
 no-project profile audit had no caller, and such an audit runs local mode
 over a scratch project instead.
 
-Adapted from FamilySearch's `MobWarnings.java`. This spec starts with
-three starter warnings and is designed for easy extension.
+Adapted from FamilySearch's `MobWarnings.java`, plus one project rule
+(`hasEventInOtherCountry`) that is not a FamilySearch port. This spec
+starts with three starter warnings and is designed for easy extension.
 
 ### Scope: anchor person and their one-hops
 
@@ -32,10 +33,10 @@ mob."
   report on a relationship between the anchor and a one-hop relative.
 
 **Single-person warnings run on the anchor *and* its one-hop relatives,
-not the anchor alone.** 27 of the 47 self-checks have a relative-mob variant
+not the anchor alone.** 27 of the 48 self-checks have a relative-mob variant
 (`relatives*`, `maleRelatives*`, `femaleRelatives*`) that fires the same
 condition on a parent, spouse, or child; the flagged relative is named in
-the warning's `personId`/`personName`. The other 20 run on the anchor only.
+the warning's `personId`/`personName`. The other 21 run on the anchor only.
 The relative-variant tags in § Warning Definitions are the evidence.
 
 ---
@@ -77,7 +78,7 @@ The shipped shape is `PersonWarning` in
 | Field | Type | Description |
 |-------|------|-------------|
 | `scoreType` | string | Always `"COHERENCE"`. The quality-score family the check belongs to (ported from FamilySearch's MobWarnings, which groups checks by score type) |
-| `issueType` | string | The warning tag (e.g., `hasEventAfterDeath1`). One of the tags catalogued under § Warning Definitions; each tag is a FamilySearch quality-score tag |
+| `issueType` | string | The warning tag (e.g., `hasEventAfterDeath1`). One of the tags catalogued under § Warning Definitions; each tag is a FamilySearch quality-score tag, except `hasEventInOtherCountry` which is a project rule |
 | `severity` | string | `contradiction` (impossible) or `implausible` (unlikely but possible) |
 | `personId` | string | Person ID the warning applies to |
 | `personName` | string | Display name of the person (see below) |
@@ -433,7 +434,7 @@ tool.
 
 ### Tag Catalogue
 
-The full set of **74** tags the tool emits in `issueType`. Each row is
+The full set of **75** tags the tool emits in `issueType`. Each row is
 `Tag`, `Severity`, `Rule` (the condition that fires it), and `Cause`
 (what it usually indicates). `scoreType` is `COHERENCE` for every tag.
 The bidirectional drift lint
@@ -585,6 +586,12 @@ mirrored self-check for the rule.
 | `relativesHasEarlyMarriage14` | implausible | `hasEarlyMarriage14` |
 | `relativesHasLateMarriage90` | implausible | `hasLateMarriage90` |
 | `maleRelativesHasDiffSurname` | implausible | `hasDiffSurnameMale` |
+
+#### Project rules (not ported from FamilySearch)
+
+| Tag | Severity | Rule | Cause |
+|-----|----------|------|-------|
+| `hasEventInOtherCountry` | implausible | A non-migration, non-residence event (on the person or on a Couple relationship) is in a country that bidirectionally contradicts every birth and death anchor country, when those anchors agree | A record attached to the wrong person, or a mis-standardised place |
 
 ---
 
