@@ -398,6 +398,10 @@ consistent across schema, manifest, and skill.)*
     a FamilySearch page URL is refused before any request. The resolved URL then
     goes through the same host check as a directly-supplied one — resolving
     changes what is accepted, never what is trusted.
+  - When a **page** URL was resolved, the artifact URL it resolved to comes back
+    on `metadata.memoryArtifactUrl`, so a later read can pass it directly and
+    skip the lookup. It is absent when a direct artifact URL was supplied —
+    there was nothing to resolve.
   - It is fetched with **no Authorization header and needs no FamilySearch
     login**, and neither does the page-URL lookup. Measured 2026-09-15 on one
     artifact with three header sets: no headers at all → 200, UA only → 200,
@@ -583,7 +587,7 @@ list the caller can turn into assertions.
 | `file` missing / a directory / not an image or PDF | `'<ref>' was not found under the project folder …` / `is a directory` / `is not an image or a PDF (by its content, not its name) …` |
 | Payload over `MAX_OCR_INPUT_BYTES` (any input) | `This <type> is N MiB, over the 14 MiB the OCR request can carry … It was not sent. Ask the user to re-save … or split a multi-page PDF …` (§7) |
 | Bad imageId/ark | reuse `image_read`'s existing messages (§8) |
-| `memoryArtifactUrl` is neither a memory artifact URL nor a Memories page URL | `Not a FamilySearch Memories page URL: <url>. Expected https://www.familysearch.org/photos/artifacts/<id> or https://www.familysearch.org/memories/<id>.` — refused before any request |
+| `memoryArtifactUrl` is neither a memory artifact URL nor a Memories page URL | the shared `Unrecognized memoryArtifactUrl.` message, which names **both** accepted forms — a near-miss page URL (`http://`, a singular `/photos/artifact/`, a non-numeric id) lands here, so it must not name only the artifact form. Refused before any request |
 | A Memories page lookup returns non-200, after the 401/403 retry | `FamilySearch Memories lookup failed (<status>) for artifact <id>.` Says to open the page URL in a browser to confirm the memory exists and is visible; if restricted, call `login` and retry; otherwise transcribe by another route |
 | A Memories page resolves to no readable artifact | `FamilySearch returned no readable artifact for memory <id>.` Names the likely cause — a story with no attached file, or an audio memory — and directs to `person_read`'s source text instead |
 | No OpenRouter key configured | LLM-instruction error directing the user to set `openRouterApiKey` in `~/.familysearch-mcp/config.json` directly (§6.3). The tool never accepts an API key as a parameter. |

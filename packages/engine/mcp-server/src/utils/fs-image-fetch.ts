@@ -180,8 +180,11 @@ export function resolveFsImageInput(
   if (input.memoryArtifactUrl !== undefined) {
     if (!MEMORY_ARTIFACT_PATTERN.test(input.memoryArtifactUrl)) {
       throw new Error(
-        "Unrecognized memoryArtifactUrl. Expected a FamilySearch memory " +
-          "artifact URL on sg30p0.familysearch.org ending in /dist.<ext>."
+        "Unrecognized memoryArtifactUrl. Expected either a FamilySearch memory " +
+          "artifact URL on sg30p0.familysearch.org ending in /dist.<ext>, or " +
+          "(image_transcribe only) a Memories page URL " +
+          "https://www.familysearch.org/photos/artifacts/<id> or " +
+          "https://www.familysearch.org/memories/<id>, where <id> is digits."
       );
     }
     return {

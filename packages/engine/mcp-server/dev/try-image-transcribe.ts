@@ -20,6 +20,8 @@
 
 import { LOCAL } from "../src/auth/principal.js";
 import { imageTranscribeTool } from "../src/tools/image-transcribe.js";
+import { isMemoryArtifactUrl } from "../src/utils/fs-image-fetch.js";
+import { memoryPageId } from "../src/utils/memories.js";
 
 const argv = process.argv.slice(2);
 function takeFlag(name: string): string | undefined {
@@ -50,10 +52,13 @@ if (file && !projectPath) {
 // because routing those to `ark` sends the wrong input and the failure looks
 // like the tool rejecting a url it now accepts. Anything else goes as ark.
 const isImageId = value !== undefined && /^\d+_\d+$/.test(value);
+// Imported, not re-implemented: a local copy of either pattern drifts, and a
+// drifted copy routes a value the tool then rejects — which is the misrouting
+// this branch exists to prevent. The first copy already had, dropping
+// MEMORY_PAGE_PATTERN's terminator so `/artifacts/123abc` routed as a memory.
 const isMemory =
-  value !== undefined &&
-  (/^https:\/\/sg30p0\.familysearch\.org\/.+\/dist\.[A-Za-z0-9]+(\?.*)?$/.test(value) ||
-    /^https:\/\/(?:www\.)?familysearch\.org\/(?:photos\/artifacts|memories)\/\d+/.test(value));
+  value !== undefined && (isMemoryArtifactUrl(value) || memoryPageId(value) !== null);
+
 const result = await imageTranscribeTool({
   ...(file
     ? { file }

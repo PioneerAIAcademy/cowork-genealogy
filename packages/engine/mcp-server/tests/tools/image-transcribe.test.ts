@@ -1265,7 +1265,10 @@ describe("imageTranscribeTool — a Memories PAGE url (#2987)", () => {
     mockFetch.mockReset();
     await expect(
       imageTranscribeTool({ memoryArtifactUrl: `https://evil.example.com/r?u=${PAGE}` }, LOCAL),
-    ).rejects.toThrow(/Unrecognized memoryArtifactUrl|Not a FamilySearch Memories page URL/);
+      // The ONE message this path produces. An alternation over both candidate
+      // messages passed whichever fired, which is exactly what hid the fact
+      // that the other one is unreachable from here.
+    ).rejects.toThrow(/Unrecognized memoryArtifactUrl/);
     expect(mockFetch, "a rejected host must never be looked up").not.toHaveBeenCalled();
     expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
   });
@@ -1300,6 +1303,22 @@ describe("imageTranscribeTool — a Memories PAGE url (#2987)", () => {
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  });
+
+  it("returns the resolved artifact url so a second read skips the lookup", async () => {
+    // person_read's spec tells readers artifact_url "saves the lookup". Without
+    // this the one caller that just performed the lookup is the only one who
+    // cannot benefit from it, and a re-read repeats the round trip.
+    mockLookupThenOcr("text");
+    const result = await transcribe({ memoryArtifactUrl: PAGE }, LOCAL);
+    expect(result.metadata.memoryArtifactUrl).toBe(ABOUT);
+  });
+
+  it("does not invent a memoryArtifactUrl for a direct artifact url", async () => {
+    mockFetch.mockReset();
+    mockOpenRouterOk("direct");
+    const result = await transcribe({ memoryArtifactUrl: ABOUT }, LOCAL);
+    expect(result.metadata.memoryArtifactUrl).toBeUndefined();
   });
 
   it("leaves a DIRECT artifact url alone — no lookup at all", async () => {

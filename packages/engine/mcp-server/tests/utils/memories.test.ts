@@ -9,8 +9,8 @@ import {
   rankForTranscription,
   hasRecordLanguage,
   fetchStoryText,
-  isMemoryPageUrl,
-  resolveMemoryPageUrl,
+  memoryPageId,
+  resolveMemoryArtifactUrl,
 } from "../../src/utils/memories.js";
 import { LOCAL } from "../../src/auth/principal.js";
 
@@ -277,66 +277,66 @@ describe("resolveMemoryPageUrl — a Memories PAGE url is resolved to the bytes 
 
   it("1. resolves a page url to the artifact's `about`", async () => {
     fetchMock.mockResolvedValue(ok(ABOUT));
-    await expect(resolveMemoryPageUrl(PAGE, LOCAL)).resolves.toBe(ABOUT);
+    await expect(resolveMemoryArtifactUrl(memoryPageId(PAGE)!, LOCAL)).resolves.toBe(ABOUT);
     expect(fetchMock.mock.calls[0][0]).toBe(
       "https://api.familysearch.org/platform/memories/memories/117201348",
     );
   });
 
   it("2. accepts the bare host as well as www.", async () => {
+    // Asserted on the id, not through a `!`: a non-null assertion turns a null
+    // id into a lookup for ".../null", which the mock answers happily — so the
+    // test passed with the `www.`-required break applied until this changed.
+    const id = memoryPageId("https://familysearch.org/photos/artifacts/117201348");
+    expect(id).toBe("117201348");
     fetchMock.mockResolvedValue(ok(ABOUT));
-    await expect(
-      resolveMemoryPageUrl("https://familysearch.org/photos/artifacts/117201348", LOCAL),
-    ).resolves.toBe(ABOUT);
+    await expect(resolveMemoryArtifactUrl(id!, LOCAL)).resolves.toBe(ABOUT);
   });
 
   it("3. keeps a query string, fragment and trailing slash out of the id", async () => {
     for (const suffix of ["/", "?foo=1", "#frag"]) {
       fetchMock.mockReset();
       fetchMock.mockResolvedValue(ok(ABOUT));
-      await resolveMemoryPageUrl(`${PAGE}${suffix}`, LOCAL);
+      expect(memoryPageId(`${PAGE}${suffix}`), `suffix ${suffix}`).toBe("117201348");
+      await resolveMemoryArtifactUrl(memoryPageId(`${PAGE}${suffix}`)!, LOCAL);
       expect(fetchMock.mock.calls[0][0], `suffix ${suffix}`).toBe(
         "https://api.familysearch.org/platform/memories/memories/117201348",
       );
     }
   });
 
-  it("4. refuses a url that merely CONTAINS a FamilySearch page url — the anchor", async () => {
-    // The only shape where dropping `^` changes the answer: measured false
-    // anchored, true unanchored. Refused before any network call.
-    const embedded = `https://evil.example.com/r?u=${PAGE}`;
-    expect(isMemoryPageUrl(embedded)).toBe(false);
-    await expect(resolveMemoryPageUrl(embedded, LOCAL)).rejects.toThrow(
-      /Not a FamilySearch Memories page URL/,
-    );
-    expect(fetchMock, "a rejected host must never be looked up").not.toHaveBeenCalled();
+  it("4. rejects a url that merely CONTAINS a FamilySearch page url — the anchor", async () => {
+    // The only shape where dropping `^` changes the answer: measured null
+    // anchored, an id unanchored. No id means the tool never reaches the
+    // resolver, so nothing is looked up on behalf of an unvalidated host.
+    expect(memoryPageId(`https://evil.example.com/r?u=${PAGE}`)).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("4b. refuses a foreign host — the host literal, NOT the anchor", async () => {
-    // Kept separate on purpose: this is false with AND without `^`, so it can
+  it("4b. rejects a foreign host — the host literal, NOT the anchor", async () => {
+    // Kept separate on purpose: this is null with AND without `^`, so it can
     // never red the anchor break and must not be read as anchor coverage.
-    expect(isMemoryPageUrl("https://evil.example/photos/artifacts/1")).toBe(false);
-    await expect(
-      resolveMemoryPageUrl("https://evil.example/photos/artifacts/1", LOCAL),
-    ).rejects.toThrow(/Not a FamilySearch Memories page URL/);
+    expect(memoryPageId("https://evil.example/photos/artifacts/1")).toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("4c. refuses a host-suffix lookalike", async () => {
-    expect(
-      isMemoryPageUrl("https://www.familysearch.org.evil.com/photos/artifacts/1"),
-    ).toBe(false);
+  it("4c. rejects a host-suffix lookalike", async () => {
+    expect(memoryPageId("https://www.familysearch.org.evil.com/photos/artifacts/1")).toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("4d. rejects a non-numeric id, which the terminator is what catches", async () => {
+    expect(memoryPageId("https://www.familysearch.org/photos/artifacts/123abc")).toBeNull();
   });
 
   it("5. refuses an `about` that is not a memory artifact url", async () => {
     fetchMock.mockResolvedValue(ok("https://evil.example/not-an-artifact.jpg"));
-    await expect(resolveMemoryPageUrl(PAGE, LOCAL)).rejects.toThrow(/no readable artifact/);
+    await expect(resolveMemoryArtifactUrl(memoryPageId(PAGE)!, LOCAL)).rejects.toThrow(/no readable artifact/);
   });
 
   it("6. throws an actionable error on a 404 and on empty sourceDescriptions", async () => {
     fetchMock.mockResolvedValue(new Response("", { status: 404 }));
-    await expect(resolveMemoryPageUrl(PAGE, LOCAL)).rejects.toThrow(
+    await expect(resolveMemoryArtifactUrl(memoryPageId(PAGE)!, LOCAL)).rejects.toThrow(
       /Memories lookup failed \(404\).*call the login tool/s,
     );
 
@@ -344,7 +344,7 @@ describe("resolveMemoryPageUrl — a Memories PAGE url is resolved to the bytes 
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ sourceDescriptions: [] }), { status: 200 }),
     );
-    await expect(resolveMemoryPageUrl(PAGE, LOCAL)).rejects.toThrow(/no readable artifact/);
+    await expect(resolveMemoryArtifactUrl(memoryPageId(PAGE)!, LOCAL)).rejects.toThrow(/no readable artifact/);
   });
 
   it("resolves for a LOGGED-OUT caller — getValidToken is never reached", async () => {
@@ -358,14 +358,14 @@ describe("resolveMemoryPageUrl — a Memories PAGE url is resolved to the bytes 
       new Error("User is not logged in to FamilySearch. Call the login tool."),
     );
     fetchMock.mockResolvedValue(ok(ABOUT));
-    await expect(resolveMemoryPageUrl(PAGE, LOCAL)).resolves.toBe(ABOUT);
+    await expect(resolveMemoryArtifactUrl(memoryPageId(PAGE)!, LOCAL)).resolves.toBe(ABOUT);
     expect(getValidTokenMock).not.toHaveBeenCalled();
   });
 
   it("11. accepts the /memories/<id> form person_read hands the agent", async () => {
     fetchMock.mockResolvedValue(ok(ABOUT));
     await expect(
-      resolveMemoryPageUrl("https://www.familysearch.org/memories/117201348", LOCAL),
+      resolveMemoryArtifactUrl(memoryPageId("https://www.familysearch.org/memories/117201348")!, LOCAL),
     ).resolves.toBe(ABOUT);
     expect(fetchMock.mock.calls[0][0]).toBe(
       "https://api.familysearch.org/platform/memories/memories/117201348",
@@ -383,14 +383,14 @@ describe("resolveMemoryPageUrl — a Memories PAGE url is resolved to the bytes 
     // The lookup is anonymous because the probe measured it so; demanding a
     // token would refuse a logged-out caller a public artifact.
     fetchMock.mockResolvedValue(ok(ABOUT));
-    await resolveMemoryPageUrl(PAGE, LOCAL);
+    await resolveMemoryArtifactUrl(memoryPageId(PAGE)!, LOCAL);
     expect(authHeaderOf(fetchMock.mock.calls[0])).toBeNull();
 
     fetchMock.mockReset();
     fetchMock
       .mockResolvedValueOnce(new Response("", { status: 403 }))
       .mockResolvedValue(ok(ABOUT));
-    await expect(resolveMemoryPageUrl(PAGE, LOCAL)).resolves.toBe(ABOUT);
+    await expect(resolveMemoryArtifactUrl(memoryPageId(PAGE)!, LOCAL)).resolves.toBe(ABOUT);
     expect(fetchMock.mock.calls.length, "403 must trigger exactly one retry").toBe(2);
     expect(authHeaderOf(fetchMock.mock.calls[0]), "first call stays anonymous").toBeNull();
     expect(authHeaderOf(fetchMock.mock.calls[1]), "the retry carries the bearer").toMatch(

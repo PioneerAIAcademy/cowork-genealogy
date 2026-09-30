@@ -211,8 +211,10 @@ on the artifact all degrade to a metadata-only entry.
 A memory the budget skipped, the filter missed, or the OCR failed on can be read
 directly with `image_transcribe`'s `memoryArtifactUrl` input. **Prefer the
 source's `artifact_url`** — it is the bytes URL and is read straight away. Its
-`url`, the human `/memories/<id>` page, is also accepted and costs one extra
-Memories lookup to resolve. `image_read` takes neither. Like `text` and
+`url`, the human `/memories/<id>` page, is also accepted by `image_transcribe`
+and costs one extra Memories lookup to resolve. `image_read` takes
+`artifact_url` — accepted, though not advertised on its input schema — but not
+the page `url`, which it cannot resolve. Like `text` and
 `notes`, `artifact_url` is response-only: it is absent from `TREE_SOURCE_FIELDS`,
 so a caller copying a memory source into `tree.gedcomx.json` must drop it, and
 the write fails loudly rather than silently persisting it.

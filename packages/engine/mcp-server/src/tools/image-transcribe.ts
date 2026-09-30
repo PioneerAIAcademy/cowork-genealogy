@@ -1,6 +1,6 @@
 import type { Principal } from "../auth/principal.js";
 import { getOpenRouterApiKey, getOpenRouterModel } from "../auth/config.js";
-import { isMemoryPageUrl, resolveMemoryPageUrl } from "../utils/memories.js";
+import { memoryPageId, resolveMemoryArtifactUrl } from "../utils/memories.js";
 import {
   resolveFsImageInput,
   fetchFsImageBytes,
@@ -325,6 +325,8 @@ export async function imageTranscribeTool(
   let contentType: string;
   let sizeBytes: number;
   let label: string;
+  let pageId: string | null = null;
+  let resolvedMemoryUrl = "";
   let apiKey: string;
   let model: string;
 
@@ -373,25 +375,14 @@ export async function imageTranscribeTool(
     sizeBytes = bytes.length;
     label = input.file;
   } else {
-    // Resolve credentials/config BEFORE anything on the network: a missing key
-    // should fail fast (and never leave a fetched scan unused). getOpenRouterApiKey
-    // throws an LLM-actionable error naming config.json when absent. This sits
-    // above the Memories lookup below so a page-URL call with no key does not
-    // spend a FamilySearch round trip before reporting it.
-    apiKey = await getOpenRouterApiKey(principal);
-    model = await getOpenRouterModel(principal);
-
     // A Memories *page* URL carries no path to the bytes, so it is resolved to
     // the direct artifact URL first. resolveFsImageInput stays synchronous, and
     // its MEMORY_ARTIFACT_PATTERN check then runs on the RESOLVED url — that is
     // the host check, unchanged.
+    pageId = input.memoryArtifactUrl !== undefined ? memoryPageId(input.memoryArtifactUrl) : null;
+    if (pageId !== null) resolvedMemoryUrl = await resolveMemoryArtifactUrl(pageId, principal);
     const forFetch =
-      input.memoryArtifactUrl !== undefined && isMemoryPageUrl(input.memoryArtifactUrl)
-        ? {
-            ...input,
-            memoryArtifactUrl: await resolveMemoryPageUrl(input.memoryArtifactUrl, principal),
-          }
-        : input;
+      pageId !== null ? { ...input, memoryArtifactUrl: resolvedMemoryUrl } : input;
 
     const resolved = resolveFsImageInput(forFetch, "image_transcribe");
     // Deliberately the RESOLVED url: it feeds imageKey and the staged element's
@@ -399,6 +390,15 @@ export async function imageTranscribeTool(
     // same images/<key>.jpg instead of retaining the scan twice. The staged
     // `source` below keeps the url the agent actually passed.
     label = resolved.label;
+
+    // Resolve credentials/config before FETCHING the image: a missing key should
+    // fail fast and never leave a fetched scan unused. It sits below the input
+    // resolve on purpose — hoisting it above made a malformed ark report a
+    // missing OpenRouter key instead of its own shape error. The Memories lookup
+    // above is the one call a keyless page-URL request can still waste, and it
+    // is small; the image fetch, which is not, is still behind this.
+    apiKey = await getOpenRouterApiKey(principal);
+    model = await getOpenRouterModel(principal);
 
     const fetched = await fetchFsImageBytes(
       resolved.url,
@@ -588,10 +588,12 @@ export async function imageTranscribeTool(
       if (!contentType.toLowerCase().startsWith("image/")) throw new Error("not an image");
       imageRef = await saveSourceImage({
         projectPath: input.projectPath,
-        // `label` is the caller's input verbatim, which for a memory artifact
-        // is a whole URL -- it sanitizes to a ~70-character filename carrying
-        // the host and the ctx param. person_read passes the memory id
-        // instead, so the scan lands at images/<memory id>.jpg.
+        // `label` is the caller's input verbatim EXCEPT on a Memories page url,
+        // which resolves to the artifact url first — so both routes to one
+        // artifact share a key instead of retaining the scan twice. For a
+        // memory artifact it is a whole URL: it sanitizes to a ~70-character
+        // filename carrying the host and the ctx param. person_read passes the
+        // memory id instead, so the scan lands at images/<memory id>.jpg.
         imageKey: opts.imageKey ?? label,
         bytes,
       });
@@ -686,6 +688,11 @@ export async function imageTranscribeTool(
       ...(input.imageId !== undefined ? { imageId: input.imageId } : {}),
       ...(input.ark !== undefined ? { ark: input.ark } : {}),
       ...(input.file !== undefined ? { file: input.file } : {}),
+      // The artifact url a Memories PAGE url resolved to. Returned so the caller
+      // can pass it directly next time: person_read's spec tells readers
+      // artifact_url "saves the lookup", and without this the one caller that
+      // just performed the lookup is the only one that cannot benefit from it.
+      ...(pageId !== null ? { memoryArtifactUrl: resolvedMemoryUrl } : {}),
       contentType,
       model,
       sizeBytes,
