@@ -8,7 +8,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "preinstall": "node scripts/drop-npm-managed-trees.mjs",
+    "preinstall": "node scripts/drop-npm-managed-trees.mjs --as-preinstall",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",

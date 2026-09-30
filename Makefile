@@ -45,6 +45,9 @@ JS_DEPS       := node_modules/.make-installed
 # postinstall the tests import.
 $(JS_DEPS): package.json pnpm-lock.yaml pnpm-workspace.yaml eval/app/package.json \
             $(wildcard packages/*/package.json apps/*/package.json)
+	@# Before pnpm, not as its preinstall hook: pnpm plans its linking first, so
+	@# a tree removed during preinstall leaves eval/app unlinked on that run.
+	node scripts/drop-npm-managed-trees.mjs
 	pnpm install
 	@touch $@
 

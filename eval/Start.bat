@@ -26,6 +26,10 @@ REM workspace, so testing it would skip the install for exactly the people who
 REM still need one, and Next then fails on "Can't resolve '@genealogy/schema'".
 if not exist "eval\app\node_modules\@genealogy\schema" (
   echo First run since the eval app moved into the workspace: installing. This takes a minute.
+  REM Before pnpm, not as its preinstall hook -- pnpm plans its linking first,
+  REM so a tree removed during preinstall leaves eval\app unlinked on that run.
+  call node scripts\drop-npm-managed-trees.mjs
+  if errorlevel 1 ( echo ERROR: could not clear the old npm tree. & pause & exit /b 1 )
   call pnpm install
   if errorlevel 1 ( echo ERROR: pnpm install failed. & pause & exit /b 1 )
 )

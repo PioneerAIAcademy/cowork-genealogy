@@ -308,6 +308,12 @@ Seniors need **Triage** or **Write** access on the repo to apply labels.
 > wrong. Close anything sitting in that folder and re-run; if it still fails,
 > delete `eval\app\node_modules` by hand and run again. This is one-time: once
 > the folder is gone the step is a silent no-op forever after.
+>
+> `Start.bat` and `Setup.bat` clear that folder *before* calling pnpm, so they do
+> it in one pass. A bare `pnpm install` cannot: pnpm decides what to link before
+> it runs the hook, so the hook removes the folder and then stops the install on
+> purpose rather than finishing one that would leave `eval\app` unlinked. Run the
+> same command again and it goes through.
 
 ## E2e tests
 

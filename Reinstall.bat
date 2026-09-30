@@ -38,6 +38,9 @@ if exist eval\app\node_modules rmdir /s /q eval\app\node_modules
 
 echo.
 echo Installing the pnpm workspace ^(web, electron, viewer-ui, schema^)...
+REM Before pnpm, not as its preinstall hook -- pnpm plans its linking first,
+REM so a tree removed during preinstall leaves eval\app unlinked on that run.
+call node scripts\drop-npm-managed-trees.mjs
 call pnpm install
 if errorlevel 1 (
   echo.
