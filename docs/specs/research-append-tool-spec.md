@@ -1825,7 +1825,7 @@ document: {
       type: string,                    // "birth", "death", "residence", "occupation", "age", "marital_status", …
       value?: string, date?: string, place?: string,
       computed?: ("value" | "date" | "place")[],   // which attributes the text does NOT give
-      uncertain?: true,                // the reading is doubted: [?] stays in the value
+      uncertain?: true,                // the reading is doubted: [?] stays in the value; no layer changes
       note?: string,
     }],
   }],
@@ -1868,7 +1868,7 @@ tries to classify is refused by the schema. It is not left to a prompt.
 | roles | `recordType`, `principal`, `statedRelation`, relationships | §11.6's rules. Where those name a party only as `other_N` or `witness_N`, a `statedRelation` is mapped through `roleFromRelationship` instead: `son_in_law_1`, `consent_signer_1`, `neighbor_1`. An `obituary` principal is `deceased`. |
 | `record_basis` | `computed` | `inferred` for a computed attribute, `stated` otherwise. A fact whose attributes differ in mark is **split**, one assertion per group. This is §11.6's birth split, now keyed on the mark and no longer on record type. |
 | `date_certainty` | `computed` includes `date` | `approximate`. |
-| information layer | the §11.6 table | The table keyed on record type × role family × fact class, with two document-only overrides. (1) `informant.name`, when present, replaces the table's generic informant string. (2) `uncertain` lowers `primary` to `indeterminate`: a doubted reading is not firsthand information. |
+| information layer | the §11.6 table | The table keyed on record type × role family × fact class, with one document-only override: `informant.name`, when present, replaces the table's generic informant string. **`uncertain` changes no classification** (genealogist ruling, 2026-09-30): information quality measures what the informant knew, not how well the page was read. The doubt stays in the `[?]` in the value and in `informant_bias_notes`. |
 | `informant_bias_notes` | `note` | Copied verbatim. |
 | `source_classification` | `documentForm` | `page_image`, `verbatim_transcript` → `original`. `index_entry`, `abstract` → `derivative`. `compiled_work` → `authored`. |
 | relationship assertions | `relationships` | §11.6's arms, plus `sibling`. Census: none from edges, as §11.6. |

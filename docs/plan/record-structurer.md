@@ -49,12 +49,12 @@ Key: **code** = #2937's `record-extract.ts` / `extraction-append.ts`.
 | Step 3 — `structured_value`; no `_inferred` | code | |
 | Step 3 — sex for every persona | agent §4, code | |
 | Step 3 — `standard_place` | code | The writer resolves it. |
-| Layer 2 — decision tree and informant rules | code | The §11.6 table. Two §11.7 overrides: a named informant, and `uncertain` lowers `primary`. |
+| Layer 2 — decision tree and informant rules | code | The §11.6 table. One §11.7 override: a named informant. |
 | Layer 2 — census / death / marriage / christening informant tables | code | The §11.6 table rows. |
 | Layer 2 — funeral director scoped; burial index has no informant | code | The burial row, added on #2979 (commit 9c726c709). |
 | Layer 2 — evidence independence (shared informant) | dropped | Needs a cross-source view one record does not have. It is `conflict-resolution`'s independence analysis. |
 | Layer 3 — `record_basis` doctrine, "was it in a field?" | §11.7 | Becomes the `computed` mark's definition in agent §4. |
-| Epistemic cap — `[?]` and the caller's doubt | agent §4, §11.7 | Widened to self-noticed (lead, 2026-09-27). |
+| Epistemic cap — `[?]` and the caller's doubt | agent §4 | Widened to self-noticed (lead, 2026-09-27). Its "drop `information_quality`" half is dropped (genealogist ruling, 2026-09-30): the doubt stays in `[?]` and the bias notes, and no layer changes. |
 | `log_entry_id`; `research_log_append` if no entry | code | `extraction_append` writes the log entry itself (lead, 2026-09-29). |
 | `extracted_for_question_ids` | code | From `questionIds`. |
 | Step 4 — one call; evidence-type self-check | agent §3 | The self-check becomes "did I list every computed attribute". |
@@ -99,7 +99,7 @@ entry. #2092's disposition for the family is unaffected.
 - `packages/engine/mcp-server/src/utils/record-extract.ts`: a document-mode
   options argument, the `computed`-keyed split, `statedRelation` roles, a
   `sibling` edge arm, the `obituary` type and rows, the field-level table key,
-  the two layer overrides, and the summary writer (shared with §11.6).
+  the named-informant override, and the summary writer (shared with §11.6).
 - `packages/engine/mcp-server/src/tools/extraction-append.ts`: the `documents`
   batch input, all-or-nothing validation, log-entry writing, and the summary
   return.
