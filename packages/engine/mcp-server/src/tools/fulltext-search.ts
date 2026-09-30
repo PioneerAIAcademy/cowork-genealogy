@@ -147,7 +147,7 @@ function mapFacets(raw: FSFulltextFacetItem[]): FulltextFacet[] {
       name: f.displayName!,
       count: f.count,
       items: (f.facets ?? [])
-        .filter((item) => item.displayName)
+        .filter((item) => item.displayName && item.params)
         .slice(0, 20)
         .map((item) => ({
           name: item.displayName!,

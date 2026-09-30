@@ -363,14 +363,14 @@ def test_fulltext_search_never_scopes_to_collection_id(tool_calls):
     errors = []
     for c in calls:
         args = c["args"]
-        if args.get("includeFacets"):
-            facets_seen = True
-        elif "collectionId" in args and not facets_seen:
+        if "collectionId" in args and not facets_seen:
             errors.append(
                 f"fulltext_search sent collectionId={args['collectionId']!r} "
                 f"without a prior includeFacets=true call in this turn "
                 f"(query: {(args.get('keywords') or args.get('nlQuery'))!r})"
             )
+        if args.get("includeFacets"):
+            facets_seen = True
     assert not errors, "collectionId used without prior includeFacets call:\n  - " + "\n  - ".join(errors)
 
 
