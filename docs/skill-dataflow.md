@@ -11,9 +11,9 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 24 skills and 10 agents. Besides the `research` orchestrator itself, its routing
+There are 21 skills and 12 agents. Besides the `research` orchestrator itself, its routing
 table names 13 of them, and 5 more are reached by delegation from a skill the table does
-name. The remaining 13 fire only when the user asks — see
+name. The remaining 11 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
 likely to surprise you.
 
@@ -198,8 +198,8 @@ sibling skill.
 | **`tree-edit`** | Direct user correction; a merge after a conclusion established identity at probable or better | Out-of-pipeline tree changes and person merges | `tree.gedcomx.json`; `place_search`, `person_record_matches`, `person_person_matches` | Tree `persons`, `relationships`, `facts`, `names`, `sources` — `tree_edit` / `tree_correct`. A merge via `merge_tree_persons` **also rewrites `research.json`** ids (see the discrepancies below) |
 | **`translation`** (an AGENT since issue #2804, not a skill) | A non-English record or term; handoff from `historical-context` | Transcription, translation as an explicitly derivative rendering, and paleography | The text or an image path in the delegation. **No MCP tool at all** | Nothing |
 | **`historical-context`** | "why does this record look like this", boundary and naming questions | Narrative context — what the sources say, kept distinct from what it merely believes | `wiki_search`, `wiki_read`, `wikipedia_search`, `place_search`, `place_search_all`, `place_population` | Nothing |
-| **`convert-dates`** | Julian/Gregorian, Old Style, Quaker months, double dating | Identifying the calendar regime; the arithmetic belongs to the tool | `convert_calendar` | Nothing — and **nothing downstream persists the converted date** |
-| **`search-familysearch-wiki`** | Any "how do I find [record type]" question | Wiki guidance, synthesized only from returned chunks | `wiki_search` (hosted wiki API) | `<topic-slug>.md` in the working folder. **Not logged to `log[]`** |
+| **`convert-dates`** (an AGENT since issue #2790, not a skill) | Julian/Gregorian, Old Style, Quaker months, double dating | Identifying the calendar regime; the arithmetic belongs to the tool | `convert_calendar` | Nothing — and **nothing downstream persists the converted date** |
+| **`search-familysearch-wiki`** (an AGENT since issue #2794, not a skill) | Any "how do I find [record type]" question | Wiki guidance, synthesized only from returned chunks | `wiki_search` (hosted wiki API) | `<topic-slug>.md` in the working folder. **Not logged to `log[]`** |
 | **`search-wikipedia`** (an AGENT since issue #2795, not a skill) | A single-article encyclopedia lookup | The verbatim article extract — no paraphrase | `wikipedia_search` | `<title-slug>.md` in the working folder. **Not logged to `log[]`** |
 | **`validate-schema`** | "validate", "check the files" | Relaying validator errors in plain terms with a non-regressing fix each | `validate_research_schema` | Nothing. Never edits a file to fix an error |
 | **`forget-and-rederive`** | Practice mode — the researcher asks for a known answer to be stripped | Removing a tree slice with cascade so it must be re-derived from records, and holding the rederivation to account | `project_context`; a `dryRun` read-back. **Forbidden** from reading `tree.gedcomx.json` | Tree slice removed and `.tree-before-forget.gedcomx.json` written — `tree_forget`. Touches no `research.json` |
@@ -241,7 +241,7 @@ Two consequences worth holding onto:
   and the `PreToolUse` hook. (`disallowedTools:` was deleted from every agent
   on 2026-08-30 — it only restated the `tools:` omission.)
 - **Only three skills hold `research_query`** — `research`, `search-records`,
-  `search-external-sites` — and five of the nine agents. Everything else that needs project
+  `search-external-sites` — and five of the eleven agents. Everything else that needs project
   state does a whole-file `Read`, which is the thing the orchestrator forbids for itself
   because `research.json` reaches 100+ assertions by late run.
 - **The hook carries exactly four rules**, in
@@ -331,24 +331,17 @@ touch either side.
 No routing-table row names these, so an autonomous `/research` run never enters them:
 
 `search-full-text` · `timeline` · `check-warnings` · `historical-context` ·
-`convert-dates` · `tree-edit` · `validate-schema` · `forget-and-rederive` ·
-`project-status` · `search-familysearch-wiki` ·
+`tree-edit` · `validate-schema` · `forget-and-rederive` ·
+`project-status` ·
 `source-evaluation` · `init-project` (named in prose, not in the table)
 
-`citation` left this list on 2026-09-23 by ceasing to be a skill (issue #2799), and
-`search-wikipedia` on 2026-09-27 (issue #2795). Both are now agents, and an agent is
-auto-delegated from its own `description` rather than from a routing-table row — so
-the row's absence no longer implies either cannot fire.
-**Whether it actually fires in an autonomous run is unmeasured**, and it will stay
-unmeasured until a committed e2e run postdates the conversion. Do not read its removal
-from this list as evidence either way.
-
-`search-wikipedia` left this list on 2026-09-27 by ceasing to be a skill (issue #2795),
-and `translation` on 2026-09-29 (issue #2804). Both are now agents, and an agent is
-auto-delegated from its own `description` rather than from a routing-table row — so
-the row's absence no longer implies either cannot fire.
-**Whether either actually fires in an autonomous run is unmeasured**, and it will stay
-unmeasured until a committed e2e run postdates the conversion. Do not read their removal
+`citation` left this list on 2026-09-23 by ceasing to be a skill (issue #2799),
+`search-wikipedia` on 2026-09-27 (issue #2795), and `convert-dates`,
+`search-familysearch-wiki` and `translation` on 2026-09-29 (issues #2790, #2794, #2804). All five are now
+agents, and an agent is auto-delegated from its own `description` rather than from a
+routing-table row — so the row's absence no longer implies any of them cannot fire.
+**Whether each actually fires in an autonomous run is unmeasured**, and it will stay
+unmeasured until a committed e2e run postdates each conversion. Do not read their removal
 from this list as evidence either way.
 
 The three **thin skill halves** of the paired rows join this list. Rows 7, 10
