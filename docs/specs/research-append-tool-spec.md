@@ -1819,6 +1819,8 @@ document: {
     names:  [{ given?: string, surname?: string, uncertain?: true, note?: string }],
     gender?: "male" | "female",
     statedRelation?: string,           // the text's own word: "son", "wife", "daughter-in-law", "consent signer", "neighbor"
+    fatherBirthPlace?: string,         // a census's parent-birthplace columns, as written on this person's line
+    motherBirthPlace?: string,
     facts:  [{
       type: string,                    // "birth", "death", "residence", "occupation", "age", "marital_status", …
       value?: string, date?: string, place?: string,
@@ -1892,12 +1894,13 @@ because the notice does not say who was present. Life history is secondhand
 recollection. The surviving spouse's **name** is recent knowledge, but the
 **marriage date** is life history.
 
-**The table may key on a specific field, not only on a fact class.** One rule
-already needs it: on a census, a parent's or grandparent's birthplace is
-`secondary` whoever answered, because no household respondent could have
-witnessed it. The table's format therefore becomes record type × role family ×
-fact class, with an optional field-level override, where a row names the field
-it narrows to.
+**The census parent-birthplace columns follow §11.6's rule unchanged**
+(genealogist ruling, 2026-09-30): written only when the parent is in the
+household, onto the parent's own persona, `secondary`, one claim per parent.
+A transcribed census carries them as `fatherBirthPlace` / `motherBirthPlace`
+on the person whose line states them. The table's format therefore becomes
+record type × role family × fact class, with an optional field-level
+override, where a row names the field it narrows to.
 
 #### Return
 
