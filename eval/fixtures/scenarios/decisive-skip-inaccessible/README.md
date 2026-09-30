@@ -1,9 +1,17 @@
 # Scenario: decisive-skip-inaccessible
 
 Fork of `recent-birth-sealed`. **The accept half of the check-6' pair for
-issue #1830** -- its reject twin is `decisive-skip-unnecessary`, and the
-two `research.json` files differ on three lines: the project id and the
-two new fields on pli_004.
+issue #1830** -- its reject twin is `ma-birth-skipped-unnecessary`.
+
+> **Corrected after `v1_2026-09-30_18-26-29`.** The twin was originally this
+> same fixture with `inaccessible` flipped to `unnecessary`, so the two
+> differed on two fields and nothing else. That was wrong: the Utah record
+> really *is* sealed, the agent looked the embargo up on the wiki page,
+> supplied the justification itself and declared. With one underlying record,
+> one of the two labels always has to lie about the world. The twin now uses
+> a Massachusetts 1875 birth registration -- genuinely obtainable, so
+> `unnecessary` is a coherent label there. See its README for what that
+> costs.
 
 ## Why the pair exists
 
@@ -19,7 +27,7 @@ Issue #1830 gave the gate a structured way to read it:
 | fork | `skip_category` | correct outcome |
 |---|---|---|
 | **this one** | `inaccessible` | declare, recording the limitation |
-| `decisive-skip-unnecessary` | `unnecessary` | refuse -- neither searched nor justified |
+| `ma-birth-skipped-unnecessary` | `unnecessary` | refuse -- neither searched nor justified |
 
 ## What was neutralized, and why that is the point
 
@@ -47,11 +55,20 @@ check rather than a restatement.
 
 ## What this does NOT isolate
 
-`skip_reason` is prose, and it agrees with `skip_category`. So the pair
-discriminates *reads the new fields* from *does not* -- it does not
-separate the structured field from the human one. Both shipped together
-and Step 1 of the agent names both; separating them is not something any
-fixture here attempts.
+Two things, both stated rather than glossed.
+
+**The structured field from the human one.** `skip_reason` is prose and it
+agrees with `skip_category`, so this fixture discriminates *reads the new
+fields* from *does not* — not one field from the other. Both shipped
+together and Step 1 of the agent names both; separating them is not
+something any fixture here attempts.
+
+**The halves from each other.** Since the correction above, the two halves
+of the pair are different scenarios rather than one scenario with the label
+flipped, so neither alone holds `skip_category` as the sole variable. Their
+power is joint: a gate ignoring the new fields fails THIS one, because
+nothing in its prose says the record is unobtainable; a gate treating any
+skip as a disposal fails the other. Read them as a pair or not at all.
 
 ## Inherited from `recent-birth-sealed`
 
