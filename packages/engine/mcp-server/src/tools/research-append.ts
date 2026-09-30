@@ -18,6 +18,7 @@
 // all three phases (sources/assertions/person_evidence, the status-transition
 // sections, the phase-3 sections, and the `project` singleton).
 
+import { rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
 import { getProjectStore } from "../store/project-store.js";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
@@ -116,6 +117,7 @@ const SECTIONS: Record<string, SectionConfig> = {
   sources: { prefix: "src_" },
   assertions: { prefix: "a_" },
   person_evidence: { prefix: "pe_", stampTimestamp: CREATED_DATE },
+  rejected_links: { prefix: "rj_", stampTimestamp: CREATED_DATE },
   // Phase 2
   questions: { prefix: "q_", stampTimestamp: CREATED_DATE },
   plans: { prefix: "pl_", stampTimestamp: CREATED_DATE },
@@ -580,6 +582,38 @@ function corroboratingRecordCount(entry: any, research: any, byId: Map<string, a
  *  ordinary case (a death certificate that plainly names its subject), and
  *  gating on record-count alone would reject it. Doubt only becomes
  *  disqualifying when nothing independent backs it up. */
+/**
+ * Refuse a link the researcher has already rejected.
+ *
+ * Exact pair only: rejecting "this record is not Mary" says nothing about her sister,
+ * and nothing about a different record for Mary. A broader rule would silently block
+ * work nobody objected to.
+ *
+ * The message quotes the researcher's own reason when they gave one, because a refusal
+ * a person cannot trace back to their own decision reads as the tool being broken.
+ */
+function rejectedLinkInvariants(
+  entry: Record<string, unknown>,
+  research: Record<string, unknown>,
+): string[] {
+  const assertionId = typeof entry?.assertion_id === "string" ? entry.assertion_id : "";
+  const personId = typeof entry?.person_id === "string" ? entry.person_id : "";
+  if (!assertionId || !personId) return [];
+  const rejected = Array.isArray(research?.rejected_links)
+    ? (research.rejected_links as RejectedLink[])
+    : [];
+  const hit = rejectionFor(assertionId, personId, rejected);
+  if (!hit) return [];
+  const because = typeof hit.reason === "string" && hit.reason.trim()
+    ? ` The researcher's reason: ${hit.reason}`
+    : "";
+  return [
+    `${assertionId} and ${personId} were rejected as not a match (${String(hit.id)}), ` +
+    `so this link is refused. Record new evidence, or remove the rejection if the ` +
+    `researcher has changed their mind.${because}`,
+  ];
+}
+
 function personEvidenceInvariants(entry: any, research: any): string[] {
   if (entry.confidence !== "confident") return [];
   const assertions: any[] = research.assertions ?? [];
@@ -3271,6 +3305,13 @@ function applyOne(
   // Identity over-reach: runs on append AND on an update that raises confidence
   // to "confident"; the helper no-ops for every other confidence value.
   if (section === "person_evidence") {
+    // A pair the researcher has REJECTED is not re-linked without new evidence.
+    // Ruled 2026-09-30 and enforced here rather than in a skill body: whether a pair
+    // was rejected is decidable from research.json alone, which per ADR-0011 makes it
+    // a writer precondition. The reported failure is exactly this -- a researcher
+    // challenged an assumption and the agent reverted to it, because nothing recorded
+    // the rivals.
+    invariantErrors.push(...rejectedLinkInvariants(resultEntry, research));
     invariantErrors.push(...personEvidenceInvariants(resultEntry, research));
     invariantErrors.push(...coreIdentifierConflictInvariants(resultEntry));
     // A REFUSAL, not a warning. The lead's standing ruling on issue #2272 is

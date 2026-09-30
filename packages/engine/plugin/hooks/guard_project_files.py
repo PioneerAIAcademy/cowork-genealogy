@@ -103,6 +103,9 @@ OWNED_SECTIONS = {
     # on every question the way `exhaustive_declaration` is, so this needs none
     # of OWNED_DECLARATIONS' field-scoped treatment.
     "person_evidence": "person-evidence",
+    # rejected_links, 2026-09-30. Same lane as the links themselves: a rejection
+    # cannot be written by something that could not have made the link.
+    "rejected_links": "person-evidence",
 }
 
 # Field-scoped routing: (section, field) -> the BARE agent name that may set it
@@ -167,7 +170,7 @@ AGENT_WRITABLE_SECTIONS = {
     # a blocker it meets -- an unclassified assertion, a genuinely competing
     # candidate -- is cleared by record-extraction or conflict-resolution, not
     # by this agent editing those sections itself.
-    "person-evidence": frozenset({"person_evidence"}),
+    "person-evidence": frozenset({"person_evidence", "rejected_links"}),
     # gps-mentor appends its verdict to `evaluations` and writes nothing else in
     # research.json; its description says so and every corpus write is there.
     "gps-mentor": frozenset({"evaluations"}),

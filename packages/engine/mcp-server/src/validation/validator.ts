@@ -178,6 +178,7 @@ export const ID_PREFIXES: Record<string, string> = {
   sources: "src_",
   assertions: "a_",
   person_evidence: "pe_",
+  rejected_links: "rj_",
   conflicts: "c_",
   hypotheses: "h_",
   timelines: "t_",
@@ -520,7 +521,7 @@ const NULLABLE_FIELDS = new Set([
 export const RESEARCH_SHAPES = {
   document: new Set([
     "project", "researcher_profile", "known_holdings", "questions", "plans",
-    "log", "sources", "assertions", "person_evidence", "conflicts",
+    "log", "sources", "assertions", "person_evidence", "rejected_links", "conflicts",
     "hypotheses", "timelines", "proof_summaries", "evaluations",
     "localities",
   ]),
@@ -580,6 +581,9 @@ export const RESEARCH_SHAPES = {
   person_evidence_entry: new Set([
     "id", "assertion_id", "person_id", "confidence", "rationale",
     "core_identifier_conflict", "match_score", "created", "superseded_by",
+  ]),
+  rejected_link_entry: new Set([
+    "id", "assertion_id", "person_id", "reason", "created",
   ]),
   conflict: new Set([
     "id", "conflict_type", "description", "disputed_attribute",

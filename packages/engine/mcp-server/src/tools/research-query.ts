@@ -40,6 +40,9 @@ export const RESEARCH_QUERY_SECTIONS = [
   "proof_summaries",
   "evaluations",
   "localities",
+  // A researcher's rejections are project state worth reading: an agent that
+  // cannot see them cannot explain why a link is refused.
+  "rejected_links",
 ] as const;
 
 export type ResearchQuerySection = (typeof RESEARCH_QUERY_SECTIONS)[number];
@@ -58,6 +61,9 @@ export type ResearchQuerySection = (typeof RESEARCH_QUERY_SECTIONS)[number];
  *  needs saying. */
 export const RESEARCH_QUERY_OPTIONAL_SECTIONS: ReadonlySet<string> = new Set([
   "localities",
+  // A project that has rejected nothing has no array at all, which is the common
+  // case -- asking must give an empty result, not an error.
+  "rejected_links",
 ]);
 
 /** Array sections deliberately NOT served, and why.
