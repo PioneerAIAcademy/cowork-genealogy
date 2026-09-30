@@ -299,6 +299,16 @@ Seniors need **Triage** or **Write** access on the repo to apply labels.
 
 `Setup.bat` performs the one-time setup. Then `Start.bat` launches the CRUD UI and `RunTests.bat` runs the harness against the current corpus.
 
+> **First run on a checkout that predates the eval-app workspace move.** The
+> repo-root `preinstall` deletes the old npm-managed `eval\app\node_modules`
+> once, so pnpm's lockfile wins instead of the stale packages under it. It
+> prints `[preinstall] … removing it` and then installs. If Windows refuses
+> the delete with `EPERM` — an antivirus scan or an open editor holding a file
+> handle — the install **stops** rather than proceeding over a tree it knows is
+> wrong. Close anything sitting in that folder and re-run; if it still fails,
+> delete `eval\app\node_modules` by hand and run again. This is one-time: once
+> the folder is gone the step is a silent no-op forever after.
+
 ## E2e tests
 
 Separate from the unit-test framework documented above. E2e tests

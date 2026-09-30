@@ -37,13 +37,23 @@ for (const member of FORMERLY_NPM_MANAGED) {
     `[preinstall] ${member}/node_modules was built by npm; removing it so pnpm's lockfile wins.\n`,
   )
   try {
-    rmSync(modules, { recursive: true, force: true })
+    // maxRetries/retryDelay retry exactly EBUSY, EMFILE, ENFILE, ENOTEMPTY and
+    // EPERM, with a linear backoff. That is the Windows failure this hit in
+    // testing: an antivirus scanner or Explorer holds a handle under
+    // eval\app\node_modules and the first rmSync gets EPERM, on a directory
+    // that becomes removable a moment later. Measured on Windows 10 Pro
+    // (10.0.19044) before this retry existed — the install aborted and the
+    // operator had to delete the folder by hand.
+    rmSync(modules, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 })
   } catch (err) {
     failed = true
     process.stderr.write(
       `\n[preinstall] Could not remove ${member}/node_modules: ${err.message}\n` +
         `Delete it by hand and run the install again. Leaving it in place would\n` +
-        `let npm-era packages shadow the versions in pnpm-lock.yaml, silently.\n\n`,
+        `let npm-era packages shadow the versions in pnpm-lock.yaml, silently.\n` +
+        `On Windows this is usually a held file handle: close any editor or\n` +
+        `terminal sitting in that folder, let the antivirus scan settle, and\n` +
+        `retry before deleting by hand.\n\n`,
     )
   }
 }
