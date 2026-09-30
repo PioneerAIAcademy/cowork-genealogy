@@ -161,15 +161,18 @@ services:
   # D11-12 web tier: POST /messages -> turns row + user_msg event + SendMessage; GET
   # /events and the SSE stream read session_events / session_activity / documents.
   # Depends on postgres and the queue only -- never on the worker: until D9-10 lands it
-  # is driven against rows proto/drive.py inserts. Context is ./ (not ./web) so the
-  # image carries enqueue.py and sql/.
+  # is driven against rows proto/drive.py inserts. Context is the repo root (like the
+  # tools image) so the image carries enqueue.py, sql/ and the engine's familysearch.json.
   web:
     build:
-      context: .
-      dockerfile: web/Dockerfile
+      context: ../../..
+      dockerfile: apps/server/proto/web/Dockerfile
     container_name: proto-web
     restart: unless-stopped
-    # Loopback only: the tier has no auth (README), so it must not be LAN-reachable.
+    # Loopback only. U2 put patron sign-in in front of every session route, but dev-login
+    # (on while FamilySearch sign-in is off and PUBLIC_URL is http) signs anyone in, so the
+    # tier must still not be LAN-reachable. docker-compose.fs-signin.yml adds the 1837
+    # publish the FamilySearch round-trip needs.
     ports:
       - "127.0.0.1:8085:8085"
     environment:
@@ -178,11 +181,20 @@ services:
       QUEUE_URL: http://elasticmq:9324/000000000000/turns
       POLL_S: "1"
       SSE_PING_S: "15"
+      # U2 sign-in (web/auth.py). The defaults are dev-only; web/auth.py refuses to start
+      # on an https PUBLIC_URL with a default secret. FamilySearch sign-in stays off here
+      # (dev-login only) -- docker-compose.fs-signin.yml turns it on.
+      PUBLIC_URL: ${PUBLIC_URL:-http://127.0.0.1:8085}
+      WEB_ORIGIN: ${WEB_ORIGIN:-}
+      SESSION_SECRET: ${SESSION_SECRET:-}
+      FS_TOKEN_ENC_KEY: ${FS_TOKEN_ENC_KEY:-}
+      ALLOWED_EMAILS: ${ALLOWED_EMAILS:-}
+      FAMILYSEARCH_WEB_ENABLED: ${FAMILYSEARCH_WEB_ENABLED:-false}
       # PR #2870 item 1a: the Stop hook's veto cap, stamped on every queue message
       # this tier enqueues (begin_turn -> body.max_nudges) and preferred by run_turn over
-      # the worker's own AUTONOMOUS_MAX_NUDGES. It lives HERE, not on MessageBody: this
-      # tier has no auth, so a request field would let any client set its own nudge
-      # budget. The worker cannot tell the browser from `make proto-demo` -- there is no
+      # the worker's own AUTONOMOUS_MAX_NUDGES. It lives HERE, not on MessageBody: the
+      # cap is the operator's, so a request field would let a signed-in patron set their
+      # own nudge budget. The worker cannot tell the browser from `make proto-demo` -- there is no
       # browser path it can see -- so each recipe recreates this container with its own
       # export instead, and proto-demo exports 0 to stay a one-turn run.
       #

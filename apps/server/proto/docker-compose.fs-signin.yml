@@ -1,0 +1,25 @@
+# U2: the FamilySearch sign-in round-trip on compose (docs/plan/familysearch-handoff.md, U2).
+#
+#   docker-compose -f docker-compose.yml -f docker-compose.fs-signin.yml up -d web
+#
+# The dev key's only registered redirect is http://127.0.0.1:1837/callback
+# (packages/engine/mcp-server/src/auth/config.ts), so the web tier must answer on 1837.
+# This adds that publish beside the default 8085 one and turns FamilySearch sign-in on,
+# which turns dev-login OFF -- the scripts (seed/demo/turn/drive) sign in through
+# dev-login, so run them against the default stack, not this one.
+#
+# Port conflict: `make e2e-login` (and so env.sh's .fs-token minting) runs the desktop
+# login's loopback server on the same 127.0.0.1:1837. Mint the operator token first, or
+# stop this override while it runs.
+#
+# Cookies are per host, not per port: the session cookie set by the callback on
+# 127.0.0.1 reaches the SPA only if the SPA is also on 127.0.0.1, so open the web client
+# at http://127.0.0.1:5173 (make web-proto), not localhost.
+services:
+  web:
+    ports:
+      - "127.0.0.1:1837:8085"
+    environment:
+      PUBLIC_URL: http://127.0.0.1:1837
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://127.0.0.1:5173}
+      FAMILYSEARCH_WEB_ENABLED: "true"
