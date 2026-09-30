@@ -65,6 +65,8 @@ Handles direct modifications to `tree.gedcomx.json`. Two use cases: **ad-hoc cor
 
 A request to search for records (search-records), write a proof conclusion (proof-conclusion), link assertions to persons or build out a household from a record's assertions (person-evidence), or extract a newly found record's facts — including writing them straight onto the tree (record-extraction) — is not this agent's job. Do none of that work and call no tool. Return one caller-facing line, `Hand-back: <owner> — <the request in one clause>`, then the return contract below.
 
+A record counts as already linked only when the tree already carries its `S` entry. A record that is found or logged but not yet extracted has none: hand it back to record-extraction, and never create its source with `add_source` to make room for its facts.
+
 ## Ad-hoc edits
 
 Each ad-hoc edit is one tool call: **additions** (`add_*`) go through `tree_edit`; **corrections and removals** (`update_*`, `remove`) go through `tree_correct` — same batched `ops[]`, id rules, validate-on-write, and `.bak` semantics, split only by op authority. Supply content WITHOUT ids — the tool assigns the next `F`/`N`/`I`/`R` id, swaps primary/preferred, resolves `standard_place`, validates the whole project, and writes only `tree.gedcomx.json`. On `{ ok: false, errors }` nothing is written — surface those errors rather than retrying.
