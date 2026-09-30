@@ -336,16 +336,15 @@ const DELEGATION_EDGES: Record<string, Edge> = {
 // also an ordinary English word, and `namesAgent` tokenizes and matches any
 // token CONTAINING the name — so "citation", "citations" and "inline citation
 // of individual claims" all trip arm 2 in skills that have nothing to do with
-// the agent. Of the eight below, only `record-extraction` and `translation`
-// mean the agent (both are boundary prose: "format citations (use citation)",
-// "hand off to citation after record-extraction creates the source entry");
-// the other six are the common noun. All eight are bare-name mentions, so all
-// eight take `""` and none can suppress a real delegation.
+// the agent. Of the seven below, only `record-extraction` means the agent
+// (boundary prose: "format citations (use citation)"); the other six are the
+// common noun. All seven are bare-name mentions, so all seven take `""` and
+// none can suppress a real delegation.
 //
 // The arm still earns its place for `gps-mentor`, `image-reader` and
 // `record-extractor`, whose names no one writes by accident. It does not
-// discriminate for `citation` and `translation` — both are single-word agent
-// names whose bare form can appear in ordinary prose.
+// discriminate for `citation` — a single-word agent name whose bare form can
+// appear in ordinary prose.
 const PROSE_MENTIONS = new Map<string, string>([
   ["research -> record-extractor", ""],
   ["historical-context -> citation", ""],
@@ -356,7 +355,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["research -> citation", ""],
   ["search-records -> citation", ""],
   ["source-evaluation -> citation", ""],
-  ["translation -> citation", ""],
   // Nine "use proof-conclusion" prohibitions in DO NOT clauses, visible to the
   // prose arm only since issue #2822 deleted the routing skill and made the
   // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
@@ -381,7 +379,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // so both take `""` and neither can suppress a real delegation edge. (A third
   // row, from search-familysearch-wiki, left when issue #2794 deleted that skill.)
   ["locality-guide -> search-wikipedia", ""],
-  ["translation -> search-wikipedia", ""],
   // search-familysearch-wiki entered agentOnly when issue #2794 deleted its
   // skill. Both rows are routing-boundary prose naming it as the owner of a
   // FamilySearch-wiki request, not a delegation, and neither spells
@@ -406,7 +403,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // `@plugin:convert-dates`.
   ["historical-context -> convert-dates", ""],
   ["record-extraction -> convert-dates", ""],
-  ["translation -> convert-dates", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
