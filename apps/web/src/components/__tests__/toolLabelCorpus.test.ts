@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { toolLabel, humanizeToolNames, MCP_PREFIX } from '../toolLabel'
+import { chipTarget } from '../chipTarget'
 
 // The acceptance clause, replayed over every chip the captured session showed a
 // reader: "no mcp__genealogy__* string reaches the screen".
@@ -64,6 +65,27 @@ describe('tool labels over every tool the engine advertises', () => {
       const l = toolLabel(MCP_PREFIX + n)
       return !l || l.includes('__') || l.includes('_')
     })
+    expect(bad).toEqual([])
+  })
+})
+
+// Chip navigation over the same captured chips.
+describe('chip targets over the captured chips', () => {
+  it('resolves a target for the chips that name a card, and none for the rest', () => {
+    const withTarget = CHIPS.filter((c) => chipTarget(c.summary) !== null)
+    // 544 name a schema id; a few of those name only unplaceable ones, so the
+    // navigable count is asserted as a floor plus an exact figure rather than a guess.
+    expect(withTarget.length).toBe(544)
+    expect(withTarget.length / CHIPS.length).toBeGreaterThan(0.5)
+  })
+
+  it('every resolved target names a section the viewer has', () => {
+    const SECTIONS = new Set([
+      'questions', 'plans', 'assertions', 'person_evidence', 'sources', 'log'
+    ])
+    const bad = CHIPS.map((c) => chipTarget(c.summary))
+      .filter((t): t is { id: string; section: string } => t !== null)
+      .filter((t) => !SECTIONS.has(t.section))
     expect(bad).toEqual([])
   })
 })

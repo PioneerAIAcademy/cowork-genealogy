@@ -5,6 +5,7 @@ import React from 'react'
 import { useResearchDataOptional } from '@genealogy/viewer-ui'
 import { SchemaIdText } from './SchemaIdText'
 import { toolLabel, humanizeToolNames } from './toolLabel'
+import { chipTarget } from './chipTarget'
 import type { SessionConnection, WsMessage } from '../transport/SessionConnection'
 import { api, ApiError } from '../api'
 import {
@@ -140,13 +141,39 @@ export interface UsageDelta {
   estimated: boolean
 }
 
-/** One chip, with both its slots humanized (phase 2 item 2). */
-function ToolChipView({ chip }: { chip: ToolChip }): React.JSX.Element {
-  return (
-    <span className={`toolChip ${chip.done ? 'toolDone' : 'toolRunning'}`}>
+/**
+ * One chip: humanized in both slots, and clickable when it names a card.
+ *
+ * 544 of the captured session's 1,009 chips name a schema id in their summary, so
+ * more than half become navigation. A chip that names nothing, or that has no
+ * resolver above it, renders exactly as before -- the same additive rule the prose
+ * linker follows, so the failure mode is "not clickable", never a dead control.
+ */
+function ToolChipView({
+  chip,
+  onOpen
+}: {
+  chip: ToolChip
+  onOpen?: (id: string, section: string) => void
+}): React.JSX.Element {
+  const body = (
+    <>
       {chip.done ? '✓' : '⟳'} {chip.agent ? `${chip.agent} · ` : ''}
       {toolLabel(chip.tool)}: {humanizeToolNames(chip.summary)}
-    </span>
+    </>
+  )
+  const target = onOpen ? chipTarget(chip.summary) : null
+  const cls = `toolChip ${chip.done ? 'toolDone' : 'toolRunning'}`
+  if (!target) return <span className={cls}>{body}</span>
+  return (
+    <button
+      type="button"
+      className={`${cls} toolChipLink`}
+      title={`Open ${target.id}`}
+      onClick={() => onOpen?.(target.id, target.section)}
+    >
+      {body}
+    </button>
   )
 }
 
@@ -157,7 +184,11 @@ function ToolChipView({ chip }: { chip: ToolChip }): React.JSX.Element {
  * chips. A block with no chips contributes nothing, so the markup is unchanged for
  * a paragraph that had none.
  */
-function renderChipRuns(blocks: ChatBlock[], tools: ToolChip[]): React.JSX.Element[] {
+function renderChipRuns(
+  blocks: ChatBlock[],
+  tools: ToolChip[],
+  onOpen?: (id: string, section: string) => void
+): React.JSX.Element[] {
   const out: React.JSX.Element[] = []
   let run: ToolChip[] = []
   let key = 0
@@ -167,7 +198,7 @@ function renderChipRuns(blocks: ChatBlock[], tools: ToolChip[]): React.JSX.Eleme
     out.push(
       <div className="toolChips" key={`run-${key++}`}>
         {chips.map((c, i) => (
-          <ToolChipView key={i} chip={c} />
+          <ToolChipView key={i} chip={c} onOpen={onOpen} />
         ))}
       </div>
     )
@@ -450,11 +481,11 @@ export default function ChatPane({
                   messages have no `blocks`, so they fall back to the flat list and
                   render exactly as before. */}
               {m.blocks
-                ? renderChipRuns(m.blocks, m.tools)
+                ? renderChipRuns(m.blocks, m.tools, openSchemaId)
                 : m.tools.length > 0 && (
                     <div className="toolChips">
                       {m.tools.map((t, j) => (
-                        <ToolChipView key={j} chip={t} />
+                        <ToolChipView key={j} chip={t} onOpen={openSchemaId} />
                       ))}
                     </div>
                   )}

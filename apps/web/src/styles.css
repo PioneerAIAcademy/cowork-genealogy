@@ -882,3 +882,14 @@ button {
 }
 .jobStateLive { background: var(--accent-soft, #1f6feb22); color: var(--accent, #1f6feb); }
 .jobStateRest { background: var(--bg-muted, #8884); color: var(--text-secondary, #666); }
+
+/* A chip that opens the card it names. Looks like its non-clickable siblings -- the
+   affordance is the cursor and the hover, not a second visual language in a strip
+   where half the chips navigate and half do not. */
+.toolChipLink {
+  cursor: pointer;
+  border: none;
+  font: inherit;
+  text-align: left;
+}
+.toolChipLink:hover { text-decoration: underline; }
