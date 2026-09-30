@@ -37,8 +37,8 @@ nothing. The answer has to be absent from the live tree as a property of the que
 |---|---|
 | Outcome | `completed` — the research finished |
 | Wall clock | **133 minutes** |
-| Feed events | 2,697 (282 narration paragraphs, 1,009 tool calls, 326 thinking) |
-| Sub-agents | 36, all completed |
+| Feed events | 2,697 — of which **190 paragraphs reach the screen**, not 282 (see below) |
+| Sub-agents | **32 distinct** (36 `task_started` events; the 5 redeliveries repeat 4). **25 completed, 4 stopped, 3 never closed** |
 | Deliveries | **5** |
 
 **Read the duration and nudge fields carefully.** `turns.claimed_at` is the LAST claim, so
@@ -53,3 +53,21 @@ section — a real job outlived its own queue delivery four times and still comp
 
 `thinking` is 65% of the bytes and is kept: the chat client accumulates it, so it is part of
 what the reader sees.
+
+## Corrected 2026-09-30 — the feed is not the screen
+
+An earlier version of this file said "282 narration paragraphs" and "36 sub-agents, all
+completed". Both were readings of the FEED, and the feed is not what a reader sees:
+
+- **`chatEvents.ts:154` drops all sub-agent prose.** `real_agent` labels every sub-agent event
+  with `agent`, and canonical `text`/`thinking` carrying that label are dropped —
+  *"Subagent prose never reaches the chat"*. So **190** of the 282 paragraphs render; 92 do
+  not. Tool chips DO keep their label and render, so chips are multi-source while prose is
+  single-source.
+- **32 distinct sub-agents, not 36.** There are 36 `task_started` events, but the turn was
+  delivered 5 times and 4 tasks are repeats. Final statuses are 25 completed, 4 stopped, and
+  3 that never closed — not "all completed".
+
+Anyone deriving figures from this file must say which of the two they mean. Counting the feed
+and calling it the screen is the same error that put 18% in the parent plan where the truth
+was 8.8%.
