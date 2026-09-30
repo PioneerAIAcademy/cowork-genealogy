@@ -1006,7 +1006,7 @@ name that is still a skill is stubbed at its `Skill` call only.
 
 ### 5.8 `intentionally_invalid`
 
-Optional boolean (default `false`). Set it on a test whose scenario files are **broken on purpose** — the case of a validator/guardrail skill (`validate-schema`) whose whole job is to detect invalid input. Every other skill operates on valid project state, so the harness assumes scenarios are schema-valid and gates on it in three places; this flag is the opt-out for the one skill that must see invalid input:
+Optional boolean (default `false`). Set it on a test whose scenario files are **broken on purpose** — the case of a validator/guardrail agent (`validate-schema`) whose whole job is to detect invalid input. Every other subject operates on valid project state, so the harness assumes scenarios are schema-valid and gates on it in three places; this flag is the opt-out for the one subject that must see invalid input:
 
 - the **runnability gate** (Section 9) skips schema validation of the scenario instead of aborting the test as `not_runnable`;
 - the **post-run file-validity validators** (`test_research_json_validates_schema`, `test_tree_gedcomx_json_validates_schema`, `test_id_references_resolve`, `test_project_files_pass_full_validation`, `test_no_duplicate_tree_ids`) are not counted against the test — the invalid state is expected. Behavioural validators (allowlist, append-only, …) still apply;

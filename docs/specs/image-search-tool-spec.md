@@ -238,7 +238,7 @@ all other authenticated tools. Do not re-implement token plumbing.
 | `children/names` returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | `children/names` returns 403 | Throw: `"FamilySearch image search API error: 403 Forbidden."` |
 | `children/names` other non-OK | Throw: `"FamilySearch image search API error: {status} {statusText}."` |
-| Network error (either call) | Throw: `"Could not reach FamilySearch image search API: {message}."` |
+| Network error (either call) | Throw: `"Could not reach FamilySearch image search API: {cause}."` (`{cause}` from `describeFetchError`, `src/utils/http.ts`) |
 | Group has no images (empty/`{}` response) | Return `{ imageIds: [] }` (not an error) |
 
 ---
