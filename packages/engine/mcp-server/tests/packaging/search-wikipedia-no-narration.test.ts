@@ -70,7 +70,9 @@ describe("the search-wikipedia Narration exception", () => {
   const agents = agentBodies();
 
   it("scans every skill and agent body", () => {
-    expect(skills.length, "skill bodies found").toBeGreaterThan(20);
+    // A reach floor, not a count: it proves the scan found bodies at all. Every
+    // skill-to-agent conversion lowers the real count, so keep it well below.
+    expect(skills.length, "skill bodies found").toBeGreaterThan(5);
     expect(agents.length, "agent bodies found").toBeGreaterThan(5);
     expect(
       agents.map((a) => a.name),

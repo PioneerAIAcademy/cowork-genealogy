@@ -613,6 +613,15 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // The folded check-warnings skill (issue #2118). `person_quality` is absent by
+  // lead ruling 2026-09-27. No `Read`: with it the agent read research.json and
+  // the tree and reported what it found there instead of the tool's answer (4
+  // of 39 confirmation runs, 2026-09-28); callers pass person ids. Writes nothing.
+  "check-warnings.md": {
+    tools: ["person_warnings"],
+    denies: [],
+  },
+
   // search-wikipedia (issue #2795) holds the one tool the skill it replaced
   // declared — `wikipedia_search` — plus the built-in `Write`, decided by
   // review-ready on 2026-09-24 and accepted by the lead the same day, on the

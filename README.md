@@ -54,7 +54,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 49 tools.
+The MCP server exposes 50 tools.
 
 ### FamilySearch records and places
 
@@ -77,6 +77,7 @@ The MCP server exposes 49 tools.
 | `person_ancestors` | FamilySearch Family Tree pedigree — a person (or, when no ID is given, the logged-in user) plus up to N generations of ancestors, each tagged with its Ahnentafel (ascendancy) number; relationships are endpoint-closed, and `notes[]` reports any edge dropped for naming a person not returned | OAuth |
 | `source_attachments` | Check whether source ARKs are already attached to tree persons | OAuth |
 | `volume_search` | Search FamilySearch's Records Management Service for digitized volumes (image groups) by place and year range, optionally filtered to one or more `recordTypeGroups` (selecting a group also returns the groups nested beneath it) — returns coverage metadata, `recordSearchablePercent`, and `fulltextSearchable` per volume | OAuth |
+| `volume_bisect` | Bisect a browse-only image volume toward a target year — reads **one** page per call, folds its year into the bracket built from the readings so far, and returns the narrowed bracket plus the next image to probe. Refuses a bare image-group prefix (use `volume_search` to pick a sub-volume first) | OAuth + OpenRouter |
 | `external_links_search` | FS-curated third-party genealogy URLs by place; optional year filter | None |
 
 ### FamilySearch Wiki content
@@ -160,7 +161,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 21 skills covering the full GPS research cycle. Skills
+The plugin ships 20 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 For a plain-language account of the research method itself — the GPS
 cycle, the judgment made at each stage, and what to expect from a
@@ -231,7 +232,6 @@ skills per the validation protocol.
 | Skill | What it does | Triggered by |
 |-------|-------------|-------------|
 | **validate-schema** | Validates both project files against the published schemas. Required fields, enum values, ID prefixes, cross-references. | Every writing skill invokes this after writing. You can also say "validate the files." |
-| **check-warnings** | Flags genealogical impossibilities (married before 12, died after 120, child born after parent's death). | Writing skills invoke after adding assertions/person_evidence. You can say "check for warnings." |
 
 ### Benchmark suite (not shipped — repo-local dev tooling)
 
@@ -252,7 +252,7 @@ specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships twelve Cowork agents. Unlike skills, an agent runs in
+The plugin ships thirteen Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 at its mentor checkpoint, or by the skill that delegates to it — you
 don't load it explicitly.
@@ -267,6 +267,7 @@ don't load it explicitly.
 | **search-images** | Browses a digitized FamilySearch volume page by page when the record set is neither indexed nor full-text searchable, and logs the browse. It finds the image groups covering a place and date range, lists the images inside one, and reads each page as text. | "Browse the images" / "page through the film" |
 | **citation** | Polishes the citations on sources that already exist to Evidence Explained standards (Who/What/When/Where/Where-within), and looks up the office that created a probate record on the FamilySearch wiki rather than carrying one jurisdiction's offices in its prompt. It never creates a source entry: asked to add a record, it declines and routes to `record-extraction`. | "Fix citations" / "Cite this source" |
 | **question-selection** | Picks the highest-value next research question. | "What should I research next?" |
+| **check-warnings** | Flags genealogical impossibilities and implausible patterns in one person's own data (married before 12, died after 120, child born after parent's death), deterministically from your local tree. Writes nothing. `init-project` runs it on every imported person, and `tree-edit` after every edit or merge. | "Check for warnings" / "Any problems with his dates?" |
 | **image-reader** | Reads **one** FamilySearch image scan and returns a full text transcription (fast, cheap — hosted Gemini Flash OCR). Used when browsing unindexed volumes or extracting from a page image; it keeps the image data out of the main conversation. | (not invoked directly — `record-extraction` and `search-images` delegate) |
 | **search-familysearch-wiki** | Searches the FamilySearch Research Wiki for **one** genealogy how-to question and saves the guidance as a markdown file in your working folder, citing the wiki pages it came from. Asked for Wikipedia, a locality records survey or narrative history, it does no search and hands the request back by name. | "Search the FamilySearch wiki for how to find Italian birth records" |
 | **search-wikipedia** | Looks **one** topic up on Wikipedia — the general-purpose encyclopedia — and saves the article summary as a markdown file in your working folder. One tool call, a template it carries in its own body, one file. Asked for narrative history, a locality records survey or the FamilySearch wiki, it does no lookup and hands the request back by name. | "Look up Albert Einstein on Wikipedia" |
@@ -477,16 +478,16 @@ then narrows the search.
 
 What's shipped:
 
-- **49 MCP tools.** See the tables above for the full catalog, by category:
+- **50 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
-- **21 shipped skills.** Full GPS research cycle from `init-project`
+- **20 shipped skills.** Full GPS research cycle from `init-project`
   through the conclusion, plus reference skills (locality-guide,
   historical-context, translation)
-  and guardrails (validate-schema, check-warnings). The three
+  and guardrails (validate-schema). The three
   e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result, grade-e2e-run)
   are repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
-- **12 Cowork agents.** `gps-mentor` (BCG-style senior-genealogist review,
+- **13 Cowork agents.** `gps-mentor` (BCG-style senior-genealogist review,
   invoked by `/research` at GPS checkpoints and on demand), `record-extractor`
   (per-record assertion extraction), `proof-conclusion` (the proof conclusion
   for one question, and the only writer of `proof_summaries`),
@@ -497,6 +498,7 @@ What's shipped:
   `convert-dates` (calendar-system date conversion), `question-selection`
   (the next research question, and the only minter of questions), `search-images`
   (page-by-page browse of an unindexed volume),
+  `check-warnings` (genealogical-impossibility checks on one person's data),
   `search-familysearch-wiki` (FamilySearch Research Wiki how-to guidance saved
   as a markdown file), `search-wikipedia` (one encyclopedia lookup saved as a markdown file) and
   `image-reader` (page OCR).

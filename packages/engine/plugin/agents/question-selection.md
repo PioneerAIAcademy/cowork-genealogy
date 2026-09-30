@@ -236,9 +236,9 @@ all fail — the "no"/"married" branch names no fact. An apparently open-form
 question fails the same way when it only characterizes the recorded name (how
 it was acquired, which kind it is) instead of asking for the missing value;
 name the gating fact and ask for its value directly ("What was her maiden
-name?"). Ask for the value itself; do not restate the question as an
-either/or classification, not even as a trailing clause ("What was her birth
-surname — was 'Quennell' her maiden or married name?" fails). A disputed
+name?"). End the question at the value it asks for: once it asks "What was
+her birth surname?", it is complete — add no clause after it that restates the
+recorded name as a choice. A disputed
 identity assertion already on the tree
 may be tested directly (confirm-or-refute, per the next paragraph); a property
 test of a name or date may not stand in for the fact.
