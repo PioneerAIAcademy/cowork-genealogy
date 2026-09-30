@@ -1979,6 +1979,22 @@ following the obituary split. The parents' names sit with the event: the
 submitting family knows them firsthand, as with a surviving spouse's name.
 `newspaper_announcement` joins the `RecordType` union.
 
+**Roles and obituary corners on this path** (genealogist ruling, 2026-09-30):
+
+- **The principal's role:** `deceased` on an obituary. On probate, `testator`
+  when the file holds a will and `decedent` when it is intestate. On a
+  newspaper announcement, the event's subject: `child` for a birth, `bride` /
+  `groom` for an engagement or wedding, `husband` / `wife` for an
+  anniversary, and `principal` otherwise.
+- **Other parties' roles** come from `statedRelation` through
+  `roleFromRelationship` (son → `child_N`, daughter-in-law →
+  `daughter_in_law_N`, executor, `heir_N`, `witness_N`). A party the text
+  gives no relation for is `other_N`.
+- **Obituary corners:** the decedent's residence at death is recent family
+  knowledge, and **earlier** residences are life history (a residence dated
+  before the death year). A **predeceased** spouse's or child's name is life
+  history. The **parents' names** are life history.
+
 The probate rows are the genealogist's ruling (2026-09-30), split by who
 produced each part of the file. A petitioner's statement of the death follows
 the obituary's reading: family, but the file does not say who was present.
