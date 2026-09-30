@@ -883,7 +883,7 @@ Array of timeline objects. Timelines are keyed by a unique ID with a human-reada
 
 Timelines have **no** `impossibilities` field. Detecting a single
 person's logical impossibilities — an event after death, an impossible
-age — is the check-warnings skill's job, done deterministically via
+age — is the check-warnings agent's job, done deterministically via
 `person_warnings`; the timeline skill surfaces such a contradiction in
 its chat reply and recommends a data-integrity check rather than
 persisting it. (Geographic/travel infeasibility, which depends on
