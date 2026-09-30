@@ -379,7 +379,7 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["search-records -> citation", ""],
   ["source-evaluation -> citation", ""],
   ["translation -> citation", ""],
-  // Seven "use proof-conclusion" prohibitions in DO NOT clauses, visible to the
+  // Six "use proof-conclusion" prohibitions in DO NOT clauses, visible to the
   // prose arm only since issue #2822 deleted the routing skill and made the
   // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
   // is a delegation being silenced -- verified per file before listing.
