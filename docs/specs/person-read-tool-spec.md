@@ -32,7 +32,7 @@ etc.) and is out of scope for v1.
 | `personId` | string | **Yes** | FamilySearch person ID (e.g., `"KNDX-MKG"`). |
 | `relatives` | boolean | No | Include parents, **siblings**, spouses, and children. Defaults to `false`. Siblings are a second hop and cost **one extra request per parent** — see "The sibling fan-out" below. |
 | `sourceDescriptions` | boolean | No | Include attached source citations — and, for a non-living subject, that person's source-style memories. Defaults to `false`. |
-| `projectPath` | string | No | Absolute project-folder path. When set, a memory scan transcribed during the read is retained under `images/` and its ref returned as that source's `image_ref`. A path is not a mode flag, so decision 1's "no third flag" does not reach it. Without it, scans are transcribed but not kept. |
+| `projectPath` | string | No | Absolute project-folder path. When set, a memory scan transcribed during the read is retained under `images/` and its ref returned as that source's `image_ref`, **and the read itself is staged** under `results/.staging/` and its handle returned as `staged` (see "Staging the read" below). A path is not a mode flag, so decision 1's "no third flag" does not reach it. Without it, scans are transcribed but not kept and nothing is staged. A blank or whitespace-only value is treated as absent. |
 
 Examples:
 
@@ -85,9 +85,41 @@ the answer to what the caller asked, and that case gets its own line. Counts and
 relationship types only — ids would name persons that by definition are not in
 `persons[]` and cannot be looked up.
 
+Two more conditional keys ride on a call that carried `projectPath`:
+`staged` (`{ resultsRef, returnedCount }`, or `null` when staging failed) and
+`stagingError` (the reason, present only beside `staged: null`). Both are
+response-only, like `notes[]`, and never tree keys (`TREE_TOP_LEVEL_FIELDS`).
+
 - `persons[]` is always present (at minimum, the requested person)
 - `relationships[]` is present when `relatives: true` (empty array otherwise)
 - `sources[]` is present when `sourceDescriptions: true` (empty array otherwise)
+
+### Staging the read
+
+When `projectPath` is given, the tool stages the result it is about to return,
+after the memories merge, through the shared `stageSearchResults`
+(`search-result-staging-spec.md` §5) with `tool: "person_read"`:
+
+```json
+{ "query": { "personId": "KNDX-MKG", "relatives": true, "sourceDescriptions": true },
+  "results": [ { "personId": "KNDX-MKG", "gedcomx": { "persons": [], "relationships": [], "sources": [] } } ] }
+```
+
+- `query` is the trimmed requested id and both flags as sent, an absent or `null` flag recorded as `false`.
+- The element's `personId` is the **post-redirect** id: for a merged subject it is
+  the surviving person's id and differs from `query.personId`.
+- `gedcomx` is the whole response minus `staged`/`stagingError`, including a
+  top-level `notes[]` and every source's response-only fields (`notes`, `text`,
+  `image_ref`, `artifact_url`). Nothing is stripped on the way in.
+
+It exists so the starting tree can be built host-side from the staged copy rather
+than the model re-typing it into `project_create`. That consumer is not built
+yet: today nothing reads the staged file. It is **not a search**: it is in
+`STAGING_CAPABLE_TOOLS` and not `STAGING_SEARCH_TOOLS`, so no search note fires on
+it, and no shipped flow finalizes it with `research_log_append`. An unconsumed
+file is removed by the 24h TTL prune. Staging is best-effort: a failure never
+fails the read. The staging code is exported as `stagePersonRead`, which the eval
+mock calls to stage its canned responses.
 
 ### `persons[]`
 
@@ -326,7 +358,7 @@ fetched for the id the redirect landed on, not the id the caller passed.
           "scan transcribed during this read is saved under images/ and its " +
           "project-relative path returned on that source as image_ref, so a " +
           "retained source can cite it. Without it the scan is transcribed but " +
-          "not kept."
+          "not kept. The read itself is also staged, returned as `staged`."
       }
     },
     required: ["personId"]
@@ -787,6 +819,7 @@ false.
 | Transcription fails for one memory (no `openRouterApiKey`, OpenRouter error, timeout, artifact 403) | **Never throws.** That memory degrades to a metadata-only entry carrying a `notes` line naming `image_transcribe` as the retry route. Other memories are unaffected. |
 | Transcription budget expires | **Never throws.** Memories not reached come back as metadata-only entries with a `notes` line saying the budget ran out. Nothing is dropped, and the budget is not extended. |
 | Story artifact unavailable | `text` is left **absent** rather than filled with the payload's 200-character preview, which is cut mid-word. A `notes` line records it. |
+| Staging the read fails (the `projectPath` folder does not exist or is not a directory, or a store write error) | **Never throws.** The read returns as usual with `staged: null` and `stagingError` naming the cause. The folder is never created. |
 
 ---
 
@@ -910,6 +943,9 @@ interface PersonReadResult {
   persons: SimplifiedPerson[];
   relationships: SimplifiedRelationship[];
   sources: SimplifiedSource[];
+  notes?: string[];
+  staged?: { resultsRef: string; returnedCount: number } | null; // projectPath only
+  stagingError?: string;                                          // beside staged: null
 }
 ```
 
@@ -970,6 +1006,10 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 | 22 | Throws on 403 (restricted person) | Error handling |
 | 23 | Follows 301 redirect (person merged) | Merge handling |
 | 24 | Returns living=true on 204 response | Living person |
+| 25 | Stages the read with `projectPath`; the staged document equals the returned one | Staging |
+| 26 | No `staged` key without `projectPath`, or with a blank one | Staging gate |
+| 27 | A staging failure returns the read with `staged: null` + `stagingError`; a missing folder is not created | Staging fail-soft |
+| 28 | A merged subject's staged element carries the post-redirect id | Staging + redirect |
 
 ### Smoke-test script
 
@@ -981,6 +1021,7 @@ npx tsx dev/try-person-read.ts KNDX-MKG                         # Person only
 npx tsx dev/try-person-read.ts KNDX-MKG --relatives              # Person + family
 npx tsx dev/try-person-read.ts KNDX-MKG --sources                # Person + sources
 npx tsx dev/try-person-read.ts KNDX-MKG --relatives --sources    # Everything
+npx tsx dev/try-person-read.ts KNDX-MKG --relatives --project /tmp/p  # + stage it, and check the staged copy
 ```
 
 ---
