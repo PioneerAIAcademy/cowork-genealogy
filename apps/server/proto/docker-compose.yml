@@ -203,6 +203,12 @@ services:
       PG_DSN: postgresql://postgres:proto@postgres:5432/proto
       # The same queue the shim reads (QUEUE_URL below); the tier keys SendMessage on it.
       QUEUE_URL: http://elasticmq:9324/000000000000/turns
+      # Sidecar bodies live in the blob store, so the tier that serves them needs to
+      # reach it. Same values the worker uses.
+      GENEALOGY_S3_ENDPOINT: http://minio:9000
+      GENEALOGY_S3_BUCKET: projects
+      GENEALOGY_S3_ACCESS_KEY: proto
+      GENEALOGY_S3_SECRET_KEY: protoproto
       POLL_S: "1"
       SSE_PING_S: "15"
       # PR #2870 item 1a: the Stop hook's veto cap, stamped on every queue message

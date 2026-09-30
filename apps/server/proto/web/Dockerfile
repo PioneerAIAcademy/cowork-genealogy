@@ -8,7 +8,10 @@ ENV PIP_NO_CACHE_DIR=1
 WORKDIR /app
 
 # [binary] bundles libpq, so no apt step on -slim.
-RUN pip install "fastapi>=0.115,<1" "uvicorn[standard]>=0.30,<1" "psycopg[binary]>=3.2,<4"
+# boto3 is for sidecar bodies only: `results/<log_id>.json` is an S3 object, and
+# without a client every search-result chip 404s and the viewer shows nothing.
+RUN pip install "fastapi>=0.115,<1" "uvicorn[standard]>=0.30,<1" "psycopg[binary]>=3.2,<4" \
+    "boto3>=1.34,<2"
 
 COPY enqueue.py ./
 COPY sql ./sql

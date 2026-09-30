@@ -54,6 +54,7 @@ import asyncio
 import json
 import logging
 import os
+from functools import lru_cache
 import sys
 import time
 import uuid
@@ -83,6 +84,32 @@ log = logging.getLogger("proto.web")
 
 DEFAULT_PG_DSN = "postgresql://postgres:proto@localhost:5434/proto"
 from proto.web.job_state import job_state
+from proto.web.sidecar import fetch_sidecar, sidecar_key, sidecar_payload
+
+S3_ENDPOINT = os.environ.get("GENEALOGY_S3_ENDPOINT", "")
+S3_BUCKET = os.environ.get("GENEALOGY_S3_BUCKET", "projects")
+
+
+@lru_cache(maxsize=1)
+def _s3_client():
+    """A blob-store client, or None where none is configured.
+
+    None rather than raising: a deployment with no blob store should serve every
+    other route, and its sidecars are legitimately absent.
+    """
+    if not S3_ENDPOINT:
+        return None
+    try:
+        import boto3  # noqa: PLC0415 - optional, and absent in a no-blob deployment
+
+        return boto3.client(
+            "s3",
+            endpoint_url=S3_ENDPOINT,
+            aws_access_key_id=os.environ.get("GENEALOGY_S3_ACCESS_KEY", ""),
+            aws_secret_access_key=os.environ.get("GENEALOGY_S3_SECRET_KEY", ""),
+        )
+    except Exception:  # noqa: BLE001 - a client we cannot build is a client we do not have
+        return None
 
 DEFAULT_TITLE = "New research session"
 DEFAULT_MODEL = "claude-sonnet-4-6"
@@ -817,8 +844,29 @@ def create_app(
 
     @app.get("/api/sessions/{session_id}/sidecar/{log_id}")
     async def session_sidecar(session_id: str, log_id: str, request: Request) -> dict:
-        await _session(request, session_id)
-        raise HTTPException(status_code=404, detail="Sidecar bodies are not served by the prototype web tier (D6-8)")
+        """The body behind a search-result chip.
+
+        404 is a REAL state here, not a stub: the viewer reads it as "this log has no
+        sidecar", which is true for most log entries. What changed is that a log which
+        DOES have one now returns it instead of the same 404.
+        """
+        row = await _session(request, session_id)
+        try:
+            key_ok = sidecar_key(log_id)
+        except ValueError:
+            # A traversal attempt is a bad request, not a missing file -- 404 would
+            # tell a prober that the path shape was accepted.
+            raise HTTPException(status_code=400, detail="not a log id") from None
+        del key_ok
+        s3 = _s3_client()
+        if s3 is None:
+            raise HTTPException(status_code=404, detail="no blob store configured")
+        with psycopg.connect(PG_DSN) as conn:
+            blob = fetch_sidecar(conn, s3, S3_BUCKET, row.project_id, log_id)
+        payload = sidecar_payload(blob)
+        if payload is None:
+            raise HTTPException(status_code=404, detail="no sidecar for this log")
+        return payload
 
     _NOT_IN_PROTOTYPE = {
         "image": "Source images are not served by the prototype web tier (D6-8 blobs)",
