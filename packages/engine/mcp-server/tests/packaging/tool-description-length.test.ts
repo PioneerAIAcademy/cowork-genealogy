@@ -154,9 +154,11 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
   ["record_search", 14947],
   // 5292 -> 5302: the tool-level description gained "siblings, " when the
-  // sibling fan-out landed (#2593). Measured independently (1251 tool-level +
-  // 4051 params), not copied from the failure message.
-  ["person_search", 5302],
+  // sibling fan-out landed (#2593). 5302 -> 5281: it lost " with relatives:
+  // true" when person_read started ignoring that flag (#2696). Measured
+  // independently (1230 tool-level + 4051 params), not copied from the failure
+  // message.
+  ["person_search", 5281],
 ];
 
 /**

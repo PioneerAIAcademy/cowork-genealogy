@@ -5,7 +5,7 @@
     "regenerate": "UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts"
   },
   "prompts": {
-    "CLAUDE.md": 56972,
+    "CLAUDE.md": 56971,
     "packages/engine/plugin/agents/check-warnings.md": 44172,
     "packages/engine/plugin/agents/citation.md": 44479,
     "packages/engine/plugin/agents/convert-dates.md": 11387,
@@ -19,11 +19,12 @@
     "packages/engine/plugin/agents/search-images.md": 21550,
     "packages/engine/plugin/agents/search-wikipedia.md": 6843,
     "packages/engine/plugin/agents/tree-edit.md": 30669,
+    "packages/engine/plugin/agents/validate-schema.md": 4382,
     "packages/engine/plugin/skills/conflict-resolution/SKILL.md": 27656,
     "packages/engine/plugin/skills/forget-and-rederive/SKILL.md": 13208,
     "packages/engine/plugin/skills/historical-context/SKILL.md": 15449,
     "packages/engine/plugin/skills/hypothesis-tracking/SKILL.md": 13498,
-    "packages/engine/plugin/skills/init-project/SKILL.md": 30020,
+    "packages/engine/plugin/skills/init-project/SKILL.md": 29791,
     "packages/engine/plugin/skills/locality-guide/SKILL.md": 20751,
     "packages/engine/plugin/skills/project-status/SKILL.md": 11447,
     "packages/engine/plugin/skills/question-selection/SKILL.md": 20246,
@@ -36,8 +37,7 @@
     "packages/engine/plugin/skills/search-records/SKILL.md": 61270,
     "packages/engine/plugin/skills/source-evaluation/SKILL.md": 16823,
     "packages/engine/plugin/skills/timeline/SKILL.md": 21833,
-    "packages/engine/plugin/skills/translation/SKILL.md": 10741,
-    "packages/engine/plugin/skills/validate-schema/SKILL.md": 2873
+    "packages/engine/plugin/skills/translation/SKILL.md": 10741
   },
   "tools": {
     "tool:auth_status": 274,
@@ -59,9 +59,9 @@
     "tool:person_ancestors": 1923,
     "tool:person_person_matches": 1091,
     "tool:person_quality": 1638,
-    "tool:person_read": 1319,
+    "tool:person_read": 1211,
     "tool:person_record_matches": 1115,
-    "tool:person_search": 7970,
+    "tool:person_search": 7949,
     "tool:person_warnings": 640,
     "tool:place_distance": 630,
     "tool:place_population": 906,

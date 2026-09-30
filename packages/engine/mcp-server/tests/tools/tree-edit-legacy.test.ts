@@ -1,6 +1,6 @@
 // The upgrade-compat contract: a project tree written before the validator
-// tightening (preferred:false from the old mergeNames, person-level sources,
-// top-level places, invented fact keys) must not brick the project. The tools
+// tightening (preferred:false from the old mergeNames, a person-level entry
+// that names no source, top-level places, invented fact keys) must not brick the project. The tools
 // heal it at read; the first successful tree write persists the healed
 // document (a one-shot migration); research_append validates against the
 // healed shape without touching the file.
@@ -23,14 +23,14 @@ const minimalResearch = {
 // What a real pre-tightening project tree looks like (shapes taken from the
 // repo's own runlog final trees): the old merge wrote preferred:false, the
 // old spec carried places[], the open-shape validator let invented keys and
-// person-level sources persist.
+// person-level entries with no `ref` persist.
 const legacyTree = () => ({
   persons: [
     {
       id: "I1",
       living: false,
       gender: "Male",
-      sources: [{ ref: "S1" }],
+      sources: [{ id: "X1", title: "Some record" }],
       names: [
         { id: "N1", preferred: true, given: "John", surname: "Smith" },
         { id: "N2", preferred: false, given: "Jack", surname: "Smith" },

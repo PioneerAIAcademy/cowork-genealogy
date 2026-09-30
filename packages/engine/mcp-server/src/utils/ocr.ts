@@ -13,7 +13,11 @@
  * rule is about the MCP boundary — an LLM cannot reach this — not about an
  * in-process caller.
  */
-import { fetchWithTimeout, isFetchTimeout } from "./http.js";
+import {
+  describeFetchError,
+  fetchWithTimeout,
+  isFetchTimeout,
+} from "./http.js";
 import type { OpenRouterChatResponse } from "../types/image-transcribe.js";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
@@ -74,40 +78,6 @@ export function buildOcrPrompt(lookingFor?: string): string {
     );
   }
   return base;
-}
-
-// Node's global `fetch` rejects with `TypeError: fetch failed` and hangs the
-// real socket-level reason (ECONNRESET, ENOTFOUND, UND_ERR_*, a TLS error) off
-// `.cause` — the bare `.message` is always the useless string "fetch failed".
-// Walk that chain so the thrown "Could not reach OpenRouter" carries the code
-// that tells host-side from provider-side. `AggregateError.errors` is flattened
-// too. Depth- and cycle-bounded so a self-referential cause cannot loop.
-export function describeFetchError(error: unknown): string {
-  const parts: string[] = [];
-  const seen = new Set<unknown>();
-  const push = (label: string) => {
-    if (label && !parts.includes(label)) parts.push(label);
-  };
-  const labelOf = (e: unknown): string => {
-    if (!(e instanceof Error)) return String(e);
-    const code = (e as { code?: unknown }).code;
-    return typeof code === "string" && code.length > 0
-      ? `${code}: ${e.message}`
-      : e.message;
-  };
-  let current: unknown = error;
-  for (
-    let depth = 0;
-    depth < 6 && current != null && !seen.has(current);
-    depth++
-  ) {
-    seen.add(current);
-    push(labelOf(current));
-    const agg = (current as { errors?: unknown }).errors;
-    if (Array.isArray(agg)) for (const e of agg) push(labelOf(e));
-    current = (current as { cause?: unknown }).cause;
-  }
-  return parts.join(" <- ") || "unknown error";
 }
 
 /** The FOUND / NOT FOUND marker `buildOcrPrompt`'s locate hint asks for. */

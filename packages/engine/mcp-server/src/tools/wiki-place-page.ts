@@ -2,7 +2,7 @@ import type { Principal } from "../auth/principal.js";
 import { getPlaceCandidateNames } from "./place-search.js";
 import { standardPlaceToPlaceId } from "../utils/place-resolver.js";
 import { getWikiApiUrl } from "../auth/config.js";
-import { fetchWithRetry } from "../utils/http.js";
+import { describeFetchError, fetchWithRetry } from "../utils/http.js";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import type {
   WikiPlacePageInput,
@@ -67,9 +67,8 @@ async function fetchPage(
       headers: { "User-Agent": "genealogy-mcp-server/0.0.1" },
     });
   } catch (error) {
-    const cause = error instanceof Error ? error.message : String(error);
     throw new Error(
-      `Could not reach wiki-query-api at ${baseUrl}. Is the server running? (${cause})`
+      `Could not reach wiki-query-api at ${baseUrl} (${describeFetchError(error)}).`
     );
   }
 
