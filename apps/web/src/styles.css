@@ -860,3 +860,12 @@ button {
   font-size: 12px;
   color: var(--danger, #c0392b);
 }
+
+/* Phase 2 item 4: the run survives a closed tab; testers who locked their screen
+   thought it had quit (#2921, #2922). Sits under the typing indicator, quieter than
+   the activity line above it so it reassures without competing. */
+.keepsRunning {
+  margin-top: 4px;
+  font-size: 0.85em;
+  opacity: 0.7;
+}

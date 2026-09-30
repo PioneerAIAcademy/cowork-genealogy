@@ -12,6 +12,7 @@ import {
   trackLiveTask,
   withOpeningTurn,
   stripOpeningTurn,
+  KEEPS_RUNNING_NOTE,
   type ChatMessage,
   type ChatBlock,
   type ToolChip,
@@ -516,6 +517,10 @@ export default function ChatPane({
                     }`
                   : 'working…'}{' '}
                 {elapsed}s
+                {/* Item 4: the job already survives a disconnect; testers who locked
+                    their screen thought it had quit (#2921, #2922). Shown only while
+                    a turn is RUNNING -- telling an idle reader this is noise. */}
+                <div className="keepsRunning">{KEEPS_RUNNING_NOTE}</div>
               </div>
             )
           )}

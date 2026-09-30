@@ -10,7 +10,8 @@ import {
   clearQueued,
   turnOutcomeLabel,
   TURN_OUTCOME_LABELS,
-  SPEND_CAP_LABEL
+  SPEND_CAP_LABEL,
+  KEEPS_RUNNING_NOTE
 } from '../chatEvents'
 import subagentStream from './fixtures/subagent-stream.json'
 
@@ -453,5 +454,31 @@ describe('ordered blocks', () => {
       'second',
       'third'
     ])
+  })
+})
+
+// --- "The job outlives the tab" (phase 2 item 4) ---
+//
+// Alpha testers who locked the screen reported the run had QUIT (#2921, #2922). It
+// had not: on the prototype a disconnect stops only the stream. The captured session
+// is direct proof -- 133 minutes, and the queue delivered that one turn FIVE times
+// with the resume guard absorbing each redelivery and the run completing.
+//
+// So the behaviour is right and only the saying-so is missing. The reassurance must
+// appear while a turn is running and only then: telling an idle reader their job
+// keeps running is noise.
+
+describe('keeps-running reassurance', () => {
+  it('names closing the tab, because that is what testers actually did', () => {
+    expect(KEEPS_RUNNING_NOTE.toLowerCase()).toMatch(/close|leave/)
+    expect(KEEPS_RUNNING_NOTE.toLowerCase()).toMatch(/keep|continue|carry/)
+  })
+
+  it('does not promise a notification the product cannot send', () => {
+    expect(KEEPS_RUNNING_NOTE.toLowerCase()).not.toMatch(/email|notify|notification/)
+  })
+
+  it('is short enough to sit under a typing indicator', () => {
+    expect(KEEPS_RUNNING_NOTE.length).toBeLessThan(90)
   })
 })

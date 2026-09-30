@@ -53,6 +53,17 @@ export interface ChatMessage {
 // spent budget and no progress. To a genealogist a half-finished run then reads as
 // "nothing more was found", which is a correctness bug in the product, not a cosmetic
 // one. `ok` is deliberately absent: an ordinary turn that simply finished says nothing.
+// Phase 2 item 4. Alpha testers who locked the screen reported the run had QUIT
+// (#2921, #2922). It had not -- on the prototype a disconnect stops only the stream,
+// and the captured session proves it: 133 minutes, one turn delivered FIVE times by
+// the queue, the resume guard absorbing each redelivery, and the run completing.
+// The behaviour was already right; only the saying-so was missing.
+//
+// Deliberately promises nothing the product cannot do. There is no notification when
+// a job finishes, so this must not imply one -- the reader comes back and looks.
+export const KEEPS_RUNNING_NOTE =
+  'This keeps running if you close the tab — come back any time.'
+
 export const TURN_OUTCOME_LABELS: Record<string, string> = {
   completed: 'Research complete.',
   stopped: 'Stopped — send a message to carry on.',
