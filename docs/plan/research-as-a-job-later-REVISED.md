@@ -17,6 +17,7 @@
 > | R5 | Phase 2's `not searched` merges into phase 3's errand work | One semantic, same SKILL.md passage — splitting pays the eval slot twice |
 > | R6 | Cold-start person pick moves ahead of phase 3's card | The pick is the plan's own root cause of #2864, and every wrong pick burns a full job |
 > | R7 | Four load-bearing figures get derivation scripts | PR #2870 shipped a derivation test because these silently drift |
+> | R10 | The bounded-request scenario names an identifiable person; the #2932 citation stays as quoted |
 > | R9 | *not sure* continues on the **recommended** option, not "the weaker choice" | Lead, 2026-09-28. "Weaker" was undecidable, and *not sure* means deferring to the agent's judgement |
 > | R8 | Two dropped ux-findings restored; three mis-citations fixed | #2539 is not the errand card; one change-review data source does not exist |
 >
@@ -228,9 +229,9 @@ answer was checked not to be on the live tree before the run, with no slash comm
 `research` in its first turn **on three consecutive runs, not one** — the repo's own protocol for
 a behaviour measured to flap (`eval/CLAUDE.md`, "Clearing a card that names specific tests").
 One PASS of a coin flip is not evidence and ends `completed` or `decision`, never `budget` or
-`no_progress`, and its feed is committed to the repo; "create a research plan for Mary Hales
-but leave it at that" ends with a rendered plan, no research-log entries, and the delivered
-outcome; "where are we?" on an active project ends after the answer with the delivered outcome
+`no_progress`, and its feed is committed to the repo; **[R10]** "create a research plan for
+Mary E. McAndrew (G13G-P68), wife of John Mogan of Detroit, but leave it at that" ends with a
+rendered plan, no research-log entries, and the delivered outcome; "where are we?" on an active project ends after the answer with the delivered outcome
 and no new log entry; no shipped skill or agent body ends a reply with an offer the run then
 overrides — shown by the committed feeds, where no offer is followed by further work in the same
 turn; a weak match nobody asked about resolves downward, not to a decision; a stop on any clause
@@ -480,6 +481,31 @@ with PR #2870. S3 is done — PR #2870 removed the literal from `question-select
 |---|---|---|
 | S1 | `init-project` | The between-actions clause, once the feed capture measures it; the cold start's wording, with phase 4. Its identifier clause is phase 2 |
 | S5 | `record-extraction` | Probably no prose change: "a batch is one step" assumed a per-step hand-back, which is gone, and issue #1998 shipped per-record narration with a guard. The relay-leak validator's re-key is phase 2's, and an instrument change needs no paid slot |
+
+**[R10] The bounded-request scenario must name a person the agent can identify.** Run
+2026-09-29 against the live prototype, the original wording — "create a research plan for
+**Mary Hales**" — matched **35,921** FamilySearch people. The agent cannot plan for a person it
+cannot identify, so the run never reached the bounded-request path at all: it ended
+`no_progress`, and the criterion measured nothing it intended to. The subject is now
+Mary E. McAndrew (G13G-P68), which passed every clause on the same day — `delivered`, a
+rendered `pl_001` carrying jurisdiction, date range and rationale, and zero research-log
+entries (`docs/captures/2026-09-29-bounded-requests/`).
+
+**The illustration above is NOT changed and must not be.** "Create a research plan for Mary
+Hales but leave it at that" is quoted from issue #2932 — a real researcher's words, and the
+evidence that the pushback happened. Editing a citation to fit a test would misquote the
+issue. An example of a complaint and an instruction for a measurement are different things;
+only the second needs to be runnable.
+
+**What the failing run additionally exposed, and it is not a wording problem.** Facing those
+35,921 matches the agent had the decision exit — `AskUserQuestion`, which ends a turn
+`decision` and reads *"Waiting on you"* — and did not use it. It stopped, took one nudge,
+produced no tool call, and ended `no_progress`: the researcher is shown *"the agent stopped
+making progress"* when the truth was *"which Mary Hales?"*. That is the **compliance** half of
+R1/R4, which this plan defers as unmeasured. It is now measured **once** — the delivery rule
+was followed in both runs that could act on it, the decision exit was not reached in the one
+run that needed it. One observation, not a rate, and it should be given a rate before anything
+is built on it.
 
 **[R7] Every load-bearing figure gets a derivation before it is built on.** Four numbers here
 decide design and none can be recomputed: **83.5%** of paragraphs follow no log write (L166 —

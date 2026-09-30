@@ -79,7 +79,7 @@ Everything is BUILT. The acceptance is a separate bar and is **not** met yet —
 | No body ends a reply with an offer the run overrides | **met** — 0 offers in 282 paragraphs |
 | Invokes `research` in its first turn | **met** — settled 2026-09-29: it means DURING the first turn, not AS the first call. `init-project` always holds call 1 because the web client prefixes `OPENING_TURN`, so the strict reading is unsatisfiable by construction. The router was entered at call 6 of 42, within the run's single turn |
 | **Three consecutive runs** | **NOT met** — one run |
-| "…but leave it at that" ends with the delivered outcome | **met** — `delivered`, a rendered `pl_001`, and zero research-log entries (`docs/captures/2026-09-29-bounded-requests/`). NOTE: only with an IDENTIFIABLE subject; the criterion's own "Mary Hales" matches 35,921 people and never reaches the path |
+| "…but leave it at that" ends with the delivered outcome | **met** — `delivered`, a rendered `pl_001`, and zero research-log entries (`docs/captures/2026-09-29-bounded-requests/`). The criterion itself is fixed (R10) to name an identifiable subject |
 | "where are we?" ends after the answer, delivered, no new log entry | **met** — `delivered` in 1 minute, no new log entry |
 | #2927 fixed first, or the measurement means nothing | **NOT met** — open, Cia-3 |
 
@@ -88,10 +88,12 @@ here — but one run cannot show that it won't, which is exactly why R2 asks for
 
 **Two defects this scoring found, neither in the code:**
 
-1. **R2's own example cannot test what it intends.** "Create a research plan for Mary Hales"
-   carries no date, place or id and matches 35,921 FamilySearch people, so the agent never
-   reaches the bounded-request path. Before anyone runs this three times, the criterion needs
-   a subject the agent can identify.
+1. ~~**R2's own example cannot test what it intends.**~~ **FIXED (R10).** "Create a research
+   plan for Mary Hales" carries no date, place or id and matches 35,921 FamilySearch people,
+   so the agent never reached the bounded-request path. The criterion now names
+   Mary E. McAndrew (G13G-P68), which passed every clause. The #2932 *citation* elsewhere in
+   the plan is deliberately left as quoted — it is a real researcher's words and the evidence
+   the complaint happened; editing a citation to fit a test would misquote the issue.
 2. **The agent stalls where it should ask.** Facing that ambiguity it had the decision exit
    and did not use it: one nudge, no tool call, outcome `no_progress` — the researcher reads
    "the agent stopped making progress" where the truth was "which Mary Hales?". This is the
