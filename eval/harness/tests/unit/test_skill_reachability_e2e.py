@@ -76,6 +76,8 @@ SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 #     description, which this set does not measure.
 #   - `search-familysearch-wiki` left on 2026-09-29, same reason (issue
 #     #2794), NOT re-listed, same caveat for `agents/search-familysearch-wiki.md`.
+#   - `validate-schema` left on 2026-09-30, same reason (issue #2798), NOT
+#     re-listed, same caveat for `agents/validate-schema.md`.
 DARK_SKILLS_2026_09_01 = frozenset(
     {
         "forget-and-rederive",
@@ -86,7 +88,6 @@ DARK_SKILLS_2026_09_01 = frozenset(
         "timeline",
         "translation",
         "tree-edit",
-        "validate-schema",
     }
 )
 
@@ -131,7 +132,10 @@ def test_the_corpus_is_actually_readable():
     assertion below pass vacuously in the wrong direction."""
     counts = invocation_counts()
     assert sum(counts.values()) > 0, "no skill invocations found — is E2E_RUNLOGS right?"
-    assert len(shipped_skills()) > 20, "skills directory did not enumerate"
+    # A floor against an empty scan, not a count: conversions shrink the set, and
+    # research, record-extraction and forget-and-rederive stay skills (lead
+    # ruling 2026-09-22).
+    assert len(shipped_skills()) >= 3, "skills directory did not enumerate"
 
 
 def test_no_new_skill_has_gone_dark():

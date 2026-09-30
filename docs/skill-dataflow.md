@@ -11,9 +11,9 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 21 skills and 12 agents. Besides the `research` orchestrator itself, its routing
+There are 20 skills and 13 agents. Besides the `research` orchestrator itself, its routing
 table names 13 of them, and 5 more are reached by delegation from a skill the table does
-name. The remaining 10 fire only when the user asks — see
+name. The remaining 9 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
 likely to surprise you.
 
@@ -201,7 +201,7 @@ sibling skill.
 | **`convert-dates`** (an AGENT since issue #2790, not a skill) | Julian/Gregorian, Old Style, Quaker months, double dating | Identifying the calendar regime; the arithmetic belongs to the tool | `convert_calendar` | Nothing — and **nothing downstream persists the converted date** |
 | **`search-familysearch-wiki`** (an AGENT since issue #2794, not a skill) | Any "how do I find [record type]" question | Wiki guidance, synthesized only from returned chunks | `wiki_search` (hosted wiki API) | `<topic-slug>.md` in the working folder. **Not logged to `log[]`** |
 | **`search-wikipedia`** (an AGENT since issue #2795, not a skill) | A single-article encyclopedia lookup | The verbatim article extract — no paraphrase | `wikipedia_search` | `<title-slug>.md` in the working folder. **Not logged to `log[]`** |
-| **`validate-schema`** | "validate", "check the files" | Relaying validator errors in plain terms with a non-regressing fix each | `validate_research_schema` | Nothing. Never edits a file to fix an error |
+| **`validate-schema`** (an AGENT since issue #2798, not a skill) | "validate", "check the files" | Relaying validator errors in plain terms with a non-regressing fix each | `validate_research_schema` | Nothing. Never edits a file to fix an error |
 | **`forget-and-rederive`** | Practice mode — the researcher asks for a known answer to be stripped | Removing a tree slice with cascade so it must be re-derived from records, and holding the rederivation to account | `project_context`; a `dryRun` read-back. **Forbidden** from reading `tree.gedcomx.json` | Tree slice removed and `.tree-before-forget.gedcomx.json` written — `tree_forget`. Touches no `research.json` |
 
 ---
@@ -241,7 +241,7 @@ Two consequences worth holding onto:
   and the `PreToolUse` hook. (`disallowedTools:` was deleted from every agent
   on 2026-08-30 — it only restated the `tools:` omission.)
 - **Only three skills hold `research_query`** — `research`, `search-records`,
-  `search-external-sites` — and five of the eleven agents. Everything else that needs project
+  `search-external-sites` — and four of the thirteen agents. Everything else that needs project
   state does a whole-file `Read`, which is the thing the orchestrator forbids for itself
   because `research.json` reaches 100+ assertions by late run.
 - **The hook carries exactly four rules**, in
@@ -331,7 +331,7 @@ touch either side.
 No routing-table row names these, so an autonomous `/research` run never enters them:
 
 `search-full-text` · `timeline` · `translation` ·
-`historical-context` · `tree-edit` · `validate-schema` ·
+`historical-context` · `tree-edit` ·
 `forget-and-rederive` · `project-status` ·
 `source-evaluation` · `init-project` (named in prose, not in the table)
 
@@ -346,6 +346,10 @@ from this list as evidence either way.
 
 `check-warnings` left it the same way on 2026-09-28 (issue #2118), with the same caveat:
 its callers now spawn it (`init-project`, `tree-edit`), and whether it fires unasked in an
+autonomous run is unmeasured.
+
+`validate-schema` left it on 2026-09-30 (issue #2798), same caveat: it is now an agent
+reached by auto-delegation from its own `description`, and whether it fires in an
 autonomous run is unmeasured.
 
 The two **thin skill halves** of the paired rows join this list. Rows 10

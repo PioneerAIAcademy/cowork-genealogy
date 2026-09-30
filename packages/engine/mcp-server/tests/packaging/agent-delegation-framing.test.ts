@@ -404,7 +404,7 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["search-records -> citation", ""],
   ["source-evaluation -> citation", ""],
   ["translation -> citation", ""],
-  // Nine "use proof-conclusion" prohibitions in DO NOT clauses, visible to the
+  // Seven "use proof-conclusion" prohibitions in DO NOT clauses, visible to the
   // prose arm only since issue #2822 deleted the routing skill and made the
   // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
   // is a delegation being silenced -- verified per file before listing.
@@ -415,7 +415,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["research-exhaustiveness -> proof-conclusion", ""],
   ["timeline -> proof-conclusion", ""],
   ["tree-edit -> proof-conclusion", ""],
-  ["validate-schema -> proof-conclusion", ""],
   // `search-wikipedia` (issue #2795) is the reverse of the `citation` shape: its
   // name is not an ordinary English word, so the arm DOES discriminate for it,
   // and both mentions below are boundary prose telling the reader this is the
@@ -455,7 +454,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["search-records -> check-warnings", ""],
   ["source-evaluation -> check-warnings", ""],
   ["timeline -> check-warnings", ""],
-  ["validate-schema -> check-warnings", ""],
   // convert-dates entered agentOnly when issue #2790 deleted its skill. All
   // three are routing-boundary prose naming it as the owner of a calendar
   // conversion ("use convert-dates", "route to convert-dates"), none spells
@@ -651,6 +649,7 @@ describe("agent delegation framing", () => {
     "record-extractor",
     "search-familysearch-wiki",
     "search-wikipedia",
+    "validate-schema",
   ];
 
   it("the prose arm still covers every agent it is relied on to police", () => {
