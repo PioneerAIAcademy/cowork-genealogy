@@ -5,10 +5,10 @@
     "name": "FamilySearch wiki — Irish immigration",
     "type": "positive",
     "description": "A FamilySearch wiki search on a migration research topic. Confirms the skill handles a single-result response and still produces a sourced summary file.",
-    "tags": ["fs-wiki", "migration", "expects-file-irish-immigration-pennsylvania"]
+    "tags": ["fs-wiki", "migration", "expects-file-irish-immigration-pennsylvania", "direct-arm"]
   },
   "input": {
-    "user_message": "Search the FamilySearch wiki about Irish immigration to Pennsylvania",
+    "delegation": "Search the FamilySearch wiki about Irish immigration to Pennsylvania",
     "scenario": null
   },
   "mcp_fixtures": ["wiki-search-irish-immigration"],
