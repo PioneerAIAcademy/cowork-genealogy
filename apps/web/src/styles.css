@@ -893,3 +893,32 @@ button {
   text-align: left;
 }
 .toolChipLink:hover { text-decoration: underline; }
+
+/* Phase 3 item 1: the decision card. A turn that ends waiting on the researcher used
+   to render one line; this shows the candidates side by side with what each would do.
+   The recommended one is marked, because *not sure* continues on it (R9). */
+.decisionCard {
+  border: 1px solid var(--accent, #1f6feb);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+  background: var(--bg-card, transparent);
+}
+.decisionQuestion { font-weight: 600; margin-bottom: 8px; }
+.decisionOptions { display: flex; flex-direction: column; gap: 6px; }
+.decisionOption {
+  display: flex; flex-direction: column; gap: 2px;
+  text-align: left; padding: 8px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--border, #8883); background: transparent; font: inherit;
+  color: inherit;
+}
+.decisionOption:hover { border-color: var(--accent, #1f6feb); }
+.decisionRecommended { border-color: var(--accent, #1f6feb); }
+.decisionLabel { font-weight: 600; }
+.decisionBadge { font-size: 0.75em; color: var(--accent, #1f6feb); }
+.decisionWhy { font-size: 0.85em; opacity: 0.8; }
+.decisionEscapes { display: flex; gap: 12px; margin-top: 10px; }
+.decisionEscape {
+  background: none; border: none; padding: 0; font: inherit; font-size: 0.85em;
+  color: var(--text-secondary, #666); text-decoration: underline; cursor: pointer;
+}

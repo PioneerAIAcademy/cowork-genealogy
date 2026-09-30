@@ -29,6 +29,10 @@ export interface ChatMessage {
   // session. This records it. Both fields above are untouched, so every existing
   // reader keeps working and this stays additive.
   blocks?: ChatBlock[]
+  // The structured questions from a decision call. The chip summary is truncated to
+  // 160 characters, so a card showing candidates side by side cannot be built from
+  // it; the options ride the event instead.
+  decision?: Array<{ question: string; header?: string; options: Array<{ label: string; description?: string }> }>
   thinking?: string
   // Partial content streaming in ahead of its canonical block. Held separately
   // so committing the block can't double-render what the deltas already showed.
@@ -229,6 +233,9 @@ export function foldChatEvent(
       ...(last.blocks ?? []),
       { kind: 'chip', tool: ev.tool as string, toolIndex: last.tools.length }
     ]
+    if (Array.isArray(ev.questions) && ev.questions.length > 0) {
+      last.decision = ev.questions as ChatMessage['decision']
+    }
     last.tools.push({
       tool: ev.tool as string,
       summary: ev.summary as string,

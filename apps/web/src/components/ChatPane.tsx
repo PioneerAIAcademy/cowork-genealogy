@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm'
 import React from 'react'
 import { useResearchDataOptional } from '@genealogy/viewer-ui'
 import { SchemaIdText } from './SchemaIdText'
+import { DecisionCard } from './DecisionCard'
 import { toolLabel, humanizeToolNames } from './toolLabel'
 import { chipTarget } from './chipTarget'
 import type { SessionConnection, WsMessage } from '../transport/SessionConnection'
@@ -295,6 +296,15 @@ export default function ChatPane({
   const [connState, setConnState] = useState<'open' | 'reconnecting'>('open')
   // 1c: the label for how the last turn ended, or null for an ordinary finish.
   const [outcome, setOutcome] = useState<string | null>(null)
+  // The card replaces the one-line outcome label only for a turn that actually ended
+  // waiting on the researcher AND carried its options. A `decision` turn whose payload
+  // did not arrive falls through to the label, which is the honest degradation: a
+  // question the reader can still see, rather than an empty card.
+  const m0Decision = useMemo(() => {
+    if (!outcome) return null
+    const last = [...messages].reverse().find((m) => m.decision && m.decision.length > 0)
+    return last?.decision ?? null
+  }, [outcome, messages])
   // 1b: the server is holding a message for this session. Distinct from the per-bubble
   // `queued` flag, which only the tab that sent it knows about.
   const [queuedOnServer, setQueuedOnServer] = useState(false)
@@ -531,6 +541,18 @@ export default function ChatPane({
               as progress (the failure mode that hid the 2026-07-20 disconnect). */}
           {connState === 'reconnecting' ? (
             <div className="typing">●●● Reconnecting…</div>
+          ) : m0Decision && !busy ? (
+            // Phase 3 item 1: a turn that ended `decision` gets the CARD, not the
+            // one-line "Waiting on you" label. Answering sends the reader's choice
+            // as the next message, which is what resumes the run -- the same path a
+            // typed reply takes, so nothing new has to be taught to the worker.
+            <DecisionCard
+              questions={m0Decision}
+              onAnswer={(answer) => {
+                conn.send({ type: 'user_msg', text: answer })
+                setMessages((prev) => [...prev, { role: 'user', text: answer, tools: [] }])
+              }}
+            />
           ) : outcome && !busy ? (
             <div className="turnOutcome">{outcome}</div>
           ) : queuedOnServer && !messages.some((m) => m.queued) ? (

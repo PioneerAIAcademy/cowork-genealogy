@@ -840,8 +840,10 @@ def map_message(
                 out.append(_event_for(message, "thinking", text=getattr(block, "thinking", "")))
             elif isinstance(block, ToolUseBlock):
                 tool_names[getattr(block, "id", "")] = block.name  # for the matching tool_result
+                inp = getattr(block, "input", None)
+                extra = _decision_payload(block.name, inp)
                 out.append(_event_for(message, "tool_use", tool=block.name,
-                                      summary=_tool_summary(getattr(block, "input", None))))
+                                      summary=_tool_summary(inp), **extra))
     elif isinstance(message, UserMessage):
         # Tool results come back as a UserMessage of ToolResultBlock(s); tag each
         # with the originating tool's name so the UI can mark that chip done.
@@ -856,6 +858,33 @@ def map_message(
 # Live-only event kinds: shown as they stream, never written to the replay
 # transcript (see map_message's docstring). Shared with sandbox_server's pump.
 TRANSIENT_KINDS = frozenset({"text_delta", "thinking_delta", "task_progress"})
+
+
+# The decision tool, and only it, carries its input structured alongside the summary.
+#
+# `_tool_summary` flattens an input to its first four keys truncated to 160 characters,
+# which is right for a chip and useless for a card: in the committed corpus an
+# AskUserQuestion arrives with its `questions` cut off mid-word. A card showing
+# candidates side by side cannot be built from that.
+#
+# Every other tool is left alone deliberately. Widening this for all of them would put
+# whole record payloads on the wire for every call.
+DECISION_TOOL_NAME = "AskUserQuestion"
+
+
+def _decision_payload(tool_name: str, inp: object) -> dict:
+    """`{"questions": [...]}` for a well-formed decision call, else `{}`.
+
+    Silent on a malformed input rather than raising: an event builder that throws
+    ends the turn, and a decision whose shape we do not recognise must still produce
+    a chip the reader can see.
+    """
+    if tool_name != DECISION_TOOL_NAME or not isinstance(inp, dict):
+        return {}
+    questions = inp.get("questions")
+    if not isinstance(questions, list) or not questions:
+        return {}
+    return {"questions": questions}
 
 
 def _tool_summary(inp: object) -> str:

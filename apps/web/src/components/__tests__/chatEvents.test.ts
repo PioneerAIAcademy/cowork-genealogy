@@ -482,3 +482,24 @@ describe('keeps-running reassurance', () => {
     expect(KEEPS_RUNNING_NOTE.length).toBeLessThan(90)
   })
 })
+
+describe('decision questions reach the bubble', () => {
+  it('keeps the structured questions off a decision tool_use', () => {
+    // The card cannot be built from the 160-char summary; the options ride the event.
+    let m: ChatMessage[] = []
+    m = foldChatEvent(m, 'text', { text: 'thinking' })
+    m = foldChatEvent(m, 'tool_use', {
+      tool: 'AskUserQuestion',
+      summary: 'questions=[...]',
+      questions: [{ question: 'Which one?', options: [{ label: 'A' }] }]
+    })
+    expect(m[m.length - 1].decision?.[0].question).toBe('Which one?')
+  })
+
+  it('leaves an ordinary tool_use without a decision payload', () => {
+    let m: ChatMessage[] = []
+    m = foldChatEvent(m, 'text', { text: 'x' })
+    m = foldChatEvent(m, 'tool_use', { tool: 'record_read', summary: 'ark=1' })
+    expect(m[m.length - 1].decision).toBeUndefined()
+  })
+})

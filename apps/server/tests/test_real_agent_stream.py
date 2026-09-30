@@ -216,3 +216,65 @@ def test_omitting_the_id_map_leaves_every_existing_caller_unchanged():
     (ev,) = map_message(sub, {}, tasks)
     assert ev["agent"] == "record-extractor"
     assert "task_id" not in ev, "no map supplied -> no id stamped, and nothing breaks"
+
+
+# --- The decision card needs the options, not a 160-char summary (phase 3 item 1) ---
+#
+# `_tool_summary` flattens a tool's input to its first four keys, truncated to 160
+# characters. For AskUserQuestion that mangles the questions array into an unusable
+# string -- measured in the committed corpus, where `questions` arrives cut off
+# mid-word. A card showing candidates side by side cannot be built from it.
+#
+# So the decision tool, and only it, carries its input structured alongside the
+# summary. Every other tool is untouched: the summary is what chips render, and
+# widening it for all tools would put whole record payloads on the wire.
+
+def _ask(questions):
+    return AssistantMessage(
+        content=[ToolUseBlock(id="b1", name="AskUserQuestion", input={"questions": questions})],
+        model="claude-sonnet-4-6",
+    )
+
+
+QS = [{
+    "question": "Which Mary Hales?",
+    "header": "Person",
+    "options": [
+        {"label": "Mary Hales of Ohio (Recommended)", "description": "b. 1832, matches the census"},
+        {"label": "Mary Hales of Indiana", "description": "b. 1841, weaker match"},
+    ],
+}]
+
+
+def test_the_decision_tool_carries_its_questions_structured():
+    (ev,) = map_message(_ask(QS), {}, {})
+    assert ev["kind"] == "tool_use" and ev["tool"] == "AskUserQuestion"
+    assert ev["questions"] == QS, "the card needs the options, not a truncated string"
+
+
+def test_the_summary_is_still_there_for_the_chip():
+    (ev,) = map_message(_ask(QS), {}, {})
+    assert ev["summary"], "the chip still renders a summary as it does for every tool"
+
+
+def test_every_other_tool_is_left_alone():
+    """Widening this for all tools would put whole record payloads on the wire."""
+    msg = AssistantMessage(
+        content=[ToolUseBlock(id="b1", name="record_read", input={"ark": "x", "big": "y" * 500})],
+        model="claude-sonnet-4-6",
+    )
+    (ev,) = map_message(msg, {}, {})
+    assert "questions" not in ev
+
+
+def test_a_malformed_ask_does_not_break_the_stream():
+    """A hook that raises ends the turn; so does an event builder. A decision whose
+    input is not the shape we expect must still produce a chip."""
+    for bad in ({"questions": "not a list"}, {}, {"questions": []}):
+        msg = AssistantMessage(
+            content=[ToolUseBlock(id="b1", name="AskUserQuestion", input=bad)],
+            model="claude-sonnet-4-6",
+        )
+        (ev,) = map_message(msg, {}, {})
+        assert ev["kind"] == "tool_use"
+        assert "questions" not in ev, "only a well-formed list is carried"
