@@ -93,7 +93,42 @@ says none is sequenced: **#1830** (open — `skip_reason`/`skip_category`), **#2
 gate rewrite), **#2475** (absorbed #1821). A `waiting` value lands on top of all three.
 Sequence against them before touching the enum, or two of the four collide in the same file.
 
-### Open questions, to answer before any code
+### RULED (user, 2026-09-30) — all five
+
+1. **`waiting` sits BESIDE `in_progress`, not instead of it.** A search stuck on the
+   researcher is still in progress. It also carries a short note of what is being waited for,
+   and the job continues automatically when the researcher supplies it.
+2. **An outstanding errand does NOT permit `completed`.** If the agent is waiting on the
+   researcher to do the research better, the research is not finished. **One escape:** the
+   researcher may say *proceed without it*, and then the agent skips the ask and carries on.
+   At the end it must report the result, **what was skipped, and what that skipping implies**.
+   The researcher may later supply the answer and ask for it to be redone.
+3. **What is needed IS noted on the search**, as well as in the errand record.
+4. **Answering picks up where it was**, from the state it was in.
+5. **Sequencing: #1830 first** (assigned to Benter). #2539 and #2475 remain in the backlog.
+
+**Implementation note on (2), flagged rather than silently reinterpreted.** "Resumes from the
+exact state it previously asked" is achievable in one sense and not another, and the difference
+decides the build:
+
+- **Achievable:** the errand record and the plan item persist, so when the answer arrives the
+  agent re-opens *that item* — from `skipped` back to in-progress-with-the-answer — and
+  completes it. The item is the resume point.
+- **Not achievable:** literally rewinding the run to the moment of the ask. Sessions move
+  forward; work done after the ask is real and stays. Nothing in the prototype can replay a
+  turn as if the intervening hours had not happened.
+
+So "resume from that state" is built as *re-open that item with the new information*, not
+*replay the run*. A conclusion already written while the evidence was incomplete may then need
+revisiting — which is exactly what change review (item 4) is for, and is a reason those two
+items are related rather than independent.
+
+**Also worth naming:** ruling (2) makes "what was skipped and what it implies" a
+**reasonably-exhaustive** claim, not a courtesy line. An unsearched source bears directly on
+GPS Element 1, so the end-of-run report is evidence about the conclusion's strength, not a
+status note.
+
+### Questions now closed
 
 1. Does `waiting` replace `in_progress` on the item, or sit beside it? An item can be started
    and blocked at once.
