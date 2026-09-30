@@ -9,25 +9,54 @@ is [`docs/plan/research-as-a-job-later-REVISED.md`](./plan/research-as-a-job-lat
 
 ## Where we are in one line
 
-*Before phase 2* is most of the way done. Phase 2 itself has not started. Two things
-still block it, and one of them is not ours to close (#2927).
+*Before phase 2* is built and its acceptance is met except the three-run measurement, which
+is blocked on someone else. **Phase 2 is built except two pieces**, both named below, and
+neither is blocked.
 
-## Built on this branch
+## Before phase 2 — built
 
 | Commit | What |
 |---|---|
-| `b7d84a0c8` | The "I need you" exit — `AskUserQuestion` ends the turn as `decision` instead of stalling |
+| `b7d84a0c8` | The "I need you" exit — `AskUserQuestion` ends the turn as `decision` |
 | `0e82c1da6` | `make e2e-narration-figures` — derives the plan's load-bearing figures |
-| `5d9c53e70` | Harness: an agent SPAWN now counts toward a negative test's routing verdict; plus a `main`-red fix in `setup-feedback-case.sh` |
-| `28f4041a6` | `export.py` writes the feed a hosted reader saw; plan revised to the system-prompt carrier |
-| `7e3b9914a` | **R1**: router re-entry on every turn's system prompt, and the ledger now records which skill was called |
-| `0538d487d` | Guard for `export`'s `main()` wiring |
-| `c7b63b350` | R4 carrier ruled (user): a second dedicated tool; build spec pinned |
-| `ed159989c` | **R4 worker half** — `delivered` outcome, hook arm, browser label |
-| `beeb69742` | **R4 engine half** — the `research_delivered` MCP tool + spec |
+| `5d9c53e70` | Harness: an agent SPAWN counts toward a negative test's routing verdict; plus a `main`-red fix in `setup-feedback-case.sh` |
+| `98e179f75`, `0538d487d` | `export.py` writes the feed a hosted reader saw, and its wiring is guarded |
+| `7e3b9914a` | **R1** — router re-entry on every turn's system prompt, plus the ledger recording which callee a `Skill`/`Task` call names |
+| `ed159989c`, `beeb69742` | **R4** — the `delivered` exit: outcome, hook arm, browser label, and the `research_delivered` MCP tool |
+| `81b8e9041`, `4b71fdded` | When to deliver, taught in the turn prompt rather than 27 skill bodies |
+| `45dcd3ff8` | `make proto-up` unbroken — minio repointed after every registry refused it |
+| `ed44c3749` | **The captured feed** — 133 min, `completed`, 2,697 events |
+| `74b477107` | The stall fix: a retry waits out a stall instead of retrying into it |
+| `8b884bfcf` | Both bounded-request scenarios, run live and passing |
+| `fa970d079`, `1167a78ae` | Two acceptance criteria settled/fixed (R10) |
 
-Three offer-removal commits were made and then **reverted** (`a262fcac0`, `9ec112c13`) —
-see findings below. That is deliberate, not unfinished work.
+Three offer-removal commits were made and **reverted** (`a262fcac0`, `9ec112c13`) — deliberate,
+see findings.
+
+## Phase 2 — the reading experience
+
+| Parent item | State |
+|---|---|
+| The step is the chat's unit | **DONE** (`41a45a0c4`, `1cce268de`) — chips render where they arrived, not stacked above the prose |
+| Identifiers become links | **DONE** (`f3908a47a`, `eddb86d5c`) — 193 dead ids open their card; provider hoisted above both panes |
+| Tool chips in FamilySearch's words | **LABELS DONE** (`13d6cf010`). **Navigation not done** — the chip opening the card it names is now *unblocked* by the provider hoist |
+| One view of job state | **DONE** (`537ebcf0a`, `b04873198`) — rail deleted, four states on the list, off-plan group |
+| The job outlives the tab | **DONE** (`61c1c8941`) |
+| Three kinds of nothing | **DEFERRED BY DESIGN** — R5 pins it to phase 3's errand; one semantic, two eval slots if split |
+| Show the scans, let documents in | **NOT DONE** — the prototype's sidecar endpoint 404s *deliberately* ("not served by the prototype web tier"). A backend feature, not a reading change |
+
+Supporting fixes: chips now close on the agent that produced the result
+(`0b6ba0373` — 28 of 1,006 were cross-attributed), and every sub-agent event carries a
+`task_id` (`f372060f3`), because attribution by description string could not tell two tasks
+apart.
+
+## What is left, and who owns it
+
+1. **Chips open the card they name** — small, unblocked, ours. The provider hoist made it
+   possible; `setActiveSection` is already reachable from the chat.
+2. **Serving sidecar bodies** — a backend feature (blobs through the web tier), ours, larger.
+3. **The three-run acceptance** — blocked on #2793/#2927, **Cia-3's**. R2 wants three
+   consecutive runs and R3 says #2927 must be fixed first or the measurement means nothing.
 
 ## What we found (each measured, none assumed)
 
@@ -111,6 +140,24 @@ declared it.
 
 Nothing else here is owned by this branch. What remains is the acceptance above, and it is
 gated on #2927 (Cia-3).
+
+## Findings from phase 2 itself
+
+5. **The feed is not the screen.** `foldChatEvent` drops all sub-agent prose, so of the
+   capture's 282 paragraphs only **190** reach a reader, 405 identifier occurrences are
+   really **193**, and "36 sub-agents, all completed" is **32 distinct — 25 completed, 4
+   stopped, 3 never closed**. The first phase-2 draft measured the feed and called it the
+   screen, one day after correcting the same class of error in the parent plan.
+6. **A direction heuristic for anchoring was built and rejected on the data.** Narration
+   both reports and announces, in near-equal measure (158 transitions each way), but opening
+   words do not separate the two — and the ground-truth burst is announced by "Running both
+   checks for all 18 persons at once", which no opener list contained. Chronological order
+   needs no heuristic and is what the parent plan asked for.
+7. **28 of 1,006 chips were cross-attributed** — one agent's result closing another's chip
+   and overwriting its summary. Now 0, with no results left unmatched.
+8. **The progress rail showed all-green on a looping run.** Every one of its six stages reads
+   `completed` on the captured project, because a stage is done forever once its section is
+   non-empty. Deleted; the plan items already carry the real state.
 
 ## Process notes worth keeping
 
