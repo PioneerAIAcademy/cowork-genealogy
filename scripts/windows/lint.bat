@@ -5,5 +5,4 @@ setlocal
 cd /d "%~dp0..\.."
 call pnpm --filter @genealogy/electron lint
 if errorlevel 1 exit /b 1
-cd eval\app
-call npm run lint
+call pnpm --filter cowork-genealogy-eval-app lint
