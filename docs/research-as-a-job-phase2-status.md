@@ -10,8 +10,8 @@ is [`docs/plan/research-as-a-job-later-REVISED.md`](./plan/research-as-a-job-lat
 ## Where we are in one line
 
 *Before phase 2* is built and its acceptance is met except the three-run measurement, which
-is blocked on someone else. **Phase 2's reading experience is built.** One backend piece remains
-(serving sidecar bodies) and two items are deferred by design; nothing here is blocked.
+is blocked on someone else. **Phase 2 is built.** Every parent item is done or deferred by design, and the only thing
+left is the acceptance measurement, which is not ours.
 
 ## Before phase 2 — built
 
@@ -43,7 +43,7 @@ see findings.
 | One view of job state | **DONE** (`537ebcf0a`, `b04873198`) — rail deleted, four states on the list, off-plan group |
 | The job outlives the tab | **DONE** (`61c1c8941`) |
 | Three kinds of nothing | **DEFERRED BY DESIGN** — R5 pins it to phase 3's errand; one semantic, two eval slots if split |
-| Show the scans, let documents in | **NOT DONE** — the prototype's sidecar endpoint 404s *deliberately* ("not served by the prototype web tier"). A backend feature, not a reading change |
+| Show the scans, let documents in | **SIDECAR BODIES DONE** (`f2b98b957`) — served from the blob store; 404 now means a log genuinely has none. Still not served: images, uploads, sandbox logs (`_NOT_IN_PROTOTYPE`) |
 
 Supporting fixes: chips now close on the agent that produced the result
 (`0b6ba0373` — 28 of 1,006 were cross-attributed), and every sub-agent event carries a
@@ -52,8 +52,7 @@ apart.
 
 ## What is left, and who owns it
 
-1. **Serving sidecar bodies** — a backend feature (blobs through the web tier), ours, larger.
-2. **The three-run acceptance** — blocked on #2793/#2927, **Cia-3's**. R2 wants three
+1. **The three-run acceptance** — blocked on #2793/#2927, **Cia-3's**. R2 wants three
    consecutive runs and R3 says #2927 must be fixed first or the measurement means nothing.
 
 ## What we found (each measured, none assumed)
