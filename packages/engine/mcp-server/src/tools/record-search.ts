@@ -1248,7 +1248,22 @@ export const recordSearchToolSchema = {
     "value drops surname-empty records outright. Setting a flag " +
     "excludes what its own field admits, so it only ever narrows and can drop " +
     "the target. Years and places differ — see `birthYearExact` and " +
-    "`birthPlaceExact`.",
+    "`birthPlaceExact`. " +
+    "EVENT FAMILIES: a `birth*` parameter matches birth, christening, baptism " +
+    "and naming; `death*` matches death, burial and cremation; `marriage*` " +
+    "matches marriage, engagement, licence and banns; `residence*` matches " +
+    "census, directory, tax and land residence; `any*` matches every event " +
+    "type. A typed date+place pair must match the SAME event, so reach for " +
+    "`anyYearFrom`/`anyYearTo` with `anyPlace` when the event type is " +
+    "uncertain rather than guessing a family. " +
+    "DATES: only the YEAR is matched — a day or month is accepted and " +
+    "discarded — and a year range is INCLUSIVE on both ends. An unqualified " +
+    "range also fuzzes outward, by roughly two years either side for birth, " +
+    "marriage and death and roughly five for `any` and `residence`, so state " +
+    "the span you mean as a range rather than relying on a single year. " +
+    "PLACES: pass the full hierarchical standardized string when you have one " +
+    "(`'Lehi, Utah County, Utah, United States'`); a non-standardized string " +
+    "falls back to brittle string matching.",
   // The `*Exact` descriptions below state only what is specific to each
   // parameter; the rule they share lives in the tool-level description above and
   // is deliberately not repeated per parameter. They cover the effect on the
@@ -1290,7 +1305,7 @@ export const recordSearchToolSchema = {
       birthYearTo: { type: "number", description: "Upper bound of the birth-year range. 4-digit year (e.g., 1859). Must be paired with `birthYearFrom`." },
       birthYearExact: { type: "boolean", description: "With `true`, only records whose indexed date is inside the range survive. Unqualified, a range also admits records whose estimated date range overlaps it. Records with no indexed date at all are reached by neither." },
       birthPlace: { type: "string", description: "Birth place name (e.g., `'Kentucky'`, `'Hardin, Kentucky, United States'`). For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      birthPlaceExact: { type: "boolean", description: "Stop upward expansion to parent jurisdictions. A different mechanism from the rule above — expansion, not fuzz. Large effect on the count; set it when the count must mean something. Ordering effect measured on one target only." },
+      birthPlaceExact: { type: "boolean", description: "Stop upward expansion to parent jurisdictions. A different mechanism from the rule above — expansion, not fuzz. Unqualified, a place matches the place given AND places up to three jurisdiction levels above it, which is why a county scope barely discriminates. Whether `.exact` still descends to child localities is NOT established — treat that half as unverified. Large effect on the count; set it when the count must mean something. Ordering effect measured on one target only." },
 
       deathYearFrom: { type: "number", description: "Lower bound of the death-year range. 4-digit year (e.g., 1900). Must be paired with `deathYearTo`." },
       deathYearTo: { type: "number", description: "Upper bound of the death-year range. 4-digit year (e.g., 1920). Must be paired with `deathYearFrom`." },
@@ -1341,7 +1356,7 @@ export const recordSearchToolSchema = {
       batchNumber: { type: "string", description: "IGI batch number (e.g., `\"M01048-5\"`), the extraction batch behind a legacy parish register. OBTAIN ONE from the `batchNumber` field on a previous result (search the collection by name, then scan the hits for one that carries it — most records carry none, and a hit without one says nothing about the collection); `ranked[]` stubs carry it too. A very strong filter and the canonical way to enumerate one parish: send it ALONE and it returns that batch's records, and adding a name searches within the batch. It anchors by itself — adding `recordCountry` or `recordSubdivision` is REJECTED by the tool, because a country that does not match the batch silently returns 0 (a batch number carries no country information, so there is nothing to guess it from). A nonexistent batch returns 0 rather than being ignored. Paging stops at `offset + count = 4999`, so a batch bigger than that cannot be walked end to end — partition it with `surname`, not by paging deeper. Shape varies: a batch may lead with a digit or with a letter, and may carry a trailing `-digit`. Attested live: `B01883-5`, `M01048-5`, and the all-numeric `8317102`. Always pass it as a quoted string, keeping any leading zeros; pass it exactly as the source gives it, do not reject or reformat one on shape, and treat no shape rule here as exhaustive." },
       imageGroupNumber: { type: "string", description: "Filter to a specific digitized volume by image group number (e.g., `'004010852'`). Also accepts split DGS format (e.g., `'004010852_001_M9QY-X6Y'`). Use the `volume_search` tool first to find the image group number for a place and date range." },
       recordCountry: { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname`, `recordCountry` or `batchNumber` must be supplied. Combining it (or `recordSubdivision`) with `batchNumber` is REJECTED (the batch anchors on its own): a country that does not match the batch silently returns 0, which is indistinguishable from a wrong batch." },
-      recordSubdivision: { type: "string", description: "State, province, or first-level subdivision within the country (e.g., `'Alabama'`). Requires `recordCountry` to be supplied alongside it." },
+      recordSubdivision: { type: "string", description: "State, province, or first-level subdivision within the country (e.g., `'Alabama'`). Requires `recordCountry` to be supplied alongside it. Both this and `recordCountry` are ALREADY STRICT — a nonexistent country or subdivision returns 0 rather than being ignored, so no `*Exact` qualifier exists for either and none is needed. Reading a nil: a nil at one place level does NOT settle another. Whether dropping from a subdivision to a country-wide scope rescues a search that nilled is unestablished, so re-run at the wider level rather than concluding the record is absent." },
       recordType: { type: "string", enum: ["birth", "marriage", "death", "census", "immigration", "military", "probate", "other"], description: "Type of record. Mapped to the upstream's integer recordType encoding by the tool." },
       maritalStatus: { type: "string", enum: ["Married", "Single", "Divorced", "Widowed"], description: "Marital status of the searched person. Case-sensitive — must be supplied with the exact capitalization shown. Many records leave this field unfilled, so filtering on it excludes records where the field is blank." },
       isPrincipal: { type: "boolean", description: "Filter by the searched person's role in the record. `true` returns only records where the matched person is the principal subject (e.g., the deceased on a death certificate, the bride/groom on a marriage). `false` returns only records where the matched person is mentioned but is not the principal (e.g., as a parent, witness, sibling). Pick by intent, do not default to omitting. Records ABOUT a person (their own birth/marriage/death) take `true` — a heavy filter, which is the point: it drops incidental mentions. Finding a relative THROUGH a person you already know is `false`. Each result now carries a `role` field (\"Principal\", \"Father\", \"Mother\", \"Spouse\", \"Other\") naming the matched person's relationship to the record — read it before inferring the role from the relationship graph. `record_read` carries `principal` (boolean) but not the role string; for the string, use the search result's `role`. Omit to return both." },
