@@ -3002,7 +3002,8 @@ def collect_post_hoc_shadow(
             emit(
                 f"[guardrail-shadow] {len(conflict_unpersisted)} concluded "
                 "question(s) relying on an unpersisted conflict resolution "
-                "(shadow mode — not failed)"
+                "(reported, not failed here — research_append refuses the write "
+                "at the writer tool)"
             )
 
     fact_disagreements = find_tree_facts_disagreeing_with_assertions(research, tree)

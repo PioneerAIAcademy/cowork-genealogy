@@ -157,6 +157,7 @@ depends on another shipping first.
 | §5 | Completion gate: blocking conflicts | engine (MCP tool) — so Cowork, hosted, both harnesses | `project.status: "completed"` while an unresolved conflict blocks a question — it names one, is an identity conflict, or disputes an assertion a question was built on | **enforcing** (the two declared arms shipped first, motivated by the `wilkins-death-kentucky` finding of 2026-07-15; the derived arm widens them. refuses 11 of 128 (9%) completed corpus runs against the previous 5, measured at f459af71b; all 11 refusals read individually per ADR-0011 limit 2 and all are true positives) |
 | §5 | Core-identifier contradiction caps the tier | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` entry at `confident`/`probable` whose record states a birth place or a birth/christening date contradicting what the tree person attests, or which declares `core_identifier_conflict` | **enforcing** (since 2026-09-24). **Refuses 0 of 323** committed confident/probable entries. Reaching zero took four genealogical scopings, each measured: comparing any place refuses 274 (a census place is not a birthplace); birth-type only refuses 38; excluding secondary/no-proximity informants clears 35 of those (a death record's birthplace, senior genealogist ruling 2026-09-23) and excluding christening PLACE clears the other 3 (you are christened where the church is); scoping to the linked party clears 16 more and excluding two-party relationship assertions the last 14 (a son's birth year is not a contradiction for his father). All 38 of the un-gated arm were read individually per ADR-0011 limit 2 and every one was a false positive. Its limit: a link made through a relationship assertion is bound on the date arm only, and only when another link ties a one-party assertion of the same record party to the same person. One with no such sibling, including a relationship link written before its party's one-party link, is still not bound, because which of the two people it is about is not decidable from the documents |
 | §5 | A logged query names only filters its search sent | engine (MCP tool) — so Cowork, hosted, both harnesses | a `research_log_append` op whose explicit `query` names a filter key, with a value, that its staged `record_search` or `fulltext_search` never sent. A differing value is allowed (mostly place normalization, observed by the eval `report_*` validators instead), as are descriptive keys, plumbing and paging. A nil search stages nothing and is never judged | **enforcing** (refuses 18 of 358 paired staged ops, 15 distinct claims, all read individually per ADR-0011 limit 2 and all true positives, measured at a1960c5af by `packages/engine/mcp-server/dev/measure-log-query-claims.ts`; 0 of the 121 paired unit-eval ops, whose misstatements were filled from a staged payload the eval mock built from a fixture's recorded query, fixed at the mock. Unstaged entries — nil searches, searches made without a `projectPath` — and external-site entries are seen only by the eval `report_*` observers in `test_search_records.py` and `test_search_external_sites.py`) |
+| §5 | A resolution in prose must reach `conflicts[]` | engine (MCP tool) — so Cowork, hosted, both harnesses; the harness detector `find_unpersisted_conflict_resolutions` stays as the document-plane reading | a `proof_summaries` write whose question's `exhaustive_declaration.stop_criteria.conflict_resolution` claims a conflict was resolved while `conflicts[]` holds no record of it — empty, or not holding the `c_` id the stop-criterion names. Scoped to the summary written, read live, not tier-gated; a recorded but open conflict is not this miss. Every other conflict gate iterates `conflicts[]` and passes vacuously when it is empty, which is how a tester's project reached `completed` with the Conflicts section blank | **enforcing** (since 2026-09-28; the first guard graduated under ADR-0011's labelled-case rule, its cases in `packages/engine/mcp-server/tests/guard-cases/unpersisted-conflict-resolution.json`, replayed by both planes. **Refuses 10 summaries across 9 of 194 committed e2e final states**, measured at 0b65122bc by `packages/engine/mcp-server/dev/measure-unpersisted-conflict-guard.ts`, which names the same runs, summaries and questions as the harness replay. Every one has an empty `conflicts[]`. All 10 read individually per ADR-0011 limit 2: 9 true positives — two records weighed and settled in prose, or a spelling, index-reading or premise discrepancy of the tester's own class — and 1 borderline, a `cruz-corona-ancestry` run that fires on an illegible surname reading settled by a sibling's record, accepted as a satisfiable cost of one conflict entry. What it lets through is in `unpersistedConflictResolutionInvariants`: a stop-criterion reading "no conflicts remain", rewording to that, a resolution claim written after the summary, and — wider than the rule before it graduated — any `conflicts[]` entry at all backing an id-less claim, so one recorded conflict in a multi-question project turns it off for every other question's id-less claim) |
 | §5 | Set-once project fields | engine (MCP tool) — so Cowork, hosted, both harnesses | a rewrite of `objective`, `title` or `subject_person_ids` after project creation | **enforcing** |
 | §5 | Hypothesis `supported` evidence floor | engine (MCP tool) — so Cowork, hosted, both harnesses | a hypothesis set to `status: "supported"` while a conflict naming its own supporting/contradicting assertions is unresolved, or with neither ≥1 `record_basis: "stated"` supporting assertion nor ≥2 at `record_basis: "inferred"` citing ≥2 distinct sources | **enforcing** (since 2026-09-16, lead ruling 2026-09-07; forward direction only. **Refuses 0 of 9** landed `supported` writes in the calibration corpus — 17 ops attempt it across 13 run logs, 7 refused for unrelated reasons and 1 capture-stripped, so 9 are writes — and 0 of 44 `supported` hypotheses across 276 committed final states and fixtures. **Measured at 587d3c98d**, 2026-09-17, `eval/harness/scripts/count_supported_floor.py`. Mirrors the eval validator `test_supported_requires_evidence_floor`, which stays; the rule now sits on four planes with nothing that can see them disagree — the cross-plane parity work owns that) |
 | §5 | Plan-phase gate on `tree_forget` | engine (MCP tool) — so Cowork, hosted, both harnesses | `tree_forget` called after `research.json` already holds a non-empty `plans` array | **enforcing** |
@@ -355,7 +356,7 @@ and getting it wrong is what made three checks look dead for a fortnight:
 | §8 live `same_person` provenance | 12, across 7 runs | 115 of 149 runs that link a person | **graduated 2026-09-24**, on the writer side rather than as an e2e hook: `research_append` now refuses the append itself. The e2e pre-write hook stays shadow, since it fires on a different plane and catches the ordering rather than the attestation |
 | §7.5 citation-nulling (`find_citation_nulling_in_conclusions`) | **0**, 0 runs | **0**, of 159 scanned | never observed either way |
 | §7.5 citation-nulling, TREE side (`find_citation_nulling_in_tree_sources`) | **0**, 0 runs — arm added 2026-08-25, no run has carried it yet | **111 source(s), across 50 runs**, of 159 scanned | shadow, reported; **deliberately not graduated** — see below |
-| §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **0**, 0 runs | **4 runs**, of 159 scanned | behaviour confirmed; live store path never exercised |
+| §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **6**, across 5 runs, measured at 0b65122bc | **10** summaries across 9 of 194 runs, measured at 0b65122bc | **graduated 2026-09-28** to a `research_append` precondition that refuses the `proof_summaries` write, under ADR-0011's labelled-case rule. The harness detector stays as the document-plane reading, and both replay one case file |
 | §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **1**, 1 run | **59 runs**, of 158 scanned | behaviour confirmed; live store path exercised |
 | §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | **15**, across 1 run (of 20 that carry any attribution, 159 scanned) | **15**, 1 run | shadow, reported, no graduation count — revisit only if a **second** attributed run flags |
 | §11.5 tree-encoding (`find_conclusions_without_tree_encoding`) | **0**, 0 runs | **3**, across 3 runs, of 183 scanned | shadow, reported, and deliberately never a gate: the 2026-08-24 no-override ruling prefers a false allow to a false deny, so this count is calibration for a gate nobody has shipped; 2026-09-23 read: 2/3 fires are false denies (documented negatives), stays WARNING pending a negative-conclusion signal |
@@ -438,20 +439,19 @@ So this table can establish that a candidate does not over-fire on real work. It
 cannot establish that the candidate catches the class it names — that is
 established the way any guard is, by breaking the thing in several shapes and
 watching it fire (CLAUDE.md, "A new lint must be proven to fail"). A graduation
-argument needs both halves, and only one of them lives here.
-
-**This is in tension with ADR-0011, and the tension is named rather than
-resolved here.** ADR-0011 sets the graduation bar as "replay the gate over the
-committed corpus, then read every refusal it produces and confirm each is a true
-positive", and says in terms that "that is the whole test". This section says
-that is one half. Nothing checks the two against each other, and a spec does not
-overrule an ADR: read the sentence above as an argument for amending ADR-0011,
-not as an amendment. Whoever owns that ADR decides which stands.
+argument needs both halves. ADR-0011 ("The bar is inspection, not a rate") now
+states the other half as a rule: a labelled case set — must-fire cases in at
+least two distinct shapes, plus must-not-fire cases — and, for a guard on two
+planes, one JSON case file both planes replay. The guard registry
+(`packages/engine/mcp-server/tests/guard-cases/registry.json`) accounts for
+every detector here: registered with its case file, owed one because it predates
+the rule, or exempt with a reason.
 
 **What each check still owes, on two axes.** The predicates are not the open
-question: all three have firing controls in
-`eval/harness/tests/unit/test_skill_invocation.py`, green on every
-`make harness-test`. What a predicate control cannot see is the *wiring* — the
+question: all three have firing controls, green on every `make harness-test` —
+conflict-unpersisted's in its shared case file
+(`packages/engine/mcp-server/tests/guard-cases/unpersisted-conflict-resolution.json`),
+the other two in `eval/harness/tests/unit/test_skill_invocation.py`. What a predicate control cannot see is the *wiring* — the
 detector called with the wrong argument, an entry never stored, a bucket
 predicate that misses. That is what "the detector is broken" means here, and it
 splits in two:
@@ -459,15 +459,15 @@ splits in two:
 | | is the zero ambiguous? | has the live store path ever been exercised? |
 |---|---|---|
 | warnings-unchecked | **no** — 59 corpus fires | **yes** — `stribling-father-1821/run-2026-08-17_23-35-44`, the corpus's only stored entry |
-| conflict-unpersisted | **no** — 4 corpus fires | **no** |
+| conflict-unpersisted | **no** — 10 corpus fires, measured at 0b65122bc; now also refused at the writer tool | **yes** — 6 stored entries across 5 runs, measured at 0b65122bc, among them `robert-lord-children/run-2026-09-16_14-15-30` |
 | citation-nulling | **yes** — zero on both axes | **no** |
 
 Both remaining gaps are now closed. citation-nulling's synthetic fixture is
 `tests/unit/test_post_hoc_shadow.py`, which drives
 `orchestrator.collect_post_hoc_shadow` from a hand-built `research.json` on disk
-— the live path, offline and free. The other two lack only a live run that
-stored an entry, which the next committed e2e run producing one supplies for
-free. The replay plumbing has its own controls in
+— the live path, offline and free. warnings-unchecked and conflict-unpersisted
+have both since stored entries from live runs, so neither lacks anything on
+this axis. The replay plumbing has its own controls in
 `tests/unit/test_guardrail_shadow_report.py`, written against sidecar
 resolution, seed-tree loading and per-check skip discipline rather than against
 the predicates.
@@ -597,7 +597,7 @@ to understand before reading either:
   as the write, while the replay always sees the full prefix. Its second job is
   scoring a candidate *narrowing* of the rule against history before that
   narrowing ships. The three post-hoc checks: citation-nulling **0** of 159
-  scanned, conflict-unpersisted **4 runs** of 159, warnings-unchecked **59 runs**
+  scanned, conflict-unpersisted **4 runs** of 159 (10 summaries across 9 of 194 runs when it graduated, measured at 0b65122bc), warnings-unchecked **59 runs**
   of 158 — the 159th being the corpus's one orphan run log
   (`william-ferber-ancestry`, a committed run with no fixture directory, and so
   no baseline to diff a relationship against). Every replay **names** the runs it
@@ -881,6 +881,38 @@ have no staged echo either, and are observed the same way. The eval mock stages
 the call's own arguments for `record_search` and `fulltext_search`, as production
 does; before it did, it staged a fixture's recorded query, and every unit-eval
 misstatement the observers first reported was an entry filled from one.
+
+### A resolution in prose must reach `conflicts[]`
+
+`research_append` refuses a `proof_summaries` write when the summary's question
+carries an `exhaustive_declaration.stop_criteria.conflict_resolution` that claims
+a conflict was resolved, and `conflicts[]` holds no record of it
+(`research-append-tool-spec.md` §5). Every other conflict gate reads
+`conflicts[]` — the completion gate, the conflicted-source rule, the resolve
+preconditions — and each passes vacuously when the array is empty, so an
+unrecorded conflict was invisible to all of them. That is how an alpha tester's
+project reached `completed` with the viewer's Conflicts section reading "No
+conflicts recorded" while the resolution sat in prose.
+
+It is the first guard graduated under ADR-0011's labelled-case rule. The harness
+detector `find_unpersisted_conflict_resolutions` and the writer precondition
+`unpersistedConflictResolutionInvariants` replay one case file, and the
+harness detector stays: it reads documents the writer never saw.
+
+Three choices, each decided before it was built. **The write gated is the
+summary, not `project.status = "completed"`**: the summary is where every firing
+run makes the claim, and the completion transition misses a run that never
+completes and refuses where the agent no longer holds the context. **It is not
+tier-gated**: most corpus violations stand at `probable` or `possible`, so a
+`proved`-only gate would reach almost none. **It asks whether the conflict was
+persisted, not whether it was resolved**: `proof-conclusion` is told to write a
+`not_proved` summary while a conflict is recorded but open, and refusing that
+would block a prescribed step; an open conflict under a tier it forbids is the
+conflicted-source rule's and the completion gate's to refuse.
+
+The refusal names the question, quotes the stop-criterion and sends the agent to
+conflict-resolution, the only writer of `conflicts[]`. It never suggests
+rewording the stop-criterion, because that is how the heuristic is silenced.
 
 ### Plan-phase gate on `tree_forget`
 
