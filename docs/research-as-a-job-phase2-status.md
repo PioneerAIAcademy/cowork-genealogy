@@ -272,6 +272,25 @@ first search says what to expect. Eval green: 14 pass, 1 partial, zero reds.
    "five candidates" line now says twenty, and three lines were added covering what the
    reply must do with a result set too large for AskUserQuestion's four options.
 
+17. **The realistic fixture changed what the run demonstrates, and for the better.**
+   `v6_2026-09-30_14-36-09.json`: 14 pass, 1 partial, zero reds — same headline as
+   before, different substance. Against 20 tied candidates `ut_init_project_012` now
+   shows the agent doing work the five-blank stand-in could not test:
+
+   - It **narrowed 20 to 4**, which `AskUserQuestion`'s four-option limit forces and the
+     old fixture never exercised.
+   - It **skipped `LBF1-LHF`** — the *top-scoring* candidate, whose only fact is a bare
+     `{type: Death}` — in favour of four carrying birth dates, places and deaths. Ranking
+     by recognisability over score is exactly the judgement the ask exists to get right,
+     and nothing in the skill spells it out.
+   - It reported the real 35,921 and the real reason ("all 20 returned candidates share
+     the same score"), asked for the five details that would narrow it, called no
+     `person_read`, and created no project files.
+
+   Worth keeping as a general point: **a fixture that makes a task trivial hides whether
+   the agent can do it.** The rule under test (decisiveness) passed either way; what was
+   invisible was everything downstream of the rule.
+
 ## Where init-project's eval stands, and what it is waiting on
 
 `v6_2026-09-30_13-45-44.json` is **green** — 14 pass, 1 partial, zero reds — and
