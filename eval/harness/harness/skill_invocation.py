@@ -1067,6 +1067,12 @@ DEDICATED_AGENT_NAMES = frozenset(
         # is listed because the set is asserted equal to the shipped agent
         # files. Do not read its presence here as evidence of a hook route.
         "search-wikipedia",
+        # Same shape as `search-images`, `citation`, and `search-wikipedia`
+        # (issue #2804): a cost-motivated conversion, no hook route, and it
+        # writes no project state. Listed because the set is asserted equal to
+        # the shipped agent files. Do not read its presence here as evidence of
+        # a hook route.
+        "translation",
     }
 )
 

@@ -673,14 +673,14 @@ def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
     assert options.check_registration(None, expected_agents=AGENTS, expected_skills=25)
 
 
-def test_the_plugin_ships_ten_agents_and_twenty_four_skills():
+def test_the_plugin_ships_ten_agents_and_twenty_three_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
-    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 24
+    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 23
     # A literal in the source, not an expression over the plugin dir (the mutation the
     # review named: both sides of the check shrinking together).
-    assert "\nEXPECTED_SKILLS = 24\n" in Path(worker.__file__).read_text(encoding="utf-8")
+    assert "\nEXPECTED_SKILLS = 23\n" in Path(worker.__file__).read_text(encoding="utf-8")
 
 
 def test_expected_agents_is_the_shipped_set():
@@ -715,13 +715,13 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
 
 
 def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
-    # Ten agents and 24 skills registered: clean. Nine, or 23: the miss, whatever loaded --
+    # Ten agents and 23 skills registered: clean. Nine, or 22: the miss, whatever loaded --
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
-    assert worker.registration_problems(_info(AGENTS, 24)) == []
-    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 24, ("genealogy-research:gps-mentor",)))
+    assert worker.registration_problems(_info(AGENTS, 23)) == []
+    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 23, ("genealogy-research:gps-mentor",)))
     assert problems == ["agents not registered under their bare names: ['gps-mentor']"]
-    assert worker.registration_problems(_info(AGENTS, 23)) == ["23 genealogy-research:* commands registered, expected 24"]
+    assert worker.registration_problems(_info(AGENTS, 22)) == ["22 genealogy-research:* commands registered, expected 23"]
     import inspect
 
     assert list(inspect.signature(worker.registration_problems).parameters) == ["info"]
