@@ -1677,8 +1677,11 @@ accuracy.
 | burial, church register | the burial event | the officiant | `official_duty` | `primary` |
 | burial, church register | everything else | unknown | `unknown` | `indeterminate` |
 | burial, cemetery or grave index | anything | unknown | `unknown` | `indeterminate` |
-| christening / birth | the event | the officiant | `official_duty` | `primary` |
-| christening / birth | everything else | the presenting parent | `household_member` | `primary` |
+| christening | the christening event | the officiant | `official_duty` | `primary` |
+| christening | a godparent's or sponsor's facts (any non-family party) | the officiant | `official_duty` | `primary` |
+| christening | everything else | the presenting parent | `household_member` | `primary` |
+| birth | anything, the birth included | the informant (usually a parent) | `household_member` | `primary` |
+| birth, delayed (title says "Delayed") | anything | the informant | `household_member` | `secondary` |
 | **anything else** | **anything** | **unknown** | **`unknown`** | **`indeterminate`** |
 
 **Parent-birthplace columns** (genealogist ruling, 2026-09-30). A census with a
@@ -1722,6 +1725,19 @@ and Texas Deaths are death records.
 The census row is `household_member` and never `self` because a pre-1940 census
 does not record who answered. The christening row is never `self` because a
 christened infant cannot report.
+
+The christening and birth rows are the genealogist's rulings (2026-09-30):
+
+- **Birth vs christening.** A civil registrar recorded the birth but did not
+  witness it, so a birth record's birth comes from its informant, not the
+  official.
+- **Godparents.** They are recorded by the officiant. Every non-family party on
+  a christening takes that row, because the index does not label a godparent
+  apart from a witness.
+- **Delayed records.** A delayed birth record is recollection filed long after
+  the birth, so it is `secondary`. It is told apart by its collection title.
+  The scorer corpus holds no delayed title, so that match rests on the title
+  alone.
 
 **A defaulted row is named in the output.** Every assertion that took the last
 row rather than a real one is listed in the result and echoed into
