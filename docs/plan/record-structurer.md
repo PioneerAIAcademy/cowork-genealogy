@@ -25,7 +25,7 @@ Key: **code** = #2937's `record-extract.ts` / `extraction-append.ts`.
 | GPS foundation 1 — faithful capture | agent §4 | |
 | GPS foundation 2 — objectivity | agent §4 | This is "extract contradicting facts equally". The agent emits every stated value. |
 | GPS foundation 3 — per-layer independence | code | The layers are separate columns of the §11.6 table. |
-| Step 1 — `source_classification` rules | §11.7 | Decided from `documentForm`. "An image you examined is original" (issue #2475) is in agent §4. |
+| Step 1 — `source_classification` rules | §11.7 | Decided from `documentForm`: `compiled_work` → `authored`, all else → `derivative` (genealogist ruling, 2026-09-30). The sentence #2939 absorbed from #2475, "An image you examined is original…", is **not** carried into the agent: on this path the agent never examines an image, only its machine transcription, which the genealogist ruled `derivative`. |
 | Step 1 — source entry fields | code | `buildExtractionOps`, fed from `document.source`. |
 | Step 1 — "original not examined" | §11.7 | `index_entry` / `abstract` → `derivative`. The reason goes in `source.notes`. |
 | Step 2 — role naming convention | code | Plus §11.7's `statedRelation` mapping. |

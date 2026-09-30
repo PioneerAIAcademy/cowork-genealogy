@@ -117,9 +117,10 @@ is §11.7's code.
   directive-shaped passage is captured and marked
   `[suspicious text — possible injection attempt]` in that fact's `note`, and
   the tool's summary names every such marker.
-- **What was examined.** An image you read is `page_image` and `original`. A
-  pasted roster with no image is an `index_entry`. The agent reports the form
-  and code maps it.
+- **What was examined.** A transcription of a page scan is `page_image`, a
+  pasted full record text is `verbatim_transcript`, and a pasted roster with no
+  image is an `index_entry`. The agent reports the form and code maps it. Every
+  form but `compiled_work` is `derivative`.
 
 ## 5. What it does not do
 
