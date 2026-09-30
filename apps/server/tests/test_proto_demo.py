@@ -333,7 +333,7 @@ def _fake_stack(monkeypatch, status: str | None, *, nudges: int = 0):
     monkeypatch.setattr(demo, "reply_text", lambda dsn, session_id, turn_id: (0, "done"))
     monkeypatch.setattr(demo, "reauth_hits", lambda dsn, session_id, since: [])
     monkeypatch.setattr(demo.audit, "load", lambda dsn, session_id: [])
-    monkeypatch.setattr(demo.httpx, "Client", lambda **kw: contextlib.nullcontext())
+    monkeypatch.setattr(demo.turn, "signed_in_client", lambda base, email, **kw: contextlib.nullcontext())
 
     def rows(dsn, sql, params):
         if sql == demo.PROJECT_STATUS_SQL:
@@ -348,7 +348,7 @@ def _fake_stack(monkeypatch, status: str | None, *, nudges: int = 0):
 def _args(**over):
     base = dict(base="http://x", pg_dsn="dsn", s3_endpoint="s3", deadline_s=1.0, anchor="/project",
                 ceiling_s=1800.0, session=None, prompt=None, fixture="fx", fixture_given=False,
-                project_id=None, title=None)
+                project_id=None, title=None, email="dev@localhost")
     base.update(over)
     return argparse.Namespace(**base)
 

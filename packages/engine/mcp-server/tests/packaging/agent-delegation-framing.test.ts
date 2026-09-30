@@ -370,18 +370,23 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["validate-schema -> proof-conclusion", ""],
   // `search-wikipedia` (issue #2795) is the reverse of the `citation` shape: its
   // name is not an ordinary English word, so the arm DOES discriminate for it,
-  // and all three mentions below are boundary prose telling the reader this is
-  // the other lane — "a general Wikipedia summary of the place (use
-  // search-wikipedia)", "use the `search-wikipedia` skill instead", "→
-  // search-wikipedia, not translation". None is a delegation: under the lead's
-  // 2026-09-23 hand-back ruling nothing spawns this agent from a skill body.
-  // #2795 decided to leave all three wordings alone — the name survives as the
-  // agent's name, and rewording them would flip three more skills' eval
-  // snapshots for no behavioural gain. All three are bare-name mentions, so all
-  // three take `""` and none can suppress a real delegation edge.
+  // and both mentions below are boundary prose telling the reader this is the
+  // other lane — "a general Wikipedia summary of the place (use
+  // search-wikipedia)", "→ search-wikipedia, not translation". None is a
+  // delegation: under the lead's 2026-09-23 hand-back ruling nothing spawns this
+  // agent from a skill body. #2795 decided to leave the wordings alone — the
+  // name survives as the agent's name, and rewording them would flip more
+  // skills' eval snapshots for no behavioural gain. Both are bare-name mentions,
+  // so both take `""` and neither can suppress a real delegation edge. (A third
+  // row, from search-familysearch-wiki, left when issue #2794 deleted that skill.)
   ["locality-guide -> search-wikipedia", ""],
-  ["search-familysearch-wiki -> search-wikipedia", ""],
   ["translation -> search-wikipedia", ""],
+  // search-familysearch-wiki entered agentOnly when issue #2794 deleted its
+  // skill. Both rows are routing-boundary prose naming it as the owner of a
+  // FamilySearch-wiki request, not a delegation, and neither spells
+  // `@plugin:search-familysearch-wiki`.
+  ["historical-context -> search-familysearch-wiki", ""],
+  ["locality-guide -> search-familysearch-wiki", ""],
   // person-evidence gained a skills/<name>/ directory before the agent
   // conversion; when the skill was deleted the name entered agentOnly and
   // every SKILL.md that references it now needs a registration. All are
@@ -395,6 +400,13 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["timeline -> person-evidence", ""],
   ["translation -> person-evidence", ""],
   ["tree-edit -> person-evidence", ""],
+  // convert-dates entered agentOnly when issue #2790 deleted its skill. All
+  // three are routing-boundary prose naming it as the owner of a calendar
+  // conversion ("use convert-dates", "route to convert-dates"), none spells
+  // `@plugin:convert-dates`.
+  ["historical-context -> convert-dates", ""],
+  ["record-extraction -> convert-dates", ""],
+  ["translation -> convert-dates", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -572,6 +584,7 @@ describe("agent delegation framing", () => {
   // fails here and the author says in the diff which it was.
   const PROSE_ARM_COVERS = [
     "citation",
+    "convert-dates",
     "gps-mentor",
     "image-reader",
     // ARRIVED when issue #2822 deleted skills/proof-conclusion/. The name is
@@ -579,6 +592,7 @@ describe("agent delegation framing", () => {
     "proof-conclusion",
     "person-evidence",
     "record-extractor",
+    "search-familysearch-wiki",
     "search-wikipedia",
   ];
 
