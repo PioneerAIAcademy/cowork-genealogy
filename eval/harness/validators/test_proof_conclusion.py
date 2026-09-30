@@ -150,8 +150,8 @@ def test_q001_possible_tier(after_state, test):
 
     `bounded-death-encoded-not-collapsed` (_018) formerly carried this tag,
     pinning its bounded death to `possible` (the 2026-08-21 ceiling); issue
-    #2930 relaxed it to accept `possible` OR `probable` — the ceiling was
-    un-enforceable behind the delegation boundary — so 018 dropped the tag and
+    #2930 relaxed it to accept `possible` OR `probable` — the tier flips
+    between the two run-to-run even on neutral wording — so 018 dropped the tag and
     is now guarded by `test_bounded_conclusion_is_tiered_and_encoded`'s floor
     (off `not_proved`, Death fact encoded) instead."""
     if "tier-possible-q001" not in test.get("tags", []):

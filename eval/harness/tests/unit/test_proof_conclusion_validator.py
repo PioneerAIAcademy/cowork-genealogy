@@ -189,8 +189,8 @@ def test_message_reports_the_conflict_as_resolved_and_points_at_the_ownership_ch
 # to `not_proved`), and its ACCEPTED set deliberately admits `probable`. This tag
 # owns the exact-`possible` ceiling and now binds only `_004`
 # (`possible-tier-thin-evidence`). `_018` carried it too until issue #2930
-# relaxed its bounded death to accept `possible` OR `probable` — the 2026-08-21
-# ceiling was un-enforceable behind the delegation boundary — so 018 dropped the
+# relaxed its bounded death to accept `possible` OR `probable` — the tier flips
+# between the two run-to-run even on neutral wording — so 018 dropped the
 # tag and now relies on the floor validator alone. The synthetic cases below pin
 # both directions of the assertion (issue #2604), independently of any fixture.
 

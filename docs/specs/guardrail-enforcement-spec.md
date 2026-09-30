@@ -2486,8 +2486,12 @@ this section before reopening one.
   tests, to yield to a leading delegation over its own gate: `d1a` declined a
   blocked write in the reply and persisted nothing; `d2b` narrated a refinement
   and issued no `update`; `d6f` tiered a bounded conclusion to `probable` under a
-  delegation that asserted `probable` was correct, where the routed original held
-  `possible` across 15 runs. None meets this item's reopen condition — *a
+  delegation that asserted `probable` was correct, and the neutral-wording twin
+  `ut_proof_conclusion_018` was later seen to tier `probable` too (1 of 5 runs
+  under the current validator, 2026-09-30), so the tiering is nondeterministic,
+  not confined to a leading delegation. 018 was relaxed to accept `possible` or
+  `probable`; the narrowing cap is now graded by no test. None meets this item's
+  reopen condition — *a
   violation observed per-instance on an attributed run.* All three are harness
   observations produced by adversarial delegation wording written to lead the
   agent, not violations seen on a production attributed run, and no production
@@ -2500,7 +2504,8 @@ this section before reopening one.
   once `gps-mentor` comes off the default research path, and that is
   accepted (lead, 2026-09-29) because the three standing `xfail` markers carried
   cost the streamlining removes. The three markers and their tests were deleted;
-  the routed neutral-wording twins stay and pass.
+  the neutral-wording twins stay; 011 and 012 pass unchanged, and 018 passes
+  under its relaxed tier.
 
 - **An ark cross-check on `exhaustive_search_summary`** — "every ark named in a proof
   summary's `exhaustive_search_summary` must appear in some `log[].query`." Proposed
