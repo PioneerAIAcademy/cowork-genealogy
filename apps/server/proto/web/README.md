@@ -50,7 +50,8 @@ read. Every turn's FamilySearch calls still run on the operator's token
 (`worker/options.py`). Project data is scoped to its owner, but FamilySearch identity is
 not. The engine only reads from FamilySearch, but those reads run as the operator, so
 allowlist only staff entitled to the operator's FamilySearch access. There is no code
-guard for this, by decision (2026-09-29).
+guard for this, by decision (2026-09-29). Signing in with the operator's own FamilySearch account does not revoke the
+operator token (measured 2026-09-29), so sign-in is safe while a turn runs.
 
 ## The row → wire contract (what the worker writes, what the SPA reads)
 

@@ -1,6 +1,6 @@
 # U2: Patron sign-in and owner scoping (prototype web tier)
 
-**Status:** In progress (2026-09-29): code and offline tests on branch `u2-patron-sign-in`; the compose image build, the FamilySearch round-trip on 1837 and the revocation measurement are still to run. Plan reviewed by `plan-critic` and a split skeptic; their findings are folded in.
+**Status:** Built and verified (2026-09-29) on branch `u2-patron-sign-in`; PR not yet opened. Offline suites, break proofs, embedded-Postgres and compose checks, a real FamilySearch sign-in on 1837, and the revocation measurement all ran. Plan reviewed by `plan-critic` and a split skeptic; their findings are folded in.
 
 ## Goal
 This PR replaces the prototype web tier's stub auth with a real FamilySearch sign-in: PKCE, an email allowlist, and each patron's grant stored encrypted in Postgres. It scopes every session route and project to the signed-in owner. It includes no token refresh and does not pass the token to the worker; both belong to U3, which ships as a separate PR after this one. Handoff: [U2](familysearch-handoff.md) in list 1.
@@ -115,6 +115,7 @@ CREATE INDEX IF NOT EXISTS projects_owner_idx ON projects (owner_id);
 7. **Revocation measurement (in U2).** On compose, with a turn running on the operator's `.fs-token`, sign in through the override with the operator's FamilySearch account. Record whether that turn's FamilySearch calls start returning 401.
    - If they do, the PR and README say: sign in only between turns, or with a FamilySearch account other than the operator's, until U3 lands.
    - Either way, no guard ships.
+   - **Measured 2026-09-29 (dev key, compose, n=1): a second sign-in does NOT revoke the account's earlier access token.** The operator's `.fs-token` answered `users/current` 200 on all 62 polls (every 5 s) from before the sign-in at 01:22:51 UTC to 01:27:57 UTC, for the same FamilySearch account (ids compared). Unlike a refresh, which revokes at once, a fresh authorization-code grant leaves the old token live, so no "sign in only between turns" warning is needed. The measurement ran as polls instead of a running turn: dev-login is off under the override, so no turn could be posted, and the poll asks the same question for free.
 8. **Must not change:** queue_body (app.py:212-227), worker/*, the FS_ACCESS_TOKEN* compose lines, env.sh.
 
 ## Tests
