@@ -2000,6 +2000,25 @@ submitting family knows them firsthand, as with a surviving spouse's name.
   before the death year). A **predeceased** spouse's or child's name is life
   history. The **parents' names** are life history.
 
+**Interpretations the genealogist confirmed** (2026-09-30), where the rows
+above leave a case open:
+
+- Intestate probate: a fact other than a name, a relationship or the death
+  (e.g. the decedent's residence) is the petitioner's, at
+  `household_member` / `indeterminate`. The administrator's own name is
+  `household_member` / `primary`, as the heirs' row.
+- Probate with a will: an heir's residence or a bequest is the testator's,
+  at `self` / `primary`. A file holds a will when its label says "will" or
+  "testament", or it carries a `will` fact.
+- Obituary: a survivor's facts beyond name and residence are life history.
+  "Parents" and "predeceased" are the parent role, or a stated relation
+  containing "late", "deceased" or "predeceased".
+- Newspaper: a non-principal's fact of the event's own type (the parents'
+  marriage in a wedding notice) is recent family knowledge.
+- A named informant replaces the generic string on the family rows only
+  (`household_member`, `family_not_present`), never on an officiant's,
+  clerk's, enumerator's or witness's row.
+
 The probate rows are the genealogist's ruling (2026-09-30), split by who
 produced each part of the file. A petitioner's statement of the death follows
 the obituary's reading: family, but the file does not say who was present.
