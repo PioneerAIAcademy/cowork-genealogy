@@ -321,47 +321,57 @@ def test_log_query_traces_to_fulltext_search_call(before_state, after_state, too
 # --- First look at a query must be unscoped ----------------------------
 
 def test_first_fulltext_search_call_is_unscoped(tool_calls):
-    """SKILL.md step 4: Search by name only first; apply place as a
-    post-search filter. The decision ladder in step 5 only ever adds a
-    Year/RecordType/place filter once the unfiltered hit count is known
-    (50-500 add Year/RecordType; over 500 add a second term or place) so
-    the FIRST fulltext_search call in a turn must carry none of them
-    (deep-dive #1651 finding 2). collectionId is intentionally not part of
-    this check -- see test_fulltext_search_never_scopes_to_collection_id,
-    which covers every call, not just the first.
-
-    Checks only the literal first call, not every later first look at an
-    independent target within the same turn (e.g. two names searched in
-    parallel) -- a known narrower scope than the full rule, chosen to keep
-    false positives at zero; widening it needs a way to tell a new target
-    apart from the same target narrowed, which is a judgment call, not a
-    mechanical one."""
+    """SKILL.md step 4: For each independent search topic (identified by
+    keywords or nlQuery handle), the first call for that topic must not
+    carry post-search filters. Parallel first calls for different topics
+    are each checked independently — this fixes the case where two
+    independent searches are issued in the same turn (e.g. two witnesses
+    searched in parallel; the second was previously mislabeled as a
+    follow-up call)."""
     calls = _fts_tool_calls(tool_calls)
     if not calls:
         pytest.skip("no fulltext_search calls this turn")
-    first_args = calls[0]["args"]
-    present = [k for k in POST_SEARCH_FILTER_KEYS if k in first_args]
-    assert not present, (
-        f"first fulltext_search call ({first_args.get('keywords') or first_args.get('nlQuery')!r}) "
-        f"includes post-search filter(s) before any unfiltered hit count was observed: {present}"
-    )
+
+    seen_handles: set[str] = set()
+    errors = []
+    for c in calls:
+        args = c["args"]
+        handle = args.get("keywords") or args.get("nlQuery") or ""
+        if handle not in seen_handles:
+            seen_handles.add(handle)
+            present = [k for k in POST_SEARCH_FILTER_KEYS if k in args]
+            if present:
+                errors.append(
+                    f"first fulltext_search call for topic {handle!r} "
+                    f"includes post-search filter(s) before any unfiltered "
+                    f"hit count was observed: {present}"
+                )
+    assert not errors, "First calls for topics include post-search filters:\n  - " + "\n  - ".join(errors)
 
 
 def test_fulltext_search_never_scopes_to_collection_id(tool_calls):
-    """SKILL.md: "Do NOT scope a full-text search to a record collectionId"
-    -- an absolute rule, unlike place/date/recordType, which only wait for
-    the first unfiltered look (see test_first_fulltext_search_call_is_unscoped,
-    which checks call 0 only and never mentions collectionId). Without this
-    check, collectionId sent on a second-or-later call had no coverage
-    anywhere in the suite (task review on PR #1758, chrisedeson)."""
+    """collectionId is allowed only when a prior fulltext_search call in
+    the same turn sent includeFacets=true. A borrowed collectionId (no prior
+    facet call) silently excludes the FTS partition holding the answer.
+    Safe path: pass includeFacets=true on the first call and use the
+    filterParam values from the response's facets array on a follow-up."""
     calls = _fts_tool_calls(tool_calls)
     if not calls:
         pytest.skip("no fulltext_search calls this turn")
-    offenders = [c["args"] for c in calls if "collectionId" in c["args"]]
-    assert not offenders, (
-        f"fulltext_search must never send collectionId; offending call(s): "
-        f"{[(a.get('keywords') or a.get('nlQuery'), a.get('collectionId')) for a in offenders]}"
-    )
+
+    facets_seen = False
+    errors = []
+    for c in calls:
+        args = c["args"]
+        if args.get("includeFacets"):
+            facets_seen = True
+        elif "collectionId" in args and not facets_seen:
+            errors.append(
+                f"fulltext_search sent collectionId={args['collectionId']!r} "
+                f"without a prior includeFacets=true call in this turn "
+                f"(query: {(args.get('keywords') or args.get('nlQuery'))!r})"
+            )
+    assert not errors, "collectionId used without prior includeFacets call:\n  - " + "\n  - ".join(errors)
 
 
 # --- A plan item only completes via its own search ----------------------

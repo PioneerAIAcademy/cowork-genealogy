@@ -2,7 +2,6 @@ import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetch } from "../utils/fs-fetch.js";
 import { toArk } from "../utils/ark.js";
-import { expandNameForFulltext } from "../utils/name-variants.js";
 import type {
   FulltextSearchInput,
   FulltextSearchResponse,
@@ -59,23 +58,14 @@ function validateInput(input: FulltextSearchInput): void {
   }
 }
 
-function buildUrl(input: FulltextSearchInput, nameOverride?: string): string {
+function buildUrl(input: FulltextSearchInput): string {
   const params: string[] = [];
   const add = (key: string, value: string | number): void => {
     params.push(`${key}=${encodeURIComponent(String(value))}`);
   };
 
   if (input.keywords) add("q.text", input.keywords);
-  // When a name expansion is active, nameOverride carries the quoted-phrase
-  // expansion; input.name stays untouched so echoQuery and staging see the
-  // caller's original value.
-  const nameValue = nameOverride ?? input.name;
-  if (nameValue) {
-    add("q.fullName", nameValue);
-    // Boost the name field so name matches rank higher when expansion
-    // widens the query with variant phrases (recommended by @DallanQ).
-    if (nameOverride) add("q.fullName.boost", 2.0);
-  }
+  if (input.name) add("q.fullName", input.name);
   if (input.place) add("q.recordPlace", input.place);
   if (input.nlQuery) add("nlQuery", input.nlQuery);
   if (input.collectionId) add("f.collectionId", input.collectionId);
@@ -181,12 +171,7 @@ export async function fulltextSearchTool(
 ): Promise<FulltextSearchResponse> {
   validateInput(input);
 
-  // Expand recognized given names with historical diminutives (issue #607).
-  // The expansion rewrites the Lucene query but never mutates input — echoQuery
-  // and stageSearchResults must both see the caller's original input.name.
-  const expansion = input.name ? expandNameForFulltext(input.name) : null;
-
-  const url = buildUrl(input, expansion?.expanded);
+  const url = buildUrl(input);
 
   const fetchHeaders: Record<string, string> = {
     Accept: "application/json",
@@ -239,50 +224,6 @@ export async function fulltextSearchTool(
     input.projectPath !== undefined
       ? await unloggedStagedSearches(input.projectPath)
       : [];
-
-  // Detect which expanded variants appear in results — must run before
-  // compaction strips textDocument. Scans names, highlights, and the full
-  // transcript (the tool's "mentioned anywhere in the document" case).
-  function detectVariantsInResults(): string[] {
-    if (!expansion) return [];
-    // Map lowercase -> canonical table form so the output correlates with
-    // expansions (which uses table casing, e.g. "Betty" not "betty").
-    const lowerToCanonical = new Map<string, string>();
-    for (const variants of Object.values(expansion.expansions)) {
-      for (const v of variants) {
-        lowerToCanonical.set(v.toLowerCase(), v);
-      }
-    }
-    const matched = new Set<string>();
-    for (const r of results) {
-      for (const name of r.names ?? []) {
-        for (const word of name.split(/\s+/)) {
-          const canonical = lowerToCanonical.get(word.toLowerCase());
-          if (canonical) {
-            matched.add(canonical);
-          }
-        }
-      }
-      for (const hl of r.highlightTerms ?? []) {
-        for (const word of hl.split(/\s+/)) {
-          const canonical = lowerToCanonical.get(word.toLowerCase());
-          if (canonical) {
-            matched.add(canonical);
-          }
-        }
-      }
-      if (r.textDocument) {
-        for (const word of r.textDocument.split(/\s+/)) {
-          const clean = word.replace(/[^a-zA-Z]/g, "").toLowerCase();
-          const canonical = clean ? lowerToCanonical.get(clean) : undefined;
-          if (canonical) {
-            matched.add(canonical);
-          }
-        }
-      }
-    }
-    return [...matched];
-  }
 
   // A nil on an image group the volume metadata reports as NOT full-text
   // searchable is a fact about the volume, not about the person. The session
@@ -341,18 +282,6 @@ export async function fulltextSearchTool(
       : {}),
     // Precedes `results` with the other notes, for the same size-bound reason.
     ...(notSearchableNote ? { notFulltextSearchable: notSearchableNote } : {}),
-    // nameExpansion precedes results so it survives a size-bound trim —
-    // the field after the largest payload is the first thing dropped.
-    ...(expansion && input.name
-      ? {
-          nameExpansion: {
-            original: input.name,
-            expanded: expansion.expanded,
-            expansions: expansion.expansions,
-            variantsInResults: detectVariantsInResults(),
-          },
-        }
-      : {}),
     results,
   };
 
@@ -421,10 +350,9 @@ export const fulltextSearchToolSchema = {
       name: {
         type: "string",
         description:
-          "Search within name fields only. Recognized English given names are automatically expanded " +
-          "with historical diminutives (e.g. Elizabeth also matches Betty, Bess, Eliza). " +
-          "Do not prefix terms with + or the expansion is disabled. " +
-          "The response includes a nameExpansion field showing what was expanded and which variants matched.",
+          "Search within name fields only. Auto-handles last-name-first inversions. " +
+          "Do not prefix terms with + (terms are already required by m.queryRequireDefault). " +
+          "Use get_name_variants to get explicit variant forms before querying.",
       },
       place: {
         type: "string",

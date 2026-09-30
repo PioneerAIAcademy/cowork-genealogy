@@ -155,11 +155,13 @@ auto-expands recognized English given names). Three rules come from repeated fai
 
 - Search by **name only**, then filter for place. Putting the place in the
   query matches the collection's description, not the document.
-- **Don't scope to a single collection.** The full-text corpus is
+- **Don't borrow a collection ID from indexed record search.** The full-text corpus is
   partitioned into collections of its own, so an id borrowed from indexed
   record search can name a partition that does not hold the document: a
   Cantabrian baptism found by an unscoped name search returned nothing when
-  scoped that way.
+  scoped that way. Use `includeFacets: true` on the first call to get real
+  FTS partition IDs from the response's `facets` array; those are safe to
+  scope on a follow-up call.
 - **Decompose compound surnames into co-occurrence, not an exact phrase.**
   In the parents' own records the father carries the paternal surname and
   the mother the maternal one, so the two sit on different people. The phrase

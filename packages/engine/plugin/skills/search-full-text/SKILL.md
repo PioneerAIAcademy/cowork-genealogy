@@ -2,21 +2,22 @@
 name: search-full-text
 description: Invoke for FamilySearch full-text search (FTS) — immediately
   when the user says "full-text search", "FTS", "search document
-  transcripts", or "construct a full-text query". Use this skill to find a
-  person as a witness, executor, executrix, administrator, appraiser, heir,
-  neighbor, surety, or other non-principal in deeds, probate, wills, court
-  minutes, or notarial protocolos; to run Lucene-style queries with
-  +required terms, wildcards, or phrase matching; and to cover spelling and
-  transcription variants across FamilySearch's AI-transcribed historical
-  documents. FamilySearch document images only. Exclude external sites like
-  Ancestry or Newspapers.com (use search-external-sites), structured
-  indexed search by name/date/place (use search-records), and planning what
-  to search (use research-plan). Do NOT use to scope a new project or
-  propose opening questions with no plan item yet (use question-selection),
-  or when the user has a record in hand wanting extraction (use
-  record-extraction).
+  transcripts", or "construct a full-text query". Use to find a
+  non-principal (witness, executor, heir, neighbor, surety) in deeds,
+  probate, wills, court minutes, or notarial protocolos; or a principal
+  in bulk-digitized unindexed records; to run Lucene-style queries with
+  +required terms, wildcards, or phrase matching; and to cover spelling
+  and transcription variants across FamilySearch's AI-transcribed
+  historical documents. FamilySearch document images only. Exclude
+  external sites like Ancestry or Newspapers.com (use
+  search-external-sites), structured indexed search by name/date/place
+  (use search-records), and planning what to search (use research-plan).
+  Do NOT use to scope a new project or propose opening questions with no
+  plan item yet (use question-selection), or when the user has a record
+  in hand wanting extraction (use record-extraction).
 allowed-tools:
   - fulltext_search
+  - get_name_variants
   - source_attachments
   - research_log_append
   - research_append
@@ -33,7 +34,8 @@ historical document images. FTS searches the raw transcript text of
 those images — a fundamentally different search surface than indexed
 Records search. FTS finds people mentioned
 anywhere in a document (witnesses, neighbors, heirs, appraisers),
-not just indexed principals.
+and finds any person — principal or not — in a paragraph-style record
+that was never name-indexed.
 
 This skill is the FTS counterpart to search-records (indexed search)
 and search-external-sites (non-FamilySearch repositories).
@@ -51,10 +53,10 @@ This skill uses one search tool:
 FTS and indexed search are completely different systems:
 
 - **What's searched:** Raw transcript text, not structured name/date/place fields.
-- **No fuzzy matching** in `keywords` and `place` fields. Exact text only — no nicknames, phonetic variants, or Soundex. The `name` field auto-expands recognized English given names with historical diminutives.
-- **No abbreviation expansion** in `keywords` and `place` fields. The `name` field auto-expands (e.g. Elizabeth also matches Betty, Bess, Eliza).
+- **No fuzzy matching** in any field. Exact text only — no nicknames, phonetic variants, or Soundex. Use `get_name_variants` to build an explicit variant set and run each as a separate query.
+- **No abbreviation expansion** in `keywords`, `place`, or `name` fields. Run abbreviations explicitly.
 - **Default is OR** — at least one term must appear. Always use `+` to require terms in `keywords`.
-- **Unique strength:** Finding non-principal mentions (witnesses, neighbors, heirs).
+- **Unique strength:** Finding non-principal mentions (witnesses, neighbors, heirs), and finding any person in a paragraph-style record that was never name-indexed, principal included.
 
 FTS results are derivative sources (original → image → AI transcript,
 ~10% error rate). **Always verify against the original image.**
@@ -121,7 +123,7 @@ you nothing. Do not drop an instruction that does not depend on the page.
 
 | Research goal | Query approach |
 |---|---|
-| Find person as witness/appraiser/heir | `Surname` in Name field (no `+` — it disables auto-expansion), place filter after |
+| Find person as witness/appraiser/heir | `+Surname` in Keywords first (call `get_name_variants` beforehand to build the explicit variant set); if NLP missed the name, retry with `Surname` in Name field |
 | Find person in narrative records | `+GivenName +Surname` in Keywords, place filter after |
 | FAN cluster search | `+TargetSurname +AssociateSurname` in Keywords |
 | Compound surname parentage (Iberian `Paterno Materno`) | `+PaternalSurname +MaternalSurname` co-occurrence — **never** as one phrase (see step 4 rules) |
@@ -150,20 +152,26 @@ Read `references/query-syntax.md` for operator details and wildcards.
   instead of dropping it from the log. See `references/query-syntax.md`'s
   "Filters (post-search)" section for why, and the decision ladder below
   for when to add them.
-- **Do NOT scope a full-text search to a record `collectionId`.** The
-  FTS corpus is partitioned into its own auto-generated collections;
-  a `collectionId` guessed from `record_search` (or from a collections
-  survey) frequently does **not** contain the FTS volume that holds the
-  answer, so scoping silently drops it. Search the whole corpus first;
-  narrow with `recordPlace*` / `recordType` / year filters (or a
-  known `imageGroupNumber`) only after you have hits.
+- **Never borrow a `collectionId` from `record_search` or a collections
+  survey.** The FTS corpus uses its own auto-generated partitions that
+  do not map 1:1 onto indexed-record collection IDs; a borrowed ID
+  silently excludes the very FTS volume that holds the answer. The safe
+  path: pass `includeFacets: true` on the first call; the response
+  `facets` array gives `filterParam` values that are real FTS partition
+  IDs. Use only those on scoped follow-up calls — never a borrowed ID.
+  See `references/query-syntax.md` "Scoping FTS to a collection ID" for
+  the two-call pattern.
 - **Decompose a compound surname into co-occurrence, not a phrase.**
   For an Iberian / Latin-American name (`Given Paterno Materno`, e.g.
   "Francisco **Naveda Somarriba**"), require the two surnames as
   separate terms — `+Naveda +Somarriba` — **never** `+"Naveda
-  Somarriba"`. The parents' own records name the father with the
-  paternal surname and the mother with the maternal, so the words are
-  on **different people and not adjacent**. See `references/query-syntax.md`
+  Somarriba"`. In the father's own records he is named with the
+  paternal surname and the mother with hers, so the words sit on
+  different people and are not adjacent there. A married woman is
+  often written with her own surnames plus her husband's ("María
+  Somarriba de Naveda"), where adjacency is available — the
+  co-occurrence still covers that case, and the phrase form still
+  misses the parentage records you want. See `references/query-syntax.md`
   for escalation once the mother's fuller form is known.
 - **Abbreviations must be searched explicitly** in `keywords` and
   `place` fields. FTS does not auto-expand (Wm/William, Thos/Thomas)
@@ -179,7 +187,12 @@ Read `references/query-syntax.md` for operator details and wildcards.
 # Require both terms; always pass projectPath for result staging
 fulltext_search({ keywords: "+Patrick +Flynn", projectPath })
 
-# Compound-surname parentage: co-occurrence, UNSCOPED (no collectionId)
+# includeFacets: get real FTS partition IDs from the first call
+fulltext_search({ keywords: "+Flynn +Patrick", includeFacets: true, projectPath })
+# Scoped follow-up using a facet-derived collectionId
+fulltext_search({ keywords: "+Flynn +Patrick", collectionId: "<facets[0].items[0].filterParam>", projectPath })
+
+# Compound-surname parentage: co-occurrence
 fulltext_search({ keywords: "+Naveda +Somarriba", projectPath })
 
 # Natural language search / tree person ID
@@ -322,10 +335,14 @@ When a search returns no results:
    negative.** A bare "no results" note is insufficient for the GPS
    exhaustive-search audit trail.
 2. **Iterate through variants before declaring negative — but cap
-   total queries (initial + retries) at 5 per plan item.** Pick the
-   most promising 4 variants from `references/search-strategies.md`
-   and `references/online-search-literacy.md`; log each retry
-   separately. After 5 nil queries, declare a coverage gap.
+   total queries (initial + retries) at 5 per plan item.** Start with:
+   - **Switch Keywords↔Name field.** If the initial search used the
+     Name field, retry with `+Surname` in Keywords (NLP may have missed
+     the name). If it used Keywords, retry with `Surname` in the Name
+     field. This counts as one retry against the 5-query cap.
+   Then pick the most promising remaining variants from
+   `references/search-strategies.md` and `references/online-search-literacy.md`;
+   log each retry separately. After 5 nil queries, declare a coverage gap.
 3. **Verify coverage exists.** A nil result may mean the record was
    never transcribed — not that it doesn't exist.
 4. Assess whether absence is meaningful (negative evidence) — only
@@ -356,7 +373,8 @@ image itself for the transcript.
 ### 12. Present results
 
 Summarize what was searched and found, highlighting non-principal
-mentions (FTS's unique value). Show log entries, plan progress, and
+mentions and any principals found in records that are only searchable
+via FTS (FTS's twin unique values). Show log entries, plan progress, and
 suggest next steps (more plan items, cross-references, or re-plan).
 
 ## Important rules

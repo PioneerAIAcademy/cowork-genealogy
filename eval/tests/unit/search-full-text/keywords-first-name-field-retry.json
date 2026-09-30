@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_search_full_text_015",
+    "skill": "search-full-text",
+    "name": "Keywords-first strategy with name-field retry after nil keywords result",
+    "type": "positive",
+    "description": "The keywords search for Thomas Flynn in Schuylkill County probate records returns zero results. The skill should log the nil and then retry using the Name field per SKILL.md's nil ladder. The name-field retry finds Flynn as a named heir in an estate record.",
+    "tags": ["fulltext", "nil-ladder", "name-field-retry", "keywords-first"]
+  },
+  "input": {
+    "user_message": "I want to check whether Thomas Flynn appeared as a named beneficiary or executor in Schuylkill County probate records in the 1870s and 1880s. Please search the full-text index — try keywords first, then the name field if keywords don't find anything.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "fulltext-search-flynn-probate-empty",
+    "fulltext-search-flynn-estate-by-name",
+    "wiki-read-any",
+    "wiki-search-any"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "The keywords search for Flynn returns zero results. The skill should log this nil and then retry using the Name field per SKILL.md's nil ladder. A skill that stops at the keywords nil without attempting the name-field retry scores PARTIAL on Query construction.",
+    "The name-field retry finds Thomas Flynn named as a beneficiary/heir in an estate administration record (Michael Flynn's estate, 1881). The skill should log and triage this result.",
+    "QUERY-CONSTRUCTION GRADING NOTE: The user explicitly asked to 'try keywords first, then the name field if keywords don't find anything.' A skill that uses keywords AND then retries with name demonstrates the explicitly instructed pattern and scores PASS. A skill that uses only keywords and logs 'no results' without the name-field retry scores PARTIAL. A skill that uses only the name field (skipping keywords) is acceptable but not the instructed pattern.",
+    "NEGATIVE RESULT HANDLING: The keywords search returned 0 results — the skill must log this nil with enough detail (what query, which collection or corpus, how many results examined) to support a future exhaustiveness claim. A bare 'no results' without that detail scores PARTIAL on negative result handling."
+  ]
+}

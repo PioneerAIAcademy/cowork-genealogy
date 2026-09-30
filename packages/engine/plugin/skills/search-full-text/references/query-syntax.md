@@ -10,7 +10,7 @@ Behavior differs fundamentally from indexed Records search.
 |---|---|---|
 | Keywords | Free text against entire transcript | All operators (`+`, `-`, `"…"`, `?`, `*`) work here |
 | Name | NLP-recognized person names only | Auto-handles last-name-first inversions ("Mills Alexander" matches "Alexander Mills"). Keywords field does NOT auto-invert. |
-| Place | Place name | Matches BOTH transcript content AND collection metadata — major source of false positives. **Prefer filtering by place after search rather than including place in the query.** |
+| Place | Place name | Matches collection metadata only — NOT transcript text. Causes false positives because a document's actual place may differ from the collection's place metadata. **Prefer filtering by place after search rather than including place in the query.** |
 | Year Range | Numeric range | Matches AI-recognized years in transcript and/or collection metadata. Documents often contain multiple dates. |
 | Image Group Number | Restrict to one digitized volume | Enter without leading zeros. Combine with keywords to scan one volume. |
 
@@ -73,18 +73,31 @@ and the phrase does not match the non-adjacent one.
 When in doubt which word is paternal and which maternal, run the
 co-occurrence — it does not care about order.
 
-## Do not scope FTS to a record collection ID
+## Scoping FTS to a collection ID
 
-`fulltext_search` accepts a `collectionId`, but the full-text corpus is
-partitioned into its **own** auto-generated collections that do **not**
-line up with the indexed-`record_search` collection IDs (or with a
-`collections_search` survey). Passing a `collectionId` guessed from
-those sources frequently excludes the very FTS volume that holds the
-answer, and the search returns zero with no hint that scoping caused it.
+The FTS corpus is partitioned into its **own** auto-generated collections
+that do **not** line up with `record_search` collection IDs or a
+`collections_search` survey. A `collectionId` borrowed from those sources
+frequently excludes the very FTS volume that holds the answer, silently
+returning zero.
 
-Search the **whole corpus first**. Narrow only *after* you have hits,
-using the post-search filters below (`recordPlace*`, `recordType`, year
-range) or a known `imageGroupNumber` — never a borrowed `collectionId`.
+**Safe path — use `includeFacets: true` on the first call.** When
+`includeFacets: true`, the response includes a `facets` array. Each facet
+item carries a `filterParam` string — the exact `collectionId` value to
+pass on a scoped follow-up call. That value is safe because it names a
+real FTS partition that already returned hits.
+
+```
+# Step 1: unscoped, with facets
+fulltext_search({ keywords: "+Flynn +Patrick", includeFacets: true, projectPath })
+# Step 2: scoped to one facet-derived partition
+fulltext_search({ keywords: "+Flynn +Patrick", collectionId: "<facets[0].items[0].filterParam>", projectPath })
+```
+
+**Never borrow a `collectionId` from `record_search` or `collections_search`.**
+Search the whole corpus first; narrow only via `recordPlace*` / `recordType` /
+year-range filters, a known `imageGroupNumber`, or a `collectionId` taken from
+`includeFacets` results.
 
 ## What is NOT supported
 
