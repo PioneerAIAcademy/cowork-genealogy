@@ -1488,8 +1488,10 @@ duplicated and the *value* it reads is centralized in project state.
 viewer, `eval/app/components/scenario/`. Its **types** are no longer a site:
 `lib/schema.ts` re-exports `@genealogy/schema`, so site 5 covers it and
 `pnpm turbo run typecheck` compiles it. Its **section components** still are —
-11 hand-maintained renderers against `packages/viewer-ui`'s 14, reached by no
-check, which is the parallel of site 7 for that app.)*
+a hand-maintained subset of `packages/viewer-ui/src/components/sections/`,
+reached by no check, which is the parallel of site 7 for that app. Its shared
+`StatusBadge` is the exception: `eval/app/tests/unit/statusBadgeParity.test.ts`
+fails when a status viewer-ui colours is one this tree renders gray.)*
 
 | # | Site | What catches a miss |
 |---|---|---|

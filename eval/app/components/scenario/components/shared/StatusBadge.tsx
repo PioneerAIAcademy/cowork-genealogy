@@ -62,7 +62,18 @@ const statusColorMap: Record<string, BadgeColor> = {
   // Priority
   high: 'red',
   medium: 'amber',
-  low: 'gray'
+  low: 'gray',
+  // gps-mentor verdicts (#1223). Without these every verdict renders gray, so
+  // "this proof needs work before it stands" looks the same as "looks solid".
+  looks_solid: 'green',
+  consider_addressing: 'amber',
+  address_first: 'red',
+  refused: 'gray',
+  // Known-holding confidence (confident reuses the green above). Carried even
+  // though no section here renders it yet: the map is keyed on the stored
+  // value, not on the section, and the parity test against viewer-ui's copy
+  // compares the whole map.
+  unsure: 'amber'
 }
 
 interface StatusBadgeProps {
