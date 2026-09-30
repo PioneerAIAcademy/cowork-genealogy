@@ -1,4 +1,4 @@
-"""Offline tests for the prototype worker (apps/server/proto/worker/), D9-10 + D15.
+﻿"""Offline tests for the prototype worker (apps/server/proto/worker/), D9-10 + D15.
 
 No Postgres, no SDK process, no model: the row writers run against a fake connection
 that records SQL; event routing runs on canned ``map_message`` outputs; the deny
@@ -76,10 +76,10 @@ PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
-AGENTS = {"citation", "convert-dates", "gps-mentor", "image-reader", "person-evidence", "proof-conclusion", "record-extractor", "research-exhaustiveness", "search-familysearch-wiki", "search-images", "search-wikipedia", "translation"}
+AGENTS = {"check-warnings", "citation", "convert-dates", "gps-mentor", "image-reader", "person-evidence", "proof-conclusion", "record-extractor", "research-exhaustiveness", "search-familysearch-wiki", "search-images", "search-wikipedia", "translation"}
 
 
-# ── fakes ─────────────────────────────────────────────────────────────────────────
+# â”€â”€ fakes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 class FakeCursor:
@@ -185,7 +185,7 @@ TURN = {
 }
 
 
-# ── claim / complete / idempotent completion ─────────────────────────────────────
+# â”€â”€ claim / complete / idempotent completion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 def test_claim_upserts_sessions_and_turns_with_the_receive_count():
@@ -331,7 +331,7 @@ def test_is_real_turn_needs_text():
     assert not worker.is_real_turn({"text": 42})
 
 
-# ── event routing ─────────────────────────────────────────────────────────────────
+# â”€â”€ event routing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 @pytest.mark.parametrize("event", [
@@ -406,7 +406,7 @@ def test_is_init_message_picks_the_clis_session_declaration_only():
     assert not worker.is_init_message(Other()) and not worker.is_init_message(Assistant())
 
 
-# ── session store rows ───────────────────────────────────────────────────────────
+# â”€â”€ session store rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 def test_session_store_rows_take_the_constructors_project_and_ignore_the_keys():
@@ -416,7 +416,7 @@ def test_session_store_rows_take_the_constructors_project_and_ignore_the_keys():
     assert rows[0][:3] == ("proj-1", "sid", "subagents/agent-1")
 
 
-# ── deny.py ───────────────────────────────────────────────────────────────────────
+# â”€â”€ deny.py â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 def test_a_read_under_the_anchor_is_denied_and_routed(tmp_path):
@@ -462,7 +462,7 @@ def test_read_route_chooser():
     assert deny.read_route("/project", "/project") == "project_context"
 
 
-# ── the PreToolUse hook ──────────────────────────────────────────────────────────
+# â”€â”€ the PreToolUse hook â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 def _hook(rows: list[dict], cwd: str, config_root: str, record=None):
@@ -600,7 +600,7 @@ def test_blocked_tools_are_denied_by_bare_name_under_any_server_spelling(tmp_pat
 
 
 def test_person_warnings_is_allowed_while_block_is_on(tmp_path):
-    # person_warnings reads the local stripped tree only (no live mode — lead
+    # person_warnings reads the local stripped tree only (no live mode â€” lead
     # ruling 2026-09-27, reverses issue #2225 D1). Always allowed.
     rows: list[dict] = []
     hook = options.make_pretool_hook(
@@ -649,7 +649,7 @@ def test_the_hook_never_raises(tmp_path):
     assert rows[-1]["decision"] == "allow"
 
 
-# ── D15: registration precondition ───────────────────────────────────────────────
+# â”€â”€ D15: registration precondition â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 def _info(agents: set[str], skills: int, extra_agents: tuple[str, ...] = ()) -> dict:
@@ -660,27 +660,27 @@ def _info(agents: set[str], skills: int, extra_agents: tuple[str, ...] = ()) -> 
 
 
 def test_registration_passes_with_every_bare_agent_and_every_skill():
-    assert options.check_registration(_info(AGENTS, 21, ("general-purpose", "genealogy-research:gps-mentor")),
-                                      expected_agents=AGENTS, expected_skills=21) == []
+    assert options.check_registration(_info(AGENTS, 20, ("general-purpose", "genealogy-research:gps-mentor")),
+                                      expected_agents=AGENTS, expected_skills=20) == []
 
 
 def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
-    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 21, ("genealogy-research:gps-mentor",)),
-                                          expected_agents=AGENTS, expected_skills=21)
+    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 20, ("genealogy-research:gps-mentor",)),
+                                          expected_agents=AGENTS, expected_skills=20)
     assert problems and "gps-mentor" in problems[0] and "bare" in problems[0]
-    problems = options.check_registration(_info(AGENTS, 20), expected_agents=AGENTS, expected_skills=21)
-    assert problems == ["20 genealogy-research:* commands registered, expected 21"]
-    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=21)
+    problems = options.check_registration(_info(AGENTS, 19), expected_agents=AGENTS, expected_skills=20)
+    assert problems == ["19 genealogy-research:* commands registered, expected 20"]
+    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=20)
 
 
-def test_the_plugin_ships_twelve_agents_and_twenty_one_skills():
+def test_the_plugin_ships_thirteen_agents_and_twenty_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
-    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 21
+    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 20
     # A literal in the source, not an expression over the plugin dir (the mutation the
     # review named: both sides of the check shrinking together).
-    assert "\nEXPECTED_SKILLS = 21\n" in Path(worker.__file__).read_text(encoding="utf-8")
+    assert "\nEXPECTED_SKILLS = 20\n" in Path(worker.__file__).read_text(encoding="utf-8")
 
 
 def test_expected_agents_is_the_shipped_set():
@@ -715,28 +715,28 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
 
 
 def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
-    # Twelve agents and 21 skills registered: clean. Eleven, or 20: the miss, whatever loaded --
+    # Thirteen agents and 20 skills registered: clean. Twelve, or 19: the miss, whatever loaded --
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
-    assert worker.registration_problems(_info(AGENTS, 21)) == []
-    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 21, ("genealogy-research:gps-mentor",)))
+    assert worker.registration_problems(_info(AGENTS, 20)) == []
+    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 20, ("genealogy-research:gps-mentor",)))
     assert problems == ["agents not registered under their bare names: ['gps-mentor']"]
-    assert worker.registration_problems(_info(AGENTS, 20)) == ["20 genealogy-research:* commands registered, expected 21"]
+    assert worker.registration_problems(_info(AGENTS, 19)) == ["19 genealogy-research:* commands registered, expected 20"]
     import inspect
 
     assert list(inspect.signature(worker.registration_problems).parameters) == ["info"]
     # The mutation the first build let through: a plugin copy short one skill folder
-    # registers 20, and a count of that same copy would have expected 20.
+    # registers 19, and a count of that same copy would have expected 19.
     copy = tmp_path / "plugin"
     shutil.copytree(PLUGIN_DIR / "skills", copy / "skills")
     shutil.rmtree(next(d for d in sorted((copy / "skills").iterdir()) if (d / "SKILL.md").is_file()))
-    assert worker.count_skills(str(copy)) == 20
+    assert worker.count_skills(str(copy)) == 19
     assert worker.registration_problems(_info(AGENTS, worker.count_skills(str(copy)))) == [
-        "20 genealogy-research:* commands registered, expected 21"
+        "19 genealogy-research:* commands registered, expected 20"
     ]
 
 
-# ── the option set ───────────────────────────────────────────────────────────────
+# â”€â”€ the option set â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 WORKER_ENV = {
@@ -901,7 +901,7 @@ def test_every_shipped_agent_model_has_a_gateway_id():
     assert not unmapped, f"add a Bedrock id to GATEWAY_AGENT_MODELS for {unmapped}"
 
 
-# ── the container ─────────────────────────────────────────────────────────────────
+# â”€â”€ the container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 def _compose() -> dict:
@@ -1051,7 +1051,7 @@ def test_tool_server_headers_require_a_project_id():
     assert options.tool_server_headers({}, fs_access_token=None, project_id="p") == {"X-Genealogy-Project-Id": "p"}
 
 
-# ── run_turn: every guard seen firing, on a fake client ──────────────────────────
+# â”€â”€ run_turn: every guard seen firing, on a fake client â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 class FakeSessionStore:
@@ -1177,7 +1177,7 @@ def turn_env(monkeypatch, tmp_path):
 
 
 def _run(state: dict, messages: list[Any], info: dict | None = None, *, receive_count: int = 1) -> dict:
-    state["client"] = FakeClient(messages, _info(AGENTS, 21) if info is None else info, state)
+    state["client"] = FakeClient(messages, _info(AGENTS, 20) if info is None else info, state)
     return asyncio.run(worker.run_turn(TURN, receive_count, SID, agents={"gps-mentor": object()}))
 
 
@@ -1239,7 +1239,7 @@ def test_run_turn_refuses_to_bill_when_the_registration_is_short(turn_env):
     assert turn_env["client"].disconnected and not _turn_done_written(turn_env["conn"])
 
 
-# ── the resume rule: a redelivery that produced no model turn (D17) ───────────────
+# â”€â”€ the resume rule: a redelivery that produced no model turn (D17) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 class TwoPassClient(FakeClient):
@@ -1277,7 +1277,7 @@ def _run_passes(
     ``receive_count`` > 1 (the shim redelivered this message); the default is the D17
     shape, a second delivery of a resumed turn."""
     state["entries"] = entries
-    state["client"] = TwoPassClient(streams, _info(AGENTS, 21), state)
+    state["client"] = TwoPassClient(streams, _info(AGENTS, 20), state)
     return asyncio.run(worker.run_turn(TURN, receive_count, SID, agents={"gps-mentor": object()}))
 
 
@@ -1379,7 +1379,7 @@ def test_the_first_delivery_of_a_resumed_turn_is_never_re_queried(turn_env, monk
     assert not [f for f in logged if f.get("ev") == "resume_synthetic_result"]
 
 
-# ── 0a: the resume guard and its bounded retry ───────────────────────────────────
+# â”€â”€ 0a: the resume guard and its bounded retry â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 #
 # The plan gated the guard on a live probe of the synthetic result, and named THIS as the
 # accepted evidence if the probe would not fire on demand after two billed attempts: a
@@ -1657,7 +1657,7 @@ def test_every_guard_binds_on_the_re_query_too(turn_env, second, error, match):
     assert turn_env["client"].disconnected, "the CLI is always released"
 
 
-# ── PostToolUse: the duration stamp (acceptance criterion 4) ──────────────────────
+# â”€â”€ PostToolUse: the duration stamp (acceptance criterion 4) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 def test_the_row_carries_the_tool_use_id_and_the_post_hook_finishes_it(tmp_path):
@@ -1710,7 +1710,7 @@ def test_options_bind_the_post_hook_on_success_and_on_failure(tmp_path):
     assert opts.hooks["PostToolUse"][0].hooks == [post] and opts.hooks["PostToolUseFailure"][0].hooks == [post]
 
 
-# ── 1b / 1c: Stop, the held message, and what a turn's ending is called ───────────
+# â”€â”€ 1b / 1c: Stop, the held message, and what a turn's ending is called â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 _STOP_KW = dict(research=None, nudges_used=0, max_nudges=5, tool_count=0, tool_count_at_last_nudge=-1)
 
@@ -1935,7 +1935,7 @@ def test_a_failed_release_puts_the_message_back_rather_than_losing_it(monkeypatc
     assert [f["ev"] for f in logged] == ["queued_release_failed"]
 
 
-# ── 1e: the per-session spend bound ──────────────────────────────────────────────
+# â”€â”€ 1e: the per-session spend bound â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 RUNLOGS_E2E = SERVER.parents[1] / "eval" / "runlogs" / "e2e"
 
@@ -2404,7 +2404,7 @@ def test_every_turn_records_the_spend_estimate_for_calibration(turn_env, monkeyp
     assert params[2].obj["spend_estimate_usd"] == pytest.approx(1.2345), "and it reaches the feed"
 
 
-# ── D18: the Stop hook (the harness's continue-nudge, ported) ─────────────────────
+# â”€â”€ D18: the Stop hook (the harness's continue-nudge, ported) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 _INCOMPLETE = {"project": {"status": "in_progress"}}
@@ -2455,7 +2455,7 @@ def test_the_stop_hook_blocks_a_vetoable_stop_with_the_harness_reason_verbatim()
     # silent-stop fallback the worker mirrors. Since 2026-09-20 a second such dict
     # carries the "Yes." reply to a well-formed hand-back, whose reason is a NAME
     # (`reply`) rather than a constant, so it is skipped here by shape and named in
-    # CONTINUE_REASON's comment — if that branch ever spells a literal too, this
+    # CONTINUE_REASON's comment â€” if that branch ever spells a literal too, this
     # collects two and fails, which is the re-sync this test exists to force.
     tree = ast.parse(ORCHESTRATOR.read_text(encoding="utf-8"))
     blocks = [
@@ -2574,7 +2574,7 @@ def test_prepare_logs_a_bad_cap_and_runs_with_the_hook_off_instead_of_dying(monk
     assert next(f for f in logged if f.get("step") == "agents")["autonomous_max_nudges"] == 20
 
 
-# ── 1a: the cap rides the queue message ──────────────────────────────────────────
+# â”€â”€ 1a: the cap rides the queue message â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 @pytest.mark.parametrize("message, fallback, expected", [
@@ -2601,7 +2601,7 @@ def test_turn_max_nudges_prefers_the_body_and_falls_back_on_anything_unusable(me
 def test_run_turn_takes_the_caps_from_the_message_over_the_module_global(turn_env, monkeypatch):
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 0)
     turn = {**TURN, "message": {**TURN["message"], "max_nudges": 60}}
-    turn_env["client"] = FakeClient(_good(), _info(AGENTS, 21), turn_env)
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, 20), turn_env)
     summary = asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
     assert callable(turn_env["options"]["stop_hook"]), \
         "the browser's turn arms the Stop hook even though the worker's own cap is 0"
@@ -2612,7 +2612,7 @@ def test_run_turn_takes_the_caps_from_the_message_over_the_module_global(turn_en
     # container and the value rides the message.
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
     turn = {**TURN, "message": {**TURN["message"], "max_nudges": 0}}
-    turn_env["client"] = FakeClient(_good(), _info(AGENTS, 21), turn_env)
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, 20), turn_env)
     summary = asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
     assert turn_env["options"]["stop_hook"] is None and summary["max_nudges"] == 0
 
@@ -2689,7 +2689,7 @@ class NudgingClient(FakeClient):
 
 def test_two_vetoes_land_on_the_turns_row_and_in_the_summary(turn_env, monkeypatch):
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 5)
-    turn_env["client"] = NudgingClient(_info(AGENTS, 21), turn_env)
+    turn_env["client"] = NudgingClient(_info(AGENTS, 20), turn_env)
     summary = asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
     assert summary["nudges"] == 2
     sql, params = next((s, p) for s, p in turn_env["conn"].executed if s.startswith("UPDATE turns SET completed_at"))
@@ -2706,4 +2706,5 @@ def test_read_research_and_count_tool_calls_read_the_rows():
     assert worker.read_research(conn, "proj-1") is None
     conn.research = None
     assert worker.read_research(conn, "proj-1") is None
+
 

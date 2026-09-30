@@ -18,7 +18,7 @@
     "scenario": null
   },
   "mcp_fixtures": [
-    "person-read-flynn", "person-quality-clean-LZNY-BRF"],
+    "person-read-flynn"],
   "judge_context": [
     "`researcher_profile.subscriptions` should contain `Ancestry` and `LibraryAccess`. The family history centre is an access route with its own enum value -- it must not be dropped and must not be flattened to `other`",
     "`researcher_profile.subscriptions` must NOT contain `FamilySearch`. That is not a value on the closed enum; a plain FamilySearch account is the baseline every researcher here has, so it is not recorded at all. Storing it verbatim would fail schema validation",
@@ -30,6 +30,7 @@
     "Should still create both research.json and tree.gedcomx.json in a single pass and seed the Patrick Flynn stub from person-read-flynn -- volunteered access must not stop or delay the initialization"
   ],
   "execution": {
+    "max_wall_clock_seconds": 600,
     "stub_skills": [
       {
         "skill": "question-selection",
