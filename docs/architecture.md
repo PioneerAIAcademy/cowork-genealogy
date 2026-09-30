@@ -1916,7 +1916,7 @@ lead you to them:**
   `rubric.md`, a deterministic validator per skill, an LLM judge, snapshot-hashed
   run logs, and negative routing tests across 25 skill suites. **446** committed
   test definitions (`make eval-inventory`) — one JSON file per test under
-  `eval/tests/unit/` — and across the 26 live suites the latest run log per suite
+  `eval/tests/unit/` — and across the 25 live suites the latest run log per suite
   totals **446 rows, 389 passing (87%)**. Those two numbers count different things
   and can diverge in either direction: a test defined after its suite's last run
   has no row, and a row survives for a test since deleted. Both numbers are facts
