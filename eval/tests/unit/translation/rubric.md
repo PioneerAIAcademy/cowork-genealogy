@@ -28,8 +28,8 @@ Did the agent identify and explain genealogically significant terms (relationshi
 
 ## Date formatting
 
-Wherever a specific date appears in the response — prose narration, a structured assertions section, a translated passage, anywhere — is it expressed in ISO 8601 format alongside the prose form, except where the pre-Gregorian carve-out requires it to be withheld?
+Are the dates in the response accurately translated, and is the calendar flag correctly applied where the jurisdiction had not yet adopted the Gregorian calendar?
 
-- **pass:** Every date in the response carries both the human-readable prose form and the ISO 8601 parenthetical — e.g., "15 March 1845 (1845-03-15)". A date the record states only partially is given only as far as the record states it (1845-03, or 1845). A date whose jurisdiction had not yet adopted the Gregorian calendar at that date — or whose jurisdiction the record leaves undetermined, such as a Dutch record between 1582 and 1701 that names no province — correctly carries **no** ISO form, and is instead flagged Old Style (or indeterminate) and handed to convert-dates. That is a pass, not a miss: withholding the ISO form is what the skill requires there.
-- **partial:** Dates appear in prose form but at least one lacks its ISO 8601 parenthetical, and no carve-out reason is given for the omission. Includes the case where no date carries the ISO form.
+- **pass:** Dates are accurately rendered in prose (day, month, year match the record). Where the record's jurisdiction had not yet adopted the Gregorian calendar — or where the jurisdiction is indeterminate, such as a Dutch record between 1582 and 1701 that names no province — the response flags the date as Old Style (or indeterminate) and routes to convert-dates rather than converting it directly. Partially-stated dates (month and year only, or year only) are given only as far as the record states them.
+- **partial:** A date is rendered inaccurately (wrong day, month, or year), or a pre-Gregorian date is converted directly rather than flagged and routed.
 - **fail:** The agent declines to translate the date(s) at all, or provides no date information from the record despite the record containing a clear date.

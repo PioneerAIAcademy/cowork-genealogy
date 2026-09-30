@@ -24,12 +24,6 @@ tools:
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
-> **Date format — required everywhere a date appears in the response:**
-> Write every prose date with its ISO 8601 form in parentheses immediately after:
-> "3 April 1748 (1748-04-03)" — not "3 April 1748" alone.
-> This applies in the translation line, the genealogical notes, and the summary. No exceptions except the pre-Gregorian carve-out below.
-> When the original record spells the date in words (e.g., Spanish "a quince de enero de mil setecientos cincuenta"), the ISO form is still required in the translated output: "15 January 1750 (1750-01-15)". A translated date without its ISO parenthetical is an incomplete translation for genealogical purposes.
-
 Provides genealogy-specific translation and paleography assistance
 for historical records in Western European languages. Genealogical
 records use specialized vocabulary, period handwriting styles, and
@@ -121,7 +115,6 @@ accuracy before translating.
 
 Provide:
 - Full English translation (labeled as derivative)
-- **Every date: prose form immediately followed by ISO 8601 in parentheses — "14 March 1843 (1843-03-14)". Never write a date in prose without the ISO parenthetical.** This includes dates that were written as words in the original (e.g., "quince de enero de mil setecientos cincuenta" → "15 January 1750 (1750-01-15)").
 - Ambiguous readings flagged with [?]
 - Abbreviation expansions (abbreviated form shown alongside)
 - Period-specific meanings explained where they differ from modern
@@ -153,8 +146,6 @@ auf den Nahmen Georg getauft worden. Pathe: Georg Ba[u/v]er.'"*
 
 **Response:**
 
-"Extract assertions from this record?" (record-extraction) · "Link Georg Schmid to the tree?" (person-evidence)
-
 *Original (as written):* Den 12ten Märtz 1789 … ein Söhnlein gebohren
 und … auf den Nahmen Georg getauft worden. Pathe: Georg Ba[?]er.
 
@@ -185,8 +176,6 @@ I'm especially stuck on the word 'relicta': 'Die 3 Aprilis 1748 sepulta
 est Maria, relicta Joannis Hofer.'"*
 
 **Response:**
-
-"Extract assertions from this record?" (record-extraction) · "Link Maria to the tree?" (person-evidence)
 
 *Original (as written):* Die 3 Aprilis 1748 sepulta est Maria, relicta Joannis Hofer.
 
@@ -235,22 +224,17 @@ character by character through ambiguous passages.
 
 ## Output conventions
 
-- **Every date carries its ISO 8601 form.** Write the prose date
-  followed by ISO 8601 in parentheses, everywhere a date appears in
-  the response: "12 March 1789 (1789-03-12)". Source conventions
-  vary — German: day.month.year; French: day month year; Latin:
-  varies — so read the original convention before converting. When
-  the day or month is unknown, give only what the record states
-  (1789-03, or 1789); never invent the missing part. When the
+- **Pre-Gregorian dates: flag and route, do not convert.** When the
   record's jurisdiction had not yet adopted the Gregorian calendar at
   that date — Protestant German states before 1700, Britain and
   colonies before 1752, Sweden before 1753, Russia before 1918,
   Gelderland, Utrecht and Overijssel in or before 1700, Friesland
   and Groningen before 1701, Drenthe in or before 1701 (but Zeeland
-  from 1582 and Holland from 1583) — do not write an ISO form: say
-  the date is Old Style and route to convert-dates. A Dutch record
-  between 1582 and 1701 that names no province is indeterminate: say
-  so and route to convert-dates rather than assuming.
+  from 1582 and Holland from 1583) — say the date is Old Style and
+  route to convert-dates rather than converting it yourself. A Dutch
+  record between 1582 and 1701 that names no province is
+  indeterminate: say so and route to convert-dates rather than
+  assuming.
 - **Genitive names aren't errors.** "Johannis" is genitive of
   "Johannes" — normalize to nominative form.
 - **Foreign text in English narrative.** Italicize foreign words
@@ -441,8 +425,8 @@ and [mother], at the age of [age] years. Buried on [burial date]."
 | User provides text they already transcribed | Review for common misreadings (f/long-s, C/E confusion) before translating. |
 | A word has no clear modern equivalent | Keep the original term in italics, provide the closest English explanation in parentheses. |
 | The record uses regional dialect | Note the dialect and translate based on regional meaning, not standard-language meaning. |
-| User asks "what does [term] mean?" with no record given | Answer with the genealogical meaning. No routing offers needed. |
-| User asks about a term but provides a record entry (e.g., "I'm stuck on this word in this entry") | Translate the entry, explain the term in context, and end with the routing offers. The record is what triggers Step 5. |
+| User asks "what does [term] mean?" with no record given | Answer with the genealogical meaning only. |
+| User asks about a term but provides a record entry (e.g., "I'm stuck on this word in this entry") | Translate the entry and explain the term in context. |
 | User wants historical context about WHY a record exists | Hand off to historical-context. This agent translates WHAT the record says. |
 | User wants citation formatting for the translated record | Hand off to citation after record-extraction creates the source entry. |
 
