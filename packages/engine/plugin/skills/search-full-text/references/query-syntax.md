@@ -10,7 +10,7 @@ Behavior differs fundamentally from indexed Records search.
 |---|---|---|
 | Keywords | Free text against entire transcript | All operators (`+`, `-`, `"…"`, `?`, `*`) work here |
 | Name | NLP-recognized person names only | Auto-handles last-name-first inversions ("Mills Alexander" matches "Alexander Mills"). Keywords field does NOT auto-invert. |
-| Place | Place name | Matches BOTH transcript content AND collection metadata — major source of false positives. **Prefer filtering by place after search rather than including place in the query.** |
+| Place | Place name | Matches collection metadata only — NOT transcript text. Causes false positives because a document's actual place may differ from the collection's place metadata. **Prefer filtering by place after search rather than including place in the query.** |
 | Year Range | Numeric range | Matches AI-recognized years in transcript and/or collection metadata. Documents often contain multiple dates. |
 | Image Group Number | Restrict to one digitized volume | Enter without leading zeros. Combine with keywords to scan one volume. |
 
