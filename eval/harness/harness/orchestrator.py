@@ -975,6 +975,7 @@ async def _execute_skill_with_retry(
                         # Direct-agent arm: agents staged, no skills. The
                         # conversion doc's acceptance check, made literal.
                         stage_skills=not spec.is_direct,
+                        suite=spec.skill,
                     )
                     before_snapshot = snapshot_files(workspace)
                     result = await run_skill(
