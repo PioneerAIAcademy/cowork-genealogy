@@ -1,4 +1,4 @@
-"""Skill-specific validators for the tree-edit skill.
+"""Validators for the tree-edit agent (a skill until issue #2805).
 
 tree-edit applies direct edits to tree.gedcomx.json — adding facts,
 correcting values, creating persons and relationships, and merging
@@ -112,12 +112,42 @@ def test_tree_edit_noop(before_state, after_state, test):
 
 # --- Post-edit check-warnings (deep dive #1657, Finding F) ------------
 
+_HAND_BACK_LINE = re.compile(r"^\s*[*_>`-]*\s*Hand-back:\s*`?check-warnings\b", re.I | re.M)
+_NEGATION = re.compile(r"\bnot\b|n't\b|\bnever\b|\bskip\w*|\bwithout\b|\bunable\b|\bcannot\b", re.I)
+
+
+def _names_check_warnings(reply: str) -> bool:
+    """A `Hand-back: check-warnings` line, or any other sentence naming it
+    that does not negate it ("I did not run check-warnings" is not a hand-back).
+    The hand-back line passes even beside a negation elsewhere in the reply --
+    "I can't run it myself. Hand-back: check-warnings I1" is the compliant
+    shape, since the agent holds no Agent tool."""
+    if _HAND_BACK_LINE.search(reply):
+        return True
+    for line in reply.splitlines():
+        for unit in re.split(r"(?<=[.;!?])\s+", line):
+            if "check-warnings" in unit.lower() and not _NEGATION.search(unit):
+                return True
+    return False
+
+
 def test_check_warnings_runs_after_any_tree_write(
-    before_state, after_state, skills_invoked, builtin_tool_calls=None
+    before_state, after_state, skills_invoked, test,
+    builtin_tool_calls=None, agent_returns=None, text_response=None,
 ):
-    """SKILL.md § Validation: "After ANY edit or merge, run check-warnings
-    to catch genealogical impossibilities the structural validator cannot"
-    -- unconditional, no carve-out for a single-field correction. Deep dive
+    """Agent body § Validation: every edit or merge ends with a caller-facing
+    `Hand-back: check-warnings <person ids>` line -- unconditional, no carve-out
+    for a single-field correction. Since issue #2805 tree-edit is an agent that
+    holds no Agent tool, so it cannot spawn check-warnings; the hand-back names
+    it for the main thread to run (lead ruling 2026-09-23 on that issue).
+
+    Passes when `handoffs` shows a check-warnings spawn -- the routed-caller
+    fallback, dead on the direct arm, whose dispatcher may call no other tool --
+    or when the SUBJECT's reply names it (`subject_reply_text`: on a direct
+    test the agent's own return only, never the relay, so a silent agent fails
+    however the dispatcher words its relay; review of issue #2805, 2026-09-30).
+
+    History: before the conversion this required the spawn itself. Deep dive
     #1657 finding F: across the 5 committed run logs, this fired in at most
     2 of 5 runs for any one edit test, and 0 of 5 for three of them
     (`ut_tree_edit_006`, `_008`, `_009`) -- including the currently-active
@@ -137,13 +167,17 @@ def test_check_warnings_runs_after_any_tree_write(
     after_tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
     if before_tree is None or after_tree is None:
         pytest.skip("missing tree.gedcomx.json on one side")
-    from harness.skill_runner import handoffs
+    from harness.skill_runner import handoffs, subject_reply_text
 
     if before_tree == after_tree:
         pytest.skip("tree.gedcomx.json unchanged -- no edit to validate")
-    assert "check-warnings" in handoffs(skills_invoked, builtin_tool_calls), (
-        "tree.gedcomx.json changed but check-warnings was never invoked -- "
-        "SKILL.md § Validation requires it after ANY edit or merge"
+    if "check-warnings" in handoffs(skills_invoked, builtin_tool_calls):
+        return
+    reply = subject_reply_text(agent_returns, text_response, "tree-edit", test)
+    assert _names_check_warnings(reply), (
+        "tree.gedcomx.json changed but the reply never hands back to "
+        "check-warnings -- the agent body requires a caller-facing "
+        "`Hand-back: check-warnings <person ids>` line after ANY edit or merge"
     )
 
 

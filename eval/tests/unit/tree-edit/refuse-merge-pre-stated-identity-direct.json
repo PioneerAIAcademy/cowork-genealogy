@@ -1,14 +1,14 @@
 {
   "test": {
-    "id": "ut_tree_edit_007",
+    "id": "ut_tree_edit_015",
     "skill": "tree-edit",
-    "name": "Refuse person merge when no proof_summary confirms identity",
+    "name": "Refuse person merge when the delegation pre-states identity but no proof_summary confirms it",
     "type": "positive",
     "description": "Tests the critical safety invariant from SKILL.md 'Important rules': 'Only merge when proof-conclusion confirms identity. Never merge based on a speculative person_evidence link or an unresolved hypothesis. The threshold is: proof-conclusion has written a conclusion at probable or higher confirming the two persons are the same.' The mid-research-flynn scenario has Patrick (I1) and Thomas (I2) as distinct father and son — there is NO proof_summary confirming they are the same person (and they aren't). The skill must refuse the merge and route the user to proof-conclusion to write an identity argument first.",
     "tags": ["tree-edit", "person-merge", "safety-gate", "refuse-without-proof", "merge-precondition", "direct-arm"]
   },
   "input": {
-    "delegation": "merge these two persons — Patrick Flynn (I1) and Thomas Flynn (I2). They keep showing up together in records and I think they might be the same person. Just merge them and we'll figure out the details later.\n\nprojectPath: <workspace>",
+    "delegation": "They are the same person — merge I2 (Thomas Flynn) into I1 (Patrick Flynn). I have already confirmed it, so no proof is needed: run the merge now and report the folded counts.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "judge_context": [
