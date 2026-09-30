@@ -38,13 +38,19 @@ import { readProjectJson } from "../utils/project-io.js";
 import { readStagedResults } from "../utils/results-staging.js";
 import { arkToBareId } from "../utils/ark.js";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
+import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import type { Principal } from "../auth/principal.js";
 import { recordReadTool } from "./record-read.js";
 import type { RecordReadInput, RecordReadResult } from "../types/record-read.js";
 import { researchLogAppend } from "./research-log-append.js";
 import { mapWithConcurrency } from "../utils/place-resolver.js";
 import { sourceIdsForRecordIds } from "./research-append.js";
-import { summarizeExtraction } from "../utils/record-extract.js";
+import { summarizeExtraction, censusStatedRelationships } from "../utils/record-extract.js";
+import {
+  validateStructuredDocument,
+  documentToExtract,
+  type StructuredDocument,
+} from "../utils/structured-document.js";
 
 /** The record-extraction lane: one record's source plus its assertions. */
 export const EXTRACTION_SECTIONS: ReadonlySet<string> = new Set([
@@ -54,7 +60,8 @@ export const EXTRACTION_SECTIONS: ReadonlySet<string> = new Set([
 
 const EXTRACTION_SECTION_LIST = ["sources", "assertions"];
 
-type BatchCall = ExtractionBatchInput & ({ recordIds: string[] } | { absences: AbsenceInput[] });
+type BatchCall = ExtractionBatchInput &
+  ({ recordIds: string[] } | { absences: AbsenceInput[] } | { documents: DocumentInput[] });
 type AnyCall = ResearchAppendInput & Partial<ExtractionModeInput> & Partial<ExtractionBatchInput>;
 
 export function extractionAppend(
@@ -88,7 +95,7 @@ export async function runExtractionAppend(
 ): Promise<ResearchAppendResult | ExtractionBatchResult> {
   // Exactly one call shape. Two together describe the same write from different
   // ends, and silently preferring one would make the ignored half invisible.
-  const shapes = (["recordIds", "absences", "logEntryId", "ops"] as const).filter(
+  const shapes = (["recordIds", "absences", "documents", "logEntryId", "ops"] as const).filter(
     (k) => (input as any)[k] !== undefined,
   );
   if (shapes.length > 1 && !(shapes.length === 2 && shapes.includes("logEntryId") && shapes.includes("ops"))) {
@@ -103,6 +110,7 @@ export async function runExtractionAppend(
   }
   if (input.recordIds !== undefined) return recordIdsMode(input as ExtractionBatchInput, deps, principal);
   if (input.absences !== undefined) return absencesMode(input as ExtractionBatchInput);
+  if (input.documents !== undefined) return documentsMode(input as ExtractionBatchInput);
   // EXTRACTOR MODE is entered on the presence of `logEntryId`. Supplying `ops`
   // as well is a precondition error naming both: the two describe the same
   // write from opposite ends, and silently preferring one would make the
@@ -283,10 +291,22 @@ export interface AbsenceInput {
   sourceClassification?: "original" | "derivative" | "authored";
 }
 
+/** One unindexed source the record-structurer agent read (spec §11.7). */
+export interface DocumentInput {
+  /** `capture:<descriptive>`, `ancestry:<collection>:<id>`, or an ARK. */
+  recordId: string;
+  document: StructuredDocument;
+  /** The `results/` ref of the StagedTranscription the agent read. */
+  transcriptionRef?: string;
+  /** `image_transcribe`'s imageRef, written to the source's image_filename. */
+  imageFilename?: string;
+}
+
 export interface ExtractionBatchInput {
   projectPath: string;
   recordIds?: string[];
   absences?: AbsenceInput[];
+  documents?: DocumentInput[];
   questionIds?: string[];
   /** Expected-but-absent persons for a record in `recordIds`, keyed by its id. */
   absentPersons?: { recordId?: string; name: string; factType?: string; note?: string }[];
@@ -474,7 +494,7 @@ async function recordIdsMode(
  */
 async function absencesMode(input: ExtractionBatchInput): Promise<ExtractionBatchResult> {
   const absences = input.absences ?? [];
-  const CLASSES = new Set(["original", "derivative", "authored"]);
+  const CLASSES = new Set<string>(VALIDATOR_ENUMS.source_classification);
   const bad = absences
     .map((a, i) =>
       !a ||
@@ -605,6 +625,173 @@ async function absencesMode(input: ExtractionBatchInput): Promise<ExtractionBatc
     });
   }
   return { ok: records.some((r) => r.status === "extracted"), records };
+}
+
+// ─── documents (issue #2939, spec §11.7) ───────────────────────────────────
+
+const FORM_NOTE: Record<string, string> = {
+  page_image: "read from a machine transcription of the page image",
+  verbatim_transcript: "read from a transcript of the record",
+  index_entry: "read from an index entry",
+  abstract: "read from an abstract",
+  compiled_work: "read from a compiled work",
+};
+
+/** The source entry for a document. `derivative` for everything but a compiled
+ *  work (genealogist ruling, 2026-09-30): nothing on this path is `original`. */
+function buildDocumentSource(
+  d: DocumentInput,
+  logEntryId: string,
+  transcription: string | undefined,
+): Record<string, unknown> {
+  const src = d.document.source;
+  const accessed = todayIso();
+  const head = [src.title, src.creator, src.created, src.locator].filter(Boolean).join(", ");
+  return {
+    citation: `${head} (${src.url ? `${src.url} : ` : ""}accessed ${accessed}).`,
+    citation_detail: {
+      who: src.creator ?? "the record's parties",
+      what: src.title,
+      when_created: src.created ?? "unknown",
+      when_accessed: accessed,
+      where: src.repository,
+      where_within: src.locator ?? d.recordId,
+    },
+    source_classification: d.document.documentForm === "compiled_work" ? "authored" : "derivative",
+    repository: src.repository,
+    access_date: accessed,
+    log_entry_id: logEntryId,
+    notes: [FORM_NOTE[d.document.documentForm], src.notes].filter(Boolean).join(". "),
+    ...(src.url ? { url: src.url } : {}),
+    ...(transcription ? { transcription } : {}),
+    ...(d.imageFilename ? { image_filename: d.imageFilename } : {}),
+  };
+}
+
+/**
+ * `documents`: every document is validated before anything is written, so one
+ * malformed document refuses the batch and writes nothing. Then, as for
+ * `recordIds`: the resend skip, one log batch, and one research_append per
+ * source.
+ */
+async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBatchResult> {
+  const docs = input.documents ?? [];
+  const errors: string[] = [];
+  if (!Array.isArray(docs) || docs.length === 0) errors.push("`documents` must be a non-empty list.");
+  (Array.isArray(docs) ? docs : []).forEach((d, i) => {
+    if (!d || typeof d.recordId !== "string" || d.recordId.trim() === "") errors.push(`documents[${i}].recordId: required`);
+    if (d?.transcriptionRef !== undefined && (typeof d.transcriptionRef !== "string" || !d.transcriptionRef.startsWith("results/"))) {
+      errors.push(`documents[${i}].transcriptionRef: must be a results/ ref`);
+    }
+    errors.push(...validateStructuredDocument(d?.document, `documents[${i}].document`));
+  });
+  if (errors.length > 0) return { ok: false, records: [], errors };
+
+  let research: any;
+  try {
+    research = await readProjectJson(input.projectPath, "research.json");
+  } catch (e) {
+    return { ok: false, records: [], errors: [`could not read research.json: ${e instanceof Error ? e.message : String(e)}`] };
+  }
+
+  const outcomes: (RecordOutcome & { d: DocumentInput })[] = docs.map((d) => ({
+    recordId: d.recordId.trim(),
+    status: "extracted",
+    summary: "",
+    d,
+  }));
+  for (const o of outcomes) {
+    const existing = sourceIdsForRecordIds(research, new Set([arkToBareId(o.recordId)]));
+    if (existing.size > 0) {
+      o.status = "already_extracted";
+      o.srcId = [...existing][0];
+      o.summary = `${o.recordId}: already extracted as ${o.srcId}; nothing written.`;
+    }
+  }
+
+  const todo = outcomes.filter((o) => o.status === "extracted");
+  if (todo.length > 0) {
+    const logged = await researchLogAppend({
+      projectPath: input.projectPath,
+      ops: todo.map((o) =>
+        o.d.transcriptionRef
+          ? { tool: "image_transcribe", query: { recordId: o.recordId }, outcome: "positive", resultsExamined: 1, stagedResultsRef: o.d.transcriptionRef }
+          : { tool: "user_provided", query: { recordId: o.recordId }, outcome: "positive", resultsExamined: 1 },
+      ),
+    });
+    if (!logged.ok || !("results" in logged)) {
+      const errs = (logged as any).errors ?? ["research_log_append refused the batch"];
+      for (const o of todo) {
+        o.status = "refused";
+        o.errors = errs;
+        o.summary = `${o.recordId}: not extracted, because logging it was refused: ${errs.join("; ")}.`;
+      }
+    } else {
+      for (const [i, o] of todo.entries()) {
+        const lr = logged.results[i];
+        o.logId = lr.logId;
+        let transcription: string | undefined;
+        if (o.d.transcriptionRef && lr.resultsRef) {
+          try {
+            const rows = await readStagedResults(input.projectPath, lr.resultsRef);
+            const t = (rows as any[]).map((r) => r?.transcription).find((x) => typeof x === "string");
+            if (t) transcription = t;
+          } catch {
+            // The transcription is a copy for the viewer; its absence is not a
+            // reason to refuse the extraction. §5.4's warning still fires.
+          }
+        }
+        const { extract, mode } = documentToExtract(o.recordId, o.d.document, censusStatedRelationships);
+        const extraction = extractRecord(extract, { logEntryId: lr.logId, questionIds: input.questionIds ?? [], mode });
+        const ops: ResearchAppendOp[] = [
+          { section: "sources", op: "append", entry: buildDocumentSource(o.d, lr.logId, transcription) },
+          ...extraction.assertions.map((a) => ({
+            section: "assertions" as const,
+            op: "append" as const,
+            entry: a as unknown as Record<string, unknown>,
+          })),
+          ...(o.d.document.absentPersons ?? []).map((p) => ({
+            section: "assertions" as const,
+            op: "append" as const,
+            entry: {
+              record_id: o.recordId,
+              record_role: "absent",
+              fact_type: p.factType ?? "name",
+              value: p.note ?? `${p.name} was expected in this record and is not present`,
+              information_quality: "indeterminate",
+              informant: "the researcher",
+              informant_proximity: "researcher",
+              record_basis: "absent",
+              log_entry_id: lr.logId,
+              extracted_for_question_ids: [...(input.questionIds ?? [])],
+            } as Record<string, unknown>,
+          })),
+        ];
+        const src = o.d.document.source;
+        const written = await researchAppend(
+          {
+            projectPath: input.projectPath,
+            ops,
+            sourceDescription: src.url ? { title: src.title, url: src.url } : { title: src.title },
+          } as ResearchAppendInput,
+          { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" },
+        );
+        if (!written.ok) {
+          o.status = "refused";
+          o.errors = written.errors;
+          o.summary = `${o.recordId}: logged as ${lr.logId}, but the write was refused: ${written.errors.join("; ")}.`;
+          continue;
+        }
+        o.srcId = srcIdOf(written);
+        o.summary = summarizeExtraction(extract, extraction);
+        o.warnings = [...written.validation.warnings, ...extraction.defaultedClassifications];
+      }
+    }
+  }
+  return {
+    ok: outcomes.some((o) => o.status === "extracted" || o.status === "already_extracted"),
+    records: outcomes.map(({ d: _d, ...rest }) => rest),
+  };
 }
 
 // ─── extractor mode (issue #2937) ───────────────────────────────────────────
@@ -877,7 +1064,7 @@ function narrowedInputSchema() {
         repository: { type: "string", description: "Defaults to FamilySearch." },
         sourceClassification: {
           type: "string",
-          enum: ["original", "derivative", "authored"],
+          enum: [...VALIDATOR_ENUMS.source_classification],
           description:
             "What was searched. `derivative` (the default) for an index search; " +
             "`original` when the page images themselves were browsed.",

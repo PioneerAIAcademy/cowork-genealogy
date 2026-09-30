@@ -27,6 +27,7 @@
 
 import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
 import type { PersonaIndexFields } from "./record-index-fields.js";
+import type { DocumentMode } from "./structured-document.js";
 
 // ─── input / output ─────────────────────────────────────────────────────────
 
@@ -44,6 +45,9 @@ export interface ExtractOptions {
   /** The open questions this extraction serves. Caller's call — relative to the
    *  research question, not to the record. */
   questionIds: string[];
+  /** Set only for an unindexed source the record-structurer agent read
+   *  (spec §11.7): what the document says that a sidecar has no field for. */
+  mode?: DocumentMode;
   // NO `evidenceType`. Issue #2937 lists it among the three things the caller
   // still supplies, but that field was RENAMED to `record_basis` on 2026-09-18
   // (the retired-identifier registry in enums.schema.json;
@@ -147,6 +151,9 @@ export type RecordType =
   | "christening"
   | "land"
   | "draft_registration"
+  | "obituary"
+  | "probate"
+  | "newspaper_announcement"
   | "other";
 
 /** `grave` for Find a Grave, the commonest burial index in the scorer corpus. */
@@ -779,6 +786,88 @@ function classify(
   };
 }
 
+/** Record types that only a document produces: each has its own rows below. */
+const DOCUMENT_ONLY_TYPES: ReadonlySet<RecordType> = new Set(["obituary", "probate", "newspaper_announcement"]);
+
+/**
+ * The obituary, probate and newspaper-announcement rows. All of them are the
+ * genealogist's rulings (2026-09-29 and 2026-09-30); spec §11.7 holds the tables.
+ * Keyed on role, fact type and, for residences, date, because "recent family
+ * knowledge" and "life history" split the same fact type by when it happened.
+ */
+function classifyDocumentRow(
+  recordType: RecordType,
+  role: string,
+  factType: string,
+  extra: Partial<ExtractedAssertion>,
+  mode: DocumentMode | undefined,
+  statedRelation: string | undefined,
+): Classification {
+  const year = Number(String(extra.date ?? "").match(/\d{4}/)?.[0]);
+  const earlier = !Number.isNaN(year) && mode?.eventYear !== undefined && year < mode.eventYear;
+  const relatedRole = String(extra.structured_value?.related_person_role ?? "");
+  const isParentRole = (r: string) => roleFamily(r) === "parent" || /^(father|mother)(_|$)/.test(r);
+
+  if (recordType === "obituary") {
+    const author = "the obituary's author (usually unnamed family)";
+    const recent: Classification = { informant: author, informant_proximity: "household_member", information_quality: "indeterminate" };
+    const life: Classification = { informant: author, informant_proximity: "family_not_present", information_quality: "secondary" };
+    if (role === "deceased") {
+      if (factType === "relationship") return isParentRole(relatedRole) ? life : recent;
+      if (/^(name|death|burial|funeral|cremation|interment)$/.test(factType)) return recent;
+      if (factType === "residence") return earlier ? life : recent;
+      return life;
+    }
+    if (isParentRole(role) || /\b(late|deceased|predeceased)\b/i.test(statedRelation ?? "")) return life;
+    if (/^(name|residence|relationship)$/.test(factType)) return recent;
+    return life;
+  }
+
+  if (recordType === "probate") {
+    if (/^(probate|court|letters|letters_testamentary|letters_of_administration|will_proved|administration)$/.test(factType)) {
+      return { informant: "the court clerk", informant_proximity: "official_duty", information_quality: "primary" };
+    }
+    if (/^(will|will_execution|testament|signing)$/.test(factType) || /^witness_\d+$/.test(role)) {
+      return { informant: "the witnesses", informant_proximity: "witness", information_quality: "primary" };
+    }
+    const petitioner = "the petitioner (executor or administrator)";
+    if (factType === "death") {
+      return { informant: petitioner, informant_proximity: "household_member", information_quality: "indeterminate" };
+    }
+    if (mode?.hasWill) {
+      return { informant: "the testator", informant_proximity: "self", information_quality: "primary" };
+    }
+    if (/^(name|relationship)$/.test(factType)) {
+      return { informant: petitioner, informant_proximity: "household_member", information_quality: "primary" };
+    }
+    return { informant: petitioner, informant_proximity: "household_member", information_quality: "indeterminate" };
+  }
+
+  // newspaper_announcement
+  const submitter = "the announcement's submitter (usually unnamed family)";
+  const recent: Classification = { informant: submitter, informant_proximity: "household_member", information_quality: "indeterminate" };
+  const life: Classification = { informant: submitter, informant_proximity: "family_not_present", information_quality: "secondary" };
+  if (mode?.eventType && factType === mode.eventType) return recent;
+  if (/^(name|relationship)$/.test(factType)) return recent;
+  if (factType === "residence") return earlier ? life : recent;
+  return life;
+}
+
+/** Newspaper-announcement roles (genealogist ruling, 2026-09-30): the event's
+ *  subject by event, and by sex where the event has two principals. */
+function newspaperRoles(ps: Party[], gx: SimplifiedGedcomX, eventType: string | undefined): Map<string, string> {
+  const principalRole =
+    eventType === "birth" ? "child" : eventType === "marriage" || eventType === "engagement" || eventType === "anniversary" ? "__pair" : "principal";
+  const roles = principalRoles(ps, gx, principalRole === "__pair" ? "principal" : principalRole);
+  if (principalRole === "__pair") {
+    for (const p of ps.filter((q) => q.person.principal === true)) {
+      const female = genderOf(p.person) === "female";
+      roles.set(p.id, eventType === "anniversary" ? (female ? "wife" : "husband") : female ? "bride" : "groom");
+    }
+  }
+  return roles;
+}
+
 // ─── fact mapping ───────────────────────────────────────────────────────────
 
 /** Normalize a fact type to the snake_case `fact_type` the schema expects.
@@ -822,7 +911,8 @@ export function extractRecord(
   opts: ExtractOptions,
 ): ExtractResult {
   const gx = doc.gedcomx ?? {};
-  const recordType = detectRecordType(gx);
+  const mode = opts.mode;
+  const recordType = mode?.recordType ?? detectRecordType(gx);
   const collection = collectionTitle(gx);
   const ps = parties(doc);
   const assertions: ExtractedAssertion[] = [];
@@ -843,8 +933,17 @@ export function extractRecord(
       .find((f) => /census/i.test(String(f.type ?? "")));
     const year = Number(String(censusFact?.date ?? "").match(/\d{4}/)?.[0]);
     const place = censusFact?.standard_place ?? censusFact?.place;
-    const stated = censusStatedRelationships(place, Number.isNaN(year) ? undefined : year);
+    const stated =
+      mode && "censusStates" in mode
+        ? (mode.censusStates ?? null)
+        : censusStatedRelationships(place, Number.isNaN(year) ? undefined : year);
     censusStatesRelationships = stated === true;
+    if (mode && stated !== true && mode.statedRelations.size > 0) {
+      notes.push(
+        `${mode.statedRelations.size} stated relation(s) not used: this schedule had no ` +
+          `relationship column, so a relation the text appears to give is not the record's claim`,
+      );
+    }
     if (stated === null) {
       notes.push(
         `census jurisdiction not in the relationship-column table ` +
@@ -885,6 +984,12 @@ export function extractRecord(
     for (const [id, r] of principalRoles(ps, gx, "child")) roles.set(id, r);
   } else if (recordType === "draft_registration") {
     for (const [id, r] of principalRoles(ps, gx, "registrant")) roles.set(id, r);
+  } else if (recordType === "obituary") {
+    for (const [id, r] of principalRoles(ps, gx, "deceased")) roles.set(id, r);
+  } else if (recordType === "probate") {
+    for (const [id, r] of principalRoles(ps, gx, mode?.hasWill ? "testator" : "decedent")) roles.set(id, r);
+  } else if (recordType === "newspaper_announcement") {
+    for (const [id, r] of newspaperRoles(ps, gx, mode?.eventType)) roles.set(id, r);
   } else if (recordType === "land") {
     // `grantee` for the principal, `grantor_N` for the rest. The record is
     // indexed under the party ACQUIRING the land — a patentee, a homesteader —
@@ -904,6 +1009,20 @@ export function extractRecord(
     }
   }
 
+  // In document mode, a party the rules above could only number (`other_N`,
+  // `witness_N`) takes the text's own relation word instead: son -> child_N,
+  // executor, heir_N (genealogist ruling, 2026-09-30). A census's relation is the
+  // column's, handled above, and never this.
+  if (mode && recordType !== "census" && mode.statedRelations.size > 0) {
+    const counters = new Map<string, number>();
+    for (const p of ps) {
+      const rel = mode.statedRelations.get(p.id);
+      if (rel && /^(other|witness)_\d+$/.test(roles.get(p.id) ?? "")) {
+        roles.set(p.id, roleFromRelationship(rel, counters));
+      }
+    }
+  }
+
   // ── assertions ──
   const push = (
     party: Party,
@@ -914,9 +1033,17 @@ export function extractRecord(
     clsOverride?: Classification,
   ) => {
     const role = roles.get(party.id) ?? "other_1";
-    const cls =
+    let cls =
       clsOverride ??
-      classify(recordType, role, factClass ?? factClassOf(factType, recordType), collection);
+      (DOCUMENT_ONLY_TYPES.has(recordType)
+        ? classifyDocumentRow(recordType, role, factType, extra, mode, mode?.statedRelations.get(party.id))
+        : classify(recordType, role, factClass ?? factClassOf(factType, recordType), collection));
+    if (
+      mode?.informantName &&
+      (cls.informant_proximity === "household_member" || cls.informant_proximity === "family_not_present")
+    ) {
+      cls = { ...cls, informant: mode.informantName };
+    }
     const a: ExtractedAssertion = {
       record_id: doc.recordId,
       record_role: role,
@@ -933,8 +1060,12 @@ export function extractRecord(
     // Set per persona and never auto-filled. `extraction_append`'s auto-fill
     // stamped the SEARCHED persona's id onto assertions about someone else 16
     // times in the e2e corpus (issue #2937).
-    if (party.person.id) a.record_persona_id = party.person.id;
-    if (cls.bias) a.informant_bias_notes = cls.bias;
+    // Document mode never sets a persona id: local ids name nothing outside the
+    // document, and research_append verifies a supplied id against a sidecar.
+    if (party.person.id && !mode) a.record_persona_id = party.person.id;
+    const bias = [cls.bias, extra.informant_bias_notes].filter(Boolean).join("; ");
+    if (bias) a.informant_bias_notes = bias;
+    else delete a.informant_bias_notes;
     assertions.push(a);
     if (cls.defaulted) {
       defaultedClassifications.push(
@@ -960,6 +1091,7 @@ export function extractRecord(
           given: p.names?.[0]?.given ?? "",
           surname: p.names?.[0]?.surname ?? "",
         },
+        ...(mode?.nameNotes.get(party.id) ? { informant_bias_notes: mode.nameNotes.get(party.id) } : {}),
       });
     }
 
@@ -975,9 +1107,32 @@ export function extractRecord(
     if (age) push(party, "age", String(age));
 
     // Every persona fact.
-    for (const f of p.facts ?? []) {
+    for (const [fi, f] of (p.facts ?? []).entries()) {
       const factType = normalizeFactType(f.type);
       if (factType === "") continue;
+
+      if (mode) {
+        const marks = mode.factMarks.get(`${party.id}#${fi}`);
+        const computed = new Set(marks?.computed ?? []);
+        const attrs = (["value", "date", "place"] as const).filter(
+          (k) => f[k] !== undefined && String(f[k]).trim() !== "",
+        );
+        const groups: [readonly ("value" | "date" | "place")[], "stated" | "inferred"][] = [
+          [attrs.filter((k) => !computed.has(k)), "stated"],
+          [attrs.filter((k) => computed.has(k)), "inferred"],
+        ];
+        for (const [group, basis] of groups) {
+          if (group.length === 0) continue;
+          const extra: Partial<ExtractedAssertion> = { record_basis: basis };
+          if (group.includes("date")) extra.date = f.date;
+          if (group.includes("place")) extra.place = f.place;
+          if (basis === "inferred" && group.includes("date")) extra.date_certainty = "approximate";
+          if (marks?.note) extra.informant_bias_notes = marks.note;
+          const value = group.includes("value") ? f.value : group.includes("date") ? f.date : f.place;
+          push(party, factType, String(value ?? ""), extra);
+        }
+        continue;
+      }
 
       // A record that states an AGE but no birth date carries the birth year
       // only as arithmetic. FamilySearch folds both the birthplace and that
@@ -1189,6 +1344,26 @@ export function extractRecord(
         );
       }
     }
+    for (const r of gx.relationships ?? []) {
+      if (!String(r.type ?? "").toLowerCase().includes("sibling") || !r.person1 || !r.person2) continue;
+      const ap = byId.get(r.person1);
+      const bp = byId.get(r.person2);
+      if (!ap || !bp) continue;
+      const g = genderOf(ap.person);
+      const word = g === "male" ? "brother" : g === "female" ? "sister" : "sibling";
+      push(
+        ap,
+        "relationship",
+        `${word} of ${fullName(bp.person) || r.person2}`,
+        {
+          structured_value: {
+            relationship_type: "sibling",
+            related_person_role: roles.get(r.person2) ?? "other_1",
+          },
+        },
+        "relationship",
+      );
+    }
     for (const [a, b] of couples) {
       const ap = byId.get(a);
       const bp = byId.get(b);
@@ -1243,6 +1418,34 @@ export function extractRecord(
  * cannot drift.
  */
 export const EXTRACTED_SOURCE_CLASSIFICATION = "derivative";
+
+// ─── the calendar flag ──────────────────────────────────────────────────────
+
+const MONTH = "(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\\.?";
+const DAY_MONTH_YEAR = new RegExp(`\\b\\d{1,2}(st|nd|rd|th)?\\s+${MONTH}\\s+(\\d{4})\\b`, "i");
+const MONTH_DAY_YEAR = new RegExp(`\\b${MONTH}\\s+\\d{1,2}(st|nd|rd|th)?,?\\s+(\\d{4})\\b`, "i");
+const QUAKER_MONTH = /\b\d{1,2}(st|nd|rd|th)\s+(month|mo\.?)\b/i;
+const DOUBLE_DATED = /\b\d{4}\/\d{1,4}\b/;
+
+/**
+ * The dates the calendar route may apply to (genealogist ruling, 2026-09-30,
+ * the broad trigger): a date with a day and a month before 1752, anywhere; a
+ * Quaker numbered month; a double-dated year. A year-only date never fires. No
+ * country table here: `convert-dates` owns the cutoffs and clears the dates that
+ * needed nothing.
+ */
+export function calendarFlags(assertions: readonly { date?: string; value: string }[]): string[] {
+  const out = new Set<string>();
+  for (const a of assertions) {
+    for (const text of [a.date, a.value]) {
+      if (!text) continue;
+      const dm = text.match(DAY_MONTH_YEAR) ?? text.match(MONTH_DAY_YEAR);
+      const y = dm ? Number(dm[dm.length - 1]) : NaN;
+      if ((dm && y < 1752) || QUAKER_MONTH.test(text) || DOUBLE_DATED.test(text)) out.add(text.trim());
+    }
+  }
+  return [...out];
+}
 
 // ─── the summary the caller relays ──────────────────────────────────────────
 
@@ -1308,6 +1511,20 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
           `Possible kin of unstated relationship; worth a hypothesis, not a conclusion.`,
       );
     }
+  }
+  const calendar = calendarFlags(result.assertions);
+  if (calendar.length > 0) {
+    lines.push(
+      `Calendar: ${calendar.join("; ")} may fall under the Old Style calendar or a ` +
+        `double-dated year. Run convert-dates on each, and correct the assertion if it changes.`,
+    );
+  }
+  const suspicious = result.assertions.filter((a) => /\[suspicious text/i.test(a.informant_bias_notes ?? ""));
+  if (suspicious.length > 0) {
+    lines.push(
+      `Suspicious text: ${suspicious.length} passage(s) read like instructions and were captured as ` +
+        `record text only (${suspicious.map((a) => `${a.record_role} ${a.fact_type}`).join(", ")}).`,
+    );
   }
   for (const n of result.notes) lines.push(`Note: ${n}.`);
   if (result.defaultedClassifications.length > 0) {

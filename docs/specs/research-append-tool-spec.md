@@ -1847,7 +1847,8 @@ writes the log entry** for each source, as it does on the FamilySearch path
 `docs/specs/schemas/ownership.json`.
 
 **Entered on `documents`.** Sending `documents` together with `recordIds` (the
-FamilySearch path) or `ops` (the hand-built form) is refused, naming both.
+FamilySearch path), `absences`, or the older `logEntryId` / `ops` forms (which
+the same merge removes) is refused, naming what was sent.
 
 **Inline, not staged.** A model cannot stage a sidecar. `results_ref` is
 host-written only (`finalizeStagedResults` in `results-staging.ts`), so each
@@ -1868,9 +1869,13 @@ document travels as a tool parameter.
 A source with no `transcriptionRef` (pasted prose, PDF text, external-site text)
 is logged `tool: "user_provided"` with no sidecar.
 
-**All or nothing.** The batch validates as a whole before anything is written.
-One malformed document refuses the call, naming its index and JSON path, so a
-corrected resend cannot duplicate the sources that were valid.
+**Validated before any write.** Every document is validated before anything is
+written: one malformed document refuses the call, naming its index and JSON
+path, and writes nothing. After validation, the writes are §11.6's. There is one
+log batch, then one `research_append` per source, so a refusal on document *k*
+leaves the earlier ones written. The resend skip (a `recordId` that already has
+a source is skipped and named) makes a corrected resend of the whole batch
+safe.
 
 #### The document
 
