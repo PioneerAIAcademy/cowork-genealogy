@@ -3594,6 +3594,14 @@ describe("research_append (project singleton section)", () => {
     expect(research.project.status).toBe("completed");
   });
 
+  it("a resolved question with no proof summary still completes, on seeded state", async () => {
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), resolution_assertion_ids: [] });
+    await writeProject(r0);
+    const r = await complete();
+    expect(r.ok).toBe(true);
+  });
+
   // ── Completed-gate: the tree-encoding WARNING (issue #1490 phase 2) ──
   // A tier->=-probable conclusion is expected to leave a fact or relationship on
   // the tree. This warns — never refuses (2026-08-24 no-override ruling) — when a
