@@ -1098,7 +1098,8 @@ def test_person_quality_without_projectpath_does_not_read_the_tree(tmp_path):
 
 
 def test_person_quality_familysearch_id_uses_its_fixture(tmp_path):
-    """The four check-warnings tests that score a real FS id: unchanged."""
+    """A real FS id still resolves to its captured fixture (the check-warnings
+    tests that scored one were deleted with its person_quality use, #2118)."""
     response, entry = _pq(tmp_path, ["person-quality-hole-christian"], {"personId": "KD96-TV2"})
     assert "overallScore" in response
     assert entry["expected_args"] is None
