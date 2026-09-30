@@ -330,7 +330,7 @@ about you. Every project gets the same `researcher_profile` in
 is one house-style string that every skill but one reads and follows
 verbatim:
 
-> Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence.
+> Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence.
 
 Subscription sites are not asked about either. Access is assumed
 available, so nothing is recorded unless you mention a site yourself —
