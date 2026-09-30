@@ -4,13 +4,21 @@ Bisect a browse-only image volume toward a target year, one probe per call.
 
 ## 1. Overview
 
-A browse volume has no index. Reaching a target year inside a 749-image register
-currently has no tool behind it: the agent samples image numbers by eye and
+A browse volume has no index. Reaching a target year inside a several-hundred-image
+film currently has no tool behind it: the agent samples image numbers by eye and
 interpolates in prose. The committed corpus records where that leads — one run made
 **58 `image_transcribe` calls** bisecting a single image group with no give-up
 condition, until it burned the harness wall-clock cap with no proof written
 (`image-transcribe-tool-spec.md` §5.8). Another examined roughly the first third of
-a 749-image volume and stopped, never reaching the page holding its answer.
+that same film and stopped, never reaching the page holding its answer.
+
+**Film 004516861 is 695 images, not the 749 this section and the card both used to
+claim** (measured 2026-09-30 via `image_search`: ids run `_00001`..`_00695`
+contiguously, so nothing was filtered). The distinction the wrong figure hid matters
+more than the count: 695 is the **film**, and a film is a concatenation of bound
+registers — its first Natural Group, `_001_M9S4-SQB`, is 54 images. That is precisely
+why this tool refuses a bare film prefix (§3), so describing the film as "a register"
+argued against the tool's own input domain.
 
 `volume_bisect` owns the probe sequence instead. Given a sub-volume, a target year
 and the readings so far, it reads **one** page, folds that year into the bracket,
@@ -160,11 +168,17 @@ Cowork aborts at 60s, so all three legs are bounded to fit, not just the OCR:
 
 Worst case ≈ 55s, inside the ceiling.
 
-**These are bounds, not measurements.** The 20s OCR figure is reasoned from the
-full-page whole-call p50 of 18.7s — a year-only prompt returns a handful of output
-tokens against a full page's ~1.6k, so it should sit well under — but it has not
-been measured for this prompt. Measure it with `dev/try-volume-bisect.ts` against
-the corpus before treating it as a latency budget.
+**Measured 2026-09-30, live, against `004516861_001_M9S4-SQB`:** three probes at
+**10.7s, 9.0s and 9.0s** whole-call — comfortably inside the 55s worst case and the
+60s ceiling. The first is longer because nothing is warm; the tool is stateless, so
+every call re-runs `image_search` before probing.
+
+**The per-leg split is still unmeasured.** Those are whole-call figures, so they
+bound all three legs together and do not isolate the OCR one. The 20s OCR figure
+remains reasoned rather than measured — from the full-page whole-call p50 of 18.7s,
+against which a year-only prompt returns a handful of output tokens rather than a
+full page's ~1.6k. What the run does establish is that the three bounds together are
+not the binding constraint.
 
 **The trade this makes, deliberately.** Bounding a leg means a slow-but-genuine
 read is *aborted* rather than completed — the opposite of `image_transcribe`'s 180s
@@ -178,6 +192,16 @@ From the sub-volume's **own first and last readings**, never from `volume_search
 date range. All four sub-volumes of `004514824` return the same coverage — that is a
 catalogue span, not a register span, and seeding from it puts the bracket outside
 the book.
+
+**An unseeded start can end the hunt before it begins — measured 2026-09-30.** Run
+cold against `004516861_001_M9S4-SQB` for a 1690s target, the tool probes the
+midpoint and its two neighbours (images 27, 26, 28), reads no year on any of them,
+and stops `inconclusive` on the three-null rule (§6). That is the rule working: the
+group is 54 images of front matter, so there is no year to find and walking it a
+page at a time is the behaviour worth refusing. But it means a cold start on an
+unknown group is a plausible dead end, and the caller's first move should be a
+reading it already has — from a hit, a neighbouring group, or one hand-read page —
+rather than letting the tool pick the midpoint blind.
 
 ## 10. What nothing checks
 

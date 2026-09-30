@@ -88,6 +88,12 @@ describe("refuses to converge on a non-monotonic film", () => {
    * the ADJACENT pair 295/299 — four images apart, both register pages, both
    * transcribed in a committed run log — so it does not rest on the wide
    * 122/257 gap, where a sub-volume boundary would be a competing explanation.
+   *
+   * These are positions in the FILM, which is 695 images; the tool takes a
+   * Natural Group, and the film's first is 54. So the pair cannot arise inside
+   * that group — it is fed here as a sub-volume's readings to exercise the
+   * safety net for a group that is itself not monotone, which is the case the
+   * input-domain rule cannot rule out.
    */
   const reviewerPair: VolumeBisectReading[] = [
     { position: 295, imageId: imageIdAt(295), year: 1729 },
