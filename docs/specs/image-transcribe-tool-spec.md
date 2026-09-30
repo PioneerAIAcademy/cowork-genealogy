@@ -397,7 +397,12 @@ consistent across schema, manifest, and skill.)*
     sizes. The page pattern is anchored at `^`, so a URL that merely *contains*
     a FamilySearch page URL is refused before any request. The resolved URL then
     goes through the same host check as a directly-supplied one — resolving
-    changes what is accepted, never what is trusted.
+    changes what is accepted, never what is trusted. The resolve is a step in
+    **this tool**, not in the shared input resolver: `image_read` shares that
+    resolver and already accepts a direct `memoryArtifactUrl` without
+    advertising it, so moving the resolve there would hand it page-URL support
+    against the `image_transcribe`-only ruling — and it would mostly pay the
+    lookup only to refuse the bytes on its inline size cap.
   - When a **page** URL was resolved, the artifact URL it resolved to comes back
     on `metadata.memoryArtifactUrl`, so a later read can pass it directly and
     skip the lookup. It is absent when a direct artifact URL was supplied —

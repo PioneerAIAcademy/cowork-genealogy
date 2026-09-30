@@ -195,6 +195,15 @@ export async function imageTranscribeTool(
     // the direct artifact URL first. resolveFsImageInput stays synchronous, and
     // its MEMORY_ARTIFACT_PATTERN check then runs on the RESOLVED url — that is
     // the host check, unchanged.
+    //
+    // This resolution lives HERE, not in resolveFsImageInput, on purpose.
+    // `ImageReadInput extends FsImageInput`, so image_read already accepts
+    // memoryArtifactUrl without advertising it — lifting the resolve into the
+    // shared resolver would quietly give image_read page-URL support, against
+    // the image_transcribe-only ruling (lead, 2026-09-29; placement confirmed
+    // 2026-09-30). image_read would also mostly pay the lookup and then refuse
+    // the bytes on its 700 KB inline cap. One caller, so it stays in the tool
+    // until there is a second.
     pageId = input.memoryArtifactUrl !== undefined ? memoryPageId(input.memoryArtifactUrl) : null;
     if (pageId !== null) resolvedMemoryUrl = await resolveMemoryArtifactUrl(pageId, principal);
     const forFetch =
