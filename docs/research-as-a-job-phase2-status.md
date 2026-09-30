@@ -65,11 +65,27 @@ apart.
    the same way. **Removing an offer needs a replacement stop — it is a design change,
    not a wording change.** Both rows are back on the ledger in
    `packages/engine/mcp-server/tests/packaging/overridden-offers.test.ts` carrying this.
-2. **`sdk_stream_silence` tracks test duration.** 100% of that abort class corpus-wide is
-   `research-plan`, and every test that has hit it is in that suite's top five by median
-   duration (`wzk` 424s rank 1, `005` 2, `014` 3, `002` 5). **Five consecutive runs
-   failed to produce a red-free `research-plan` log**, which is why that skill's offer
-   removal was reverted — the gate was unreachable, not the edit wrong.
+2. **`sdk_stream_silence` is a risk that rises with duration — NOT a predictor.**
+   ~~"tracks test duration … every test that has hit it is in that suite's top five by
+   median duration"~~ **— refuted 2026-09-30 by the re-run, and both halves of the
+   original claim were wrong.**
+
+   Medians over all 8 committed runs plus the re-run: `wzk` 451s rank 1, `014` 397s
+   rank 2, `005` 393s rank 3 — the three longest, which is what the claim saw. But
+   **`r3d` is rank 11 of 23 (271s)** and aborted, so "every test that has hit it is in
+   the top five" is false. And in that run **`wzk`, rank 1, passed on attempt 1** while
+   ranks 14 and 15 of that run's durations aborted. Length raises the odds; it does not
+   say which test goes.
+
+   The second half was stale too: ~~"five consecutive runs failed to produce a red-free
+   log"~~ — `v2.json` and its candidate are both red-free (21 pass, 1 partial, and one
+   `fail` that is a declared `xfail`). A red-free `research-plan` log exists and is
+   released.
+
+   What holds: the threshold stays at 180s (successful runs peak at a 58.7s gap), the
+   30s stall backoff works (7 transient retries rescued 4 tests; `wzk` and `014` both
+   recovered), and the residual costs **0–2 tests per run** with `ut_research_plan_005`
+   the repeat offender — the only test aborting in both runs that ever aborted.
 3. **Two of the parent plan's four load-bearing figures were wrong.** Paragraphs opening
    "Now…"/"Let me…" is **8.8%**, not 18% (re-measured six ways; none yields 18%).
    `research-plan` lands at **4.7 min**, not 7. The 83.5% log-write figure **holds**
