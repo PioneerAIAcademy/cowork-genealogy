@@ -10,11 +10,12 @@
       "add-fact",
       "occupation",
       "place_search",
-      "standard_place"
+      "standard_place",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "tree-edit: add occupation — the 1860 census (source S2, already cited on R1) records Patrick Flynn's occupation as 'Coal miner' at Schuylkill County, Pennsylvania. Add an Occupation fact to Patrick (I1) with date 1860, the place from the source, and a source reference back to S2 with page 'dwelling 112'.",
+    "delegation": "add occupation — the 1860 census (source S2, already cited on R1) records Patrick Flynn's occupation as 'Coal miner' at Schuylkill County, Pennsylvania. Add an Occupation fact to Patrick (I1) with date 1860, the place from the source, and a source reference back to S2 with page 'dwelling 112'.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
@@ -27,15 +28,9 @@
     "Edit-minimality: no other facts on I1 are changed (F1 Birth and F2 Death stay byte-identical); no other person, relationship, or source is touched; research.json is not modified",
     "Should NOT need a separate validate_research_schema call — tree_edit, tree_correct, and merge_tree_persons all validate-before-persist (SKILL.md § Validation), and the tool is not in this skill's allowed-tools. Do not score down for omitting it; do not reward calling it.",
     "Should reuse S2 (1860 census already in tree.sources) — must NOT create a duplicate S-prefix source entry",
-    "Should invoke `Skill(\"check-warnings\")` after this edit — SKILL.md § Validation requires it after ANY edit or merge. This is stubbed via `execution.stub_skills` (the callee has its own unit suite), so the launch is what's graded, not a real check-warnings run — score on whether the skill actually called it (visible in `skills_invoked`), not on the canned response's content."
+    "Should end its return with a caller-facing `Hand-back: check-warnings <person ids>` line naming every person this edit touched — the agent body requires it after ANY edit or merge. The agent cannot spawn check-warnings itself (it holds no Agent tool), so check-warnings not running is correct and MUST NOT be scored down; score only on whether the return names it for the touched persons."
   ],
   "execution": {
-    "max_wall_clock_seconds": 600,
-    "stub_skills": [
-      {
-        "skill": "check-warnings",
-        "response": "No warnings found for the edited person's data -- no impossible dates, no relationship loops, nothing implausible. FamilySearch's online quality check was not run in this environment."
-      }
-    ]
+    "max_wall_clock_seconds": 600
   }
 }

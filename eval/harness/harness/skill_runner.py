@@ -469,6 +469,28 @@ def agent_return_text(agent_returns: list[dict[str, Any]] | None, agent: str) ->
     )
 
 
+def subject_reply_text(
+    agent_returns: list[dict[str, Any]] | None,
+    text_response: str | None,
+    agent: str,
+    test: dict[str, Any] | None,
+) -> str:
+    """The reply a validator grades: the subject's own words.
+
+    On a DIRECT test (`test["delegation"]` set) the main thread is a dispatcher
+    relaying the agent's return, so only `agent_return_text` counts. An empty
+    return there is the agent saying nothing, and it grades as nothing: falling
+    back to the relay would let a silent agent pass whenever the dispatcher
+    happened to write the right name (review of issue #2805, 2026-09-30). On a
+    ROUTED test the main thread's reply IS the subject's, so `text_response` is
+    the fallback when the agent made no return.
+    """
+    own = agent_return_text(agent_returns, agent)
+    if own or (test or {}).get("delegation"):
+        return own
+    return text_response or ""
+
+
 def _tool_result_text(content: Any) -> str:
     """Flatten a ToolResultBlock's content to text.
 

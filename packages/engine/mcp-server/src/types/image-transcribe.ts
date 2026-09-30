@@ -1,3 +1,5 @@
+import type { BrowseBudgetAdvisory } from "../utils/browse-budget.js";
+
 export interface ImageTranscribeInput {
   imageId?: string;
   ark?: string;
@@ -46,14 +48,7 @@ export interface ImageTranscribeResult {
    *  project onward. Advisory only, and independent of `truncated` — the two can
    *  co-occur (a browse-budget read can also be output-cap truncated). See spec
    *  §5.8. */
-  browseBudget?: {
-    /** The image-group prefix, e.g. "004261111". */
-    imageGroup: string;
-    /** Distinct images transcribed from this group in this project so far. */
-    distinctImagesRead: number;
-    /** The advisory the caller should act on (pivot to indexed search). */
-    notice: string;
-  };
+  browseBudget?: BrowseBudgetAdvisory;
   /** Present when `lookingFor` contained a recognized given name and
    *  expansion fired. Tells the caller what the VLM was primed with. */
   nameExpansion?: {

@@ -18,12 +18,16 @@ import type {
 
 export interface PersonReadToolInput {
   personId: string;
+  /** Accepted and ignored: relatives are always read. */
   relatives?: boolean;
+  /** Accepted and ignored: attached sources (and, for a non-living subject,
+   *  memories) are always read. */
   sourceDescriptions?: boolean;
   /** Absolute project-folder path. When given, a memory scan transcribed during
    *  this read is retained under images/ and its ref returned as the source's
    *  `image_ref`. A path is not a mode flag, so decision 1's "no third flag"
-   *  does not reach it. */
+   *  does not reach it. The read itself is also staged there (see
+   *  `PersonReadResult.staged`). */
   projectPath?: string;
 }
 
@@ -52,6 +56,13 @@ export interface TreeFact {
   value?: string;
 }
 
+/** A tree source reference: `ref` names an id in the result's `sources[]`. */
+export interface TreeSourceRef {
+  ref: string;
+  page?: string;
+  quality?: number;
+}
+
 export interface TreePerson {
   id: string;
   ark?: string;
@@ -59,6 +70,10 @@ export interface TreePerson {
   living: boolean;
   names: TreeName[];
   facts?: TreeFact[];
+  /** The sources FamilySearch attached to this person, as refs into the
+   *  result's `sources[]`. Only refs that resolve there are kept; absent when
+   *  none do. */
+  sources?: TreeSourceRef[];
 }
 
 export interface TreeRelationship {
@@ -125,6 +140,12 @@ export interface PersonReadResult {
    *  partial loss, and "a quiet partial loss of the subject's own parentage is
    *  worse than the refusal it replaces if nobody can see it happened." */
   notes?: string[];
+  /** Set when `projectPath` was given: the handle of this read staged under
+   *  results/.staging/, or `null` when staging failed (`stagingError` says why).
+   *  Absent without `projectPath`. Response-only, like `notes` -- never a tree
+   *  key (`TREE_TOP_LEVEL_FIELDS`). */
+  staged?: { resultsRef: string; returnedCount: number } | null;
+  stagingError?: string;
 }
 
 // ─── FS-extended GEDCOMX (raw API response) ───────────────────────────────

@@ -8,6 +8,7 @@ vi.mock("../../src/auth/refresh.js", () => ({
 import { imageSearchTool } from "../../src/tools/image-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
+import { socketFetchFailure } from "../helpers/fetch-failed.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -167,12 +168,12 @@ it("throws on 401 with re-login guidance", async () => {
 
 // Test 10 — network error (retried by fetchWithRetry before surfacing)
 it("throws on network error", async () => {
-  mockFetch.mockRejectedValue(new Error("ECONNREFUSED"));
+  mockFetch.mockRejectedValue(socketFetchFailure());
 
   await expect(
     imageSearchTool({ imageGroupNumber: "007621224_005_M99P-2TQ" }, LOCAL)
   ).rejects.toThrow(
-    "Could not reach FamilySearch image search API: ECONNREFUSED."
+    /Could not reach FamilySearch image search API: fetch failed <- ETIMEDOUT/
   );
 });
 
