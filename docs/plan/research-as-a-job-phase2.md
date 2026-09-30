@@ -1,6 +1,8 @@
 # Research as a job — phase 2 (router re-entry and the turn's finish line)
 
-**Status:** NOT BUILT. Written 2026-09-29 against the code as it stands on
+**Status:** BUILT 2026-09-29/30 on the `research-as-a-job-phase2` branch (unmerged).
+R1 and R4 are complete end to end; the acceptance measurement is blocked on #2793/#2927.
+Originally written 2026-09-29 against the code as it stands on
 `research-as-a-job-phase2`, after the *Before phase 2* sweep. Supersedes nothing;
 the parent is `research-as-a-job-later-REVISED.md`, whose R1 and R4 this executes.
 

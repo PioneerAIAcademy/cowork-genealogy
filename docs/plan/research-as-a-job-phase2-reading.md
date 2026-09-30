@@ -1,6 +1,8 @@
 # Phase 2 — the reading experience (detailed pass)
 
-**Status:** NOT BUILT. Written 2026-09-30 against the first captured hosted feed
+**Status:** BUILT 2026-09-30 on the `research-as-a-job-phase2` branch (unmerged).
+All four items landed, plus chip navigation and the sidecar bodies.
+Originally written 2026-09-30 against the first captured hosted feed
 (`docs/captures/2026-09-29-mcandrew-children/`, 133 minutes, outcome `completed`).
 Parent: `docs/plan/research-as-a-job-later-REVISED.md`. Revised after plan-critic round 1,
 which found the first draft had measured the **feed** and called it the **screen** — the same
