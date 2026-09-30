@@ -3396,6 +3396,116 @@ describe("hasEventInOtherCountry", () => {
     expect(w!.facts!.some((f) => f.type === "Marriage")).toBe(true);
   });
 
+  it("fires when a person-level fact is in a different country", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N1", given: "Elsie", surname: "Chamberlain" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "1790",
+              standard_date: "1790",
+              standard_place: "Newbury, Orange, Vermont, United States",
+            },
+            {
+              id: "F2",
+              type: "Death",
+              date: "1865",
+              standard_date: "1865",
+              standard_place: "Ryegate, Caledonia, Vermont, United States",
+            },
+            {
+              id: "F3",
+              type: "Marriage",
+              date: "1830",
+              standard_date: "1830",
+              standard_place: "St Andrews, Fife, Scotland, United Kingdom",
+            },
+          ],
+        },
+      ],
+    };
+    const mob = new Mob(tree, "I1");
+    expect(hasEventInOtherCountry(mob)).toBe(true);
+    const warnings = finalWarnings(mob);
+    const w = warnings.find(
+      (x) => x.issueType === "hasEventInOtherCountry",
+    );
+    expect(w).toBeDefined();
+    expect(w!.message).toContain("Marriage");
+    expect(w!.message).toContain("United Kingdom");
+    expect(w!.message).toContain("United States");
+  });
+
+  it("does NOT fire when only birth anchors exist (no death)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N1", given: "Jane", surname: "Doe" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "1800",
+              standard_date: "1800",
+              standard_place: "Bennington, Bennington, Vermont, United States",
+            },
+            {
+              id: "F2",
+              type: "Marriage",
+              date: "1825",
+              standard_date: "1825",
+              standard_place: "London, Middlesex, United Kingdom",
+            },
+          ],
+        },
+      ],
+    };
+    expect(hasEventInOtherCountry(new Mob(tree, "I1"))).toBe(false);
+  });
+
+  it("does NOT fire when a skip-set fact (Census) is in a different country", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "John", surname: "Smith" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "1800",
+              standard_date: "1800",
+              standard_place: "Bennington, Bennington, Vermont, United States",
+            },
+            {
+              id: "F2",
+              type: "Death",
+              date: "1870",
+              standard_date: "1870",
+              standard_place: "Bennington, Bennington, Vermont, United States",
+            },
+            {
+              id: "F3",
+              type: "Census",
+              date: "1841",
+              standard_date: "1841",
+              standard_place: "London, Middlesex, United Kingdom",
+            },
+          ],
+        },
+      ],
+    };
+    expect(hasEventInOtherCountry(new Mob(tree, "I1"))).toBe(false);
+  });
+
   it("does NOT fire when birth and death countries disagree (emigrant)", () => {
     const tree: SimplifiedGedcomX = {
       persons: [

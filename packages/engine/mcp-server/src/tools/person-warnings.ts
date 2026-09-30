@@ -22,6 +22,8 @@ import {
   DEATH,
   DEATHLIKE_FACT_TYPES,
   MARRIAGELIKE_FACT_TYPES,
+  MIGRATIONLIKE_FACT_TYPES,
+  RESIDENCELIKE_FACT_TYPES,
   Mob,
   getRelativeMobs,
 } from "../utils/mob.js";
@@ -262,11 +264,12 @@ const HAS_EVENT_IN_OTHER_COUNTRY = "hasEventInOtherCountry";
 
 // Fact types excluded from the "event in other country" check: migration-like,
 // residence-like, inherently mobile/paperwork types, and the anchor facts
-// themselves (birth-like and death-like).
+// themselves (birth-like and death-like — the specific types, not the full
+// BIRTHLIKE/DEATHLIKE families, because only Birth/Christening/Baptism and
+// Death/Burial are used as anchors in findEventInOtherCountry).
 const EVENT_IN_OTHER_COUNTRY_SKIP: ReadonlySet<string> = new Set([
-  "Immigration", "Emigration", "Migration", "Naturalization",
-  "MoveTo", "MoveFrom", "Move", "NaturalizationRegistration",
-  "Census", "MunicipalCensus", "Residence",
+  ...MIGRATIONLIKE_FACT_TYPES,
+  ...RESIDENCELIKE_FACT_TYPES,
   "MilitaryService", "Occupation", "Obituary", "Probate", "Will",
   "Birth", "Christening", "Baptism", "Death", "Burial",
 ]);
@@ -2754,6 +2757,7 @@ function isDifferentFromAllAnchors(
   candidatePlace: string,
   anchorPlaces: string[],
 ): boolean {
+  if (anchorPlaces.length === 0) return false;
   for (const anchor of anchorPlaces) {
     if (
       countryConsistency(candidatePlace, anchor) !== "contradiction" ||

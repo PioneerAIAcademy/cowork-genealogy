@@ -197,10 +197,10 @@ All warnings are evaluated relative to the **anchor person** (the
 required `personId`) and its one-hop relatives. Single-person checks
 read the anchor's own facts; relationship checks consider relationships
 in which the anchor participates (as parent, spouse, or child); and 27 of
-the 47 self-checks have a `relatives*`/`maleRelatives*`/`femaleRelatives*`
+the 48 self-checks have a `relatives*`/`maleRelatives*`/`femaleRelatives*`
 variant that fires the same condition on a one-hop relative.
 
-The full catalogue of the **74 tags** the tool emits in `issueType` is
+The full catalogue of the **75 tags** the tool emits in `issueType` is
 the § Tag Catalogue below. It is the source of truth an implementation is
 checked against, and the drift lint
 (`tests/packaging/person-warnings-spec-drift.test.ts`) fails if it and
@@ -547,9 +547,9 @@ counterpart.
 
 #### Relative-mob mirrors (`implausible`)
 
-27 of the 47 self-checks above have a relative-mob variant that fires the
+27 of the 48 self-checks above have a relative-mob variant that fires the
 same condition on a one-hop relative (parent, spouse, or child) instead of
-the anchor; the other 20 run on the anchor only. They are **always
+the anchor; the other 21 run on the anchor only. They are **always
 `implausible`** regardless of the self-check's
 severity — the anchor's own data isn't necessarily wrong; the issue is in
 the relationship — and the flagged relative is named in the warning's
