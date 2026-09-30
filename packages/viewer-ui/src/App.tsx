@@ -4,7 +4,6 @@ import { useResearchData } from './contexts/ResearchDataContext'
 import { ResearchDataProvider } from './contexts/ResearchDataProvider'
 import Header from './components/layout/Header'
 import Sidebar from './components/layout/Sidebar'
-import ProgressPipeline from './components/layout/ProgressPipeline'
 import ProjectOverview from './components/sections/ProjectOverview'
 import KnownInformationSection from './components/sections/KnownInformationSection'
 import QuestionsSection from './components/sections/QuestionsSection'
@@ -248,7 +247,6 @@ export function ViewerBody({
         <Header />
         <ErrorNotice />
         <FolderNotice />
-        <ProgressPipeline />
         <div className={styles.content}>
           <ErrorBoundary resetKey={activeSection} label={`the ${activeSection} section`}>
             <ActiveSection />
