@@ -250,7 +250,7 @@ and on how often that relative is indexed in the records you are searching:
   Whether it also drops indexed abbreviations (`Wm` for `William`) is not
   established.
 
-For wildcard rules and fuzzy matching behavior, read `references/name-search-mechanics.md`. For place hierarchy expansion and date range behavior, read `references/place-date-mechanics.md`.
+For wildcard rules and fuzzy matching behavior, read `references/name-search-mechanics.md`. Place expansion, date granularity and event-family semantics are in `record_search`'s own parameter descriptions — read them there, not from memory.
 
 **Before finalizing queries for a named collection (a specific `collectionId`, or a collection you can name — e.g. "Norway, Marriages, 1660-1926"), check `references/collection-quirks.md` for an entry on it and apply its guidance exactly.** Required, not optional — it documents transcription and indexing behaviors (abbreviations, vowel substitutions, wildcard restrictions) the general name-variant strategy will not surface. If an entry says two fields must be varied together (e.g. a given name and a surname abbreviation), vary them together in the same call before concluding a plan item is exhausted.
 
