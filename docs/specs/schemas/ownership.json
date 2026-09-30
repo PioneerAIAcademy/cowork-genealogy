@@ -135,6 +135,7 @@
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
+        "agent:search-images",
         "skill:record-extraction"
       ],
       "writerTools": [
