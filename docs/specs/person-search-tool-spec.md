@@ -288,6 +288,7 @@ Example:
   "returned": 1,
   "offset": 0,
   "hasMore": false,
+  "pick": { "decisive": true, "tiedAtTop": 1, "reason": "One candidate leads on score (5.1136)." },
   "results": [
     {
       "personId": "LZJW-C31",
@@ -488,6 +489,9 @@ For each `entry` in `response.entries`:
 - `returned` ← mapped `results.length`.
 - `offset` ← `response.index ?? 0`.
 - `hasMore` ← `response.links?.next?.href != null`.
+- `pick` ← `decisiveness(results)`, computed from the mapped results alone. Pure: the
+  same results give the same answer on every call, which is the point — a model asked
+  to judge "is this decisive?" answers differently on different runs.
 - `results` ← the mapped `PersonSearchResult[]`.
 
 ---
@@ -507,9 +511,9 @@ For each `entry` in `response.entries`:
 | API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | API returns 400 | Read body as JSON, extract error detail, throw: `"FamilySearch tree search rejected the query: ${detail}."` Fall back to a generic message if the body isn't parseable. |
 | API returns 429 | Throw: `"FamilySearch rate limit reached. Wait a moment and try again."` |
-| API returns 204 (no matches) | Return `{ ..., totalMatches: 0, returned: 0, results: [], hasMore: false }`. |
+| API returns 204 (no matches) | Return `{ ..., totalMatches: 0, returned: 0, results: [], hasMore: false, pick: { decisive: false, tiedAtTop: 0, reason: "No candidates to choose from." } }`. Nothing to pick from is not a decisive pick, and `pick` says so rather than being omitted — an absent field reads as "not computed". |
 | API returns other non-OK status | Throw: `"FamilySearch tree search API error: ${status} ${statusText}."` |
-| API returns 200 with empty `entries` | Return `{ ..., totalMatches: <upstream>, returned: 0, results: [], hasMore: false }`. |
+| API returns 200 with empty `entries` | Return `{ ..., totalMatches: <upstream>, returned: 0, results: [], hasMore: false, pick: { decisive: false, tiedAtTop: 0, reason: "No candidates to choose from." } }`. |
 
 ---
 

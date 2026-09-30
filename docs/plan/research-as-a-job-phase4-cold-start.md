@@ -1,8 +1,34 @@
 # Phase 4 — the cold start (detailed pass)
 
-**Status:** NOT BUILT. Written 2026-09-30 after phase 3's items 1, 3, 4 and 5 landed on the
-`research-as-a-job-phase2` branch (unmerged). Parent:
+**Status:** BUILT, 2026-09-30, on the `research-as-a-job-phase2` branch (unmerged). All
+three steps and all four acceptance items are done; see "Order of work" and
+"Acceptance" below, each annotated with what landed. Parent:
 `docs/plan/research-as-a-job-later-REVISED.md`, "## Phase 4 — the cold start".
+
+What shipped, in the order the plan set:
+
+| Step | Commit | Note |
+|---|---|---|
+| 1. The decisiveness signal in `person_search` | `bc2222201` | `pick: { decisive, tiedAtTop, reason }` on the RESPONSE, computed by `src/utils/person-search-decisiveness.ts`. Rule DERIVED from a live 8-query probe, which refuted the two rules proposed before it. |
+| 2. The ask | `a6d98fd1f` | `init-project/SKILL.md` reads `pick.decisive`: auto-pick when true, `AskUserQuestion` with the top candidates when false. |
+| 3. "Say what to expect" | `a6d98fd1f` | `SKILL.md:117`, suppressed when the first message already names a person ID. |
+| Eval green | `871860350` | `v6_2026-09-30_13-45-44.json` — 14 pass, 1 partial, zero reds. `ut_init_project_012` (the new Mary-Hales-shaped test) passes; `ut_init_project_004` still auto-picks. Candidate, not released: release needs the genealogist annotation pass. |
+
+**Two gaps this plan named and the first build missed**, closed afterwards:
+
+- **The spec's worked example, Mapping Logic and behaviour table.** The plan called
+  contract drift here explicitly. The response-fields table had been updated; the other
+  three sites had not, so the example a reader would copy carried no `pick`.
+- **Nothing asserted `pick` reaches the response at all.** Deleting
+  `pick: decisiveness(results)` from `person-search.ts` left all 48 tests in both
+  person-search files green — the RULE was tested exhaustively and the WIRING not at all,
+  while `SKILL.md` branches on the field. Closed by `person-search.test.ts` 21a-21d,
+  which also carry acceptance item 3 (determinism asserted directly, not inferred).
+- A third guard was added that the plan did not ask for: `mcp-fixture-shape.test.ts`
+  now checks each `person_search` fixture's `pick` against what `decisiveness()` computes
+  from that fixture's own results. The mock serves fixtures verbatim, so a hand-written
+  `pick` that disagreed with the rule would teach the eval the wrong behaviour with
+  everything green.
 
 ## The failure, already captured
 
@@ -94,12 +120,12 @@ unique top score) and keeps `ut_init_project_004` passing.
 
 ## Order of work
 
-1. **The decisiveness signal in `person_search`.** Tool-side, no skill edit, no eval slot.
+1. **DONE (`bc2222201`). The decisiveness signal in `person_search`.** Tool-side, no skill edit, no eval slot.
    Valuable alone: it is the number the next step needs.
-2. **The ask.** When not decisive, the agent presents candidates and waits — which needs no new
+2. **DONE (`a6d98fd1f`). The ask.** When not decisive, the agent presents candidates and waits — which needs no new
    mechanism, because the decision exit and its card are built. R6 already ruled the pick does
    not wait for phase 3; it now does not have to.
-3. **"Say what to expect"** — a line before the first search, so a job that runs an hour does
+3. **DONE (`a6d98fd1f`, `SKILL.md:117`). "Say what to expect"** — a line before the first search, so a job that runs an hour does
    not begin in silence.
 
 ## Edit sites the response change actually touches
@@ -139,12 +165,12 @@ outcome and its card exist only on the unmerged `research-as-a-job-phase2` branc
 Mary-Hales-shaped test exists anywhere — the captures are one-off feeds, not repeatable
 fixtures.
 
-1. **A new unit test and fixture** carry the real check: a `person_search` mock with
+1. **MET.** `ut_init_project_012` + `eval/fixtures/mcp/person-search-hales-namesakes.json`; passes in `v6_2026-09-30_13-45-44.json`. **A new unit test and fixture** carry the real check: a `person_search` mock with
    `totalMatches: 35921` and tied top scores, and a `judge_context` requiring the agent to
    present candidates and ask — calling neither `person_read` nor the project writers.
-2. `ut_init_project_004` **still auto-picks and still passes**, against a fixture updated to
+2. **MET.** Passes in the same run. `ut_init_project_004` **still auto-picks and still passes**, against a fixture updated to
    probed values. A threshold that reclassifies it is wrong.
-3. The signal is computed from the response alone, so the same input gives the same answer on
+3. **MET** — `person-search.test.ts` 21d asserts it directly by calling the tool three times on the same response and deep-comparing `pick`. It was NOT met by the first build: nothing asserted `pick` reached the response at all (deleting it left all 48 tests green), so 21a-21c close the wiring and 21d this item. The signal is computed from the response alone, so the same input gives the same answer on
    every run — asserted directly, not inferred from a run.
-4. The `decision`-outcome half is gated on the phase-2 branch merging, and is stated as a
+4. **STANDS AS A PRECONDITION**, unchanged — this branch is still unmerged, so the `decision`-outcome half remains unverified end-to-end and is not claimed. The `decision`-outcome half is gated on the phase-2 branch merging, and is stated as a
    precondition rather than assumed.

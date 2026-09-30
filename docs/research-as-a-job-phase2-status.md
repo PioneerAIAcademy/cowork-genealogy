@@ -219,6 +219,36 @@ rather than failed, and every `with pytest.raises(AssertionError)` in
 fires) survived because of it. Replaced with a `must_fail` helper that turns a skip into an
 explicit failure; all four mutations now die.
 
+## Phase 4 is built
+
+All three steps and all four acceptance items are done; the plan
+(`docs/plan/research-as-a-job-phase4-cold-start.md`) carries the per-item annotations
+and is marked BUILT. `person_search` returns `pick { decisive, tiedAtTop, reason }`,
+`init-project` asks instead of guessing when it is not decisive, and a line before the
+first search says what to expect. Eval green: 14 pass, 1 partial, zero reds.
+
+13. **The rule was tested exhaustively and the WIRING not at all.** Deleting
+   `pick: decisiveness(results)` from `person-search.ts` left all 48 tests in both
+   person-search files green — 10 unit tests plus an 8-query live-probe corpus all
+   exercised the pure helper, and nothing asserted the tool put the field on its
+   response, while `init-project/SKILL.md` branches on `pick.decisive`. The feature
+   could have been deleted silently. Closed by `person-search.test.ts` 21a-21d.
+
+   The general shape is worth carrying: **a pure helper with a thorough unit suite is
+   the easiest place to mistake rule coverage for feature coverage.** The helper tests
+   look like the feature's tests and are not.
+
+14. **A guard must be broken in the direction that wrongly BLOCKS, too.** The new
+   fixture-agreement check compared `pick` with `JSON.stringify`, which compares key
+   ORDER — so a fixture reserialized with the same values by any tool would have redded
+   the build. Caught only because the legitimate-variant mutation was run alongside the
+   four defect ones. Now compared field by field.
+
+15. **The phase-4 spec sites the first build missed.** The plan named four sites in
+   `person-search-tool-spec.md`; the build updated the response-fields table and left
+   the worked example, the Mapping Logic top-level list and the two no-match rows of
+   the behaviour table. The example a reader would copy carried no `pick`.
+
 ## Where init-project's eval stands, and what it is waiting on
 
 `v6_2026-09-30_13-45-44.json` is **green** — 14 pass, 1 partial, zero reds — and
