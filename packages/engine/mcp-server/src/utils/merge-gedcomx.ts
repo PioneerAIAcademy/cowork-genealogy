@@ -106,7 +106,7 @@ function mergeCrossDocument(
       if (content.gender !== undefined) carried.gender = content.gender;
       if (content.names.length) carried.names = content.names;
       if (content.facts.length) carried.facts = content.facts;
-      if (content.sources.length) carried.sources = content.sources;
+      if (content.sources.length) carried.sources = dedupSourceRefs(content.sources);
       result.persons.push(carried);
     }
   }

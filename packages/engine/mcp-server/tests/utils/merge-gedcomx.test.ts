@@ -554,6 +554,27 @@ describe("mergeGedcomx — mode 2 (same document)", () => {
 // ────────────────────────────────────────────────────────────────────
 
 describe("mergeGedcomx — robustness", () => {
+  it("dedups a carried person's refs when two candidate sources collapse to one title (#2696)", () => {
+    const target: SimplifiedGedcomX = { persons: [{ id: "I1" }], sources: [] };
+    const candidate: SimplifiedGedcomX = {
+      persons: [
+        { id: "C1" },
+        { id: "C2", sources: [{ ref: "X1" }, { ref: "X2" }] },
+      ],
+      sources: [
+        { id: "X1", title: "Census" },
+        { id: "X2", title: "Census" }, // same title -> the same tree source as X1
+      ],
+    };
+
+    const out = mergeGedcomx(target, candidate, [["I1", "C1"]]);
+
+    const census = out.sources!.find((s) => s.title === "Census")!.id;
+    const carried = out.persons!.find((p) => p.id !== "I1")!;
+    expect(carried.sources).toEqual([{ ref: census }]);
+    assertIntegrity(out);
+  });
+
   it("folds candidate person-level source refs, remapped and deduped (#2696)", () => {
     const target: SimplifiedGedcomX = {
       persons: [{ id: "I1", sources: [{ ref: "S1" }] }],
