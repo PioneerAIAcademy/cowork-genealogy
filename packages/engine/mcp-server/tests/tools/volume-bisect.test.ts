@@ -231,6 +231,56 @@ describe("stops when the bracket closes", () => {
   });
 });
 
+describe("says so when the target is outside the volume's range", () => {
+  it("names the covered range on the blank-run stop", async () => {
+    // The live shape (spec §9): _001 covers 1815-1821 and a 1690s target walks
+    // to the front of the book. Before this the caller got `inconclusive` and a
+    // bracket, which reads as the tool failing rather than as the wrong book.
+    const result = await volumeBisectTool(
+      {
+        imageGroupNumber: GROUP,
+        targetYear: 1695,
+        readings: [
+          { position: 26, imageId: imageIdAt(26), year: 1821 },
+          { position: 13, imageId: imageIdAt(13), year: 1817 },
+          { position: 6, imageId: imageIdAt(6), year: 1815 },
+          { position: 3, imageId: imageIdAt(3), year: null },
+          { position: 2, imageId: imageIdAt(2), year: null },
+          { position: 4, imageId: imageIdAt(4), year: null },
+        ],
+      },
+      LOCAL,
+    );
+
+    expect(ocr).not.toHaveBeenCalled();
+    expect(result.stopped).toContain("1815-1821");
+    expect(result.stopped).toContain("earlier than");
+    expect(result.stopped).toContain("volume_search");
+  });
+
+  it("stays silent when the target is inside the range", async () => {
+    // The other direction, and the one that decides whether this is noise: a
+    // target the readings bracket must NOT be told it is in the wrong book.
+    const result = await volumeBisectTool(
+      {
+        imageGroupNumber: GROUP,
+        targetYear: 1817,
+        readings: [
+          { position: 26, imageId: imageIdAt(26), year: 1821 },
+          { position: 6, imageId: imageIdAt(6), year: 1815 },
+          { position: 3, imageId: imageIdAt(3), year: null },
+          { position: 2, imageId: imageIdAt(2), year: null },
+          { position: 4, imageId: imageIdAt(4), year: null },
+        ],
+      },
+      LOCAL,
+    );
+
+    expect(result.stopped).not.toContain("wrong sub-volume");
+    expect(result.stopped).not.toContain("volume_search");
+  });
+});
+
 describe("input domain", () => {
   it("refuses a bare image-group prefix and names volume_search", async () => {
     await expect(

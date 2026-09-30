@@ -35,6 +35,15 @@ async function resolveGroupId(
       `${GROUP_SERVICE_BASE}/group/${encodeURIComponent(imageGroupNumber)}/apid`,
       { headers: FS_HEADERS },
       timeoutMs,
+      // Cap the RETRY budget too, not just the per-request timeout. `fsFetch`
+      // delegates to `fetchWithRetry`, whose default budget is 10s across 3
+      // attempts, so a lowered `timeoutMs` bounded each request while the call
+      // still ran to 10s. Measured 2026-09-30 with a hanging `fetch`:
+      // timeoutMs=6000 alone took 10,001ms over 2 requests; with the budget
+      // capped it takes 6,001ms over 1. `volume_bisect` sizes its three-leg
+      // budget on this leg costing `timeoutMs` (volume-bisect-tool-spec §8).
+      // Undefined leaves the default callers on the default budget.
+      timeoutMs === undefined ? undefined : { budgetMs: timeoutMs },
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -64,6 +73,15 @@ async function fetchChildren(
       `${ARTIFACT_BASE}/artifact/group/${encodeURIComponent(groupId)}/children/names`,
       { headers: FS_HEADERS },
       timeoutMs,
+      // Cap the RETRY budget too, not just the per-request timeout. `fsFetch`
+      // delegates to `fetchWithRetry`, whose default budget is 10s across 3
+      // attempts, so a lowered `timeoutMs` bounded each request while the call
+      // still ran to 10s. Measured 2026-09-30 with a hanging `fetch`:
+      // timeoutMs=6000 alone took 10,001ms over 2 requests; with the budget
+      // capped it takes 6,001ms over 1. `volume_bisect` sizes its three-leg
+      // budget on this leg costing `timeoutMs` (volume-bisect-tool-spec §8).
+      // Undefined leaves the default callers on the default budget.
+      timeoutMs === undefined ? undefined : { budgetMs: timeoutMs },
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

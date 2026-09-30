@@ -44,8 +44,12 @@ const IMAGE_SEARCH_TIMEOUT_MS = 6_000;
 const DOWNLOAD_TIMEOUT_MS = 10_000;
 const PROBE_OCR_TIMEOUT_MS = 30_000;
 
-/** `image-search.ts` re-requests once when the response was defective
- *  (`if (best.dropped > 0)`). */
+/** Two. `image-search.ts` re-requests once when the response was defective
+ *  (`if (best.dropped > 0)`). Each of those costs `IMAGE_SEARCH_TIMEOUT_MS` only
+ *  because that call site caps `fetchWithRetry`'s retry BUDGET as well as the
+ *  per-request timeout; without that cap the default 10s budget stands and each
+ *  attempt costs 10s regardless of the number here (measured, 2026-09-30). A
+ *  count is not enough on its own — the duration it multiplies has to be real. */
 export const IMAGE_SEARCH_ATTEMPTS = 2;
 /** One. `fs-image-fetch.ts` CAN issue a fallback after the primary, but only
  *  when `resolveFsImageInput` produced a `fallbackUrl`, and it does that for the
@@ -211,6 +215,38 @@ function closedMessage(bracket: VolumeBisectBracket): string {
   );
 }
 
+/** A sentence for the stop message when every dated reading sits on ONE side of
+ *  the target, i.e. nothing read so far covers the year asked for.
+ *
+ *  Not keyed on the bracket being outside `[lowYear, highYear]`: `bracketFrom`
+ *  picks the ends AROUND the target, so whenever both are dated the target is
+ *  inside them by construction and that test can never fire. The one-sided case
+ *  is the one that happens — `004516861_001_M9S4-SQB` covers 1815-1821 and a
+ *  1690s target walks to the front of the book and stops (spec §9).
+ *
+ *  Advisory only, appended to a stop the tool was already making. It does NOT
+ *  stop the bisect early: positions below the lowest reading may still be
+ *  unprobed, and a register whose first pages are out of order would otherwise
+ *  be abandoned on a guess. */
+function coverageHint(
+  readings: VolumeBisectReading[],
+  targetYear: number,
+): string | undefined {
+  const years = readings
+    .map((r) => r.year)
+    .filter((y): y is number => y !== null);
+  if (years.length === 0) return undefined;
+  const low = Math.min(...years);
+  const high = Math.max(...years);
+  if (targetYear >= low && targetYear <= high) return undefined;
+  const side = targetYear < low ? "earlier than" : "later than";
+  return (
+    ` Every page read so far dates to ${low}-${high}, and ${targetYear} is ` +
+    `${side} that — this may be the wrong sub-volume. Check volume_search for ` +
+    `another Natural Group on this film.`
+  );
+}
+
 function trailingNullRun(readings: VolumeBisectReading[]): number {
   let n = 0;
   for (let i = readings.length - 1; i >= 0 && readings[i].year === null; i--) n++;
@@ -277,7 +313,7 @@ export async function volumeBisectTool(
       stopped:
         `${MAX_CONSECUTIVE_NULL_READINGS} consecutive probes found no year (covers, ` +
         `blank leaves or target cards). Stopping rather than walking the volume a page ` +
-        `at a time.`,
+        `at a time.` + (coverageHint(readings, input.targetYear) ?? ""),
     };
   }
 
@@ -295,7 +331,9 @@ export async function volumeBisectTool(
     return {
       bracket: bracketBefore,
       confidence: "resolved",
-      stopped: "Every image in this sub-volume has been probed.",
+      stopped:
+        "Every image in this sub-volume has been probed." +
+        (coverageHint(readings, input.targetYear) ?? ""),
     };
   }
 

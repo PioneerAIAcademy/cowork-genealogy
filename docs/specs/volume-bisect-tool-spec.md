@@ -165,6 +165,8 @@ Cowork aborts at 60s, so all three legs are bounded to fit, not just the OCR:
 | leg | attempts | why that many | here | worst |
 |---|---|---|---|---|
 | `image_search` | **2** | re-requests once on a defective response (`best.dropped > 0`) | 6s | 12s |
+
+The 6s is real only because that call site caps `fetchWithRetry`'s retry **budget** as well as its per-request timeout. Without the cap the default 10s budget stands and one attempt costs 10s however short the timeout is — measured 2026-09-30 against a hanging `fetch`: **10,001ms over 2 requests uncapped, 6,001ms over 1 capped**, which put the real worst case near the abort while this table said 52s. A count is not enough on its own; the duration it multiplies has to be checked too, and `tests/tools/probe-retry-budget.test.ts` is what checks it.
 | image download | **1** | `fs-image-fetch` can issue a fallback, but only when `resolveFsImageInput` returned a `fallbackUrl`, which it does for the `ark` shape alone. This tool always passes an `imageId`. | 10s | 10s |
 | OCR | 1 | retries a transport failure but never a timeout, so a full-budget first attempt is the worst case | 30s | 30s |
 
@@ -208,12 +210,21 @@ a short answer as no year. Three false nulls then tripped the blank-run rule. Wi
 the cap measured and raised, the same cold start bisects: 1821 → 1817 → 1815,
 narrowing 0..26 → 0..13 → 0..6 before reaching genuine blank leaves at the front.
 
-**What that run does show is a case-selection trap.** The group covers **1815-1821**;
-the 1690s target the card names is not in it at all. A target outside the
-sub-volume's range walks the bisect to the nearest edge and stops there, which is
-correct but reads as failure. Seed from a reading you already hold, and read the
-bracket's dated end before concluding the tool could not find the year — it may be
-telling you the year is not in this book.
+**What that run does show is a case-selection trap, and the tool now names it.**
+The group covers **1815-1821**; the 1690s target the card names is not in it at
+all. A target outside the sub-volume's range walks the bisect to the nearest edge
+and stops there, which is correct and used to read as failure — the caller got
+`inconclusive` and a bracket, with nothing saying to go back to `volume_search`
+for a different Natural Group.
+
+When every dated reading falls on one side of the target, the stop message now
+names the range actually read and points back at `volume_search`. It is advisory
+and appended to a stop the tool was already making: it does not end the bisect
+early, because positions below the lowest reading may still be unprobed.
+
+It is **not** keyed on the target being outside `[lowYear, highYear]`.
+`bracketFrom` picks those ends around the target, so whenever both are dated the
+target is inside them by construction and such a test could never fire.
 
 ## 10. What nothing checks
 
