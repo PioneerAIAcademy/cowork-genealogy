@@ -108,8 +108,8 @@ criteria, run two checks over the assertions tied to this question
   state how its informant knew, and it is not a missing one. Block only on an
   absent or placeholder value. If any assertion fails, stop here and name the specific assertion
   IDs. Classifications are set in code at extraction and never refined, so
-  such an assertion predates that: report it for the researcher rather than
-  routing it.
+  such an assertion was not written by extraction: report it for the
+  researcher rather than routing it.
 - **person_evidence (hard block scoped to person identity).** `person_evidence`
   is identity resolution. Confirm **each person the judgment depends on** — the
   subject and any candidate parent/relative — is identified by **at least one**

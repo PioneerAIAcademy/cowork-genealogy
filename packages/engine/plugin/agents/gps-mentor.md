@@ -443,8 +443,8 @@ plan that was too narrow to begin with.
    identity assertion, is a `must_address`: cite the specific assertion IDs.
    For a missing identity link set `suggested_skill` to `person-evidence`. A
    classification failure has no skill to route to (classifications are set in
-   code at extraction, and none is refined afterwards): say the assertion
-   predates that, and leave `suggested_skill` unset for it. Do not proceed to checks 1–5 below until this passes;
+   code at extraction, and none is refined afterwards): say the assertion was
+   not written by extraction, and leave `suggested_skill` unset for it. Do not proceed to checks 1–5 below until this passes;
    they assume classified evidence with the relevant persons identified.
 
 1. **Topical breadth (Standard 14).** Get the log for this question —
