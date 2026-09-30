@@ -485,7 +485,8 @@ def test_every_call_gets_a_tool_calls_row_with_the_decision(tmp_path):
                        "tool_use_id": "tu-1", "session_id": "sdk-sid"})
     assert out == {}
     assert rows == [{"turn_id": "turn-1", "session_id": "sess-1", "agent_id": None, "agent_type": None,
-                     "tool_name": "mcp__genealogy__convert_calendar", "input_path": None, "decision": "allow",
+                     "tool_name": "mcp__genealogy__convert_calendar", "input_path": None, "wrote": None,
+                     "decision": "allow",
                      "tool_use_id": "tu-1"}]
 
 
@@ -1857,7 +1858,11 @@ def test_insert_tool_call_writes_the_tool_use_id_and_finish_stamps_the_open_row(
     worker.insert_tool_call(conn, {"turn_id": "t", "session_id": "s", "tool_name": "Read", "decision": "allow",
                                    "tool_use_id": "toolu_9"})
     sql, params = conn.executed[-1]
-    assert "tool_use_id" in sql and params[-1] == "toolu_9"
+    # By meaning, not position: `wrote` was appended after tool_use_id, and a
+    # positional assertion silently follows whichever column happens to be last.
+    assert "tool_use_id" in sql and "toolu_9" in params
+    assert "wrote" in sql, "a change review needs what the call wrote"
+    assert params[-1] is None, "a Read wrote nothing, so the column stays sparse"
     worker.finish_tool_call(conn, "t", "toolu_9")
     sql, params = conn.executed[-1]
     assert sql.startswith("UPDATE tool_calls SET duration_ms") and "now() - ts" in sql
@@ -3145,3 +3150,30 @@ def test_the_guidance_does_not_encourage_asking_more_often():
     to ask -- it says to mark a recommendation WHEN asking, not to ask."""
     lowered = options.DECISION_GUIDANCE.lower()
     assert "when you ask" in lowered or "when asking" in lowered
+
+
+def test_a_write_records_what_it_wrote_in_the_tool_calls_row():
+    """The WIRING, not the recorder. `writer_record` being correct is worth nothing if
+    the hook never calls it -- a correct function nothing invokes looks identical to a
+    working feature, which is how an unguarded hunk shipped earlier on this branch."""
+    rows: list[dict] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=rows.append,
+    )
+    asyncio.run(hook({
+        "tool_name": "mcp__genealogy__research_append",
+        "tool_input": {"section": "questions", "op": "append", "entry": {"id": "q_001"}},
+    }, "u1", None))
+    assert rows and rows[-1]["wrote"] == {"section": "questions", "op": "append", "ids": ["q_001"]}
+
+
+def test_a_read_leaves_the_wrote_column_empty():
+    """Sparse by design: most calls are reads, and recording them would bury the diff."""
+    rows: list[dict] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=rows.append,
+    )
+    asyncio.run(hook({"tool_name": "mcp__genealogy__research_query", "tool_input": {}}, "u1", None))
+    assert rows and rows[-1]["wrote"] is None

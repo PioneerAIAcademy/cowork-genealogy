@@ -50,6 +50,7 @@ import os
 from collections.abc import Callable, Mapping
 from typing import Any
 
+from proto.web.writer_record import writer_record
 from app.agent.continue_policy import (
     CONTINUE_REASON,
     env_float,
@@ -522,6 +523,8 @@ def make_pretool_hook(
                     "agent_id": data.get("agent_id"), "agent_type": data.get("agent_type"),
                     "tool_name": tool_name or "unknown",
                     "input_path": input_path(tool_name, tool_input, cwd=cwd),
+                    # The shape of what this call wrote, for change review (None for a read).
+                    "wrote": writer_record(tool_name, tool_input),
                     "decision": "halt", "tool_use_id": tool_use_id or data.get("tool_use_id"),
                 })
             except Exception as exc:  # noqa: BLE001 - the log must not change the decision
@@ -541,6 +544,8 @@ def make_pretool_hook(
                 record({
                     "turn_id": turn_id, "session_id": session_id, "tool_name": tool_name,
                     "input_path": input_path(tool_name, tool_input, cwd=cwd),
+                    # The shape of what this call wrote, for change review (None for a read).
+                    "wrote": writer_record(tool_name, tool_input),
                     "decision": "decision",
                     "tool_use_id": tool_use_id or data.get("tool_use_id"),
                 })
@@ -572,6 +577,8 @@ def make_pretool_hook(
                 record({
                     "turn_id": turn_id, "session_id": session_id, "tool_name": tool_name,
                     "input_path": input_path(tool_name, tool_input, cwd=cwd),
+                    # The shape of what this call wrote, for change review (None for a read).
+                    "wrote": writer_record(tool_name, tool_input),
                     "decision": "delivered",
                     "tool_use_id": tool_use_id or data.get("tool_use_id"),
                 })
@@ -613,6 +620,8 @@ def make_pretool_hook(
                 "agent_type": data.get("agent_type"),
                 "tool_name": tool_name or "unknown",
                 "input_path": input_path(tool_name, tool_input, cwd=cwd),
+                    # The shape of what this call wrote, for change review (None for a read).
+                    "wrote": writer_record(tool_name, tool_input),
                 "decision": decision,
                 "tool_use_id": tool_use_id or data.get("tool_use_id"),
             })
