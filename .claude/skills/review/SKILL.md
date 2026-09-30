@@ -58,8 +58,9 @@ says "the tests pass", is itself a finding.
 `additions + deletions` and `changedFiles` size the passes below. `author` and
 `isCrossRepository` say whether this is a teammate's branch or a fork — a fork
 cannot be checked out as a local branch, see §2. `labels` carry this repo's
-routing (`developer` / `genealogist`, and `eval-cosmetic-skip`, which relaxes the
-run-log gate, is senior-only, and is worth a second look when present).
+routing (`developer` / `genealogist`, and `eval-cosmetic-skip:<skill>`, one per
+waived skill, which relax the run-log gate, are senior-only, and are worth a
+second look when present).
 
 **A red or missing check outranks anything you find by reading.** The required
 ones are `pytest`, `runlogs`, `e2e-fixtures`, `vitest`, `lockfile-drift`, `scan`.

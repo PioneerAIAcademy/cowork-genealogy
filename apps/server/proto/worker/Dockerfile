@@ -27,7 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN python3 -m pip install --break-system-packages \
         "claude-agent-sdk==0.2.128" "psycopg[binary]>=3.2,<4"
 
-# Plugin: 20 skills + 13 agents + the shipped PreToolUse hook (python3 runs it).
+# Plugin: 19 skills + 14 agents + the shipped PreToolUse hook (python3 runs it).
 COPY packages/engine/plugin /opt/genealogy/plugin
 
 # The worker and what it imports: app.agent.real_agent (map_message) and proto/sql,
