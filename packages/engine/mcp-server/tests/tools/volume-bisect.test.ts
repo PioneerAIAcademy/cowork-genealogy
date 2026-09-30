@@ -281,6 +281,97 @@ describe("input domain", () => {
     ).rejects.toThrow(/1500-1950/);
   });
 
+  /**
+   * `readings` is the one field the model composes itself, so every branch of
+   * `validateReadings` is an LLM trust boundary. Only the drift branch below was
+   * exercised. The reading-year branch in particular looked covered and was not:
+   * the `1500-1950` assertions above are the `targetYear` guard in a different
+   * function that happens to share the message.
+   */
+  it("refuses a reading positioned outside the sub-volume", async () => {
+    await expect(
+      volumeBisectTool(
+        {
+          imageGroupNumber: GROUP,
+          targetYear: 1700,
+          readings: [
+            { position: INDEX_LENGTH + 40, imageId: imageIdAt(INDEX_LENGTH + 40), year: 1700 },
+          ],
+        },
+        LOCAL,
+      ),
+    ).rejects.toThrow(/outside this sub-volume/);
+
+    await expect(
+      volumeBisectTool(
+        {
+          imageGroupNumber: GROUP,
+          targetYear: 1700,
+          readings: [{ position: -1, imageId: imageIdAt(0), year: 1700 }],
+        },
+        LOCAL,
+      ),
+    ).rejects.toThrow(/outside this sub-volume/);
+
+    // A non-integer indexes nothing; without the Number.isInteger arm it would
+    // reach `imageIds[2.5]` and fail as a bogus drift error instead.
+    await expect(
+      volumeBisectTool(
+        {
+          imageGroupNumber: GROUP,
+          targetYear: 1700,
+          readings: [{ position: 2.5, imageId: imageIdAt(2), year: 1700 }],
+        },
+        LOCAL,
+      ),
+    ).rejects.toThrow(/outside this sub-volume/);
+  });
+
+  it("refuses the same position twice", async () => {
+    // Echoing a reading back twice is the obvious caller slip, and a duplicate
+    // would double-weight one page in the bracket.
+    await expect(
+      volumeBisectTool(
+        {
+          imageGroupNumber: GROUP,
+          targetYear: 1700,
+          readings: [
+            { position: 295, imageId: imageIdAt(295), year: 1699 },
+            { position: 295, imageId: imageIdAt(295), year: 1701 },
+          ],
+        },
+        LOCAL,
+      ),
+    ).rejects.toThrow(/appears twice/);
+  });
+
+  it("refuses a reading year outside the register range", async () => {
+    await expect(
+      volumeBisectTool(
+        {
+          imageGroupNumber: GROUP,
+          targetYear: 1700,
+          readings: [{ position: 295, imageId: imageIdAt(295), year: 1499 }],
+        },
+        LOCAL,
+      ),
+    ).rejects.toThrow(/Use null/);
+
+    // The sentinel the message exists to refuse: 0 or -1 for "no year" would be
+    // read as a real year far below the target and drag the bracket to the front
+    // of the volume.
+    await expect(
+      volumeBisectTool(
+        {
+          imageGroupNumber: GROUP,
+          targetYear: 1700,
+          readings: [{ position: 295, imageId: imageIdAt(295), year: 0 }],
+        },
+        LOCAL,
+      ),
+    ).rejects.toThrow(/Use null/);
+  });
+
   it("refuses a reading whose imageId no longer matches its position", async () => {
     await expect(
       volumeBisectTool(
