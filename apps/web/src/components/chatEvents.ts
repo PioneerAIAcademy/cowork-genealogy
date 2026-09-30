@@ -205,7 +205,17 @@ export function foldChatEvent(
       agent: typeof ev.agent === 'string' ? ev.agent : undefined
     })
   } else if (kind === 'tool_result') {
-    const idx = last.tools.findIndex((t) => t.tool === ev.tool && !t.done)
+    // Match the AGENT as well as the tool. Matching on the tool alone closed the
+    // first open chip with that name, whoever produced it -- and with up to eight
+    // extraction agents live at once and `same_person` called 299 times in one
+    // session, a result from agent B closed agent A's chip and overwrote its
+    // summary. Measured on the captured session: 28 of 1,006 results (2.8%) landed
+    // on the wrong chip. `agent` is undefined on the main thread, so main-thread
+    // results still match main-thread chips and only each other.
+    const evAgent = typeof ev.agent === 'string' ? ev.agent : undefined
+    const idx = last.tools.findIndex(
+      (t) => t.tool === ev.tool && t.agent === evAgent && !t.done
+    )
     if (idx >= 0) last.tools[idx] = { ...last.tools[idx], done: true, summary: ev.summary as string }
     else
       last.tools.push({

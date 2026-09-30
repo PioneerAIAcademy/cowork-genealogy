@@ -333,3 +333,64 @@ describe('turnOutcomeLabel', () => {
     expect(new Set(labels).size).toBe(labels.length)
   })
 })
+
+// --- Chip attribution across concurrent sub-agents (phase 2 item 3 prerequisite) ---
+//
+// A tool_result closed the first OPEN chip with the same tool name, ignoring which
+// agent produced it. With up to eight extraction agents live at once and
+// `same_person` called 299 times, results land on the wrong chip and overwrite its
+// summary. Measured on the captured session: 28 of 1,006 results (2.8%) closed a
+// different agent's chip.
+//
+// This has to be right before anything anchors paragraphs to steps, or the anchoring
+// validates against cross-attributed chips.
+
+describe('tool chips with several agents in flight', () => {
+  const start = (tool: string, agent?: string): Record<string, unknown> => ({
+    tool, summary: `${agent ?? 'main'} started`, ...(agent ? { agent } : {})
+  })
+  const finish = (tool: string, agent?: string): Record<string, unknown> => ({
+    tool, summary: `${agent ?? 'main'} finished`, ...(agent ? { agent } : {})
+  })
+
+  it("closes the chip belonging to the agent that produced the result", () => {
+    let msgs: ChatMessage[] = []
+    msgs = foldChatEvent(msgs, 'text', { text: 'working' })
+    msgs = foldChatEvent(msgs, 'tool_use', start('same_person', 'agent-A'))
+    msgs = foldChatEvent(msgs, 'tool_use', start('same_person', 'agent-B'))
+    // B finishes first — A must stay open and keep ITS summary.
+    msgs = foldChatEvent(msgs, 'tool_result', finish('same_person', 'agent-B'))
+
+    const tools = msgs[msgs.length - 1].tools
+    const a = tools.find((t) => t.agent === 'agent-A')
+    const b = tools.find((t) => t.agent === 'agent-B')
+    expect(b?.done, 'the agent that finished should be closed').toBe(true)
+    expect(b?.summary).toBe('agent-B finished')
+    expect(a?.done, "the other agent's chip must stay open").toBe(false)
+    expect(a?.summary, "and must keep its own summary").toBe('agent-A started')
+  })
+
+  it('does not let a sub-agent result close the main thread chip', () => {
+    let msgs: ChatMessage[] = []
+    msgs = foldChatEvent(msgs, 'text', { text: 'working' })
+    msgs = foldChatEvent(msgs, 'tool_use', start('research_query'))
+    msgs = foldChatEvent(msgs, 'tool_use', start('research_query', 'agent-A'))
+    msgs = foldChatEvent(msgs, 'tool_result', finish('research_query', 'agent-A'))
+
+    const tools = msgs[msgs.length - 1].tools
+    expect(tools.find((t) => t.agent === undefined)?.done).toBe(false)
+    expect(tools.find((t) => t.agent === 'agent-A')?.done).toBe(true)
+  })
+
+  it('still closes same-agent chips in order when one agent repeats a tool', () => {
+    let msgs: ChatMessage[] = []
+    msgs = foldChatEvent(msgs, 'text', { text: 'working' })
+    msgs = foldChatEvent(msgs, 'tool_use', start('record_read', 'agent-A'))
+    msgs = foldChatEvent(msgs, 'tool_use', start('record_read', 'agent-A'))
+    msgs = foldChatEvent(msgs, 'tool_result', finish('record_read', 'agent-A'))
+
+    const tools = msgs[msgs.length - 1].tools
+    expect(tools.filter((t) => t.done).length).toBe(1)
+    expect(tools.filter((t) => !t.done).length).toBe(1)
+  })
+})
