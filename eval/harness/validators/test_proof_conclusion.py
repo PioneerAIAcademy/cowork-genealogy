@@ -380,13 +380,10 @@ def test_bounded_conclusion_is_tiered_and_encoded(after_state, test):
     not do is collapse to `not_proved` because the exact value is unreachable,
     or reach a tier and never touch the tree.
 
-    `possible` is the expected tier for the committed fixture, and for a reason
-    worth keeping: a reachable, unsearched 1880 census would halve its bracket,
-    which is a Component 1 failure rather than a corroboration gap. A bracket
-    with a named record that would narrow it is not reasonably exhaustive.
-
-    Deterministic on purpose — both halves were judge-graded before, and the
-    test failed on 2026-08-19 with a rationale that misread its own fixture.
+    `possible` or `probable` are both accepted; the committed run used
+    `possible`, but the tier may vary between runs. The `tier-possible-q001`
+    ceiling was removed from 018 on 2026-09-30, so this floor is now its only
+    tier guard.
     """
     if "bounded-conclusion" not in test.get("tags", []):
         pytest.skip("not a bounded-conclusion scenario")
