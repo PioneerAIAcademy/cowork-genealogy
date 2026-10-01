@@ -116,6 +116,8 @@ export const imageReadToolSchema = {
     "when you have one; use ark when you only have a document-image ARK " +
     "(e.g. from fulltext_search's id field), a resolver URL for one, or an " +
     "already-resolved distribution URL. " +
+    "A FamilySearch Memories PAGE url (familysearch.org/photos/artifacts/<id> " +
+    "or /memories/<id>) is not resolved here — use image_transcribe. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
