@@ -51,7 +51,7 @@ def test_tally_counts_each_axis_independently(tmp_path: Path):
         # Pre-detector run: never checked.
         _write(tmp_path, "run-3.json", {"verdict": "partial"}),
     ]
-    recall, compliance, gate, problems, _arms, _fix, _bash = tally(paths)
+    recall, compliance, gate, problems, _arms, _fix, _bash, _host_slept = tally(paths)
 
     assert recall == {"pass": 2, "partial": 1}
     assert compliance == {"fail": 1, "pass": 1, "not_checked": 1}
@@ -71,7 +71,7 @@ def test_not_checked_is_never_folded_into_the_gate_pass_count(tmp_path: Path):
     paths = [
         _write(tmp_path, f"run-{i}.json", {"verdict": "pass"}) for i in range(3)
     ]
-    recall, compliance, gate, _, _arms, _fix, _bash = tally(paths)
+    recall, compliance, gate, _, _arms, _fix, _bash, _host_slept = tally(paths)
 
     assert compliance == {"not_checked": 3}
     assert compliance.get("pass", 0) == 0, "unchecked must not read as clean"
@@ -86,7 +86,7 @@ def test_tally_reports_unreadable_files_instead_of_crashing(tmp_path: Path):
     bad = tmp_path / "run-2.json"
     bad.write_text("{not json", encoding="utf-8")
 
-    recall, _compliance, _gate, problems, _arms, _fix, _bash = tally([good, bad])
+    recall, _compliance, _gate, problems, _arms, _fix, _bash, _host_slept = tally([good, bad])
     assert recall == {"pass": 1}
     assert len(problems) == 1
     assert "run-2.json" in problems[0]
@@ -113,7 +113,7 @@ def test_tally_survives_a_log_whose_bytes_are_not_utf_8(tmp_path: Path):
     # interrupted mid-character leaves behind, not a syntactically broken file.
     bad.write_bytes(b'{"verdict": "pass", "note": "\xff\xfe"}')
 
-    recall, _compliance, _gate, problems, _arms, _fix, _bash = tally([good, bad])
+    recall, _compliance, _gate, problems, _arms, _fix, _bash, _host_slept = tally([good, bad])
     assert recall == {"pass": 1}
     assert len(problems) == 1
     assert "run-2.json" in problems[0]
@@ -126,7 +126,7 @@ def test_format_report_omits_the_note_when_everything_was_checked(tmp_path: Path
             "verdict": "pass", "compliance": "pass", "outcome": "pass",
         })
     ]
-    recall, compliance, gate, _, _arms, _fix, _bash = tally(paths)
+    recall, compliance, gate, _, _arms, _fix, _bash, _host_slept = tally(paths)
     out = format_report(recall, compliance, gate, n_runs=1)
     assert "unknown compliance" not in out
     assert "1 pass" in out
@@ -253,7 +253,7 @@ def test_tally_counts_violations_by_arm_and_by_fixture(tmp_path: Path):
             ]},
         }),
     ]
-    _, _, _, _, arms, per_fixture, _bash = tally(paths)
+    _, _, _, _, arms, per_fixture, _bash, _host_slept = tally(paths)
     assert arms == {"same_person (per person)": 2, "proof-conclusion": 1,
                     "conflict-resolution": 1}
     assert per_fixture == {"loud-fixture": 3, "quiet-fixture": 1}
@@ -262,7 +262,7 @@ def test_tally_counts_violations_by_arm_and_by_fixture(tmp_path: Path):
 def test_report_refuses_a_rate_when_nothing_is_decidable(tmp_path: Path):
     """The corpus today. A percentage here would assert 17 unknowns ran clean."""
     paths = [_write(tmp_path, f"run-{i}.json", {"verdict": "pass"}) for i in range(3)]
-    recall, compliance, gate, _, arms, fix, _bash = tally(paths)
+    recall, compliance, gate, _, arms, fix, _bash, _host_slept = tally(paths)
     out = format_report(recall, compliance, gate, n_runs=3, arms=arms, per_fixture=fix)
     assert "NOT MEASURABLE" in out
     assert "%" not in out.split("runs w/ >=1 violation:")[1]
@@ -279,7 +279,7 @@ def test_report_calls_an_all_fail_decidable_set_a_floor_not_a_rate(tmp_path: Pat
                              "guardrail_bypass_violations": ["'same_person' missing"]},
         })
     ]
-    recall, compliance, gate, _, arms, fix, _bash = tally(paths)
+    recall, compliance, gate, _, arms, fix, _bash, _host_slept = tally(paths)
     out = format_report(recall, compliance, gate, n_runs=1, arms=arms, per_fixture=fix)
     assert "floor on incidence, not a rate" in out
 
@@ -300,7 +300,7 @@ def test_report_flags_a_dominant_fixture_so_the_next_outlier_self_discloses(
                                      "verdict": "pass", "outcome": "fail",
                                      "guardrail_bypass_violations": ["'same_person' x"]}),
     ]
-    recall, compliance, gate, _, arms, fix, _bash = tally(paths)
+    recall, compliance, gate, _, arms, fix, _bash, _host_slept = tally(paths)
     out = format_report(recall, compliance, gate, n_runs=2, arms=arms, per_fixture=fix)
     assert "concentration:" in out
     assert "hog" in out
@@ -320,7 +320,7 @@ def test_concentration_names_what_the_top_n_cap_withheld(tmp_path: Path):
             "verdict": "pass", "outcome": "fail",
             "guardrail_bypass_violations": ["'same_person' x"] * n,
         }))
-    _, compliance, gate, _, arms, fix, _bash = tally(paths)
+    _, compliance, gate, _, arms, fix, _bash, _host_slept = tally(paths)
     out = format_report(Counter(), compliance, gate, n_runs=5, arms=arms, per_fixture=fix)
 
     assert "fx0" in out and "fx1" in out and "fx2" in out
@@ -341,7 +341,7 @@ def test_concentration_is_silent_when_nothing_was_withheld(tmp_path: Path):
             "verdict": "pass", "outcome": "fail",
             "guardrail_bypass_violations": ["'same_person' x"] * n,
         }))
-    _, compliance, gate, _, arms, fix, _bash = tally(paths)
+    _, compliance, gate, _, arms, fix, _bash, _host_slept = tally(paths)
     out = format_report(Counter(), compliance, gate, n_runs=2, arms=arms, per_fixture=fix)
     assert "not shown" not in out
 

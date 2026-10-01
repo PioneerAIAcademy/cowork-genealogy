@@ -222,6 +222,11 @@ def derive_stop_reason(
     # project.status == "completed" and were reported as research failures.
     if sdk_aborted_reason == "mcp_unavailable":
         return "mcp_unavailable"
+    # #2974 — like mcp_unavailable, an infrastructure stop that outranks
+    # `completed`: a host that slept past the inactivity cap consumed the run's
+    # budget, so whatever status it left is not a graded outcome.
+    if sdk_aborted_reason == "host_slept":
+        return "host_slept"
     if sdk_aborted_reason == "max_wall_clock_seconds":
         return "timeout"
     if sdk_aborted_reason == "max_tool_calls":
