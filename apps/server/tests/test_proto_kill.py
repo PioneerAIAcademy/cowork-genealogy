@@ -243,8 +243,9 @@ def test_the_kill_check_fails_only_on_a_resume_that_did_nothing():
     for worked in ("ok", "completed", "queued", "stopped", "budget", "decision", "mcp_unavailable"):
         assert outcome_check(worked) is True, worked
     assert outcome_check("no_progress") is False, "a dead resume is the one thing this probe catches"
+    assert outcome_check("retries_exhausted") is False, "U5: a turn closed for running out of receives never resumed"
     assert outcome_check(None) is False, "no outcome at all is not a completed turn"
-    assert turn.RESUMED_FAILED_OUTCOMES == frozenset({"no_progress"})
+    assert turn.RESUMED_FAILED_OUTCOMES == frozenset({"no_progress", "retries_exhausted"})
 
 
 # ── 0a: the input selector (--kill-on-input) ────────────────────────────────────────
@@ -507,6 +508,33 @@ def test_run_kill_sleeps_kill_after_s_then_takes_its_marks_before_the_kill(monke
     assert [ok for _, ok, _ in checks] == [True, False]
     assert figures["kill_after_s"] == kill_after_s and figures["entries_at_kill"] == 7
     assert "-- evidence: the turns row" in capsys.readouterr().out, "the evidence block prints even without turn_done"
+
+
+def test_the_kill_signal_defaults_to_kill_and_term_reaches_the_spec():
+    assert _args().kill_signal == "kill" and turn.kill_spec(_args()).kill_signal == "kill"
+    assert turn.kill_spec(_args("--kill-signal", "term")).kill_signal == "term"
+    with pytest.raises(SystemExit):
+        _args("--kill-signal", "hup")
+
+
+def test_kill_signal_term_runs_docker_restart_with_a_30s_grace(monkeypatch, capsys):
+    order: list[str] = []
+    _fake_stack(monkeypatch, order)
+    spec = turn.kill_spec(_args("--kill-on", "Agent", "--session", "sess_1", "--worker-container", "w",
+                                "--kill-signal", "term", "--text", "x"))
+    checks, figures = turn.run_kill("http://x", "dsn", 100.0, spec)
+    assert order == ["wait_for_tool_call Agent deadline=100.0", "take_marks", "docker restart -t 30 w",
+                     "wait_turn_done", "gather_evidence"]
+    assert figures["kill_signal"] == "term"
+
+
+def test_the_default_kill_signal_still_kills_and_starts(monkeypatch, capsys):
+    order: list[str] = []
+    _fake_stack(monkeypatch, order)
+    spec = turn.kill_spec(_args("--kill-on", "Agent", "--session", "sess_1", "--worker-container", "w", "--text", "x"))
+    turn.run_kill("http://x", "dsn", 100.0, spec)
+    assert "docker kill w" in order and "docker start w" in order
+    assert not any(o.startswith("docker restart") for o in order)
 
 
 # ── the script runs standalone ──────────────────────────────────────────────────────

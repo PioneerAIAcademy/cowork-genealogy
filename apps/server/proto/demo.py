@@ -17,8 +17,8 @@ so the run is the research workflow, not a lookup of the answer the live tree st
 The deadline defaults to two shim ceilings plus slack (``READ_TIMEOUT_S`` is 1800 s per
 attempt, on which the shim kills the worker and requeues at once -- a turn past 1800 s is
 resumed by design, and a one-ceiling deadline would report FAIL as attempt 2 began; the
-D18 arm, ``make proto-demo-auto``, runs the shim at 7200 s and passes its own
-``--deadline-s`` sized the same way). The printed ``receive_count`` says whether the shim
+D18 arm, ``make proto-demo-auto``, runs the shim at the same 1800 s and passes its own
+``--deadline-s`` sized for six attempts). The printed ``receive_count`` says whether the shim
 intervened.
 
 Exit 0 when ``turn_done`` arrived, criterion 3 is PASS, no FamilySearch tool answered with

@@ -1257,7 +1257,7 @@ without whichever Bedrock refuses.
   configuration-only `update-environment` took 78 s, restarted sqsd and left the app
   process running. API option settings override the same option in `.ebextensions`.
   nginx sits between sqsd and the app with a 60 s `proxy_read_timeout`; the bundle's
-  `.platform` override to 36000 s was required, or nginx cuts first. The 512 MB bundle
+  `.platform` override to 43200 s was required, or nginx cuts first. The 512 MB bundle
   cap and the `.ebextensions/*.config` rule are documented and were not exercised.
 - **D3** docker-compose skeleton: postgres, **elasticmq** (SQS API — not RabbitMQ,
   whose semantics differ and whose client code you would throw away), **minio**, and
