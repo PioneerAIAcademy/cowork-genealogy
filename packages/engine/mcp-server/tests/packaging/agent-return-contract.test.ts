@@ -18,8 +18,16 @@ import { fileURLToPath } from "node:url";
 // that agent's next body edit rather than flipping four run logs in one PR.
 // An entry here is checked in BOTH directions: an agent on the list that has
 // gained the heading fails ("stale entry — remove it"), and an agent off the
-// list that lacks it fails. `image-reader` is excluded outright: by spec it
-// returns a transcription and nothing else.
+// list that lacks it fails. Two agents are excluded outright rather than
+// pending: `image-reader`, which by spec returns a transcription and nothing
+// else, and `project-status`, whose two summaries and integrity warnings ARE
+// its whole output (lead ruling "PS return: A", 2026-09-24, issue #2793) —
+// conforming would drop the detailed summary and the id-bearing warnings below
+// the caller's print line.
+//
+// NOTE for anyone converting an agent: exclusion silences this lint in both
+// directions, so a green run says nothing about whether the excluded body is
+// right. Read it.
 
 const here = dirname(fileURLToPath(import.meta.url));
 const agentsDir = join(here, "..", "..", "..", "plugin", "agents");
@@ -28,6 +36,8 @@ const HEADING = /^#{2,4}\s+`summary_for_user`\s*$/m;
 
 const EXCLUDED: Record<string, string> = {
   "image-reader.md": "returns a full transcription and nothing else, by spec",
+  "project-status.md":
+    "returns the user-friendly and detailed summaries, warnings first, as its whole output, by its own contract",
 };
 
 const PENDING: Record<string, string> = {

@@ -195,7 +195,29 @@ def test_blocks_when_negative_correct_skill_has_typo(tmp_path):
     )
     assert result.runnable is False
     assert "search-record" in result.reason
-    assert "not an existing skill" in result.reason
+    assert "neither an existing skill" in result.reason
+    # The name matches no agent file either, which is what still makes it a typo
+    # rather than a converted skill (issue #2793).
+    assert "nor an existing agent" in result.reason
+
+
+def test_allows_a_negative_correct_skill_naming_a_converted_agent(tmp_path):
+    """The other direction of the same guard: a `correct_skill` naming a skill
+    that was CONVERTED to an agent is a real destination, not a typo. Requiring
+    a skill directory would fail a correctly-routed test for a migration the
+    test is not about (issue #2793)."""
+    d = _runnable_test_dict()
+    d["test"]["type"] = "negative"
+    d["negative"] = {
+        "correct_skill": ["project-status"],  # an agent file, no skill directory
+        "explanation": "x",
+    }
+    spec = load_test_from_dict(d)
+    result = check_runnable(
+        spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES,
+        skills_dir=SKILLS, tests_dir=TESTS,
+    )
+    assert result.runnable is True, result.reason
 
 
 def _stub_check(execution):

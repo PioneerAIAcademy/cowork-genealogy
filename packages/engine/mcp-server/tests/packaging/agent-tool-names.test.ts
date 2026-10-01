@@ -282,14 +282,21 @@ describe("plugin agent tool names", () => {
       const text = readFileSync(join(agentsDir, file), "utf8");
 
       for (const key of ["tools", "disallowedTools"] as const) {
-        const entries = extractList(text, key).filter((t) => t.startsWith("mcp__"));
-        if (key === "disallowedTools" && entries.length === 0) continue;
+        const parsed = extractList(text, key);
+        const entries = parsed.filter((t) => t.startsWith("mcp__"));
+        if (key === "disallowedTools" && parsed.length === 0) continue;
 
         describe(key, () => {
-          it("parses at least one MCP entry", () => {
+          it("parses at least one entry", () => {
             // Guards the assertions below against passing vacuously if the
             // frontmatter parser stops matching the block-sequence form.
-            expect(entries.length).toBeGreaterThan(0);
+            // Asserted on the UNFILTERED list: a parser that still returns
+            // `["Read"]` demonstrably matched, and an agent may legitimately
+            // hold only built-in tools — `project-status` is read-only and
+            // calls no MCP tool (issue #2793). Filtering to `mcp__` first
+            // made this fail such an agent for a reason the comment above
+            // does not claim to test.
+            expect(parsed.length).toBeGreaterThan(0);
           });
 
           it("uses only recognized server prefixes", () => {
@@ -552,6 +559,15 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "validate_research_schema",
       "wiki_read",
     ],
+    denies: [],
+  },
+
+  // Read-only by contract: it reports project state and never writes. It calls
+  // no MCP tool at all — `eval/harness/validators/test_project_status.py`
+  // enforces that — so `Read` is the whole grant, and this is the first agent
+  // to hold only built-in tools (issue #2793).
+  "project-status.md": {
+    tools: ["Read"],
     denies: [],
   },
 

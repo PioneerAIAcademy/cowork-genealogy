@@ -1061,6 +1061,13 @@ DEDICATED_AGENT_NAMES = frozenset(
         # `agent:citation` on that row -- rather than an unnamed-delegate
         # bypass. Do not read its presence here as evidence of a hook route.
         "citation",
+        # Same shape as citation (issue #2793): a converted skill, not a
+        # hook-routed pair. No hook routes anything to it, and it writes
+        # NOTHING at all -- it is read-only by contract, so it cannot produce a
+        # protected write to attribute in the first place. It is listed only
+        # because the set is asserted equal to the shipped agent files. Do not
+        # read its presence here as evidence of a hook route.
+        "project-status",
     }
 )
 

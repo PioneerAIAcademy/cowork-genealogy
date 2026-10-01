@@ -381,7 +381,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["research -> record-extractor", ""],
   ["historical-context -> citation", ""],
   ["init-project -> citation", ""],
-  ["project-status -> citation", ""],
   ["record-extraction -> citation", ""],
   ["research -> citation", ""],
   ["search-records -> citation", ""],
@@ -394,10 +393,19 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["check-warnings -> person-evidence", ""],
   ["conflict-resolution -> person-evidence", ""],
   ["forget-and-rederive -> person-evidence", ""],
-  ["project-status -> person-evidence", ""],
   ["record-extraction -> person-evidence", ""],
   ["search-records -> person-evidence", ""],
   ["timeline -> person-evidence", ""],
+  // project-status lost its skills/<name>/ directory in the agent conversion
+  // (issue #2793), so the name entered agentOnly and every SKILL.md that still
+  // references it needs a registration. All are bare-name mentions — none
+  // spells `@plugin:project-status`, and none is edited to satisfy this test,
+  // because editing a SKILL.md buys that skill a paid eval run.
+  ["init-project -> project-status", ""],
+  ["question-selection -> project-status", ""],
+  ["research -> project-status", ""],
+  ["research-plan -> project-status", ""],
+  ["search-records -> project-status", ""],
   ["translation -> person-evidence", ""],
   ["tree-edit -> person-evidence", ""],
 ]);
@@ -580,6 +588,7 @@ describe("agent delegation framing", () => {
     "gps-mentor",
     "image-reader",
     "person-evidence",
+    "project-status",
     "record-extractor",
   ];
 

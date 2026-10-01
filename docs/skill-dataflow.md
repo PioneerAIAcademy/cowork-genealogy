@@ -11,7 +11,7 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 26 skills and 8 agents. Besides the `research` orchestrator itself, its routing
+There are 25 skills and 9 agents. Besides the `research` orchestrator itself, its routing
 table names 13 of them, and 5 more are reached by delegation from a skill the table does
 name. The remaining 14 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
@@ -102,7 +102,7 @@ flowchart TD
     subgraph ASK ["Reached only by asking — no routing row"]
         direction LR
         U1["timeline · check-warnings · translation<br/>historical-context · convert-dates"]
-        U2["tree-edit · validate-schema · project-status<br/>forget-and-rederive · the two wiki searches"]
+        U2["tree-edit · validate-schema<br/>forget-and-rederive · the two wiki searches"]
     end
 
     classDef unrouted stroke-dasharray: 5 5
@@ -190,7 +190,7 @@ sibling skill.
 
 | Skill | Triggered by | Owns | Reads | Writes |
 |---|---|---|---|---|
-| **`project-status`** | "where are we", opening an existing project | The resume summary — plain-language first, then GPS state — plus broken-foreign-key detection | Whole-file `Read` of both project files, deliberately | Nothing |
+| **`project-status`** (an AGENT since issue #2793, not a skill) | "where are we", opening an existing project | The resume summary — plain-language first, then GPS state — plus broken-foreign-key detection | Whole-file `Read` of both project files, deliberately | Nothing |
 | **`timeline`** | "build a timeline"; handoffs from `person-evidence`, `conflict-resolution`, `hypothesis-tracking` | `timelines` — regenerated wholesale, never edited entry by entry — with gaps and geographic feasibility | `research.json` `person_evidence`, `assertions`, `hypotheses`, `timelines`, `conflicts` by whole-file `Read`; `place_search`, `place_distance` | `timelines[]` — `research_append` |
 | **`citation`** (an AGENT since issue #2799, not a skill) | "fix this citation", "format to Evidence Explained" | Refining `citation` and the six `citation_detail` fields on a source that already exists. **Never creates one**. Fetches the creating office for a probate record from `{State}_Probate_Records` rather than carrying one jurisdiction's offices in its body | Whole-file `Read` of `research.json` `sources` and `log`; tree source descriptions; `wiki_read` | `sources[].citation`, `.citation_detail`, `.notes` — `research_append` `op: "update"` only |
 | **`check-warnings`** | After any tree edit or merge; after `person-evidence` mints persons; "check for problems" | Running the offline impossibility check and the live FamilySearch quality score, and interpreting both for a single person's own data. `source-evaluation` also reads that score, for its source-conflict list and to report the profile checklist alongside its audit. Never fixes anything | `person_warnings` (deterministic; offline as the skill calls it, though the tool also has an opt-in live mode), `person_quality` (live FamilySearch; a project id is first resolved to the person's FamilySearch link through the tree, and a person with no link gets one sentence by name); the tree only to resolve a name to an id | Nothing |
@@ -241,7 +241,7 @@ Two consequences worth holding onto:
   and the `PreToolUse` hook. (`disallowedTools:` was deleted from every agent
   on 2026-08-30 — it only restated the `tools:` omission.)
 - **Only three skills hold `research_query`** — `research`, `search-records`,
-  `person-evidence` — and three of the eight agents. Everything else that needs project
+  `person-evidence` — and three of the nine agents. Everything else that needs project
   state does a whole-file `Read`, which is the thing the orchestrator forbids for itself
   because `research.json` reaches 100+ assertions by late run.
 - **The hook carries exactly four rules**, in
@@ -332,11 +332,12 @@ No routing-table row names these, so an autonomous `/research` run never enters 
 
 `search-full-text` · `timeline` · `check-warnings` · `translation` ·
 `historical-context` · `convert-dates` · `tree-edit` · `validate-schema` ·
-`forget-and-rederive` · `project-status` · `search-familysearch-wiki` ·
+`forget-and-rederive` · `search-familysearch-wiki` ·
 `search-wikipedia` · `source-evaluation` · `init-project` (named in prose, not in the table)
 
-`citation` left this list on 2026-09-23 by ceasing to be a skill (issue #2799). It is
-now an agent, and an agent is auto-delegated from its own `description` rather than
+`citation` left this list on 2026-09-23 by ceasing to be a skill (issue #2799), and
+`project-status` on 2026-09-30 the same way (issue #2793). Both are
+now agents, and an agent is auto-delegated from its own `description` rather than
 from a routing-table row — so the row's absence no longer implies it cannot fire.
 **Whether it actually fires in an autonomous run is unmeasured**, and it will stay
 unmeasured until a committed e2e run postdates the conversion. Do not read its removal
