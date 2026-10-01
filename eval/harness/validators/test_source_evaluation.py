@@ -219,6 +219,35 @@ def _list_items(block: str) -> list[str] | None:
 _CLAUSE_RE = re.compile(r"(?:;|\s+and\s+|(?<=\))\s*,\s*|\.\s+)")
 
 
+# A capitalised record-title word. Case-sensitive on purpose: a title in the
+# reply is capitalised ("the 1885 Minnesota State Census"), while the generic
+# noun in "correct the index" is not, and must not count as naming a record.
+_RECORD_TITLE_RE = re.compile(r"\b(?:Census|Index|Register|Registration|Collection|Records)\b")
+_SENTENCE_RE = re.compile(r"(?<=[.!?])\s+(?=[A-Z*])")
+
+
+def _detach_names_another_record(block: str, protected: str) -> bool:
+    """True when every detach in `block` is attributed, in its own sentence, to
+    a record other than `protected`.
+
+    The fifth shape (`ut_source_evaluation_x6b`, `v1_2026-10-01_19-24-15.json`,
+    issue #2796): a closing prose paragraph covering every source, with no
+    "Summary:" lead and no list, keeping the Minnesota Death Index in one
+    sentence and saying "The 1885 Minnesota State Census should be detached"
+    in the next. One block, so the guard flagged a correct report.
+
+    Deliberately one-sided. A passage is cleared only if each sentence carrying
+    a detach term names some record by title and does not name `protected`. A
+    detach sentence that names no record ("Detach it.") keeps the whole block
+    attributed, so the cross-sentence case the guard exists for still fires.
+    """
+    sentences = [x for x in _SENTENCE_RE.split(block) if x.strip()]
+    detaching = [x for x in sentences if _recommends_detach(x)]
+    return bool(detaching) and all(
+        protected.lower() not in x.lower() and _RECORD_TITLE_RE.search(x) for x in detaching
+    )
+
+
 def _passages(text: str) -> list[str]:
     """Split a report into the units that carry ONE source's remedy.
 
@@ -243,11 +272,13 @@ def _passages(text: str) -> list[str]:
       indexed death year (1954) needs correction" and the 1885 census bullet
       two lines below it "detach". Exactly right, and flagged.
 
-    A table row or a list item is the per-source unit the guard wants, so each
+    A multi-source prose paragraph (x6b, `v1_2026-10-01_19-24-15.json`) is
+    handled at the guard by `_detach_names_another_record`, sentence by
+    sentence. A table row or a list item is the per-source unit the guard wants, so each
     is split out and judged individually. Everything else keeps the blank-line
     block.
 
-    Four shapes needing bespoke handling, each found inside a paid run, is the
+    Five shapes needing bespoke handling, each found inside a paid run, is the
     signal worth recording: this guard is lexical and attribution is not, so
     the shape of the report decides whether it is right. Handle a new shape
     here rather than loosening the rule that fires, and keep `rubric.md`'s
@@ -351,6 +382,7 @@ def test_index_discrepancy_does_not_recommend_detaching(text_response, test, age
         for block in _passages(text_response)
         if protected.lower() in block.lower()
         and _recommends_detach(block)
+        and not _detach_names_another_record(block, protected)
     ]
     assert not hits, (
         f"source-evaluation recommended detaching or unlinking in the same "

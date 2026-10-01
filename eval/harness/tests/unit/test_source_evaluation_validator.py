@@ -612,3 +612,33 @@ def test_checklist_guard_skips_an_untagged_test():
 
     with pytest.raises(pytest.skip.Exception):
         _restate(_OV_CALLS, "", {"tags": ["direct-arm"]})
+
+
+# --- a multi-source closing paragraph (x6b, v1_2026-10-01_19-24-15) -------
+
+_X6B_PARAGRAPH = (
+    "Of the four attached sources, two belong on the profile without question: the 1900 U.S. Census "
+    "(which fits name, household, Polk County residence, and Norwegian birth) and the Minnesota Death "
+    "Index (which fits everything except a death year that needs verification against the original "
+    "certificate). The uploaded funeral card is plausible but unverifiable from the index. The 1885 "
+    "Minnesota State Census should be detached — it documents a different Christian Hole, born 1852, "
+    "residing in Otter Tail County, whose own profile (KD96-WX7) already holds the record correctly."
+)
+
+
+def test_a_detach_sentence_naming_another_record_passes():
+    _no_detach(_X6B_PARAGRAPH, _TEST)
+
+
+def test_a_detach_sentence_that_names_no_record_still_fails():
+    for reply in (
+        "The Minnesota Death Index has the wrong year. Detach it.",
+        "The Minnesota Death Index has the wrong year. The index should be detached.",
+        "The Minnesota Death Index is wrong. Detach the Minnesota Death Index.",
+        _X6B_PARAGRAPH + " Detach it as well.",
+    ):
+        try:
+            _no_detach(reply, _TEST)
+        except AssertionError:
+            continue
+        raise AssertionError(f"a detach left attributed to the protected source passed: {reply!r}")
