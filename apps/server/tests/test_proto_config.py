@@ -495,7 +495,7 @@ def test_008_is_idempotent_and_owner_is_nullable():
     assert "NOT NULL" not in owner.upper(), f"projects.owner_id must be nullable: {owner}"
     [tokens] = [s for s in statements if re.search(r"CREATE TABLE IF NOT EXISTS familysearch_tokens\b", s, re.I)]
     assert re.search(r"\buser_id text PRIMARY KEY\b", tokens), "one grant row per patron: U3 locks it"
-    assert re.search(r"\bgranted_at timestamptz NOT NULL\b", tokens), "U3's 24 h clock"
+    assert re.search(r"\bgranted_at timestamptz NOT NULL\b", tokens), "the sign-in time"
 
 
 def test_web_dockerfile_installs_auth_deps():
