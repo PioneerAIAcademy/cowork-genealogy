@@ -4,7 +4,7 @@ import { createFixtureSync } from './tests/e2e/create-fixture';
 /**
  * Playwright config for the eval CRUD UI.
  *
- * Tests live in `tests/e2e/`. The webServer block boots `npm run dev`
+ * Tests live in `tests/e2e/`. The webServer block boots `pnpm run dev`
  * automatically when running locally; CI can set PLAYWRIGHT_WEB_SERVER=0
  * to skip if the server is already running.
  *
@@ -31,7 +31,11 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_WEB_SERVER === '0'
     ? undefined
     : {
-        command: 'npm run dev -- --port 3100',
+        // No `--` before the flag: pnpm passes the separator through to the
+        // script, so `pnpm run dev -- --port 3100` runs
+        // `next dev --hostname 127.0.0.1 -- --port 3100` and Next reads `--port`
+        // as a positional project directory. npm strips it; pnpm does not.
+        command: 'pnpm run dev --port 3100',
         url: 'http://127.0.0.1:3100',
         timeout: 120_000,
         reuseExistingServer: !process.env.CI,

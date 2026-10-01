@@ -177,7 +177,16 @@ async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
             f"  no grade: "
             f"{ungradeable_reason(result, skip_judge=bool(kwargs.get('skip_judge')))}"
         )
-    if is_committable_run(result.verdict):
+    if result.stop_reason == "host_slept":
+        # Committed (so the operator can see why it dropped out of the rates) but
+        # ungraded on purpose — the host slept past the inactivity cap, so there
+        # is nothing to interpret or grade (issue #2974).
+        print(
+            "  host slept past the inactivity cap — run excluded from rates, "
+            "not graded.\n"
+            "  Commit the run log so the drop is visible; there is no .ann.json."
+        )
+    elif is_committable_run(result.verdict, result.stop_reason):
         print(
             "  Next: /interpret-e2e-result to see what it recovered, then "
             "/grade-e2e-run to grade it.\n"

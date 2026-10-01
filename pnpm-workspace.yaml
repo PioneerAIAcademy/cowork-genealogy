@@ -6,8 +6,19 @@
 # The web/electron/viewer side depends on packages/schema, never on the engine.
 # packages/engine has no package.json of its own — it's a container for the two
 # engine dirs; the negation keeps pnpm from adopting mcp-server's package.json.
+#
+# eval/app IS a member (#1488). It used to be a third island with its own
+# package-lock.json, which is why it carried a hand-typed fork of the
+# packages/schema types that nothing could diff against the master. Membership
+# lets it import @genealogy/schema, so the fork is deleted rather than guarded
+# (ADR-0008 tier 1). Adding a member here also obliges $(JS_DEPS) in the Makefile
+# to list its package.json — the packages/*,apps/* wildcard cannot reach it, and
+# a member missing from that list is the #1271 stale-stamp bug — and any
+# `overrides` it carried to move to root pnpm.overrides, which pnpm ignores in a
+# member silently.
 packages:
   - packages/*
   - '!packages/engine/**'    # engine is npm-managed, not a pnpm member
   - apps/web
   - apps/electron
+  - eval/app

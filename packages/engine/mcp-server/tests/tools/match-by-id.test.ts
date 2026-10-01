@@ -12,6 +12,7 @@ import {
   recordRecordMatches,
 } from "../../src/tools/match-by-id.js";
 import { getValidToken } from "../../src/auth/refresh.js";
+import { socketFetchFailure } from "../helpers/fetch-failed.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -444,8 +445,10 @@ describe("Error handling", () => {
   });
 
   it("translates a network error", async () => {
-    mockFetch.mockRejectedValue(new Error("ETIMEDOUT"));
-    await expect(personRecordMatches({ id: "KNDX-MKG" }, LOCAL)).rejects.toThrow(/Could not reach/);
+    mockFetch.mockRejectedValue(socketFetchFailure());
+    await expect(personRecordMatches({ id: "KNDX-MKG" }, LOCAL)).rejects.toThrow(
+      /Could not reach FamilySearch match API: fetch failed <- ETIMEDOUT/,
+    );
   });
 
   it("rejects malformed JSON body", async () => {

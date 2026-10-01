@@ -3,7 +3,7 @@ import type { PopulationResponse, PopulationToolInput } from "../types/place-pop
 export type { PopulationToolInput } from "../types/place-population.js";
 import { loadConfig } from "../auth/config.js";
 import { resolveStandardPlaceToPlaceId, ambiguousPlaceError } from "../utils/place-resolver.js";
-import { fetchWithRetry } from "../utils/http.js";
+import { describeFetchError, fetchWithRetry } from "../utils/http.js";
 
 const DEFAULT_POP_STATS_URL = "https://malachi.taild68f1b.ts.net/pop-stats";
 
@@ -43,9 +43,8 @@ export async function populationTool(
   try {
     response = await fetchWithRetry(url);
   } catch (err) {
-    const cause = err instanceof Error ? err.message : String(err);
     throw new Error(
-      `Population data service is unavailable. Is the Pop Stats API running? (${cause})`
+      `Population data service is unavailable at ${baseUrl} (${describeFetchError(err)}).`
     );
   }
 

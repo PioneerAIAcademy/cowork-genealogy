@@ -18,8 +18,7 @@
     "scenario": null
   },
   "mcp_fixtures": [
-    "person-read-flynn",
-    "person-quality-clean-LZNY-BRF"
+    "person-read-flynn"
   ],
   "judge_context": [
     "Should create both research.json and tree.gedcomx.json, seeding a stub for Patrick Flynn from the person-read-flynn fixture (Birth ~1845 Ireland, Death 1908 Schuylkill County PA), sourced to FamilySearch at quality 1",

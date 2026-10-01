@@ -120,18 +120,6 @@ COMMON_WORD_EXEMPTIONS: dict[str, str] = {
 # say it is not there); only "quotes" is held to the file.
 SUPPRESSIONS: list[dict[str, str]] = [
     {
-        "file": "eval/tests/unit/check-warnings/negative-schema-validation.json",
-        "tool": "validate_research_schema",
-        "quotes": [
-            "Should route to validate-schema (or whatever skill owns the validate_research_schema MCP tool)",
-        ],
-        "reason": (
-            "cross-owner: names the destination skill of a routing test - "
-            "'Should route to validate-schema (or whatever skill owns the "
-            "validate_research_schema MCP tool)'"
-        ),
-    },
-    {
         "file": "eval/tests/unit/init-project/rubric.md",
         "tool": "validate_research_schema",
         "quotes": [
@@ -608,120 +596,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
             "negative mention of another skill's tool - 'Should NOT scope "
             "the full-text search to a record `collectionId` guessed from "
             "record_search or a collections survey'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/browse-unindexed-probate.json",
-        "tool": "image_read",
-        "quotes": [
-            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool: image_read returns the page inline and a volume browse overflows the transport)",
-        ],
-        "reason": (
-            "negative mention - 'the agent reads pages itself with "
-            "image_transcribe - it must NOT call image_read (it has no such "
-            "tool: image_read returns the page inline and a volume browse "
-            "overflows the transport)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/image-group-listing.json",
-        "tool": "image_read",
-        "quotes": [
-            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool: image_read returns the page inline and a volume browse overflows the transport)",
-        ],
-        "reason": (
-            "negative mention - 'the agent reads pages itself with "
-            "image_transcribe - it must NOT call image_read (it has no such "
-            "tool: image_read returns the page inline and a volume browse "
-            "overflows the transport)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/volume-selection-multi-candidate.json",
-        "tool": "image_read",
-        "quotes": [
-            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool: image_read returns the page inline and a volume browse overflows the transport)",
-        ],
-        "reason": (
-            "negative mention - 'the agent reads pages itself with "
-            "image_transcribe - it must NOT call image_read (it has no such "
-            "tool: image_read returns the page inline and a volume browse "
-            "overflows the transport)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/volume-split-across-films.json",
-        "tool": "image_read",
-        "quotes": [
-            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool: image_read returns the page inline and a volume browse overflows the transport)",
-        ],
-        "reason": (
-            "negative mention - 'the agent reads pages itself with "
-            "image_transcribe - it must NOT call image_read (it has no such "
-            "tool: image_read returns the page inline and a volume browse "
-            "overflows the transport)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/direct-browse-unindexed-probate.json",
-        "tool": "image_read",
-        "quotes": [
-            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool)",
-        ],
-        "reason": (
-            "negative mention - 'the agent reads pages itself with "
-            "image_transcribe - it must NOT call image_read (it has no such "
-            "tool)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/direct-happy-path-browse.json",
-        "tool": "image_read",
-        "quotes": [
-            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool)",
-        ],
-        "reason": (
-            "negative mention - 'the agent reads pages itself with "
-            "image_transcribe - it must NOT call image_read (it has no such "
-            "tool)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/volume-mixed-item-sections.json",
-        "tool": "image_read",
-        "quotes": [
-            "Page reading is done by the agent itself with image_transcribe (never image_read, which it does not hold)",
-        ],
-        "reason": (
-            "negative mention, worded as a parenthetical rather than an "
-            "imperative - 'Page reading is done by the agent itself with "
-            "image_transcribe (never image_read, which it does not hold)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/rubric.md",
-        "tool": "image_read",
-        "quotes": [
-            "The agent does not call `image_read` and does not hold it: `image_read` returns the page inline as base64 and a volume browse accumulates enough of it to overflow the transport and crash the run",
-        ],
-        "reason": (
-            "negative mention - 'The agent does not call `image_read` and "
-            "does not hold it: `image_read` returns the page inline as "
-            "base64 and a volume browse accumulates enough of it to "
-            "overflow the transport and crash the run'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/negative-indexed-search.json",
-        "tool": "record_search",
-        "quotes": [
-            "A log entry from search-records itself (tool: record_search) is the CORRECT route working and is not a violation",
-        ],
-        "reason": (
-            "cross-owner: names search-records' tool as the correct "
-            "alternative route - 'A log entry from search-records itself "
-            "(tool: record_search) is the CORRECT route working and is not "
-            "a violation'"
         ),
     },
     {

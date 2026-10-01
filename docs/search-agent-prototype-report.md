@@ -90,7 +90,7 @@
 - Validated: **one queue message per patron turn**, now often a whole research run (PR #2870); the review proposes one model call. The time limit (handoff U26) changes the grain again: a run of at most 1,800 s, ended, not resumed.
 - **Visible queue depth is a poor scaling signal:** it reads zero while every worker is busy and rises only once patrons wait. No alternative is chosen.
 - **Packing and the review's ~$0.04 compute estimate** need re-deriving at U26's grain (a run of at most 1,800 s).
-- **Until U26 lands, sqsd must cut only a run past 10 h:** `InactivityTimeout` at Beanstalk's 36,000 s maximum, so `MaxRetries` counts only crashes and deploys; a crashed worker's message can take ~10 h to return (handoff U5).
+- **Until U26 lands, sqsd must cut only a run past 10 h:** `InactivityTimeout` at Beanstalk's 36,000 s maximum, so receives after the first come only from a crash, a deploy or SIGTERM, or a 500 (an API error, Postgres down at claim, a `ResumeFailure`); a crashed worker's message can take ~10 h to return (handoff U5, which builds these values: `VisibilityTimeout` 36,300, `MaxRetries` 5, `ErrorVisibilityTimeout` 300, handoff step 11).
 
 ## Six measurements
 
