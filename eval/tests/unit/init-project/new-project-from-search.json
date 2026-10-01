@@ -9,7 +9,8 @@
       "initialization",
       "person-search",
       "no-id",
-      "single-turn-decomposition"
+      "single-turn-decomposition",
+      "expects-person-search"
     ]
   },
   "input": {

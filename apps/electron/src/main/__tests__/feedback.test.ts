@@ -13,7 +13,10 @@ import {
   PARENT_LOG_ENTRY,
   readSessionLog,
   redactApiKeys,
+  PRESUMED_LIVING_YEARS,
+  redactLivingPersons,
   renderFeedbackMarkdown,
+  walkProject,
   type FeedbackOptions
 } from '../feedback'
 
@@ -386,7 +389,9 @@ describe('buildFeedbackZip — living-person redaction', () => {
         names: [{ id: 'n2', given: 'Jane Marie', surname: 'Spriggs' }],
         facts: [{ id: 'f2', type: 'Birth', date: '3 March 1985', place: 'Riverside, CA' }]
       },
-      // No `living` flag at all — absent is NOT deceased.
+      // No `living` flag at all. Absent is no longer living unconditionally —
+      // P3 stays redacted only because a 1990 birth is neither 110 years back
+      // nor evidence of death. Changing this date changes the expected outcome.
       {
         id: 'P3',
         gender: 'Male',
@@ -466,7 +471,9 @@ describe('buildFeedbackZip — living-person redaction', () => {
     expect(p2.living).toBe(true)
   })
 
-  it('treats a MISSING living flag as living — absent is not deceased', async () => {
+  it('still redacts a missing living flag when nothing says the person died', async () => {
+    // Issue #2988 narrowed this: an absent flag is no longer living *unconditionally*,
+    // but P3 has only a Birth 1990, so no death fact and no 110-year age — still living.
     const tree = await readTree((await buildFeedbackZip(makeOptions(folder))).zipBase64)
     const p3 = person(tree, 'P3')
     expect(p3.names[0].given).toBe('Living')
@@ -925,5 +932,452 @@ describe('renderFeedbackMarkdown — the grouped-only branch names its cause', (
     expect(md).toContain('had no conversation entries for this project')
     expect(md).not.toContain('Skipped files')
     expect(md).not.toContain('transcript size budget')
+  })
+})
+
+describe('issue #2988 — an absent `living` flag is no longer "living" unconditionally', () => {
+  // The rule is exercised at the file level, mirroring the server suite's
+  // fb._redact_living tests, so the plumbing between the predicate and the
+  // rewritten bytes is covered too.
+  const NOW = new Date(2026, 0, 1)
+
+  function p(extra: Record<string, unknown>): Record<string, unknown> {
+    return {
+      id: 'X1',
+      gender: 'Male',
+      names: [{ id: 'nx', given: 'Ada Test', surname: 'Sample' }],
+      ...extra
+    }
+  }
+
+  function entryFor(persons: unknown[]): { relativePath: string; buf: Buffer } {
+    return {
+      relativePath: 'tree.gedcomx.json',
+      buf: Buffer.from(
+        JSON.stringify({ persons, relationships: [], sources: [] }, null, 2),
+        'utf-8'
+      )
+    }
+  }
+
+  const SENTINEL = {
+    id: 'SENTINEL',
+    gender: 'Female',
+    living: true,
+    names: [{ id: 'ns', given: 'Jane Marie', surname: 'Sentinel' }]
+  }
+
+  /**
+   * 1 when the subject was redacted, 0 when they shipped unredacted.
+   *
+   * Every tree also carries a person explicitly flagged living, and this
+   * asserts they came back redacted. Without it a bare count of 0 is
+   * ambiguous: redactOneTree's catch also returns 0 with the file passed
+   * through untouched, and since the fixture and the redactor both serialize
+   * with `JSON.stringify(x, null, 2)` the bytes are identical too. The
+   * sentinel is the only thing that makes a swallowed throw visible.
+   */
+  function redacts(person: Record<string, unknown>, now: Date | undefined = NOW): number {
+    const entry = entryFor([person, SENTINEL])
+    const count = redactLivingPersons([entry], now)
+    const tree = JSON.parse(entry.buf.toString('utf-8'))
+    const sentinel = tree.persons.find((x: GedcomxPerson) => x.id === 'SENTINEL')
+    expect(
+      sentinel?.names[0].given,
+      'the sentinel survived unredacted — the file was passed through by a catch'
+    ).toBe('Living')
+    return count - 1
+  }
+
+  const BIRTH_1990 = { id: 'b', type: 'Birth', date: '3 March 1990' }
+
+  // 1-3: each death-type fact alone decides it. Birth 1990 keeps the age
+  // heuristic out of the way, so exactly one fact type is under test.
+  it('case 1: no flag + a Death fact ships unredacted', () => {
+    expect(redacts(p({ facts: [{ id: 'f', type: 'Death', date: '1994' }, BIRTH_1990] }))).toBe(0)
+  })
+
+  it('case 2: no flag + a Burial fact ships unredacted', () => {
+    expect(redacts(p({ facts: [{ id: 'f', type: 'Burial', date: '1994' }, BIRTH_1990] }))).toBe(0)
+  })
+
+  it('case 3: no flag + a Cremation fact ships unredacted', () => {
+    expect(redacts(p({ facts: [{ id: 'f', type: 'Cremation', date: '1994' }, BIRTH_1990] }))).toBe(
+      0
+    )
+  })
+
+  it('case 4: no flag, born 1823, no death fact — age alone ships them unredacted', () => {
+    expect(redacts(p({ facts: [{ id: 'b', type: 'Birth', date: '14 May 1823' }] }))).toBe(0)
+  })
+
+  it('case 5: no flag, born 1990, no death fact — still redacted, as before #2988', () => {
+    expect(redacts(p({ facts: [BIRTH_1990] }))).toBe(1)
+  })
+
+  // 6: `living` is 4-valued in the wild. Every PRESENT value keeps the
+  // pre-#2988 behaviour, so a non-boolean flag must not fall into the
+  // heuristic and un-redact someone the old code protected.
+  it.each([
+    ['null', null],
+    ['0', 0],
+    ['the string "true"', 'true'],
+    ['an empty array', []]
+  ])('case 6: a present but non-boolean living flag (%s) is still redacted', (_label, value) => {
+    const person = p({
+      living: value,
+      facts: [{ id: 'f', type: 'Death', date: '1994' }, BIRTH_1990]
+    })
+    expect(redacts(person)).toBe(1)
+  })
+
+  it('case 7: `living: true` wins over a Death fact — the flag comes from FamilySearch', () => {
+    const person = p({
+      living: true,
+      facts: [{ id: 'f', type: 'Death', date: '1994' }, BIRTH_1990]
+    })
+    expect(redacts(person)).toBe(1)
+  })
+
+  it('case 8: a person with `facts: null` does not throw the file past the redactor', () => {
+    // redactOneTree's catch ships the file UNTOUCHED, so a throw here would leak
+    // every living person in it. Asserting the bytes changed is what separates
+    // "the helper coped" from "the outer catch swallowed it".
+    const entry = entryFor([
+      p({ id: 'BAD', facts: null }),
+      p({
+        id: 'LIVE',
+        living: true,
+        names: [{ id: 'n2', given: 'Jane Marie', surname: 'Sample' }]
+      })
+    ])
+    const before = entry.buf.toString('utf-8')
+    const count = redactLivingPersons([entry], NOW)
+    const after = entry.buf.toString('utf-8')
+
+    expect(count).toBe(2)
+    expect(after).not.toBe(before)
+    expect(after).not.toContain('Jane Marie')
+  })
+
+  it('case 9: a malformed fact is skipped, not fatal — the real Death fact still counts', () => {
+    const person = p({ facts: [null, { id: 'f', type: 'Death', date: '1994' }, BIRTH_1990] })
+    expect(redacts(person)).toBe(0)
+  })
+
+  // 10-11: the only pair that can tell `> 110` from `>= 110`. Deliberately one
+  // year more conservative than living_gate, which would ship the 110-year-old.
+  it('case 10: born exactly 110 years ago is still redacted', () => {
+    const year = NOW.getFullYear() - PRESUMED_LIVING_YEARS
+    expect(redacts(p({ facts: [{ id: 'b', type: 'Birth', date: `1 July ${year}` }] }))).toBe(1)
+  })
+
+  it('case 11: born 111 years ago ships unredacted', () => {
+    const year = NOW.getFullYear() - PRESUMED_LIVING_YEARS - 1
+    expect(redacts(p({ facts: [{ id: 'b', type: 'Birth', date: `1 July ${year}` }] }))).toBe(0)
+  })
+
+  it('reads the birth year past a birth fact whose dates do not parse', () => {
+    // Mirrors _birth_year: an unparseable birth fact falls through to the next
+    // one rather than ending the search.
+    const person = p({
+      facts: [
+        { id: 'b1', type: 'Birth', date: 'date unknown' },
+        { id: 'b2', type: 'Christening', standard_date: '+1823-05-14' }
+      ]
+    })
+    expect(redacts(person)).toBe(0)
+  })
+
+  it('defaults to the real clock when no `now` is passed', () => {
+    // Born 1900, so the answer flips on what the default clock actually is:
+    // the real one ships them, while the epoch, a NaN date and a deleted
+    // fallback all redact. A 1990 birth would pass under every one of those.
+    expect(redacts(p({ facts: [{ id: 'b', type: 'Birth', date: '1900' }] }), undefined)).toBe(0)
+  })
+})
+
+describe('issue #2988 — stale tree copies never reach the bundle', () => {
+  let folder: string
+
+  beforeEach(async () => {
+    folder = await mkdtemp(join(tmpdir(), 'feedback-stale-'))
+    await writeFile(join(folder, 'research.json'), '{}', 'utf8')
+    await writeFile(join(folder, 'tree.gedcomx.json'), '{"persons":[]}', 'utf8')
+  })
+
+  afterEach(async () => {
+    await rm(folder, { recursive: true, force: true })
+  })
+
+  it('case 12: a `.bak` beside the tree is not walked', async () => {
+    // Pre-#2333 .mcpb builds wrote one. It is never redacted, because
+    // redactOneTree only rewrites the two canonical filenames.
+    await writeFile(join(folder, 'tree.gedcomx.json.bak'), '{"persons":[]}', 'utf8')
+    const names = (await walkProject(folder)).map((f) => f.relativePath)
+    expect(names).toContain('tree.gedcomx.json')
+    expect(names).not.toContain('tree.gedcomx.json.bak')
+  })
+
+  it('case 13: a non-dot-prefixed `.tmp-<uuid>` is not walked', async () => {
+    // Before the ProjectStore seam, atomicWriteJson wrote this shape, so a
+    // crash between write and rename leaves one the dot-skip does not catch.
+    const stale = 'tree.gedcomx.json.tmp-0b5f1c2e-9a44-4d1e-8f77-2c6d3e9a1b04'
+    await writeFile(join(folder, stale), '{"persons":[]}', 'utf8')
+    const names = (await walkProject(folder)).map((f) => f.relativePath)
+    expect(names).not.toContain(stale)
+  })
+
+  it('skips stale copies at any depth, and keeps look-alike names', async () => {
+    // The other direction: names that merely resemble the patterns must survive,
+    // or the skip is silently eating real project files.
+    await mkdir(join(folder, 'results'), { recursive: true })
+    await writeFile(join(folder, 'results', 'log_001.json.bak'), '{}', 'utf8')
+    await writeFile(join(folder, 'results', 'log_001.json'), '{}', 'utf8')
+    await writeFile(join(folder, 'backup-notes.md'), 'keep me', 'utf8')
+    await writeFile(join(folder, 'tmp-plan.md'), 'keep me', 'utf8')
+
+    const names = (await walkProject(folder)).map((f) => f.relativePath)
+    expect(names).not.toContain(join('results', 'log_001.json.bak'))
+    expect(names).toContain(join('results', 'log_001.json'))
+    expect(names).toContain('backup-notes.md')
+    expect(names).toContain('tmp-plan.md')
+  })
+})
+
+describe('issue #2988 — the bundle #2932 shape, end to end', () => {
+  let folder: string
+
+  const TREE = {
+    persons: [
+      // No living flag anywhere: exactly what tree_edit produces, and what
+      // blanked all 11 persons in bundle #2932.
+      {
+        id: 'M1',
+        gender: 'Female',
+        names: [{ id: 'n1', given: 'Mary Hales', surname: 'Hales' }],
+        facts: [
+          { id: 'f1', type: 'Birth', date: '1823', place: 'Sheffield, Yorkshire' },
+          { id: 'f2', type: 'Death', date: '1853' },
+          { id: 'f3', type: 'Burial', date: '1853' }
+        ]
+      },
+      {
+        id: 'M2',
+        gender: 'Male',
+        names: [{ id: 'n2', given: 'Bobby Living', surname: 'Hales' }],
+        facts: [{ id: 'f4', type: 'Birth', date: '1990', place: 'Riverside, CA' }]
+      }
+    ],
+    relationships: [],
+    sources: []
+  }
+
+  beforeEach(async () => {
+    folder = await mkdtemp(join(tmpdir(), 'feedback-2932-'))
+    await writeFile(join(folder, 'research.json'), '{}', 'utf8')
+    await writeFile(join(folder, 'tree.gedcomx.json'), JSON.stringify(TREE), 'utf8')
+    await writeFile(join(folder, 'tree.gedcomx.json.bak'), JSON.stringify(TREE), 'utf8')
+    await writeFile(
+      join(folder, 'tree.gedcomx.json.tmp-0b5f1c2e-9a44-4d1e-8f77-2c6d3e9a1b04'),
+      JSON.stringify(TREE),
+      'utf8'
+    )
+  })
+
+  afterEach(async () => {
+    await rm(folder, { recursive: true, force: true })
+  })
+
+  it('ships the 1823 ancestor, redacts the 1990 person, and drops both stale copies', async () => {
+    const zip = await JSZip.loadAsync(
+      Buffer.from((await buildFeedbackZip(makeOptions(folder))).zipBase64, 'base64')
+    )
+
+    const names = Object.values(zip.files)
+      .filter((f) => !f.dir)
+      .map((f) => f.name)
+    expect(names.some((n) => n.endsWith('.bak'))).toBe(false)
+    expect(names.some((n) => n.includes('.tmp-'))).toBe(false)
+
+    const tree = JSON.parse(await zip.file('tree.gedcomx.json')!.async('string'))
+    const mary = tree.persons.find((x: GedcomxPerson) => x.id === 'M1')
+    const bobby = tree.persons.find((x: GedcomxPerson) => x.id === 'M2')
+
+    expect(mary.names[0].given).toBe('Mary Hales')
+    expect(mary.facts).toHaveLength(3)
+    expect(bobby.names[0].given).toBe('Living')
+    expect(bobby.facts).toEqual([])
+
+    // And the leaked copies really are gone from every entry, not just unnamed.
+    for (const entry of Object.values(zip.files).filter((f) => !f.dir)) {
+      if (entry.name === 'tree.gedcomx.json') continue
+      expect(await entry.async('string')).not.toContain('Bobby Living')
+    }
+  })
+})
+
+describe('review findings on the #2988 fix', () => {
+  const NOW = new Date(2026, 0, 1)
+
+  function p(extra: Record<string, unknown>): Record<string, unknown> {
+    return {
+      id: 'X1',
+      gender: 'Male',
+      names: [{ id: 'nx', given: 'Ada Test', surname: 'Sample' }],
+      ...extra
+    }
+  }
+
+  const SENTINEL = {
+    id: 'SENTINEL',
+    gender: 'Female',
+    living: true,
+    names: [{ id: 'ns', given: 'Jane Marie', surname: 'Sentinel' }]
+  }
+
+  function redacts(person: Record<string, unknown>, name = 'tree.gedcomx.json'): number {
+    const entry = {
+      relativePath: name,
+      buf: Buffer.from(
+        JSON.stringify({ persons: [person, SENTINEL], relationships: [], sources: [] }, null, 2),
+        'utf-8'
+      )
+    }
+    const count = redactLivingPersons([entry], NOW)
+    const tree = JSON.parse(entry.buf.toString('utf-8'))
+    const sentinel = tree.persons.find((x: GedcomxPerson) => x.id === 'SENTINEL')
+    expect(sentinel?.names[0].given, 'sentinel survived — the file was passed through').toBe(
+      'Living'
+    )
+    return count - 1
+  }
+
+  it('redacts a tree copy the walker has no reason to drop', () => {
+    // A researcher's own duplicate is not `.bak` and not `.tmp-`, so nothing
+    // skips it. Keying redaction on the two canonical names shipped it whole.
+    expect(
+      redacts(p({ facts: [{ id: 'b', type: 'Birth', date: '1990' }] }), 'tree-backup.gedcomx.json')
+    ).toBe(1)
+    expect(
+      redacts(p({ facts: [{ id: 'b', type: 'Birth', date: '1990' }] }), 'tree.gedcomx copy.json')
+    ).toBe(1)
+  })
+
+  it('leaves a non-tree JSON document alone', () => {
+    // The other direction: shape-based selection must not rewrite project JSON
+    // that has no `persons` array. research.json is the one that matters.
+    const entry = {
+      relativePath: 'research.json',
+      buf: Buffer.from(JSON.stringify({ project: { id: 'rp_x' }, log: [] }), 'utf-8')
+    }
+    const before = entry.buf.toString('utf-8')
+    expect(redactLivingPersons([entry], NOW)).toBe(0)
+    expect(entry.buf.toString('utf-8')).toBe(before)
+  })
+
+  it('ignores a non-string date instead of reading a year out of its contents', () => {
+    // Python's str({...}) shows the contents and would find 1823 here; TS's
+    // String({...}) gives "[object Object]". The guard is what keeps the two
+    // bundles identical — without it the hosted server ships this person.
+    const person = p({ facts: [{ id: 'b', type: 'Birth', date: { original: '14 May 1823' } }] })
+    expect(redacts(person)).toBe(1)
+  })
+
+  it('ships an ancestor known only from a census or residence', () => {
+    // No birth, no death — the record type an ancestor is most likely to have
+    // exactly one of. A birth-only heuristic left these blanked.
+    expect(
+      redacts(
+        p({
+          facts: [
+            { id: 'c', type: 'Census', date: '1850' },
+            { id: 'r', type: 'Residence', date: '1860' }
+          ]
+        })
+      )
+    ).toBe(0)
+  })
+
+  it('treats a Probate fact as evidence of death', () => {
+    expect(redacts(p({ facts: [{ id: 'pr', type: 'Probate', date: '1994' }] }))).toBe(0)
+  })
+
+  it('is not fooled by a posthumous ordinance dated after the birth', () => {
+    // A Baptism long after death would date this 1823 person to 1960 and blank
+    // them. An explicit Birth fact wins regardless of array order.
+    const person = p({
+      facts: [
+        { id: 'o', type: 'Baptism', date: '12 Mar 1960' },
+        { id: 'b', type: 'Birth', date: '14 May 1823' }
+      ]
+    })
+    expect(redacts(person)).toBe(0)
+  })
+
+  it('redacts a tree saved with a BOM in front', () => {
+    // A Windows editor readily adds one. Without stripping it the parse throws,
+    // redactOneTree's catch ships the file UNREDACTED, and the living person in
+    // it leaks — the fail-open hazard this whole change exists to close.
+    const body = JSON.stringify(
+      {
+        persons: [p({ facts: [{ id: 'b', type: 'Birth', date: '3 March 1990' }] })],
+        relationships: [],
+        sources: []
+      },
+      null,
+      2
+    )
+    const entry = {
+      relativePath: 'tree.gedcomx.json',
+      buf: Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from(body, 'utf-8')])
+    }
+    expect(redactLivingPersons([entry], NOW)).toBe(1)
+    expect(entry.buf.toString('utf-8')).not.toContain('Ada Test')
+  })
+
+  it('still redacts someone whose only dated fact is recent', () => {
+    // The reverse of the census case: a living person with a 1990 residence
+    // must not be shipped by the last-seen-alive rule.
+    expect(redacts(p({ facts: [{ id: 'r', type: 'Residence', date: '1990' }] }))).toBe(1)
+  })
+})
+
+describe('review findings — the stale-copy skip', () => {
+  let folder: string
+
+  beforeEach(async () => {
+    folder = await mkdtemp(join(tmpdir(), 'feedback-stale2-'))
+    await writeFile(join(folder, 'research.json'), '{}', 'utf8')
+    await writeFile(join(folder, 'tree.gedcomx.json'), '{"persons":[]}', 'utf8')
+  })
+
+  afterEach(async () => {
+    await rm(folder, { recursive: true, force: true })
+  })
+
+  it('matches case-insensitively — the genealogist team is on Windows', async () => {
+    await writeFile(join(folder, 'tree.gedcomx.json.BAK'), '{"persons":[]}', 'utf8')
+    const names = (await walkProject(folder)).map((f) => f.relativePath)
+    expect(names).not.toContain('tree.gedcomx.json.BAK')
+  })
+
+  it('keeps a file that merely contains the temp substring', async () => {
+    // The pattern is anchored to a trailing uuid run, so an ordinary file with
+    // `.tmp-` in the middle of its name is not silently eaten.
+    await writeFile(join(folder, 'notes.tmp-draft.md'), 'keep me', 'utf8')
+    const names = (await walkProject(folder)).map((f) => f.relativePath)
+    expect(names).toContain('notes.tmp-draft.md')
+  })
+
+  it('names every stale copy it dropped in FEEDBACK.md', async () => {
+    // Every other drop reason is reported; a silent one leaves a triager
+    // reproducing against a folder quietly missing a file.
+    await writeFile(join(folder, 'tree.gedcomx.json.bak'), '{"persons":[]}', 'utf8')
+    const zip = await JSZip.loadAsync(
+      Buffer.from((await buildFeedbackZip(makeOptions(folder))).zipBase64, 'base64')
+    )
+    const md = await zip.file('FEEDBACK.md')!.async('string')
+    expect(md).toContain('tree.gedcomx.json.bak (stale copy)')
   })
 })

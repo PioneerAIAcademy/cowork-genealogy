@@ -7,15 +7,21 @@ It returns data in **simplified GEDCOMX format** (`persons[]`,
 `relationships[]`, `sources[]`) following the conventions in
 `docs/specs/simplified-gedcomx-spec.md`.
 
-The tool accepts a FamilySearch person ID (required) and two optional boolean
-flags that bundle additional data into the response. `sourceDescriptions` costs
-no extra tree call; `relatives` is no longer a single one, because siblings are a
-second hop costing one read per parent (see "The sibling fan-out" below):
+The tool accepts a FamilySearch person ID (required) and always returns the
+person's parents, **siblings**, spouses and children (`persons[]` +
+`relationships[]`) and the sources attached to the person (`sources[]`, each
+person linking to its own through `persons[].sources`). Siblings are a second
+hop costing one read per parent (see "The sibling fan-out" below). For a
+non-living subject the read also pages that person's source-style memories.
 
-| Flag | What it adds to the response |
-|------|------------------------------|
-| `relatives: true` | Parents, **siblings**, spouses, and children in `persons[]` + `relationships[]` |
-| `sourceDescriptions: true` | Attached source citations in `sources[]` |
+**Both reads are always on (lead ruling, 2026-09-27).** The
+`relatives` and `sourceDescriptions` inputs are still accepted, so a prompt that
+passes them does not start erroring, and their values are ignored. The opt-in
+flags made "not requested" and "we looked and found nothing" the same empty
+array: a caller that omitted `relatives` read a person with parents as having
+none, and proposed adding them again. The living-person 204 stub is the one
+remaining case where an empty section means "could not see" (see Error
+Handling); it is left as it is.
 
 Requires authentication (OAuth tokens obtained via the `login` tool).
 
@@ -30,8 +36,8 @@ etc.) and is out of scope for v1.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `personId` | string | **Yes** | FamilySearch person ID (e.g., `"KNDX-MKG"`). |
-| `relatives` | boolean | No | Include parents, **siblings**, spouses, and children. Defaults to `false`. Siblings are a second hop and cost **one extra request per parent** — see "The sibling fan-out" below. |
-| `sourceDescriptions` | boolean | No | Include attached source citations — and, for a non-living subject, that person's source-style memories. Defaults to `false`. |
+| `relatives` | boolean | No | Accepted and ignored: relatives are always read. |
+| `sourceDescriptions` | boolean | No | Accepted and ignored: attached sources, and a non-living subject's memories, are always read. |
 | `projectPath` | string | No | Absolute project-folder path. When set, a memory scan transcribed during the read is retained under `images/` and its ref returned as that source's `image_ref`, **and the read itself is staged** under `results/.staging/` and its handle returned as `staged` (see "Staging the read" below). A path is not a mode flag, so decision 1's "no third flag" does not reach it. Without it, scans are transcribed but not kept and nothing is staged. An empty value is treated as absent. A whitespace-only value stages nothing, but the retention half still forwards it as a path. |
 
 Examples:
@@ -41,19 +47,7 @@ Examples:
 ```
 
 ```json
-{ "personId": "KNDX-MKG", "relatives": true }
-```
-
-```json
-{ "personId": "KNDX-MKG", "sourceDescriptions": true }
-```
-
-```json
-{ "personId": "KNDX-MKG", "relatives": true, "sourceDescriptions": true }
-```
-
-```json
-{ "personId": "KNDX-MKG", "sourceDescriptions": true, "projectPath": "/home/me/projects/clegg" }
+{ "personId": "KNDX-MKG", "projectPath": "/home/me/projects/clegg" }
 ```
 
 ---
@@ -91,8 +85,9 @@ Two more conditional keys ride on a call that carried `projectPath`:
 response-only, like `notes[]`, and never tree keys (`TREE_TOP_LEVEL_FIELDS`).
 
 - `persons[]` is always present (at minimum, the requested person)
-- `relationships[]` is present when `relatives: true` (empty array otherwise)
-- `sources[]` is present when `sourceDescriptions: true` (empty array otherwise)
+- `relationships[]` and `sources[]` are always present; an empty array means
+  FamilySearch holds none, except on the living-person 204 stub, where both are
+  empty because nothing could be read
 
 ### Staging the read
 
@@ -105,7 +100,7 @@ after the memories merge, through the shared `stageSearchResults`
   "results": [ { "personId": "KNDX-MKG", "gedcomx": { "persons": [], "relationships": [], "sources": [] } } ] }
 ```
 
-- `query` is the trimmed requested id and both flags as sent, an absent or `null` flag recorded as `false`.
+- `query` is the trimmed requested id and `relatives: true, sourceDescriptions: true`: what was read, not what was asked, since both inputs are ignored.
 - The element's `personId` is the **post-redirect** id: for a merged subject it is
   the surviving person's id and differs from `query.personId`.
 - `gedcomx` is the whole response minus `staged`/`stagingError`, including a
@@ -133,6 +128,7 @@ Each person object:
 | `living` | boolean | yes | Whether the person is marked as living |
 | `names` | object[] | yes | Every name FamilySearch holds for the person, preferred-first (see "Names" below). At least one — a person FS returns with no name at all gets a single `{ given: "", surname: "" }` placeholder |
 | `facts` | object[] | no | Life facts (birth, death, etc.). Omitted for living persons with no data. |
+| `sources` | object[] | no | The sources FamilySearch attached to this person, as `{ ref, page?, quality? }` refs whose `ref` is an id in this response's `sources[]`. FamilySearch attributes sources at the person level and essentially nowhere else (lead probe, 2026-09-20: 25 of 25 persons, 0 of 157 facts, 0 of 31 names). Its `tags` and attribution metadata are not carried. **Only refs that resolve in `sources[]` are kept**, and the key is omitted when none do: the subject's refs are `#<id>` fragments that all resolve, while a relative's refs are mostly full URLs to descriptions FamilySearch does not send in this body (probe, 2026-09-30: 0 of 102 and 2 of 79 resolved), and a `SD_*` target is filtered out of `sources[]`. A dangling ref would make `project_create` refuse the whole tree. Carrying relatives' own sources is not in scope. |
 
 **Names:**
 
@@ -160,7 +156,7 @@ Each person object:
 
 ### `relationships[]`
 
-Present when `relatives: true`. Two types:
+Always present. Two types:
 
 **ParentChild:**
 
@@ -182,7 +178,7 @@ Present when `relatives: true`. Two types:
 
 ### `sources[]`
 
-Present when `sourceDescriptions: true`. Each source object:
+Always present. Each source object:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -197,7 +193,7 @@ Present when `sourceDescriptions: true`. Each source object:
 
 #### Memories are merged into `sources[]`
 
-For a **non-living subject**, `sourceDescriptions: true` also returns that
+For a **non-living subject**, every read also returns that
 person's **source-style memories** as ordinary entries in `sources[]` — nothing
 else changes. Memories add **no new key and no memory-vs-source discriminator**, so no
 downstream reader has to branch on where a source came from (lead,
@@ -218,8 +214,10 @@ rarely* a non-source one, and **it will miss a record scan filed under Photos**.
 The one payload-verifiable non-source marker is the person's designated
 portrait, which is excluded. Audio and video are dropped.
 
-**Scope: the subject only.** Memories are never fetched for relatives, whatever
-`relatives` is set to.
+**Scope: the subject only, on every read of a non-living subject.** Memories
+are coupled to sources (lead, 2026-09-27: "coupled everywhere"), and sources are
+always read, so the memories leg runs whenever the subject is not living. It is
+never run for relatives.
 
 **Transcription (decisions 3 and 4).** Every memory the filter keeps is
 transcribed inside the read: a story's full text is fetched from its artifact,
@@ -326,10 +324,10 @@ fetched for the id the redirect landed on, not the id the caller passed.
 {
   name: "person_read",
   description: "Read person data from the FamilySearch Family Tree. " +
-    "Returns simplified GEDCOMX (persons, relationships, sources). " +
-    "Set relatives=true to include parents, siblings, spouses, and children. " +
-    "Set sourceDescriptions=true to include attached sources — for a " +
-    "non-living subject this also returns source-style memories (scanned " +
+    "Returns simplified GEDCOMX (persons, relationships, sources): the person, " +
+    "their parents, siblings, spouses and children, and the sources attached " +
+    "to the person, each linked from the person's own `sources` refs. For a " +
+    "non-living subject it also returns source-style memories (scanned " +
     "wills, certificates, obituaries), transcribed where the " +
     "read's time budget allowed. " +
     "Requires authentication — call the login tool first if not logged in.",
@@ -342,14 +340,11 @@ fetched for the id the redirect landed on, not the id the caller passed.
       },
       relatives: {
         type: "boolean",
-        description:
-          "Include parents, siblings, spouses, and children. Siblings are " +
-          "reached by reading each parent, so this costs one extra request " +
-          "per parent. Defaults to false."
+        description: "Ignored: relatives are always returned."
       },
       sourceDescriptions: {
         type: "boolean",
-        description: "Include attached source citations. Defaults to false."
+        description: "Ignored: attached sources are always returned."
       },
       projectPath: {
         type: "string",
@@ -401,18 +396,17 @@ header. Confirmed by the FamilySearch team (Todd Chapman, Erik Wilford).
 ### Endpoint: Person details
 
 ```
-GET https://api.familysearch.org/platform/tree/persons/{pid}
-GET https://api.familysearch.org/platform/tree/persons/{pid}?relatives=true
-GET https://api.familysearch.org/platform/tree/persons/{pid}?sourceDescriptions=true
 GET https://api.familysearch.org/platform/tree/persons/{pid}?relatives=true&sourceDescriptions=true
 ```
+
+The subject read always sends both parameters.
 
 | Query Parameter | Effect |
 |-----------------|--------|
 | `relatives=true` | Includes family members in `persons[]`, plus `childAndParentsRelationships[]` and `relationships[]`. **Does not include siblings** — see the fan-out below. |
 | `sourceDescriptions=true` | Includes source citations in `sourceDescriptions[]` |
 
-**This is no longer a single call when `relatives=true`.** The endpoint returns a
+**This is not a single call.** The endpoint returns a
 person's parents but not their siblings, so the tool additionally issues one
 `?relatives=true` read **per parent**, concurrently, bounded at 4 in flight:
 
@@ -545,8 +539,9 @@ For each person in `response.persons[]`:
 | `gender.type` | `gender` | Last segment of URI (e.g., `"Male"`) |
 | `names[]` | `names[]` | **All** names are kept, not only the primary one. Per name: `id` and `type` (URI-stripped) pass through, `preferred` is carried only when `true`, and `nameForms[0].parts[]` yields `given` / `surname` / `prefix` / `suffix`. Names marked `preferred: true` are stable-reordered to the front, so simplified `names[0]` is the preferred name even when FS lists an alternate first (`gedcomx-convert-spec.md` § "Rule 4") |
 | `facts[]` | `facts[]` | See fact conversion below |
+| `sources[]` | `sources[]` | Per ref: `description` with its leading `#` stripped becomes `ref`; the citation-detail qualifier becomes `page`, the quality qualifier `quality`. `tags`, `attribution`, `descriptionId`, `id` and `links` are dropped. After the whole response is built (memories merged), refs whose `ref` is not an id in `sources[]` are removed, and the key with them when none remain |
 
-Strip: `display`, `links`, `sortKey`, `evidence`, `personInfo`, `sources`,
+Strip: `display`, `links`, `sortKey`, `evidence`, `personInfo`,
 `attribution`, and every `identifiers` entry except the Persistent one lifted
 to `ark` above.
 
@@ -606,7 +601,7 @@ deduplicating or auditing identity must read the whole array — a surname that
 disagrees with `names[0]` is normal (a married name, an `AlsoKnownAs`, a spelling
 variant) and is not on its own evidence of a conflated record.
 
-#### 5. Relationships (when `relatives: true`)
+#### 5. Relationships
 
 **ParentChild** — convert from `childAndParentsRelationships[]`:
 
@@ -624,8 +619,8 @@ the fact `type` URI's last segment, stripped of `"Parent"` suffix
 no parent facts are present for that parent.
 
 **Keep all relationships.** Do not filter to the focal person —
-include every relationship returned by the API. When `relatives: true`,
-the response includes extended-family relationships; return them all.
+include every relationship returned by the API. The response includes
+extended-family relationships; return them all.
 
 **Couple** — convert from `relationships[]` where `type` ends with `"Couple"`:
 
@@ -645,7 +640,7 @@ between two people who are not the subject is kept. What is dropped is a
 `Couple` naming a partner the response never returned, under the
 endpoint-closure rule below, because that edge fails the `project_create` write.
 
-#### 5a. The sibling fan-out (when `relatives: true`)
+#### 5a. The sibling fan-out
 
 FamilySearch returns a person's parents but **not their siblings**. Siblings sit
 two hops out, so each parent is read to find them.
@@ -750,7 +745,7 @@ would remain in `persons[]` — unconnected persons in the user's tree, which
 `validate_research_schema` does not catch because it has no persons-to-edges
 rule. They are skipped, which also saves a request whose result cannot be used.
 
-#### 6. Sources (when `sourceDescriptions: true`)
+#### 6. Sources
 
 For each entry in `sourceDescriptions[]`:
 
@@ -767,8 +762,8 @@ metadata, not real sources.
 
 ##### Memories (same array, subject only, non-living only)
 
-A second call to `GET /platform/tree/persons/{pid}/memories` runs under the same
-flag. It **pages to completion** — the endpoint pages at 25 and the last page is
+A second call to `GET /platform/tree/persons/{pid}/memories` runs on every read
+of a non-living subject. It **pages to completion** — the endpoint pages at 25 and the last page is
 a **204 with an empty body**, so a pager that calls `.json()` unconditionally
 throws on the final hop. Each kept memory converts to the same source shape:
 
@@ -793,9 +788,8 @@ designated portrait (`/tree/persons/{pid}/portrait`). The media kind comes from
 (`http://familysearch.org/v1/{Photo,Document,Story}`) and **the uploader chose
 it** — hence the proxy caveat above.
 
-**Scope:** the subject only, never per relative, whatever `relatives` is set to.
-Skipped entirely when the subject is living, and when `sourceDescriptions` is
-false.
+**Scope:** the subject only, never per relative. Skipped only when the subject
+is living.
 
 **Fail-soft:** any failure of the memories fetch returns the tree sources alone.
 `person_read` never fails because of memories or transcription.
@@ -919,6 +913,7 @@ interface SimplifiedPerson {
   living: boolean;
   names: SimplifiedName[];
   facts?: SimplifiedFact[];
+  sources?: { ref: string; page?: string; quality?: number }[]; // resolvable refs only
 }
 
 interface SimplifiedRelationship {
@@ -983,10 +978,10 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 | # | Test case | What it verifies |
 |---|-----------|------------------|
 | 1 | Returns simplified person for valid ID | Person happy path |
-| 2 | Includes relatives in persons[] and relationships[] when flag set | Relatives flag |
-| 3 | Includes sources[] when flag set | Sources flag |
-| 4 | Returns both when both flags set | Combined flags |
-| 5 | Returns empty relationships/sources when flags are false | No-flag shape |
+| 2 | Includes relatives in persons[] and relationships[] | Relatives |
+| 3 | Includes sources[] | Sources |
+| 4 | Returns both | Combined |
+| 5 | A caller cannot suppress relatives or sources: flags absent or `false` still send both parameters and return both | Flags ignored |
 | 6 | Strips URI prefixes from fact types (Birth, Death, etc.) | Fact type extraction |
 | 7 | Handles data: prefix custom fact types | Custom fact types |
 | 8 | Extracts given/surname from name parts | Name extraction |
@@ -1010,6 +1005,9 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 | 26 | No `staged` key without `projectPath`, or with a blank one | Staging gate |
 | 27 | A staging failure returns the read with `staged: null` + `stagingError`; a missing folder is not created | Staging fail-soft |
 | 28 | A merged subject's staged element carries the post-redirect id | Staging + redirect |
+| 29 | Carries the subject's person-level sources, dropping refs to descriptions not returned (an `SD_*` target, a relative's full-URL ref) | Person-level refs |
+| 30 | Never carries FamilySearch's tags or attribution onto a ref | Person-level refs |
+| 31 | The living 204 stub carries no `sources` key | Living person |
 
 ### Smoke-test script
 
@@ -1017,11 +1015,9 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 
 ```bash
 cd packages/engine/mcp-server
-npx tsx dev/try-person-read.ts KNDX-MKG                         # Person only
-npx tsx dev/try-person-read.ts KNDX-MKG --relatives              # Person + family
-npx tsx dev/try-person-read.ts KNDX-MKG --sources                # Person + sources
-npx tsx dev/try-person-read.ts KNDX-MKG --relatives --sources    # Everything
-npx tsx dev/try-person-read.ts KNDX-MKG --relatives --project /tmp/p  # + stage it, and check the staged copy
+npx tsx dev/try-person-read.ts KNDX-MKG                    # Person, family, sources
+npx tsx dev/try-person-read.ts KNDX-MKG --project /tmp/p   # + stage it, and check the staged copy
+# --relatives and --sources are accepted and do nothing (author.py passes them)
 ```
 
 ---
@@ -1040,10 +1036,8 @@ cd packages/engine/mcp-server && npm run build && npm test
 npx @modelcontextprotocol/inspector node build/index.js
 ```
 
-- Call `person_read({ personId: "KNDX-MKG" })` — returns simplified person
-- Call `person_read({ personId: "KNDX-MKG", relatives: true })` — returns person + family
-- Call `person_read({ personId: "KNDX-MKG", sourceDescriptions: true })` — returns person + sources
-- Call `person_read({ personId: "KNDX-MKG", relatives: true, sourceDescriptions: true })` — returns all
+- Call `person_read({ personId: "KNDX-MKG" })` — returns person, family and sources, each person carrying its resolvable person-level `sources` refs
+- Call `person_read({ personId: "KNDX-MKG", relatives: false, sourceDescriptions: false })` — returns the same: both flags are ignored
 - Call `person_read` without logging in — returns auth error
 
 ### Manual Layer 2 (Claude Code)
@@ -1055,5 +1049,4 @@ the ID).
 - "Look up KNDX-MKG in the Family Tree" — Claude calls `person_read` with the ID
 - "Here is my ancestor: https://www.familysearch.org/tree/person/details/KNDX-MKG" —
   Claude extracts the ID from the URL
-- "Who are his family members?" — Claude calls `person_read` with `relatives: true`
-- "What sources are attached?" — Claude calls with `sourceDescriptions: true`
+- "Who are his family members?" / "What sources are attached?" — both are answered by one `person_read` call
