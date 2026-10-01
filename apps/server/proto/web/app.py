@@ -694,7 +694,7 @@ class PgStore:
         self, user_id: str, access_token_enc: str, refresh_token_enc: str | None, expires_at: datetime
     ) -> None:
         """One statement, ciphertext only. granted_at restarts on every sign-in and never
-        on refresh (U3's 24 h clock); a response without a refresh token keeps the one
+        on refresh (it records the sign-in); a response without a refresh token keeps the one
         already stored."""
         async with await self._connect() as conn:
             await conn.execute(
