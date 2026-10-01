@@ -8,7 +8,9 @@ final tree must ship its ``run-<ts>.ann.json`` in the same PR — grading is
 same-PR (the developer +
 genealogist teams grade every run they commit; docs/e2e-testing-guide.md
 "Grading a run"). A treeless run (crashed or skipped before a final tree) is
-exempt: there is nothing to grade. Scoped to run logs ADDED OR RENAMED into
+exempt: there is nothing to grade. A ``host_slept`` run is the second exemption
+(issue #2974): it HAS a tree but the judge is skipped by design, so no
+annotation is owed — see ``check_added_runlogs_graded``. Scoped to run logs ADDED OR RENAMED into
 the corpus via ``git diff --diff-filter=AR`` (BASE_SHA / HEAD_SHA), so a run
 promoted out of quarantine is caught; skipped when run outside a PR (env
 unset), so local runs still work.
@@ -469,6 +471,15 @@ def check_added_runlogs_graded(added: list[Path], head: str) -> list[str]:
     Detected by the absence of the ``run-<ts>.final-tree.gedcomx.json`` sibling,
     which is exactly the file the grade loader requires.
 
+    A ``host_slept`` run is the second exemption (issue #2974): unlike every
+    other committed run it HAS a tree yet is ungraded by design — the host slept
+    past the inactivity cap, so the judge was skipped and no annotation is owed.
+    It is the first committed-and-ungraded stop reason (``mcp_unavailable`` raises
+    before a result is built), so it is the one case treelessness does not cover;
+    keyed on ``stop_reason`` read from the head tree, and fails safe — an
+    unreadable/unparseable log reads as not-host_slept and still owes its
+    annotation.
+
     Both siblings resolve from the ``head`` tree, not the working directory: the
     run logs were selected from that tree too, and a sibling present on disk but
     uncommitted must not change the verdict (issue #2469). The two warn-only
@@ -483,6 +494,8 @@ def check_added_runlogs_graded(added: list[Path], head: str) -> list[str]:
         ann = slug_dir / f"{stem}.ann.json"
         if not _in_head_tree(head, tree):
             continue  # treeless run — nothing to grade
+        if (_read_at_head(head, rel) or {}).get("stop_reason") == "host_slept":
+            continue  # host slept past the cap: the judge is skipped by design (#2974)
         if not _in_head_tree(head, ann):
             violations.append(
                 f"run log '{rel}' produced a final tree but no committed "
