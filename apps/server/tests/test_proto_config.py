@@ -13,6 +13,9 @@ topology exists to make, so a well-meaning edit cannot quietly undo one:
   compose default and the one proto-demo-auto exports -- and there is NO redrive
   policy -- ChangeMessageVisibility never resets the receive count, so any
   maxReceiveCount would dead-letter a legitimately long turn;
+- U5's interim sqsd values (proto/eb-worker/README.md): the Beanstalk template
+  under eb-worker/ tells the worker the same numbers it gives sqsd, the sqsd overlay
+  mirrors them, and the base profile keeps unlimited retries with the sweep off;
 - the schema creates every table the plan names and not committed_batches
   (cut 2026-09-10);
 - the D16 tool server runs read-only with /tmp its only tmpfs (no /projects: project
@@ -28,6 +31,7 @@ deadLettersQueue or committed_batches is not an offence.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import re
@@ -43,6 +47,12 @@ PROTO = Path(__file__).resolve().parents[1] / "proto"
 REPO = Path(__file__).resolve().parents[3]
 COMPOSE = PROTO / "docker-compose.yml"
 CEILING_OVERRIDE = PROTO / "docker-compose.ceiling.yml"
+SQSD_OVERLAY = PROTO / "docker-compose.sqsd.yml"
+EB_WORKER = PROTO / "eb-worker"
+SQSD_TEMPLATE = EB_WORKER / ".ebextensions" / "01-sqsd.config"
+EB_NGINX = EB_WORKER / ".platform" / "nginx" / "conf.d" / "01-worker-timeouts.conf"
+WORKER_PY = PROTO / "worker" / "worker.py"
+SMOKE_PY = PROTO / "smoke.py"
 ELASTICMQ_CONF = PROTO / "elasticmq.conf"
 SQL_DIR = PROTO / "sql"
 MAKEFILE = Path(__file__).resolve().parents[3] / "Makefile"
@@ -459,6 +469,232 @@ def test_max_nudges_reads_the_environment_and_never_silently_disables_itself(env
 
 def test_elasticmq_has_no_redrive_policy():
     assert "deadLettersQueue" not in _hocon(), "no redrive policy: any maxReceiveCount dead-letters a long turn"
+
+
+# ── U5: interim sqsd values ─────────────────────────────────────────────────────
+
+BEANSTALK_MAX_INACTIVITY_S = 36000  # the sqsd options table: InactivityTimeout "1 to 36000"
+SQS_MAX_VISIBILITY_S = 43200
+# Beanstalk's worker stop grace is unmeasured (U13); systemd's default stop timeout is
+# the bound the template is sized against until then.
+BEANSTALK_STOP_GRACE_S = 90
+STOP_GRACE_MARGIN_S = 2  # worker stop_grace_period above SHUTDOWN_GRACE_S + RELEASE_BUDGET_S (main()'s join slack)
+CONTAINER_RESTART_S = 10  # a `docker restart` bringing proto-worker back up
+_SQSD_ENV_OPTIONS = {
+    "SQSD_MAX_RETRIES": "MaxRetries",
+    "SQSD_VISIBILITY_TIMEOUT_S": "VisibilityTimeout",
+    "SQSD_RETENTION_PERIOD_S": "RetentionPeriod",
+}
+
+
+def _sqsd_template() -> tuple[dict[str, int | str], dict[str, str]]:
+    """The template's sqsd options (numbers as ints) and its application environment."""
+    settings = _load(SQSD_TEMPLATE)["option_settings"]
+    sqsd = {k: (int(v) if str(v).isdigit() else str(v))
+            for k, v in settings["aws:elasticbeanstalk:sqsd"].items()}
+    env = {str(k): str(v) for k, v in settings["aws:elasticbeanstalk:application:environment"].items()}
+    return sqsd, env
+
+
+def _worker_path() -> str:
+    match = re.search(r'self\.path != "([^"]+)"', WORKER_PY.read_text(encoding="utf-8"))
+    assert match, "worker.py no longer 404s on a literal path; re-derive the POST path here"
+    return match.group(1)
+
+
+def _worker_shutdown_grace_s() -> float:
+    match = re.search(r"""["']SHUTDOWN_GRACE_S["']\s*,\s*["']?(\d+(?:\.\d+)?)""",
+                      WORKER_PY.read_text(encoding="utf-8"))
+    assert match, "worker.py does not read SHUTDOWN_GRACE_S with a literal default"
+    return float(match.group(1))
+
+
+def _worker_release_budget_s() -> float:
+    match = re.search(r"^RELEASE_BUDGET_S = (\d+(?:\.\d+)?)$", WORKER_PY.read_text(encoding="utf-8"), re.M)
+    assert match, "worker.py no longer defines RELEASE_BUDGET_S as a literal"
+    return float(match.group(1))
+
+
+def _compose_seconds(raw: object) -> float:
+    raw = str(raw or "")
+    parts = _COMPOSE_DURATION.findall(raw)
+    assert parts and _COMPOSE_DURATION.sub("", raw) == "", f"not a compose duration: {raw!r}"
+    return sum(int(n) * _COMPOSE_UNIT_S[u] for n, u in parts)
+
+
+def _worker_stop_grace_s() -> float:
+    return _compose_seconds(_service(_load(COMPOSE), "worker").get("stop_grace_period"))
+
+
+def _overlay_defaults(service: str) -> dict[str, str]:
+    return {k: _compose_default(v)[1] for k, v in _env(_service(_load(SQSD_OVERLAY), service)).items()}
+
+
+def test_sqsd_template_holds_the_interim_values():
+    sqsd, _ = _sqsd_template()
+    assert sqsd["InactivityTimeout"] == BEANSTALK_MAX_INACTIVITY_S, "sqsd cuts only a run past 10 h"
+    assert BEANSTALK_MAX_INACTIVITY_S < sqsd["VisibilityTimeout"] <= SQS_MAX_VISIBILITY_S
+    assert sqsd["MaxRetries"] == 5
+    assert sqsd["ErrorVisibilityTimeout"] == 300
+    assert sqsd["HttpPath"] == _worker_path(), "the worker 404s every other path"
+    assert sqsd["HttpConnections"] == 2
+    assert sqsd["RetentionPeriod"] == 345600
+
+
+def test_sqsd_template_env_matches_its_sqsd_options():
+    """The worker's last-receive close and sweep read these; a value that drifts from sqsd's
+    closes a receive early or disables the fast close."""
+    sqsd, env = _sqsd_template()
+    for var, option in _SQSD_ENV_OPTIONS.items():
+        assert var in env, f"the template does not tell the worker {var}"
+        assert int(env[var]) == sqsd[option], f"{var}={env[var]} but sqsd {option}={sqsd[option]}"
+    assert int(env["SWEEP_INTERVAL_S"]) > 0, "Beanstalk runs the dead-letter sweep"
+
+
+def test_worker_nginx_read_timeout_exceeds_inactivity():
+    """At equal values nginx's 504 would redeliver a running message."""
+    text = _strip_line_comments(EB_NGINX.read_text(encoding="utf-8"), ("#",))
+    match = re.search(r"proxy_read_timeout\s+(\d+)s?\s*;", text)
+    assert match, "the worker template must raise nginx's proxy_read_timeout"
+    sqsd, _ = _sqsd_template()
+    assert int(match.group(1)) > sqsd["InactivityTimeout"]
+
+
+def test_error_visibility_exceeds_the_worker_stop_grace():
+    """A redelivery after a SIGTERM's 500 must never meet the old process's CLI."""
+    sqsd, _ = _sqsd_template()
+    assert sqsd["ErrorVisibilityTimeout"] > BEANSTALK_STOP_GRACE_S
+    assert int(_overlay_defaults("shim")["ERROR_VISIBILITY_S"]) > _worker_stop_grace_s()
+
+
+def test_worker_stop_grace_covers_shutdown_grace():
+    """Compose SIGKILLs at stop_grace_period; the worker's own shutdown must finish first."""
+    needed = _worker_shutdown_grace_s() + _worker_release_budget_s() + STOP_GRACE_MARGIN_S
+    assert _worker_stop_grace_s() >= needed
+
+
+def test_no_compose_file_overrides_the_worker_shutdown_grace():
+    """The grace tests read worker.py's literal default; a compose override would make that
+    default not the value the container runs with, and they would pass regardless."""
+    files = sorted(PROTO.glob("docker-compose*.yml"))
+    assert COMPOSE in files and SQSD_OVERLAY in files
+    for path in files:
+        worker = (_load(path).get("services") or {}).get("worker")
+        if worker is not None:
+            assert "SHUTDOWN_GRACE_S" not in _env(worker), f"{path.name} sets the worker's SHUTDOWN_GRACE_S"
+
+
+def test_sqsd_overlay_touches_only_sqsd_variables():
+    overlay = _load(SQSD_OVERLAY)
+    assert set(overlay["services"]) == {"worker", "shim"}
+    for name, service in overlay["services"].items():
+        assert set(service) == {"environment"}, f"the overlay sets {name}'s environment only"
+    assert set(_env(overlay["services"]["worker"])) == {*_SQSD_ENV_OPTIONS, "SWEEP_INTERVAL_S", "QUEUE_URL"}
+    assert set(_env(overlay["services"]["shim"])) == {
+        "KILL_ON_READ_TIMEOUT", "READ_TIMEOUT_S", "VISIBILITY_TIMEOUT_S",
+        "ERROR_VISIBILITY_S", "SQSD_MAX_RETRIES", "DLQ_URL",
+    }
+    sqsd, _ = _sqsd_template()
+    worker, shim = _overlay_defaults("worker"), _overlay_defaults("shim")
+    for var, option in _SQSD_ENV_OPTIONS.items():
+        assert int(worker[var]) == sqsd[option], f"the overlay's {var} default is not the template's"
+    assert int(shim["SQSD_MAX_RETRIES"]) == sqsd["MaxRetries"]
+    assert int(shim["VISIBILITY_TIMEOUT_S"]) == sqsd["VisibilityTimeout"]
+    assert int(shim["ERROR_VISIBILITY_S"]) == sqsd["ErrorVisibilityTimeout"]
+    assert int(shim["READ_TIMEOUT_S"]) == sqsd["InactivityTimeout"]
+    assert shim["KILL_ON_READ_TIMEOUT"] == "false", "sqsd abandons at InactivityTimeout, it never kills"
+    assert shim["DLQ_URL"].rsplit("/", 1)[-1] == "turns-dlq"
+    var, default = _compose_default(_env(overlay["services"]["worker"])["QUEUE_URL"])
+    assert var == "WORKER_QUEUE_URL", "smoke.py empties the worker's queue through WORKER_QUEUE_URL"
+    assert default == _env(_service(_load(COMPOSE), "worker"))["QUEUE_URL"]
+
+
+def test_base_profile_keeps_unlimited_retries():
+    compose = _load(COMPOSE)
+    for name in ("worker", "shim"):
+        var, default = _compose_default(_env(_service(compose, name))["SQSD_MAX_RETRIES"])
+        assert var == "SQSD_MAX_RETRIES" and int(default) == 0, f"{name}: base retries are unlimited"
+
+
+def test_base_profile_disables_the_sweep():
+    """Base compose runs on the persistent proto-pgdata volume: a sweep there would close
+    old smoke leftovers and release their held messages into paid turns."""
+    for name, service in _load(COMPOSE)["services"].items():
+        env = _env(service)
+        assert "SQSD_RETENTION_PERIOD_S" not in env, f"{name}: the sweep's backstop must stay off"
+        if "SQSD_MAX_RETRIES" in env:
+            assert int(_compose_default(env["SQSD_MAX_RETRIES"])[1]) == 0, f"{name}: the fast path must stay off"
+        if "SWEEP_INTERVAL_S" in env:
+            assert int(_compose_default(env["SWEEP_INTERVAL_S"])[1]) == 0, f"{name}: the sweep must stay off"
+
+
+def test_smoke_error_visibility_exceeds_shutdown_grace():
+    """The smoke's `sigterm` case restarts the worker mid-turn; its redelivery must arrive
+    after the old process is gone, whether it exited on its own or was SIGKILLed."""
+    match = re.search(r"^SIGTERM_ERROR_VISIBILITY_S\s*=\s*(\d+)", SMOKE_PY.read_text(encoding="utf-8"), re.M)
+    assert match, "smoke.py must define SIGTERM_ERROR_VISIBILITY_S"
+    gone_by = max(_worker_shutdown_grace_s(), _worker_stop_grace_s()) + CONTAINER_RESTART_S
+    assert int(match.group(1)) > gone_by
+
+
+def _smoke_cfg(smoke):
+    cfg = smoke.Config()
+    cfg.pg_dsn, cfg.endpoint, cfg.queue, cfg.worker_container = "dsn", "http://sqs", "turns", "proto-worker"
+    return cfg
+
+
+@pytest.mark.parametrize("fail_at", ["overlay_up", "purge"])
+def test_smoke_sqsd_profile_always_restores_the_base_profile(monkeypatch, fail_at):
+    """An overlay `up` that fails after recreating the containers, or a purge that fails,
+    must not leave SQSD_MAX_RETRIES=1 and the sweep live for every later turn."""
+    from proto import smoke
+
+    ups: list[tuple] = []
+
+    def compose(*args, files=(smoke.COMPOSE,), env=None):
+        ups.append(tuple(files))
+        if fail_at == "overlay_up" and smoke.SQSD in files:
+            raise smoke.subprocess.CalledProcessError(1, "compose up --wait")
+        return ""
+
+    def purge_queue(*, endpoint, queue):
+        if fail_at == "purge":
+            raise smoke.SqsError(f"purge {queue}")
+
+    monkeypatch.setattr(smoke, "compose", compose)
+    monkeypatch.setattr(smoke, "purge_queue", purge_queue)
+    with contextlib.suppress(smoke.subprocess.CalledProcessError):
+        with smoke.sqsd_profile(_smoke_cfg(smoke)):
+            pass
+    assert ups[-1] == (smoke.COMPOSE,), f"the base profile was not restored: {ups}"
+
+
+def test_smoke_preflight_names_the_missing_dlq(monkeypatch):
+    from proto import smoke
+
+    def queue_url(endpoint, queue):
+        if queue == smoke.DLQ:
+            raise smoke.SqsError(f"no queue {queue}")
+        return f"{endpoint}/{queue}"
+
+    monkeypatch.setattr(smoke, "inspect_worker", lambda cfg: (0, "t"))
+    monkeypatch.setattr(smoke, "db_one", lambda cfg, sql, params: (1,))
+    monkeypatch.setattr(smoke, "queue_url", queue_url)
+    problem = smoke.preflight(_smoke_cfg(smoke))
+    assert problem and "--force-recreate elasticmq" in problem and smoke.DLQ in problem
+    monkeypatch.setattr(smoke, "queue_url", lambda endpoint, queue: f"{endpoint}/{queue}")
+    assert smoke.preflight(_smoke_cfg(smoke)) is None
+
+
+def test_sqsd_overlay_disables_the_sweep_by_default():
+    """The overlay's sweep acts on the whole database; only a run that asks turns it on."""
+    var, default = _compose_default(_env(_service(_load(SQSD_OVERLAY), "worker"))["SWEEP_INTERVAL_S"])
+    assert var == "SWEEP_INTERVAL_S" and int(default) == 0
+
+
+def test_elasticmq_has_a_plain_dlq():
+    text = _hocon()
+    assert re.search(r"\bturns-dlq\s*\{", text), "the shim's DLQ_URL needs a turns-dlq queue"
 
 
 # ── schema ──────────────────────────────────────────────────────────────────────

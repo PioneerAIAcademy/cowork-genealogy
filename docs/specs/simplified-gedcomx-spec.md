@@ -129,6 +129,7 @@ Array of person objects.
 | `living` | boolean | no | True when FamilySearch reports the person as living. `person_read` sets it on every person it returns; hand-built trees may omit it. Living people must never appear in a committed e2e fixture (FamilySearch ToS) — the living-person gate in `eval/harness/e2e/author.py` treats both `true` **and** a missing field as a refusal |
 | `names` | object[] | yes | At least one name. See below |
 | `facts` | object[] | no | Person facts (birth, death, etc.). May be empty or omitted for stub persons |
+| `sources` | object[] | no | Source references (Section 4.4) to the sources attached to the person as a whole. `person_read` carries FamilySearch's person-level attachments here |
 | `ark` | string | no | Persistent FamilySearch ARK in canonical form (e.g. `ark:/61903/4:1:KGS8-LY1`). The flat lift of full GedcomX's `identifiers["http://gedcomx.org/Persistent"][0]`, with the resolver-URL prefix stripped. Required by tools whose API responses reference persons by ARK (`matchTwoExamples`, future `person_read`/`cets`). Omit on synthesized stub persons with no real-world FS persona. See Section 4.6 |
 
 **Stub persons:** A minimal valid person requires `id`, `gender` (which may be `Unknown`), and one name with at least a `surname`. `given` may be an empty string when only the surname is known. `facts` may be omitted entirely. Example: `{ "id": "I1", "gender": "Unknown", "names": [{ "id": "N1", "preferred": true, "given": "", "surname": "Flynn" }] }`
@@ -229,22 +230,31 @@ for fixture authoring, and both validation gates reject a verbatim copy.
 
 **Legacy documents are healed at read, not rejected.** Trees persisted before
 the validator closed these shapes (`preferred: false` written by the old
-merge core, top-level `places[]`, person-level `sources`, unknown keys,
-missing ids, string quality values) are repaired in memory by every engine
+merge core, top-level `places[]`, unknown keys, missing ids, string quality
+values, a person-level ref that names no source) are repaired in memory by every engine
 tool that reads `tree.gedcomx.json` (`src/validation/tree-sanitize.ts`), with
 one warning per healed class; the next successful tree write persists the
-healed document. Only unambiguous repairs are made — dangling references,
-swapped relationship endpoint keys, and duplicate ids still fail validation.
+healed document. Only unambiguous repairs are made — dangling references on
+names, facts and relationships, swapped relationship endpoint keys, and
+duplicate ids still fail validation. A dangling person-level ref is dropped:
+it attests no particular value, and the healer used to drop every person-level
+ref, so dropping only the ones that resolve to nothing loses less.
 
 ### 4.4 Source References
 
-Source references appear on names, facts, and relationships — deliberately
-**not** on persons. Full GedcomX allows person-level source references (a
-FamilySearch record persona typically carries one pointing at its record),
-but in the tree format every reference hangs off the specific name, fact, or
-relationship it attests; the merge tools strip person-level refs from
-candidates rather than carry them (see `merge-gedcomx-spec.md` §6.3). They
-link an assertion to a source description with a locator.
+Source references appear on persons, names, facts, and relationships, and link
+the holder to a source description with a locator.
+
+**On a person, a ref says only that the source is attached to that person.**
+FamilySearch attributes sources at the person level and essentially nowhere
+else (lead probe, 2026-09-20: 25 of 25 persons carry them, 0 of 157 facts and
+0 of 31 names), so `person_read` carries them here rather than discarding the
+only attribution it has. FamilySearch's `tags` on these refs are not carried: a
+`Name` tag says the record carries *a* name for the person, not *this* name,
+so it cannot attest a value, and 86% of refs carry none. Which source supports
+which name or fact is not decided here; that is source evaluation's job. The
+merge tools carry person-level refs and fold them on a collapse
+(`merge-gedcomx-spec.md` §6.3).
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -257,7 +267,7 @@ link an assertion to a source description with a locator.
 Each fact carries two date fields:
 
 - **`date`** — the date string as it was originally written. Whatever a contributor typed in the raw GedcomX (`fact.date.original`) is preserved here verbatim. LLM-authored stub facts populate `date` directly with a human-readable string.
-- **`standard_date`** — a canonical GEDCOM-form sidecar produced by the converter (e.g. `12 Mar 1908`, `Abt 1850`, `Bef Oct 1855`, `Bet 1917 and 1918`). Downstream tools that need to compare or order dates should read `standard_date` rather than re-parsing `date` each time. Omitted when the standardizer cannot parse the input.
+- **`standard_date`** — a canonical GEDCOM-form sidecar produced by the converter (e.g. `12 Mar 1908`, `Abt 1850`, `Bef Oct 1855`, `Bet 1917 and 1918`). Downstream tools that need to compare or order dates should read `standard_date` rather than re-parsing `date` each time. Omitted when the standardizer cannot parse the input. **It never emits a partial:** if any word of `date` is unrecognized, `standard_date` is omitted rather than built from the words it did read, and it never carries a day without a month. So `13 ene 1752` gives `13 Jan 1752` and `1872 AGE 3 YRS` gives no sidecar, never `3 1872`. Connector words the date vocabulary knows, such as English `of` and `on` and Spanish and Portuguese `de` in `22 de abril de 1838`, count as read, and the legal idioms `on or about`, `on or before` and `on or after` read as `Abt`, `Bef` and `Aft`. A trailing parenthetical is an annotation, not part of the date, and is carried through verbatim (`~1845 (?)` gives `Abt 1845 (?)`).
 
 The standardizer recognizes the patterns below (and many freeform variants). LLM-authored skills should prefer these patterns in `date`; the converter will produce a matching `standard_date` when it can:
 
@@ -270,7 +280,7 @@ The standardizer recognizes the patterns below (and many freeform variants). LLM
 | `before YYYY` | `before 1850` | `/+1850` | Before a date |
 | `after YYYY` | `after 1840` | `+1840/` | After a date |
 | `YYYY-YYYY` | `1840-1850` | `+1840/+1850` | Date range |
-| Free text | `about Spring 1845` | (best-effort) | Unstructured — conversion function attempts to extract year and qualifier |
+| Free text | `about Spring 1845` | (none) | Unstructured. Any word the standardizer does not recognize (here `Spring`) omits `standard_date`; `date` still keeps the text verbatim |
 
 Reverse conversion (simplified → raw): only `date` is restored into `fact.date.original`. `standard_date` is dropped — it is a simplified-format-only sidecar.
 

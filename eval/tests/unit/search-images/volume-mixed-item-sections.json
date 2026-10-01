@@ -5,10 +5,10 @@
     "name": "Recognize a mixed film bundling several record sets",
     "type": "positive",
     "description": "volume_search returns the right browse-only film (008116090) whose coverages[] lists THREE record sets filmed together as separate item sections — Wills and Estate Records, Land and Property Deeds, and Loose Probate Papers — plus a wrong-type Schuylkill tax volume (007512883) as a decoy. The will the user wants is one item-section WITHIN the mixed film, not the whole volume. This covers the reviewer's second case: a film/volume often contains several books or record sets filmed together (a will book, land records, loose probate files) as separate item sections. The gradeable behavior is: pick 008116090 (not the tax volume), recognize from coverages[] that the film is mixed and the will is one section within it, frame the browse accordingly, call image_search, and log. image_search returns the whole film with no item-section filter and page reads are delegated to the image-reader subagent (which returns no content in the harness), so isolating the exact will pages is out of scope here.",
-    "tags": ["browse", "volume-selection", "mixed-volume", "item-sections", "scoping"]
+    "tags": ["browse", "volume-selection", "mixed-volume", "item-sections", "scoping", "direct-arm"]
   },
   "input": {
-    "user_message": "Browse the unindexed Schuylkill County, Pennsylvania probate film for Thomas Flynn's will and list its images so I can see what's covered.",
+    "delegation": "Browse the unindexed Schuylkill County, Pennsylvania probate film for Thomas Flynn's will and list its images.\n\nstandardPlace: Schuylkill, Pennsylvania, United States\nlooking_for: Thomas Flynn's will\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": ["volume-search-schuylkill-mixed-items", "image-search-schuylkill-mixed-items", "image-transcribe-schuylkill-probate-flynn-will", "image-transcribe-any"],

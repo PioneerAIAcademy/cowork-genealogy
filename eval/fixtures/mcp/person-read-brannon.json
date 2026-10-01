@@ -1,11 +1,7 @@
 {
   "tool": "person_read",
   "description": "FamilySearch tree person read for Ellen Brannon (the mother) WITH relatives and source descriptions. Her tree holds two children born before the 1900 census (1892, 1895) plus one born between the censuses (1904). Used by the living-cumulative init-project test: the 1900 (3 born / 3 living) and 1910 (4 born / 4 living) counts, supplied via the user message, leave one living child missing at BOTH censuses (born before 1900, still alive in 1910) — it must be counted as one missing child, not two, and there are no deceased children (born equals living at both censuses).",
-  "args": {
-    "personId": "BRNN-MOM",
-    "relatives": true,
-    "sourceDescriptions": true
-  },
+  "args": { "personId": "BRNN-MOM" },
   "response": {
     "persons": [
       {

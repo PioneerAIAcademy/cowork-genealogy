@@ -1118,12 +1118,12 @@ export function personaReachable(entry: any, research: any): boolean {
 /** Whether this tree person exists only because of the record now being linked.
  *
  *  The lead's step-3 wording is "a tree person whose only source ref is this
- *  record", and it is NOT decidable from the tree alone: `TREE_PERSON_FIELDS`
- *  has no `sources`, refs hang off `names[]`/`facts[]`, and a tree source
+ *  record", and it is NOT decidable from the tree alone: refs hang off the
+ *  person itself, its `names[]` and its `facts[]`, and a tree source
  *  description carries `id/title/citation/author/url` and no record id. So the
  *  walk is six hops and ends in `research.json`:
  *
- *    tree names[]/facts[].sources[].ref -> tree sources[].id
+ *    tree person/names[]/facts[].sources[].ref -> tree sources[].id
  *      -> research sources[].gedcomx_source_description_id
  *      -> research sources[].id -> assertions[].source_id
  *      -> assertions[].record_id
@@ -1167,6 +1167,11 @@ export function mintedFromThisRecord(
   const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
   if (!person) return false;
   const refs = new Set<string>();
+  // Person-level refs count too (#2696): "only source ref" means every ref the
+  // person carries, and person_read attaches FamilySearch's at this level.
+  for (const src of (person.sources ?? []) as any[]) {
+    if (typeof src?.ref === "string" && src.ref !== "") refs.add(src.ref);
+  }
   for (const n of (person.names ?? []) as any[]) {
     for (const src of (n?.sources ?? []) as any[]) {
       if (typeof src?.ref === "string" && src.ref !== "") refs.add(src.ref);
