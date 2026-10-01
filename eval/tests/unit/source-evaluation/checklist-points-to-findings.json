@@ -1,0 +1,39 @@
+{
+  "test": {
+    "id": "ut_source_evaluation_o3c",
+    "skill": "source-evaluation",
+    "name": "A checklist line that restates a finding points to the finding instead of repeating it",
+    "type": "positive",
+    "description": "Issue #2796 finding 3 (florencemashipei on PR #2728). The profile checklist block prints FamilySearch's issues under 'suggestions, not errors'. A CONSISTENCY sentence is a profile-vs-source mismatch that names the source, so where it matches a finding the audit made, printing it verbatim calls that finding a suggestion, and for a misattributed source it reopens what the audit settled. D4's no-escalation ruling stands, so the checklist still carries no action. Where a line matches a finding, the block points to the finding instead. The fixture (person-quality-hole-detail-overlap) adds two CONSISTENCY DATE_MISMATCH issues to q8p's profile. One is the death date against the Minnesota Death Index (the index-error finding), and one is the birth date against the 1885 state census (one field of the misattribution finding). No other fixture carries a CONSISTENCY or COHERENCE issue. Gated by test_checklist_does_not_restate_a_finding.",
+    "tags": [
+      "index-discrepancy",
+      "doctrine",
+      "quality-detail",
+      "checklist-overlap",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Have a look at the sources attached to Christian P. Hole (KD96-TV2) — are they actually right, or is something mis-indexed?\n\nprojectPath: <workspace>",
+    "scenario": "christian-hole-quality"
+  },
+  "mcp_fixtures": [
+    "person-read-hole-attached-sources",
+    "record-read-hole-1900-census",
+    "record-read-hole-mn-death-index",
+    "record-read-hole-1885-state-census",
+    "source-attachments-hole-1885",
+    "person-read-hole-wx7-otter-tail",
+    "person-quality-hole-detail-overlap"
+  ],
+  "index_error_source": "Minnesota Death Index",
+  "judge_context": [
+    "Should call person_read, record_read each source carrying a record ARK, and person_quality with detail: true for KD96-TV2.",
+    "The two real findings must be reported as findings: the 1885 state census misattribution (it belongs to KD96-WX7) and the Minnesota Death Index discrepancy (1954 indexed against the profile's 1945).",
+    "person_quality returned four issues. Two are CONSISTENCY mismatches that restate those findings: the death date against the Minnesota Death Index, and the birth date against the 1885 state census. The checklist block must not print either sentence as a suggestion. In their place it should point to the finding each one matches (for example, a line saying the death-date mismatch FamilySearch flags is finding N above). A reply that prints them verbatim under 'suggestions, not errors' has called an index error a suggestion and reopened a source it already assigned to someone else.",
+    "The pointer must add no action and no escalation. The checklist still carries no recommended action of its own.",
+    "The other two issues, the marriage place missing a city and the marriage having no tagged sources, match no finding and must still be printed as returned, grouped under their scoreType. VERIFIABILITY must come before COMPLETENESS, and where the CONSISTENCY group appears it comes before both.",
+    "The checklist must sit after the numbered findings and outside the stated count, and no numeric score, band or percentage may be stated.",
+    "Grade the reply against the four-fact profile person_read returned (Birth 1875, Marriage 1898, one Residence 1900, Death 1945, no burial) and this test's 4-issue checklist. The scenario README describes a 7-issue captured fixture used by a different suite; that is not what this test runs."
+  ]
+}

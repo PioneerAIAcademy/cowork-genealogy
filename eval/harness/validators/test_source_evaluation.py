@@ -481,3 +481,36 @@ def test_scope_handback_calls_no_tool(tool_calls, text_response, test, agent_ret
     assert destinations[0] in named, (
         f"expected a `Hand-back: {destinations[0]}` line; the reply named {named or 'no hand-back'}"
     )
+
+
+def test_checklist_does_not_restate_a_finding(tool_calls, text_response, test, agent_returns=None):
+    """Tag-gated (`checklist-overlap`), issue #2796 finding 3.
+
+    A CONSISTENCY sentence from `person_quality` names a profile-vs-source
+    mismatch. Where it matches a finding, printing it verbatim in the checklist
+    block files that finding under "suggestions, not errors". The test declares
+    that every CONSISTENCY issue in its fixture matches a finding, so none may
+    appear verbatim in the reply. The sentences are read off the run's own
+    `person_quality` response rather than written into this file.
+    """
+    if "checklist-overlap" not in (test.get("tags") or []):
+        pytest.skip("test does not declare checklist-overlap")
+    sentences = [
+        issue["sentence"]
+        for c in (tool_calls or [])
+        if (c.get("tool") or "").endswith("person_quality") and isinstance(c.get("response"), dict)
+        for issue in c["response"].get("issues") or []
+        if issue.get("scoreType") == "CONSISTENCY" and issue.get("sentence")
+    ]
+    assert sentences, (
+        "no CONSISTENCY issue reached the run, so this guard checks nothing: either "
+        "person_quality was not called or its fixture lost the overlap issues"
+    )
+    from harness.skill_runner import subject_reply_text
+
+    reply = " ".join(subject_reply_text(agent_returns, text_response, "source-evaluation", test).split())
+    restated = [s for s in sentences if " ".join(s.split()) in reply]
+    assert not restated, (
+        "the checklist restated a finding instead of pointing to it: "
+        f"{restated[0][:160]!r}"
+    )

@@ -564,3 +564,51 @@ def test_a_detach_on_a_continuation_line_stays_with_its_bullet():
     except AssertionError:
         return
     raise AssertionError("a continuation line's detach was split off its source")
+
+
+# --- the checklist does not restate a finding (o3c, issue #2796 finding 3) -
+
+_restate = _VALIDATOR.test_checklist_does_not_restate_a_finding
+_OVERLAP = json.loads(
+    (_REPO / "eval/fixtures/mcp/person-quality-hole-detail-overlap.json").read_text(encoding="utf-8")
+)
+_OV_CALLS = [{"tool": "mcp__genealogy__person_quality", "response": _OVERLAP["response"]}]
+_OV_TEST = {"tags": ["checklist-overlap", "direct-arm"], "delegation": "audit KD96-TV2"}
+_DEATH_LINE = next(i["sentence"] for i in _OVERLAP["response"]["issues"] if i["conclusionType"] == "DEATH")
+
+
+def test_checklist_pointer_passes():
+    reply = (
+        "From FamilySearch's own profile checklist:\n  CONSISTENCY\n"
+        "    · FamilySearch flags this death date too — finding 1 above.\n"
+        "    · It flags the birth date against the 1885 census — finding 2 above.\n"
+        "  VERIFIABILITY\n    · The marriage has no tagged sources."
+    )
+    _restate(_OV_CALLS, "", _OV_TEST, agent_returns=_returns(reply))
+
+
+def test_checklist_verbatim_restatement_fails_even_rewrapped():
+    wrapped = _DEATH_LINE.replace(", which", ",\n      which")
+    for line in (_DEATH_LINE, wrapped):
+        try:
+            _restate(_OV_CALLS, "", _OV_TEST, agent_returns=_returns("CONSISTENCY\n    · " + line))
+        except AssertionError as exc:
+            assert "restated a finding" in str(exc)
+            continue
+        raise AssertionError(f"a verbatim restatement passed: {line!r}")
+
+
+def test_checklist_guard_fails_when_no_consistency_issue_reached_the_run():
+    try:
+        _restate([], "", _OV_TEST, agent_returns=_returns("anything"))
+    except AssertionError as exc:
+        assert "checks nothing" in str(exc)
+        return
+    raise AssertionError("an empty sweep passed")
+
+
+def test_checklist_guard_skips_an_untagged_test():
+    import pytest
+
+    with pytest.raises(pytest.skip.Exception):
+        _restate(_OV_CALLS, "", {"tags": ["direct-arm"]})
