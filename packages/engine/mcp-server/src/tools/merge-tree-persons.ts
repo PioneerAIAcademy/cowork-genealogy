@@ -84,12 +84,12 @@ export async function mergeTreePersons(
     // 5b. Warning gate: refuse if the merge introduces unjustified warnings.
     //     Pass collapseMap so pre-existing warnings on collapsed persons are
     //     matched against their survivor and not read as introduced.
-    const warningRefusal = await checkWarningGate(
+    const mergeGateResult = await checkWarningGate(
       tree, merged, research, projectPath,
       input.warningJustifications, "merge_tree_persons",
       collapseMap,
     );
-    if (warningRefusal) return warningRefusal as any;
+    if (mergeGateResult && "ok" in mergeGateResult) return mergeGateResult as any;
 
     // 6. Derive the compact summary.
     const pairs = derivePairSummaries(merges, preSurvivors, preCollapsed, merged);

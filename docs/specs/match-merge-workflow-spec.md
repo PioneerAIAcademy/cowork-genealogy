@@ -276,6 +276,12 @@ particular is strong evidence the pairing is wrong.
 
 ## 7. Merge-mode warnings primitive
 
+> **Warning gate (issue #2840).** `merge_tree_persons` now refuses a merge that
+> introduces unjustified genealogical warnings. The gate runs after validation
+> and before the write, using `introduced-warnings.ts` to compute the delta.
+> Pre-existing warnings on collapsed persons are remapped to survivors before
+> diffing. `merge_warnings` is kept as an optional preview — it is not retired.
+
 The analog of `MobWarnings.getWarnings(targetMob, candidateMob, mergedMob,
 isFinalWarnings)` (`warnings.java`). The current TS port
 (`packages/engine/mcp-server/src/tools/person-warnings.ts`) implements only the

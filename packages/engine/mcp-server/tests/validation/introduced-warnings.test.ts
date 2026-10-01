@@ -117,6 +117,31 @@ describe("introducedWarnings", () => {
     expect(result.unjustified.length).toBeGreaterThan(0);
   });
 
+  it("(e) merge: collapsed person's old warning needs no justification (remap)", () => {
+    // Before: both I1 (survivor) and I2 (collapsed) have an implausible lifespan.
+    // The merge collapses I2 into I1, keeping I1's facts — I2 disappears.
+    // The warning on I1 was pre-existing, so the merge introduces nothing.
+    const before = tree([
+      implausiblePerson("I1", "John", "Smith"),
+      implausiblePerson("I2", "Jane", "Smith"),
+    ]);
+    // After merge: I2 is gone, I1 (survivor) still has the same implausible dates
+    const after = tree([implausiblePerson("I1", "John", "Smith")]);
+
+    // collapseMap: I2 was collapsed into I1
+    const collapseMap = new Map([["I2", "I1"]]);
+
+    // I1's warning was pre-existing (same facts, same person) so needs none.
+    // I2's warning is remapped to I1 — since I1 already had the same warning
+    // type before, the delta is empty.
+    const result = introducedWarnings(
+      before, after, ["I1", "I2"], undefined, collapseMap,
+    );
+
+    expect(result.unjustified).toHaveLength(0);
+    expect(result.allIntroduced).toHaveLength(0);
+  });
+
   it("(f) justification with stale id is detected", () => {
     const before = tree([plausiblePerson("I1", "John", "Smith")]);
     const after = tree([implausiblePerson("I1", "John", "Smith")]);

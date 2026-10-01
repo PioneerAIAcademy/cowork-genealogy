@@ -753,7 +753,7 @@ export async function checkWarningGate(
   warningJustifications: WarningJustificationInput[] | undefined,
   toolName: string,
   collapseMap?: Map<string, string>,
-): Promise<{ ok: false; reason: string; warnings: any[] } | null> {
+): Promise<{ ok: false; reason: string; message?: string; warnings: any[] } | { justificationsPersisted: boolean } | null> {
   const touchedIds = computeTouchedPersonIds(beforeTree, afterTree);
   if (touchedIds.length === 0) return null;
 
@@ -815,6 +815,7 @@ export async function checkWarningGate(
         recorded_at: now,
       }));
       research.warning_justifications = [...existing, ...newEntries];
+      return { justificationsPersisted: true };
     }
   }
 
@@ -888,14 +889,15 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
       }
 
       // Warning gate: refuse if the write introduces unjustified warnings
-      const warningRefusal = await checkWarningGate(
+      const warningGateResult = await checkWarningGate(
         beforeTree, tree, research, projectPath,
         input.warningJustifications, toolName,
       );
-      if (warningRefusal) return warningRefusal as any;
+      if (warningGateResult && "ok" in warningGateResult) return warningGateResult as any;
+      const justificationsPersisted = warningGateResult?.justificationsPersisted === true;
 
       // Write tree (and research if justifications were persisted)
-      if (research.warning_justifications) {
+      if (justificationsPersisted) {
         await atomicWriteBoth(projectPath, [
           { ref: "tree.gedcomx.json", data: tree },
           { ref: "research.json", data: research },
@@ -903,7 +905,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
       } else {
         await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
       }
-      const filesWritten = research.warning_justifications
+      const filesWritten = justificationsPersisted
         ? ["tree.gedcomx.json", "research.json"]
         : ["tree.gedcomx.json"];
       return {
@@ -931,14 +933,15 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
     }
 
     // Warning gate: refuse if the write introduces unjustified warnings
-    const warningRefusal = await checkWarningGate(
+    const singleGateResult = await checkWarningGate(
       beforeTree, tree, research, projectPath,
       input.warningJustifications, toolName,
     );
-    if (warningRefusal) return warningRefusal as any;
+    if (singleGateResult && "ok" in singleGateResult) return singleGateResult as any;
+    const singleJustificationsPersisted = singleGateResult?.justificationsPersisted === true;
 
     // Write tree (and research if justifications were persisted)
-    if (research.warning_justifications) {
+    if (singleJustificationsPersisted) {
       await atomicWriteBoth(projectPath, [
         { ref: "tree.gedcomx.json", data: tree },
         { ref: "research.json", data: research },
@@ -947,7 +950,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
       await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
     }
 
-    const singleFilesWritten = research.warning_justifications
+    const singleFilesWritten = singleJustificationsPersisted
       ? ["tree.gedcomx.json", "research.json"]
       : ["tree.gedcomx.json"];
     const result: TreeEditResult = {

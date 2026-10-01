@@ -54,12 +54,7 @@ import type {
   ConflictSurfaced,
 } from "../types/materialize-facts.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
-import {
-  introducedWarnings,
-  staleJustifications,
-  computeTouchedPersonIds,
-  type WarningJustificationInput,
-} from "../validation/introduced-warnings.js";
+import { checkWarningGate } from "./tree-edit.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   atomicWriteJson,
@@ -832,14 +827,14 @@ export async function materializeFacts(
       }
 
       // Warning gate: refuse if the write introduces unjustified warnings
-      const { checkWarningGate } = await import("./tree-edit.js");
-      const warningRefusal = await checkWarningGate(
+      const batchGateResult = await checkWarningGate(
         beforeTree, tree, research, projectPath,
         input.warningJustifications, "materialize_facts",
       );
-      if (warningRefusal) return warningRefusal as any;
+      if (batchGateResult && "ok" in batchGateResult) return batchGateResult as any;
+      const batchJustPersisted = batchGateResult?.justificationsPersisted === true;
 
-      if (research.warning_justifications) {
+      if (batchJustPersisted) {
         await atomicWriteBoth(projectPath, [
           { ref: "tree.gedcomx.json", data: tree },
           { ref: "research.json", data: research },
@@ -847,7 +842,7 @@ export async function materializeFacts(
       } else {
         await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
       }
-      const batchFilesWritten = research.warning_justifications
+      const batchFilesWritten = batchJustPersisted
         ? ["tree.gedcomx.json", "research.json"]
         : ["tree.gedcomx.json"];
       return {
@@ -897,14 +892,14 @@ export async function materializeFacts(
     }
 
     // Warning gate: refuse if the write introduces unjustified warnings
-    const { checkWarningGate: checkGate } = await import("./tree-edit.js");
-    const warningRefusal2 = await checkGate(
+    const singleGateResult = await checkWarningGate(
       beforeTree, tree, research, projectPath,
       input.warningJustifications, "materialize_facts",
     );
-    if (warningRefusal2) return warningRefusal2 as any;
+    if (singleGateResult && "ok" in singleGateResult) return singleGateResult as any;
+    const singleJustPersisted = singleGateResult?.justificationsPersisted === true;
 
-    if (research.warning_justifications) {
+    if (singleJustPersisted) {
       await atomicWriteBoth(projectPath, [
         { ref: "tree.gedcomx.json", data: tree },
         { ref: "research.json", data: research },
@@ -912,7 +907,7 @@ export async function materializeFacts(
     } else {
       await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
     }
-    const singleFilesWritten = research.warning_justifications
+    const singleFilesWritten = singleJustPersisted
       ? ["tree.gedcomx.json", "research.json"]
       : ["tree.gedcomx.json"];
 
