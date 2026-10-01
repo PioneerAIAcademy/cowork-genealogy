@@ -49,6 +49,11 @@
         "facts": {
           "type": "array",
           "items": { "$ref": "#/$defs/fact" }
+        },
+        "sources": {
+          "type": "array",
+          "description": "The sources FamilySearch attaches to this person (essentially the only level it attributes at), as refs into this document's sources[]. Carried by person_read; FamilySearch's tags are not carried.",
+          "items": { "$ref": "#/$defs/source_reference" }
         }
       }
     },
