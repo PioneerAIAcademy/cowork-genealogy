@@ -60,10 +60,11 @@ by an `Agent` spawn of `@plugin:<name>`, not by a `Skill` call (#2075). A
 `no-shortcut`, and it was deleted on 2026-10-01 (issue #2984): it failed 9 of 19
 committed runs on a real router defect, spawning `person-evidence` and
 `research-exhaustiveness` directly instead of walking the table from the top
-(issue #2272). `test_no_paired_skill_shortcut` (`validators/test_research.py`)
-is still correct and still runs, but **no test exercises it now**. Issue #2272
-needs a replacement test before it can claim the shortcut is fixed; git history
-has the old file, including why it kept the paired agents in `stub_skills`.
+(recorded on issue #2927; the test's old note cited #2272, a closed
+person-evidence card). `test_no_paired_skill_shortcut`
+(`validators/test_research.py`) is still correct and still runs, but **no test
+exercises it now**. A replacement test is needed before anyone can claim the
+shortcut is fixed; git history has the old file, including why it kept the paired agents in `stub_skills`.
 
 That validator is not redundant with `test_routes_to_expected_skill`, which
 asserts only the first hand-off. A router that calls `Skill(question-selection)`
