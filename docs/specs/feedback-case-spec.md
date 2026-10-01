@@ -46,11 +46,65 @@ never reaches the Drive folder at all.
 Implemented as `_redact_living` (`apps/server/app/feedback.py`) and
 `redactLivingPersons` (`apps/electron/src/main/feedback.ts`). The rule:
 
-- **A person is living unless `living` is exactly `false`.** A *missing* flag
-  counts as living. `living` is optional in simplified GedcomX, and defaulting
-  an absent flag to "probably deceased" is the wrong bet for data about to
-  leave the machine. This is the same rule as the e2e fixture gate
-  (`eval/harness/e2e/author.py::living_gate`).
+- **A person whose `living` key is present is living unless it is exactly
+  `false`.** Every present value keeps this rule, including the non-boolean
+  ones (`null`, `0`, `"true"`) — `living` is optional in simplified GedcomX and
+  its type is not enforced, so an unexpected value must not be read as a
+  licence to un-redact.
+- **A person with no `living` key is deceased only on evidence**, of which
+  there are three kinds. Otherwise they are living, as before. A tree built by
+  `tree_edit` carries no flag on any person, so the older "absent counts as
+  living" rule blanked every person in such a bundle — in one reported case all
+  11 of a project's 19th-century ancestors — which made those bundles useless
+  for triage.
+  - A **death-type fact**: `Death`, `Burial`, `Cremation` or `Probate`. Probate
+    can only follow a death; a `Will` cannot, because a will is written while
+    alive, so `Will` is not on the list.
+  - A **birth** more than 110 years ago. `Birth`, `Christening` and `Baptism`
+    all date a birth, but an explicit `Birth` fact wins over the other two,
+    which in a FamilySearch-derived tree may be a posthumous ordinance dated
+    long after death. Within a kind the earliest year wins, so the answer does
+    not depend on the order facts appear in.
+  - A **last-seen-alive year** more than 110 years ago: the most recent year on
+    any dated fact that is neither a birth nor a death. A census, residence,
+    marriage or military entry places the person alive that year, which bounds
+    their birth no later than it. This is defined as "everything else" rather
+    than a list of types, because the fact-type enum is open and any list would
+    be under-inclusive by construction — which is how an ancestor known only
+    from a census stayed blanked.
+  - Only a **string** date is read. `str()` in Python renders a dict's contents
+    while `String()` in JavaScript renders `"[object Object]"`, so an unguarded
+    coercion would let the two implementations disagree about a malformed date.
+  - The comparison is year arithmetic, so the effective threshold is anywhere
+    between 110 and 111 years depending on the birth month.
+- This **deliberately differs** from the e2e fixture gate
+  (`eval/harness/e2e/author.py::living_gate`) in two ways, and the two are not
+  being brought back into line. The gate refuses a missing flag outright,
+  because fixtures are committed to a public repo; a bundle goes only to
+  maintainers. And the gate presumes living only when
+  `birth_year > current_year - 110`, so it treats a person born exactly 110
+  years ago as deceased, where the redactor still redacts them — one year more
+  conservative, on the side that protects.
+- **Which files get redacted is decided by shape, not by filename.** Any
+  bundled file that parses as a JSON object with a `persons` array is redacted.
+  Keying on the two canonical names meant every other copy of a tree shipped
+  whole — not only build residue, but a researcher's own
+  `tree-backup.gedcomx.json` or a Finder duplicate, which no skip rule has any
+  reason to drop. `research.json` has no top-level `persons`, so it is
+  unaffected; a cheap first-byte check keeps media files away from the parser.
+  A leading byte-order mark is tolerated — a Windows editor readily saves one,
+  and a parse failure here does not fail closed: it falls through to the
+  pass-through below, shipping the file with its living people intact.
+- **Stale copies are additionally skipped by the walker**: any name ending
+  `.bak`, and any name ending `.tmp-<hex>`. Matching is case-insensitive,
+  because the researcher team is on Windows. `.bak` files were written by older
+  `.mcpb` builds; `.tmp-<uuid>` files are crash residue from the
+  pre-ProjectStore `atomicWriteJson`, whose temp name was not dot-prefixed.
+  Neither is written any more, but neither is deleted from project folders that
+  already hold one. They are skipped rather than merely redacted because
+  nothing reads them and they are noise in a bundle — and **each one is named
+  in FEEDBACK.md's skipped list**, like every other drop reason, so a triager
+  can tell a file was removed rather than never existed.
 - A redacted person keeps `id` — relationships reference it, so removing the
   person would dangle every edge — and keeps `gender`.
 - Their `names` become a single `{id, given: "Living", surname}` placeholder,

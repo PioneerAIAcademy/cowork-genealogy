@@ -780,8 +780,21 @@ def _person_identity(person: dict) -> tuple:
         for n in (person.get("names") or [])
         if isinstance(n, dict)
     )
+    # Person-level source refs (#2696) are identity too: a fact rewrite must not
+    # move them. Ref STRINGS, sorted, as `_fact_identity` compares, so the
+    # healer's own coercions (a string quality, pruned keys) and a reorder do
+    # not read as a move. The healer also drops a person-level ref naming no
+    # source; that needs a before-tree holding a dangling ref, which the fixture
+    # gate and the runtime validator both reject.
+    person_refs = tuple(
+        sorted(
+            r.get("ref")
+            for r in (person.get("sources") or [])
+            if isinstance(r, dict) and isinstance(r.get("ref"), str)
+        )
+    )
     return (person.get("id"), person.get("gender"), person.get("ark"),
-            person.get("living"), names)
+            person.get("living"), names, person_refs)
 
 
 #: Keys `sanitizeTree` may add or remove on its own, so a difference in one is a
@@ -1422,6 +1435,43 @@ def test_skill_calls_name_a_shipped_skill(builtin_tool_calls):
         f"Skill call(s) to {sorted(set(missing))}, which ship no "
         f"plugin/skills/<name>/SKILL.md. A converted skill is an agent now: "
         f"invoke it as `@plugin:<name>` (an Agent spawn), not `Skill(...)`."
+    )
+
+
+# --- An out-of-lane request is handed back to its owner ------------------
+
+def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_returns=None):
+    """On a hand-back test the agent makes no MCP tool call and its reply names
+    the owner, read off `negative.correct_skill[0]`.
+
+    Tag-gated: skips unless the test carries the 'hand-back' tag. Paired with
+    negative.grade_on_invariant: true, this is the test's whole verdict. Lifted
+    from check-warnings' suite (issue #2118) when tree-edit became its second
+    user (issue #2805).
+
+    The agent bodies say: "Return one caller-facing line, `Hand-back: <owner> —
+    <the request in one clause>`". WHERE in the reply the name sits is not
+    graded, because a routed reply may reword it. WHOSE reply is graded is
+    `subject_reply_text`: on a direct test, the agent's own return and nothing
+    else.
+    """
+    from harness.skill_runner import subject_reply_text
+
+    if "hand-back" not in test.get("tags", []):
+        pytest.skip("not a hand-back test")
+    owners = (test.get("negative") or {}).get("correct_skill") or []
+    assert owners, "a hand-back test must name its owner in negative.correct_skill"
+    owner = owners[0]
+
+    assert (tool_calls or []) == [], (
+        "a hand-back makes no tool call; got "
+        f"{len(tool_calls or [])} call(s): "
+        + ", ".join(c.get("tool", "?") for c in (tool_calls or []))
+    )
+    reply = subject_reply_text(agent_returns, text_response, test.get("skill") or "", test)
+    assert owner in reply.lower(), (
+        f"the reply never names {owner}, so the caller cannot tell which owner "
+        "to spawn"
     )
 
 
