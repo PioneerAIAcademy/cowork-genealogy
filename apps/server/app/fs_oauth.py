@@ -92,10 +92,9 @@ async def refresh_tokens(refresh_token: str) -> dict | None:
     JSON, or None when FamilySearch refuses — which the caller must treat as
     "this grant is dead, the user has to sign in at the front door again".
 
-    FamilySearch refresh tokens are capped at **8 hours idle / 24 hours
-    absolute** (docs/testing-guides/oauth-tool-testing-guide.md), so this
-    returning None is a routine daily event, not an error condition: no amount
-    of refreshing carries a grant past 24h from the original login."""
+    A FamilySearch session lasts at most 8 hours idle / 24 hours in all, and a
+    refresh starts a new session, so refreshing carries a grant past 24 h from
+    the original login. None means FamilySearch refused the refresh."""
     s = get_settings()
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(

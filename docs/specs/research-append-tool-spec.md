@@ -631,6 +631,11 @@ splintering into inconsistent labels, over a form the model added:
   **not** normalize). An already-ISO value is untouched; an unparseable value is
   left in place so the joint validator reports the real problem rather than the
   tool inventing a date. (Sources are the only section carrying `access_date`.)
+  Because `stdDate` omits any input carrying a word it does not recognize, a
+  value with extra words (`"Accessed 12 July 2026"`) is unparseable and is left
+  in place, so the write is refused; a weekday (`"Monday, 12 July 2026"`) is
+  recognized and still normalizes. Every committed `access_date` value was ISO
+  or a plain `12 July 2026` form when this landed (2026-09-30).
 - **`fact_type` canonicalization (assertions).** `fact_type` is an OPEN enum
   (`fact_type_recommended`), so the model freely varies casing (`Name`,
   `CauseOfDeath`) and reaches for role-prefixed or bare-structure aliases

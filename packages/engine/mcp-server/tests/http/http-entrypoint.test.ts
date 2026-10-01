@@ -71,7 +71,12 @@ beforeAll(async () => {
     delete process.env[name];
   }
   vi.spyOn(console, "error").mockImplementation(() => {});
-  await import("../../src/http.js");
+  const stderrWrite = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+  try {
+    await import("../../src/http.js");
+  } finally {
+    stderrWrite.mockRestore();
+  }
 });
 
 afterAll(() => {
