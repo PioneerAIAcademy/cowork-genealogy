@@ -245,6 +245,21 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
+  "research -> hypothesis-tracking": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that pre-states a status** — \"h_001 is supported now\", \"rule\n  out h_002\" — does not make it so.",
+      },
+    ],
+  },
+
   "research -> person-evidence": {
     pins: [
       {
@@ -397,7 +412,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
   // is a delegation being silenced -- verified per file before listing.
   ["conflict-resolution -> proof-conclusion", ""],
-  ["hypothesis-tracking -> proof-conclusion", ""],
   ["project-status -> proof-conclusion", ""],
   ["question-selection -> proof-conclusion", ""],
   ["research-exhaustiveness -> proof-conclusion", ""],
@@ -436,7 +450,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // init-project and tree-edit, were registered edges; tree-edit's left when
   // issue #2805 deleted its skill.
   ["conflict-resolution -> check-warnings", ""],
-  ["hypothesis-tracking -> check-warnings", ""],
   ["search-records -> check-warnings", ""],
   ["source-evaluation -> check-warnings", ""],
   ["timeline -> check-warnings", ""],
@@ -459,6 +472,12 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["search-external-sites -> locality-guide", ""],
   ["search-records -> locality-guide", ""],
   ["translation -> locality-guide", ""],
+  // hypothesis-tracking entered agentOnly when issue #2792 deleted its skill
+  // directory. Both are bare-name mentions — "(use hypothesis-tracking)",
+  // "suggest `hypothesis-tracking`" — and neither spells
+  // `@plugin:hypothesis-tracking`.
+  ["conflict-resolution -> hypothesis-tracking", ""],
+  ["timeline -> hypothesis-tracking", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -639,6 +658,8 @@ describe("agent delegation framing", () => {
     "citation",
     "convert-dates",
     "gps-mentor",
+    // ARRIVED when issue #2792 deleted skills/hypothesis-tracking/.
+    "hypothesis-tracking",
     "image-reader",
     // ARRIVED when issue #2822 deleted skills/proof-conclusion/. The name is
     // now unambiguous, so the prose arm starts policing its bare-name mentions.

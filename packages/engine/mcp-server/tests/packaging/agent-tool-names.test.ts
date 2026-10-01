@@ -676,6 +676,10 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // spawn (lead ruling 2026-09-23). `agent-tool-names.test.ts` fails a Task or
   // Agent grant outright; this comment records that the omission is deliberate
   // rather than an oversight.
+  "hypothesis-tracking.md": {
+    tools: ["Read", "research_append", "validate_research_schema"],
+    denies: [],
+  },
   "search-wikipedia.md": {
     tools: ["Write", "wikipedia_search"],
     denies: [],

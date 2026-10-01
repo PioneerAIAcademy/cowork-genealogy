@@ -221,14 +221,14 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **17** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **15** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **16** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **16** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The fifteen agents are `gps-mentor`, `record-extractor`, `image-reader`,
+The sixteen agents are `gps-mentor`, `record-extractor`, `image-reader`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
 `search-images`, `citation`, `search-wikipedia`, `convert-dates`,
-`search-familysearch-wiki`, `check-warnings`, `tree-edit`, `validate-schema` and
-`locality-guide`.
+`search-familysearch-wiki`, `check-warnings`, `tree-edit`, `validate-schema`,
+`hypothesis-tracking` and `locality-guide`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -352,7 +352,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-13 of the 17 skills carry a `references/` folder, loaded on demand, in-session,
+12 of the 16 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -1468,9 +1468,9 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-All 17 skills carry a `**Narration:**` line (`init-project` spells it
+All 16 skills carry a `**Narration:**` line (`init-project` spells it
 `**Narration**`, without the colon) — 15 of them as the first line of the body,
-the other two further down — instructing Claude to read
+the other one further down — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. `init-project` writes the profile from two
 questions it answers from the opening message or from defaults — it **never

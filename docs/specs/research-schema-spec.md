@@ -246,7 +246,7 @@ described under "Who actually writes a row" below.
 | `assertions` | record-extraction | timeline, conflict-resolution, proof-conclusion, question-selection | Mutable (classification fields, date fields); never delete. convert-dates was listed here and never could write: its only tool is `convert_calendar` and it holds no writer tool |
 | `person_evidence` | person-evidence | all downstream | Mutable (confidence, rationale); never delete, use superseded_by |
 | `conflicts` | conflict-resolution | question-selection, proof-conclusion | Mutable (status, analysis, preferred_assertion_id) |
-| `hypotheses` | hypothesis-tracking | question-selection, proof-conclusion | Mutable (status, assertion lists, ruled_out fields) |
+| `hypotheses` | the hypothesis-tracking agent | question-selection, proof-conclusion | Mutable (status, assertion lists, ruled_out fields) |
 | `timelines` | timeline | question-selection, conflict-resolution | Regeneratable; replaced wholesale when regenerated |
 | `proof_summaries` | proof-conclusion | (terminal) | Mutable (tier, narrative can be revised) |
 | `evaluations` | **the gps-mentor agent** | proof-conclusion, question-selection | Retire an entry by pointing `superseded_by` at its replacement; never delete. The owner is an agent, and the harness ownership check keys on the calling *skill's* name — so this row cannot be enforced there, and is declared unenforceable rather than left to look covered |

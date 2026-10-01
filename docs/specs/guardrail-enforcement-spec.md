@@ -1313,7 +1313,7 @@ on `append`, or on an `update` whose `fields` names `status`,
 `status` alone left the mirror-image hole the `questions` arm had already found:
 the invariant couples the status to both id lists, so an op touching a list
 breaks it without naming the status. That is the skill's own documented
-re-invocation path — `hypothesis-tracking/SKILL.md` tells the agent that adding
+re-invocation path — `agents/hypothesis-tracking.md` tells the agent that adding
 contradicting evidence "does not automatically require a status downgrade — only
 link the evidence and leave the status unchanged" — and three such calls were
 measured landing `ok: true` on exactly the state this refuses. Measured at
@@ -1334,7 +1334,7 @@ accepted.
 
 **Both halves read the pre-call snapshot**, per ADR-0011's criterion — snapshot
 when the precondition must be satisfied by someone else. `ownership.json` gives
-`hypotheses.callers` as `["skill:hypothesis-tracking"]`, while `conflicts`
+`hypotheses.callers` as `["agent:hypothesis-tracking"]`, while `conflicts`
 belongs to `skill:conflict-resolution` and `assertions` to
 `skill:record-extraction`; neither satisfying write is this author's own prior
 step, and both those sections are `enforceableAt: ["unit"]` only — no hook arm,
