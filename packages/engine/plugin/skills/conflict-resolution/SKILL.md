@@ -524,6 +524,15 @@ Suggest next steps:
   "unresolved" is better than a premature resolution (Standard 49).
 - **A reading the user disputes is recorded with [?], and the conflict
   is settled by another record or by the user.**
+- **Date conflicts require a `convert_calendar` call — no exceptions.**
+  Call it once per competing date before stating any calendar fact or
+  ruling on the dates. A correct answer reached without the call is a
+  failure: the adoption table was removed from this skill and lives in
+  the tool.
+- **Work with the assertions already in `research.json`.** When the
+  user reports a disagreement, read the existing assertions and
+  person_evidence first. Do not ask the user for an image or for data
+  that the project already contains.
 
 ## Re-invocation behavior
 
