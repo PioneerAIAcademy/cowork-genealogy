@@ -567,9 +567,20 @@ describe('stdDate', () => {
     test('in ranges', () => {
       expect(stdDate('Bet 1 Jan 1632/33 and 5 Feb 1635/36')).toBe('Bet 1 Jan 1632/33 and 5 Feb 1635/36');
     });
+    // A "/NN" that is not a split year is never parsed, so the year alone
+    // would be a partial: omit, like "1850 or 1851".
     test('invalid after 1752', () => {
-      const result = stdDate('1756/57');
-      expect(result).not.toContain('/');
+      expect(stdDate('1756/57')).toBe('');
+      expect(stdDate('1850/51')).toBe('');
+      expect(stdDate('1850/1851')).toBe('');
+      expect(stdDate('12 Jun. 1818/1819')).toBe('');
+    });
+    test('suffix that is not the next year', () => {
+      expect(stdDate('1750/52')).toBe('');
+      expect(stdDate('1623/5')).toBe('');
+    });
+    test('century suffix that does not roll over', () => {
+      expect(stdDate('1799/00')).toBe('');
     });
   });
 

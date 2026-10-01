@@ -30,6 +30,7 @@ interface DateParts {
   month?: string;       // 3-letter abbreviation
   year?: number;
   splitYear?: string;   // e.g. "24", "00"
+  droppedSplit?: boolean; // a "/NN" after the year that was not read as a split year
   bc?: boolean;
   uncertain?: boolean;
   quarter?: number;     // 1-4 for quarter dates
@@ -410,6 +411,10 @@ function parseDateTokens(tokens: Token[], startIdx: number, endIdx: number): Dat
             // Year > 1752, not valid split year — don't consume / and next num
             // Leave them for other processing
           }
+          // A "/NN" that was not read as a split year is never parsed by
+          // anything after this ("1850/51", "1750/52", "1799/00"), so the year
+          // alone would be a partial.
+          if (parts.splitYear === undefined) parts.droppedSplit = true;
         }
         continue;
       }
@@ -508,6 +513,12 @@ function droppedBefore(tokens: Token[], keywordIdx: number): boolean {
  *  (an age, a scanning error) or a month the parser did not read. */
 function dayWithoutMonth(d: DateParts): boolean {
   return d.day !== undefined && !d.month;
+}
+
+/** Whether formatting `d` would emit a partial: a day with no month, or a
+ *  year whose "/NN" suffix was not read as a split year. */
+function dropsAPart(d: DateParts): boolean {
+  return dayWithoutMonth(d) || d.droppedSplit === true;
 }
 
 // Find all positions of a modifier keyword (checks both str and sym tokens)
@@ -624,7 +635,7 @@ export function stdDate(raw: string): string {
 
       // Range gap filling
       fillRangeGaps(date1, date2);
-      if (dayWithoutMonth(date1) || dayWithoutMonth(date2)) return '';
+      if (dropsAPart(date1) || dropsAPart(date2)) return '';
 
       const d1str = formatDate(date1);
       const d2str = formatDate(date2);
@@ -645,7 +656,7 @@ export function stdDate(raw: string): string {
       const date2 = parseDateTokens(allTokens, toIdx + 1, allTokens.length);
 
       fillRangeGaps(date1, date2);
-      if (dayWithoutMonth(date1) || dayWithoutMonth(date2)) return '';
+      if (dropsAPart(date1) || dropsAPart(date2)) return '';
 
       const d1str = formatDate(date1);
       const d2str = formatDate(date2);
@@ -666,7 +677,7 @@ export function stdDate(raw: string): string {
     const fromIdx = fromPositions[0];
     if (droppedBefore(allTokens, fromIdx)) return '';
     const date = parseDateTokens(allTokens, fromIdx + 1, allTokens.length);
-    if (!date.year || dayWithoutMonth(date)) return '';
+    if (!date.year || dropsAPart(date)) return '';
     date.modifier = 'Aft';
     let result = formatDate(date);
     if (trailingParen) result += ' ' + trailingParen;
@@ -679,7 +690,7 @@ export function stdDate(raw: string): string {
     const toIdx = toPositions[0];
     if (droppedBefore(allTokens, toIdx)) return '';
     const date = parseDateTokens(allTokens, toIdx + 1, allTokens.length);
-    if (!date.year || dayWithoutMonth(date)) return '';
+    if (!date.year || dropsAPart(date)) return '';
     date.modifier = 'Bef';
     let result = formatDate(date);
     if (trailingParen) result += ' ' + trailingParen;
@@ -702,7 +713,7 @@ export function stdDate(raw: string): string {
 
   // A day with no month, e.g. the "3" of "1872 AGE 3 YRS". After the quarter
   // branch, whose leftover number ("1st quarter") sets day on purpose.
-  if (dayWithoutMonth(date)) return '';
+  if (dropsAPart(date)) return '';
 
   // Validate
   if (!date.year && !date.month && !date.day) {
