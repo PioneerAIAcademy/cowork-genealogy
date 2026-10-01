@@ -454,3 +454,70 @@ def test_another_agents_return_is_not_the_subjects():
     except AssertionError:
         return
     raise AssertionError("an unrelated agent's return was graded as the audit")
+
+
+# --- the front-door hand-back (ut_source_evaluation_b6h) ------------------
+#
+# b6h is `grade_on_invariant`, so this validator is that test's whole verdict.
+
+_handback = _VALIDATOR.test_scope_handback_calls_no_tool
+_HB_TEST = {
+    "tags": ["scope-handback", "handback-to-conflict-resolution", "direct-arm"],
+    "delegation": "which one should I believe?",
+}
+_HB_REPLY = "Hand-back: conflict-resolution — which of two disagreeing sources to believe."
+
+
+def test_handback_passes_a_clean_handback():
+    _handback([], "", _HB_TEST, agent_returns=_returns(_HB_REPLY))
+
+
+def test_handback_passes_a_backticked_name_beside_a_builtin_read():
+    calls = [{"tool": "Read", "args": {"file_path": "research.json"}}]
+    _handback(calls, "", _HB_TEST,
+              agent_returns=_returns("Hand-back: `conflict-resolution` — a source conflict."))
+
+
+def test_handback_fails_on_any_mcp_call():
+    calls = [{"tool": "mcp__genealogy__person_read", "args": {"personId": "KD96-TV2"}}]
+    try:
+        _handback(calls, "", _HB_TEST, agent_returns=_returns(_HB_REPLY))
+    except AssertionError as exc:
+        assert "person_read" in str(exc)
+        return
+    raise AssertionError("an audit started before the hand-back passed")
+
+
+def test_handback_fails_on_the_wrong_destination_or_none():
+    for reply in ("Hand-back: check-warnings — impossible dates.",
+                  "Please take this to the conflict workflow.", ""):
+        try:
+            _handback([], "", _HB_TEST, agent_returns=_returns(reply))
+        except AssertionError as exc:
+            assert "Hand-back: conflict-resolution" in str(exc)
+            continue
+        raise AssertionError(f"passed on {reply!r}")
+
+
+def test_handback_fails_when_only_the_relay_names_the_destination():
+    try:
+        _handback([], _HB_REPLY, _HB_TEST, agent_returns=_returns("I compared the two censuses."))
+    except AssertionError:
+        return
+    raise AssertionError("graded the relay, not the agent")
+
+
+def test_handback_needs_exactly_one_destination_tag():
+    try:
+        _handback([], "", {"tags": ["scope-handback"], "delegation": "x"}, agent_returns=_returns(_HB_REPLY))
+    except AssertionError as exc:
+        assert "handback-to-" in str(exc)
+        return
+    raise AssertionError("an untargeted hand-back test passed")
+
+
+def test_handback_skips_an_untagged_test():
+    import pytest
+
+    with pytest.raises(pytest.skip.Exception):
+        _handback([], "", {"tags": ["direct-arm"]})

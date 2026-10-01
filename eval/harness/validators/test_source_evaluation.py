@@ -402,3 +402,44 @@ def test_quality_detail_call_carries_detail_flag(tool_calls, test):
         "carried no `detail` block: "
         f"{[(c.get('args') or {}) for c in calls]}"
     )
+
+
+# --- front-door gate: hand back, call nothing (tag-gated) ---
+
+_HANDBACK_TAG_PREFIX = "handback-to-"
+
+
+def test_scope_handback_calls_no_tool(tool_calls, text_response, test, agent_returns=None):
+    """Tag-gated (`scope-handback`): the agent's front-door gate.
+
+    The deterministic verdict for `ut_source_evaluation_b6h`, the direct
+    hand-back test that replaced the two description-routing negatives
+    deleted in issue #2796. The gate answers an out-of-scope delegation with
+    one line, "Hand-back: <name> — <clause>", and calls no tool. The
+    destination comes from a `handback-to-<name>` tag. That both project
+    files are unchanged is already asserted on every test by the two
+    unmodified-state validators above.
+
+    Fails iff the run made any MCP tool call, or the subject's own reply
+    (`subject_reply_text`: on a direct test, the agent's return and never the
+    relay) names no `Hand-back:` line for the tagged destination.
+    """
+    tags = test.get("tags") or []
+    if "scope-handback" not in tags:
+        pytest.skip("not a scope-handback scenario")
+
+    calls = [c.get("tool") for c in (tool_calls or []) if (c.get("tool") or "").startswith("mcp__")]
+    assert not calls, (
+        f"an out-of-scope delegation must be handed back before any tool call; got {calls}"
+    )
+    destinations = [t[len(_HANDBACK_TAG_PREFIX):] for t in tags if t.startswith(_HANDBACK_TAG_PREFIX)]
+    assert len(destinations) == 1, (
+        f"a scope-handback test needs exactly one `{_HANDBACK_TAG_PREFIX}<name>` tag; got {destinations}"
+    )
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, "source-evaluation", test)
+    named = re.findall(r"Hand-back:\s*`?([a-z][a-z0-9-]*)", reply)
+    assert destinations[0] in named, (
+        f"expected a `Hand-back: {destinations[0]}` line; the reply named {named or 'no hand-back'}"
+    )
