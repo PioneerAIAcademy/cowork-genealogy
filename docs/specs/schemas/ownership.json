@@ -135,7 +135,7 @@
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
-        "skill:search-images",
+        "agent:search-images",
         "skill:record-extraction"
       ],
       "writerTools": [
@@ -158,7 +158,7 @@
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
-        "skill:search-images",
+        "agent:search-images",
         "skill:record-extraction"
       ],
       "agentCallers": [
@@ -188,7 +188,7 @@
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
-        "skill:search-images",
+        "agent:search-images",
         "skill:record-extraction",
         "agent:survey-surname"
       ],
