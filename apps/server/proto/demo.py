@@ -226,8 +226,9 @@ def seed_session(args: argparse.Namespace) -> tuple[str, str, dict]:
     rc = seed.seed(files, project_id=project_id, pg_dsn=args.pg_dsn, s3_endpoint=args.s3_endpoint)
     if rc != 0:
         raise RuntimeError(f"seed exited {rc}")
-    r = httpx.post(f"{args.base}/api/sessions", json={"title": title, "project_id": project_id}, timeout=10.0)
-    r.raise_for_status()
+    with turn.signed_in_client(args.base, args.email, timeout=10.0) as client:
+        r = client.post("/api/sessions", json={"title": title, "project_id": project_id})
+        r.raise_for_status()
     return r.json()["id"], project_id, meta
 
 
@@ -262,7 +263,7 @@ def run(args: argparse.Namespace) -> int:
                        (project_id,), rows(args.pg_dsn, section_counts_sql(), (project_id,))))
     print()
 
-    with httpx.Client(timeout=30.0) as client:
+    with turn.signed_in_client(args.base, args.email) as client:
         try:
             turn_id = turn.post_message(client, args.base, session_id, prompt)
         except httpx.HTTPError as exc:
@@ -325,6 +326,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--prompt", default=None, help="the opening prompt; default the fixture's researcher_question")
     p.add_argument("--session", default=None, help="drive this seeded session instead of seeding (proto/seed.py)")
     p.add_argument("--base", default="http://127.0.0.1:8085")
+    p.add_argument("--email", default=turn.DEV_LOGIN_EMAIL,
+                   help="dev-login as this patron; --session must be one this patron owns")
     p.add_argument("--pg-dsn", default="postgresql://postgres:proto@localhost:5434/proto")
     p.add_argument("--s3-endpoint", default="http://localhost:9000")
     p.add_argument("--deadline-s", type=float, default=DEFAULT_DEADLINE_S, help="wall clock before turn_done is a FAIL")

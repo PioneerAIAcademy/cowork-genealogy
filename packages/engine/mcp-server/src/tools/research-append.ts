@@ -683,14 +683,102 @@ function contradictionIsCredible(assertion: any): boolean {
   );
 }
 
-function coreIdentifierContradictionInvariants(
+/** A person_evidence link as the contradiction gate needs it: which assertion,
+ *  to which person. */
+export interface PersonLink {
+  assertion_id: string;
+  person_id: string;
+}
+
+/** The record party an assertion describes: `record_persona_id` when the
+ *  sidecar kept one, `record_role` otherwise (required on every assertion). The
+ *  same key `record-persona.ts` groups by; the contradiction gate and its
+ *  two-party arm both read it from here so the two cannot drift apart. */
+function partyKey(a: any): string | null {
+  return a?.record_persona_id ?? a?.record_role ?? null;
+}
+
+/** Links the gate can see for this call: the project's live person_evidence
+ *  with this batch's person_evidence ops replayed over it, whatever order the
+ *  ops arrive in. An update that supersedes a link removes it, and one that
+ *  re-points `person_id` or `assertion_id` moves it, so a link retired in the
+ *  same call cannot pair and a link moved onto a person does. */
+function batchPersonLinks(research: any, ops: ResearchAppendOp[]): PersonLink[] {
+  const byId = new Map<string, { assertion_id: unknown; person_id: unknown; superseded: boolean }>();
+  const appended: { assertion_id: unknown; person_id: unknown; superseded: boolean }[] = [];
+  const live: any[] = Array.isArray(research?.person_evidence) ? research.person_evidence : [];
+  for (const e of live) {
+    if (e && typeof e.id === "string") {
+      byId.set(e.id, { assertion_id: e.assertion_id, person_id: e.person_id, superseded: !!e.superseded_by });
+    }
+  }
+  for (const op of ops) {
+    if (op.section !== "person_evidence") continue;
+    if (op.op === "append") {
+      const e = (op as any).entry;
+      if (e) appended.push({ assertion_id: e.assertion_id, person_id: e.person_id, superseded: !!e.superseded_by });
+    } else if (op.op === "update" && typeof op.entryId === "string") {
+      const cur = byId.get(op.entryId);
+      const f = (op as any).fields ?? {};
+      if (!cur) continue;
+      if (Object.prototype.hasOwnProperty.call(f, "superseded_by")) cur.superseded = !!f.superseded_by;
+      if (typeof f.person_id === "string") cur.person_id = f.person_id;
+      if (typeof f.assertion_id === "string") cur.assertion_id = f.assertion_id;
+    }
+  }
+  const out: PersonLink[] = [];
+  for (const l of [...byId.values(), ...appended]) {
+    if (!l.superseded && typeof l.assertion_id === "string" && typeof l.person_id === "string") {
+      out.push({ assertion_id: l.assertion_id, person_id: l.person_id });
+    }
+  }
+  return out;
+}
+
+/** Whether `linked`, a two-party assertion, is about its OWN party when linked
+ *  to `entry.person_id`: true when some other link ties a one-party assertion of
+ *  the same record and the same party to that same person. The party key is the
+ *  one the gate below uses (`record_persona_id`, else `record_role`). */
+function ownPartyLinkedTo(
+  linked: any,
+  entry: any,
+  recordId: string,
+  assertionById: ReadonlyMap<string, any>,
+  personLinks?: ReadonlyArray<PersonLink>,
+): boolean {
+  if (!personLinks || personLinks.length === 0) return false;
+  const party = partyKey(linked);
+  if (party === null) return false;
+  return personLinks.some((l) => {
+    if (l.person_id !== entry.person_id || l.assertion_id === entry.assertion_id) return false;
+    const other = assertionById.get(l.assertion_id);
+    if (!other) return false;
+    if (RELATIONAL_FACT_TYPES.has(String(other.fact_type ?? "").toLowerCase())) return false;
+    return (other.record_id ?? other.source_id ?? null) === recordId && partyKey(other) === party;
+  });
+}
+
+export function coreIdentifierContradictionInvariants(
   entry: any,
   research: any,
   tree: any,
+  // Optional so every existing caller compiles unchanged; absent, a two-party
+  // assertion stays out of scope exactly as before.
+  personLinks?: ReadonlyArray<PersonLink>,
+  batchAssertions?: Map<string, any>,
 ): string[] {
   if (entry.confidence !== "confident" && entry.confidence !== "probable") return [];
-  const assertions: any[] = research.assertions ?? [];
-  const linked = assertions.find((a: any) => a?.id === entry.assertion_id);
+  // Every assertion this call can resolve: the document's, plus this batch's
+  // predicted appends. Reading only `research.assertions` let a batch that puts
+  // its assertion appends AFTER the person_evidence ops silence this gate, the
+  // ordering bypass the score gate already closed.
+  const assertionById = new Map<string, any>();
+  for (const a of (research.assertions ?? []) as any[]) {
+    if (a && typeof a.id === "string") assertionById.set(a.id, a);
+  }
+  if (batchAssertions) for (const [id, a] of batchAssertions) assertionById.set(id, { ...a, id });
+  const assertions: any[] = [...assertionById.values()];
+  const linked = assertionById.get(entry.assertion_id);
   if (!linked) return [];
   const recordId = linked.record_id ?? linked.source_id ?? null;
   if (recordId == null) return [];
@@ -700,9 +788,31 @@ function coreIdentifierContradictionInvariants(
   // position consistent with son") carries the CHILD's role while the link may
   // be to the father. Comparing the child's stated birth of 1845 against a
   // father the tree puts at 1818 produced 14 refusals that are one household,
-  // not one contradiction. We cannot tell from the assertion which side a link
-  // is about, so two-party assertions are out of scope for this gate.
-  if (RELATIONAL_FACT_TYPES.has(String(linked.fact_type ?? "").toLowerCase())) return [];
+  // not one contradiction. The assertion alone cannot say which side a link is
+  // about, so a two-party assertion is out of scope -- UNLESS another link ties
+  // the same record party to the same person through a one-party assertion.
+  // Then the link is about the assertion's own party, and skipping it let a
+  // baptism's relationship assertion carry `confident` onto the very person
+  // its christening date had just been refused on (ut_person_evidence_024,
+  // 2026-09-29: a_003 capped, a_001 from the same child persona persisted).
+  //
+  // The widened reach checks the DATE arm only. Measured 2026-09-29 over 302
+  // committed fixture and e2e documents (9,736 confident/probable links), running
+  // the place arm too would add 247 refusals, and every one read was a
+  // less-specific place ("Ohio" against "Ohio, United States"), which
+  // `compatiblePlace`'s country-first prefix test calls a contradiction. That is
+  // a comparator defect, not a contradiction, and this arm must not export it.
+  // Date only, the same corpus gains 11 refusals, all read: 9 are a census
+  // persona whose OWN birth assertion is more than 5 years from the tree birth,
+  // which the one-party arm already refuses for that persona; 2 (one Spriggs run)
+  // inherit an extraction that gave father and child one record_persona_id, which
+  // already refuses every one-party link of that persona. No new class.
+  const twoParty = RELATIONAL_FACT_TYPES.has(String(linked.fact_type ?? "").toLowerCase());
+  if (twoParty) {
+    if (!ownPartyLinkedTo(linked, entry, recordId, assertionById, personLinks)) {
+      return [];
+    }
+  }
 
   const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === entry.person_id);
   if (!person) return [];
@@ -719,7 +829,6 @@ function coreIdentifierContradictionInvariants(
   // are all one household, not one contradiction. The party key is the same one
   // `record-persona.ts` groups by -- `record_persona_id` when the sidecar kept
   // one, `record_role` otherwise, which is required on every assertion.
-  const partyKey = (a: any) => a?.record_persona_id ?? a?.record_role ?? null;
   const linkedParty = partyKey(linked);
   const sameRecord = assertions.filter(
     (a: any) =>
@@ -732,7 +841,7 @@ function coreIdentifierContradictionInvariants(
   const findings: string[] = [];
 
   // ── place ────────────────────────────────────────────────────────────────
-  if (typeof birth.place === "string" && placeSegments(birth.place).length > 0) {
+  if (!twoParty && typeof birth.place === "string" && placeSegments(birth.place).length > 0) {
     for (const a of sameRecord) {
       // Like for like. An ANY-place comparison refuses 274 of 323 committed
       // confident/probable entries (85%) because a marriage or census place is
@@ -1009,12 +1118,12 @@ export function personaReachable(entry: any, research: any): boolean {
 /** Whether this tree person exists only because of the record now being linked.
  *
  *  The lead's step-3 wording is "a tree person whose only source ref is this
- *  record", and it is NOT decidable from the tree alone: `TREE_PERSON_FIELDS`
- *  has no `sources`, refs hang off `names[]`/`facts[]`, and a tree source
+ *  record", and it is NOT decidable from the tree alone: refs hang off the
+ *  person itself, its `names[]` and its `facts[]`, and a tree source
  *  description carries `id/title/citation/author/url` and no record id. So the
  *  walk is six hops and ends in `research.json`:
  *
- *    tree names[]/facts[].sources[].ref -> tree sources[].id
+ *    tree person/names[]/facts[].sources[].ref -> tree sources[].id
  *      -> research sources[].gedcomx_source_description_id
  *      -> research sources[].id -> assertions[].source_id
  *      -> assertions[].record_id
@@ -1058,6 +1167,11 @@ export function mintedFromThisRecord(
   const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
   if (!person) return false;
   const refs = new Set<string>();
+  // Person-level refs count too (#2696): "only source ref" means every ref the
+  // person carries, and person_read attaches FamilySearch's at this level.
+  for (const src of (person.sources ?? []) as any[]) {
+    if (typeof src?.ref === "string" && src.ref !== "") refs.add(src.ref);
+  }
   for (const n of (person.names ?? []) as any[]) {
     for (const src of (n?.sources ?? []) as any[]) {
       if (typeof src?.ref === "string" && src.ref !== "") refs.add(src.ref);
@@ -2704,6 +2818,7 @@ function applyOne(
   // this research and cannot have been minted from the record being linked.
   startingPersonIds?: ReadonlySet<string>,
   createdAssertions?: ReadonlySet<string>,
+  personLinks?: ReadonlyArray<PersonLink>,
 ): AppliedOp {
   const section = op.section;
   // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
@@ -3281,8 +3396,20 @@ function applyOne(
     // `secondary`/`family_not_present`, 3 christening PLACES against a birth
     // place. Both classes are now excluded on genealogical grounds, and the
     // arm refuses 0 of 323 committed confident/probable entries.
+    //
+    // An UPDATE that sets `superseded_by` is retiring a link, not asserting
+    // one. Refusing it would make a confident link on a contradicted persona
+    // permanently unretractable through the section 6 supersede pattern
+    // (append the corrected link, then set `superseded_by` on the old one) --
+    // the trap the score gate avoids too. Keyed on the op, not the field: an
+    // APPEND that arrives already carrying `superseded_by` is a new link, and
+    // exempting it let any confident link on a contradicted persona through
+    // with an invented supersede pointer (the validator does not check that
+    // a person_evidence `superseded_by` names an existing entry).
     invariantErrors.push(
-      ...coreIdentifierContradictionInvariants(resultEntry, research, tree),
+      ...(op.op === "update" && resultEntry.superseded_by
+        ? []
+        : coreIdentifierContradictionInvariants(resultEntry, research, tree, personLinks, batchAssertions)),
     );
     // #1731 step 3. The two halves have different scope, and collapsing them
     // into "append only" left the CIRCULAR arm reachable in two calls: append
@@ -3423,6 +3550,9 @@ interface PreparedOps {
   startingPersonIds: ReadonlySet<string>;
   /** Assertion ids this call creates; they cannot already carry a score. */
   createdAssertions: ReadonlySet<string>;
+  /** Live person_evidence plus this batch's appends, for the contradiction
+   *  gate's two-party arm. */
+  personLinks: PersonLink[];
   sourceDescriptionId?: string;
   sourceReuse?: SourceReuseEcho;
   resolvedPlaces: ResolvedPlaceEcho[];
@@ -3703,6 +3833,7 @@ async function prepareOps(
   const matchScores = new Map<string, MatchScoreFile>();
   const batchAssertions = batchAssertionsById(research, ops);
   const createdAssertions = createdAssertionIds(research, ops);
+  const personLinks = batchPersonLinks(research, ops);
   // Read once here: `applyOne` is synchronous. Fail-open (an absent baseline
   // yields an empty set) matches `readStartingTree`'s own contract.
   const baseline = await readStartingTree(projectPath);
@@ -4306,7 +4437,7 @@ async function prepareOps(
   if (errors.length > 0) throw new ResearchAppendError(errors);
   const verdictFile = prepareVerdict(input, ops, fmt, errors);
   if (errors.length > 0) throw new ResearchAppendError(errors);
-  return { treeMutated, matchScores, batchAssertions, startingPersonIds, createdAssertions, sourceDescriptionId, sourceReuse, resolvedPlaces, warnings, verdictFile };
+  return { treeMutated, matchScores, batchAssertions, startingPersonIds, createdAssertions, personLinks, sourceDescriptionId, sourceReuse, resolvedPlaces, warnings, verdictFile };
 }
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
@@ -4481,6 +4612,7 @@ export async function researchAppend(
             prep.batchAssertions,
             prep.startingPersonIds,
             prep.createdAssertions,
+            prep.personLinks,
           ),
         );
       } catch (e) {
