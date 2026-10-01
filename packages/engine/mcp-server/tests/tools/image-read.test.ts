@@ -172,9 +172,7 @@ describe("imageReadTool — ark input", () => {
     const [url] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(url).toBe(ark);
     expect(result.metadata.url).toBe(ark);
-    // A $dist URL is not a canonical ARK, so no viewerUrl — toArk strips it
-    // to the ARK but this is a resolved URL, not a document-image pattern.
-    // The viewerUrl is still undefined for this input shape.
+    expect(result.metadata.viewerUrl).toBeUndefined();
   });
 
   it("fetches a DGS distribution URL directly", async () => {

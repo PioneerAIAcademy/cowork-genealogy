@@ -89,10 +89,24 @@ export function arkToUrl(value: string): string {
   return trimmed;
 }
 
-// DGS image identifiers: <group number>_<sequence number>, e.g.
-// "004528077_00697". Same shape as IMAGE_ID_PATTERN in fs-image-fetch.ts —
-// duplicated here to avoid a cross-util coupling for a one-line regex.
-const DGS_RE = /^(\d+)_(\d+)$/;
+// An imageId is a digitized-image identifier of the form NUMBER_NUMBER
+// (an image group number, an underscore, and an image sequence number,
+// e.g. "004884748_02613"). Shared by fs-image-fetch.ts (validation) and
+// imageViewerUrl (viewer-link construction).
+export const IMAGE_ID_PATTERN = /^\d+_\d+$/;
+
+// An image-ARK id with its `3:1:` prefix dropped, as a delegating agent passed
+// it in an alpha-feedback run. Only the 4-4-4-1 shape: in the repo, 161 distinct
+// prefixed ids of that shape are 3:1: and 1 is 3:2: (a test value), while
+// shorter bare ids collide with 1:1: persona ids (XXXX-XXX, XXXX-XXXX) and 4:1:
+// tree ids (XXXX-XXX). Shared by fs-image-fetch.ts (fetch resolution) and
+// imageViewerUrl (viewer-link construction).
+export const UNPREFIXED_IMAGE_ID_RE = /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]$/;
+
+// A DGS distribution URL passed as `ark` — extract the embedded imageId to build
+// a viewer URL. The fetch side (fs-image-fetch.ts) already accepts this shape;
+// imageViewerUrl needs to derive a film-viewer link from it.
+const DGS_URL_RE = /^https:\/\/(?:www\.)?familysearch\.org\/das\/v2\/dgs:(\d+_\d+)\/dist\.jpg$/;
 
 /**
  * Build a FamilySearch viewer URL for a tool's image input, so the user can
@@ -112,15 +126,26 @@ export function imageViewerUrl(
   extractContextQuery?: (raw: string) => string,
 ): string | undefined {
   if (input.imageId !== undefined) {
-    const m = DGS_RE.exec(input.imageId);
-    if (!m) return undefined;
-    const dgsNumber = m[1];
-    const imageNumber = parseInt(m[2], 10);
+    if (!IMAGE_ID_PATTERN.test(input.imageId)) return undefined;
+    const [dgsNumber, seq] = input.imageId.split("_");
+    const imageNumber = parseInt(seq, 10);
     if (imageNumber < 1) return undefined;
     // The film viewer's `i=` is zero-indexed.
     return `https://www.familysearch.org/search/film/${dgsNumber}?i=${imageNumber - 1}`;
   }
   if (input.ark !== undefined) {
+    // DGS distribution URL: extract the embedded imageId and build a film viewer.
+    const dgsMatch = DGS_URL_RE.exec(input.ark);
+    if (dgsMatch) {
+      const [dgsNumber, seq] = dgsMatch[1].split("_");
+      const imageNumber = parseInt(seq, 10);
+      if (imageNumber < 1) return undefined;
+      return `https://www.familysearch.org/search/film/${dgsNumber}?i=${imageNumber - 1}`;
+    }
+    // Unprefixed XXXX-XXXX-XXXX-X image id → treat as 3:1: ARK.
+    if (UNPREFIXED_IMAGE_ID_RE.test(input.ark.trim())) {
+      return arkToUrl(`ark:/61903/3:1:${input.ark.trim()}`);
+    }
     const canonical = toArk(input.ark);
     if (!isDocumentImageArk(canonical)) return undefined;
     const base = arkToUrl(canonical);
