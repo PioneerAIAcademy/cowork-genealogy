@@ -2,8 +2,10 @@ import type { Principal } from "../auth/principal.js";
 import {
   resolveFsImageInput,
   fetchFsImageBytes,
+  extractImageContextQuery,
   type FsImageInput,
 } from "../utils/fs-image-fetch.js";
+import { imageViewerUrl } from "../utils/ark.js";
 import { saveSourceImage } from "../utils/image-store.js";
 
 // The MCP transport between this server and the calling agent caps a single
@@ -23,6 +25,9 @@ export interface ImageReadInput extends FsImageInput {
 
 export interface ImageReadResult {
   url: string;
+  /** FamilySearch viewer URL for the image. Present for imageId and ark inputs;
+   *  absent for memoryArtifactUrl (issue #2854). */
+  viewerUrl?: string;
   mimeType: string;
   sizeBytes: number;
   /** Project-relative path of the saved scan (images/<key>.jpg), present only
@@ -86,10 +91,16 @@ export async function imageReadTool(input: ImageReadInput, principal: Principal)
     }
   }
 
+  const viewerUrl = imageViewerUrl(
+    { imageId: input.imageId, ark: input.ark },
+    extractImageContextQuery,
+  );
+
   return {
     imageData,
     metadata: {
       url: resolvedUrl,
+      ...(viewerUrl ? { viewerUrl } : {}),
       mimeType: contentType,
       sizeBytes,
       ...(imageRef ? { imageRef } : {}),

@@ -59,6 +59,9 @@ describe("imageReadTool — imageId input", () => {
     expect(result.metadata.url).toBe(
       "https://familysearch.org/das/v2/dgs:004884748_02613/dist.jpg"
     );
+    expect(result.metadata.viewerUrl).toBe(
+      "https://www.familysearch.org/search/film/004884748?i=2612"
+    );
     expect(result.metadata.mimeType).toBe("image/jpeg");
   });
 
@@ -169,6 +172,9 @@ describe("imageReadTool — ark input", () => {
     const [url] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(url).toBe(ark);
     expect(result.metadata.url).toBe(ark);
+    // A $dist URL is not a canonical ARK, so no viewerUrl — toArk strips it
+    // to the ARK but this is a resolved URL, not a document-image pattern.
+    // The viewerUrl is still undefined for this input shape.
   });
 
   it("fetches a DGS distribution URL directly", async () => {
@@ -184,10 +190,13 @@ describe("imageReadTool — ark input", () => {
   it("expands a canonical document-image ARK (3:1:) to a resolver URL", async () => {
     mockImageResponse();
 
-    await imageReadTool({ ark: "ark:/61903/3:1:3Q9M-CSNL-S98H-M" }, LOCAL);
+    const result = await imageReadTool({ ark: "ark:/61903/3:1:3Q9M-CSNL-S98H-M" }, LOCAL);
 
     const [fetchedUrl] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(fetchedUrl).toBe(
+      "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSNL-S98H-M"
+    );
+    expect(result.metadata.viewerUrl).toBe(
       "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSNL-S98H-M"
     );
   });
@@ -331,6 +340,12 @@ describe("imageReadTool — memoryArtifactUrl input", () => {
     expect(mockedGetValidToken).not.toHaveBeenCalled();
     const headers = new Headers(mockFetch.mock.calls[0][1]?.headers as HeadersInit);
     expect(headers.get("Authorization")).toBeNull();
+  });
+
+  it("omits viewerUrl for memory artifact input (issue #2854)", async () => {
+    mockImageResponse();
+    const result = await imageReadTool({ memoryArtifactUrl: ART }, LOCAL);
+    expect(result.metadata.viewerUrl).toBeUndefined();
   });
 
   it("still sends the bearer for an ordinary imageId, so the flag is not stuck on", async () => {

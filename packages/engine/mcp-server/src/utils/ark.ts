@@ -88,3 +88,43 @@ export function arkToUrl(value: string): string {
   }
   return trimmed;
 }
+
+// DGS image identifiers: <group number>_<sequence number>, e.g.
+// "004528077_00697". Same shape as IMAGE_ID_PATTERN in fs-image-fetch.ts —
+// duplicated here to avoid a cross-util coupling for a one-line regex.
+const DGS_RE = /^(\d+)_(\d+)$/;
+
+/**
+ * Build a FamilySearch viewer URL for a tool's image input, so the user can
+ * click through and verify what the agent read. Returns `undefined` when no
+ * viewer URL can be derived (uploaded file, memory artifact).
+ *
+ * - **ARK** (3:1:/3:2:, bare or canonical or full URL): the resolver URL,
+ *   preserving any `i=`/`cc=`/`groupId=` context params the input carried.
+ * - **DGS imageId** (`004528077_00697`): the film-viewer URL. The viewer's
+ *   `i=` parameter is **zero-indexed** (verified 2026-10-01: image 00697 of
+ *   film 004528077 opens correctly at `i=696`).
+ *
+ * Called by `image_transcribe`, `image_read`, and `record_read` (issue #2854).
+ */
+export function imageViewerUrl(
+  input: { imageId?: string; ark?: string },
+  extractContextQuery?: (raw: string) => string,
+): string | undefined {
+  if (input.imageId !== undefined) {
+    const m = DGS_RE.exec(input.imageId);
+    if (!m) return undefined;
+    const dgsNumber = m[1];
+    const imageNumber = parseInt(m[2], 10);
+    // The film viewer's `i=` is zero-indexed.
+    return `https://www.familysearch.org/search/film/${dgsNumber}?i=${imageNumber - 1}`;
+  }
+  if (input.ark !== undefined) {
+    const canonical = toArk(input.ark);
+    if (!isDocumentImageArk(canonical)) return undefined;
+    const base = arkToUrl(canonical);
+    const query = extractContextQuery ? extractContextQuery(input.ark) : "";
+    return `${base}${query}`;
+  }
+  return undefined;
+}

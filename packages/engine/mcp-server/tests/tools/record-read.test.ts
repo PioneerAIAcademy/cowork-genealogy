@@ -835,16 +835,20 @@ const RECORD_WITH_IMAGE_SOURCE: GedcomX = {
 
 describe("recordReadTool — imageArk field", () => {
 
-  it("surfaces imageArk when the record has a DigitalArtifact source", async () => {
+  it("surfaces imageArk and viewerUrl when the record has a DigitalArtifact source", async () => {
     mockOk(RECORD_WITH_IMAGE_SOURCE);
     const result = await recordReadTool({ recordId: "P1" }, LOCAL);
     expect(result.imageArk).toBe("ark:/61903/3:1:9Q97-YSRZ-GWP");
+    expect(result.viewerUrl).toBe(
+      "https://www.familysearch.org/ark:/61903/3:1:9Q97-YSRZ-GWP"
+    );
   });
 
-  it("omits imageArk when no DigitalArtifact source is present", async () => {
+  it("omits imageArk and viewerUrl when no DigitalArtifact source is present", async () => {
     mockOk(MINIMAL_RECORD);
     const result = await recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL);
     expect(result.imageArk).toBeUndefined();
+    expect(result.viewerUrl).toBeUndefined();
   });
 });
 

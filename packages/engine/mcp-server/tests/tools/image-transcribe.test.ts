@@ -151,6 +151,9 @@ describe("imageTranscribeTool — request + happy path", () => {
     expect(imagePart?.image_url?.url).toMatch(/^data:image\/jpeg;base64,/);
 
     expect(result.transcription).toBe("Johann Schreck, b. 1801, Bayern");
+    expect(result.viewerUrl).toBe(
+      "https://www.familysearch.org/search/film/004884748?i=2612"
+    );
     expect(result.metadata).toEqual({
       imageId: "004884748_02613",
       contentType: "image/jpeg",
@@ -991,6 +994,8 @@ describe("imageTranscribeTool — `file` input (#2048)", () => {
     });
     // Already retained at its own path — no copy under images/, no imageRef.
     expect(result.imageRef).toBeUndefined();
+    // No FamilySearch viewer URL for uploaded files (issue #2854).
+    expect(result.viewerUrl).toBeUndefined();
     await expect(readdir(join(dir, "images"))).rejects.toThrow();
   });
 

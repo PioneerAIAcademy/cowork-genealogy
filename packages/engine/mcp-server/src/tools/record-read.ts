@@ -4,7 +4,7 @@ import { fsFetch } from "../utils/fs-fetch.js";
 import { toSimplified } from "../utils/gedcomx-convert.js";
 import { repIdToStandardPlace } from "../utils/place-resolver.js";
 import { readStagedResults, stageSearchResults } from "../utils/results-staging.js";
-import { toArk, arkToBareId, isDocumentImageArk } from "../utils/ark.js";
+import { toArk, arkToBareId, isDocumentImageArk, imageViewerUrl } from "../utils/ark.js";
 import { extractImageContextQuery } from "../utils/fs-image-fetch.js";
 import type { GedcomX, SimplifiedGedcomX } from "../types/gedcomx.js";
 import type { RecordSearchResult } from "../types/record-search.js";
@@ -167,9 +167,14 @@ export async function recordReadTool(
   // `imageArk` rides on the RESPONSE only — what gets staged below is the
   // record document itself, and readFromSidecar re-extracts the ark from that
   // on the way back out, so the two paths cannot disagree.
-  const withImageArk: RecordReadResult = imageArk
-    ? { ...simplified, imageArk }
-    : simplified;
+  const viewerUrl = imageArk
+    ? imageViewerUrl({ ark: imageArk }, extractImageContextQuery)
+    : undefined;
+  const withImageArk: RecordReadResult = {
+    ...simplified,
+    ...(imageArk ? { imageArk } : {}),
+    ...(viewerUrl ? { viewerUrl } : {}),
+  };
 
   // Stage the fetched record when the caller named the project (issue #2048 /
   // #2489): until now a record fetched by ARK was retained nowhere, so its full
