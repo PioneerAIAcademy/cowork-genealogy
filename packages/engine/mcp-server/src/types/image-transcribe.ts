@@ -86,6 +86,10 @@ export interface ImageTranscribeResult {
     ark?: string;
     /** The project-relative ref that was read, for a `file` input. */
     file?: string;
+    /** The artifact URL a Memories *page* URL resolved to, so a later read can
+     *  pass it directly and skip the lookup. Absent when a direct artifact URL
+     *  was supplied — there was nothing to resolve. */
+    memoryArtifactUrl?: string;
     /** The content type sent to the OCR model (`image/jpeg`, `application/pdf`, …). */
     contentType: string;
     /** The OpenRouter model slug actually used. */
