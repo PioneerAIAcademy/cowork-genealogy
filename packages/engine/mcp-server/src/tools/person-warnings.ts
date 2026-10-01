@@ -2,18 +2,13 @@
 // See `docs/specs/person-warnings-tool-spec.md`.
 //
 // Runs deterministic data-quality checks from the point of view of a required
-// anchor person. Two sources for that person's tree:
-//   - default: tree.gedcomx.json from a project directory. No network, no auth.
-//   - `live: true`: the person and their one-hop relatives fetched from
-//     FamilySearch via `personReadTool`, which authenticates through
-//     `getValidToken`. Opt-in by the flag only, never by omitting projectPath.
-// The checks themselves are identical; only where the tree comes from differs.
+// anchor person, reading tree.gedcomx.json from a project directory.
+// No network, no auth.
 
 import { getProjectStore } from "../store/project-store.js";
-import type { Principal } from "../auth/principal.js";
-import { personReadTool } from "./person-read.js";
 import { classifyProjectPath, missingProjectDirMessage, noProjectResult } from "../utils/project-io.js";
 import type {
+  SimplifiedFact,
   SimplifiedGedcomX,
   SimplifiedPerson,
 } from "../types/gedcomx.js";
@@ -27,6 +22,8 @@ import {
   DEATH,
   DEATHLIKE_FACT_TYPES,
   MARRIAGELIKE_FACT_TYPES,
+  MIGRATIONLIKE_FACT_TYPES,
+  RESIDENCELIKE_FACT_TYPES,
   Mob,
   getRelativeMobs,
 } from "../utils/mob.js";
@@ -54,6 +51,7 @@ import {
   perfectDaysOfSelfFacts,
 } from "../utils/fact-helpers.js";
 import { nameSimilarity, normalizeString } from "../utils/string-similarity.js";
+import { countryConsistency, placeSegments } from "../utils/place-resolver.js";
 import { preferredName } from "../utils/name-helpers.js";
 import { getSimilarNamePairs } from "../utils/name-pairs.js";
 import {
@@ -122,41 +120,25 @@ export const personWarningsToolSchema = {
   name: "person_warnings",
   description:
     "Check a person for impossible or unlikely genealogical data (e.g., death " +
-    "before birth, parent too young, event after death). Two modes. Default: " +
-    "reads tree.gedcomx.json from the local project — pass projectPath, no " +
-    "authentication or network access required. Live: pass live=true and no " +
-    "projectPath to fetch the person from FamilySearch and run the same checks " +
-    "in memory, for auditing a profile with no local project — this mode does " +
-    "require authentication. personId is the anchor person; warnings are " +
-    "evaluated over that person and their one-hop relatives.",
+    "before birth, parent too young, event after death). Reads " +
+    "tree.gedcomx.json from the local project — no authentication or network " +
+    "access required. personId is the anchor person; warnings are evaluated " +
+    "over that person and their one-hop relatives.",
   inputSchema: {
     type: "object" as const,
     properties: {
       projectPath: {
         type: "string",
         description:
-          "Required unless live=true. Absolute path to the directory containing " +
-          "tree.gedcomx.json. Must be omitted when live=true — the two modes read " +
-          "different trees, so passing both is an error rather than a preference.",
+          "Absolute path to the directory containing tree.gedcomx.json.",
       },
       personId: {
         type: "string",
         description:
           "The anchor person to check. Warnings are evaluated over this person and their one-hop relatives.",
       },
-      live: {
-        type: "boolean",
-        description:
-          "Fetch the person from FamilySearch instead of reading a local project, " +
-          "and evaluate the same checks against the fetched tree. Defaults to false. " +
-          "Requires authentication, and omits projectPath. Use when auditing a live " +
-          "profile that has no local project; note it sees parents, spouses and " +
-          "children but not siblings, which the local mode does see.",
-      },
     },
-    // projectPath is conditionally required — enforced at runtime, because the
-    // MCP input schema cannot express "required unless another field is set".
-    required: ["personId"],
+    required: ["personId", "projectPath"],
   },
 } as const;
 
@@ -276,6 +258,21 @@ const SIMILAR_SPOUSES_CONFLICTING_DATES = "similarSpousesConflictingDates";
 const HAS_CLOSE_CHILD_BIRTHS_IGNORE_SIMILAR_CHILDREN = "hasCloseChildBirthsIgnoreSimilarChildren";
 const HAS_CLOSE_CHILD_CHRISTENINGS_6_30 = "hasCloseChildChristenings6_30";
 const HAS_DISSIMILAR_SPOUSES_WITH_SAME_MARRIAGE_YEAR = "hasDissimilarSpousesWithSameMarriageYear";
+
+// Project rule — NOT a FamilySearch Java MobWarnings port.
+const HAS_EVENT_IN_OTHER_COUNTRY = "hasEventInOtherCountry";
+
+// Fact types excluded from the "event in other country" check: migration-like,
+// residence-like, inherently mobile/paperwork types, and the anchor facts
+// themselves (birth-like and death-like — the specific types, not the full
+// BIRTHLIKE/DEATHLIKE families, because only Birth/Christening/Baptism and
+// Death/Burial are used as anchors in findEventInOtherCountry).
+const EVENT_IN_OTHER_COUNTRY_SKIP: ReadonlySet<string> = new Set([
+  ...MIGRATIONLIKE_FACT_TYPES,
+  ...RESIDENCELIKE_FACT_TYPES,
+  "MilitaryService", "Occupation", "Obituary", "Probate", "Will",
+  "Birth", "Christening", "Baptism", "Death", "Burial",
+]);
 
 // ─── Predicate ports of Java MobWarnings ────────────────────────────────────
 // These mirror the boolean predicate methods in warnings.java exactly:
@@ -2753,6 +2750,144 @@ function checkMaleRelativesHasDiffSurname(
   };
 }
 
+// ─── Project rule: event in a country inconsistent with birth and death ───────
+
+/** True when the candidate's country bidirectionally contradicts every anchor. */
+function isDifferentFromAllAnchors(
+  candidatePlace: string,
+  anchorPlaces: string[],
+): boolean {
+  if (anchorPlaces.length === 0) return false;
+  for (const anchor of anchorPlaces) {
+    if (
+      countryConsistency(candidatePlace, anchor) !== "contradiction" ||
+      countryConsistency(anchor, candidatePlace) !== "contradiction"
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Project rule (not a FamilySearch Java port).
+ *
+ * Returns the first fact whose standard_place country bidirectionally
+ * contradicts every birth and death anchor country, or null.
+ *
+ * Requires birth-like and death-like anchors that agree with each other.
+ */
+function findEventInOtherCountry(mob: Mob): {
+  fact: SimplifiedFact;
+  factCountry: string;
+  anchorCountry: string;
+} | null {
+  const person = mob.getPerson();
+
+  // 1. Gather anchor standard_places.
+  const birthAnchors: string[] = [];
+  const deathAnchors: string[] = [];
+  for (const f of person.facts ?? []) {
+    if (!f.standard_place) continue;
+    if (f.type === "Birth" || f.type === "Christening" || f.type === "Baptism") {
+      birthAnchors.push(f.standard_place);
+    } else if (f.type === "Death" || f.type === "Burial") {
+      deathAnchors.push(f.standard_place);
+    }
+  }
+  if (birthAnchors.length === 0 || deathAnchors.length === 0) return null;
+
+  // 2. Verify anchors agree: if any birth-death pair is bidirectionally
+  //    contradicted, the person is an emigrant and we cannot determine a
+  //    "home country".
+  for (const b of birthAnchors) {
+    for (const d of deathAnchors) {
+      if (
+        countryConsistency(b, d) === "contradiction" &&
+        countryConsistency(d, b) === "contradiction"
+      ) {
+        return null;
+      }
+    }
+  }
+
+  const allAnchors = [...birthAnchors, ...deathAnchors];
+
+  // 3. Scan person facts.
+  for (const f of person.facts ?? []) {
+    if (!f.standard_place || !f.type) continue;
+    if (EVENT_IN_OTHER_COUNTRY_SKIP.has(f.type)) continue;
+    if (isDifferentFromAllAnchors(f.standard_place, allAnchors)) {
+      const segs = placeSegments(f.standard_place);
+      return {
+        fact: f,
+        factCountry: segs[segs.length - 1],
+        anchorCountry: placeSegments(birthAnchors[0]).slice(-1)[0],
+      };
+    }
+  }
+
+  // 4. Scan Couple-relationship facts.
+  for (const rel of mob.tree.relationships ?? []) {
+    if (rel.type !== "Couple") continue;
+    if (rel.person1 !== mob.anchorId && rel.person2 !== mob.anchorId) continue;
+    for (const f of rel.facts ?? []) {
+      if (!f.standard_place || !f.type) continue;
+      if (EVENT_IN_OTHER_COUNTRY_SKIP.has(f.type)) continue;
+      if (isDifferentFromAllAnchors(f.standard_place, allAnchors)) {
+        const segs = placeSegments(f.standard_place);
+        return {
+          fact: f,
+          factCountry: segs[segs.length - 1],
+          anchorCountry: placeSegments(birthAnchors[0]).slice(-1)[0],
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
+export function hasEventInOtherCountry(mob: Mob): boolean {
+  return findEventInOtherCountry(mob) !== null;
+}
+
+function checkHasEventInOtherCountry(mob: Mob): PersonWarning | null {
+  const result = findEventInOtherCountry(mob);
+  if (!result) return null;
+
+  const { fact, factCountry, anchorCountry } = result;
+  const factType = fact.type ?? "event";
+
+  const birthFacts = warningFactsOfPerson(
+    mob.getPerson(),
+    new Set(["Birth", "Christening", "Baptism"]),
+  );
+  const deathFacts = warningFactsOfPerson(
+    mob.getPerson(),
+    new Set(["Death", "Burial"]),
+  );
+  const oddFacts: WarningFact[] = [];
+  if (fact.id) {
+    oddFacts.push({
+      id: fact.id,
+      type: fact.type ?? "",
+      date: fact.date ?? fact.standard_date ?? null,
+    });
+  }
+
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_EVENT_IN_OTHER_COUNTRY,
+    severity: "implausible",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    facts: unionFactIds(birthFacts, deathFacts, oddFacts),
+    message:
+      `A ${factType} is placed in ${factCountry}, but this person was born and died in ${anchorCountry}.`,
+  };
+}
+
 // ─── Merge-mode predicates, checks, and the non-final bucket ─────────────────
 // Ported from warnings.java's calculateNonFinalWarnings (:572) plus the
 // target-vs-candidate-separate checks in calculateWarnings (:143/:159/:181/
@@ -2844,6 +2979,7 @@ export const ALL_WARNING_TAGS = [
   RELATIVES_HAS_AGE_RANGE_GREATER_THAN_120,
   RELATIVES_HAS_CHILD_DEATH_AFTER_PARENT_BIRTH_200,
   MALE_RELATIVES_HAS_DIFF_SURNAME,
+  HAS_EVENT_IN_OTHER_COUNTRY,
   HAS_SAME_CENSUS,
   HAS_EVENTS_OUTSIDE_LIFESPAN_FAR,
   HAS_EVENTS_OUTSIDE_LIFESPAN_NEAR,
@@ -3561,6 +3697,10 @@ export function calculateWarnings(
   const dissimilarSpouses = checkHasDissimilarSpousesWithSameMarriageYear(mergedMob);
   if (dissimilarSpouses) warnings.push(dissimilarSpouses);
 
+  // Project rule: event in a country inconsistent with birth and death.
+  const eventInOtherCountry = checkHasEventInOtherCountry(mergedMob);
+  if (eventInOtherCountry) warnings.push(eventInOtherCountry);
+
   return warnings;
 }
 
@@ -3568,69 +3708,11 @@ export function calculateWarnings(
 // Single-person mode: read tree.gedcomx.json, build a Mob anchored on the
 // requested person, then call calculateWarnings with `isFinalWarnings=true`.
 
-// Fetch the anchor and their one-hop relatives from FamilySearch and shape them
-// into the tree the checks already read. `PersonReadResult` is structurally a
-// `SimplifiedGedcomX`, so no conversion layer is needed.
-//
-// `relatives: true` is load-bearing: person_read defaults it to false, and with
-// the anchor alone every relative check returns false — a profile with a
-// father-died-before-child in it would be reported clean.
-async function loadLiveAnchor(
-  personId: string,
-  principal: Principal,
-): Promise<{ tree: SimplifiedGedcomX; anchorId: string }> {
-  const tree = await personReadTool(
-    { personId, relatives: true },
-    principal,
-  );
-  const persons = tree.persons ?? [];
-  if (persons.some((p) => p.id === personId)) {
-    return { tree, anchorId: personId };
-  }
-  // person_read follows a 301 for a merged-away profile and returns the
-  // surviving person under its NEW id, without reporting the redirect. Anchor on
-  // that instead of letting Mob throw "anchor person not found", which names
-  // neither the merge nor where the person went.
-  const survivor = persons.find((p) => p.id !== undefined);
-  if (persons.length === 1 && survivor?.id) {
-    return { tree, anchorId: survivor.id };
-  }
-  throw new Error(
-    `Person '${personId}' was not in the FamilySearch response. It may have ` +
-      "been merged into another profile — open it on familysearch.org to find " +
-      "the surviving ID, then check that one.",
-  );
-}
-
 export async function personWarningsTool(
   input: PersonWarningsInput,
-  principal: Principal,
 ): Promise<PersonWarningsResult> {
   if (!input?.personId || typeof input.personId !== "string") {
     throw new Error("personId is required");
-  }
-
-  // Live mode is opt-in by `live === true` exactly — never by a falsy or
-  // absent projectPath. check-warnings has the model COMPUTE the path, so a
-  // truthiness branch would turn an empty string into a silent network call on
-  // the user's token instead of today's loud error.
-  if (input.live === true) {
-    if (input.projectPath !== undefined) {
-      throw new Error(
-        "Pass either projectPath or live=true, not both — they read different " +
-          "trees (the local project file versus the live FamilySearch profile), " +
-          "so the caller has to say which one is meant.",
-      );
-    }
-    const { tree, anchorId } = await loadLiveAnchor(input.personId, principal);
-    const liveMob = new Mob(tree, anchorId);
-    const liveWarnings = calculateWarnings(
-      liveMob,
-      liveMob,
-      liveMob,
-      /* isFinalWarnings */ true,
-    );
-    return { warningCount: liveWarnings.length, warnings: liveWarnings };
   }
 
   if (!input.projectPath || typeof input.projectPath !== "string") {

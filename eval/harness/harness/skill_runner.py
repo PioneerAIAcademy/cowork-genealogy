@@ -37,7 +37,9 @@ from claude_agent_sdk import (
     RateLimitEvent,
     ResultMessage,
     TextBlock,
+    ToolResultBlock,
     ToolUseBlock,
+    UserMessage,
     query,
 )
 
@@ -421,6 +423,94 @@ def spawn_prompts(
     return out
 
 
+# Trailers the RUNTIME appends to a subagent's return -- not the agent's text.
+# Measured verbatim on a live capture (ut_search_wikipedia_002, 2026-09-28):
+#
+#   Saved the Wikipedia summary to `albert-einstein.md`.
+#   agentId: a18a42245a899b05a (use SendMessage with to: '...' to continue this agent)
+#   <usage>total_tokens: 3509
+#   tool_uses: 2
+#   duration_ms: 5083</usage>
+#
+# They must be stripped before anything grades the return: a reply-shape check
+# reading them raw sees extra lines and fails an agent that answered in one, and
+# the `agentId` line would make every return look like it named an identifier.
+_AGENT_RETURN_TRAILERS = (
+    re.compile(r"(?m)^agentId:\s*\S+.*$"),
+    re.compile(r"(?s)<usage>.*?</usage>"),
+)
+
+
+def strip_agent_return_trailer(text: str) -> str:
+    """The agent's own text, with runtime-appended trailers removed."""
+    for pattern in _AGENT_RETURN_TRAILERS:
+        text = pattern.sub("", text)
+    return text.strip()
+
+
+def agent_return_text(agent_returns: list[dict[str, Any]] | None, agent: str) -> str:
+    """Every return `agent` made this run, joined -- the text a direct test grades.
+
+    ONE definition, called by both graders. They had two: the judge joined every
+    return from `spec.skill` while the narration validator took the FIRST match,
+    so a clean first return hid a narrating second one from the validator and not
+    from the judge -- the two could disagree about the same run with nothing
+    saying so.
+
+    Returns "" when the agent made none, which is the caller's signal to fall
+    back to `text_response`. A ROUTED run can spawn agents too
+    (`ut_timeline_008` spawns `record-extractor`), so the filter is on the
+    agent NAME, never on "did anything spawn".
+    """
+    return "\n\n".join(
+        entry["text"]
+        for entry in (agent_returns or [])
+        if entry.get("subagent_type") == agent and entry.get("text")
+    )
+
+
+def subject_reply_text(
+    agent_returns: list[dict[str, Any]] | None,
+    text_response: str | None,
+    agent: str,
+    test: dict[str, Any] | None,
+) -> str:
+    """The reply a validator grades: the subject's own words.
+
+    On a DIRECT test (`test["delegation"]` set) the main thread is a dispatcher
+    relaying the agent's return, so only `agent_return_text` counts. An empty
+    return there is the agent saying nothing, and it grades as nothing: falling
+    back to the relay would let a silent agent pass whenever the dispatcher
+    happened to write the right name (review of issue #2805, 2026-09-30). On a
+    ROUTED test the main thread's reply IS the subject's, so `text_response` is
+    the fallback when the agent made no return.
+    """
+    own = agent_return_text(agent_returns, agent)
+    if own or (test or {}).get("delegation"):
+        return own
+    return text_response or ""
+
+
+def _tool_result_text(content: Any) -> str:
+    """Flatten a ToolResultBlock's content to text.
+
+    The block's `content` is `str | list[dict] | None`: the SDK hands back a
+    plain string for some tools and a list of content dicts for others, so both
+    shapes have to be read or a subagent's return is silently empty for half the
+    corpus. A non-text part (an image block) contributes nothing rather than its
+    repr.
+    """
+    if content is None:
+        return ""
+    if isinstance(content, str):
+        return content
+    parts: list[str] = []
+    for part in content:
+        if isinstance(part, dict) and isinstance(part.get("text"), str):
+            parts.append(part["text"])
+    return "\n".join(parts)
+
+
 def builtin_call_record(
     tool_name: str, input_data: dict[str, Any]
 ) -> dict[str, Any] | None:
@@ -607,6 +697,25 @@ class SkillRunResult:
     # derives `spawned_agents` and `spawn_prompts` from those records, and two
     # gating universal validators read them, so this field now decides outcomes.
     builtin_tool_calls: list[dict[str, Any]] = field(default_factory=list)
+    # What each spawned subagent RETURNED, as {"subagent_type", "text"}, in call
+    # order. Empty when the agent under test returned nothing. A ROUTED run
+    # CAN spawn agents (`ut_timeline_008` spawns `record-extractor`), so a
+    # non-empty list does not mean the run was direct.
+    #
+    # `text_response` is the MAIN THREAD's text, and on the direct arm the main
+    # thread is a dispatcher relaying someone else's work -- so every reply-shape
+    # check that reads `text_response` there is grading the dispatcher's
+    # paraphrase, not the agent. Measured on
+    # eval/runlogs/unit/search-wikipedia/v1_2026-09-28_09-49-04: two of ten
+    # replies open "The subagent has completed the task" / "The subagent has
+    # looked up ...", wording no agent body could produce about itself, and the
+    # suite failed six tests on reply shape while every deterministic validator
+    # passed 10/10.
+    #
+    # Collected off the message stream rather than in the PreToolUse hook that
+    # fills `builtin_tool_calls`: that hook fires BEFORE the tool runs, so it
+    # structurally cannot carry a result.
+    agent_returns: list[dict[str, Any]] = field(default_factory=list)
     # True when the run ended before a ResultMessage ever arrived even though
     # it is NOT an abort — currently only the negative-test routing
     # short-circuit (issue #2189). On that path num_turns is real (turns_seen
@@ -716,6 +825,12 @@ async def run_skill(
     # stream because the hook is the only site that sees calls made inside a
     # Task-spawned subagent, which is where reference reads actually happen.
     builtin_tool_calls: list[dict[str, Any]] = []
+    # tool_use_id -> subagent_type, for every Agent/Task spawn seen streaming by,
+    # so the matching ToolResultBlock can be attributed. Main-thread spawns only
+    # is NOT enforced here: the id match already scopes it to a call this stream
+    # carried, and `spawned_agents` remains the field that answers "who spawned".
+    _spawn_ids: dict[str, str] = {}
+    agent_returns: list[dict[str, Any]] = []
 
     async def pretool_hook(input_data, tool_use_id, ctx):
         tool_name = input_data.get("tool_name", "")
@@ -1043,6 +1158,10 @@ async def run_skill(
                             and block.id == routing_resolved["tool_use_id"]
                         ):
                             routed_call_seen = True
+                        if block.name in SPAWN_TOOL_NAMES:
+                            subagent = (dict(block.input or {})).get("subagent_type")
+                            if isinstance(subagent, str) and block.id:
+                                _spawn_ids[block.id] = subagent
                         if block.name.startswith("mcp__"):
                             turn_mcp_calls.append(
                                 {"tool": block.name, "args": dict(block.input or {})}
@@ -1142,6 +1261,25 @@ async def run_skill(
                         usage["num_turns"] = turns_seen["n"]
                         no_result_message_flag["v"] = True
                     return
+            elif isinstance(message, UserMessage):
+                # Tool results stream back as ToolResultBlocks on a UserMessage.
+                # Only a spawn's result is kept; every other tool's result is
+                # already recorded by the mock (`tool_calls`) or is noise.
+                for block in message.content if isinstance(message.content, list) else []:
+                    if not isinstance(block, ToolResultBlock):
+                        continue
+                    subagent = _spawn_ids.get(block.tool_use_id)
+                    if subagent is None:
+                        continue
+                    agent_returns.append(
+                        {
+                            "subagent_type": subagent,
+                            "text": strip_agent_return_trailer(
+                                _tool_result_text(block.content)
+                            ),
+                            **({"is_error": True} if block.is_error else {}),
+                        }
+                    )
             elif isinstance(message, ResultMessage):
                 usage = {
                     "duration_ms": message.duration_ms,
@@ -1326,6 +1464,7 @@ async def run_skill(
         registered_mcp_tools=set(tools_by_name.keys()),
         unread_skill_calls=unread_skill_calls,
         builtin_tool_calls=builtin_tool_calls,
+        agent_returns=agent_returns,
         no_result_message=no_result_message_flag["v"],
         suppressed_post_deny_calls=suppressed_post_deny_calls,
     )

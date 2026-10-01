@@ -5,13 +5,22 @@
     "name": "Single-word non-English title — Kirchenbuch",
     "type": "positive",
     "description": "Wikipedia lookup for a single-word non-English title. Tests slug normalization when the title has no spaces, commas, or special characters — the slug should be just 'kirchenbuch' with no hyphens. The extract contains Unicode (Kirchenbücher) which must be preserved verbatim.",
-    "tags": ["wikipedia", "slug-single-word", "non-english", "unicode-extract", "slug-kirchenbuch"]
+    "tags": [
+      "wikipedia",
+      "slug-single-word",
+      "non-english",
+      "unicode-extract",
+      "slug-kirchenbuch",
+      "direct-arm"
+    ]
   },
   "input": {
-    "user_message": "Look up Kirchenbuch on Wikipedia — I want to understand what German church books are",
+    "delegation": "Look up Kirchenbuch on Wikipedia — I want to understand what German church books are\n\ntopic: Kirchenbuch",
     "scenario": null
   },
-  "mcp_fixtures": ["wikipedia-search-kirchenbuch"],
+  "mcp_fixtures": [
+    "wikipedia-search-kirchenbuch"
+  ],
   "judge_context": [
     "Slug should be 'kirchenbuch' — a single-word title producing a slug with no hyphens. The extract contains Unicode characters (Kirchenbücher) which must be preserved verbatim.",
     "IMPORTANT — file visibility: This skill writes a standalone markdown file to the working folder. That file will NOT appear in the file changes summary (which only tracks research.json and tree.gedcomx.json). If the skill called wikipedia_search successfully and its text response confirms saving a file with a correctly slugified name, treat file creation as fully successful. Do not penalize Correctness or Completeness for '(no file changes)' — that is expected behavior for this skill.",

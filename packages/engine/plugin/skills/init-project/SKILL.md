@@ -122,13 +122,13 @@ Present ranked candidates with `personId`, confidence, key facts. In single-turn
 
 ### 2. Fetch person data
 
-Call `person_read({ personId: "<id>", relatives: true, sourceDescriptions: true })`. **Both flags are required** — they default to `false`, and without them the call returns ONLY the subject's own facts (`relationships: []`, `sources: []`), which imports a subject-only tree with no spouse, children, or sources (issue #1475). With the flags it returns simplified GedcomX: person (name, gender, facts), relatives with IDs, relationships, and source descriptions. Auth error → tell user to log in.
+Call `person_read({ personId: "<id>", projectPath })`. It returns simplified GedcomX: person (name, gender, facts, and the person-level `sources` refs FamilySearch attached), relatives with IDs, relationships, and source descriptions. Auth error → tell user to log in.
 
 **Pass `projectPath` too.** For a non-living subject the `sources` array also carries that person's **memories** — scanned wills, certificates, obituaries, family stories — each with `text` when the read transcribed it, `image_ref` when a scan was retained, and a `notes` entry when it was not. `projectPath` is what retains those scans; without it they are transcribed but not kept.
 
 **User-stated facts vs. FamilySearch conflicts:**
 - **tree.gedcomx.json:** use FamilySearch data (the source being surveyed)
-- **Research objective:** use user's stated facts (reflects user's understanding)
+- **Research objective:** use the user's stated facts, in the user's own wording (reflects user's understanding). Do not add the subject's vitals — birth/death dates or places — from `person_read`/FamilySearch to the `objective`, even when the user stated none: those belong in the tree, and the objective records the user's stated direction, not the record's
 - **Flag the discrepancy** with user's statement first: "You stated [Y]; FamilySearch shows [X] — both will need verification."
 - Never frame the user's information as an error.
 
@@ -138,9 +138,9 @@ Build the simplified-GedcomX document in memory — you pass it to `project_crea
 
 **`person_read` already returns this format** — `{ "persons": [], "relationships": [], "sources": [] }`, snake_case, no field renaming. It also returns a top-level `notes` array when it dropped a relationship whose other end it could not return; that is a sibling of `persons`, not a source field, and never goes in the tree. What it returns is still not persistable as-is: its ids, its source `notes`, and its missing source refs all need work below. Everything else — including both standardized sidecars — is carried through untouched.
 
-**Include:** subject person (names, facts — source refs live on each fact, never as a person-level property), all relatives (parents, siblings, spouse, children), all relationships, all source descriptions in the top-level `sources` array — minus `notes`, `text`, `image_ref` and `artifact_url`, none of which are allowed source fields and each of which fails the write. (`text` carries a memory's story text or OCR; keep it for Step 4b, then drop it from the tree.) A person object allows only `id`, `ark`, `living`, `gender`, `names`, `facts`. `ark` is what marks a person as being *in* the FamilySearch tree, so every person read from it carries `ark: "ark:/61903/4:1:<their FamilySearch person ID>"` — that exact form, which is what `person_search` returns for the same person. Omit the key entirely on local stubs. Never a page URL, never a bare ID.
+**Include:** subject person (names, facts), all relatives (parents, siblings, spouse, children), every person's person-level `sources` refs, all relationships, all source descriptions in the top-level `sources` array — minus `notes`, `text`, `image_ref` and `artifact_url`, none of which are allowed source fields and each of which fails the write. (`text` carries a memory's story text or OCR; keep it for Step 4b, then drop it from the tree.) A person object allows only `id`, `ark`, `living`, `gender`, `names`, `facts`, `sources`. `ark` is what marks a person as being *in* the FamilySearch tree, so every person read from it carries `ark: "ark:/61903/4:1:<their FamilySearch person ID>"` — that exact form, which is what `person_search` returns for the same person. Omit the key entirely on local stubs. Never a page URL, never a bare ID.
 
-**ID conventions:** ALL persons get local `I` IDs (`I1`, `I2`…) — including FamilySearch-seeded persons. Do NOT use FamilySearch PIDs as person IDs. Names `N1`…; facts `F1`…; relationships `R1`…; sources `S1`… — mint any the tool did not supply (it returns no name or relationship IDs), and rewrite every relationship endpoint to the new person IDs.
+**ID conventions:** ALL persons get local `I` IDs (`I1`, `I2`…) — including FamilySearch-seeded persons. Do NOT use FamilySearch PIDs as person IDs. Names `N1`…; facts `F1`…; relationships `R1`…; sources `S1`… — mint any the tool did not supply (it returns no name or relationship IDs), rewrite every relationship endpoint to the new person IDs, and rewrite every person-level `sources[].ref` to the new ID of the source it names.
 
 **Source every FamilySearch fact with `quality: 1`** (questionable — compiled/unverified tree data). Create one source description for the FamilySearch tree using only the schema-allowed fields (`id`, `title`, `citation`, `author`, `url` — NO `quality`, `notes`, `repository`, or `accessed`). Then attach a source reference to every fact and relationship (`quality` goes here, on fact-level refs, not on source descriptions):
 ```json
@@ -161,7 +161,7 @@ Do NOT call data "unsourced" — it IS sourced to the FamilySearch tree. `qualit
 
 **Simplified GedcomX rules:** gender as flat string (`Male`/`Female`/`Unknown`); names with `given`, `surname`, optional `preferred: true`; facts with PascalCase `type`; ParentChild uses `parent`/`child`; Couple uses `person1`/`person2`; `preferred`/`primary` omit-when-false.
 
-**No placeholder unknown-person stubs.** Create stubs only for people with at least one concrete identifying detail. A known surname alone qualifies — when a maiden name is stated, it fixes a surname in that woman's **parental line**, but does not by itself tell you *which* parent carries it. Assuming it is the father assumes patrilineal surname descent without evidence — an unsound assumption of exactly the kind `check-warnings/references/assumption-categories.md` names as its canonical example ("a bride's surname is the same as her parents' surname"); unsound assumptions need positive evidence, not a default. Create one stub for that parent, sex left unspecified, linked via a `ParentChild` relationship — do not label or default it as "father." **Spell the unknown given name as `given: ""` — do NOT omit the key.** `given` is required on every name; a surname-only stub is `{"id": "N1", "preferred": true, "given": "", "surname": "Donovan"}`. **Set this person's `gender` to `"Unknown"` — do NOT omit the key.** `gender` is required on every person; a stub missing it fails the write for both project files, not just this person.
+**No placeholder unknown-person stubs.** Create stubs only for people with at least one concrete identifying detail. A known surname alone qualifies — when a maiden name is stated, it fixes a surname in that woman's **parental line**, but does not by itself tell you *which* parent carries it. Assuming it is the father assumes patrilineal surname descent without evidence — an unsound assumption, and the canonical example of one ("a bride's surname is the same as her parents' surname"); unsound assumptions need positive evidence, not a default. Create one stub for that parent, sex left unspecified, linked via a `ParentChild` relationship — do not label or default it as "father." **Spell the unknown given name as `given: ""` — do NOT omit the key.** `given` is required on every name; a surname-only stub is `{"id": "N1", "preferred": true, "given": "", "surname": "Donovan"}`. **Set this person's `gender` to `"Unknown"` — do NOT omit the key.** `gender` is required on every person; a stub missing it fails the write for both project files, not just this person.
 
 **Stub only the people the user actually named or directly implied — no others.** A stated maiden name implies exactly one new person: that woman's parent (not specifically her father).
 
@@ -224,7 +224,7 @@ A memory whose `notes` says it was not transcribed gets **no** `sources` entry �
 
 ### 5. Pedigree analysis and project summary
 
-**First, call `Skill("check-warnings")` once, naming the subject and every
+**First, invoke `@plugin:check-warnings` once, naming the subject and every
 imported relative by their LOCAL tree id from Step 3 (`I1`, `I2`… — never
 the FamilySearch PID or `ark`, even when the tree summary below lists both),
 and asking it to check all of them.** Fold what it returns into the findings
@@ -238,7 +238,9 @@ Analyze imported data before presenting results:
 
 **Gap detection:** missing ancestors (no parents)? Missing key life events? Only vague information?
 
-**Obvious error detection:** birth after death; parent-child age gaps outside 15-50 years; children born in locations inconsistent with parents; dates referencing non-existent jurisdictions; sibling births <9 months apart. **This is the complete list — do not flag anything else as an error**, no matter how odd it looks (a missing relationship subtype, an absent Couple relationship, two people sharing a name, a thin source count, or anything else you notice). Such a pattern belongs in **Gap detection** above if it's a missing-ancestor/event/vague-information gap, or is simply not mentioned — never presented as a defect. A deeper data-integrity pass is check-warnings' (`person_warnings`/`person_quality`) job, not this step's. Auditing the sources already attached — whether each belongs, whether it was indexed correctly — is source-evaluation's; name it, never audit them here.
+**Census fertility gap:** when a 1900 or 1910 US census gives the mother's children-born and children-living counts, born minus living is the number of her children dead by that census; each one not already in the tree, having died before the census date, is a gap to research — a child born and died before that enumeration. Living minus the children already in the tree alive at that date is the number of living children still missing. Parity between the living count and the children in the tree does not close the deceased-child gap. The dead count is cumulative: a child dead by 1900 is still counted among the dead in 1910, not an additional one. Apply the same de-duplication to the living-missing count — a child missing at both 1900 and 1910 is one missing child, not two — but a pre-census deceased child and a between-census living child are distinct targets, never merged. Count every child she bore, including by an earlier husband.
+
+**Obvious error detection:** birth after death; parent-child age gaps outside 15-50 years; children born in locations inconsistent with parents; dates referencing non-existent jurisdictions; sibling births <9 months apart. **This is the complete list — do not flag anything else as an error**, no matter how odd it looks (a missing relationship subtype, an absent Couple relationship, two people sharing a name, a thin source count, or anything else you notice). Such a pattern belongs in **Gap detection** above if it's a missing-ancestor/event/vague-information gap, or is simply not mentioned — never presented as a defect. A deeper data-integrity pass is check-warnings' (`person_warnings`) job, not this step's. Auditing the sources already attached — whether each belongs, whether it was indexed correctly — is source-evaluation's; name it, never audit them here.
 
 **Historical context signals** — per person, what the era and place imply about where the records will be. Were they of military age during a conflict that reached where they lived, so service, draft or pension files exist? Did a famine, emigration wave or internal migration move this population, leaving the records in the origin jurisdiction rather than the residence? Had civil registration begun there by the recorded date — before it, church registers are the only vitals? And did the named jurisdiction exist at that date, or does the record belong to the parent county or parish it was later split from?
 
@@ -255,8 +257,8 @@ present the imported relationship as established. Frame the current
 parent-child (or other disputed) assignment as **the relationship under
 investigation**: an *unverified* (`quality: 1`) tree assertion that is the
 hypothesis to be tested this project, not a settled fact. Say so in the tree
-summary and findings, and never confirm it from the tree it came from
-(issue #1471). Recording and testing the doubt is question-selection's job —
+summary and findings, and never confirm it from the tree it came from.
+Recording and testing the doubt is question-selection's job —
 here, only the framing changes.
 
 **Present to the user** — one short report in the house style, no tree table.
@@ -282,12 +284,12 @@ here, only the framing changes.
 
 User: "Start a new research project for person KWCJ-RN4. I want to identify his parents."
 
-1. Call `person_read({ personId: "KWCJ-RN4", relatives: true, sourceDescriptions: true })`
+1. Call `person_read({ personId: "KWCJ-RN4", projectPath })`
 2. Receive: Patrick Flynn, Male, Birth ~1845 Ireland, Death 1908-03-12 Schuylkill County PA. No parents. Spouse: Mary Kelly. Children: James, Margaret. Attached sources.
 3. Build the tree in memory — all persons, relationships, sources (quality: 1).
 4. `project_create({ projectPath, objective, title, subjectPersonIds: ["I1"], tree })`. Tell the user where the project was created.
 5. `research_append` for `researcher_profile` (the fixed novice profile) and one per volunteered holding.
-6. `Skill("check-warnings")` for I1, Mary Kelly, James, and Margaret. Pedigree
+6. `@plugin:check-warnings` for I1, Mary Kelly, James, and Margaret. Pedigree
    analysis + summary, folding in whatever it returns. Mary Kelly and the
    children are tree context only — their gaps are noted, not queued. Then name
    the first research question as the next step and go on to it.
@@ -297,7 +299,7 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 - **Never overwrite an existing project.** Guard clause catches this.
 - **v1 is read-only.** tree.gedcomx.json is not uploaded to FamilySearch.
 - **Use local GedcomX IDs** (`I1`, `I2`…) in both project files, including FamilySearch-seeded persons.
-- **Include relatives** (FAN principle), **siblings included**. Known relatives from the start give downstream skills persons to link to. `person_read` with `relatives: true` returns siblings by reading each parent; a half-sibling comes back linked to the shared parent only, which is the truth of what was imported.
+- **Include relatives** (FAN principle), **siblings included**. Known relatives from the start give downstream skills persons to link to. `person_read` returns siblings by reading each parent; a half-sibling comes back linked to the shared parent only, which is the truth of what was imported.
 - **Treat imported data as unverified.** FamilySearch tree is collaborative, quality varies. Never silently correct errors — flag them.
 - **Recording conventions:** maiden (birth) surnames for women; places most-specific to most-general; jurisdictions as they existed at event time; ISO 8601 dates in JSON.
 - **Handle isolated persons.** If `person_read` returns no relatives, still create the project. Note isolation in summary.

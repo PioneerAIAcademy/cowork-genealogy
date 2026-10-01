@@ -9,11 +9,12 @@
       "proof",
       "parentage",
       "reinvocation-dedup",
-      "no-new-proof-expected"
+      "no-new-proof-expected",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Take another look at the parentage proof and update it with anything you'd refine.",
+    "delegation": "Run your preconditions gate, then conclude the question at whatever tier the evidence supports, including `possible` or `not_proved`. Decline only if the gate itself fails.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "judge_context": [

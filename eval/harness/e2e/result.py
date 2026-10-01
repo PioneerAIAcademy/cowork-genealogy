@@ -173,7 +173,11 @@ class E2eResult:
 
     # Why the run stopped. See spec §6.5.
     # One of: completed | inactivity | timeout | tool_cap | cost_cap |
-    # max_turns | natural_end | error
+    # max_turns | natural_end | error | host_slept
+    # (`host_slept`, issue #2974: the host slept past the inactivity cap — the
+    # only stop_reason with verdict="skipped" that is still committed, so the
+    # drop is visible; excluded from outcome rates. `mcp_unavailable` never
+    # appears here — it raises before any E2eResult is built.)
     stop_reason: str
 
     # Structured judge output (per_finding, recall_required, recall_total,
@@ -386,7 +390,7 @@ def timestamp_slug(now: datetime | None = None) -> str:
 _COMMITTABLE_VERDICTS = frozenset({"pass", "partial", "fail", "ungraded"})
 
 
-def is_committable_run(verdict: str) -> bool:
+def is_committable_run(verdict: str, stop_reason: str | None = None) -> bool:
     """Whether a run produced a tree worth committing.
 
     "Committable" and "graded" are two different axes. A judge verdict of
@@ -399,24 +403,31 @@ def is_committable_run(verdict: str) -> bool:
     before producing any tree, so there is nothing to grade or re-grade —
     stays a gitignored `scratch_` run.
 
+    The one `skipped` run that IS committed is `host_slept` (issue #2974): the
+    host slept past the inactivity cap, so the judge was deliberately skipped,
+    but the run log is kept `run-`-prefixed so the operator can see why a run
+    dropped out of the rates. This is why committability takes `stop_reason` —
+    the verdict alone cannot tell a host_slept skip from an agent-crash skip.
+
     Fixture *validity* is a separate axis (e2e-test-spec.md §14): only a `pass`
     proves the fixture solvable. A committed `fail` does NOT validate the
     fixture (validity is a recommended authoring practice, not a CI check).
     """
-    return verdict in _COMMITTABLE_VERDICTS
+    return verdict in _COMMITTABLE_VERDICTS or stop_reason == "host_slept"
 
 
-def runlog_prefix(verdict: str) -> str:
-    """`run-` for a committable run (pass/partial/fail/ungraded), else `scratch_`.
+def runlog_prefix(verdict: str, stop_reason: str | None = None) -> str:
+    """`run-` for a committable run (pass/partial/fail/ungraded/host_slept), else `scratch_`.
 
     Keyed on the GENEALOGICAL verdict, deliberately — not on `outcome`. A run
     whose judge never ran has nothing to grade no matter what the guardrail
     check found, and `e2e-test-spec.md` §7.2 already says such a run gets the
     gitignored prefix. (Before the issue-#972 split, a guardrail violation
     forced `verdict="fail"`, which force-committed exactly those ungradeable
-    runs.)
+    runs.) The lone exception is `stop_reason == "host_slept"`, committed despite
+    its `skipped` verdict (issue #2974) — see is_committable_run.
     """
-    return "run-" if is_committable_run(verdict) else "scratch_"
+    return "run-" if is_committable_run(verdict, stop_reason) else "scratch_"
 
 
 def overall_outcome(verdict: str, compliance: str) -> str:
@@ -529,7 +540,7 @@ def write_result_files(
     """Write the three committed artifacts. Returns the paths written."""
     runlog_dir.mkdir(parents=True, exist_ok=True)
     ts = timestamp or timestamp_slug()
-    stem = f"{runlog_prefix(result.verdict)}{ts}"
+    stem = f"{runlog_prefix(result.verdict, result.stop_reason)}{ts}"
 
     paths = {
         "result": runlog_dir / f"{stem}.json",

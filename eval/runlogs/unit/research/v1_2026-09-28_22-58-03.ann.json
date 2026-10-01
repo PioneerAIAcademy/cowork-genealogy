@@ -1,0 +1,150 @@
+{
+  "run_log": "v1_2026-09-28_22-58-03.json",
+  "annotator": "edmondoware70@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The reply says the research plan has been extended and lists six searches queued, but research-plan was stubbed and its return said the delegation changed no project state. It also reports all five positive or partial log entries as linked, when the scenario log has four positive entries and one negative (log_003)."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": " The stub told the router to move on to the next step if one remained, and the router stopped to ask whether to continue instead."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "he reply states that the question has been added and both gates for q_001 are satisfied, but question-selection and the gps-mentor spawn were stubbed with no state change. It also calls the certificate the registrar's record, while the fixture's death assertion names the attending physician."
+    },
+    {
+      "test_id": "ut_research_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "fter the single question-selection delegation, the router answered from existing evidence and invited the user to continue, rather than moving on to locality-guide or research-plan as the stub directed."
+    },
+    {
+      "test_id": "ut_research_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The reply lists Bridget, Mary, Catherine and Margaret as common wives for such men, which no evidence supports; Bridget is actually a child in the 1850 Flynn household. Its table marks every step done against stubs that changed nothing, and it passed a predicted id q_003 to research-plan."
+    },
+    {
+      "test_id": "ut_research_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The project subject I1 is the Patrick Flynn of Schuylkill County, Pennsylvania, enumerated there in 1850 and 1860 and dead there in 1908. The router opened a New York wife question for him without raising that the user's New York manmay be a different person."
+    },
+    {
+      "test_id": "ut_research_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The reply cites NARA Series M237 as the Philadelphia arrivals, but M237 is the New York passenger lists; Philadelphia is M425. It also says two new questions have been queued, although question-selection was stubbed with no state change."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "After the mentor spawn and one question-selection call, the router asked whether to proceed. judge_context asks it to drive the full workflow, and the stub told it to move on to the next step."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The stub said only that the question was selected and recorded, yet the reply quotes question text that no tool returned. It also refers to Patrick's known death, marriage and census appearances in a project with zero sources or\nassertions."
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}

@@ -17695,7 +17695,7 @@
         "external-links-search-kongsberg",
         "external-links-search-trysil"
       ],
-      "outcome": "xfail",
+      "outcome": "fail",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [

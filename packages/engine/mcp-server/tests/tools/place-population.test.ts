@@ -17,6 +17,7 @@ vi.mock("../../src/auth/config.js", () => ({
 
 import { populationTool } from "../../src/tools/place-population.js";
 import type { PopulationToolInput } from "../../src/types/place-population.js";
+import { socketFetchFailure } from "../helpers/fetch-failed.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -130,6 +131,15 @@ describe("populationTool", () => {
     await expect(populationTool({ standardPlace: "Nigeria" }, LOCAL)).rejects.toThrow(
       /Population data service is unavailable/
     );
+  });
+
+  it("names the socket cause, not just \"fetch failed\"", async () => {
+    mockFetch.mockRejectedValue(socketFetchFailure());
+
+    const err = await populationTool({ standardPlace: "Nigeria" }, LOCAL).catch((e: Error) => e);
+    expect((err as Error).message).toMatch(/Population data service is unavailable.*ETIMEDOUT/s);
+    expect((err as Error).message).toContain("https://pop.example/api");
+    expect((err as Error).message).not.toMatch(/Is the Pop Stats API running/);
   });
 
   it("throws on a non-OK response", async () => {

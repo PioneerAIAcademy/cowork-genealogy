@@ -1,10 +1,13 @@
 name: JS workspace tests
 
 # Runs the pnpm workspace's own checks (apps/web, apps/electron,
-# packages/schema, packages/viewer-ui) and, as a second job, the separately
-# npm-managed eval/app tree.
+# packages/schema, packages/viewer-ui, eval/app) and, as a second job, the
+# Playwright suite eval/app needs a browser for. eval/app was a separately
+# npm-managed tree until #1488 made it a member; the second job survives only
+# because turbo cannot install chromium, not because that tree is separate.
 #
-# Neither had any CI. engine-tests.yml covers packages/engine/mcp-server, which
+# Neither had any CI when this file was written. engine-tests.yml covers
+# packages/engine/mcp-server, which
 # is deliberately NOT a workspace member (see pnpm-workspace.yaml), so every
 # other JS tree in the repo was unchecked — `turbo run test` and
 # `pnpm --filter web build` existed but nothing called them. Dependency PRs
@@ -69,7 +72,7 @@ jobs:
           # packages/schema/ mirror skips this job and reports success — the
           # lint dark in exactly the case it exists to catch. engine-tests.yml
           # lists the same path for the same reason.
-          PATTERNS: '^apps/web/|^apps/electron/|^packages/schema/|^packages/viewer-ui/|^docs/specs/schemas/|^package\.json$|^pnpm-lock\.yaml$|^pnpm-workspace\.yaml$|^turbo\.json$|^tsconfig\.base\.json$|^\.github/workflows/js-tests\.yml$|^\.github/workflows/electron-release\.yml$'
+          PATTERNS: '^apps/web/|^apps/electron/|^packages/schema/|^packages/viewer-ui/|^eval/app/|^eval/Start\.bat$|^scripts/drop-npm-managed-trees\.mjs$|^docs/specs/schemas/|^package\.json$|^pnpm-lock\.yaml$|^pnpm-workspace\.yaml$|^turbo\.json$|^tsconfig\.base\.json$|^\.github/workflows/js-tests\.yml$|^\.github/workflows/electron-release\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
@@ -103,6 +106,10 @@ jobs:
         if: steps.scope.outputs.relevant == 'true'
         run: pnpm --filter @genealogy/electron lint
 
+      - name: ESLint (eval CRUD UI)
+        if: steps.scope.outputs.relevant == 'true'
+        run: pnpm --filter cowork-genealogy-eval-app lint
+
       - name: Run workspace tests
         if: steps.scope.outputs.relevant == 'true'
         run: pnpm turbo run test
@@ -115,7 +122,16 @@ jobs:
         if: steps.scope.outputs.relevant == 'true'
         run: pnpm --filter web build
 
-  eval-app:
+  # Playwright only. eval/app is a pnpm workspace member (#1488), so the
+  # `workspace` job above already runs its ESLint, vitest and tsc through turbo.
+  # What that job cannot do is install a browser, so this one survives rather
+  # than folding in: deleting it would drop holdout-persistence.spec.ts and
+  # layout-geometry.spec.ts from CI while every PR still reported green.
+  eval-app-e2e:
+    # The `name:` is the required-status-check context in the `protect-main`
+    # ruleset — it is deliberately NOT renamed alongside the job key. Changing
+    # it makes the required check `eval CRUD UI` stop reporting, and every PR
+    # sits on `Expected — waiting for status` until someone edits the ruleset.
     name: eval CRUD UI
     runs-on: ubuntu-latest
     steps:
@@ -125,16 +141,21 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           # `^docs/specs/schemas/` (issue #1776): eval/app/scripts/gen-zod.ts
-          # generates the Zod schemas this job's tests import, from
+          # generates the Zod schemas this app imports, from
           # docs/specs/schemas/*.schema.json. Without it a schema-only diff
-          # reported success without regenerating or checking them.
-          # `eval/Start.bat` is outside eval/app/ but is pinned by
-          # eval/app/tests/unit/wiring.test.ts — the launcher URL has to match the
-          # loopback binding. Without it here, a PR editing only the launcher
-          # makes this job report success without running, and that guard never
-          # executes. Nothing else reaches the file: windows-wrappers.test.ts
-          # checks only that it exists.
-          PATTERNS: '^eval/app/|^eval/Start\.bat$|^docs/specs/schemas/|^\.github/workflows/js-tests\.yml$'
+          # reported success without regenerating them.
+          # `eval/Start.bat` moved to the `workspace` job's PATTERNS along with
+          # the vitest suite that pins it (wiring.test.ts), so it is not listed
+          # here — this job runs Playwright only.
+          #
+          # The workspace manifests ARE listed. eval/app renders
+          # `@genealogy/schema` types, and its dependency tree is resolved from
+          # the root lockfile, so a change to `packages/schema/`, `pnpm-lock.yaml`,
+          # `package.json` or `pnpm-workspace.yaml` can change what these specs
+          # render while touching nothing under `eval/app/`. Without them this
+          # required check reports success without running — the shape it exists
+          # to prevent.
+          PATTERNS: '^eval/app/|^packages/schema/|^scripts/drop-npm-managed-trees\.mjs$|^docs/specs/schemas/|^package\.json$|^pnpm-lock\.yaml$|^pnpm-workspace\.yaml$|^\.github/workflows/js-tests\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
@@ -149,41 +170,29 @@ jobs:
       - if: steps.scope.outputs.relevant == 'true'
         uses: actions/checkout@v7
 
+      # pnpm BEFORE setup-node so the cache step can find it, same as the
+      # workspace job. Version comes from the root package.json packageManager.
+      - if: steps.scope.outputs.relevant == 'true'
+        uses: pnpm/action-setup@v6
+
       - if: steps.scope.outputs.relevant == 'true'
         uses: actions/setup-node@v7
         with:
           node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: 'eval/app/package-lock.json'
+          cache: 'pnpm'
 
-      # `npm ci` runs eval/app's postinstall (scripts/gen-zod.ts), which
-      # generates the Zod schemas the tests import.
+      # `--filter …app...` is eval/app plus its workspace dependencies (2 of 6
+      # projects), which skips apps/electron and its binary download. Still runs
+      # eval/app's postinstall (scripts/gen-zod.ts), which generates the Zod
+      # schemas this app imports.
       - name: Install dependencies
         if: steps.scope.outputs.relevant == 'true'
-        working-directory: eval/app
-        run: npm ci
-
-      - name: ESLint
-        if: steps.scope.outputs.relevant == 'true'
-        working-directory: eval/app
-        run: npm run lint
-
-      - name: Run tests
-        if: steps.scope.outputs.relevant == 'true'
-        working-directory: eval/app
-        run: npm test
-
-      - name: Typecheck
-        if: steps.scope.outputs.relevant == 'true'
-        working-directory: eval/app
-        run: npm run typecheck
+        run: pnpm install --frozen-lockfile --filter cowork-genealogy-eval-app...
 
       - name: Install Playwright browsers
         if: steps.scope.outputs.relevant == 'true'
-        working-directory: eval/app
-        run: npx playwright install --with-deps chromium
+        run: pnpm --filter cowork-genealogy-eval-app exec playwright install --with-deps chromium
 
       - name: E2E tests (Playwright)
         if: steps.scope.outputs.relevant == 'true'
-        working-directory: eval/app
-        run: npm run test:e2e
+        run: pnpm --filter cowork-genealogy-eval-app test:e2e

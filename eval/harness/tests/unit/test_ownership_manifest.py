@@ -98,7 +98,25 @@ WIDENED: dict[str, set[str]] = {"questions": {"proof-conclusion"}}
 #: Declaring it here rather than editing the frozen literal above is the point:
 #: the literal stays a verbatim copy of what was enforced before, and every
 #: departure from it is a line someone had to write.
-NARROWED: dict[str, set[str]] = {"assertions": {"convert-dates"}}
+#:
+#: `person_evidence` loses `person-evidence` from citation's vantage point.
+#: The skill directory was deleted and the caller flipped from `skill:person-evidence`
+#: to `agent:person-evidence` in ownership.json. An `agent:` caller only resolves
+#: when it IS the subject — SUBJECT="citation" here — so person-evidence disappears
+#: from the visible writer set for this fixed perspective. The write permission is
+#: unchanged: from person-evidence's own subject perspective it still owns all three
+#: sections it held before the conversion.
+#:
+#: `log`'s and `plans`'s `search-images` caller changed from `skill:` to
+#: `agent:` (issue #2268, thin-skill deletion). With SUBJECTS iterating every
+#: agent caller, `search-images` resolves when `subject="search-images"`, so
+#: the union still sees it — no NARROWED entry needed for either section.
+#: `plan_items` has `enforceableAt: []` so it never reaches the unit plane
+#: and needs no entry.
+NARROWED: dict[str, set[str]] = {
+    "assertions": {"convert-dates"},
+    "person_evidence": {"person-evidence"},
+}
 
 
 # The suite subject the research.json rows need to resolve (issue #2799). The
@@ -108,7 +126,40 @@ NARROWED: dict[str, set[str]] = {"assertions": {"convert-dates"}}
 # `sources` is UNCHANGED at {"record-extraction", "citation"}. The conversion
 # moved how the caller is spelled, not who may write, and this test is what
 # says so.
-SUBJECT = "citation"
+#: Every agent that is both a unit-suite subject and an `agent:` caller in the
+#: manifest. `writer_sets` reads an `agent:` caller ONLY when it is the subject
+#: (ownership.py's agent rule), so no single vantage point can see the whole
+#: manifest any more: from `citation` the `proof-conclusion` rows resolve to
+#: nobody, and vice versa. The union over every subject is the manifest as the
+#: unit plane actually enforces it, one suite at a time.
+#:
+#: The frozen tables below stay unchanged across a conversion, and that is the
+#: point: it proves the conversion moved how a caller is SPELLED, not who may
+#: write. Editing a frozen table to drop a converted skill is the wrong fix --
+#: it makes this free suite green and the paid run red.
+#:
+#: Derived from the manifest, so the next conversion joins the union with no
+#: edit here; `test_a_unit_plane_agent_caller_is_a_suite_subject` is what
+#: keeps each of these a real suite.
+SUBJECTS = tuple(
+    sorted(
+        {
+            c[len("agent:") :]
+            for r in rows()
+            if UNIT_PLANE in (r.get("enforceableAt") or [])
+            for c in r.get("callers") or []
+            if c.startswith("agent:")
+        }
+    )
+)
+
+
+def _union_writer_sets(artifact: str) -> dict[str, set[str]]:
+    merged: dict[str, set[str]] = {}
+    for subject in SUBJECTS:
+        for section, writers in writer_sets(artifact, UNIT_PLANE, subject=subject).items():
+            merged.setdefault(section, set()).update(writers)
+    return merged
 
 
 #: tree `persons` and `relationships` gain `forget-and-rederive`. It holds
@@ -127,11 +178,23 @@ TREE_WIDENED: dict[str, set[str]] = {
     "relationships": {"forget-and-rederive"},
 }
 
+#: tree `persons` and `relationships` lose `person-evidence` from the no-subject
+#: vantage point. After the skill-to-agent conversion, the caller is
+#: `agent:person-evidence`, which only resolves when subject="person-evidence".
+#: The tree writer_sets call passes no subject, so person-evidence is invisible here.
+#: Write permission is unchanged from person-evidence's own subject perspective.
+TREE_NARROWED: dict[str, set[str]] = {
+    "persons": {"person-evidence"},
+    "relationships": {"person-evidence"},
+}
+
 
 def expected_tree_owners() -> dict[str, set[str]]:
     expected = {k: set(v) for k, v in FROZEN_TREE_OWNERSHIP_TABLE.items()}
     for section, added in TREE_WIDENED.items():
         expected[section] |= added
+    for section, removed in TREE_NARROWED.items():
+        expected[section] -= removed
     return expected
 
 
@@ -148,11 +211,11 @@ def expected_research_owners() -> dict[str, set[str]]:
 
 
 def test_research_owners_match_the_frozen_tables():
-    assert writer_sets(RESEARCH_JSON, UNIT_PLANE, subject=SUBJECT) == expected_research_owners()
+    assert _union_writer_sets(RESEARCH_JSON) == expected_research_owners()
 
 
 def test_tree_owners_match_the_frozen_table():
-    assert writer_sets(TREE_GEDCOMX_JSON, UNIT_PLANE) == expected_tree_owners()
+    assert _union_writer_sets(TREE_GEDCOMX_JSON) == expected_tree_owners()
 
 
 def test_the_only_newly_enforced_section_is_localities():
@@ -163,7 +226,7 @@ def test_the_only_newly_enforced_section_is_localities():
     added to an existing one are different decisions with different costs.
     """
     before = set(FROZEN_OWNERSHIP_TABLE) - NEWLY_ENFORCED
-    after = set(writer_sets(RESEARCH_JSON, UNIT_PLANE, subject=SUBJECT))
+    after = set(_union_writer_sets(RESEARCH_JSON))
     assert after - before == NEWLY_ENFORCED
     assert before - after == set()
 
@@ -177,7 +240,7 @@ def test_no_owner_was_dropped_except_the_declared_one():
     the check — so the drop side gets its own named assertion and its own
     allow-list, which is a place a reviewer can look.
     """
-    actual = writer_sets(RESEARCH_JSON, UNIT_PLANE, subject=SUBJECT)
+    actual = _union_writer_sets(RESEARCH_JSON)
     dropped = {
         section: sorted((frozen - actual.get(section, set())) - NARROWED.get(section, set()))
         for section, frozen in FROZEN_OWNERSHIP_TABLE.items()
@@ -185,11 +248,11 @@ def test_no_owner_was_dropped_except_the_declared_one():
     }
     assert dropped == {}
 
-    tree_actual = writer_sets(TREE_GEDCOMX_JSON, UNIT_PLANE)
+    tree_actual = _union_writer_sets(TREE_GEDCOMX_JSON)
     tree_dropped = {
-        section: sorted(frozen - tree_actual.get(section, set()))
+        section: sorted((frozen - tree_actual.get(section, set())) - TREE_NARROWED.get(section, set()))
         for section, frozen in FROZEN_TREE_OWNERSHIP_TABLE.items()
-        if frozen - tree_actual.get(section, set())
+        if (frozen - tree_actual.get(section, set())) - TREE_NARROWED.get(section, set())
     }
     assert tree_dropped == {}
 
@@ -217,6 +280,10 @@ def test_a_unit_plane_agent_caller_is_a_suite_subject():
 
     `evaluations` (`agent:gps-mentor`) stays off the unit plane and is untouched
     by this: it claims no plane, so it never reaches the filter below.
+
+    Checked across `callers`, `hookCallers`, and `unitCallers` — all three
+    fields resolve agent callers through the same `writer_sets` path, so
+    all must satisfy the same structural invariant.
     """
     repo_root = REPO_ROOT
     agents_dir = repo_root / "packages" / "engine" / "plugin" / "agents"
@@ -226,7 +293,12 @@ def test_a_unit_plane_agent_caller_is_a_suite_subject():
     for r in rows():
         if UNIT_PLANE not in (r.get("enforceableAt") or []):
             continue
-        for c in r.get("callers") or []:
+        agent_callers = (
+            list(r.get("callers") or [])
+            + list(r.get("hookCallers") or [])
+            + list(r.get("unitCallers") or [])
+        )
+        for c in agent_callers:
             if not c.startswith("agent:"):
                 continue
             name = c[len("agent:") :]

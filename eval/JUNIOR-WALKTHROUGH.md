@@ -71,7 +71,7 @@ You'll install three things outside the repo, then run a single batch file insid
 
    Either way, the script will:
    - Install `uv` (the Python package manager) via PowerShell.
-   - Run `npm install` in `eval/app/` (installs the CRUD UI's dependencies).
+   - Run `pnpm install` at the repo root (installs the CRUD UI's dependencies with the rest of the workspace).
    - Run `npm install` and `npm run build` in `packages/engine/mcp-server/` (compiles the MCP server the harness loads).
    - Run `uv sync` in `eval/harness/` (installs Python dependencies and Python itself if needed).
    - Prompt you for your **Anthropic API key** — paste it in when asked. It gets saved to `eval/.env`.
@@ -109,11 +109,12 @@ You only do all this once per machine. After this point, daily work uses `Start.
 ```bash
 # Git is usually pre-installed; if not: brew install git (macOS) or apt install git (Linux)
 brew install node                                      # or: nvm install --lts
+npm install -g pnpm@9.15.9                             # same pin as eval/Setup.bat; brew's node has npm, not pnpm
 brew install uv                                        # or: curl -LsSf https://astral.sh/uv/install.sh | sh
 
 git clone <repo-url> ~/cowork-genealogy
 cd ~/cowork-genealogy/eval/harness && uv sync
-cd ~/cowork-genealogy/eval/app && npm install
+cd ~/cowork-genealogy && pnpm install
 
 # Save your API key from https://console.anthropic.com/settings/keys
 echo "ANTHROPIC_API_KEY=sk-ant-..." > ~/cowork-genealogy/eval/.env
@@ -171,7 +172,7 @@ uv run python run_tests.py --skill search-wikipedia
 
 **What happens next — same on both platforms:**
 
-- Claude runs against every test in `eval/tests/unit/search-wikipedia/`, using the model pinned in `plugin/skills/search-wikipedia/SKILL.md` (currently `claude-sonnet-4-6`).
+- Claude runs against every test in `eval/tests/unit/search-wikipedia/`, using the model pinned in `packages/engine/plugin/agents/search-wikipedia.md` (currently `claude-sonnet-4-6`). `search-wikipedia` is an **agent**, not a skill, so its body is that one file rather than a `skills/<name>/SKILL.md` folder — everything else about running and grading it is the same.
 - An LLM judge grades each run.
 - **Time:** ~30 seconds per test, run one at a time — `search-wikipedia` has 8 tests, so ~4 minutes total.
 - **Cost:** ~$0.50 of API credit per pass.
@@ -205,8 +206,8 @@ Either way, **keep that command-prompt window open** the whole time you work —
 **macOS / Linux:** open a second terminal and run:
 
 ```bash
-cd ~/cowork-genealogy/eval/app
-npm run dev
+cd ~/cowork-genealogy
+pnpm --filter cowork-genealogy-eval-app dev
 ```
 
 **Keep that terminal open** while you work — closing it (or pressing Ctrl-C) stops the app.
@@ -252,8 +253,8 @@ If the scores reveal the skill is doing the wrong thing — bad tool args, missi
 
 **Open SKILL.md in Notepad++:**
 
-1. Open File Explorer and go into `cowork-genealogy\plugin\skills\<skill>\` — e.g. `cowork-genealogy\plugin\skills\search-wikipedia\`.
-2. Right-click `SKILL.md` → **Edit with Notepad++** (added automatically by the installer). If that option isn't there, right-click → **Open with** → **Notepad++**.
+1. Open File Explorer and go into `cowork-genealogy\packages\engine\plugin\skills\<skill>\` — e.g. `cowork-genealogy\packages\engine\plugin\skills\record-extraction\`. For an **agent** such as `search-wikipedia` there is no folder: the body is the single file `cowork-genealogy\packages\engine\plugin\agents\search-wikipedia.md`.
+2. Right-click the file → **Edit with Notepad++** (added automatically by the installer). If that option isn't there, right-click → **Open with** → **Notepad++**.
 3. Edit, then **File → Save** (or Ctrl-S). Don't use **Save As** — it can change the file extension or the text encoding.
 
 > ⚠️ Don't open the file in Word or WordPad — they silently turn straight quotes into curly "smart quotes" that break the skill. Notepad++ doesn't do this.
@@ -274,7 +275,7 @@ Once your latest candidate has every dimension reviewed:
 
 **GitHub Desktop:**
 
-1. The left panel shows changed files. Tick the boxes next to the files you intend to commit — usually anything under `plugin/skills/search-wikipedia/` (if you edited the skill) and `eval/runlogs/unit/search-wikipedia/` (the candidate + its `.ann.json`).
+1. The left panel shows changed files. Tick the boxes next to the files you intend to commit — usually `packages/engine/plugin/agents/search-wikipedia.md` (if you edited the body) and `eval/runlogs/unit/search-wikipedia/` (the candidate + its `.ann.json`).
 2. Write a summary like `search-wikipedia: candidate v{N}` at the bottom-left, then click "Commit to junior-<your-name>-search-wikipedia".
 3. Click "Push origin" at the top.
 4. Click "Create Pull Request" — that opens GitHub in your browser. Add a one-paragraph description of what you changed and why, then click "Create pull request".
@@ -282,7 +283,7 @@ Once your latest candidate has every dimension reviewed:
 **Terminal alternative:**
 
 ```bash
-git add plugin/skills/search-wikipedia/
+git add packages/engine/plugin/agents/search-wikipedia.md
 git add eval/runlogs/unit/search-wikipedia/
 git commit -m "search-wikipedia: candidate v{N}"
 git push -u origin junior-<your-name>-search-wikipedia

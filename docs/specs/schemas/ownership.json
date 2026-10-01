@@ -22,7 +22,7 @@
       "owner": "skill:init-project",
       "callers": [
         "skill:init-project",
-        "skill:proof-conclusion"
+        "agent:proof-conclusion"
       ],
       "agentCallers": [
         {
@@ -99,7 +99,7 @@
       "callers": [
         "skill:question-selection",
         "skill:research-exhaustiveness",
-        "skill:proof-conclusion"
+        "agent:proof-conclusion"
       ],
       "agentCallers": [
         {
@@ -135,7 +135,7 @@
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
-        "skill:search-images",
+        "agent:search-images",
         "skill:record-extraction"
       ],
       "writerTools": [
@@ -144,7 +144,7 @@
       "enforceableAt": [
         "unit"
       ],
-      "requires": "research-plan owns plan and item structure. The search skills and record-extraction may update only `items[].status` after executing or extracting from an item.",
+      "requires": "research-plan owns plan and item structure. The search skills, the search-images agent, and record-extraction may update only `items[].status` after executing or extracting from an item.",
       "failure": "A search skill rewrites the plan it was handed, and the plan stops being a record of what was intended versus what was done.",
       "remedy": "Update the item's status; route a change to the plan itself through research-plan.",
       "override": "none"
@@ -158,7 +158,7 @@
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
-        "skill:search-images",
+        "agent:search-images",
         "skill:record-extraction"
       ],
       "agentCallers": [
@@ -188,7 +188,7 @@
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
-        "skill:search-images",
+        "agent:search-images",
         "skill:record-extraction"
       ],
       "agentCallers": [
@@ -231,6 +231,12 @@
           "agent": "agent:record-extractor",
           "tools": [
             "extraction_append"
+          ]
+        },
+        {
+          "agent": "agent:citation",
+          "tools": [
+            "research_append"
           ]
         }
       ],
@@ -278,10 +284,8 @@
     {
       "artifact": "research.json",
       "section": "person_evidence",
-      "owner": "skill:person-evidence",
-      "callers": [
-        "skill:person-evidence"
-      ],
+      "owner": "agent:person-evidence",
+      "callers": [],
       "writerTools": [
         "research_append",
         "merge_tree_persons"
@@ -293,7 +297,7 @@
         "unit",
         "hook"
       ],
-      "notes": "Enforced at the hook plane since 2026-09-01, section-scoped: the plugin PreToolUse hook denies a research_append op on this section unless the caller is the person-evidence AGENT. The section has one owner and `extraction_append` does not accept it, so a section rule fits and the field-scoped treatment `exhaustive_declaration` needed does not apply here — nothing on this section is required on every question. `callers` stays skill-only and `writerTools` stays research_append on purpose: the unit plane keys on the calling skill's frontmatter name and cannot see an agent, so naming an agent there raises OwnershipManifestError. The agent caller lives in `hookCallers`. Known limit, stated rather than implied: `owner_denied` only inspects research_append, so `materialize_facts` with no `personId` mints a brand-new tree person and reaches this lane's work without passing the section check.",
+      "notes": "Enforced at the hook plane since 2026-09-01, section-scoped: the plugin PreToolUse hook denies a research_append op on this section unless the caller is the person-evidence AGENT. The section has one owner and `extraction_append` does not accept it, so a section rule fits and the field-scoped treatment `exhaustive_declaration` needed does not apply here — nothing on this section is required on every question. The unit plane resolves `agent:person-evidence` via `writer_sets(..., subject=skill_name)` when person-evidence is the suite's own subject (issue #2799 ruling, issue #2821 conversion). Known limit, stated rather than implied: `owner_denied` only inspects research_append, so `materialize_facts` with no `personId` mints a brand-new tree person and reaches this lane's work without passing the section check.",
       "requires": "Only person-evidence links a persona to a tree person. The record-extraction lane is held off this section by tool identity: `extraction_append` does not accept it.",
       "failure": "A skill writing an identity link asserts a `match_score` no tool computed — the exact failure that produced the narrower extraction tool.",
       "remedy": "Route the identity link through person-evidence.",
@@ -366,9 +370,9 @@
     {
       "artifact": "research.json",
       "section": "proof_summaries",
-      "owner": "skill:proof-conclusion",
+      "owner": "agent:proof-conclusion",
       "callers": [
-        "skill:proof-conclusion"
+        "agent:proof-conclusion"
       ],
       "writerTools": [
         "research_append",
@@ -381,7 +385,7 @@
         "unit",
         "hook"
       ],
-      "notes": "The highest measured bypass rate of any artifact: 47 of 133 committed e2e runs wrote a proof summary without ever launching the skill that owns it. test_ownership_table cannot see that, because it grades a single skill's own run; test_no_out_of_lane_section_writes has recorded the hook's agent-keyed verdict on this plane since 2026-09-02. Enforced at the hook plane since 2026-08-19: the plugin PreToolUse hook denies a research_append op on this section unless the caller is the proof-conclusion AGENT. `callers` stays skill-only and `writerTools` stays research_append on purpose -- `callers` is validated against test_ownership_table, which keys on the calling skill's frontmatter name, so naming an agent there raises OwnershipManifestError. That is a property of THAT check, not of the plane: test_no_out_of_lane_section_writes on the same plane does see the agent. The agent caller lives in `hookCallers`, which is the per-plane field a later phase should read.",
+      "notes": "The highest measured bypass rate of any artifact: 47 of 133 committed e2e runs wrote a proof summary without ever launching the skill that owns it. test_ownership_table cannot see that, because it grades a single skill's own run; test_no_out_of_lane_section_writes has recorded the hook's agent-keyed verdict on this plane since 2026-09-02. Enforced at the hook plane since 2026-08-19: the plugin PreToolUse hook denies a research_append op on this section unless the caller is the proof-conclusion AGENT. `owner` and `callers` name the AGENT since the routing skill was deleted (issue #2822). The older note here said naming an agent raised OwnershipManifestError; that stopped being true with issue #2799, which made `writer_sets` resolve an `agent:` caller when it is the suite subject and drop it otherwise. This row is enforceable on the unit plane precisely because proof-conclusion owns `eval/tests/unit/proof-conclusion/`, which `test_a_unit_plane_agent_caller_is_a_suite_subject` checks against the filesystem. `hookCallers` still names the agent for the hook plane, which is a different plane and not a duplicate.",
       "requires": "Only proof-conclusion writes a conclusion, and never more than one summary per `question_id`.",
       "failure": "A summary written outside the skill skips the tier decision rules and the conflict preconditions, and the tree is then encoded from it.",
       "remedy": "Conclude through proof-conclusion.",
@@ -433,10 +437,12 @@
       "reason": "Four co-equal writers with disjoint jobs and no structural owner: init-project mints the starting stubs, person-evidence owns the household skeleton and mints a person the moment a persona matches nobody, tree-edit applies user-directed changes, and proof-conclusion lands the concluded value. The permitted writers are listed in `callers`. record-extraction is deliberately NOT one of them: it reaches this section only through `research_append`/`extraction_append`'s assertion-update rewrite, which is authorized by TOOL identity instead, and only for the exact delta that rewrite can produce.",
       "callers": [
         "skill:init-project",
-        "skill:tree-edit",
-        "skill:proof-conclusion",
-        "skill:person-evidence",
+        "agent:tree-edit",
+        "agent:proof-conclusion",
         "skill:forget-and-rederive"
+      ],
+      "unitCallers": [
+        "agent:person-evidence"
       ],
       "agentCallers": [
         {
@@ -454,6 +460,14 @@
         },
         {
           "agent": "agent:proof-conclusion",
+          "tools": [
+            "merge_tree_persons",
+            "tree_correct",
+            "tree_edit"
+          ]
+        },
+        {
+          "agent": "agent:tree-edit",
           "tools": [
             "merge_tree_persons",
             "tree_correct",
@@ -490,10 +504,12 @@
       "reason": "The same four writers as `persons`, for the same reason — a relationship edge is written by whichever of them established it, and no one of them owns the section's structure.",
       "callers": [
         "skill:init-project",
-        "skill:tree-edit",
-        "skill:proof-conclusion",
-        "skill:person-evidence",
+        "agent:tree-edit",
+        "agent:proof-conclusion",
         "skill:forget-and-rederive"
+      ],
+      "unitCallers": [
+        "agent:person-evidence"
       ],
       "agentCallers": [
         {
@@ -504,6 +520,14 @@
         },
         {
           "agent": "agent:proof-conclusion",
+          "tools": [
+            "merge_tree_persons",
+            "tree_correct",
+            "tree_edit"
+          ]
+        },
+        {
+          "agent": "agent:tree-edit",
           "tools": [
             "merge_tree_persons",
             "tree_correct",
@@ -532,8 +556,8 @@
       "owner": "skill:record-extraction",
       "callers": [
         "skill:init-project",
-        "skill:tree-edit",
-        "skill:proof-conclusion",
+        "agent:tree-edit",
+        "agent:proof-conclusion",
         "skill:record-extraction"
       ],
       "agentCallers": [
@@ -560,6 +584,13 @@
           "agent": "agent:citation",
           "tools": [
             "research_append"
+          ]
+        },
+        {
+          "agent": "agent:tree-edit",
+          "tools": [
+            "tree_correct",
+            "tree_edit"
           ]
         }
       ],

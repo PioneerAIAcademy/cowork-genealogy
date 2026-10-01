@@ -120,18 +120,6 @@ COMMON_WORD_EXEMPTIONS: dict[str, str] = {
 # say it is not there); only "quotes" is held to the file.
 SUPPRESSIONS: list[dict[str, str]] = [
     {
-        "file": "eval/tests/unit/check-warnings/negative-schema-validation.json",
-        "tool": "validate_research_schema",
-        "quotes": [
-            "Should route to validate-schema (or whatever skill owns the validate_research_schema MCP tool)",
-        ],
-        "reason": (
-            "cross-owner: names the destination skill of a routing test - "
-            "'Should route to validate-schema (or whatever skill owns the "
-            "validate_research_schema MCP tool)'"
-        ),
-    },
-    {
         "file": "eval/tests/unit/init-project/rubric.md",
         "tool": "validate_research_schema",
         "quotes": [
@@ -148,11 +136,11 @@ SUPPRESSIONS: list[dict[str, str]] = [
         "file": "eval/tests/unit/person-evidence/baptism-parentage-links-only-defers-relationship.json",
         "tool": "tree_correct",
         "quotes": [
-            "nothing in this skill's toolset can raise the gender afterwards, since `tree_correct update_person` is not granted to it",
+            "nothing in this agent's toolset can raise the gender afterwards, since `tree_correct update_person` is not granted to it",
         ],
         "reason": (
-            "negative mention: names the tool to say the skill lacks it - "
-            "'nothing in this skill's toolset can raise the gender "
+            "negative mention: names the tool to say the agent lacks it - "
+            "'nothing in this agent's toolset can raise the gender "
             "afterwards, since `tree_correct update_person` is not granted "
             "to it'"
         ),
@@ -171,7 +159,7 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "eval/tests/unit/proof-conclusion/no-image-claim-without-tool-confirmation.json",
+        "file": "eval/tests/unit/proof-conclusion/direct-no-image-claim-without-tool-confirmation.json",
         "tool": "record_read",
         "quotes": [
             "record_read was never called to check for a digitized image",
@@ -183,7 +171,7 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "eval/tests/unit/proof-conclusion/no-image-claim-without-tool-confirmation.json",
+        "file": "eval/tests/unit/proof-conclusion/direct-no-image-claim-without-tool-confirmation.json",
         "tool": "record_search",
         "quotes": [
             "Its notes and log_001 explicitly state that record_search returned no imageId/artifacts field for this hit",
@@ -608,120 +596,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
             "negative mention of another skill's tool - 'Should NOT scope "
             "the full-text search to a record `collectionId` guessed from "
             "record_search or a collections survey'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/browse-unindexed-probate.json",
-        "tool": "image_read",
-        "quotes": [
-            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool: image_read returns the page inline and a volume browse overflows the transport)",
-        ],
-        "reason": (
-            "negative mention - 'the agent reads pages itself with "
-            "image_transcribe - it must NOT call image_read (it has no such "
-            "tool: image_read returns the page inline and a volume browse "
-            "overflows the transport)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/image-group-listing.json",
-        "tool": "image_read",
-        "quotes": [
-            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool: image_read returns the page inline and a volume browse overflows the transport)",
-        ],
-        "reason": (
-            "negative mention - 'the agent reads pages itself with "
-            "image_transcribe - it must NOT call image_read (it has no such "
-            "tool: image_read returns the page inline and a volume browse "
-            "overflows the transport)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/volume-selection-multi-candidate.json",
-        "tool": "image_read",
-        "quotes": [
-            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool: image_read returns the page inline and a volume browse overflows the transport)",
-        ],
-        "reason": (
-            "negative mention - 'the agent reads pages itself with "
-            "image_transcribe - it must NOT call image_read (it has no such "
-            "tool: image_read returns the page inline and a volume browse "
-            "overflows the transport)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/volume-split-across-films.json",
-        "tool": "image_read",
-        "quotes": [
-            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool: image_read returns the page inline and a volume browse overflows the transport)",
-        ],
-        "reason": (
-            "negative mention - 'the agent reads pages itself with "
-            "image_transcribe - it must NOT call image_read (it has no such "
-            "tool: image_read returns the page inline and a volume browse "
-            "overflows the transport)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/direct-browse-unindexed-probate.json",
-        "tool": "image_read",
-        "quotes": [
-            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool)",
-        ],
-        "reason": (
-            "negative mention - 'the agent reads pages itself with "
-            "image_transcribe - it must NOT call image_read (it has no such "
-            "tool)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/direct-happy-path-browse.json",
-        "tool": "image_read",
-        "quotes": [
-            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool)",
-        ],
-        "reason": (
-            "negative mention - 'the agent reads pages itself with "
-            "image_transcribe - it must NOT call image_read (it has no such "
-            "tool)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/volume-mixed-item-sections.json",
-        "tool": "image_read",
-        "quotes": [
-            "Page reading is done by the agent itself with image_transcribe (never image_read, which it does not hold)",
-        ],
-        "reason": (
-            "negative mention, worded as a parenthetical rather than an "
-            "imperative - 'Page reading is done by the agent itself with "
-            "image_transcribe (never image_read, which it does not hold)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/rubric.md",
-        "tool": "image_read",
-        "quotes": [
-            "The agent does not call `image_read` and does not hold it: `image_read` returns the page inline as base64 and a volume browse accumulates enough of it to overflow the transport and crash the run",
-        ],
-        "reason": (
-            "negative mention - 'The agent does not call `image_read` and "
-            "does not hold it: `image_read` returns the page inline as "
-            "base64 and a volume browse accumulates enough of it to "
-            "overflow the transport and crash the run'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/negative-indexed-search.json",
-        "tool": "record_search",
-        "quotes": [
-            "A log entry from search-records itself (tool: record_search) is the CORRECT route working and is not a violation",
-        ],
-        "reason": (
-            "cross-owner: names search-records' tool as the correct "
-            "alternative route - 'A log entry from search-records itself "
-            "(tool: record_search) is the CORRECT route working and is not "
-            "a violation'"
         ),
     },
     {
@@ -1336,6 +1210,56 @@ def main() -> int:
                             f"can't make — update judge_context.",
                             file=rel_file,
                         )
+
+    # A suite whose subject is an AGENT, not a skill. The loop above keys on
+    # SKILLS_DIR, so a skill-to-agent conversion silently took that suite's
+    # rubric.md and judge_context out of this check entirely -- `citation`
+    # (issue #2799) and `proof-conclusion` (issue #2822) both left by that
+    # door, and `gps-mentor` was never in. The declared set is the agent's
+    # own `tools:`; there is no skill frontmatter to union in.
+    if TESTS_DIR.is_dir():
+        for suite_dir in sorted(TESTS_DIR.iterdir()):
+            suite = suite_dir.name
+            if not suite_dir.is_dir() or (SKILLS_DIR / suite).is_dir():
+                continue
+            agent_md = AGENTS_DIR / f"{suite}.md"
+            if not agent_md.exists():
+                continue
+            declared, _disallowed = agent_declared_tools(agent_md)
+
+            rubric_md = suite_dir / "rubric.md"
+            for tool in sorted(rubric_mentions(rubric_md, vocabulary, declared=declared)):
+                rel_file = f"eval/tests/unit/{suite}/rubric.md"
+                if is_suppressed(rel_file, tool):
+                    suppressed_count += 1
+                    continue
+                drift_hits += 1
+                gh_warning(
+                    f"agent `{suite}`'s rubric.md mentions `{tool}`, which is "
+                    f"not in its `tools:` {sorted(declared) or '[]'}. If "
+                    f"`{tool}` was folded into another tool, update the "
+                    f"grading prose — don't fail runs for not calling a tool "
+                    f"the agent can't call.",
+                    file=rel_file,
+                )
+
+            for test_path in sorted(suite_dir.glob("*.json")):
+                for tool in sorted(
+                    judge_context_mentions(test_path, vocabulary, declared=declared)
+                ):
+                    rel_file = f"eval/tests/unit/{suite}/{test_path.name}"
+                    if is_suppressed(rel_file, tool):
+                        suppressed_count += 1
+                        continue
+                    drift_hits += 1
+                    gh_warning(
+                        f"test `{test_path.name}` (agent `{suite}`) has a "
+                        f"judge_context mentioning `{tool}`, which is not in "
+                        f"its `tools:` {sorted(declared) or '[]'}. The judge is "
+                        f"being told to expect a call the agent can't make "
+                        f"— update judge_context.",
+                        file=rel_file,
+                    )
 
     if AGENTS_DIR.is_dir():
         for agent_md in sorted(AGENTS_DIR.glob("*.md")):

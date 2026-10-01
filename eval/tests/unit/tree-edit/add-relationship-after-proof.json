@@ -5,10 +5,10 @@
     "name": "Add ParentChild relationship after proof reaches probable tier",
     "type": "positive",
     "description": "Per research-schema-spec.md §8 (two-layer doctrine), a parent-child edge materializes onto the tree at identity-link time carrying a source-ref — it does not wait for a proof to reach `probable`. The mid-research-flynn scenario has R1 (Thomas → Patrick ParentChild) ALREADY in tree.gedcomx.json (materialized when the relationship assertion was linked), and ps_001 is at `probable`. Tests the skill's handling of this expected-state case: confirm the relationship is present and that its source list carries the relationship assertion's source-ref.",
-    "tags": ["tree-edit", "parentchild-relationship", "post-proof", "R1", "no-op-or-verify", "tree-edit-noop"]
+    "tags": ["tree-edit", "parentchild-relationship", "post-proof", "R1", "no-op-or-verify", "tree-edit-noop", "direct-arm"]
   },
   "input": {
-    "user_message": "tree-edit: ps_001 is at `probable` tier. Verify the tree reflects this — make sure the tree shows the ParentChild relationship between Thomas (I2) and Patrick (I1), and tell me whether R1 already reflects this or whether an edit is needed.",
+    "delegation": "ps_001 is at `probable` tier. Verify the tree reflects this — make sure the tree shows the ParentChild relationship between Thomas (I2) and Patrick (I1), and tell me whether R1 already reflects this or whether an edit is needed.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "judge_context": [
