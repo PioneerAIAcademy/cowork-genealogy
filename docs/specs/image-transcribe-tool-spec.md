@@ -506,7 +506,7 @@ Returns **text only**:
 ```typescript
 {
   transcription: string      // faithful full-page OCR (the primary payload) — never doctored
-  viewerUrl?: string         // FamilySearch viewer URL for the image (issue #2854).
+  viewerUrl?: string         // FamilySearch viewer URL for the image.
                              // Present for imageId and ark inputs; absent for file and memoryArtifactUrl.
                              // DGS: https://www.familysearch.org/search/film/<dgs>?i=<n-1> (zero-indexed,
                              //   verified 2026-10-01: image 00697 of film 004528077 opens at i=696).
