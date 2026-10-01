@@ -658,7 +658,10 @@ def test_the_rescue_claim_is_the_workers_own_statement():
     ).read_text(encoding="utf-8")
     claim = " ".join(worker_src.split("def take_queued_turn", 1)[1].split("def ", 1)[0].split())
     for fragment in (
-        "UPDATE turns SET outcome = NULL WHERE turn_id = (",
+        # claimed_at dates the row from its release: the worker's retention backstop
+        # reads COALESCE(claimed_at, enqueued_at), so a long-held message released without
+        # it looks expired and is closed before it ever runs.
+        "UPDATE turns SET outcome = NULL, claimed_at = now() WHERE turn_id = (",
         # The predicate IS the claim. Widened to anything non-null it would match a turn
         # that already RAN and re-enqueue it; this was unpinned until a break test
         # swapped it for `outcome IS NOT NULL` and every test stayed green.

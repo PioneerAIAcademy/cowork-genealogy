@@ -1,30 +1,22 @@
 {
   "run_log": "v3.json",
-  "annotator": "florencemashipei4@gmail.com",
+  "annotator": "adeyinkaadedayo1024@mail.com",
   "corrections": [
     {
-      "test_id": "ut_research_005",
+      "test_id": "ut_research_003",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
+      "comment": "Correctly added q_003 and pl_003 with required fields. Tool responses all ok:true. No fabrication."
     },
     {
-      "test_id": "ut_research_005",
+      "test_id": "ut_research_003",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_005",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Planning phase completed but execution blocked by environment limitation. LLM 2 fair — planning done, execution not attempted."
     },
     {
       "test_id": "ut_research_003",
@@ -32,23 +24,7 @@
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_003",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_003",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "comment": "project_context, research_query, research_append calls matched expected_args. Validation error on first attempt self-corrected in one retry."
     },
     {
       "test_id": "ut_research_004",
@@ -56,7 +32,7 @@
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
+      "comment": "Parentage evidence (1850/1860 census, 1908 death cert) accurately summarized. Proof tier 'Probable' correct. No fabrication."
     },
     {
       "test_id": "ut_research_004",
@@ -64,7 +40,7 @@
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
+      "comment": "Full workflow: project_context, mentor gate on ps_001, question-selection for two new questions. All steps completed"
     },
     {
       "test_id": "ut_research_004",
@@ -72,31 +48,7 @@
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_008",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_008",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_008",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "comment": " Four calls (project_context, research_query x3) all matched expected_args with correct section/targetIdparameters."
     },
     {
       "test_id": "ut_research_001",
@@ -104,15 +56,7 @@
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_001",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "comment": "Parentage of Thomas Flynn accurately grounded in three sources (1850/1860 census, death cert). Conflict resolution correct. No fabrication."
     },
     {
       "test_id": "ut_research_001",
@@ -120,103 +64,31 @@
       "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The father, Thomas Flynn, was supported by three sources, but the mother was not identified and the proposed follow-up searches were not"
+      "comment": "Father identified with three sources, but mother not pursued. LLM 2 fair — half the request answered, searches planned but not executed."
     },
     {
-      "test_id": "ut_research_012",
+      "test_id": "ut_research_001",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
+      "comment": "Seven calls (project_context, research_query x6) all matched expected_args. Correct section/targetId parameters throughout."
     },
     {
-      "test_id": "ut_research_012",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_012",
+      "test_id": "ut_research_002",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Death facts correct (12 Mar 1908, Schuylkill Co.) but procedural error claiming question-selection 'did not persist.' LLM 2 fair."
     },
     {
-      "test_id": "ut_research_013",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_013",
+      "test_id": "ut_research_002",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_013",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_014",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_014",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_014",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_015",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_015",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_015",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Answered conversationally rather than driving through GPS workflow as per-test context requires. LLM 2 fair."
     },
     {
       "test_id": "ut_research_002",
@@ -224,23 +96,175 @@
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
+      "comment": "All tool calls correctly formed — project_context, research_query calls with proper section/targetId/focus params. No fixture_not_found."
     },
     {
-      "test_id": "ut_research_002",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_002",
+      "test_id": "ut_research_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
+      "comment": "Correctly recognized empty folder (no research.json) and declined to research. Routed toward init-project."
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Routing complete — asked for person details needed for init-project. No omissions."
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Zero tool calls on a negative routing test. N/A correct."
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly identified 'framed' state, recognized missing locality guide, routed to locality-guide. No fabrication."
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Full routing workflow completed — context read, blocking condition identified, delegation issued."
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Single project_context call with correct projectPath. Matched live fixture, ok:true."
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly identified locality guide in place (loc_001), routed to research-plan per routing table. Accurate narration."
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Full routing workflow — context read, locality guide confirmed, delegated to research-plan with q_001."
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Single project_context call with correct projectPath. Matched live fixture."
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly identified existing plan (pl_001/pli_001), routed to search-records. Patronymic reasoning sound."
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Full routing workflow — context read, plan confirmed, search-records delegation with clear context."
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Two calls (project_context, research_query with section='plans') both matched expected structure."
+    },
+    {
+      "test_id": "ut_research_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly identified empty project (objective only), routed to question-selection. Honest narration."
+    },
+    {
+      "test_id": "ut_research_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Routing complete — recognized no questions/sources/plan, delegated to question-selection."
+    },
+    {
+      "test_id": "ut_research_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Single project_context call with correct projectPath. Matched live fixture."
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly declined browse-planning request and routed to research-plan. No tool calls made."
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Routing complete — no tools invoked, no research attempted for a planning-domain request."
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Zero tool calls on a negative routing test. N/A correct."
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly declined research and routed to search-records for indexed census query. No browse attempted."
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Routing completed correctly — no tools invoked, no browse attempted on indexed volume."
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Zero tool calls on a negative routing test. N/A correct."
     }
   ]
 }
