@@ -19,7 +19,6 @@ const canonicalPath = join(repoRoot, "plugin", "references", "places-guidance.md
 // places.
 const SKILLS_WITH_PLACES_GUIDANCE = [
   "historical-context",
-  "search-external-sites",
   "timeline",
   "conflict-resolution",
   "record-extraction",

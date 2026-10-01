@@ -542,7 +542,8 @@ re-issue it first. Then present the plan:
   like "...and start executing it," "...and continue with exhaustive
   research," or "...don't stop to check in with me" — hand off to
   execution in this same turn instead of asking: `Skill("search-records")`
-  for FamilySearch items, `Skill("search-external-sites")` for others.
+  for FamilySearch items, a spawn of `@plugin:search-external-sites` for
+  others, naming the plan item and never the result you expect.
   If only some items can execute right now (e.g. one
   repository or tool is unavailable but another isn't), execute those and
   report the block on the rest — don't let an item that's blocked for any
@@ -550,6 +551,11 @@ re-issue it first. Then present the plan:
 - Otherwise, suggest next step: "Would you like me to start executing this
   plan?" (search-records / search-external-sites, depending on
   the repositories)
+- **A plan item that ends at an external archive the researcher must open
+  themselves** (Archion, Matricula, a paid site): give the link — the parish or
+  collection page, never just the site name — what the record would settle,
+  exactly what to look for (register or volume, folio or page, entry), and an
+  offer to walk them through capturing the page and uploading it.
 
 ## Example
 

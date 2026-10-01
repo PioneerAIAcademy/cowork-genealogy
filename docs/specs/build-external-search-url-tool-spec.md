@@ -613,13 +613,11 @@ network vantage; a second vantage would settle it.
   (`project-context-tool-spec.md` §2.3). The log write's warnings and its
   nil-escalation note are merged into `notes`. Writes nothing to
   `tree.gedcomx.json`.
-- **`projectPath` and `planItemId` are not advertised yet.** The function
-  accepts them; the skill-to-agent conversion adds them to the MCP `inputSchema`
-  in the same change that deletes the skill's own step-4
-  `research_log_append` call. Advertised earlier, a model following the
-  skill's habit of passing `projectPath` everywhere would log each URL
-  twice. Until then the write path is reachable only from the tests and the
-  eval harness.
+- **`projectPath` and `planItemId` are advertised** in the MCP `inputSchema`, in
+  the same change that removed the in-flight `research_log_append` call from the
+  search-external-sites agent, so a hand-off is logged once. The description
+  tells the caller not to log it again, and to omit `projectPath` when the
+  results are already in hand.
 - **Does not decide which event a search targets, or resolve `conflicts[]`.**
   Those are the skill's judgments (SKILL.md `:314-333`) — the tool receives
   already-decided attribute values and templates them.

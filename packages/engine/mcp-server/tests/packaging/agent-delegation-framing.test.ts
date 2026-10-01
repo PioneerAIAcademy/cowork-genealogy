@@ -260,6 +260,51 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
+  // The agent-conversion (issue #2802) deleted skills/search-external-sites/,
+  // so its three callers became spawns of `@plugin:search-external-sites`.
+  "research -> search-external-sites": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that pre-states a value** — a birthplace, a year, a collection\n  — does not settle it.",
+      },
+    ],
+  },
+
+  "search-records -> search-external-sites": {
+    pins: [
+      {
+        side: "caller",
+        excerpt: "and the plan item — never a value you expect it to find —",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that pre-states a value** — a birthplace, a year, a collection\n  — does not settle it.",
+      },
+    ],
+  },
+
+  "research-plan -> search-external-sites": {
+    pins: [
+      {
+        side: "caller",
+        excerpt: "naming the plan item and never the result you expect.",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that pre-states a value** — a birthplace, a year, a collection\n  — does not settle it.",
+      },
+    ],
+  },
+
   "research -> person-evidence": {
     pins: [
       {
@@ -478,6 +523,14 @@ const PROSE_MENTIONS = new Map<string, string>([
   // `@plugin:hypothesis-tracking`.
   ["conflict-resolution -> hypothesis-tracking", ""],
   ["timeline -> hypothesis-tracking", ""],
+  // search-external-sites entered agentOnly when issue #2802 deleted its skill.
+  // All five are routing-boundary prose naming it as the owner of an
+  // external-site search ("use search-external-sites"), none a delegation.
+  ["locality-guide -> search-external-sites", ""],
+  ["project-status -> search-external-sites", ""],
+  ["question-selection -> search-external-sites", ""],
+  ["record-extraction -> search-external-sites", ""],
+  ["search-full-text -> search-external-sites", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -667,6 +720,8 @@ describe("agent delegation framing", () => {
     "person-evidence",
     "locality-guide",
     "record-extractor",
+    // ARRIVED when issue #2802 deleted skills/search-external-sites/.
+    "search-external-sites",
     "search-familysearch-wiki",
     "search-images",
     "search-wikipedia",

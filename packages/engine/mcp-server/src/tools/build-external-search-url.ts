@@ -1326,7 +1326,10 @@ export const buildExternalSearchUrlSchema = {
     "tool only templates the URL. On success the response's `access` field " +
     "classifies the site as `free`, `free_bot_protected`, or `subscription` — " +
     "read it from here, not from memory, when telling the user what access " +
-    "the search needs. It writes nothing and makes no network call.",
+    "the search needs. Given `projectPath`, it also appends the search's " +
+    "in-flight `external_site` log entry (outcome partial, captureReceived false) " +
+    "to research.json and returns its `logId` — do not log that hand-off again. " +
+    "It makes no network call.",
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -1351,6 +1354,17 @@ export const buildExternalSearchUrlSchema = {
           "Country-domain variant. \"uk\" builds against ancestry.co.uk or " +
           "findmypast.co.uk instead of the .com default; has no effect on any " +
           "other site, or when `baseUrl` is supplied.",
+      },
+      projectPath: {
+        type: "string",
+        description:
+          "Absolute project-folder path. When given, the tool logs the URL as an in-flight " +
+          "hand-off awaiting the researcher's capture and returns its `logId`. Omit it when " +
+          "the results are already in hand and nothing is awaiting a capture.",
+      },
+      planItemId: {
+        type: "string",
+        description: "The `pli_` plan item this search executes, recorded on the logged hand-off.",
       },
       attributes: {
         type: "object",
