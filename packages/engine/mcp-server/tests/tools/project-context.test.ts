@@ -168,6 +168,21 @@ describe("project_context", () => {
       ).toEqual([]);
     });
 
+    it("drops it when the user could not access the site (a later error with no capture)", async () => {
+      expect(
+        await withLog([ext("log_001", "partial", URL_A, false), ext("log_002", "error", URL_A, false)]),
+      ).toEqual([]);
+    });
+
+    it("a later partial for the same URL is the link sent again: it opens a row and closes none", async () => {
+      const open = await withLog([ext("log_001", "partial", URL_A, false), ext("log_002", "partial", URL_A, false)]);
+      expect(open.map((o) => o.logId)).toEqual(["log_001", "log_002"]);
+    });
+
+    it("an autonomous deferral (negative, no capture) never opens a row", async () => {
+      expect(await withLog([ext("log_001", "negative", URL_A, false)])).toEqual([]);
+    });
+
     it("a capture on a different URL closes nothing", async () => {
       const open = await withLog([ext("log_001", "partial", URL_A, false), ext("log_002", "positive", URL_B, true)]);
       expect(open.map((o) => o.logId)).toEqual(["log_001"]);

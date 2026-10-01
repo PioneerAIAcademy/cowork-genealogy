@@ -119,10 +119,15 @@ function externalSiteOf(entry: any): any | null {
   return ext && typeof ext === "object" && typeof ext.url_generated === "string" ? ext : null;
 }
 
-/** Whether a later log entry answers the hand-off at `url` (spec §2.3). */
+/**
+ * Whether a later log entry ends the hand-off at `url` (spec §2.3): any entry
+ * for the same URL whose outcome is not `partial`, whether or not a capture
+ * came back. "I have no access" is logged as `error` with no capture, and after
+ * it the user is not holding a link from us.
+ */
 function closesHandOff(entry: any, url: string): boolean {
   const ext = externalSiteOf(entry);
-  return ext !== null && ext.url_generated === url && ext.capture_received === true;
+  return ext !== null && ext.url_generated === url && entry.outcome !== "partial";
 }
 
 /**
@@ -305,7 +310,8 @@ export const projectContextSchema = {
     "question needs nothing further. awaitingUser [{logId, site, urlGenerated, " +
     "planItemId, performed}] lists external-site URLs already handed to the user that " +
     "nothing has answered yet — do not raise them again; when the user brings back a " +
-    "capture, log it as that row's closing entry (same url, captureReceived true). " +
+    "capture, or says they cannot access the site, log that as the row's closing " +
+    "entry with the same urlGenerated. " +
     "One call gives the context " +
     "for extraction judgment calls (which questions an assertion bears on, " +
     "whether a record persona is already in the tree, which sources cover a " +

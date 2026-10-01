@@ -210,8 +210,21 @@ the user fetched it. The "waiting on the user" record already existed — an
 
 A row is every `log[]` entry with `tool: "external_site"`,
 `outcome: "partial"` and `external_site.capture_received === false` that no
-**later** `external_site` entry (by log order) closes. A later entry closes it
-when it carries the same `url_generated` and `capture_received: true`.
+**later** `external_site` entry (by log order) for the same `url_generated`
+closes. A later entry closes it when its outcome is not `partial`, whether or
+not a capture came back (closing condition amended 2026-10-01; the rest of the
+2026-09-30 ruling stands). `awaitingUser` answers one question — is the user
+holding a link from us right now?
+
+- A capture answers the hand-off.
+- "The user can't access the site" is logged as `outcome: "error"` with no
+  capture, and ends it too. The plan item still records what they chose
+  (`skipped` on their yes, `in_progress` otherwise), so closing the row loses
+  nothing.
+- A later `partial` is the link sent again. It opens a row of its own and
+  closes none.
+
+"Same URL" is an exact match on `url_generated`.
 
 - **Keyed on `partial`, not on `capture_received` alone.** That session's bundle
   holds two `outcome: "positive"` entries logged with `capture_received: false`
@@ -219,11 +232,12 @@ when it carries the same `url_generated` and `capture_received: true`.
   waiting on anyone and never list.
 - **Later only.** An earlier capture of the same URL does not close a hand-off
   issued after it: the user was sent the link again.
-- **Open question (put back to the lead 2026-10-01).** The
-  skill logs a no-access wall as `capture_received: false` with a non-`partial`
-  outcome, so under this rule "I have no Archion pass" leaves the row listed
-  for good. The proposal is to close on any later non-`partial` entry for the
-  same URL; the rule above stands until that is answered.
+- **An autonomous deferral never opens a row.** It is logged
+  `outcome: "negative"` with no capture — nothing was handed to anyone.
+- **Why not close on a capture alone.** The 2026-09-30 ruling closed a row
+  only on `capture_received: true`. A no-access reply carries no capture, so
+  "I have no Archion pass" would have left the row listed for good — the same
+  re-raise loop this field exists to stop. Amended 2026-10-01.
 
 *Rejected:* an `awaiting_user` plan-item status — it duplicates state the log
 already holds, and would pull `research-plan` into the change.
@@ -273,7 +287,10 @@ shape by the `search-external-sites` agent once the skill is converted.
 - **not a project at all** — `{ ok: false, reason: "no_project", errors }`, and
   no `isError`.
 - **`awaitingUser`** — lists an open partial hand-off with its plan item and
-  timestamp; drops it once a later entry for the same URL carries the capture;
+  timestamp; drops it once a later entry for the same URL carries the capture,
+  and when a later `error` entry records that the user could not access the site;
+  a re-sent link (a later `partial`) opens its own row and closes none; an
+  autonomous deferral (`negative`, no capture) never lists;
   a capture on a different URL closes nothing; an earlier capture does not
   close a later hand-off; a `positive` entry with `capture_received: false`
   never lists; a non-`external_site` entry never lists.
