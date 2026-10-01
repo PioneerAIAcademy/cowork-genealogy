@@ -322,10 +322,30 @@ def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
     """SKILL.md step 4 / query-syntax.md: when a fulltext_search call carries
     post-search filters and returns zero results, the next call for the same
     topic (same keywords/nlQuery handle) must omit those filters — a nil under
-    a filter may be a metadata mismatch, not a true negative."""
+    a filter may be a metadata mismatch, not a true negative.
+
+    Exception: if any call in the turn returned positive results AND shares at
+    least one required term (+word) with the nil handle, the topic is already
+    resolved and no retry is required. This covers spelling/abbreviation
+    variants (e.g. +Flinn after +Flynn returned results, or +Thos after
+    +Thomas) — trying the variant without filters would add nothing."""
     calls = _fts_tool_calls(tool_calls)
     if not calls:
         pytest.skip("no fulltext_search calls this turn")
+
+    # Collect required (+word) terms from every call that returned positive results.
+    positive_terms: set = set()
+    for c in calls:
+        resp = c.get("response") or {}
+        results = resp.get("results")
+        total_hits = resp.get("totalHits")
+        is_positive = (
+            (isinstance(results, list) and len(results) > 0) or
+            (total_hits is not None and int(total_hits) > 0)
+        )
+        if is_positive:
+            h = c["args"].get("keywords") or c["args"].get("nlQuery") or ""
+            positive_terms.update(w for w in h.split() if w.startswith("+"))
 
     by_handle: dict = {}
     for c in calls:
@@ -335,6 +355,12 @@ def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
 
     errors = []
     for handle, handle_calls in by_handle.items():
+        # If this handle shares a required term with any positive result in the
+        # turn, the topic is resolved — no retry needed for variant searches.
+        handle_req_terms = {w for w in handle.split() if w.startswith("+")}
+        if handle_req_terms & positive_terms:
+            continue
+
         for i, c in enumerate(handle_calls):
             args = c["args"]
             present_filters = [k for k in POST_SEARCH_FILTER_KEYS if k in args]

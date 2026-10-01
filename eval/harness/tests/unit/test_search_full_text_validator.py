@@ -153,6 +153,17 @@ def test_filtered_nil_retry_passes_when_filtered_call_returns_results():
     check_filtered_nil_retry([c])
 
 
+def test_filtered_nil_retry_passes_when_positive_overlapping_term_exists():
+    """Validator passes when a spelling variant's nil is covered by a positive result
+    sharing a required term. E.g. +Flinn returned nil but +Flynn found results — the
+    topic is resolved and no retry for +Flinn is needed."""
+    calls = [
+        _unfiltered_call("+Flynn +witness"),  # positive result
+        _filtered_nil_call("+Flinn +witness", recordPlace1="Pennsylvania"),  # variant, no retry needed
+    ]
+    check_filtered_nil_retry(calls)
+
+
 # --- test_plan_item_completion_matches_its_own_record_type --------------
 # Deep dive #1651 finding 3, content branch: `ut_search_full_text_011`, run
 # `v1_2026-07-27_21-14-16` -- `pli_006` (record_type "probate") flips to

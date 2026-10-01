@@ -14,10 +14,10 @@ Resolution order:
      even in subscription mode and carries it on AuthConfig so the
      judge has it.
 
-     Note: an inherited ANTHROPIC_API_KEY in the SDK subprocess would
-     otherwise take precedence over the subscription session, so
-     env_for_sdk actively suppresses it in subscription mode (see
-     that function).
+     Note: an inherited ANTHROPIC_API_KEY in the SDK subprocess takes
+     precedence over the subscription session when present. env_for_sdk
+     does NOT suppress it — setting it to "" caused CLI >=2.1.278 to
+     return is_error=true even on a successful response (see that function).
 
   2. Judge — always uses an ANTHROPIC_API_KEY. The Anthropic SDK (the
      judge talks to it directly, bypassing the Agent SDK) has no
@@ -164,11 +164,14 @@ def env_for_sdk(auth: AuthConfig) -> dict[str, str]:
     For api_key mode: explicitly inject the key (covers the case where it
     lives in eval/.env but isn't in the shell environment).
 
-    For subscription mode: force the subprocess onto the CLI's subscription
-    session by suppressing any inherited ANTHROPIC_API_KEY (set to empty
-    string — the Claude Code CLI treats it as unset and falls back to its
-    OAuth session). Without this a key in the operator's shell would silently
-    win over the subscription.
+    For subscription mode: do NOT suppress an inherited ANTHROPIC_API_KEY.
+    Setting it to empty string (the prior approach) causes claude CLI >=2.1.278
+    to return is_error=true even when the model responds successfully — the CLI
+    no longer treats "" as "unset and fall back to OAuth". Without suppression,
+    the subprocess inherits whatever the shell has: if ANTHROPIC_API_KEY is
+    present it uses API-key auth (slightly more expensive than subscription but
+    functionally correct); if absent, the CLI falls back to its OAuth session.
+    Either path works; the empty-string path does not.
 
     `ENABLE_TOOL_SEARCH` turns tool search ON, not off — the polarity is the
     opposite of what this comment claimed until issue #1110. Read off the
@@ -190,6 +193,4 @@ def env_for_sdk(auth: AuthConfig) -> dict[str, str]:
     env = {"ENABLE_TOOL_SEARCH": "true"}
     if auth.skill_runner_mode == "api_key" and auth.api_key:
         env["ANTHROPIC_API_KEY"] = auth.api_key
-    else:
-        env["ANTHROPIC_API_KEY"] = ""
     return env

@@ -66,11 +66,12 @@ def test_raises_when_no_auth_available(monkeypatch, tmp_path):
         auth.resolve_auth()
 
 
-def test_env_for_sdk_subscription_mode_sets_tool_search_and_suppresses_key():
-    """Subscription mode sets ENABLE_TOOL_SEARCH=true and suppresses any
-    inherited ANTHROPIC_API_KEY="" so the CLI falls back to its OAuth session."""
+def test_env_for_sdk_subscription_mode_sets_tool_search_only():
+    """Subscription mode sets ENABLE_TOOL_SEARCH=true and does NOT inject
+    ANTHROPIC_API_KEY. Setting it to "" caused CLI >=2.1.278 to return
+    is_error=true even on a successful model response."""
     cfg = auth.AuthConfig(skill_runner_mode="subscription", api_key=None, detail="x")
-    assert auth.env_for_sdk(cfg) == {"ENABLE_TOOL_SEARCH": "true", "ANTHROPIC_API_KEY": ""}
+    assert auth.env_for_sdk(cfg) == {"ENABLE_TOOL_SEARCH": "true"}
 
 
 def test_env_for_sdk_returns_key_and_tool_search_in_api_mode():
@@ -81,11 +82,11 @@ def test_env_for_sdk_returns_key_and_tool_search_in_api_mode():
     }
 
 
-def test_env_for_sdk_subscription_mode_suppresses_key_even_if_present():
+def test_env_for_sdk_subscription_mode_does_not_inject_key_even_if_present():
     """Even when a key is available (carried for the judge), subscription
-    mode suppresses it with "" so the CLI OAuth session wins, and still
-    sets ENABLE_TOOL_SEARCH=true."""
+    mode does not inject it — ANTHROPIC_API_KEY is left for the CLI to inherit
+    from the shell or ignore; only ENABLE_TOOL_SEARCH is set explicitly."""
     cfg = auth.AuthConfig(
         skill_runner_mode="subscription", api_key="sk-x", detail="x"
     )
-    assert auth.env_for_sdk(cfg) == {"ENABLE_TOOL_SEARCH": "true", "ANTHROPIC_API_KEY": ""}
+    assert auth.env_for_sdk(cfg) == {"ENABLE_TOOL_SEARCH": "true"}
