@@ -1,6 +1,7 @@
 ---
 name: source-evaluation
-description: Audits the sources already attached to a person's FamilySearch
+description: >-
+  Audits the sources already attached to a person's FamilySearch
   profile and reports what is wrong with them. Invoke when the user wants to
   evaluate, audit, or review the sources on a profile, asks whether the
   attached sources actually support the recorded facts, or asks to look for
@@ -12,11 +13,21 @@ description: Audits the sources already attached to a person's FamilySearch
   between two sources about the same fact to conflict-resolution; route a
   single person's impossible dates or relationships to check-warnings; route
   extracting a new record's contents into assertions to record-extraction.
-allowed-tools:
-  - person_read
-  - record_read
-  - source_attachments
-  - person_quality
+model: claude-sonnet-4-6
+tools:
+  - Read
+  - mcp__genealogy__person_read
+  - mcp__remote-devices__Genealogy_Research__person_read
+  - mcp__Genealogy_Research__person_read
+  - mcp__genealogy__record_read
+  - mcp__remote-devices__Genealogy_Research__record_read
+  - mcp__Genealogy_Research__record_read
+  - mcp__genealogy__source_attachments
+  - mcp__remote-devices__Genealogy_Research__source_attachments
+  - mcp__Genealogy_Research__source_attachments
+  - mcp__genealogy__person_quality
+  - mcp__remote-devices__Genealogy_Research__person_quality
+  - mcp__Genealogy_Research__person_quality
 ---
 
 # Source Evaluation
