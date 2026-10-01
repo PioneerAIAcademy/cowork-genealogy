@@ -23,9 +23,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && python3 --version
 
 # The SDK pin is the flush-mode pin (session_store_flush="eager" is SDK-side) and the
-# CLI pin (the wheel bundles Claude Code 2.1.220). [binary] bundles libpq.
+# CLI pin (the wheel bundles Claude Code 2.1.220). [binary] bundles libpq. botocore
+# signs enqueue.py's SQS calls, pinned to apps/server/uv.lock's version.
 RUN python3 -m pip install --break-system-packages \
-        "claude-agent-sdk==0.2.128" "psycopg[binary]>=3.2,<4"
+        "claude-agent-sdk==0.2.128" "psycopg[binary]>=3.2,<4" "botocore==1.43.106"
 
 # Plugin: 17 skills + 15 agents + the shipped PreToolUse hook (python3 runs it).
 COPY packages/engine/plugin /opt/genealogy/plugin
@@ -36,7 +37,7 @@ COPY apps/server/app               /opt/genealogy/server/app
 COPY apps/server/proto/sql         /opt/genealogy/server/proto/sql
 # 1b: the worker releases a held message when the turn holding it ends, and it is the
 # only component that knows a turn finished. enqueue.py is the repo's one SQS client
-# (stdlib urllib, no boto3), so the handover reuses it rather than growing a second.
+# (urllib transport, botocore SigV4), so the handover reuses it rather than growing a second.
 COPY apps/server/proto/enqueue.py  /opt/genealogy/server/proto/enqueue.py
 COPY apps/server/proto/worker      /opt/genealogy/server/proto/worker
 

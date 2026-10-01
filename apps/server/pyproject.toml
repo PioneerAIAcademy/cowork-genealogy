@@ -33,6 +33,10 @@ dev = [
     # tests/test_proto_config.py parses apps/server/proto/docker-compose.yml.
     # Already present transitively (uvicorn[standard]); declared because we import it.
     "pyyaml>=6.0",
+    # proto/enqueue.py's SigV4 signer (U7). The proto web and worker images pip-install
+    # it at the version this lock pins (test_proto_config checks the two agree). It sits
+    # here, not in [project], so deploy/Dockerfile's `uv sync --no-dev` image does not grow.
+    "botocore>=1.40",
 ]
 # proto/drive.py --embedded-pg: a pip-installed PostgreSQL 16 so the D11-13 acceptance
 # runs on a machine with neither Docker nor Postgres. Its own group, never installed by
