@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "FamilySearch record search for Dixon surname in the 1840 Virginia census. Pre-1850: only heads of household are named. Returns 4 results, totalMatches 441 (under the 600 threshold).",
+  "description": "FamilySearch record search for Dixon surname in the 1840 Virginia census, page 1. Pre-1850: only heads of household are named. Returns 4 of 6 results; hasMore is true so the agent must page with offset 100.",
   "args": {
     "surname": "~Dixon",
     "residenceYearFrom": 1840,
@@ -15,11 +15,11 @@
       "residenceYearFrom": 1840,
       "residenceYearTo": 1840
     },
-    "totalMatches": 441,
+    "totalMatches": 6,
     "paginationCappedAt": 4999,
     "returned": 4,
     "offset": 0,
-    "hasMore": false,
+    "hasMore": true,
     "rankingSkipped": "No subjectId provided — results are in FamilySearch relevance order.",
     "results": [
       {

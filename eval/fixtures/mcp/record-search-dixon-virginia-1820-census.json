@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "FamilySearch record search for Dixon surname in the 1820 Virginia census. Pre-1850: only heads of household are named. Returns 3 results (all under the 600 threshold), each a distinct household.",
+  "description": "FamilySearch record search for Dixon surname in the 1820 Virginia census. Pre-1850: only heads of household are named. Returns 3 results on one page, each a distinct household.",
   "args": {
     "surname": "~Dixon",
     "residenceYearFrom": 1820,
@@ -15,7 +15,7 @@
       "residenceYearFrom": 1820,
       "residenceYearTo": 1820
     },
-    "totalMatches": 366,
+    "totalMatches": 3,
     "paginationCappedAt": 4999,
     "returned": 3,
     "offset": 0,

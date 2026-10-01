@@ -15,6 +15,7 @@
     "place-search-virginia",
     "record-search-dixon-virginia-1820-census",
     "record-search-dixon-virginia-1830-census",
+    "record-search-dixon-virginia-1840-census-page2",
     "record-search-dixon-virginia-1840-census"
   ],
   "execution": {
@@ -23,11 +24,11 @@
   "judge_context": [
     "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour.",
     "Should call place_search for Virginia, then record_search for each of 1820, 1830, and 1840 with surname Dixon, recordType census, recordCountry United States, recordSubdivision Virginia, residenceYearFrom = residenceYearTo = that year, count 100, and projectPath.",
-    "All three years are under the 600 totalMatches threshold (366, 407, 441), so the agent should fetch all results (they fit on one page each) and NOT ask for counties.",
+    "All three years are under the 600 totalMatches threshold (3, 3, 6), so the agent should fetch all results and NOT ask for counties. 1820 and 1830 fit on one page each (hasMore: false). 1840 has 6 results split across two pages (hasMore: true on page 1) — the agent MUST page with offset 100 to get the remaining 2 results.",
     "Should call research_log_append after each record_search page to log the search, passing the staged.resultsRef from the record_search response as stagedResultsRef.",
     "Should build a markdown table with one section per census year, columns for year, county, head of household, other surname members, record ARK, and ruled out. Pre-1850 censuses name only the head of household, so there are no other members to list.",
     "Should write the table to a markdown file using Write. The file name should follow the pattern surname-survey-dixon-virginia.md. To verify Table structure, check the Write call's content in builtin_tool_calls for the required columns (census year, county, head of household, other surname members, record ARK, ruled out) and per-year sectioning. If the Write call is present with the correct column headers and year sections, score Table structure 3.",
-    "All three fixtures return hasMore: false, meaning all deliverable results are on that single page. The agent should NOT claim data is incomplete or that additional paging is needed when hasMore is false.",
+    "1820 and 1830 return hasMore: false (single page). 1840 returns hasMore: true on page 1 — the agent must call record_search again with offset 100 for 1840. Expect two record_search calls for 1840 (page 1 and page 2) and one each for 1820 and 1830, for a total of four record_search calls.",
     "The agent's return should end with the summary_for_user block: a `---` line followed by two unlabeled paragraphs in plain language."
   ]
 }

@@ -206,6 +206,7 @@ sibling skill.
 | **`search-familysearch-wiki`** (an AGENT since issue #2794, not a skill) | Any "how do I find [record type]" question | Wiki guidance, synthesized only from returned chunks | `wiki_search` (hosted wiki API) | `<topic-slug>.md` in the working folder. **Not logged to `log[]`** |
 | **`search-wikipedia`** (an AGENT since issue #2795, not a skill) | A single-article encyclopedia lookup | The verbatim article extract — no paraphrase | `wikipedia_search` | `<title-slug>.md` in the working folder. **Not logged to `log[]`** |
 | **`validate-schema`** (an AGENT since issue #2798, not a skill) | "validate", "check the files" | Relaying validator errors in plain terms with a non-regressing fix each | `validate_research_schema` | Nothing. Never edits a file to fix an error |
+| **`survey-surname`** (an AGENT, issue #2065) | "find every Dixon family in Virginia censuses", tabulate a surname across censuses | Per-year `record_search` sweep, grouped by `recordArk`, sectioned by year and collection, with non-population schedules separate | `place_search`, `record_search` (with `projectPath`), `research_log_append` | `log[]` — `research_log_append`; writes `surname-survey-*.md` via `Write` |
 | **`forget-and-rederive`** | Practice mode — the researcher asks for a known answer to be stripped | Removing a tree slice with cascade so it must be re-derived from records, and holding the rederivation to account | `project_context`; a `dryRun` read-back. **Forbidden** from reading `tree.gedcomx.json` | Tree slice removed and `.tree-before-forget.gedcomx.json` written — `tree_forget`. Touches no `research.json` |
 
 ---
@@ -223,7 +224,7 @@ rule prevents, is in [`specs/schemas/ownership.json`](specs/schemas/ownership.js
 | | `known_holdings` | `init-project` | — | `research_append` | **nothing** |
 | | `questions` | `question-selection` | `research-exhaustiveness`, `proof-conclusion` | `research_append` | unit + hook + tool — the only field-scoped rule: the hook keys on the claim `exhaustive_declaration.declared: true`, not on the section |
 | | `plans` / `plan_items` | `research-plan` | the four search skills and `record-extraction`, for `items[].status` only | `research_append` | unit (whole-section only — it cannot tell a status flip from a rewritten plan) |
-| | `log` | none by design — append-only, multi-writer | the four search skills and `record-extraction` | `research_log_append` | unit |
+| | `log` | none by design — append-only, multi-writer | the four search skills, `record-extraction` and `survey-surname` | `research_log_append` | unit |
 | | `sources` | `record-extraction` | `agent:citation` (refine only, never create) | `research_append`, `extraction_append` | unit; create-vs-refine held by tool identity |
 | | `assertions` | `record-extraction` | — | `research_append`, `extraction_append` | unit + tool preconditions |
 | | `person_evidence` | `person-evidence` | — | `research_append` | unit + tool — `extraction_append` does not accept the section, which is what holds the extraction lane off it |

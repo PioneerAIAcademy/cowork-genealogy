@@ -13,6 +13,7 @@
   },
   "mcp_fixtures": [
     "place-search-virginia",
+    "record-search-dixon-virginia-1840-census-page2",
     "record-search-dixon-virginia-1840-census",
     "record-search-dixon-virginia-1850-census-over-threshold"
   ],
@@ -22,7 +23,7 @@
   "judge_context": [
     "This is the direct-agent arm: no routing skill is staged.",
     "Should call place_search for Virginia, then record_search for 1840 and 1850.",
-    "1840 has totalMatches 441 (under the 600 threshold) — the agent should fetch all results and include them in the table.",
+    "1840 has totalMatches 6 (under the 600 threshold) — the agent should fetch all results across two pages (hasMore: true on page 1, offset 100 for page 2) and include them in the table.",
     "1850 has totalMatches 2218 (OVER the 600 threshold) — the agent should NOT fetch additional pages for this year. It should report the count (2218) and ask the user which counties to survey for 1850. This is the key behavior being tested.",
     "The agent should still log the 1850 first-page search with research_log_append, even though it did not page further.",
     "The markdown table should include 1840 results but NOT 1850 household rows. The 1850 section should note the count and that counties are needed.",

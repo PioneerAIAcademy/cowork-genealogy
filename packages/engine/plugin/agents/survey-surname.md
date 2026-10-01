@@ -2,7 +2,7 @@
 name: survey-surname
 description: >-
   Tabulates every household of a surname across a place's US federal censuses.
-  Invoke when the user says "find every surname family in place", "list
+  Invoke when the user says "find every <surname> family in <place>", "list
   all the Dixons in Virginia censuses", or "make a table of candidate
   families". Not a search for one person's record: hand that back to
   search-records by name.
@@ -73,7 +73,7 @@ The `rankingSkipped` note that comes back is expected for a survey — ignore it
 
 Read `totalMatches` on the first page. **If `totalMatches` exceeds 600: STOP for that year. Do NOT call `record_search` again for that year with any offset.** Report the `totalMatches` count and ask the user which counties to survey. Only page with `offset` for years where `totalMatches` is 600 or fewer.
 
-**`hasMore: false` means done.** When `hasMore` is false, the `results` array is the complete set. Build your table from those stubs. Do not say the data is incomplete, do not suggest further paging, and do not ask for counties — even when `totalMatches` is larger than `returned`. The `totalMatches` is the index count; the stubs in `results` are the deliverable records.
+Page with `offset` += 100 until `hasMore` is false. When `hasMore` is false the page is the last one.
 
 Log every page, including the first, with `research_log_append`:
 
