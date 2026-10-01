@@ -845,8 +845,10 @@ describe('ISO year-month is not an abbreviated year range (#1653 review)', () =>
 // ─── Never emit a partial (issue #2124, lead ruling 2026-09-18) ──────────────
 //
 // An unrecognized word means the standard_date sidecar is omitted, and a day is
-// never emitted without its month. The nine inputs are the ruling's own; the
-// rest come from the 2,692-string corpus walk recorded on the PR.
+// never emitted without its month. The issue's ten example inputs are covered:
+// the ruling's six in the first block and below it, plus 1848. március 8.,
+// 10. května 1797, 1872. szeptember 27. and 1873. február 5. in the month-name
+// rows. The rest come from the 2,692-string corpus walk recorded on the PR.
 describe('stdDate never emits a partial', () => {
   test.each([
     // The ruling's examples: each now standardizes in full.
@@ -877,17 +879,22 @@ describe('stdDate never emits a partial', () => {
     ['1844. augusztus 25.', '25 Aug 1844'], ['1856. szeptember 8.', '8 Sep 1856'],
     ['1905. május 11.', '11 May 1905'], ['1848. március 8.', '8 Mar 1848'],
     ['1900. július 3.', '3 Jul 1900'], ['1873. április 1.', '1 Apr 1873'],
+    ['1872. szeptember 27.', '27 Sep 1872'], ['1873. február 5.', '5 Feb 1873'],
+    ['1850. febr. 5.', '5 Feb 1850'], ['1850. marc. 5.', '5 Mar 1850'],
     // Czech, genitive as dates write it
     ['13. března 1784', '13 Mar 1784'], ['2. června 1864', '2 Jun 1864'],
     ['16. září 1823', '16 Sep 1823'], ['7. dubna 1833', '7 Apr 1833'],
     ['10. května 1797', '10 May 1797'], ['19. října 1842', '19 Oct 1842'],
     // Spanish abbreviations, any case
     ['17 Dic 1929', '17 Dec 1929'], ['2 abr 1860', '2 Apr 1860'], ['12 ago 1914', '12 Aug 1914'],
+    ['5 set 1850', '5 Sep 1850'],
     // Danish
     ['20 marts 1893', '20 Mar 1893'],
     // Abbreviations in languages already supported
     ['5 mrt 1850', '5 Mar 1850'], ['5 janv 1850', '5 Jan 1850'], ['5 avr 1850', '5 Apr 1850'],
     ['5 gen 1850', '5 Jan 1850'], ['5 ott 1850', '5 Oct 1850'], ['1850. szept 5.', '5 Sep 1850'],
+    ['5 fevr 1850', '5 Feb 1850'], ['5 mag 1850', '5 May 1850'], ['5 giu 1850', '5 Jun 1850'],
+    ['5 lug 1850', '5 Jul 1850'],
   ])('new month name: %s -> %s', (raw, std) => {
     expect(stdDate(raw)).toBe(std);
   });
