@@ -55,6 +55,24 @@ def test_threshold_year_gets_one_record_search(tool_calls, test):
     )
 
 
+# --- Positive: two-page paging for 1840 in statewide sweep -----------
+
+def test_statewide_pages_1840_twice(tool_calls, test):
+    """d1: 1840 has hasMore: true on page 1, so the agent must call
+    record_search twice for that year (page 1 at offset 0, page 2 at
+    offset 100)."""
+    if "statewide" not in test.get("tags", []):
+        pytest.skip("not the statewide sweep test")
+    calls_1840 = [
+        tc for tc in _mcp_calls(tool_calls, "record_search")
+        if tc.get("args", {}).get("residenceYearFrom") == 1840
+    ]
+    assert len(calls_1840) == 2, (
+        f"expected 2 record_search calls for 1840 (two pages); "
+        f"got {len(calls_1840)}"
+    )
+
+
 # --- Negative: no MCP calls and no Write -----------------------------
 
 def test_negative_makes_no_mcp_calls(tool_calls, test):
