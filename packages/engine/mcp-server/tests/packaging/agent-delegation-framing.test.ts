@@ -320,30 +320,6 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     },
   },
 
-  "tree-edit -> check-warnings": {
-    pins: [
-      {
-        side: "agent",
-        excerpt:
-          "**The tool is the arbiter; don't re-derive.** The tool's output is ground truth.",
-      },
-    ],
-    exempt: {
-      side: "caller",
-      reason:
-        "check-warnings (issue #2118) writes nothing and holds one MCP tool, the read-only " +
-        "`person_warnings`, whose verdict is computed from tree.gedcomx.json and cannot be " +
-        "moved by delegation wording; the agent-side pin makes that output the ground truth " +
-        "the report is built from. The caller's delegation is specified as person ids, " +
-        "pinned below; what it can still carry is a verdict in prose, which the pinned " +
-        "sentence does not stop and nothing here measures.",
-      mitigation: {
-        side: "caller",
-        excerpt: "naming by id every person the edit touched",
-      },
-    },
-  },
-
   // Converted from a skill (issue #2117). Both callers spawn it directly; the
   // research row shares the caller paragraph the three rows above pin.
   "research -> locality-guide": {
@@ -434,7 +410,7 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["search-records -> citation", ""],
   ["source-evaluation -> citation", ""],
   ["translation -> citation", ""],
-  // Nine "use proof-conclusion" prohibitions in DO NOT clauses, visible to the
+  // Six "use proof-conclusion" prohibitions in DO NOT clauses, visible to the
   // prose arm only since issue #2822 deleted the routing skill and made the
   // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
   // is a delegation being silenced -- verified per file before listing.
@@ -444,8 +420,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["question-selection -> proof-conclusion", ""],
   ["research-exhaustiveness -> proof-conclusion", ""],
   ["timeline -> proof-conclusion", ""],
-  ["tree-edit -> proof-conclusion", ""],
-  ["validate-schema -> proof-conclusion", ""],
   // `search-wikipedia` (issue #2795) is the reverse of the `citation` shape: its
   // name is not an ordinary English word, so the arm DOES discriminate for it,
   // and the one mention below is boundary prose telling the reader this is the
@@ -475,16 +449,19 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["search-records -> person-evidence", ""],
   ["timeline -> person-evidence", ""],
   ["translation -> person-evidence", ""],
-  ["tree-edit -> person-evidence", ""],
   // check-warnings (issue #2118): boundary mentions ("use check-warnings",
   // "that is check-warnings' job"), none a delegation. The two real callers,
-  // init-project and tree-edit, are registered edges above.
+  // init-project and tree-edit, were registered edges; tree-edit's left when
+  // issue #2805 deleted its skill.
   ["conflict-resolution -> check-warnings", ""],
   ["hypothesis-tracking -> check-warnings", ""],
   ["search-records -> check-warnings", ""],
   ["source-evaluation -> check-warnings", ""],
   ["timeline -> check-warnings", ""],
-  ["validate-schema -> check-warnings", ""],
+  // tree-edit entered agentOnly when issue #2805 deleted its skill. The one
+  // mention is a DO NOT clause ("Merging is ... a data operation (tree-edit)"),
+  // not a delegation; it does not spell `@plugin:tree-edit`.
+  ["conflict-resolution -> tree-edit", ""],
   // convert-dates entered agentOnly when issue #2790 deleted its skill. All
   // three are routing-boundary prose naming it as the owner of a calendar
   // conversion ("use convert-dates", "route to convert-dates"), none spells
@@ -689,6 +666,8 @@ describe("agent delegation framing", () => {
     "record-extractor",
     "search-familysearch-wiki",
     "search-wikipedia",
+    "tree-edit",
+    "validate-schema",
   ];
 
   it("the prose arm still covers every agent it is relied on to police", () => {

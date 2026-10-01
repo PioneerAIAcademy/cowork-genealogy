@@ -163,7 +163,7 @@ engine.
 | **Artifacts** | a `.mcpb` desktop extension + a plugin `.zip` | a FastAPI control plane + a React client, deployed |
 | **Where it runs** | user's machine (host) + the Cowork VM | Fly.io today, AWS in production |
 | **Source** | `packages/engine/{mcp-server,plugin}` | `apps/{server,web,electron}`, `packages/{viewer-ui,schema}` |
-| **Toolchain** | **npm** | **pnpm + turborepo** (`apps/{web,electron}`, `packages/*`); **uv / Python** (`apps/server`) |
+| **Toolchain** | **npm** | **pnpm + turborepo** (`apps/{web,electron}`, `packages/*`, `eval/app`); **uv / Python** (`apps/server`) |
 | **Build** | `make mcpb`, `make plugin` | `make server`, `make web`, `make deploy` |
 | **Covered by** | §§2–6, 8 | §7 |
 
@@ -221,13 +221,14 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **20** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **13** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **18** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **15** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The thirteen agents are `gps-mentor`, `record-extractor`, `image-reader`,
+The fifteen agents are `gps-mentor`, `record-extractor`, `image-reader`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
 `search-images`, `citation`, `search-wikipedia`, `convert-dates`,
-`search-familysearch-wiki`, `check-warnings` and `locality-guide`.
+`search-familysearch-wiki`, `check-warnings`, `tree-edit`, `validate-schema` and
+`locality-guide`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -351,7 +352,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-14 of the 20 skills carry a `references/` folder, loaded on demand, in-session,
+13 of the 18 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -743,8 +744,9 @@ out of it (§3.1), then run `make eval-skill SKILL=<name>` — **and grade it.**
 > sampling shipped, still owes every dimension of every test.
 > Annotations are written **only** through the CRUD UI (`make
 > eval-ui`); hand-writing them is forbidden. A behavior-neutral edit can instead
-> take the `eval-cosmetic-skip` label from a senior, which relaxes **the snapshot
-> rule only** — the annotation rule still runs against the prior run log — and
+> take the `eval-cosmetic-skip:<skill>` label from a senior for each skill whose
+> change is behavior-neutral, which relaxes **the snapshot rule only**, for that
+> skill only — the annotation rule still runs against the prior run log — and
 > expires on every new push. **`forget-and-rederive` is exempt**
 > (`RUNLOG_GATE_EXEMPT_SKILLS`), because it has no unit suite. `research` was
 > formerly exempt but gained a trigger corpus and is now gated. Full rules:
@@ -1466,8 +1468,8 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-All 20 skills carry a `**Narration:**` line (`init-project` spells it
-`**Narration**`, without the colon) — 18 of them as the first line of the body,
+All 18 skills carry a `**Narration:**` line (`init-project` spells it
+`**Narration**`, without the colon) — 16 of them as the first line of the body,
 the other two further down — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. `init-project` writes the profile from two
@@ -1484,8 +1486,11 @@ duplicated and the *value* it reads is centralized in project state.
 **Add a field or section to `research.json`.** Ten sites in the shipping product
 — and **two of them are checked by nothing.** *(Unprefixed paths are under
 `packages/engine/mcp-server/`. The eval CRUD UI carries a parallel scenario
-viewer, `eval/app/components/scenario/`, that a field change also touches; it is
-outside this list and outside every check.)*
+viewer, `eval/app/components/scenario/`. Its **types** are no longer a site:
+`lib/schema.ts` re-exports `@genealogy/schema`, so site 5 covers it and
+`pnpm turbo run typecheck` compiles it. Its **section components** still are —
+11 hand-maintained renderers against `packages/viewer-ui`'s 14, reached by no
+check, which is the parallel of site 7 for that app.)*
 
 | # | Site | What catches a miss |
 |---|---|---|
@@ -1831,7 +1836,7 @@ carries no hook state at all, so it cannot see a hook either way.
 |---|---|---|
 | **`make test-all`** (= `scripts/test.sh`) | **everything offline**: typecheck, JS workspace, `apps/server`, engine + packaging lints, CRUD UI, eval harness. The target delegates to the script, so the two are one command; the PR template names it. Runs every suite before reporting, so one failure doesn't hide the next. Deterministic and free — **no suite in it calls a model**, which is what keeps it ~30s and therefore actually run. | anything needing a model or a live API: a single tool (`dev/try-<tool>.ts`), agent tool binding (`make agent-smoke`), skill behaviour (`make eval-skill`) |
 | `make test` | `test-js` + `server-test` | **engine, packaging lints, harness** — an engine-only change gets *zero* coverage, and this is **not** the eval-harness gate despite what `CLAUDE.md` and `DEVELOPMENT.md` imply |
-| `make test-js` | the JS workspace (turbo): web, electron, viewer-ui, schema — including the **`packages/schema` TypeScript mirror** (`schema-interface-drift.test.ts`) | Python; the engine (npm-managed, outside the pnpm workspace) |
+| `make test-js` | the JS workspace (turbo): web, electron, viewer-ui, schema, eval/app — including the **`packages/schema` TypeScript mirror** (`schema-interface-drift.test.ts`) | Python; the engine (npm-managed, outside the pnpm workspace); eval/app's Playwright suite (needs a browser — its own CI job) |
 | `make engine-test` | `packages/engine/mcp-server` (vitest) + all packaging lints | the `packages/schema` mirror; anything needing a live API |
 | `make harness-test` | `eval/harness` (pytest) — including the **`packages/schema/schemas/` JSON mirror** (`test_schema_mirrors.py`) and the three write-lockdown copies' parity | engine unit tests, though it *does* execute the compiled `build/` — a broken engine fails here wearing the costume of a harness bug. **Not** the TS half of the `packages/schema` mirror — that is `make test-js` |
 | `make typecheck` | the whole JS workspace (turbo) | Python; and it is not the only viewer gate — `make test-js` runs viewer-ui's vitest suite (including `schema-interface-drift.test.ts`), and `make engine-test` runs `field-render-drift.test.ts` against the viewer's section components |

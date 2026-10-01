@@ -162,6 +162,26 @@ def test_derive_stop_reason_mcp_unavailable_beats_completed():
     )
 
 
+def test_derive_stop_reason_host_slept():
+    assert (
+        derive_stop_reason(sdk_aborted_reason="host_slept", research=None)
+        == "host_slept"
+    )
+
+
+def test_derive_stop_reason_host_slept_beats_completed():
+    """#2974: like mcp_unavailable, a slept host must outrank a self-declared
+    `completed` — the sleep consumed the budget, so whatever status the run left
+    is not a graded outcome."""
+    assert (
+        derive_stop_reason(
+            sdk_aborted_reason="host_slept",
+            research={"project": {"status": "completed"}},
+        )
+        == "host_slept"
+    )
+
+
 def test_derive_stop_reason_completed_when_no_abort_and_status_set():
     assert (
         derive_stop_reason(

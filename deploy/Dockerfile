@@ -22,6 +22,12 @@ WORKDIR /repo
 # packages/schema and packages/viewer-ui. Copy the workspace manifests
 # first for a cached install, then the sources those three need.
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json .npmrc ./
+# The root package.json declares a `preinstall` hook, so its script has to be
+# here before the install or every build dies MODULE_NOT_FOUND — the same shape
+# as the packages/schema note below. This one IS load-bearing, unlike the member
+# manifests; `make deploy-preflight` is what catches it, since no CI job builds
+# this image.
+COPY scripts/drop-npm-managed-trees.mjs scripts/
 # packages/schema goes in WHOLE and BEFORE the install, unlike its siblings: its
 # postinstall generates the gitignored src/enums.generated.ts, so with only the
 # manifest here the install dies MODULE_NOT_FOUND on scripts/gen-enums.mjs — and
@@ -34,6 +40,16 @@ COPY apps/web/package.json apps/web/
 # apps/electron is a workspace member but the web build does not need it; a
 # frozen install still resolves it from the lockfile without building it.
 COPY apps/electron/package.json apps/electron/
+# eval/app is a workspace member, so it is listed here alongside the others.
+# MEASURED, so nobody re-derives it: this COPY is NOT load-bearing (unlike the
+# preinstall script above, which is). pnpm 9.15.9's
+# frozen install tolerates a member whose manifest is absent from the context —
+# with or without `--filter` — so stage 1 installs with this line removed, and
+# with the apps/electron line above removed too. It is here for consistency, and
+# because that tolerance is an implementation detail a version bump could
+# tighten. Nothing in CI builds this image (js-tests.yml header), so
+# `make deploy-preflight` is the only check either way.
+COPY eval/app/package.json eval/app/
 RUN pnpm install --frozen-lockfile --filter web...
 
 COPY packages/viewer-ui packages/viewer-ui

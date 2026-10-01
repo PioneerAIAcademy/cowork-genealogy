@@ -23,7 +23,7 @@ place_search(query: "Kentucky")              // (optional) confirm an ambiguous 
   ↓
 person_search({ givenName, surname, ... })   // find candidate tree persons
   ↓  user picks one → personId (e.g. "LZJW-C31")
-person_read({ personId, relatives: true })   // expand to parents, siblings, spouse, children
+person_read({ personId })   // expands to parents, siblings, spouse, children
 ```
 
 Sibling to `record_search`: that tool searches indexed historical
@@ -313,7 +313,7 @@ Example:
 ### Picking a result (why this output is terminal)
 
 When the user chooses a match, the LLM passes only the `personId` string
-to `person_read({ personId, relatives: true })`. `person_read` re-fetches
+to `person_read({ personId })`. `person_read` re-fetches
 the authoritative person from FamilySearch by ID and runs its own
 GedcomX→simplified conversion. This tool's `gedcomx` is therefore never
 read back as input, and the simplified→raw reverse converter
@@ -612,7 +612,7 @@ npx @modelcontextprotocol/inspector node build/index.js
 
 ### Manual Layer 2 (Claude Code)
 - *"Find Abraham Lincoln born 1809 in Kentucky in the family tree."* — Claude calls `person_search`, surfaces the ranked matches.
-- *"Now show me his parents and children."* — Claude chains to `person_read({ personId: "LZJW-C31", relatives: true })`.
+- *"Now show me his parents and children."* — Claude chains to `person_read({ personId: "LZJW-C31" })`.
 
 ### Manual Layers 0–3 (smoke → Inspector → Claude Code → Cowork)
 Run `dev/try-person-search.ts` for the smoke layer; OAuth setup per
