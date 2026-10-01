@@ -17,6 +17,7 @@
 import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetchWithTimeout } from "./fs-fetch.js";
+import { describeFetchError } from "./http.js";
 import { toGedcomX } from "./gedcomx-convert.js";
 import { isFamilySearchPersonId } from "./fs-id.js";
 import { toArk } from "./ark.js";
@@ -64,9 +65,8 @@ export async function scorePair(
       }),
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
     throw new Error(
-      `Could not reach FamilySearch matchTwoExamples API: ${message}.`,
+      `Could not reach FamilySearch matchTwoExamples API: ${describeFetchError(err)}.`,
     );
   }
 

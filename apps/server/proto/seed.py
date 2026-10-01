@@ -99,6 +99,17 @@ def seed(files: list[tuple[str, Path]], *, project_id: str, pg_dsn: str, s3_endp
     return proc.returncode
 
 
+def _turn():
+    """proto/turn.py's signed_in_client, imported the way demo.py imports it. Lazy: turn
+    pulls in psycopg, which seeding itself never needs."""
+    server_dir = str(Path(__file__).resolve().parents[1])
+    if server_dir not in sys.path:
+        sys.path.insert(0, server_dir)
+    from proto import turn
+
+    return turn
+
+
 def main(argv: list[str] | None = None) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -108,6 +119,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--project-id", default=None, help="default proj_<fixture>_<6 hex>")
     p.add_argument("--title", default=None, help="session title; default the fixture's name")
     p.add_argument("--base", default="http://127.0.0.1:8085")
+    p.add_argument("--email", default="dev@localhost", help="dev-login as this patron, who then owns the project")
     p.add_argument("--pg-dsn", default="postgresql://postgres:proto@localhost:5434/proto")
     p.add_argument("--s3-endpoint", default="http://localhost:9000")
     args = p.parse_args(argv)
@@ -132,8 +144,12 @@ def main(argv: list[str] | None = None) -> int:
     rc = seed(files, project_id=project_id, pg_dsn=args.pg_dsn, s3_endpoint=args.s3_endpoint)
     if rc != 0:
         return rc
-    r = httpx.post(f"{args.base}/api/sessions", json={"title": title, "project_id": project_id}, timeout=10.0)
-    r.raise_for_status()
+    # Under dev-login the tier hands the project the engine just created (no owner yet)
+    # to the signed-in patron; with FamilySearch sign-in on it would answer 404.
+    turn = _turn()
+    with turn.signed_in_client(args.base, args.email, timeout=10.0) as client:
+        r = client.post("/api/sessions", json={"title": title, "project_id": project_id})
+        r.raise_for_status()
     session = r.json()
     print()
     print(f"session_id  {session['id']}")
