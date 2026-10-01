@@ -145,16 +145,14 @@ Filters operate on **collection metadata**, not transcript text:
   collection metadata place, NOT places mentioned in the document.
 - **Record Type** — deeds, probate, court, vital, military, etc.
 
-**Critical rule:** Apply place, date, and record type via filters
-(`recordPlace*`, `yearFrom`/`yearTo`, `recordType`) AFTER the initial
-search — never on the first `fulltext_search` call for a query, whether
-typed into a keywords string or passed as the structured argument.
-Place risks false positives (matches collection metadata, not document
-content). Date and record type risk the opposite: a document's real
-date may not match its collection's metadata date (see
+**Scoping guidance:** Place filters match collection metadata — that is
+the useful place to narrow. Use `recordPlace*` when the plan item or
+the user names a jurisdiction. Date (`yearFrom`/`yearTo`) and record
+type are allowed too, but collection metadata dates can be off (see
 references/transcription-quirks.md's "Auto-collection dates/places come
-from metadata, not document content"), so filtering on the first call
-can silently exclude the right record instead of just adding noise.
+from metadata, not document content"), so apply them more cautiously.
+**If a filtered search returns zero results, re-run it without that
+filter before logging anything as not found.**
 
 **Filter order:** Place first, then year, then record type.
 

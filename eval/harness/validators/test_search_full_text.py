@@ -129,14 +129,11 @@ FILTER_KEYS = (
     "recordType", "yearFrom", "yearTo", "collectionId",
 )
 
-# The subset SKILL.md's decision ladder adds only after an unfiltered look
-# (step 5: 50-500 hits -> add Year/RecordType; >500 -> add a second term or
-# place). collectionId is deliberately excluded: it is not a "wait, then
-# add" filter at all. A borrowed collectionId (from record_search or
-# collections_search) is always forbidden; a facet-derived collectionId (taken
-# from a prior includeFacets=true call's response) is conditionally allowed.
-# That conditional is checked by test_fulltext_search_never_scopes_to_collection_id
-# below, so collectionId is not included in the first-call-only guard here.
+# Place, date, and record-type filters are allowed on any call, but a filtered
+# search that returns zero results must be followed by an unfiltered retry
+# (checked by test_filtered_nil_is_followed_by_unfiltered_retry below).
+# collectionId is excluded: its guard is
+# test_fulltext_search_never_scopes_to_collection_id, not this one.
 POST_SEARCH_FILTER_KEYS = (
     "recordPlace0", "recordPlace1", "recordPlace2", "recordPlace3",
     "recordType", "yearFrom", "yearTo",
@@ -319,35 +316,53 @@ def test_log_query_traces_to_fulltext_search_call(before_state, after_state, too
     assert not errors, "Log entries claiming an unsent filter:\n  - " + "\n  - ".join(errors)
 
 
-# --- First look at a query must be unscoped ----------------------------
+# --- Filtered nil must be followed by an unfiltered retry --------------
 
-def test_first_fulltext_search_call_is_unscoped(tool_calls):
-    """SKILL.md step 4: For each independent search topic (identified by
-    keywords or nlQuery handle), the first call for that topic must not
-    carry post-search filters. Parallel first calls for different topics
-    are each checked independently — this fixes the case where two
-    independent searches are issued in the same turn (e.g. two witnesses
-    searched in parallel; the second was previously mislabeled as a
-    follow-up call)."""
+def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
+    """SKILL.md step 4 / query-syntax.md: when a fulltext_search call carries
+    post-search filters and returns zero results, the next call for the same
+    topic (same keywords/nlQuery handle) must omit those filters — a nil under
+    a filter may be a metadata mismatch, not a true negative."""
     calls = _fts_tool_calls(tool_calls)
     if not calls:
         pytest.skip("no fulltext_search calls this turn")
 
-    seen_handles: set[str] = set()
-    errors = []
+    by_handle: dict = {}
     for c in calls:
         args = c["args"]
         handle = args.get("keywords") or args.get("nlQuery") or ""
-        if handle not in seen_handles:
-            seen_handles.add(handle)
-            present = [k for k in POST_SEARCH_FILTER_KEYS if k in args]
-            if present:
+        by_handle.setdefault(handle, []).append(c)
+
+    errors = []
+    for handle, handle_calls in by_handle.items():
+        for i, c in enumerate(handle_calls):
+            args = c["args"]
+            present_filters = [k for k in POST_SEARCH_FILTER_KEYS if k in args]
+            if not present_filters:
+                continue
+            resp = c.get("response") or {}
+            results = resp.get("results")
+            total_hits = resp.get("totalHits")
+            is_zero = (
+                (isinstance(results, list) and len(results) == 0) or
+                (total_hits is not None and int(total_hits) == 0)
+            )
+            if not is_zero:
+                continue
+            later_calls = handle_calls[i + 1:]
+            retry_found = any(
+                not any(k in lc["args"] for k in present_filters)
+                for lc in later_calls
+            )
+            if not retry_found:
                 errors.append(
-                    f"first fulltext_search call for topic {handle!r} "
-                    f"includes post-search filter(s) before any unfiltered "
-                    f"hit count was observed: {present}"
+                    f"fulltext_search for topic {handle!r} sent filter(s) "
+                    f"{present_filters} and returned zero results, but no "
+                    f"unfiltered retry for that topic follows in this turn"
                 )
-    assert not errors, "First calls for topics include post-search filters:\n  - " + "\n  - ".join(errors)
+    assert not errors, (
+        "Filtered nil not followed by unfiltered retry:\n  - " + "\n  - ".join(errors)
+    )
 
 
 def test_fulltext_search_never_scopes_to_collection_id(tool_calls):

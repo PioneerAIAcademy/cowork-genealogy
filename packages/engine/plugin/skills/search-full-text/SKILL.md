@@ -137,20 +137,14 @@ Read `references/query-syntax.md` for operator details and wildcards.
 - **Always use `+` to require terms in `keywords`.** Default is OR,
   which returns millions of irrelevant results. Do NOT use `+` in the
   `name` field — terms there are already required by `m.queryRequireDefault`.
-- **Search by name only first.** Do NOT send `recordPlace0/1/2/3`,
-  `yearFrom`/`yearTo`, or `recordType` on the first `fulltext_search`
-  call for a query — whether as `keywords` text or a structured
-  argument, both count as "the initial query." **This holds even when
-  the user's own request phrases the place in the same sentence as the
-  person** — "find X as a witness in Schuylkill County, Pennsylvania"
-  is still an unscoped first call (`keywords: "+X +witness"`, no
-  `recordPlace*`); the place is a post-search filter to add on a later
-  call, not part of the request's wording to carry into the first one.
-  The log entry for that first call is unscoped too (step 7) — do not
-  resolve the temptation to include the place by adding it to the call
-  instead of dropping it from the log. See `references/query-syntax.md`'s
-  "Filters (post-search)" section for why, and the decision ladder below
-  for when to add them.
+- **Scope by place when the plan or the user names the jurisdiction.**
+  Send `recordPlace*` on the first call when the plan item or the
+  user's message identifies a specific place. Date (`yearFrom`/`yearTo`)
+  and record type are also allowed, but collection metadata dates can
+  be off, so apply them more cautiously than place. **If a filtered
+  search returns zero results, re-run it without that filter before
+  logging anything as not found** — a nil under a filter may reflect a
+  metadata mismatch rather than a true absence.
 - **Never borrow a `collectionId` from `record_search` or a collections
   survey.** The FTS corpus uses its own auto-generated partitions that
   do not map 1:1 onto indexed-record collection IDs; a borrowed ID
