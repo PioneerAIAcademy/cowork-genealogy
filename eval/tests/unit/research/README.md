@@ -19,7 +19,7 @@ decay.
 ## Deleted activation tests (issue #2984)
 
 `ut_research_001`, `002`, `003`, `004`, `012`, `013` and `014` were deleted on
-2026-10-01. All seven were `xfail` for one defect: `research` and
+2026-10-01 (`015` too; see "Paired rows"). All seven were `xfail` for one defect: `research` and
 `project-status` both match a "drive the workflow forward" request, so the
 orchestrator is skipped about half the time (issue #2927). Under single-run
 grading that made each one a coin flip on every `research` run. Issue #2927
@@ -56,26 +56,18 @@ by an `Agent` spawn of `@plugin:<name>`, not by a `Skill` call (#2075). A
 `routes-to:` tag now observes a spawned row, because the validator reads
 `handoffs`.
 
-`route-shortcut-guard.json` keeps all three in `stub_skills`, and that is
-deliberate. The stub is the control on the FAILURE path, not the compliant one:
-the non-compliance this fixture catches is a router that calls
-`Skill(proof-conclusion)` directly because the user asked for it, and a `Skill`
-call is exactly what `skill_runner.py:684` still stubs. Drop the stub and a
-shortcutting router runs the real skill inside an empty project for up to 30
-turns. The stub is merely inert on the compliant path, where the router spawns
-the agent instead — inert is not the same as useless.
+`ut_research_015` (`route-shortcut-guard.json`) was the only test tagged
+`no-shortcut`, and it was deleted on 2026-10-01 (issue #2984): it failed 9 of 19
+committed runs on a real router defect, spawning `person-evidence` and
+`research-exhaustiveness` directly instead of walking the table from the top
+(issue #2272). `test_no_paired_skill_shortcut` (`validators/test_research.py`)
+is still correct and still runs, but **no test exercises it now**. Issue #2272
+needs a replacement test before it can claim the shortcut is fixed; git history
+has the old file, including why it kept the paired agents in `stub_skills`.
 
-Issue #2246 **has landed** (`d25e8560b`, in this branch): `spawned_agents()`
-(`skill_runner.py:302`) derives main-thread `Agent` spawns from
-`builtin_tool_calls`, already a validator fixture (`validators/conftest.py:140`).
-So the harness can now observe a spawn, and `test_no_paired_skill_shortcut`
-(`validators/test_research.py`) is the assertion that uses it: on a test tagged
-`no-shortcut`, no paired name may be reached by **either** call mechanism.
-
-That second arm is not redundant with `test_routes_to_expected_skill`, which
+That validator is not redundant with `test_routes_to_expected_skill`, which
 asserts only the first hand-off. A router that calls `Skill(question-selection)`
-first and *then* spawns `@plugin:proof-conclusion` passes it green while doing
-the exact thing `ut_research_015` exists to forbid.
+first and *then* spawns `@plugin:proof-conclusion` passes it green.
 
 ## Moved negatives (issue #2268)
 
