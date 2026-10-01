@@ -9,7 +9,8 @@
       "initialization",
       "person-search",
       "no-id",
-      "single-turn-decomposition"
+      "single-turn-decomposition",
+      "expects-person-search"
     ]
   },
   "input": {
@@ -18,8 +19,7 @@
   },
   "mcp_fixtures": [
     "person-search-flynn",
-    "person-read-flynn",
-    "person-quality-clean-LZNY-BRF"
+    "person-read-flynn"
   ],
   "judge_context": [
     "Should call person_search (not person_read) first — no FamilySearch ID was provided",

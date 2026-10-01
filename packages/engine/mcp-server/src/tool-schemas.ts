@@ -4,6 +4,7 @@
 // assert manifest.tools stays in sync with what's registered. Keeping it
 // in its own module means the test can read the list without importing
 // index.ts, which connects the stdio transport as a side effect.
+import { volumeBisectSchema } from "./tools/volume-bisect.js";
 import { wikipediaSearchSchema } from "./tools/wikipedia.js";
 import {
   placeSearchToolSchema,
@@ -69,6 +70,7 @@ export const ALWAYS_LOAD: ReadonlySet<string> = new Set([
 ]);
 
 export const allToolSchemas = [
+  volumeBisectSchema,
   wikipediaSearchSchema,
   placeSearchToolSchema,
   placeSearchAllToolSchema,

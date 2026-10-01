@@ -29,14 +29,17 @@ PROTO = Path(__file__).resolve().parents[1] / "proto"
 sys.path.insert(0, str(PROTO))
 
 from drive import parse_frame  # noqa: E402  (the driver's SSE parser; one parser, two callers)
-from web import app  # noqa: E402  (queue_body / max_nudges: one definition for the fake store too)
+from web import app, auth  # noqa: E402  (queue_body / max_nudges: one definition for the fake store too)
 from web.app import (  # noqa: E402
     DEFAULT_MODEL,
     DEFAULT_TITLE,
     Activity,
     EventRow,
+    IdentityMismatch,
+    ProjectNotOwned,
     SessionRow,
     Turn,
+    User,
     activity_to_wire,
     create_app,
     resolve_cursor,
@@ -57,8 +60,22 @@ SESSION_SUMMARY_KEYS = {
 # ── fakes ────────────────────────────────────────────────────────────────────────
 
 
+# U2: the patron every route test signs in as (make_client), and a second one.
+USER_A = User("usr_a", "a@example.org")
+USER_B = User("usr_b", "b@example.org")
+
+
 class FakeStore:
+    """Re-implements the store in Python. The owner DECISION is the route's (``_session``
+    compares ``owner_id``), so these tests exercise the real rule; only ``list_sessions``
+    and ``create_session`` filter by owner here, mirroring the SQL that
+    ``test_proto_auth.py`` runs against a scripted connection."""
+
     def __init__(self) -> None:
+        self.users: dict[str, User] = {USER_A.id: USER_A, USER_B.id: USER_B}
+        self.allowed: set[str] = set()
+        self.grants: dict[str, dict[str, Any]] = {}
+        self.owners: dict[str, str | None] = {}  # projects.owner_id
         self.sessions: dict[str, SessionRow] = {}
         self.events: dict[str, list[EventRow]] = {}
         self.activity_rows: dict[str, Activity] = {}
@@ -70,8 +87,11 @@ class FakeStore:
         self.queued: list[Turn] = []
         self.stopped: set[str] = set()
 
-    def seed_session(self, session_id: str = "sess_1", project_id: str = "proj_1") -> SessionRow:
-        row = SessionRow(session_id, project_id, DEFAULT_TITLE, DEFAULT_MODEL, T0, T0)
+    def seed_session(
+        self, session_id: str = "sess_1", project_id: str = "proj_1", owner: str | None = USER_A.id
+    ) -> SessionRow:
+        self.owners.setdefault(project_id, owner)
+        row = SessionRow(session_id, project_id, DEFAULT_TITLE, DEFAULT_MODEL, T0, T0, self.owners[project_id])
         self.sessions[session_id] = row
         return row
 
@@ -81,14 +101,25 @@ class FakeStore:
         rows.append(EventRow(seq=seq, kind=kind, payload=payload, ts=T0 + timedelta(seconds=seq)))
         return seq
 
-    async def create_session(self, title: str, model: str, project_id: str | None = None) -> SessionRow:
+    async def create_session(
+        self, title: str, model: str, project_id: str | None, owner: str, may_create_or_claim: bool
+    ) -> SessionRow:
         n = len(self.sessions) + 1
-        row = SessionRow(f"sess_{n}", project_id or f"proj_{n}", title, model, T0, T0)
+        if project_id is None:
+            project_id = f"proj_{n}"
+            self.owners[project_id] = owner
+        elif self.owners.get(project_id) == owner and project_id in self.owners:
+            pass
+        elif may_create_or_claim and self.owners.get(project_id) is None:
+            self.owners[project_id] = owner  # create, or claim an unowned one
+        else:
+            raise ProjectNotOwned(project_id)
+        row = SessionRow(f"sess_{n}", project_id, title, model, T0, T0, owner)
         self.sessions[row.session_id] = row
         return row
 
-    async def list_sessions(self) -> list[SessionRow]:
-        return list(self.sessions.values())
+    async def list_sessions(self, owner: str) -> list[SessionRow]:
+        return [r for r in self.sessions.values() if r.owner_id == owner]
 
     async def get_session(self, session_id: str) -> SessionRow | None:
         return self.sessions.get(session_id)
@@ -97,12 +128,19 @@ class FakeStore:
         row = self.sessions.get(session_id)
         if row is None:
             return None
-        row = SessionRow(row.session_id, row.project_id, title or row.title, model or row.model, row.created_at, T0 + timedelta(minutes=1))
+        row = SessionRow(row.session_id, row.project_id, title or row.title, model or row.model, row.created_at,
+                         T0 + timedelta(minutes=1), row.owner_id)
         self.sessions[session_id] = row
         return row
 
     async def delete_session(self, session_id: str) -> bool:
-        return self.sessions.pop(session_id, None) is not None
+        row = self.sessions.pop(session_id, None)
+        if row is None:
+            return False
+        if not any(r.project_id == row.project_id for r in self.sessions.values()):
+            self.docs.pop(row.project_id, None)
+            self.owners.pop(row.project_id, None)
+        return True
 
     async def document_versions(self, project_id: str) -> dict[str, int]:
         return {name: v for name, (v, _) in self.docs.get(project_id, {}).items()}
@@ -157,6 +195,42 @@ class FakeStore:
         self.stopped.add(session_id)
         return True
 
+    async def get_user(self, user_id: str) -> User | None:
+        return self.users.get(user_id)
+
+    async def upsert_user(self, email: str, familysearch_id: str | None) -> User:
+        email = email.strip().lower()
+        user = next((u for u in self.users.values() if u.email == email), None)
+        if user is None:
+            user = User(f"usr_{len(self.users) + 1}", email)
+        if familysearch_id and user.familysearch_id and user.familysearch_id != familysearch_id:
+            raise IdentityMismatch(email)
+        if familysearch_id and not user.familysearch_id:
+            user = User(user.id, user.email, familysearch_id, user.sessions_revoked_at)
+        self.users[user.id] = user
+        return user
+
+    async def is_allowed(self, email: str) -> bool:
+        return email.strip().lower() in self.allowed
+
+    async def sync_allowlist(self, emails: set[str]) -> None:
+        self.allowed = set(emails)
+
+    async def revoke_sessions(self, user_id: str) -> None:
+        u = self.users[user_id]
+        self.users[user_id] = User(u.id, u.email, u.familysearch_id, datetime.now(tz=timezone.utc))
+
+    async def store_grant(self, user_id: str, access_token_enc: str, refresh_token_enc: str | None,
+                          expires_at: datetime) -> None:
+        old = self.grants.get(user_id, {})
+        self.grants[user_id] = {
+            "access_token_enc": access_token_enc,
+            "refresh_token_enc": refresh_token_enc if refresh_token_enc is not None else old.get("refresh_token_enc"),
+            "expires_at": expires_at,
+            "granted_at": datetime.now(tz=timezone.utc),
+            "writes": old.get("writes", 0) + 1,
+        }
+
 
 class FakeQueue:
     def __init__(self, fail: bool = False) -> None:
@@ -170,9 +244,12 @@ class FakeQueue:
         return f"msg-{len(self.sent)}"
 
 
-def make_client(store: FakeStore, queue: FakeQueue, **kw) -> httpx.AsyncClient:
+def make_client(store: FakeStore, queue: FakeQueue, *, user: str | None = USER_A.id, **kw) -> httpx.AsyncClient:
+    """A client signed in as ``user`` (a session cookie minted the way /auth/dev-login
+    mints one); ``user=None`` sends no cookie."""
     app = create_app(store, queue, poll_s=0.0, ping_s=0.0, **kw)
-    return httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t")
+    cookies = {auth.COOKIE_NAME: auth.session_cookie_value(user)} if user else None
+    return httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t", cookies=cookies)
 
 
 def parse_frames(body: str) -> list[dict[str, Any]]:
@@ -299,9 +376,9 @@ async def test_state_reads_documents_and_the_unserved_routes_say_so():
         # 1c: interrupt used to be on that list. It is the control surface the whole
         # design rests on, so a 501 here is the feature missing, not a gap in the tier.
         assert (await c.post(f"/api/sessions/{row.session_id}/interrupt")).status_code == 202
-        auth = (await c.get("/auth/config")).json()
-        assert auth == {"familysearch": False, "devLogin": True}
-        assert (await c.get("/auth/me")).json()["id"] == "proto"
+        config = (await c.get("/auth/config")).json()
+        assert config == {"familysearch": False, "devLogin": True}
+        assert (await c.get("/auth/me")).json() == {"id": USER_A.id, "email": USER_A.email}
 
 
 async def test_post_message_mints_turn_id_records_user_msg_and_enqueues_the_body():
@@ -581,7 +658,10 @@ def test_the_rescue_claim_is_the_workers_own_statement():
     ).read_text(encoding="utf-8")
     claim = " ".join(worker_src.split("def take_queued_turn", 1)[1].split("def ", 1)[0].split())
     for fragment in (
-        "UPDATE turns SET outcome = NULL WHERE turn_id = (",
+        # claimed_at dates the row from its release: the worker's retention backstop
+        # reads COALESCE(claimed_at, enqueued_at), so a long-held message released without
+        # it looks expired and is closed before it ever runs.
+        "UPDATE turns SET outcome = NULL, claimed_at = now() WHERE turn_id = (",
         # The predicate IS the claim. Widened to anything non-null it would match a turn
         # that already RAN and re-enqueue it; this was unpinned until a break test
         # swapped it for `outcome IS NOT NULL` and every test stayed green.
@@ -915,7 +995,7 @@ def test_web_service_is_published_and_depends_on_postgres_and_the_queue_only():
     web = services["web"]
     assert web["container_name"] == "proto-web"
     assert web["ports"], "the SPA and the driver reach the tier from the host"
-    assert all(str(p).startswith("127.0.0.1:") for p in web["ports"]), "no auth on the tier: publish on loopback only"
+    assert all(str(p).startswith("127.0.0.1:") for p in web["ports"]), "dev-login signs anyone in: publish on loopback only"
     deps = web["depends_on"]
     assert deps["postgres"] == {"condition": "service_healthy"}
     assert deps["elasticmq"] == {"condition": "service_healthy"}
@@ -928,11 +1008,24 @@ def test_web_service_sends_to_the_queue_the_shim_reads():
     assert _env(services["web"])["QUEUE_URL"] == _env(services["shim"])["QUEUE_URL"]
 
 
-def test_web_build_context_carries_enqueue_and_sql():
+def test_web_build_context_carries_enqueue_sql_and_the_client_config():
+    """U2 moved the context to the repo root (like the tools image) so the image can carry
+    the engine's familysearch.json, the client id's sole source. The paths are checked
+    against the repo too, so a moved file reds here and not in `docker build`."""
     web = _compose()["services"]["web"]
-    assert web["build"] == {"context": ".", "dockerfile": "web/Dockerfile"}
+    assert web["build"] == {"context": "../../..", "dockerfile": "apps/server/proto/web/Dockerfile"}
+    repo = PROTO.parents[2]
+    assert (repo / web["build"]["dockerfile"]).is_file()
     dockerfile = (PROTO / "web" / "Dockerfile").read_text(encoding="utf-8")
-    assert re.search(r"^COPY enqueue\.py", dockerfile, re.M) and re.search(r"^COPY sql", dockerfile, re.M)
+    copies = dict(ln.split()[1:3] for ln in dockerfile.splitlines() if ln.startswith("COPY "))
+    assert copies["apps/server/proto/enqueue.py"] == "./"
+    assert copies["apps/server/proto/sql"] == "./sql"
+    assert copies["apps/server/proto/web"] == "./web"
+    assert copies["packages/engine/mcp-server/config/familysearch.json"] == "./config/familysearch.json"
+    for src in copies:
+        assert (repo / src).exists(), f"the web Dockerfile copies {src}, which is not in the repo"
+    # ./config/familysearch.json under WORKDIR /app is the path web/auth.py looks at first.
+    assert auth.CLIENT_CONFIG_CANDIDATES[0].relative_to(auth.PROTO_DIR).as_posix() == "config/familysearch.json"
 
 
 def test_003_web_only_adds_not_null_default_columns_to_sessions():
@@ -958,3 +1051,167 @@ async def test_create_session_on_a_seeded_project_and_refuse_a_bad_project_id():
         for bad in ("p/q", "", "..", "/p", "p q", "-p"):
             assert (await c.post("/api/sessions", json={"project_id": bad})).status_code == 422, repr(bad)
 
+
+
+# ── U2: patron sign-in and owner scoping ────────────────────────────────────────
+
+AUTH_ENV = ("PUBLIC_URL", "WEB_ORIGIN", "SESSION_SECRET", "FS_TOKEN_ENC_KEY", "ALLOWED_EMAILS",
+            "FAMILYSEARCH_WEB_ENABLED", "FAMILYSEARCH_CONFIG")
+
+
+@pytest.fixture(autouse=True)
+def _clean_auth_env(monkeypatch):
+    """A developer's shell can carry PUBLIC_URL or FAMILYSEARCH_WEB_ENABLED; either turns
+    dev-login off and changes what every route test here means."""
+    for name in AUTH_ENV:
+        monkeypatch.delenv(name, raising=False)
+
+
+def _per_session_routes() -> list[tuple[str, str]]:
+    """(method, path) for every route under /api/sessions/{session_id}, read off the app
+    itself -- so a route added later is swept without anyone remembering to list it."""
+    pairs = []
+    for route in create_app(FakeStore(), FakeQueue()).routes:
+        path = getattr(route, "path", "")
+        if path.startswith("/api/sessions/{session_id}"):
+            pairs += [(m, path) for m in sorted(route.methods - {"HEAD"})]
+    return sorted(pairs)
+
+
+_BODIES = {"/api/sessions/{session_id}/messages": {"text": "Find Thomas Flynn"},
+           "/api/sessions/{session_id}": {"title": "renamed"}}
+
+
+async def _call(c: httpx.AsyncClient, method: str, path: str, session_id: str) -> httpx.Response:
+    url = path.replace("{session_id}", session_id).replace("{log_id}", "q_001")
+    body = _BODIES.get(path) if method in ("POST", "PATCH") else None
+    return await c.request(method, url, json=body)
+
+
+def test_the_route_sweep_sees_every_per_session_route():
+    # 13 routes: get, patch, delete, resume, state, sidecar, image, logs, files,
+    # interrupt, messages, events, events/stream. A new one must be decided on, not missed.
+    assert len(_per_session_routes()) == 13, _per_session_routes()
+
+
+@pytest.mark.parametrize(("method", "path"), _per_session_routes())
+async def test_second_user_gets_404_on_every_session_route(method, path):
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session(owner=USER_A.id)
+    async with make_client(store, queue, user=USER_B.id, stream_max_polls=1) as c:
+        r = await _call(c, method, path, row.session_id)
+    assert r.status_code == 404, (method, path, r.status_code, r.text[:200])
+    assert r.json()["detail"] == "Session not found"
+    assert row.session_id in store.sessions and store.turns == [] and store.stopped == set()
+    # The owner still gets through -- the refusal is about B, not about the route.
+    async with make_client(store, queue, user=USER_A.id, stream_max_polls=1) as c:
+        r = await _call(c, method, path, row.session_id)
+    assert r.status_code not in (401, 403), (method, path, r.status_code)
+    assert r.status_code != 404 or r.json()["detail"] != "Session not found", (method, path)
+
+
+@pytest.mark.parametrize(("method", "path"), _per_session_routes() + [("GET", "/api/sessions"), ("POST", "/api/sessions")])
+async def test_session_routes_require_a_cookie(method, path):
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session()
+    async with make_client(store, queue, user=None, stream_max_polls=1) as c:
+        r = await _call(c, method, path, row.session_id)
+        assert r.status_code == 401, (method, path, r.status_code)
+        assert (await c.get("/api/health")).status_code == 200
+
+
+async def test_a_forged_or_unknown_cookie_is_401():
+    store, queue = FakeStore(), FakeQueue()
+    async with make_client(store, queue, user="usr_nobody") as c:
+        assert (await c.get("/api/sessions")).status_code == 401
+    app_ = create_app(store, queue)
+    forged = auth.session_cookie_value(USER_A.id) + "x"
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app_), base_url="http://t",
+                                 cookies={auth.COOKIE_NAME: forged}) as c:
+        assert (await c.get("/api/sessions")).status_code == 401
+
+
+async def test_an_unowned_project_is_nobodys():
+    # The engine creates projects without an owner; until a create claims one, nobody sees it.
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session(owner=None)
+    async with make_client(store, queue) as c:
+        assert (await c.get(f"/api/sessions/{row.session_id}")).status_code == 404
+        assert (await c.get("/api/sessions")).json() == []
+
+
+async def test_list_sessions_returns_only_the_callers_sessions():
+    store, queue = FakeStore(), FakeQueue()
+    store.seed_session("sess_a", "proj_a", owner=USER_A.id)
+    store.seed_session("sess_b", "proj_b", owner=USER_B.id)
+    async with make_client(store, queue, user=USER_A.id) as c:
+        assert [s["id"] for s in (await c.get("/api/sessions")).json()] == ["sess_a"]
+    async with make_client(store, queue, user=USER_B.id) as c:
+        assert [s["id"] for s in (await c.get("/api/sessions")).json()] == ["sess_b"]
+
+
+async def test_delete_by_another_user_leaves_the_session_and_project_documents():
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session(owner=USER_A.id)
+    store.docs[row.project_id] = {"research.json": (1, {"x": 1})}
+    async with make_client(store, queue, user=USER_B.id) as c:
+        assert (await c.delete(f"/api/sessions/{row.session_id}")).status_code == 404
+    assert row.session_id in store.sessions and row.project_id in store.docs
+
+
+async def test_deleting_one_of_two_sessions_keeps_the_other_visible():
+    store, queue = FakeStore(), FakeQueue()
+    first = store.seed_session("sess_1", "proj_1")
+    second = store.seed_session("sess_2", "proj_1")
+    store.docs["proj_1"] = {"research.json": (1, {"x": 1})}
+    async with make_client(store, queue) as c:
+        assert (await c.delete(f"/api/sessions/{first.session_id}")).status_code == 200
+        assert (await c.get(f"/api/sessions/{second.session_id}")).status_code == 200
+        state = (await c.get(f"/api/sessions/{second.session_id}/state")).json()
+    assert state["research"] == {"x": 1}, "the surviving session's documents went with the other one"
+
+
+async def test_create_session_refuses_a_project_owned_by_another_user():
+    store, queue = FakeStore(), FakeQueue()
+    store.seed_session("sess_a", "proj_a", owner=USER_A.id)
+    async with make_client(store, queue, user=USER_B.id) as c:
+        r = await c.post("/api/sessions", json={"project_id": "proj_a"})
+    assert r.status_code == 404
+    assert [s.session_id for s in store.sessions.values() if s.project_id == "proj_a"] == ["sess_a"]
+
+
+async def test_create_session_on_own_project_opens_a_second_session():
+    store, queue = FakeStore(), FakeQueue()
+    store.seed_session("sess_a", "proj_a", owner=USER_A.id)
+    async with make_client(store, queue, user=USER_A.id) as c:
+        r = await c.post("/api/sessions", json={"project_id": "proj_a"})
+    assert r.status_code == 200
+    assert store.sessions[r.json()["id"]].project_id == "proj_a"
+
+
+async def test_supplied_project_id_is_created_or_claimed_only_under_dev_login(monkeypatch):
+    store, queue = FakeStore(), FakeQueue()
+    store.seed_session("sess_x", "proj_unowned", owner=None)
+    # Dev-login on (the default): a new id is created and an unowned one is claimed.
+    async with make_client(store, queue) as c:
+        assert (await c.post("/api/sessions", json={"project_id": "proj_new"})).status_code == 200
+        assert (await c.post("/api/sessions", json={"project_id": "proj_unowned"})).status_code == 200
+    assert store.owners["proj_new"] == store.owners["proj_unowned"] == USER_A.id
+    # FamilySearch sign-in on: dev-login is off, and neither may happen.
+    store2 = FakeStore()
+    store2.seed_session("sess_y", "proj_unowned", owner=None)
+    store2.allowed = {USER_A.email}
+    monkeypatch.setenv("FAMILYSEARCH_WEB_ENABLED", "true")
+    assert not auth.dev_login_enabled()
+    async with make_client(store2, queue) as c:
+        assert (await c.post("/api/sessions", json={"project_id": "proj_new"})).status_code == 404
+        assert (await c.post("/api/sessions", json={"project_id": "proj_unowned"})).status_code == 404
+        assert (await c.post("/api/sessions", json={})).status_code == 200, "a fresh project is still fine"
+    assert "proj_new" not in store2.owners and store2.owners["proj_unowned"] is None
+
+
+def test_queue_body_carries_no_token_or_user_field():
+    """U3 resolves the patron from the project_id already in the body; a token in the body
+    would persist in turns.message, SQS and the DLQ."""
+    body = app.queue_body("t", SessionRow("s", "p", "t", "m", T0, T0, USER_A.id), "hi", T0.isoformat(), 1)
+    assert set(body) == {"turn_id", "session_id", "project_id", "text", "enqueued_at", "max_nudges"}

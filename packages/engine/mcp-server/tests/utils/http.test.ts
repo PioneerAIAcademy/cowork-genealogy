@@ -4,12 +4,15 @@ const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
 import {
+  describeFetchError,
+  isFetchTimeout,
   fetchWithTimeout,
   fetchWithRetry,
   retryAfterMs,
   RETRYABLE_STATUS,
   DEFAULT_RETRY_BUDGET_MS,
 } from "../../src/utils/http.js";
+import { socketFetchFailure } from "../helpers/fetch-failed.js";
 
 beforeEach(() => {
   mockFetch.mockReset();
@@ -234,6 +237,23 @@ describe("fetchWithRetry", () => {
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
+  it("keeps an earlier socket code when a later retry times out (#3031)", async () => {
+    const stall = (_url: string, init?: RequestInit) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => {
+          const err = new Error("The operation timed out.");
+          err.name = "TimeoutError";
+          reject(err);
+        });
+      });
+    mockFetch.mockRejectedValueOnce(socketFetchFailure()).mockImplementation(stall);
+
+    const err = await fetchWithRetry("https://example.com", {}, 20, fastOpts).catch((e) => e);
+
+    expect(isFetchTimeout(err)).toBe(true);
+    expect(describeFetchError(err)).toMatch(/timed out after \d+ms\..*ETIMEDOUT/s);
+  });
+
   it("retries a thrown network error then returns 200", async () => {
     mockFetch
       .mockRejectedValueOnce(new TypeError("fetch failed: ECONNRESET"))
@@ -363,5 +383,23 @@ describe("fetchWithRetry", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("describeFetchError", () => {
+  it("walks .cause and AggregateError.errors down to the socket code (#3031)", () => {
+    expect(describeFetchError(socketFetchFailure())).toBe(
+      "fetch failed <- ETIMEDOUT: connect ETIMEDOUT 208.111.35.209:443",
+    );
+  });
+
+  it("returns a plain error's message unchanged", () => {
+    expect(describeFetchError(new Error("ECONNREFUSED"))).toBe("ECONNREFUSED");
+  });
+
+  it("stops on a cause that points back at itself", () => {
+    const loop = new Error("loop") as Error & { cause?: unknown };
+    loop.cause = loop;
+    expect(describeFetchError(loop)).toBe("loop");
   });
 });
