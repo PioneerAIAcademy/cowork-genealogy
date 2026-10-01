@@ -1849,11 +1849,16 @@ def test_render_prompt_frames_tool_calls_as_claudes_wording_vs_a_tools(sample_ru
     rendered calls, and carries the exception for output the harness cut."""
     prompt = judge.render_prompt(**_prompt_parts_kwargs(sample_rubric))
     heading_at = prompt.index("## MCP tool calls")
-    rule_at = prompt.index("is Claude's own wording, not a tool's")
+    rule_at = prompt.index("Claude's own wording, not a tool's")
     calls_at = prompt.index("(none)", rule_at)
     assert heading_at < rule_at < calls_at < prompt.index("## Deterministic validators")
-    assert "[truncated by harness for prompt size;" in prompt[heading_at:calls_at]
-    assert "_dropped_for_size" in prompt[heading_at:calls_at]
+    block = prompt[heading_at:calls_at]
+    # Attribution only: an unsupported fact is still a Correctness deduction.
+    assert "This is about attribution, not support" in block
+    assert "Attribute it to Claude." in block
+    assert "is not by itself a grounding failure, so do not deduct" in block
+    for marker in ("[truncated by harness for prompt size;", "_truncated_for_depth", "_dropped_for_size"):
+        assert marker in block
 
 
 def test_render_prompt_puts_per_test_context_last(sample_rubric):

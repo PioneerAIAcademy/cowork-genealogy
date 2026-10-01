@@ -876,6 +876,41 @@ def test_negative_judge_context_keeps_machine_and_author_lines_apart():
     assert "AUTHOR-NOTE-ONE" in author and "AUTHOR-NOTE-TWO" in author
 
 
+def test_negative_judge_context_keeps_a_multi_line_note_inside_its_group():
+    _, author = _negative_judge_context(_negative_ctx_spec(["first line\nsecond line"]))
+    assert author.endswith("\n  - first line\n    second line")
+
+
+def test_run_judge_hands_a_negative_test_the_labeled_groups(monkeypatch):
+    """The wiring, not just the builder: a negative test's judge receives
+    the two labeled groups, not the test's raw judge_context."""
+    from harness import orchestrator
+    from harness.auth import AuthConfig
+    from harness.rubric import empty_rubric
+
+    seen = {}
+
+    def fake_grade(**kwargs):
+        seen.update(kwargs)
+        return "graded"
+
+    monkeypatch.setattr(orchestrator, "grade", fake_grade)
+    spec = _negative_ctx_spec(["AUTHOR-NOTE"])
+    result = SimpleNamespace(
+        text_response="t", skills_invoked=[], tool_calls=[],
+        builtin_tool_calls=[], agent_returns=[],
+    )
+    assert orchestrator._run_judge(
+        spec=spec, rubric=empty_rubric(spec.skill), scenario_readme="",
+        result=result, file_changes=[],
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        judge_model="stub",
+    ) == "graded"
+    ctx = seen["judge_context"]
+    assert ctx[0].startswith("Harness framing (")
+    assert ctx[1] == "Test author's notes (written for this test):\n  - AUTHOR-NOTE"
+
+
 def test_negative_judge_context_without_author_notes_has_no_author_group():
     ctx = _negative_judge_context(_negative_ctx_spec([]))
     assert len(ctx) == 1
@@ -901,7 +936,10 @@ def test_negative_judge_context_renders_as_two_nested_lists_in_the_judge_prompt(
     )
     lines = prompt.splitlines()
     lines = lines[lines.index(next(l for l in lines if l.startswith("- Harness framing ("))):]
-    assert lines[0].startswith("- Harness framing (")
+    assert lines[0] == (
+        "- Harness framing (written by the eval harness for every negative test, "
+        "not by this test's author):"
+    )
     assert lines[1].startswith("  - This is a NEGATIVE test.")
     author_at = lines.index("- Test author's notes (written for this test):")
     assert lines[author_at + 1] == "  - AUTHOR-NOTE"

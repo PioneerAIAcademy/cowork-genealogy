@@ -2003,7 +2003,9 @@ _AUTHOR_NOTES_LABEL = "Test author's notes (written for this test):"
 
 
 def _labeled_group(label: str, lines: list[str]) -> str:
-    return label + "".join(f"\n  - {line}" for line in lines)
+    # A line's own newlines are indented too, so a multi-line note stays inside
+    # its group instead of rendering flush left after it.
+    return label + "".join("\n  - " + line.replace("\n", "\n    ") for line in lines)
 
 
 # Caps for the opt-in content block (test.judge_reads_files). The per-field
