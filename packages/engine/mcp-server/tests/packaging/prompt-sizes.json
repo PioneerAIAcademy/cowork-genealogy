@@ -24,7 +24,7 @@
     "packages/engine/plugin/skills/forget-and-rederive/SKILL.md": 13208,
     "packages/engine/plugin/skills/historical-context/SKILL.md": 15449,
     "packages/engine/plugin/skills/hypothesis-tracking/SKILL.md": 13498,
-    "packages/engine/plugin/skills/init-project/SKILL.md": 29791,
+    "packages/engine/plugin/skills/init-project/SKILL.md": 30117,
     "packages/engine/plugin/skills/locality-guide/SKILL.md": 20751,
     "packages/engine/plugin/skills/project-status/SKILL.md": 11447,
     "packages/engine/plugin/skills/question-selection/SKILL.md": 20246,
@@ -36,7 +36,7 @@
     "packages/engine/plugin/skills/search-full-text/SKILL.md": 19118,
     "packages/engine/plugin/skills/search-images/SKILL.md": 2983,
     "packages/engine/plugin/skills/search-records/SKILL.md": 61270,
-    "packages/engine/plugin/skills/source-evaluation/SKILL.md": 17429,
+    "packages/engine/plugin/skills/source-evaluation/SKILL.md": 17164,
     "packages/engine/plugin/skills/timeline/SKILL.md": 21833,
     "packages/engine/plugin/skills/translation/SKILL.md": 10741
   },

@@ -280,12 +280,25 @@ def check_runnable(
     # correct_skill naming a not-yet-built skill is the documented
     # reason for the xfail (see xfail_reason), not a typo to catch.
     if spec.type == "negative" and spec.negative and spec.expected_outcome != "xfail":
+        # An AGENT is a legitimate target, exactly as it is for `stub_skills`
+        # above: a callee converted from a skill to an agent still routes, and
+        # the conversion deletes its skill directory. Checking only for a
+        # directory made every such test abort `not_runnable` -- silently, since
+        # an abort reports no reason a reader connects to the conversion.
+        # Eleven tests across eight skills were in that state when this was
+        # found (`proof-conclusion`, `person-evidence`, `search-wikipedia`,
+        # `convert-dates`, `check-warnings`), each from a conversion whose sweep
+        # updated the `stub_skills` gate and not this one.
         for i, name in enumerate(spec.negative.get("correct_skill", []) or []):
-            if not (Path(skills_dir) / name).is_dir():
+            if (
+                not (Path(skills_dir) / name).is_dir()
+                and not (Path(skills_dir).parent / "agents" / f"{name}.md").is_file()
+            ):
                 return RunnabilityResult(
                     False,
-                    f"negative.correct_skill[{i}]='{name}' is not an "
-                    f"existing skill (no directory at {skills_dir}/{name})",
+                    f"negative.correct_skill[{i}]='{name}' is not an existing "
+                    f"skill or agent (no directory at {skills_dir}/{name}, no "
+                    f"{Path(skills_dir).parent / 'agents' / (name + '.md')})",
                 )
 
         # `grade_on_invariant` hands the whole verdict to the test's
