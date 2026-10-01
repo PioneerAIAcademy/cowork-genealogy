@@ -430,7 +430,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // `@plugin:convert-dates`.
   ["historical-context -> convert-dates", ""],
   ["record-extraction -> convert-dates", ""],
-  ["translation -> convert-dates", ""],
   // hypothesis-tracking entered agentOnly when issue #2792 deleted its skill
   // directory. Both are bare-name mentions — "(use hypothesis-tracking)",
   // "suggest `hypothesis-tracking`" — and neither spells
