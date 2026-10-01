@@ -1,6 +1,6 @@
 # Handing the search agent to FamilySearch
 
-**Status:** In progress (2026-09-29): U2 built (PR #3039); the rest not started.
+**Status:** In progress (2026-09-30): U2 built (PR #3039); U5 built (PR #3083); proven offline and on compose; AWS half is U13; the rest not started.
 **Owner:** Dallan. Written for Richard, the FamilySearch employee on the project. List 1 is Dallan's team's work; list 2 is FamilySearch's, routed through Richard; list 3 is for FamilySearch engineers.
 
 See [the prototype report](../search-agent-prototype-report.md) (its legend defines D, P and R) and [the prototype plan](search-agent-prototype.md).
@@ -13,7 +13,7 @@ See [the prototype report](../search-agent-prototype-report.md) (its legend defi
 - **First three actions:**
   1. **U1, send the asks:** every unsent list-2 ask. File the Bedrock quota increase once F5 names the account; it takes days.
   2. **Size U2–U13.** Start U2, and U3's dev-key token measurements.
-  3. **Build U5.** U6 before any second instance.
+  3. **U5 built** (PR #3083; U13 confirms it on AWS). U6 before any second instance.
 - **Richard decides:** list-2 routing and F15's owner (U1); which tree U16 grades; whose key runs the SDK-bump probes (step 10).
 
 ## What the system is
@@ -26,14 +26,14 @@ See [the prototype report](../search-agent-prototype-report.md) (its legend defi
 | Web tier: REST, SSE, Stop | `apps/server/proto/web/app.py` | **Prototype-grade:** patron sign-in and owner scoping (U2), but every turn's FamilySearch calls stay on the operator's token until U3; uploads, images, logs 501 (U20). |
 | Schema | `apps/server/proto/sql/001_schema.sql`…`008_auth_owner.sql` | **Keep content.** Applied at service start until U9. |
 | Browser client | `apps/web`, `VITE_SESSION_TRANSPORT=sse` | **Keep.** Not yet built for SSE or mounted (U12). |
-| Compose, elasticmq, MinIO, Postgres container, sqsd shim | `apps/server/proto/{docker-compose*.yml,elasticmq.conf,shim/}` | **Local only.** Unlike the shim, sqsd never kills the worker (U5). |
+| Compose, elasticmq, MinIO, Postgres container, sqsd shim | `apps/server/proto/{docker-compose*.yml,elasticmq.conf,shim/}` | **Local only.** The base shim kills the worker at its 1,800 s ceiling, which sqsd never does; `docker-compose.sqsd.yml` overlays sqsd's behaviour: abandon without a kill, a fixed error visibility (also after a refused or reset connection), `MaxRetries` into `turns-dlq`; under it the shim exits at start if `turns-dlq` is unreachable (U5). [compose] |
 | Operator token plumbing | `apps/server/proto/env.sh`, `.fs-token`, `dev/fs-token.ts` | **Dev only.** U2, U3 replace it. |
 | Dockerfiles | `apps/server/proto/{worker,web,tools}/Dockerfile` | **Recipes** for U12 (images if F12 allows Docker). |
 
 Two premises moved since the plan:
 
 - **One message is a whole research run** (PR #2870, merged 2026-09-27; its acceptance run: 6 attempts, 150 min). The auth design assumed "a turn is minutes"; the grain moved further from the review's "one model call per message" (R4). Once [our cost-and-latency plan](cost-latency-10x.md) lands (not started, no date), U26 ends every run at 1,800 s.
-- **Forced foreground delegation is the design** (lead ruling 2026-09-23, PR #2852, reaffirmed 2026-09-29): no agent outlives its turn. The rewrite covers a call with no flag too, which CLI 2.1.220 runs in the background (U27, done in this PR).
+- **Forced foreground delegation is the design** (lead ruling 2026-09-23, PR #2852, reaffirmed 2026-09-29): no agent outlives its turn. The rewrite covers a call with no flag too, which CLI 2.1.220 runs in the background (U27, done in PR #3011).
 
 ## 1. Preconditions Dallan's team implements and tests
 
@@ -67,7 +67,7 @@ Two premises moved since the plan:
 | U24 | Continuous-work behaviour | Turns overrun their deliverable | go-live | — |
 | U25 | Hard image cap (issue #3010) | Image browsing unbounded | go-live (cost) | — |
 | U26 | Session time limit: every run ends within 1,800 s | Multi-hour runs | go-live | `cost-latency-10x.md` lands |
-| U27 | Foreground rewrite covers a flagless delegation | Delegation dies at turn end | **done in this PR** | — |
+| U27 | Foreground rewrite covers a flagless delegation | Delegation dies at turn end | **done in PR #3011** | — |
 
 ### Details
 
@@ -79,7 +79,7 @@ Two premises moved since the plan:
 
 **U4.** Why: only network placement protects the tool server (step 9). Skip if F8 accepts isolation. **Done when:** a test refuses patron A's bearer naming patron B's project.
 
-**U5.** What integration needs until U26. Why: sqsd cuts a POST silently and redelivers while the attempt runs on (step 11): two CLIs on one session. A dead-lettered turn stays open, holding its session and held messages (found by reading). Build: step 11's interim sqsd values, so sqsd cuts only a run past 10 h (D18's spend rates reach the untried $35 cap in ~3–4.5 h, U23; a crashed worker's message can take ~10 h to return); exit cleanly on SIGTERM; close a dead-lettered turn with a named outcome, releasing its held messages. **Done when**, in U13: a run past 1,800 s completes on receive 1; SIGTERM mid-turn exits and the redelivery resumes (answer 500 before exiting, or lower `VisibilityTimeout` for the test); `MaxRetries` 1 plus a 500 closes the turn and releases its held messages.
+**U5.** What integration needs until U26. Why: sqsd cuts a POST silently and redelivers while the attempt runs on (step 11): two CLIs on one session. A dead-lettered turn stays open, holding its session and held messages (found by reading). Build: step 11's interim sqsd values, so sqsd cuts only a run past 10 h (D18's spend rates reach the untried $35 cap in ~3–4.5 h, U23; a crashed worker's message can take ~10 h to return); exit cleanly on SIGTERM; close a dead-lettered turn with a named outcome, releasing its held messages. **Done when**, in U13: a run past 1,800 s completes on receive 1; SIGTERM mid-turn exits and the redelivery resumes (answer 500 before exiting, or lower `VisibilityTimeout` for the test); `MaxRetries` 1 plus a 500 closes the turn and releases its held messages. **Built** in PR #3083 (2026-09-30); proven offline and on compose (2026-09-30, n=1 each, `docker-compose.sqsd.yml`: smoke cases `sigterm`, `dead_letter`, `crash_last_receive`, `past_ceiling`, and one billed `proto-kill --kill-signal term` that resumed on receive 2); AWS half is U13. Template `apps/server/proto/eb-worker/` (steps 11, 12). On SIGTERM the worker answers every in-flight POST 500, stops the CLI, exits 0. A last receive that would answer non-200 closes the turn `retries_exhausted` and releases the next held message; a sweep closes a crashed last receive after `VisibilityTimeout` and any turn past `RetentionPeriod`. A redelivery of a completed turn now releases a stranded held message.
 
 **U6.** Why: claims have no fencing or expiry; cross-instance write locking is untested. **Done when:** a two-worker test, with a parallel write through two tool servers, makes the stale epoch's writes no-ops.
 
@@ -95,7 +95,7 @@ Two premises moved since the plan:
 
 **U12.** Why: none exist; the review rules Docker out, so start now. Build and test on Node 24 with npm 11.12.x; add `tsx` to engine devDependencies or compile the smoke (acceptance step 2). Vendored bundles must fit 512 MB; installed ones need registry egress. **Done when:** U13 passes.
 
-**U13.** Why: the guide is untrusted until run. Correct list 3 wherever reality differs. Register the rehearsal host's callback on dev key `fs-internal-dev-key-000262` (else F15). Measure step 11's open items, `TMPDIR` size, closed-VPC CLI egress, TLS-enforcing Postgres, and recovery from a kill between a tool result spilling to `mkdtemp` and its read. Departures: stock Beanstalk, no gateway allowlist, self-provisioned stores, `MODEL_PROVIDER=anthropic` (so `ANTHROPIC_API_KEY` from secrets, egress to `api.anthropic.com`, acceptance step 1 expects `provider=anthropic`); our hostname and certificate; needs no list-2 answer. **Done when:** the acceptance test passes and FamilySearch sign-in completes on the rehearsal host (moved from U2); dev-login is opt-in (`DEV_LOGIN=true`), so a host with `PUBLIC_URL` unset refuses it.
+**U13.** Why: the guide is untrusted until run. Correct list 3 wherever reality differs. Register the rehearsal host's callback on dev key `fs-internal-dev-key-000262` (else F15). Measure step 11's open items, and U5's: Beanstalk's worker stop grace, whether sqsd outlives the app process during an app-version deploy (if not, a SIGTERM's 500 reaches nobody and the message waits out `VisibilityTimeout`), whether sqsd delivers exactly `MaxRetries` receives, whether SQS's 12 h visibility cap counts from the first-ever receive; re-size `MaxRetries` and `ErrorVisibilityTimeout`. Also `TMPDIR` size, closed-VPC CLI egress, TLS-enforcing Postgres, and recovery from a kill between a tool result spilling to `mkdtemp` and its read. Departures: stock Beanstalk, no gateway allowlist, self-provisioned stores, `MODEL_PROVIDER=anthropic` (so `ANTHROPIC_API_KEY` from secrets, egress to `api.anthropic.com`, acceptance step 1 expects `provider=anthropic`); our hostname and certificate; needs no list-2 answer. **Done when:** the acceptance test passes and FamilySearch sign-in completes on the rehearsal host (moved from U2); dev-login is opt-in (`DEV_LOGIN=true`), so a host with `PUBLIC_URL` unset refuses it.
 
 **U14.** Why: the worker has used the gateway provider once (2 short turns, local copy of TAP's route, no kill; P3k, 2026-09-25); an unmapped agent model silently becomes a general-purpose stand-in (P3h). Run `probe_gateway_parity.py` on the integ route, adding deployed latency and which of four cache points survive. Then one gateway run on a page-scan fixture: a kill inside an image-reading delegation, a forced autocompact, `gps-mentor` on Sonnet 5, cost against a tool-search-on control (prices F2); compose on the VPN suffices (F13). **Done when:** the worker asserts at start that every agent model is in `GATEWAY_AGENT_MODELS` and fails loudly on any `general-purpose` delegation; the probe passes but for known items; the run meets D17 criteria 1–3.
 
@@ -139,7 +139,7 @@ Two premises moved since the plan:
 
 **Done when:** acceptance step 5's time-limit form passes on U13's rehearsal host.
 
-**U27.** Done in this PR. The hook rewrote only an explicit `run_in_background: true`, but CLI 2.1.220 backgrounds an `Agent` call with no flag, and the two extractors lost on 2026-09-21 had none. The worker now rewrites every delegation not explicitly `false`; `test_a_delegation_not_explicitly_foreground_is_rewritten` fails on the old rule.
+**U27.** Done in PR #3011. The hook rewrote only an explicit `run_in_background: true`, but CLI 2.1.220 backgrounds an `Agent` call with no flag, and the two extractors lost on 2026-09-21 had none. The worker now rewrites every delegation not explicitly `false`; `test_a_delegation_not_explicitly_foreground_is_rewritten` fails on the old rule.
 
 ## 2. Preconditions only FamilySearch can answer or do
 
@@ -256,25 +256,29 @@ F6, F7, F8, F10 → F11, F16, U24, U25 ─► go-live
     - `TOOL_SERVER_URL`: `http://<tools host>/mcp`
     - `SESSION_SPEND_CAP_USD`: per-session bound, default 35
     - `PRICE_INPUT_PER_MTOK`, `PRICE_CACHE_WRITE_PER_MTOK`, `PRICE_CACHE_READ_PER_MTOK`, `PRICE_OUTPUT_PER_MTOK`: defaults 3.0, 6.0, 0.30, 15.0; recalibrate (U19)
+    - `SQSD_MAX_RETRIES`, `SQSD_VISIBILITY_TIMEOUT_S`, `SQSD_RETENTION_PERIOD_S`: equal to step 11's `MaxRetries`, `VisibilityTimeout`, `RetentionPeriod`; step 11's template sets all three (U5). Unset: no last-receive close, no sweep. Below sqsd's value the turn closes `MaxRetries` − `SQSD_MAX_RETRIES` receives early and those recoveries are lost; above it only the retention backstop closes it. [compose]
+    - `SWEEP_INTERVAL_S`: dead-letter sweep period, default 300; `0` turns it off. [compose]
+    - `SHUTDOWN_GRACE_S`: default 20; below the platform's stop grace (unmeasured on Beanstalk, U13) and `ErrorVisibilityTimeout`. [compose]
 
     **Never set in production:** `ANTHROPIC_API_KEY`, `BLOCKED_TOOLS`, `FS_ACCESS_TOKEN`, `FS_ACCESS_TOKEN_FILE`, `AUTONOMOUS_MAX_NUDGES` (the web tier stamps it).
 
-11. **sqsd options** (`aws:elasticbeanstalk:sqsd`; template `apps/server/proto/eb-worker-probe/.ebextensions/01-worker.config`). API option settings override the file [EB probe]; Blueprint's precedence is [untested] (F12).
+11. **sqsd options** (`aws:elasticbeanstalk:sqsd`; template `apps/server/proto/eb-worker/.ebextensions/01-sqsd.config`, U5; the probe's `eb-worker-probe/` files stay as the 2026-09-11 record). API option settings override the file [EB probe]; Blueprint's precedence is [untested] (F12).
 
     | Option | Value | Status |
     |---|---|---|
-    | `HttpPath` | `/turn` | [untested]; the probe used `/`. Other paths 404, which sqsd retries into the DLQ. |
+    | `HttpPath` | `/turn` | [compose]; Beanstalk [untested]; the probe used `/`. Other paths 404, which sqsd retries into the DLQ. |
     | `HttpConnections` | `2` | [EB probe]. Memory at 2 concurrent turns unmeasured. |
-    | `InactivityTimeout` | Interim (U5): `36000`, Beanstalk's maximum. After U26: just above the worker's 1,800 s deadline | [untested]; `1800` [EB probe] |
-    | `VisibilityTimeout` | Interim `36300`; after U26 just above `InactivityTimeout`. SQS's maximum is `43200`. A crashed worker's message returns only after it | [untested]; `2100` over `1800` [EB probe] |
-    | `MaxRetries` | Small: only crashes and deploys add receives | Mechanism [EB probe], value [untested]. Counts never reset. The probe used 10. |
-    | `ErrorVisibilityTimeout` | Sized in U13 with `MaxRetries` | [untested]. AWS documents a retry of a non-200 after this delay (default 2 s). The worker answers 500 whenever it cannot claim the turn in Postgres, so at 2 s a failover can exhaust `MaxRetries` in seconds and dead-letter the turn. |
+    | `InactivityTimeout` | Interim (U5): `36000`, Beanstalk's maximum. After U26: just above the worker's 1,800 s deadline | [untested]; `1800` [EB probe]; the overlay's abandon [compose] (a 1,850 s turn completed on receive 1) |
+    | `VisibilityTimeout` | Interim `36300` (`InactivityTimeout` + 300); after U26 just above `InactivityTimeout`. SQS's maximum is `43200`. A crashed or SIGKILLed worker's message returns only after it | [untested]; `2100` over `1800` [EB probe] |
+    | `MaxRetries` | Interim `5`: after the first, receives come only from a crash, a deploy or SIGTERM, or a 500 (an API error, Postgres down at claim, a `ResumeFailure`), so four recoveries per run; the cumulative $35 cap bounds their spend | Mechanism [EB probe], value [untested]; last-receive close and DLQ move [compose]. Counts never reset. The probe used 10. |
+    | `ErrorVisibilityTimeout` | Interim `300`: above the worker's stop grace (compose 30 s; Beanstalk unmeasured), a deploy window (78 s configuration-only; app-version unmeasured) and a Postgres failover; five receives tolerate ~20 min of errors. U13 re-sizes it with `MaxRetries` | [untested]; the overlay's fixed wait [compose]. AWS documents a retry of a non-200 after this delay (default 2 s). The worker answers 500 whenever it cannot claim the turn in Postgres, so at 2 s a failover can exhaust `MaxRetries` in seconds and dead-letter the turn. |
+    | `RetentionPeriod` | `345600`, the AWS default, written down because the worker's sweep reads it (step 10) | [untested] |
 
     Measured (2026-09-11, n=1): at `InactivityTimeout` sqsd cuts the POST **and tells the worker nothing**; the message returns after `VisibilityTimeout` (300 s dead at 2100 over 1800). Ids travel in the body (a message attribute was not forwarded); the worker reads `X-Aws-Sqsd-Msgid` and `X-Aws-Sqsd-Receive-Count`. A configuration-only update took 78 s, restarting only sqsd. **Not measured:** sqsd on a worker 500, an app-version deploy mid-turn, the 512 MB bundle cap, the `.ebextensions` naming rule.
 
-12. **nginx override:** `.platform/nginx/conf.d/<name>.conf` with `proxy_read_timeout 43200s;`, or nginx cuts the POST at 60 s. It must exceed `InactivityTimeout`, or nginx's 504 redelivers mid-run. Template: `apps/server/proto/eb-worker-probe/.platform/nginx/conf.d/01-worker-timeouts.conf`. [EB probe] (Python platform).
+12. **nginx override:** `.platform/nginx/conf.d/<name>.conf` with `proxy_read_timeout 43200s;`, or nginx cuts the POST at 60 s. It must exceed `InactivityTimeout`, or nginx's 504 redelivers mid-run. Template: `apps/server/proto/eb-worker/.platform/nginx/conf.d/01-worker-timeouts.conf`, copied from the probe's. [EB probe] (Python platform).
 13. **One instance each** for worker and tools until U6, not the review's 2. [compose]
-14. **Logs:** `aws:elasticbeanstalk:cloudwatch:logs` `StreamLogs: true` on all three, `DeleteOnTerminate: false`, retention of FamilySearch's choosing. Groups: `/aws/elasticbeanstalk/<env>/var/log/web.stdout.log`, `…/aws-sqsd/default.log`, `…/nginx/access.log`. [EB probe] The worker logs JSON lines: `ev=start` names the provider; `ev=turn`, one per returning attempt, has on 200 `receive_count`, `resumed`, `list_subkeys`; a killed attempt writes none.
+14. **Logs:** `aws:elasticbeanstalk:cloudwatch:logs` `StreamLogs: true` on all three, `DeleteOnTerminate: false`, retention of FamilySearch's choosing. Groups: `/aws/elasticbeanstalk/<env>/var/log/web.stdout.log`, `…/aws-sqsd/default.log`, `…/nginx/access.log`. [EB probe] The worker logs JSON lines: `ev=start` names the provider; `ev=turn`, one per returning attempt, has on 200 `receive_count`, `resumed`, `list_subkeys`; a killed attempt writes none. `ev=shutdown` lists the turn ids answered 500 on SIGTERM (`answered`; a last receive closed with a 200 is not listed); `ev=close` has `turn_id`, `outcome`, `cause` (`error`, `shutdown`, `sweep`), `receive_count`; `ev=deferred_release_skipped` has `session_id`, `turn_id` when a SIGTERM close could not release its held message within the grace and release budget (the held row waits for the web tier's rescue); `ev=sweep` lists the turn ids a sweep closed (`closed`), only when there are any. All [compose] except `ev=deferred_release_skipped` [untested] (offline tests).
 
 ### Web tier
 
@@ -316,10 +320,10 @@ Nothing scripts it against a deployed stack yet (`make proto-demo` and `make pro
 4. **Kill mid-delegation** (D17's equivalent). Set `GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS=20000` on tools for this test only, then unset it; without it `extraction_append` commits in ~68 ms (2026-09-20) and the kill lands after the commit. Run `/record-extraction` on a named record. When `tool_calls` shows an `agent_type = 'record-extractor'` row whose `tool_name` ends in `extraction_append`, terminate the worker instance within the hold.
    - Pass: `receive_count` ≥ 2; the redelivery's `ev=turn` has `resumed` true and `list_subkeys` ≥ 1; `completed_at` set, `outcome` not `no_progress`; `research.json` holds the source exactly once.
    - Void if the kill landed before the delegation started or after its `Agent` row had `duration_ms`; if any FamilySearch call got the reconnect instruction; or on more than one kill.
-   - On Beanstalk, redelivery waits out `VisibilityTimeout`; lower step 11's interim values for this test.
+   - On Beanstalk, only a SIGKILL's redelivery waits out `VisibilityTimeout`; lower step 11's interim values for this test. With U5 a SIGTERM answers 500 and redelivers after `ErrorVisibilityTimeout`, provided sqsd outlives the app process during the deploy (U13). [untested]
    - [live run] on the 2026-09-23 pre-merge build only (D17, n=1, compose, `docker kill`); not re-run on current `main`; Beanstalk [untested].
    - Once U26 lands, the redelivery closes the run `interrupted` instead. Pass then: the patron's next message resumes the same SDK session (`resumed` true, `list_subkeys` ≥ 1) and `research.json` holds the source exactly once.
-5. **No mid-run cut** (until U26): an autonomous run past 1,800 s completes on `receive_count` 1. Needs U5. [untested]
+5. **No mid-run cut** (until U26): an autonomous run past 1,800 s completes on `receive_count` 1. Needs U5. [compose] (`smoke.py --case past_ceiling`, opt-in, ~31 min: a 1,850 s turn completed on receive 1, 2026-09-30, n=1); Beanstalk [untested].
    **Time limit** (once U26 lands): by 1,800 s from its first attempt the run closes `budget` with limit `time`, the patron sees the stop event, the message is deleted, and a next message continues. [untested]
 
 **Not covered** (never run live; U23 runs the first four): Stop during a run; held-message release; the $35 cap firing; Stop or cap during a foreground delegation, with PR #2870's owed SDK questions (does `continue_: False` suppress the Stop dispatch; does a subagent's halt stop the parent); the time limit (U26).

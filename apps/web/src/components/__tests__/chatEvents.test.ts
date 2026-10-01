@@ -292,7 +292,7 @@ describe('clearQueued', () => {
 describe('turnOutcomeLabel', () => {
   it('names each terminal outcome the worker can write', () => {
     for (const outcome of ['completed', 'stopped', 'queued', 'budget', 'no_progress',
-                           'decision', 'mcp_unavailable']) {
+                           'decision', 'mcp_unavailable', 'retries_exhausted']) {
       expect(turnOutcomeLabel(outcome)).toBeTruthy()
     }
   })
@@ -309,10 +309,15 @@ describe('turnOutcomeLabel', () => {
   it('tells the reader how to carry on wherever carrying on is possible', () => {
     // The failure this exists to prevent: a capped or stalled run that reads as
     // "nothing more was found". Each of those three must say what to do next.
-    for (const outcome of ['stopped', 'budget', 'no_progress']) {
+    for (const outcome of ['stopped', 'budget', 'no_progress', 'retries_exhausted']) {
       expect(turnOutcomeLabel(outcome)).toMatch(/carry on/i)
     }
     expect(turnOutcomeLabel('completed')).not.toMatch(/carry on/i)
+  })
+
+  it('names a turn closed for running out of receives (U5)', () => {
+    expect(turnOutcomeLabel('retries_exhausted')).toBe(
+      'This run was interrupted too many times and has stopped. Send a message to carry on.')
   })
 
   it('separates the two budgets, because only one of them ends the sitting', () => {
@@ -328,7 +333,7 @@ describe('turnOutcomeLabel', () => {
   })
 
   it('distinguishes a finished run from every paused one', () => {
-    const labels = ['completed', 'stopped', 'budget', 'no_progress', 'mcp_unavailable']
+    const labels = ['completed', 'stopped', 'budget', 'no_progress', 'mcp_unavailable', 'retries_exhausted']
       .map((o) => turnOutcomeLabel(o))
     expect(new Set(labels).size).toBe(labels.length)
   })
