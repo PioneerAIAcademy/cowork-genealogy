@@ -378,7 +378,12 @@ function parseDateTokens(tokens: Token[], startIdx: number, endIdx: number): Dat
           const suffixVal = parseInt(suffixTok.value, 10);
 
           if (num >= 1000 && num <= 1752) {
-            // Valid split year range
+            // Valid split year range. Deliberate, not a bug to widen: Britain
+            // and its colonies started the year on 25 March (Lady Day) until
+            // they adopted the Gregorian calendar in 1752, so only a Jan-Mar
+            // date up to then carries both years ("28 Feb 1623/24"). After
+            // 1752 a "/NN" is not dual dating, and the year is omitted below
+            // (droppedSplit) rather than read.
             const nextYear = num + 1;
             const suffixLen = suffixTok.value.length;
 
