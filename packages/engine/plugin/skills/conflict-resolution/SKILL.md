@@ -76,6 +76,8 @@ fact conflicts which require at least two).
 ### 1. Identify conflicts
 
 Read `research.json` assertions, person_evidence, and timelines.
+When you find competing values, proceed through Steps 2–5 and call
+`research_append` — do not stop after presenting your findings in text.
 **Trust the existing assertion classifications** (record_basis,
 directness, informant) as recorded — do NOT re-classify inline, and do
 NOT invoke the record-extraction or check-warnings skills from here.
