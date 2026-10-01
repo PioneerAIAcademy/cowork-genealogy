@@ -11,7 +11,7 @@ nothing else; PyYAML is deliberately not used.
     python proto/worker/plugin_agents.py [--plugin-dir DIR]
 
 prints one line per agent (name, model, tool count, description length) and exits 1 if
-fewer than fifteen were found.
+fewer than sixteen were found.
 """
 from __future__ import annotations
 

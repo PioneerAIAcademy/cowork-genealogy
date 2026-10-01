@@ -385,6 +385,11 @@ Two things this does NOT close:
    `packages/engine/mcp-server/tests/packaging/agent-return-contract.test.ts`
    refuses an agent body without the heading once its name leaves that test's
    pending list.
+   **An agent whose report is its whole deliverable is exempt** (lead ruling
+   "PS return: A", 2026-09-24): `project-status` and `source-evaluation` write
+   nothing, so their id-bearing findings would sit above the caller's print
+   line and be dropped by a production relay. Each goes in that test's
+   `EXCLUDED` with its reason, and carries no `---` section.
    **A request that belongs to another agent is handed back, never spawned**
    (lead ruling 2026-09-23): the agent does none of that work, names the
    owning agent in its caller-facing lines, and the main thread spawns it. The
