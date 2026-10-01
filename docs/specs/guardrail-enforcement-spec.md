@@ -174,6 +174,7 @@ the four objects in this branch’s own record-extraction candidate, so quote th
 | n/a | Assertion correction reaches its materialized fact | engine (MCP tool) — so Cowork, hosted, both harnesses | a `place`/`standard_place`/`date`/`value` corrected on an assertion never reaching the tree fact already materialized from it | **enforcing as a WRITE, not a refusal** — the write being made is the legitimate one, so there is nothing for a boundary check to refuse, and ADR-0009 constraint 6 rules out a gate no call shape can satisfy. Eight advisories ride it, none blocking: no fact carries the backlink; the fact holds a value this assertion never asserted (another source corroborated it); the assertion's value is malformed rather than withdrawn; the assertion has been re-classified so the fact no longer matches its type; a field was DELETED from the fact; the rewritten fact is `primary` (a concluded value a proof summary may cite); a `place` corrected without its `standard_place`; and a `date` corrected without its `standard_date`. A ninth, the country-contradiction clear, rides the same channel. Every advisory that describes a CHANGE is discarded if the rewrite is rolled back |
 | below | Tree fact agrees with its linked assertion | unit harness (inside a paid per-skill run) **and** the e2e harness, where it reports rather than fails | a backlinked fact whose `place`/`standard_place`/`date`/`value` disagrees with the assertion it was minted from | **enforcing on unit, reporting on e2e.** One predicate, `find_tree_facts_disagreeing_with_assertions`: the universal validator asserts on it, while `collect_post_hoc_shadow` emits its findings as a shadow kind live and `replay_post_hoc` recomputes them offline, so the plane the card was filed off is now covered — as a measured number, not a gate. Still green by construction on today's unit corpus, where no run both mints a backlinked fact and corrects its assertion; the shadow bucket likewise reads zero so far, over a small live population. Its falsifiable halves are `eval/harness/tests/unit/test_tree_fact_assertion_agreement_validator.py` and `eval/harness/tests/unit/test_post_hoc_shadow.py` |
 | below | Fact rewrite authorized by tool identity | unit harness only, and only inside a paid per-skill run | record-extraction touching `tree.gedcomx.json`'s `persons` for anything other than that rewrite. The skill is deliberately NOT added to the row's `callers`, which would also authorize adding an unsourced person and setting `primary`; `research_append`/`extraction_append` are authorized as TOOLS, and only when the whole persons delta is mirrored attributes on facts that already carried the same backlink | **enforcing there, nowhere else** (the same reasoning that authorizes `merge_tree_persons` on the research side — anything the substitution does not explain still fails) |
+| §5 | Unjustified genealogical warnings | engine (MCP tool) — so Cowork, hosted, both harnesses | a tree write (`tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts`) that introduces a genealogical warning (a `person_warnings` check absent before and present after) without a `warningJustifications` entry for each introduced warning id. `project_create` and `research_append`'s linked-fact rewrite are knowingly ungated (false allows). `tree_forget` is exempt. | **enforcing** |
 | §6 | Claim ownership by caller (`exhaustive_declaration`) | plugin hook — Cowork, hosted, wherever the plugin loads; and the e2e harness; and the unit harness since 2026-09-02 | an op setting `exhaustive_declaration.declared` to true from anything but the `research-exhaustiveness` agent. FIELD-scoped, not section-scoped: `declared: false` is not routed, because the schema makes the field required and question creation would otherwise be denied | **enforcing** (since 2026-08-23; unproven against a real Cowork payload; the **hosted** binding of this arm is proven by `make hook-smoke` (§6.4)) |
 
 > **§6's "Reaches" claim is narrower than it looks — see §6.1.** Measured
@@ -274,7 +275,7 @@ row says:
 | Section | Observed | Row as promoted |
 |---|---|---|
 | `evaluations` | 230 ops, 114/154 runs; **32 of 34 attributable writes are the `gps-mentor` agent** | `agent:gps-mentor`, **no enforcement plane in the shipped hook** — `evaluations` is in no owner map. The `test_ownership_table` harness check keys on the calling *skill's* name and cannot see an agent, but since 2026-09-02 `test_no_out_of_lane_section_writes` records the hook's agent-keyed verdict on the unit plane, so a write from an agent whose lane excludes `evaluations` IS denied there, so claiming a plane would deny the owner's own writes. The loader raises rather than silently dropping an agent caller |
-| `localities` | 73 ops, 71 to `locality-guide` | `skill:locality-guide`, **newly enforced**. The paper row was always correct and had never once been evaluated — the check iterated `REQUIRED_SECTIONS`, which the section is not in |
+| `localities` | 73 ops, 71 to `locality-guide` | `skill:locality-guide` (`agent:locality-guide` since the skill was converted to an agent), **newly enforced**. The paper row was always correct and had never once been evaluated — the check iterated `REQUIRED_SECTIONS`, which the section is not in |
 | `known_holdings` | **zero successful writes corpus-wide** | `owner: null` with a reason. Writable through `research_append`, solicited by nothing; the paper owners the prose table named have never written it, and repeating them here would read as coverage |
 | `researcher_profile` | **0 writes, non-empty in 154/154 sidecars** — every fixture seeds it | `owner: null` with a reason. **No tool can write it**; its only route is a raw `Write` the lockdown denies |
 
@@ -1313,7 +1314,7 @@ on `append`, or on an `update` whose `fields` names `status`,
 `status` alone left the mirror-image hole the `questions` arm had already found:
 the invariant couples the status to both id lists, so an op touching a list
 breaks it without naming the status. That is the skill's own documented
-re-invocation path — `hypothesis-tracking/SKILL.md` tells the agent that adding
+re-invocation path — `agents/hypothesis-tracking.md` tells the agent that adding
 contradicting evidence "does not automatically require a status downgrade — only
 link the evidence and leave the status unchanged" — and three such calls were
 measured landing `ok: true` on exactly the state this refuses. Measured at
@@ -1334,7 +1335,7 @@ accepted.
 
 **Both halves read the pre-call snapshot**, per ADR-0011's criterion — snapshot
 when the precondition must be satisfied by someone else. `ownership.json` gives
-`hypotheses.callers` as `["skill:hypothesis-tracking"]`, while `conflicts`
+`hypotheses.callers` as `["agent:hypothesis-tracking"]`, while `conflicts`
 belongs to `skill:conflict-resolution` and `assertions` to
 `skill:record-extraction`; neither satisfying write is this author's own prior
 step, and both those sections are `enforceableAt: ["unit"]` only — no hook arm,
@@ -2480,6 +2481,32 @@ this section before reopening one.
   an agent leaves no trace in the project documents, so only run-level
   attribution sees it, and that is eval-only. It reaches production for nothing
   today because nothing needs it.
+
+  **Three unit observations under a leading delegation, retired 2026-09-29 (lead
+  ruling).** The `proof-conclusion` pair's direct arm was shown, in three unit
+  tests, to yield to a leading delegation over its own gate: `d1a` declined a
+  blocked write in the reply and persisted nothing; `d2b` narrated a refinement
+  and issued no `update`; `d6f` tiered a bounded conclusion to `probable` under a
+  delegation that asserted `probable` was correct, and the neutral-wording twin
+  `ut_proof_conclusion_018` was later seen to tier `probable` too (1 of 5 runs
+  under the current validator, 2026-09-30), so the tiering is nondeterministic,
+  not confined to a leading delegation. 018 was relaxed to accept `possible` or
+  `probable`; the narrowing cap is now graded by no test. None meets this item's
+  reopen condition — *a
+  violation observed per-instance on an attributed run.* All three are harness
+  observations produced by adversarial delegation wording written to lead the
+  agent, not violations seen on a production attributed run, and no production
+  delegation has been shown to lead this way. A writer-tool precondition cannot
+  reach `d1a`/`d2b` either: their failure is a write that is never made, and a
+  precondition runs only on a call that is made (ADR-0011 places "the reply claims
+  a write no call made" at step 4, harness-only). Downstream, `d1a` leaves an
+  unresolved `c_001` that the completion gate (§5, "Blocking conflicts before
+  completion") refuses, so it is caught; `d2b` and `d6f` have no downstream catch
+  once `gps-mentor` comes off the default research path, and that is
+  accepted (lead, 2026-09-29) because the three standing `xfail` markers carried
+  cost the streamlining removes. The three markers and their tests were deleted;
+  the neutral-wording twins stay; 011 and 012 pass unchanged, and 018 passes
+  under its relaxed tier.
 
 - **An ark cross-check on `exhaustive_search_summary`** — "every ark named in a proof
   summary's `exhaustive_search_summary` must appear in some `log[].query`." Proposed
