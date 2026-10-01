@@ -212,7 +212,22 @@
       "superseded_by": null
     }
   ],
-  "conflicts": [],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "description": "Mother's name: 'Jannetje [?] van Noord' (birth act OCR, first letter uncertain) vs. 'Fannetje van Noord' (ten-year marriage index). The user reads the birth act as 'Tannetje'.",
+      "disputed_attribute": "name",
+      "identity_question": null,
+      "competing_assertion_ids": ["a_002", "a_003"],
+      "independence_analysis": null,
+      "weighing_analysis": null,
+      "preferred_assertion_id": null,
+      "resolution_rationale": null,
+      "status": "unresolved",
+      "blocks_question_ids": ["q_001"]
+    }
+  ],
   "hypotheses": [],
   "timelines": [],
   "proof_summaries": [],
