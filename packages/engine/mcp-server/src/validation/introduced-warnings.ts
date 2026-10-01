@@ -110,10 +110,18 @@ export function introducedWarnings(
   // fixtures, producing false-deny rates too high for the gate's intended
   // catches (implausible lifespan, event after death, etc.). Each is a
   // data-quality indicator rather than a genealogical contradiction.
+  // Warning types exempt from the gate. The satisfiability replay (ADR-0011
+  // limit 2) showed these fire routinely on minimal trees and FamilySearch
+  // imports, producing false-deny rates too high for the gate's intended
+  // catches (implausible lifespan, event after death, burial after death).
+  // Each is a data-quality indicator — not a genealogical contradiction the
+  // writer introduced through a judgment error.
   const GATE_EXEMPT_TYPES = new Set([
     "missingFactsAndRelatives",     // stub detection — every one-fact person trips it on remove
-    "tooManyBirthDates2",           // duplicate birth facts in test trees
+    "tooManyBirthDates2",           // duplicate birth facts in imported records
     "hasEventBeforeBirth365_2",     // fires when adding a second birth-like fact
+    "hasDiffSurnameMale",           // two names with different surnames — common in merges and imports
+    "hasBlankName",                 // a name node with empty given/surname — named-party materializations
   ]);
 
   // Delta: warnings in after that were not in before
