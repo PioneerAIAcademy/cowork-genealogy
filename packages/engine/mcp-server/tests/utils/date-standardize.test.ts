@@ -442,6 +442,22 @@ describe('stdDate', () => {
   });
 
   describe('modifiers', () => {
+    // Review on PR #3088: "on or about 23 August 1936" was a correct
+    // "Abt 23 Aug 1936" on main and became "" under the strict vocabulary.
+    test('"on" before a date is filler', () => {
+      expect(stdDate('on 23 August 1936')).toBe('23 Aug 1936');
+      expect(stdDate('on 4 July 1776')).toBe('4 Jul 1776');
+    });
+    test('the "on or ..." legal idioms are one modifier each', () => {
+      expect(stdDate('on or about 23 August 1936')).toBe('Abt 23 Aug 1936');
+      expect(stdDate('On or About 23 Aug 1936')).toBe('Abt 23 Aug 1936');
+      expect(stdDate('on or before 1 May 1850')).toBe('Bef 1 May 1850');
+      expect(stdDate('on or after 1 May 1850')).toBe('Aft 1 May 1850');
+    });
+    test('a bare "or" between dates still omits', () => {
+      expect(stdDate('1850 or 1851')).toBe('');
+      expect(stdDate('on 1850 or 1851')).toBe('');
+    });
     test('Abt', () => {
       expect(stdDate('ABT 28 SEP 1974')).toBe('Abt 28 Sep 1974');
       expect(stdDate('about 1850')).toBe('Abt 1850');

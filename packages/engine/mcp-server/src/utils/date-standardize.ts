@@ -91,6 +91,14 @@ function preProcess(raw: string): { text: string; trailingParen: string; uncerta
   let uncertain = false;
   const orDates: string[] | null = null;
 
+  // The legal and probate idioms "on or about/before/after" are one modifier
+  // each. Rewritten before anything reads `or`, which otherwise marks an
+  // ambiguous date and omits ("1850 or 1851").
+  text = text
+    .replace(/\bon\s+or\s+about\b/gi, 'abt')
+    .replace(/\bon\s+or\s+before\b/gi, 'bef')
+    .replace(/\bon\s+or\s+after\b/gi, 'aft');
+
   // Convert em-dashes/en-dashes to hyphens
   text = text.replace(/[\u2013\u2014]/g, '-');
 

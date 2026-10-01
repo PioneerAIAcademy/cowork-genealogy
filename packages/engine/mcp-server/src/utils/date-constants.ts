@@ -168,15 +168,15 @@ export const MODIFIERS: Map<string, string> = new Map([
 export const QUARTER_WORDS: Set<string> = new Set(['quarter', 'qtr', 'qrt', 'q']);
 
 /** Words that carry no date meaning and parse as nothing, so the whole-input
- *  vocabulary check in stdDate accepts them. English `of`/`the`/`day`,
+ *  vocabulary check in stdDate accepts them. English `of`/`the`/`day`/`on`,
  *  Spanish/Portuguese `de`
  *  ("22 de abril de 1838"), Polish `r` (rok, "21.06.1827 r."), and weekday
  *  names. Deliberately NOT `da` ("from") or `do` ("until"): treating them as
  *  filler would turn `do 1850` into an exact 1850. */
 export const FILLER_WORDS: Set<string> = new Set([
   'de', 'r',
-  // English: "3rd of March 1850", "the 5th day of June 1850"
-  'of', 'the', 'day',
+  // English: "3rd of March 1850", "the 5th day of June 1850", "on 4 July 1776"
+  'of', 'the', 'day', 'on',
   'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
   'mon', 'tue', 'tues', 'wed', 'weds', 'thu', 'thur', 'thurs', 'fri', 'sat', 'sun',
 ]);
