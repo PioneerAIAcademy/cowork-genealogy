@@ -1,6 +1,6 @@
 {
   "test": {
-    "id": "ut_research_016",
+    "id": "ut_research_018",
     "skill": "research",
     "name": "A second-opinion request on a completed project spawns gps-mentor on demand",
     "type": "positive",
