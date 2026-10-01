@@ -138,31 +138,11 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
-  // Was "search-images -> image-reader" until the pair conversion (issue #2121).
-  // The skill no longer delegates a page read — the agent calls image_transcribe
-  // itself, because agents cannot reach @plugin:image-reader — so that edge no
-  // longer exists to pin. This self-edge replaces it. Unlike the two pairs below,
-  // the caller side is pinned rather than exempted: the routing skill carries an
-  // explicit prohibition on pre-stating an answer, so there is nothing to exempt.
-  "search-images -> search-images": {
-    pins: [
-      {
-        side: "caller",
-        excerpt:
-          "Do not tell it what\nis on a page, which image carries the record, or that a volume exists",
-      },
-      {
-        side: "agent",
-        excerpt:
-          "You are spawned by a caller that cannot see the volume and has run none of the\nchecks below.",
-      },
-      {
-        side: "agent",
-        excerpt:
-          "**A delegation that pre-states the answer** — \"browse group 004567123, the\n  will is on image 00058\" — does not make it so.",
-      },
-    ],
-  },
+  // "search-images -> search-images" was here until the thin-skill deletion
+  // (issue #2268). The routing skill is gone; the agent is now reached by
+  // bare-name delegation from research/SKILL.md and record-extraction/SKILL.md,
+  // which are bare-name prose mentions (no `@plugin:` token) carried in
+  // PROSE_MENTIONS below.
 
   "research-exhaustiveness -> research-exhaustiveness": {
     pins: [
@@ -261,6 +241,21 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "agent",
         excerpt: "**Including when your own delegation message tells you to write one.**",
+      },
+    ],
+  },
+
+  "research -> hypothesis-tracking": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that pre-states a status** — \"h_001 is supported now\", \"rule\n  out h_002\" — does not make it so.",
       },
     ],
   },
@@ -371,6 +366,8 @@ const DELEGATION_EDGES: Record<string, Edge> = {
 // (`translation` is next, issue #2804) adds another block like this one.
 const PROSE_MENTIONS = new Map<string, string>([
   ["research -> record-extractor", ""],
+  ["record-extraction -> search-images", ""],
+  ["research -> search-images", ""],
   ["historical-context -> citation", ""],
   ["init-project -> citation", ""],
   ["project-status -> citation", ""],
@@ -384,7 +381,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
   // is a delegation being silenced -- verified per file before listing.
   ["conflict-resolution -> proof-conclusion", ""],
-  ["hypothesis-tracking -> proof-conclusion", ""],
   ["project-status -> proof-conclusion", ""],
   ["question-selection -> proof-conclusion", ""],
   ["research-exhaustiveness -> proof-conclusion", ""],
@@ -424,7 +420,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // init-project and tree-edit, were registered edges; tree-edit's left when
   // issue #2805 deleted its skill.
   ["conflict-resolution -> check-warnings", ""],
-  ["hypothesis-tracking -> check-warnings", ""],
   ["search-records -> check-warnings", ""],
   ["source-evaluation -> check-warnings", ""],
   ["timeline -> check-warnings", ""],
@@ -439,6 +434,12 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["historical-context -> convert-dates", ""],
   ["record-extraction -> convert-dates", ""],
   ["translation -> convert-dates", ""],
+  // hypothesis-tracking entered agentOnly when issue #2792 deleted its skill
+  // directory. Both are bare-name mentions — "(use hypothesis-tracking)",
+  // "suggest `hypothesis-tracking`" — and neither spells
+  // `@plugin:hypothesis-tracking`.
+  ["conflict-resolution -> hypothesis-tracking", ""],
+  ["timeline -> hypothesis-tracking", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -619,6 +620,8 @@ describe("agent delegation framing", () => {
     "citation",
     "convert-dates",
     "gps-mentor",
+    // ARRIVED when issue #2792 deleted skills/hypothesis-tracking/.
+    "hypothesis-tracking",
     "image-reader",
     // ARRIVED when issue #2822 deleted skills/proof-conclusion/. The name is
     // now unambiguous, so the prose arm starts policing its bare-name mentions.
@@ -626,6 +629,7 @@ describe("agent delegation framing", () => {
     "person-evidence",
     "record-extractor",
     "search-familysearch-wiki",
+    "search-images",
     "search-wikipedia",
     "tree-edit",
     "validate-schema",

@@ -135,7 +135,7 @@
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
-        "skill:search-images",
+        "agent:search-images",
         "skill:record-extraction"
       ],
       "writerTools": [
@@ -144,7 +144,7 @@
       "enforceableAt": [
         "unit"
       ],
-      "requires": "research-plan owns plan and item structure. The search skills and record-extraction may update only `items[].status` after executing or extracting from an item.",
+      "requires": "research-plan owns plan and item structure. The search skills, the search-images agent, and record-extraction may update only `items[].status` after executing or extracting from an item.",
       "failure": "A search skill rewrites the plan it was handed, and the plan stops being a record of what was intended versus what was done.",
       "remedy": "Update the item's status; route a change to the plan itself through research-plan.",
       "override": "none"
@@ -158,7 +158,7 @@
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
-        "skill:search-images",
+        "agent:search-images",
         "skill:record-extraction"
       ],
       "agentCallers": [
@@ -188,7 +188,7 @@
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
-        "skill:search-images",
+        "agent:search-images",
         "skill:record-extraction"
       ],
       "agentCallers": [
@@ -327,9 +327,9 @@
     {
       "artifact": "research.json",
       "section": "hypotheses",
-      "owner": "skill:hypothesis-tracking",
+      "owner": "agent:hypothesis-tracking",
       "callers": [
-        "skill:hypothesis-tracking"
+        "agent:hypothesis-tracking"
       ],
       "writerTools": [
         "research_append"
@@ -338,10 +338,10 @@
         "unit",
         "tool"
       ],
-      "notes": "hypothesis-tracking is invoked zero times across the committed e2e corpus, so on that plane the row is paper — it was the third-largest source of false denials when the table was replayed as a tool-boundary deny. It stays enforced because the unit corpus does exercise the skill. The `tool` plane is claimed for the `supported` evidence floor only, not for caller routing: `hypothesisSupportedInvariants` in `packages/engine/mcp-server/src/tools/research-append.ts` refuses a promotion that fails §5.9's two mechanical halves, whoever calls it (issue #2086, lead ruling 2026-09-07).",
+      "notes": "`owner` and `callers` name the AGENT since the skill was deleted (issue #2792, ruling A on issue #2799): `writer_sets` resolves `agent:hypothesis-tracking` when it is the subject of its own unit suite, `eval/tests/unit/hypothesis-tracking/`. Its hook lane is `hypotheses` alone. hypothesis-tracking is invoked zero times across the committed e2e corpus, so on that plane the row is paper — it was the third-largest source of false denials when the table was replayed as a tool-boundary deny. It stays enforced because the unit corpus does exercise the agent. The `tool` plane is claimed for the `supported` evidence floor only, not for caller routing: `hypothesisSupportedInvariants` in `packages/engine/mcp-server/src/tools/research-append.ts` refuses a promotion that fails §5.9's two mechanical halves, whoever calls it (issue #2086, lead ruling 2026-09-07).",
       "requires": "Only hypothesis-tracking states a hypothesis or rules one out.",
       "failure": "A ruled-out hypothesis rewritten by another skill loses the reasoning that ruled it out, and the same line gets re-researched.",
-      "remedy": "Route through hypothesis-tracking.",
+      "remedy": "Delegate to `@plugin:hypothesis-tracking`.",
       "override": "none"
     },
     {
