@@ -28,10 +28,11 @@ Three kinds, and it changes how you write it:
 - **Reference document** — not triggered on its own. It's a rules doc
   (like the research-log protocol) that several skills must follow
   identically, so a copy lives in each of their `references/` folders.
-- **Guardrail** — enforces a check, e.g. schema validity. Cowork has no
-  automatic post-write hooks, so a guardrail runs only because a writing
-  skill's prose tells Claude to: "After writing to research.json, invoke
-  validate-schema."
+- **Guardrail** — enforces a check. Schema validity needs no guardrail
+  step: the writer tools validate before they persist, and
+  `validate-schema` is an on-demand agent. The guardrails that remain
+  (e.g. `check-warnings`) are agents, and a writing skill that needs one
+  spawns it with `@plugin:<agent>`.
 
 **Skills never call each other.** There is no programmatic skill-to-skill
 invocation in Cowork — orchestration is Claude reading the skill
@@ -131,7 +132,7 @@ Cowork's orchestrator decides whether to invoke a skill from its
   replaced that skill with an agent, and it is pinned by
   `tests/packaging/search-wikipedia-no-narration.test.ts`. Re-derive both lists
   with `grep -rL '\*\*Narration' packages/engine/plugin/skills/*/SKILL.md` and
-  `grep -rL '\*\*Narration' packages/engine/plugin/agents/*.md` — three other
+  `grep -rL '\*\*Narration' packages/engine/plugin/agents/*.md` — six other
   agents also carry no line, but `search-wikipedia` is the only one whose
   absence is a rule.
 - **End with `## Re-invocation behavior`.** State what the skill
@@ -154,8 +155,8 @@ Cowork's orchestrator decides whether to invoke a skill from its
   descriptions and file state. If skill A produces data B needs, A leaves
   it in `research.json`/`tree.gedcomx.json` (or Claude's context), and
   B's description tells Claude when to fire. A guardrail like
-  validate-schema is invoked by a prose instruction in the writing
-  skill, not a programmatic call.
+  check-warnings is an agent the writing skill spawns with
+  `@plugin:check-warnings`, not a skill call.
 
 ## 5. Writing style
 

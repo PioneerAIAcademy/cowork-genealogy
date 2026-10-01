@@ -1,11 +1,7 @@
 {
   "tool": "person_read",
   "description": "FamilySearch tree person read for Margaret Mercer (the mother) WITH relatives and source descriptions. Her tree holds five children born before the June 1900 census enumeration plus William (b. 1906). Used by the census-deceased-child init-project test: the 1900 (6 born / 5 living) and 1910 (8 born / 7 living) fertility counts arrive via the user message, so born-minus-living names a child dead before 1900 (absent here) and 1910's living count exceeds the tree by one living child.",
-  "args": {
-    "personId": "MRCR-MOM",
-    "relatives": true,
-    "sourceDescriptions": true
-  },
+  "args": { "personId": "MRCR-MOM" },
   "response": {
     "persons": [
       {
