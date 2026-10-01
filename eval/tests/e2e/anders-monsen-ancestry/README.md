@@ -170,7 +170,7 @@ Two required findings: (f1) the marriage fact — Anders Monsen married Unna Hal
   2026-09-30 re-run made twelve searches in the collection without it. Earlier
   runs did use it: run 3 (2026-07-13) tried it extensively with the full
   surname, and the 2026-09-29 run used it in 13 of its 59 `record_search`
-  calls, 7 of them in 1468080. **At call 65 that run issued exactly the query
+  calls, 7 of them in 1468080. **At `tool_calls[65]` that run issued exactly the query
   above and got `totalMatches: 0`** — because the record was out of the index
   that day. The same query returning nothing on 29 September and the record at
   rank 1 on 30 September is this fixture's strongest evidence that the reload
