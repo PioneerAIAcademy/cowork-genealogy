@@ -154,6 +154,7 @@ EXPECTED_AGENTS = frozenset({
     "search-familysearch-wiki",
     "search-images",
     "search-wikipedia",
+    "survey-surname",
     "tree-edit",
     "validate-schema",
 })
