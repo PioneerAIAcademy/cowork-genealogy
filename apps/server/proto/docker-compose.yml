@@ -12,6 +12,11 @@
 # 9000/9001, elasticmq 9324 (SQS) / 9325 (stats). The worker is reachable inside
 # the compose network only.
 #
+# sqsd: this base profile keeps the 1800 s ceiling kill, the doubling backoff and
+# unlimited retries (SQSD_MAX_RETRIES 0, no SQSD_RETENTION_PERIOD_S, so the worker's
+# dead-letter sweep is off -- it must never close old rows on the persistent
+# proto-pgdata volume). docker-compose.sqsd.yml layers the interim sqsd behaviour on top.
+#
 # Offline shape checks: apps/server/tests/test_proto_config.py.
 name: proto
 
@@ -103,6 +108,10 @@ services:
     # D14 kills this container on a ceiling overrun (and the D3 `crash` turn exits it);
     # every subsequent redelivery needs a worker to POST to.
     restart: unless-stopped
+    # U5: on SIGTERM the worker answers in-flight POSTs 500, stops their CLIs and exits
+    # within SHUTDOWN_GRACE_S (20); this must cover that, or compose SIGKILLs at 10 s and
+    # the 500 is lost.
+    stop_grace_period: 30s
     environment:
       PG_DSN: postgresql://postgres:proto@postgres:5432/proto
       # The model. Passed through from the host environment at `up` time, never a
@@ -141,6 +150,12 @@ services:
       # knows a turn finished -- the web tier is stateless and the browser may be closed
       # -- so the handover is its job. Unset means no release.
       QUEUE_URL: http://elasticmq:9324/000000000000/turns
+      # U5: sqsd's MaxRetries and VisibilityTimeout as the worker's last-receive close and
+      # sweep read them. 0 is off: no close, no sweep. No SQSD_RETENTION_PERIOD_S here, so
+      # the sweep's backstop is off too; docker-compose.sqsd.yml sets all three.
+      SQSD_MAX_RETRIES: "${SQSD_MAX_RETRIES:-0}"
+      SQSD_VISIBILITY_TIMEOUT_S: "${SQSD_VISIBILITY_TIMEOUT_S:-0}"
+      SWEEP_INTERVAL_S: "${SWEEP_INTERVAL_S:-0}"
       ENGINE_PLUGIN_DIR: /opt/genealogy/plugin
       WORKER_CWD: /project
       TMPDIR: /tmp
@@ -285,6 +300,10 @@ services:
       READ_TIMEOUT_S: "${READ_TIMEOUT_S:-1800}"
       BACKOFF_BASE_S: "5"
       BACKOFF_MAX_S: "300"
+      # U5: 0 is unlimited retries, today's behaviour. Above 0 (docker-compose.sqsd.yml)
+      # a receive past it goes to DLQ_URL instead of the worker.
+      SQSD_MAX_RETRIES: "${SQSD_MAX_RETRIES:-0}"
+      DLQ_URL: http://elasticmq:9324/000000000000/turns-dlq
     depends_on:
       worker:
         condition: service_healthy

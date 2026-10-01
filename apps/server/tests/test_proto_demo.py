@@ -263,6 +263,17 @@ def test_proto_demo_auto_exports_the_harness_cap_and_delegates_to_proto_demo():
         "a 0 default here would ship the stop-every-step behaviour the plan exists to remove"
 
 
+def test_proto_kill_pins_a_one_turn_run_unless_the_caller_sets_nudges():
+    """The web tier stamps its own cap on every message (1a, default 60), so a kill turn
+    left on that default is nudged as an autonomous run on its redelivery and, with no
+    project, ends no_progress -- the kill check then FAILs on a resume that worked
+    (2026-09-30, the U5 SIGTERM run). proto-probe-resume still passes its own 40."""
+    kill = "\n".join(_recipe("proto-kill"))
+    assert re.search(r'AUTONOMOUS_MAX_NUDGES="\$\$\{AUTONOMOUS_MAX_NUDGES-0\}" \$\(MAKE\) proto-turn', kill), kill
+    probe = "\n".join(_recipe("proto-probe-resume"))
+    assert re.search(r'AUTONOMOUS_MAX_NUDGES="\$\$\{AUTONOMOUS_MAX_NUDGES-40\}" \$\(MAKE\) proto-kill', probe), probe
+
+
 def test_proto_demo_auto_pins_the_step_ceiling_and_waits_out_six_attempts():
     """One message is a whole run on this arm, but the per-attempt ceiling is the SAME
     pinned 1800 s every other target runs at -- the 7200 s override of 2026-09-20 was a
