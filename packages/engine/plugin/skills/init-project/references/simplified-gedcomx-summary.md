@@ -56,7 +56,7 @@ Full spec: `docs/specs/simplified-gedcomx-spec.md`.
 - `standard_date` / `standard_place` on facts: the standardized sidecars beside
   the raw `date`/`place`. `person_read` supplies both — carry them through, do
   not re-derive them
-- `sources` on facts/names: optional array of source references
+- `sources` on persons, facts, names: optional array of source references
 
 ## Stub persons (minimal valid person)
 
@@ -106,13 +106,13 @@ Full spec: `docs/specs/simplified-gedcomx-spec.md`.
   key fails the write. `person_read` may return a source carrying `notes` —
   drop it
 
-## Source references (on facts, names, relationships)
+## Source references (on persons, facts, names, relationships)
 
 ```json
-{ "ref": "S1", "page": "Schuylkill Co., dwelling 84", "quality": 2 }
+{ "ref": "S1", "page": "Schuylkill Co., dwelling 84", "quality": 1 }
 ```
 
-- `quality`: optional. 0=unreliable, 1=questionable, 2=secondary, 3=direct+primary
+- `quality`: 0=unreliable, 1=questionable, 2=secondary, 3=direct+primary. init-project writes `1`
 
 ## Date formats
 
@@ -142,7 +142,8 @@ not part of the tree and is not copied into one. What it does need:
 
 - **Re-id.** Persons get `I` ids; names and relationships arrive with no ids, so
   mint `N`/`R`, and mint `F` for any fact the tool did not id. Rewrite every
-  relationship endpoint to the new person ids
+  relationship endpoint to the new person ids. Sources get `S` ids: rewrite
+  each person's own `sources[].ref` to the new id of the source it names
 - **Drop `notes`** from returned source descriptions
 - **Add source references** — `{ "ref": "S1", "quality": 1 }` on every fact and
   every relationship

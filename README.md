@@ -161,7 +161,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 20 skills covering the full GPS research cycle. Skills
+The plugin ships 18 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 For a plain-language account of the research method itself — the GPS
 cycle, the judgment made at each stage, and what to expect from a
@@ -209,10 +209,6 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 
 ### Concluding
 
-| Skill | What it does | Say this |
-|-------|-------------|----------|
-| **tree-edit** | Direct corrections to the tree file. Also executes person merges after proof-conclusion confirms identity. | "Fix this name" / "Merge these two persons" |
-
 Writing the conclusion itself is an agent rather than a skill — see
 `proof-conclusion` in the agent table below.
 
@@ -223,15 +219,6 @@ Writing the conclusion itself is an agent rather than a skill — see
 | **locality-guide** | Produces a structured research guide for a place/time — what records exist and where they're held. | "What records exist for Schuylkill County?" |
 | **historical-context** | Explains boundary changes, naming conventions, migration patterns, and cultural context affecting records. | "Why does the birthplace differ?" |
 | **translation** | Genealogy-specific translation for German, French, Spanish, Italian, Dutch, Latin, Portuguese. Period handwriting and abbreviations. | "Translate this German church record" |
-
-### Internal (guardrails)
-
-These enforce correctness. Most are invoked automatically by other
-skills per the validation protocol.
-
-| Skill | What it does | Triggered by |
-|-------|-------------|-------------|
-| **validate-schema** | Validates both project files against the published schemas. Required fields, enum values, ID prefixes, cross-references. | Every writing skill invokes this after writing. You can also say "validate the files." |
 
 ### Benchmark suite (not shipped — repo-local dev tooling)
 
@@ -252,7 +239,7 @@ specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships thirteen Cowork agents. Unlike skills, an agent runs in
+The plugin ships fifteen Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 at its mentor checkpoint, or by the skill that delegates to it — you
 don't load it explicitly.
@@ -272,6 +259,8 @@ don't load it explicitly.
 | **search-familysearch-wiki** | Searches the FamilySearch Research Wiki for **one** genealogy how-to question and saves the guidance as a markdown file in your working folder, citing the wiki pages it came from. Asked for Wikipedia, a locality records survey or narrative history, it does no search and hands the request back by name. | "Search the FamilySearch wiki for how to find Italian birth records" |
 | **search-wikipedia** | Looks **one** topic up on Wikipedia — the general-purpose encyclopedia — and saves the article summary as a markdown file in your working folder. One tool call, a template it carries in its own body, one file. Asked for narrative history, a locality records survey or the FamilySearch wiki, it does no lookup and hands the request back by name. | "Look up Albert Einstein on Wikipedia" |
 | **convert-dates** | Converts **one** date, or compares dates, across calendar systems — Julian/Gregorian, Old Style/New Style year starts, Quaker numbered months, double-dated years — using the `convert_calendar` tool's adoption table for the record's jurisdiction. It writes nothing. Asked why a convention existed, whether a date string passes the schema, or about a same-calendar conflict, it hands the request back by name. | "Convert this date to Gregorian" / "Is 30 February 1712 a real date?" |
+| **tree-edit** | Direct corrections to the tree file — add or correct a fact, create a person or relationship, check FamilySearch record hints and possible duplicates. Also executes person merges after proof-conclusion confirms identity. After any change it hands back so `check-warnings` runs on the persons it touched. | "Fix this name" / "Merge these two persons" |
+| **validate-schema** | Validates both project files against the published schemas — required fields, enum values, ID prefixes, cross-references — and reports each error with a suggested fix. Read-only: it never edits a file. The writer tools already validate before they persist, so this is an on-demand audit of the whole project. Asked about genealogical impossibilities or GPS quality, it hands the request back by name. | "Validate the project files" / "Is the schema valid?" |
 
 ## Recommended workflow
 
@@ -295,7 +284,7 @@ don't load it explicitly.
                              back to step 3 (extend plan) or step 2
                              (FAN pivot). If exhaustive, advance.
 11. proof-conclusion         Write the GPS conclusion
-    tree-edit                Merge persons, correct facts
+    tree-edit (agent)        Merge persons, correct facts
 12. project-status           "Where are we? What's next?"
 ```
 
@@ -316,7 +305,7 @@ The `/research` orchestrator handles this routing automatically.
 | File | Purpose | Updated by |
 |------|---------|-----------|
 | `research.json` | GPS audit trail — all analytical state | Most skills |
-| `tree.gedcomx.json` | Simplified GedcomX — resolved persons, relationships, sources | init-project, record-extraction (sources), person-evidence agent (stubs), proof-conclusion (facts/relationships), tree-edit |
+| `tree.gedcomx.json` | Simplified GedcomX — resolved persons, relationships, sources | init-project, record-extraction (sources), person-evidence agent (stubs), proof-conclusion (facts/relationships), tree-edit agent |
 
 Specs: `docs/specs/research-schema-spec.md` and
 `docs/specs/simplified-gedcomx-spec.md`.
@@ -481,13 +470,12 @@ What's shipped:
 - **50 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
-- **20 shipped skills.** Full GPS research cycle from `init-project`
+- **18 shipped skills.** Full GPS research cycle from `init-project`
   through the conclusion, plus reference skills (locality-guide,
-  historical-context, translation)
-  and guardrails (validate-schema). The three
+  historical-context, translation). The three
   e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result, grade-e2e-run)
   are repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
-- **13 Cowork agents.** `gps-mentor` (BCG-style senior-genealogist review,
+- **15 Cowork agents.** `gps-mentor` (BCG-style senior-genealogist review,
   invoked by `/research` at GPS checkpoints and on demand), `record-extractor`
   (per-record assertion extraction), `proof-conclusion` (the proof conclusion
   for one question, and the only writer of `proof_summaries`),
@@ -499,9 +487,11 @@ What's shipped:
   (the next research question, and the only minter of questions), `search-images`
   (page-by-page browse of an unindexed volume),
   `check-warnings` (genealogical-impossibility checks on one person's data),
+  `validate-schema` (read-only schema audit of both project files),
   `search-familysearch-wiki` (FamilySearch Research Wiki how-to guidance saved
-  as a markdown file), `search-wikipedia` (one encyclopedia lookup saved as a markdown file) and
-  `image-reader` (page OCR).
+  as a markdown file), `search-wikipedia` (one encyclopedia lookup saved as a markdown file),
+  `tree-edit` (direct corrections to the tree, and person merges after a proof
+  conclusion) and `image-reader` (page OCR).
 - **Researcher profile.** `init-project` asks only the research objective, in
   one non-blocking opening turn; the profile itself is fixed (`novice`, one
   house-style narration string) and nothing about the researcher is asked.

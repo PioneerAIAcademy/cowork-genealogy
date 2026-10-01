@@ -11,9 +11,9 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 21 skills and 12 agents. Besides the `research` orchestrator itself, its routing
+There are 19 skills and 14 agents. Besides the `research` orchestrator itself, its routing
 table names 13 of them, and 5 more are reached by delegation from a skill the table does
-name. The remaining 10 fire only when the user asks — see
+name. The remaining 8 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
 likely to surprise you.
 
@@ -102,7 +102,7 @@ flowchart TD
     subgraph ASK ["Reached only by asking — no routing row"]
         direction LR
         U1["timeline · translation<br/>historical-context · convert-dates"]
-        U2["tree-edit · validate-schema · project-status<br/>forget-and-rederive · the two wiki searches"]
+        U2["validate-schema · project-status<br/>forget-and-rederive · the two wiki searches"]
     end
 
     classDef unrouted stroke-dasharray: 5 5
@@ -120,7 +120,7 @@ unreachable from an autonomous run.
 
 | # | Skill / agent | Gate — true before it runs | Owns | Reads | Writes |
 |---|---|---|---|---|---|
-| 0 | **`init-project`** (skill) | No `research.json` in the folder. A guard clause refuses — reading no project file at all — if one exists. Not a routing row; `/research` names it in prose. | Creating both project files, the researcher profile, and the known-holdings survey | `person_read` (with `relatives` + `sourceDescriptions`), `person_search`, `place_search`; the user's opening answers | `research.json` `project` + empty sections and `tree.gedcomx.json` `persons`/`relationships`/`sources` — `project_create`; then `researcher_profile` and `known_holdings` — `research_append` |
+| 0 | **`init-project`** (skill) | No `research.json` in the folder. A guard clause refuses — reading no project file at all — if one exists. Not a routing row; `/research` names it in prose. | Creating both project files, the researcher profile, and the known-holdings survey | `person_read`, `person_search`, `place_search`; the user's opening answers | `research.json` `project` + empty sections and `tree.gedcomx.json` `persons`/`relationships`/`sources` — `project_create`; then `researcher_profile` and `known_holdings` — `research_append` |
 | 1 | **`research`** (skill, orchestrator) | Entry point. `research.json` exists. | Routing only — plus the four contracts that forbid it doing the work inline (extraction, identity links, conflict/hypothesis, exhaustiveness/proof), and the two completion gates | `research_query` projections only; it explicitly bans a whole-file `Read` of `research.json` for itself | **Nothing.** The file still instructs it to write `project.status = "completed"`; that was ruled to the `proof-conclusion` agent on 2026-08-25 and the prose has not caught up — see [How the project gets closed](#how-the-project-gets-closed) |
 | 2 | **`question-selection`** (agent) | Spawned as `@plugin:question-selection`. Objective but no questions; or exhaustiveness returned gaps and the next move is a FAN pivot; or new evidence raised a new question | Minting at most one `q_` per invocation with its selection basis. Not a question's `status` after creation — all four transitions belong elsewhere | `research.json` `project.objective`, `questions`, `assertions`, `conflicts`, `hypotheses`, `timelines`, `log`, `proof_summaries`; tree `persons`. Conditional whole-file `Read` | `questions[]` append — `research_append`. Never `project.status` — when its step 1b stop point fires ("no further questions — objective answered") it returns a signal whose closing line still names `/research` as the writer; the 2026-08-25 ruling redirects it to a `proof-conclusion` re-invocation, and that edit has not landed — see [How the project gets closed](#how-the-project-gets-closed) |
 | 3 | **`locality-guide`** | A question has no plan **and** its target jurisdiction has no `localities` entry | The survey of what records survive for one place and period, persisted as the one `loc_` entry `research-plan` plans from | `place_search`, `place_search_all`, `place_population`, `collections_search`, `volume_search`, `external_links_search`, `wiki_search`, `wiki_read`, `wiki_place_page` — the hosted wiki API and Pop Stats | `localities` — one entry per jurisdiction, `research_append`. Nothing at all in standalone Q&A with no project |
@@ -195,13 +195,13 @@ sibling skill.
 | **`citation`** (an AGENT since issue #2799, not a skill) | "fix this citation", "format to Evidence Explained" | Refining `citation` and the six `citation_detail` fields on a source that already exists. **Never creates one**. Fetches the creating office for a probate record from `{State}_Probate_Records` rather than carrying one jurisdiction's offices in its body | Whole-file `Read` of `research.json` `sources` and `log`; tree source descriptions; `wiki_read` | `sources[].citation`, `.citation_detail`, `.notes` — `research_append` `op: "update"` only |
 | **`check-warnings`** (an AGENT since issue #2118, not a skill) | After any tree edit or merge; on every person `init-project` imports; "check for problems" | Running the offline impossibility check and interpreting it for a single person's own data. Hands a source conflict, a source audit or a schema check back to its owner instead of doing it. Never fixes anything | `person_warnings` (deterministic, offline) for the person ids the caller names; no file reads | Nothing |
 | **`source-evaluation`** | "evaluate / audit / review the sources on this profile", "are these sources right" | Auditing the sources **already attached** to a person: classifying each finding as an index error (re-read and correct), a misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do), and reporting the kind as undecided where the profile alone cannot settle it. A precise source refining a vague conclusion is an improvement, not a finding. A **source-vs-source** disagreement the audit turns up is characterised — both values, both record types, what would settle it — with no winner picked and nothing written; a request to *resolve* one still routes to `conflict-resolution` at the front door. Never fixes anything, never extracts | `person_read` (with `sourceDescriptions`), `record_read`, `source_attachments`, `person_quality` (`detail: true`, FamilySearch-shaped ids only). Reads no images — it holds no image tool, and none of those four returns an image id | Nothing |
-| **`tree-edit`** | Direct user correction; a merge after a conclusion established identity at probable or better | Out-of-pipeline tree changes and person merges | `tree.gedcomx.json`; `place_search`, `person_record_matches`, `person_person_matches` | Tree `persons`, `relationships`, `facts`, `names`, `sources` — `tree_edit` / `tree_correct`. A merge via `merge_tree_persons` **also rewrites `research.json`** ids (see the discrepancies below) |
+| **`tree-edit`** (an AGENT since issue #2805, not a skill) | Direct user correction; a merge after a conclusion established identity at probable or better | Out-of-pipeline tree changes and person merges | `tree.gedcomx.json`; `place_search`, `person_record_matches`, `person_person_matches` | Tree `persons`, `relationships`, `facts`, `names`, `sources` — `tree_edit` / `tree_correct`. A merge via `merge_tree_persons` **also rewrites `research.json`** ids (see the discrepancies below) |
 | **`translation`** | A non-English record or term; handoff from `historical-context` | Transcription, translation as an explicitly derivative rendering, and paleography | The text or an image already in the conversation. **No MCP tool at all** | Nothing |
 | **`historical-context`** | "why does this record look like this", boundary and naming questions | Narrative context — what the sources say, kept distinct from what it merely believes | `wiki_search`, `wiki_read`, `wikipedia_search`, `place_search`, `place_search_all`, `place_population` | Nothing |
 | **`convert-dates`** (an AGENT since issue #2790, not a skill) | Julian/Gregorian, Old Style, Quaker months, double dating | Identifying the calendar regime; the arithmetic belongs to the tool | `convert_calendar` | Nothing — and **nothing downstream persists the converted date** |
 | **`search-familysearch-wiki`** (an AGENT since issue #2794, not a skill) | Any "how do I find [record type]" question | Wiki guidance, synthesized only from returned chunks | `wiki_search` (hosted wiki API) | `<topic-slug>.md` in the working folder. **Not logged to `log[]`** |
 | **`search-wikipedia`** (an AGENT since issue #2795, not a skill) | A single-article encyclopedia lookup | The verbatim article extract — no paraphrase | `wikipedia_search` | `<title-slug>.md` in the working folder. **Not logged to `log[]`** |
-| **`validate-schema`** | "validate", "check the files" | Relaying validator errors in plain terms with a non-regressing fix each | `validate_research_schema` | Nothing. Never edits a file to fix an error |
+| **`validate-schema`** (an AGENT since issue #2798, not a skill) | "validate", "check the files" | Relaying validator errors in plain terms with a non-regressing fix each | `validate_research_schema` | Nothing. Never edits a file to fix an error |
 | **`forget-and-rederive`** | Practice mode — the researcher asks for a known answer to be stripped | Removing a tree slice with cascade so it must be re-derived from records, and holding the rederivation to account | `project_context`; a `dryRun` read-back. **Forbidden** from reading `tree.gedcomx.json` | Tree slice removed and `.tree-before-forget.gedcomx.json` written — `tree_forget`. Touches no `research.json` |
 
 ---
@@ -241,7 +241,7 @@ Two consequences worth holding onto:
   and the `PreToolUse` hook. (`disallowedTools:` was deleted from every agent
   on 2026-08-30 — it only restated the `tools:` omission.)
 - **Only three skills hold `research_query`** — `research`, `search-records`,
-  `search-external-sites` — and five of the twelve agents. Everything else that needs project
+  `search-external-sites` — and five of the fifteen agents. Everything else that needs project
   state does a whole-file `Read`, which is the thing the orchestrator forbids for itself
   because `research.json` reaches 100+ assertions by late run.
 - **The hook carries exactly four rules**, in
@@ -331,7 +331,7 @@ touch either side.
 No routing-table row names these, so an autonomous `/research` run never enters them:
 
 `search-full-text` · `timeline` · `translation` ·
-`historical-context` · `tree-edit` · `validate-schema` ·
+`historical-context` ·
 `forget-and-rederive` · `project-status` ·
 `source-evaluation` · `init-project` (named in prose, not in the table)
 
@@ -345,7 +345,12 @@ unmeasured until a committed e2e run postdates each conversion. Do not read thei
 from this list as evidence either way.
 
 `check-warnings` left it the same way on 2026-09-28 (issue #2118), with the same caveat:
-its callers now spawn it (`init-project`, `tree-edit`), and whether it fires unasked in an
+`init-project` spawns it and `tree-edit` hands it back to the main thread by name, and
+whether it fires unasked in an autonomous run is unmeasured. `tree-edit` itself left on
+2026-09-30 (issue #2805), with the same caveat.
+
+`validate-schema` left it on 2026-09-30 (issue #2798), same caveat: it is now an agent
+reached by auto-delegation from its own `description`, and whether it fires in an
 autonomous run is unmeasured.
 
 The two **thin skill halves** of the paired rows join this list. Rows 10

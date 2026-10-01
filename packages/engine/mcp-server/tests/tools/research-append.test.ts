@@ -21,7 +21,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   };
 });
 
-import { researchAppend, countryConsistency } from "../../src/tools/research-append.js";
+import { researchAppend, countryConsistency, mintedFromThisRecord } from "../../src/tools/research-append.js";
 import { validateProject } from "../../src/validation/validator.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
 import {
@@ -9999,4 +9999,29 @@ describe("supported evidence floor (#2086)", () => {
     expect(promote.ok).toBe(true);
   });
 
+});
+
+describe("mintedFromThisRecord counts person-level refs (#2696)", () => {
+  const research = {
+    sources: [
+      { id: "src_1", gedcomx_source_description_id: "S1" },
+      { id: "src_2", gedcomx_source_description_id: "S2" },
+    ],
+    assertions: [
+      { source_id: "src_1", record_id: "REC-A" },
+      { source_id: "src_2", record_id: "REC-B" },
+    ],
+  };
+  const tree = (sources: unknown) => ({
+    persons: [{ id: "I9", gender: "Male", names: [{ id: "N1", given: "A", surname: "B" }], sources }],
+    sources: [{ id: "S1", title: "A" }, { id: "S2", title: "B" }],
+  });
+
+  it("a person whose only refs are person-level, all to this record, was minted from it", () => {
+    expect(mintedFromThisRecord("I9", "REC-A", research, tree([{ ref: "S1" }]))).toBe(true);
+  });
+
+  it("a person-level ref to another record means it was not minted from this one", () => {
+    expect(mintedFromThisRecord("I9", "REC-A", research, tree([{ ref: "S1" }, { ref: "S2" }]))).toBe(false);
+  });
 });

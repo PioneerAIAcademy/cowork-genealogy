@@ -855,7 +855,7 @@ all other authenticated tools. Do not re-implement token plumbing.
 | Group-search API returns 403 | Throw: `"FamilySearch volume search API error: 403 Forbidden."` |
 | Group-search API returns 409 | Throw: `"FamilySearch volume search API error: 409.{ body, when non-empty } A pageToken is only valid alongside a byte-identical search and it expires; re-issue this search from the first page with the same standardPlace, year range and recordTypeGroups, omitting pageToken."` A real 409 arrives bodyless, so `statusText` is empty and the generic row below rendered it as `"409 ."` — a status, a space and a full stop. **Assert no cause**: no 409 on this path is reproducible, so the message says what to do, never why upstream refused. Not added to the retry set either — 409 is not transient, and a blind retry on a possibly-stale cursor can skip or duplicate rows |
 | Group-search API other non-OK | Throw: `"FamilySearch volume search API error: {status} {statusText}.{ body, when non-empty }"` |
-| Group-search network error | Throw: `"Could not reach FamilySearch volume search API: {message}."` |
+| Group-search network error | Throw: `"Could not reach FamilySearch volume search API: {cause}."` (`{cause}` from `describeFetchError`, `src/utils/http.ts`) |
 | Group missing inline count fields | Set `imageCount` and `recordSearchablePercent` to `null` for that group; continue |
 | **Full-text** check fails (after 3 retries) | Set `fulltextSearchable` to `null` for the batch; continue |
 
