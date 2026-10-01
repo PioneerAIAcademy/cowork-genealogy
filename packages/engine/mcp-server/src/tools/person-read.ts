@@ -15,7 +15,10 @@ import {
   rankForTranscription,
   type Memory,
 } from "../utils/memories.js";
-import { fetchRelativeSources } from "../utils/relative-sources.js";
+import {
+  fetchRelativeSources,
+  type RelativeSourcesResult,
+} from "../utils/relative-sources.js";
 import { mapWithConcurrency } from "../utils/place-resolver.js";
 import { stageSearchResults } from "../utils/results-staging.js";
 import { imageTranscribeTool } from "./image-transcribe.js";
@@ -126,6 +129,16 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
   // the pre-redirect id against the post-redirect person made this gate false
   // for every merged subject -- no memories, no note, no error, indistinguishable
   // from a person who simply has none.
+  // Issue #1689 Half 3: the relatives' own attached sources. STARTED BEFORE the
+  // memories merge is awaited, so the two reads overlap. They share one deadline, and
+  // run in sequence the memories phase can consume all of it -- OCR waits out the full
+  // budget -- after which every relative is skipped and the loss shows only on stderr.
+  const relativeIds = relativesWithRefs(result, resolvedId);
+  const relativesPending: Promise<RelativeSourcesResult> =
+    relativeIds.length > 0
+      ? fetchRelativeSources(relativeIds, principal, deadline)
+      : Promise.resolve({ descriptions: [], skipped: [] });
+
   if (result.persons.some((p) => p.id === resolvedId && !p.living)) {
     result.sources = await mergeMemories(
       resolvedId,
@@ -136,16 +149,22 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
     );
   }
 
-  // Issue #1689 Half 3: the relatives' own attached sources. MUST run BEFORE
-  // `keepResolvablePersonSourceRefs` -- that function drops every person-level ref
-  // whose target is not already in `sources[]`, so merging after it would fetch
-  // every relative's sources and then throw them away, with every test still green.
-  result.sources = await mergeRelativeSources(
-    result,
-    resolvedId,
-    principal,
-    deadline,
-  );
+  // MUST be applied BEFORE `keepResolvablePersonSourceRefs`: that function drops every
+  // person-level ref whose target is not already in `sources[]`, so merging after it
+  // would fetch every relative's sources and throw them away, all tests still green.
+  try {
+    result.sources = applyRelativeSources(
+      result,
+      await relativesPending,
+      resolvedId,
+      relativeIds.length,
+    );
+  } catch (err) {
+    process.stderr.write(
+      `person_read: relative sources failed for ${resolvedId}, ` +
+        `returning tree sources only: ${String(err)}\n`,
+    );
+  }
 
   keepResolvablePersonSourceRefs(result);
 
@@ -444,47 +463,50 @@ async function mergeMemories(
  * Only relatives are fetched: the subject's own sources are already in the tree-read
  * body and resolve from it (17/17 and 24/24, probe 2026-09-30).
  */
-async function mergeRelativeSources(
+/**
+ * Fetch the relatives' attached sources and fold them into `sources[]`.
+ *
+ * Ordinary entries, no discriminator, no new top-level key (lead, 2026-08-27).
+ *
+ * SHAPED THROUGH `shapeSources`, never `simplifySourceDescription` alone. The simplified
+ * form carries `resource_type` and `coverage` — not allowed tree-source fields — may omit
+ * `title`, and skips the `SD_*` metadata filter. `project_create` validates without
+ * sanitizing, so one stray key refuses the whole project: shaping these the short way
+ * produced 180 validation errors on a real subject.
+ */
+function applyRelativeSources(
   result: PersonReadResult,
+  fetched: RelativeSourcesResult,
   subjectId: string,
-  principal: Principal,
-  deadline: number,
-): Promise<TreeSource[]> {
-  // Only persons that actually carry a ref are worth a call. On the probed subjects
-  // this is every relative, but a tree where most relatives have nothing attached
-  // should not pay a request each to find that out.
-  const relativeIds = result.persons
-    .filter((p) => p.id !== subjectId && (p.sources?.length ?? 0) > 0)
-    .map((p) => p.id);
-  if (relativeIds.length === 0) return result.sources;
+  relativeCount: number,
+): TreeSource[] {
+  if (fetched.skipped.length > 0) {
+    // stderr, not the response: the top level is pinned, and the memories fail-soft this
+    // mirrors reports the same way. A partial read must not look complete in the logs.
+    process.stderr.write(
+      `person_read: relative sources unread for ${fetched.skipped.length} of ` +
+        `${relativeCount} relative(s) of ${subjectId}: ${fetched.skipped.join(", ")}\n`,
+    );
+  }
+  if (fetched.descriptions.length === 0) return result.sources;
 
   const have = new Set(result.sources.map((s) => s.id));
-  try {
-    const { descriptions, skipped } = await fetchRelativeSources(
-      relativeIds,
-      principal,
-      deadline,
-    );
-    if (skipped.length > 0) {
-      // stderr, not the response: acceptance #1 pins the top level, and the memories
-      // fail-soft this mirrors reports the same way. A partial read must not look
-      // complete to whoever is reading the logs.
-      process.stderr.write(
-        `person_read: relative sources unread for ${skipped.length} of ` +
-          `${relativeIds.length} relative(s) of ${subjectId}: ${skipped.join(", ")}\n`,
-      );
-    }
-    const added = descriptions
-      .map(simplifySourceDescription)
-      .filter((d): d is TreeSource => typeof d.id === "string" && d.id !== "" && !have.has(d.id));
-    return added.length > 0 ? [...result.sources, ...added] : result.sources;
-  } catch (err) {
-    process.stderr.write(
-      `person_read: relative sources fetch failed for ${subjectId}, ` +
-        `returning tree sources only: ${String(err)}\n`,
-    );
-    return result.sources;
-  }
+  const shaped = shapeSources(
+    fetched.descriptions.map(simplifySourceDescription),
+    fetched.descriptions as FSSourceDescription[],
+  );
+  // A source attached to BOTH the subject and a relative is the common case for a
+  // marriage record, and the subject's copy is already in `sources[]`.
+  const added = shaped.filter((d) => !have.has(d.id));
+  return added.length > 0 ? [...result.sources, ...added] : result.sources;
+}
+
+/** Which relatives are worth a call: only those carrying a ref. A tree whose relatives
+ *  have nothing attached must not pay a request each to discover that. */
+function relativesWithRefs(result: PersonReadResult, subjectId: string): string[] {
+  return result.persons
+    .filter((p) => p.id !== subjectId && (p.sources?.length ?? 0) > 0)
+    .map((p) => p.id);
 }
 
 /** A memory as an ordinary source row. No discriminator field and no new

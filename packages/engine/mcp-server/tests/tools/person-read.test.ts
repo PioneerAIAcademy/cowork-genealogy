@@ -1835,7 +1835,16 @@ describe("personReadTool relatives' attached sources (#1689 Half 3)", () => {
   it("30. fetches a relative's descriptions and KEEPS the ref that used to be dropped", async () => {
     mockOk(bodyWithRelativeRef());
     mockRelativeSources([
-      { id: "REL-9AA", titles: [{ value: "Marriage, of Liberty, Amite, Mississippi" }] },
+      {
+        id: "REL-9AA",
+        titles: [{ value: "Marriage, of Liberty, Amite, Mississippi" }],
+        // REALISTIC, not minimal. Live descriptions carry these, and an earlier version
+        // of this test mocked neither -- so it could not see that the entries were being
+        // built with `resource_type`/`coverage`, which are not allowed tree-source
+        // fields and made `project_create` refuse the whole project.
+        resourceType: "http://gedcomx.org/Record",
+        coverage: [{ temporal: { original: "1860" } }],
+      },
     ]);
     const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
 
@@ -1949,5 +1958,170 @@ describe("fetchRelativeSources partial failure (#1689 Half 3)", () => {
     expect(out.descriptions).toEqual([]);
     expect(out.skipped.sort()).toEqual(["A", "B"]);
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
+
+// The shape that reaches `project_create`. These exist because tests 30-37 could not see
+// the defect that mattered most: relatives' descriptions were being built with
+// `simplifySourceDescription` alone, which emits `resource_type` and `coverage` and may
+// omit `title`. `project_create` validates WITHOUT sanitizing, so one stray key refuses
+// the whole project -- 180 validation errors on a real subject, and every mock passed.
+describe("relatives' sources are shaped for the tree write (#1689 Half 3)", () => {
+  function relativeBody() {
+    return {
+      persons: [
+        {
+          id: "SUBJ-001",
+          living: true,
+          names: [{ nameForms: [{ fullText: "Ann Subject" }] }],
+          sources: [{ description: "#SUBJ-SRC", descriptionId: "SUBJ-SRC" }],
+        },
+        {
+          id: "KID-0001",
+          living: false,
+          gender: { type: "http://gedcomx.org/Female" },
+          names: [{ nameForms: [{ fullText: "Bea Child" }] }],
+          sources: [
+            {
+              description: "https://api.familysearch.org/platform/sources/descriptions/REL-9AA",
+              descriptionId: "REL-9AA",
+            },
+          ],
+        },
+      ],
+      childAndParentsRelationships: [
+        { parent1: { resourceId: "SUBJ-001" }, child: { resourceId: "KID-0001" } },
+      ],
+      sourceDescriptions: [{ id: "SUBJ-SRC", titles: [{ value: "Subject's own source" }] }],
+    } as never;
+  }
+
+  it("38. carries no field the tree schema forbids", async () => {
+    mockOk(relativeBody());
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () =>
+        Promise.resolve({
+          sourceDescriptions: [
+            {
+              id: "REL-9AA",
+              titles: [{ value: "Marriage" }],
+              resourceType: "http://gedcomx.org/Record",
+              coverage: [{ temporal: { original: "1860" } }],
+              citations: [{ value: "a citation" }],
+              about: "https://familysearch.org/ark:/x",
+            },
+          ],
+        }),
+      headers: new Headers(),
+    });
+    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    const rel = out.sources.find((s) => s.id === "REL-9AA")!;
+    expect(rel).toBeDefined();
+    // Exactly the keys `shapeSources` emits. `resource_type` and `coverage` are the two
+    // that broke the write; asserting the whole key set catches the next one too.
+    expect(Object.keys(rel).sort()).toEqual(["citation", "id", "title", "url"]);
+  });
+
+  it("39. gives a title-less description the empty-string title the write requires", async () => {
+    mockOk(relativeBody());
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ sourceDescriptions: [{ id: "REL-9AA" }] }),
+      headers: new Headers(),
+    });
+    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    expect(out.sources.find((s) => s.id === "REL-9AA")!.title).toBe("");
+  });
+
+  it("40. drops an SD_* metadata entry a relative's read returns", async () => {
+    mockOk(relativeBody());
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () =>
+        Promise.resolve({
+          sourceDescriptions: [
+            { id: "SD_METADATA_9", titles: [{ value: "FS metadata" }] },
+            { id: "REL-9AA", titles: [{ value: "Marriage" }] },
+          ],
+        }),
+      headers: new Headers(),
+    });
+    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    expect(out.sources.map((s) => s.id)).not.toContain("SD_METADATA_9");
+    expect(out.sources.map((s) => s.id)).toContain("REL-9AA");
+  });
+
+  it("41. a source the subject already carries is not added twice", async () => {
+    // The common case: a marriage record attached to both the subject and the spouse.
+    mockOk(relativeBody());
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () =>
+        Promise.resolve({
+          sourceDescriptions: [{ id: "SUBJ-SRC", titles: [{ value: "Subject's own source" }] }],
+        }),
+      headers: new Headers(),
+    });
+    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    expect(out.sources.filter((s) => s.id === "SUBJ-SRC")).toHaveLength(1);
+  });
+});
+
+// A NON-LIVING subject, which is the real case: the memories phase runs, and it shares
+// one deadline with this one. Run in sequence, memories can consume the whole budget --
+// OCR waits it out -- after which every relative is skipped and the loss shows only on
+// stderr. The relative read is therefore STARTED before the memories merge is awaited,
+// so the two overlap. Every other test here uses a living subject precisely to keep the
+// memories phase out of the way, which is why this one exists.
+describe("relatives' sources on a non-living subject (#1689 Half 3)", () => {
+  it("42. still arrive when the memories phase also runs", async () => {
+    mockOk({
+      persons: [
+        {
+          id: "DEAD-001",
+          living: false,
+          gender: { type: "http://gedcomx.org/Male" },
+          names: [{ nameForms: [{ fullText: "Olde Subject" }] }],
+          sources: [{ description: "#OWN-1", descriptionId: "OWN-1" }],
+        },
+        {
+          id: "KID-0001",
+          living: false,
+          gender: { type: "http://gedcomx.org/Female" },
+          names: [{ nameForms: [{ fullText: "Bea Child" }] }],
+          sources: [
+            {
+              description: "https://api.familysearch.org/platform/sources/descriptions/REL-9AA",
+              descriptionId: "REL-9AA",
+            },
+          ],
+        },
+      ],
+      childAndParentsRelationships: [
+        { parent1: { resourceId: "DEAD-001" }, child: { resourceId: "KID-0001" } },
+      ],
+      sourceDescriptions: [{ id: "OWN-1", titles: [{ value: "His own" }] }],
+    } as never);
+    // The relative read is issued before the memories merge is awaited, so it is the
+    // next request out.
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ sourceDescriptions: [{ id: "REL-9AA", titles: [{ value: "Marriage" }] }] }),
+      headers: new Headers(),
+    });
+    // Whatever the memories phase then does, it fails soft and must not take the
+    // relatives with it.
+    mockFetch.mockRejectedValue(new Error("memories unavailable"));
+
+    const out = await personReadTool({ personId: "DEAD-001" }, LOCAL);
+    expect(out.sources.map((s) => s.id).sort()).toEqual(["OWN-1", "REL-9AA"]);
+    const kid = out.persons.find((p) => p.id === "KID-0001")!;
+    expect(kid.sources).toEqual([{ ref: "REL-9AA" }]);
   });
 });

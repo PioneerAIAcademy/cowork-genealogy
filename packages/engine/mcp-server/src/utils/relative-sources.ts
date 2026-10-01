@@ -20,16 +20,23 @@
  * endpoint returns all of one person's descriptions in ONE call, so it is ~6x fewer
  * requests for identical data (`dev/probe-relative-sources.json`, 2026-09-30):
  *
- *     by URL     3/3 ok, median 93-107ms, ~400 calls at 63 relatives  -> ~40s
- *     by person  3/3 ok, median 107-115ms,   63 calls at 63 relatives -> ~7s
+ *     by URL     3/3 ok, median 93-107ms, ~400 calls at 63 relatives
+ *     by person  3/3 ok, median 107-115ms,   63 calls at 63 relatives
  *
- * The 40s figure matters: `person_read` shares one `OCR_PHASE_BUDGET_MS` deadline across
- * the parent fan-out, memories paging and this, so the per-ref route would exhaust the
- * whole budget and time out the read it was meant to enrich.
+ * At CONCURRENCY below that is about a second of wall clock at 63 relatives — not the
+ * ~7s an earlier draft claimed, which wrongly assumed the calls ran one at a time.
+ *
+ * BOUNDED TWICE, and the second bound is the one that matters. This phase shares
+ * `person_read`'s single `OCR_PHASE_BUDGET_MS` deadline with the parent fan-out and
+ * memories. The deadline gates whether a request STARTS; `fsFetch`'s timeout bounds one
+ * already IN FLIGHT. Without the second, a read beginning just under the deadline runs on
+ * `fsFetch`'s own 30s default plus its retry budget and can push the whole call past the
+ * 60s Cowork bridge abort — losing the subject, not merely the enrichment.
  */
 import type { Principal } from "../auth/principal.js";
 import type { GedcomXSourceDescription } from "../types/gedcomx.js";
 import { fsFetch } from "./fs-fetch.js";
+import { mapWithConcurrency } from "./place-resolver.js";
 
 const TREE_BASE = "https://api.familysearch.org/platform/tree/persons";
 const ACCEPT_HEADER = "application/x-fs-v1+json";
@@ -37,15 +44,17 @@ const ACCEPT_HEADER = "application/x-fs-v1+json";
 /**
  * How many relatives are read at once. Bounded because a 63-child subject would
  * otherwise open 63 sockets against one host, and FamilySearch sits behind Imperva.
- * Six keeps the projected 63-relative case near a second of wall clock while staying
- * far below anything that reads as a burst.
  */
 const CONCURRENCY = 6;
 
+/** Per-read ceiling, mirroring `PARENT_READ_TIMEOUT_MS` on the sibling fan-out. The
+ *  effective bound is `min(this, whatever is left on the shared deadline)`. */
+const RELATIVE_READ_TIMEOUT_MS = 30_000;
+
 export interface RelativeSourcesResult {
-  /** Descriptions to merge into `sources[]`, deduped by id. */
+  /** RAW FamilySearch descriptions, deduped by id. The caller shapes them — see below. */
   descriptions: GedcomXSourceDescription[];
-  /** Relatives whose fetch failed or was cut short. Diagnostic only — see below. */
+  /** Relatives whose read failed or was cut short. Diagnostic only. */
   skipped: string[];
 }
 
@@ -56,12 +65,14 @@ async function fetchOne(
   principal: Principal,
   deadline: number,
 ): Promise<GedcomXSourceDescription[] | null> {
-  if (Date.now() >= deadline) return null;
+  const left = deadline - Date.now();
+  if (left <= 0) return null;
   try {
     const res = await fsFetch(
       principal,
       `${TREE_BASE}/${encodeURIComponent(personId)}/sources`,
       { headers: { Accept: ACCEPT_HEADER, "Accept-Language": "en" } },
+      Math.min(RELATIVE_READ_TIMEOUT_MS, left),
     );
     // 204 is a person with no sources — an answer, not a failure.
     if (res.status === 204) return [];
@@ -74,50 +85,46 @@ async function fetchOne(
 }
 
 /**
- * Read the attached sources of every id in `personIds`, deduped.
+ * Read the attached sources of every id in `personIds`, deduped by id.
  *
- * FAIL-SOFT, AND SILENT TO THE AGENT — deliberately, and the same way the memories
- * fetch is. The response shape is pinned to exactly `{persons, relationships, sources}`
- * by the 2026-08-21 no-discriminator ruling, so there is nowhere to report a shortfall
- * without reopening it. A caller that wants the detail reads `skipped`; nothing is put
- * in the response. What must NOT happen is a partial read presented as a complete one,
- * which is why `skipped` exists at all rather than being swallowed here.
+ * RETURNS RAW DESCRIPTIONS ON PURPOSE. They must pass through `shapeSources` before they
+ * reach the response: the simplified form carries `resource_type` and `coverage`, which
+ * are not allowed tree-source fields, may omit `title`, and skips the `SD_*` metadata
+ * filter. `project_create` validates without sanitizing, so one stray key refuses the
+ * whole project. An earlier version of this file shaped them here with
+ * `simplifySourceDescription` and produced 180 validation errors on a real subject.
+ * Shaping belongs in one place, with the subject's own sources.
+ *
+ * FAIL-SOFT, AND SILENT TO THE AGENT — the same way the memories fetch is. The response
+ * shape is pinned to exactly `{persons, relationships, sources}` by the 2026-08-21
+ * no-discriminator ruling, so there is nowhere to report a shortfall without reopening it.
+ * A caller that wants the detail reads `skipped`; what must NOT happen is a partial read
+ * presented as a complete one, which is why `skipped` exists rather than being swallowed.
  */
 export async function fetchRelativeSources(
   personIds: string[],
   principal: Principal,
   deadline: number,
 ): Promise<RelativeSourcesResult> {
+  const queue = [...new Set(personIds)];
+  const results = await mapWithConcurrency(queue, CONCURRENCY, (pid) =>
+    fetchOne(pid, principal, deadline),
+  );
+
   const byId = new Map<string, GedcomXSourceDescription>();
   const skipped: string[] = [];
-  const queue = [...new Set(personIds)];
-
-  let cursor = 0;
-  const worker = async (): Promise<void> => {
-    for (;;) {
-      const i = cursor++;
-      if (i >= queue.length) return;
-      const pid = queue[i];
-      const got = await fetchOne(pid, principal, deadline);
-      if (got === null) {
-        skipped.push(pid);
-        continue;
-      }
-      for (const d of got) {
-        // Keyed by id, which IS the dedupe: two relatives genuinely share a source
-        // (measured — 1 of 79 on KNDX-MKG) and a repeated id in `sources[]` breaks the
-        // tree write. An earlier draft also guarded with `!byId.has(d.id)`; the
-        // mutation check showed that guard is redundant — removing it changes nothing a
-        // test can see, because the Map holds one entry per id either way. It only
-        // chose first-wins over last-wins, and the two copies are the same description.
-        if (typeof d.id === "string" && d.id !== "") byId.set(d.id, d);
-      }
+  results.forEach((got, i) => {
+    if (got === null) {
+      skipped.push(queue[i]);
+      return;
     }
-  };
-
-  await Promise.all(
-    Array.from({ length: Math.min(CONCURRENCY, queue.length) }, () => worker()),
-  );
+    for (const d of got) {
+      // Keyed by id, which IS the dedupe: two relatives genuinely share a source
+      // (measured — 1 of 79 on KNDX-MKG) and a repeated id in `sources[]` breaks the
+      // tree write.
+      if (typeof d.id === "string" && d.id !== "") byId.set(d.id, d);
+    }
+  });
 
   return { descriptions: [...byId.values()], skipped };
 }
