@@ -536,9 +536,11 @@ Suggest next steps:
   user reports a disagreement, read the existing assertions and
   person_evidence first. Do not ask the user for an image or for data
   that the project already contains. Do not ask for permission to
-  proceed — you are invoked to resolve conflicts, so create the
-  conflict entry and complete the full analysis (independence,
-  weighing, resolution or deferral) in one pass.
+  proceed and do not stop after presenting findings — call
+  `research_append` to create the conflict entry, then call it again
+  to fill `independence_analysis`, `weighing_analysis`, and either
+  resolve or defer. A response that describes the conflict without
+  persisting it is incomplete.
 
 ## Re-invocation behavior
 
