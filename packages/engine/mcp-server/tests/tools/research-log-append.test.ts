@@ -83,6 +83,86 @@ describe("research_log_append", () => {
     expect(research.log[0].query).toEqual(echoed);
   });
 
+  describe("an omitted `tool` (feedback issue #3069)", () => {
+    async function stage() {
+      return stageSearchResults({
+        projectPath: dir,
+        tool: "record_search",
+        response: { query: { surname: "Byrne" }, results: [{ recordId: "A" }, { recordId: "B" }] },
+      });
+    }
+
+    it("is filled from the staged envelope, and the results are kept", async () => {
+      await writeProject(baseResearch());
+      const handle = await stage();
+      const result = await researchLogAppend({
+        projectPath: dir,
+        outcome: "partial",
+        resultsExamined: 2,
+        planItemId: "pli_001",
+        stagedResultsRef: handle!.resultsRef,
+      } as any);
+
+      expect(result.ok).toBe(true);
+      const research = await readJson("research.json");
+      expect(research.log[0].tool).toBe("record_search");
+      expect(research.log[0].results_ref).toBe("results/log_001.json");
+      expect((await validateProject(dir)).valid).toBe(true);
+    });
+
+    it("is filled per op in a batch", async () => {
+      await writeProject(baseResearch());
+      const handle = await stage();
+      const result = await researchLogAppend({
+        projectPath: dir,
+        ops: [{ outcome: "partial", resultsExamined: 2, planItemId: null, stagedResultsRef: handle!.resultsRef }],
+      } as any);
+
+      expect(result.ok).toBe(true);
+      expect((await readJson("research.json")).log[0].tool).toBe("record_search");
+    });
+
+    it("is refused with every missing field named at once when nothing records it", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({ projectPath: dir, outcome: "partial", planItemId: "pli_001" } as any);
+
+      expect(result.ok).toBe(false);
+      const [message] = (result as { errors: string[] }).errors;
+      expect(message).toContain("missing required fields `tool`, `resultsExamined`, `query`");
+      expect((await readJson("research.json")).log).toEqual([]);
+    });
+
+    it("is refused, not inferred, when the staged ref does not exist", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        outcome: "partial",
+        resultsExamined: 0,
+        stagedResultsRef: `${STAGING_SUBDIR}/missing.json`,
+      } as any);
+
+      expect(result.ok).toBe(false);
+      expect((result as { errors: string[] }).errors[0]).toContain("missing required field `tool`");
+    });
+
+    it("leaves an explicit wrong `tool` refused as a mismatch", async () => {
+      await writeProject(baseResearch());
+      const handle = await stage();
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "fulltext_search",
+        outcome: "partial",
+        resultsExamined: 2,
+        stagedResultsRef: handle!.resultsRef,
+      } as any);
+
+      expect(result.ok).toBe(false);
+      expect((result as { errors: string[] }).errors[0]).toContain(
+        "staged file tool 'record_search' does not match log entry tool 'fulltext_search'",
+      );
+    });
+  });
+
   it("finalizes a staged image_transcribe transcription — a one-element results[] — into the sidecar (#2048)", async () => {
     // The acquisition producers stage through the search channel unchanged: one
     // element, `returned_count` recomputed to 1, the staged file consumed, and the
