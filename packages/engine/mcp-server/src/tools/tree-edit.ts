@@ -799,7 +799,7 @@ export async function checkWarningGate(
 
     // Persist justifications to research.json
     if (result.allIntroduced.length > 0) {
-      const now = new Date().toISOString();
+      const now = new Date().toISOString().slice(0, 10);
       const existing = Array.isArray(research.warning_justifications)
         ? research.warning_justifications
         : [];

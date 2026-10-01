@@ -21,6 +21,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 import { treeEdit } from "../../src/tools/tree-edit.js";
 import { treeCorrect } from "../../src/tools/tree-correct.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
+import { validateProject } from "../../src/validation/validator.js";
 
 const minimalResearch = {
   project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
@@ -1646,5 +1647,121 @@ describe("tree_edit add_relationship: sourceAssertionId resolution", () => {
     expect(r.results[0].assignedIds?.relationship).toBe("R1");
     const rel = (await readTree()).relationships[0];
     expect(rel.sources).toEqual([{ ref: "S1", quality: 3 }]);
+  });
+});
+
+describe("tree_edit — warning gate integration (issue #2840)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "tree-edit-wg-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  async function writeProject(tree: any, research: any = minimalResearch) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+  const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+
+  // Person born 1800 with a death 1950 — a >120-year lifespan triggers
+  // hasAgeRangeGreaterThan120, which is NOT in GATE_EXEMPT_TYPES.
+  const longLifeTree = () => ({
+    persons: [
+      {
+        id: "I1",
+        gender: "Male",
+        names: [{ id: "N1", given: "John", surname: "Smith", preferred: true }],
+        facts: [{ id: "F1", type: "Birth", date: "1800", primary: true }],
+      },
+    ],
+    relationships: [],
+    sources: [{ id: "S1", title: "Parish Register" }],
+  });
+
+  it("refuses a write that introduces a >120-year-lifespan warning, tree unchanged", async () => {
+    await writeProject(longLifeTree());
+    const treeBefore = await readTree();
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact: { type: "Death", date: "1950", sources: [{ ref: "S1" }] },
+    });
+
+    expect(r.ok).toBe(false);
+    expect((r as any).reason).toBe("unjustified_warnings");
+    expect((r as any).warnings.length).toBeGreaterThan(0);
+    const treeAfter = await readTree();
+    expect(treeAfter).toEqual(treeBefore);
+  });
+
+  it("re-call with the returned warningId lands, persists justifications, and validates", async () => {
+    await writeProject(longLifeTree());
+
+    // First call: refused
+    const refused = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact: { type: "Death", date: "1950", sources: [{ ref: "S1" }] },
+    });
+    expect(refused.ok).toBe(false);
+    const warnId = (refused as any).warnings[0].warningId;
+    expect(warnId).toBeTruthy();
+
+    // Re-call with justification
+    const justified = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact: { type: "Death", date: "1950", sources: [{ ref: "S1" }] },
+      warningJustifications: [
+        { warningId: warnId, justification: "Death date confirmed in probate record" },
+      ],
+    });
+
+    expect(justified.ok).toBe(true);
+    expect(justified.filesWritten).toContain("research.json");
+
+    // Persisted justification
+    const research = await readResearch();
+    expect(research.warning_justifications).toHaveLength(1);
+    expect(research.warning_justifications[0].warning_id).toBe(warnId);
+    expect(research.warning_justifications[0].justification).toBe(
+      "Death date confirmed in probate record",
+    );
+    expect(research.warning_justifications[0].recorded_at).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+
+    // Project validates
+    const validation = await validateProject(dir);
+    expect(validation.valid).toBe(true);
+  });
+
+  it("re-call with blank justification is refused", async () => {
+    await writeProject(longLifeTree());
+
+    const refused = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact: { type: "Death", date: "1950", sources: [{ ref: "S1" }] },
+    });
+    expect(refused.ok).toBe(false);
+    const warnId = (refused as any).warnings[0].warningId;
+
+    const blank = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact: { type: "Death", date: "1950", sources: [{ ref: "S1" }] },
+      warningJustifications: [{ warningId: warnId, justification: "" }],
+    });
+
+    expect(blank.ok).toBe(false);
+    expect((blank as any).reason).toBe("unjustified_warnings");
   });
 });

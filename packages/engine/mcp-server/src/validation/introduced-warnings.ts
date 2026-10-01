@@ -106,11 +106,6 @@ export function introducedWarnings(
   }
 
   // Warning types exempt from the gate. The satisfiability replay (ADR-0011
-  // limit 2) showed these fire on minimal test trees that use one-fact person
-  // fixtures, producing false-deny rates too high for the gate's intended
-  // catches (implausible lifespan, event after death, etc.). Each is a
-  // data-quality indicator rather than a genealogical contradiction.
-  // Warning types exempt from the gate. The satisfiability replay (ADR-0011
   // limit 2) showed these fire routinely on minimal trees and FamilySearch
   // imports, producing false-deny rates too high for the gate's intended
   // catches (implausible lifespan, event after death, burial after death).
@@ -134,7 +129,7 @@ export function introducedWarnings(
 
   // Check justifications
   const justifiedIds = new Set(
-    (warningJustifications ?? []).map((j) => j.warningId),
+    (warningJustifications ?? []).filter((j) => typeof j.justification === "string" && j.justification.trim() !== "").map((j) => j.warningId),
   );
 
   const unjustified = introduced.filter((w) => !justifiedIds.has(w.warningId));

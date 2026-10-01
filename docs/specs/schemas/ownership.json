@@ -434,16 +434,18 @@
       "artifact": "research.json",
       "section": "warning_justifications",
       "owner": null,
-      "reason": "Writer-tool only: the tree-writer gate (tree_edit, tree_correct, materialize_facts) appends justifications when a write introduces a genealogical warning. No skill or agent owns this section — the tool writes it as a side-effect of a justified write. merge_tree_persons also calls checkWarningGate but its research.json writes are validated by the person-id-refs walker, which does not cover this section, so it is not listed here.",
+      "reason": "Writer-tool only: the tree-writer gate (tree_edit, tree_correct, merge_tree_persons, materialize_facts) appends justifications when a write introduces a genealogical warning. No skill or agent owns this section — the tool writes it as a side-effect of a justified write.",
       "callers": [],
       "writerTools": [
         "tree_edit",
         "tree_correct",
+        "merge_tree_persons",
         "materialize_facts"
       ],
       "toolAuthorized": [
         "tree_edit",
         "tree_correct",
+        "merge_tree_persons",
         "materialize_facts"
       ],
       "enforceableAt": [],
