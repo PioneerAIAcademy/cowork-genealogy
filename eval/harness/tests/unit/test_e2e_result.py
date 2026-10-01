@@ -215,6 +215,22 @@ def test_runlog_prefix_graded_vs_scratch():
     assert runlog_prefix("skipped") == "scratch_"
 
 
+def test_host_slept_skipped_run_is_committed(tmp_path: Path):
+    """#2974: a `skipped` verdict is normally a `scratch_` run, but when the skip
+    is because the host slept (`stop_reason == "host_slept"`) the log IS committed
+    so the operator can see why a run dropped out of the rates. Keyed on the
+    stop_reason, since the verdict alone cannot tell it from an agent-crash skip.
+    """
+    assert is_committable_run("skipped", "host_slept") is True
+    assert runlog_prefix("skipped", "host_slept") == "run-"
+    # Any other stop_reason on a `skipped` run stays scratch — the exception is
+    # host_slept alone, not "skipped run with some stop_reason".
+    assert is_committable_run("skipped", "error") is False
+    assert runlog_prefix("skipped", "timeout") == "scratch_"
+    # host_slept never *demotes* an already-committable verdict.
+    assert runlog_prefix("pass", "host_slept") == "run-"
+
+
 def test_passing_run_uses_committable_run_prefix(tmp_path: Path):
     result = E2eResult(
         test_id="t", captured_at="2026-05-26_14-30-45",
