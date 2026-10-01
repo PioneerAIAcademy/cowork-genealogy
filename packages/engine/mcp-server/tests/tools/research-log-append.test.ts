@@ -83,6 +83,86 @@ describe("research_log_append", () => {
     expect(research.log[0].query).toEqual(echoed);
   });
 
+  describe("an omitted `tool` (feedback issue #3069)", () => {
+    async function stage() {
+      return stageSearchResults({
+        projectPath: dir,
+        tool: "record_search",
+        response: { query: { surname: "Byrne" }, results: [{ recordId: "A" }, { recordId: "B" }] },
+      });
+    }
+
+    it("is filled from the staged envelope, and the results are kept", async () => {
+      await writeProject(baseResearch());
+      const handle = await stage();
+      const result = await researchLogAppend({
+        projectPath: dir,
+        outcome: "partial",
+        resultsExamined: 2,
+        planItemId: "pli_001",
+        stagedResultsRef: handle!.resultsRef,
+      } as any);
+
+      expect(result.ok).toBe(true);
+      const research = await readJson("research.json");
+      expect(research.log[0].tool).toBe("record_search");
+      expect(research.log[0].results_ref).toBe("results/log_001.json");
+      expect((await validateProject(dir)).valid).toBe(true);
+    });
+
+    it("is filled per op in a batch", async () => {
+      await writeProject(baseResearch());
+      const handle = await stage();
+      const result = await researchLogAppend({
+        projectPath: dir,
+        ops: [{ outcome: "partial", resultsExamined: 2, planItemId: null, stagedResultsRef: handle!.resultsRef }],
+      } as any);
+
+      expect(result.ok).toBe(true);
+      expect((await readJson("research.json")).log[0].tool).toBe("record_search");
+    });
+
+    it("is refused with every missing field named at once when nothing records it", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({ projectPath: dir, outcome: "partial", planItemId: "pli_001" } as any);
+
+      expect(result.ok).toBe(false);
+      const [message] = (result as { errors: string[] }).errors;
+      expect(message).toContain("missing required fields `tool`, `resultsExamined`, `query`");
+      expect((await readJson("research.json")).log).toEqual([]);
+    });
+
+    it("leaves an unreadable staged ref to the staged-ref check", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        outcome: "partial",
+        resultsExamined: 0,
+        stagedResultsRef: `${STAGING_SUBDIR}/missing.json`,
+      } as any);
+
+      expect(result.ok).toBe(false);
+      expect((result as { errors: string[] }).errors[0]).toContain("is not in results/.staging/");
+    });
+
+    it("leaves an explicit wrong `tool` refused as a mismatch", async () => {
+      await writeProject(baseResearch());
+      const handle = await stage();
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "fulltext_search",
+        outcome: "partial",
+        resultsExamined: 2,
+        stagedResultsRef: handle!.resultsRef,
+      } as any);
+
+      expect(result.ok).toBe(false);
+      expect((result as { errors: string[] }).errors[0]).toContain(
+        "staged file tool 'record_search' does not match log entry tool 'fulltext_search'",
+      );
+    });
+  });
+
   it("finalizes a staged image_transcribe transcription — a one-element results[] — into the sidecar (#2048)", async () => {
     // The acquisition producers stage through the search channel unchanged: one
     // element, `returned_count` recomputed to 1, the staged file consumed, and the
@@ -458,27 +538,74 @@ describe("research_log_append", () => {
     expect(research.log).toHaveLength(0);
   });
 
-  it("rejects an external_links_search entry logged negative despite returning results", async () => {
-    // This entry grades the curated-links FETCH, not the search: a model
-    // that recognizes none of the returned links fit the target site/record
-    // type has been observed logging outcome "negative" anyway — collapsing
-    // "FamilySearch curates nothing here" and "curates plenty, none
-    // relevant" into the same value, which loses the distinction permanently
-    // in the audit trail. Enforced here rather than left to the model, since
-    // it was a repeat, measured miss in practice.
+  it.each(["negative", "partial", "error"])(
+    "corrects an external_links_search entry logged %s despite returning results, and says so",
+    async (sent) => {
+      // This entry grades the curated-links FETCH, not the search: a model
+      // that recognizes none of the returned links fit the target site/record
+      // type has been observed logging outcome "negative" anyway — collapsing
+      // "FamilySearch curates nothing here" and "curates plenty, none
+      // relevant" into the same value. The right value is decidable from the
+      // call, so the tool writes it instead of refusing — never silently.
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "external_links_search",
+        query: { standardPlace: "Pennsylvania, United States", host: "findagrave.com" },
+        outcome: sent,
+        resultsExamined: 2,
+      });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.validation.warnings.join(" ")).toMatch(
+        new RegExp(`outcome set to 'positive' \\(was '${sent}'\\).*grades the fetch, not the search`),
+      );
+      const research = await readJson("research.json");
+      expect(research.log).toHaveLength(1);
+      expect(research.log[0].outcome).toBe("positive");
+    },
+  );
+
+  it("corrects the outcome inside a batch too", async () => {
     await writeProject(baseResearch());
     const result = await researchLogAppend({
       projectPath: dir,
-      tool: "external_links_search",
-      query: { standardPlace: "Pennsylvania, United States", host: "findagrave.com" },
+      ops: [
+        {
+          tool: "external_links_search",
+          query: { standardPlace: "Pennsylvania, United States", host: "findagrave.com" },
+          outcome: "negative",
+          resultsExamined: 3,
+        },
+        {
+          tool: "external_links_search",
+          query: { standardPlace: "Ohio, United States", host: "findagrave.com" },
+          outcome: "negative",
+          resultsExamined: 0,
+        },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const research = await readJson("research.json");
+    expect(research.log.map((e: any) => e.outcome)).toEqual(["positive", "negative"]);
+    expect(result.validation.warnings.filter((w) => w.startsWith("outcome set to 'positive'"))).toHaveLength(1);
+  });
+
+  it("leaves every other tool's outcome as sent", async () => {
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Flynn" },
       outcome: "negative",
       resultsExamined: 2,
     });
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.errors.join(" ")).toMatch(/outcome must be 'positive'/);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.validation.warnings.join(" ")).not.toMatch(/outcome set to/);
     const research = await readJson("research.json");
-    expect(research.log).toHaveLength(0);
+    expect(research.log[0].outcome).toBe("negative");
   });
 
   it("accepts an external_links_search entry logged positive when it returned results", async () => {
@@ -503,6 +630,11 @@ describe("research_log_append", () => {
       resultsExamined: 0,
     });
     expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // Zero links keep the caller's outcome, with no correction note.
+    expect(result.validation.warnings.join(" ")).not.toMatch(/outcome set to/);
+    const research = await readJson("research.json");
+    expect(research.log[0].outcome).toBe("negative");
   });
 
   it.each([NaN, -3, 1.5])(

@@ -17,10 +17,10 @@ this table leaves uncovered; PR #2994 added four (§ Step 3), and the rows below
   in [`person-quality-tool-spec.md`](specs/person-quality-tool-spec.md) § Missing-template
   fallback), and the API may add types. Those are not counted, and a live profile can
   surface one through the fallback sentence.
-- **`person_warnings` side:** the 78 tags in the § Tag Catalogue of
-  [`person-warnings-tool-spec.md`](specs/person-warnings-tool-spec.md): 51 self-checks
+- **`person_warnings` side:** the 79 tags in the § Tag Catalogue of
+  [`person-warnings-tool-spec.md`](specs/person-warnings-tool-spec.md): 52 self-checks
   plus 27 relative mirrors. `person-warnings-spec-drift.test.ts` holds that catalogue
-  and `ALL_WARNING_TAGS` in exact agreement, so 78 is the shipped count. Not every tag
+  and `ALL_WARNING_TAGS` in exact agreement, so 79 is the shipped count. Not every tag
   fires in `person_warnings`: the catalogue marks the ones that fire only in merge mode
   (`merge_warnings`), and a verdict below counts only what `person_warnings` runs.
 - **No live profiles were read.** Every verdict comes from the template text and the
@@ -185,6 +185,7 @@ Context, not gaps. None of these appears among the 58 templates:
   `latestChildBirthToMarriage35`, `childMarriageToMarriage15`, `hasDeathAfterChildBirth90`,
   `hasChildDeathAfterParentBirth200`.
 - **Identity:** `hasDiffSurnameMale` (two same-given-name men merged), `missingFactsAndRelatives`.
+- **Place:** `hasEventInOtherCountry`, a project rule added after this table was measured: an event in a country that contradicts both the birth and the death country.
 - **Merge mode only:** `hasEventsOutsideLifespanFar`, `hasEventsOutsideLifespanNear`,
   `birthRangeGreaterThan3`, `birthLikeRangeGreaterThan8`, `hasCloseChildChristenings6_30`.
 - `hasBurialAfterDeath31` overlaps FamilySearch's strict burial-before-death ordering, with a

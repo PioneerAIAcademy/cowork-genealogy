@@ -13,11 +13,12 @@
       "treaties",
       "archives",
       "jurisdiction-awareness",
-      "volume-search"
+      "volume-search",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I\u2019m researching ancestors connected to Native American tribes in Oklahoma during the mid\u20111800s. What records or repositories would help trace families through tribal rolls and treaties?",
+    "delegation": "I'm researching ancestors connected to Native American tribes in Oklahoma during the mid-1800s. What records or repositories would help trace families through tribal rolls and treaties?\n\nprojectPath: <workspace>",
     "scenario": "empty-project-just-created",
     "scenario_notes": null
   },
@@ -27,6 +28,7 @@
   "mcp_fixtures": [
     "place-search-oklahoma",
     "place-search-indian-territory",
+    "place-search-any",
     "collections-search-oklahoma",
     "collections-search-indian-territory",
     "wikipedia-search-oklahoma",

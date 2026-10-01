@@ -11,11 +11,12 @@
       "schuylkill",
       "record-availability",
       "pre-1906-vital",
-      "volume-search"
+      "volume-search",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "What records are available for genealogical research in Schuylkill County, Pennsylvania in the 1840s-1860s?",
+    "delegation": "What records are available for genealogical research in Schuylkill County, Pennsylvania in the 1840s-1860s?",
     "scenario": null
   },
   "execution": {
@@ -24,6 +25,7 @@
   "mcp_fixtures": [
     "place-search-schuylkill-county",
     "place-search-schuylkill-by-id",
+    "place-search-any",
     "collections-search-schuylkill",
     "collections-search-pennsylvania",
     "external-links-search-schuylkill",

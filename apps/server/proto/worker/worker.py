@@ -12,9 +12,11 @@ redelivered ``turn_id`` is granted immediately -- that IS the resume path) and t
   outcome with no model:
 
     {"behaviour": "ok"}                   -> session_events row (kind turn_done),
-                                             turns.completed_at/outcome, 200
+                                             turns.completed_at/outcome, 200 (a
+                                             redelivery of a closed turn writes nothing)
     {"behaviour": "sleep", "seconds": N}  -> sleep N (first delivery only), then as ok
-    {"behaviour": "fail"}                 -> 500, every delivery
+    {"behaviour": "fail"}                 -> 500, every delivery but the last receive,
+                                             which closes the turn (below)
     {"behaviour": "crash"}                -> os._exit(1) before replying (first
                                              delivery only; compose restarts us)
 
@@ -23,8 +25,8 @@ The real turn: the SDK session id is CHOSEN by the worker at claim time --
 first transcript append can never land under an id no row names -- and passed as
 ``session_id=`` on a fresh session or ``resume=`` when the session store already holds
 entries for it (a mid-turn kill on either path resumes on redelivery); the options from
-``options.py``; ``get_server_info()`` checked for the fourteen bare agent names
-(``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 19
+``options.py``; ``get_server_info()`` checked for the sixteen bare agent names
+(``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 16
 ``genealogy-research:<skill>`` commands (``EXPECTED_SKILLS``, a literal -- never a count
 of the directory the SDK loads from) BEFORE the query bills a token (D15) -- a miss
 is a 500; the CLI's ``system/init`` must arrive and declare the chosen id, or the
@@ -66,10 +68,33 @@ worker stops re-running the model and closes the turn ITSELF -- 200, ``outcome``
 surfaced as an error is redelivered forever, which is the paid loop the guard exists to
 prevent.
 
+Dead letters (U5 D3): sqsd moves a message on after ``MaxRetries`` receives, and the
+worker never sees the DLQ. So a receive with ``receive_count >= SQSD_MAX_RETRIES`` that
+is about to answer non-200 -- an exception, a ``ResumeFailure``, a SIGTERM -- closes the
+turn itself instead (``close_turn``: 200, outcome ``retries_exhausted``, ``detail.cause``
+``error``/``shutdown``/``sweep``) and releases the session's next held message. A crash
+on the last receive runs no worker code, so a sweep thread closes what no delivery can
+reach any more: the last receive's visibility lapsed (``SQSD_VISIBILITY_TIMEOUT_S`` +
+60 s), or SQS's retention (``SQSD_RETENTION_PERIOD_S``) expired it. Each path is on
+only when its variable is set, and ``SWEEP_INTERVAL_S=0`` turns the sweep off.
+
+SIGTERM / SIGINT (U5 D2): every in-flight ``POST /turn`` answers 500 at once
+(``"shutdown": true``) so sqsd redelivers after ``ErrorVisibilityTimeout`` rather than
+``VisibilityTimeout``; then each attempt is cancelled through its anyio cancel scope,
+which runs ``client.disconnect()``'s SIGTERM-then-SIGKILL; the replies and the attempts'
+``finally`` blocks are waited for, bounded by ``SHUTDOWN_GRACE_S``; a last-receive
+close's deferred release runs once its attempt has finished (within ``RELEASE_BUDGET_S``
+more, else it is skipped and the row stays held); the server stops, a POST it accepted
+meanwhile is waited for and released the same way; and the process exits 0. A POST after
+SHUTDOWN answers 503, except on its last receive, which closes.
+
 Env: PG_DSN, PORT (8080), WORKER_CWD (/project -- created empty if missing, never
 written), ENGINE_PLUGIN_DIR, TMPDIR (per-turn CLAUDE_CONFIG_DIRs go under it),
 MODEL_PROVIDER + ANTHROPIC_API_KEY / GATEWAY_BASE_URL, GATEWAY_API_KEY and
-GATEWAY_TOOL_SEARCH, TOOL_SERVER_URL and FS_ACCESS_TOKEN (see options.py). Startup
+GATEWAY_TOOL_SEARCH, TOOL_SERVER_URL and FS_ACCESS_TOKEN (see options.py);
+SQSD_MAX_RETRIES (0 = no last-receive close), SQSD_VISIBILITY_TIMEOUT_S,
+SQSD_RETENTION_PERIOD_S (unset = no backstop), SWEEP_INTERVAL_S (300; 0 = off) and
+SHUTDOWN_GRACE_S (20). Startup
 applies ../sql/*.sql (all idempotent) and parses the plugin's agents once. ``GET /healthz`` -> 200.
 ThreadingHTTPServer, so a second POST is served while a turn is running.
 """
@@ -77,9 +102,11 @@ ThreadingHTTPServer, so a second POST is served while a turn is running.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import os
 import shutil
+import signal
 import sys
 import tempfile
 import threading
@@ -87,9 +114,10 @@ import time
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Iterator
 from urllib.parse import urlparse
 
+import anyio
 import psycopg
 from psycopg.types.json import Jsonb
 
@@ -146,7 +174,9 @@ EXPECTED_AGENTS = frozenset({
     "citation",
     "convert-dates",
     "gps-mentor",
+    "hypothesis-tracking",
     "image-reader",
+    "locality-guide",
     "person-evidence",
     "proof-conclusion",
     "record-extractor",
@@ -158,9 +188,9 @@ EXPECTED_AGENTS = frozenset({
     "validate-schema",
 })
 # The other half of the same precondition, a literal for the same reason: a count of
-# the directory the SDK loads the plugin from shrinks with it -- an image shipping 18
-# skills registers 18 and passes. test_proto_worker pins this against the repo.
-EXPECTED_SKILLS = 19
+# the directory the SDK loads the plugin from shrinks with it -- an image shipping 15
+# skills registers 15 and passes. test_proto_worker pins this against the repo.
+EXPECTED_SKILLS = 16
 
 _stdout_lock = threading.Lock()
 
@@ -175,6 +205,9 @@ _AUTONOMOUS_MAX_NUDGES: int = 0
 # ITSELF, without the model having finished, because re-running it would not help.
 OK_OUTCOME = "ok"
 NO_PROGRESS_OUTCOME = "no_progress"
+# U5 D3: the worker closed the turn because its message ran out of receives -- on the
+# last receive itself, or from the sweep once no delivery can reach it any more.
+RETRIES_EXHAUSTED_OUTCOME = "retries_exhausted"
 
 # PR #2870 item 1e: what one SITTING may spend before the worker stops it.
 #
@@ -207,7 +240,8 @@ def _env_float(name: str, default: float) -> float:
 # PR #2870 item 0a: how many CONSECUTIVE zero-progress redeliveries of one turn the
 # worker will pay for before closing it. Two, per the plan. The counter lives on
 # turns.zero_progress_attempts (005_resume_guard.sql) and NOT on receive_count, which
-# counts healthy ceiling crossings with the same number -- see that file's header.
+# counts healthy ceiling crossings -- and crash, deploy and SIGTERM receives -- with the
+# same number; see that file's header.
 ZERO_PROGRESS_CAP = 2
 
 
@@ -230,6 +264,10 @@ class MirrorError(RuntimeError):
     """The session store dropped a transcript batch; the turn cannot be resumed faithfully."""
 
 
+class WorkerShutdown(RuntimeError):
+    """The attempt was stopped by SIGTERM (U5 D2); the handler has already answered."""
+
+
 class ResumeFailure(RuntimeError):
     """A REDELIVERED attempt did no work (0a), and the cap is not spent yet -- so the turn
     is NOT complete and must be redelivered. Raised rather than completed, which
@@ -242,6 +280,27 @@ def log(**fields: object) -> None:
     with _stdout_lock:
         sys.stdout.write(line + "\n")
         sys.stdout.flush()
+
+
+# U5: the sqsd options the worker must agree with, from the same environment block as
+# the template's sqsd options -- read after ``log``, which a bad value reports
+# through. 0 / unset turns the dependent path off.
+SQSD_MAX_RETRIES = env_int("SQSD_MAX_RETRIES", 0)
+SQSD_VISIBILITY_TIMEOUT_S = env_int("SQSD_VISIBILITY_TIMEOUT_S", 0)
+SQSD_RETENTION_PERIOD_S = env_int("SQSD_RETENTION_PERIOD_S", 0)
+SWEEP_INTERVAL_S = env_int("SWEEP_INTERVAL_S", 300)
+SHUTDOWN_GRACE_S = _env_float("SHUTDOWN_GRACE_S", 20.0)
+# The deferred last-receive releases run after the grace, inside their own budget: a
+# release starts only if its connect and its SendMessage, each capped below, can finish
+# before ``started + SHUTDOWN_GRACE_S + RELEASE_BUDGET_S``. That sum is what compose's
+# worker ``stop_grace_period`` must cover (test_proto_config pins it).
+RELEASE_BUDGET_S = 6.0
+RELEASE_CONNECT_TIMEOUT_S = 2
+RELEASE_SQS_TIMEOUT_S = 3.0
+# The fast sweep path waits this long past the last receive's visibility, so sqsd has
+# certainly given up on the message before the worker closes its turn.
+SWEEP_VISIBILITY_MARGIN_S = 60
+SWEEP_BATCH = 100
 
 
 # -- rows ----------------------------------------------------------------------
@@ -350,7 +409,8 @@ def complete(
     nudges: int | None = None,
     outcome: str = OK_OUTCOME,
     detail: dict[str, Any] | None = None,
-) -> int:
+    only_if_open: bool = False,
+) -> int | None:
     """Append the turn_done event (per-session seq via next_session_seq) and close the
     turn -- with the ResultMessage's figures when there are any, the token sum over
     ``session_entries`` when ``sdk_session_id`` is given, and the Stop hook's veto count
@@ -358,9 +418,20 @@ def complete(
 
     ``outcome`` is ``"ok"`` for every ordinary close. 0a passes
     ``NO_PROGRESS_OUTCOME`` when the worker closes the turn itself because redelivering
-    it again would only re-run a model that is making no progress."""
+    it again would only re-run a model that is making no progress.
+
+    ``only_if_open`` (U5 D3) closes the turn only if nobody has: the row is locked and
+    read first, and a missing or completed row writes nothing and returns None. Two
+    closers can race on one turn -- an attempt finishing while SIGTERM's last-receive close
+    runs, or the sweep -- and only the one that gets a seq back may release a held
+    message."""
     with conn.transaction():
         with conn.cursor() as cur:
+            if only_if_open:
+                cur.execute("SELECT completed_at FROM turns WHERE turn_id = %s FOR UPDATE", (turn["turn_id"],))
+                row = cur.fetchone()
+                if row is None or row[0] is not None:
+                    return None
             cur.execute("SELECT next_session_seq(%s)", (turn["session_id"],))
             seq = cur.fetchone()[0]
             cur.execute(
@@ -389,7 +460,8 @@ def complete(
                 "cache_creation_tokens = COALESCE(%s, cache_creation_tokens), "
                 "cache_read_tokens = COALESCE(%s, cache_read_tokens), "
                 "output_tokens = COALESCE(%s, output_tokens), "
-                "nudges = COALESCE(%s, nudges) WHERE turn_id = %s",
+                "nudges = COALESCE(%s, nudges) WHERE turn_id = %s"
+                + (" AND completed_at IS NULL" if only_if_open else ""),
                 (outcome, cost_usd, num_turns, duration_ms, *tokens, nudges, turn["turn_id"]),
             )
     conn.commit()
@@ -459,8 +531,9 @@ def bump_zero_progress(conn: psycopg.Connection, turn_id: str) -> int:
 
 def reset_zero_progress(conn: psycopg.Connection, turn_id: str) -> None:
     """Clear the counter because this attempt did work (0a). Called at the attempt's FIRST
-    tool call, not at completion: an attempt killed at the step ceiling after real work
-    never reaches completion, and must still clear the count."""
+    tool call, not at completion: an attempt killed at the step ceiling -- or by a crash,
+    a deploy or SIGTERM -- after real work never reaches completion, and must still clear
+    the count."""
     with conn.cursor() as cur:
         cur.execute(
             "UPDATE turns SET zero_progress_attempts = 0 "
@@ -523,10 +596,15 @@ def take_queued_turn(conn: psycopg.Connection, session_id: str) -> dict[str, Any
     wedged until they type again.
 
     `SELECT ... FOR UPDATE` above means only the claimer that wins gets here, so the clear
-    happens exactly once per released message."""
+    happens exactly once per released message.
+
+    ``claimed_at = now()`` dates the row from its RELEASE, not from when the patron typed
+    it: the sweep's retention backstop reads ``COALESCE(claimed_at, enqueued_at)``, and a
+    message held for days would otherwise look expired the moment it was released and be
+    closed ``retries_exhausted`` before it ever ran. The worker's claim overwrites it."""
     with conn.cursor() as cur:
         cur.execute(
-            "UPDATE turns SET outcome = NULL WHERE turn_id = ("
+            "UPDATE turns SET outcome = NULL, claimed_at = now() WHERE turn_id = ("
             "  SELECT turn_id FROM turns WHERE session_id = %s AND outcome = %s "
             "  AND completed_at IS NULL ORDER BY enqueued_at LIMIT 1 FOR UPDATE SKIP LOCKED"
             ") RETURNING message",
@@ -564,8 +642,8 @@ def record_nudge(conn: psycopg.Connection, turn_id: str, cumulative: int) -> Non
     """Persist the veto count AS IT HAPPENS (1c).
 
     ``complete()`` also writes this column, but only when the turn CLOSES -- and a
-    redelivery happens precisely when the previous attempt did NOT close, killed at the
-    step ceiling or failed. So a seed that read only ``complete``'s write would find NULL
+    redelivery happens precisely when the previous attempt did NOT close: killed at the
+    step ceiling, by a crash, a deploy or SIGTERM, or failed. So a seed that read only ``complete``'s write would find NULL
     on every redelivery and hand each attempt a fresh budget: the per-attempt cap 1c
     exists to remove, six times over on the longest run in the corpus.
 
@@ -577,15 +655,21 @@ def record_nudge(conn: psycopg.Connection, turn_id: str, cumulative: int) -> Non
         )
 
 
-def release_queued_turn(conn: psycopg.Connection, session_id: str) -> str | None:
+def release_queued_turn(
+    conn: psycopg.Connection, session_id: str, *, sqs_timeout: float = 30,
+) -> str | None:
     """Enqueue the session's held message now that the turn holding it has ended (1b).
     Returns the SQS MessageId, or None when nothing was held or no queue is configured.
+    ``sqs_timeout`` bounds the SendMessage (the shutdown release passes a short one).
 
     Never raises: a turn that did its work must not be reported as failed because the
     handover failed. A failed send puts the message back."""
     if not QUEUE_URL:
         return None
     body = take_queued_turn(conn, session_id)
+    # Committed before the send (a no-op on an autocommit connection), so the claim is
+    # visible before the message it names can reach a worker.
+    conn.commit()
     if body is None:
         return None
     try:
@@ -596,13 +680,88 @@ def release_queued_turn(conn: psycopg.Connection, session_id: str) -> str | None
             f"{parsed.scheme}://{parsed.netloc}",
             "SendMessage",
             {"QueueUrl": QUEUE_URL, "MessageBody": json.dumps(body)},
+            timeout=sqs_timeout,
         )
         return enqueue.xml_text(doc, "MessageId")
     except Exception as exc:  # noqa: BLE001 - the patron's words outlive one failed send
         log(ev="queued_release_failed", session_id=session_id, turn_id=body.get("turn_id"),
             error=f"{type(exc).__name__}: {exc}")
         hold_queued_turn(conn, str(body.get("turn_id") or ""))
+        conn.commit()
         return None
+
+
+# A turn is RUNNING on the session: open and not a held message. Spelled the same as the
+# web tier's TURN_ACTIVE_SQL; `test_the_two_turn_active_statements_match` pins them.
+TURN_ACTIVE_SQL = (
+    "SELECT EXISTS (SELECT 1 FROM turns WHERE session_id = %s AND completed_at IS NULL "
+    "AND outcome IS DISTINCT FROM %s) AS active"
+)
+
+
+def release_next_held(conn: psycopg.Connection, session_id: str, *, sqs_timeout: float = 30) -> str | None:
+    """The one way the worker releases a held message (U5 D3): nothing while the session
+    has a running turn, else ``release_queued_turn``. The guard is what lets the
+    ``already_completed`` redelivery release a stranded held row without enqueuing a
+    sibling beside a held turn that was already released and is running."""
+    with conn.cursor() as cur:
+        cur.execute(TURN_ACTIVE_SQL, (session_id, QUEUED_OUTCOME))
+        row = cur.fetchone()
+    if row and row[0]:
+        return None
+    return release_queued_turn(conn, session_id, sqs_timeout=sqs_timeout)
+
+
+def session_sdk_id(conn: psycopg.Connection, session_id: str) -> str | None:
+    """The session's SDK session id if one was chosen -- for a close that runs no attempt."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT sdk_session_id FROM sessions WHERE session_id = %s", (session_id,))
+        row = cur.fetchone()
+    return str(row[0]) if row and row[0] else None
+
+
+def turn_outcome(conn: psycopg.Connection, turn_id: str) -> str | None:
+    """``turns.outcome`` -- what a close that lost the race reports instead of its own."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT outcome FROM turns WHERE turn_id = %s", (turn_id,))
+        row = cur.fetchone()
+    return str(row[0]) if row and row[0] is not None else None
+
+
+def release_guarded(connect: Callable[..., Any], session_id: str, turn_id: str) -> None:
+    """``release_next_held`` on its own connection, a failure logged and swallowed: the
+    reply that follows must not turn into a dead letter because the handover failed."""
+    try:
+        with connect(PG_DSN) as conn:
+            release_next_held(conn, session_id)
+    except Exception as exc:  # noqa: BLE001 - the web tier's rescue is the fallback
+        log(ev="release_failed", session_id=session_id, turn_id=turn_id, error=f"{type(exc).__name__}: {exc}")
+
+
+def close_turn(
+    conn: psycopg.Connection,
+    turn: dict,
+    receive_count: int,
+    *,
+    outcome: str = RETRIES_EXHAUSTED_OUTCOME,
+    cause: str,
+    sdk_session_id: str | None,
+    release: bool = True,
+) -> int | None:
+    """Close a turn the worker is giving up on (U5 D3): ``complete(only_if_open=True)``
+    with ``detail.cause``, then -- only if THIS call closed the row -- the session's next
+    held message. ``release=False`` leaves the release to the caller, which SIGTERM's
+    close needs: the held turn must not start while the old attempt's CLI is still
+    alive. Returns the turn_done seq, or None when the row was already closed."""
+    seq = complete(conn, turn, receive_count, outcome=outcome, detail={"cause": cause},
+                   sdk_session_id=sdk_session_id, only_if_open=True)
+    if seq is None:
+        return None
+    log(ev="close", turn_id=turn["turn_id"], session_id=turn["session_id"], outcome=outcome,
+        cause=cause, receive_count=receive_count)
+    if release:
+        release_next_held(conn, turn["session_id"])
+    return seq
 
 
 def count_tool_calls(conn: psycopg.Connection, turn_id: str) -> int:
@@ -773,6 +932,230 @@ def registration_problems(info: Any) -> list[str]:
     return check_registration(info, expected_agents=set(EXPECTED_AGENTS), expected_skills=EXPECTED_SKILLS)
 
 
+def pg_connect(*args: Any, **kwargs: Any) -> psycopg.Connection:
+    """``psycopg.connect``, looked up per call: the ``connect=`` defaults below bind this,
+    so replacing ``psycopg.connect`` (test_proto_shutdown's harness) reaches every one."""
+    return psycopg.connect(*args, **kwargs)
+
+
+# -- shutdown (U5 D2) ----------------------------------------------------------
+
+# Set once by SIGTERM / SIGINT. Read by every POST, by run_turn just inside its cancel
+# scope, and by the sweep, which stops.
+SHUTDOWN = threading.Event()
+
+
+class Inflight:
+    """One ``POST /turn`` this process is serving: what the shutdown thread wakes, cancels
+    and waits for."""
+
+    def __init__(self, turn_id: str) -> None:
+        self.turn_id = turn_id
+        self.replied = threading.Event()
+        self.attempt_done = threading.Event()
+        self.attempt_done.set()
+        self.wake = threading.Event()
+        self.cancel: tuple[asyncio.AbstractEventLoop, anyio.CancelScope] | None = None
+
+
+_INFLIGHT_LOCK = threading.Lock()
+_INFLIGHT: set[Inflight] = set()
+_ATTEMPT = threading.local()  # .entry: the Inflight whose attempt this thread runs
+_ANSWERED: list[str] = []  # turn ids the shutdown answered 500 (redelivered), for ev=shutdown
+# session id -> (turn id, the Inflight entries serving that turn when the release was
+# deferred): the release runs only once every one of those attempts has finished.
+_DEFERRED_RELEASES: dict[str, tuple[str, list[Inflight]]] = {}
+_SHUTDOWN_THREAD: threading.Thread | None = None  # joined by main() before it returns
+
+
+def _retire(entry: Inflight) -> None:
+    with _INFLIGHT_LOCK:
+        if entry.replied.is_set() and entry.attempt_done.is_set():
+            _INFLIGHT.discard(entry)
+
+
+@contextlib.contextmanager
+def track(turn_id: str) -> Iterator[Inflight]:
+    """Register a POST for the shutdown thread until its reply is written (the block
+    exits) and its attempt, if one started, has finished."""
+    entry = Inflight(turn_id)
+    with _INFLIGHT_LOCK:
+        _INFLIGHT.add(entry)
+    try:
+        yield entry
+    finally:
+        entry.replied.set()
+        _retire(entry)
+
+
+def inflight_turn_ids() -> list[str]:
+    with _INFLIGHT_LOCK:
+        return sorted({e.turn_id for e in _INFLIGHT})
+
+
+@contextlib.contextmanager
+def cancellable_attempt() -> Iterator[anyio.CancelScope]:
+    """run_turn's body runs inside this anyio scope. The shutdown thread cancels it with
+    ``loop.call_soon_threadsafe(scope.cancel)`` -- an anyio cancel, which the SDK's
+    shielded ``close()`` defers until its SIGTERM-then-SIGKILL escalation has run; a bare
+    ``task.cancel()`` would skip that. The scope is registered FIRST and SHUTDOWN checked
+    after, so a SIGTERM landing between the two is seen by one side or the other and no
+    CLI spawns after shutdown."""
+    entry = getattr(_ATTEMPT, "entry", None)
+    with anyio.CancelScope() as scope:
+        if entry is not None:
+            with _INFLIGHT_LOCK:
+                entry.cancel = (asyncio.get_running_loop(), scope)
+        if SHUTDOWN.is_set():
+            raise WorkerShutdown("worker shutting down before the attempt started")
+        yield scope
+    if scope.cancelled_caught:
+        raise WorkerShutdown("attempt cancelled by worker shutdown")
+
+
+def await_attempt(entry: Inflight, fn: Callable[[], Any]) -> tuple[str, Any]:
+    """Run ``fn`` on a DAEMON thread and wait for it or for SHUTDOWN, whichever is first:
+    ``("done", result)``, ``("error", exc)`` or ``("shutdown", None)``. A daemon, so an
+    attempt that cannot be cancelled cannot hold the interpreter open past the grace."""
+    box: dict[str, Any] = {}
+
+    def target() -> None:
+        _ATTEMPT.entry = entry
+        try:
+            box["result"] = fn()
+        except BaseException as exc:  # noqa: BLE001 - handed to the waiting handler
+            box["error"] = exc
+        finally:
+            box["done"] = True
+            entry.attempt_done.set()
+            entry.wake.set()
+            _retire(entry)
+
+    entry.attempt_done.clear()
+    threading.Thread(target=target, daemon=True, name=f"attempt-{entry.turn_id}").start()
+    entry.wake.wait()
+    if not box.get("done"):
+        return "shutdown", None
+    if "error" in box:
+        return "error", box["error"]
+    return "done", box.get("result")
+
+
+def request_shutdown() -> list[Inflight]:
+    """Set SHUTDOWN, wake every waiting handler (each answers at once) and cancel every
+    registered attempt. Returns the entries it saw."""
+    SHUTDOWN.set()
+    with _INFLIGHT_LOCK:
+        entries = list(_INFLIGHT)
+    for entry in entries:
+        entry.wake.set()
+    for entry in entries:
+        if entry.cancel is None:
+            continue
+        loop, scope = entry.cancel
+        try:
+            loop.call_soon_threadsafe(scope.cancel)
+        except RuntimeError:  # the loop already closed: the attempt finished
+            pass
+    return entries
+
+
+def _wait_for_inflight(deadline: float) -> bool:
+    """Every tracked POST has written its reply and every attempt's ``finally`` has run,
+    or the deadline passed. Re-read each round, so a POST that arrived mid-shutdown is
+    waited for too."""
+    while True:
+        with _INFLIGHT_LOCK:
+            pending = [e for e in _INFLIGHT if not (e.replied.is_set() and e.attempt_done.is_set())]
+        if not pending:
+            return True
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return False
+        first = pending[0]
+        (first.attempt_done if first.replied.is_set() else first.replied).wait(min(remaining, 0.1))
+
+
+def defer_release(session_id: str, turn_id: str) -> None:
+    """Hand a last-receive close's release to the shutdown thread, which runs it only once
+    every attempt this process is running for ``turn_id`` has finished."""
+    with _INFLIGHT_LOCK:
+        waits = [e for e in _INFLIGHT if e.turn_id == turn_id]
+        if session_id in _DEFERRED_RELEASES:
+            _DEFERRED_RELEASES[session_id][1].extend(waits)
+        else:
+            _DEFERRED_RELEASES[session_id] = (turn_id, waits)
+
+
+def deferred_sessions() -> list[str]:
+    with _INFLIGHT_LOCK:
+        return list(_DEFERRED_RELEASES)
+
+
+def run_deferred_releases(*, connect=pg_connect, deadline: float | None = None) -> None:
+    """Release every deferred session whose attempts have finished; one whose attempt is
+    still running stays registered for a later round. A release starts only if its capped
+    connect and send can finish by ``deadline``; past it the session is logged
+    ``deferred_release_skipped`` and left held for the web tier's rescue."""
+    with _INFLIGHT_LOCK:
+        ready = [(sid, turn_id) for sid, (turn_id, waits) in _DEFERRED_RELEASES.items()
+                 if all(e.attempt_done.is_set() for e in waits)]
+        for sid, _ in ready:
+            del _DEFERRED_RELEASES[sid]
+    for session_id, turn_id in ready:
+        if deadline is not None and time.monotonic() + RELEASE_CONNECT_TIMEOUT_S + RELEASE_SQS_TIMEOUT_S > deadline:
+            log(ev="deferred_release_skipped", session_id=session_id, turn_id=turn_id, reason="deadline")
+            continue
+        try:
+            with connect(PG_DSN, connect_timeout=RELEASE_CONNECT_TIMEOUT_S) as conn:
+                release_next_held(conn, session_id, sqs_timeout=RELEASE_SQS_TIMEOUT_S)
+        except Exception as exc:  # noqa: BLE001 - the web tier's rescue is the fallback
+            log(ev="deferred_release_failed", session_id=session_id, turn_id=turn_id,
+                error=f"{type(exc).__name__}: {exc}")
+
+
+def shutdown(server: Any, *, grace: float | None = None, connect=pg_connect) -> None:
+    """The shutdown thread: answer, cancel, wait (bounded by SHUTDOWN_GRACE_S), run the
+    releases a last-receive close deferred, stop the server -- then, since a POST accepted
+    before ``serve_forever`` exited can still be running, wait and release once more,
+    and log ``ev=shutdown``. A deferred release whose attempt never finished is logged
+    ``deferred_release_skipped`` and left held: the held turn must not start beside the
+    old CLI. ``server.shutdown()`` cannot be called from the ``serve_forever`` thread,
+    which is why this is a thread and not the signal handler; main() joins it."""
+    grace = SHUTDOWN_GRACE_S if grace is None else grace
+    started = time.monotonic()
+    release_deadline = started + grace + RELEASE_BUDGET_S
+    request_shutdown()
+    _wait_for_inflight(started + grace)
+    run_deferred_releases(connect=connect, deadline=release_deadline)
+    server.shutdown()
+    drained = _wait_for_inflight(started + grace)
+    run_deferred_releases(connect=connect, deadline=release_deadline)
+    with _INFLIGHT_LOCK:
+        answered = list(_ANSWERED)
+        stranded = list(_DEFERRED_RELEASES.items())
+        _DEFERRED_RELEASES.clear()
+    for session_id, (turn_id, _) in stranded:
+        log(ev="deferred_release_skipped", session_id=session_id, turn_id=turn_id, reason="attempt_running")
+    log(ev="shutdown", answered=answered, drained=drained, still_running=inflight_turn_ids(),
+        wait_ms=int((time.monotonic() - started) * 1000))
+
+
+def install_signal_handlers(server: Any) -> None:
+    """SIGTERM / SIGINT set SHUTDOWN and start the shutdown thread, once."""
+
+    def on_signal(signum: int, frame: Any) -> None:
+        global _SHUTDOWN_THREAD
+        if SHUTDOWN.is_set():
+            return
+        SHUTDOWN.set()
+        _SHUTDOWN_THREAD = threading.Thread(target=shutdown, args=(server,), daemon=True, name="shutdown")
+        _SHUTDOWN_THREAD.start()
+
+    signal.signal(signal.SIGTERM, on_signal)
+    signal.signal(signal.SIGINT, on_signal)
+
+
 # -- the real turn -------------------------------------------------------------
 
 
@@ -854,6 +1237,18 @@ async def run_turn(
     *,
     agents: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """One attempt, inside the cancel scope SIGTERM's shutdown thread cancels (U5 D2)."""
+    with cancellable_attempt():
+        return await _run_turn(turn, receive_count, sdk_session_id, agents=agents)
+
+
+async def _run_turn(
+    turn: dict,
+    receive_count: int,
+    sdk_session_id: str,
+    *,
+    agents: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     from claude_agent_sdk import ClaudeSDKClient, MirrorErrorMessage, ResultMessage
 
     from app.agent.real_agent import TRANSIENT_KINDS, map_message
@@ -885,9 +1280,10 @@ async def run_turn(
             counters["tool_calls"] += 1
             if counters["tool_calls"] == 1 and receive_count > 1:
                 # 0a: this attempt has done work. Clear the zero-progress count HERE
-                # rather than at completion -- an attempt killed at the step ceiling
-                # after real work never reaches completion, and the stale count would
-                # then terminate a healthy turn two redeliveries later.
+                # rather than at completion -- an attempt killed at the step ceiling, or
+                # by a crash, a deploy or SIGTERM, after real work never reaches
+                # completion, and the stale count would then terminate a healthy turn
+                # two redeliveries later.
                 reset_zero_progress(conn, turn_id)
 
         # 1c: the halt predicate, checked before EVERY tool call. The Stop hook fires at
@@ -1084,10 +1480,11 @@ async def run_turn(
                 TERMINAL_STOPPED if stop_requested(conn, session_id) else OK_OUTCOME
             )
             # A stopped turn is NOT a zero-progress attempt, and the order matters twice
-            # over. A turn killed at the ceiling after Stop comes back as exactly the
-            # synthetic zero-turn result 0a keys on -- no tool call, so halt() never runs
-            # -- and without this it raises ResumeFailure, answers 500, and decide.py
-            # requeues it: the model is re-run and BILLED after the patron pressed Stop.
+            # over. A turn killed at the ceiling (or by a crash, a deploy or SIGTERM)
+            # after Stop comes back as exactly the synthetic zero-turn result 0a keys on
+            # -- no tool call, so halt() never runs -- and without this it raises
+            # ResumeFailure, answers 500, and decide.py requeues it: the model is re-run
+            # and BILLED after the patron pressed Stop.
             # At the cap it would also be recorded `no_progress` and rendered "the agent
             # stopped making progress", to the person who stopped it. That is the same
             # "says the opposite of what happened" failure the on_allow clobber guard
@@ -1127,6 +1524,9 @@ async def run_turn(
                 # on the attempt that happens to finish, destroying the figure the column
                 # was added for. Zero is not a measurement here; it is "nothing to add".
                 nudges=counters["nudges"] or None,
+                # U5 D3: SIGTERM's last-receive close may have closed the row first; then
+                # this writes nothing, returns None, and releases nothing.
+                only_if_open=True,
             )
         finally:
             await client.disconnect()
@@ -1137,9 +1537,12 @@ async def run_turn(
     # 1b: the turn is closed, so a message held while it ran goes on the queue now --
     # whatever the outcome, because a held message is the patron's words and is never
     # dropped. On its own connection, after the one above closed: a handover that fails
-    # must not undo a turn that completed.
-    with psycopg.connect(PG_DSN, autocommit=True) as release_conn:
-        released = release_queued_turn(release_conn, session_id)
+    # must not undo a turn that completed. Only if THIS attempt closed the row (U5 D3),
+    # or a racing close and this one could each release one.
+    released = None
+    if seq is not None:
+        with psycopg.connect(PG_DSN, autocommit=True) as release_conn:
+            released = release_next_held(release_conn, session_id)
 
     summary = {
         "seq": seq,
@@ -1177,15 +1580,123 @@ def is_real_turn(message: dict) -> bool:
     return isinstance(text, str) and bool(text.strip())
 
 
-def serve_real_turn(turn: dict, receive_count: int, *, connect=psycopg.connect, run=run_turn_sync) -> tuple[int, dict]:
-    """Claim, skip a turn that already completed, else choose the SDK session id and run
-    it. ``(status, body)``."""
+def is_last_receive(receive_count: int) -> bool:
+    """No further delivery will come (U5 D3): sqsd delivers receives 1..MaxRetries and
+    moves the message to the DLQ on the next. Off when SQSD_MAX_RETRIES is 0."""
+    return SQSD_MAX_RETRIES > 0 and receive_count >= SQSD_MAX_RETRIES
+
+
+def _shutdown_body(turn_id: str) -> dict:
+    return {"ok": False, "turn_id": turn_id, "error": "worker shutting down", "shutdown": True}
+
+
+def close_on_last_receive(
+    turn: dict, receive_count: int, *, connect, cause: str, sdk_session_id: str | None,
+    defer: bool = False, error: str | None = None,
+) -> tuple[int, dict] | None:
+    """The last receive's close: ``close_turn`` and 200, so the message is deleted rather
+    than dead-lettered. ``defer`` hands the release to the shutdown thread. None when the
+    close itself failed, and the caller answers what it was going to.
+
+    When the row was already closed -- this attempt completed it and then failed its
+    release, say -- no redelivery will come to release a held message it stranded, so
+    this receive releases (or defers) it and answers ``already_completed`` with the
+    row's own outcome."""
     turn_id = turn["turn_id"]
+    try:
+        with connect(PG_DSN) as conn:
+            seq = close_turn(conn, turn, receive_count, cause=cause, sdk_session_id=sdk_session_id,
+                             release=not defer)
+            prior = turn_outcome(conn, turn_id) if seq is None else None
+    except Exception as exc:  # noqa: BLE001 - a failed close must not swallow the reply
+        log(ev="close_failed", turn_id=turn_id, receive_count=receive_count, cause=cause,
+            error=f"{type(exc).__name__}: {exc}")
+        return None
+    if seq is None:
+        if defer:
+            defer_release(turn["session_id"], turn_id)
+        else:
+            release_guarded(connect, turn["session_id"], turn_id)
+        log(ev="turn", turn_id=turn_id, session_id=turn["session_id"], receive_count=receive_count,
+            status=200, already_completed=True, outcome=prior, cause=cause, error=error)
+        return 200, {"ok": True, "turn_id": turn_id, "receive_count": receive_count,
+                     "already_completed": True, "outcome": prior}
+    if defer:
+        defer_release(turn["session_id"], turn_id)
+    log(ev="turn", turn_id=turn_id, session_id=turn["session_id"], receive_count=receive_count,
+        status=200, outcome=RETRIES_EXHAUSTED_OUTCOME, cause=cause, seq=seq, error=error)
+    return 200, {"ok": True, "turn_id": turn_id, "receive_count": receive_count, "seq": seq,
+                 "outcome": RETRIES_EXHAUSTED_OUTCOME, "cause": cause}
+
+
+def shutdown_reply(turn: dict, receive_count: int, *, connect, sdk_session_id: str | None) -> tuple[int, dict]:
+    """What an in-flight POST answers once SHUTDOWN is set: 500 at once, so sqsd
+    redelivers after ErrorVisibilityTimeout -- or, on the last receive, the close, whose
+    release runs only once the attempt's cleanup has run (and is skipped, the row left
+    held, if it has not by the end of the shutdown). Only a 500 goes in ``_ANSWERED``."""
+    turn_id = turn["turn_id"]
+    if is_last_receive(receive_count):
+        closed = close_on_last_receive(turn, receive_count, connect=connect, cause="shutdown",
+                                       sdk_session_id=sdk_session_id, defer=True)
+        if closed is not None:
+            return closed
+    with _INFLIGHT_LOCK:
+        _ANSWERED.append(turn_id)
+    log(ev="turn", turn_id=turn_id, session_id=turn["session_id"], receive_count=receive_count,
+        status=500, shutdown=True)
+    return 500, _shutdown_body(turn_id)
+
+
+def serve_after_shutdown(turn: dict, receive_count: int, *, connect) -> tuple[int, dict]:
+    """A POST that arrives after SHUTDOWN: 503 without claiming, except on the last
+    receive, where it claims and closes -- otherwise that receive is spent with no row
+    recording it, and only the retention backstop would see the dead letter."""
+    turn_id = turn["turn_id"]
+    if not is_last_receive(receive_count):
+        log(ev="turn", turn_id=turn_id, receive_count=receive_count, status=503, shutdown=True)
+        return 503, _shutdown_body(turn_id)
+    try:
+        with connect(PG_DSN) as conn:
+            claim(conn, turn, receive_count)
+            done = turn_completed(conn, turn_id)
+            sdk_session_id = None if done else session_sdk_id(conn, turn["session_id"])
+    except psycopg.Error as exc:
+        log(ev="turn", turn_id=turn_id, receive_count=receive_count, status=503, shutdown=True,
+            error=f"{type(exc).__name__}: {exc}")
+        return 503, _shutdown_body(turn_id)
+    if done:
+        # The last receive: no redelivery will come to release what this turn stranded.
+        defer_release(turn["session_id"], turn_id)
+        log(ev="turn", turn_id=turn_id, receive_count=receive_count, status=200, already_completed=True)
+        return 200, {"ok": True, "turn_id": turn_id, "receive_count": receive_count, "already_completed": True}
+    closed = close_on_last_receive(turn, receive_count, connect=connect, cause="shutdown",
+                                   sdk_session_id=sdk_session_id, defer=True)
+    return closed if closed is not None else (503, _shutdown_body(turn_id))
+
+
+def serve_real_turn(
+    turn: dict, receive_count: int, *, connect=pg_connect, run=run_turn_sync,
+    entry: Inflight | None = None,
+) -> tuple[int, dict]:
+    """Claim, skip a turn that already completed (releasing a held message it stranded),
+    else choose the SDK session id and run it on an attempt thread. ``(status, body)``.
+    A failure on the last receive closes the turn instead of answering 500 (U5 D3)."""
+    if entry is None:
+        with track(turn["turn_id"]) as entry:
+            return serve_real_turn(turn, receive_count, connect=connect, run=run, entry=entry)
+    turn_id = turn["turn_id"]
+    if SHUTDOWN.is_set():
+        return serve_after_shutdown(turn, receive_count, connect=connect)
     try:
         with connect(PG_DSN) as conn:
             claim(conn, turn, receive_count)
             done = turn_completed(conn, turn_id)
             sdk_session_id = None if done else choose_sdk_session_id(conn, turn["session_id"], str(uuid.uuid4()))
+            if done:
+                # U5: the attempt that closed this turn may have failed its release and
+                # answered 500. The guard keeps this from enqueuing a sibling beside a
+                # held turn that was already released and is running.
+                release_next_held(conn, turn["session_id"])
     except psycopg.Error as exc:
         error = f"{type(exc).__name__}: {exc}"
         log(ev="turn", turn_id=turn_id, receive_count=receive_count, status=500, error=error)
@@ -1193,16 +1704,182 @@ def serve_real_turn(turn: dict, receive_count: int, *, connect=psycopg.connect, 
     if done:
         log(ev="turn", turn_id=turn_id, receive_count=receive_count, status=200, already_completed=True)
         return 200, {"ok": True, "turn_id": turn_id, "receive_count": receive_count, "already_completed": True}
-    try:
-        summary = run(turn, receive_count, sdk_session_id)
-    except Exception as exc:  # noqa: BLE001 - every failure is a 500 the shim backs off on
-        error = f"{type(exc).__name__}: {exc}"
+    if SHUTDOWN.is_set():
+        return shutdown_reply(turn, receive_count, connect=connect, sdk_session_id=sdk_session_id)
+    kind, value = await_attempt(entry, lambda: run(turn, receive_count, sdk_session_id))
+    if kind == "shutdown" or isinstance(value, WorkerShutdown):
+        return shutdown_reply(turn, receive_count, connect=connect, sdk_session_id=sdk_session_id)
+    if kind == "error":
+        error = f"{type(value).__name__}: {value}"
         log(ev="turn", turn_id=turn_id, session_id=turn["session_id"], receive_count=receive_count,
             status=500, error=error)
+        if is_last_receive(receive_count):
+            closed = close_on_last_receive(turn, receive_count, connect=connect, cause="error",
+                                           sdk_session_id=sdk_session_id, error=error)
+            if closed is not None:
+                return closed
         return 500, {"ok": False, "turn_id": turn_id, "error": error}
+    summary = value
     log(ev="turn", turn_id=turn_id, session_id=turn["session_id"], receive_count=receive_count,
         status=200, **summary)
     return 200, {"ok": True, "turn_id": turn_id, "receive_count": receive_count, **summary}
+
+
+STUB_BEHAVIOURS = ("ok", "sleep", "fail", "crash")
+
+
+def serve_stub_turn(
+    turn: dict, receive_count: int, behaviour: str, seconds: float, *, connect=pg_connect,
+    entry: Inflight | None = None,
+) -> tuple[int, dict]:
+    """The D3 stub arms, under the same shutdown and last-receive rules as a real turn --
+    ``make proto-smoke``'s ``sigterm`` and ``dead_letter`` cases drive them."""
+    if entry is None:
+        with track(turn["turn_id"]) as entry:
+            return serve_stub_turn(turn, receive_count, behaviour, seconds, connect=connect, entry=entry)
+    turn_id = turn["turn_id"]
+    if SHUTDOWN.is_set():
+        return serve_after_shutdown(turn, receive_count, connect=connect)
+    try:
+        with connect(PG_DSN) as conn:
+            claim(conn, turn, receive_count)
+    except psycopg.Error as exc:
+        error = f"{type(exc).__name__}: {exc}"
+        log(ev="turn", turn_id=turn_id, behaviour=behaviour, receive_count=receive_count, status=500, error=error)
+        return 500, {"ok": False, "turn_id": turn_id, "error": error}
+
+    if behaviour == "fail":
+        log(ev="turn", turn_id=turn_id, behaviour=behaviour, receive_count=receive_count, status=500)
+        if is_last_receive(receive_count):
+            closed = close_on_last_receive(turn, receive_count, connect=connect, cause="error",
+                                           sdk_session_id=None, error="behaviour=fail")
+            if closed is not None:
+                return closed
+        return 500, {"ok": False, "turn_id": turn_id, "error": "behaviour=fail"}
+    if behaviour == "crash" and receive_count == 1:
+        log(ev="turn", turn_id=turn_id, behaviour=behaviour, receive_count=receive_count, status="crash")
+        os._exit(1)
+    if SHUTDOWN.is_set():
+        return shutdown_reply(turn, receive_count, connect=connect, sdk_session_id=None)
+
+    def attempt() -> int | None:
+        if behaviour == "sleep" and receive_count == 1 and SHUTDOWN.wait(seconds):
+            raise WorkerShutdown("sleep interrupted by worker shutdown")
+        if SHUTDOWN.is_set():
+            raise WorkerShutdown("worker shutting down before the stub completed")
+        with connect(PG_DSN) as conn:
+            return complete(conn, turn, receive_count, only_if_open=True)
+
+    kind, value = await_attempt(entry, attempt)
+    if kind == "shutdown" or isinstance(value, WorkerShutdown):
+        return shutdown_reply(turn, receive_count, connect=connect, sdk_session_id=None)
+    if kind == "error":
+        error = f"{type(value).__name__}: {value}"
+        log(ev="turn", turn_id=turn_id, behaviour=behaviour, receive_count=receive_count, status=500, error=error)
+        return 500, {"ok": False, "turn_id": turn_id, "error": error}
+    log(ev="turn", turn_id=turn_id, behaviour=behaviour, receive_count=receive_count, status=200, seq=value)
+    return 200, {"ok": True, "turn_id": turn_id, "receive_count": receive_count, "seq": value}
+
+
+# -- the dead-letter sweep (U5 D3) ---------------------------------------------
+
+SWEEP_SELECT = (
+    "SELECT t.turn_id, t.session_id, t.project_id, t.receive_count, s.sdk_session_id, "
+    "t.entries_seq_before "
+    "FROM turns t LEFT JOIN sessions s ON s.session_id = t.session_id "
+    "WHERE t.completed_at IS NULL AND t.outcome IS DISTINCT FROM %s "
+    "AND NOT (t.turn_id = ANY(%s::text[]))"
+)
+
+
+def sweep_query(
+    max_retries: int, visibility_s: int, retention_s: int, skip: list[str],
+) -> tuple[str, tuple] | None:
+    """The next turn no delivery can reach any more, locked ``SKIP LOCKED`` so a second
+    instance cannot close it twice; None when neither path is configured.
+
+    - fast, on when ``max_retries`` > 0: the last receive's visibility has lapsed, so the
+      message is in the DLQ or goes there on its next receive;
+    - backstop, on when ``retention_s`` > 0: SQS has deleted the message whatever the
+      configuration -- a mis-set max_retries, or a turn never claimed at all.
+
+    A held row (``outcome = 'queued'``) is never a candidate; its turn has not run."""
+    clauses: list[str] = []
+    params: list[Any] = [QUEUED_OUTCOME, skip]
+    if max_retries > 0:
+        clauses.append("(t.receive_count >= %s AND t.claimed_at < now() - make_interval(secs => %s))")
+        params += [max_retries, visibility_s + SWEEP_VISIBILITY_MARGIN_S]
+    if retention_s > 0:
+        clauses.append("COALESCE(t.claimed_at, t.enqueued_at) < now() - make_interval(secs => %s)")
+        params.append(retention_s)
+    if not clauses:
+        return None
+    sql = (SWEEP_SELECT + " AND (" + " OR ".join(clauses) + ") "
+           "ORDER BY t.enqueued_at LIMIT 1 FOR UPDATE OF t SKIP LOCKED")
+    return sql, tuple(params)
+
+
+def sweep_once(
+    *, connect=pg_connect, max_retries: int | None = None, visibility_s: int | None = None,
+    retention_s: int | None = None,
+) -> list[str]:
+    """Close every sweepable turn, one row per transaction: the row stays locked from the
+    SELECT to ``close_turn``'s commit. Turns this process is serving are skipped.
+    Returns the closed turn ids and logs ``ev=sweep`` when there are any."""
+    max_retries = SQSD_MAX_RETRIES if max_retries is None else max_retries
+    visibility_s = SQSD_VISIBILITY_TIMEOUT_S if visibility_s is None else visibility_s
+    retention_s = SQSD_RETENTION_PERIOD_S if retention_s is None else retention_s
+    closed: list[str] = []
+    with connect(PG_DSN) as conn:
+        for _ in range(SWEEP_BATCH):
+            if SHUTDOWN.is_set():
+                break
+            query = sweep_query(max_retries, visibility_s, retention_s, inflight_turn_ids())
+            if query is None:
+                break
+            with conn.cursor() as cur:
+                cur.execute(*query)
+                row = cur.fetchone()
+            if row is None:
+                conn.commit()
+                break
+            turn_id, session_id, project_id, receive_count, sdk_session_id, seq_before = row
+            turn = {"turn_id": turn_id, "session_id": session_id, "project_id": project_id}
+            # A turn never claimed has no high-water mark, and TURN_USAGE_SQL would then sum
+            # the whole session's history onto it: close it with no token sum instead.
+            seq = close_turn(conn, turn, int(receive_count or 0), cause="sweep",
+                             sdk_session_id=sdk_session_id if seq_before is not None else None)
+            conn.commit()
+            if seq is None:
+                break
+            closed.append(turn_id)
+    if closed:
+        log(ev="sweep", closed=closed)
+    return closed
+
+
+def start_sweep(
+    *, interval: float | None = None, max_retries: int | None = None, retention_s: int | None = None,
+) -> threading.Thread | None:
+    """The sweep thread, started only when ``SWEEP_INTERVAL_S`` > 0 and at least one path
+    is on -- so base compose, which sets neither, never closes the dev database's old
+    smoke leftovers or releases their held messages into paid turns."""
+    interval = SWEEP_INTERVAL_S if interval is None else interval
+    max_retries = SQSD_MAX_RETRIES if max_retries is None else max_retries
+    retention_s = SQSD_RETENTION_PERIOD_S if retention_s is None else retention_s
+    if interval <= 0 or (max_retries <= 0 and retention_s <= 0):
+        return None
+
+    def loop() -> None:
+        while not SHUTDOWN.wait(interval):
+            try:
+                sweep_once(max_retries=max_retries, retention_s=retention_s)
+            except Exception as exc:  # noqa: BLE001 - the next pass tries again
+                log(ev="sweep_failed", error=f"{type(exc).__name__}: {exc}")
+
+    thread = threading.Thread(target=loop, daemon=True, name="sweep")
+    thread.start()
+    return thread
 
 
 # -- HTTP ----------------------------------------------------------------------
@@ -1257,41 +1934,20 @@ class Handler(BaseHTTPRequestHandler):
             "message": message,
         }
 
-        if is_real_turn(message):
-            status, payload = serve_real_turn(turn, receive_count)
+        with track(turn["turn_id"]) as entry:
+            if is_real_turn(message):
+                status, payload = serve_real_turn(turn, receive_count, entry=entry)
+            else:
+                behaviour = message.get("behaviour", "ok")
+                seconds = float(message.get("seconds") or 0)
+                if behaviour in STUB_BEHAVIOURS:
+                    status, payload = serve_stub_turn(turn, receive_count, behaviour, seconds, entry=entry)
+                else:
+                    log(ev="turn", turn_id=turn["turn_id"], behaviour=behaviour, receive_count=receive_count, status=400)
+                    status, payload = 400, {"ok": False, "error": f"unknown behaviour {behaviour!r}"}
+            # Inside the block: the shutdown thread waits for `replied`, which is set
+            # only once this reply is written, so a 500 is never lost to the exit.
             self._reply(status, payload)
-            return
-
-        behaviour = message.get("behaviour", "ok")
-        seconds = float(message.get("seconds") or 0)
-        if behaviour not in ("ok", "sleep", "fail", "crash"):
-            log(ev="turn", turn_id=turn["turn_id"], behaviour=behaviour, receive_count=receive_count, status=400)
-            self._reply(400, {"ok": False, "error": f"unknown behaviour {behaviour!r}"})
-            return
-
-        try:
-            with psycopg.connect(PG_DSN) as conn:
-                claim(conn, turn, receive_count)
-
-            if behaviour == "fail":
-                log(ev="turn", turn_id=turn["turn_id"], behaviour=behaviour, receive_count=receive_count, status=500)
-                self._reply(500, {"ok": False, "turn_id": turn["turn_id"], "error": "behaviour=fail"})
-                return
-            if behaviour == "crash" and receive_count == 1:
-                log(ev="turn", turn_id=turn["turn_id"], behaviour=behaviour, receive_count=receive_count, status="crash")
-                os._exit(1)
-            if behaviour == "sleep" and receive_count == 1:
-                time.sleep(seconds)
-
-            with psycopg.connect(PG_DSN) as conn:
-                seq = complete(conn, turn, receive_count)
-        except psycopg.Error as exc:
-            log(ev="turn", turn_id=turn["turn_id"], behaviour=behaviour, receive_count=receive_count, status=500, error=f"{type(exc).__name__}: {exc}")
-            self._reply(500, {"ok": False, "turn_id": turn["turn_id"], "error": f"{type(exc).__name__}: {exc}"})
-            return
-
-        log(ev="turn", turn_id=turn["turn_id"], behaviour=behaviour, receive_count=receive_count, status=200, seq=seq)
-        self._reply(200, {"ok": True, "turn_id": turn["turn_id"], "receive_count": receive_count, "seq": seq})
 
 
 def main() -> None:
@@ -1300,9 +1956,20 @@ def main() -> None:
         sys.stderr.reconfigure(encoding="utf-8")
     prepare()
     server = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
+    install_signal_handlers(server)
+    sweeper = start_sweep()
     log(ev="start", port=PORT, pg_dsn=PG_DSN.split("@")[-1], cwd=WORKER_CWD,
-        provider=os.environ.get("MODEL_PROVIDER") or "anthropic")
+        provider=os.environ.get("MODEL_PROVIDER") or "anthropic",
+        sqsd_max_retries=SQSD_MAX_RETRIES, sqsd_visibility_timeout_s=SQSD_VISIBILITY_TIMEOUT_S,
+        sqsd_retention_period_s=SQSD_RETENTION_PERIOD_S, sweep_interval_s=SWEEP_INTERVAL_S,
+        sweep=sweeper is not None, shutdown_grace_s=SHUTDOWN_GRACE_S)
     server.serve_forever()
+    if _SHUTDOWN_THREAD is not None:
+        # A daemon: its second wait, the releases and ev=shutdown run after
+        # serve_forever returns, and must finish before the interpreter exits.
+        _SHUTDOWN_THREAD.join(SHUTDOWN_GRACE_S + RELEASE_BUDGET_S + 2)
+    server.server_close()
+    # Returning exits 0; the SDK's atexit reaper then SIGTERMs any CLI child still alive.
 
 
 if __name__ == "__main__":

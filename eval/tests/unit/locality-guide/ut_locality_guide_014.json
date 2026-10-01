@@ -12,11 +12,12 @@
       "employment registers",
       "unions",
       "archives",
-      "jurisdiction-awareness"
+      "jurisdiction-awareness",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I\u2019m researching ancestors in Pittsburgh during the late 1800s steel industry boom. What records or repositories would help trace families through occupational and industrial sources?",
+    "delegation": "I'm researching ancestors in Pittsburgh during the late 1800s steel industry boom. What records or repositories would help trace families through occupational and industrial sources?\n\nprojectPath: <workspace>",
     "scenario": "empty-project-just-created",
     "scenario_notes": null
   },
@@ -26,6 +27,7 @@
   "mcp_fixtures": [
     "place-search-pittsburgh",
     "place-search-pennsylvania",
+    "place-search-any",
     "collections-search-pennsylvania",
     "wikipedia-search-pittsburgh",
     "wiki-search-pittsburgh-steel-industry",

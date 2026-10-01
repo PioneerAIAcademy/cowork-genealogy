@@ -3163,6 +3163,7 @@ describe("Research closed shapes", () => {
       proof_claim_relationship: schema.$defs.proof_claim_relationship,
       evaluation_entry: schema.$defs.evaluation_entry,
       locality: schema.$defs.locality,
+      warning_justification: schema.$defs.warning_justification,
     };
 
     expect(Object.keys(defFor).sort()).toEqual(Object.keys(RESEARCH_SHAPES).sort());

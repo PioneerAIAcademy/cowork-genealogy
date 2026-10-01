@@ -35,6 +35,7 @@ import {
   hasNoChildrenConflict,
   hasNoCoupleRelationshipsConflict,
   hasStillbirthConflict,
+  hasEventInOtherCountry,
   calculateWarnings,
 } from "../../src/tools/person-warnings.js";
 import { Mob } from "../../src/utils/mob.js";
@@ -4228,5 +4229,305 @@ describe("person_quality fact-type URIs survive the real converter", () => {
     expect(tagsFor("H")).toContain("hasNoChildrenConflict");
     expect(tagsFor("N")).toContain("hasNoCoupleRelationshipsConflict");
     expect(tagsFor("ST")).toContain("hasStillbirthConflict");
+  });
+});
+// ────────────────────────────────────────────────────────────────────
+// hasEventInOtherCountry — project rule (not a FamilySearch Java port)
+// ────────────────────────────────────────────────────────────────────
+
+describe("hasEventInOtherCountry", () => {
+  it("fires when a Couple-relationship marriage is in a country inconsistent with birth and death", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N1", given: "Elsie", surname: "Chamberlain" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "ABT 1790",
+              standard_date: "Abt 1790",
+              standard_place: "Newbury, Orange, Vermont, United States",
+            },
+            {
+              id: "F2",
+              type: "Death",
+              date: "20 Dec 1865",
+              standard_date: "20 December 1865",
+              standard_place: "Ryegate, Caledonia, Vermont, United States",
+            },
+          ],
+        },
+        {
+          id: "I2",
+          gender: "Male",
+          names: [{ id: "N2", given: "Gilchrist", surname: "Unknown" }],
+        },
+      ],
+      relationships: [
+        {
+          id: "R1",
+          type: "Couple",
+          person1: "I1",
+          person2: "I2",
+          facts: [
+            {
+              id: "F3",
+              type: "Marriage",
+              date: "4 Jan 1830",
+              standard_date: "4 January 1830",
+              standard_place:
+                "St Andrews, Fife, Scotland, United Kingdom",
+            },
+          ],
+        },
+      ],
+    };
+    const warnings = finalWarnings(new Mob(tree, "I1"));
+    const w = warnings.find(
+      (x) => x.issueType === "hasEventInOtherCountry",
+    );
+    expect(w).toBeDefined();
+    expect(w!.severity).toBe("implausible");
+    expect(w!.message).toContain("Marriage");
+    expect(w!.message).toContain("United Kingdom");
+    expect(w!.message).toContain("United States");
+    expect(w!.facts).toBeDefined();
+    expect(w!.facts!.some((f) => f.type === "Birth")).toBe(true);
+    expect(w!.facts!.some((f) => f.type === "Death")).toBe(true);
+    expect(w!.facts!.some((f) => f.type === "Marriage")).toBe(true);
+  });
+
+  it("fires when a person-level fact is in a different country", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N1", given: "Elsie", surname: "Chamberlain" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "1790",
+              standard_date: "1790",
+              standard_place: "Newbury, Orange, Vermont, United States",
+            },
+            {
+              id: "F2",
+              type: "Death",
+              date: "1865",
+              standard_date: "1865",
+              standard_place: "Ryegate, Caledonia, Vermont, United States",
+            },
+            {
+              id: "F3",
+              type: "Marriage",
+              date: "1830",
+              standard_date: "1830",
+              standard_place: "St Andrews, Fife, Scotland, United Kingdom",
+            },
+          ],
+        },
+      ],
+    };
+    const mob = new Mob(tree, "I1");
+    expect(hasEventInOtherCountry(mob)).toBe(true);
+    const warnings = finalWarnings(mob);
+    const w = warnings.find(
+      (x) => x.issueType === "hasEventInOtherCountry",
+    );
+    expect(w).toBeDefined();
+    expect(w!.message).toContain("Marriage");
+    expect(w!.message).toContain("United Kingdom");
+    expect(w!.message).toContain("United States");
+  });
+
+  it("does NOT fire when only birth anchors exist (no death)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N1", given: "Jane", surname: "Doe" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "1800",
+              standard_date: "1800",
+              standard_place: "Bennington, Bennington, Vermont, United States",
+            },
+            {
+              id: "F2",
+              type: "Marriage",
+              date: "1825",
+              standard_date: "1825",
+              standard_place: "London, Middlesex, United Kingdom",
+            },
+          ],
+        },
+      ],
+    };
+    expect(hasEventInOtherCountry(new Mob(tree, "I1"))).toBe(false);
+  });
+
+  it("does NOT fire when a skip-set fact (Census) is in a different country", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "John", surname: "Smith" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "1800",
+              standard_date: "1800",
+              standard_place: "Bennington, Bennington, Vermont, United States",
+            },
+            {
+              id: "F2",
+              type: "Death",
+              date: "1870",
+              standard_date: "1870",
+              standard_place: "Bennington, Bennington, Vermont, United States",
+            },
+            {
+              id: "F3",
+              type: "Census",
+              date: "1841",
+              standard_date: "1841",
+              standard_place: "London, Middlesex, United Kingdom",
+            },
+          ],
+        },
+      ],
+    };
+    expect(hasEventInOtherCountry(new Mob(tree, "I1"))).toBe(false);
+  });
+
+  it("does NOT fire when birth and death countries disagree (emigrant)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "John", surname: "McLeod" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "1790",
+              standard_date: "1790",
+              standard_place: "Edinburgh, Midlothian, Scotland, United Kingdom",
+            },
+            {
+              id: "F2",
+              type: "Death",
+              date: "1860",
+              standard_date: "1860",
+              standard_place: "Bennington, Bennington, Vermont, United States",
+            },
+            {
+              id: "F3",
+              type: "Marriage",
+              date: "1825",
+              standard_date: "1825",
+              standard_place: "Paris, Ile-de-France, France",
+            },
+          ],
+        },
+      ],
+    };
+    const warnings = finalWarnings(new Mob(tree, "I1"));
+    expect(
+      warnings.find((x) => x.issueType === "hasEventInOtherCountry"),
+    ).toBeUndefined();
+  });
+
+  it("does NOT fire when a fact has no standard_place", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "John", surname: "Smith" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "1800",
+              standard_date: "1800",
+              standard_place: "Bennington, Bennington, Vermont, United States",
+            },
+            {
+              id: "F2",
+              type: "Death",
+              date: "1870",
+              standard_date: "1870",
+              standard_place: "Bennington, Bennington, Vermont, United States",
+            },
+            {
+              id: "F3",
+              type: "Marriage",
+              date: "1825",
+              standard_date: "1825",
+              place: "Some place in Scotland",
+            },
+          ],
+        },
+      ],
+    };
+    const warnings = finalWarnings(new Mob(tree, "I1"));
+    expect(
+      warnings.find((x) => x.issueType === "hasEventInOtherCountry"),
+    ).toBeUndefined();
+  });
+
+  it("does NOT fire for England-vs-United Kingdom (same umbrella country)", () => {
+    // The bidirectional check protects against this: a birth in "..., England"
+    // (constituent only) and a marriage in "..., United Kingdom" (umbrella).
+    // countryConsistency(UK, England) = "contradiction" but
+    // countryConsistency(England, UK) = "ok" — so they are NOT different.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "John", surname: "Smith" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "1800",
+              standard_date: "1800",
+              standard_place: "Wednesbury, Staffordshire, England",
+            },
+            {
+              id: "F2",
+              type: "Death",
+              date: "1870",
+              standard_date: "1870",
+              standard_place: "Wednesbury, Staffordshire, England",
+            },
+            {
+              id: "F3",
+              type: "Marriage",
+              date: "1825",
+              standard_date: "1825",
+              standard_place: "London, Middlesex, United Kingdom",
+            },
+          ],
+        },
+      ],
+    };
+    const warnings = finalWarnings(new Mob(tree, "I1"));
+    expect(
+      warnings.find((x) => x.issueType === "hasEventInOtherCountry"),
+    ).toBeUndefined();
   });
 });
