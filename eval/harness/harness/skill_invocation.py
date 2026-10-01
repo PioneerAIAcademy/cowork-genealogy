@@ -1082,6 +1082,12 @@ DEDICATED_AGENT_NAMES = frozenset(
         # folder. Listed because the set is asserted equal to the shipped agent
         # files.
         "search-familysearch-wiki",
+        # Same shape as `citation` (issue #2792): a converted skill, no hook
+        # route. It is listed because the set is asserted equal to the shipped
+        # agent files, and because a `hypotheses` write arriving from it is
+        # legitimate -- `ownership.json` names `agent:hypothesis-tracking` on
+        # that row. Do not read its presence here as evidence of a hook route.
+        "hypothesis-tracking",
         # Same shape as `search-images`, `citation`, and `search-wikipedia`
         # (issue #2804): a cost-motivated conversion, no hook route, and it
         # writes no project state. Listed because the set is asserted equal to

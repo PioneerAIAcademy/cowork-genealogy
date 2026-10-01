@@ -9,11 +9,12 @@
       "hypothesis-creation",
       "claim-clarity",
       "from-scratch",
-      " status-transitions"
+      " status-transitions",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I'm just getting started on figuring out who Patrick Flynn's father was. My best guess right now is a Thomas Flynn who lived in Schuylkill County, Pennsylvania in the 1840s. Can you set up a hypothesis so I can track this as I find more evidence?",
+    "delegation": "I'm just getting started on figuring out who Patrick Flynn's father was. My best guess right now is a Thomas Flynn who lived in Schuylkill County, Pennsylvania in the 1840s. Can you set up a hypothesis so I can track this as I find more evidence?\n\nprojectPath: <workspace>",
     "scenario": "empty-project-just-created",
     "scenario_notes": null
   },

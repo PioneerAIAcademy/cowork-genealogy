@@ -4,16 +4,17 @@
     "skill": "hypothesis-tracking",
     "name": "Rule out parentage hypothesis when timeline makes it impossible",
     "type": "positive",
-    "description": "The scenario has hypothesis h_002 (Thomas Flynn of Luzerne County is Patrick's father) with one supporting assertion (same surname, right age). A new death record assertion shows Thomas of Luzerne died in 1840, five years before Patrick's estimated 1845 birth. The skill should recognize this as a chronological impossibility, add the death record to contradicting_assertion_ids, transition status to ruled_out, and provide a specific ruled_out_reason citing the timeline impossibility.",
+    "description": "The scenario has hypothesis h_002 (Thomas Flynn of Luzerne County is Patrick's father) with one supporting assertion (same surname, right age). A new death record assertion shows Thomas of Luzerne died in 1840, five years before Patrick's estimated 1845 birth. The agent should recognize this as a chronological impossibility, add the death record to contradicting_assertion_ids, transition status to ruled_out, and provide a specific ruled_out_reason citing the timeline impossibility.",
     "tags": [
       "hypothesis",
       "ruled-out",
       "timeline",
-      "parentage"
+      "parentage",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I just found a death record showing Thomas Flynn of Luzerne County died in 1840. Update hypothesis h_002.\" makes sense — Claude can look at the research.json, find h_002, see the death assertion a_016, and reason about the timeline impossibility.",
+    "delegation": "I just found a death record showing Thomas Flynn of Luzerne County died in 1840. Update hypothesis h_002.\n\nprojectPath: <workspace>",
     "scenario": "flynn-competing-fathers",
     "scenario_notes": null
   },

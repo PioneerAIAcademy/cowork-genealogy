@@ -649,6 +649,50 @@ async function preflightQueryFilterClaims(op: ResearchLogAppendOp, projectPath: 
   );
 }
 
+const QUERY_REQUIRED_MESSAGE =
+  "`query` is required. Supply it as an object — search parameters for a " +
+  'search entry, or a keyed identifier for a read-style entry (e.g. ' +
+  '`{"recordId": "ark:/61903/1:1:XXXX-XXX"}` for record_read, ' +
+  '`{"imageArk": "..."}` for image_transcribe). It may be omitted only ' +
+  "when `stagedResultsRef` points at a staged payload that already " +
+  "carries the query.";
+
+/**
+ * Fill an omitted `tool` from the staged envelope, then refuse once naming every
+ * required field still missing. Runs first, so every later preflight sees the
+ * filled `tool`. Without it an omitted `tool` reached the staging check as
+ * `'undefined'` and read as a mismatch, and a caller that dropped the staged ref
+ * to get past it lost the search's results (feedback issue #3069).
+ */
+async function preflightRequiredFields(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
+  const ref = asNull(op.stagedResultsRef);
+  if ((op.tool === undefined || op.tool === null || op.tool === "") && typeof ref === "string") {
+    const staged = await readStagedEnvelopeQuery(projectPath, ref);
+    if (!staged) return; // an unreadable ref is preflightStagedRef's error to report
+    op.tool = staged.tool;
+  }
+  const toolMissing = op.tool === undefined || op.tool === null || op.tool === "";
+  const queryMissing = typeof ref !== "string" && (op.query === undefined || op.query === null);
+  const missing: string[] = [];
+  if (toolMissing) missing.push("`tool`");
+  if (op.outcome === undefined || op.outcome === null) missing.push("`outcome`");
+  if (op.resultsExamined === undefined || op.resultsExamined === null) missing.push("`resultsExamined`");
+  if (queryMissing) missing.push("`query`");
+  if (missing.length === 0) return;
+  throw new LogAppendError(
+    `missing required ${missing.length === 1 ? "field" : "fields"} ${missing.join(", ")}.` +
+      (toolMissing
+        ? " `tool` names the tool that produced the entry (e.g. 'record_search'); it may be " +
+          "omitted only alongside a `stagedResultsRef`, which records it."
+        : "") +
+      (queryMissing ? ` ${QUERY_REQUIRED_MESSAGE}` : "") +
+      (typeof ref === "string"
+        ? " Keep the `stagedResultsRef` when re-sending: it is what keeps the search's results " +
+          "with the log entry."
+        : ""),
+  );
+}
+
 /**
  * Check one op's staged ref BEFORE any op is applied — it exists under
  * results/.staging/ and its tool matches — so a bad ref in op[1] is refused
@@ -1010,14 +1054,7 @@ async function applyLogAppendOp(
   // error — fail loudly here rather than writing an entry the validator will
   // reject on the next append.
   if (entry.query === undefined) {
-    throw new LogAppendError(
-      "`query` is required. Supply it as an object — search parameters for a " +
-        'search entry, or a keyed identifier for a read-style entry (e.g. ' +
-        '`{"recordId": "ark:/61903/1:1:XXXX-XXX"}` for record_read, ' +
-        '`{"imageArk": "..."}` for image_transcribe). It may be omitted only ' +
-        "when `stagedResultsRef` points at a staged payload that already " +
-        "carries the query.",
-    );
+    throw new LogAppendError(QUERY_REQUIRED_MESSAGE);
   }
 
   // 4. Append (append-only — existing entries are never touched).
@@ -1076,6 +1113,7 @@ export async function researchLogAppend(
       if (duplicate) return { ok: false, errors: [duplicate] };
       for (let i = 0; i < input.ops.length; i++) {
         try {
+          await preflightRequiredFields(input.ops[i], projectPath);
           await preflightStagedRef(input.ops[i], projectPath);
           await preflightCensusHedge(input.ops[i], projectPath);
           await preflightQueryFilterClaims(input.ops[i], projectPath);
@@ -1137,6 +1175,7 @@ export async function researchLogAppend(
       externalSite: input.externalSite,
       stagedResultsRef: input.stagedResultsRef,
     };
+    await preflightRequiredFields(singleOp, projectPath);
     await preflightStagedRef(singleOp, projectPath);
     await preflightCensusHedge(singleOp, projectPath);
     await preflightQueryFilterClaims(singleOp, projectPath);
@@ -1218,7 +1257,8 @@ export const researchLogAppendSchema = {
         description:
           "The tool/source that produced this entry, e.g. 'record_search', " +
           "'fulltext_search', 'external_links_search', 'image_search', 'person_read', or " +
-          "'external_site'. Must match the staged file's tool when stagedResultsRef is given.",
+          "'external_site'. Must match the staged file's tool when stagedResultsRef is given; " +
+          "may be omitted alongside stagedResultsRef, which records it.",
       },
       query: {
         type: "object",
@@ -1301,11 +1341,11 @@ export const researchLogAppendSchema = {
             externalSite: { type: ["object", "null"] },
             stagedResultsRef: { type: ["string", "null"] },
           },
-          // `query` is deliberately absent: it may be omitted when
+          // `query` and `tool` are deliberately absent: both may be omitted when
           // `stagedResultsRef` carries a payload the producing tool already
-          // stamped with its own query. Enforced in code (applyLogAppendOp),
-          // which fails loudly when neither source supplies one.
-          required: ["tool", "outcome", "resultsExamined"],
+          // stamped with its own name and query. Enforced in code
+          // (preflightRequiredFields), which names every field still missing.
+          required: ["outcome", "resultsExamined"],
         },
       },
     },
