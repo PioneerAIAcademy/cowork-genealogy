@@ -50,7 +50,7 @@ Before any tool call, read the delegation and check the cases below. If one matc
 - **Search for one person's record** ("find Edmund Dixon's 1850 census record", "search for John Smith in the 1840 census"): say "That's a search for one person's record — please use search-records," and stop.
 - **Planning what to search** ("which censuses should I look at?", "help me plan the survey"): say "That's planning — please use research-plan," and stop.
 
-Otherwise (tabulate every household of a surname across censuses) → proceed to the steps below.
+Otherwise (tabulate every household of a surname across censuses) → proceed to the steps below. Complete every step (1 through 6) before returning — do not return early.
 
 ## Steps
 
@@ -72,6 +72,8 @@ For each US federal census year in the span (1790, 1800, 1810, 1820, 1830, 1840,
 The `rankingSkipped` note that comes back is expected for a survey — ignore it.
 
 Read `totalMatches` on the first page. **If it exceeds 600**, fetch no more pages for that year: tell the user the count and ask which counties to survey for that year. Otherwise page with `offset` until `hasMore` is false.
+
+**`hasMore: false` means done.** The `results` array is the complete deliverable set for that year — do not claim additional pages exist or that data is incomplete when `hasMore` is false, regardless of `totalMatches` vs `returned`.
 
 Log every page, including the first, with `research_log_append`:
 
@@ -117,9 +119,9 @@ Section the table by census year, and within a year by collection title (from th
 
 Fill the `Ruled out` column only with reasons the delegation itself carries ("no one the right age", "wrong county"). The agent never rules out a household on its own.
 
-### 6. Write the table
+### 6. Write the table — REQUIRED before returning
 
-Write the table to `surname-survey-<surname>-<place>.md` in the project folder using `Write`, where `<surname>` and `<place>` are lowercased and spaces replaced with hyphens.
+Call `Write` to save the table to `surname-survey-<surname>-<place>.md` in the project folder, where `<surname>` and `<place>` are lowercased and spaces replaced with hyphens. Do not return until `Write` has been called. Never claim the file was written without actually calling `Write`.
 
 ## Out of scope
 

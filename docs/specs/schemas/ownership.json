@@ -189,7 +189,8 @@
         "skill:search-external-sites",
         "skill:search-full-text",
         "skill:search-images",
-        "skill:record-extraction"
+        "skill:record-extraction",
+        "agent:survey-surname"
       ],
       "agentCallers": [
         {
