@@ -1715,13 +1715,14 @@ def test_no_out_of_lane_section_writes(blocked_owned_section_writes):
 #
 # Bounds reused verbatim from packages/engine/mcp-server/src/tools/
 # person-warnings.ts (earliestChildBirthToBirth12, earliestChildBirthToBirthMale14,
-# latestChildBirthToBirth80) rather than invented here. Known gap this inherits
-# rather than papers over: person-warnings.ts has no female-specific LOWER bound
-# (only general <=12, male-specific <=14), so a mother's age-14 birth -- the exact
-# age in issue #1642 Finding 2's motivating bug (jimmie-jewel-neal/
-# run-2026-07-31_13-02-13, the Wood-family adoption) -- is not caught by either
-# lower bound. That is a separate open question for person-warnings.ts's own
-# coverage, not something this validator papers over.
+# latestChildBirthToBirth80) rather than invented here. person-warnings.ts gained a
+# female-specific LOWER bound (earliestChildBirthToBirthFemale14) in issue #2007, so
+# the tool now catches the mother's age-14 birth that motivated issue #1642 Finding 2
+# (jimmie-jewel-neal/run-2026-07-31_13-02-13, the Wood-family adoption). This
+# validator deliberately does NOT mirror it: adding a bound changes what runs are
+# flagged, which changes grading, and that is a measured change rather than a side
+# effect. Same shape as _PARENT_AGE_UPPER_FEMALE below, which is documented here and
+# likewise not enforced.
 #
 # _PARENT_AGE_UPPER_FEMALE (45, person-warnings.ts's latestChildBirthToBirthFemale45)
 # is deliberately NOT enforced here -- chesworthrm review, issue #1642. It was live
@@ -1793,9 +1794,10 @@ def test_parent_child_age_plausibility_flagged(before_state, after_state):
     Detection primitive reused, not reinvented: the age bounds are a subset of
     what packages/engine/mcp-server/src/tools/person-warnings.ts already treats
     as implausible for `check-warnings` (earliestChildBirthToBirth12 / Male14,
-    latestChildBirthToBirth80) -- see the module comment above for the coverage
-    gaps this inherits (no female-specific lower bound) or deliberately does not
-    enforce yet (Female45 upper bound, dropped pending issue #1837).
+    latestChildBirthToBirth80) -- see the module comment above for the bounds
+    this deliberately does not mirror: the Female14 lower bound, which the tool
+    has and this validator does not enforce, and the Female45 upper bound,
+    dropped pending issue #1837.
 
     A relationship this flags must carry a `notes[]` entry using inference/
     uncertainty language (see _UNCERTAINTY_MARKERS) -- the same shape as

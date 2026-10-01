@@ -33,7 +33,7 @@ mob."
   report on a relationship between the anchor and a one-hop relative.
 
 **Single-person warnings run on the anchor *and* its one-hop relatives,
-not the anchor alone.** 27 of the 48 self-checks have a relative-mob variant
+not the anchor alone.** 28 of the 49 self-checks have a relative-mob variant
 (`relatives*`, `maleRelatives*`, `femaleRelatives*`) that fires the same
 condition on a parent, spouse, or child; the flagged relative is named in
 the warning's `personId`/`personName`. The other 21 run on the anchor only.
@@ -196,11 +196,11 @@ helpers.
 All warnings are evaluated relative to the **anchor person** (the
 required `personId`) and its one-hop relatives. Single-person checks
 read the anchor's own facts; relationship checks consider relationships
-in which the anchor participates (as parent, spouse, or child); and 27 of
-the 48 self-checks have a `relatives*`/`maleRelatives*`/`femaleRelatives*`
+in which the anchor participates (as parent, spouse, or child); and 28 of
+the 49 self-checks have a `relatives*`/`maleRelatives*`/`femaleRelatives*`
 variant that fires the same condition on a one-hop relative.
 
-The full catalogue of the **75 tags** the tool emits in `issueType` is
+The full catalogue of the **77 tags** the tool emits in `issueType` is
 the § Tag Catalogue below. It is the source of truth an implementation is
 checked against, and the drift lint
 (`tests/packaging/person-warnings-spec-drift.test.ts`) fails if it and
@@ -434,7 +434,7 @@ tool.
 
 ### Tag Catalogue
 
-The full set of **75** tags the tool emits in `issueType`. Each row is
+The full set of **77** tags the tool emits in `issueType`. Each row is
 `Tag`, `Severity`, `Rule` (the condition that fires it), and `Cause`
 (what it usually indicates). `scoreType` is `COHERENCE` for every tag.
 The bidirectional drift lint
@@ -469,6 +469,7 @@ imprecise dates are widened per § Date Parsing Rules.
 |-----|----------|------|-------|
 | `earliestChildBirthToBirth12` | implausible | The person had a child at age 12 or younger | Wrong birth date on person or child, or wrong parent-child link |
 | `earliestChildBirthToBirthMale14` | implausible | Father had a child at age 14 or younger | As above, male-gated |
+| `earliestChildBirthToBirthFemale14` | implausible | Mother was age 14 or younger at a child's birth | As above, female-gated |
 | `latestChildBirthToBirth80` | implausible | A child was born 80 or more years after this person's birth | Wrong date or a generation skipped in the link |
 | `latestChildBirthToBirthFemale45` | implausible | Mother was age 45 or older at a child's birth | Wrong date or wrong mother attribution |
 | `earliestChildMarriageToBirth30` | implausible | A child married before this person reached age 30 | Very young parenthood, or a wrong date/link |
@@ -547,7 +548,7 @@ counterpart.
 
 #### Relative-mob mirrors (`implausible`)
 
-27 of the 48 self-checks above have a relative-mob variant that fires the
+28 of the 49 self-checks above have a relative-mob variant that fires the
 same condition on a one-hop relative (parent, spouse, or child) instead of
 the anchor; the other 21 run on the anchor only. They are **always
 `implausible`** regardless of the self-check's
@@ -572,6 +573,7 @@ mirrored self-check for the rule.
 | `relativesChildBirthRange40` | implausible | `childBirthRange40` |
 | `relativesEarliestChildBirthToBirth12` | implausible | `earliestChildBirthToBirth12` |
 | `maleRelativesEarliestChildBirthToBirth14` | implausible | `earliestChildBirthToBirthMale14` |
+| `femaleRelativesEarliestChildBirthToBirth14` | implausible | `earliestChildBirthToBirthFemale14` |
 | `relativesLatestChildBirthToBirth80` | implausible | `latestChildBirthToBirth80` |
 | `femaleRelativesLatestChildBirthToBirth45` | implausible | `latestChildBirthToBirthFemale45` |
 | `relativesEarliestChildMarriageToBirth30` | implausible | `earliestChildMarriageToBirth30` |
@@ -694,7 +696,7 @@ fixture trees; there are no `extractYear`/`extractEarliestYear`/
 `extractLatestYear` tests, because those helpers do not exist (date
 handling is tested where it lives, under `src/utils/`).
 
-**Per-tag coverage is partial.** Roughly half of the 74 tags are named
+**Per-tag coverage is partial.** Roughly half of the 77 tags are named
 in that test file; the rest are covered indirectly or not at all. The
 drift lint proves a tag is *documented and emitted*, never that its
 catalogue entry reads correctly — so a reviewer verifying a
@@ -739,12 +741,34 @@ and need not be added to that reference.
 5. Add unit tests in `tests/tools/person-warnings.test.ts`.
 6. Add the tag's row to § Tag Catalogue in this spec.
 7. Bump the three hardcoded tag-count assertions in
-   `tests/packaging/person-warnings-spec-drift.test.ts` (the `toBe(74)` guards)
+   `tests/packaging/person-warnings-spec-drift.test.ts` (the `toBe(77)` guards)
    to the new total.
 8. **Run the drift lint** (`make engine-test`, or the
    `tests/packaging/person-warnings-spec-drift.test.ts` suite directly).
    It is bidirectional: it fails if the tag is emitted but undocumented,
    or documented but not emitted. Steps 4 and 6 both feed it.
+
+**The drift lint cannot check step 3.** It reads the source *text* for
+`issueType:`, so it finds the tag inside a `checkX` body whether or not
+`calculateWarnings` ever calls it. Skip the wiring and the lint still passes,
+with a check that can never fire — and every self-check in the relative-mob
+family has a twin, so the usual way to get this wrong is to wire one and not
+the other. Only a unit test that drives `calculateWarnings` proves step 3; write
+one per check, not one per pair.
+
+**Two tools consume these warnings, not one.** `merge_warnings` imports
+`calculateWarnings` and surfaces the result as its pre-merge coherence gate, so a
+new tag changes that tool's output too — its `warningCount` rises, and a
+`contradiction` severity there is load-bearing in a way `implausible` is not.
+A grep for an existing tag name will not find this: the consumer imports the
+function, not a tag. Grep for `calculateWarnings` when sizing the blast radius.
+
+**The prose counts in this spec are not linted.** `catalogueTags()` compares the
+tag *set* only, so every sentence stating a total ("the N tags", "M of the K
+self-checks") ships stale and silent. Update them with step 7; `git grep -n` for
+the old numbers across this file and
+`docs/person-quality-vs-person-warnings-coverage.md`, and read the hits rather
+than trusting a single-line replacement — several of these sentences wrap.
 
 No schema changes needed — warnings are a flat array of the same
 `PersonWarning` shape.
@@ -762,7 +786,13 @@ renamed from the retired `error` / `warning`.
 
 > **Struck — shipped:** several rows this table once listed have shipped,
 > so they are struck the way `MOTHER_TOO_OLD` was:
-> - `MOTHER_TOO_YOUNG` → `earliestChildBirthToBirth12`.
+> - `MOTHER_TOO_YOUNG` → `earliestChildBirthToBirth12`, and also
+>   `earliestChildBirthToBirthFemale14`. That tag was chosen over widening
+>   `earliestChildBirthToBirth12`'s cutoff to 14, which the same measurement shows adds
+>   **0** male-or-other hits — so false positives are not what decided it. What decided it
+>   is that widening renames a ported tag and moves its semantics away from
+>   `warnings.java`, where adding a female-gated tag is the same documented divergence
+>   `latestChildBirthToBirthFemale45` already makes.
 > - `LIVED_TOO_LONG` → `hasAgeRangeGreaterThan120`.
 > - `BIRTH_AFTER_MOTHER_DEATH` → `hasDeathBeforeChildBirthFemale365`
 >   (loose) and `hasDeathBeforeChildBirthFemale2` (exact-day).
