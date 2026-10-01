@@ -26,7 +26,7 @@ first transcript append can never land under an id no row names -- and passed as
 ``session_id=`` on a fresh session or ``resume=`` when the session store already holds
 entries for it (a mid-turn kill on either path resumes on redelivery); the options from
 ``options.py``; ``get_server_info()`` checked for the fourteen bare agent names
-(``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 19
+(``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 18
 ``genealogy-research:<skill>`` commands (``EXPECTED_SKILLS``, a literal -- never a count
 of the directory the SDK loads from) BEFORE the query bills a token (D15) -- a miss
 is a 500; the CLI's ``system/init`` must arrive and declare the chosen id, or the
@@ -188,7 +188,7 @@ EXPECTED_AGENTS = frozenset({
 # The other half of the same precondition, a literal for the same reason: a count of
 # the directory the SDK loads the plugin from shrinks with it -- an image shipping 18
 # skills registers 18 and passes. test_proto_worker pins this against the repo.
-EXPECTED_SKILLS = 19
+EXPECTED_SKILLS = 18
 
 _stdout_lock = threading.Lock()
 
