@@ -628,6 +628,14 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // The folded validate-schema skill (issue #2798) holds the one tool that skill
+  // declared. No `Read`: the tool reads both project files itself, and nothing
+  // in the body reads a file directly. Writes nothing, so no hook route.
+  "validate-schema.md": {
+    tools: ["validate_research_schema"],
+    denies: [],
+  },
+
   // search-wikipedia (issue #2795) holds the one tool the skill it replaced
   // declared — `wikipedia_search` — plus the built-in `Write`, decided by
   // review-ready on 2026-09-24 and accepted by the lead the same day, on the

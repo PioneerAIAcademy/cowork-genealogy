@@ -32,6 +32,16 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+/** The person TREE reads made so far: memories and portrait pages are other
+ *  endpoints and are not counted. Sources are always read now, so every
+ *  non-living subject also pages its memories; counting those would make each
+ *  fan-out assertion depend on the memories leg. */
+function treeReads(): string[] {
+  return mockFetch.mock.calls
+    .map((c) => String(c[0]))
+    .filter((u) => /\/tree\/persons\/[^/?]+(\?|$)/.test(u));
+}
+
 // ─── Fixtures ─────────────────────────────────────────────────────────────
 
 function mockOk(body: FSTreeResponse): void {
@@ -403,13 +413,18 @@ describe("personReadTool", () => {
     );
   });
 
-  // 3b. Omits flags from the URL when not requested
-  it("omits flags from the request URL when not set", async () => {
-    mockOk(PERSON_ONLY);
-    await personReadTool({ personId: "KNDX-MKG" }, LOCAL);
+  // 3b. The flags are ignored: a caller cannot suppress relatives or sources
+  it.each([
+    [{}],
+    [{ relatives: false, sourceDescriptions: false }],
+  ])("a caller cannot suppress relatives or sources (%j)", async (flags) => {
+    mockOk({ ...WITH_RELATIVES, sourceDescriptions: WITH_SOURCES.sourceDescriptions });
+    const result = await personReadTool({ personId: "KNDX-MKG", ...flags }, LOCAL);
     const url = String(mockFetch.mock.calls[0][0]);
-    expect(url).not.toContain("relatives=true");
-    expect(url).not.toContain("sourceDescriptions=true");
+    expect(url).toContain("relatives=true");
+    expect(url).toContain("sourceDescriptions=true");
+    expect(result.relationships.length).toBeGreaterThan(0);
+    expect(result.sources.length).toBeGreaterThan(0);
   });
 
   // 4. Returns both when both flags set
@@ -710,7 +725,8 @@ describe("personReadTool", () => {
     });
     const result = await personReadTool({ personId: "K2QT-J56" }, LOCAL);
     expect(result.persons[0].id).toBe("GDZW-NZZ");
-    expect(mockFetch).toHaveBeenCalledTimes(2);
+    // The 301 and the redirected read; the memories leg is another endpoint.
+    expect(treeReads()).toHaveLength(2);
   });
 
   // 24. Returns living=true on 204 response
@@ -749,7 +765,8 @@ describe("personReadTool", () => {
       });
     const result = await personReadTool({ personId: "KNDX-MKG" }, LOCAL);
     expect(result.persons[0].id).toBe("KNDX-MKG");
-    expect(mockFetch).toHaveBeenCalledTimes(2);
+    // The 429 and its retry.
+    expect(treeReads()).toHaveLength(2);
   });
 
   // 26. Rejects an empty personId before making any request
@@ -977,13 +994,15 @@ describe("personReadTool — sibling fan-out", () => {
       LOCAL,
     );
     expect(out.persons.map((p) => p.id)).toEqual([SUBJECT]);
-    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(treeReads()).toHaveLength(1);
   });
 
-  it("makes zero extra calls when relatives is false", async () => {
+  it("relatives: false does not suppress the fan-out", async () => {
     route({ [SUBJECT]: subjectBody() });
-    await personReadTool({ personId: SUBJECT }, LOCAL);
-    expect(mockFetch).toHaveBeenCalledTimes(1);
+    await personReadTool({ personId: SUBJECT, relatives: false }, LOCAL);
+    const reads = treeReads();
+    expect(reads.some((u) => u.includes(`/${DAD}`))).toBe(true);
+    expect(reads.some((u) => u.includes(`/${MUM}`))).toBe(true);
   });
 
   it("imports full siblings and links them to both parents", async () => {
@@ -1132,7 +1151,7 @@ describe("personReadTool — sibling fan-out", () => {
     );
     expect(out.persons.map((p) => p.id)).toContain(sib);
     // 1 subject read + 3 parent reads
-    expect(mockFetch).toHaveBeenCalledTimes(4);
+    expect(treeReads()).toHaveLength(4);
   });
 
   for (const status of [204, 403, 404, 410, 429]) {
@@ -1616,7 +1635,7 @@ describe("personReadTool — staging the read (#2944)", () => {
     expect(envelope.payload.query).toEqual({
       personId: "KNDX-MKG",
       relatives: true,
-      sourceDescriptions: false,
+      sourceDescriptions: true,
     });
     expect(envelope.payload.results).toHaveLength(1);
     expect(envelope.payload.results[0].personId).toBe("KNDX-MKG");
@@ -1677,5 +1696,75 @@ describe("personReadTool — staging the read (#2944)", () => {
     const envelope = await envelopeOf(out.staged!.resultsRef);
     expect(envelope.payload.query.personId).toBe("K2QT-J56");
     expect(envelope.payload.results[0].personId).toBe("GDZW-NZZ");
+  });
+});
+
+describe("personReadTool — person-level source refs (#2696)", () => {
+  const TAG = (t: string) => ({ resource: `http://gedcomx.org/${t}` });
+  /** Subject + one child. The subject's refs are `#` fragments (what FS sends
+   *  for descriptions in this body); the child's is a full URL to a
+   *  description FS does not return, measured live 2026-09-30. */
+  const body = (): FSTreeResponse =>
+    ({
+      persons: [
+        {
+          ...WITH_SOURCES.persons![0],
+          sources: [
+            { description: "#7X6N-4WR", descriptionId: "7X6N-4WR", tags: [TAG("Name"), TAG("Birth")] },
+            { description: "#Q1KF-5FS", descriptionId: "Q1KF-5FS" },
+            { description: "#SD_METADATA_1", descriptionId: "SD_METADATA_1" },
+          ],
+        },
+        {
+          id: "KID-0001",
+          living: false,
+          gender: { type: "http://gedcomx.org/Female" },
+          names: [{ nameForms: [{ fullText: "Kid Washington" }] }],
+          sources: [
+            {
+              description: "https://api.familysearch.org/platform/sources/descriptions/ZZZZ-999",
+              descriptionId: "ZZZZ-999",
+            },
+          ],
+        },
+      ],
+      childAndParentsRelationships: [
+        { parent1: { resourceId: "KNDX-MKG" }, child: { resourceId: "KID-0001" } },
+      ],
+      sourceDescriptions: WITH_SOURCES.sourceDescriptions,
+    }) as unknown as FSTreeResponse;
+
+  it("carries the subject's person-level sources, dropping refs to descriptions not returned", async () => {
+    mockOk(body());
+    const out = await personReadTool({ personId: "KNDX-MKG" }, LOCAL);
+    const subject = out.persons.find((p) => p.id === "KNDX-MKG")!;
+    // SD_* is filtered out of sources[], so its ref would dangle: dropped.
+    expect(subject.sources).toEqual([{ ref: "7X6N-4WR" }, { ref: "Q1KF-5FS" }]);
+    // The child's only ref points at a description not in this body.
+    const kid = out.persons.find((p) => p.id === "KID-0001")!;
+    expect(kid).toBeDefined();
+    expect("sources" in kid).toBe(false);
+    // Every person-level ref resolves in sources[].
+    const ids = new Set(out.sources.map((s) => s.id));
+    for (const p of out.persons) for (const r of p.sources ?? []) expect(ids.has(r.ref)).toBe(true);
+  });
+
+  it("never carries FamilySearch's tags or attribution onto a ref", async () => {
+    mockOk(body());
+    const out = await personReadTool({ personId: "KNDX-MKG" }, LOCAL);
+    for (const p of out.persons) {
+      for (const r of p.sources ?? []) {
+        expect(Object.keys(r).every((k) => ["ref", "page", "quality"].includes(k))).toBe(true);
+      }
+    }
+  });
+
+  it("the living 204 stub is unchanged: no sources key on the person", async () => {
+    mockStatus(204);
+    const out = await personReadTool({ personId: "LIVE-001" }, LOCAL);
+    expect(out.persons).toHaveLength(1);
+    expect("sources" in out.persons[0]).toBe(false);
+    expect(out.relationships).toEqual([]);
+    expect(out.sources).toEqual([]);
   });
 });

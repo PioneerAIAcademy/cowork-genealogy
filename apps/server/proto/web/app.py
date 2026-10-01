@@ -604,7 +604,7 @@ class PgStore:
         That is the whole reason this is not a SELECT followed by an UPDATE."""
         async with await self._connect() as conn:
             cur = await conn.execute(
-                "UPDATE turns SET outcome = NULL WHERE turn_id = ("
+                "UPDATE turns SET outcome = NULL, claimed_at = now() WHERE turn_id = ("
                 "  SELECT turn_id FROM turns WHERE session_id = %s AND outcome = %s "
                 "  AND completed_at IS NULL ORDER BY enqueued_at LIMIT 1 FOR UPDATE SKIP LOCKED"
                 ") RETURNING message",
@@ -694,7 +694,7 @@ class PgStore:
         self, user_id: str, access_token_enc: str, refresh_token_enc: str | None, expires_at: datetime
     ) -> None:
         """One statement, ciphertext only. granted_at restarts on every sign-in and never
-        on refresh (U3's 24 h clock); a response without a refresh token keeps the one
+        on refresh (it records the sign-in); a response without a refresh token keeps the one
         already stored."""
         async with await self._connect() as conn:
             await conn.execute(

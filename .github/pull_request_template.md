@@ -89,7 +89,8 @@
       Windows: `RunTests.bat` — and committed the run log **and its
       `.ann.json`** under `eval/runlogs/unit/<skill>/`.
       <!-- Behaviour-neutral skill edit (typo, rewording, comment)? Ask a senior
-           for the `eval-cosmetic-skip` label instead of burning a paid run.
+           for the `eval-cosmetic-skip:<skill>` label (one per skill) instead
+           of burning a paid run.
            Rules: eval/CLAUDE.md § "GitHub Action rules". -->
 
 - [ ] If I changed a skill's `description` frontmatter or its DO NOT clauses, I

@@ -1088,6 +1088,11 @@ DEDICATED_AGENT_NAMES = frozenset(
         # subject of its own unit suite. No hook routes anything to it. Listed
         # because the set is asserted equal to the shipped agent files.
         "tree-edit",
+        # Same shape as convert-dates (issue #2798): a converted skill with no
+        # hook route. It writes nothing at all, so `ownership.json` names it on
+        # no row. Listed because the set is asserted equal to the shipped agent
+        # files.
+        "validate-schema",
     }
 )
 
