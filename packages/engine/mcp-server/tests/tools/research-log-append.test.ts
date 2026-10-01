@@ -458,27 +458,74 @@ describe("research_log_append", () => {
     expect(research.log).toHaveLength(0);
   });
 
-  it("rejects an external_links_search entry logged negative despite returning results", async () => {
-    // This entry grades the curated-links FETCH, not the search: a model
-    // that recognizes none of the returned links fit the target site/record
-    // type has been observed logging outcome "negative" anyway — collapsing
-    // "FamilySearch curates nothing here" and "curates plenty, none
-    // relevant" into the same value, which loses the distinction permanently
-    // in the audit trail. Enforced here rather than left to the model, since
-    // it was a repeat, measured miss in practice.
+  it.each(["negative", "partial", "error"])(
+    "corrects an external_links_search entry logged %s despite returning results, and says so",
+    async (sent) => {
+      // This entry grades the curated-links FETCH, not the search: a model
+      // that recognizes none of the returned links fit the target site/record
+      // type has been observed logging outcome "negative" anyway — collapsing
+      // "FamilySearch curates nothing here" and "curates plenty, none
+      // relevant" into the same value. The right value is decidable from the
+      // call, so the tool writes it instead of refusing — never silently.
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "external_links_search",
+        query: { standardPlace: "Pennsylvania, United States", host: "findagrave.com" },
+        outcome: sent,
+        resultsExamined: 2,
+      });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.validation.warnings.join(" ")).toMatch(
+        new RegExp(`outcome set to 'positive' \\(was '${sent}'\\).*grades the fetch, not the search`),
+      );
+      const research = await readJson("research.json");
+      expect(research.log).toHaveLength(1);
+      expect(research.log[0].outcome).toBe("positive");
+    },
+  );
+
+  it("corrects the outcome inside a batch too", async () => {
     await writeProject(baseResearch());
     const result = await researchLogAppend({
       projectPath: dir,
-      tool: "external_links_search",
-      query: { standardPlace: "Pennsylvania, United States", host: "findagrave.com" },
+      ops: [
+        {
+          tool: "external_links_search",
+          query: { standardPlace: "Pennsylvania, United States", host: "findagrave.com" },
+          outcome: "negative",
+          resultsExamined: 3,
+        },
+        {
+          tool: "external_links_search",
+          query: { standardPlace: "Ohio, United States", host: "findagrave.com" },
+          outcome: "negative",
+          resultsExamined: 0,
+        },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const research = await readJson("research.json");
+    expect(research.log.map((e: any) => e.outcome)).toEqual(["positive", "negative"]);
+    expect(result.validation.warnings.filter((w) => w.startsWith("outcome set to 'positive'"))).toHaveLength(1);
+  });
+
+  it("leaves every other tool's outcome as sent", async () => {
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Flynn" },
       outcome: "negative",
       resultsExamined: 2,
     });
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.errors.join(" ")).toMatch(/outcome must be 'positive'/);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.validation.warnings.join(" ")).not.toMatch(/outcome set to/);
     const research = await readJson("research.json");
-    expect(research.log).toHaveLength(0);
+    expect(research.log[0].outcome).toBe("negative");
   });
 
   it("accepts an external_links_search entry logged positive when it returned results", async () => {
@@ -503,6 +550,11 @@ describe("research_log_append", () => {
       resultsExamined: 0,
     });
     expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // Zero links keep the caller's outcome, with no correction note.
+    expect(result.validation.warnings.join(" ")).not.toMatch(/outcome set to/);
+    const research = await readJson("research.json");
+    expect(research.log[0].outcome).toBe("negative");
   });
 
   it.each([NaN, -3, 1.5])(

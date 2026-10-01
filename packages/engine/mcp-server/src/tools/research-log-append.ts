@@ -858,24 +858,25 @@ async function applyLogAppendOp(
   }
   // This entry grades the curated-links FETCH, not the search: any links
   // returned is a positive fetch, even when none fit the plan item's record
-  // type (that goes in notes instead). Enforced mechanically — rather than
-  // left to the model's own judgment call — because it was measured to be
-  // wrong often enough in practice to need a hard gate, not another
-  // reminder in prose. Measured 2026-09-10 against the five run logs this
-  // branch commits: 4 of 66 `external_links_search` entries, across three
-  // tests (ut_search_external_sites_002, _005, _006) and three of the five
-  // logs. (Issue #1950's census said 9 of 48; the corpus has turned over, so
-  // that figure is stale rather than wrong — re-derive rather than reword.)
-  // This gate replaced the eval validator that used to grade the same shape
-  // after the fact; refusing the write is what made that grader unfireable. Scoped to `external_links_search` only: no other
-  // tool value shares this fetch-vs-search distinction, and it is the only
-  // one search-external-sites (its sole caller) uses this way.
-  if (op.tool === "external_links_search" && resultsExamined > 0 && op.outcome !== "positive") {
-    throw new LogAppendError(
-      `tool 'external_links_search' returned ${resultsExamined} result(s), so outcome must be ` +
-        `'positive' (this entry grades the fetch, not the search); got '${op.outcome}'. Note which ` +
-        `results didn't fit the plan item's record type in 'notes' instead.`,
+  // type (that goes in notes instead). Measured 2026-09-10 against the five run
+  // logs then committed, a model got this wrong in 4 of 66
+  // `external_links_search` entries, so prose alone did not hold it.
+  //
+  // Corrected rather than refused: the right value is decidable from the call
+  // itself, so a refusal only bought a retry and, on 2026-10-01, the Tool
+  // Arguments point in every partial of a re-measured suite. The correction is
+  // never silent — a warning names it, so the agent and the transcript both
+  // see it. Scoped to `external_links_search` with links returned: a
+  // zero-link entry keeps the outcome the caller sent, and no other tool value
+  // shares this fetch-vs-search distinction.
+  let outcome: string = op.outcome;
+  if (op.tool === "external_links_search" && resultsExamined > 0 && outcome !== "positive") {
+    warnings.push(
+      `outcome set to 'positive' (was '${outcome}'): tool 'external_links_search' returned ` +
+        `${resultsExamined} result(s), and this entry grades the fetch, not the search — put the ` +
+        `record-type mismatch in 'notes'.`,
     );
+    outcome = "positive";
   }
 
   if (!Array.isArray(research.log)) {
@@ -892,7 +893,7 @@ async function applyLogAppendOp(
     performed,
     tool: op.tool,
     query,
-    outcome: op.outcome,
+    outcome,
     results_examined: resultsExamined,
     external_site: externalSite
       ? {
