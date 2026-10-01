@@ -111,18 +111,23 @@ def test_creates_no_project_when_none_exists(before_state, after_state, test):
 
 
 def _paired_names() -> set[str]:
-    """Names that ship BOTH as a skill directory and as a plugin agent file.
+    """Plugin agents the research router spawns by ``@plugin:<name>``.
 
-    Derived rather than listed so a fourth pair is covered without a second
-    edit. The derivation is asserted non-empty at the call site: a tree move
-    would otherwise make the check below vacuous and green.
+    Read from ``research/SKILL.md`` rather than intersecting skill and agent
+    directories: since issue #2822 deleted the proof-conclusion routing skill,
+    a spawned row need not have a skill twin, and the intersection silently
+    dropped it. Derived rather than listed so a new spawned row is covered
+    without a second edit. The derivation is asserted to contain
+    ``proof-conclusion`` at the call site: a tree move would otherwise make
+    the check below vacuous and green.
     """
+    import re
     from pathlib import Path
 
     plugin = Path(__file__).resolve().parents[3] / "packages" / "engine" / "plugin"
-    skills = {p.name for p in (plugin / "skills").iterdir() if p.is_dir()}
+    body = (plugin / "skills" / "research" / "SKILL.md").read_text(encoding="utf-8")
     agents = {p.stem for p in (plugin / "agents").glob("*.md")}
-    return skills & agents
+    return set(re.findall(r"@plugin:([a-z][a-z-]*)", body)) & agents
 
 
 def test_no_paired_skill_shortcut(test, skills_invoked, builtin_tool_calls):
@@ -135,7 +140,7 @@ def test_no_paired_skill_shortcut(test, skills_invoked, builtin_tool_calls):
     ``Skill(question-selection)`` satisfies it — ``delegations[0]`` is the
     expected name — while doing the exact thing ut_research_015 exists to
     forbid. Both call mechanisms are checked here because the routing table
-    now reaches these three rows by spawn and the rest by ``Skill``.
+    reaches its ``@plugin:`` rows by spawn and the rest by ``Skill``.
     """
     from harness.skill_runner import spawned_agents
 

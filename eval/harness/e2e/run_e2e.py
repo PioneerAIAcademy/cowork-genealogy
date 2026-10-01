@@ -147,8 +147,10 @@ async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
     result, paths = await run_e2e_test(fixture_dir=fixture_dir, **kwargs)
 
     # DELIBERATELY NOT PRINTED: the judge's `verdict`, its `proof_quality`
-    # score, or the combined `outcome` (which reveals the verdict whenever
-    # compliance is clean). The person who runs a fixture is usually the same
+    # score, or `outcome` (which since the §8 detectors were demoted IS the
+    # verdict, so it reveals it unconditionally rather than only when
+    # compliance is clean — spec §7.4's residual leak, widened by the
+    # 2026-09-25 ruling and accepted there). The person who runs a fixture is usually the same
     # person who then grades it with /grade-e2e-run, and spec §7.4 wants that
     # grade drawn blind — printing the grade here anchors it before they
     # start. `stop_reason` and `compliance` are harness facts and are safe;
@@ -175,7 +177,16 @@ async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
             f"  no grade: "
             f"{ungradeable_reason(result, skip_judge=bool(kwargs.get('skip_judge')))}"
         )
-    if is_committable_run(result.verdict):
+    if result.stop_reason == "host_slept":
+        # Committed (so the operator can see why it dropped out of the rates) but
+        # ungraded on purpose — the host slept past the inactivity cap, so there
+        # is nothing to interpret or grade (issue #2974).
+        print(
+            "  host slept past the inactivity cap — run excluded from rates, "
+            "not graded.\n"
+            "  Commit the run log so the drop is visible; there is no .ann.json."
+        )
+    elif is_committable_run(result.verdict, result.stop_reason):
         print(
             "  Next: /interpret-e2e-result to see what it recovered, then "
             "/grade-e2e-run to grade it.\n"
@@ -184,6 +195,20 @@ async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
     else:
         print("  (scratch run — gitignored)")
     return result
+
+
+#: Outcomes the process exit code treats as a failed run.
+#:
+#: Module-level so a test can import it rather than restate the literal — a
+#: test that re-types the set proves nothing about this code. It carries more
+#: weight since the §8 compliance detectors were demoted from the gate: an
+#: `ungraded` or `skipped` verdict used to reach `outcome` already downgraded
+#: to "fail" by the veto, and now arrives as itself.
+#:
+#: NOT the complement of `result._COMMITTABLE_VERDICTS`, which is about whether
+#: a run joins the corpus — `fail` and `ungraded` are in both sets, `skipped`
+#: is in this one only. Two sets, two jobs; do not derive one from the other.
+FAILING_OUTCOMES = frozenset({"fail", "skipped", "ungraded"})
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -432,12 +457,17 @@ def main(argv: list[str] | None = None) -> int:
 
     print()
     print_rollup(results)
-    # Exit nonzero if the test failed or aborted. Keyed on the combined gate,
-    # which preserves the pre-#972 behavior exactly: a guardrail bypass used to
-    # force `verdict = "fail"`, and now forces `outcome = "fail"` instead.
-    # Verified against all 122 committed runs — the gate distribution is
-    # byte-identical to the old fused verdict's.
-    failed = sum(1 for r in results if r.outcome in {"fail", "skipped", "ungraded"})
+    # Exit nonzero if the test failed or aborted. Keyed on the gate, which is
+    # the genealogical verdict: a guardrail bypass used to
+    # force `verdict = "fail"`; it then forced `outcome = "fail"` instead, and
+    # since the §8 detectors were demoted it forces neither — a bypassing
+    # run is counted by its verdict alone.
+    # That behaviour-preservation claim is what this change ends, so the old
+    # measurement ("byte-identical to the fused verdict's, over 122 runs") is
+    # gone rather than restated: the gate distribution is now the RECALL
+    # distribution. Measured at 2c00dfd76, `make e2e-corpus SINCE=all` prints
+    # the gate and recall lines identically.
+    failed = sum(1 for r in results if r.outcome in FAILING_OUTCOMES)
     return 1 if failed else 0
 
 

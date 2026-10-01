@@ -1,18 +1,12 @@
-"""Skill-specific validators for the check-warnings skill.
+"""Validators for the check-warnings agent (a skill until issue #2118).
 
-check-warnings is a read-only analysis skill — it invokes the
-`person_warnings` MCP tool (declared in allowed-tools) and surfaces
-the results as narrative output. It does not modify research.json or
+check-warnings is read-only — it calls the `person_warnings` MCP tool and
+surfaces the results as narrative output. It does not modify research.json or
 tree.gedcomx.json.
 
 The rubric (rubric.md) keeps the narrative-judgment dimensions
 (detection accuracy, severity classification, actionability). The
 mechanical "didn't modify anything" rules live here.
-
-Tool-usage enforcement is handled by the universal `test_tool_allowlist`,
-which validates calls against the skill's `allowed-tools` frontmatter —
-there is no separate `test_no_mcp_tools_called` here because check-warnings
-legitimately calls `person_warnings` as its checking engine.
 
 See test_universal.py module docstring for the full validator
 function-signature contract.
@@ -68,62 +62,6 @@ def test_tree_gedcomx_unmodified(before_state, after_state, test):
     assert before == after, (
         "check-warnings modified tree.gedcomx.json — this skill is read-only."
     )
-
-
-# --- V1: No FamilySearch quality mention without a person_quality call ---
-
-def report_no_fs_quality_mention_without_call(tool_calls, text_response, test):
-    """V1: a run with no person_quality call must not mention FamilySearch quality.
-
-    Tier 2 — reports, never gates. SKILL.md states the rule twice: "skip this
-    call silently ... do not mention FamilySearch quality at all for that
-    person" and "Say **nothing** about FamilySearch quality -- do not add a
-    'not available' note." A mention can appear as a standalone note, a
-    routing remark, or even a single clause of an opening sentence — all are
-    violations.
-
-    Skipped on negative tests: the skill body does not run so no quality call
-    is expected by design.
-
-    Matched per sentence, on co-occurrence of "familysearch" and "quality",
-    rather than on the adjacent phrase "familysearch quality". Once the
-    person_quality check above has returned, ANY pairing of the two in one
-    sentence is a violation, so the loose match has nothing to false-positive
-    on — while the adjacent-phrase form missed every real paraphrase the
-    committed logs contain ("no FamilySearch quality score as ... has a local
-    project ID" matches either way, but "quality score from FamilySearch" and
-    "FamilySearch's quality" do not match the phrase form).
-
-    Two silent-wrong traps to avoid:
-    - tool_calls is pre-resolved as the run's output; reading test["tool_calls"]
-      always returns [] and makes every run look applicable.
-    - Tool names are fully qualified (mcp__genealogy__person_quality), so
-      equality-matching on "person_quality" never hits — use endswith() instead.
-    """
-    import re as _re
-
-    if test.get("type") == "negative":
-        pytest.skip("negative test — skill body does not run")
-    response = text_response or ""
-    if not response.strip():
-        pytest.skip("no response text to check")
-
-    has_quality_call = any(
-        (c.get("tool") or "").endswith("person_quality")
-        for c in (tool_calls or [])
-    )
-    if has_quality_call:
-        return  # quality call happened — any mention is legitimate
-
-    for sentence in _re.split(r"(?<=[.!?;:])\s+|\n+", response):
-        low = sentence.lower()
-        if "familysearch" in low and "quality" in low:
-            raise AssertionError(
-                "the response mentions FamilySearch quality but person_quality "
-                "was never called — SKILL.md forbids any mention (standalone "
-                "note, 'not available' remark, or routing narration) when the "
-                f"id is synthetic and the tool was skipped: {sentence.strip()!r}"
-            )
 
 
 # --- V2: No unsourced 4-digit year in the response ---
@@ -190,39 +128,6 @@ def report_unsourced_year_in_response(tool_calls, text_response, test):
         )
 
 
-# --- V3: Conflict-resolution handoff is completely silent ---
+# --- V3: An out-of-lane request is handed back to its owner ---
 
-def test_conflict_resolution_handoff_is_silent(
-    tool_calls, text_response, skills_invoked, test
-):
-    """V3: on a conflict-resolution silent-handoff test the run must make zero
-    tool calls, return an empty response, and have 'conflict-resolution' in
-    skills_invoked. All three must hold, or it is a violation.
-
-    Tier 1 — gates (test_* prefix). Tag-gated: skips unless the test carries
-    the 'silent-handoff' tag. Paired with negative.grade_on_invariant: true on
-    negative-source-conflict.json, this hands the verdict to the validator and
-    drops the judge to diagnostic — stopping the 1/1 grading on a byte-identical
-    compliant run that occurred in 3 of 5 committed logs.
-
-    SKILL.md absolutes:
-      "Invoke the conflict-resolution skill right away ... as your first and
-      only action"
-      "Write no reply of your own — no preamble, no explanation, no summary."
-    """
-    if "silent-handoff" not in test.get("tags", []):
-        pytest.skip("not a silent-handoff test")
-
-    assert (tool_calls or []) == [], (
-        "silent handoff must make zero tool calls; got "
-        f"{len(tool_calls or [])} call(s): "
-        + ", ".join(c.get("tool", "?") for c in (tool_calls or []))
-    )
-    assert not (text_response or "").strip(), (
-        "silent handoff must produce an empty response; "
-        f"got {len((text_response or '').strip())} non-whitespace characters"
-    )
-    assert "conflict-resolution" in (skills_invoked or []), (
-        "silent handoff must invoke conflict-resolution via the Skill tool; "
-        f"skills_invoked = {skills_invoked!r}"
-    )
+# Lives in test_universal.py since tree-edit became its second user (issue #2805).

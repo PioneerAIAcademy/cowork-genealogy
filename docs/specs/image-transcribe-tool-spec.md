@@ -375,8 +375,9 @@ consistent across schema, manifest, and skill.)*
 - Exactly one of `imageId` / `ark` / `memoryArtifactUrl` / `file`, checked in the tool
   **before** the shared resolver (which knows only the three FamilySearch shapes). The first two resolve
   **identically to `image_read`** (§8 shares the resolver). Accept the same
-  shapes `image_read` accepts today (`3:1:`/`3:2:` ARKs, resolver URLs,
-  `/$dist`, `dgs:.../dist.jpg`).
+  shapes `image_read` accepts today (`3:1:`/`3:2:` ARKs, an unprefixed
+  `XXXX-XXXX-XXXX-X` id treated as `3:1:`, resolver URLs, `/$dist`,
+  `dgs:.../dist.jpg`).
 - `memoryArtifactUrl` is a person's **memory** artifact, as carried by a
   `person_read` source that came from the memories API — a scanned will,
   certificate, obituary clipping or compiled history uploaded by a relative. It
@@ -583,7 +584,7 @@ headers and body together:
 | Leg | Constant | Budget |
 |---|---|---|
 | FS image download (and its fallback-URL retry) | `IMAGE_FETCH_TIMEOUT_MS` (`utils/fs-image-fetch.ts`) | 90s per attempt |
-| OpenRouter OCR | `OCR_TIMEOUT_MS` (`tools/image-transcribe.ts`) | 180s |
+| OpenRouter OCR | `OCR_TIMEOUT_MS` (`utils/ocr.ts`) | 180s |
 
 Worst case for one `image_transcribe` is therefore 90 + 90 + 180 = **360s**,
 inside the e2e harness's 600s inactivity window — and a timeout returns as a
@@ -632,6 +633,12 @@ not reach it (nothing counts *across* invocations), and skill prose does not eit
 (over half the long hunts run in sessions that never load `search-images`). So the
 budget lives on the tool.
 
+The budget bounds that hunt; it does not replace it. `volume_bisect`
+(`docs/specs/volume-bisect-tool-spec.md`) is what owns the probe sequence itself —
+one page per call, a bracket the agent cannot lose track of, and a stop condition
+when year headings stop resolving the volume. The budget stays here because the
+hand-driven hunt is still reachable: nothing forces an agent through `volume_bisect`.
+
 **What it does.** From the `BROWSE_BUDGET_IMAGES + 1`-th (currently the **21st**)
 distinct image transcribed within **one image group in one project**, a successful
 result carries an advisory `browseBudget` field naming the count, the group, and a
@@ -640,7 +647,8 @@ route, or ask the user). The field is additive and independent of `truncated`:
 `browseBudget` reports a browse-count advisory, not read completeness, so a
 budget-advised read can also be output-cap truncated (the two co-occur).
 
-**Counting.** A module-level `Map<string, Set<string>>` (`browseBudgetSeen`, keyed
+**Counting.** A module-level `Map<string, Set<string>>` in `utils/browse-budget.ts`
+(`browseBudgetSeen`, keyed
 `` `${projectScope(projectPath)}\0${imageGroup}` ``) holds the distinct `imageId`s seen
 per group per project; the group is the digits before the underscore in the `imageId`.
 The scope is the bound store's `projectId` where it has one (patron isolation on the
@@ -649,6 +657,24 @@ shared-process `http.ts` entrypoint — see the shared `projectScope` helper in
 `projectPath`, else the `<no-project>` sentinel when the LLM passed no `projectPath`.
 The map is process-lifetime and **never persisted**; re-reading an image already in the
 set does not advance the count. `__clearBrowseBudgetForTests` resets it between tests.
+
+**Two producers, one counter.** The budget left this tool for
+`utils/browse-budget.ts` when `volume_bisect` shipped: it charges a
+bisect probe to the same `(project, group)` counter this tool charges a
+transcription to. They must share it — a hunt that alternates between the two
+tools is invisible to a per-tool counter, which is the failure the budget exists
+to catch. `recordBrowseAndCheckBudget`'s `kind` argument changes only the notice's
+wording: "pivot to the indexed route" is right against a page-by-page hunt and
+wrong against a bisect that is converging, so the bisect's notice reports the
+spend and points at the bracket instead.
+
+**The threshold is calibrated for one producer.** `BROWSE_BUDGET_IMAGES = 20` was
+derived below from `image_transcribe` distinct-image counts alone (highest
+non-noticing block: 18). With a second producer charging the same counter the
+bound is reached sooner in wall-clock terms. That is not a reason to raise it —
+the two producers are reading the same volume for the same answer — but it does
+mean the 18 figure no longer bounds a live hunt, so **re-measure across both tools
+before changing the constant**, not from this section's numbers.
 
 **Key by project, not group alone.** The MCP server process outlives one
 conversation (on the desktop `.mcpb` it lives as long as Claude Desktop runs; the
@@ -806,7 +832,8 @@ the condition to re-check on.
 ```
 
 - `temperature: 0` — OCR is not a creative task.
-- `max_tokens` (`OCR_MAX_TOKENS`, `image-transcribe.ts`) is set **explicitly**.
+- `max_tokens` (`OCR_MAX_TOKENS`, `utils/ocr.ts`, re-exported from
+  `image-transcribe.ts`) is set **explicitly**.
   Setting it makes the cap ours and the truncation case (§6.2) reproducible.
   Mind the **direction**: for the current default `google/gemini-3.7-flash`
   OpenRouter reports a 65536 max-completion ceiling and the tool previously sent
@@ -912,16 +939,15 @@ and the answer splits on whether the server is a process a user installed or a p
 something else starts. Where a user installed it, the config is the file they own.
 Where an orchestrator starts it — the hosted sandbox, the e2e harness — that
 orchestrator writes the file before the server runs. Where the server is a **container**
-(the two search-agent prototype entrypoints), the entrypoint builds the config from its
+(the search-agent prototype's `build/http.js`), the entrypoint builds the config from its
 own environment before constructing the server, because a container receives a secret
-as environment and not as a file baked into an image — and `hosted-stdio.js` receives
-it per TURN, from the worker, which no file could do:
+as environment and not as a file baked into an image:
 
 | Runtime | Server runs | How `openRouterApiKey` reaches `config.json` |
 |---|---|---|
 | **Cowork desktop** | host (`.mcpb`) | the user edits `~/.familysearch-mcp/config.json` directly |
 | **Hosted web** | inside the E2B sandbox | Fly secret `OPENROUTER_API_KEY` → `config.py` `Settings.openrouter_api_key` → a `write_config(sandbox, {openRouterApiKey})` sibling of `fs_oauth.write_tokens`, written into the sandbox's `~/.familysearch-mcp/config.json` at session create (`sessions.py`) |
-| **Search-agent prototype** | a container (`build/http.js`, the shared compose `tools` service; `build/hosted-stdio.js`, the worker's per-turn fork) | compose passes the stack's `OPENROUTER_API_KEY` to the service, and the worker passes it to each fork; both entrypoints layer it and the other three per-user keys over whatever config they start from (`src/hosted-config-env.ts`) before building the server |
+| **Search-agent prototype** | a container (`build/http.js`, the shared compose `tools` service) | compose passes the stack's `OPENROUTER_API_KEY` to the service; the entrypoint layers it and the other three per-user keys over the config it starts from (`src/hosted-config-env.ts`) before building the server |
 | **e2e harness** | node subprocess of the harness | the harness reads `OPENROUTER_API_KEY` from `eval/.env` and stages `openRouterApiKey` into the `~/.familysearch-mcp/config.json` the subprocess reads (consistent with e2e already depending on the developer's real `tokens.json` there) |
 
 So in every runtime the env var is **bridged into the config** rather than consulted
@@ -929,8 +955,7 @@ when the key is needed: no tool reads a credential from the environment, and
 `getOpenRouterApiKey` stays the single resolution point with a single source. That is
 what the "no env-var fallback" rule protects, and it holds. What does **not** hold, and
 was claimed here until 2026-09-20, is the stronger sentence that the server makes zero
-`process.env` reads: `hosted-stdio.ts` has read these four since the D9–10 engine half,
-`http.ts` since the tool-server default moved to it, and a shipped tool
+`process.env` reads: `http.ts` reads these four, and a shipped tool
 (`research-append.ts`) reads two debug-hold variables. The bridge is at the
 **entrypoint** for a container and at the **orchestrator** for a sandbox; both are
 outside the tool, which is the line that matters. The hosted-path
@@ -1137,6 +1162,11 @@ one, because the key is `image_filename`, not imageId:
   referenced.
 - `dev/try-image-transcribe.ts` — one-shot live smoke test against real
   OpenRouter + a real FS image (mirrors `dev/try-image-read.ts`).
+- `src/utils/ocr.ts` — the OpenRouter leg (`runOcr`, `OCR_TIMEOUT_MS`,
+  `OCR_MAX_TOKENS`, `MAX_OCR_INPUT_BYTES`, `buildOcrPrompt`), shared with
+  `volume_bisect`.
+- `src/utils/browse-budget.ts` — the browse counter (§5.8), shared with
+  `volume_bisect`.
 
 ## 10. Migration (skills + subagent)
 
@@ -1290,6 +1320,18 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `tests/tools/{image-transcribe,record-read,no-project,research-log-append,sidecar-read}.test.ts`, `tests/utils/results-staging.test.ts`
 - `eval/harness/tests/unit/test_mock_mcp.py` (parity lint compares the SEARCH sets), `eval/CLAUDE.md` (parity list)
 - `docs/specs/search-result-staging-spec.md` §2 / §5 / §11, `docs/specs/sidecar-read-tool-spec.md` §7, `README.md`
+
+*Extracted for `volume_bisect` — behaviour unchanged, 88/88 of this tool's tests
+passed unedited across the move:*
+- `src/utils/ocr.ts` — the OpenRouter leg. The code moved unchanged; the
+  constants' measured derivations (the 126-call `OCR_MAX_TOKENS` scan, the
+  14-25 MiB upload case, the 70/70 and 46/46 transport probes) stayed in this
+  spec rather than travelling with them, so read §5 here for provenance
+- `src/utils/browse-budget.ts` — the browse counter, lifted whole
+- `src/tools/image-transcribe.ts` — imports both; re-exports
+  `__clearBrowseBudgetForTests`, `OCR_MAX_TOKENS` and `MAX_OCR_INPUT_BYTES` so
+  existing importers keep their paths
+- `docs/specs/volume-bisect-tool-spec.md` — the second producer's contract
 
 *Image-persistence increment (§8.5):*
 - `src/tools/research-append.ts` — TTL-GC sweep of unreferenced `images/*.jpg` after each write

@@ -20,11 +20,11 @@ Do the plan items stay inside the question's scope? A FAN item earns its place b
 
 ## Sequencing logic
 
-Are plan items ordered logically? Free/indexed sources before paid/unindexed. Broad searches before narrow. Fallbacks identified for items that might fail.
+Are plan items ordered logically? Free/indexed sources before paid/unindexed. Narrow before broad — the specific county before adjacent counties. Fallbacks identified for items that might fail. Beyond efficiency, the order must respect evidence dependency: a record that *supplies* an identifier the subject cannot yet be searched by (a maiden name, an unknown given name, an unlocated residence) comes before records that *use* it; a gap between two anchors is bridged by the record in between rather than assumed; and the plan's `date_range`s reach the later part of the question's window, not only its start.
 
-- **pass:** `sequence` numbers reflect a defensible search order (free/indexed first, fallback chains explicit via `fallback_for`), and the rationale on each item explains its placement.
-- **partial:** Order is mostly reasonable but one item is out of sequence (paid before free, narrow before broad), or fallbacks aren't identified.
-- **fail:** Sequence is arbitrary; no logic visible across `sequence` numbers; no `fallback_for` chain even when sources are likely to fail.
+- **pass:** `sequence` numbers reflect a defensible search order (free/indexed first, narrow before broad, fallback chains explicit via `fallback_for`), and the rationale on each item explains its placement. No item waits on evidence only a later item can produce, and where the question supplies a birth estimate and a death or last-known date, some item's `date_range` reaches the later part of that window. Where neither a missing identifier nor a gap applies, the dependency and intervening-link checks are N/A.
+- **partial:** Order is mostly reasonable but one item is out of sequence (paid before free, broad before narrow), fallbacks aren't identified, or the `date_range`s cover only the start of the question's window.
+- **fail:** Sequence is arbitrary; no logic visible across `sequence` numbers; no `fallback_for` chain even when sources are likely to fail; or an item is conditioned on an identifier that no earlier item can supply, or continuity across a gap is asserted from name, place and approximate age alone with no bridging record planned.
 
 ## Jurisdiction accuracy
 

@@ -124,11 +124,11 @@ than trusting it: `npx vitest run tests/validation/validator.test.ts`.
 Skills that call this tool after writing project files:
 `research/SKILL.md`, `research-plan/SKILL.md`,
 `hypothesis-tracking/SKILL.md`,
-`tree-edit/SKILL.md`, `timeline/SKILL.md`,
-`validate-schema/SKILL.md`.
+`timeline/SKILL.md`.
 
 Agents: `person-evidence.md`, `gps-mentor.md`, `citation.md` (its Step 6 makes
-the call, mandatory on every write).
+the call, mandatory on every write), `validate-schema.md` (its only tool: an
+on-demand, read-only audit).
 
 Referenced in: the "Validate" step of `agents/citation.md`, which absorbed the
 former `citation/references/validation-protocol.md`.

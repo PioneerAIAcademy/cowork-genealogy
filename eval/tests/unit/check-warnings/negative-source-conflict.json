@@ -2,24 +2,34 @@
   "test": {
     "id": "ut_check_warnings_011",
     "skill": "check-warnings",
-    "name": "Source-vs-source disagreement should route to conflict-resolution silently",
+    "name": "Source-vs-source disagreement is handed back to conflict-resolution",
     "type": "negative",
-    "description": "User describes two sources giving mutually exclusive values for the same fact (County Kerry vs County Cork — two Irish counties at the same administrative level, not a container/contained pair). That is a source conflict, not a single-person impossibility, so it belongs to conflict-resolution. SKILL.md requires a completely silent handoff: zero tool calls, empty response, conflict-resolution in skills_invoked. grade_on_invariant: true hands the verdict to the tag-gated validator (test_conflict_resolution_handoff_is_silent) and drops the judge to diagnostic, stopping the 1/1 grading that occurred on 3 of 5 compliant runs. The pair was changed from 'Ireland vs County Cork' (a container/contained pair whose premise was contested) to two same-level counties; the prior user_message was also a near-verbatim quote of SKILL.md:43, making a pass indistinguishable from recall of a sentence the model just read. See unit-test-spec.md § 'Negative tests' and issue #1965.",
-    "tags": ["negative", "boundary", "conflict-resolution", "silent-handoff"]
+    "description": "The delegation describes two sources giving mutually exclusive values for the same fact (County Kerry vs County Cork — two Irish counties at the same administrative level, not a container/contained pair). That is a source conflict, not a single-person impossibility, so it belongs to conflict-resolution. Under the lead's 2026-09-23 ruling an agent never spawns another agent: the agent makes no tool call and hands the request back, naming conflict-resolution in its caller-facing lines (before the final `---`) and never in the researcher-facing paragraphs after it. grade_on_invariant: true hands the verdict to the tag-gated validator (test_conflict_resolution_hand_back); the judge is diagnostic. See unit-test-spec.md § 'Negative tests' and issue #2118.",
+    "tags": [
+      "negative",
+      "boundary",
+      "conflict-resolution",
+      "hand-back",
+      "direct-arm"
+    ]
   },
   "input": {
-    "user_message": "One census says he was born in County Kerry, the death cert says County Cork -- flag that mismatch.",
+    "delegation": "One census says he was born in County Kerry, the death cert says County Cork -- flag that mismatch.\n\npersonId: I1\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["person-warnings-no-warnings"],
+  "mcp_fixtures": [
+    "person-warnings-no-warnings"
+  ],
   "negative": {
-    "correct_skill": ["conflict-resolution"],
+    "correct_skill": [
+      "conflict-resolution"
+    ],
     "grade_on_invariant": true,
-    "explanation": "A source-vs-source disagreement is a conflict, not a warning. Warnings are about a single person's data violating physical/biological/temporal constraints; conflicts are about two sources giving different answers for the same fact. County Kerry and County Cork are two distinct Irish counties at the same administrative level — not a container/contained pair — so they are genuinely mutually exclusive values. The skills' references/warnings-as-identity-signals.md draws this boundary explicitly: 'Conflicts: two or more sources disagree about the same fact for the same person... handled by conflict-resolution.' SKILL.md forbids any tool calls, any text response, and any response text — the handoff is completely silent."
+    "explanation": "A source-vs-source disagreement is a conflict, not a warning. Warnings are about a single person's data violating physical/biological/temporal constraints; conflicts are about two sources giving different answers for the same fact. County Kerry and County Cork are two distinct Irish counties at the same administrative level — not a container/contained pair — so they are genuinely mutually exclusive values. Appendix B of the agent body draws this boundary explicitly: 'Conflicts: two or more sources disagree about the same fact for the same person... handled by conflict-resolution.' The agent body requires a hand-back: no tool call, and one caller-facing `Hand-back: conflict-resolution` line."
   },
   "judge_context": [
-    "Should NOT invoke person_warnings -- the user is not asking about a single-person impossibility",
-    "Should route to conflict-resolution silently: zero tool calls, empty response, conflict-resolution in skills_invoked",
-    "Any text response — even a one-line explanation of the handoff — is a violation of SKILL.md's silence requirement"
+    "Should NOT invoke person_warnings -- the request is not about a single-person impossibility",
+    "Should hand the request back: no tool call, no analysis of the discrepancy, and a caller-facing line naming conflict-resolution before the final `---`",
+    "The two researcher-facing paragraphs after the final `---` must name no skill, agent, tool or field"
   ]
 }

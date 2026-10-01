@@ -18,8 +18,8 @@ point — each answers a different question:
 - **Random (1)** — the only unbiased estimator of judge accuracy. Every other
   slot is chosen, so only this one supports an honest error rate.
 - **Mandatory (uncapped)** — every test that scored a 1 or 2 on any dimension,
-  whose outcome is not `pass`/`xfail`, or which carries a
-  `coerced_routing_negative_to_na` warning. `is_mandatory` below carries the
+  whose outcome is not an ordinary pass or a declared-xfail failure, or which
+  carries a `coerced_routing_negative_to_na` warning. `is_mandatory` below carries the
   evidence for all three triggers. Appended last so the three slots above keep
   drawing from the whole eligible pool.
 
@@ -47,6 +47,7 @@ from __future__ import annotations
 
 import random
 from typing import Any
+from harness.outcomes import suppressed_failure
 from harness.warning_kinds import iter_run_warnings
 
 
@@ -58,10 +59,16 @@ N_RANDOM = 1
 # uncapped — so a constant claiming otherwise would be wrong wherever it was
 # read. It had no callers when it was removed; keep it that way.
 
-# Outcomes that do NOT make a test mandatory. Everything else does, including
-# `fail`, `partial`, `xpass` and `aborted`. `xfail` is a failure someone
-# declared in advance, and `pass` is the ordinary case.
-_NON_FAILING_OUTCOMES = frozenset({"pass", "xfail"})
+def _is_non_failing(entry: dict) -> bool:
+    """A test whose outcome does NOT make it mandatory to annotate: an ordinary
+    pass, or a declared-xfail test that failed as declared. Everything else —
+    `fail`, `partial`, `aborted`, and a declared-xfail test that unexpectedly
+    passed — is mandatory."""
+    outcome = entry.get("outcome")
+    expected_outcome = entry.get("expected_outcome")
+    return (
+        outcome == "pass" and expected_outcome != "xfail"
+    ) or suppressed_failure(outcome, expected_outcome)
 
 
 def review_dimensions(entry: dict[str, Any]) -> list[dict[str, Any]]:
@@ -148,10 +155,10 @@ def is_mandatory(entry: dict[str, Any]) -> bool:
       one, and 26 of those owed not a single written comment. Per cell, a human
       changed the judge's score on 5.92% of cells belonging to such a test
       (38/642) against 0.61% everywhere else (28/4,581) — 9.7x the yield.
-    - **An outcome that is not `pass` or `xfail`.** 14 tests fail on routing or
-      activation with every dimension scored 3 or null, which the first trigger
-      cannot see. 11 were already sampled, so this one costs 3 tests across the
-      whole corpus.
+    - **An outcome that is not an ordinary pass or a declared-xfail failure.**
+      14 tests fail on routing or activation with every dimension scored 3 or
+      null, which the first trigger cannot see. 11 were already sampled, so this
+      one costs 3 tests across the whole corpus.
 
     **Non-gating tests are deliberately included.** A routing negative renders
     `outcome: pass` beside a diagnostic 1 by design — `dimensions_gate_outcome`
@@ -179,7 +186,7 @@ def is_mandatory(entry: dict[str, Any]) -> bool:
     so a multi-run test could carry the coercion with no null in
     `aggregated_dimensions` at all.
     """
-    if entry.get("outcome") not in _NON_FAILING_OUTCOMES:
+    if not _is_non_failing(entry):
         return True
     if any(d.get("score") in (1, 2) for d in review_dimensions(entry)):
         return True
@@ -249,9 +256,10 @@ def select_review_sample(
     #
     # `_outcome_disagrees` was the fifth, deleted when the mandatory slot landed
     # because that slot subsumes it **structurally**. `expected_outcome` is only
-    # `pass` or `xfail`, and `assemble_test_entry` normalizes an xfail run to
-    # `xfail`/`xpass`, so a disagreement can only ever be `partial`, `fail`,
-    # `aborted` or `xpass` — and `is_mandatory` takes all four. It was a strict
+    # `pass` or `xfail`, and `_is_non_failing` treats an ordinary pass and a
+    # declared-xfail failure as non-mandatory, so a disagreement can only ever be
+    # `partial`, `fail`, `aborted` or a declared-xfail that unexpectedly passed —
+    # and `is_mandatory` takes all four. It was a strict
     # subset: across the corpus it matched 170 tests, every one already
     # mandatory, and reached none of the 66 human score changes the surviving
     # rule and the mandatory slot do not. The shape that would have escaped

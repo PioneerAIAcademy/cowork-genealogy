@@ -3,19 +3,16 @@
 ## Overview
 
 A deterministic MCP tool that checks person data for impossible or unlikely
-genealogical facts. It has two modes.
-
-**Local (default).** Reads `tree.gedcomx.json` from a project directory. Offline
+genealogical facts. Reads `tree.gedcomx.json` from a project directory. Offline
 and deterministic; no authentication required, no network access.
 
-**Live (`live: true`).** Fetches the person and their one-hop relatives from
-FamilySearch and evaluates the same checks against that tree in memory, so an
-audit of a profile with no local project still gets the impossibility checks.
-This mode requires an authenticated session and makes network calls. It is
-opt-in by the flag, never by omitting `projectPath` — see *Input*.
+Decided (lead, 2026-09-27): no live mode — the live mode added for a
+no-project profile audit had no caller, and such an audit runs local mode
+over a scratch project instead.
 
-Adapted from FamilySearch's `MobWarnings.java`. This spec starts with
-three starter warnings and is designed for easy extension.
+Adapted from FamilySearch's `MobWarnings.java`, plus one project rule
+(`hasEventInOtherCountry`) that is not a FamilySearch port. This spec
+starts with three starter warnings and is designed for easy extension.
 
 ### Scope: anchor person and their one-hops
 
@@ -36,10 +33,10 @@ mob."
   report on a relationship between the anchor and a one-hop relative.
 
 **Single-person warnings run on the anchor *and* its one-hop relatives,
-not the anchor alone.** 27 of the 47 self-checks have a relative-mob variant
+not the anchor alone.** 27 of the 48 self-checks have a relative-mob variant
 (`relatives*`, `maleRelatives*`, `femaleRelatives*`) that fires the same
 condition on a parent, spouse, or child; the flagged relative is named in
-the warning's `personId`/`personName`. The other 20 run on the anchor only.
+the warning's `personId`/`personName`. The other 21 run on the anchor only.
 The relative-variant tags in § Warning Definitions are the evidence.
 
 ---
@@ -48,7 +45,7 @@ The relative-variant tags in § Warning Definitions are the evidence.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `projectPath` | string | Local mode only | Absolute path to the directory containing `tree.gedcomx.json`. Required unless `live` is true; passing it **with** `live` is an error, because the two modes read different trees and the caller has to say which is meant. |
+| `projectPath` | string | Yes | Absolute path to the directory containing `tree.gedcomx.json`. |
 | `personId` | string | Yes | The anchor person to check. Names the target; warnings are evaluated over this person and their one-hop relatives |
 
 Example:
@@ -81,12 +78,12 @@ The shipped shape is `PersonWarning` in
 | Field | Type | Description |
 |-------|------|-------------|
 | `scoreType` | string | Always `"COHERENCE"`. The quality-score family the check belongs to (ported from FamilySearch's MobWarnings, which groups checks by score type) |
-| `issueType` | string | The warning tag (e.g., `hasEventAfterDeath1`). One of the tags catalogued under § Warning Definitions; each tag is a FamilySearch quality-score tag |
+| `issueType` | string | The warning tag (e.g., `hasEventAfterDeath1`). One of the tags catalogued under § Warning Definitions; each tag is a FamilySearch quality-score tag, except `hasEventInOtherCountry` which is a project rule |
 | `severity` | string | `contradiction` (impossible) or `implausible` (unlikely but possible) |
 | `personId` | string | Person ID the warning applies to |
 | `personName` | string | Display name of the person (see below) |
 | `message` | string | Human-readable description of the problem |
-| `factIds` | string[]? | Fact IDs involved in the check, for UI highlighting. Optional — MobWarnings carries only the tag; the TS port attaches contributing facts when cheaply retrievable |
+| `facts` | `{id, type, date}[]?` | The facts the check examined, resolved. Optional — MobWarnings carries only the tag; the TS port attaches contributing facts where cheaply retrievable. `date` is the fact's raw `date`, falling back to `standard_date`, and `null` when it has neither — **not** `getStandardDate()`, which inverts that precedence and normalizes through `stdDate()` (a record's `~1818` would come back `Abt 1818`). Three fields exactly: `hasEventAfterDeath1` cites every self fact and `merge_warnings` multiplies that by mob size |
 | `relatedPersonId` | string? | Person ID of the related person, when the check involves a relationship (e.g., the father in `earliestChildBirthToBirthMale14`). Omitted when not applicable |
 | `mobRole` | string? | Merge-mode only (`merge_warnings`): which mob surfaced the warning — `"target"`, `"candidate"`, `"merged"`, or `"relative"`. Single-anchor `person_warnings` never sets it. See `match-merge-workflow-spec.md` §7.5 |
 
@@ -107,7 +104,10 @@ Example output:
       "personId": "I1",
       "personName": "Patrick Flynn",
       "message": "An event is dated more than 1 year after this person's latest death-like fact.",
-      "factIds": ["F1", "F2"]
+      "facts": [
+        { "id": "F1", "type": "Birth", "date": "~1845" },
+        { "id": "F2", "type": "Death", "date": "1908-03-12" }
+      ]
     }
   ]
 }
@@ -129,20 +129,17 @@ implementation is checked against.
   name: "person_warnings",
   description:
     "Check a person for impossible or unlikely genealogical data (e.g., death " +
-    "before birth, parent too young, event after death). Two modes. Default: " +
-    "reads tree.gedcomx.json from the local project — pass projectPath, no " +
-    "authentication or network access required. Live: pass live=true and no " +
-    "projectPath to fetch the person from FamilySearch and run the same checks " +
-    "in memory, for auditing a profile with no local project — this mode does " +
-    "require authentication. personId is the anchor person; warnings are " +
-    "evaluated over that person and their one-hop relatives.",
+    "before birth, parent too young, event after death). Reads " +
+    "tree.gedcomx.json from the local project — no authentication or network " +
+    "access required. personId is the anchor person; warnings are evaluated " +
+    "over that person and their one-hop relatives.",
   inputSchema: {
     type: "object" as const,
     properties: {
       projectPath: {
         type: "string",
         description:
-          "Absolute path to the directory containing tree.gedcomx.json",
+          "Absolute path to the directory containing tree.gedcomx.json.",
       },
       personId: {
         type: "string",
@@ -150,9 +147,7 @@ implementation is checked against.
           "The anchor person to check. Warnings are evaluated over this person and their one-hop relatives.",
       },
     },
-    // projectPath is conditionally required — enforced at runtime, because the
-    // MCP input schema cannot express "required unless another field is set".
-    required: ["personId"],
+    required: ["personId", "projectPath"],
   },
 }
 ```
@@ -161,12 +156,7 @@ implementation is checked against.
 
 ## Authentication
 
-**Local mode: none required.** The tool reads a local file only.
-
-**Live mode: a FamilySearch session is required.** `live: true` fetches through
-the same path `person_read` uses, so the token comes from
-`getValidToken(principal)` and an unauthenticated call raises the standard
-LLM-instruction error directing the caller to log in.
+None required. The tool reads a local file only.
 
 ---
 
@@ -207,10 +197,10 @@ All warnings are evaluated relative to the **anchor person** (the
 required `personId`) and its one-hop relatives. Single-person checks
 read the anchor's own facts; relationship checks consider relationships
 in which the anchor participates (as parent, spouse, or child); and 27 of
-the 47 self-checks have a `relatives*`/`maleRelatives*`/`femaleRelatives*`
+the 48 self-checks have a `relatives*`/`maleRelatives*`/`femaleRelatives*`
 variant that fires the same condition on a one-hop relative.
 
-The full catalogue of the **74 tags** the tool emits in `issueType` is
+The full catalogue of the **75 tags** the tool emits in `issueType` is
 the § Tag Catalogue below. It is the source of truth an implementation is
 checked against, and the drift lint
 (`tests/packaging/person-warnings-spec-drift.test.ts`) fails if it and
@@ -265,7 +255,7 @@ if (birthYear != null && deathYear != null && deathYear < birthYear)
 
 **Message:** `"Death year ({deathYear}) is before birth year ({birthYear}) for {personName}."`
 
-**factIds:** `[birthFact.id, deathFact.id]`
+**facts:** the birth-like and death-like facts examined
 
 **relatedPersonId:** omitted
 
@@ -314,7 +304,7 @@ for each relationship where type === "ParentChild"
 
 **Message:** `"Father {parentName} would have been {maxAge} at the birth of {childName} (father born {parentBirthYear}, child born {childBirthYear})."`
 
-**factIds:** `[parentBirthFact.id, childBirthFact.id]`
+**facts:** the parent's and the child's birth-like facts
 
 **relatedPersonId:** `parent.id`
 
@@ -369,7 +359,7 @@ for each fact in anchor.facts:
 
 **Message:** `"{factType} ({eventYear}) is after death year ({deathYear}) for {personName}."`
 
-**factIds:** `[deathFact.id, fact.id]`
+**facts:** the death-like fact and the offending later fact
 
 **relatedPersonId:** omitted
 
@@ -444,7 +434,7 @@ tool.
 
 ### Tag Catalogue
 
-The full set of **74** tags the tool emits in `issueType`. Each row is
+The full set of **75** tags the tool emits in `issueType`. Each row is
 `Tag`, `Severity`, `Rule` (the condition that fires it), and `Cause`
 (what it usually indicates). `scoreType` is `COHERENCE` for every tag.
 The bidirectional drift lint
@@ -503,7 +493,7 @@ imprecise dates are widened per § Date Parsing Rules.
 | `tooManyBirthDates2` | implausible | Two or more distinct exact-DMY Birth dates spaced more than 30 days apart | Unreconciled conflicting sources, or two identities merged |
 | `tooManyDeathDates2` | implausible | Two or more distinct exact-DMY Death dates spaced more than 14 days apart | As above |
 | `deathRangeGreaterThan2` | implausible | Death-like dates span more than 2 years | Unreconciled conflicting death records |
-| `hasBurialAfterDeath31` | implausible | Earliest Burial is more than 31 days before the latest Death (despite the Java name, fires on burial-before-death outliers; preserved for parity) | Conflicting or mis-typed burial/death dates |
+| `hasBurialAfterDeath31` | implausible | The **latest possible** Burial is more than 31 days before the **earliest possible** Death (despite the Java name, fires on burial-before-death outliers) — see the divergence note below | Conflicting or mis-typed burial/death dates |
 | `birthRangeGreaterThan3` | implausible | Merge-mode only: the merged record's Birth facts span more than 3 years, with no shared marriage date to corroborate the join | The two records are different people |
 | `birthLikeRangeGreaterThan8` | implausible | Merge-mode only: the merged record's birth-like facts span more than 8 years, with no shared marriage date | As above, at the looser birth-like tolerance |
 | `hasCloseChildBirthsIgnoreSimilarChildren` | implausible | Two of this person's children (that are not already flagged as similar) have Birth dates suspiciously close together | Two records of one child attached as two children |
@@ -514,6 +504,33 @@ imprecise dates are widened per § Date Parsing Rules.
 | `similarSpousesConflictingDates` | implausible | Two spouses have similar names but conflicting dates | Same spouse recorded twice with a date discrepancy |
 | `hasDissimilarSpousesWithSameMarriageYear` | implausible | Two spouses share a marriage year but have dissimilar names | Two marriage records conflated, or a mis-transcribed name |
 | `hasEventsOutsideLifespanNear` | implausible | Merge-mode only: merging places an event slightly outside the other record's lifespan | A borderline mismatch worth checking before the merge |
+
+**`hasBurialAfterDeath31` diverges from the Java port on purpose — do not
+"restore" the original math.** Java computes
+`latestDeath − earliestBurial > 31`, which pairs the two bounds that
+*maximise* the apparent gap. On a year-only date pair that is guaranteed to
+fire on data that is not contradictory at all: Burial `1938` and Death `1938`
+expand to 1938-01-01 and 1938-12-31, and the tool reports a 364-day
+"violation" from two identical recorded values. Every such warning was false,
+and the genealogist acting on one corrects a record that was right.
+
+The implementation instead compares `earliestDeath − latestBurial`, the
+*conservative* pairing, so the check fires only when the burial precedes the
+death under **every** reading the recorded dates permit:
+
+| Burial | Death | Java pairing | Conservative pairing | Fires now? |
+|---|---|---|---|---|
+| `1938` | `1938` | +364 | −364 | no (was a false positive) |
+| `1961` | `28 Dec 1961` | +361 | −3 | no (was a false positive) |
+| `Jun 1900` | `15 Jun 1900` | +14 | −15 | no |
+| `1937` | `1 Jan 1939` | +730 | +366 | **yes** |
+| `1 Jan 1900` | `2 Feb 1900` | +32 | +32 | **yes** |
+
+Exact dates collapse both pairings to the same number, so the narrowing costs
+no true positive that was expressed precisely; what it drops are exactly the
+cases where the recorded precision cannot support the claim. The helper it
+calls, `factDaysDiffLatestEarliest`, exists only for this and has no Java
+counterpart.
 
 #### Family structure and names (`implausible`)
 
@@ -530,9 +547,9 @@ imprecise dates are widened per § Date Parsing Rules.
 
 #### Relative-mob mirrors (`implausible`)
 
-27 of the 47 self-checks above have a relative-mob variant that fires the
+27 of the 48 self-checks above have a relative-mob variant that fires the
 same condition on a one-hop relative (parent, spouse, or child) instead of
-the anchor; the other 20 run on the anchor only. They are **always
+the anchor; the other 21 run on the anchor only. They are **always
 `implausible`** regardless of the self-check's
 severity — the anchor's own data isn't necessarily wrong; the issue is in
 the relationship — and the flagged relative is named in the warning's
@@ -570,6 +587,12 @@ mirrored self-check for the rule.
 | `relativesHasLateMarriage90` | implausible | `hasLateMarriage90` |
 | `maleRelativesHasDiffSurname` | implausible | `hasDiffSurnameMale` |
 
+#### Project rules (not ported from FamilySearch)
+
+| Tag | Severity | Rule | Cause |
+|-----|----------|------|-------|
+| `hasEventInOtherCountry` | implausible | A non-migration, non-residence event (on the person or on a Couple relationship) is in a country that bidirectionally contradicts every birth and death anchor country, when those anchors agree | A record attached to the wrong person, or a mis-standardised place |
+
 ---
 
 ## Error Handling
@@ -604,9 +627,7 @@ is worth recording so it isn't "fixed" back later by mistake:
 
 | Condition | Behavior |
 |-----------|----------|
-| `projectPath` not provided and `live` is not `true` | Throw: `"projectPath is required"` |
-| `projectPath` **and** `live: true` both provided | Throw: `"Pass either projectPath or live=true, not both…"` |
-| `live: true` and the person is absent from the FamilySearch response | Throw a message naming a possible merge. `person_read` follows a 301 for a merged-away profile and returns the survivor under its **new** id; the tool anchors on that when it is the only person returned, and otherwise says so rather than leaking `Mob: anchor person not found`. |
+| `projectPath` not provided | Throw: `"projectPath is required"` |
 | `personId` not provided | Throw: `"personId is required"` |
 | `tree.gedcomx.json` is invalid JSON | Throw: `"Failed to parse tree.gedcomx.json: {parseError}"` |
 | `projectPath` is a real directory holding **neither** project file | **Return**, do not throw: `{ ok: false, reason: "no_project", errors }`. The user is not in a research project, which is an answer rather than a failure. This is the one tool that owes this answer without reading through `readProjectJson`, so it calls `classifyProjectPath` itself. Discriminate the result with `"ok" in result` — the success shape has no `ok` field. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
@@ -626,13 +647,13 @@ diagnostic-field alternative to throwing was not adopted.
 
 ### `packages/engine/mcp-server/src/types/person-warnings.ts`
 
-- `PersonWarningsInput` — `{ projectPath?: string; personId: string; live?: boolean }`
+- `PersonWarningsInput` — `{ projectPath: string; personId: string }`
 - `PersonWarning` — the warning object shape
 - `PersonWarningsResult` — the output shape
 
 ### `packages/engine/mcp-server/src/tools/person-warnings.ts`
 
-- `personWarningsTool(input, principal)` — main function. Takes a `Principal` because live mode reads a credential; local mode never uses it.
+- `personWarningsTool(input)` — main function.
 - `personWarningsToolSchema` — MCP tool schema
 - `ALL_WARNING_TAGS` — the array of every `issueType` tag the tool emits;
   imported by the drift lint as the shipped source of truth
@@ -700,8 +721,8 @@ newly-derived entry must read the predicate, not lean on a test.
 ### This spec is the full catalogue
 
 § Tag Catalogue documents **every** tag the tool emits, and the drift
-lint enforces that. The check-warnings skill's
-`references/warning-checks.md` is a **curated, agent-facing subset** — it
+lint enforces that. The check-warnings agent's
+Appendix A (formerly `references/warning-checks.md`) is a **curated, agent-facing subset** — it
 does not have to list every tag. So a new tag must be documented here
 and need not be added to that reference.
 
@@ -797,13 +818,6 @@ npx @modelcontextprotocol/inspector node build/index.js
   — throws file-not-found
 - Call `person_warnings({ projectPath: "/path/to/project", personId: "ZZZZ" })`
   — throws person-not-found
-- Call `person_warnings({ personId: "KD96-TV2", live: true })` — live mode;
-  fetches the person and their one-hop relatives from FamilySearch and checks
-  them. Needs a logged-in session; without one it throws the login instruction
-- Call `person_warnings({ personId: "I1" })` — throws `projectPath is required`.
-  Omitting the path does **not** select live mode; only `live: true` does
-- Call `person_warnings({ projectPath: "/p", personId: "I1", live: true })`
-  — throws (the two modes read different trees)
 
 ### Manual Layer 2 (Claude Code)
 

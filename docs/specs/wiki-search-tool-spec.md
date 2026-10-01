@@ -77,7 +77,7 @@ Example:
 |-----------|----------|
 | Missing `wikiApiUrl` in config | Throw LLM-instruction error: `"wiki-query-api MCP not configured. Create ~/.familysearch-mcp/config.json with { \"wikiApiUrl\": \"http://localhost:8000\" } and start the wiki-query-api server."` |
 | 5xx from API | Throw: `"wiki-query-api error: {status}"` |
-| Network failure | Throw: `"Could not reach wiki-query-api at {url}. Is the server running?"` |
+| Network failure | Throw: `"Could not reach wiki-query-api at {url} ({cause})."` — `{cause}` from `describeFetchError` (`src/utils/http.ts`) |
 
 Match the LLM-instruction error pattern used by `getValidToken(principal)` in
 `src/auth/refresh.ts` — error messages must tell Claude what to do next.

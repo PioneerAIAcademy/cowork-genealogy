@@ -121,7 +121,8 @@ export const imageReadToolSchema = {
         description:
           "A FamilySearch document-image ARK, when no imageId is available " +
           "— ark:/61903/3:1:... or 3:2:... (e.g. from fulltext_search's " +
-          "`id`), a bare 3:1:.../3:2:... id, a full resolver URL for one, " +
+          "`id`), a bare 3:1:.../3:2:... id, an unprefixed XXXX-XXXX-XXXX-X " +
+          "id (treated as 3:1:), a full resolver URL for one, " +
           "or an already-resolved DeepZoomCloud (ending in /$dist) or DGS " +
           "(dgs:.../dist.jpg) distribution URL. " +
           "IMPORTANT: some document-image ARKs are waypoints into a multi-image " +

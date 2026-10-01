@@ -31,6 +31,7 @@ import {
   hasDeathBeforeChildBirthLike,
   childMarriageToMarriage,
   hasDiffSurname,
+  hasEventInOtherCountry,
   calculateWarnings,
 } from "../../src/tools/person-warnings.js";
 import { Mob } from "../../src/utils/mob.js";
@@ -525,7 +526,7 @@ describe("hasAgeRangeGreaterThan predicate", () => {
 // hasBurialAfterDeath — Java MobWarnings.hasBurialAfterDeath
 // ────────────────────────────────────────────────────────────────────
 
-describe("hasBurialAfterDeath predicate (Java math: fires when burial > N days BEFORE death)", () => {
+describe("hasBurialAfterDeath predicate (fires when burial > N days BEFORE death under EVERY reading of the dates)", () => {
   it("fires when earliest Burial is more than 31 days before latest Death", () => {
     // Burial in 1890, Death in 1900 — burial 10 years BEFORE death.
     // Java's math: latest(Death) − earliest(Burial) = +days → fires.
@@ -588,6 +589,140 @@ describe("hasBurialAfterDeath predicate (Java math: fires when burial > N days B
       ],
     };
     expect(hasBurialAfterDeath(new Mob(tree, "I1"), 31)).toBe(false);
+  });
+
+  // ── Issue #2681: the ported Java pairing fired on data that is not
+  // contradictory. These pin the narrowing in BOTH directions — the four
+  // below must stay silent, and the genuine violations above must keep
+  // firing. See the KNOWING DIVERGENCE note on hasBurialAfterDeath.
+
+  it("does NOT fire on two year-only dates in the SAME year", () => {
+    // The reported false positive. Java's pairing expands these to
+    // earliest(Burial) = 1938-01-01 and latest(Death) = 1938-12-31 and
+    // reports a 364-day violation from two identical recorded values.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Same", surname: "Year" }],
+          facts: [
+            { id: "F1", type: "Burial", date: "1938", standard_date: "1938" },
+            { id: "F2", type: "Death", date: "1938", standard_date: "1938" },
+          ],
+        },
+      ],
+    };
+    expect(hasBurialAfterDeath(new Mob(tree, "I1"), 31)).toBe(false);
+  });
+
+  it("does NOT fire on a year-only Burial with an exact Death later that year", () => {
+    // Also reported. Burial "1961" cannot be shown to precede a death of
+    // 28 Dec 1961: 31 Dec 1961 is inside the burial's own range.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Year", surname: "Only" }],
+          facts: [
+            { id: "F1", type: "Burial", date: "1961", standard_date: "1961" },
+            {
+              id: "F2",
+              type: "Death",
+              date: "28 Dec 1961",
+              standard_date: "28 Dec 1961",
+            },
+          ],
+        },
+      ],
+    };
+    expect(hasBurialAfterDeath(new Mob(tree, "I1"), 31)).toBe(false);
+  });
+
+  it("does NOT fire when an imprecise Burial straddles an exact Death", () => {
+    // Month-precision burial containing the death day: the burial could be
+    // the 30th, after the death, so the contradiction is not established.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N", given: "Straddle", surname: "Month" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Burial",
+              date: "Jun 1900",
+              standard_date: "Jun 1900",
+            },
+            {
+              id: "F2",
+              type: "Death",
+              date: "15 Jun 1900",
+              standard_date: "15 Jun 1900",
+            },
+          ],
+        },
+      ],
+    };
+    expect(hasBurialAfterDeath(new Mob(tree, "I1"), 31)).toBe(false);
+  });
+
+  it("STILL fires on an imprecise Burial that cannot reach the Death", () => {
+    // The other direction: even the last day of the burial year (1937-12-31)
+    // is 366 days before the death, so every reading is contradictory. A
+    // narrowing that swallowed this one would be too wide.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Real", surname: "Violation" }],
+          facts: [
+            { id: "F1", type: "Burial", date: "1937", standard_date: "1937" },
+            {
+              id: "F2",
+              type: "Death",
+              date: "1 Jan 1939",
+              standard_date: "1 Jan 1939",
+            },
+          ],
+        },
+      ],
+    };
+    expect(hasBurialAfterDeath(new Mob(tree, "I1"), 31)).toBe(true);
+  });
+
+  it("STILL fires on two exact dates 32 days apart, and not on 31", () => {
+    // Exact dates collapse both pairings to the same number, so the
+    // narrowing must not move the 31-day threshold by a single day.
+    const build = (burial: string): SimplifiedGedcomX => ({
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Edge", surname: "Case" }],
+          facts: [
+            { id: "F1", type: "Burial", date: burial, standard_date: burial },
+            {
+              id: "F2",
+              type: "Death",
+              date: "2 Feb 1900",
+              standard_date: "2 Feb 1900",
+            },
+          ],
+        },
+      ],
+    });
+    // 1 Jan → 2 Feb 1900 = 32 days.
+    expect(
+      hasBurialAfterDeath(new Mob(build("1 Jan 1900"), "I1"), 31),
+    ).toBe(true);
+    // 2 Jan → 2 Feb 1900 = 31 days, not strictly greater.
+    expect(
+      hasBurialAfterDeath(new Mob(build("2 Jan 1900"), "I1"), 31),
+    ).toBe(false);
   });
 });
 
@@ -3053,7 +3188,7 @@ describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
     );
     expect(w).toBeDefined();
     // Birth-like + death-like facts examined by the check.
-    expect(w?.factIds).toEqual(["F1", "F2"]);
+    expect(w?.facts?.map((f) => f.id)).toEqual(["F1", "F2"]);
     // No relative involved — relatedPersonId stays unset.
     expect(w?.relatedPersonId).toBeUndefined();
   });
@@ -3077,7 +3212,7 @@ describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
       (x) => x.issueType === "tooManyBirthDates2",
     );
     expect(w).toBeDefined();
-    expect(w?.factIds).toEqual(["F1", "F2"]);
+    expect(w?.facts?.map((f) => f.id)).toEqual(["F1", "F2"]);
   });
 
   it("child-birth warning: earliestChildBirthToBirthMale14 carries anchor + child fact ids and relatedPersonId", () => {
@@ -3109,7 +3244,7 @@ describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
     );
     expect(w).toBeDefined();
     // Anchor's birth fact + the contributing child's birth fact.
-    expect(w?.factIds).toEqual(["F1", "F2"]);
+    expect(w?.facts?.map((f) => f.id)).toEqual(["F1", "F2"]);
     expect(w?.relatedPersonId).toBe("C");
   });
 
@@ -3142,7 +3277,7 @@ describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
     // Anchored on the focal person, but points at the failing relative.
     expect(w?.personId).toBe("I1");
     expect(w?.relatedPersonId).toBe("I2");
-    expect(w?.factIds).toEqual(["F1", "F2"]);
+    expect(w?.facts?.map((f) => f.id)).toEqual(["F1", "F2"]);
   });
 
   it("structural warning: tooManyChildren18 carries NO factIds", () => {
@@ -3171,10 +3306,10 @@ describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
       (x) => x.issueType === "tooManyChildren18",
     );
     expect(w).toBeDefined();
-    expect(w?.factIds).toBeUndefined();
+    expect(w?.facts).toBeUndefined();
   });
 
-  it("name warning: hasBlankName carries NO factIds", () => {
+  it("name warning: hasBlankName carries NO facts", () => {
     const tree: SimplifiedGedcomX = {
       persons: [
         {
@@ -3188,6 +3323,307 @@ describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
       (x) => x.issueType === "hasBlankName",
     );
     expect(w).toBeDefined();
-    expect(w?.factIds).toBeUndefined();
+    expect(w?.facts).toBeUndefined();
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// hasEventInOtherCountry — project rule (not a FamilySearch Java port)
+// ────────────────────────────────────────────────────────────────────
+
+describe("hasEventInOtherCountry", () => {
+  it("fires when a Couple-relationship marriage is in a country inconsistent with birth and death", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N1", given: "Elsie", surname: "Chamberlain" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "ABT 1790",
+              standard_date: "Abt 1790",
+              standard_place: "Newbury, Orange, Vermont, United States",
+            },
+            {
+              id: "F2",
+              type: "Death",
+              date: "20 Dec 1865",
+              standard_date: "20 December 1865",
+              standard_place: "Ryegate, Caledonia, Vermont, United States",
+            },
+          ],
+        },
+        {
+          id: "I2",
+          gender: "Male",
+          names: [{ id: "N2", given: "Gilchrist", surname: "Unknown" }],
+        },
+      ],
+      relationships: [
+        {
+          id: "R1",
+          type: "Couple",
+          person1: "I1",
+          person2: "I2",
+          facts: [
+            {
+              id: "F3",
+              type: "Marriage",
+              date: "4 Jan 1830",
+              standard_date: "4 January 1830",
+              standard_place:
+                "St Andrews, Fife, Scotland, United Kingdom",
+            },
+          ],
+        },
+      ],
+    };
+    const warnings = finalWarnings(new Mob(tree, "I1"));
+    const w = warnings.find(
+      (x) => x.issueType === "hasEventInOtherCountry",
+    );
+    expect(w).toBeDefined();
+    expect(w!.severity).toBe("implausible");
+    expect(w!.message).toContain("Marriage");
+    expect(w!.message).toContain("United Kingdom");
+    expect(w!.message).toContain("United States");
+    expect(w!.facts).toBeDefined();
+    expect(w!.facts!.some((f) => f.type === "Birth")).toBe(true);
+    expect(w!.facts!.some((f) => f.type === "Death")).toBe(true);
+    expect(w!.facts!.some((f) => f.type === "Marriage")).toBe(true);
+  });
+
+  it("fires when a person-level fact is in a different country", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N1", given: "Elsie", surname: "Chamberlain" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "1790",
+              standard_date: "1790",
+              standard_place: "Newbury, Orange, Vermont, United States",
+            },
+            {
+              id: "F2",
+              type: "Death",
+              date: "1865",
+              standard_date: "1865",
+              standard_place: "Ryegate, Caledonia, Vermont, United States",
+            },
+            {
+              id: "F3",
+              type: "Marriage",
+              date: "1830",
+              standard_date: "1830",
+              standard_place: "St Andrews, Fife, Scotland, United Kingdom",
+            },
+          ],
+        },
+      ],
+    };
+    const mob = new Mob(tree, "I1");
+    expect(hasEventInOtherCountry(mob)).toBe(true);
+    const warnings = finalWarnings(mob);
+    const w = warnings.find(
+      (x) => x.issueType === "hasEventInOtherCountry",
+    );
+    expect(w).toBeDefined();
+    expect(w!.message).toContain("Marriage");
+    expect(w!.message).toContain("United Kingdom");
+    expect(w!.message).toContain("United States");
+  });
+
+  it("does NOT fire when only birth anchors exist (no death)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N1", given: "Jane", surname: "Doe" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "1800",
+              standard_date: "1800",
+              standard_place: "Bennington, Bennington, Vermont, United States",
+            },
+            {
+              id: "F2",
+              type: "Marriage",
+              date: "1825",
+              standard_date: "1825",
+              standard_place: "London, Middlesex, United Kingdom",
+            },
+          ],
+        },
+      ],
+    };
+    expect(hasEventInOtherCountry(new Mob(tree, "I1"))).toBe(false);
+  });
+
+  it("does NOT fire when a skip-set fact (Census) is in a different country", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "John", surname: "Smith" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "1800",
+              standard_date: "1800",
+              standard_place: "Bennington, Bennington, Vermont, United States",
+            },
+            {
+              id: "F2",
+              type: "Death",
+              date: "1870",
+              standard_date: "1870",
+              standard_place: "Bennington, Bennington, Vermont, United States",
+            },
+            {
+              id: "F3",
+              type: "Census",
+              date: "1841",
+              standard_date: "1841",
+              standard_place: "London, Middlesex, United Kingdom",
+            },
+          ],
+        },
+      ],
+    };
+    expect(hasEventInOtherCountry(new Mob(tree, "I1"))).toBe(false);
+  });
+
+  it("does NOT fire when birth and death countries disagree (emigrant)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "John", surname: "McLeod" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "1790",
+              standard_date: "1790",
+              standard_place: "Edinburgh, Midlothian, Scotland, United Kingdom",
+            },
+            {
+              id: "F2",
+              type: "Death",
+              date: "1860",
+              standard_date: "1860",
+              standard_place: "Bennington, Bennington, Vermont, United States",
+            },
+            {
+              id: "F3",
+              type: "Marriage",
+              date: "1825",
+              standard_date: "1825",
+              standard_place: "Paris, Ile-de-France, France",
+            },
+          ],
+        },
+      ],
+    };
+    const warnings = finalWarnings(new Mob(tree, "I1"));
+    expect(
+      warnings.find((x) => x.issueType === "hasEventInOtherCountry"),
+    ).toBeUndefined();
+  });
+
+  it("does NOT fire when a fact has no standard_place", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "John", surname: "Smith" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "1800",
+              standard_date: "1800",
+              standard_place: "Bennington, Bennington, Vermont, United States",
+            },
+            {
+              id: "F2",
+              type: "Death",
+              date: "1870",
+              standard_date: "1870",
+              standard_place: "Bennington, Bennington, Vermont, United States",
+            },
+            {
+              id: "F3",
+              type: "Marriage",
+              date: "1825",
+              standard_date: "1825",
+              place: "Some place in Scotland",
+            },
+          ],
+        },
+      ],
+    };
+    const warnings = finalWarnings(new Mob(tree, "I1"));
+    expect(
+      warnings.find((x) => x.issueType === "hasEventInOtherCountry"),
+    ).toBeUndefined();
+  });
+
+  it("does NOT fire for England-vs-United Kingdom (same umbrella country)", () => {
+    // The bidirectional check protects against this: a birth in "..., England"
+    // (constituent only) and a marriage in "..., United Kingdom" (umbrella).
+    // countryConsistency(UK, England) = "contradiction" but
+    // countryConsistency(England, UK) = "ok" — so they are NOT different.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "John", surname: "Smith" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "1800",
+              standard_date: "1800",
+              standard_place: "Wednesbury, Staffordshire, England",
+            },
+            {
+              id: "F2",
+              type: "Death",
+              date: "1870",
+              standard_date: "1870",
+              standard_place: "Wednesbury, Staffordshire, England",
+            },
+            {
+              id: "F3",
+              type: "Marriage",
+              date: "1825",
+              standard_date: "1825",
+              standard_place: "London, Middlesex, United Kingdom",
+            },
+          ],
+        },
+      ],
+    };
+    const warnings = finalWarnings(new Mob(tree, "I1"));
+    expect(
+      warnings.find((x) => x.issueType === "hasEventInOtherCountry"),
+    ).toBeUndefined();
   });
 });

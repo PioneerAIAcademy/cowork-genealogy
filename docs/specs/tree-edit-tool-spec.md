@@ -117,8 +117,8 @@ owns; the two are linked by `gedcomx_source_description_id`.
 Out of scope: **person merging / person removal** — that is the merge tools'
 job (`merge_tree_persons` removes a collapsed person and remaps `research.json`);
 `tree_edit` never deletes a person. Also out of scope: `research.json` edits
-(those are `research_append`), and `check-warnings` (a separate skill
-step, run after — see §8).
+(those are `research_append`), and `check-warnings` (a separate agent,
+spawned after — see §8).
 
 ---
 
@@ -429,8 +429,8 @@ Sequence (validate-before-persist, tree-only):
    a stale `factId`/`personId`/`relationshipId` is a clear error, not a silent
    no-op), then **heal legacy shapes** (`src/validation/tree-sanitize.ts`):
    trees written before the validator tightening — `preferred:/primary: false`
-   from the old merge core, top-level `places[]`, person-level `sources`,
-   unknown keys, missing ids, string quality — are repaired in memory with one
+   from the old merge core, top-level `places[]`, unknown keys, missing ids,
+   string quality, a person-level ref that names no source — are repaired in memory with one
    warning per healed class, so a pre-tightening project is never bricked. A
    successful edit persists the healed document (a one-shot migration).
    Ambiguous problems (dangling refs, swapped endpoint keys, duplicate ids)
