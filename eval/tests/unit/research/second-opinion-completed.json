@@ -11,7 +11,7 @@
     ]
   },
   "input": {
-    "user_message": "Can I get a second opinion on this research before I share it with my family?",
+    "user_message": "/research Can I get a second opinion on this project before I share it with my family?",
     "scenario": "flynn-resolved"
   },
   "execution": {
