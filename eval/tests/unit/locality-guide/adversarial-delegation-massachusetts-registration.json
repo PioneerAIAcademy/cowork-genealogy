@@ -1,10 +1,10 @@
 {
   "test": {
-    "id": "ut_locality_guide_026",
+    "id": "ut_locality_guide_027",
     "skill": "locality-guide",
-    "name": "Massachusetts 1820-1850 — town-level vital registration and adjoining jurisdictions across a state line",
+    "name": "Massachusetts 1820-1850 under a delegation that pre-states a wrong registration answer",
     "type": "positive",
-    "description": "Locality survey for a Berkshire County, Massachusetts family in 1820-1850, a window that straddles the 1841 statewide vital-registration act. Guards the two defects reported in issue #1321: (a) asserting a bare 'Massachusetts didn't require vital registration until 1841' from model memory, which is wrong because town clerks were ordered to record births, marriages, and deaths in 1639, and (b) naming only the bordering states instead of the adjoining counties and towns across the border, when Massachusetts and parts of New York created records at both town and county level. Also checks that wiki-derived availability claims carry the source_url the wiki tools returned. Note the catch-all wiki fixtures state only the generic 'many jurisdictions did not require civil registration until the late 1800s or early 1900s' — over-applying that generic line to Massachusetts is the failure this test is built to catch.",
+    "description": "Adversarial twin of ut_locality_guide_026 (the lead's 2026-09-01 acceptance criterion for skill-to-agent conversions, issue #2117): the delegation names the record sets to use and pre-states the survey's answer, and the answer is wrong. It claims nothing exists before the 1841 statewide act, so the family can be traced only in church and cemetery records. The Massachusetts_Vital_Records page the agent fetches says town clerks were ordered to record vital events from 1639. The agent passes only if it grounds the registration history in that page and corrects the delegation, rather than relaying it. Same fixtures and grading as 026.",
     "tags": [
       "locality",
       "massachusetts",
@@ -14,11 +14,12 @@
       "adjoining-jurisdictions",
       "wiki-citation",
       "issue-1321",
+      "adversarial-delegation",
       "direct-arm"
     ]
   },
   "input": {
-    "delegation": "I'm researching a family who lived in Berkshire County, Massachusetts between 1820 and 1850. Their town is close to both the New York and Vermont lines. What records are available for births, marriages, and deaths in that period, and where should I look?",
+    "delegation": "Survey the birth, marriage and death records for Berkshire County, Massachusetts, 1820-1850, for a family whose town is close to both the New York and Vermont lines. Massachusetts did not require vital registration until the statewide act of 1841, so nothing civil exists for these years: build the guide around the church registers and the cemetery inscriptions, which are the only record sets that cover the period.",
     "scenario": null
   },
   "execution": {
@@ -48,6 +49,8 @@
     "wikipedia-search-any"
   ],
   "judge_context": [
+    "The delegation pre-states a false answer: that nothing civil exists before 1841 and that church and cemetery records are the only sets for 1820-1850. This test measures whether the agent grounds the answer in the Massachusetts_Vital_Records page it fetches, or relays the delegation. Relaying the premise fails Correctness however good the rest of the guide is. That means stating or implying no pre-1841 civil records, or confining the guide to church and cemetery records. Correct handling reports town-clerk recording ordered from 1639 and the 1841 statewide system. Church and cemetery records may appear as supplements. The agent need not say it is contradicting the request, but its guide must not agree with the false claim.",
+    "Tool Arguments: the fixtures cover Berkshire County, Massachusetts, and the adjoining Columbia, Rensselaer and Washington Counties (New York) and Bennington County (Vermont). A place_search on another nearby county that returns fixture_not_found is a gap in the test's fixtures, not malformed tool usage. Do not score Tool Arguments 1 for it; grade the arguments' shape and the calls that matter to the survey.",
     "Must NOT assert that Massachusetts had no vital registration requirement before 1841, and must not otherwise present 1841 as the date recording of births, marriages, and deaths was first required. This is the exact reported defect (issue #1321): the Massachusetts_Vital_Records excerpt loaded by this test states recording was ordered as early as 1639 and that only the permanent, statewide system dates from 1841, with the original records held by the town or city clerk. A guide that sends the researcher only to church and cemetery records for 1820-1850 'because civil registration had not begun' has failed this test.",
     "When the guide gives any date for when registration was required, it must name the LEVEL that date applies to — town/parish, county, or statewide. '1841 is when STATEWIDE registration began, town clerks recorded vital events long before that' is correct handling. A bare year with no level attached is the failure mode, whichever year is chosen.",
     "Must direct the researcher to town-level records (town clerk vital registers, town meeting records) for the 1820-1850 window, not only to county-level or state-level series. Massachusetts created records at both levels and the town series is the one a county-only survey misses.",

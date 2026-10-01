@@ -73,6 +73,9 @@ export const RESEARCH_QUERY_EXCLUDED: Readonly<Record<string, string>> = {
   known_holdings:
     "write-only; issue #2069 deletes it from the schema, so exposing it here " +
     "would create a contract that card then has to remove",
+  warning_justifications:
+    "writer-tool only; persisted by the warning gate as a side-effect of a " +
+    "justified write. Read by gps-mentor for audit, not by research_query",
 };
 
 export interface ResearchQueryInput {

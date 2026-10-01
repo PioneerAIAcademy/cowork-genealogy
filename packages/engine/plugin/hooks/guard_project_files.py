@@ -177,6 +177,9 @@ AGENT_WRITABLE_SECTIONS = {
     # citation refines `citation` / `citation_detail` on source entries that
     # already exist, and writes nothing else in research.json.
     "citation": frozenset({"sources"}),
+    # locality-guide writes one `localities` entry per surveyed place, and
+    # nothing else in research.json.
+    "locality-guide": frozenset({"localities"}),
     # hypothesis-tracking states, links and rules out hypotheses, and writes
     # nothing else in research.json.
     "hypothesis-tracking": frozenset({"hypotheses"}),
