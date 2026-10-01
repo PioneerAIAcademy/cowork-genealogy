@@ -343,7 +343,8 @@ def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
             (isinstance(results, list) and len(results) > 0) or
             (total_hits is not None and int(total_hits) > 0)
         )
-        if is_positive:
+        has_filters = any(k in c["args"] for k in POST_SEARCH_FILTER_KEYS)
+        if is_positive and not has_filters:
             h = c["args"].get("keywords") or c["args"].get("nlQuery") or ""
             positive_terms.update(w for w in h.split() if w.startswith("+"))
 
