@@ -374,7 +374,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["record-extraction -> citation", ""],
   ["research -> citation", ""],
   ["search-records -> citation", ""],
-  ["source-evaluation -> citation", ""],
   ["translation -> citation", ""],
   // Six "use proof-conclusion" prohibitions in DO NOT clauses, visible to the
   // prose arm only since issue #2822 deleted the routing skill and made the
@@ -421,7 +420,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // issue #2805 deleted its skill.
   ["conflict-resolution -> check-warnings", ""],
   ["search-records -> check-warnings", ""],
-  ["source-evaluation -> check-warnings", ""],
   ["timeline -> check-warnings", ""],
   // tree-edit entered agentOnly when issue #2805 deleted its skill. The one
   // mention is a DO NOT clause ("Merging is ... a data operation (tree-edit)"),
@@ -440,6 +438,11 @@ const PROSE_MENTIONS = new Map<string, string>([
   // `@plugin:hypothesis-tracking`.
   ["conflict-resolution -> hypothesis-tracking", ""],
   ["timeline -> hypothesis-tracking", ""],
+  // source-evaluation entered agentOnly when issue #2796 deleted its skill. The
+  // one mention is init-project's boundary prose ("Auditing the sources already
+  // attached ... is source-evaluation's; name it, never audit them here"), not
+  // a delegation; it does not spell `@plugin:source-evaluation`.
+  ["init-project -> source-evaluation", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -631,6 +634,8 @@ describe("agent delegation framing", () => {
     "search-familysearch-wiki",
     "search-images",
     "search-wikipedia",
+    // ARRIVED when issue #2796 deleted skills/source-evaluation/.
+    "source-evaluation",
     "tree-edit",
     "validate-schema",
   ];
