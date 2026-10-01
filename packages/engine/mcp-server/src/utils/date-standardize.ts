@@ -485,9 +485,21 @@ function hasUnparsedWord(text: string, tokens: Token[]): boolean {
   // The tokenizer builds words from ASCII letters only and drops the rest, so
   // a Cyrillic or CJK word would otherwise never be seen ("январь 1860" ->
   // "1860"). Any letter left after accent folding is unparsed.
-  if (/\p{L}/u.test(text.replace(/[a-zA-Z]/g, ''))) return true;
+  // `º`/`ª` are Spanish/Portuguese ordinal marks ("1º de enero"), not words.
+  if (/\p{L}/u.test(text.replace(/[a-zA-Zºª]/g, ''))) return true;
   for (let i = 0; i < tokens.length; i++) {
     if (tokens[i].type === 'str' && !isDateWord(tokens, i)) return true;
+  }
+  return false;
+}
+
+/** The standalone From/To branches parse only what follows the keyword, so
+ *  anything in front of it other than a filler ("1682 bis 1694",
+ *  "um 1850 bis 1860") would be dropped. */
+function droppedBefore(tokens: Token[], keywordIdx: number): boolean {
+  for (let i = 0; i < keywordIdx; i++) {
+    const t = tokens[i];
+    if (t.type !== 'str' || !FILLER_WORDS.has(t.value.toLowerCase())) return true;
   }
   return false;
 }
@@ -555,12 +567,16 @@ export function stdDate(raw: string): string {
 
   // Never emit a partial: every word of the input must be understood.
   const normalizedText = normalizeAccents(text);
-  if (hasUnparsedWord(normalizedText, tokenize(normalizedText))) return '';
+  const allTokens = tokenize(normalizedText);
+  if (hasUnparsedWord(normalizedText, allTokens)) return '';
 
   // Check for __OR__ pattern (ambiguous date)
   if (text.includes('__OR__')) {
     const orParts = text.match(/__OR__(.*?)__OR__(.*?)__OR__/);
     if (orParts) {
+      // Anything outside the ambiguous segment ("abt 3/9/1978") would be
+      // dropped from the output, so the result would be a partial.
+      if (text.replace(/__OR__.*?__OR__.*?__OR__/, '').trim() !== '') return '';
       const interp1 = orParts[1].trim();
       const interp2 = orParts[2].trim();
 
@@ -572,16 +588,14 @@ export function stdDate(raw: string): string {
     }
   }
 
-  // Tokenize
-  const allTokens = tokenize(normalizeAccents(text));
-
   if (allTokens.length === 0) return '';
 
   // Check for "Q" prefix for quarters (e.g., "Q1")
   if (allTokens.length >= 2 && allTokens[0].type === 'str' &&
       allTokens[0].value.toLowerCase() === 'q' && allTokens[1].type === 'num') {
     const qNum = parseInt(allTokens[1].value, 10);
-    if (qNum >= 1 && qNum <= 4 && allTokens.length >= 3) {
+    // Exactly "Q<n> <year>": anything after ("Q1 1850 to Q2 1851") would be dropped.
+    if (qNum >= 1 && qNum <= 4 && allTokens.length === 3) {
       const yearTok = allTokens[2];
       if (yearTok.type === 'num') {
         const year = parseInt(yearTok.value, 10);
@@ -643,9 +657,14 @@ export function stdDate(raw: string): string {
     }
   }
 
+  // A conjunction that no range branch consumed would be dropped by every path
+  // below: "1850 or 1851" would give 1851, "Bef 1850 and Aft 1840" Bef 1840.
+  if (andPositions.length > 0 || findAllModifier(allTokens, 'or').length > 0) return '';
+
   // Standalone From → Aft
   if (fromPositions.length > 0 && toPositions.length === 0 && andPositions.length === 0) {
     const fromIdx = fromPositions[0];
+    if (droppedBefore(allTokens, fromIdx)) return '';
     const date = parseDateTokens(allTokens, fromIdx + 1, allTokens.length);
     if (!date.year || dayWithoutMonth(date)) return '';
     date.modifier = 'Aft';
@@ -658,6 +677,7 @@ export function stdDate(raw: string): string {
   // Standalone To → Bef
   if (toPositions.length > 0 && fromPositions.length === 0) {
     const toIdx = toPositions[0];
+    if (droppedBefore(allTokens, toIdx)) return '';
     const date = parseDateTokens(allTokens, toIdx + 1, allTokens.length);
     if (!date.year || dayWithoutMonth(date)) return '';
     date.modifier = 'Bef';

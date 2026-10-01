@@ -957,3 +957,39 @@ describe('stdDate never emits a partial', () => {
     expect(stdDate('1st quarter 1850')).toBe('Q1 1850');
   });
 });
+
+// /code-review high on the branch, 2026-10-01: regressions the first version
+// introduced, and partials the "never emit a partial" rule still let through.
+describe('stdDate never emits a partial: review cases', () => {
+  test.each([
+    // Previously correct and must stay so.
+    ['1º de enero de 1850', '1 Jan 1850'],
+    ['1.º de janeiro de 1850', '1 Jan 1850'],
+    ['3rd of March 1850', '3 Mar 1850'],
+    ['the 3rd of March 1850', '3 Mar 1850'],
+    ['5th day of June 1850', '5 Jun 1850'],
+    // The ambiguous numeric form on its own still gives both readings.
+    ['3/9/1978', '9 Mar 1978 or 3 Sep 1978'],
+    ['Q1 1850', 'Q1 1850'],
+  ])('%s -> %s', (raw, std) => {
+    expect(stdDate(raw)).toBe(std);
+  });
+
+  test.each([
+    // A standalone To/From keyword with something in front of it.
+    ['1682 bis 1694'],
+    ['um 1850 bis 1860'],
+    ['1849 to 1850'],
+    // A conjunction no range consumed.
+    ['1850 or 1851'],
+    ['Bef 1850 and Aft 1840'],
+    ['12 or 13 Mar 1850'],
+    ['13 & 14 Mar 1850'],
+    // Something outside the ambiguous segment, or after a quarter.
+    ['abt 3/9/1978'],
+    ['bef 3/9/1978'],
+    ['Q1 1850 to Q2 1851'],
+  ])('omits %s', (raw) => {
+    expect(stdDate(raw)).toBe('');
+  });
+});

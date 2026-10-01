@@ -634,8 +634,8 @@ splintering into inconsistent labels, over a form the model added:
   Because `stdDate` omits any input carrying a word it does not recognize, a
   value with extra words (`"Accessed 12 July 2026"`) is unparseable and is left
   in place, so the write is refused; a weekday (`"Monday, 12 July 2026"`) is
-  recognized and still normalizes. All 82 distinct committed `access_date`
-  values were ISO or a plain `12 July 2026` form when this landed (2026-09-30).
+  recognized and still normalizes. Every committed `access_date` value was ISO
+  or a plain `12 July 2026` form when this landed (2026-09-30).
 - **`fact_type` canonicalization (assertions).** `fact_type` is an OPEN enum
   (`fact_type_recommended`), so the model freely varies casing (`Name`,
   `CauseOfDeath`) and reaches for role-prefixed or bare-structure aliases
