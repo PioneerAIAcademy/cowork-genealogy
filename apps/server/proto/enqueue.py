@@ -32,8 +32,9 @@ class SqsError(RuntimeError):
     pass
 
 
-def sqs_call(endpoint: str, action: str, params: dict[str, str]) -> str:
-    """One SQS query-API call (form-encoded POST); returns the XML response body."""
+def sqs_call(endpoint: str, action: str, params: dict[str, str], *, timeout: float = 30) -> str:
+    """One SQS query-API call (form-encoded POST); returns the XML response body.
+    ``timeout`` bounds the whole call; the worker's shutdown release passes a short one."""
     data = urlencode({"Action": action, "Version": "2012-11-05", **params}).encode("utf-8")
     req = Request(
         endpoint.rstrip("/") + "/",
@@ -42,7 +43,7 @@ def sqs_call(endpoint: str, action: str, params: dict[str, str]) -> str:
         method="POST",
     )
     try:
-        with urlopen(req, timeout=30) as resp:
+        with urlopen(req, timeout=timeout) as resp:
             return resp.read().decode("utf-8")
     except HTTPError as exc:
         detail = exc.read().decode("utf-8", "replace")
