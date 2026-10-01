@@ -292,7 +292,7 @@ def test_complete_writes_the_nudge_count_with_coalesce_like_the_other_figures():
     conn = FakeConn()
     worker.complete(conn, TURN, 1, nudges=3)
     sql, params = conn.executed[2]
-    assert "nudges = COALESCE(%s, nudges)" in sql and params[-2:] == (3, "turn-1") and params[0] == "ok"
+    assert "nudges = COALESCE(%s, nudges, 0)" in sql and params[-2:] == (3, "turn-1") and params[0] == "ok"
     conn = FakeConn()
     worker.complete(conn, TURN, 1, nudges=0)
     assert conn.executed[2][1][-2] == 0, "zero is a figure (the arm was off or never vetoed), not an absence"
@@ -2249,8 +2249,48 @@ def test_completing_an_attempt_that_vetoed_nothing_does_not_erase_the_turns_coun
         f"complete() passed {params[-2]!r} for nudges; COALESCE then keeps the row's "
         f"value only if this is None"
     )
-    assert "nudges = COALESCE(%s, nudges)" in next(
+    assert "nudges = COALESCE(%s, nudges, 0)" in next(
         sql for sql, _ in conn.executed if sql.startswith("UPDATE turns SET completed_at"))
+
+
+def _replay_nudge_writes(*steps: tuple[str, Any]) -> Any:
+    """Run the SQL record_nudge and complete() actually emit against a real turns row
+    (stdlib sqlite: GREATEST is spelled max(), now() CURRENT_TIMESTAMP) and return the
+    row's nudges. Each step is ("record", cumulative) or ("complete", nudges)."""
+    import sqlite3
+
+    db = sqlite3.connect(":memory:")
+    db.execute("CREATE TABLE turns (turn_id text, completed_at text, outcome text, cost_usd real,"
+               " num_turns int, duration_ms int, input_tokens int, cache_creation_tokens int,"
+               " cache_read_tokens int, output_tokens int, nudges int)")
+    db.execute("INSERT INTO turns (turn_id) VALUES ('turn-1')")
+    for kind, value in steps:
+        conn = FakeConn()
+        if kind == "record":
+            worker.record_nudge(conn, "turn-1", value)
+        else:
+            worker.complete(conn, TURN, 1, nudges=value)
+        for sql, params in conn.executed:
+            if sql.startswith("UPDATE turns"):
+                db.execute(sql.replace("%s", "?").replace("GREATEST(", "max(")
+                           .replace("now()", "CURRENT_TIMESTAMP"), params)
+    return db.execute("SELECT nudges FROM turns WHERE turn_id = 'turn-1'").fetchone()[0]
+
+
+@pytest.mark.parametrize("steps, expected", [
+    ((), None),                                            # open, never vetoed
+    ((("complete", None),), 0),                            # closed, no attempt vetoed
+    ((("complete", 0),), 0),
+    ((("record", 2), ("complete", 2)), 2),                 # one attempt, two vetoes
+    ((("record", 5), ("complete", None)), 5),              # attempt 1's five survive attempt 2
+    ((("record", 5), ("record", 3), ("complete", None)), 5),  # a slower attempt cannot walk it back
+])
+def test_turns_nudges_is_0_on_a_turn_nothing_vetoed_and_keeps_an_earlier_attempts_count(steps, expected):
+    """004_worker.sql's contract for turns.nudges, on the statements themselves rather
+    than their text: a turn the worker closed without a veto reads 0 (demo.py prints
+    "0 (cap off)", not "?"), and a later attempt that vetoed nothing (run_turn passes
+    None) leaves the cumulative count record_nudge wrote."""
+    assert _replay_nudge_writes(*steps) == expected
 
 
 def test_a_stopped_turn_is_never_re_run_as_a_zero_progress_attempt(turn_env, monkeypatch):
@@ -2694,7 +2734,7 @@ def test_run_turn_wires_the_stop_hook_only_on_the_autonomous_arm_and_records_nud
     assert callable(turn_env["options"]["stop_hook"]) and summary["nudges"] == 0
     assert completed[-1]["nudges"] is None
     update = next(sql for sql, _ in turn_env["conn"].executed if sql.startswith("UPDATE turns SET completed_at"))
-    assert "nudges = COALESCE(%s, nudges)" in update
+    assert "nudges = COALESCE(%s, nudges, 0)" in update
 
 
 def test_the_wired_stop_hook_reads_research_and_the_tool_count_off_the_turns_connection(turn_env, monkeypatch):
@@ -2741,7 +2781,7 @@ def test_two_vetoes_land_on_the_turns_row_and_in_the_summary(turn_env, monkeypat
     summary = asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
     assert summary["nudges"] == 2
     sql, params = next((s, p) for s, p in turn_env["conn"].executed if s.startswith("UPDATE turns SET completed_at"))
-    assert "nudges = COALESCE(%s, nudges)" in sql and params[-2] == 2, params
+    assert "nudges = COALESCE(%s, nudges, 0)" in sql and params[-2] == 2, params
 
 
 def test_read_research_and_count_tool_calls_read_the_rows():

@@ -474,7 +474,8 @@ def complete(
     """Append the turn_done event (per-session seq via next_session_seq) and close the
     turn -- with the ResultMessage's figures when there are any, the token sum over
     ``session_entries`` when ``sdk_session_id`` is given, and the Stop hook's veto count
-    (``nudges``, the completing attempt's, like cost_usd) -- in ONE commit.
+    (``nudges``: the cumulative count record_nudge persisted, else 0, since a turn the
+    hook never vetoed has nothing on the row) -- in ONE commit.
 
     ``outcome`` is ``"ok"`` for every ordinary close. 0a passes
     ``NO_PROGRESS_OUTCOME`` when the worker closes the turn itself because redelivering
@@ -520,7 +521,7 @@ def complete(
                 "cache_creation_tokens = COALESCE(%s, cache_creation_tokens), "
                 "cache_read_tokens = COALESCE(%s, cache_read_tokens), "
                 "output_tokens = COALESCE(%s, output_tokens), "
-                "nudges = COALESCE(%s, nudges) WHERE turn_id = %s"
+                "nudges = COALESCE(%s, nudges, 0) WHERE turn_id = %s"
                 + (" AND completed_at IS NULL" if only_if_open else ""),
                 (outcome, cost_usd, num_turns, duration_ms, *tokens, nudges, turn["turn_id"]),
             )
@@ -1848,7 +1849,8 @@ async def _run_turn(
                 # is 0 whenever THIS attempt vetoed nothing, and 31% of runs never yield
                 # at all -- so a plain assignment walks a cumulative count of 5 back to 0
                 # on the attempt that happens to finish, destroying the figure the column
-                # was added for. Zero is not a measurement here; it is "nothing to add".
+                # was added for. Zero is not a measurement here; it is "nothing to add" --
+                # complete()'s trailing 0 is what a turn no attempt vetoed ends up with.
                 nudges=counters["nudges"] or None,
                 # U5 D3: SIGTERM's last-receive close may have closed the row first; then
                 # this writes nothing, returns None, and releases nothing.

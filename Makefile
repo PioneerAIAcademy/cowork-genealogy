@@ -546,7 +546,7 @@ proto-kill: ## D14: one real turn killed at its first place_search call (docker 
 .PHONY: proto-probe-resume
 proto-probe-resume: ## 0a probe: kill a real turn inside a BACKGROUND delegation and watch the resume — SESSION=<id> (proto-seed first); billed, ~1 h
 	@test -n "$(SESSION)" || { echo "proto-probe-resume: SESSION=<id> is required (make proto-seed FIXTURE=... first)" >&2; exit 2; }
-	AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-40}" $(MAKE) proto-kill SESSION="$(SESSION)" \
+	AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-40}" $(MAKE) proto-kill SESSION="$(SESSION)" \
 	  ARGS="--kill-on Agent --kill-on-input run_in_background=true --kill-after-s $${KILL_AFTER_S-20} \
 	        --text-file proto/probes/background-delegation.txt --deadline-s $${DEADLINE_S-2400} $(ARGS)"
 
@@ -572,10 +572,12 @@ proto-audit: ## Acceptance criteria 3 and 4 over a session's tool_calls rows —
 # the harness's tree-read block (BLOCKED_TOOLS; `BLOCKED_TOOLS= make proto-demo` lifts it),
 # since every e2e fixture's answer still sits in the live tree. On a docker-compose-only
 # machine: make proto-demo PROTO_COMPOSE="docker-compose -f apps/server/proto/docker-compose.yml"
+# The Stop hook is off unless the caller sets AUTONOMOUS_MAX_NUDGES non-empty -- `:-0`, as
+# in proto-turn, since an empty value would reach compose's `:-60` on the web tier.
 .PHONY: proto-demo
 proto-demo: $(ENGINE_DEPS) ## D19 demo: seed FIXTURE (default bagley-father-1884), run one real research turn to turn_done with the tree-read block, print the acceptance queries; ARGS="--prompt '…' | --session <id>"
 	export BLOCKED_TOOLS="$${BLOCKED_TOOLS-person_read,person_search,person_ancestors,person_record_matches,person_person_matches,person_quality}"; \
-	  export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-0}"; \
+	  export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; \
 	  . apps/server/proto/env.sh && \
 	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-demo: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
 	  $(PROTO_COMPOSE) up -d --build && \
@@ -602,7 +604,7 @@ proto-demo: $(ENGINE_DEPS) ## D19 demo: seed FIXTURE (default bagley-father-1884
 # attempt at the ceiling is redelivered mid-flight; test_proto_config.py compares the two.
 .PHONY: proto-demo-auto
 proto-demo-auto: ## D18: proto-demo with the continue-nudge Stop hook (AUTONOMOUS_MAX_NUDGES, default 40) at the pinned 1800 s per-attempt ceiling (READ_TIMEOUT_S), waiting out the six attempts a whole run may take; FIXTURE=… ARGS=…
-	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-40}"; \
+	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-40}"; \
 	  export READ_TIMEOUT_S="$${READ_TIMEOUT_S:-1800}"; \
 	  $(MAKE) proto-demo FIXTURE="$(FIXTURE)" ARGS="--deadline-s $$((6 * READ_TIMEOUT_S + 300)) $(ARGS)"
 
