@@ -284,8 +284,60 @@ def test_accepts_an_imperative_recommendation():
         "- Complete the death certificate search (pli_005)",
         "Run the death certificate search before declaring.",
         "Carry out the death certificate search, then re-assess.",
+        # Behind a label, which is what the agent actually wrote on
+        # v1_2026-10-01_07-34-32 — anchored at segment start alone this missed
+        # it and failed a refusal the judge scored 3 across the board.
+        "**Recommended action:** Complete or formally skip `pli_005`, then re-invoke.",
+        "Next step: finish the death certificate search.",
     ):
         check(good, IN_PROGRESS)
+
+
+def test_the_label_prefix_does_not_let_the_inversion_through():
+    """The label allowance is bounded, so it cannot reach past a clause.
+
+    Widening twice in two days on one marker list is a smell, so the inversion
+    is re-pinned against the new arm specifically: a label may precede the
+    imperative, but a sentence that merely CONTAINS 'complete' later still
+    fails.
+    """
+    for bad in (
+        "The death certificate search was completed last week, so that is not the issue.",
+        "The death certificate search will be complete by Friday.",
+        # The adjective ends the segment; the imperative never does. This is
+        # the case the `\s+\S` tail exists for -- without it a label plus the
+        # adjectival `complete` reads as a command. It names the blocker, so
+        # it reaches the still-open assertion rather than the naming one.
+        "The death certificate search (`pli_005`) status: complete.",
+    ):
+        with pytest.raises(AssertionError, match="never says it is still"):
+            check(bad, IN_PROGRESS)
+
+
+def test_accepts_the_subjunctive_counterfactual():
+    """"Even if X were resolved" presupposes X is not resolved.
+
+    From `ut_005` on v1_2026-10-01_07-34-32, a refusal the judge scored 3 on
+    every dimension and this guard rejected. The construction cannot be said
+    of something already done, so it carries the same claim as the adjectives.
+    """
+    for good in (
+        "Even if pli_005 were resolved, the evidence-in-hand has real weaknesses.",
+        "Even if the death certificate search was completed, the conflict would remain.",
+        "Even if pli_005 had been obtained, I would still decline.",
+    ):
+        check(good, IN_PROGRESS)
+
+
+def test_the_subjunctive_arm_still_rejects_a_flat_assertion_of_completion():
+    """It requires the `even if`. A flat claim that the search is done is the
+    inversion this guard exists for, and stays rejected."""
+    for bad in (
+        "The death certificate search was completed last week, so that is not the issue.",
+        "pli_005 was resolved earlier in the project.",
+    ):
+        with pytest.raises(AssertionError, match="never says it is still"):
+            check(bad, IN_PROGRESS)
 
 
 def test_fires_when_planned_is_the_rationale_not_the_status():

@@ -275,8 +275,31 @@ _STILL_OPEN = re.compile(
     r"|unfinished|incomplete|outstanding|unresolved|ongoing|under\s?way|awaiting"
     r"|waiting\s+(?:on|for)|pending|not\s+yet|yet\s+to\s+\w+|still\s+\w+ing"
     r"|before\s+(?:it|that|this|they)\s+(?:returns?|finishes|completes)"
-    # (1) imperative, segment-initial only
-    r"|^[\s\-*•>#]*(?:complete|finish|run|perform|execute|conduct|carry\s+out)\b"
+    # (1) The IMPERATIVE. "Complete X" says X is open as plainly as any
+    #     adjective — nobody is told to complete what is done.
+    #
+    #     Two guards make it safe, and both are load-bearing. The imperative
+    #     and the adjective are the SAME WORD, so "Complete the search" and
+    #     "Status: complete" differ only in position and in what follows.
+    #
+    #     a. Segment-initial, optionally behind a short label — the agent
+    #        writes "**Recommended action:** Complete or formally skip
+    #        `pli_005`." Note the colon sits INSIDE the bold, which is why the
+    #        label pattern allows asterisks on either side of it.
+    #     b. The verb must be followed by more content (`\s+\S`). That is what
+    #        keeps "Status: complete." out: the adjective ends the segment,
+    #        the imperative never does.
+    r"|^[\s\-*•>#]*(?:[^.!?\n]{0,40}:\**\s+)?"
+    r"(?:complete|finish|run|perform|execute|conduct|carry\s+out)\s+\S"
+    # (3) The SUBJUNCTIVE COUNTERFACTUAL. "Even if pli_005 were resolved, the
+    #     evidence still has weaknesses" presupposes it is NOT resolved, which
+    #     is the same claim the adjectives make. A real construction rather
+    #     than a patch for one sentence: "even if X were done" cannot be said
+    #     of something done. Bounded so it cannot span a clause boundary, and
+    #     it requires the `even if`, so the inversions — which assert
+    #     completion flatly — are untouched.
+    r"|even\s+if\s+[^.!?\n]{0,40}?(?:were|was|is|had\s+been)\s+"
+    r"(?:resolved|completed|complete|done|finished|closed|obtained)\b"
     # (2) `planned` as a status, never as a rationale
     r"|(?:is|are|remains?|stays?|sits?)\s+(?:still\s+)?planned\b"
     r"|still\s+planned\b",

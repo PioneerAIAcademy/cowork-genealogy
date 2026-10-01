@@ -176,12 +176,16 @@ named in `justification`.
   source remains. Explain what is missing and recommend expanding the plan
   (`research-plan`). **When in doubt, a gap is unsearched, not unobtainable —
   default to `research-plan`.**
-  - A skipped item's `skip_category` routes it to the exception below. Only
-    `inaccessible` and `no_coverage` are eligible, and the exception's own
+  - A skipped item with **no `skip_category`** is judged on its recorded
+    reason, exactly as before the field existed. Most skipped items on a real
+    project are this shape. A missing value is **not** evidence the source was
+    unsearched, and must never be read as one.
+  - When a `skip_category` IS present it routes the item: `inaccessible` and
+    `no_coverage` are eligible for the exception below, and the exception's own
     conditions still decide. `answered`, `fallback_not_triggered`,
-    `out_of_scope`, `premise_invalidated` and `user_declined` are not — those
-    items were disposed of with the source reachable. `premise_invalidated`
-    additionally says the plan wants revising: recommend `research-plan`.
+    `out_of_scope` and `user_declined` are not — those were disposed of with
+    the source reachable. `premise_invalidated` says the plan wants revising:
+    recommend `research-plan`.
   - *Narrow exception — a source verified **inaccessible*** (a browse-only
     image over the MCP transport cap; a record **sealed by privacy law** —
     e.g. a recent vital record still inside its statutory embargo and
