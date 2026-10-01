@@ -11,13 +11,13 @@
 > `conflicts[]` says about a disputed field); the tool does only the
 > string-templating.
 
-A pure, offline tool that builds a pre-filled search URL for one of fifteen
+An offline tool that builds a pre-filled search URL for one of seventeen
 supported external genealogy sites from structured search attributes, either
 as a fresh site-wide search or by appending parameters onto a FamilySearch-
-curated collection link.
+curated collection link. Given a `projectPath` it also logs the hand-off (§6).
 
 ```
-build_external_search_url({ site, baseUrl?, locale?, attributes }) -> { ok: true, url, notes, access } | { ok: false, reason, errors, supportedSites? }
+build_external_search_url({ site, baseUrl?, locale?, attributes }) -> { ok: true, url, notes, access, logId? } | { ok: false, reason, errors, supportedSites? }
 ```
 
 ---
