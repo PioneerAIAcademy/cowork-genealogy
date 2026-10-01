@@ -492,7 +492,7 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py
 
 # D9–10 acceptance, billed (two short Sonnet turns). Same `up` as proto-up (env.sh);
 # refuses to run without a model key.
@@ -523,7 +523,7 @@ proto-token: $(ENGINE_DEPS) ## Refresh the FamilySearch token the running worker
 # Billed, one turn.
 .PHONY: proto-kill
 proto-kill: ## D14: one real turn killed at its first place_search call (docker kill + start), redelivered and resumed; SESSION=<id> to use a seeded session, ARGS="--kill-on <tool> --kill-after-s <n> --text-file <path>" to time it inside a delegation
-	$(MAKE) proto-turn ARGS="--kill $(if $(SESSION),--session $(SESSION),) $(ARGS)"
+	AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-0}" $(MAKE) proto-turn ARGS="--kill $(if $(SESSION),--session $(SESSION),) $(ARGS)"
 
 # PR #2870 item 0a: the resume probe the guard was gated on. The 2026-09-20 run that
 # produced the synthetic result had been killed during a BACKGROUND delegation, and
@@ -664,10 +664,22 @@ proto-up-store: ## D6–8 store: start postgres + minio (+ the bucket one-shot) 
 	$(PROTO_COMPOSE) up -d postgres minio minio-init
 	$(PROTO_COMPOSE) up -d --wait postgres minio
 
+# Two arms. Static: the MinIO keys as GENEALOGY_S3_* (via PROTO_S3_*), with any exported
+# AWS_* keys unset so they cannot mask it. Keyless (U8): PROTO_S3_KEYLESS=1, the MinIO keys
+# as AWS_* and also as PROTO_S3_* (so a helper that stopped dropping them goes red), and
+# ~/.aws, SSO and instance metadata isolated, so the SDK default chain's environment
+# provider is the only way the store can sign.
 .PHONY: proto-store-test
 proto-store-test: proto-up-store ## D6–8 store: PgS3ProjectStore conformance + Postgres-specific cases against the compose postgres/minio
-	cd $(ENGINE_DIR) && PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 \
+	cd $(ENGINE_DIR) && env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY \
+	  PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 \
 	  PROTO_S3_BUCKET=projects PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
+	  npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts
+	cd $(ENGINE_DIR) && env -u AWS_PROFILE -u AWS_SESSION_TOKEN \
+	  PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 PROTO_S3_BUCKET=projects \
+	  PROTO_S3_KEYLESS=1 PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
+	  AWS_ACCESS_KEY_ID=proto AWS_SECRET_ACCESS_KEY=protoproto \
+	  AWS_SHARED_CREDENTIALS_FILE=/nonexistent AWS_CONFIG_FILE=/nonexistent AWS_EC2_METADATA_DISABLED=true \
 	  npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts
 
 .PHONY: engine-test

@@ -4,7 +4,9 @@ import { memoryPageId, resolveMemoryArtifactUrl } from "../utils/memories.js";
 import {
   resolveFsImageInput,
   fetchFsImageBytes,
+  extractImageContextQuery,
 } from "../utils/fs-image-fetch.js";
+import { imageViewerUrl } from "../utils/ark.js";
 import {
   saveSourceImage,
   recordImageReadCap,
@@ -360,8 +362,14 @@ export async function imageTranscribeTool(
     };
   }
 
+  const viewerUrl = imageViewerUrl(
+    { imageId: input.imageId, ark: input.ark },
+    extractImageContextQuery,
+  );
+
   return {
     transcription,
+    ...(viewerUrl ? { viewerUrl } : {}),
     ...(truncated ? { truncated: true as const, truncationNotice } : {}),
     ...(found ? { found } : {}),
     ...(imageRef ? { imageRef } : {}),

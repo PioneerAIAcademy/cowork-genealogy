@@ -536,6 +536,11 @@ Returns **text only**:
 ```typescript
 {
   transcription: string      // faithful full-page OCR (the primary payload) — never doctored
+  viewerUrl?: string         // FamilySearch viewer URL for the image.
+                             // Present for imageId and ark inputs; absent for file and memoryArtifactUrl.
+                             // DGS: https://www.familysearch.org/search/film/<dgs>?i=<n-1> (zero-indexed,
+                             //   verified 2026-10-01: image 00697 of film 004528077 opens at i=696).
+                             // ARK: the resolver URL, preserving i=/cc=/groupId= context params.
   truncated?: true           // present when the OCR hit its output-token cap (finish_reason or native_finish_reason marks it — §6.2); transcription is PARTIAL
   truncationNotice?: string  // tool-voiced plain sentence companion to `truncated`; present iff `truncated`
   found?: "FOUND" | "NOT FOUND"  // present only when lookingFor was set, the read was not truncated (§6.2), AND the model emitted the marker on the final line

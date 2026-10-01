@@ -30,6 +30,9 @@ export interface ImageTranscribeResult {
    *  truncation is signalled by the sibling `truncated`/`truncationNotice`
    *  fields, not by splicing prose into this text. */
   transcription: string;
+  /** FamilySearch viewer URL for the image that was transcribed. Present for
+   *  imageId and ark inputs; absent for file and memoryArtifactUrl (issue #2854). */
+  viewerUrl?: string;
   /** True only when the OCR hit its output-token cap (finish_reason or
    *  native_finish_reason marks it — see §6.2 for the exact match): the
    *  transcription above is PARTIAL and the rest of the page is unread, not

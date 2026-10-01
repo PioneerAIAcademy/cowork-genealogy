@@ -10,8 +10,9 @@ Decided (lead, 2026-09-27): no live mode — the live mode added for a
 no-project profile audit had no caller, and such an audit runs local mode
 over a scratch project instead.
 
-Adapted from FamilySearch's `MobWarnings.java`. This spec starts with
-three starter warnings and is designed for easy extension.
+Adapted from FamilySearch's `MobWarnings.java`, plus one project rule
+(`hasEventInOtherCountry`) that is not a FamilySearch port. This spec
+starts with three starter warnings and is designed for easy extension.
 
 ### Scope: anchor person and their one-hops
 
@@ -32,10 +33,10 @@ mob."
   report on a relationship between the anchor and a one-hop relative.
 
 **Single-person warnings run on the anchor *and* its one-hop relatives,
-not the anchor alone.** 27 of the 47 self-checks have a relative-mob variant
+not the anchor alone.** 27 of the 48 self-checks have a relative-mob variant
 (`relatives*`, `maleRelatives*`, `femaleRelatives*`) that fires the same
 condition on a parent, spouse, or child; the flagged relative is named in
-the warning's `personId`/`personName`. The other 20 run on the anchor only.
+the warning's `personId`/`personName`. The other 21 run on the anchor only.
 The relative-variant tags in § Warning Definitions are the evidence.
 
 ---
@@ -77,7 +78,7 @@ The shipped shape is `PersonWarning` in
 | Field | Type | Description |
 |-------|------|-------------|
 | `scoreType` | string | Always `"COHERENCE"`. The quality-score family the check belongs to (ported from FamilySearch's MobWarnings, which groups checks by score type) |
-| `issueType` | string | The warning tag (e.g., `hasEventAfterDeath1`). One of the tags catalogued under § Warning Definitions; each tag is a FamilySearch quality-score tag |
+| `issueType` | string | The warning tag (e.g., `hasEventAfterDeath1`). One of the tags catalogued under § Warning Definitions; each tag is a FamilySearch quality-score tag, except `hasEventInOtherCountry` which is a project rule |
 | `severity` | string | `contradiction` (impossible) or `implausible` (unlikely but possible) |
 | `personId` | string | Person ID the warning applies to |
 | `personName` | string | Display name of the person (see below) |
@@ -85,6 +86,11 @@ The shipped shape is `PersonWarning` in
 | `facts` | `{id, type, date}[]?` | The facts the check examined, resolved. Optional — MobWarnings carries only the tag; the TS port attaches contributing facts where cheaply retrievable. `date` is the fact's raw `date`, falling back to `standard_date`, and `null` when it has neither — **not** `getStandardDate()`, which inverts that precedence and normalizes through `stdDate()` (a record's `~1818` would come back `Abt 1818`). Three fields exactly: `hasEventAfterDeath1` cites every self fact and `merge_warnings` multiplies that by mob size |
 | `relatedPersonId` | string? | Person ID of the related person, when the check involves a relationship (e.g., the father in `earliestChildBirthToBirthMale14`). Omitted when not applicable |
 | `mobRole` | string? | Merge-mode only (`merge_warnings`): which mob surfaced the warning — `"target"`, `"candidate"`, `"merged"`, or `"relative"`. Single-anchor `person_warnings` never sets it. See `match-merge-workflow-spec.md` §7.5 |
+
+**Warning id format.** The tree-writer warning gate uses a stable id
+to key justifications: `${issueType}|${personId}|${relatedPersonId ?? ""}|${sorted facts[].id joined by ","}`.
+This id is deterministic for a given tree because fact ids come from `nextId()`.
+It is computed by `warningId()` in `src/validation/introduced-warnings.ts`.
 
 **`personName` resolution:** Use the preferred name (the one with
 `preferred: true`), falling back to the first name in the array. Format
@@ -196,10 +202,10 @@ All warnings are evaluated relative to the **anchor person** (the
 required `personId`) and its one-hop relatives. Single-person checks
 read the anchor's own facts; relationship checks consider relationships
 in which the anchor participates (as parent, spouse, or child); and 27 of
-the 47 self-checks have a `relatives*`/`maleRelatives*`/`femaleRelatives*`
+the 48 self-checks have a `relatives*`/`maleRelatives*`/`femaleRelatives*`
 variant that fires the same condition on a one-hop relative.
 
-The full catalogue of the **74 tags** the tool emits in `issueType` is
+The full catalogue of the **75 tags** the tool emits in `issueType` is
 the § Tag Catalogue below. It is the source of truth an implementation is
 checked against, and the drift lint
 (`tests/packaging/person-warnings-spec-drift.test.ts`) fails if it and
@@ -433,7 +439,7 @@ tool.
 
 ### Tag Catalogue
 
-The full set of **74** tags the tool emits in `issueType`. Each row is
+The full set of **75** tags the tool emits in `issueType`. Each row is
 `Tag`, `Severity`, `Rule` (the condition that fires it), and `Cause`
 (what it usually indicates). `scoreType` is `COHERENCE` for every tag.
 The bidirectional drift lint
@@ -546,9 +552,9 @@ counterpart.
 
 #### Relative-mob mirrors (`implausible`)
 
-27 of the 47 self-checks above have a relative-mob variant that fires the
+27 of the 48 self-checks above have a relative-mob variant that fires the
 same condition on a one-hop relative (parent, spouse, or child) instead of
-the anchor; the other 20 run on the anchor only. They are **always
+the anchor; the other 21 run on the anchor only. They are **always
 `implausible`** regardless of the self-check's
 severity — the anchor's own data isn't necessarily wrong; the issue is in
 the relationship — and the flagged relative is named in the warning's
@@ -585,6 +591,12 @@ mirrored self-check for the rule.
 | `relativesHasEarlyMarriage14` | implausible | `hasEarlyMarriage14` |
 | `relativesHasLateMarriage90` | implausible | `hasLateMarriage90` |
 | `maleRelativesHasDiffSurname` | implausible | `hasDiffSurnameMale` |
+
+#### Project rules (not ported from FamilySearch)
+
+| Tag | Severity | Rule | Cause |
+|-----|----------|------|-------|
+| `hasEventInOtherCountry` | implausible | A non-migration, non-residence event (on the person or on a Couple relationship) is in a country that bidirectionally contradicts every birth and death anchor country, when those anchors agree | A record attached to the wrong person, or a mis-standardised place |
 
 ---
 

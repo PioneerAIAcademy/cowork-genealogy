@@ -29,9 +29,17 @@ refreshes and never touches `~/.familysearch-mcp/tokens.json`.
 `new PgS3ProjectStore(backend, { projectId: id, anchorPath })` for the duration of that
 request, bound with `runWithProjectStore` so every `getProjectStore()` call in the tool
 body, the utils and the validator resolves to it (`src/store/project-store.ts`). One
-`createPgS3Backend` per process, from the five `GENEALOGY_*` store variables plus
-`GENEALOGY_ANCHOR_PATH` (`readPgS3Env`; a missing variable is one stderr line and exit 2
-before `listen`). The projectPath every call passes
+`createPgS3Backend` per process, from the `GENEALOGY_*` store variables plus
+`GENEALOGY_ANCHOR_PATH` (`readPgS3Env`): `GENEALOGY_PG_DSN` and `GENEALOGY_S3_BUCKET`
+required; `GENEALOGY_S3_ACCESS_KEY` + `GENEALOGY_S3_SECRET_KEY` an optional pair — both set
+signs with them, neither set leaves the S3 client to the AWS SDK default chain (environment,
+`~/.aws` shared config/SSO, web identity, then ECS/EC2 instance metadata — so a host-process
+run on a laptop with `~/.aws` signs with the developer's profile); `GENEALOGY_S3_REGION` (default `us-east-1`);
+`GENEALOGY_S3_ENDPOINT` (unset on AWS: the regional endpoint); `GENEALOGY_S3_FORCE_PATH_STYLE`
+(`true`/`false`, default `true` when an endpoint is set and `false` otherwise). A missing
+required variable, exactly one of the two keys, or a path-style value other than
+`true`/`false` is one stderr line and exit 2 before `listen`; otherwise one stderr line names
+the credential mode (`static keys` or `SDK default chain`), the region and the endpoint. The projectPath every call passes
 is the anchor (`/project`). With the header **missing**, the request is bound to an
 `unboundProjectStore` whose every method rejects with an instruction naming the header:
 tools that take no `projectPath` (`convert_calendar`, the FamilySearch searches, …) still
@@ -71,7 +79,8 @@ smoke names all three.
   **repo root** (`Dockerfile` here): the root `.dockerignore` already drops
   `node_modules`/`.claude`/`eval`/`releases`, and `src/` is compiled inside the image — the
   host's `build/` is never copied. `proto-up-core` and `proto-smoke` do not include it.
-- **Host process**: `cd packages/engine/mcp-server && GENEALOGY_PG_DSN=… GENEALOGY_S3_ENDPOINT=… GENEALOGY_S3_BUCKET=… GENEALOGY_S3_ACCESS_KEY=… GENEALOGY_S3_SECRET_KEY=… node build/http.js [--host 127.0.0.1] [--port 8787]`
+- **Host process**: `cd packages/engine/mcp-server && GENEALOGY_PG_DSN=… GENEALOGY_S3_ENDPOINT=… GENEALOGY_S3_BUCKET=… [GENEALOGY_S3_ACCESS_KEY=… GENEALOGY_S3_SECRET_KEY=…] node build/http.js [--host 127.0.0.1] [--port 8787]`
+  (the keys are an optional pair: omit both to sign through the AWS SDK default chain)
   — `make engine-smoke-http` does this against the compose store (`proto-up-store`,
   localhost:5434 / :9000).
 - **The transport smoke** — every advertised tool but the three exclusions, in

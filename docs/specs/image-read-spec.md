@@ -176,6 +176,10 @@ The tool returns two content blocks:
 ```typescript
 {
   url: string          // The distribution URL that was built and fetched
+  viewerUrl?: string   // FamilySearch viewer URL for the image.
+                        // Present for imageId and ark inputs; absent for memoryArtifactUrl.
+                        // DGS: https://www.familysearch.org/search/film/<dgs>?i=<n-1> (zero-indexed).
+                        // ARK: the resolver URL, preserving i=/cc=/groupId= context params.
   mimeType: string     // e.g. "image/jpeg"
   sizeBytes: number    // Size of the image in bytes
   imageRef?: string    // Project-relative saved path (images/<key>.jpg), present only

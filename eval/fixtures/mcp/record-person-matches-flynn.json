@@ -32,7 +32,7 @@
     },
     "required": ["id"]
   },
-  "args": { "id": "MXHY-TP4" },
+  "args": { "id": "~MXHY-TP4" },
   "response": {
     "queryArk": "ark:/61903/1:1:MXHY-TP4",
     "resultCount": 1,

@@ -9775,7 +9775,7 @@ describe("supported evidence floor (#2086)", () => {
   });
 
   it("refuses linking contradicting evidence an unresolved conflict names — the skill's own documented call", async () => {
-    // `hypothesis-tracking/SKILL.md` tells the agent that adding contradicting
+    // `agents/hypothesis-tracking.md` tells the agent that adding contradicting
     // evidence "does not automatically require a status downgrade — only link
     // the evidence and leave the status unchanged". That is this exact op, and
     // it reached no precondition under the narrow gate.
