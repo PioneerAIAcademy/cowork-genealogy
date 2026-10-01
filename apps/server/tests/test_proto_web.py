@@ -1056,6 +1056,15 @@ async def test_lifespan_start_line_names_mode_and_region(monkeypatch, caplog):
                    for r in caplog.records)
 
 
+def test_the_start_line_reaches_the_container_log():
+    """uvicorn configures only its own loggers: without a handler of its own, proto.web's
+    INFO start line is dropped in the container while caplog still sees it here."""
+    import logging
+
+    assert app.log.handlers, "proto.web has no handler: its INFO lines never reach the log"
+    assert app.log.getEffectiveLevel() <= logging.INFO
+
+
 async def test_lifespan_warns_when_the_chain_finds_nothing(monkeypatch, caplog):
     monkeypatch.setenv("QUEUE_URL", QUEUE)
     application = create_app(store=FakeStore())

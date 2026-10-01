@@ -89,6 +89,13 @@ import enqueue  # noqa: E402  (the SQS query-API client; signs SigV4)
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
 
 log = logging.getLogger("proto.web")
+# uvicorn configures only its own loggers, so without a handler of its own every INFO line
+# here -- the schema and the ``queue: ...; sqs credentials: ...`` start line -- is dropped.
+if not log.handlers:
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter("%(levelname)s:     %(name)s: %(message)s"))
+    log.addHandler(_handler)
+    log.setLevel(logging.INFO)
 
 DEFAULT_PG_DSN = "postgresql://postgres:proto@localhost:5434/proto"
 DEFAULT_TITLE = "New research session"
