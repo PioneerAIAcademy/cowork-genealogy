@@ -37,15 +37,15 @@ If the question falls into one of these categories, redirect the user immediatel
 
 | Question type | Action |
 |---|---|
-| "What records exist in [place]?" / "Where do I access records?" / "What records are available?" | **Hand off — do not answer.** This is the locality-guide skill's job, so invoke it directly: call the **Skill** tool with the `locality-guide` skill and let it answer the question. Do NOT survey the records yourself, do NOT load reference files, do NOT call any MCP tools. |
+| "What records exist in [place]?" / "Where do I access records?" / "What records are available?" | **Hand off — do not answer.** This is the locality-guide agent's job, so hand it over directly: spawn `@plugin:locality-guide` with the Agent tool and let it answer the question. Do NOT survey the records yourself, do NOT load reference files, do NOT call any MCP tools. |
 | "Search for / find records for [person]" | Redirect to search-records. |
 | "Translate this [non-English] record" / "What does [non-English word] mean?" | Redirect to translation. **Defining or glossing a non-English word — even a one-line "getauft = baptized" — IS translation; do not do it here, not even briefly before redirecting.** Only *English* historical terms (e.g. "relict", "yeoman") are handled in this skill. |
 | "Convert this date" | Redirect to convert-dates. |
 
-**For a record-availability question (row 1): hand off by invoking the
-`locality-guide` skill via the Skill tool as your very first action. Write at
+**For a record-availability question (row 1): hand off by spawning
+`@plugin:locality-guide` with the Agent tool as your very first action. Write at
 most one short sentence before the hand-off (e.g. "Handing this to the
-locality-guide skill.") — do NOT explain how the two skills differ, do NOT
+locality-guide agent.") — do NOT explain how the two differ, do NOT
 write a multi-paragraph comparison, and do NOT call any MCP tools or read any
 files. A long explanation before handing off is itself doing the work you are
 supposed to hand off.**
@@ -84,8 +84,8 @@ What does the user need to understand?
 - "Why does this record say X?" → interpretation. Apply the
   historical-terminology reference and broad-context factors.
 - "What records exist / where do I access records for [place]?" →
-  record availability. This is locality-guide's job — hand off by invoking
-  the locality-guide skill via the Skill tool, and do NOT call MCP tools
+  record availability. This is locality-guide's job — hand off by spawning
+  `@plugin:locality-guide` with the Agent tool, and do NOT call MCP tools
   (see the Routing check above).
 - "Why can't I find [person]?" → search strategy. Consider
   migration, occupation, ethnic/linguistic factors, name changes.
