@@ -325,7 +325,10 @@ def test_no_warning_on_out_of_scope_negative():
     assert warnings == []
 
 
-def test_no_warning_on_grade_on_invariant():
+def test_grade_on_invariant_is_coerced_and_names_its_mode():
+    """Ruling on issue #2190 (2026-09-07): an invariant negative no longer
+    short-circuits. Its 1 is coerced like a routing negative's, but the warning
+    and rationale must say the validator decides it, not routing."""
     dims = _routing_dims()
     warnings: list = []
     flag_routing_negative_judge_fail(
@@ -335,6 +338,43 @@ def test_no_warning_on_grade_on_invariant():
         skills_invoked=["search-records"],
         warnings=warnings,
     )
+    assert [d["score"] for d in dims] == [None, None, None]
+    assert [w["kind"] for w in warnings] == ["coerced_routing_negative_to_na"] * 2
+    assert "decided by its invariant validator alone" in warnings[0]["advisory"]
+    assert "decided by its invariant validator alone" in dims[0]["rationale"]
+    assert "decided by routing" not in dims[0]["rationale"]
+
+
+def test_routing_negative_coercion_still_says_routing():
+    """The other direction: a negative without `grade_on_invariant` keeps the
+    routing wording."""
+    dims = _routing_dims()
+    warnings: list = []
+    flag_routing_negative_judge_fail(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["search-records"],
+        warnings=warnings,
+    )
+    assert "decided by routing alone" in warnings[0]["advisory"]
+    assert "decided by routing alone" in dims[0]["rationale"]
+
+
+def test_activated_invariant_negative_is_not_coerced():
+    """The `activated` guard stays for invariant negatives: one may activate and
+    still pass on its validator, and there its 1 is left a 1 for the review
+    sample's first trigger to catch."""
+    dims = _routing_dims()
+    warnings: list = []
+    flag_routing_negative_judge_fail(
+        dims,
+        spec=_negative_spec(correct=["search-records"], grade_on_invariant=True),
+        activated=True,
+        skills_invoked=["search-records"],
+        warnings=warnings,
+    )
+    assert [d["score"] for d in dims] == [1, 1, None]
     assert warnings == []
 
 
@@ -854,6 +894,37 @@ def test_negative_judge_context_frames_decline_and_keeps_test_context():
     assert "record-extraction" in ctx[0]
     assert "citation" in ctx[1]
     assert ctx[-1] == "Should explicitly name record-extraction"
+
+
+def test_negative_judge_context_self_route_only_renders_the_no_skill_arm():
+    """A `correct_skill` naming only the skill under test
+    (`ut_record_extraction_011`) must not tell the judge to route to the skill
+    it was told must not do its task; the emptied list takes the no-skill arm."""
+    spec = _negative_spec(skill="record-extraction", correct=["record-extraction"])
+    ctx = _negative_judge_context(spec)
+    assert "decline without invoking any skill" in ctx[0]
+    assert "route the user to" not in ctx[0]
+
+
+def test_negative_judge_context_drops_the_skill_under_test_from_the_route():
+    """`ut_conflict_resolution_010`'s shape: the skill under test plus one
+    other. Only the other is named as the route."""
+    spec = _negative_spec(
+        skill="conflict-resolution",
+        correct=["record-extraction", "conflict-resolution"],
+    )
+    ctx = _negative_judge_context(spec)
+    assert ctx[0].endswith("decline and route the user to: record-extraction.")
+
+
+def test_negative_judge_context_unchanged_when_skill_not_in_route():
+    """The other direction: a route not naming the skill under test is rendered
+    in full, in order."""
+    spec = _negative_spec(skill="citation", correct=["record-extraction", "timeline"])
+    ctx = _negative_judge_context(spec)
+    assert ctx[0].endswith(
+        "decline and route the user to: record-extraction, timeline."
+    )
 
 
 def test_negative_out_of_scope_fails_when_judge_scored_a_dimension_1():
@@ -2025,19 +2096,13 @@ def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monk
 # `if not validators_passed: return "fail"` runs ahead of every judge_skipped
 # branch. These drive the real path.
 
-# A negative fixture with a non-empty `correct_skill` and NO
-# `grade_on_invariant`. That second condition is load-bearing and easy to get
-# wrong: `grade_on_invariant` is the FIRST guard in
-# flag_routing_negative_judge_fail, so a fixture carrying it is exempt from the
-# coercion and would make this test pass for the wrong reason. (The example
-# this comment used to cite was search-wikipedia's three negatives; issue #2795
-# deleted two of them and made the third — `ut_search_wikipedia_008` — a DIRECT
-# negative that still carries `grade_on_invariant`, so it is exempt from the
-# coercion for that reason rather than for having ceased to be a negative.) 81 of the committed negative
-# fixtures qualify; this one is
-# picked because its scenario exists and OrchestratorPaths resolves it, and it
-# sits in record-extraction's suite, which stays a skill (the check-warnings one
-# it replaced was deleted with that skill, issue #2118).
+# A negative fixture with a non-empty `correct_skill`. It needs no
+# `grade_on_invariant` exclusion any more: since issue #3080 deleted that early
+# return from flag_routing_negative_judge_fail, an invariant negative is coerced
+# too, so neither kind makes the coercion test below pass for the wrong reason.
+# This one is picked because its scenario exists and OrchestratorPaths resolves
+# it, and it sits in record-extraction's suite, which stays a skill (the
+# check-warnings one it replaced was deleted with that skill, issue #2118).
 NEGATIVE_TEST_PATH = (
     REPO_ROOT / "eval/tests/unit/record-extraction/negative-search-vs-extract.json"
 )
