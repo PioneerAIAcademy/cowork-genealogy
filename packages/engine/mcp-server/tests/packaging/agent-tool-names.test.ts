@@ -287,16 +287,24 @@ describe("plugin agent tool names", () => {
         if (key === "disallowedTools" && parsed.length === 0) continue;
 
         describe(key, () => {
-          it("parses at least one entry", () => {
-            // Guards the assertions below against passing vacuously if the
-            // frontmatter parser stops matching the block-sequence form.
-            // Asserted on the UNFILTERED list: a parser that still returns
-            // `["Read"]` demonstrably matched, and an agent may legitimately
-            // hold only built-in tools — `project-status` is read-only and
-            // calls no MCP tool (issue #2793). Filtering to `mcp__` first
-            // made this fail such an agent for a reason the comment above
-            // does not claim to test.
-            expect(parsed.length).toBeGreaterThan(0);
+          it("parses at least one MCP entry", () => {
+            // Two things at once. It guards the assertions below against
+            // passing vacuously if the frontmatter parser stops matching the
+            // block-sequence form — and, because it counts only `mcp__`-
+            // prefixed entries, it also catches an agent whose MCP grants were
+            // all written as BARE names, which leaves the subagent toolless
+            // (CLAUDE.md, "Dual-spelled tool names" — that has broken every
+            // agent in Cowork twice while CI stayed green).
+            //
+            // Exempt ONLY an agent whose own AGENT_PERMISSIONS row pins no MCP
+            // tool at all — today `project-status` alone, which is read-only
+            // and holds `Read` (issue #2793). Keying the exemption to the
+            // PINNED row rather than to whatever the frontmatter parses to is
+            // what keeps the bare-name arm alive: bare-naming a real grant
+            // would have to edit the snapshot in the same commit to escape
+            // this, and that is reviewable as a diff.
+            if (key === "tools" && pinsNoMcpTool(file)) return;
+            expect(entries.length).toBeGreaterThan(0);
           });
 
           it("uses only recognized server prefixes", () => {
@@ -680,6 +688,22 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
 /** Bare name for an MCP entry; non-MCP built-ins (`Read`) pass through as-is. */
 function bareOrBuiltin(entry: string): string {
   return entry.startsWith("mcp__") ? bareName(entry) : entry;
+}
+
+/** Cowork built-ins, which are granted bare. Every OTHER name in an
+ *  `AGENT_PERMISSIONS` row is an MCP tool recorded under its bare name, so a
+ *  row consisting only of these pins no MCP tool. */
+const BUILT_IN_GRANTS = new Set(["Read", "Write"]);
+
+/** True when this agent's pinned permission row holds no MCP tool at all —
+ *  the one case where the "parses at least one MCP entry" arm cannot apply.
+ *  Reads `AGENT_PERMISSIONS` at call time, from inside an `it()` body, so the
+ *  const below it is initialised by then. */
+function pinsNoMcpTool(file: string): boolean {
+  const pinned = AGENT_PERMISSIONS[file]?.tools;
+  return (
+    Array.isArray(pinned) && pinned.length > 0 && pinned.every((t) => BUILT_IN_GRANTS.has(t))
+  );
 }
 
 describe("plugin agent permission surface", () => {
