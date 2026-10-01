@@ -1725,6 +1725,7 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
     });
 
     expect(justified.ok).toBe(true);
+    if (!justified.ok) return;
     expect(justified.filesWritten).toContain("research.json");
 
     // Persisted justification
