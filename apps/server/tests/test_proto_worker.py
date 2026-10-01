@@ -685,7 +685,7 @@ def test_registration_passes_with_every_bare_agent_and_every_skill():
 
 
 def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
-    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 18, ("genealogy-research:gps-mentor",)),
+    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 17, ("genealogy-research:gps-mentor",)),
                                           expected_agents=AGENTS, expected_skills=17)
     assert problems and "gps-mentor" in problems[0] and "bare" in problems[0]
     problems = options.check_registration(_info(AGENTS, 16), expected_agents=AGENTS, expected_skills=17)
@@ -739,7 +739,7 @@ def test_registration_problems_compares_against_the_constants_not_the_loaded_set
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
     assert worker.registration_problems(_info(AGENTS, 17)) == []
-    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 18, ("genealogy-research:gps-mentor",)))
+    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 17, ("genealogy-research:gps-mentor",)))
     assert problems == ["agents not registered under their bare names: ['gps-mentor']"]
     assert worker.registration_problems(_info(AGENTS, 16)) == ["16 genealogy-research:* commands registered, expected 17"]
     import inspect
