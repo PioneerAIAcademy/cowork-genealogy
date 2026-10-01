@@ -18,10 +18,22 @@ judgement. So the gate must refuse and route back to `research-plan`.
 
 The judgement in `skip_reason` is not a strawman -- the death registration
 really does name both parents, and that is exactly the argument a researcher
-would offer. It is still not enough, which is the point: the decisive-record
-rule exists because the subject's own birth record is the one source that
-could overturn a derivative one, and "we already have it from elsewhere" is
-the reasoning it is designed to refuse.
+would offer. It is still not enough, and the reason is the **informant**, not
+merely that one record is derivative.
+
+**A death certificate's informant is whoever was present at the DEATH.** On
+parentage they are reporting something they did not witness, so it is hearsay
+unless a parent was the informant -- and here both parents predeceased her.
+The fixture already says so: `a_003` and `a_004` carry
+`informant_proximity: "family_not_present"`, with `informant_bias_notes`
+reading *"A survivor's recollection, not a witness to the birth"* and
+*"Maiden surnames reported at a death are a known weak point"*.
+
+So the 1875 birth registration is not a duplicate of what is held. It would be
+the only assertion in the file whose informant was present at the event it
+reports, and the only primary information about the parentage. That is what
+the decisive-record rule is protecting, and "we already have it from
+elsewhere" is the reasoning it exists to refuse.
 
 ## Why this is not a fork of `recent-birth-sealed` (the first attempt, discarded)
 
