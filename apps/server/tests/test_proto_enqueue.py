@@ -448,12 +448,12 @@ def test_describe_never_leaks():
 
 
 def test_aws_error_is_coded_and_redacted(capture):
-    enqueue.configure({"GENEALOGY_SQS_ACCESS_KEY": "AKIAERR", "GENEALOGY_SQS_SECRET_KEY": "ERRSECRET"}, None)
+    enqueue.configure({"GENEALOGY_SQS_ACCESS_KEY": "AKIAERRORTESTKEY0001", "GENEALOGY_SQS_SECRET_KEY": "ERRSECRETERRSECRETERRSECRET"}, None)
     capture.status = 403
     capture.reply = (
         '<ErrorResponse xmlns="http://queue.amazonaws.com/doc/2012-11-05/"><Error><Type>Sender</Type>'
-        "<Code>SignatureDoesNotMatch</Code><Message>Signature=abc123 for AKIAERR with ERRSECRET; "
-        "x-amz-security-token:TOK123\n\nThe Canonical String was 'POST\n/'</Message></Error>"
+        "<Code>SignatureDoesNotMatch</Code><Message>Signature=abc123 for AKIAERRORTESTKEY0001 with ERRSECRETERRSECRETERRSECRET; "
+        "x-amz-security-token:TOK123TOK123TOK123TOK\n\nThe Canonical String was 'POST\n/'</Message></Error>"
         "</ErrorResponse>"
     )
     with pytest.raises(enqueue.SqsError) as exc:
@@ -461,26 +461,40 @@ def test_aws_error_is_coded_and_redacted(capture):
     text = str(exc.value)
     assert text.startswith("SQS SendMessage failed: HTTP 403 SignatureDoesNotMatch: ")
     assert "Canonical" not in text, "the first line of the Message only"
-    for secret in ("TOK123", "ERRSECRET", "AKIAERR", "Signature=", "abc123"):
+    for secret in ("TOK123TOK123TOK123TOK", "ERRSECRETERRSECRETERRSECRET", "AKIAERRORTESTKEY0001", "Signature=", "abc123"):
         assert secret not in text, secret
 
     # A session token is redacted wherever it appears.
-    enqueue._STATE = enqueue.SqsAuth("default chain (iam-role)", None, Credentials("AKIAERR", "ERRSECRET", "TOK123"),
+    enqueue._STATE = enqueue.SqsAuth("default chain (iam-role)", None, Credentials("AKIAERRORTESTKEY0001", "ERRSECRETERRSECRETERRSECRET", "TOK123TOK123TOK123TOK"),
                                      "iam-role")
     capture.reply = ("<ErrorResponse><Error><Code>InvalidClientTokenId</Code>"
-                     "<Message>token TOK123 is invalid</Message></Error></ErrorResponse>")
+                     "<Message>token TOK123TOK123TOK123TOK is invalid</Message></Error></ErrorResponse>")
     with pytest.raises(enqueue.SqsError) as exc:
         enqueue.sqs_call(capture.url, "SendMessage", {})
-    assert "TOK123" not in str(exc.value) and "InvalidClientTokenId" in str(exc.value)
+    assert "TOK123TOK123TOK123TOK" not in str(exc.value) and "InvalidClientTokenId" in str(exc.value)
 
     # Not XML at all (a proxy's HTML 502): the redacted first 400 characters, still an SqsError.
     capture.status = 502
-    capture.reply = "<html><body>Bad Gateway for AKIAERR " + "x" * 600 + "</body></html>"
+    capture.reply = "<html><body>Bad Gateway for AKIAERRORTESTKEY0001 " + "x" * 600 + "</body></html>"
     with pytest.raises(enqueue.SqsError) as exc:
         enqueue.sqs_call(capture.url, "SendMessage", {})
     text = str(exc.value)
     assert text.startswith("SQS SendMessage failed: HTTP 502: <html>")
-    assert "AKIAERR" not in text and len(text) < 450
+    assert "AKIAERRORTESTKEY0001" not in text and len(text) < 450
+
+
+def test_compose_dummy_credentials_do_not_mangle_the_error(capture):
+    """Compose signs with the one-character dummy pair ``x``; redacting it would turn
+    NonExistentQueue into NonE[redacted]istentQueue."""
+    enqueue.configure({"GENEALOGY_SQS_ACCESS_KEY": "x", "GENEALOGY_SQS_SECRET_KEY": "x"}, None)
+    capture.status = 400
+    capture.reply = ("<ErrorResponse><Error><Code>AWS.SimpleQueueService.NonExistentQueue</Code>"
+                     "<Message>The specified queue does not exist for this wsdl version.</Message>"
+                     "</Error></ErrorResponse>")
+    with pytest.raises(enqueue.SqsError) as exc:
+        enqueue.sqs_call(capture.url, "GetQueueUrl", {"QueueName": "turns-dlq"})
+    assert str(exc.value) == ("SQS GetQueueUrl failed: HTTP 400 AWS.SimpleQueueService.NonExistentQueue: "
+                              "The specified queue does not exist for this wsdl version.")
 
 
 def test_an_unreachable_endpoint_is_an_sqs_error():

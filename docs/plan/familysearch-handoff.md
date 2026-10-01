@@ -282,7 +282,7 @@ F6, F7, F8, F10 → F11, F16, U24, U25 ─► go-live
 
 12. **nginx override:** `.platform/nginx/conf.d/<name>.conf` with `proxy_read_timeout 43200s;`, or nginx cuts the POST at 60 s. It must exceed `InactivityTimeout`, or nginx's 504 redelivers mid-run. Template: `apps/server/proto/eb-worker/.platform/nginx/conf.d/01-worker-timeouts.conf`, copied from the probe's. [EB probe] (Python platform).
 13. **One instance each** for worker and tools until U6, not the review's 2. [compose]
-14. **Logs:** `aws:elasticbeanstalk:cloudwatch:logs` `StreamLogs: true` on all three, `DeleteOnTerminate: false`, retention of FamilySearch's choosing. Groups: `/aws/elasticbeanstalk/<env>/var/log/web.stdout.log`, `…/aws-sqsd/default.log`, `…/nginx/access.log`. [EB probe] The worker logs JSON lines: `ev=start` names the provider and, with `QUEUE_URL` set, `sqs_credentials` and `sqs_region` (U7); the web tier's start line `queue: <url>; sqs credentials: <mode>; region <r>` names the same; `ev=turn`, one per returning attempt, has on 200 `receive_count`, `resumed`, `list_subkeys`; a killed attempt writes none. `ev=shutdown` lists the turn ids answered 500 on SIGTERM (`answered`; a last receive closed with a 200 is not listed); `ev=close` has `turn_id`, `outcome`, `cause` (`error`, `shutdown`, `sweep`), `receive_count`; `ev=deferred_release_skipped` has `session_id`, `turn_id` when a SIGTERM close could not release its held message within the grace and release budget (the held row waits for the web tier's rescue); `ev=sweep` lists the turn ids a sweep closed (`closed`), only when there are any. All [compose] except `ev=deferred_release_skipped` [untested] (offline tests).
+14. **Logs:** `aws:elasticbeanstalk:cloudwatch:logs` `StreamLogs: true` on all three, `DeleteOnTerminate: false`, retention of FamilySearch's choosing. Groups: `/aws/elasticbeanstalk/<env>/var/log/web.stdout.log`, `…/aws-sqsd/default.log`, `…/nginx/access.log`. [EB probe] The worker logs JSON lines: `ev=start` names the provider and, with `QUEUE_URL` set, `sqs_credentials` and `sqs_region` (U7); the web tier's start line `queue: <url>; sqs credentials: <mode>; region <r>` names the same; `ev=turn`, one per returning attempt, has on 200 `receive_count`, `resumed`, `list_subkeys`; a killed attempt writes none. `ev=shutdown` lists the turn ids answered 500 on SIGTERM (`answered`; a last receive closed with a 200 is not listed); `ev=close` has `turn_id`, `outcome`, `cause` (`error`, `shutdown`, `sweep`), `receive_count`; `ev=deferred_release_skipped` has `session_id`, `turn_id` when a SIGTERM close could not release its held message within the grace and release budget (the held row waits for the web tier's rescue); `ev=sqs_credentials_unavailable` has `session_id`, `reason` when the worker had no SQS credentials to sign a held-message release with (the row stays held; U7); `ev=sweep` lists the turn ids a sweep closed (`closed`), only when there are any. All [compose] except `ev=deferred_release_skipped` and `ev=sqs_credentials_unavailable` [untested] (offline tests).
 
 ### Web tier
 
@@ -299,7 +299,7 @@ F6, F7, F8, F10 → F11, F16, U24, U25 ─► go-live
 
 Nothing scripts it against a deployed stack yet (`make proto-demo` and `make proto-audit` do on compose; U13 adapts them): run the SQL by hand.
 
-1. **Health.** Web `/api/health`, tools and worker `/healthz` answer 200; tools reports `"tools":48`; `ev=start` shows `provider=gateway` and `sqs_credentials` `default chain (iam-role)` (U7; compose shows `default chain (env)`). [compose]
+1. **Health.** Web `/api/health`, tools and worker `/healthz` answer 200; tools reports `"tools":48`; `ev=start` shows `provider=gateway` [compose] and `sqs_credentials` `default chain (iam-role)` (U7; compose shows `default chain (env)`) [untested] (U13).
 2. **Tool transport.** From a worker-security-group bastion with Node ≥ 22, npm 11.12.x, `npm ci` run in a checkout's `packages/engine/mcp-server`, and registry access (`npx` fetches `tsx`; U12). If tools has `OPENROUTER_API_KEY`, write `{"openRouterApiKey":"set"}` to `~/.familysearch-mcp/config.json` and add `--host-config`.
 
    ```
@@ -307,7 +307,7 @@ Nothing scripts it against a deployed stack yet (`make proto-demo` and `make pro
    ```
 
    It calls every tool but `login`, `logout`, `auth_status`. Pass: exit 0. Until F16 it exits 1 naming exactly `wiki_search`, `wiki_read`, `wiki_place_page`, `place_population`. [compose]
-3. **One research turn.** As a test patron, open a session on a new project and ask a research question; its message reaches the worker by the web tier's signed SendMessage (U7). The reply streams; the turn has `completed_at`; `research.json` is in `documents`. Then in psql after `\set s sess_…` (the web session id): [live run]
+3. **One research turn.** As a test patron, open a session on a new project and ask a research question; its message reaches the worker by the web tier's signed SendMessage (U7) [untested] (U13). The reply streams; the turn has `completed_at`; `research.json` is in `documents`. Then in psql after `\set s sess_…` (the web session id): [live run]
 
    ```sql
    -- criterion 3: both must be 0

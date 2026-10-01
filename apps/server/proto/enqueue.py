@@ -57,6 +57,7 @@ _VPCE_HOST = re.compile(r"^vpce-[^.]+\.sqs\.([a-z0-9-]+)\.vpce\.amazonaws\.com$"
 _LEGACY_HOST = re.compile(r"^([a-z0-9-]+)\.queue\.amazonaws\.com$")
 _DUALSTACK_HOST = re.compile(r"^sqs\.([a-z0-9-]+)\.api\.aws$")
 _AWS_SUFFIXES = (".amazonaws.com", ".amazonaws.com.cn", ".api.aws")
+_MIN_SECRET_LEN = 16  # AWS access key ids are 16+ characters; secrets and tokens are longer
 _SIGNATURE = re.compile(r"Signature=[0-9A-Fa-f]*")
 _TOKEN_ECHO = re.compile(r"(?i)(x-amz-security-token\s*[:=]\s*)[^\s'\"&<]+")
 
@@ -268,10 +269,12 @@ def sign(url: str, body: bytes, creds: Any, region: str, *, service: str = "sqs"
 
 def _redact(text: str, frozen: Any) -> str:
     """No secret, access key, session token or signature survives into an error: AWS's
-    SignatureDoesNotMatch body echoes the canonical request, token included."""
+    SignatureDoesNotMatch body echoes the canonical request, token included. Values shorter
+    than any real AWS credential (compose's dummy ``x``) are left alone, or every ``x`` in an
+    elasticmq error would be redacted."""
     for secret in (getattr(frozen, "secret_key", None), getattr(frozen, "token", None),
                    getattr(frozen, "access_key", None)):
-        if secret:
+        if secret and len(secret) >= _MIN_SECRET_LEN:
             text = text.replace(secret, REDACTED)
     return _TOKEN_ECHO.sub(r"\1" + REDACTED, _SIGNATURE.sub(REDACTED, text))
 
