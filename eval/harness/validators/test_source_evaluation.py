@@ -433,8 +433,18 @@ def test_a_memory_is_still_audited(tool_calls, text_response, test):
     Memories carry no `1:1:` ARK, so the evidence is that the response ACCOUNTS for
     the unreadable one rather than that it was read.
     """
-    if "memories" not in str(test.get("name", "")).lower() and not text_response:
-        pytest.skip("no response to inspect")
+    # ONLY WHERE AN AUDIT ACTUALLY RAN. A negative test routes away without
+    # reading anything, so asking it to name an unreadable source is meaningless.
+    # The first version of this validator did exactly that and failed
+    # `ut_source_evaluation_h3t`, which had correctly declined and handed off to
+    # check-warnings. The gate is a `record_read`: no audit, nothing to say.
+    if test.get("type") != "positive":
+        pytest.skip("negative test: no audit is performed")
+    if not any(
+        (c.get("tool") or "").rsplit("__", 1)[-1] == "record_read"
+        for c in (tool_calls or [])
+    ):
+        pytest.skip("no source was read, so there is no audit to inspect")
     body = (text_response or "").lower()
     mentions_unreadable = any(
         p in body for p in ("could not", "cannot", "not readable", "no readable", "memory", "memories")
