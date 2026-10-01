@@ -386,18 +386,20 @@ the caller, in this order:
 - the question in full, quoted as written
 - its selection basis and the rationale in one line
 - what it depends on and unblocks, naming any other question by its text
-- next-step hint for the caller (e.g. "research-plan for q_002")
+- next-step hint for the caller
 
 ### `summary_for_user`
 
-After the lines above, write a line containing only `---`, then exactly two
-paragraphs of plain prose with **no label, heading or field name**:
+Every caller line comes before the `---`; none is repeated after it. After the
+lines above, write a line containing only `---`, then exactly two paragraphs of
+plain prose with **no label, heading or field name**:
 
 1. One paragraph for someone who has never done genealogy: the question chosen
    next, in plain words, and why it is the one to pursue — or, when you selected
    nothing, why not. No identifiers, file names, tool names or field names; a
    question is what it asks, never a `q_` id.
-2. One sentence: what happens next, in plain language.
+2. One sentence: what happens next, in plain language — what will be searched
+   or done, never which step, skill or tool does it, and no identifiers.
 
 The caller prints everything after that `---` verbatim and nothing above it.
 No closing essay.
