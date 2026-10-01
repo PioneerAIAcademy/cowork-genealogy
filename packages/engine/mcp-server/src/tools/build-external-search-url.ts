@@ -1,6 +1,6 @@
 // build_external_search_url — deterministic external-site search URL templating.
 //
-// Migrates the site-wide `{...}` templates the `search-external-sites` skill
+// Migrates the site-wide `{...}` templates the `search-external-sites` skill (now an agent)
 // filled in by hand into tested code. The LLM keeps every judgment (which
 // record type/event the search targets, which curated link fits, what
 // conflicts[] says about a disputed field); the tool applies only the

@@ -10,14 +10,15 @@
       "external-site",
       "nil-result",
       "negative-outcome-logging",
-      "log-site-newspapers"
+      "log-site-newspapers",
+      "direct-arm"
     ],
     "holdout": true,
     "expected_outcome": "xfail",
     "xfail_reason": "Model drift as of 2026-09-28: the model answers in 3 turns without invoking any MCP tool calls (activated=false), completing in ~25s instead of the expected ~120s. A mandatory place_search instruction was attempted but caused a regression in ut_search_external_sites_013 and did not fix the drift. Tracked as issue #2966. Remove this marker when the skill reliably invokes place_search on the first turn and this test passes three consecutive single-test runs."
   },
   "input": {
-    "user_message": "I ran that Newspapers.com search for Patrick Flynn's obituary in Schuylkill County — the site says zero results. Nothing came up, so there's nothing to save.",
+    "delegation": "I ran that Newspapers.com search for Patrick Flynn's obituary in Schuylkill County — the site says zero results. Nothing came up, so there's nothing to save.\n\nuserPresent: yes\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
@@ -31,6 +32,6 @@
     "Log notes should state what was searched and its limitations: newspaper digitization coverage is incomplete, the obituary may exist in an undigitized paper or under a name variant — absence from this collection is not proof of absence",
     "Should suggest a sensible follow-up rather than dead-ending: a search variation (name variant, wider date range, neighboring counties), another site, or physical repositories",
     "Should not fabricate results or treat the nil report as an error",
-    "This search matches no plan item in the scenario (mid-research-flynn has no Newspapers.com item), so plan_item_id is null and NO plan-item status may be written. Do not expect one, and treat ticking an unrelated item as a defect. The user reported the nil without a capture, so the log entry must mark the absence unconfirmed pending a capture (SKILL.md step 6) rather than conclusive."
+    "This search matches no plan item in the scenario (mid-research-flynn has no Newspapers.com item), so plan_item_id is null and NO plan-item status may be written. Do not expect one, and treat ticking an unrelated item as a defect. The user reported the nil without a capture, so the log entry must mark the absence unconfirmed pending a capture (the agent's step 6) rather than conclusive."
   ]
 }

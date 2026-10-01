@@ -1,7 +1,7 @@
 # `build_external_search_url` — external-site search URL tool — Spec
 
 > **Status:** New (2026-09-09), corrected 2026-09-10 after review. Migrates
-> the deterministic URL-templating the `search-external-sites` skill
+> the deterministic URL-templating the `search-external-sites` skill (now an agent)
 > previously performed **by hand in prose** into a tested MCP tool. The
 > skill's own SKILL.md carried seven site-wide templates (Ancestry,
 > MyHeritage, FindMyPast, FindAGrave, Newspapers.com, Chronicling America, and

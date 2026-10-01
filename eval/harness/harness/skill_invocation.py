@@ -1103,6 +1103,12 @@ DEDICATED_AGENT_NAMES = frozenset(
         # it to `localities` and routes nothing to it; `ownership.json` names
         # `agent:locality-guide` on that row.
         "locality-guide",
+        # Same shape as search-images (issue #2802): a converted skill, not a
+        # hook-routed pair. It writes `log` entries (one through
+        # build_external_search_url) and a plan item's `status`, and
+        # `ownership.json` names `agent:search-external-sites` on those rows.
+        # Listed because the set is asserted equal to the shipped agent files.
+        "search-external-sites",
     }
 )
 
