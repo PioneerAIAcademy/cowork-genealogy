@@ -162,7 +162,7 @@ time in 3; the worker never does.
 - **Throughput:** ~166k tokens/min a session (2026-09-09 estimate); 50 sessions ≈ 0.5M–8.1M TPM, up to 4× the 2M default, depending on burndown and cache-read counting. The gateway is one 0.25 vCPU task, no autoscaling (2026-09-11). U18.
 - **Re-logged duplicates:** PR #2850 refuses a re-extraction of the same record, person and fact type under the same log entry, even reworded: the measured resume shape (P1, D17). Under a new or missing log entry it gets through; never seen on a resume, and a corpus replay's 27 such misses (194 runs, 2026-09-29) left no duplicate. U16 counts them.
 - **Missing against the current stack:** uploads, images, logs, stored search results, two wiki skills, `evaluations/` gates, continuing a capped project. U20.
-- **Silent transcript loss:** a config-dir mismatch persists nothing; `/healthz` answers 200 regardless. U10.
+- **Silent transcript loss:** a config-dir mismatch persists nothing; the turn now closes `transcript_lost`, answers 500, and `/healthz` answers 503 (U10). A partial loss (one dropped frame) is still silent.
 - **Stop, held messages, the $35 cap:** offline tests only; while Postgres is down all three fail open, silently (the hooks swallow its errors). U23.
 - **Dev-only paths ship:** an unauthenticated crash stub, fixture tree-read block, token fallbacks (one persists in `turns.message`, SQS and the DLQ), debug holds. U11.
 

@@ -267,8 +267,9 @@ class KillSpec:
 # safe default for a check whose job is to catch one specific defect. `no_progress` is
 # 0a's terminal failure -- the resume did nothing, twice -- which is exactly what a resume
 # probe exists to catch. `retries_exhausted` (U5) is the worker closing the turn because its
-# message ran out of receives: no resume finished it.
-RESUMED_FAILED_OUTCOMES = frozenset({"no_progress", "retries_exhausted"})
+# message ran out of receives: no resume finished it. `transcript_lost` (U10) is a turn
+# whose transcript never reached the store, closed by the worker: a resume that did not work.
+RESUMED_FAILED_OUTCOMES = frozenset({"no_progress", "retries_exhausted", "transcript_lost"})
 
 
 def bare_name(tool_name: str) -> str:

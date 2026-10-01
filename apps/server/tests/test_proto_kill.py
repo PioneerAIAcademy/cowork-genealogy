@@ -244,8 +244,9 @@ def test_the_kill_check_fails_only_on_a_resume_that_did_nothing():
         assert outcome_check(worked) is True, worked
     assert outcome_check("no_progress") is False, "a dead resume is the one thing this probe catches"
     assert outcome_check("retries_exhausted") is False, "U5: a turn closed for running out of receives never resumed"
+    assert outcome_check("transcript_lost") is False, "U10: a turn whose transcript was lost did not resume"
     assert outcome_check(None) is False, "no outcome at all is not a completed turn"
-    assert turn.RESUMED_FAILED_OUTCOMES == frozenset({"no_progress", "retries_exhausted"})
+    assert turn.RESUMED_FAILED_OUTCOMES == frozenset({"no_progress", "retries_exhausted", "transcript_lost"})
 
 
 # ── 0a: the input selector (--kill-on-input) ────────────────────────────────────────
