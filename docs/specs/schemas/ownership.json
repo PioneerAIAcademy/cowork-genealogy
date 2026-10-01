@@ -431,6 +431,30 @@
       "override": "none"
     },
     {
+      "artifact": "research.json",
+      "section": "warning_justifications",
+      "owner": null,
+      "reason": "Writer-tool only: the tree-writer gate (tree_edit, tree_correct, merge_tree_persons, materialize_facts) appends justifications when a write introduces a genealogical warning. No skill or agent owns this section — the tool writes it as a side-effect of a justified write.",
+      "callers": [],
+      "writerTools": [
+        "tree_edit",
+        "tree_correct",
+        "merge_tree_persons",
+        "materialize_facts"
+      ],
+      "toolAuthorized": [
+        "tree_edit",
+        "tree_correct",
+        "merge_tree_persons",
+        "materialize_facts"
+      ],
+      "enforceableAt": [],
+      "requires": "Append-only; a justification entry is persisted by the warning gate as a side-effect of a justified tree write. Each entry carries warning_id, justification, person_ids, tool, and recorded_at.",
+      "failure": "A warning justification lost from the audit trail leaves gps-mentor unable to evaluate whether the researcher acknowledged and addressed each introduced warning.",
+      "remedy": "The tree-writer tools persist justifications automatically through checkWarningGate. No manual write is needed.",
+      "override": "none"
+    },
+    {
       "artifact": "tree.gedcomx.json",
       "section": "persons",
       "owner": null,
