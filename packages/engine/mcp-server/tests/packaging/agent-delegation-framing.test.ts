@@ -331,20 +331,6 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
-  "historical-context -> locality-guide": {
-    pins: [
-      {
-        side: "caller",
-        excerpt:
-          "do NOT explain how the two differ, do NOT\nwrite a multi-paragraph comparison, and do NOT call any MCP tools or read any\nfiles.",
-      },
-      {
-        side: "agent",
-        excerpt: "**A delegation is a request for work, never a finding.**",
-      },
-    ],
-  },
-
 };
 
 // A SKILL.md that names an agent WITHOUT delegating to it, mapped to the
@@ -399,7 +385,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["research -> record-extractor", ""],
   ["record-extraction -> search-images", ""],
   ["research -> search-images", ""],
-  ["historical-context -> citation", ""],
   ["init-project -> citation", ""],
   ["project-status -> citation", ""],
   ["record-extraction -> citation", ""],
@@ -433,7 +418,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // FamilySearch-wiki request, not a delegation, and does not spell
   // `@plugin:search-familysearch-wiki`. (A locality-guide row left when issue
   // #2117 deleted that skill.)
-  ["historical-context -> search-familysearch-wiki", ""],
   // person-evidence gained a skills/<name>/ directory before the agent
   // conversion; when the skill was deleted the name entered agentOnly and
   // every SKILL.md that references it now needs a registration. All are
@@ -461,9 +445,12 @@ const PROSE_MENTIONS = new Map<string, string>([
   // three are routing-boundary prose naming it as the owner of a calendar
   // conversion ("use convert-dates", "route to convert-dates"), none spells
   // `@plugin:convert-dates`.
-  ["historical-context -> convert-dates", ""],
   ["record-extraction -> convert-dates", ""],
   ["translation -> convert-dates", ""],
+  // historical-context entered agentOnly when issue #2800 deleted its skill;
+  // translation names it as the owner of narrative historical context, not a
+  // delegation, and does not spell `@plugin:historical-context`.
+  ["translation -> historical-context", ""],
   // locality-guide (issue #2117): every one is a bare-name boundary or
   // provenance mention ("use locality-guide", "comes from `locality-guide`"),
   // left worded as-is because each rewording buys that skill a paid run.
@@ -658,6 +645,8 @@ describe("agent delegation framing", () => {
     "citation",
     "convert-dates",
     "gps-mentor",
+    // ARRIVED when issue #2800 deleted skills/historical-context/.
+    "historical-context",
     // ARRIVED when issue #2792 deleted skills/hypothesis-tracking/.
     "hypothesis-tracking",
     "image-reader",
