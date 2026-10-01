@@ -89,7 +89,7 @@ Two premises moved since the plan:
 
 **U9.** Why: every instance applies every schema file at start (review item 15); concurrent starts are untried. **Done when:** empty and 005-level databases reach 007, and simultaneous starts do not race.
 
-**U10.** Why: health checks answer 200 when `prepare()`, Postgres or S3 fail; a read-only config dir (P1) or a mismatched child `CLAUDE_CONFIG_DIR` silently loses the transcript. **Done when** (offline): Postgres down fails all three checks; a bad `TMPDIR` blocks start; a model turn appending no entries fails non-200. **Status:** tools half built (`/healthz` checks Postgres, its schema and S3; `docs/plan/u10-tools-readiness.md`); worker and web halves open.
+**U10.** Why: health checks answer 200 when `prepare()`, Postgres or S3 fail; a read-only config dir (P1) or a mismatched child `CLAUDE_CONFIG_DIR` silently loses the transcript. **Done when** (offline): Postgres down fails all three checks; a bad `TMPDIR` blocks start; a model turn appending no entries fails non-200. **Status:** tools half built (`/healthz` checks Postgres, its schema and S3; PR #3078); worker and web halves open.
 
 **U11.** Remove or gate: the D3 `behaviour` stub arms (crash is an unauthenticated `os._exit(1)`); `*-unknown` id defaults; `BLOCKED_TOOLS`, `LIVE_TREE_ARG_TOOLS`; token fallbacks (U3); `NullQueue` (U2 removes the auth stubs); the implicit `MODEL_PROVIDER=anthropic`; `GENEALOGY_DEBUG_HOLD_*`; `.fs-token` (not in `.dockerignore`); stale agent and skill counts. **Done when:** a crash POST answers 400; a packaging test rejects dev variables in production config.
 
