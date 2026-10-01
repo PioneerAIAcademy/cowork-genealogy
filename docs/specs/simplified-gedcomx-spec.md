@@ -257,7 +257,7 @@ link an assertion to a source description with a locator.
 Each fact carries two date fields:
 
 - **`date`** — the date string as it was originally written. Whatever a contributor typed in the raw GedcomX (`fact.date.original`) is preserved here verbatim. LLM-authored stub facts populate `date` directly with a human-readable string.
-- **`standard_date`** — a canonical GEDCOM-form sidecar produced by the converter (e.g. `12 Mar 1908`, `Abt 1850`, `Bef Oct 1855`, `Bet 1917 and 1918`). Downstream tools that need to compare or order dates should read `standard_date` rather than re-parsing `date` each time. Omitted when the standardizer cannot parse the input.
+- **`standard_date`** — a canonical GEDCOM-form sidecar produced by the converter (e.g. `12 Mar 1908`, `Abt 1850`, `Bef Oct 1855`, `Bet 1917 and 1918`). Downstream tools that need to compare or order dates should read `standard_date` rather than re-parsing `date` each time. Omitted when the standardizer cannot parse the input. **It never emits a partial:** if any word of `date` is unrecognized, `standard_date` is omitted rather than built from the words it did read, and it never carries a day without a month. So `13 ene 1752` gives `13 Jan 1752` and `1872 AGE 3 YRS` gives no sidecar, never `3 1872`. Connector words the date vocabulary knows, such as Spanish and Portuguese `de` in `22 de abril de 1838`, count as read.
 
 The standardizer recognizes the patterns below (and many freeform variants). LLM-authored skills should prefer these patterns in `date`; the converter will produce a matching `standard_date` when it can:
 
@@ -270,7 +270,7 @@ The standardizer recognizes the patterns below (and many freeform variants). LLM
 | `before YYYY` | `before 1850` | `/+1850` | Before a date |
 | `after YYYY` | `after 1840` | `+1840/` | After a date |
 | `YYYY-YYYY` | `1840-1850` | `+1840/+1850` | Date range |
-| Free text | `about Spring 1845` | (best-effort) | Unstructured — conversion function attempts to extract year and qualifier |
+| Free text | `about Spring 1845` | (none) | Unstructured. Any word the standardizer does not recognize (here `Spring`) omits `standard_date`; `date` still keeps the text verbatim |
 
 Reverse conversion (simplified → raw): only `date` is restored into `fact.date.original`. `standard_date` is dropped — it is a simplified-format-only sidecar.
 

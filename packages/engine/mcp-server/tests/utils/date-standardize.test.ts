@@ -841,3 +841,112 @@ describe('ISO year-month is not an abbreviated year range (#1653 review)', () =>
     }
   });
 });
+
+// ─── Never emit a partial (issue #2124, lead ruling 2026-09-18) ──────────────
+//
+// An unrecognized word means the standard_date sidecar is omitted, and a day is
+// never emitted without its month. The nine inputs are the ruling's own; the
+// rest come from the 2,692-string corpus walk recorded on the PR.
+describe('stdDate never emits a partial', () => {
+  test.each([
+    // The ruling's examples: each now standardizes in full.
+    ['1942. június 18.', '18 Jun 1942'],
+    ['27. října 1749', '27 Oct 1749'],
+    ['13 ene 1752', '13 Jan 1752'],
+    ['4 AGO 1798', '4 Aug 1798'],
+    ['1814. január 11.', '11 Jan 1814'],
+    // A year alone still standardizes.
+    ['1872', '1872'],
+  ])('%s -> %s', (raw, std) => {
+    expect(stdDate(raw)).toBe(std);
+  });
+
+  test('never takes a day of month from an age', () => {
+    expect(stdDate('1872 AGE 3 YRS')).toBe('');
+  });
+
+  test('a month it cannot read omits the date rather than dropping the month', () => {
+    // The wrong fix this guards against: making the examples pass by stripping
+    // the stray day. A recognized month keeps its day.
+    expect(stdDate('13 ene 1752')).not.toBe('1752');
+    expect(stdDate('13 xyzzy 1752')).toBe('');
+  });
+
+  test.each([
+    // Hungarian
+    ['1844. augusztus 25.', '25 Aug 1844'], ['1856. szeptember 8.', '8 Sep 1856'],
+    ['1905. május 11.', '11 May 1905'], ['1848. március 8.', '8 Mar 1848'],
+    ['1900. július 3.', '3 Jul 1900'], ['1873. április 1.', '1 Apr 1873'],
+    // Czech, genitive as dates write it
+    ['13. března 1784', '13 Mar 1784'], ['2. června 1864', '2 Jun 1864'],
+    ['16. září 1823', '16 Sep 1823'], ['7. dubna 1833', '7 Apr 1833'],
+    ['10. května 1797', '10 May 1797'], ['19. října 1842', '19 Oct 1842'],
+    // Spanish abbreviations, any case
+    ['17 Dic 1929', '17 Dec 1929'], ['2 abr 1860', '2 Apr 1860'], ['12 ago 1914', '12 Aug 1914'],
+    // Danish
+    ['20 marts 1893', '20 Mar 1893'],
+    // Abbreviations in languages already supported
+    ['5 mrt 1850', '5 Mar 1850'], ['5 janv 1850', '5 Jan 1850'], ['5 avr 1850', '5 Apr 1850'],
+    ['5 gen 1850', '5 Jan 1850'], ['5 ott 1850', '5 Oct 1850'], ['1850. szept 5.', '5 Sep 1850'],
+  ])('new month name: %s -> %s', (raw, std) => {
+    expect(stdDate(raw)).toBe(std);
+  });
+
+  test.each([
+    // `de` is a connector, not an unparsed word: these were correct before and stay so.
+    ['22 de abril de 1838', '22 Apr 1838'],
+    ['31 de julho de 1871', '31 Jul 1871'],
+    ['noviembre de 1886', 'Nov 1886'],
+    // Polish `r.` (rok, year) likewise.
+    ['21.06.1827 r.', '21 Jun 1827'],
+    // A weekday says nothing a date needs.
+    ['Monday, 12 July 2026', '12 Jul 2026'],
+    ['Tues, 12 July 2026', '12 Jul 2026'],
+    // An ordinal after a month-first day.
+    ['January 5th, 1850', '5 Jan 1850'],
+  ])('filler and ordinal: %s -> %s', (raw, std) => {
+    expect(stdDate(raw)).toBe(std);
+  });
+
+  test.each([
+    // These lost their meaning before: a range collapsed to its end year, and
+    // "about"/"before" fell away.
+    ['von 1682 bis 1694', 'Bet 1682 and 1694'],
+    ['um 1625', 'Abt 1625'],
+    ['około 1793 r.', 'Abt 1793'],
+    ['antes de 1908', 'Bef 1908'],
+  ])('new modifier: %s -> %s', (raw, std) => {
+    expect(stdDate(raw)).toBe(std);
+  });
+
+  test('ł is folded so Polish około matches', () => {
+    expect(normalizeAccents('około')).toBe('okolo');
+  });
+
+  test.each([
+    // A scanning error for 31 is not a day of 3.
+    ['3l July 1952'],
+    // `do` (Polish/Czech "until") and `da` ("from") are not filler.
+    ['do 1850'],
+    ['da 1850'],
+    // A context word omits the sidecar; the ruling accepts this.
+    ['1850 Census'],
+    // Paths that return before the parser sees every word.
+    ['abt 3/9/1978 census'],
+    ['Q1 1850 census'],
+    ['census from 1850 to 1860'],
+    // The standalone From/To branches, which return before the single-date check.
+    ['to 13 1752'],
+    ['bis 13 1752'],
+    ['from 13 1752'],
+    // A non-Latin word is unparsed too.
+    ['январь 1860'],
+  ])('omits %s', (raw) => {
+    expect(stdDate(raw)).toBe('');
+  });
+
+  test('ranges and quarters that carry a day with no month mid-parse still work', () => {
+    expect(stdDate('BET 10 AND 15 OCT 1943')).toBe('Bet 10 Oct 1943 and 15 Oct 1943');
+    expect(stdDate('1st quarter 1850')).toBe('Q1 1850');
+  });
+});

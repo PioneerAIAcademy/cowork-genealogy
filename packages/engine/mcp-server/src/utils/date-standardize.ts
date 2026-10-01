@@ -14,6 +14,7 @@ import {
   BC_WORDS,
   AD_WORDS,
   WFT_PATTERN,
+  FILLER_WORDS,
 } from "./date-constants.js";
 
 // ---------- Token types ----------
@@ -259,9 +260,17 @@ function parseDateTokens(tokens: Token[], startIdx: number, endIdx: number): Dat
         continue;
       }
 
-      // Check for ordinal suffix after number
-      if (ORDINAL_SUFFIXES.has(lower) && pendingNums.length > 0) {
+      // Check for ordinal suffix after number. `pendingNums` is empty when the
+      // month came first ("Jan 1st, 1901" stores the day directly), so the
+      // previous token decides too.
+      if (ORDINAL_SUFFIXES.has(lower) && (pendingNums.length > 0 || (i > 0 && tokens[i - 1].type === 'num'))) {
         // Just ignore the suffix; the number is already stored
+        i++;
+        continue;
+      }
+
+      // Filler words carry no date meaning (see FILLER_WORDS)
+      if (FILLER_WORDS.has(lower)) {
         i++;
         continue;
       }
@@ -451,6 +460,44 @@ function parseDateTokens(tokens: Token[], startIdx: number, endIdx: number): Dat
   return parts;
 }
 
+// ---------- Never emit a partial ----------
+//
+// Lead ruling on issue #2124 (2026-09-18): when any token of the input is
+// unparsed, return "" so the standard_date sidecar is omitted, and never take a
+// day of month from an age. Before this, an unrecognized word was skipped and
+// the rest emitted: "13 ene 1752" -> "13 1752", "1872 AGE 3 YRS" -> "3 1872".
+
+/** Whether a word token is part of the date vocabulary. An ordinal suffix
+ *  counts only straight after a number. */
+function isDateWord(tokens: Token[], i: number): boolean {
+  const lower = tokens[i].value.toLowerCase();
+  if (ORDINAL_SUFFIXES.has(lower)) return i > 0 && tokens[i - 1].type === 'num';
+  return (
+    MONTHS.has(lower) || MODIFIERS.has(lower) || FILLER_WORDS.has(lower) ||
+    QUARTER_WORDS.has(lower) || BC_WORDS.has(lower) || AD_WORDS.has(lower)
+  );
+}
+
+/** Checked over the WHOLE input before any branch, because several branches
+ *  return without parsing every token: the ambiguous `__OR__` form, the `Q`
+ *  prefix, and anything in front of a Bet/From/To keyword. */
+function hasUnparsedWord(text: string, tokens: Token[]): boolean {
+  // The tokenizer builds words from ASCII letters only and drops the rest, so
+  // a Cyrillic or CJK word would otherwise never be seen ("январь 1860" ->
+  // "1860"). Any letter left after accent folding is unparsed.
+  if (/\p{L}/u.test(text.replace(/[a-zA-Z]/g, ''))) return true;
+  for (let i = 0; i < tokens.length; i++) {
+    if (tokens[i].type === 'str' && !isDateWord(tokens, i)) return true;
+  }
+  return false;
+}
+
+/** A day with no month is a number taken from somewhere that is not a date
+ *  (an age, a scanning error) or a month the parser did not read. */
+function dayWithoutMonth(d: DateParts): boolean {
+  return d.day !== undefined && !d.month;
+}
+
 // Find all positions of a modifier keyword (checks both str and sym tokens)
 function findAllModifier(tokens: Token[], keyword: string): number[] {
   const positions: number[] = [];
@@ -506,6 +553,10 @@ export function stdDate(raw: string): string {
 
   if (!text) return '';
 
+  // Never emit a partial: every word of the input must be understood.
+  const normalizedText = normalizeAccents(text);
+  if (hasUnparsedWord(normalizedText, tokenize(normalizedText))) return '';
+
   // Check for __OR__ pattern (ambiguous date)
   if (text.includes('__OR__')) {
     const orParts = text.match(/__OR__(.*?)__OR__(.*?)__OR__/);
@@ -559,6 +610,7 @@ export function stdDate(raw: string): string {
 
       // Range gap filling
       fillRangeGaps(date1, date2);
+      if (dayWithoutMonth(date1) || dayWithoutMonth(date2)) return '';
 
       const d1str = formatDate(date1);
       const d2str = formatDate(date2);
@@ -579,6 +631,7 @@ export function stdDate(raw: string): string {
       const date2 = parseDateTokens(allTokens, toIdx + 1, allTokens.length);
 
       fillRangeGaps(date1, date2);
+      if (dayWithoutMonth(date1) || dayWithoutMonth(date2)) return '';
 
       const d1str = formatDate(date1);
       const d2str = formatDate(date2);
@@ -594,7 +647,7 @@ export function stdDate(raw: string): string {
   if (fromPositions.length > 0 && toPositions.length === 0 && andPositions.length === 0) {
     const fromIdx = fromPositions[0];
     const date = parseDateTokens(allTokens, fromIdx + 1, allTokens.length);
-    if (!date.year) return '';
+    if (!date.year || dayWithoutMonth(date)) return '';
     date.modifier = 'Aft';
     let result = formatDate(date);
     if (trailingParen) result += ' ' + trailingParen;
@@ -606,7 +659,7 @@ export function stdDate(raw: string): string {
   if (toPositions.length > 0 && fromPositions.length === 0) {
     const toIdx = toPositions[0];
     const date = parseDateTokens(allTokens, toIdx + 1, allTokens.length);
-    if (!date.year) return '';
+    if (!date.year || dayWithoutMonth(date)) return '';
     date.modifier = 'Bef';
     let result = formatDate(date);
     if (trailingParen) result += ' ' + trailingParen;
@@ -626,6 +679,10 @@ export function stdDate(raw: string): string {
       return result;
     }
   }
+
+  // A day with no month, e.g. the "3" of "1872 AGE 3 YRS". After the quarter
+  // branch, whose leftover number ("1st quarter") sets day on purpose.
+  if (dayWithoutMonth(date)) return '';
 
   // Validate
   if (!date.year && !date.month && !date.day) {
