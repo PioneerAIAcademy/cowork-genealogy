@@ -10,6 +10,7 @@
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 import { mergeGedcomx } from "../utils/merge-gedcomx.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
+import { checkWarningGate } from "./tree-edit.js";
 import { atomicWriteBoth, withProjectLock } from "../utils/project-io.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
@@ -27,6 +28,7 @@ import type { MergeResult } from "./merge-shared.js";
 export interface MergeTreePersonsInput {
   projectPath: string;
   merges: Array<[string, string]>;
+  warningJustifications?: Array<{ warningId: string; justification: string }>;
 }
 
 export async function mergeTreePersons(
@@ -78,6 +80,15 @@ export async function mergeTreePersons(
     if (!validation.valid) {
       return { ok: false, errors: formatIssues(validation.errors) };
     }
+
+    // 5b. Warning gate: refuse if the merge introduces unjustified warnings.
+    //     Pass collapseMap so pre-existing warnings on collapsed persons are
+    //     matched against their survivor and not read as introduced.
+    const warningRefusal = await checkWarningGate(
+      tree, merged, research, projectPath,
+      input.warningJustifications, "merge_tree_persons",
+    );
+    if (warningRefusal) return warningRefusal as any;
 
     // 6. Derive the compact summary.
     const pairs = derivePairSummaries(merges, preSurvivors, preCollapsed, merged);
@@ -147,6 +158,22 @@ export const mergeTreePersonsSchema = {
           items: { type: "string" },
           minItems: 2,
           maxItems: 2,
+        },
+      },
+      warningJustifications: {
+        type: "array",
+        description:
+          "Justifications for genealogical warnings this write introduces. " +
+          "If the write introduces warnings and this is absent or incomplete, the tool " +
+          "refuses with { ok: false, reason: 'unjustified_warnings', warnings: [...] }. " +
+          "Re-call with each warningId and a justification string.",
+        items: {
+          type: "object",
+          properties: {
+            warningId: { type: "string", description: "The warning id from the refusal." },
+            justification: { type: "string", description: "Why this warning is acceptable." },
+          },
+          required: ["warningId", "justification"],
         },
       },
     },

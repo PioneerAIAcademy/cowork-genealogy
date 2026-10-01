@@ -431,6 +431,27 @@
       "override": "none"
     },
     {
+      "artifact": "research.json",
+      "section": "warning_justifications",
+      "owner": null,
+      "reason": "Writer-tool only: the tree-writer gate (tree_edit, tree_correct, merge_tree_persons, materialize_facts) appends justifications when a write introduces a genealogical warning. No skill or agent owns this section — the tool writes it as a side-effect of a justified write. Issue #2840.",
+      "writerTools": [
+        "tree_edit",
+        "tree_correct",
+        "merge_tree_persons",
+        "materialize_facts"
+      ],
+      "toolAuthorized": [
+        "tree_edit",
+        "tree_correct",
+        "merge_tree_persons",
+        "materialize_facts"
+      ],
+      "enforceableAt": [
+        "tool"
+      ]
+    },
+    {
       "artifact": "tree.gedcomx.json",
       "section": "persons",
       "owner": null,

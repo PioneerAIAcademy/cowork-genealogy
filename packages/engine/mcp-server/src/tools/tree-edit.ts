@@ -26,9 +26,16 @@ import type {
   SimplifiedSourceReference,
 } from "../types/gedcomx.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
+import {
+  introducedWarnings,
+  staleJustifications,
+  computeTouchedPersonIds,
+  type WarningJustificationInput,
+} from "../validation/introduced-warnings.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   atomicWriteJson,
+  atomicWriteBoth,
   readProjectJson,
   formatIssues,
   withProjectLock,
@@ -118,6 +125,10 @@ export interface TreeEditInput extends Partial<TreeEditOp> {
   // once (all-or-nothing). Ids assigned earlier in the batch are visible to
   // later ops (the allocator rescans the live tree).
   ops?: TreeEditOp[];
+  // Justifications for genealogical warnings this write introduces (issue #2840).
+  // If the write introduces warnings and this is absent or incomplete, the tool
+  // refuses with { ok: false, reason: "unjustified_warnings", warnings: [...] }.
+  warningJustifications?: Array<{ warningId: string; justification: string }>;
 }
 
 interface AssignedIds {
@@ -727,10 +738,89 @@ export async function treeEdit(input: TreeEditInput): Promise<TreeEditResult> {
   return executeTreeOps(input, EDIT_GATE);
 }
 
+/**
+ * Check introduced genealogical warnings and refuse if any are unjustified.
+ * Returns null when the write may proceed, or the refusal response.
+ * When justified, persists the justifications to research.json.
+ *
+ * Shared by tree_edit, tree_correct, materialize_facts and merge_tree_persons.
+ */
+export async function checkWarningGate(
+  beforeTree: SimplifiedGedcomX,
+  afterTree: SimplifiedGedcomX,
+  research: any,
+  projectPath: string,
+  warningJustifications: WarningJustificationInput[] | undefined,
+  toolName: string,
+): Promise<{ ok: false; reason: string; warnings: any[] } | null> {
+  const touchedIds = computeTouchedPersonIds(beforeTree, afterTree);
+  if (touchedIds.length === 0) return null;
+
+  const result = introducedWarnings(
+    beforeTree,
+    afterTree,
+    touchedIds,
+    warningJustifications,
+  );
+
+  if (result.unjustified.length > 0) {
+    return {
+      ok: false,
+      reason: "unjustified_warnings",
+      warnings: result.unjustified.map((w) => ({
+        warningId: w.warningId,
+        issueType: w.issueType,
+        severity: w.severity,
+        personId: w.personId,
+        personName: w.personName,
+        message: w.message,
+        facts: w.facts,
+        relatedPersonId: w.relatedPersonId,
+      })),
+    };
+  }
+
+  // All introduced warnings are justified — check for stale justification ids
+  if (warningJustifications && warningJustifications.length > 0) {
+    const stale = staleJustifications(result.allIntroduced, warningJustifications);
+    if (stale.length > 0) {
+      return {
+        ok: false,
+        reason: "unjustified_warnings",
+        warnings: [{
+          message: `Stale warningId(s) not matching any introduced warning: ${stale.join(", ")}. Re-call without warningJustifications to get the current warning ids.`,
+        }],
+      };
+    }
+
+    // Persist justifications to research.json
+    if (result.allIntroduced.length > 0) {
+      const now = new Date().toISOString();
+      const existing = Array.isArray(research.warning_justifications)
+        ? research.warning_justifications
+        : [];
+      const newEntries = warningJustifications.map((j) => ({
+        warning_id: j.warningId,
+        justification: j.justification,
+        person_ids: [...new Set(
+          result.allIntroduced
+            .filter((w) => w.warningId === j.warningId)
+            .flatMap((w) => [w.personId, ...(w.relatedPersonId ? [w.relatedPersonId] : [])]),
+        )],
+        tool: toolName,
+        recorded_at: now,
+      }));
+      research.warning_justifications = [...existing, ...newEntries];
+    }
+  }
+
+  return null;
+}
+
 /** Shared core behind `tree_edit` and `tree_correct` — identical batched-op,
  *  id-assignment, and validate-on-write semantics; only the admitted
  *  op set (the gate) differs. */
-export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promise<TreeEditResult> {
+export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolName = "tree_edit"): Promise<TreeEditResult> {
   const { projectPath } = input;
 
   // Recover object/array args the model serialized as JSON strings (see
@@ -792,11 +882,30 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
       if (!validation.valid) {
         return { ok: false, errors: formatIssues(validation.errors) };
       }
-      await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
+
+      // Warning gate: refuse if the write introduces unjustified warnings
+      const warningRefusal = await checkWarningGate(
+        beforeTree, tree, research, projectPath,
+        input.warningJustifications, toolName,
+      );
+      if (warningRefusal) return warningRefusal as any;
+
+      // Write tree (and research if justifications were persisted)
+      if (research.warning_justifications) {
+        await atomicWriteBoth(projectPath, [
+          { ref: "tree.gedcomx.json", data: tree },
+          { ref: "research.json", data: research },
+        ]);
+      } else {
+        await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
+      }
+      const filesWritten = research.warning_justifications
+        ? ["tree.gedcomx.json", "research.json"]
+        : ["tree.gedcomx.json"];
       return {
         ok: true,
         results,
-        filesWritten: ["tree.gedcomx.json"],
+        filesWritten,
         validation: {
           valid: true,
           warnings: [...sanitized.warnings, ...formatIssues(validation.warnings), ...opWarnings],
@@ -817,12 +926,30 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
       return { ok: false, errors: formatIssues(validation.errors) };
     }
 
-    await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
+    // Warning gate: refuse if the write introduces unjustified warnings
+    const warningRefusal = await checkWarningGate(
+      beforeTree, tree, research, projectPath,
+      input.warningJustifications, toolName,
+    );
+    if (warningRefusal) return warningRefusal as any;
 
+    // Write tree (and research if justifications were persisted)
+    if (research.warning_justifications) {
+      await atomicWriteBoth(projectPath, [
+        { ref: "tree.gedcomx.json", data: tree },
+        { ref: "research.json", data: research },
+      ]);
+    } else {
+      await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
+    }
+
+    const singleFilesWritten = research.warning_justifications
+      ? ["tree.gedcomx.json", "research.json"]
+      : ["tree.gedcomx.json"];
     const result: TreeEditResult = {
       ok: true,
       operation: input.operation,
-      filesWritten: ["tree.gedcomx.json"],
+      filesWritten: singleFilesWritten,
       validation: {
         valid: true,
         warnings: [...sanitized.warnings, ...formatIssues(validation.warnings), ...warnings],
@@ -980,6 +1107,22 @@ export const treeEditSchema = {
             resolveStandardPlace: { type: "boolean" },
           },
           required: ["operation"],
+        },
+      },
+      warningJustifications: {
+        type: "array",
+        description:
+          "Justifications for genealogical warnings this write introduces. " +
+          "If the write introduces warnings and this is absent or incomplete, the tool " +
+          "refuses with { ok: false, reason: 'unjustified_warnings', warnings: [...] }. " +
+          "Re-call with each warningId and a justification string.",
+        items: {
+          type: "object",
+          properties: {
+            warningId: { type: "string", description: "The warning id from the refusal." },
+            justification: { type: "string", description: "Why this warning is acceptable." },
+          },
+          required: ["warningId", "justification"],
         },
       },
     },

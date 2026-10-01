@@ -54,9 +54,16 @@ import type {
   ConflictSurfaced,
 } from "../types/materialize-facts.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
+import {
+  introducedWarnings,
+  staleJustifications,
+  computeTouchedPersonIds,
+  type WarningJustificationInput,
+} from "../validation/introduced-warnings.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   atomicWriteJson,
+  atomicWriteBoth,
   readProjectJson,
   formatIssues,
   withProjectLock,
@@ -823,11 +830,30 @@ export async function materializeFacts(
       if (!validation.valid) {
         return { ok: false, errors: formatIssues(validation.errors) };
       }
-      await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
+
+      // Warning gate: refuse if the write introduces unjustified warnings
+      const { checkWarningGate } = await import("./tree-edit.js");
+      const warningRefusal = await checkWarningGate(
+        beforeTree, tree, research, projectPath,
+        input.warningJustifications, "materialize_facts",
+      );
+      if (warningRefusal) return warningRefusal as any;
+
+      if (research.warning_justifications) {
+        await atomicWriteBoth(projectPath, [
+          { ref: "tree.gedcomx.json", data: tree },
+          { ref: "research.json", data: research },
+        ]);
+      } else {
+        await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
+      }
+      const batchFilesWritten = research.warning_justifications
+        ? ["tree.gedcomx.json", "research.json"]
+        : ["tree.gedcomx.json"];
       return {
         ok: true,
         results,
-        filesWritten: ["tree.gedcomx.json"],
+        filesWritten: batchFilesWritten,
         validation: {
           valid: true,
           warnings: [...sanitized.warnings, ...formatIssues(validation.warnings)],
@@ -869,12 +895,31 @@ export async function materializeFacts(
     if (!validation.valid) {
       return { ok: false, errors: formatIssues(validation.errors) };
     }
-    await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
+
+    // Warning gate: refuse if the write introduces unjustified warnings
+    const { checkWarningGate: checkGate } = await import("./tree-edit.js");
+    const warningRefusal2 = await checkGate(
+      beforeTree, tree, research, projectPath,
+      input.warningJustifications, "materialize_facts",
+    );
+    if (warningRefusal2) return warningRefusal2 as any;
+
+    if (research.warning_justifications) {
+      await atomicWriteBoth(projectPath, [
+        { ref: "tree.gedcomx.json", data: tree },
+        { ref: "research.json", data: research },
+      ]);
+    } else {
+      await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
+    }
+    const singleFilesWritten = research.warning_justifications
+      ? ["tree.gedcomx.json", "research.json"]
+      : ["tree.gedcomx.json"];
 
     return {
       ok: true,
       ...result,
-      filesWritten: ["tree.gedcomx.json"],
+      filesWritten: singleFilesWritten,
       validation: {
         valid: true,
         warnings: [...sanitized.warnings, ...formatIssues(validation.warnings)],
@@ -1069,6 +1114,22 @@ export const materializeFactsSchema = {
             gender: { type: "string" },
             nameType: { type: "string" },
           },
+        },
+      },
+      warningJustifications: {
+        type: "array",
+        description:
+          "Justifications for genealogical warnings this write introduces. " +
+          "If the write introduces warnings and this is absent or incomplete, the tool " +
+          "refuses with { ok: false, reason: 'unjustified_warnings', warnings: [...] }. " +
+          "Re-call with each warningId and a justification string.",
+        items: {
+          type: "object",
+          properties: {
+            warningId: { type: "string", description: "The warning id from the refusal." },
+            justification: { type: "string", description: "Why this warning is acceptable." },
+          },
+          required: ["warningId", "justification"],
         },
       },
     },
