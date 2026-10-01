@@ -194,4 +194,8 @@ describe("imageViewerUrl", () => {
   it("returns undefined for an invalid imageId", () => {
     expect(imageViewerUrl({ imageId: "not-a-dgs" })).toBeUndefined();
   });
+
+  it("returns undefined for DGS image number 00000 (defensive)", () => {
+    expect(imageViewerUrl({ imageId: "004528077_00000" })).toBeUndefined();
+  });
 });

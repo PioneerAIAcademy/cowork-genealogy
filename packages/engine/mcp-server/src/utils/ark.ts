@@ -116,6 +116,7 @@ export function imageViewerUrl(
     if (!m) return undefined;
     const dgsNumber = m[1];
     const imageNumber = parseInt(m[2], 10);
+    if (imageNumber < 1) return undefined;
     // The film viewer's `i=` is zero-indexed.
     return `https://www.familysearch.org/search/film/${dgsNumber}?i=${imageNumber - 1}`;
   }

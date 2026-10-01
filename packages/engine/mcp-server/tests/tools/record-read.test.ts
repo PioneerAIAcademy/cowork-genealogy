@@ -919,11 +919,15 @@ describe("recordReadTool — staging on a live read (#2048 / #2489)", () => {
     );
     expect(envelope.payload.results[0].gedcomx.imageArk).toBeUndefined();
 
-    // ...and the sidecar read re-derives it from the staged document.
+    // ...and the sidecar read re-derives both imageArk and viewerUrl from the
+    // staged document (issue #2854 — the sidecar path must also return viewerUrl).
     const again = await recordReadTool(
       { recordId: "P1", resultsRef: live.staged!.resultsRef, projectPath: dir },
       LOCAL,
     );
     expect(again.imageArk).toBe("ark:/61903/3:1:9Q97-YSRZ-GWP");
+    expect(again.viewerUrl).toBe(
+      "https://www.familysearch.org/ark:/61903/3:1:9Q97-YSRZ-GWP"
+    );
   });
 });
