@@ -143,7 +143,9 @@ services:
       # separated; proto-demo exports the harness's five). Empty: no block.
       BLOCKED_TOOLS: ${BLOCKED_TOOLS:-}
       # D18's autonomous arm: the worker's Stop hook vetoes the model's voluntary yield up
-      # to this many times per turn (proto-demo-auto exports the harness's 40). 0: off.
+      # to this many times per turn. Only for a message WITHOUT max_nudges: the web tier
+      # stamps its own cap (below) on every message, and the worker prefers it, so this 0
+      # does not switch the hook off for a web-tier turn.
       AUTONOMOUS_MAX_NUDGES: ${AUTONOMOUS_MAX_NUDGES:-0}
       # 1b: where a message held during a turn is released to when that turn ends. The
       # SAME queue the web tier and the shim use. The worker is the only component that

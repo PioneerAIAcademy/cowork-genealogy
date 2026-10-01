@@ -5,8 +5,10 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import os
 import pathlib
 import re
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -272,6 +274,68 @@ def test_proto_kill_pins_a_one_turn_run_unless_the_caller_sets_nudges():
     assert re.search(r'AUTONOMOUS_MAX_NUDGES="\$\$\{AUTONOMOUS_MAX_NUDGES-0\}" \$\(MAKE\) proto-turn', kill), kill
     probe = "\n".join(_recipe("proto-probe-resume"))
     assert re.search(r'AUTONOMOUS_MAX_NUDGES="\$\$\{AUTONOMOUS_MAX_NUDGES-40\}" \$\(MAKE\) proto-kill', probe), probe
+
+
+_PIN = re.compile(r"""^export AUTONOMOUS_MAX_NUDGES=(["']?)\$\$\{AUTONOMOUS_MAX_NUDGES:?-0\}\1$""")
+_COMPOSE_UP = re.compile(r"^\$\(PROTO_COMPOSE\)\s+up\b")
+
+
+def _recipe_commands(body: list[str]) -> list[str]:
+    return [c.strip() for line in body for c in re.split(r"&&|;|\|\|", line) if c.strip()]
+
+
+def _pins_nudges_before_compose_up(body: list[str]) -> bool:
+    """Whether a recipe exports AUTONOMOUS_MAX_NUDGES with a 0 default (an outer setting
+    wins) as its own shell command before its first `$(PROTO_COMPOSE) up`, which is where
+    the web and worker containers take their environment -- read command by command, so a
+    reflowed or re-indented recipe still reads the same. env.sh never touches the name, so
+    where the pin sits relative to it does not matter."""
+    commands = _recipe_commands(body)
+    pin = next((i for i, c in enumerate(commands) if _PIN.match(c)), None)
+    up = next((i for i, c in enumerate(commands) if _COMPOSE_UP.match(c)), None)
+    return pin is not None and up is not None and pin < up
+
+
+def test_proto_turn_pins_the_stop_hook_off_before_compose_up():
+    """The web tier stamps its own cap (default 60) on every message and the worker prefers
+    it, so a proto-turn left on that default ran with the Stop hook on: a lookup on a
+    project-less session is never "completed", every stop is vetoed, and the turn ends
+    no_progress. proto-kill's own pin covers only the --kill arm."""
+    assert _pins_nudges_before_compose_up(_recipe("proto-turn")), "\n".join(_recipe("proto-turn"))
+    assert "AUTONOMOUS_MAX_NUDGES" not in (PROTO / "env.sh").read_text(encoding="utf-8"), \
+        "env.sh now touches AUTONOMOUS_MAX_NUDGES: the pin's place relative to it matters again"
+
+
+@pytest.mark.parametrize("caller, expected", [(None, "0"), ("", "0"), ("40", "40")])
+def test_proto_turn_pin_resolves_unset_and_empty_to_0_and_keeps_a_callers_value(caller, expected):
+    """An empty value is the hole `-0` leaves: it survives the pin, compose's `:-60` turns
+    it into 60 on the web tier, and the turn ends no_progress. proto-kill and
+    proto-probe-resume always pass a non-empty value, so theirs still wins."""
+    pin = next(c for c in _recipe_commands(_recipe("proto-turn")) if _PIN.match(c))
+    env = {k: v for k, v in os.environ.items() if k != "AUTONOMOUS_MAX_NUDGES"}
+    if caller is not None:
+        env["AUTONOMOUS_MAX_NUDGES"] = caller
+    script = pin.replace("$$", "$") + '; printf %s "$AUTONOMOUS_MAX_NUDGES"'
+    out = subprocess.run(["sh", "-c", script], env=env, capture_output=True, text=True,
+                         encoding="utf-8", check=True)
+    assert out.stdout == expected, script
+
+
+@pytest.mark.parametrize("body, expected", [
+    (['\texport AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; . apps/server/proto/env.sh && \\',
+      "\t  $(PROTO_COMPOSE) up -d --build"], True),
+    (["\texport AUTONOMOUS_MAX_NUDGES=$${AUTONOMOUS_MAX_NUDGES-0} && \\", "\t$(PROTO_COMPOSE)  up -d"], True),
+    (["\t. apps/server/proto/env.sh && \\", '\t  export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; \\',
+      "\t  $(PROTO_COMPOSE) up -d --build"], True),
+    (["\t$(PROTO_COMPOSE) up -d --build && \\", '\texport AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"'], False),
+    (['\texport AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-60}"; $(PROTO_COMPOSE) up -d'], False),
+    (['\texport AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-60}"; $(PROTO_COMPOSE) up -d'], False),
+    (['\t# export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"', "\t$(PROTO_COMPOSE) up -d"], False),
+    (['\texport AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; . apps/server/proto/env.sh'], False),
+    (["\t$(PROTO_COMPOSE) up -d --build"], False),
+])
+def test_the_nudge_pin_reader_accepts_a_reflow_and_rejects_a_misplaced_or_wrong_pin(body, expected):
+    assert _pins_nudges_before_compose_up(body) is expected
 
 
 def test_proto_demo_auto_pins_the_step_ceiling_and_waits_out_six_attempts():

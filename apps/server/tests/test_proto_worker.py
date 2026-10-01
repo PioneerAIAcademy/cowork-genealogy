@@ -35,7 +35,9 @@ Dockerfile and 004_worker.sql are read as text. What these pin:
 - D18's Stop hook: ``should_continue_run`` on the harness's own truth table, the hook's
   block with the harness's reason text verbatim (read off orchestrator.py), its cap, its
   no-progress arm, that it never raises; the ``Stop`` matcher bound only when a hook is
-  given; run_turn wiring it only when AUTONOMOUS_MAX_NUDGES > 0 and writing ``nudges``;
+  given; run_turn wiring it only when the turn's cap > 0 (the body's ``max_nudges``, which
+  the web tier stamps on every message, else the worker's AUTONOMOUS_MAX_NUDGES) and
+  writing ``nudges``;
 - U5: the last-receive close (200 ``retries_exhausted``, one release) and every way it
   must NOT fire; ``complete(only_if_open=True)`` and the close race; the guarded release;
   the sweep's statement and its off-unless-configured rule; and SIGTERM in-process -- the
@@ -993,8 +995,10 @@ def test_worker_tmpfs_holds_tmpdir_and_the_key_is_passed_through_not_literal():
             f"{env['FS_ACCESS_TOKEN']!r}"
         )
     assert env["BLOCKED_TOOLS"].startswith("${BLOCKED_TOOLS"), "the tree-read block is the caller's, empty by default"
-    assert env["AUTONOMOUS_MAX_NUDGES"].startswith("${AUTONOMOUS_MAX_NUDGES"), "the nudge cap is the caller's (proto-demo-auto), off by default"
-    assert env["AUTONOMOUS_MAX_NUDGES"].endswith(":-0}"), "unset means off, not the arm's default"
+    # The worker's own cap governs only a message without max_nudges; the web tier stamps
+    # its own on every message it enqueues, so this 0 does not turn the hook off there.
+    assert env["AUTONOMOUS_MAX_NUDGES"].startswith("${AUTONOMOUS_MAX_NUDGES"), "the fallback cap is the caller's"
+    assert env["AUTONOMOUS_MAX_NUDGES"].endswith(":-0}"), "unset means no hook for an unstamped message, not the arm's default"
     assert "./.fs-token:/run/fs-token:ro" in (svc.get("volumes") or [])
     assert "apps/server/proto/.fs-token" in (SERVER.parents[1] / ".gitignore").read_text(encoding="utf-8").splitlines()
     assert env["WORKER_CWD"] == "/project"

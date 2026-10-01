@@ -64,7 +64,7 @@ Two premises moved since the plan:
 | U21 | Lead decisions: all seven decided 2026-09-29 | — | — | — |
 | U22 | Correct the ARB draft (SC-12457) | Wrong premises | go-live; before F17's request | — |
 | U23 | Live Stop, held release, $35 cap, Stop mid-delegation | Bounds untried | integ | — |
-| U24 | Continuous-work behaviour | Turns overrun their deliverable | go-live | — |
+| U24 | Continuous-work behaviour | Turns overrun their deliverable; a lookup ends `no_progress` | go-live | — |
 | U25 | Hard image cap (issue #3010) | Image browsing unbounded | go-live (cost) | — |
 | U26 | Session time limit: every run ends within 1,800 s | Multi-hour runs | go-live | `cost-latency-10x.md` lands |
 | U27 | Foreground rewrite covers a flagless delegation | Delegation dies at turn end | **done in PR #3011** | — |
@@ -124,7 +124,7 @@ Two premises moved since the plan:
 
 **U23.** Why: until U26, Stop and the $35 cap are the patron's only bounds on a run; all four have offline tests only. The hooks swallow Postgres errors, so during an outage Stop, the held-message handover and the cap fail open, silently. Also run PR #2870's owed probes: `make proto-probe-resume` (its kill now lands in a foregrounded delegation) and the two SDK questions under "Not covered". **Done when:** each is recorded on compose, then in U13.
 
-**U24.** Why: since PR #2870 every browser turn, even a lookup, runs to the proof, the nudge cap or $35; outcome `decision` (ending to ask the patron) never fires; the web path skips the `research` router about half the time. Build "Before phase 2" of [`research-as-a-job-later.md`](research-as-a-job-later.md) (issue #2921, issue #2927, issue #2932). **Done when:** its Acceptance paragraph passes.
+**U24.** Why: since PR #2870 every browser turn, even a lookup, runs to the proof, the nudge cap or $35; outcome `decision` (ending to ask the patron) never fires; the web path skips the `research` router about half the time. A delivered lookup on a fresh session ends `no_progress`: no `research.json` reads as not completed (`continue_policy.py`, `project_completed`), the first stop is always vetoed, and the nudged reply calls no tool. `CONTINUE_REASON` offers "a genuine, logged blocker" as an exit no clause reads; `pending_decision` is hard-wired `False` (`worker.py`). Until this lands U19's `no_progress` alarm cannot tell a lookup from a stall; `make proto-turn` and `proto-kill` pin the hook off for this reason. **Lead:** nudge non-job turns at all? Give the blocker exit a clause, or drop it from the text? Hold U19's `no_progress` alarm until U24? Build "Before phase 2" of [`research-as-a-job-later.md`](research-as-a-job-later.md) (issue #2921, issue #2927, issue #2932). **Done when:** its Acceptance paragraph passes.
 
 **U25.** Issue #3010. Why: nothing bounds image browsing; D18 paerai made 108 `image_transcribe` calls and passed $35 on the cap's meter. From the 21st distinct image per image group per project, `image_transcribe` and `image_read` refuse, on one shared count kept in the project store (the advisory threshold becomes a refusal). The refusal says to log the browse `partial`, try other routes, and link the next unread image in the final summary. Amends ADR-0011's read-tool carve-out and the spec's browse budget. `image-reader` relays a thrown error verbatim, so the cap needs no issue #1546 relay fix. **Done when:** the 21st image of one group is refused across a tools restart, and a delegated read relays it.
 

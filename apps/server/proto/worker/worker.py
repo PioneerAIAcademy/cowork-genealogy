@@ -229,7 +229,9 @@ _stdout_lock = threading.Lock()
 _AGENTS: dict[str, Any] | None = None
 _AGENTS_ERROR: str | None = None
 _BLOCKED: frozenset[str] = frozenset()  # BLOCKED_TOOLS, the harness's tree-read block
-# AUTONOMOUS_MAX_NUDGES (D18): the Stop hook's veto cap per turn; 0 = no Stop hook.
+# AUTONOMOUS_MAX_NUDGES (D18): the Stop hook's veto cap for a message WITHOUT max_nudges
+# (turn_max_nudges); 0 = no Stop hook for those. The web tier stamps its own cap on every
+# message it enqueues, so this value does not govern a web-tier turn.
 _AUTONOMOUS_MAX_NUDGES: int = 0
 
 # turns.outcome. 0a adds the first value that is not "ok": a turn the worker closed
