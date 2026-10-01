@@ -243,6 +243,16 @@ skill was invoked but it skipped the citation step.")
 
 ## MCP tool calls
 
+Each call's output is its `response_summary`. Use them to tell Claude's
+wording from a tool's: text in "Claude's full text response" that appears in
+no `response_summary` is Claude's own wording, not a tool's. Attribute it to
+Claude, and grade it as Claude's. It being absent from every
+`response_summary` is not by itself a grounding failure, so do not deduct as
+if a tool had said it. One exception: a `response_summary` string ending in
+`[truncated by harness for prompt size; …]`, or a list opening with
+`_dropped_for_size`, was cut by the harness, so text that could have come from
+the cut part cannot be attributed either way.
+
 {tool_calls}
 
 ## Deterministic validators that FAILED

@@ -1844,6 +1844,18 @@ def test_render_prompt_parts_leaves_no_unsubstituted_slot(sample_rubric):
     )
 
 
+def test_render_prompt_frames_tool_calls_as_claudes_wording_vs_a_tools(sample_rubric):
+    """The attribution rule sits between the MCP tool calls heading and the
+    rendered calls, and carries the exception for output the harness cut."""
+    prompt = judge.render_prompt(**_prompt_parts_kwargs(sample_rubric))
+    heading_at = prompt.index("## MCP tool calls")
+    rule_at = prompt.index("is Claude's own wording, not a tool's")
+    calls_at = prompt.index("(none)", rule_at)
+    assert heading_at < rule_at < calls_at < prompt.index("## Deterministic validators")
+    assert "[truncated by harness for prompt size;" in prompt[heading_at:calls_at]
+    assert "_dropped_for_size" in prompt[heading_at:calls_at]
+
+
 def test_render_prompt_puts_per_test_context_last(sample_rubric):
     """The per-test override renders AFTER the transcript it applies to
     and immediately before the reporting instruction it modifies (#1403).
