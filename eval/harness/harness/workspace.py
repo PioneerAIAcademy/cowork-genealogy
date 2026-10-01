@@ -112,7 +112,15 @@ def build_workspace(
         src = Path(scenarios_dir) / scenario_name
         if not src.is_dir():
             raise InvalidScenarioError(f"scenario not found: {src}")
-        for fname in ("research.json", "tree.gedcomx.json"):
+        # `starting-tree.gedcomx.json` is the write-once baseline `project_create`
+        # writes in production. research_append reads it to exempt people who
+        # pre-existed the research from its minted-from-this-record check; with no
+        # baseline a pre-existing person enriched by materialize_facts reads as
+        # minted from the record, and a real same_person score is refused. Staged
+        # only when a scenario ships one: copying tree.gedcomx.json in its place
+        # would also exempt persons a mid-research fixture minted in an earlier
+        # session.
+        for fname in ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json"):
             f = src / fname
             if f.exists():
                 shutil.copy(f, target / fname)

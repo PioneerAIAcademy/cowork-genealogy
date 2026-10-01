@@ -502,8 +502,9 @@ def test_staging_tool_sets_agree_across_the_two_copies():
     copy would drift"); this is the third, and it lives in another language.
 
     Compared against the engine's SEARCH set, not its wider `STAGING_CAPABLE_TOOLS`
-    (issue #2048): `image_transcribe` and `record_read` stage in production but
-    their canned fixtures carry no `results[]`, and the mock's nil-search /
+    (issue #2048): `image_transcribe`, `record_read` and `person_read` stage in
+    production but their canned fixtures carry no `results[]` (`person_read` is
+    staged by its own path, `_stage_person_read`, issue #2944), and the mock's nil-search /
     unlogged-search notes are search semantics — keying them on the wider set
     would stamp `nilSearchNeedsLog` onto every transcription fixture. The second
     assertion pins the relation the split relies on: every search producer is a
@@ -532,7 +533,7 @@ def test_staging_tool_sets_agree_across_the_two_copies():
         "so the search producers cannot drop out of the capable set"
     )
     ts_extra = set(re.findall(r'"([a-z_]+)"', capable_body))
-    assert ts_extra == {"image_transcribe", "record_read"}
+    assert ts_extra == {"image_transcribe", "record_read", "person_read"}
 
 
 def test_nil_search_carries_the_negative_log_note(tmp_path):
@@ -1029,43 +1030,6 @@ def test_upstream_fetch_timeout_is_not_flagged_as_a_harness_timeout():
     assert not any(w["kind"] == "harness_node_timeout" for w in warnings)
 
 
-def test_compiled_tool_live_mode_is_refused_without_running_node():
-    """The unit suite is hermetic — every response is a fixture. A compiled
-    tool's live mode is real code that makes an authenticated FamilySearch
-    request, and `_COMPILED_TOOLS` runs real code, so nothing else stops it:
-    measured, it really does fetch and return live warnings.
-
-    Injecting `projectPath` instead would be worse than refusing. person_warnings
-    rejects projectPath and live together (they read different trees), so a skill
-    that called live mode correctly would be handed an error the judge scores
-    against the skill. The refusal names the harness as the limitation.
-
-    No workspace and no build are passed: reaching either branch means the
-    refusal did not fire first.
-    """
-    import asyncio
-
-    from harness.mock_mcp import (
-        _COMPILED_TOOLS,
-        _COMPILED_TOOLS_WITH_PRINCIPAL,
-        _make_compiled_tool_handler,
-    )
-
-    assert "person_warnings" in _COMPILED_TOOLS_WITH_PRINCIPAL
-    js, sym = _COMPILED_TOOLS["person_warnings"]
-    handler = _make_compiled_tool_handler("person_warnings", js, sym, None, [])
-
-    result = asyncio.run(handler({"personId": "KD96-TV2", "live": True}))
-    text = result["content"][0]["text"]
-    assert "live mode is not available in the unit harness" in text
-    # Not the "workspace not provided" branch — that would mean the refusal
-    # did not fire and only the missing workspace saved us.
-    assert "workspace not provided" not in text
-
-    # A non-live call still falls through to the ordinary path.
-    plain = asyncio.run(handler({"personId": "I1"}))
-    assert "workspace not provided" in plain["content"][0]["text"]
-
 def _pq_tree(tmp_path, persons):
     (tmp_path / "tree.gedcomx.json").write_text(json.dumps({"persons": persons}), encoding="utf-8")
 
@@ -1135,7 +1099,8 @@ def test_person_quality_without_projectpath_does_not_read_the_tree(tmp_path):
 
 
 def test_person_quality_familysearch_id_uses_its_fixture(tmp_path):
-    """The four check-warnings tests that score a real FS id: unchanged."""
+    """A real FS id still resolves to its captured fixture (the check-warnings
+    tests that scored one were deleted with its person_quality use, #2118)."""
     response, entry = _pq(tmp_path, ["person-quality-hole-christian"], {"personId": "KD96-TV2"})
     assert "overallScore" in response
     assert entry["expected_args"] is None
@@ -1406,3 +1371,94 @@ def test_record_read_stages_nothing_without_projectpath_or_with_resultsref(tmp_p
     assert not (tmp_path / "results" / ".staging").exists() or not any(
         (tmp_path / "results" / ".staging").iterdir()
     )
+
+
+# --- person_read stages its canned response (#2944) ---------------------------
+
+_PERSON_READ_ARGS = {"personId": "LZNY-BRF", "relatives": True, "sourceDescriptions": True}
+
+
+@pytest.mark.requires_engine_build
+def test_person_read_is_staged_when_given_project_path(tmp_path):
+    """Production stages every `person_read` given a projectPath and returns
+    `staged`; the mock does the same through the compiled `stagePersonRead`,
+    so the staged document is the canned response itself."""
+    fixture = json.loads(
+        (FIXTURES_DIR / "person-read-flynn.json").read_text(encoding="utf-8")
+    )["response"]
+    server, call_log, tools_by_name = create_mock_server(
+        ["person-read-flynn"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "person_read",
+            {**_PERSON_READ_ARGS, "projectPath": str(tmp_path)},
+        )
+    )
+    staged = body.get("staged")
+    assert staged, f"no staged handle: {body.get('stagingError')!r}"
+    assert staged["returnedCount"] == 1
+    assert staged["resultsRef"].startswith("results/.staging/")
+    envelope = json.loads((tmp_path / staged["resultsRef"]).read_text(encoding="utf-8"))
+    assert envelope["tool"] == "person_read"
+    assert envelope["payload"]["query"] == _PERSON_READ_ARGS
+    assert envelope["payload"]["results"] == [
+        {"personId": "LZNY-BRF", "gedcomx": fixture}
+    ]
+    # The rest of the response is the fixture, unchanged.
+    assert {k: v for k, v in body.items() if k != "staged"} == fixture
+
+
+@pytest.mark.parametrize("project_path", [None, "", "   "])
+def test_person_read_is_not_staged_without_project_path(tmp_path, project_path):
+    server, call_log, tools_by_name = create_mock_server(
+        ["person-read-flynn"], FIXTURES_DIR, workspace=tmp_path
+    )
+    args = dict(_PERSON_READ_ARGS)
+    if project_path is not None:
+        args["projectPath"] = project_path
+    body = _extract_response_dict(_invoke(tools_by_name, "person_read", args))
+    assert "staged" not in body
+    assert "stagingError" not in body
+    assert not (tmp_path / "results").exists()
+
+
+@pytest.mark.parametrize(
+    "failure",
+    ["raises", "empty_stdout", "nonzero_exit"],
+)
+def test_person_read_staging_degrades_on_node_failure(tmp_path, monkeypatch, failure):
+    """A node fault is a harness fault, not a production staging failure: the
+    canned response comes back unchanged, with no `staged` and no
+    `stagingError` that would tell the agent staging failed."""
+    from harness import mock_mcp
+
+    def _fake_run(*a, **k):
+        if failure == "raises":
+            raise TimeoutError("node did not return in time")
+        return subprocess.CompletedProcess(
+            args=a, returncode=1 if failure == "nonzero_exit" else 0,
+            stdout="" if failure == "empty_stdout" else '{"staged": {"resultsRef": "x", "returnedCount": 1}}',
+            stderr="",
+        )
+
+    # A stub build, so the missing-build early return cannot make this pass
+    # without ever reaching the node call it exists to test.
+    stub_build = tmp_path / "build"
+    (stub_build / "tools").mkdir(parents=True)
+    (stub_build / "tools" / "person-read.js").write_text("", encoding="utf-8")
+    monkeypatch.setattr(mock_mcp, "_MCP_BUILD", stub_build)
+    calls = []
+
+    def _counted(*a, **k):
+        calls.append(1)
+        return _fake_run(*a, **k)
+
+    monkeypatch.setattr(mock_mcp, "_run_node_eval", _counted)
+    response = {"persons": [{"id": "LZNY-BRF"}], "relationships": [], "sources": []}
+    out = mock_mcp._stage_person_read(
+        tmp_path, {**_PERSON_READ_ARGS, "projectPath": str(tmp_path)}, response
+    )
+    assert calls, "the node call was never reached"
+    assert out == response

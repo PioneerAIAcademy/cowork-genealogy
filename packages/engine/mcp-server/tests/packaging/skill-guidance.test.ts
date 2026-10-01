@@ -23,7 +23,6 @@ const SKILLS_WITH_PLACES_GUIDANCE = [
   "search-external-sites",
   "timeline",
   "conflict-resolution",
-  "tree-edit",
   "init-project",
 ];
 

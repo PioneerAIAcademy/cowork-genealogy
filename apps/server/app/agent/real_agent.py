@@ -665,11 +665,12 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         # CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS.)
         #
         # So "true" below means hosted sessions run WITH tool search: the
-        # ~38-tool genealogy server's schemas are deferred and re-discovered via
-        # ToolSearch mid-session. Speedup plan §3a wanted the opposite; flipping
-        # to "false" is a separate, tracked decision that requires re-measuring
-        # the tool mix, so the value is left as it has been running — and kept in
-        # sync with the e2e orchestrator either way.
+        # ~38-tool genealogy server's schemas are deferred (except ALWAYS_LOAD in
+        # tool-schemas.ts) and re-discovered via ToolSearch mid-session. Speedup
+        # plan §3a wanted the opposite; flipping to "false" is a separate,
+        # tracked decision that requires re-measuring the tool mix, so the value
+        # is left as it has been running — and kept in sync with the e2e
+        # orchestrator either way.
         env=_sdk_env(api_key),
     )
     if resume:

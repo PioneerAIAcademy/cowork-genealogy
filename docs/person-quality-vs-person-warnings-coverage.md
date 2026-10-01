@@ -200,8 +200,8 @@ Context, not gaps. None of these appears among the 58 templates:
 
 ## Two discrepancies this measurement turned up
 
-Both are in `packages/engine/plugin/skills/check-warnings/references/warning-checks.md`.
-That file is inside check-warnings' run-log snapshot, so correcting it buys a paid run.
+Both are in Appendix A of `packages/engine/plugin/agents/check-warnings.md` (formerly
+`skills/check-warnings/references/warning-checks.md`). That file is inside check-warnings' run-log snapshot, so correcting it buys a paid run.
 With step 3 ruled none, it rides with check-warnings' next scheduled run.
 
 - **Its "NOT currently checked" list names child spacing** ("two children born less than

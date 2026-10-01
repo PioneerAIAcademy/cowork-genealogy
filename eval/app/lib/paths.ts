@@ -2,7 +2,7 @@
  * Resolves `eval/` paths from inside the Next.js app.
  *
  * The app lives at `<repo>/eval/app/`. Whether started via
- * `eval/Start.bat`, `npm run dev` from `eval/app/`, or via test
+ * `eval/Start.bat`, `pnpm run dev` from `eval/app/`, or via test
  * runner, `process.cwd()` differs — so we anchor on a stable
  * relative location.
  */
@@ -19,7 +19,7 @@ export function evalDir(): string {
   if (process.env.EVAL_DIR) {
     return path.resolve(process.env.EVAL_DIR);
   }
-  // process.cwd() is `<repo>/eval/app/` when run via `npm run dev`.
+  // process.cwd() is `<repo>/eval/app/` when run via `pnpm run dev`.
   // Walk up until we see a directory named `eval` that contains
   // `tests/` and `fixtures/`.
   let dir = process.cwd();

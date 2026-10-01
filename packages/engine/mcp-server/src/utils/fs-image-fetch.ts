@@ -8,7 +8,7 @@ import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithTimeout } from "./http.js";
 import { fsFetchWithTimeout } from "./fs-fetch.js";
-import { toArk, arkToUrl, isDocumentImageArk, findDocumentImageArk } from "./ark.js";
+import { toArk, arkToUrl, isDocumentImageArk, findDocumentImageArk, IMAGE_ID_PATTERN, UNPREFIXED_IMAGE_ID_RE } from "./ark.js";
 
 // fetchWithTimeout's budget covers headers and body together, and a full-size
 // page scan at typical throughput needs more than the 30s default to finish
@@ -16,11 +16,6 @@ import { toArk, arkToUrl, isDocumentImageArk, findDocumentImageArk } from "./ark
 // headroom — this is the download leg only, and it is budgeted separately
 // from the OCR call it feeds (image-transcribe.ts's OCR_TIMEOUT_MS).
 const IMAGE_FETCH_TIMEOUT_MS = 90_000;
-
-// An imageId is a digitized-image identifier of the form NUMBER_NUMBER
-// (an image group number, an underscore, and an image sequence number,
-// e.g. "004884748_02613").
-const IMAGE_ID_PATTERN = /^\d+_\d+$/;
 
 // `ark` accepts either an already-resolved distribution URL (the pre-#267
 // input shapes, for callers that already have one) or a FamilySearch
@@ -131,11 +126,18 @@ function arkToImageUrl(ark: string): { url: string; fallbackUrl?: string } {
     // there's nothing to strip, primary and fallback would be identical.
     return query ? { url: base + query, fallbackUrl: base } : { url: base };
   }
+  const unprefixed = ark.trim();
+  if (UNPREFIXED_IMAGE_ID_RE.test(unprefixed)) {
+    return { url: arkToUrl(`ark:/61903/3:1:${unprefixed}`) };
+  }
   throw new Error(
     "Unrecognized ark. Expected a FamilySearch document-image ARK " +
-      "(ark:/61903/3:1:... or 3:2:..., a bare 3:1:.../3:2:... id, or a " +
-      "resolver URL for one), a DeepZoomCloud ARK URL (ending in /$dist), " +
-      "or a DGS distribution URL (dgs:.../dist.jpg)."
+      "(ark:/61903/3:1:... or 3:2:..., a bare 3:1:.../3:2:... id, an " +
+      "unprefixed XXXX-XXXX-XXXX-X id (treated as 3:1:), or a resolver URL " +
+      "for one), a DeepZoomCloud ARK URL (ending in /$dist), or a DGS " +
+      "distribution URL (dgs:.../dist.jpg). Pass the FamilySearch page URL or " +
+      "ARK exactly as the user gave it, including its 3:1:/3:2: prefix; do not " +
+      "build an imageId from a groupId or an i= index."
   );
 }
 
@@ -217,7 +219,9 @@ interface FetchAttempt {
 async function attemptFsImageFetch(
   url: string,
   principal: Principal | null,
-  memoryShape: boolean
+  memoryShape: boolean,
+  /** Lower the per-attempt budget; defaults to the multi-MB scan size. */
+  timeoutMs: number = IMAGE_FETCH_TIMEOUT_MS
 ): Promise<FetchAttempt> {
   // A memory artifact is served publicly: measured 2026-09-15, the same
   // artifact returned 200 with no headers at all, with a UA only, and
@@ -229,8 +233,8 @@ async function attemptFsImageFetch(
     "User-Agent": BROWSER_USER_AGENT,
   };
   const response = principal
-    ? await fsFetchWithTimeout(principal, url, { headers: fetchHeaders }, IMAGE_FETCH_TIMEOUT_MS)
-    : await fetchWithTimeout(url, { headers: fetchHeaders }, IMAGE_FETCH_TIMEOUT_MS);
+    ? await fsFetchWithTimeout(principal, url, { headers: fetchHeaders }, timeoutMs)
+    : await fetchWithTimeout(url, { headers: fetchHeaders }, timeoutMs);
   if (!response.ok) {
     return { ok: false, status: response.status, statusText: response.statusText };
   }
@@ -275,16 +279,20 @@ export async function fetchFsImageBytes(
   url: string,
   fallbackUrl: string | undefined,
   principal: Principal,
-  memoryShape = false
+  memoryShape = false,
+  /** Lower the per-attempt budget. A probe must fit inside Cowork's 60s call
+   *  abort alongside two other legs (volume-bisect-tool-spec.md §8); the default
+   *  is a hang-catcher sized for a multi-MB scan, not for a probe. */
+  opts: { timeoutMs?: number } = {}
 ): Promise<FetchedFsImage> {
   // A memory artifact needs no credential (measured), and asking for one would
   // make a public read fail for an unauthenticated caller with an auth error.
   const authedPrincipal = memoryShape ? null : principal;
 
-  let attempt = await attemptFsImageFetch(url, authedPrincipal, memoryShape);
+  let attempt = await attemptFsImageFetch(url, authedPrincipal, memoryShape, opts.timeoutMs);
   let resolvedUrl = url;
   if (!attempt.ok && fallbackUrl) {
-    attempt = await attemptFsImageFetch(fallbackUrl, authedPrincipal, memoryShape);
+    attempt = await attemptFsImageFetch(fallbackUrl, authedPrincipal, memoryShape, opts.timeoutMs);
     resolvedUrl = fallbackUrl;
   }
 

@@ -37,18 +37,21 @@ export const STAGING_SEARCH_TOOLS = new Set([
 ]);
 
 /**
- * Every tool that stages: the search producers above plus the two acquisition
- * producers. A transcription and a record fetched by ARK are retained as a
- * ONE-element `results[]` envelope, so finalize needs no second shape. The
- * acquisition producers carry none of the search notes: `extraction_append`
- * logs each read it makes with that read's own staged ref, and an upload as
- * `user_provided`, so there is nothing to nag about. An unfinalized
- * acquisition file is simply TTL-pruned.
+ * Every tool that stages: the search producers above plus the three acquisition
+ * producers. A transcription, a record fetched by ARK and a tree person read are
+ * retained as a ONE-element `results[]` envelope, so finalize needs no second
+ * shape. The acquisition producers carry none of the search notes:
+ * `extraction_append` logs each read it makes with that read's own staged ref,
+ * and an upload as `user_provided`, and a `person_read` file is staged for
+ * `project_create` to build the starting tree from (issue #2944's Stage B, not
+ * yet built) rather than logged, so there is nothing to nag about. An
+ * unfinalized acquisition file is simply TTL-pruned.
  */
 export const STAGING_CAPABLE_TOOLS = new Set([
   ...STAGING_SEARCH_TOOLS,
   "image_transcribe",
   "record_read",
+  "person_read",
 ]);
 
 /**

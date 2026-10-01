@@ -34,6 +34,10 @@ def _envelope(doc_json: str) -> str:
 # envelope and the unwrapped form.
 UNREACHABLE_WIKI = '{"error":"Could not reach wiki-query-api at https://x/wiki. Is the server running?"}'
 UNREACHABLE_POP = '{"error":"Population data service is unavailable. Is the Pop Stats API running?"}'
+# The #3031 wording, which names the base URL and the socket cause; the two above
+# are what run logs recorded before it.
+UNREACHABLE_WIKI_CAUSE = '{"error":"Could not reach wiki-query-api at https://x/wiki (fetch failed <- ETIMEDOUT: connect ETIMEDOUT 208.111.35.209:443)."}'
+UNREACHABLE_POP_CAUSE = '{"error":"Population data service is unavailable at https://x/pop (fetch failed <- ECONNREFUSED: connect ECONNREFUSED 127.0.0.1:443)."}'
 UPSTREAM_WIKI = '{"error":"wiki-query-api error: 502"}'
 UPSTREAM_POP = '{"error":"Population API error: 502 Bad Gateway"}'
 NO_WIKI_PAGE = '{"error":"No wiki page found for \\"Bohemia\\"."}'
@@ -51,6 +55,8 @@ def test_each_service_failure_bucket_in_both_shapes():
     cases = [
         ("wiki_search", UNREACHABLE_WIKI, "unreachable"),
         ("place_population", UNREACHABLE_POP, "unreachable"),
+        ("wiki_read", UNREACHABLE_WIKI_CAUSE, "unreachable"),
+        ("place_population", UNREACHABLE_POP_CAUSE, "unreachable"),
         ("wiki_place_page", UPSTREAM_WIKI, "upstream_5xx"),
         ("place_population", UPSTREAM_POP, "upstream_5xx"),
         ("wiki_place_page", NO_WIKI_PAGE, "no_wiki_page"),

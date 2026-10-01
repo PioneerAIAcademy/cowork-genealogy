@@ -12,12 +12,13 @@
       "death",
       "tier-selection",
       "tier-possible-q001",
-      "tree-encoding"
+      "tree-encoding",
+      "direct-arm"
     ],
     "holdout": true
   },
   "input": {
-    "user_message": "Write the proof conclusion for the death question (q_001).",
+    "delegation": "Run your preconditions gate, then conclude the question at whatever tier the evidence supports, including `possible` or `not_proved`. Decline only if the gate itself fails.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "wilkins-bounded-death"
   },
   "mcp_fixtures": [],

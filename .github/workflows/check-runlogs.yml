@@ -59,11 +59,16 @@ permissions:
   pull-requests: read
   issues: read
 
-# Cosmetic-skip escape hatch (rule 2 only). A senior applies the
-# `eval-cosmetic-skip` label on a PR whose only skill-side change is
-# behavior-neutral (rewording, typo) to keep the prior run log active without
-# a re-run + re-grade. The label must exist in the repo once:
-# `gh label create eval-cosmetic-skip`.
+# Cosmetic-skip escape hatch (rule 2 only), PER SKILL. A senior applies
+# `eval-cosmetic-skip:<skill>` for each skill whose change is behavior-neutral
+# (rewording, typo), keeping that skill's prior run log active without a re-run
+# + re-grade. `<skill>` is the run-log directory name, the one rule 2's error
+# prints. Every other touched skill keeps the hard block, and the bare
+# `eval-cosmetic-skip` label waives nothing. The `cosmetic` step below only
+# passes the raw label names through; check_runlogs.py matches them, so its
+# tests cover the matching and nothing here parses a label. Each label must
+# exist in the repo once (`gh label create eval-cosmetic-skip:<skill>`; the loop
+# over every skill is in eval/README.md "Cosmetic-change exemption").
 #
 # SAFETY PROPERTY: a new commit voids the bypass, so it can never outlive the
 # commit a senior approved it for — they must re-apply after each push.
@@ -85,8 +90,8 @@ permissions:
 #      2026-07-31, which turned that from theory into a live gap.
 #
 # So the property is now decided from the EVENT, not from the label: on
-# `synchronize`, skip=0 unconditionally. No token needed, so it holds
-# identically on a fork PR and an in-repo branch. Removing the label is now
+# `synchronize`, no labels are passed, unconditionally. No token needed, so it
+# holds identically on a fork PR and an in-repo branch. Removing the label is now
 # purely cosmetic — it keeps the PR's UI honest so nobody misreads a lapsed
 # label as an active bypass — and lives in cosmetic-skip-strip.yml, which runs
 # on `pull_request_target` and therefore has the write token forks deny this
@@ -133,26 +138,27 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # A new commit voids the bypass, decided from the EVENT and without
+          # A new commit voids every bypass, decided from the EVENT and without
           # consulting the labels API at all. Doing it this way needs no write
           # token, which is what makes the rule hold on a fork PR — see the
-          # header note. Do not "improve" this by reading the label here.
+          # header note. Do not "improve" this by reading the labels here.
           if [ "${{ github.event.action }}" = "synchronize" ]; then
-            echo "skip=0" >> "$GITHUB_OUTPUT"
-            echo "::notice::New commit pushed — any eval-cosmetic-skip bypass is void until a senior re-applies the label."
+            echo "labels=" >> "$GITHUB_OUTPUT"
+            echo "::notice::New commit pushed — any eval-cosmetic-skip:<skill> bypass is void until a senior re-applies the label."
             exit 0
           fi
 
           # Every other event (opened / reopened / labeled / unlabeled) reads
-          # the live label. Reading is available to a fork token too.
+          # the live labels. Reading is available to a fork token too. The raw
+          # names go to check_runlogs.py one per line; nothing is filtered here.
           labels=$(gh pr view "${{ github.event.pull_request.number }}" \
             --repo "${{ github.repository }}" --json labels --jq '.labels[].name')
-          if echo "$labels" | grep -qx "eval-cosmetic-skip"; then
-            echo "skip=1" >> "$GITHUB_OUTPUT"
-            echo "::notice::eval-cosmetic-skip label present — rule 2 will be bypassed for this PR."
-          else
-            echo "skip=0" >> "$GITHUB_OUTPUT"
-          fi
+          delim="LABELS_$(openssl rand -hex 16)"
+          {
+            echo "labels<<$delim"
+            printf '%s\n' "$labels"
+            echo "$delim"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Check out PR with full history
         if: steps.scope.outputs.relevant == 'true'
@@ -171,7 +177,9 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          COSMETIC_SKIP: ${{ steps.cosmetic.outputs.skip }}
+          # Raw PR label names, one per line (empty on a push). Set through env,
+          # never interpolated into a script: a label name is repo-controlled text.
+          COSMETIC_SKIP_LABELS: ${{ steps.cosmetic.outputs.labels }}
           # Rule 6's closed-owner arm resolves each xfail marker's cited issue
           # via `gh api`, to catch a marker whose removal condition can never be
           # met. Warn-only and it swallows every error, so without a token it is

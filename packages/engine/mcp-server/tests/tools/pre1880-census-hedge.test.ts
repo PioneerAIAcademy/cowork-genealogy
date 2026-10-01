@@ -105,12 +105,38 @@ describe("requirePre1880CensusHedge", () => {
     bad("Traced the family across the 1850 and 1860 US census, Dodge County: head of household Thomas Flynn, with Mary Flynn.");
   });
 
-  it("falls back to the whole-note year when no year binds to a census at all", () => {
-    // Undecidable on the year axis, so behaviour is unchanged rather than
-    // silently permissive -- this is the one branch the binding does not reach.
-    bad("The federal census shows Daniel in one dwelling with Margaret and sons Thomas and Stephen; marriage 1871, Adams County.");
+  it("accepts when no year binds to a census at all (undecidable inputs skip)", () => {
+    // Undecidable on the year axis: no year is syntactically attached to the
+    // word "census", so the note-only gate skips rather than guessing. What
+    // this gives up: an unhedged pre-1880 US census note whose phrasing the
+    // adjacency patterns do not cover. Decided (lead, 2026-09-29), issue #2945.
+    ok("The federal census shows Daniel in one dwelling with Margaret and sons Thomas and Stephen; marriage 1871, Adams County.");
   });
 
+  it("accepts the English parish baptism note that triggered issue #2945", () => {
+    // Session-log L292 from feedback bundle feedback-2026-09-25T20-03-43-745889Z.
+    // The note mentions "census" (in "census self-reports") and contains 1830
+    // (a baptism year matching \b18[0-7]\d\b), but no year is bound to a census
+    // mention — censusMentions returns []. The old whole-note fallback refused
+    // this; the undecidable-inputs-skip rule accepts it.
+    ok(
+      "Register heading: \u2018Baptisms solemnized in the parish of Stoke in the County of " +
+        "Stafford in the Year 1830.\u2019 Entry: \u2018March 20, William son of John & Harriet " +
+        "Latham of Lane End, Laborer.\u2019 The original register confirms the christening date " +
+        "(20 March 1830) and the parents (John and Harriet Latham), and gives the family " +
+        "address as Lane End \u2014 the pre-railway-era name for the area later renamed Longton " +
+        "\u2014 and the father\u2019s occupation as Laborer. The register heading names the parent " +
+        "parish as Stoke (Stoke-upon-Trent), consistent with Longton having been a chapelry " +
+        "of Stoke before 1802. The parent names John and Harriet Latham match the tree " +
+        "(father John Latham, mother Harriet Powell, married name Latham). This is an " +
+        "original source with primary information recorded at the time of the event. It " +
+        "directly answers q_001: William was christened on 20 March 1830 in Lane End " +
+        "(Longton), Staffordshire. The three census self-reports (Retford, Nottinghamshire " +
+        "1861; Crewe, Cheshire 1881; Sandbach, Cheshire 1891) are secondary recollections " +
+        "made 30-60 years after the fact and appear to be memory errors \u2014 all three " +
+        "disagree with each other and with this contemporaneous record.",
+    );
+  });
 
   it("refuses a census named before 1800, which the old whole-note test allowed", () => {
     // The one shape this change newly refuses. `CENSUS_YEAR` spans 1600-1999
@@ -200,10 +226,11 @@ describe("requirePre1880CensusHedge with a staged census payload", () => {
     bad(plural, [1850]);
   });
 
-  it("does not let a note-only refusal through when the payload year is absent", () => {
-    // Says "census", binds no year, payload year not in the note: the old
-    // whole-note fallback still runs, so nothing refused before is allowed now.
-    bad(
+  it("accepts an unbound-census note even with a payload whose year is absent from the note", () => {
+    // Says "census", binds no year, payload year (1850) not in the note text:
+    // undecidable inputs skip (issue #2945), and the payload tie requires the
+    // year to appear in the note, so this passes on both branches.
+    ok(
       "The federal census shows Daniel in one dwelling with Margaret and sons Thomas and Stephen; marriage 1871, Adams County.",
       [1850],
     );

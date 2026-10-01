@@ -5,10 +5,10 @@
     "name": "Russia February 1900 — the offset threshold is 1 March, not New Year",
     "type": "positive",
     "description": "Convert a Russian Empire date from February 1900. The Julian-to-Gregorian offset grows the day after each Julian Feb 29 the Gregorian calendar skipped, so it becomes 13 days only from 1 March 1900 (Julian); a February 1900 date still takes 12. A calendar-year reading of the offset table ('1900+ = 13 days') gives 27 February and is wrong by a day. Covers the two-month window at each century threshold (1700, 1800, 1900) that no other test in the suite reaches.",
-    "tags": ["julian-gregorian", "1900", "russia", "12-day-shift", "offset-threshold", "century-boundary", "requires-tool-conversion"]
+    "tags": ["julian-gregorian", "1900", "russia", "12-day-shift", "offset-threshold", "century-boundary", "requires-tool-conversion", "direct-arm"]
   },
   "input": {
-    "user_message": "Convert this Russian parish register date to the Gregorian calendar: '14 February 1900, Moscow'.",
+    "delegation": "Convert this Russian parish register date to the Gregorian calendar: '14 February 1900, Moscow'.\n\nprojectPath: <workspace>",
     "scenario": null
   },
   "judge_context": [

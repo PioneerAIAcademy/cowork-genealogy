@@ -67,7 +67,7 @@
             "xfail"
           ],
           "default": "pass",
-          "description": "Expected aggregated outcome. `xfail` marks a known-failing test so its failures aggregate to `outcome: xfail` rather than `fail` (not a regression). A test marked xfail that starts passing is reported as `xpass` — investigate before flipping to `pass`. Matches pytest convention."
+          "description": "Expected aggregated outcome. `xfail` marks a known-failing test: its `outcome` stays `fail`, but readers treat that failure as suppressed (not a regression) rather than a distinct outcome value. A test marked xfail that starts passing (`outcome: pass` beside an `xfail` marker) is an unexpected pass — investigate before flipping the marker to `pass`. Matches pytest convention."
         },
         "xfail_reason": {
           "type": "string",
@@ -296,7 +296,7 @@
     "intentionally_invalid": {
       "type": "boolean",
       "default": false,
-      "description": "When true, the test's scenario files are broken on purpose — e.g. for a validator/guardrail skill (validate-schema) whose job is to detect invalid input. The runnability gate then skips schema validation of the scenario, the post-run file-validity validators are not counted against the test, and the scenario-fixture lint exempts the referenced scenario. Defaults to false; only set it on tests that genuinely need an invalid starting state. See unit-test-spec.md Section 9."
+      "description": "When true, the test's scenario files are broken on purpose — e.g. for a validator/guardrail agent (validate-schema) whose job is to detect invalid input. The runnability gate then skips schema validation of the scenario, the post-run file-validity validators are not counted against the test, and the scenario-fixture lint exempts the referenced scenario. Defaults to false; only set it on tests that genuinely need an invalid starting state. See unit-test-spec.md Section 9."
     },
     "judge_reads_files": {
       "type": "boolean",

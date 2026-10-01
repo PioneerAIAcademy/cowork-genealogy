@@ -299,7 +299,12 @@ def check_runnable(
         # enforced it until now. Same failure mode and same gate-time
         # treatment as the correct_skill typo above.
         if spec.negative.get("grade_on_invariant"):
-            gate_tags = tag_gated_validator_tags(validators_dir, spec.skill)
+            # `test_universal.py` runs for every suite, so a gate there binds
+            # this test as surely as one in the skill's own file
+            # (`test_hand_back_names_its_owner`, lifted there by issue #2805).
+            gate_tags = tag_gated_validator_tags(
+                validators_dir, spec.skill
+            ) | tag_gated_validator_tags(validators_dir, "universal")
             matched = sorted(set(spec.tags or []) & gate_tags)
             if not matched:
                 validator_file = (

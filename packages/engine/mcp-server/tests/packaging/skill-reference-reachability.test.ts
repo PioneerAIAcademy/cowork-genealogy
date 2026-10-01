@@ -118,8 +118,8 @@ function reachableRefs(skill: string): Set<string> {
 /**
  * `references/<file>.md` paths a skill's own SKILL.md names that are not on
  * disk. The lookbehind drops a cross-skill citation
- * (`check-warnings/references/assumption-categories.md`), which names another
- * skill's file — real, and not this skill's to hold.
+ * (`<other-skill>/references/<file>.md`), which names another skill's file —
+ * not this skill's to hold.
  */
 function namedButMissing(skill: string): string[] {
   const bodyPath = join(skillsDir, skill, "SKILL.md");

@@ -283,12 +283,13 @@ class LogAppendError extends Error {}
  * Nothing in that corpus was newly refused by the binding. Those figures are the
  * record of what the binding moved and can no longer be reproduced: 414ee3c68
  * was a branch commit a squash merge discarded. The current figures come from
- * `dev/measure-census-hedge-refusals.ts`: measured at dc9766b15, 216 of 3,882
- * distinct notes are refused on note text alone, and the staged-search trigger
- * newly refuses 4 of the 662 staged `record_search` entries it can pair to their
- * search response (the `h4k` note twice, and two more flat household claims with
- * no census word) while freeing none. The "indexed" hedge frees 4 notes and
- * refuses none. RE-DERIVE RATHER THAN QUOTE these: the corpus moves in both
+ * `dev/measure-census-hedge-refusals.ts`: measured at c70e0214d, 177 of 4,062
+ * distinct notes are refused on note text alone (4.4%), and the staged-search
+ * trigger refuses 4 of the 738 paired `record_search` entries (the `h4k` note
+ * twice, and two more flat household claims with no census word). Against the
+ * fallback-present baseline, 46 notes are newly freed (note-only) and 12
+ * payload ops are newly freed; 0 newly refused in either.
+ * RE-DERIVE RATHER THAN QUOTE these: the corpus moves in both
  * directions as run logs land, because a re-run REPLACES a skill's run log
  * rather than adding one. Four earlier passes of this docstring read
  * 3,275/332/136, 3,392/338/142, 3,490/355/154 and 3,489/355/153 -- it shrank by
@@ -450,21 +451,21 @@ export function requirePre1880CensusHedge(
   if (!saysCensus && payloadYears.length === 0) return;
 
   // Tie the year to the census it qualifies. When no year binds to a census
-  // mention at all the note is undecidable on that axis, so fall back to the
-  // old whole-note test rather than letting an unhedged 1870 household through
-  // on a phrasing the patterns above do not cover. A note that reaches THIS
-  // branch gets its pre-change verdict, because the fallback below is the old
-  // gate verbatim and the `\bcensus\b` test above it is unchanged. That is a
-  // claim about this path and nothing wider: the rule as a whole does NOT only
-  // narrow -- a census named before 1800 is newly refused, and it is refused on
-  // the bound branch, never reaching this one. See the docstring's 1600-1799
-  // boundary, pinned by "refuses a census named before 1800, which the old
-  // whole-note test allowed".
+  // mention at all the note is undecidable on that axis, so the note-only gate
+  // SKIPS rather than guessing — the same behaviour as an undocumented
+  // jurisdiction. What this gives up: an unhedged pre-1880 US census note whose
+  // phrasing the adjacency patterns above do not cover (e.g. "The federal
+  // census shows Daniel in one dwelling with Margaret and sons Thomas and
+  // Stephen; marriage 1871, Adams County"). The staged-payload trigger still
+  // fires for `record_search` entries whose staged rows name a pre-1880 US
+  // census, provided the payload year appears in the note text.
+  // Decided (lead, 2026-09-29), issue #2945: the whole-note fallback
+  // (`saysCensus && /\b18[0-7]\d\b/`) made 46 of 223 note-only refusals over
+  // ~4,000 distinct corpus notes, about 38 of them wrong on reading.
   const bound = censusMentions(notes);
   const namesColumnlessCensus = bound.length > 0
     ? bound.some((m) => m.year < m.columnFrom)
-    : payloadYears.some((y) => new RegExp(String.raw`\b${y}\b`).test(notes)) ||
-      (saysCensus && /\b18[0-7]\d\b/.test(text));
+    : payloadYears.some((y) => new RegExp(String.raw`\b${y}\b`).test(notes));
   if (!namesColumnlessCensus) return;
 
   const describesHousehold =

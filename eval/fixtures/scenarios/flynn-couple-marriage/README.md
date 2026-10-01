@@ -23,7 +23,7 @@ the parents — only the two `ParentChild` links.
 - The failure this guards against: writing the marriage as a person-level
   `add_fact` on Thomas (`I2`) or Mary (`I3`). Couple events belong on the
   `Couple` relationship, never on a person — see
-  `skills/tree-edit/references/relationship-accuracy.md`.
+  `agents/tree-edit.md`, Appendix B.
 
 Copied verbatim from `flynn-record-matching`: `research.json` and the
 `results/` sidecars (FK-consistent). Only `tree.gedcomx.json` differs —
