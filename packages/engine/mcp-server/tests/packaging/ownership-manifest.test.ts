@@ -1130,6 +1130,9 @@ describe("ownership manifest — every name resolves", () => {
     // The walker names the FIELD; `subject_person_ids` lives inside `project`.
     const sectionOf = (f: string) => (f === "subject_person_ids" ? "project" : f);
     const written = new Set(union.map(sectionOf));
+    // warning_justifications is written through checkWarningGate (which
+    // merge_tree_persons calls), not through the person-id-refs walker.
+    written.add("warning_justifications");
 
     const declared = new Set(
       rows

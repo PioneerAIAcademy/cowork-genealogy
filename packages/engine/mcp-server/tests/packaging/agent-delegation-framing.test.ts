@@ -314,6 +314,37 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       },
     },
   },
+
+  // Converted from a skill (issue #2117). Both callers spawn it directly; the
+  // research row shares the caller paragraph the three rows above pin.
+  "research -> locality-guide": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt: "**A delegation is a request for work, never a finding.**",
+      },
+    ],
+  },
+
+  "historical-context -> locality-guide": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "do NOT explain how the two differ, do NOT\nwrite a multi-paragraph comparison, and do NOT call any MCP tools or read any\nfiles.",
+      },
+      {
+        side: "agent",
+        excerpt: "**A delegation is a request for work, never a finding.**",
+      },
+    ],
+  },
+
 };
 
 // A SKILL.md that names an agent WITHOUT delegating to it, mapped to the
@@ -386,22 +417,20 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["timeline -> proof-conclusion", ""],
   // `search-wikipedia` (issue #2795) is the reverse of the `citation` shape: its
   // name is not an ordinary English word, so the arm DOES discriminate for it,
-  // and both mentions below are boundary prose telling the reader this is the
-  // other lane — "a general Wikipedia summary of the place (use
-  // search-wikipedia)", "→ search-wikipedia, not translation". None is a
+  // and the one mention below is boundary prose telling the reader this is the
+  // other lane — "→ search-wikipedia, not translation". It is not a
   // delegation: under the lead's 2026-09-23 hand-back ruling nothing spawns this
-  // agent from a skill body. #2795 decided to leave the wordings alone — the
-  // name survives as the agent's name, and rewording them would flip more
-  // skills' eval snapshots for no behavioural gain. Both are bare-name mentions,
-  // so both take `""` and neither can suppress a real delegation edge. (A third
-  // row, from search-familysearch-wiki, left when issue #2794 deleted that skill.)
-  ["locality-guide -> search-wikipedia", ""],
+  // agent from a skill body. #2795 decided to leave the wording alone — the
+  // name survives as the agent's name, and rewording it would flip skills'
+  // eval snapshots for no behavioural gain. (Rows from search-familysearch-wiki,
+  // locality-guide, and translation left when issues #2794, #2117, and #2804
+  // deleted those skills — no skill mentions it now.)
   // search-familysearch-wiki entered agentOnly when issue #2794 deleted its
-  // skill. Both rows are routing-boundary prose naming it as the owner of a
-  // FamilySearch-wiki request, not a delegation, and neither spells
-  // `@plugin:search-familysearch-wiki`.
+  // skill. The row is routing-boundary prose naming it as the owner of a
+  // FamilySearch-wiki request, not a delegation, and does not spell
+  // `@plugin:search-familysearch-wiki`. (A locality-guide row left when issue
+  // #2117 deleted that skill.)
   ["historical-context -> search-familysearch-wiki", ""],
-  ["locality-guide -> search-familysearch-wiki", ""],
   // person-evidence gained a skills/<name>/ directory before the agent
   // conversion; when the skill was deleted the name entered agentOnly and
   // every SKILL.md that references it now needs a registration. All are
@@ -623,6 +652,7 @@ describe("agent delegation framing", () => {
     // now unambiguous, so the prose arm starts policing its bare-name mentions.
     "proof-conclusion",
     "person-evidence",
+    "locality-guide",
     "record-extractor",
     "search-familysearch-wiki",
     "search-images",
