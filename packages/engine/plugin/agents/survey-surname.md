@@ -71,7 +71,7 @@ For each US federal census year in the span (1790, 1800, 1810, 1820, 1830, 1840,
 
 The `rankingSkipped` note that comes back is expected for a survey — ignore it.
 
-Read `totalMatches` on the first page. **If it exceeds 600**, fetch no more pages for that year: tell the user the count and ask which counties to survey for that year. Otherwise page with `offset` until `hasMore` is false.
+Read `totalMatches` on the first page. **If `totalMatches` exceeds 600: STOP for that year. Do NOT call `record_search` again for that year with any offset.** Report the `totalMatches` count and ask the user which counties to survey. Only page with `offset` for years where `totalMatches` is 600 or fewer.
 
 **`hasMore: false` means done.** When `hasMore` is false, the `results` array is the complete set. Build your table from those stubs. Do not say the data is incomplete, do not suggest further paging, and do not ask for counties — even when `totalMatches` is larger than `returned`. The `totalMatches` is the index count; the stubs in `results` are the deliverable records.
 
