@@ -1,8 +1,8 @@
 # `get_name_variants` — given-name lookup tool — Spec
 
 > **Status:** Shipped (2026-09-29). v1 covers given names only. Called by
-> `search-full-text`; the hidden expansion inside `fulltext_search` was retired
-> by PR #3047. `image_transcribe` still expands through `expandLookingFor`.
+> `search-full-text`; the hidden expansion inside `fulltext_search` is
+> retired. `image_transcribe` still expands through `expandLookingFor`.
 
 A pure, offline lookup tool: given one given name, return every other form
 of that name (nicknames, diminutives, formal forms) the bundled table knows
@@ -111,7 +111,7 @@ It does not touch `expandLookingFor` or its table.
 - **Surnames and places.** v1 is given names only. A `kind` parameter for
   surnames/places is deferred pending a probe of the FamilySearch wiki page
   `Guessing_a_Name_Variation`, which was not attempted for this card.
-- **Retiring the old path.** `expandNameForFulltext` is gone (PR #3047).
+- **Retiring the old path.** `expandNameForFulltext` is gone.
   `config/given-name-variants.json`, its drift test and `expandLookingFor`
   remain for `image_transcribe` until that caller moves onto this tool.
 
