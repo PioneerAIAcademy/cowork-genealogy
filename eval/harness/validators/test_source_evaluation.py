@@ -180,6 +180,35 @@ _SUMMARY_LEAD_RE = re.compile(
 
 _TABLE_ROW_RE = re.compile(r"^\s*\|")
 
+# A list item opens a line: "- ", "* ", "+ " or "1. " / "1) ". A line that does
+# not open one, inside a list, continues the item above it.
+_LIST_ITEM_RE = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+")
+
+
+def _list_items(block: str) -> list[str] | None:
+    """A block holding two or more list items, split one passage per item.
+
+    Each item keeps its continuation lines, so a detach written on the line
+    below its source's name still lands in that source's passage. Any prose
+    before the first item is a passage of its own. None when the block is not
+    a list, so the caller keeps it whole.
+    """
+    lines = block.splitlines()
+    if sum(1 for ln in lines if _LIST_ITEM_RE.match(ln)) < 2:
+        return None
+    out: list[str] = []
+    lead: list[str] = []
+    for ln in lines:
+        if _LIST_ITEM_RE.match(ln):
+            out.append(ln)
+        elif out:
+            out[-1] += "\n" + ln
+        else:
+            lead.append(ln)
+    if "".join(lead).strip():
+        out.insert(0, "\n".join(lead))
+    return out
+
 # Clause boundaries inside a recap sentence. A recap reads "correct the death
 # year on X (Finding 1), detach the 1885 census (Finding 2), and the rest are
 # fine" — each remedy is its own clause naming its own source, so splitting
@@ -208,15 +237,22 @@ def _passages(text: str) -> list[str]:
       the original certificate" and the row below it read "Detach — it is about
       a different Christian Hole". Exactly right, and flagged.
 
-    A table row is the per-source unit the guard wants, so rows are split out
-    and judged individually. Everything else keeps the blank-line block.
+    - A per-source verdict LIST (`ut_source_evaluation_x6b`,
+      `v1_2026-10-01_18-58-11.json`, issue #2796): one bullet per source, no
+      blank lines, the Minnesota Death Index bullet reading "keep, but the
+      indexed death year (1954) needs correction" and the 1885 census bullet
+      two lines below it "detach". Exactly right, and flagged.
 
-    Three shapes needing bespoke handling, each found inside a paid run, is the
+    A table row or a list item is the per-source unit the guard wants, so each
+    is split out and judged individually. Everything else keeps the blank-line
+    block.
+
+    Four shapes needing bespoke handling, each found inside a paid run, is the
     signal worth recording: this guard is lexical and attribution is not, so
     the shape of the report decides whether it is right. Handle a new shape
     here rather than loosening the rule that fires, and keep `rubric.md`'s
-    Remediation doctrine bars as the judgment-based backstop. **Issue #2382**
-    owns the durable fix — narrowing to object-adjacency so shape stops
+    Remediation doctrine bars as the judgment-based backstop. **Issue #2481**
+    (which absorbed #2382) owns the durable fix — narrowing to object-adjacency so shape stops
     mattering — and records the measured constraint that passage-scoping
     `_GO_TO_SOURCE_PATTERN` breaks 23 of 24 committed positive runs.
     """
@@ -232,6 +268,8 @@ def _passages(text: str) -> list[str]:
             )
             if prose.strip():
                 out.append(prose)
+        elif (items := _list_items(block)) is not None:
+            out.extend(items)
         elif _SUMMARY_LEAD_RE.match(block.strip()):
             # A recap is one sentence carrying several sources' remedies, so
             # the block is the wrong unit — but SKIPPING it is worse than

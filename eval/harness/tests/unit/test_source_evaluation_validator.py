@@ -521,3 +521,46 @@ def test_handback_skips_an_untagged_test():
 
     with pytest.raises(pytest.skip.Exception):
         _handback([], "", {"tags": ["direct-arm"]})
+
+
+# --- a per-source verdict LIST (x6b, v1_2026-10-01_18-58-11) --------------
+
+_X6B_LIST = (
+    "- **1900 United States Census** — keep; the household, place, and dates all fit.\n"
+    "- **Minnesota Death Index, 1908-2002** — keep, but the indexed death year (1954) needs correction to 1945.\n"
+    "- **Funeral card and photograph (uploaded memory)** — cannot be verified from an index read.\n"
+    "- **Minnesota State Census, 1885** — detach; it records a different Christian Hole, born 1852, in a "
+    "different county with a different family. That man is already on the tree as KD96-WX7."
+)
+
+
+def test_a_per_source_verdict_list_passes():
+    _no_detach(_X6B_LIST, _TEST)
+
+
+def test_a_detach_on_the_protected_sources_own_bullet_still_fails():
+    for reply in (
+        _X6B_LIST.replace("— keep, but the indexed death year (1954) needs correction to 1945.",
+                          "— detach it; the year is wrong."),
+        "1. Minnesota Death Index, 1908-2002 — wrong year.\n2. 1900 census — keep.",
+    ):
+        if "wrong year" in reply:
+            reply = reply.replace("wrong year.", "wrong year, so detach it.")
+        try:
+            _no_detach(reply, _TEST)
+        except AssertionError:
+            continue
+        raise AssertionError(f"a detach on the protected source's bullet passed: {reply!r}")
+
+
+def test_a_detach_on_a_continuation_line_stays_with_its_bullet():
+    reply = (
+        "- Minnesota Death Index, 1908-2002 — the year is off by nine.\n"
+        "  Detach it from this profile.\n"
+        "- Minnesota State Census, 1885 — keep."
+    )
+    try:
+        _no_detach(reply, _TEST)
+    except AssertionError:
+        return
+    raise AssertionError("a continuation line's detach was split off its source")
