@@ -54,7 +54,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 48 tools.
+The MCP server exposes 50 tools.
 
 ### FamilySearch records and places
 
@@ -77,6 +77,7 @@ The MCP server exposes 48 tools.
 | `person_ancestors` | FamilySearch Family Tree pedigree — a person (or, when no ID is given, the logged-in user) plus up to N generations of ancestors, each tagged with its Ahnentafel (ascendancy) number; relationships are endpoint-closed, and `notes[]` reports any edge dropped for naming a person not returned | OAuth |
 | `source_attachments` | Check whether source ARKs are already attached to tree persons | OAuth |
 | `volume_search` | Search FamilySearch's Records Management Service for digitized volumes (image groups) by place and year range, optionally filtered to one or more `recordTypeGroups` (selecting a group also returns the groups nested beneath it) — returns coverage metadata, `recordSearchablePercent`, and `fulltextSearchable` per volume | OAuth |
+| `volume_bisect` | Bisect a browse-only image volume toward a target year — reads **one** page per call, folds its year into the bracket built from the readings so far, and returns the narrowed bracket plus the next image to probe. Refuses a bare image-group prefix (use `volume_search` to pick a sub-volume first) | OAuth + OpenRouter |
 | `external_links_search` | FS-curated third-party genealogy URLs by place; optional year filter | None |
 
 ### FamilySearch Wiki content
@@ -123,9 +124,10 @@ way project state changes.
 | `place_distance` | Distance between two FamilySearch places | None |
 | `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) or by ark (a document-image ARK, resolver URL, or resolved distribution URL) and return bytes + metadata; optional `projectPath` saves the scan and returns `imageRef`. Refuses scans over ~700 KB raw. Kept for the Issue #28 OCR-comparison pipeline — no skill or agent calls it, and the eval harness denies it on the main thread. | OAuth |
 | `image_transcribe` | OCR a FamilySearch image by imageId or ark, a memory artifact URL, or an **uploaded image/PDF inside the project folder** (`file`, e.g. `uploads/scan.jpg` — no FamilySearch login) host-side (Gemini Flash via OpenRouter) and return **text**; with `projectPath` the transcription is also staged (`staged.resultsRef` + a `digest`). No bytes cross the MCP transport; inputs over 14 MiB are refused with the remedy. The `image-reader` subagent's reader. | OpenRouter (+ OAuth for imageId/ark) |
-| `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives. Reads the local tree by default — offline. `live: true` fetches the person from FamilySearch instead, for auditing a profile with no local project | None, or OAuth with `live: true` |
+| `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives. Reads tree.gedcomx.json from the local project — offline | None |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
 | `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with cited sources, sources with record ids) — the context call agents make instead of reading project files | None |
+| `get_name_variants` | Look up a given name's alternate forms (nicknames, diminutives, formal forms) from a bundled bidirectional table. Given names only, no caller yet | None |
 
 ### Auth (FamilySearch OAuth 2.0 + PKCE)
 
@@ -159,7 +161,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 25 skills covering the full GPS research cycle. Skills
+The plugin ships 17 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 For a plain-language account of the research method itself — the GPS
 cycle, the judgment made at each stage, and what to expect from a
@@ -187,7 +189,6 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 |-------|-------------|----------|
 | **search-records** | Searches FamilySearch indexed records (census, vital, probate, etc.). Triages results by match quality. | "Search for Patrick Flynn in the 1850 census" |
 | **search-full-text** | Full-text search of FS AI-transcribed document images. Finds witnesses, neighbors, heirs, and other non-principal mentions. | "Full-text search for Flynn in Schuylkill County deeds" |
-| **search-images** | Browses FamilySearch digitized image volumes page-by-page when a record set is digitized but unindexed and not full-text searchable. Finds the volume (`volume_search`), lists its images (`image_search`), and views pages by delegating to the `image-reader` subagent. | "Browse the unindexed Schuylkill County probate films" |
 | **search-external-sites** | Generates search URLs for Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, and ten other genealogy sites (`build_external_search_url`'s full site list). Walks the click-capture-analyze loop. | "Search Ancestry for Thomas Flynn" |
 
 ### Analyzing evidence
@@ -207,10 +208,8 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 
 ### Concluding
 
-| Skill | What it does | Say this |
-|-------|-------------|----------|
-| **proof-conclusion** | Writes the GPS proof conclusion — tier, vehicle, self-contained narrative. Updates the tree when confidence reaches Probable or higher. | "Write the conclusion" |
-| **tree-edit** | Direct corrections to the tree file. Also executes person merges after proof-conclusion confirms identity. | "Fix this name" / "Merge these two persons" |
+Writing the conclusion itself is an agent rather than a skill — see
+`proof-conclusion` in the agent table below.
 
 ### Reference and context
 
@@ -219,19 +218,6 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 | **locality-guide** | Produces a structured research guide for a place/time — what records exist and where they're held. | "What records exist for Schuylkill County?" |
 | **historical-context** | Explains boundary changes, naming conventions, migration patterns, and cultural context affecting records. | "Why does the birthplace differ?" |
 | **translation** | Genealogy-specific translation for German, French, Spanish, Italian, Dutch, Latin, Portuguese. Period handwriting and abbreviations. | "Translate this German church record" |
-| **search-familysearch-wiki** | Searches the FamilySearch Research Wiki for genealogy how-to guidance and saves the findings as a markdown file. | "Search the FamilySearch wiki for how to find Italian birth records" |
-| **search-wikipedia** | Reference example skill — fetches a Wikipedia summary and saves it as a markdown file. | "Look up Albert Einstein on Wikipedia" |
-
-### Internal (guardrails)
-
-These enforce correctness. Most are invoked automatically by other
-skills per the validation protocol.
-
-| Skill | What it does | Triggered by |
-|-------|-------------|-------------|
-| **validate-schema** | Validates both project files against the published schemas. Required fields, enum values, ID prefixes, cross-references. | Every writing skill invokes this after writing. You can also say "validate the files." |
-| **check-warnings** | Flags genealogical impossibilities (married before 12, died after 120, child born after parent's death). | Writing skills invoke after adding assertions/person_evidence. You can say "check for warnings." |
-| **convert-dates** | Converts dates at calendar boundaries — Julian/Gregorian, Old Style/New Style, Quaker double-dating. | When dates from pre-Gregorian periods are encountered. You can say "convert this date." |
 
 ### Benchmark suite (not shipped — repo-local dev tooling)
 
@@ -252,7 +238,7 @@ specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships nine Cowork agents. Unlike skills, an agent runs in
+The plugin ships fifteen Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 at its mentor checkpoint, or by the skill that delegates to it — you
 don't load it explicitly.
@@ -261,13 +247,19 @@ don't load it explicitly.
 |-------|-------------|----------|
 | **gps-mentor** | A Board for Certification of Genealogists (BCG)-style senior genealogist who reviews your work against GPS standards and returns a structured verdict plus a mentoring narrative. Read-only — it never edits your tree and only appends its verdict to `research.json`. `/research` calls it once per proof, after a conclusion is written; its verdict is advisory and never blocks or re-opens a resolved question. You can also ask for a review at any time. | "Review my work" / "Is this defensible?" / "Am I ready to conclude?" |
 | **record-extractor** | Extracts every assertion from **one** record — the source entry, atomic per-fact assertions, and their GPS evidence classifications — in a single validated write. The `record-extraction` skill delegates one of these per record; classifications are set here and are final. | (not invoked directly — `record-extraction` delegates) |
-| **proof-conclusion** | Writes the GPS proof conclusion for **one** question — selects the confidence tier and the proof form, writes the self-contained narrative, and encodes the conclusion into your tree once it reaches Probable or better. The `proof-conclusion` skill delegates to it; it is the only caller allowed to write the `proof_summaries` section, which is what keeps a conclusion from being hand-authored around the tier and citation rules. | (not invoked directly — `proof-conclusion` delegates) |
+| **proof-conclusion** | Writes the GPS proof conclusion for **one** question — selects the confidence tier and the proof form, writes the self-contained narrative, and encodes the conclusion into your tree once it reaches Probable or better. `/research` routes to it at the conclusion step, and you can ask for it directly; it is the only caller allowed to write the `proof_summaries` section, which is what keeps a conclusion from being hand-authored around the tier and citation rules. | "Write the conclusion" / "What's the proof?" |
 | **research-exhaustiveness** | Judges whether the research on **one** question is reasonably exhaustive — applies the GPS 5 threshold questions and the 7-point stop criteria, then either declares the question exhaustive or names what is still missing. The `research-exhaustiveness` skill delegates to it; it is the only caller allowed to declare a question exhaustive, which is what keeps that claim from being hand-authored around the criteria it rests on. | (not invoked directly — `research-exhaustiveness` delegates) |
 | **person-evidence** | Resolves identity for **one** request — evaluates whether a record's person matches a tree person, writes the `person_evidence` links with their confidence and rationale, and creates stub persons when nothing matches. It is the only writer of `person_evidence`. | (spawned by `/research` directly via the agent description) |
 | **search-images** | Browses a digitized FamilySearch volume page by page when the record set is neither indexed nor full-text searchable, and logs the browse. It finds the image groups covering a place and date range, lists the images inside one, and reads each page as text. | "Browse the images" / "page through the film" |
 | **citation** | Polishes the citations on sources that already exist to Evidence Explained standards (Who/What/When/Where/Where-within), and looks up the office that created a probate record on the FamilySearch wiki rather than carrying one jurisdiction's offices in its prompt. It never creates a source entry: asked to add a record, it declines and routes to `record-extraction`. | "Fix citations" / "Cite this source" |
+| **check-warnings** | Flags genealogical impossibilities and implausible patterns in one person's own data (married before 12, died after 120, child born after parent's death), deterministically from your local tree. Writes nothing. `init-project` runs it on every imported person, and it runs after every `tree-edit` edit or merge. | "Check for warnings" / "Any problems with his dates?" |
 | **project-status** | Reads the whole project and reports where the research stands — a plain-language story for the user and a detailed GPS-state summary, integrity warnings first, plus the recommended next step. Read-only: it never writes to either project file. It is the "resume project" path when you come back to existing work. | "Where are we?" / "What's next?" / "Status" |
 | **image-reader** | Reads **one** FamilySearch image scan and returns a full text transcription (fast, cheap — hosted Gemini Flash OCR). Used when browsing unindexed volumes or extracting from a page image; it keeps the image data out of the main conversation. | (not invoked directly — `record-extraction` and `search-images` delegate) |
+| **search-familysearch-wiki** | Searches the FamilySearch Research Wiki for **one** genealogy how-to question and saves the guidance as a markdown file in your working folder, citing the wiki pages it came from. Asked for Wikipedia, a locality records survey or narrative history, it does no search and hands the request back by name. | "Search the FamilySearch wiki for how to find Italian birth records" |
+| **search-wikipedia** | Looks **one** topic up on Wikipedia — the general-purpose encyclopedia — and saves the article summary as a markdown file in your working folder. One tool call, a template it carries in its own body, one file. Asked for narrative history, a locality records survey or the FamilySearch wiki, it does no lookup and hands the request back by name. | "Look up Albert Einstein on Wikipedia" |
+| **convert-dates** | Converts **one** date, or compares dates, across calendar systems — Julian/Gregorian, Old Style/New Style year starts, Quaker numbered months, double-dated years — using the `convert_calendar` tool's adoption table for the record's jurisdiction. It writes nothing. Asked why a convention existed, whether a date string passes the schema, or about a same-calendar conflict, it hands the request back by name. | "Convert this date to Gregorian" / "Is 30 February 1712 a real date?" |
+| **tree-edit** | Direct corrections to the tree file — add or correct a fact, create a person or relationship, check FamilySearch record hints and possible duplicates. Also executes person merges after proof-conclusion confirms identity. After any change it hands back so `check-warnings` runs on the persons it touched. | "Fix this name" / "Merge these two persons" |
+| **validate-schema** | Validates both project files against the published schemas — required fields, enum values, ID prefixes, cross-references — and reports each error with a suggested fix. Read-only: it never edits a file. The writer tools already validate before they persist, so this is an on-demand audit of the whole project. Asked about genealogical impossibilities or GPS quality, it hands the request back by name. | "Validate the project files" / "Is the schema valid?" |
 
 ## Recommended workflow
 
@@ -277,7 +269,6 @@ don't load it explicitly.
 3. research-plan             "How do I answer this question?"
 4. search-records            Execute indexed searches on FamilySearch
    search-full-text          ...or full-text search for witnesses/FAN mentions
-   search-images             ...or browse unindexed digitized image volumes
    search-external-sites     ...or on Ancestry/MyHeritage/FindMyPast
 5. record-extraction         Extract assertions from found records
                              (evidence classifications are written
@@ -291,7 +282,7 @@ don't load it explicitly.
                              back to step 3 (extend plan) or step 2
                              (FAN pivot). If exhaustive, advance.
 11. proof-conclusion         Write the GPS conclusion
-    tree-edit                Merge persons, correct facts
+    tree-edit (agent)        Merge persons, correct facts
 12. project-status (agent)   "Where are we? What's next?"
 ```
 
@@ -312,7 +303,7 @@ The `/research` orchestrator handles this routing automatically.
 | File | Purpose | Updated by |
 |------|---------|-----------|
 | `research.json` | GPS audit trail — all analytical state | Most skills |
-| `tree.gedcomx.json` | Simplified GedcomX — resolved persons, relationships, sources | init-project, record-extraction (sources), person-evidence agent (stubs), proof-conclusion (facts/relationships), tree-edit |
+| `tree.gedcomx.json` | Simplified GedcomX — resolved persons, relationships, sources | init-project, record-extraction (sources), person-evidence agent (stubs), proof-conclusion (facts/relationships), tree-edit agent |
 
 Specs: `docs/specs/research-schema-spec.md` and
 `docs/specs/simplified-gedcomx-spec.md`.
@@ -407,7 +398,7 @@ documented paths:
 
 1. Download `genealogy-plugin.zip` from the latest release
 2. Unzip it into `~/.claude/skills/` so each skill folder
-   (`init-project/`, `search-wikipedia/`, …) sits directly under
+   (`init-project/`, `record-extraction/`, …) sits directly under
    `~/.claude/skills/`:
 
    ```bash
@@ -429,7 +420,7 @@ In a Cowork session, exercise any of:
 
 > "Look up Albert Einstein on Wikipedia"
 
-Triggers the `search-wikipedia` skill — calls Wikipedia, fills a
+Delegates to the `search-wikipedia` agent — calls Wikipedia, fills a
 template, saves `albert-einstein.md` to your working folder.
 
 > "Find FamilySearch info for Ohio."
@@ -450,7 +441,7 @@ counts.
 
 > "How do I find Italian birth records?"
 
-Triggers the `search-familysearch-wiki` skill — calls the `wiki_search` MCP tool,
+Delegates to the `search-familysearch-wiki` agent — calls the `wiki_search` MCP tool,
 which runs RAG retrieval over the FamilySearch Wiki via the hosted
 `wiki-query-api` service, then saves the synthesized guidance to a
 markdown file. See `docs/specs/wiki-search-tool-spec.md`.
@@ -474,16 +465,15 @@ then narrows the search.
 
 What's shipped:
 
-- **48 MCP tools.** See the tables above for the full catalog, by category:
+- **50 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
-- **25 shipped skills.** Full GPS research cycle from `init-project`
-  through `proof-conclusion`, plus reference skills (locality-guide,
-  historical-context, translation, search-familysearch-wiki, search-wikipedia)
-  and guardrails (validate-schema, check-warnings, convert-dates). The three
+- **17 shipped skills.** Full GPS research cycle from `init-project`
+  through the conclusion, plus reference skills (locality-guide,
+  historical-context, translation). The three
   e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result, grade-e2e-run)
   are repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
-- **9 Cowork agents.** `gps-mentor` (BCG-style senior-genealogist review,
+- **15 Cowork agents.** `gps-mentor` (BCG-style senior-genealogist review,
   invoked by `/research` at GPS checkpoints and on demand), `record-extractor`
   (per-record assertion extraction), `proof-conclusion` (the proof conclusion
   for one question, and the only writer of `proof_summaries`),
@@ -491,8 +481,14 @@ What's shipped:
   the only caller that may declare one exhaustive), `person-evidence` agent (identity
   resolution, and the only writer of `person_evidence`), `citation` (Evidence
   Explained refinement of citations on sources that already exist),
-  `search-images` (page-by-page browse of an unindexed volume) and
-  `image-reader` (page OCR).
+  `convert-dates` (calendar-system date conversion), `search-images`
+  (page-by-page browse of an unindexed volume),
+  `check-warnings` (genealogical-impossibility checks on one person's data),
+  `validate-schema` (read-only schema audit of both project files),
+  `search-familysearch-wiki` (FamilySearch Research Wiki how-to guidance saved
+  as a markdown file), `search-wikipedia` (one encyclopedia lookup saved as a markdown file),
+  `tree-edit` (direct corrections to the tree, and person merges after a proof
+  conclusion) and `image-reader` (page OCR).
 - **Researcher profile.** `init-project` asks only the research objective, in
   one non-blocking opening turn; the profile itself is fixed (`novice`, one
   house-style narration string) and nothing about the researcher is asked.

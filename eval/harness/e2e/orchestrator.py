@@ -170,8 +170,7 @@ BASELINE_ALLOWED_TOOLS = [
 # records itself); record_person_matches / record_record_matches (keyed
 # off a RECORD the agent already found, not the subject); source_attachments
 # (confirms a found record's attachment — real GPS work); person_warnings
-# WITHOUT `live` (it then reads the local stripped tree, not the live one —
-# a `live: true` call is blocked below, see LIVE_TREE_ARG_TOOLS).
+# (reads the local stripped tree, not the live one).
 #
 # See e2e-test-spec.md §6.1. Matched on the bare tool name (after the
 # `mcp__<server>__` prefix).
@@ -208,12 +207,8 @@ def is_turn_cap_error(detail: str | None) -> bool:
 
 
 # Tools that read the live tree only in one MODE, so the bare name cannot decide
-# it. `person_warnings` is local by default and fetches the subject plus their
-# parents, spouses and children from the live tree when called with `live: true`
-# — and each warning carries `personId`, `personName` and `relatedPersonId`, so
-# on a parents fixture the live mode hands back a stripped relative's name and
-# PID. That is the read `person_read` heads BLOCKED_TREE_TOOLS for.
-LIVE_TREE_ARG_TOOLS = {"person_warnings": "live"}
+# it. Currently empty — kept for the next tool whose block depends on an argument.
+LIVE_TREE_ARG_TOOLS = {}
 
 
 def is_blocked_tree_tool(
@@ -1643,6 +1638,44 @@ def sleep_usage_fields(
     }
 
 
+# Abort reasons a detected host sleep can override. On Windows `time.monotonic()`
+# advances through Modern Standby, so these three caps/watchdogs count the sleep
+# as run time and cut the run (issue #2974); when the heartbeat proves the cut
+# was a sleep, the run is relabeled `host_slept` and left ungraded rather than
+# scored as a capability timeout/stall.
+_SLEEP_RELABELABLE = (
+    "max_wall_clock_seconds",
+    "sdk_stream_silence",
+    "no_progress_stall",
+)
+
+
+def sleep_relabel(
+    aborted_reason: str | None,
+    counted_sleep_seconds: float,
+    inactivity_seconds: float,
+) -> str | None:
+    """Relabel a cap/watchdog abort as `host_slept` when host sleep caused it.
+
+    Returns `"host_slept"` when `aborted_reason` is one a sleep can consume
+    (`_SLEEP_RELABELABLE`) and the heartbeat counted at least `inactivity_seconds`
+    of sleep; otherwise returns `aborted_reason` unchanged. Pure and
+    side-effect-free on purpose: it is the whole stop decision the lead ruling
+    picks, so it is unit-testable without spinning the SDK query loop (issue
+    #2974). The threshold is CUMULATIVE counted sleep — the ruling's
+    ">= caps.inactivity_seconds" reading — so several shorter sleeps summing past
+    the cap relabel too, which is correct: on Windows every counted second was
+    billed against the wall-clock budget, so the grade is untrustworthy however
+    the sleep was distributed.
+    """
+    if (
+        aborted_reason in _SLEEP_RELABELABLE
+        and counted_sleep_seconds >= inactivity_seconds
+    ):
+        return "host_slept"
+    return aborted_reason
+
+
 async def _run_agent(
     *,
     fixture: Fixture,
@@ -2353,12 +2386,13 @@ async def _run_agent(
         # CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS.)
         #
         # So "true" below means e2e runs WITH tool search: the ~38-tool
-        # genealogy server's schemas are deferred and re-discovered via
-        # ToolSearch mid-session (the 17x in the spriggs run, ~11% of all tool
-        # calls across recent runs). Idea 3a of the speedup plan wanted the
-        # opposite; flipping to "false" is a separate, tracked decision that
-        # requires re-measuring the tool mix, so the value is left as it has been
-        # running. `env` MERGES onto the inherited environment (claude_agent_sdk
+        # genealogy server's schemas are deferred (except ALWAYS_LOAD in
+        # tool-schemas.ts) and re-discovered via ToolSearch mid-session (the
+        # 17x in the spriggs run, ~11% of all tool calls across recent runs).
+        # Idea 3a of the speedup plan wanted the opposite; flipping to "false"
+        # is a separate, tracked decision that requires re-measuring the tool
+        # mix, so the value is left as it has been running. `env` MERGES onto
+        # the inherited environment (claude_agent_sdk
         # subprocess_cli merges os.environ, then options.env), so this adds the
         # var without dropping PATH.
         #
@@ -2512,7 +2546,27 @@ async def _run_agent(
                 except StopAsyncIteration:
                     return
                 except asyncio.TimeoutError:
-                    # No SDK message at all within the window (true silence).
+                    # No SDK message at all within the window. On Windows this
+                    # can be a Modern Standby, not a genuine silence — force a
+                    # heartbeat tick so `counted_sleep_seconds` is current
+                    # regardless of `_beat`/timeout wake order (issue #2974),
+                    # then relabel before resuming: a slept run must NOT consume
+                    # a resume as if it had stalled.
+                    sleep_detector.tick()
+                    if (
+                        sleep_relabel(
+                            "sdk_stream_silence",
+                            sleep_detector.counted_sleep_seconds,
+                            fixture.caps.inactivity_seconds,
+                        )
+                        == "host_slept"
+                    ):
+                        aborted_reason = "host_slept"
+                        error = (
+                            f"host slept {sleep_detector.counted_sleep_seconds:.0f}s "
+                            f">= inactivity cap {fixture.caps.inactivity_seconds}s"
+                        )
+                        return
                     if _should_resume():
                         restart = True
                         break
@@ -2611,8 +2665,9 @@ async def _run_agent(
                                     # AFTER init, when there is no init message
                                     # left to read. Absence surfaces only as
                                     # ToolSearch finding nothing (the genealogy
-                                    # schemas are deferred under
-                                    # ENABLE_TOOL_SEARCH), so count consecutive
+                                    # schemas outside ALWAYS_LOAD are
+                                    # deferred under ENABLE_TOOL_SEARCH),
+                                    # so count consecutive
                                     # no-match lookups while not one `mcp__`
                                     # call has ever succeeded. Threshold and
                                     # reset rule are calibrated against the
@@ -2782,6 +2837,27 @@ async def _run_agent(
                 if progressed:
                     last_progress["t"] = now
                 elif now - last_progress["t"] > fixture.caps.progress_stall_seconds:
+                    # Same Windows-sleep guard as the inactivity timer above: a
+                    # Modern Standby looks like a no-progress stall on the
+                    # monotonic clock, so force a tick and relabel before the
+                    # resume decision — otherwise a slept run is resumed as if it
+                    # had stalled (issue #2974), the exact case spec §6 "Clocks"
+                    # says cannot happen.
+                    sleep_detector.tick()
+                    if (
+                        sleep_relabel(
+                            "no_progress_stall",
+                            sleep_detector.counted_sleep_seconds,
+                            fixture.caps.inactivity_seconds,
+                        )
+                        == "host_slept"
+                    ):
+                        aborted_reason = "host_slept"
+                        error = (
+                            f"host slept {sleep_detector.counted_sleep_seconds:.0f}s "
+                            f">= inactivity cap {fixture.caps.inactivity_seconds}s"
+                        )
+                        return
                     if _should_resume():
                         restart = True
                         break
@@ -2830,6 +2906,26 @@ async def _run_agent(
     if aborted_reason is None and tool_call_count["n"] > fixture.caps.tool_calls:
         aborted_reason = "max_tool_calls"
         error = f"tool_calls cap ({fixture.caps.tool_calls}) exceeded"
+
+    # The wall-clock cap runs on `time.monotonic()`, which advances through
+    # Windows Modern Standby, so a slept run trips it recorded as
+    # `max_wall_clock_seconds` (issue #2974). The cap's TimeoutError cancelled
+    # `run_with_heartbeat`, whose `finally` already ticked, so
+    # `counted_sleep_seconds` is current here. Relabel to `host_slept` when the
+    # heartbeat proves the cut was a sleep. (The resume-site guards above catch
+    # `sdk_stream_silence`/`no_progress_stall`; this is idempotent for them —
+    # below threshold it returns the reason unchanged.)
+    aborted_reason = sleep_relabel(
+        aborted_reason,
+        sleep_detector.counted_sleep_seconds,
+        fixture.caps.inactivity_seconds,
+    )
+    if aborted_reason == "host_slept" and error and "host slept" not in error:
+        error = (
+            f"host slept {sleep_detector.counted_sleep_seconds:.0f}s "
+            f">= inactivity cap {fixture.caps.inactivity_seconds}s"
+            f" (was: {error})"
+        )
 
     # A ResultMessage populates `usage` with the SDK's authoritative numbers.
     # Every abort path (wall-clock timeout, inactivity silence, no-progress
@@ -3180,9 +3276,14 @@ async def run_e2e_test(
             raise McpUnavailableError(fallback_message)
 
         judge_seconds = 0.0
-        if skip_judge or final_tree is None:
-            # Both cases produce no verdict: --skip-judge by request, or no
-            # tree for the judge to grade (agent crashed before writing one).
+        if skip_judge or final_tree is None or stop_reason == "host_slept":
+            # No verdict is produced: --skip-judge by request, no tree for the
+            # judge to grade (agent crashed before writing one), or the host
+            # slept past the inactivity cap (issue #2974) — the run's budget was
+            # spent on standby, so grading it would score the power settings, not
+            # the agent. Unlike mcp_unavailable above, host_slept does NOT raise:
+            # the run log IS committed (see runlog_prefix) so the operator can
+            # see why, but it carries no verdict and is excluded from rates.
             judge_output: dict[str, Any] = {}
             verdict = "skipped"
         else:

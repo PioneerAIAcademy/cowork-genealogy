@@ -277,28 +277,72 @@ _INACTIVE_LOG = {"snapshot": {"eval/__no_such_cosmetic_test__/x.md": "expected\n
 
 
 def test_rule2_blocks_without_cosmetic_skip(monkeypatch, capsys):
-    monkeypatch.delenv("COSMETIC_SKIP", raising=False)
+    monkeypatch.delenv("COSMETIC_SKIP_LABELS", raising=False)
     rc = check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v1.json")
     assert rc == 1
     out = capsys.readouterr().out
     assert "NOT active" in out
-    assert "eval-cosmetic-skip" in out  # tells the senior the escape hatch exists
+    # Tells the senior the exact per-skill label, and how to create it.
+    assert "`eval-cosmetic-skip:demo`" in out
+    assert "gh label create eval-cosmetic-skip:demo" in out
+    assert "waives nothing" not in out
 
 
-def test_rule2_bypassed_with_cosmetic_skip(monkeypatch, capsys):
-    monkeypatch.setenv("COSMETIC_SKIP", "1")
-    rc = check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v1.json")
-    assert rc == 0
+def test_rule2_error_names_the_blocked_skills_own_label(monkeypatch, capsys):
+    monkeypatch.delenv("COSMETIC_SKIP_LABELS", raising=False)
+    check_runlogs.rule2_active("research-plan", _INACTIVE_LOG, "v1.json")
     out = capsys.readouterr().out
-    assert "::warning" in out and "eval-cosmetic-skip" in out
+    assert "`eval-cosmetic-skip:research-plan`" in out
+    assert "eval-cosmetic-skip:demo" not in out
 
 
-def test_rule2_skip_zero_does_not_bypass(monkeypatch, capsys):
-    """Only COSMETIC_SKIP == '1' bypasses; '0' (label absent) still blocks."""
-    monkeypatch.setenv("COSMETIC_SKIP", "0")
+def test_rule2_other_namespaced_label_naming_the_skill_does_not_waive(monkeypatch, capsys):
+    """Only the eval-cosmetic-skip: namespace waives; `cluster:demo` or a bare
+    `demo` label must not."""
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", "demo\ncluster:demo")
     rc = check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v1.json")
     assert rc == 1
     assert "NOT active" in capsys.readouterr().out
+
+
+def test_rule2_bypassed_by_its_own_skill_label(monkeypatch, capsys):
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", "developer\neval-cosmetic-skip:demo\n")
+    rc = check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v1.json")
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out and "`eval-cosmetic-skip:demo`" in out
+
+
+def test_rule2_label_for_one_skill_does_not_waive_another(monkeypatch, capsys):
+    """The waiver is per skill. The legacy PR-wide COSMETIC_SKIP=1 is set too,
+    so this fails against the old code, which waived every touched skill."""
+    monkeypatch.setenv("COSMETIC_SKIP", "1")
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", "eval-cosmetic-skip:other")
+    rc = check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v1.json")
+    assert rc == 1
+    assert "NOT active" in capsys.readouterr().out
+
+
+def test_rule2_label_for_a_longer_skill_name_does_not_waive_its_prefix(monkeypatch, capsys):
+    """`research` is a prefix of `research-plan`; the match must be exact."""
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", "eval-cosmetic-skip:demo-two")
+    rc = check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v1.json")
+    assert rc == 1
+    assert "NOT active" in capsys.readouterr().out
+
+
+def test_rule2_bare_label_waives_nothing(monkeypatch, capsys):
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", "eval-cosmetic-skip")
+    rc = check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v1.json")
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "`eval-cosmetic-skip:demo`" in out
+    assert "waives nothing" in out
+
+
+def test_rule2_label_list_tolerates_crlf_and_padding(monkeypatch):
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", "  developer \r\n eval-cosmetic-skip:demo \r\n\r\n")
+    assert check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v1.json") == 0
 
 
 # --- Orchestrator-skill exemption (RUNLOG_GATE_EXEMPT_SKILLS) --------------
@@ -996,7 +1040,7 @@ def test_rule2_passes_on_hash_snapshot_when_disk_matches(tmp_path, monkeypatch, 
     would have blocked *every* skill in CI and the unit suite would have stayed
     green — the failure mode that motivated writing it.
     """
-    monkeypatch.delenv("COSMETIC_SKIP", raising=False)
+    monkeypatch.delenv("COSMETIC_SKIP_LABELS", raising=False)
     skill_md = tmp_path / "packages/engine/plugin/skills/s1/SKILL.md"
     skill_md.parent.mkdir(parents=True)
     skill_md.write_text("---\nname: s1\n---\nbody\n", encoding="utf-8")
@@ -1024,7 +1068,7 @@ def test_rule2_tolerates_a_cosmetic_name_description_edit(tmp_path, monkeypatch)
     every rename of a test's display name into a forced paid re-run, and
     nothing else in the suite composes build_snapshot with rule 2.
     """
-    monkeypatch.delenv("COSMETIC_SKIP", raising=False)
+    monkeypatch.delenv("COSMETIC_SKIP_LABELS", raising=False)
     (tmp_path / "packages/engine/plugin/skills/s1").mkdir(parents=True)
     tests_dir = tmp_path / "eval/tests/unit/s1"
     tests_dir.mkdir(parents=True)
@@ -1055,7 +1099,7 @@ def test_rule2_treats_tag_edit_as_substantive(tmp_path, monkeypatch):
     A tag edit must invalidate the snapshot — unlike name/description, tags
     are NOT cosmetic.
     """
-    monkeypatch.delenv("COSMETIC_SKIP", raising=False)
+    monkeypatch.delenv("COSMETIC_SKIP_LABELS", raising=False)
     (tmp_path / "packages/engine/plugin/skills/s1").mkdir(parents=True)
     tests_dir = tmp_path / "eval/tests/unit/s1"
     tests_dir.mkdir(parents=True)
@@ -1350,6 +1394,50 @@ def test_rule6_an_empty_tests_array_is_allowed():
     """`run_tests.py` exits 0 on an empty row set, so blocking here would be a
     second definition. Rules 1 and 3 own "a PR must carry a real run log"."""
     assert _rule6([]) == 0
+
+
+# --- rule 9: aggregate outcome enum, corpus-wide (#2842) -------------------------
+
+
+def _write_runlog(dir_path, filename, outcomes):
+    """Write a minimal committed-shaped run log with the given aggregate
+    ``tests[].outcome`` values."""
+    d = dir_path / "some-skill"
+    d.mkdir(parents=True, exist_ok=True)
+    tests = [{"test_id": f"ut_s_{i}", "outcome": o} for i, o in enumerate(outcomes)]
+    (d / filename).write_text(json.dumps({"tests": tests}), encoding="utf-8")
+
+
+@pytest.mark.parametrize("retired", ["xfail", "xpass"])
+def test_rule9_blocks_a_retired_aggregate_outcome(tmp_path, retired, capsys):
+    """The straggler class: a committed run log whose aggregate `outcome` is a
+    retired value. Rule 6 cannot see it — it reads per-run outcomes and only on
+    PR-added logs — so this corpus-wide rule is what catches one landed by merge.
+    Break the enum narrowing (put xfail/xpass back on `_RUN_OUTCOMES`) and this
+    goes green: the falsifiability check."""
+    _write_runlog(tmp_path, "v1.json", ["pass", retired])
+    assert check_runlogs.rule9_outcome_enum(tmp_path) == 1
+    out = capsys.readouterr().out
+    assert retired in out and "v1.json" in out
+
+
+def test_rule9_accepts_every_value_the_schema_allows(tmp_path):
+    """The other direction — a log of legitimate aggregates must pass."""
+    _write_runlog(tmp_path, "v1.json", ["pass", "partial", "fail", "aborted"])
+    assert check_runlogs.rule9_outcome_enum(tmp_path) == 0
+
+
+def test_rule9_skips_scratch_and_annotation_files(tmp_path, capsys):
+    """A retired value in a scratch log (gitignored, never committed) or inside an
+    `.ann.json` (a different shape) must NOT trip the rule — the reach guard, so
+    the check cannot be dodged by mislabelling and cannot false-flag an annotation."""
+    _write_runlog(tmp_path, "scratch_2026-09-28_10-00-00.json", ["xfail"])
+    d = tmp_path / "some-skill"
+    (d / "v1.ann.json").write_text(
+        json.dumps({"corrections": [{"outcome": "xpass"}]}), encoding="utf-8"
+    )
+    assert check_runlogs.rule9_outcome_enum(tmp_path) == 0
+    assert capsys.readouterr().out == ""
 
 
 # --- marker owners, read from the committed test corpus --------------------------

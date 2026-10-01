@@ -5,10 +5,18 @@
     "name": "Write a disproved conclusion for a chronological impossibility",
     "type": "positive",
     "description": "The flynn-parentage-disproved scenario tests an unsourced online-tree claim that Thomas Flynn of Ballingarry was Patrick's father. The Ballingarry burial register shows Thomas was buried in 1842; Patrick was born ~1845 (1850 census, corroborated by the 1908 death certificate). The skill should write a `disproved` conclusion — the candidate father's death predates the child's birth — and must NOT write tree.gedcomx.json.",
-    "tags": ["proof", "parentage", "disproved", "GPS-step-5", "tier-disproved-q001", "no-tree-write"]
+    "tags": [
+      "proof",
+      "parentage",
+      "disproved",
+      "GPS-step-5",
+      "tier-disproved-q001",
+      "no-tree-write",
+      "direct-arm"
+    ]
   },
   "input": {
-    "user_message": "An online tree says Thomas Flynn of Ballingarry was Patrick's father. Write the conclusion on whether that holds up.",
+    "delegation": "An online tree says Thomas Flynn of Ballingarry was Patrick's father. Write the conclusion on whether that holds up.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "flynn-parentage-disproved"
   },
   "judge_context": [

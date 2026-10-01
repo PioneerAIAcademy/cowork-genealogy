@@ -12,7 +12,8 @@ reused verbatim with ``VITE_SESSION_TRANSPORT=sse``:
   GET  /api/sessions/{id}/events?after=N       one-shot poll read (JSON)
   GET  /api/sessions/{id}/events/stream        text/event-stream; Last-Event-ID resume
   GET/POST /api/sessions, GET/PATCH/DELETE /api/sessions/{id}, POST .../resume, GET .../state
-  GET  /auth/config, /auth/me, POST /auth/dev-login, /auth/logout   (no auth -- see README)
+  GET  /auth/config, /auth/me, POST /auth/dev-login, /auth/logout, GET /auth/familysearch/login,
+  GET  /callback   (patron sign-in, web/auth.py; every /api/sessions route needs the cookie)
   GET  .../sidecar/{log_id} -> 404;  .../image, .../logs, .../files -> 501
   POST /api/sessions/{id}/interrupt                Stop: raise the flag        -> 202
 
@@ -22,8 +23,8 @@ SQS MessageId, which the shim holds and the worker never sees. ``max_nudges`` (1
 this tier's ``AUTONOMOUS_MAX_NUDGES``, stamped on every message and preferred by the
 worker over its own: the worker serves the browser and ``make proto-demo`` alike and
 cannot tell them apart. It is read from the ENVIRONMENT and never from the request --
-this tier has no auth, so a ``MessageBody`` field would let any client set its own nudge
-budget.
+the cap is the operator's, so a ``MessageBody`` field would let a signed-in patron set
+their own nudge budget.
 
 Row -> wire contract (the worker writes the rows; the SPA's chatEvents.ts reads the wire):
 
@@ -51,9 +52,11 @@ Run: from apps/server, ``uv run python proto/web/app.py``.
 from __future__ import annotations
 
 import asyncio
+import html
 import json
 import logging
 import os
+import secrets
 import sys
 import time
 import uuid
@@ -65,8 +68,8 @@ from pathlib import Path
 from typing import Any, Protocol
 from urllib.parse import urlparse
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import StreamingResponse
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse, RedirectResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
 HERE = Path(__file__).resolve().parent
@@ -78,6 +81,7 @@ if str(PROTO_DIR) not in sys.path:
     sys.path.insert(0, str(PROTO_DIR))
 
 import enqueue  # noqa: E402  (the D3 SQS query-API client; reused, not edited)
+from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
 
 log = logging.getLogger("proto.web")
 
@@ -87,7 +91,6 @@ DEFAULT_MODEL = "claude-sonnet-4-6"
 EVENTS_PAGE = 500
 # documents.name -> the wire type the SPA's WsResearchTransport already folds.
 DOC_WIRE = {"research.json": "research_updated", "tree.gedcomx.json": "gedcomx_updated"}
-PROTO_USER = {"id": "proto", "email": "proto@localhost"}
 # 1b: a turns row whose outcome says it has not been enqueued yet -- the message the
 # patron typed while a turn was running. 006_stop_and_queue.sql records why this is a
 # turns row and not a second table.
@@ -127,6 +130,29 @@ class SessionRow:
     model: str
     created_at: datetime
     updated_at: datetime
+    # projects.owner_id (008). None -- a project the engine created and nobody has
+    # claimed -- is visible to nobody: the route's owner check never matches it.
+    owner_id: str | None = None
+
+
+@dataclass(frozen=True)
+class User:
+    id: str
+    email: str
+    familysearch_id: str | None = None
+    sessions_revoked_at: datetime | None = None
+
+
+class ProjectNotOwned(Exception):
+    """create_session was handed a project the caller may not open. The route answers
+    404, the same as for a project that does not exist, so the answer leaks nothing."""
+
+
+class IdentityMismatch(Exception):
+    """A FamilySearch sign-in presented an email already pinned to a DIFFERENT
+    FamilySearch account. The alpha's upsert never compared the two
+    (apps/server/app/auth.py _upsert_user), so any account carrying an allowlisted email
+    signed in as the existing user."""
 
 
 @dataclass(frozen=True)
@@ -151,8 +177,10 @@ class Turn:
 
 
 class Store(Protocol):
-    async def create_session(self, title: str, model: str) -> SessionRow: ...
-    async def list_sessions(self) -> list[SessionRow]: ...
+    async def create_session(
+        self, title: str, model: str, project_id: str | None, owner: str, may_create_or_claim: bool
+    ) -> SessionRow: ...
+    async def list_sessions(self, owner: str) -> list[SessionRow]: ...
     async def get_session(self, session_id: str) -> SessionRow | None: ...
     async def patch_session(self, session_id: str, title: str | None, model: str | None) -> SessionRow | None: ...
     async def delete_session(self, session_id: str) -> bool: ...
@@ -166,6 +194,15 @@ class Store(Protocol):
     async def has_queued(self, session_id: str) -> bool: ...
     async def claim_queued_turn(self, session_id: str) -> dict[str, Any] | None: ...
     async def request_stop(self, session_id: str) -> bool: ...
+    # 008: sign-in. store_grant takes CIPHERTEXT; web/auth.py encrypts before the call.
+    async def get_user(self, user_id: str) -> User | None: ...
+    async def upsert_user(self, email: str, familysearch_id: str | None) -> User: ...
+    async def is_allowed(self, email: str) -> bool: ...
+    async def sync_allowlist(self, emails: set[str]) -> None: ...
+    async def revoke_sessions(self, user_id: str) -> None: ...
+    async def store_grant(
+        self, user_id: str, access_token_enc: str, refresh_token_enc: str | None, expires_at: datetime
+    ) -> None: ...
 
 
 class Queue(Protocol):
@@ -366,35 +403,78 @@ class PgStore:
             session_id=r["session_id"], project_id=r["project_id"],
             title=r["title"] or DEFAULT_TITLE, model=r["model"] or DEFAULT_MODEL,
             created_at=r["created_at"], updated_at=r["updated_at"] or r["created_at"],
+            owner_id=r["owner_id"],
         )
 
-    _SELECT = "SELECT session_id, project_id, title, model, created_at, updated_at FROM sessions"
+    # LEFT JOIN: 001 declares no foreign keys, so a session whose project row is missing
+    # must still load -- with owner_id NULL, which the route turns into a 404.
+    _SELECT = (
+        "SELECT s.session_id, s.project_id, s.title, s.model, s.created_at, s.updated_at, p.owner_id "
+        "FROM sessions s LEFT JOIN projects p ON p.project_id = s.project_id"
+    )
 
-    async def create_session(self, title: str, model: str, project_id: str | None = None) -> SessionRow:
+    async def create_session(
+        self, title: str, model: str, project_id: str | None, owner: str, may_create_or_claim: bool
+    ) -> SessionRow:
+        """Open a session on a project the caller owns, in one transaction.
+
+        No project_id: a fresh project, owned by the caller. A supplied one opens only
+        if the caller already owns it -- or, under dev-login only
+        (``may_create_or_claim``), if it does not exist yet or nobody owns it, which is
+        how ``proto/seed.py`` hands a project the engine created to the signed-in
+        developer. Anything else raises ProjectNotOwned. Production therefore never
+        creates or claims a client-chosen id."""
         session_id = "sess_" + uuid.uuid4().hex[:16]
-        project_id = project_id or "proj_" + uuid.uuid4().hex[:16]
         async with await self._connect() as conn:
             async with conn.transaction():
-                await conn.execute(
-                    "INSERT INTO projects (project_id) VALUES (%s) ON CONFLICT (project_id) DO NOTHING",
-                    (project_id,),
-                )
+                if project_id is None:
+                    project_id = "proj_" + uuid.uuid4().hex[:16]
+                    await conn.execute(
+                        "INSERT INTO projects (project_id, owner_id) VALUES (%s, %s)", (project_id, owner)
+                    )
+                else:
+                    cur = await conn.execute(
+                        "SELECT owner_id FROM projects WHERE project_id = %s FOR UPDATE", (project_id,)
+                    )
+                    found = await cur.fetchone()
+                    if found is not None and found["owner_id"] == owner:
+                        pass
+                    elif not may_create_or_claim or (found is not None and found["owner_id"] is not None):
+                        raise ProjectNotOwned(project_id)
+                    elif found is None:
+                        cur = await conn.execute(
+                            "INSERT INTO projects (project_id, owner_id) VALUES (%s, %s) "
+                            "ON CONFLICT (project_id) DO NOTHING RETURNING project_id",
+                            (project_id, owner),
+                        )
+                        if await cur.fetchone() is None:  # a concurrent create won the id
+                            raise ProjectNotOwned(project_id)
+                    else:
+                        cur = await conn.execute(
+                            "UPDATE projects SET owner_id = %s WHERE project_id = %s AND owner_id IS NULL "
+                            "RETURNING project_id",
+                            (owner, project_id),
+                        )
+                        if await cur.fetchone() is None:
+                            raise ProjectNotOwned(project_id)
                 await conn.execute(
                     "INSERT INTO sessions (session_id, project_id, title, model) VALUES (%s, %s, %s, %s)",
                     (session_id, project_id, title, model),
                 )
-            cur = await conn.execute(self._SELECT + " WHERE session_id = %s", (session_id,))
+            cur = await conn.execute(self._SELECT + " WHERE s.session_id = %s", (session_id,))
             row = await cur.fetchone()
         return self._row(row)
 
-    async def list_sessions(self) -> list[SessionRow]:
+    async def list_sessions(self, owner: str) -> list[SessionRow]:
         async with await self._connect() as conn:
-            cur = await conn.execute(self._SELECT + " ORDER BY updated_at DESC, created_at DESC")
+            cur = await conn.execute(
+                self._SELECT + " WHERE p.owner_id = %s ORDER BY s.updated_at DESC, s.created_at DESC", (owner,)
+            )
             return [self._row(r) for r in await cur.fetchall()]
 
     async def get_session(self, session_id: str) -> SessionRow | None:
         async with await self._connect() as conn:
-            cur = await conn.execute(self._SELECT + " WHERE session_id = %s", (session_id,))
+            cur = await conn.execute(self._SELECT + " WHERE s.session_id = %s", (session_id,))
             row = await cur.fetchone()
         return self._row(row) if row else None
 
@@ -421,8 +501,15 @@ class PgStore:
                 for table in ("session_events", "session_seq", "session_activity", "session_entries", "turns", "tool_calls"):
                     await conn.execute(f"DELETE FROM {table} WHERE session_id = %s", (session_id,))  # noqa: S608 - fixed names
                 await conn.execute("DELETE FROM sessions WHERE session_id = %s", (session_id,))
+                # The project goes only with its LAST session. A project another session
+                # still opens must keep its documents -- and must keep its projects row,
+                # or its owner is gone and the next dev-login create could claim it.
                 for table in ("documents", "blobs", "staging", "projects"):
-                    await conn.execute(f"DELETE FROM {table} WHERE project_id = %s", (row["project_id"],))  # noqa: S608
+                    await conn.execute(
+                        f"DELETE FROM {table} WHERE project_id = %s "  # noqa: S608 - fixed names
+                        "AND NOT EXISTS (SELECT 1 FROM sessions WHERE project_id = %s)",
+                        (row["project_id"], row["project_id"]),
+                    )
         return True
 
     async def document_versions(self, project_id: str) -> dict[str, int]:
@@ -517,7 +604,7 @@ class PgStore:
         That is the whole reason this is not a SELECT followed by an UPDATE."""
         async with await self._connect() as conn:
             cur = await conn.execute(
-                "UPDATE turns SET outcome = NULL WHERE turn_id = ("
+                "UPDATE turns SET outcome = NULL, claimed_at = now() WHERE turn_id = ("
                 "  SELECT turn_id FROM turns WHERE session_id = %s AND outcome = %s "
                 "  AND completed_at IS NULL ORDER BY enqueued_at LIMIT 1 FOR UPDATE SKIP LOCKED"
                 ") RETURNING message",
@@ -544,6 +631,81 @@ class PgStore:
                 (session_id,),
             )
             return (await cur.fetchone()) is not None
+
+    # -- sign-in (008) --------------------------------------------------------------
+
+    @staticmethod
+    def _user(r: dict[str, Any]) -> User:
+        return User(
+            id=r["id"], email=r["email"], familysearch_id=r["familysearch_id"],
+            sessions_revoked_at=r["sessions_revoked_at"],
+        )
+
+    _USER = "SELECT id, email, familysearch_id, sessions_revoked_at FROM users"
+
+    async def get_user(self, user_id: str) -> User | None:
+        async with await self._connect() as conn:
+            cur = await conn.execute(self._USER + " WHERE id = %s", (user_id,))
+            row = await cur.fetchone()
+        return self._user(row) if row else None
+
+    async def upsert_user(self, email: str, familysearch_id: str | None) -> User:
+        """The user for this email, created on first sign-in. The FamilySearch id is
+        pinned on first sight; a later sign-in presenting a DIFFERENT one raises
+        IdentityMismatch (trust on first use)."""
+        email = email.strip().lower()
+        async with await self._connect() as conn:
+            async with conn.transaction():
+                await conn.execute(
+                    "INSERT INTO users (id, email) VALUES (%s, %s) ON CONFLICT (email) DO NOTHING",
+                    ("usr_" + uuid.uuid4().hex[:16], email),
+                )
+                cur = await conn.execute(self._USER + " WHERE email = %s FOR UPDATE", (email,))
+                user = self._user(await cur.fetchone())
+                if familysearch_id and user.familysearch_id and user.familysearch_id != familysearch_id:
+                    raise IdentityMismatch(email)
+                if familysearch_id and not user.familysearch_id:
+                    await conn.execute(
+                        "UPDATE users SET familysearch_id = %s WHERE id = %s", (familysearch_id, user.id)
+                    )
+                    user = User(user.id, user.email, familysearch_id, user.sessions_revoked_at)
+        return user
+
+    async def is_allowed(self, email: str) -> bool:
+        async with await self._connect() as conn:
+            cur = await conn.execute("SELECT 1 FROM allowed_emails WHERE email = %s", (email.strip().lower(),))
+            return (await cur.fetchone()) is not None
+
+    async def sync_allowlist(self, emails: set[str]) -> None:
+        """ALLOWED_EMAILS is the source of truth: the table is replaced at each start, so
+        removing an address from the environment and restarting locks that patron out
+        (current_user re-checks the allowlist on every request)."""
+        async with await self._connect() as conn:
+            async with conn.transaction():
+                await conn.execute("DELETE FROM allowed_emails")
+                for email in sorted(emails):
+                    await conn.execute("INSERT INTO allowed_emails (email) VALUES (%s)", (email,))
+
+    async def revoke_sessions(self, user_id: str) -> None:
+        async with await self._connect() as conn:
+            await conn.execute("UPDATE users SET sessions_revoked_at = now() WHERE id = %s", (user_id,))
+
+    async def store_grant(
+        self, user_id: str, access_token_enc: str, refresh_token_enc: str | None, expires_at: datetime
+    ) -> None:
+        """One statement, ciphertext only. granted_at restarts on every sign-in and never
+        on refresh (U3's 24 h clock); a response without a refresh token keeps the one
+        already stored."""
+        async with await self._connect() as conn:
+            await conn.execute(
+                "INSERT INTO familysearch_tokens "
+                "(user_id, access_token_enc, refresh_token_enc, expires_at, granted_at, updated_at) "
+                "VALUES (%s, %s, %s, %s, now(), now()) "
+                "ON CONFLICT (user_id) DO UPDATE SET access_token_enc = EXCLUDED.access_token_enc, "
+                "refresh_token_enc = COALESCE(EXCLUDED.refresh_token_enc, familysearch_tokens.refresh_token_enc), "
+                "expires_at = EXCLUDED.expires_at, granted_at = now(), updated_at = now()",
+                (user_id, access_token_enc, refresh_token_enc, expires_at),
+            )
 
 
 # ── queues ───────────────────────────────────────────────────────────────────────
@@ -641,8 +803,8 @@ def max_nudges(env: Mapping[str, str] | None = None) -> int:
     """``AUTONOMOUS_MAX_NUDGES`` for the turns this tier enqueues (1a).
 
     Read from the tier's OWN environment and stamped on the queue body -- never taken
-    from the request. This tier has no auth, so a field on ``MessageBody`` would let any
-    client set its own nudge budget, and the worker cannot tell the browser from
+    from the request. The cap is the operator's, so a field on ``MessageBody`` would let a
+    signed-in patron set their own nudge budget, and the worker cannot tell the browser from
     ``make proto-demo``: there is no browser path it can see. Each recipe recreates this
     container with its own export instead.
 
@@ -679,11 +841,14 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
+        auth.preflight()  # before anything binds: a misconfigured tier must not come up
         if app.state.store is None:
             pg = PgStore(os.environ.get("PG_DSN") or DEFAULT_PG_DSN)
             applied = await pg.apply_schema()
             log.info("schema applied: %s", ", ".join(applied))
             app.state.store = pg
+        if hasattr(app.state.store, "sync_allowlist"):
+            await app.state.store.sync_allowlist(auth.allowed_emails())
         if app.state.queue is None:
             queue_url = os.environ.get("QUEUE_URL")
             if queue_url:
@@ -704,13 +869,31 @@ def create_app(
     def _store(request: Request) -> Store:
         return request.app.state.store
 
-    async def _session(request: Request, session_id: str) -> SessionRow:
+    async def current_user(request: Request) -> User:
+        """The signed-in patron, or 401/403. On every /api/sessions route."""
+        data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME))
+        if data is None:
+            raise HTTPException(status_code=401, detail="Not signed in")
+        store = _store(request)
+        user = await store.get_user(data["uid"])
+        if user is None:
+            raise HTTPException(status_code=401, detail="Unknown user")
+        if auth.revoked(data.get("iat"), user.sessions_revoked_at):
+            raise HTTPException(status_code=401, detail="Session revoked")
+        if auth.familysearch_configured() and not await store.is_allowed(user.email):
+            raise HTTPException(status_code=403, detail="Account removed from allowlist")
+        return user
+
+    async def _session(request: Request, session_id: str, user: User) -> SessionRow:
+        """The session, if the caller owns its project. Someone else's session is a 404,
+        exactly like a missing one, so the answer does not confirm the id exists. A NULL
+        owner never equals a user id, so an unclaimed project is nobody's."""
         row = await _store(request).get_session(session_id)
-        if row is None:
+        if row is None or row.owner_id is None or row.owner_id != user.id:
             raise HTTPException(status_code=404, detail="Session not found")
         return row
 
-    # -- health / auth stubs --------------------------------------------------------
+    # -- health ---------------------------------------------------------------------
 
     @app.get("/api/health")
     async def health(request: Request) -> dict:
@@ -722,59 +905,159 @@ def create_app(
             "ping_s": request.app.state.ping_s,
         }
 
+    # -- sign-in (web/auth.py) ------------------------------------------------------
+
+    def _signed_in(response: Response, user: User) -> dict:
+        response.set_cookie(
+            auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.COOKIE_MAX_AGE, **auth.cookie_kwargs()
+        )
+        return {"id": user.id, "email": user.email}
+
     @app.get("/auth/config")
     async def auth_config() -> dict:
-        return {"familysearch": False, "devLogin": True}
+        return {"familysearch": auth.familysearch_configured(), "devLogin": auth.dev_login_enabled()}
 
     @app.get("/auth/me")
-    async def auth_me() -> dict:
-        return PROTO_USER
+    async def auth_me(user: User = Depends(current_user)) -> dict:
+        return {"id": user.id, "email": user.email}
 
     @app.post("/auth/dev-login")
-    async def dev_login(body: DevLoginBody) -> dict:
-        return {**PROTO_USER, "email": body.email or PROTO_USER["email"]}
+    async def dev_login(body: DevLoginBody, request: Request, response: Response) -> dict:
+        """Local only (auth.dev_login_enabled). No allowlist: any email signs in, so a
+        developer can act as two patrons and watch the owner checks work."""
+        if not auth.dev_login_enabled():
+            raise HTTPException(status_code=403, detail="Dev-login disabled; sign in with FamilySearch")
+        email = (body.email or "").strip().lower() or auth.DEV_LOGIN_EMAIL
+        return _signed_in(response, await _store(request).upsert_user(email, None))
 
     @app.post("/auth/logout")
-    async def logout() -> dict:
+    async def logout(request: Request, response: Response) -> dict:
+        data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME))
+        if data is not None:
+            await _store(request).revoke_sessions(data["uid"])
+        response.delete_cookie(auth.COOKIE_NAME, path="/", samesite="lax", secure=auth.is_https())
         return {"ok": True}
+
+    @app.get("/auth/familysearch/login")
+    async def familysearch_login(next: str | None = None) -> Response:
+        if not auth.familysearch_configured():
+            raise HTTPException(
+                status_code=501,
+                detail="FamilySearch sign-in is not configured (FAMILYSEARCH_WEB_ENABLED); use dev-login locally",
+            )
+        verifier, challenge = auth.pkce()
+        state = secrets.token_urlsafe(16)
+        resp = RedirectResponse(auth.authorize_url(challenge, state))
+        resp.set_cookie(
+            auth.FS_OAUTH_COOKIE, auth.oauth_state_cookie(verifier, state, next),
+            max_age=auth.FS_OAUTH_MAX_AGE, **auth.cookie_kwargs(),
+        )
+        return resp
+
+    @app.get("/callback")
+    async def familysearch_callback(request: Request, code: str | None = None, state: str | None = None) -> Response:
+        """The registered FamilySearch redirect: a TOP-LEVEL /callback (auth.redirect_uri).
+
+        Order matters, and each refusal writes nothing: state, code exchange, identity,
+        allowlist, then the user (refused if the email is pinned to another FamilySearch
+        account), and only then the grant -- encrypted here, so the store sees ciphertext.
+        No refresh: the grant is written once and U3 owns every later write."""
+        fail = "FamilySearch sign-in failed; return to the app and try again."
+        data = auth.read_oauth_state_cookie(request.cookies.get(auth.FS_OAUTH_COOKIE))
+        if data is None:
+            return HTMLResponse(f"Missing or invalid OAuth state. {fail}", status_code=400)
+        if not code or not state or state != data.get("state"):
+            return HTMLResponse(f"OAuth state mismatch. {fail}", status_code=400)
+        token_json = await auth.exchange_code(code, str(data.get("verifier") or ""))
+        if token_json is None:
+            return HTMLResponse(f"Token exchange failed. {fail}", status_code=502)
+        identity = await auth.fetch_identity(token_json["access_token"])
+        if identity is None:
+            return HTMLResponse(f"Could not read your FamilySearch identity. {fail}", status_code=502)
+        email = str(identity.get("email") or "").strip().lower()
+        if not email:
+            return HTMLResponse(
+                "Your FamilySearch account returned no email address, so it cannot be checked against "
+                "the allowlist. Ask the administrator.",
+                status_code=403,
+            )
+        store = _store(request)
+        if not await store.is_allowed(email):
+            return HTMLResponse(
+                f"The FamilySearch account <strong>{html.escape(email)}</strong> is not on the allowlist. "
+                "Ask the administrator to add this exact address, then sign in again.",
+                status_code=403,
+            )
+        fs_id = identity.get("id")
+        try:
+            user = await store.upsert_user(email, str(fs_id) if fs_id else None)
+        except IdentityMismatch:
+            return HTMLResponse(
+                f"<strong>{html.escape(email)}</strong> is already linked to a different FamilySearch "
+                "account. Sign in with that account, or ask the administrator.",
+                status_code=403,
+            )
+        refresh = token_json.get("refresh_token")
+        await store.store_grant(
+            user.id,
+            auth.encrypt(token_json["access_token"]),
+            auth.encrypt(refresh) if isinstance(refresh, str) and refresh else None,
+            auth.expires_at_from(token_json),
+        )
+        resp = RedirectResponse(auth.redirect_target(data.get("next")))
+        resp.set_cookie(
+            auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.COOKIE_MAX_AGE, **auth.cookie_kwargs()
+        )
+        resp.delete_cookie(auth.FS_OAUTH_COOKIE, path="/")
+        return resp
 
     # -- sessions -----------------------------------------------------------------
 
     @app.get("/api/sessions")
-    async def list_sessions(request: Request) -> list[dict]:
-        return [session_out(r) for r in await _store(request).list_sessions()]
+    async def list_sessions(request: Request, user: User = Depends(current_user)) -> list[dict]:
+        return [session_out(r) for r in await _store(request).list_sessions(user.id)]
 
     @app.post("/api/sessions")
-    async def create_session(body: CreateSessionBody, request: Request) -> dict:
-        row = await _store(request).create_session(
-            body.title or DEFAULT_TITLE, body.model or DEFAULT_MODEL, body.project_id
-        )
+    async def create_session(body: CreateSessionBody, request: Request, user: User = Depends(current_user)) -> dict:
+        try:
+            row = await _store(request).create_session(
+                body.title or DEFAULT_TITLE, body.model or DEFAULT_MODEL, body.project_id,
+                user.id, auth.dev_login_enabled(),
+            )
+        except ProjectNotOwned as exc:
+            raise HTTPException(status_code=404, detail="Project not found") from exc
         return session_out(row)
 
     @app.get("/api/sessions/{session_id}")
-    async def get_session(session_id: str, request: Request) -> dict:
-        return session_out(await _session(request, session_id))
+    async def get_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
+        return session_out(await _session(request, session_id, user))
 
     @app.patch("/api/sessions/{session_id}")
-    async def patch_session(session_id: str, body: PatchSessionBody, request: Request) -> dict:
+    async def patch_session(
+        session_id: str, body: PatchSessionBody, request: Request, user: User = Depends(current_user)
+    ) -> dict:
+        # Check, then act: an existing project's owner only ever moves from NULL to a
+        # user, and a NULL owner has already failed the check.
+        await _session(request, session_id, user)
         row = await _store(request).patch_session(session_id, body.title, body.model)
         if row is None:
             raise HTTPException(status_code=404, detail="Session not found")
         return session_out(row)
 
     @app.post("/api/sessions/{session_id}/resume")
-    async def resume_session(session_id: str, request: Request) -> dict:
-        return session_out(await _session(request, session_id))  # nothing to resume: no sandbox
+    async def resume_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
+        return session_out(await _session(request, session_id, user))  # nothing to resume: no sandbox
 
     @app.delete("/api/sessions/{session_id}")
-    async def delete_session(session_id: str, request: Request) -> dict:
+    async def delete_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
+        await _session(request, session_id, user)
         if not await _store(request).delete_session(session_id):
             raise HTTPException(status_code=404, detail="Session not found")
         return {"ok": True}
 
     @app.get("/api/sessions/{session_id}/state")
-    async def session_state(session_id: str, request: Request) -> dict:
-        row = await _session(request, session_id)
+    async def session_state(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
+        row = await _session(request, session_id, user)
         docs = await _store(request).documents(row.project_id)
         return {
             "label": row.title,
@@ -784,8 +1067,10 @@ def create_app(
         }
 
     @app.get("/api/sessions/{session_id}/sidecar/{log_id}")
-    async def session_sidecar(session_id: str, log_id: str, request: Request) -> dict:
-        await _session(request, session_id)
+    async def session_sidecar(
+        session_id: str, log_id: str, request: Request, user: User = Depends(current_user)
+    ) -> dict:
+        await _session(request, session_id, user)
         raise HTTPException(status_code=404, detail="Sidecar bodies are not served by the prototype web tier (D6-8)")
 
     _NOT_IN_PROTOTYPE = {
@@ -796,17 +1081,17 @@ def create_app(
 
     @app.get("/api/sessions/{session_id}/image")
     @app.get("/api/sessions/{session_id}/logs")
-    async def not_in_prototype_get(session_id: str, request: Request) -> None:
-        await _session(request, session_id)
+    async def not_in_prototype_get(session_id: str, request: Request, user: User = Depends(current_user)) -> None:
+        await _session(request, session_id, user)
         raise HTTPException(status_code=501, detail=_NOT_IN_PROTOTYPE[request.url.path.rsplit("/", 1)[-1]])
 
     @app.post("/api/sessions/{session_id}/files")
-    async def not_in_prototype_post(session_id: str, request: Request) -> None:
-        await _session(request, session_id)
+    async def not_in_prototype_post(session_id: str, request: Request, user: User = Depends(current_user)) -> None:
+        await _session(request, session_id, user)
         raise HTTPException(status_code=501, detail=_NOT_IN_PROTOTYPE[request.url.path.rsplit("/", 1)[-1]])
 
     @app.post("/api/sessions/{session_id}/interrupt", status_code=202)
-    async def interrupt(session_id: str, request: Request) -> dict:
+    async def interrupt(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
         """1c: Stop. This used to answer 501 -- "the worker owns the turn" -- and the whole
         design rests on it, so it is phase-1 work rather than a later nicety.
 
@@ -815,7 +1100,7 @@ def create_app(
         every tool call (a median of 2.6 s apart) and ends the turn; its Stop hook reads
         the same row so it cannot immediately veto that ending. 202, not 200: the press is
         recorded here, and the halt is observed on the feed as turn_done."""
-        row = await _session(request, session_id)
+        row = await _session(request, session_id, user)
         store = _store(request)
         await store.request_stop(row.session_id)
         return {"ok": True, "stopping": await store.turn_active(row.session_id)}
@@ -823,8 +1108,10 @@ def create_app(
     # -- turns and events ---------------------------------------------------------
 
     @app.post("/api/sessions/{session_id}/messages", status_code=202)
-    async def post_message(session_id: str, body: MessageBody, request: Request) -> dict:
-        row = await _session(request, session_id)
+    async def post_message(
+        session_id: str, body: MessageBody, request: Request, user: User = Depends(current_user)
+    ) -> dict:
+        row = await _session(request, session_id, user)
         store = _store(request)
         # 1b: nothing else serializes two turns on one session. post_message enqueued
         # unconditionally, the turn_active() helper existed but only the SSE replay and
@@ -875,8 +1162,10 @@ def create_app(
         return {"turn_id": turn.turn_id, "seq": turn.seq, "message_id": message_id, "queued": held}
 
     @app.get("/api/sessions/{session_id}/events")
-    async def get_events(session_id: str, request: Request, after: str | None = None) -> dict:
-        row = await _session(request, session_id)
+    async def get_events(
+        session_id: str, request: Request, after: str | None = None, user: User = Depends(current_user)
+    ) -> dict:
+        row = await _session(request, session_id, user)
         try:
             cursor = resolve_cursor(request.headers.get("last-event-id"), after)
         except ValueError as exc:
@@ -893,8 +1182,10 @@ def create_app(
         }
 
     @app.get("/api/sessions/{session_id}/events/stream")
-    async def stream_events(session_id: str, request: Request, after: str | None = None) -> StreamingResponse:
-        row = await _session(request, session_id)
+    async def stream_events(
+        session_id: str, request: Request, after: str | None = None, user: User = Depends(current_user)
+    ) -> StreamingResponse:
+        row = await _session(request, session_id, user)
         try:
             cursor = resolve_cursor(request.headers.get("last-event-id"), after)
         except ValueError as exc:

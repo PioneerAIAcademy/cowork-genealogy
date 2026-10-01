@@ -1,3 +1,5 @@
+import type { BrowseBudgetAdvisory } from "../utils/browse-budget.js";
+
 export interface ImageTranscribeInput {
   imageId?: string;
   ark?: string;
@@ -28,6 +30,9 @@ export interface ImageTranscribeResult {
    *  truncation is signalled by the sibling `truncated`/`truncationNotice`
    *  fields, not by splicing prose into this text. */
   transcription: string;
+  /** FamilySearch viewer URL for the image that was transcribed. Present for
+   *  imageId and ark inputs; absent for file and memoryArtifactUrl (issue #2854). */
+  viewerUrl?: string;
   /** True only when the OCR hit its output-token cap (finish_reason or
    *  native_finish_reason marks it — see §6.2 for the exact match): the
    *  transcription above is PARTIAL and the rest of the page is unread, not
@@ -46,14 +51,7 @@ export interface ImageTranscribeResult {
    *  project onward. Advisory only, and independent of `truncated` — the two can
    *  co-occur (a browse-budget read can also be output-cap truncated). See spec
    *  §5.8. */
-  browseBudget?: {
-    /** The image-group prefix, e.g. "004261111". */
-    imageGroup: string;
-    /** Distinct images transcribed from this group in this project so far. */
-    distinctImagesRead: number;
-    /** The advisory the caller should act on (pivot to indexed search). */
-    notice: string;
-  };
+  browseBudget?: BrowseBudgetAdvisory;
   /** Present when `lookingFor` contained a recognized given name and
    *  expansion fired. Tells the caller what the VLM was primed with. */
   nameExpansion?: {

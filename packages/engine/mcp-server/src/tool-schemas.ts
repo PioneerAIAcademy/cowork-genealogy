@@ -4,6 +4,7 @@
 // assert manifest.tools stays in sync with what's registered. Keeping it
 // in its own module means the test can read the list without importing
 // index.ts, which connects the stdio transport as a side effect.
+import { volumeBisectSchema } from "./tools/volume-bisect.js";
 import { wikipediaSearchSchema } from "./tools/wikipedia.js";
 import {
   placeSearchToolSchema,
@@ -56,8 +57,20 @@ import { researchQuerySchema } from "./tools/research-query.js";
 import { projectCreateSchema } from "./tools/project-create.js";
 import { buildExternalSearchUrlSchema } from "./tools/build-external-search-url.js";
 import { sidecarReadSchema } from "./tools/sidecar-read.js";
+import { getNameVariantsSchema } from "./tools/name-variants.js";
+
+// Tools exempt from ToolSearch deferral: their schemas load up front instead of
+// costing a ToolSearch turn each time. Sized against the September 2026 e2e corpus.
+export const ALWAYS_LOAD: ReadonlySet<string> = new Set([
+  "research_query", // loaded by the first genealogy ToolSearch of 34/34 runs
+  "project_context", // loaded beside research_query in that same first ToolSearch
+  "research_append", // most-loaded tool; 76 of its 82 re-loads follow a compaction
+  "research_log_append", // logs every search; 67 of its 68 re-loads follow a compaction
+  "record_read", // 2.3 KB and loaded in 31/34 runs. record_search stays deferred at 18.5 KB
+]);
 
 export const allToolSchemas = [
+  volumeBisectSchema,
   wikipediaSearchSchema,
   placeSearchToolSchema,
   placeSearchAllToolSchema,
@@ -106,4 +119,12 @@ export const allToolSchemas = [
   projectCreateSchema,
   buildExternalSearchUrlSchema,
   sidecarReadSchema,
+  getNameVariantsSchema,
 ];
+
+// Set in place, not copied: ownership-manifest.test.ts matches schemas by object identity.
+for (const name of ALWAYS_LOAD) {
+  const schema = allToolSchemas.find((s) => s.name === name);
+  if (!schema) throw new Error(`ALWAYS_LOAD names unknown tool "${name}"`);
+  Object.assign(schema, { _meta: { "anthropic/alwaysLoad": true } });
+}

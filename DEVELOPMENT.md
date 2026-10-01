@@ -147,8 +147,9 @@ Example: adding a "list providers" feature.
 4. **Manually test by installing both artifacts in Claude Desktop.**
 
 Copy the templates for steps 1 and 2: `src/tools/wikipedia.ts` plus its sibling
-four files for a tool, and `packages/engine/plugin/skills/search-wikipedia/` for
-a skill. Before the PR, read the implementation against its
+four files for a tool, and `packages/engine/plugin/agents/search-images.md`
+for a capability — under the lead's 2026-09-22 ruling a new capability is an
+agent, not a skill. Before the PR, read the implementation against its
 `docs/specs/<tool>-tool-spec.md` and quote both sides on any drift.
 
 (The `mcp-tool-scaffolder`, `cowork-skill-builder`, and `spec-review` subagents
@@ -300,7 +301,6 @@ After any dependency bump, re-run the audits and update
 
 ```bash
 (cd packages/engine/mcp-server && npm audit)
-(cd eval/app && npm audit)
 pnpm audit
 ```
 
@@ -309,7 +309,7 @@ dev-only, and the omitting forms report zero for trees that have open advisories
 Re-run with `--omit=dev` / `--prod` afterwards to sort what ships from what does not;
 the "Reachability" paragraph in the register does that triage.
 
-These cover the three JS trees only. The two Python trees (`apps/server/uv.lock`,
+These cover the two JS trees only. The two Python trees (`apps/server/uv.lock`,
 `eval/harness/uv.lock`) have no audit command here — Dependabot alerts are their only
 signal, and the register's backlog section carries the query.
 
@@ -356,12 +356,12 @@ skill tells it to — write a file to the selected folder. If that
 round-trip works, the full pipeline is wired: host → MCP server → SDK
 bridge → VM → Claude → file write.
 
-The `search-wikipedia` skill in `packages/engine/plugin/` is a working reference
-example showing the full plugin pipeline — it calls the
-`wikipedia_search` MCP tool, populates a markdown template, and saves
-the result to a file. Copy this structure when wiring a new skill to
-one of the other tools. Don't mutate `search-wikipedia` itself; create a
-new skill folder.
+`packages/engine/plugin/agents/search-images.md` is the reference agent to copy
+when wiring a new agent to one of the other tools: invocation contract, routing
+hand-back, the three tool spellings and the `summary_for_user` return contract.
+Don't mutate `search-images` itself; create a new agent file. Do not copy
+`search-wikipedia.md`: it is exempt from the return contract, so a copy fails
+`agent-return-contract.test.ts`.
 
 ## Running the hosted web workbench locally
 
