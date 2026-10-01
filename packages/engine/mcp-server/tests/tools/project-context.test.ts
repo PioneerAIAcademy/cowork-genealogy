@@ -119,6 +119,87 @@ describe("project_context", () => {
       persons: [],
       sources: [],
       localities: [],
+      awaitingUser: [],
+    });
+  });
+
+  describe("awaitingUser: open external-site hand-offs (spec §2.3)", () => {
+    const URL_A = "https://www.archion.de/de/alle-archive/baden-wuerttemberg/x/baiersbronn";
+    const URL_B = "https://www.fold3.com/search?keywords=Flynn";
+    function ext(id: string, outcome: string, url: string, captureReceived: boolean, planItemId: string | null = null) {
+      return {
+        id,
+        plan_item_id: planItemId,
+        performed: `2026-09-2${id.slice(-1)}T00:00:00.000Z`,
+        tool: "external_site",
+        query: {},
+        outcome,
+        results_examined: 0,
+        external_site: { site: "archion", url_generated: url, capture_received: captureReceived },
+        results_ref: null,
+      };
+    }
+    async function withLog(log: any[]) {
+      await writeProject(
+        { project: { id: "rp_001", objective: "T", status: "active", created: "2026-01-01", updated: "2026-01-01" }, log },
+        { persons: [], relationships: [], sources: [] },
+      );
+      const r = await projectContext({ projectPath: dir });
+      expect(r.ok).toBe(true);
+      if (!r.ok) throw new Error("project_context failed");
+      return r.awaitingUser;
+    }
+
+    it("lists an open partial hand-off with its plan item and timestamp", async () => {
+      expect(await withLog([ext("log_001", "partial", URL_A, false, "pli_004")])).toEqual([
+        {
+          logId: "log_001",
+          site: "archion",
+          urlGenerated: URL_A,
+          planItemId: "pli_004",
+          performed: "2026-09-21T00:00:00.000Z",
+        },
+      ]);
+    });
+
+    it("drops it once a later entry for the same URL carries the capture", async () => {
+      expect(
+        await withLog([ext("log_001", "partial", URL_A, false), ext("log_002", "positive", URL_A, true)]),
+      ).toEqual([]);
+    });
+
+    it("a capture on a different URL closes nothing", async () => {
+      const open = await withLog([ext("log_001", "partial", URL_A, false), ext("log_002", "positive", URL_B, true)]);
+      expect(open.map((o) => o.logId)).toEqual(["log_001"]);
+    });
+
+    it("an EARLIER capture does not close a later hand-off of the same URL", async () => {
+      const open = await withLog([ext("log_001", "positive", URL_A, true), ext("log_002", "partial", URL_A, false)]);
+      expect(open.map((o) => o.logId)).toEqual(["log_002"]);
+    });
+
+    it("never lists a positive entry logged with capture_received: false (alpha feedback #2864)", async () => {
+      expect(
+        await withLog([ext("log_012", "positive", URL_A, false), ext("log_013", "positive", URL_B, false)]),
+      ).toEqual([]);
+    });
+
+    it("ignores entries that are not external_site hand-offs", async () => {
+      expect(
+        await withLog([
+          {
+            id: "log_001",
+            plan_item_id: null,
+            performed: "2026-09-21T00:00:00.000Z",
+            tool: "record_search",
+            query: {},
+            outcome: "partial",
+            results_examined: 0,
+            external_site: null,
+            results_ref: null,
+          },
+        ]),
+      ).toEqual([]);
     });
   });
 

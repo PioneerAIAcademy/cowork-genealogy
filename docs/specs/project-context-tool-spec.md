@@ -84,6 +84,14 @@ repo's identifier-casing rule):
     recordIds: string[],                 // distinct record_id values across its assertions
     assertionCount: number,              // assertions with source_id = this id
   }],
+  localities: [...],                     // place/locale projection for research-plan
+  awaitingUser: [{                       // open external-site hand-offs — §2.3
+    logId: string,                       // log_* of the in-flight entry
+    site: string,                        // external_site.site
+    urlGenerated: string,                // the URL the user was sent
+    planItemId: string | null,
+    performed: string | null,
+  }],
 }
 // on failure: { ok: false, errors: string[], buildId }   — buildId on EVERY branch
 ```
@@ -192,6 +200,40 @@ The same predicates were first written against the committed e2e corpus, where
 they reproduced an independent count of the completion gate's population to
 within two runs.
 
+### 2.3 `awaitingUser` — what the user was already sent to fetch
+
+Decided by the lead 2026-09-30. In an alpha-feedback session the agent
+re-raised one Fold3 naturalization petition seven times over eight turns until
+the user fetched it. The "waiting on the user" record already existed — an
+`external_site` log entry with `outcome: "partial"` and
+`capture_received: false` — but nothing read it.
+
+A row is every `log[]` entry with `tool: "external_site"`,
+`outcome: "partial"` and `external_site.capture_received === false` that no
+**later** `external_site` entry (by log order) closes. A later entry closes it
+when it carries the same `url_generated` and `capture_received: true`.
+
+- **Keyed on `partial`, not on `capture_received` alone.** That session's bundle
+  holds two `outcome: "positive"` entries logged with `capture_received: false`
+  (`log_012`, `log_013`) whose results were already in hand; they are not
+  waiting on anyone and never list.
+- **Later only.** An earlier capture of the same URL does not close a hand-off
+  issued after it: the user was sent the link again.
+- **Open question (put back to the lead 2026-10-01).** The
+  skill logs a no-access wall as `capture_received: false` with a non-`partial`
+  outcome, so under this rule "I have no Archion pass" leaves the row listed
+  for good. The proposal is to close on any later non-`partial` entry for the
+  same URL; the rule above stands until that is answered.
+
+*Rejected:* an `awaiting_user` plan-item status — it duplicates state the log
+already holds, and would pull `research-plan` into the change.
+
+Written by `build_external_search_url`, which appends the in-flight entry
+itself when given a `projectPath` (`build-external-search-url-tool-spec.md`
+§6). A hand-off that did not come from the builder — an image link on a
+FamilySearch record, the shape that session hit — is to be logged in the same
+shape by the `search-external-sites` agent once the skill is converted.
+
 ## 3. Decisions recorded
 
 - **A projection, not a query language.** One fixed shape, no field
@@ -230,6 +272,11 @@ within two runs.
   half of a project.
 - **not a project at all** — `{ ok: false, reason: "no_project", errors }`, and
   no `isError`.
+- **`awaitingUser`** — lists an open partial hand-off with its plan item and
+  timestamp; drops it once a later entry for the same URL carries the capture;
+  a capture on a different URL closes nothing; an earlier capture does not
+  close a later hand-off; a `positive` entry with `capture_received: false`
+  never lists; a non-`external_site` entry never lists.
 
 ## 6. Consumers / wiring
 

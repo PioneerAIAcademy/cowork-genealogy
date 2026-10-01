@@ -8,6 +8,7 @@
 
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { isFourDigitYear, isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
+import { researchLogAppend } from "./research-log-append.js";
 
 export type ExternalSearchSite =
   | "ancestry"
@@ -24,7 +25,9 @@ export type ExternalSearchSite =
   | "antenati"
   | "library_archives_canada"
   | "american_ancestors"
-  | "italian_genealogy";
+  | "italian_genealogy"
+  | "archion"
+  | "matricula";
 
 export interface BuildExternalSearchUrlAttributes {
   givenName?: string;
@@ -85,6 +88,18 @@ export type BuildExternalSearchUrlResult =
   | { ok: false; reason: "invalid_base_url"; errors: string[] }
   | { ok: false; reason: "outside_coverage"; errors: string[] }
   | { ok: false; reason: "no_attributes"; errors: string[] };
+
+// What the MCP tool returns: the pure build, plus the in-flight log entry it
+// wrote when given a `projectPath` (spec §6).
+export interface BuildExternalSearchUrlToolInput extends BuildExternalSearchUrlInput {
+  projectPath?: string;
+  planItemId?: string | null;
+}
+
+export type BuildExternalSearchUrlToolResult =
+  | ({ ok: true; url: string; notes: string[]; access: AccessClassification; logId?: string })
+  | Exclude<BuildExternalSearchUrlResult, { ok: true }>
+  | { ok: false; reason: "log_write_failed"; errors: string[] };
 
 // ─── Value validators (spec §3.7) ────────────────────────────────────────────
 //
@@ -515,6 +530,13 @@ function siteWideParams(
       return {
         keywords: joinPresent(" ", a.givenName, a.surname, a.keywords),
       };
+    case "archion":
+    case "matricula":
+      // Browse sites (spec §3.11): church books are reached parish → register
+      // → volume → image, with no name search to template. The parish page
+      // comes from the caller's `baseUrl`, so nothing is appended and no
+      // attribute is read.
+      return {};
   }
 }
 
@@ -539,6 +561,10 @@ const SITE_BASE_URL: Record<ExternalSearchSite, string | null> = {
   library_archives_canada: "https://recherche-collection-search.bac-lac.gc.ca/eng/Home/Result",
   american_ancestors: "https://app.americanancestors.org/SearchResults/AdvancedSearch",
   italian_genealogy: "https://www.italiangenealogy.com/forum/search",
+  // Browse sites: the site root, returned only when no parish `baseUrl` was
+  // supplied (spec §3.11).
+  archion: "https://www.archion.de/de/",
+  matricula: "https://data.matricula-online.eu/de/",
   digital_newspaper_archive: null,
 };
 
@@ -550,6 +576,10 @@ const SITE_BASE_URL: Record<ExternalSearchSite, string | null> = {
 // crashed on first use. Six sites named in the launch scope have no template
 // for the live-checked reasons in spec §3.10.
 const SUPPORTED_SITES: ExternalSearchSite[] = Object.keys(SITE_BASE_URL) as ExternalSearchSite[];
+
+// Sites browsed rather than searched (spec §3.11). They append no parameters,
+// so a call with no attributes is the normal case, not a `no_attributes` error.
+const BROWSE_SITES: ReadonlySet<ExternalSearchSite> = new Set(["archion", "matricula"]);
 
 function isSupportedSite(site: string): site is ExternalSearchSite {
   return (SUPPORTED_SITES as string[]).includes(site);
@@ -607,6 +637,11 @@ const SITE_ACCESS: Record<ExternalSearchSite, AccessClassification> = {
   // permanent note in SITE_NOTES carries what the 3-value enum cannot.
   american_ancestors: "free",
   italian_genealogy: "free",
+  // Viewing Archion's scans needs a paid pass. Matricula is free; measured
+  // 2026-10-01, a parish page and the root both return HTTP 200 with no
+  // `cf-mitigated` header, with and without a user agent.
+  archion: "subscription",
+  matricula: "free",
 };
 
 // US/UK variants share one parameter table (spec §3.9) — confirmed to use the
@@ -682,6 +717,13 @@ const SITE_NOTES: Partial<Record<ExternalSearchSite, string>> = {
   // 2026-09-15 for genealogybank.com, newspaperarchive.com, newsbank.com and
   // britishnewspaperarchive.co.uk. SKILL.md tells the model never to raise
   // access for a site reported free, so the hedge has to travel with the value.
+  archion:
+    "browse, not search: open the parish page, pick the register type (Taufen, Ehen, Tote, " +
+    "Familienregister) and the volume covering the year, then page to the image — viewing the " +
+    "scans needs an Archion pass",
+  matricula:
+    "browse, not search: open the parish page, pick the register type (Taufen, Trauungen, " +
+    "Sterbefälle) and the volume covering the year, then page to the image — free to view",
   digital_newspaper_archive:
     "this archive's URL carries no date filter — tell the user which date range to set in the site's own UI. " +
     "The access classification is this class's default, NOT checked against this archive: if it turns out to " +
@@ -1163,7 +1205,7 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
   // mild noise; `SITE_NOTES[site]` stays out of this path deliberately, since
   // a site's permanent caution is never why THIS call landed nothing.
   notes.push(...siteNotes(site, a, params));
-  if (!Object.values(params).some((v) => v !== undefined)) {
+  if (!BROWSE_SITES.has(site) && !Object.values(params).some((v) => v !== undefined)) {
     // The notes ride in `errors` so the caller learns WHY nothing landed —
     // "no attributes" alone reads as "you sent none" when it sent invalid ones.
     return {
@@ -1178,6 +1220,12 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
   }
   const siteNote = SITE_NOTES[site];
   if (siteNote) notes.push(siteNote);
+  if (BROWSE_SITES.has(site) && !baseUrl) {
+    notes.push(
+      `no parish URL supplied — this is ${site}'s site root; pass the parish page from the ` +
+        "wiki or locality guide as baseUrl to link straight to the parish",
+    );
+  }
 
   // `locale` applies only to the site-wide fallback — a curated `baseUrl`
   // names its own host. A locale with no variant is noted, not ignored.
@@ -1203,6 +1251,62 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
   return { ok: true, url, notes, access: SITE_ACCESS[site] };
 }
 
+// ─── The tool: build, then log the hand-off (spec §6) ─────────────────────────
+
+// The build stays pure and synchronous; this wrapper adds the one write. With a
+// `projectPath` it appends the in-flight `external_site` entry — `outcome:
+// "partial"`, `capture_received: false` — through `researchLogAppend` itself,
+// so `project_context`'s `awaitingUser` sees every URL handed to the user.
+export async function buildExternalSearchUrlTool(
+  input: BuildExternalSearchUrlToolInput,
+): Promise<BuildExternalSearchUrlToolResult> {
+  const result = buildExternalSearchUrl(input);
+  if (!result.ok) return result;
+  const projectPath = input?.projectPath;
+  const planItemId = input?.planItemId;
+  if (projectPath === undefined || projectPath === null || projectPath === "") {
+    if (planItemId !== undefined && planItemId !== null) {
+      result.notes.push("'planItemId' has no effect without projectPath — nothing was logged");
+    }
+    return result;
+  }
+
+  const attributes = coerceJsonArg(input.attributes);
+  const query =
+    attributes !== null && typeof attributes === "object" && !Array.isArray(attributes)
+      ? { ...(attributes as Record<string, unknown>) }
+      : {};
+  const noteParts = [
+    typeof input.baseUrl === "string" && input.baseUrl.trim() !== "" ? `baseUrl: ${input.baseUrl.trim()}` : null,
+    input.locale ? `locale: ${input.locale}` : null,
+  ].filter((n): n is string => n !== null);
+
+  const logged = await researchLogAppend({
+    projectPath,
+    tool: "external_site",
+    query,
+    outcome: "partial",
+    resultsExamined: 0,
+    planItemId: planItemId ?? null,
+    notes: noteParts.length > 0 ? noteParts.join("; ") : null,
+    externalSite: { site: input.site, urlGenerated: result.url, captureReceived: false },
+  });
+  if (!logged.ok) {
+    // Not a project: the URL still serves a standalone search, so it is an
+    // answer, not a failure — relayed with the log tool's own message.
+    if (logged.reason === "no_project") {
+      return { ...result, notes: [...result.notes, ...logged.errors] };
+    }
+    return { ok: false, reason: "log_write_failed", errors: logged.errors };
+  }
+  if (!("logId" in logged)) {
+    return { ok: false, reason: "log_write_failed", errors: ["log write returned no logId"] };
+  }
+  const notes = [...result.notes, ...logged.validation.warnings];
+  if (logged.escalationDue) notes.push(logged.escalationDue);
+  return { ...result, notes, logId: logged.logId };
+}
+
 // ─── MCP schema ──────────────────────────────────────────────────────────────
 
 export const buildExternalSearchUrlSchema = {
@@ -1212,7 +1316,10 @@ export const buildExternalSearchUrlSchema = {
     "sites (see the `site` enum) from structured search attributes. Pass " +
     "`baseUrl` (a FamilySearch-curated collection link) to append parameters " +
     "onto it instead of building a fresh site-wide search — required for " +
-    "digital_newspaper_archive, which has no fixed site-wide URL. Pass `locale: " +
+    "digital_newspaper_archive, which has no fixed site-wide URL. archion and " +
+    "matricula are browse sites: pass the parish page as `baseUrl` (from the wiki " +
+    "or locality guide) and it comes back unchanged with the browse path in " +
+    "`notes`. Pass `locale: " +
     "\"uk\"` for the .co.uk variant of ancestry or findmypast (ignored, with a " +
     "note, for any other site). You decide which record type/event the search " +
     "targets and how to resolve any conflicts[] entry on a disputed field; the " +
@@ -1234,7 +1341,8 @@ export const buildExternalSearchUrlSchema = {
         type: "string",
         description:
           "A FamilySearch-curated collection URL to append parameters onto, instead of " +
-          "a fresh site-wide search. Required for digital_newspaper_archive.",
+          "a fresh site-wide search. Required for digital_newspaper_archive. For archion and " +
+          "matricula, the parish page URL.",
       },
       locale: {
         type: "string",

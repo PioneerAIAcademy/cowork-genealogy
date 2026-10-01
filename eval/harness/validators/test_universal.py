@@ -1157,6 +1157,19 @@ PROJECT_WRITER_TOOLS = {
     "materialize_facts",
     "merge_tree_persons",
 }
+# Writers only when called with a projectPath: `build_external_search_url`
+# appends its in-flight hand-off log entry then, and writes nothing otherwise.
+# Counted only when it carried one, so a pure URL build cannot vouch for a
+# hand edit made in the same run.
+CONDITIONAL_PROJECT_WRITER_TOOLS = {"build_external_search_url"}
+
+
+def _is_project_writer_call(call: dict) -> bool:
+    name = (call.get("tool") or "").rsplit("__", 1)[-1]
+    if name in PROJECT_WRITER_TOOLS:
+        return True
+    args = call.get("args")
+    return name in CONDITIONAL_PROJECT_WRITER_TOOLS and isinstance(args, dict) and bool(args.get("projectPath"))
 
 
 def test_project_file_changes_route_through_writer_tools(
@@ -1202,11 +1215,7 @@ def test_project_file_changes_route_through_writer_tools(
     if not changed:
         return
 
-    writer_calls = [
-        c
-        for c in (tool_calls or [])
-        if (c.get("tool") or "").rsplit("__", 1)[-1] in PROJECT_WRITER_TOOLS
-    ]
+    writer_calls = [c for c in (tool_calls or []) if _is_project_writer_call(c)]
     assert writer_calls, (
         f"project file {' and '.join(changed)} modified with no writer-tool "
         f"call — direct file writes bypass validation/id-allocation; "
