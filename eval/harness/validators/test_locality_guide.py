@@ -45,7 +45,7 @@ Of the two other checks the deep dive proposed, VR3 was dropped and VR2 is held
     collections[].id here), so there is no valid ground to drop it — only to defer.
   - VR3 (digitization label requires a volume_search call) — dropped as
     subsumed by VR4, and it would only ever false-fire. A wiki-grounded label
-    is NOT a legitimate substitute for the call: SKILL.md:82 makes
+    is NOT a legitimate substitute for the call: agents/locality-guide.md Step 3 makes
     volume_search a required Step-3 call, and Step 4 derives every label from
     its result — even the "No match in volume_search" branch presupposes the
     call was made, with the wiki as a cross-check, not a substitute. VR4
@@ -161,7 +161,7 @@ def test_persisted_localities_entry_shape(before_state, after_state):
 def test_survey_run_calls_both_collections_and_volume_search(tool_calls):
     """VR4 (gating) — a records-availability survey that called one of the Step-3
     searches must have called both: collections_search and volume_search are both
-    required Step-3 calls (SKILL.md Step 3, "do not drop any call").
+    required Step-3 calls (agents/locality-guide.md Step 3, "do not drop any call").
 
     Grades call PRESENCE, not the result: the skill *making* both calls is the
     behaviour under test. A `fixture_not_found` response means the skill DID call
@@ -196,5 +196,5 @@ def test_survey_run_calls_both_collections_and_volume_search(tool_calls):
     ]
     assert not missing, (
         f"records survey called {sorted(tools & {'collections_search', 'volume_search'})} "
-        f"but not {missing} — both are required Step-3 calls (SKILL.md Step 3)"
+        f"but not {missing} — both are required Step-3 calls (agents/locality-guide.md Step 3)"
     )

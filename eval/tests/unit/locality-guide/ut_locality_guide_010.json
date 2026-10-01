@@ -13,11 +13,12 @@
       "archives",
       "record loss",
       "reconstruction",
-      "volume-search"
+      "volume-search",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I\u2019m researching ancestors in New Orleans during the early 1800s. How does the locality guide explain what records survived floods, fires, or other disasters and where researchers should look for copies or substitutes?",
+    "delegation": "I'm researching ancestors in New Orleans during the early 1800s. How does the locality guide explain what records survived floods, fires, or other disasters and where researchers should look for copies or substitutes?\n\nprojectPath: <workspace>",
     "scenario": "empty-project-just-created",
     "scenario_notes": null
   },
@@ -27,6 +28,7 @@
   "mcp_fixtures": [
     "place-search-new-orleans",
     "place-search-louisiana",
+    "place-search-any",
     "collections-search-louisiana",
     "wikipedia-search-new-orleans",
     "wikipedia-search-orleans-parish",

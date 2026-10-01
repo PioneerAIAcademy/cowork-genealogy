@@ -1082,6 +1082,12 @@ DEDICATED_AGENT_NAMES = frozenset(
         # folder. Listed because the set is asserted equal to the shipped agent
         # files.
         "search-familysearch-wiki",
+        # Same shape as `citation` (issue #2792): a converted skill, no hook
+        # route. It is listed because the set is asserted equal to the shipped
+        # agent files, and because a `hypotheses` write arriving from it is
+        # legitimate -- `ownership.json` names `agent:hypothesis-tracking` on
+        # that row. Do not read its presence here as evidence of a hook route.
+        "hypothesis-tracking",
         # Same shape as citation (issue #2805): a converted skill, not a
         # hook-routed pair. It writes tree persons, relationships and sources,
         # and `ownership.json` names `agent:tree-edit` on those rows as the
@@ -1093,6 +1099,10 @@ DEDICATED_AGENT_NAMES = frozenset(
         # no row. Listed because the set is asserted equal to the shipped agent
         # files.
         "validate-schema",
+        # Same shape as citation (issue #2117): a converted skill. The hook lanes
+        # it to `localities` and routes nothing to it; `ownership.json` names
+        # `agent:locality-guide` on that row.
+        "locality-guide",
     }
 )
 

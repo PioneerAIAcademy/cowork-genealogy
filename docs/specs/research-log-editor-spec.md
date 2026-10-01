@@ -76,6 +76,9 @@ research_log_append({
   projectPath: string,            // dir holding research.json + results/
   tool: string,                   // "record_search" | "fulltext_search" | "image_search"
                                   //   | "person_read" | "external_site" | ...
+                                  //   Omit it with a stagedResultsRef and the tool fills it from the
+                                  //   staged envelope. Missing required fields are refused together,
+                                  //   in one error, before any other check.
   query: object,                  // freeform — enough to reproduce the search; may not name a
                                   //   filter its staged search never sent (§8.3). Omit it with a
                                   //   stagedResultsRef and the tool fills it from the staged search
@@ -294,7 +297,7 @@ rule is no longer needed (under Option B it never applied).
 | `id`, `performed`, `results_ref` | `tool`, `query`, `outcome`, `results_examined` |
 | sidecar `log_id`, `retrieved`, `returned_count` | `results_available`, `notes`, `plan_item_id` |
 | camelCase→snake_case rename; append-only; atomic write + validate | `external_site` details; whether results were retained |
-| `query` when omitted with a staged handle (filled from the staged search) | the **values** in an explicit `query` |
+| `query` and `tool` when omitted with a staged handle (filled from the staged search) | the **values** in an explicit `query` |
 | no explicit `query` names a filter its staged search never sent (§8.3) | which descriptive, non-filter context to record |
 
 The caller still makes every analytical call (was the outcome negative? is this
