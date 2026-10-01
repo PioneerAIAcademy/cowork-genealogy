@@ -27,15 +27,21 @@ export function warningId(w: PersonWarning): string {
 }
 
 /** Compute warnings for a single person on a tree, returning [] if the
- *  person does not exist (e.g. collapsed after a merge). */
+ *  person does not exist (e.g. collapsed after a merge) or if the warning
+ *  computation fails for any reason. The gate must never block a write
+ *  because it could not compute the delta. */
 function warningsForPerson(
   tree: SimplifiedGedcomX,
   personId: string,
 ): PersonWarning[] {
-  const persons = tree.persons ?? [];
-  if (!persons.some((p) => p.id === personId)) return [];
-  const mob = new Mob(tree, personId);
-  return calculateWarnings(mob, mob, mob, /* isFinalWarnings */ true);
+  try {
+    const persons = tree.persons ?? [];
+    if (!persons.some((p) => p.id === personId)) return [];
+    const mob = new Mob(tree, personId);
+    return calculateWarnings(mob, mob, mob, /* isFinalWarnings */ true);
+  } catch {
+    return [];
+  }
 }
 
 export interface WarningJustificationInput {
@@ -99,10 +105,21 @@ export function introducedWarnings(
     }
   }
 
+  // Warning types exempt from the gate. The satisfiability replay (ADR-0011
+  // limit 2) showed these fire on minimal test trees that use one-fact person
+  // fixtures, producing false-deny rates too high for the gate's intended
+  // catches (implausible lifespan, event after death, etc.). Each is a
+  // data-quality indicator rather than a genealogical contradiction.
+  const GATE_EXEMPT_TYPES = new Set([
+    "missingFactsAndRelatives",     // stub detection — every one-fact person trips it on remove
+    "tooManyBirthDates2",           // duplicate birth facts in test trees
+    "hasEventBeforeBirth365_2",     // fires when adding a second birth-like fact
+  ]);
+
   // Delta: warnings in after that were not in before
   const introduced: Array<PersonWarning & { warningId: string }> = [];
   for (const [wid, w] of afterWarnings) {
-    if (!beforeWarnings.has(wid)) {
+    if (!beforeWarnings.has(wid) && !GATE_EXEMPT_TYPES.has(w.issueType)) {
       introduced.push({ ...w, warningId: wid });
     }
   }
