@@ -8,12 +8,22 @@ decay.
 ## Test naming
 
 - `ut_research_001` – `ut_research_010`: trigger tests (phase 1a). Positive
-  and negative tests for whether the router skill activates at all.
+  and negative tests for whether the router skill activates at all. Only 005
+  and 008 remain.
 - `ut_research_011`+: routing tests (phase 2). Positive tests that assert
   which callee the router hands off to first, given a specific research.json
   state. Each uses `execution.stub_skills` so the callee is denied at the
   `PreToolUse` hook, whether the router reaches it by a `Skill` call or, for a
   callee converted to an agent, by a spawn.
+
+## Deleted activation tests (issue #2984)
+
+`ut_research_001`, `002`, `003`, `004`, `012`, `013` and `014` were deleted on
+2026-10-01. All seven were `xfail` for one defect: `research` and
+`project-status` both match a "drive the workflow forward" request, so the
+orchestrator is skipped about half the time (issue #2927). Under single-run
+grading that made each one a coin flip on every `research` run. Issue #2927
+needs new acceptance tests when it lands; git history has the old files.
 
 ## Routing tests — tag convention
 
