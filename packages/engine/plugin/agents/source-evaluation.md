@@ -66,7 +66,7 @@ When the `personId` is a FamilySearch ID — four characters, a hyphen, three ch
 
 For each source whose `url` carries a record-persona ARK (`1:1:`), call `record_read` on it. That returns what FamilySearch actually indexed — the names, dates, places and relationships as transcribed.
 
-Sources with no readable ARK (a user-uploaded document, an external link, a memory) cannot be checked this way. Say so for each one rather than guessing at its contents.
+Sources with no readable ARK (a user-uploaded document, an external link, a memory) cannot be checked this way. Say so for each one rather than guessing at its contents. When such an item's title or citation names the event a finding disputes, name it in that finding's remedy as something to look at alongside the original record. It is a lead, not evidence: an uploader's title is often copied from the tree, so the date it carries corroborates neither value.
 
 ### 3. Compare the index against the profile
 
