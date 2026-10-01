@@ -1,0 +1,166 @@
+{
+  "run_log": "v1_2026-09-17_21-29-19.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_question_selection_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The question itself is factually correct and relates to the objective, but the skill incorrectly narrowed the scope of a single-fact objective. Since the objective was to identify Patrick Flynn’s parents, the first question should have asked for both parents rather than decomposing the task into separate father and mother questions. Splitting the objective is only appropriate for multi-fact objectives. The issue is not factual accuracy of the question, but failure to preserve the required objective scope."
+    },
+    {
+      "test_id": "ut_question_selection_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully completed the requested task by reviewing the project state, recognizing that no existing questions were present, and creating the first research question with the required metadata. It clearly distinguished the objective from the generated question, provided the necessary rationale and selection information, and communicated the next step effectively. No required elements were missing."
+    },
+    {
+      "test_id": "ut_question_selection_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was correct throughout. All five tool calls used valid arguments, matched the expected live tool behavior, and successfully interacted with the project state and research append workflow. The schema and field structure for the appended question were valid, and no fixture_not_found errors or tool misuse occurred."
+    },
+    {
+      "test_id": "ut_question_selection_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The question is concrete, specific, and researchable. It clearly identifies the individual, includes useful identifying details (approximate birth year and location), and states the exact genealogical fact being sought (the father’s identity). It provides sufficient scope for targeted research and avoids vague wording."
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly interpreted the project state and made an appropriate decision to defer new question selection. It accurately identified the active plan item, current question statuses, proof state, and timeline gap, and its recommendation to complete the in-progress probate research first was supported by the available project information. The response demonstrated proper workflow management and did not introduce unnecessary new research tasks."
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Claude fully addressed the question-selection task by reviewing the project state, identifying the active blocking research item, and explaining why it should be completed before selecting a new question. It appropriately considered the proof status, potential impact of probate findings, and future research directions. No required part of the workflow was omitted, and the recommendation was supported by the available project evidence."
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was correct and well-targeted. All seven calls used valid arguments with the correct project path and section parameters, matched the expected tool behavior, and returned successful responses. No fixture_not_found errors occurred, and the calls retrieved the appropriate project data needed for the task."
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "This criterion does not apply because the skill correctly deferred creating a new research question. The task was not to evaluate a selected question, since no new question was added. The references to possible future research directions were only examples and not an actual question selection. Per the test override, this dimension should be scored as null."
+    },
+    {
+      "test_id": "ut_question_selection_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly applied the blocking-conflict exception and appropriately prioritized resolving the identity conflict before continuing with the blocked research question. The reasoning was genealogically sound, recognizing that establishing the correct individual is foundational before evaluating birthplace evidence. The new question was properly grounded in the existing conflict and source information, with accurate details, logical dependencies, and correct tool execution. No unsupported claims or workflow errors were introduced."
+    },
+    {
+      "test_id": "ut_question_selection_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully completed the required workflow. It correctly identified the blocking unresolved conflicts, prioritized the foundational identity conflict, created a targeted research question to resolve competing assertions, explained why the blocking-conflict exception applied, documented dependencies, and persisted the new question appropriately. All required elements of the task were addressed with no major omissions or workflow errors."
+    },
+    {
+      "test_id": "ut_question_selection_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. All six calls succeeded with valid live responses, used the correct project paths and section parameters, and matched the expected workflow. The research_append call included the required schema fields and successfully persisted a valid research question entry. No fixture_not_found errors or tool argument issues occurred."
+    },
+    {
+      "test_id": "ut_question_selection_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The question is concrete, focused, and answerable. It clearly identifies the identity conflict by naming the two Patrick Flynn references, the relevant dates, locations, and the specific fact to establish (whether they are the same individual). The wording supports a targeted genealogical research strategy using records that can build or break an identity chain. It avoids being vague or overly broad and directly addresses the unresolved conflict."
+    },
+    {
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly identified the remaining research gap and selected an appropriate next question. It accurately recognized that the father’s identity was already established and that the unresolved objective was the mother’s identity. The new question directly targets that missing fact, and the rationale is consistent with the resolved questions and available evidence. No unsupported claims or fabricated information were introduced."
+    },
+    {
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully satisfied the required workflow. It correctly recognized that q_001 was resolved, identified the remaining research gap (Patrick Flynn’s mother), created an appropriate new question, included the correct dependencies on q_001 and q_002, and provided a clear rationale connected to the existing Thomas Flynn household evidence. All required elements were completed with no unsupported claims or omissions."
+    },
+    {
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. All eight calls used valid arguments, targeted the appropriate project sections, and matched the expected live tool behavior. The final research_append call was properly structured with the required fields and successfully added the new question. No fixture_not_found errors occurred, and the workflow was executed correctly from start to finish."
+    },
+    {
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The question is specific, concrete, and researchable. It identifies the individual (Patrick Flynn), the exact genealogical fact needed (mother’s identity), and is appropriately scoped for targeted research. It avoids vague wording and directly addresses the remaining research objective."
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly recognized that the existing question already covered the research objective and avoided creating a redundant question. It accurately reviewed the project state, confirmed there were no blocking issues requiring a new question, and appropriately recommended proceeding with the existing plan item. The reasoning was grounded in the available project information, with no fabricated claims or unnecessary workflow changes."
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully addressed the user’s request by reviewing the project state, evaluating whether a new question was necessary, and applying the prioritization framework appropriately. It considered the relevant research components (conflicts, hypotheses, timelines, open questions, and plan items) and provided a clear next-step recommendation. The response was complete, grounded in the available project information, and did not introduce unsupported conclusions."
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. All five tool calls used valid arguments, targeted the appropriate project sections, and matched the expected live behavior. No fixture_not_found errors or argument mismatches occurred. The workflow correctly retrieved the necessary project information for the analysis."
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "This criterion does not apply because the skill did not create a new research question. It correctly recognized that an existing question (q_001) already covered the objective and appropriately avoided generating a duplicate. Since no new question was produced, question-quality scoring is not applicable."
+    }
+  ]
+}
