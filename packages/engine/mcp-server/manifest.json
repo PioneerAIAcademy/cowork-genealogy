@@ -54,6 +54,7 @@
     { "name": "validate_research_schema" },
     { "name": "source_attachments" },
     { "name": "image_search" },
+    { "name": "volume_bisect" },
     { "name": "person_warnings" },
     { "name": "person_quality" },
     { "name": "merge_warnings" },

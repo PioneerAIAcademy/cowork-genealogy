@@ -1827,6 +1827,7 @@ def test_orchestrator_threads_delegation_and_builtin_calls_into_validators(tmp_p
     # here and the assertion below would pass on the wrong value.
     spec.raw["input"].pop("user_message", None)
     spec.user_message = ""
+    spec.negative = {"correct_skill": ["NEGATIVE-SENTINEL"]}
     paths = OrchestratorPaths(runlogs_root=tmp_path)
     auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
 
@@ -1861,6 +1862,11 @@ def test_orchestrator_threads_delegation_and_builtin_calls_into_validators(tmp_p
         timestamp="2026-08-22_00-00-00",
     ))
 
+    assert captured["test"].get("negative") == {"correct_skill": ["NEGATIVE-SENTINEL"]}, (
+        "orchestrator did not thread spec.negative into run_validators' test "
+        "dict; test_hand_back_names_its_owner reads its owner from it and fails "
+        "every compliant hand-back without it (issue #2118)"
+    )
     assert captured["test"].get("delegation") == "DELEGATION-SENTINEL", (
         "orchestrator did not thread spec.delegation into run_validators' test "
         "dict; all three direct-arm validators would skip on every direct test"
@@ -2029,9 +2035,11 @@ def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monk
 # negative that still carries `grade_on_invariant`, so it is exempt from the
 # coercion for that reason rather than for having ceased to be a negative.) 81 of the committed negative
 # fixtures qualify; this one is
-# picked because its scenario exists and OrchestratorPaths resolves it.
+# picked because its scenario exists and OrchestratorPaths resolves it, and it
+# sits in record-extraction's suite, which stays a skill (the check-warnings one
+# it replaced was deleted with that skill, issue #2118).
 NEGATIVE_TEST_PATH = (
-    REPO_ROOT / "eval/tests/unit/check-warnings/negative-project-status.json"
+    REPO_ROOT / "eval/tests/unit/record-extraction/negative-search-vs-extract.json"
 )
 
 
@@ -2190,8 +2198,10 @@ def test_coercion_reaches_a_validator_failing_negative(tmp_path, monkeypatch):
     async def fake_run_skill(**kwargs):
         from harness.skill_runner import SkillRunResult
         # Correctly routed: the skill under test declined, the accepted skill ran.
+        # Read off the fixture, so repointing NEGATIVE_TEST_PATH cannot leave a
+        # stale name here that the fixture does not accept.
         return SkillRunResult(
-            text_response="", skills_invoked=["project-status"],
+            text_response="", skills_invoked=list(spec.negative["correct_skill"][:1]),
             tool_calls=[], duration_ms=1.0,
             usage={"total_cost_usd": 0.0, "usage": {}},
         )

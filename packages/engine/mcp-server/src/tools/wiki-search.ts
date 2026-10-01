@@ -1,6 +1,6 @@
 import type { Principal } from "../auth/principal.js";
 import { getWikiApiUrl } from "../auth/config.js";
-import { fetchWithRetry } from "../utils/http.js";
+import { describeFetchError, fetchWithRetry } from "../utils/http.js";
 import type {
   WikiSearchAPIResponse,
   WikiSearchResult,
@@ -37,9 +37,8 @@ export async function wikiSearch(
       WIKI_SEARCH_TIMEOUT_MS
     );
   } catch (error) {
-    const cause = error instanceof Error ? error.message : String(error);
     throw new Error(
-      `Could not reach wiki-query-api at ${baseUrl}. Is the server running? (${cause})`
+      `Could not reach wiki-query-api at ${baseUrl} (${describeFetchError(error)}).`
     );
   }
 

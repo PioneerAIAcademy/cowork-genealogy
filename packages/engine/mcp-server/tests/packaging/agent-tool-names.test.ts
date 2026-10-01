@@ -568,6 +568,26 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // tree-edit (issue #2805) holds the seven tools the skill it replaced
+  // declared, plus `Read` for the Narration line's read of research.json. It
+  // writes the tree through `tree_edit`, `tree_correct` and
+  // `merge_tree_persons`; `ownership.json` names `agent:tree-edit` on the tree
+  // persons, relationships and sources rows. It holds no `research_append`, so
+  // no hook routes anything to it.
+  "tree-edit.md": {
+    tools: [
+      "Read",
+      "place_search",
+      "place_search_all",
+      "tree_edit",
+      "tree_correct",
+      "merge_tree_persons",
+      "person_record_matches",
+      "person_person_matches",
+    ],
+    denies: [],
+  },
+
   // search-familysearch-wiki (issue #2794) holds the one tool the skill it
   // replaced declared, `wiki_search`, plus two built-ins it relied on from the
   // main thread. `Write`: the deliverable IS a markdown file, and handing the
@@ -596,6 +616,23 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "research_log_append",
       "volume_search",
     ],
+    denies: [],
+  },
+
+  // The folded check-warnings skill (issue #2118). `person_quality` is absent by
+  // lead ruling 2026-09-27. No `Read`: with it the agent read research.json and
+  // the tree and reported what it found there instead of the tool's answer (4
+  // of 39 confirmation runs, 2026-09-28); callers pass person ids. Writes nothing.
+  "check-warnings.md": {
+    tools: ["person_warnings"],
+    denies: [],
+  },
+
+  // The folded validate-schema skill (issue #2798) holds the one tool that skill
+  // declared. No `Read`: the tool reads both project files itself, and nothing
+  // in the body reads a file directly. Writes nothing, so no hook route.
+  "validate-schema.md": {
+    tools: ["validate_research_schema"],
     denies: [],
   },
 
