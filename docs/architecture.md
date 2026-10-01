@@ -549,7 +549,7 @@ agents.**
 
 > **Do not add a `model:` pin to a new skill.** The mechanism still exists in the
 > unit harness (`harness/orchestrator.py` honours the field, falling back to
-> `DEFAULT_MODEL`), but nothing uses it: 25 skills pinned `claude-sonnet-4-6` —
+> `DEFAULT_MODEL`), but nothing uses it: 26 skills pinned `claude-sonnet-4-6` —
 > the harness default — and were deleted, because a pin that changes nothing
 > makes per-step routing look like it exists. To route a step to a different
 > model, delegate it to a plugin agent.
