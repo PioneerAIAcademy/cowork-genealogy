@@ -9,7 +9,8 @@ spending 20–60 minutes (and $3–10) on a run.
 
 Checks, in order:
   1. FamilySearch token   — ~/.familysearch-mcp/tokens.json exists
-  2. Built MCP server     — packages/engine/mcp-server/build/index.js exists
+  2. Built MCP server     — build/index.js exists (FAIL) and is no older than
+                            src/ (WARN — a stale build measures the previous one)
   3. Anthropic API key    — ANTHROPIC_API_KEY in env or eval/.env
   4. Harness deps synced  — claude_agent_sdk + anthropic importable
   5. MCP server connects  — the CLI reports the genealogy server `connected`
@@ -58,6 +59,7 @@ from e2e.mcp_stderr import read_mcp_stderr_lines
 REPO_ROOT = Path(__file__).resolve().parents[3]
 FS_TOKENS = Path.home() / ".familysearch-mcp" / "tokens.json"
 MCP_BUILD = REPO_ROOT / "packages" / "engine" / "mcp-server" / "build" / "index.js"
+MCP_SRC = REPO_ROOT / "packages" / "engine" / "mcp-server" / "src"
 ENV_FILE = REPO_ROOT / "eval" / ".env"
 
 # Check 6 (#1552). The wiki/pop base URLs resolve exactly as the tools do: a
@@ -132,14 +134,71 @@ def _check_fs_token() -> tuple[str, str]:
     return ("OK", f"FamilySearch token present, {age_h:.0f}h old ({FS_TOKENS})")
 
 
+def _newest_mcp_source() -> tuple[float, Path] | None:
+    """The newest mtime under the MCP server's `src/`, and the file carrying it.
+
+    None when the tree holds no files at all — which is anomalous rather than
+    clean, so the caller WARNs instead of reporting a green build.
+    """
+    newest: tuple[float, Path] | None = None
+    for path in MCP_SRC.rglob("*"):
+        if not path.is_file():
+            continue
+        mtime = path.stat().st_mtime
+        if newest is None or mtime > newest[0]:
+            newest = (mtime, path)
+    return newest
+
+
 def _check_mcp_build() -> tuple[str, str]:
-    if MCP_BUILD.exists():
-        return "OK", "MCP server is built (build/index.js present)"
-    return (
-        "FAIL",
-        "MCP server not built. Run `make engine-build` (or `npm install && "
-        "npm run build` in packages/engine/mcp-server/; Windows: Setup.bat).",
-    )
+    """Check 2, both halves: the build exists, and it is not older than `src/`.
+
+    The existence half is the original check and stays a FAIL — without
+    `build/index.js` there is nothing to run. The staleness half is a WARN, for
+    the same reason checks 6 and 7 are: an operator may be deliberately running
+    an older build (reproducing a past run), and a FAIL would block a run they
+    were entitled to make.
+
+    It is a check at all because the existence half reports `OK` in exactly the
+    case it exists to catch. A build three days behind `src/` is as green to
+    preflight as a fresh one, and the run then measures code that is not the
+    code under review. Same shape as the gap issue #941 opened check 5 for: a
+    green preflight that validated the configuration and never proved the thing
+    the configuration was for. Observed on three consecutive e2e runs,
+    2026-09-28 and 2026-09-29.
+    """
+    if not MCP_BUILD.exists():
+        return (
+            "FAIL",
+            "MCP server not built. Run `make engine-build` (or `npm install && "
+            "npm run build` in packages/engine/mcp-server/; Windows: Setup.bat).",
+        )
+
+    newest = _newest_mcp_source()
+    if newest is None:
+        return (
+            "WARN",
+            f"MCP server is built, but no source files were found under {MCP_SRC} "
+            "to check it against, so staleness could not be established.",
+        )
+
+    src_mtime, src_path = newest
+    build_mtime = MCP_BUILD.stat().st_mtime
+    if src_mtime > build_mtime:
+        behind_min = (src_mtime - build_mtime) / 60.0
+        # Relative to MCP_SRC, not REPO_ROOT: `src_path` came from MCP_SRC.rglob,
+        # so this can never raise the way relative_to(REPO_ROOT) would if the two
+        # were ever pointed at unrelated trees (as the tests do).
+        rel = "src/" + src_path.relative_to(MCP_SRC).as_posix()
+        return (
+            "WARN",
+            f"MCP server build is STALE — build/index.js is {behind_min:.0f} min "
+            f"older than {rel}. The run would measure the previous build. "
+            "Rebuild with `make engine-build` (or `npm run build` in "
+            "packages/engine/mcp-server/).",
+        )
+
+    return "OK", "MCP server is built, and no source file is newer than the build"
 
 
 def _check_api_key() -> tuple[str, str]:
