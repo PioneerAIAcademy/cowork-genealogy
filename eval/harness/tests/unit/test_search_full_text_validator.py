@@ -110,13 +110,13 @@ def test_log_fidelity_does_not_guess_when_the_entry_cannot_be_correlated_to_a_ca
 def _filtered_nil_call(keywords, **filter_kwargs):
     """A fulltext_search call with filters that returns zero results."""
     c = call("fulltext_search", keywords=keywords, **filter_kwargs)
-    c["response"] = {"results": [], "totalHits": 0}
+    c["response"] = {"results": [], "totalResults": 0}
     return c
 
 
 def _unfiltered_call(keywords, **kwargs):
     c = call("fulltext_search", keywords=keywords, **kwargs)
-    c["response"] = {"results": [{"recordId": "ark:/61903/1:1:XXXX"}], "totalHits": 1}
+    c["response"] = {"results": [{"recordId": "ark:/61903/1:1:XXXX"}], "totalResults": 1}
     return c
 
 
@@ -417,14 +417,33 @@ def test_collection_id_check_fires_when_id_not_in_prior_filter_params():
     assert "2220359" in str(e.value)
 
 
-def test_collection_id_check_allows_any_id_when_prior_response_had_no_filter_params():
-    """If the facets response returned no filterParam items (e.g. no results),
-    we cannot check the ID — any value is allowed rather than blocking the call."""
+def test_collection_id_check_fires_when_prior_facets_response_was_empty():
+    """An empty facets response offers no id, so a scoped follow-up borrowed it."""
     calls = [
         facets_call("+Flynn +Patrick", filter_params=[]),
         scoped_call("+Flynn +Patrick", "9999999"),
     ]
-    check_never_scopes_to_collection_id(calls)
+    with pytest.raises(AssertionError):
+        check_never_scopes_to_collection_id(calls)
+
+
+def test_filtered_nil_is_not_answered_by_a_different_filter():
+    """Swapping one place filter for another is not the unfiltered retry."""
+    calls = [
+        _filtered_nil_call("+Flynn", recordPlace1="Pennsylvania"),
+        _unfiltered_call("+Flynn", recordPlace2="Schuylkill"),
+    ]
+    with pytest.raises(AssertionError):
+        check_filtered_nil_retry(calls)
+
+
+def test_filtered_nil_is_answered_by_dropping_one_filter():
+    """Keeping the place and dropping the year IS a looser retry."""
+    calls = [
+        _filtered_nil_call("+Flynn", recordPlace1="Pennsylvania", yearFrom=1880),
+        _unfiltered_call("+Flynn", recordPlace1="Pennsylvania"),
+    ]
+    check_filtered_nil_retry(calls)
 
 
 # --- test_wiki_prework_fetch_runs_when_required ------------------------

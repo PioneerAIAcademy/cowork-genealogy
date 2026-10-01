@@ -342,7 +342,7 @@ def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
                 continue
             resp = c.get("response") or {}
             results = resp.get("results")
-            total_hits = resp.get("totalHits")
+            total_hits = resp.get("totalResults")
             is_zero = (
                 (isinstance(results, list) and len(results) == 0) or
                 (total_hits is not None and int(total_hits) == 0)
@@ -351,7 +351,7 @@ def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
                 continue
             later_calls = handle_calls[i + 1:]
             retry_found = any(
-                not any(k in lc["args"] for k in present_filters)
+                {k for k in POST_SEARCH_FILTER_KEYS if k in lc["args"]} < set(present_filters)
                 for lc in later_calls
             )
             if not retry_found:
@@ -394,7 +394,7 @@ def test_fulltext_search_never_scopes_to_collection_id(tool_calls):
                     f"without a prior includeFacets=true call in this turn "
                     f"(query: {(args.get('keywords') or args.get('nlQuery'))!r})"
                 )
-            elif allowed_filter_params and cid not in allowed_filter_params:
+            elif cid not in allowed_filter_params:
                 errors.append(
                     f"fulltext_search sent collectionId={cid!r} which was not "
                     f"among the filterParam values from any prior includeFacets "

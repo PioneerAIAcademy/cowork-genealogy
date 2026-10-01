@@ -165,9 +165,7 @@ The tool maps its input to the upstream API query parameters:
 | `offset` | `offset` |
 | `includeFacets` | `m.defaultFacets` (set to `on` when true) |
 
-Additionally, `m.queryRequireDefault=on` is always sent. When name
-expansion is active, `q.fullName.boost=2` is also sent to rank name
-matches higher.
+Additionally, `m.queryRequireDefault=on` is always sent.
 
 When — and only when — `nlQuery` is supplied, the request also carries the
 header `X-FS-Feature-Tag: search_naturalLanguageSupport`. Every other search
