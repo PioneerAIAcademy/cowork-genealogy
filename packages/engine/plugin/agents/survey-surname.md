@@ -2,7 +2,7 @@
 name: survey-surname
 description: >-
   Tabulates every household of a surname across a place's US federal censuses.
-  Invoke when the user says "find every <surname> family in <place>", "list
+  Invoke when the user says "find every Smith family in Ohio", "list
   all the Dixons in Virginia censuses", or "make a table of candidate
   families". Not a search for one person's record: hand that back to
   search-records by name.
