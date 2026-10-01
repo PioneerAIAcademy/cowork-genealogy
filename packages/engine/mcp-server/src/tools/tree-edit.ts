@@ -752,6 +752,7 @@ export async function checkWarningGate(
   projectPath: string,
   warningJustifications: WarningJustificationInput[] | undefined,
   toolName: string,
+  collapseMap?: Map<string, string>,
 ): Promise<{ ok: false; reason: string; warnings: any[] } | null> {
   const touchedIds = computeTouchedPersonIds(beforeTree, afterTree);
   if (touchedIds.length === 0) return null;
@@ -761,12 +762,15 @@ export async function checkWarningGate(
     afterTree,
     touchedIds,
     warningJustifications,
+    collapseMap,
   );
 
   if (result.unjustified.length > 0) {
     return {
       ok: false,
       reason: "unjustified_warnings",
+      message: "This write introduces genealogical warnings that must be justified. " +
+        "Re-call with warningJustifications listing each warningId and a justification string.",
       warnings: result.unjustified.map((w) => ({
         warningId: w.warningId,
         issueType: w.issueType,

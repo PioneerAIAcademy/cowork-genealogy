@@ -87,6 +87,7 @@ export async function mergeTreePersons(
     const warningRefusal = await checkWarningGate(
       tree, merged, research, projectPath,
       input.warningJustifications, "merge_tree_persons",
+      collapseMap,
     );
     if (warningRefusal) return warningRefusal as any;
 
