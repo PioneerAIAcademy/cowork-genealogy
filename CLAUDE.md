@@ -409,7 +409,7 @@ not add the line to it. The exception moved from the skills to the agents when
 that skill was replaced by an agent on 2026-09-27; re-derive both lists with
 `grep -rL '\*\*Narration' packages/engine/plugin/skills/*/SKILL.md` and
 `grep -rL '\*\*Narration' packages/engine/plugin/agents/*.md`, and note that
-four other agents also carry no line — `search-wikipedia` is the one whose
+six other agents also carry no line — `search-wikipedia` is the one whose
 absence is a *rule*, pinned by
 `tests/packaging/search-wikipedia-no-narration.test.ts`.
 

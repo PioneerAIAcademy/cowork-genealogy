@@ -379,7 +379,7 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["search-records -> citation", ""],
   ["source-evaluation -> citation", ""],
   ["translation -> citation", ""],
-  // Nine "use proof-conclusion" prohibitions in DO NOT clauses, visible to the
+  // Six "use proof-conclusion" prohibitions in DO NOT clauses, visible to the
   // prose arm only since issue #2822 deleted the routing skill and made the
   // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
   // is a delegation being silenced -- verified per file before listing.
@@ -389,7 +389,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["question-selection -> proof-conclusion", ""],
   ["research-exhaustiveness -> proof-conclusion", ""],
   ["timeline -> proof-conclusion", ""],
-  ["validate-schema -> proof-conclusion", ""],
   // `search-wikipedia` (issue #2795) is the reverse of the `citation` shape: its
   // name is not an ordinary English word, so the arm DOES discriminate for it,
   // and both mentions below are boundary prose telling the reader this is the
@@ -429,7 +428,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["search-records -> check-warnings", ""],
   ["source-evaluation -> check-warnings", ""],
   ["timeline -> check-warnings", ""],
-  ["validate-schema -> check-warnings", ""],
   // tree-edit entered agentOnly when issue #2805 deleted its skill. The one
   // mention is a DO NOT clause ("Merging is ... a data operation (tree-edit)"),
   // not a delegation; it does not spell `@plugin:tree-edit`.
@@ -630,6 +628,7 @@ describe("agent delegation framing", () => {
     "search-familysearch-wiki",
     "search-wikipedia",
     "tree-edit",
+    "validate-schema",
   ];
 
   it("the prose arm still covers every agent it is relied on to police", () => {

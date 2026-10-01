@@ -6,10 +6,10 @@
     "name": "Broken cross-file reference (research.json -> tree.gedcomx.json) is reported",
     "type": "positive",
     "description": "Run schema validation against mid-research-flynn-cross-file, the clean scenario with one mutation: a source's gedcomx_source_description_id is 'GX-MISSING', which is not a source id in tree.gedcomx.json. The validator emits one error. Exercises the cross-file integrity check — the most complex, previously-uncovered category that spans both project files.",
-    "tags": ["validation", "error-path", "cross-file", "explain-and-suggest"]
+    "tags": ["validation", "error-path", "cross-file", "explain-and-suggest", "direct-arm"]
   },
   "input": {
-    "user_message": "Validate the project files for schema compliance.",
+    "delegation": "Validate the project files for schema compliance.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn-cross-file"
   },
   "judge_context": [

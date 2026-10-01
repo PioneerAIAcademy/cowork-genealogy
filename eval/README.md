@@ -243,6 +243,12 @@ That edit changes the skill-side snapshot, which flips the latest run log
 changed. A senior can waive that for a genuinely behavior-neutral edit by
 applying a **PR label** — no branch checkout, no commands, nothing to install.
 
+**The waiver is per skill.** The label is `eval-cosmetic-skip:<skill>`, where
+`<skill>` is the name in `eval/runlogs/unit/<skill>/` — the name rule 2's error
+prints. It waives that one skill. Every other skill the PR touches keeps the
+hard block, so one neutral edit can't carry a behavioral edit elsewhere in the
+same PR through the gate. The bare `eval-cosmetic-skip` label waives nothing.
+
 **It exempts the PR from both:** no harness re-run, and no re-correcting
 scores. The prior run log stays the active one, and its already-complete
 `.ann.json` satisfies the completeness rule as-is. (Only rule 2 is relaxed —
@@ -256,13 +262,19 @@ scenario), it is **not** cosmetic: re-run the harness.
 ### How a senior sets the flag (entirely in the GitHub web UI)
 
 1. Open the PR on github.com.
-2. In the right-hand sidebar, under **Labels**, add **`eval-cosmetic-skip`**.
+2. In the right-hand sidebar, under **Labels**, add
+   **`eval-cosmetic-skip:<skill>`** for each skill whose change is
+   behavior-neutral (the red check's error names the exact label). Adding
+   several labels starts one run each; once the last is added, check that the
+   latest `Check runlog discipline` run is green, and re-run it if an earlier
+   run finished last.
 3. (Recommended) leave a one-line comment saying *why* it's behavior-neutral —
    e.g. "Reworded step 3 'Look for' → 'Search for'; no behavior change." The
    label records *who* and *when*; the comment records *why*.
 
-The `Check runlog discipline` check re-runs automatically when the label is
-added and turns green, with a warning noting the bypass so reviewers see it.
+The `Check runlog discipline` check re-runs automatically when a label is
+added. It turns green once every touched skill is either current or waived,
+with a warning naming each waiving label so reviewers see it.
 
 ### Safety: the waiver expires on every new push
 
@@ -272,7 +284,7 @@ the check goes red again and the senior must re-apply the label (after
 confirming the new commits are still cosmetic). This is the same "voids on any
 further edit" guarantee a re-run would give, with none of the work.
 
-The label is removed from the PR on that push too, so what you see matches what
+The labels are removed from the PR on that push too, so what you see matches what
 is in force. If it ever lingers — the strip is a separate workflow and can fail
 — the waiver is still void; the stale label has no effect. To clear a stuck red
 check in that case, remove the label and re-apply it (re-applying alone does
@@ -280,13 +292,20 @@ nothing, since GitHub fires no event for a label that is already there).
 
 ### One-time repo setup
 
-The label has to exist before anyone can apply it. An admin creates it once:
+Each label has to exist before anyone can apply it. An admin creates one per
+skill, from the repo root:
 
 ```bash
-gh label create eval-cosmetic-skip \
-  --description "Senior waiver: skill change is behavior-neutral; skip the eval re-run" \
-  --color FBCA04
+for skill in $(ls eval/runlogs/unit); do
+  gh label create "eval-cosmetic-skip:$skill" \
+    --description "Senior waiver: $skill's change is behavior-neutral; skip its eval re-run" \
+    --color FBCA04 --force
+done
 ```
+
+**A new skill needs its label created** the same way (`gh label create
+eval-cosmetic-skip:<skill>`). Until it exists, that skill has no waiver and rule
+2 blocks, which is the safe direction.
 
 Seniors need **Triage** or **Write** access on the repo to apply labels.
 
