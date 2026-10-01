@@ -132,7 +132,7 @@ describe("research_log_append", () => {
       expect((await readJson("research.json")).log).toEqual([]);
     });
 
-    it("is refused, not inferred, when the staged ref does not exist", async () => {
+    it("leaves an unreadable staged ref to the staged-ref check", async () => {
       await writeProject(baseResearch());
       const result = await researchLogAppend({
         projectPath: dir,
@@ -142,7 +142,7 @@ describe("research_log_append", () => {
       } as any);
 
       expect(result.ok).toBe(false);
-      expect((result as { errors: string[] }).errors[0]).toContain("missing required field `tool`");
+      expect((result as { errors: string[] }).errors[0]).toContain("is not in results/.staging/");
     });
 
     it("leaves an explicit wrong `tool` refused as a mismatch", async () => {
