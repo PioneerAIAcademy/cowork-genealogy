@@ -1254,7 +1254,7 @@ def test_the_turn_summary_carries_the_store_counters_the_d17_criterion_reads(tur
 
 def test_run_turn_refuses_to_bill_when_the_registration_is_short(turn_env):
     with pytest.raises(worker.RegistrationError, match="gps-mentor"):
-        _run(turn_env, _good(), info=_info(AGENTS - {"gps-mentor"}, 26))
+        _run(turn_env, _good(), info=_info(AGENTS - {"gps-mentor"}, 21))
     assert turn_env["client"].queried == [], "nothing sent to the model"
     assert turn_env["client"].disconnected and not _turn_done_written(turn_env["conn"])
 
