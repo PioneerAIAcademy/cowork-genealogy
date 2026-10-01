@@ -1,4 +1,4 @@
-import { describe, it, expect, afterAll, beforeAll } from "vitest";
+import { describe, it, expect, afterAll, afterEach, beforeAll, vi } from "vitest";
 import { createHash, randomUUID } from "node:crypto";
 import net from "node:net";
 import {
@@ -14,18 +14,18 @@ import {
   type PgS3Backend,
 } from "../../src/store/pg-s3-project-store.js";
 import { runProjectStoreConformance, type StoreFixture } from "./conformance.js";
+import { protoBackendOptions, PROTO_S3_KEYLESS } from "./pg-s3-test-env.js";
 
 // The Postgres/S3 backend against a live stack: `make proto-store-test` starts
 // the compose postgres + minio and sets these. Without them the file registers
 // one skipped suite whose name says so, so a plain `npm test` stays green and
 // still shows that this backend was not exercised. The cases that need no
-// stack — the projectId guard and the two timeouts — run either way.
+// stack — the projectId guard, the two timeouts and the credential chain — run
+// either way.
 
 const DSN = process.env.PROTO_PG_DSN;
 const ENDPOINT = process.env.PROTO_S3_ENDPOINT;
 const BUCKET = process.env.PROTO_S3_BUCKET ?? "projects";
-const ACCESS_KEY = process.env.PROTO_S3_ACCESS_KEY ?? "proto";
-const SECRET_KEY = process.env.PROTO_S3_SECRET_KEY ?? "protoproto";
 
 const ANCHOR = "/project";
 const MISSING = "/elsewhere";
@@ -44,6 +44,29 @@ describe("PgS3ProjectStore without a stack", () => {
     secretAccessKey: "y",
     forcePathStyle: true,
   };
+
+  // Every variable that sends the SDK default chain somewhere other than the
+  // `AWS_*` key pair, cleared: this laptop's ~/.aws, a container credentials
+  // URI, a web-identity token, and — unless a case asks for it — instance
+  // metadata (which answers on Azure runners). Undone by vi.unstubAllEnvs().
+  function isolateChain({ metadata = false } = {}): void {
+    for (const name of [
+      "AWS_ACCESS_KEY_ID",
+      "AWS_SECRET_ACCESS_KEY",
+      "AWS_SESSION_TOKEN",
+      "AWS_PROFILE",
+      "AWS_CONTAINER_CREDENTIALS_FULL_URI",
+      "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI",
+      "AWS_WEB_IDENTITY_TOKEN_FILE",
+    ]) {
+      vi.stubEnv(name, undefined);
+    }
+    vi.stubEnv("AWS_SHARED_CREDENTIALS_FILE", "/nonexistent");
+    vi.stubEnv("AWS_CONFIG_FILE", "/nonexistent");
+    vi.stubEnv("AWS_EC2_METADATA_DISABLED", metadata ? undefined : "true");
+  }
+
+  const keyless = { endpoint: s3.endpoint, bucket: s3.bucket, forcePathStyle: s3.forcePathStyle };
 
   it("rejects a projectId that cannot be an S3 key prefix on its own", async () => {
     const backend = createPgS3Backend({ dsn: "postgresql://x:y@127.0.0.1:1/z", s3 });
@@ -76,10 +99,80 @@ describe("PgS3ProjectStore without a stack", () => {
     }
   });
 
+  describe("credentials", () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it("fails a keyless S3 call loudly and fast when no credential source exists", async () => {
+      isolateChain();
+      const backend = createPgS3Backend({ dsn: "postgresql://x:y@127.0.0.1:1/z", s3: keyless });
+      try {
+        const t0 = Date.now();
+        // Credentials resolve before any socket opens, so nothing listens here.
+        await expect(
+          backend.s3.send(new HeadObjectCommand({ Bucket: "projects", Key: "p/x/y" })),
+        ).rejects.toMatchObject({ name: "CredentialsProviderError" });
+        expect(Date.now() - t0).toBeLessThan(3000);
+      } finally {
+        await backend.close();
+      }
+    }, 5000);
+
+    it("resolves keyless credentials from the SDK default chain", async () => {
+      isolateChain();
+      vi.stubEnv("AWS_ACCESS_KEY_ID", "envkey");
+      vi.stubEnv("AWS_SECRET_ACCESS_KEY", "envsecret");
+      const backend = createPgS3Backend({ dsn: "postgresql://x:y@127.0.0.1:1/z", s3: keyless });
+      try {
+        const creds = await backend.s3.config.credentials();
+        expect(creds.accessKeyId).toBe("envkey");
+      } finally {
+        await backend.close();
+      }
+    });
+
+    it("signs with static keys over the default chain when both are given", async () => {
+      isolateChain();
+      vi.stubEnv("AWS_ACCESS_KEY_ID", "envkey");
+      vi.stubEnv("AWS_SECRET_ACCESS_KEY", "envsecret");
+      const backend = createPgS3Backend({ dsn: "postgresql://x:y@127.0.0.1:1/z", s3 });
+      try {
+        const creds = await backend.s3.config.credentials();
+        expect(creds.accessKeyId).toBe("x");
+      } finally {
+        await backend.close();
+      }
+    });
+
+    it("treats empty keys as absent and refuses exactly one", async () => {
+      isolateChain();
+      vi.stubEnv("AWS_ACCESS_KEY_ID", "envkey");
+      vi.stubEnv("AWS_SECRET_ACCESS_KEY", "envsecret");
+      const backend = createPgS3Backend({
+        dsn: "postgresql://x:y@127.0.0.1:1/z",
+        s3: { ...keyless, accessKeyId: "", secretAccessKey: "" },
+      });
+      try {
+        expect((await backend.s3.config.credentials()).accessKeyId).toBe("envkey");
+      } finally {
+        await backend.close();
+      }
+      for (const half of [{ accessKeyId: "x" }, { secretAccessKey: "y" }, { accessKeyId: "x", secretAccessKey: "" }]) {
+        expect(
+          () => createPgS3Backend({ dsn: "postgresql://x:y@127.0.0.1:1/z", s3: { ...keyless, ...half } }),
+          JSON.stringify(half),
+        ).toThrow(/set together/);
+      }
+    });
+  });
+
   describe("timeouts", () => {
     // A listener that accepts every connection and never sends a byte: the
     // stalled-host shape both clients would otherwise wait on forever.
+    let accepted = 0;
     const server = net.createServer((socket) => {
+      accepted++;
       sockets.add(socket);
       socket.on("close", () => sockets.delete(socket));
     });
@@ -131,6 +224,26 @@ describe("PgS3ProjectStore without a stack", () => {
         await backend.close();
       }
     }, 5000);
+
+    it("bounds a keyless S3 call whose instance-metadata lookup never answers", async () => {
+      isolateChain({ metadata: true });
+      vi.stubEnv("AWS_EC2_METADATA_SERVICE_ENDPOINT", `http://127.0.0.1:${port}`);
+      const backend = createPgS3Backend({ dsn: "postgresql://x:y@127.0.0.1:1/z", s3: keyless });
+      const acceptedBefore = accepted;
+      try {
+        const t0 = Date.now();
+        // The 1 s metadata timeout, a v2 token request then the v1 fallback.
+        await expect(
+          backend.s3.send(new HeadObjectCommand({ Bucket: "projects", Key: "p/x/y" })),
+        ).rejects.toMatchObject({ name: "CredentialsProviderError" });
+        expect(Date.now() - t0).toBeLessThan(4000);
+        // The lookup reached the silent listener, not a real metadata service.
+        expect(accepted).toBeGreaterThan(acceptedBefore);
+      } finally {
+        await backend.close();
+        vi.unstubAllEnvs();
+      }
+    }, 6000);
   });
 });
 
@@ -142,16 +255,8 @@ if (!DSN || !ENDPOINT) {
     },
   );
 } else {
-  const backend: PgS3Backend = createPgS3Backend({
-    dsn: DSN,
-    s3: {
-      endpoint: ENDPOINT,
-      bucket: BUCKET,
-      accessKeyId: ACCESS_KEY,
-      secretAccessKey: SECRET_KEY,
-      forcePathStyle: true,
-    },
-  });
+  const backendOptions = protoBackendOptions();
+  const backend: PgS3Backend = createPgS3Backend(backendOptions);
 
   /** Every object key under a prefix, sorted. */
   async function keysUnder(prefix: string): Promise<string[]> {
@@ -223,6 +328,18 @@ if (!DSN || !ENDPOINT) {
 
     afterAll(async () => {
       await backend.close();
+    });
+
+    it(`signs with ${PROTO_S3_KEYLESS ? "the SDK default chain" : "static keys"} (PROTO_S3_KEYLESS)`, async () => {
+      if (PROTO_S3_KEYLESS) {
+        expect(backendOptions.s3).not.toHaveProperty("accessKeyId");
+        expect(backendOptions.s3).not.toHaveProperty("secretAccessKey");
+        expect((await backend.s3.config.credentials()).accessKeyId).toBe(process.env.AWS_ACCESS_KEY_ID);
+      } else {
+        expect(backendOptions.s3.accessKeyId).toBeTruthy();
+        expect(backendOptions.s3.secretAccessKey).toBeTruthy();
+        expect((await backend.s3.config.credentials()).accessKeyId).toBe(backendOptions.s3.accessKeyId);
+      }
     });
 
     runProjectStoreConformance("PgS3ProjectStore", makeFixture);
