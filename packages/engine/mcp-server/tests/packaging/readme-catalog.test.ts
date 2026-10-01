@@ -128,9 +128,15 @@ describe("README catalog", () => {
     // made the same 9->10 edit, so a merge kept "ten Cowork agents" while 11
     // shipped, and nothing read that sentence.
     const agents = readdirSync(join(pluginRoot, "agents")).filter((f) => f.endsWith(".md"));
-    const WORDS: Record<string, number> = { nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14 };
+    // Every count word up to thirty: a fixed short list went blind the moment the
+    // count passed its last entry ("fifteen" was unseen).
+    const NAMES = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+      "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen",
+      "eighteen", "nineteen", "twenty", "twenty-one", "twenty-two", "twenty-three", "twenty-four",
+      "twenty-five", "twenty-six", "twenty-seven", "twenty-eight", "twenty-nine", "thirty"];
+    const WORDS: Record<string, number> = Object.fromEntries(NAMES.map((w, n) => [w, n]));
     const claims = [
-      ...readme.matchAll(/\b(\d+|nine|ten|eleven|twelve|thirteen|fourteen)\s+(?:Cowork\s+|plugin\s+)?agents\b/gi),
+      ...readme.matchAll(new RegExp(`\\b(\\d+|${[...NAMES].reverse().join("|")})\\s+(?:Cowork\\s+|plugin\\s+)?agents\\b`, "gi")),
     ].map((m) => WORDS[m[1].toLowerCase()] ?? Number(m[1]));
     const wrong = claims.filter((n) => n !== agents.length);
     expect(
