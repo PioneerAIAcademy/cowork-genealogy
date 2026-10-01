@@ -10,11 +10,12 @@
       "compiled-source",
       "claim-clarity",
       "mother-identity",
-      "lead-vs-evidence"
+      "lead-vs-evidence",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Someone on FamilySearch has Patrick Flynn's mother listed as Margaret O'Brien from County Cork, Ireland. It's from a user-submitted family tree, not an original record. Can you set up a hypothesis to track this so we can investigate whether it's true?",
+    "delegation": "Someone on FamilySearch has Patrick Flynn's mother listed as Margaret O'Brien from County Cork, Ireland. It's from a user-submitted family tree, not an original record. Can you set up a hypothesis to track this so we can investigate whether it's true?\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn",
     "scenario_notes": null
   },

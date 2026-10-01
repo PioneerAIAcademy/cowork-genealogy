@@ -1313,7 +1313,7 @@ on `append`, or on an `update` whose `fields` names `status`,
 `status` alone left the mirror-image hole the `questions` arm had already found:
 the invariant couples the status to both id lists, so an op touching a list
 breaks it without naming the status. That is the skill's own documented
-re-invocation path — `hypothesis-tracking/SKILL.md` tells the agent that adding
+re-invocation path — `agents/hypothesis-tracking.md` tells the agent that adding
 contradicting evidence "does not automatically require a status downgrade — only
 link the evidence and leave the status unchanged" — and three such calls were
 measured landing `ok: true` on exactly the state this refuses. Measured at
@@ -1334,7 +1334,7 @@ accepted.
 
 **Both halves read the pre-call snapshot**, per ADR-0011's criterion — snapshot
 when the precondition must be satisfied by someone else. `ownership.json` gives
-`hypotheses.callers` as `["skill:hypothesis-tracking"]`, while `conflicts`
+`hypotheses.callers` as `["agent:hypothesis-tracking"]`, while `conflicts`
 belongs to `skill:conflict-resolution` and `assertions` to
 `skill:record-extraction`; neither satisfying write is this author's own prior
 step, and both those sections are `enforceableAt: ["unit"]` only — no hook arm,
@@ -2480,6 +2480,32 @@ this section before reopening one.
   an agent leaves no trace in the project documents, so only run-level
   attribution sees it, and that is eval-only. It reaches production for nothing
   today because nothing needs it.
+
+  **Three unit observations under a leading delegation, retired 2026-09-29 (lead
+  ruling).** The `proof-conclusion` pair's direct arm was shown, in three unit
+  tests, to yield to a leading delegation over its own gate: `d1a` declined a
+  blocked write in the reply and persisted nothing; `d2b` narrated a refinement
+  and issued no `update`; `d6f` tiered a bounded conclusion to `probable` under a
+  delegation that asserted `probable` was correct, and the neutral-wording twin
+  `ut_proof_conclusion_018` was later seen to tier `probable` too (1 of 5 runs
+  under the current validator, 2026-09-30), so the tiering is nondeterministic,
+  not confined to a leading delegation. 018 was relaxed to accept `possible` or
+  `probable`; the narrowing cap is now graded by no test. None meets this item's
+  reopen condition — *a
+  violation observed per-instance on an attributed run.* All three are harness
+  observations produced by adversarial delegation wording written to lead the
+  agent, not violations seen on a production attributed run, and no production
+  delegation has been shown to lead this way. A writer-tool precondition cannot
+  reach `d1a`/`d2b` either: their failure is a write that is never made, and a
+  precondition runs only on a call that is made (ADR-0011 places "the reply claims
+  a write no call made" at step 4, harness-only). Downstream, `d1a` leaves an
+  unresolved `c_001` that the completion gate (§5, "Blocking conflicts before
+  completion") refuses, so it is caught; `d2b` and `d6f` have no downstream catch
+  once `gps-mentor` comes off the default research path, and that is
+  accepted (lead, 2026-09-29) because the three standing `xfail` markers carried
+  cost the streamlining removes. The three markers and their tests were deleted;
+  the neutral-wording twins stay; 011 and 012 pass unchanged, and 018 passes
+  under its relaxed tier.
 
 - **An ark cross-check on `exhaustive_search_summary`** — "every ark named in a proof
   summary's `exhaustive_search_summary` must appear in some `log[].query`." Proposed
