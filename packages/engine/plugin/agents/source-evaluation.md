@@ -50,15 +50,13 @@ Hand it back — call no tool, analyse nothing, and return the one caller-facing
 
 Your job is the remaining case: the sources on the profile are there, and the question is whether they belong there and whether what was indexed from them is right.
 
-If the delegation names no person at all, call no tool and return `Hand-back: no person named — <the request in one clause>`.
-
 ## Steps
 
 ### 1. Read the profile and its attached sources
 
 Call `person_read({ personId, sourceDescriptions: true })`. The `sources[]` array is the audit list — each entry has `id`, `title`, `citation`, `url` and sometimes `notes`. Entries whose id starts with `SD_` never appear; the tool already filters them as metadata.
 
-If the delegation gives a name rather than an id, read `tree.gedcomx.json` and match on `names[*].given` + `names[*].surname`. If more than one person matches, read nothing more: return each candidate's name, life dates and id, and stop. Never pick one.
+If the delegation gives a name rather than an id, read `tree.gedcomx.json` and match on `names[*].given` + `names[*].surname`. If more than one person matches, read nothing more: return each candidate's name, life dates and id, and stop. Never pick one. If the delegation names no person at all, call no tool and return `Hand-back: no person named — <the request in one clause>`.
 
 An empty `sources[]` is a finished audit with one finding: nothing is attached. Say so and stop.
 
