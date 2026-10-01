@@ -66,4 +66,14 @@ asserts only the first hand-off. A router that calls `Skill(question-selection)`
 first and *then* spawns `@plugin:proof-conclusion` passes it green while doing
 the exact thing `ut_research_015` exists to forbid.
 
+## Moved negatives (issue #2268)
+
+`ut_research_016` (negative-research-plan.json) and `ut_research_017`
+(negative-indexed-search.json) were moved from `eval/tests/unit/search-images/`
+when the search-images thin skill was deleted. Both are `grade_on_invariant`
+negatives whose tags (`no-browse-no-write`, `no-browse-on-indexed`) gate
+deterministic validators now in `validators/test_research.py`. They test
+that the research router does not trigger a browse when the request belongs
+to research-plan or search-records.
+
 A live `make e2e-run` remains the only end-to-end instrument.
