@@ -1,6 +1,6 @@
 # Handing the search agent to FamilySearch
 
-**Status:** In progress (2026-09-30): U2 built (PR #3039); U5 built in this PR; proven offline and on compose; AWS half is U13; the rest not started.
+**Status:** In progress (2026-09-30): U2 built (PR #3039); U5 built (PR #3083); proven offline and on compose; AWS half is U13; the rest not started.
 **Owner:** Dallan. Written for Richard, the FamilySearch employee on the project. List 1 is Dallan's team's work; list 2 is FamilySearch's, routed through Richard; list 3 is for FamilySearch engineers.
 
 See [the prototype report](../search-agent-prototype-report.md) (its legend defines D, P and R) and [the prototype plan](search-agent-prototype.md).
@@ -13,7 +13,7 @@ See [the prototype report](../search-agent-prototype-report.md) (its legend defi
 - **First three actions:**
   1. **U1, send the asks:** every unsent list-2 ask. File the Bedrock quota increase once F5 names the account; it takes days.
   2. **Size U2–U13.** Start U2, and U3's dev-key token measurements.
-  3. **U5 built** (this PR; U13 confirms it on AWS). U6 before any second instance.
+  3. **U5 built** (PR #3083; U13 confirms it on AWS). U6 before any second instance.
 - **Richard decides:** list-2 routing and F15's owner (U1); which tree U16 grades; whose key runs the SDK-bump probes (step 10).
 
 ## What the system is
@@ -33,7 +33,7 @@ See [the prototype report](../search-agent-prototype-report.md) (its legend defi
 Two premises moved since the plan:
 
 - **One message is a whole research run** (PR #2870, merged 2026-09-27; its acceptance run: 6 attempts, 150 min). The auth design assumed "a turn is minutes"; the grain moved further from the review's "one model call per message" (R4). Once [our cost-and-latency plan](cost-latency-10x.md) lands (not started, no date), U26 ends every run at 1,800 s.
-- **Forced foreground delegation is the design** (lead ruling 2026-09-23, PR #2852, reaffirmed 2026-09-29): no agent outlives its turn. The rewrite covers a call with no flag too, which CLI 2.1.220 runs in the background (U27, done in this PR).
+- **Forced foreground delegation is the design** (lead ruling 2026-09-23, PR #2852, reaffirmed 2026-09-29): no agent outlives its turn. The rewrite covers a call with no flag too, which CLI 2.1.220 runs in the background (U27, done in PR #3011).
 
 ## 1. Preconditions Dallan's team implements and tests
 
@@ -67,7 +67,7 @@ Two premises moved since the plan:
 | U24 | Continuous-work behaviour | Turns overrun their deliverable | go-live | — |
 | U25 | Hard image cap (issue #3010) | Image browsing unbounded | go-live (cost) | — |
 | U26 | Session time limit: every run ends within 1,800 s | Multi-hour runs | go-live | `cost-latency-10x.md` lands |
-| U27 | Foreground rewrite covers a flagless delegation | Delegation dies at turn end | **done in this PR** | — |
+| U27 | Foreground rewrite covers a flagless delegation | Delegation dies at turn end | **done in PR #3011** | — |
 
 ### Details
 
@@ -79,7 +79,7 @@ Two premises moved since the plan:
 
 **U4.** Why: only network placement protects the tool server (step 9). Skip if F8 accepts isolation. **Done when:** a test refuses patron A's bearer naming patron B's project.
 
-**U5.** What integration needs until U26. Why: sqsd cuts a POST silently and redelivers while the attempt runs on (step 11): two CLIs on one session. A dead-lettered turn stays open, holding its session and held messages (found by reading). Build: step 11's interim sqsd values, so sqsd cuts only a run past 10 h (D18's spend rates reach the untried $35 cap in ~3–4.5 h, U23; a crashed worker's message can take ~10 h to return); exit cleanly on SIGTERM; close a dead-lettered turn with a named outcome, releasing its held messages. **Done when**, in U13: a run past 1,800 s completes on receive 1; SIGTERM mid-turn exits and the redelivery resumes (answer 500 before exiting, or lower `VisibilityTimeout` for the test); `MaxRetries` 1 plus a 500 closes the turn and releases its held messages. **Built** in this PR (2026-09-30); proven offline and on compose (2026-09-30, n=1 each, `docker-compose.sqsd.yml`: smoke cases `sigterm`, `dead_letter`, `crash_last_receive`, `past_ceiling`, and one billed `proto-kill --kill-signal term` that resumed on receive 2); AWS half is U13. Template `apps/server/proto/eb-worker/` (steps 11, 12). On SIGTERM the worker answers every in-flight POST 500, stops the CLI, exits 0. A last receive that would answer non-200 closes the turn `retries_exhausted` and releases the next held message; a sweep closes a crashed last receive after `VisibilityTimeout` and any turn past `RetentionPeriod`. A redelivery of a completed turn now releases a stranded held message.
+**U5.** What integration needs until U26. Why: sqsd cuts a POST silently and redelivers while the attempt runs on (step 11): two CLIs on one session. A dead-lettered turn stays open, holding its session and held messages (found by reading). Build: step 11's interim sqsd values, so sqsd cuts only a run past 10 h (D18's spend rates reach the untried $35 cap in ~3–4.5 h, U23; a crashed worker's message can take ~10 h to return); exit cleanly on SIGTERM; close a dead-lettered turn with a named outcome, releasing its held messages. **Done when**, in U13: a run past 1,800 s completes on receive 1; SIGTERM mid-turn exits and the redelivery resumes (answer 500 before exiting, or lower `VisibilityTimeout` for the test); `MaxRetries` 1 plus a 500 closes the turn and releases its held messages. **Built** in PR #3083 (2026-09-30); proven offline and on compose (2026-09-30, n=1 each, `docker-compose.sqsd.yml`: smoke cases `sigterm`, `dead_letter`, `crash_last_receive`, `past_ceiling`, and one billed `proto-kill --kill-signal term` that resumed on receive 2); AWS half is U13. Template `apps/server/proto/eb-worker/` (steps 11, 12). On SIGTERM the worker answers every in-flight POST 500, stops the CLI, exits 0. A last receive that would answer non-200 closes the turn `retries_exhausted` and releases the next held message; a sweep closes a crashed last receive after `VisibilityTimeout` and any turn past `RetentionPeriod`. A redelivery of a completed turn now releases a stranded held message.
 
 **U6.** Why: claims have no fencing or expiry; cross-instance write locking is untested. **Done when:** a two-worker test, with a parallel write through two tool servers, makes the stale epoch's writes no-ops.
 
@@ -139,7 +139,7 @@ Two premises moved since the plan:
 
 **Done when:** acceptance step 5's time-limit form passes on U13's rehearsal host.
 
-**U27.** Done in this PR. The hook rewrote only an explicit `run_in_background: true`, but CLI 2.1.220 backgrounds an `Agent` call with no flag, and the two extractors lost on 2026-09-21 had none. The worker now rewrites every delegation not explicitly `false`; `test_a_delegation_not_explicitly_foreground_is_rewritten` fails on the old rule.
+**U27.** Done in PR #3011. The hook rewrote only an explicit `run_in_background: true`, but CLI 2.1.220 backgrounds an `Agent` call with no flag, and the two extractors lost on 2026-09-21 had none. The worker now rewrites every delegation not explicitly `false`; `test_a_delegation_not_explicitly_foreground_is_rewritten` fails on the old rule.
 
 ## 2. Preconditions only FamilySearch can answer or do
 

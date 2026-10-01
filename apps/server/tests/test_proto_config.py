@@ -13,7 +13,7 @@ topology exists to make, so a well-meaning edit cannot quietly undo one:
   compose default and the one proto-demo-auto exports -- and there is NO redrive
   policy -- ChangeMessageVisibility never resets the receive count, so any
   maxReceiveCount would dead-letter a legitimately long turn;
-- U5's interim sqsd values (docs/plan/u5-interim-sqsd.md): the Beanstalk template
+- U5's interim sqsd values (proto/eb-worker/README.md): the Beanstalk template
   under eb-worker/ tells the worker the same numbers it gives sqsd, the sqsd overlay
   mirrors them, and the base profile keeps unlimited retries with the sweep off;
 - the schema creates every table the plan names and not committed_batches
