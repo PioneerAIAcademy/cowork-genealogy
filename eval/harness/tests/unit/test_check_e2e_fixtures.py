@@ -160,6 +160,47 @@ def test_run_with_tree_missing_ann_is_violation(tmp_path, monkeypatch):
     assert f"run-{TS}.ann.json" in violations[0]
 
 
+def _set_stop_reason(repo: Path, rel: Path, stop_reason: str) -> None:
+    """Rewrite an already-created run log so it carries `stop_reason`.
+
+    `_make_e2e_run` writes a bare `{"verdict": "pass"}`; the grading gate's
+    host_slept exemption keys on `stop_reason` read from the HEAD tree, so a test
+    of it has to put the field in the committed blob."""
+    (repo / rel).write_text(
+        json.dumps({"verdict": "skipped", "stop_reason": stop_reason}),
+        encoding="utf-8",
+    )
+
+
+def test_host_slept_run_with_tree_missing_ann_is_exempt(tmp_path, monkeypatch):
+    """#2974: a host_slept run HAS a tree but is ungraded by design — the judge
+    was skipped past the inactivity cap — so it owes no annotation and must not
+    red the blocking grading gate. This is the one case treelessness does not
+    cover, and the whole point is that the gate treats it differently from every
+    other committed-with-tree run."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    _set_stop_reason(repo, rel, "host_slept")
+    tree, _ann = _siblings(rel)
+    head = commit(rel.as_posix(), tree)  # no ann committed, deliberately
+    assert check_e2e_fixtures.check_added_runlogs_graded([rel], head) == []
+
+
+def test_non_host_slept_stop_reason_with_tree_still_demands_ann(tmp_path, monkeypatch):
+    """The other direction: the exemption is keyed on host_slept specifically,
+    NOT on "the log carries a stop_reason". An ordinary graded run that stopped
+    for any other reason (here `timeout`) still owes its annotation — otherwise
+    the guard would silently waive the whole corpus."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    _set_stop_reason(repo, rel, "timeout")
+    tree, _ann = _siblings(rel)
+    head = commit(rel.as_posix(), tree)
+    violations = check_e2e_fixtures.check_added_runlogs_graded([rel], head)
+    assert len(violations) == 1
+    assert f"run-{TS}.ann.json" in violations[0]
+
+
 def test_treeless_run_is_exempt(tmp_path, monkeypatch):
     """A crashed/skipped run with no final tree owes no annotation."""
     repo, commit = _git_repo(tmp_path, monkeypatch)
