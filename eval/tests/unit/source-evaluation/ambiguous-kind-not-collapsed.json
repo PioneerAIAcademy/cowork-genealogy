@@ -9,11 +9,12 @@
       "index-discrepancy",
       "doctrine",
       "ambiguity",
-      "re-read-before-detach"
+      "re-read-before-detach",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Evaluate the sources attached to Cornelius Driscoll, GJ72-9WD -- for each one I want to know whether it belongs on his profile and whether what was indexed from it matches what the profile records.",
+    "delegation": "Evaluate the sources attached to Cornelius Driscoll, GJ72-9WD -- for each one I want to know whether it belongs on his profile and whether what was indexed from it matches what the profile records.\n\nprojectPath: <workspace>",
     "scenario": "driscoll-source-audit"
   },
   "mcp_fixtures": [

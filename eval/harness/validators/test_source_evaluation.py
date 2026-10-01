@@ -1,6 +1,6 @@
-"""Skill-specific validators for the source-evaluation skill.
+"""Validators for the source-evaluation agent (a skill until issue #2796).
 
-source-evaluation is a read-only audit skill: it enumerates the sources
+source-evaluation is a read-only audit agent: it enumerates the sources
 already attached to a person, reads each one, classifies what disagrees
 with the profile, and reports. It writes nothing.
 
@@ -20,8 +20,12 @@ finding is an index error would be exactly that. The tests declare the
 situation; the validator asserts the rule.
 
 Tool-usage enforcement is the universal `test_tool_allowlist`'s job — it
-validates calls against the skill's own `allowed-tools` frontmatter, which
-is where the absence of `image_read` and `image_transcribe` is enforced.
+validates calls against the agent's own `tools:` frontmatter, which is
+where the absence of `image_read` and `image_transcribe` is enforced.
+
+The two reply validators grade `subject_reply_text`: on a direct test the
+main thread only relays the agent's return, so `text_response` is the
+relay's words, not the audit's.
 
 See test_universal.py module docstring for the full validator
 function-signature contract.
@@ -250,7 +254,7 @@ def _requires_index_discrepancy(test) -> None:
         pytest.skip("negative tests route away and produce no audit")
 
 
-def test_index_discrepancy_recommends_reread(text_response, test):
+def test_index_discrepancy_recommends_reread(text_response, test, agent_returns=None):
     """Doctrine point 1: re-read the record, do not detach the source.
 
     On a fact conflict that looks like a transcription or indexing error,
@@ -260,6 +264,9 @@ def test_index_discrepancy_recommends_reread(text_response, test):
     index, and kept the source attached.
     """
     _requires_index_discrepancy(test)
+    from harness.skill_runner import subject_reply_text
+
+    text_response = subject_reply_text(agent_returns, text_response, "source-evaluation", test)
     assert _GO_TO_SOURCE_PATTERN.search(text_response), (
         "source-evaluation reported on an index discrepancy without "
         "recommending a re-read of the original record. Doctrine point 1 "
@@ -269,7 +276,7 @@ def test_index_discrepancy_recommends_reread(text_response, test):
     )
 
 
-def test_index_discrepancy_does_not_recommend_detaching(text_response, test):
+def test_index_discrepancy_does_not_recommend_detaching(text_response, test, agent_returns=None):
     """The other half of doctrine point 1, and the one that actually failed.
 
     Detaching is reserved for a source genuinely about a different person.
@@ -288,6 +295,9 @@ def test_index_discrepancy_does_not_recommend_detaching(text_response, test):
     declares the situation, the validator asserts the rule.
     """
     _requires_index_discrepancy(test)
+    from harness.skill_runner import subject_reply_text
+
+    text_response = subject_reply_text(agent_returns, text_response, "source-evaluation", test)
     protected = test.get("index_error_source")
     assert protected, (
         "this test is tagged `index-discrepancy` but no `index_error_source` "

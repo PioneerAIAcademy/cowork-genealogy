@@ -406,3 +406,51 @@ def test_both_guards_pass_on_every_committed_positive_run():
                 _no_detach(reply, test)
                 checked += 1
     assert checked, "replayed no positive runs — the corpus reader is broken"
+
+
+# --- the direct arm: the agent's return is the reply (issue #2796) --------
+#
+# On a direct test the main thread only relays the agent's return, so the two
+# reply guards grade `subject_reply_text`, never the relay.
+
+_DIRECT = dict(_TEST, delegation="Evaluate the sources on KD96-TV2.")
+_DETACH_PROTECTED = (
+    "Minnesota Death Index, 1908-2002 - wrong person. "
+    "Next: detach the Minnesota Death Index from this profile."
+)
+
+
+def _returns(text: str) -> list[dict]:
+    return [{"subagent_type": "source-evaluation", "text": text}]
+
+
+def test_direct_arm_grades_the_agents_return_not_the_relay():
+    # A clean relay over a detaching agent return must fail ...
+    try:
+        _no_detach(_M8Q_REMEDY, _DIRECT, agent_returns=_returns(_DETACH_PROTECTED))
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError("the detach guard read the relay instead of the agent's return")
+    # ... and a clean agent return under a relay that says nothing passes.
+    _recommends_reread("Done.", _DIRECT, agent_returns=_returns(_M8Q_REMEDY))
+    _no_detach("Done.", _DIRECT, agent_returns=_returns(_M8Q_REMEDY))
+
+
+def test_direct_arm_silent_agent_fails_even_when_the_relay_is_right():
+    try:
+        _recommends_reread(_M8Q_REMEDY, _DIRECT, agent_returns=[])
+    except AssertionError:
+        return
+    raise AssertionError("a silent agent passed on the relay's words")
+
+
+def test_another_agents_return_is_not_the_subjects():
+    try:
+        _recommends_reread(
+            "Done.", _DIRECT,
+            agent_returns=[{"subagent_type": "check-warnings", "text": _M8Q_REMEDY}],
+        )
+    except AssertionError:
+        return
+    raise AssertionError("an unrelated agent's return was graded as the audit")

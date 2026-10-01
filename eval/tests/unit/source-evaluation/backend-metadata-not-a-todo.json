@@ -9,11 +9,12 @@
       "index-discrepancy",
       "doctrine",
       "backend-metadata",
-      "signal-vs-noise"
+      "signal-vs-noise",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Evaluate the sources on Christian P. Hole (KD96-TV2) and list everything you find wrong, worst first.",
+    "delegation": "Evaluate the sources on Christian P. Hole (KD96-TV2) and list everything you find wrong, worst first.\n\nprojectPath: <workspace>",
     "scenario": "christian-hole-quality"
   },
   "mcp_fixtures": [

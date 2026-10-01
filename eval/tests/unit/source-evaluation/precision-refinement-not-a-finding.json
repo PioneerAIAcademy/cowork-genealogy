@@ -9,11 +9,12 @@
       "index-discrepancy",
       "doctrine",
       "precision-refinement",
-      "signal-vs-noise"
+      "signal-vs-noise",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Audit the sources on Cornelius Driscoll (GJ72-9WD) and list what is actually wrong with them, worst first.",
+    "delegation": "Audit the sources on Cornelius Driscoll (GJ72-9WD) and list what is actually wrong with them, worst first.\n\nprojectPath: <workspace>",
     "scenario": "driscoll-source-audit"
   },
   "mcp_fixtures": [
