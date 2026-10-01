@@ -89,6 +89,9 @@ import enqueue  # noqa: E402  (the SQS query-API client; signs SigV4)
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
 
 log = logging.getLogger("proto.web")
+# What the patron sees when SendMessage fails. Never the exception: an AWS refusal names the
+# account id and the instance role's ARN. The log line beside the 502 carries the detail.
+ENQUEUE_FAILED_MESSAGE = "queue send failed; please try again"
 # uvicorn configures only its own loggers, so without a handler of its own every INFO line
 # here -- the schema and the ``queue: ...; sqs credentials: ...`` start line -- is dropped.
 if not log.handlers:
@@ -1177,7 +1180,7 @@ def create_app(
             # the 502 names its seq: the SPA still has an echo to drop.
             raise HTTPException(
                 status_code=502,
-                detail={"message": f"queue send failed: {exc}", "turn_id": failed_id, "seq": turn.seq},
+                detail={"message": ENQUEUE_FAILED_MESSAGE, "turn_id": failed_id, "seq": turn.seq},
             ) from exc
         return {"turn_id": turn.turn_id, "seq": turn.seq, "message_id": message_id, "queued": held}
 

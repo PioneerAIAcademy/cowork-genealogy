@@ -818,18 +818,42 @@ def test_the_real_begin_turn_clears_the_stop_flag():
     assert "CLEAR_STOP_SQL" in source, "begin_turn must clear the flag, or a stopped session never resumes"
 
 
-async def test_post_message_on_queue_failure_marks_the_turn_and_returns_502():
+async def test_post_message_on_queue_failure_marks_the_turn_and_returns_502(caplog):
     store, queue = FakeStore(), FakeQueue(fail=True)
     row = store.seed_session()
-    async with make_client(store, queue) as c:
-        r = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "hello"})
+    with caplog.at_level("ERROR", logger="proto.web"):
+        async with make_client(store, queue) as c:
+            r = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "hello"})
     assert r.status_code == 502
     detail = r.json()["detail"]
-    assert "elasticmq is down" in detail["message"]
+    assert detail["message"] == app.ENQUEUE_FAILED_MESSAGE
+    assert "elasticmq is down" in caplog.text, "the operator keeps the queue's own error"
     # The user_msg row stays; the 502 names its seq so the SPA can still drop the echo.
     assert detail == {"message": detail["message"], "turn_id": store.turns[0].turn_id, "seq": 1}
     assert store.failed == [(store.turns[0].turn_id, "enqueue_failed")]
     assert queue.sent == []
+
+
+async def test_a_queue_refusal_never_reaches_the_patron(caplog):
+    """A real SQS AccessDenied (measured on AWS, 2026-10-01) names the account id and the
+    caller's role ARN. The 502 body is shown to the patron; the log line is the operator's."""
+    refusal = ("SQS SendMessage failed: HTTP 403 AccessDenied: User: arn:aws:sts::123456789012:"
+               "assumed-role/aws-elasticbeanstalk-ec2-role/i-0abc is not authorized to perform: sqs:sendmessage")
+
+    class RefusingQueue(FakeQueue):
+        async def send(self, body: dict[str, Any]) -> str:
+            raise app.enqueue.SqsError(refusal)
+
+    store, queue = FakeStore(), RefusingQueue()
+    row = store.seed_session()
+    with caplog.at_level("ERROR", logger="proto.web"):
+        async with make_client(store, queue) as c:
+            r = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "hello"})
+    assert r.status_code == 502
+    body = r.text
+    for secret in ("123456789012", "arn:aws", "AccessDenied", "elasticbeanstalk"):
+        assert secret not in body, secret
+    assert refusal in caplog.text
 
 
 async def test_post_message_rejects_empty_or_blank_text_and_unknown_session():
