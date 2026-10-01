@@ -228,9 +228,11 @@ adoption date or a year-start from memory. The tool returns a zero
 offset where no transition applies. Read `applied[]` — `offsetDays` for a
 Julian→Gregorian day difference, `yearAdjusted` for a year-start move. If the competing dates
 differ by exactly what the tool returns, they are the same day expressed
-two ways, not a substantive disagreement — say so in the weighing
-analysis. A derivative that has already been modernised by its
-transcriber must not be corrected a second time.
+two ways, not a substantive disagreement — **do not create a conflict
+entry**; explain the calendar difference in your reply and stop. Creating
+and resolving a fabricated conflict is worse than no entry. A derivative
+that has already been modernised by its transcriber must not be corrected
+a second time.
 
 ### 5. Resolve or defer
 
@@ -528,11 +530,15 @@ Suggest next steps:
   Call it once per competing date before stating any calendar fact or
   ruling on the dates. A correct answer reached without the call is a
   failure: the adoption table was removed from this skill and lives in
-  the tool.
+  the tool. If the tool shows the dates are the same day, there is no
+  conflict — do not create a conflict entry.
 - **Work with the assertions already in `research.json`.** When the
   user reports a disagreement, read the existing assertions and
   person_evidence first. Do not ask the user for an image or for data
-  that the project already contains.
+  that the project already contains. Do not ask for permission to
+  proceed — you are invoked to resolve conflicts, so create the
+  conflict entry and complete the full analysis (independence,
+  weighing, resolution or deferral) in one pass.
 
 ## Re-invocation behavior
 
