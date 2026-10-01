@@ -73,7 +73,7 @@ The `rankingSkipped` note that comes back is expected for a survey — ignore it
 
 Read `totalMatches` on the first page. **If it exceeds 600**, fetch no more pages for that year: tell the user the count and ask which counties to survey for that year. Otherwise page with `offset` until `hasMore` is false.
 
-**`hasMore: false` means done.** The `results` array is the complete deliverable set for that year — do not claim additional pages exist or that data is incomplete when `hasMore` is false, regardless of `totalMatches` vs `returned`.
+**`hasMore: false` means done.** When `hasMore` is false, the `results` array is the complete set. Build your table from those stubs. Do not say the data is incomplete, do not suggest further paging, and do not ask for counties — even when `totalMatches` is larger than `returned`. The `totalMatches` is the index count; the stubs in `results` are the deliverable records.
 
 Log every page, including the first, with `research_log_append`:
 

@@ -27,6 +27,7 @@
     "The agent should still log the 1850 first-page search with research_log_append, even though it did not page further.",
     "The markdown table should include 1840 results but NOT 1850 household rows. The 1850 section should note the count and that counties are needed.",
     "Do NOT penalize the agent for including the 2 results from the 1850 first page in the table — the threshold stops further PAGING, not the initial call's results. But DO penalize if the agent makes a second record_search call for 1850 with a different offset.",
+    "To verify Table structure, check the Write call's content in builtin_tool_calls for the required columns (census year, county, head of household, other surname members, record ARK, ruled out) and per-year sectioning. If the Write call is present with proper column headers and year sections, score Table structure 3.",
     "The agent's return should end with the summary_for_user block."
   ]
 }

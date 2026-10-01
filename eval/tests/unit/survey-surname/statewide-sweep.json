@@ -26,7 +26,8 @@
     "All three years are under the 600 totalMatches threshold (366, 407, 441), so the agent should fetch all results (they fit on one page each) and NOT ask for counties.",
     "Should call research_log_append after each record_search page to log the search, passing the staged.resultsRef from the record_search response as stagedResultsRef.",
     "Should build a markdown table with one section per census year, columns for year, county, head of household, other surname members, record ARK, and ruled out. Pre-1850 censuses name only the head of household, so there are no other members to list.",
-    "Should write the table to a markdown file using Write. The file name should follow the pattern surname-survey-dixon-virginia.md.",
+    "Should write the table to a markdown file using Write. The file name should follow the pattern surname-survey-dixon-virginia.md. To verify Table structure, check the Write call's content in builtin_tool_calls for the required columns (census year, county, head of household, other surname members, record ARK, ruled out) and per-year sectioning. If the Write call is present with the correct column headers and year sections, score Table structure 3.",
+    "All three fixtures return hasMore: false, meaning all deliverable results are on that single page. The agent should NOT claim data is incomplete or that additional paging is needed when hasMore is false.",
     "The agent's return should end with the summary_for_user block: a `---` line followed by two unlabeled paragraphs in plain language."
   ]
 }

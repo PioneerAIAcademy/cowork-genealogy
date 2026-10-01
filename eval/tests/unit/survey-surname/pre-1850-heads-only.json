@@ -24,7 +24,8 @@
     "totalMatches is 366 (under 600 threshold), so the agent should fetch all results.",
     "Pre-1850 censuses name only the head of household. Each result stub is one household. The agent should NOT try to find other household members or claim information about them that is not in the stubs.",
     "Should log the search with research_log_append and write a markdown table with Write.",
-    "The table should have one section for 1820 with 3 households (William Dixon in Rockingham, James Dixon in Augusta, Thomas Dixon in Fairfax).",
+    "The table should have one section for 1820 with 3 households (William Dixon in Rockingham, James Dixon in Augusta, Thomas Dixon in Fairfax). To verify Table structure, check the Write call's content in builtin_tool_calls for the required columns (census year, county, head of household, other surname members, record ARK, ruled out) and a 1820 section. If the Write call is present with proper column headers, score Table structure 3.",
+    "The fixture returns hasMore: false, meaning all deliverable results are on that single page. The agent should NOT claim data is incomplete or that additional paging is needed when hasMore is false.",
     "The agent's return should end with the summary_for_user block."
   ]
 }
