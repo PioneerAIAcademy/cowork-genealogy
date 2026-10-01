@@ -92,7 +92,10 @@ def test_non_owner_writing_localities_fails():
             POSITIVE,
         )
     assert "localities" in str(e.value)
-    assert "locality-guide" in str(e.value)
+    # The row's only writer is `agent:locality-guide` (issue #2117), which
+    # `writer_sets` resolves only from locality-guide's own suite, so from
+    # research-plan's vantage point the section has no writer at all.
+    assert "'localities': []" in str(e.value)
 
 
 def test_non_owner_writing_an_already_enforced_section_still_fails():
