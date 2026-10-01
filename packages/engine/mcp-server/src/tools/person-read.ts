@@ -116,6 +116,19 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
   const pid = personId.trim();
   const { result, resolvedId } = await fetchAndConvert(principal, pid, 0, deadline);
 
+  // The subject is `persons[0]`, GUARANTEED rather than inherited from whatever order
+  // FamilySearch sent. Downstream has to be able to say which entries are the subject's
+  // own -- `source-evaluation` audits the subject's sources and must not audit a
+  // relative's -- and after a 301 the caller's `personId` names nobody in the response,
+  // so the id it asked for cannot be the discriminator. Tests already pinned
+  // `persons[0]` as the subject for the plain read, the merged read and the living stub;
+  // this makes that a property of the tool instead of a habit of the upstream.
+  const subjectAt = result.persons.findIndex((p) => p.id === resolvedId);
+  if (subjectAt > 0) {
+    const [subject] = result.persons.splice(subjectAt, 1);
+    result.persons.unshift(subject);
+  }
+
   // Memories are coupled to sources (lead, 2026-09-27: "coupled everywhere"),
   // and sources are always read, so memories ride every read of a non-living
   // subject.
@@ -134,7 +147,8 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
   // Issue #1689 Half 3: the relatives' own attached sources. STARTED BEFORE the
   // memories merge is awaited, so the two reads overlap. They share one deadline, and
   // run in sequence the memories phase can consume all of it -- OCR waits out the full
-  // budget -- after which every relative is skipped and the loss shows only on stderr.
+  // budget -- after which every relative is skipped and the response carries a note
+  // saying so instead of their sources.
   const relativeIds = relativesWithRefs(result, resolvedId);
   const relativesPending: Promise<RelativeSourcesResult> =
     relativeIds.length > 0

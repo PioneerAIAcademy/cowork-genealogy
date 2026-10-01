@@ -44,10 +44,58 @@
             "place": "St. Patrick's Cemetery, Sherbrooke, Quebec, Canada",
             "standard_place": "Sherbrooke, Quebec, Canada"
           }
+        ],
+        "sources": [
+          {
+            "ref": "SD-DRIS-A"
+          },
+          {
+            "ref": "SD-DRIS-B"
+          },
+          {
+            "ref": "SD-DRIS-C"
+          },
+          {
+            "ref": "SD-DRIS-D"
+          },
+          {
+            "ref": "SD-DRIS-E"
+          },
+          {
+            "ref": "SD-DRIS-G"
+          }
+        ]
+      },
+      {
+        "id": "REL-0001",
+        "gender": "Male",
+        "living": false,
+        "names": [
+          {
+            "given": "Relative",
+            "surname": "Notaudited",
+            "preferred": true
+          }
+        ],
+        "facts": [],
+        "sources": [
+          {
+            "ref": "SD-REL-9WD"
+          }
         ]
       }
     ],
-    "relationships": [],
+    "relationships": [
+      {
+        "type": "ParentChild",
+        "person1": {
+          "resource": "#GJ72-9WD"
+        },
+        "person2": {
+          "resource": "#REL-0001"
+        }
+      }
+    ],
     "sources": [
       {
         "id": "SD-DRIS-A",
@@ -86,13 +134,20 @@
         "url": "https://ancestors.familysearch.org/en/GJ72-9WD/memories",
         "notes": [
           "Contributor upload; no indexed record behind it."
-        ]
+        ],
+        "artifact_url": "https://sg30p0.familysearch.org/service/memories/SD-DRIS-F"
       },
       {
         "id": "SD-DRIS-G",
         "title": "Cornelius Driscoll, \"Census of Canada, 1861\"",
         "citation": "\"Census of Canada, 1861\", database with images, FamilySearch, entry for Cornelius Driscoll, Sherbrooke, Canada East.",
         "url": "https://familysearch.org/ark:/61903/1:1:DRIS-006"
+      },
+      {
+        "id": "SD-REL-9WD",
+        "title": "A source attached to the RELATIVE, not the subject",
+        "citation": "Relative's own record — must not be audited as the subject's.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:REL-9999"
       }
     ]
   }

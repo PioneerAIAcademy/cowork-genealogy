@@ -54,7 +54,8 @@ const RELATIVE_READ_TIMEOUT_MS = 30_000;
 export interface RelativeSourcesResult {
   /** RAW FamilySearch descriptions, deduped by id. The caller shapes them — see below. */
   descriptions: GedcomXSourceDescription[];
-  /** Relatives whose read failed or was cut short. Diagnostic only. */
+  /** Relatives whose read failed or was cut short. The caller reports the count in
+   *  the response's `notes[]`; this is not diagnostic-only. */
   skipped: string[];
 }
 
@@ -95,11 +96,13 @@ async function fetchOne(
  * `simplifySourceDescription` and produced 180 validation errors on a real subject.
  * Shaping belongs in one place, with the subject's own sources.
  *
- * FAIL-SOFT, AND SILENT TO THE AGENT — the same way the memories fetch is. The response
- * shape is pinned to exactly `{persons, relationships, sources}` by the 2026-08-21
- * no-discriminator ruling, so there is nowhere to report a shortfall without reopening it.
- * A caller that wants the detail reads `skipped`; what must NOT happen is a partial read
- * presented as a complete one, which is why `skipped` exists rather than being swallowed.
+ * FAIL-SOFT, AND REPORTED. A relative we cannot read is skipped rather than fatal, and the
+ * caller names the count in the response's top-level `notes[]` as well as on stderr. An
+ * earlier version of this comment said there was "nowhere to report a shortfall" because
+ * the top level is pinned to `{persons, relationships, sources}` — that was wrong:
+ * `notes[]` already exists for exactly this, "present only when something was silently
+ * dropped". A partial read presented as a complete one is the failure mode, because
+ * relatives with unread sources look identical to relatives with none.
  */
 export async function fetchRelativeSources(
   personIds: string[],

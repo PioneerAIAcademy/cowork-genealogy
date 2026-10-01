@@ -2184,6 +2184,11 @@ describe("a skipped relative is reported in the response (#1689 Half 3)", () => 
   });
 
   it("a rejecting relative fetch does not take the process down", async () => {
+    // NON-LIVING subject, and that is the whole point: the unhandled window only exists
+    // while `mergeMemories` is being awaited, and a living subject skips that phase
+    // entirely. With a living one this test passed even with the `.catch` deleted —
+    // it failed on the missing note, not on the crash.
+    //
     // `relativesPending` is created before `mergeMemories` is awaited, so between those
     // points it is unhandled: a rejection ends the PROCESS, not the read.
     //
@@ -2192,13 +2197,21 @@ describe("a skipped relative is reported in the response (#1689 Half 3)", () => 
     // normal skip. The null element throws in `fetchRelativeSources`'s own dedupe loop,
     // outside every catch, which is the path that escapes. Mutation-checked: the
     // rejecting-`json()` version left the missing `.catch` undetected.
-    mockOk(body());
+    const nonLiving = body() as unknown as { persons: Array<Record<string, unknown>> };
+    nonLiving.persons[0].living = false;
+    nonLiving.persons[0].gender = { type: "http://gedcomx.org/Female" };
+    mockOk(nonLiving as never);
+    // The relative read is issued BEFORE the memories merge is awaited, so it is the
+    // next request out. A `null` element throws in the dedupe loop, outside every catch.
     mockFetch.mockResolvedValueOnce({
       ok: true,
       status: 200,
       json: () => Promise.resolve({ sourceDescriptions: [null] }),
       headers: new Headers(),
     });
+    // Whatever the memories phase then does fails soft.
+    mockFetch.mockRejectedValue(new Error("memories unavailable"));
+
     const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
     expect(out.sources.map((s) => s.id)).toEqual(["OWN-1"]);
     expect(out.notes!.join(" ")).toMatch(/could not be read/);

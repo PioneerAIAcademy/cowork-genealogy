@@ -46,10 +46,49 @@
             "place": "Erskine, Polk, Minnesota, United States",
             "standard_place": "Erskine, Polk, Minnesota, United States"
           }
+        ],
+        "sources": [
+          {
+            "ref": "SD-HOLE-A"
+          },
+          {
+            "ref": "SD-HOLE-B"
+          },
+          {
+            "ref": "SD-HOLE-C"
+          }
+        ]
+      },
+      {
+        "id": "REL-0001",
+        "gender": "Female",
+        "living": false,
+        "names": [
+          {
+            "given": "Relative",
+            "surname": "Notaudited",
+            "preferred": true
+          }
+        ],
+        "facts": [],
+        "sources": [
+          {
+            "ref": "SD-REL-TV2"
+          }
         ]
       }
     ],
-    "relationships": [],
+    "relationships": [
+      {
+        "type": "ParentChild",
+        "person1": {
+          "resource": "#KD96-TV2"
+        },
+        "person2": {
+          "resource": "#REL-0001"
+        }
+      }
+    ],
     "sources": [
       {
         "id": "SD-HOLE-A",
@@ -76,7 +115,14 @@
         "url": "https://ancestors.familysearch.org/en/KD96-TV2/memories",
         "notes": [
           "Contributor upload; no indexed record behind it."
-        ]
+        ],
+        "artifact_url": "https://sg30p0.familysearch.org/service/memories/SD-HOLE-D"
+      },
+      {
+        "id": "SD-REL-TV2",
+        "title": "A source attached to the RELATIVE, not the subject",
+        "citation": "Relative's own record — must not be audited as the subject's.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:REL-9999"
       }
     ]
   }

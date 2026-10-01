@@ -392,3 +392,55 @@ def test_quality_detail_call_carries_detail_flag(tool_calls, test):
         "carried no `detail` block: "
         f"{[(c.get('args') or {}) for c in calls]}"
     )
+
+
+def test_a_relatives_source_is_not_audited(tool_calls, test):
+    """A relative's attached source must never be `record_read` as the subject's.
+
+    `person_read` returns the relatives' attached sources in the same `sources[]`
+    array as the subject's own (issue #1689 Half 3), so "the sources array is the
+    audit list" started meaning "audit the whole family". Measured on a real
+    profile: 192 `record_read` calls where 17 were the subject's. Step 2 then
+    recommends detaching a record that is "about a different person" -- which a
+    sibling's record correctly is, so the advice is wrong and confident.
+
+    The fixtures carry one relative source, `SD-REL-*`, pointing at
+    `1:1:REL-9999`. Nothing else grades which sources were read, so without this
+    the relative in the fixture tests nothing.
+    """
+    read_arks = [
+        str((c.get("args") or {}).get("url") or (c.get("args") or {}).get("recordId") or "")
+        for c in (tool_calls or [])
+        if (c.get("tool") or "").rsplit("__", 1)[-1] == "record_read"
+    ]
+    audited = [a for a in read_arks if "REL-9999" in a]
+    assert not audited, (
+        "a RELATIVE's attached source was audited as the subject's: "
+        f"{audited}. `person_read`'s `sources[]` carries the relatives' sources too; "
+        "the audit list is the entries `persons[0].sources[].ref` names, plus entries "
+        "carrying `artifact_url`."
+    )
+
+
+def test_a_memory_is_still_audited(tool_calls, text_response, test):
+    """The other half of the same rule, and the one easy to lose.
+
+    No person entry references a memory -- 14 of 14 on one measured profile -- so
+    scoping the audit to "entries the subject's refs point at" silently drops every
+    memory. The rule keeps them by `artifact_url`, and this fails if a fix to the
+    rule above takes them with it.
+
+    Memories carry no `1:1:` ARK, so the evidence is that the response ACCOUNTS for
+    the unreadable one rather than that it was read.
+    """
+    if "memories" not in str(test.get("name", "")).lower() and not text_response:
+        pytest.skip("no response to inspect")
+    body = (text_response or "").lower()
+    mentions_unreadable = any(
+        p in body for p in ("could not", "cannot", "not readable", "no readable", "memory", "memories")
+    )
+    assert mentions_unreadable, (
+        "the audit named no unreadable source. A memory is in the audit list "
+        "(it carries `artifact_url`) but has no `1:1:` ARK, so it must be reported "
+        "as one that could not be checked -- not silently dropped."
+    )

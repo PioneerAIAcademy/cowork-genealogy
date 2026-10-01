@@ -327,7 +327,7 @@ fetched for the id the redirect landed on, not the id the caller passed.
   description: "Read person data from the FamilySearch Family Tree. " +
     "Returns simplified GEDCOMX (persons, relationships, sources): the person, " +
     "their parents, siblings, spouses and children, and the sources attached " +
-    "to the person, each linked from the person's own `sources` refs. For a " +
+    "to the person AND to each relative, each linked from that person's own `sources` refs — so what is attached to the SUBJECT is the entries its own refs point at, plus any carrying `artifact_url`. For a " +
     "non-living subject it also returns source-style memories (scanned " +
     "wills, certificates, obituaries), transcribed where the " +
     "read's time budget allowed. " +
