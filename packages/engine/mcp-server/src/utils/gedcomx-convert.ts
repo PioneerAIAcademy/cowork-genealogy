@@ -408,9 +408,9 @@ function simplifySourceRef(
   return out;
 }
 
-/** Exported for `relative-sources`: a relative's descriptions arrive from a second
- *  endpoint in the same GedcomX shape, and converting them any other way would be a
- *  parallel copy of this that drifts. */
+/** Exported for `person-read`, which converts the descriptions a relative's own
+ *  `/sources` read returns before shaping them. Same GedcomX shape as the tree body's,
+ *  so converting them any other way would be a parallel copy of this that drifts. */
 export function simplifySourceDescription(
   desc: GedcomXSourceDescription,
 ): SimplifiedSourceDescription {

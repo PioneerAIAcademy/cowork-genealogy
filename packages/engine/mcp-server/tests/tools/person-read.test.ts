@@ -1832,7 +1832,7 @@ describe("personReadTool relatives' attached sources (#1689 Half 3)", () => {
     });
   }
 
-  it("30. fetches a relative's descriptions and KEEPS the ref that used to be dropped", async () => {
+  it("fetches a relative's descriptions and KEEPS the ref that used to be dropped", async () => {
     mockOk(bodyWithRelativeRef());
     mockRelativeSources([
       {
@@ -1862,7 +1862,7 @@ describe("personReadTool relatives' attached sources (#1689 Half 3)", () => {
     for (const p of out.persons) for (const r of p.sources ?? []) expect(ids.has(r.ref)).toBe(true);
   });
 
-  it("31. the top level is still exactly {persons, relationships, sources}", async () => {
+  it("the top level is still exactly {persons, relationships, sources}", async () => {
     // The 2026-08-21 no-discriminator ruling. A new key here is the thing the whole
     // "ordinary entries" shape exists to prevent.
     mockOk(bodyWithRelativeRef());
@@ -1871,7 +1871,7 @@ describe("personReadTool relatives' attached sources (#1689 Half 3)", () => {
     expect(Object.keys(out).sort()).toEqual(["persons", "relationships", "sources"]);
   });
 
-  it("32. a failed relative fetch returns the tree read unchanged, and does not throw", async () => {
+  it("a failed relative fetch returns the tree read unchanged, and does not throw", async () => {
     // Acceptance #5: fail-soft, silent to the agent. This is what test 29 has been
     // exercising since the feature landed — the fetch falls through and nothing changes.
     mockOk(bodyWithRelativeRef());
@@ -1882,7 +1882,7 @@ describe("personReadTool relatives' attached sources (#1689 Half 3)", () => {
     expect("sources" in kid).toBe(false);
   });
 
-  it("33. a relative with no attached sources costs no call", async () => {
+  it("a relative with no attached sources costs no call", async () => {
     // Only persons carrying a ref are worth a request; a tree of unsourced relatives
     // must not pay one each to discover that.
     const body = bodyWithRelativeRef();
@@ -1892,7 +1892,7 @@ describe("personReadTool relatives' attached sources (#1689 Half 3)", () => {
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
-  it("34. a source shared by two relatives appears once", async () => {
+  it("a source shared by two relatives appears once", async () => {
     // Measured on a real subject (1 of 79 on KNDX-MKG). A repeated id in sources[]
     // breaks the tree write.
     const body = bodyWithRelativeRef() as { persons: Array<Record<string, unknown>>; relationships: unknown[] };
@@ -1919,7 +1919,7 @@ describe("personReadTool relatives' attached sources (#1689 Half 3)", () => {
     expect(out.sources.filter((s) => s.id === "REL-9AA")).toHaveLength(1);
   });
 
-  it("35. the subject's own sources are not re-fetched", async () => {
+  it("the subject's own sources are not re-fetched", async () => {
     // They are already in the tree body and resolve from it (17/17, 24/24 measured).
     // One relative carries a ref, so exactly one extra call — not two.
     mockOk(bodyWithRelativeRef());
@@ -1938,7 +1938,7 @@ describe("personReadTool relatives' attached sources (#1689 Half 3)", () => {
 // actually buys is PARTIAL success — one unreachable relative must not cost the
 // sources of the others, which the outer catch alone would throw away.
 describe("fetchRelativeSources partial failure (#1689 Half 3)", () => {
-  it("36. one relative failing does not lose the others' sources", async () => {
+  it("one relative failing does not lose the others' sources", async () => {
     mockFetch.mockRejectedValueOnce(new Error("first relative unreachable"));
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -1952,7 +1952,7 @@ describe("fetchRelativeSources partial failure (#1689 Half 3)", () => {
     expect(out.skipped).toEqual(["BAD-0001"]);
   });
 
-  it("37. a relative past the deadline is skipped, not awaited", async () => {
+  it("a relative past the deadline is skipped, not awaited", async () => {
     const { fetchRelativeSources } = await import("../../src/utils/relative-sources.js");
     const out = await fetchRelativeSources(["A", "B"], LOCAL, Date.now() - 1);
     expect(out.descriptions).toEqual([]);
@@ -1996,7 +1996,7 @@ describe("relatives' sources are shaped for the tree write (#1689 Half 3)", () =
     } as never;
   }
 
-  it("38. carries no field the tree schema forbids", async () => {
+  it("carries no field the tree schema forbids", async () => {
     mockOk(relativeBody());
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -2024,7 +2024,7 @@ describe("relatives' sources are shaped for the tree write (#1689 Half 3)", () =
     expect(Object.keys(rel).sort()).toEqual(["citation", "id", "title", "url"]);
   });
 
-  it("39. gives a title-less description the empty-string title the write requires", async () => {
+  it("gives a title-less description the empty-string title the write requires", async () => {
     mockOk(relativeBody());
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -2036,7 +2036,7 @@ describe("relatives' sources are shaped for the tree write (#1689 Half 3)", () =
     expect(out.sources.find((s) => s.id === "REL-9AA")!.title).toBe("");
   });
 
-  it("40. drops an SD_* metadata entry a relative's read returns", async () => {
+  it("drops an SD_* metadata entry a relative's read returns", async () => {
     mockOk(relativeBody());
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -2055,7 +2055,7 @@ describe("relatives' sources are shaped for the tree write (#1689 Half 3)", () =
     expect(out.sources.map((s) => s.id)).toContain("REL-9AA");
   });
 
-  it("41. a source the subject already carries is not added twice", async () => {
+  it("a source the subject already carries is not added twice", async () => {
     // The common case: a marriage record attached to both the subject and the spouse.
     mockOk(relativeBody());
     mockFetch.mockResolvedValueOnce({
@@ -2079,7 +2079,7 @@ describe("relatives' sources are shaped for the tree write (#1689 Half 3)", () =
 // so the two overlap. Every other test here uses a living subject precisely to keep the
 // memories phase out of the way, which is why this one exists.
 describe("relatives' sources on a non-living subject (#1689 Half 3)", () => {
-  it("42. still arrive when the memories phase also runs", async () => {
+  it("still arrive when the memories phase also runs", async () => {
     mockOk({
       persons: [
         {
@@ -2123,5 +2123,84 @@ describe("relatives' sources on a non-living subject (#1689 Half 3)", () => {
     expect(out.sources.map((s) => s.id).sort()).toEqual(["OWN-1", "REL-9AA"]);
     const kid = out.persons.find((p) => p.id === "KID-0001")!;
     expect(kid.sources).toEqual([{ ref: "REL-9AA" }]);
+  });
+});
+
+// Budget expiry has to be VISIBLE, not just logged. Review measured 11 of 12 relatives
+// skipped in 3 of 10 runs on one subject when the tree read and fan-out ran slow — and
+// with only a stderr line, the agent sees relatives with no attached sources, which is
+// indistinguishable from relatives that genuinely have none. That is the #1948 blind
+// spot this half exists to close, reopened by its own failure mode.
+describe("a skipped relative is reported in the response (#1689 Half 3)", () => {
+  function body() {
+    return {
+      persons: [
+        {
+          id: "SUBJ-001",
+          living: true,
+          names: [{ nameForms: [{ fullText: "Ann Subject" }] }],
+          sources: [{ description: "#OWN-1", descriptionId: "OWN-1" }],
+        },
+        {
+          id: "KID-0001",
+          living: false,
+          gender: { type: "http://gedcomx.org/Female" },
+          names: [{ nameForms: [{ fullText: "Bea Child" }] }],
+          sources: [
+            {
+              description: "https://api.familysearch.org/platform/sources/descriptions/REL-9AA",
+              descriptionId: "REL-9AA",
+            },
+          ],
+        },
+      ],
+      childAndParentsRelationships: [
+        { parent1: { resourceId: "SUBJ-001" }, child: { resourceId: "KID-0001" } },
+      ],
+      sourceDescriptions: [{ id: "OWN-1", titles: [{ value: "Her own" }] }],
+    } as never;
+  }
+
+  it("names the count in notes[] when a relative could not be read", async () => {
+    mockOk(body());
+    mockFetch.mockRejectedValueOnce(new Error("unreachable"));
+    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    expect(out.notes).toBeDefined();
+    expect(out.notes!.join(" ")).toMatch(/1 of 1 relatives'.*could not be read/);
+  });
+
+  it("says nothing when every relative was read", async () => {
+    // `notes[]` is "present only when something was silently dropped" (spec). A note on
+    // the happy path would train the reader to ignore it.
+    mockOk(body());
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ sourceDescriptions: [{ id: "REL-9AA", titles: [{ value: "x" }] }] }),
+      headers: new Headers(),
+    });
+    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    expect((out.notes ?? []).join(" ")).not.toMatch(/could not be read/);
+  });
+
+  it("a rejecting relative fetch does not take the process down", async () => {
+    // `relativesPending` is created before `mergeMemories` is awaited, so between those
+    // points it is unhandled: a rejection ends the PROCESS, not the read.
+    //
+    // A `null` ELEMENT is the trigger, and the distinction matters — a rejecting `json()`
+    // does NOT reproduce it, because `fetchOne` catches that and returns null for a
+    // normal skip. The null element throws in `fetchRelativeSources`'s own dedupe loop,
+    // outside every catch, which is the path that escapes. Mutation-checked: the
+    // rejecting-`json()` version left the missing `.catch` undetected.
+    mockOk(body());
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ sourceDescriptions: [null] }),
+      headers: new Headers(),
+    });
+    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    expect(out.sources.map((s) => s.id)).toEqual(["OWN-1"]);
+    expect(out.notes!.join(" ")).toMatch(/could not be read/);
   });
 });

@@ -9,7 +9,8 @@ It returns data in **simplified GEDCOMX format** (`persons[]`,
 
 The tool accepts a FamilySearch person ID (required) and always returns the
 person's parents, **siblings**, spouses and children (`persons[]` +
-`relationships[]`) and the sources attached to the person (`sources[]`, each
+`relationships[]`) and the sources attached to the person **and to each relative**
+(`sources[]`, each
 person linking to its own through `persons[].sources`). Siblings are a second
 hop costing one read per parent (see "The sibling fan-out" below). For a
 non-living subject the read also pages that person's source-style memories.
@@ -393,6 +394,18 @@ header is needed (no WAF issue on this domain).
 platform API always returns FS-extended GEDCOMX regardless of the Accept
 header. Confirmed by the FamilySearch team (Todd Chapman, Erik Wilford).
 
+### Endpoint: Relatives' attached sources
+
+```
+GET /platform/tree/persons/{pid}/sources
+```
+
+One call per relative that carries a source ref, concurrency-bounded, each bounded by
+`min(per-read cap, budget left)` on the same deadline as the fan-out and memories. Returns
+that person's `sourceDescriptions[]`. Chosen over fetching each ref's own URL because it
+returns all of one person's descriptions in a single call — 63 calls against ~400 at 63
+relatives (`dev/probe-relative-sources.json`).
+
 ### Endpoint: Person details
 
 ```
@@ -747,6 +760,11 @@ rule. They are skipped, which also saves a request whose result cannot be used.
 
 #### 6. Sources
 
+`sources[]` carries the subject's own descriptions **and the relatives' own**, as ordinary
+entries with no discriminator. A consumer that means "what is attached to the subject"
+must intersect against the subject's `persons[].sources[].ref` — and add entries carrying
+`artifact_url`, since a memory is referenced by no person entry.
+
 For each entry in `sourceDescriptions[]`:
 
 | FS-extended field | Simplified field | Conversion |
@@ -801,6 +819,7 @@ is living.
 | Condition | Behavior |
 |-----------|----------|
 | Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error |
+| A relative's sources read fails or the shared budget expires | Skip that relative, keep the tree read, log one line to stderr, AND name the count in top-level `notes[]` — a silent skip is indistinguishable from a relative with nothing attached |
 | Person not found (404) | Throw: `"Person {pid} not found in the FamilySearch Family Tree."` |
 | Person deleted (410) | Throw: `"Person {pid} has been deleted from the FamilySearch Family Tree."` |
 | Person restricted (403) | Throw: `"Person {pid} is restricted and cannot be viewed."` |
@@ -958,6 +977,13 @@ response. FS couple refs arrive as `resourceId`-only; the tool
 normalizes them to `resource` refs before conversion so participants
 are not dropped.
 
+### `packages/engine/mcp-server/src/utils/relative-sources.ts`
+
+- `fetchRelativeSources(personIds, principal, deadline)` — one `/persons/{pid}/sources`
+  read per relative, concurrency-bounded, each bounded by `min(cap, budget left)`.
+  Returns RAW descriptions plus `skipped[]`; the caller shapes them through
+  `shapeSources`, because the simplified form carries fields the tree schema forbids.
+
 ### `packages/engine/mcp-server/src/tools/person-read.ts`
 
 - `personReadToolSchema` — MCP tool schema
@@ -1009,17 +1035,24 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 | 30 | Never carries FamilySearch's tags or attribution onto a ref | Person-level refs |
 | 31 | The living 204 stub carries no `sources` key | Living person |
 | 32 | Fetches a relative's attached descriptions and KEEPS the ref that would otherwise dangle | Relatives' sources |
-| 33 | A relative's source entry carries no field the tree schema forbids (no `resource_type`, no `coverage`) | Tree write |
-| 34 | A title-less relative description gets the empty-string title the write requires | Tree write |
-| 35 | An `SD_*` metadata entry from a relative's read is dropped | FS metadata |
-| 36 | Top level stays exactly `{persons, relationships, sources}` with relatives' sources merged | No discriminator |
-| 37 | A failed relative read returns the tree read unchanged and does not throw | Fail-soft |
-| 38 | A relative with no attached refs costs no call | No speculative reads |
-| 39 | A source shared by two relatives, or already carried by the subject, appears once | Dedupe |
-| 40 | The subject's own sources are not re-fetched | Already in the body |
-| 41 | One relative failing does not lose the others' sources | Partial success |
-| 42 | Every relative read is bounded by `min(per-read cap, budget left)`, not `fsFetch`'s default | Budget |
-| 43 | A relative past the shared deadline is skipped, not awaited | Budget |
+| 33 | Top level stays exactly `{persons, relationships, sources}` with relatives' sources merged | No discriminator |
+| 34 | A failed relative read returns the tree read unchanged and does not throw | Fail-soft |
+| 35 | A relative with no attached refs costs no call | No speculative reads |
+| 36 | A source shared by two relatives appears once | Dedupe |
+| 37 | The subject's own sources are not re-fetched | Already in the body |
+| 38 | A relative's entry carries no field the tree schema forbids (no `resource_type`, no `coverage`) | Tree write |
+| 39 | A title-less relative description gets the empty-string title the write requires | Tree write |
+| 40 | An `SD_*` metadata entry from a relative's read is dropped | FS metadata |
+| 41 | A source already carried by the subject is not added twice | Dedupe |
+| 42 | Relatives' sources still arrive on a NON-living subject, where the memories phase also runs | Shared budget |
+| 43 | A skipped relative is named in top-level `notes[]`, not only on stderr | Budget visible |
+| 44 | No note when every relative was read | `notes[]` means something |
+| 45 | A rejecting relative fetch does not take the process down | Unhandled rejection |
+
+`tests/utils/relative-sources.test.ts` covers the fetch module directly — the per-read
+bound, the raw-description passthrough, dedupe, partial failure and 204. Those are not
+rows here: this table enumerates the TOOL's behaviours, and the bound is an argument to
+`fsFetch` that a global-`fetch` stub cannot observe.
 
 ### Smoke-test script
 

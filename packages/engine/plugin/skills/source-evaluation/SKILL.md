@@ -41,7 +41,14 @@ Your job is the remaining case: the sources on the profile are there, and the qu
 
 ### 1. Read the profile and its attached sources
 
-Call `person_read({ personId, sourceDescriptions: true })`. The `sources[]` array is the audit list — each entry has `id`, `title`, `citation`, `url` and sometimes `notes`. Entries whose id starts with `SD_` never appear; the tool already filters them as metadata.
+Call `person_read({ personId, sourceDescriptions: true })`. Entries whose id starts with `SD_` never appear; the tool already filters them as metadata.
+
+**The audit list is NOT the whole `sources[]` array.** `sources[]` also carries every *relative's* attached sources, and auditing one of those as if it were attached to the subject is how a sibling's record gets recommended for detachment because it is "about a different person" — which it correctly is. Build the list as:
+
+- every entry whose `id` appears in **the subject's own** `persons[].sources[].ref`, plus
+- every entry carrying an `artifact_url`.
+
+The second half is not optional: a memory is referenced by no person entry at all (14 of 14 on one measured profile), so subject-referenced alone silently drops every memory from the audit. An entry that is neither is a relative's and is **not** audited here.
 
 If the user gave a name rather than an id, read `tree.gedcomx.json` and match on `names[*].given` + `names[*].surname`. If more than one person matches, ask which before reading anything.
 
