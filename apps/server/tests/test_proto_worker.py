@@ -2097,6 +2097,29 @@ def test_a_release_with_static_sqs_keys_claims_and_sends(monkeypatch):
     assert worker.release_queued_turn(FakeConn(), "sess-1") == "m-s"
 
 
+def test_the_credentials_cap_reaches_credentials_ready(monkeypatch):
+    """The deadline check counts RELEASE_CREDENTIALS_TIMEOUT_S, so the cap must arrive at
+    ``credentials_ready`` itself: dropped there, a shutdown release blocks on an uncapped
+    IMDS refresh and overruns the stop grace period. An ordinary release passes none."""
+    monkeypatch.setattr(worker, "QUEUE_URL", "http://q/000000000000/turns")
+    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid: {"turn_id": "h"})
+    import proto.enqueue as enq
+
+    given: list = []
+    monkeypatch.setattr(enq, "credentials_ready", lambda timeout=None: given.append(timeout) or True)
+    monkeypatch.setattr(enq, "sqs_call", lambda *a, **k: "<R><MessageId>m</MessageId></R>")
+
+    assert worker.release_queued_turn(FakeConn(), "sess-1") == "m"
+    assert worker.release_queued_turn(
+        FakeConn(), "sess-1", credentials_timeout=worker.RELEASE_CREDENTIALS_TIMEOUT_S) == "m"
+    assert given == [None, worker.RELEASE_CREDENTIALS_TIMEOUT_S]
+
+    given.clear()
+    worker.defer_release("sess-2", "turn-2")
+    worker.run_deferred_releases(connect=lambda dsn, **kw: FakeConn(), deadline=time.monotonic() + 60)
+    assert given == [worker.RELEASE_CREDENTIALS_TIMEOUT_S], "the shutdown path, deadline to credentials_ready"
+
+
 # ── 1e: the per-session spend bound ──────────────────────────────────────────────
 
 RUNLOGS_E2E = SERVER.parents[1] / "eval" / "runlogs" / "e2e"
