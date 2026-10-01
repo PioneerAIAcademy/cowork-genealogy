@@ -113,6 +113,13 @@ WIDENED: dict[str, set[str]] = {
 #: from the visible writer set for this fixed perspective. The write permission is
 #: unchanged: from person-evidence's own subject perspective it still owns all three
 #: sections it held before the conversion.
+#:
+#: `log`'s and `plans`'s `search-images` caller changed from `skill:` to
+#: `agent:` (issue #2268, thin-skill deletion). With SUBJECTS iterating every
+#: agent caller, `search-images` resolves when `subject="search-images"`, so
+#: the union still sees it — no NARROWED entry needed for either section.
+#: `plan_items` has `enforceableAt: []` so it never reaches the unit plane
+#: and needs no entry.
 NARROWED: dict[str, set[str]] = {
     "assertions": {"convert-dates"},
     "person_evidence": {"person-evidence"},

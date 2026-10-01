@@ -8,6 +8,7 @@
 import { getProjectStore } from "../store/project-store.js";
 import { classifyProjectPath, missingProjectDirMessage, noProjectResult } from "../utils/project-io.js";
 import type {
+  SimplifiedFact,
   SimplifiedGedcomX,
   SimplifiedPerson,
 } from "../types/gedcomx.js";
@@ -21,6 +22,8 @@ import {
   DEATH,
   DEATHLIKE_FACT_TYPES,
   MARRIAGELIKE_FACT_TYPES,
+  MIGRATIONLIKE_FACT_TYPES,
+  RESIDENCELIKE_FACT_TYPES,
   Mob,
   getRelativeMobs,
 } from "../utils/mob.js";
@@ -48,6 +51,7 @@ import {
   perfectDaysOfSelfFacts,
 } from "../utils/fact-helpers.js";
 import { nameSimilarity, normalizeString } from "../utils/string-similarity.js";
+import { countryConsistency, placeSegments } from "../utils/place-resolver.js";
 import { preferredName } from "../utils/name-helpers.js";
 import { getSimilarNamePairs } from "../utils/name-pairs.js";
 import {
@@ -254,6 +258,21 @@ const SIMILAR_SPOUSES_CONFLICTING_DATES = "similarSpousesConflictingDates";
 const HAS_CLOSE_CHILD_BIRTHS_IGNORE_SIMILAR_CHILDREN = "hasCloseChildBirthsIgnoreSimilarChildren";
 const HAS_CLOSE_CHILD_CHRISTENINGS_6_30 = "hasCloseChildChristenings6_30";
 const HAS_DISSIMILAR_SPOUSES_WITH_SAME_MARRIAGE_YEAR = "hasDissimilarSpousesWithSameMarriageYear";
+
+// Project rule — NOT a FamilySearch Java MobWarnings port.
+const HAS_EVENT_IN_OTHER_COUNTRY = "hasEventInOtherCountry";
+
+// Fact types excluded from the "event in other country" check: migration-like,
+// residence-like, inherently mobile/paperwork types, and the anchor facts
+// themselves (birth-like and death-like — the specific types, not the full
+// BIRTHLIKE/DEATHLIKE families, because only Birth/Christening/Baptism and
+// Death/Burial are used as anchors in findEventInOtherCountry).
+const EVENT_IN_OTHER_COUNTRY_SKIP: ReadonlySet<string> = new Set([
+  ...MIGRATIONLIKE_FACT_TYPES,
+  ...RESIDENCELIKE_FACT_TYPES,
+  "MilitaryService", "Occupation", "Obituary", "Probate", "Will",
+  "Birth", "Christening", "Baptism", "Death", "Burial",
+]);
 
 // ─── Predicate ports of Java MobWarnings ────────────────────────────────────
 // These mirror the boolean predicate methods in warnings.java exactly:
@@ -2731,6 +2750,144 @@ function checkMaleRelativesHasDiffSurname(
   };
 }
 
+// ─── Project rule: event in a country inconsistent with birth and death ───────
+
+/** True when the candidate's country bidirectionally contradicts every anchor. */
+function isDifferentFromAllAnchors(
+  candidatePlace: string,
+  anchorPlaces: string[],
+): boolean {
+  if (anchorPlaces.length === 0) return false;
+  for (const anchor of anchorPlaces) {
+    if (
+      countryConsistency(candidatePlace, anchor) !== "contradiction" ||
+      countryConsistency(anchor, candidatePlace) !== "contradiction"
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Project rule (not a FamilySearch Java port).
+ *
+ * Returns the first fact whose standard_place country bidirectionally
+ * contradicts every birth and death anchor country, or null.
+ *
+ * Requires birth-like and death-like anchors that agree with each other.
+ */
+function findEventInOtherCountry(mob: Mob): {
+  fact: SimplifiedFact;
+  factCountry: string;
+  anchorCountry: string;
+} | null {
+  const person = mob.getPerson();
+
+  // 1. Gather anchor standard_places.
+  const birthAnchors: string[] = [];
+  const deathAnchors: string[] = [];
+  for (const f of person.facts ?? []) {
+    if (!f.standard_place) continue;
+    if (f.type === "Birth" || f.type === "Christening" || f.type === "Baptism") {
+      birthAnchors.push(f.standard_place);
+    } else if (f.type === "Death" || f.type === "Burial") {
+      deathAnchors.push(f.standard_place);
+    }
+  }
+  if (birthAnchors.length === 0 || deathAnchors.length === 0) return null;
+
+  // 2. Verify anchors agree: if any birth-death pair is bidirectionally
+  //    contradicted, the person is an emigrant and we cannot determine a
+  //    "home country".
+  for (const b of birthAnchors) {
+    for (const d of deathAnchors) {
+      if (
+        countryConsistency(b, d) === "contradiction" &&
+        countryConsistency(d, b) === "contradiction"
+      ) {
+        return null;
+      }
+    }
+  }
+
+  const allAnchors = [...birthAnchors, ...deathAnchors];
+
+  // 3. Scan person facts.
+  for (const f of person.facts ?? []) {
+    if (!f.standard_place || !f.type) continue;
+    if (EVENT_IN_OTHER_COUNTRY_SKIP.has(f.type)) continue;
+    if (isDifferentFromAllAnchors(f.standard_place, allAnchors)) {
+      const segs = placeSegments(f.standard_place);
+      return {
+        fact: f,
+        factCountry: segs[segs.length - 1],
+        anchorCountry: placeSegments(birthAnchors[0]).slice(-1)[0],
+      };
+    }
+  }
+
+  // 4. Scan Couple-relationship facts.
+  for (const rel of mob.tree.relationships ?? []) {
+    if (rel.type !== "Couple") continue;
+    if (rel.person1 !== mob.anchorId && rel.person2 !== mob.anchorId) continue;
+    for (const f of rel.facts ?? []) {
+      if (!f.standard_place || !f.type) continue;
+      if (EVENT_IN_OTHER_COUNTRY_SKIP.has(f.type)) continue;
+      if (isDifferentFromAllAnchors(f.standard_place, allAnchors)) {
+        const segs = placeSegments(f.standard_place);
+        return {
+          fact: f,
+          factCountry: segs[segs.length - 1],
+          anchorCountry: placeSegments(birthAnchors[0]).slice(-1)[0],
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
+export function hasEventInOtherCountry(mob: Mob): boolean {
+  return findEventInOtherCountry(mob) !== null;
+}
+
+function checkHasEventInOtherCountry(mob: Mob): PersonWarning | null {
+  const result = findEventInOtherCountry(mob);
+  if (!result) return null;
+
+  const { fact, factCountry, anchorCountry } = result;
+  const factType = fact.type ?? "event";
+
+  const birthFacts = warningFactsOfPerson(
+    mob.getPerson(),
+    new Set(["Birth", "Christening", "Baptism"]),
+  );
+  const deathFacts = warningFactsOfPerson(
+    mob.getPerson(),
+    new Set(["Death", "Burial"]),
+  );
+  const oddFacts: WarningFact[] = [];
+  if (fact.id) {
+    oddFacts.push({
+      id: fact.id,
+      type: fact.type ?? "",
+      date: fact.date ?? fact.standard_date ?? null,
+    });
+  }
+
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_EVENT_IN_OTHER_COUNTRY,
+    severity: "implausible",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    facts: unionFactIds(birthFacts, deathFacts, oddFacts),
+    message:
+      `A ${factType} is placed in ${factCountry}, but this person was born and died in ${anchorCountry}.`,
+  };
+}
+
 // ─── Merge-mode predicates, checks, and the non-final bucket ─────────────────
 // Ported from warnings.java's calculateNonFinalWarnings (:572) plus the
 // target-vs-candidate-separate checks in calculateWarnings (:143/:159/:181/
@@ -2822,6 +2979,7 @@ export const ALL_WARNING_TAGS = [
   RELATIVES_HAS_AGE_RANGE_GREATER_THAN_120,
   RELATIVES_HAS_CHILD_DEATH_AFTER_PARENT_BIRTH_200,
   MALE_RELATIVES_HAS_DIFF_SURNAME,
+  HAS_EVENT_IN_OTHER_COUNTRY,
   HAS_SAME_CENSUS,
   HAS_EVENTS_OUTSIDE_LIFESPAN_FAR,
   HAS_EVENTS_OUTSIDE_LIFESPAN_NEAR,
@@ -3538,6 +3696,10 @@ export function calculateWarnings(
   // Tier D — dissimilar spouses same marriage year.
   const dissimilarSpouses = checkHasDissimilarSpousesWithSameMarriageYear(mergedMob);
   if (dissimilarSpouses) warnings.push(dissimilarSpouses);
+
+  // Project rule: event in a country inconsistent with birth and death.
+  const eventInOtherCountry = checkHasEventInOtherCountry(mergedMob);
+  if (eventInOtherCountry) warnings.push(eventInOtherCountry);
 
   return warnings;
 }
