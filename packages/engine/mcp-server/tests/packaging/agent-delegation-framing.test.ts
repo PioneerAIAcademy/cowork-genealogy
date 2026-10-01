@@ -627,6 +627,7 @@ describe("agent delegation framing", () => {
     "record-extractor",
     "search-familysearch-wiki",
     "search-wikipedia",
+    "survey-surname",
     "tree-edit",
     "validate-schema",
   ];

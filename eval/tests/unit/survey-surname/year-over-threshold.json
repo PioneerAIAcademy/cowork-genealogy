@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_survey_surname_d3",
+    "skill": "survey-surname",
+    "name": "Year over the 600 threshold — agent asks for counties instead of paging",
+    "type": "positive",
+    "description": "A two-year survey spanning the threshold boundary: 1840 (441 matches, under threshold) and 1850 (2218 matches, over threshold). The agent should search 1840 normally and for 1850 read totalMatches, stop, and ask the user which counties to survey.",
+    "tags": ["survey", "threshold", "multi-year", "direct-arm"]
+  },
+  "input": {
+    "delegation": "List every Dixon household in Virginia censuses, 1840-1850.\n\nsurname: Dixon\nplace: Virginia\nyearSpan: 1840-1850\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "place-search-virginia",
+    "record-search-dixon-virginia-1840-census",
+    "record-search-dixon-virginia-1850-census-over-threshold"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged.",
+    "Should call place_search for Virginia, then record_search for 1840 and 1850.",
+    "1840 has totalMatches 441 (under the 600 threshold) — the agent should fetch all results and include them in the table.",
+    "1850 has totalMatches 2218 (OVER the 600 threshold) — the agent should NOT fetch additional pages for this year. It should report the count (2218) and ask the user which counties to survey for 1850. This is the key behavior being tested.",
+    "The agent should still log the 1850 first-page search with research_log_append, even though it did not page further.",
+    "The markdown table should include 1840 results but NOT 1850 household rows. The 1850 section should note the count and that counties are needed.",
+    "Do NOT penalize the agent for including the 2 results from the 1850 first page in the table — the threshold stops further PAGING, not the initial call's results. But DO penalize if the agent makes a second record_search call for 1850 with a different offset.",
+    "The agent's return should end with the summary_for_user block."
+  ]
+}

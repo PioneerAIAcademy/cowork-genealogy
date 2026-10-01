@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_survey_surname_d1",
+    "skill": "survey-surname",
+    "name": "Statewide Dixon survey across three Virginia censuses (1820-1840)",
+    "type": "positive",
+    "description": "The happy-path survey: three census years (1820, 1830, 1840), all under the 600 threshold. The agent should resolve Virginia with place_search, call record_search for each year, log each page with research_log_append, build a table grouped by household and sectioned by year, and write it with Write.",
+    "tags": ["survey", "statewide", "multi-year", "direct-arm"]
+  },
+  "input": {
+    "delegation": "List every Dixon household in Virginia, 1820-1840.\n\nsurname: Dixon\nplace: Virginia\nyearSpan: 1820-1840\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "place-search-virginia",
+    "record-search-dixon-virginia-1820-census",
+    "record-search-dixon-virginia-1830-census",
+    "record-search-dixon-virginia-1840-census"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour.",
+    "Should call place_search for Virginia, then record_search for each of 1820, 1830, and 1840 with surname Dixon, recordType census, recordCountry United States, recordSubdivision Virginia, residenceYearFrom = residenceYearTo = that year, count 100, and projectPath.",
+    "All three years are under the 600 totalMatches threshold (366, 407, 441), so the agent should fetch all results (they fit on one page each) and NOT ask for counties.",
+    "Should call research_log_append after each record_search page to log the search, passing the staged.resultsRef from the record_search response as stagedResultsRef.",
+    "Should build a markdown table with one section per census year, columns for year, county, head of household, other surname members, record ARK, and ruled out. Pre-1850 censuses name only the head of household, so there are no other members to list.",
+    "Should write the table to a markdown file using Write. The file name should follow the pattern surname-survey-dixon-virginia.md.",
+    "The agent's return should end with the summary_for_user block: a `---` line followed by two unlabeled paragraphs in plain language."
+  ]
+}

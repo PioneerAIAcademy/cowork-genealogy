@@ -203,6 +203,12 @@
           "tools": [
             "research_log_append"
           ]
+        },
+        {
+          "agent": "agent:survey-surname",
+          "tools": [
+            "research_log_append"
+          ]
         }
       ],
       "writerTools": [
