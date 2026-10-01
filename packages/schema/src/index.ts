@@ -416,6 +416,8 @@ export interface GedcomxPerson {
   gender: 'Male' | 'Female' | 'Unknown'
   names: GedcomxName[]
   facts?: GedcomxFact[]
+  /** The sources FamilySearch attaches to this person, as refs into `sources[]`. */
+  sources?: GedcomxSourceRef[]
 }
 
 export interface GedcomxParentChildRelationship {

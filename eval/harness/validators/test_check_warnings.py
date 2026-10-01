@@ -130,32 +130,4 @@ def report_unsourced_year_in_response(tool_calls, text_response, test):
 
 # --- V3: An out-of-lane request is handed back to its owner ---
 
-def test_hand_back_names_its_owner(tool_calls, text_response, test):
-    """V3: on a hand-back test the agent makes no MCP tool call and the reply
-    names the owner, read off `negative.correct_skill[0]`.
-
-    Tier 1 — gates (test_* prefix). Tag-gated: skips unless the test carries the
-    'hand-back' tag. Paired with negative.grade_on_invariant: true, this is the
-    test's whole verdict.
-
-    Agent body: "Do not call `person_warnings` ... Return one caller-facing line,
-    `Hand-back: <owner> — <the request in one clause>`". WHERE in the reply the
-    name sits is not graded: on the direct arm `text_response` is the main
-    thread's relay, which may reword the return and add or drop its `---` line,
-    so a placement check would grade the relay rather than the agent.
-    """
-    if "hand-back" not in test.get("tags", []):
-        pytest.skip("not a hand-back test")
-    owners = (test.get("negative") or {}).get("correct_skill") or []
-    assert owners, "a hand-back test must name its owner in negative.correct_skill"
-    owner = owners[0]
-
-    assert (tool_calls or []) == [], (
-        "a hand-back makes no tool call; got "
-        f"{len(tool_calls or [])} call(s): "
-        + ", ".join(c.get("tool", "?") for c in (tool_calls or []))
-    )
-    assert owner in (text_response or "").lower(), (
-        f"the reply never names {owner}, so the caller cannot tell which owner "
-        "to spawn"
-    )
+# Lives in test_universal.py since tree-edit became its second user (issue #2805).

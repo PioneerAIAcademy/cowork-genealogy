@@ -454,6 +454,22 @@ def test_a_name_prefix_change_is_not_authorized():
     assert "persons" in str(e.value)
 
 
+def test_a_person_level_source_ref_change_is_not_authorized():
+    """Person-level refs (#2696) are part of a person's identity: a fact rewrite
+    authorizes the fact's mirrored attrs, never the person's own `sources`."""
+    after = _person_with_fact(place="Odessa, Saskatchewan, Canada")
+    after[0]["sources"] = [{"ref": "S1"}]
+    with pytest.raises(AssertionError) as e:
+        check_tree(
+            _tree_state(_person_with_fact()),
+            _tree_state(after),
+            {"name": "record-extraction"},
+            POSITIVE,
+            tool_calls=_EXTRACTION_CALL,
+        )
+    assert "persons" in str(e.value)
+
+
 def test_a_stubbed_run_skips_tree_ownership():
     """Mirrors the research-side skip (#2156 ruling). `research` carries 10
     stubbed positive tests, owns no tree section, and stubs `person-evidence`
@@ -721,3 +737,19 @@ def test_tool_allowlist_widens_by_an_agent_keyed_suites_own_delegations(monkeypa
             test={"skill": "gps-mentor"},
         )
     assert [str(w.message) for w in caught] == []
+
+
+def test_the_healer_coercing_a_person_ref_quality_is_not_a_move():
+    """`research_append` persists the healed tree: a string quality coerced to an
+    integer, or refs reordered, is the tool's change, not a person rewrite."""
+    before = _person_with_fact()
+    before[0]["sources"] = [{"ref": "S2", "quality": "3"}, {"ref": "S1"}]
+    after = _person_with_fact(place="Odessa, Saskatchewan, Canada")
+    after[0]["sources"] = [{"ref": "S1"}, {"ref": "S2", "quality": 3}]
+    check_tree(
+        _tree_state(before),
+        _tree_state(after),
+        {"name": "record-extraction"},
+        POSITIVE,
+        tool_calls=_EXTRACTION_CALL,
+    )

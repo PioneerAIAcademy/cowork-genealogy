@@ -135,7 +135,7 @@
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
-        "skill:search-images",
+        "agent:search-images",
         "skill:record-extraction"
       ],
       "writerTools": [
@@ -144,7 +144,7 @@
       "enforceableAt": [
         "unit"
       ],
-      "requires": "research-plan owns plan and item structure. The search skills and record-extraction may update only `items[].status` after executing or extracting from an item.",
+      "requires": "research-plan owns plan and item structure. The search skills, the search-images agent, and record-extraction may update only `items[].status` after executing or extracting from an item.",
       "failure": "A search skill rewrites the plan it was handed, and the plan stops being a record of what was intended versus what was done.",
       "remedy": "Update the item's status; route a change to the plan itself through research-plan.",
       "override": "none"
@@ -158,7 +158,7 @@
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
-        "skill:search-images",
+        "agent:search-images",
         "skill:record-extraction"
       ],
       "agentCallers": [
@@ -188,7 +188,7 @@
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
-        "skill:search-images",
+        "agent:search-images",
         "skill:record-extraction"
       ],
       "agentCallers": [
@@ -437,7 +437,7 @@
       "reason": "Four co-equal writers with disjoint jobs and no structural owner: init-project mints the starting stubs, person-evidence owns the household skeleton and mints a person the moment a persona matches nobody, tree-edit applies user-directed changes, and proof-conclusion lands the concluded value. The permitted writers are listed in `callers`. record-extraction is deliberately NOT one of them: it reaches this section only through `research_append`/`extraction_append`'s assertion-update rewrite, which is authorized by TOOL identity instead, and only for the exact delta that rewrite can produce.",
       "callers": [
         "skill:init-project",
-        "skill:tree-edit",
+        "agent:tree-edit",
         "agent:proof-conclusion",
         "skill:forget-and-rederive"
       ],
@@ -460,6 +460,14 @@
         },
         {
           "agent": "agent:proof-conclusion",
+          "tools": [
+            "merge_tree_persons",
+            "tree_correct",
+            "tree_edit"
+          ]
+        },
+        {
+          "agent": "agent:tree-edit",
           "tools": [
             "merge_tree_persons",
             "tree_correct",
@@ -496,7 +504,7 @@
       "reason": "The same four writers as `persons`, for the same reason — a relationship edge is written by whichever of them established it, and no one of them owns the section's structure.",
       "callers": [
         "skill:init-project",
-        "skill:tree-edit",
+        "agent:tree-edit",
         "agent:proof-conclusion",
         "skill:forget-and-rederive"
       ],
@@ -512,6 +520,14 @@
         },
         {
           "agent": "agent:proof-conclusion",
+          "tools": [
+            "merge_tree_persons",
+            "tree_correct",
+            "tree_edit"
+          ]
+        },
+        {
+          "agent": "agent:tree-edit",
           "tools": [
             "merge_tree_persons",
             "tree_correct",
@@ -540,7 +556,7 @@
       "owner": "skill:record-extraction",
       "callers": [
         "skill:init-project",
-        "skill:tree-edit",
+        "agent:tree-edit",
         "agent:proof-conclusion",
         "skill:record-extraction"
       ],
@@ -568,6 +584,13 @@
           "agent": "agent:citation",
           "tools": [
             "research_append"
+          ]
+        },
+        {
+          "agent": "agent:tree-edit",
+          "tools": [
+            "tree_correct",
+            "tree_edit"
           ]
         }
       ],

@@ -179,6 +179,12 @@ class Tally(NamedTuple):
     arms: Counter
     per_fixture: Counter
     bash: list[BashHit]
+    #: Committed runs whose `stop_reason` is `host_slept` (issue #2974). They
+    #: carry `verdict="skipped"`, so they already sit in the `skipped` recall/gate
+    #: bucket and out of pass/fail — this separate count only lets the report say
+    #: how many of those skips were a slept host rather than an agent crash.
+    #: Defaulted so existing positional `Tally(...)` construction in tests holds.
+    host_slept: int = 0
 
 
 def decidable_runs(compliance: Counter) -> int:
@@ -260,6 +266,7 @@ def tally(paths: list[Path]) -> Tally:
     per_fixture: Counter = Counter()
     problems: list[str] = []
     bash: list[BashHit] = []
+    host_slept = 0
     for path in paths:
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
@@ -284,12 +291,14 @@ def tally(paths: list[Path]) -> Tally:
         recall[verdict] += 1
         compliance[compliance_axis] += 1
         gate[outcome] += 1
+        if data.get("stop_reason") == "host_slept":
+            host_slept += 1
         bash.extend(hits)
         if violations:
             per_fixture[path.parent.name] += len(violations)
         for violation in violations:
             arms[classify(violation)] += 1
-    return Tally(recall, compliance, gate, problems, arms, per_fixture, bash)
+    return Tally(recall, compliance, gate, problems, arms, per_fixture, bash, host_slept)
 
 
 def _load_json(path: Path) -> dict | None:
@@ -646,6 +655,7 @@ def format_report(
     bash: list[BashHit] | None = None,
     windowed: bool = False,
     skipped: int = 0,
+    host_slept: int = 0,
 ) -> str:
     # The window itself is named by `describe_window`, printed immediately
     # above this — stating it twice invites the two lines to disagree.
@@ -665,6 +675,15 @@ def format_report(
             "the guardrail\n        detector existed, or by a version of it that "
             "cannot be pinned. They are\n        NOT counted as clean. See "
             "e2e.result.axes_from_runlog."
+        )
+    if host_slept:
+        # These sit inside the `skipped` recall/gate bucket above (verdict is
+        # `skipped`), so they are already out of pass/fail. Named here so a slept
+        # host is not mistaken for that many agent crashes (issue #2974).
+        lines.append(
+            f"  NOTE: {host_slept} run(s) stopped as host_slept — the host slept past "
+            "the inactivity\n        cap, so they were not graded and are excluded "
+            "from the rates above. See\n        docs/specs/e2e-test-spec.md §6.5."
         )
     arms = arms or Counter()
     total_violations = sum(arms.values())
@@ -850,6 +869,7 @@ def main(argv: list[str] | None = None) -> int:
             bash=counts.bash,
             windowed=cutoff is not None,
             skipped=skipped,
+            host_slept=counts.host_slept,
             recomputing=args.recompute,
         )
     )
