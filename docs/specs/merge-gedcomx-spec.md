@@ -492,7 +492,7 @@ Tool-level (the rows above are the pure core's throws):
 | `candidateGedcomx` is not valid SimplifiedGedcomX | clear input error (reuse the exported `validateGedcomx`, `validate-project-refactor-spec.md` §10); write nothing |
 | Merge result carries a **merge-introduced** validation error | **write nothing**; return `{ ok: false, errors }` (§5b.2 step 4). A pre-existing error rides as a warning; for `merge_warnings` a drift-only project returns `{ ok: true }` |
 | A `merges` survivor id not found in the **on-disk** tree | staleness error (§5b.1); write nothing |
-| Merge introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", warnings: [...] }`. Re-call with `warningJustifications`. Pre-existing warnings on collapsed persons are remapped to survivors before diffing. Issue #2840 |
+| Merge introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", warnings: [...] }`. Re-call with `warningJustifications`. Pre-existing warnings on collapsed persons are remapped to survivors before diffing. |
 
 ---
 

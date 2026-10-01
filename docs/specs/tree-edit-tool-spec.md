@@ -515,7 +515,7 @@ Sequence (validate-before-persist, tree-only):
 | `resolveStandardPlace` network call fails | best-effort: set `standard_place: null`, add a warning; never fail the edit on a place-resolution miss |
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. A directory holding exactly one of the two files is a *broken* project and stays loud. Applies to `tree_correct` identically. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Resulting tree carries a **call-introduced** validation error | write nothing; return `{ ok: false, errors }`. A pre-existing error rides as a warning |
-| Write introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", message: "...", warnings: [{ warningId, issueType, severity, personId, personName, message, facts?, relatedPersonId? }] }`. Re-call with `warningJustifications: [{ warningId, justification }]` for each warning. A pre-existing warning needs no justification. Issue #2840 |
+| Write introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", message: "...", warnings: [{ warningId, issueType, severity, personId, personName, message, facts?, relatedPersonId? }] }`. Re-call with `warningJustifications: [{ warningId, justification }]` for each warning. A pre-existing warning needs no justification. |
 
 ---
 

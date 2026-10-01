@@ -87,7 +87,7 @@ The shipped shape is `PersonWarning` in
 | `relatedPersonId` | string? | Person ID of the related person, when the check involves a relationship (e.g., the father in `earliestChildBirthToBirthMale14`). Omitted when not applicable |
 | `mobRole` | string? | Merge-mode only (`merge_warnings`): which mob surfaced the warning — `"target"`, `"candidate"`, `"merged"`, or `"relative"`. Single-anchor `person_warnings` never sets it. See `match-merge-workflow-spec.md` §7.5 |
 
-**Warning id format (issue #2840).** The tree-writer warning gate uses a stable id
+**Warning id format.** The tree-writer warning gate uses a stable id
 to key justifications: `${issueType}|${personId}|${relatedPersonId ?? ""}|${sorted facts[].id joined by ","}`.
 This id is deterministic for a given tree because fact ids come from `nextId()`.
 It is computed by `warningId()` in `src/validation/introduced-warnings.ts`.
