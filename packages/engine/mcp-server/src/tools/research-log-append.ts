@@ -668,7 +668,8 @@ async function preflightRequiredFields(op: ResearchLogAppendOp, projectPath: str
   const ref = asNull(op.stagedResultsRef);
   if ((op.tool === undefined || op.tool === null || op.tool === "") && typeof ref === "string") {
     const staged = await readStagedEnvelopeQuery(projectPath, ref);
-    if (staged) op.tool = staged.tool;
+    if (!staged) return; // an unreadable ref is preflightStagedRef's error to report
+    op.tool = staged.tool;
   }
   const toolMissing = op.tool === undefined || op.tool === null || op.tool === "";
   const queryMissing = typeof ref !== "string" && (op.query === undefined || op.query === null);
