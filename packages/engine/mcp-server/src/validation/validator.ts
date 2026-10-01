@@ -1730,6 +1730,13 @@ function checkTreeSourceRefs(
   sourceIds: Set<string>,
   report: ValidationReport
 ): void {
+  // A present non-array `sources` was silently treated as empty here while the
+  // JSON Schema rejects it; the allow-list admits the key on every holder, so
+  // this is the one place that says what type it must be.
+  if ("sources" in holder && !Array.isArray(holder.sources)) {
+    addError(report, `${path}/sources`, "'sources' must be an array of source references");
+    return;
+  }
   const refs = Array.isArray(holder.sources) ? holder.sources : [];
   for (let k = 0; k < refs.length; k++) {
     const sref = refs[k];
@@ -1892,6 +1899,7 @@ export function validateGedcomx(
     for (let j = 0; j < facts.length; j++) {
       checkTreeFact(facts[j], `${pp}/facts[${j}]`, sourceIds, report);
     }
+    checkTreeSourceRefs(person, pp, sourceIds, report);
   }
 
   // Relationships

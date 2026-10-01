@@ -258,3 +258,15 @@ def test_uncle_arm_skips_an_empty_reply():
     with pytest.raises(BaseException) as exc:
         check_uncle("   ", TAGS)
     assert exc.typename == "Skipped"
+
+
+def test_uncle_gate_grades_the_agent_return_not_the_relay_on_the_direct_arm():
+    # A relay that adds "uncle" must not pass an agent whose own return never
+    # named the reading.
+    direct = {**TAGS, "delegation": "Record the guardianship.\n\nprojectPath: <workspace>"}
+    agent = [{"subagent_type": "tree-edit", "text": "The step reading leads: Nancy was a widow and these are her children."}]
+    relay = "The agent says step leads; the uncle-by-marriage reading is still open."
+    with pytest.raises(AssertionError):
+        check_uncle(relay, direct, agent)
+    check_uncle(relay + " x", {**TAGS}, None)  # routed arm: the reply IS the subject's
+

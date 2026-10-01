@@ -10,11 +10,12 @@
       "couple-relationship",
       "marriage-fact",
       "add-relationship",
-      "fact-placement"
+      "fact-placement",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "tree-edit: the marriage of Thomas Flynn (I2) and Mary Flynn (I3) is documented in the church marriage register (assertion a_005, source src_005 / S5): married 12 May 1843 at St. Patrick's Church, Schuylkill County, Pennsylvania. Record this marriage in the tree.",
+    "delegation": "the marriage of Thomas Flynn (I2) and Mary Flynn (I3) is documented in the church marriage register (assertion a_005, source src_005 / S5): married 12 May 1843 at St. Patrick's Church, Schuylkill County, Pennsylvania. Record this marriage in the tree.\n\nprojectPath: <workspace>",
     "scenario": "flynn-couple-marriage"
   },
   "judge_context": [
@@ -25,19 +26,13 @@
     "The marriage IS evidence-grounded here: assertion a_005 / source src_005 (tree source S5) documents it as direct primary evidence. Both the marriage fact and the new Couple edge must end up sourced to it, whether by `sourceAssertionId` (which does both) or by literal refs on each; the skill should proceed — it must NOT refuse or defer for lack of a source",
     "There was no Couple relationship in the starting tree, so creating one is expected here (not a duplicate) — this is the fresh-create path, since tree_edit has no update_relationship operation to add facts to an existing relationship",
     "Edit-minimality still applies: the skill should create exactly the one Couple relationship with the marriage fact and not churn the existing ParentChild relationships (RT1, RT2) or person facts",
-    "COMPLETENESS GRADING NOTE for the judge: this test targets the tree-edit WRITE (creating the Couple relationship with the Marriage fact correctly placed and sourced). SKILL.md § Validation requires invoking the `check-warnings` agent after ANY edit. This is stubbed via `execution.stub_skills` (the callee has its own unit suite) — score Completeness on both: the marriage write done correctly, AND the check-warnings agent actually spawned afterward (an `Agent` call with `subagent_type` check-warnings), not on the canned response's content"
+    "COMPLETENESS GRADING NOTE for the judge: this test targets the tree-edit WRITE (creating the Couple relationship with the Marriage fact correctly placed and sourced). The agent body requires a caller-facing `Hand-back: check-warnings <person ids>` line after ANY edit; the agent cannot spawn check-warnings itself — score Completeness on both: the marriage write done correctly, AND that hand-back line naming the persons touched"
   ],
   "mcp_fixtures": [
     "place-search-schuylkill-county"
   ],
   "execution": {
     "max_wall_clock_seconds": 600,
-    "sdk_message_silence_seconds": 600,
-    "stub_skills": [
-      {
-        "skill": "check-warnings",
-        "response": "No warnings found for the edited person's data -- no impossible dates, no relationship loops, nothing implausible. FamilySearch's online quality check was not run in this environment."
-      }
-    ]
+    "sdk_message_silence_seconds": 600
   }
 }

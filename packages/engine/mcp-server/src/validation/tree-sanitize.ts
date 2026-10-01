@@ -3,8 +3,8 @@
 // The validator closed every object shape (tree-shape.ts), which means trees
 // written before the tightening — by the old merge core (`preferred: false`
 // on every non-preferred merged name, top-level `places[]` carried per the
-// old spec §6.7), by the old open-shape validator (person-level `sources`,
-// invented fact keys like `date_certainty`), or by hand — no longer validate.
+// old spec §6.7), by the old open-shape validator (invented fact keys like
+// `date_certainty`), or by hand — no longer validate.
 // Every persistence tool validates the WHOLE project before writing anything,
 // so one legacy shape would otherwise brick every write on that project,
 // including research-log appends, with no tree_edit op able to express the
@@ -13,7 +13,9 @@
 // `sanitizeTree` heals exactly the shapes whose repair is unambiguous, and
 // returns one warning per healed class so the LLM can narrate what changed.
 // Ambiguous problems are deliberately NOT healed and still hard-fail
-// validation: dangling references (can't infer the target), swapped
+// validation: dangling references on names, facts and relationships (can't
+// infer the target; a dangling PERSON-level ref is dropped, see
+// `sanitizeSourceRefs`), swapped
 // relationship endpoint keys (can't infer direction), duplicate ids (can't
 // pick a winner), missing `given` (spelling unknowns as `""` is the agent's
 // call), and non-PascalCase fact types (meaning is the agent's call).
@@ -23,8 +25,8 @@
 // migration); research_append/research_log_append heal in memory only, so
 // their cross-file validation sees the healed tree without touching it.
 // The inline-candidate twin is `sanitizeCandidate` in tools/merge-shared.ts,
-// which strips the record_read-legal shapes (places, person sources) but
-// leaves everything else to hard validation — candidates are fresh tool
+// which strips the record_read-legal shapes (places, malformed or dangling
+// person-level refs) but leaves everything else to hard validation — candidates are fresh tool
 // output, not legacy documents, and junk there should be rejected loudly.
 
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
@@ -53,7 +55,7 @@ class Tally {
   qualityCoerced = 0;
   qualityDropped = 0;
   placesDropped = 0;
-  personSourcesDropped = 0;
+  refLessPersonRefsDropped = 0;
   nonObjectsDropped = 0;
 
   key(where: string, key: string): void {
@@ -65,8 +67,8 @@ class Tally {
 function pruneKeys(obj: any, allowed: Set<string>, where: string, tally: Tally): void {
   for (const key of Object.keys(obj)) {
     if (!allowed.has(key)) {
-      // places / person-sources get their own targeted warnings below.
-      if (!(where === "tree" && key === "places") && !(where === "persons" && key === "sources")) {
+      // places gets its own targeted warning below.
+      if (!(where === "tree" && key === "places")) {
         tally.key(where, key);
       }
       delete obj[key];
@@ -96,7 +98,21 @@ function pruneQuality(sref: any, tally: Tally): void {
   tally.qualityDropped += 1;
 }
 
-function sanitizeSourceRefs(holder: any, tally: Tally): void {
+/**
+ * `personLevel`: also remove a ref that names no tree source (no string `ref`
+ * once pruned, or a `ref` not among `sourceIds`). Used for person-level refs
+ * only. Before person-level refs were legal, the healer deleted every one of
+ * them, so dropping just the ones that resolve to nothing is strictly less
+ * lossy and keeps a legacy tree from failing every write; a person-level ref
+ * attests no particular name or fact, so nothing is lost that a fact carried.
+ * Names, facts and relationships keep the ambiguity rule: a dangling ref there
+ * is reported, not healed.
+ */
+function sanitizeSourceRefs(
+  holder: any,
+  tally: Tally,
+  personLevel?: { sourceIds: Set<string> },
+): void {
   if (!("sources" in holder)) return;
   if (!Array.isArray(holder.sources)) {
     delete holder.sources;
@@ -113,6 +129,13 @@ function sanitizeSourceRefs(holder: any, tally: Tally): void {
   for (const sref of holder.sources) {
     pruneKeys(sref, TREE_SOURCE_REF_FIELDS, "source refs", tally);
     pruneQuality(sref, tally);
+  }
+  if (personLevel) {
+    const before = holder.sources.length;
+    holder.sources = holder.sources.filter(
+      (s: any) => typeof s.ref === "string" && personLevel.sourceIds.has(s.ref),
+    );
+    tally.refLessPersonRefsDropped += before - holder.sources.length;
   }
   if (holder.sources.length === 0) delete holder.sources;
 }
@@ -164,10 +187,17 @@ export function sanitizeTree(input: unknown): SanitizeTreeResult {
   if (placeCount > 0) tally.placesDropped = placeCount;
   pruneKeys(tree, TREE_TOP_LEVEL_FIELDS, "tree", tally);
 
+  // Source ids as they stand in the input, for the person-level rule. An id the
+  // sources loop below mints for an id-less source is not referenced by any
+  // existing ref, so it cannot rescue one.
+  const sourceIds = new Set<string>(
+    (Array.isArray(tree.sources) ? tree.sources : [])
+      .map((s: any) => s?.id)
+      .filter((id: any): id is string => typeof id === "string" && id !== ""),
+  );
   for (const person of objectEntries(tree, "persons", tally)) {
-    if (Array.isArray(person.sources)) tally.personSourcesDropped += person.sources.length;
-    else if ("sources" in person) tally.personSourcesDropped += 1;
     pruneKeys(person, TREE_PERSON_FIELDS, "persons", tally);
+    sanitizeSourceRefs(person, tally, { sourceIds });
     if (!person.id) {
       person.id = nextId(tree, "I");
       tally.mintedIds.set("I", (tally.mintedIds.get("I") ?? 0) + 1);
@@ -223,10 +253,10 @@ export function sanitizeTree(input: unknown): SanitizeTreeResult {
         `the tree format carries places as names on facts`,
     );
   }
-  if (tally.personSourcesDropped > 0) {
+  if (tally.refLessPersonRefsDropped > 0) {
     warnings.push(
-      `healed legacy tree: dropped ${tally.personSourcesDropped} person-level ` +
-        `source reference(s) — tree source references live on names/facts/relationships`,
+      `healed legacy tree: dropped ${tally.refLessPersonRefsDropped} person-level ` +
+        `source reference(s) that named no source in the tree`,
     );
   }
   for (const [field, n] of tally.flags) {

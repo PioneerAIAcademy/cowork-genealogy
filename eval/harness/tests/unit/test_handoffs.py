@@ -138,7 +138,8 @@ def test_tree_edit_check_warnings_after_a_write(route):
     calls, ok = ROUTES[route]
     skills = [c["args"]["skill"] for c in calls if c["tool"] == "Skill"]
     check = lambda: _validators("test_tree_edit").test_check_warnings_runs_after_any_tree_write(  # noqa: E731
-        _TREE_BEFORE, _TREE_AFTER, skills, calls
+        _TREE_BEFORE, _TREE_AFTER, skills, {"skill": "tree-edit", "tags": []},
+        builtin_tool_calls=calls,
     )
     if ok:
         check()
