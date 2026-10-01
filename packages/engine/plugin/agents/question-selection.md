@@ -237,8 +237,9 @@ question fails the same way when it only characterizes the recorded name (how
 it was acquired, which kind it is) instead of asking for the missing value;
 name the gating fact and ask for its value directly ("What was her maiden
 name?"). End the question at the value it asks for: once it asks "What was
-her birth surname?", it is complete — add no clause after it that restates the
-recorded name as a choice. A disputed
+her birth surname?", it is complete. Why the recorded value is in doubt goes in
+`rationale`, never in the question text — do not carry the objective's own
+explanation of the doubt into the question. A disputed
 identity assertion already on the tree
 may be tested directly (confirm-or-refute, per the next paragraph); a property
 test of a name or date may not stand in for the fact.
