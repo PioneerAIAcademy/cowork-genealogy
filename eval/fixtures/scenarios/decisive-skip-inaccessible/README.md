@@ -1,16 +1,16 @@
 # Scenario: decisive-skip-inaccessible
 
 Fork of `recent-birth-sealed`. **The accept half of the check-6' pair for
-issue #1830** -- its reject twin is `ma-birth-skipped-unnecessary`.
+issue #1830** -- its reject twin is `ma-birth-skipped-answered`.
 
 > **Corrected after `v1_2026-09-30_18-26-29`.** The twin was originally this
-> same fixture with `inaccessible` flipped to `unnecessary`, so the two
+> same fixture with `inaccessible` flipped to `answered`, so the two
 > differed on two fields and nothing else. That was wrong: the Utah record
 > really *is* sealed, the agent looked the embargo up on the wiki page,
 > supplied the justification itself and declared. With one underlying record,
 > one of the two labels always has to lie about the world. The twin now uses
 > a Massachusetts 1875 birth registration -- genuinely obtainable, so
-> `unnecessary` is a coherent label there. See its README for what that
+> `answered` is a coherent label there. See its README for what that
 > costs.
 
 ## Why the pair exists
@@ -27,7 +27,7 @@ Issue #1830 gave the gate a structured way to read it:
 | fork | `skip_category` | correct outcome |
 |---|---|---|
 | **this one** | `inaccessible` | declare, recording the limitation |
-| `ma-birth-skipped-unnecessary` | `unnecessary` | refuse -- neither searched nor justified |
+| `ma-birth-skipped-answered` | `answered` | refuse -- neither searched nor justified |
 
 ## What was neutralized, and why that is the point
 

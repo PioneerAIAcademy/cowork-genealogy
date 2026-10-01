@@ -31,7 +31,7 @@ pre-fix direction, which is the direction it exists to prove.
 **Not a skip.** `pli_010` carries no `skip_category` and no
 `skip_reason`: it is `planned`, the undisposed state. The
 category-bearing cases live in `decisive-skip-inaccessible` and
-`ma-birth-skipped-unnecessary`.
+`ma-birth-skipped-answered`.
 
 **Inherited from `flynn-exhaustive-ready`** -- the parentage evidence,
 the resolved birthplace conflict, `ps_001` at `probable`, and the

@@ -84,7 +84,7 @@ flagged. (One row below is the exception, and says so.)
 | `question_status` | `open`, `in_progress`, `exhaustive_declared`, `resolved` | questions |
 | `plan_status` | `active`, `completed`, `superseded` | plans |
 | `plan_item_status` | `planned`, `in_progress`, `completed`, `skipped` | plan items |
-| `skip_category` | `unnecessary`, `inaccessible` | plan items, on a `skipped` item |
+| `skip_category` | `answered`, `inaccessible`, `no_coverage`, `fallback_not_triggered`, `out_of_scope`, `premise_invalidated`, `user_declined` | plan items, on a `skipped` item |
 | `log_outcome` | `positive`, `negative`, `partial`, `error` | log |
 | `external_site` | `ancestry`, `myheritage`, `findmypast`, `familysearch_web`, `findagrave`, `newspapers`, `chronicling_america`, `digital_newspaper_archive`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `library_archives_canada`, `american_ancestors`, `italian_genealogy` | log entries' `external_site.site` — the sites supported by the generate-click-capture-analyze workflow (Section 5.4) |
 | `source_classification` | `original`, `derivative`, `authored` | sources |
@@ -139,6 +139,38 @@ closed-enum change is in CLAUDE.md's schema-change site list.
 > trigger, then land all ~6 definition sites, both skills, and the eval
 > rubrics/goldens **in one PR**. This is also the worked example of a
 > closed-enum change's blast radius — see CLAUDE.md's schema-change site list.
+
+> **`skip_category`: why seven values, and why `user_declined` is not
+> `out_of_scope`.** The gate already draws a hard line between a source that was
+> *pursued and could not be had*, which is not an outstanding gap, and one that
+> was simply *not searched*, which blocks a declaration. Before this field the
+> only record of that distinction was free text in `rationale` — a required
+> field that means why the item was **planned** — so the gate had to re-infer it
+> from prose on every read, and the model was observed writing the skip reason
+> there for want of anywhere else.
+>
+> Only `inaccessible` and `no_coverage` describe a source that could not be
+> evaluated. The other five are decisions taken while the source was reachable,
+> and none of them earns the pursued-and-unavailable exception.
+>
+> `premise_invalidated` is the odd one and the most useful: it is not really a
+> skip verdict but the signal that the **plan** needs revising rather than this
+> item dropping. Treat a run that writes it as evidence about the plan, not
+> about the item.
+>
+> **`user_declined` is deliberately not folded into `out_of_scope`** (lead,
+> 2026-09-27). They would be easy to merge — both mean "we are
+> not doing this one" — but `out_of_scope` is the agent's own judgement and
+> `user_declined` is the user overriding it. Merging them makes steer compliance
+> unmeasurable: there would be no way to ask afterwards how often the agent
+> dropped an item because it was told to. A user's decline is also **terminal** —
+> the agent stops rather than completing the work first.
+>
+> Both fields are optional, so every plan item written before they existed still
+> validates, and `validate_research_schema` guards the enum check accordingly.
+> What stops `skipped` becoming a way to satisfy the gate without searching is
+> not the schema but the writer: `research_append` refuses a `plan_items` update
+> that sets `status: "skipped"` without a `skip_category` (see Section 5.3).
 
 The following are **open enums** — recommended values that skills should prefer, but new values may be added when existing values don't fit. Document new values in the assertion/plan/timeline entry's notes.
 
@@ -581,7 +613,7 @@ Array of plan objects. When a plan fails and is re-planned for the same question
 | `rationale` | string | yes | Why this record set for this question |
 | `fallback_for` | string or null | yes | `pli_` ID of the plan item this is a fallback for, or null |
 | `status` | `plan_item_status` | yes | Current status |
-| `skip_category` | `skip_category` | no | On a `skipped` item, whether it was `unnecessary` (a decision was made not to pursue it) or `inaccessible` (it could not be reached, so no decision about its content was possible). These are opposite claims about whether the source was evaluated, and `status` alone cannot tell them apart |
+| `skip_category` | `skip_category` | no | Why a `skipped` item was skipped, as something the exhaustiveness gate can read; `status` alone cannot tell these apart. Two of the seven — `inaccessible` and `no_coverage` — say the source could not be evaluated at all; the other five are decisions taken with the source reachable. That split is the line the gate's pursued-and-unavailable exception turns on. See the discussion below |
 | `skip_reason` | string | no | One line on why this item was skipped. Distinct from `rationale`, which is why the item was *planned* — without this field that prose lands in `rationale` and corrupts a required one |
 
 ### 5.4 `log`

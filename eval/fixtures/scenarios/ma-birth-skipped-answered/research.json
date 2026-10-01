@@ -1,6 +1,6 @@
 {
   "project": {
-    "id": "rp_ma_birth_skipped_unnecessary",
+    "id": "rp_ma_birth_skipped_answered",
     "objective": "Who were the parents of Ida F. Braman, born about 1875 in Taunton, Bristol County, Massachusetts?",
     "subject_person_ids": [
       "I1"
@@ -107,7 +107,7 @@
           "rationale": "Ida's own 1875 Taunton birth registration would name both parents, including the mother's maiden surname.",
           "fallback_for": null,
           "status": "skipped",
-          "skip_category": "unnecessary",
+          "skip_category": "answered",
           "skip_reason": "The 1946 death registration already names Charles W. Braman and Ellen Sullivan as the parents, so the birth registration would only repeat what is established."
         }
       ]

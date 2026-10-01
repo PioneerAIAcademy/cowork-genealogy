@@ -1,8 +1,8 @@
-# ma-birth-skipped-unnecessary
+# ma-birth-skipped-answered
 
 Fork of `ma-birth-record-unsearched` with **one change**: a sixth plan item,
 `pli_006`, for Ida's own 1875 Taunton birth registration -- `skipped`, with
-`skip_category: "unnecessary"` and a `skip_reason` saying the 1946 death
+`skip_category: "answered"` and a `skip_reason` saying the 1946 death
 registration already names both parents.
 
 **The reject half of the check-6' pair for issue #1830.** The accept half is
@@ -13,7 +13,7 @@ registration already names both parents.
 Massachusetts kept statewide civil registration from 1841, so Ida's own birth
 registration **exists and can be obtained**. The decisive-record rule permits
 a declaration only once that record has been *searched* or *explicitly
-justified as inaccessible*. `unnecessary` is neither: it records a disposal on
+justified as inaccessible*. `answered` is neither: it records a disposal on
 judgement. So the gate must refuse and route back to `research-plan`.
 
 The judgement in `skip_reason` is not a strawman -- the death registration
@@ -26,14 +26,14 @@ the reasoning it is designed to refuse.
 ## Why this is not a fork of `recent-birth-sealed` (the first attempt, discarded)
 
 The first version of this fixture relabelled a privacy-**sealed** Utah birth
-certificate as `unnecessary`, so that it and its accept twin differed on two
+certificate as `answered`, so that it and its accept twin differed on two
 fields and nothing else. It failed on `v1_2026-09-30_18-26-29`, and the run
 showed why: the agent read Utah's 100-year embargo off the wiki page,
 **supplied the inaccessibility justification itself**, and declared. Its
 `repository_breadth` assessment called the certificate "privacy-sealed... and
 therefore inaccessible" though no prose in the fixture said so.
 
-It was arguably right. The record really is sealed, so `unnecessary` was a
+It was arguably right. The record really is sealed, so `answered` was a
 lie about the world, and a label that contradicts a fact the agent can look up
 can never bind. With one underlying record, one of the two labels always has
 to lie -- which is why the pair now uses two records, each correctly
@@ -56,4 +56,4 @@ already grade the source scenario on the *absence* of a birth-record item;
 this fork adds one and disposes of it, which is the different question.
 The source is left untouched.
 
-Used by: ut_research_exhaustiveness_d9i (unnecessary decisive record blocks).
+Used by: ut_research_exhaustiveness_d9i (answered decisive record blocks).
