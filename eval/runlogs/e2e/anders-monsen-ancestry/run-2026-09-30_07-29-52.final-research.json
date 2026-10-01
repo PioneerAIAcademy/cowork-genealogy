@@ -1,0 +1,3454 @@
+{
+  "project": {
+    "id": "rp_anders_monsen_ancestry",
+    "objective": "When and where did Anders Monsen marry Unna Halsteinsdatter, and what does the marriage record show?",
+    "subject_person_ids": [
+      "LKFW-9XH"
+    ],
+    "status": "active",
+    "created": "2026-07-07",
+    "updated": "2026-07-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Anders Monsen marry Unna Halsteinsdatter?",
+      "rationale": "The marriage date and place of Anders Monsen and Unna Halsteinsdatter are the central unknowns of this research objective. Norwegian patronymic naming conventions (Monsen = son of Mons; Halsteinsdatter = daughter of Halstein) place this research in a Norwegian context where digitized church records (kirkeb\u00f8ker) are available through Digitalarkivet and FamilySearch. Norwegian parish registers typically recorded marriage date, place, names of parties, their parents, and witnesses \u2014 all of which bear directly on the research objective. This is a single-event question (one marriage) that can be resolved by locating and extracting the marriage entry.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": "overturn_risk and repository_breadth block. The two MCP-addressable gaps named in the prior declaration (Norway Census 1870, collection 4135961; Norway Probate Index Cards 1640-1903, collection 1661306) have now been searched and returned negative results (pli_007/log_061-062; pli_008/log_063-065). One gap remains that prevents declaration: Digitalarkivet.no \u2014 the Norwegian National Archives website holding the Hordaland parish church book images (Kinsarvik, Ulvik, Granvin, Voss) \u2014 is freely and publicly accessible but requires human browser navigation; MCP tools cannot reach it. This is not an inaccessible or sealed source: it is the primary repository for these records and is fully accessible to a human researcher at no cost. FamilySearch volume_search (log_032) confirmed FamilySearch holds zero digitized church book image volumes for the Hordaland parishes where Halsteinsdatter names concentrate (per log_016 and loc_001). FamilySearch's two national marriage/church-book indices (collections 1468080 and 4237104) returned zero results across all name variants. Norway civil registration did not begin until 1876 (loc_001; wiki_read performed); for the period of this marriage the Lutheran parish register is the sole vital system. The marriage register for Unna Halsteinsdatter's home parish is the single most decisive record type \u2014 it sits at Digitalarkivet.no, which has not been searched. A freely accessible source of this directness and relevance constitutes an unsearched gap, not a pursued-and-unavailable source. The narrow inaccessibility exception does not apply. Research must be completed by a human researcher at Digitalarkivet.no before exhaustiveness can be declared.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014",
+          "log_015",
+          "log_016",
+          "log_017",
+          "log_018",
+          "log_019",
+          "log_020",
+          "log_021",
+          "log_022",
+          "log_023",
+          "log_024",
+          "log_025",
+          "log_026",
+          "log_027",
+          "log_028",
+          "log_029",
+          "log_030",
+          "log_031",
+          "log_032",
+          "log_033",
+          "log_034",
+          "log_035",
+          "log_036",
+          "log_037",
+          "log_038",
+          "log_039",
+          "log_040",
+          "log_041",
+          "log_044",
+          "log_045",
+          "log_046",
+          "log_048",
+          "log_061",
+          "log_062",
+          "log_063",
+          "log_064",
+          "log_065"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Fails. No marriage record for Anders Monsen and Unna Halsteinsdatter was found in any searched repository. Every FamilySearch-indexed Norwegian marriage and church-book collection (collections 1468080 and 4237104) returned zero results across all name variants (Unna/Una/Unne; Halsteinsdatter/fatherGivenName Halstein; Anders Monsen/fatherGivenName Mons). Norwegian census records (1865, 1870, 1875, 1891, 1900) and probate index cards (1640-1903) were searched and returned no match. The question (date, place, and content of the marriage record) remains entirely unanswered. Failure is attributable to the decisive source being in an unsearched repository (Digitalarkivet.no), not to confirmed destruction or unavailability of records.",
+          "repository_breadth": "BLOCKING FAILURE. FamilySearch's national marriage index (1468080) and church books index (4237104) were exhausted with all name variants. Norway censuses 1865 (3756102), 1870 (4135961), 1875 (1529106), 1891 (4067726), and 1900 (3744863) were searched \u2014 all negative. Norway Probate Index Cards 1640-1903 (1661306) searched \u2014 negative (log_063-065; above-threshold hits were Mons Monsen in Bergen 1782-1796, chronologically incompatible). FamilySearch volume_search (log_032) confirmed no digitized church book image volumes exist for the Hordaland parishes (Kinsarvik, Ulvik, Vikoor, Voss). Digitalarkivet.no \u2014 the primary free repository for Norwegian church records, holding browse-only parish register images for these exact parishes \u2014 has not been searched. It is accessible to a human researcher at no cost. This is an unsearched repository, not an inaccessible one. Ancestry.com (pli_005) was also skipped as requiring a paid subscription and human navigation. FAN research through collateral relatives (siblings of Anders or Unna) was not attempted and could help narrow the parish for targeted Digitalarkivet browsing.",
+          "original_substitution": "Not yet assessable. Indexed FamilySearch records (derivatives) were the search vehicle throughout. The original parish registers are held on Digitalarkivet.no, which has not been searched. No original register images have been accessed or examined. This criterion cannot be evaluated until the source repository holding the originals has been consulted.",
+          "independent_verification": "Not assessable \u2014 no marriage record has been located in any searched repository. There is nothing to independently verify. Criterion fails by default in the absence of any positive finding.",
+          "evidence_class": "Fails. No original record with primary information about this marriage has been found. Zero marriage records were identified for this couple across all searched repositories. The original parish registers on Digitalarkivet.no have not been consulted.",
+          "conflict_resolution": "Passes vacuously. No evidence was found and no conflicts are registered. Nothing to resolve.",
+          "overturn_risk": "High \u2014 fails. Digitalarkivet.no holds browse-only parish register images for Kinsarvik, Ulvik, Granvin, and Voss (the Hordaland parishes where Halsteinsdatter names concentrate per log_016 and loc_001). FamilySearch confirmed it holds no digitized image volumes for these parishes (log_032). Norway civil registration did not begin until 1876 (loc_001; wiki_read performed in prior invocation); for the period of this marriage the Lutheran parish register is the sole vital system. The marriage register for Unna Halsteinsdatter's home parish is the single most decisive record type and sits in an unsearched, freely accessible repository. An unsearched source of this directness \u2014 one that would directly answer the question if the marriage is recorded \u2014 constitutes high overturn risk. The narrow inaccessibility exception does not apply because Digitalarkivet.no is publicly accessible at no cost; its inaccessibility is only to MCP tools, not to human researchers."
+        }
+      },
+      "created": "2026-09-30"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-09-30",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Norway",
+          "date_range": "1660-1926",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 1468080 'Norway, Marriages, 1660-1926' \u2014 1,330,979 indexed records, nationwide coverage, free. Search for 'Anders Monsen' and 'Unna Halsteinsdatter' and variants (Halsteinsd., Hallsteinsdatter, Halstend., Una). Per loc_001: this is a legacy partial-coverage collection \u2014 a hit requires verification against the original image; a negative result does not rule out the marriage. Norwegian marriages were recorded in the bride's home parish. First and highest-probability sweep because it is a dedicated national marriage index.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Norway",
+          "date_range": "1797-1900",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 4237104 'Norway, Church Books, 1797-1958' \u2014 14,398,439 records, index AND images, the best FamilySearch option per loc_001. Covers baptisms, confirmations, marriages, and burials. If a marriage record is found, retrieve the image: post-1830s entries include fathers' names and birthplaces of both parties (directly serving the 'what does the record show?' component). Search name variants for Halsteinsdatter: the -datter suffix was frequently abbreviated as d., dr., dtr. in records.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Norway",
+          "date_range": "1750-1900",
+          "repository": "Digitalarkivet",
+          "rationale": "Digitalarkivet.no (Norwegian National Archives) browse-based search cannot be executed autonomously \u2014 external site requires human browsing. URL generated and logged (log_022). This is the highest-priority remaining source for Norwegian church records. Skipped for autonomous session per BCG Standard 18 (inaccessible resource); must be completed by a human researcher using the generated URL: https://www.digitalarkivet.no/en/search/persons/advanced?firstname=Unna&lastname=Halsteinsdatter, focusing on Ulvik, Kinsarvik, Granvin, and Voss parishes in Hordaland.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Norway",
+          "date_range": "1865-1900",
+          "repository": "FamilySearch",
+          "rationale": "If the marriage is not found through national indices (steps 1-3), census records establish where Anders Monsen and Unna Halsteinsdatter lived, identifying the specific parish whose registers must be searched. Per loc_001: parish identification is prerequisite to effective parish-level searching in patronymic-era Norway. FamilySearch holds indexed+images for 1865 (collection 3756102), 1870 (4135961), 1891 (4067726), and 1900 (3744863). Search for Anders Monsen and Unna (wife), and also for Mons Monsen (likely Anders's father per his patronymic Monsen) to locate the family's farm and parish. A census locating the family provides the parish name needed to browse specific church-book volumes.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Norway",
+          "date_range": "1660-1926",
+          "repository": "Ancestry",
+          "rationale": "Ancestry.com search cannot be executed autonomously \u2014 requires paid subscription and human browsing. URL generated and logged (log_031). Skipped for autonomous session per BCG Standard 18 (inaccessible resource); must be completed by a human researcher with Ancestry subscription using: https://www.ancestry.com/search/?name=Unna_Halsteinsdatter&spouse=Anders_Monsen",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Norway",
+          "date_range": "1750-1900",
+          "repository": "Digitalarkivet",
+          "rationale": "No FamilySearch digitized church book image volumes exist for the Hordaland parishes (Kinsarvik, Ulvik, Vikoor, Voss) where Halsteinsdatter names concentrate in the 1865 census. volume_search returned only one unrelated volume (Os 1816-1825). Image browsing for this question must go through Digitalarkivet.no (pli_003), not FamilySearch.",
+          "fallback_for": "pli_003",
+          "status": "skipped"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-09-30",
+      "items": [
+        {
+          "id": "pli_007",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Norway",
+          "date_range": "1870",
+          "repository": "FamilySearch",
+          "rationale": "Norway Census 1870 (collection 4135961, listed in loc_001) was not searched in pl_001 \u2014 exhaustiveness agent confirmed no log entry covers this collection. If Anders Monsen and Unna Halsteinsdatter were married by 1870, they would appear together in this census as a household; co-residence would confirm the marriage indirectly and provide the parish of residence for a targeted Digitalarkivet search. Search: surname Monsen + givenName Anders as principal; also search Unna with surname Halsteinsdatter. Norwegian 1870 census records household relationships.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 2,
+          "record_type": "probate",
+          "jurisdiction": "Norway",
+          "date_range": "1840-1903",
+          "repository": "FamilySearch",
+          "rationale": "Norway Probate Index Cards 1640-1903 (collection 1661306, listed in loc_001) was not searched in pl_001. FAN evidence for this marriage question \u2014 BCG Standard 14: (1) Search for Anders Monsen \u2014 his own probate might name wife Unna, confirming the marriage. (2) Search for Mons Monsen (Anders's father, LKFW-9ML) \u2014 his probate might name son Anders with wife Unna. Date range sized to Mons's plausible lifespan. Norwegian probate index cards often name surviving spouses and children.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Hordaland, Norway",
+          "date_range": "1840-1870",
+          "repository": "Digitalarkivet.no (Norwegian National Archives, free public website)",
+          "rationale": "All FamilySearch-indexed and full-text-searchable collections have been exhausted. The Lutheran parish marriage registers for Hordaland parishes where Halsteinsdatter names concentrate (Ulvik, Kinsarvik, Granvin, Voss) are held at Digitalarkivet.no as scanned images. Norwegian civil registration began in 1876, so the parish register is the sole vital system for a marriage in the 1840s-1860s. Digitalarkivet.no is free and publicly accessible but requires human browser navigation. Search for Unna Halsteinsdatter (also Una, Unne; Halstensdr., Halsteinsd.) and Anders Monsen across Hordaland marriage registers.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Hordaland, Norway",
+          "date_range": "1891",
+          "repository": "FamilySearch \u2014 Norway Census 1891, collection 4067726",
+          "rationale": "Collection 4067726 (Norway Census 1891) was previously searched for Unna Halsteinsdatter (log_020, zero results) but was NOT searched for Anders Monsen with a Hordaland residencePlace filter. Anders was born approximately 1837\u20131840 and would be approximately 51\u201354 years old in 1891. The 1891 census is fully indexed and name-searchable. Finding Anders with wife Unna in this census would establish their residence parish, which is the key piece of information needed to target Digitalarkivet.no parish register searches. The groom search in collection 1468080 (log_039) produced only a wrong candidate (Anders Monsen R\u00f8sland, b. 1853, father Mons Endresen \u2014 not Mons Monsen), so census household placement is the next feasible avenue for locating the marriage parish.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_011",
+          "sequence": 5,
+          "record_type": "census",
+          "jurisdiction": "Hordaland, Norway",
+          "date_range": "1900",
+          "repository": "FamilySearch \u2014 Norway Census 1900, collection 3744863",
+          "rationale": "Collection 3744863 (Norway Census 1900) was previously searched for Unna Halsteinsdatter (log_021, two wrong results) but was NOT searched for Anders Monsen with a Hordaland residencePlace filter. Anders would be approximately 60\u201363 in 1900. The 1900 Norwegian census is particularly detailed \u2014 it records birth county (amt), church parish (prestegjeld), and children's birth years, which could establish the residence parish and help bracket the marriage year range via children's ages. If pli_010 (1891 census) fails to locate Anders, this 1900 search using the same subject identifier is the next best census source. Anders's birth ~1837\u20131840 limits the date window to the creator's lifespan; the 1900 census closing date falls within that range.",
+          "fallback_for": "pli_010",
+          "status": "completed"
+        },
+        {
+          "id": "pli_012",
+          "sequence": 6,
+          "record_type": "census",
+          "jurisdiction": "Hordaland, Norway",
+          "date_range": "1875",
+          "repository": "FamilySearch \u2014 Norway Census 1875, collection 1529106",
+          "rationale": "Collection 1529106 (Norway Census 1875) covers all of Norway and is fully name-indexed. It was not searched for Anders Monsen with a Hordaland residencePlace filter. The 1875 census is strategically the most valuable untried census source: if Anders (~35-38 years old in 1875) and Unna married in the 1860s, the 1875 household would likely include young children born post-marriage, revealing both the residence parish and bracketing the marriage year. The 1891 (pli_010) and 1900 (pli_011) searches were both negative, suggesting Anders may have died before 1891 or appears under a farm name; the 1875 census predates that window and may still find him. The 1870 Bergen-city census (pli_007, collection 4135961) covered only Bergen city and cannot speak to inner Hardanger parishes.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-30T05:39:26.648Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Monsen",
+        "givenName": "Anders",
+        "collectionId": "1468080",
+        "recordCountry": "Norway",
+        "spouseGivenName": "Unna"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 255,
+      "notes": "Anders Monsen \u00d7 Unna Halsteinsdatter in Norway Marriages 1660-1926 (col 1468080). All 50 returned results show Anders Monsen as Father of Bride or Father of Groom \u2014 not as groom principal. The spouse filter for Unna did not surface any principal marriage records. Negative for the principal marriage record."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-30T05:39:26.665Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Monsen",
+        "givenName": "Anders",
+        "collectionId": "1468080",
+        "recordCountry": "Norway",
+        "isPrincipal": true
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 564,
+      "notes": "Anders Monsen as groom (isPrincipal:true) in collection 1468080. 564 total results across all Norway. Cannot identify which, if any, is our subject \u2014 no dated or placed facts on LKFW-9XH to score against, all match scores are noise. No candidate has Unna Halsteinsdatter as a spouse. Negative: cannot discriminate without location or date."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-30T05:39:26.675Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Halsteinsdatter",
+        "givenName": "Unna",
+        "collectionId": "1468080",
+        "recordCountry": "Norway"
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 4,
+      "notes": "Unna Halsteinsdatter as bride in collection 1468080. Only 4 total matches for Halsteinsdatter surname \u2014 indexed as Halsteens Dr, Halsteensdr, Halstensdr. None have given name Unna or any variant. Zero records for Unna Halsteinsdatter as bride in this index collection. Definitive negative for pli_001."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-09-30T05:40:20.842Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Monsen",
+        "givenName": "Anders",
+        "collectionId": "4237104",
+        "recordCountry": "Norway",
+        "recordType": "marriage",
+        "spouseGivenName": "Unna"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 1139,
+      "notes": "Anders Monsen \u00d7 Unna spouse in Norway Church Books 1797-1958 (col 4237104). All 50 returned results show Anders Monsen as Father or Father-in-Law, not as groom principal. relativeTerms.spouse absent for all 50 \u2014 spouse name not consistently indexed. No principal groom match for Anders Monsen with Unna as bride found."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_002",
+      "performed": "2026-09-30T05:40:20.849Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Halsteinsdatter",
+        "givenName": "Unna",
+        "collectionId": "4237104",
+        "recordCountry": "Norway",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 4,
+      "notes": "Unna Halsteinsdatter as bride in Norway Church Books 1797-1958 (col 4237104). Only 4 results for Halsteinsdatter surname variants (Halsteensd, Halstein, Halsteensen, Halstensen) \u2014 none with given name Unna. The name 'Unna' does not appear in this indexed collection. Negative."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_002",
+      "performed": "2026-09-30T05:41:51.144Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Unna",
+        "recordCountry": "Norway",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 21368,
+      "notes": "Norway-wide marriage search for given name 'Unna' to establish whether name exists in FamilySearch index. 21,368 results confirm Unna is a valid indexed name. Among first 20 results: women with patronymics Nielsdr, Andersdr, Eriksdr, Johannesdtr etc. No Unna Halsteinsdatter or any Halsteinsdatter variant found. Conclusion: Unna Halsteinsdatter's marriage record is not indexed in FamilySearch's Norway marriage collections."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_002",
+      "performed": "2026-09-30T05:41:51.148Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Una",
+        "surname": "Halsteinsdatter",
+        "recordCountry": "Norway",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 8,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 8,
+      "notes": "Una Halsteinsdatter (variant spelling) in Norway marriages. Only 8 results \u2014 same Halsteinsdatter surname variants as before, none with given name Una or Unna. Confirms the Halstein patronymic is essentially absent from FamilySearch indexed Norway marriage collections. The marriage record must be in an unindexed parish register."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-30T05:43:22.624Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Unna",
+        "surname": "Halsteinsdatter",
+        "recordCountry": "Norway",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 2,
+      "notes": "Unna Halsteinsdatter in Norway Census 1900. Only 2 results, neither our subject. Negative."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-30T05:43:22.627Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Anders",
+        "surname": "Monsen",
+        "recordCountry": "Norway",
+        "recordType": "census",
+        "spouseGivenName": "Unna"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 1027,
+      "notes": "Anders Monsen in Norway Census with spouse Unna \u2014 all 50 results from 1801 census, births 1718-1800. Our subject likely born ~1820-1855; need 1865 and 1875 censuses instead."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-30T05:43:22.640Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Unna",
+        "recordCountry": "Norway",
+        "recordType": "census",
+        "spouseSurname": "Monsen"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 2,
+      "notes": "Unna in Norway Census with spouse surname Monsen. Only 2 results, neither matches Unna Halsteinsdatter. Negative."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-30T05:43:22.644Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Monsen",
+        "givenName": "Anders",
+        "collectionId": "3733582",
+        "recordCountry": "Norway",
+        "recordType": "census",
+        "spouseGivenName": "Unna"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil search \u2014 collectionId 3733582 does not exist. Correct 1865 census ID is 3756102 per loc_001. Negative."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-30T05:44:29.438Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Anders",
+        "surname": "Monsen",
+        "collectionId": "3756102",
+        "recordCountry": "Norway"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 302,
+      "notes": "Anders Monsen in Norway Census 1865 (col 3756102). 302 results, no scored hit above 0.01. Subject has no locating facts. All Hordaland-area entries. Cannot identify which, if any, is our subject."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-30T05:44:29.446Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Unna",
+        "collectionId": "3756102",
+        "recordCountry": "Norway"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 3642,
+      "notes": "Unna in Norway Census 1865 (col 3756102). 3642 results but no Halsteinsdatter patronymic visible in top 50. Patronymics are Johannesdatter, Andersdatter, Nilsdatter, Eriksdatter, Sjursdatter, etc. \u2014 no Halsteinsdatter found. Negative."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-30T05:44:29.453Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Unna",
+        "collectionId": "1529106",
+        "recordCountry": "Norway"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "results_available": 569,
+      "notes": "Unna in Norway Census 1875 (col 1529106). Collection indexed primarily by household name, not individual name. Results are mostly company/estate names. Poor indexing of individual members. Negative for this approach."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-30T05:51:41.504Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Halstein",
+        "collectionId": "3756102",
+        "recordCountry": "Norway",
+        "recordType": "census",
+        "isPrincipal": true,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_015.json",
+      "results_available": 9206,
+      "notes": "Searched 'Halstein' as given name in Norway Census 1865 (collection 3756102). 9,206 results too broad without surname or parish identifiers. Approach: the patronymic Halsteinsdatter indicates the bearer's father was named Halstein, so finding a Halstein record listing Unna would identify the parish. No Unna appears alongside any Halstein in the top 50 results. Strategy unproductive at this scale."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-30T05:51:41.514Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Halsteinsdatter",
+        "collectionId": "3756102",
+        "recordCountry": "Norway",
+        "count": 20
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_016.json",
+      "results_available": 1056,
+      "notes": "Searched for surname Halsteinsdatter in Norway Census 1865. 1,056 results confirm the patronymic IS indexed in this collection. Geographic concentration in Kinsarvik, Ulvik, Vik\u00f8r, and Voss (all Hordaland). Given name Unna does not appear in the top 20 under this patronymic \u2014 suggesting Unna's name may be indexed under a variant spelling, or she is absent from the indexed portion of this census."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-30T05:51:41.520Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Unna",
+        "surname": "Halsteinsdatter",
+        "collectionId": "3756102",
+        "recordCountry": "Norway"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Searched for Unna Halsteinsdatter (given name + patronymic) in Norway Census 1865 (collection 3756102). Zero results. The name form 'Unna Halsteinsdatter' is not indexed in this collection."
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-30T05:51:41.520Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Anders",
+        "surname": "Monsen",
+        "spouseGivenName": "Unna",
+        "collectionId": "3756102",
+        "recordCountry": "Norway",
+        "isPrincipal": true,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_018.json",
+      "results_available": 302,
+      "notes": "Searched for Anders Monsen with spouseGivenName Unna in Norway Census 1865. 302 results, all showing relativeTerms.spouse.status 'unknown' \u2014 none of the records in the index confirm 'Unna' as a named party. The 1865 Norway census index does not reliably index spouse given names, making this filter ineffective."
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-30T05:51:41.537Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Anders",
+        "surname": "Monsen",
+        "spouseGivenName": "Unna",
+        "collectionId": "1529106",
+        "recordCountry": "Norway",
+        "isPrincipal": true,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 28,
+      "external_site": null,
+      "results_ref": "results/log_019.json",
+      "results_available": 28,
+      "notes": "Searched for Anders Monsen with spouseGivenName Unna in Norway Census 1875. 28 results, all showing relativeTerms.spouse.status 'unknown'. The index does not confirm Unna as a named party in any of these records."
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-30T05:51:41.546Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Unna",
+        "surname": "Halsteinsdatter",
+        "collectionId": "4067726",
+        "recordCountry": "Norway"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Searched for Unna Halsteinsdatter in Norway Census 1891 (collection 4067726). Zero results. Pattern across 1865, 1875, and 1891: Unna Halsteinsdatter is absent from all FamilySearch-indexed Norwegian census collections searched."
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-30T05:51:41.546Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Unna",
+        "surname": "Halsteinsdatter",
+        "collectionId": "3744863",
+        "recordCountry": "Norway",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_021.json",
+      "results_available": 2,
+      "notes": "Searched for Unna Halsteinsdatter in Norway Census 1900 (collection 3744863). 2 results: one is Unni Halsteinsdtr born 1898 in Vossestrand (a different person born too late), the other is male. Neither is the subject. Conclusion: Unna Halsteinsdatter does not appear in any FamilySearch-indexed Norwegian census 1865\u20131900."
+    },
+    {
+      "id": "log_022",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-30T05:53:26.025Z",
+      "tool": "external_site",
+      "query": {
+        "givenName": "Unna",
+        "surname": "Halsteinsdatter",
+        "recordType": "marriage",
+        "spouseGivenName": "Anders",
+        "spouseSurname": "Monsen"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": {
+        "site": "digitalarkivet",
+        "url_generated": "https://www.digitalarkivet.no/en/search/persons/advanced?firstname=Unna&lastname=Halsteinsdatter",
+        "capture_received": false
+      },
+      "results_ref": null,
+      "notes": "Bride-side search URL generated for Digitalarkivet (free Norwegian National Archives). Groom-side URL: https://www.digitalarkivet.no/en/search/persons/advanced?firstname=Anders&lastname=Monsen. Digitalarkivet holds Norwegian church books including pre-1876 marriage registers with image access and an index. Cannot be browsed in the current automated session \u2014 requires human to open URL, search, and capture results. This is the highest-priority remaining source as all FamilySearch-indexed collections have been exhausted for this couple."
+    },
+    {
+      "id": "log_023",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-30T05:53:41.298Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Unna +Halsteinsdatter +Monsen",
+        "recordPlace1": "Norway",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Fulltext search for all three key terms in Norway marriage records. Zero results. FamilySearch full-text coverage for Norwegian church records is sparse \u2014 this nil confirms absence from the indexed transcript corpus but does not confirm absence from the underlying registers."
+    },
+    {
+      "id": "log_024",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-30T05:54:14.184Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Unna +Halsteinsdatter",
+        "recordPlace1": "Norway"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Broader fulltext search for Unna Halsteinsdatter in all Norwegian records (no record type filter). Zero results. FamilySearch full-text index does not contain this name combination for Norwegian records."
+    },
+    {
+      "id": "log_025",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-30T05:54:14.184Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Unna +Monsen",
+        "recordPlace1": "Norway",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Fulltext search for Unna + Monsen in Norway marriage records. Zero results. Neither name form nor combination is in the FamilySearch full-text index for Norwegian marriage records."
+    },
+    {
+      "id": "log_026",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-30T05:54:48.050Z",
+      "tool": "fulltext_search",
+      "query": {
+        "name": "Unna Halsteinsdatter",
+        "recordPlace1": "Norway"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Fulltext name-field search (with automatic variant expansion) for Unna Halsteinsdatter in all Norwegian records. Zero results. No variants of Unna Halsteinsdatter appear in the FamilySearch full-text indexed corpus for Norway."
+    },
+    {
+      "id": "log_027",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-30T05:54:48.050Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Halsteinsdatter +Monsen",
+        "recordPlace1": "Norway",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Fulltext search for Halsteinsdatter + Monsen co-occurring in Norway marriage records, without requiring Unna specifically. Zero results. The patronymic Halsteinsdatter does not appear in any FamilySearch full-text indexed Norwegian marriage record."
+    },
+    {
+      "id": "log_028",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-30T05:55:23.949Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Unna",
+        "fatherGivenName": "Halstein",
+        "collectionId": "1468080",
+        "recordCountry": "Norway",
+        "isPrincipal": true,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_028.json",
+      "results_available": 1,
+      "notes": "Searched for bride given name Unna with fatherGivenName Halstein in Norway Marriages 1660-1926 (collection 1468080). 1 result \u2014 Pettersen Lied with father 'Petter H. Lied' \u2014 a fuzzy false positive. No bride named Unna with a father named Halstein appears in this indexed collection."
+    },
+    {
+      "id": "log_029",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-30T05:55:23.954Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Unna",
+        "fatherGivenName": "Halstein",
+        "collectionId": "4237104",
+        "recordCountry": "Norway",
+        "isPrincipal": true,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_029.json",
+      "results_available": 2,
+      "notes": "Searched for bride given name Unna with fatherGivenName Halstein in Norway Church Books 1797-1958 (collection 4237104). 2 results \u2014 both false positives with unrelated father name abbreviations. No bride named Unna with father Halstein in this indexed collection."
+    },
+    {
+      "id": "log_030",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-30T05:56:08.278Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Unne",
+        "fatherGivenName": "Halstein",
+        "collectionId": "1468080",
+        "recordCountry": "Norway",
+        "isPrincipal": true,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_030.json",
+      "results_available": 1,
+      "notes": "Searched for bride given name 'Unne' (common Norwegian variant of Unna) with fatherGivenName Halstein in Norway Marriages 1660-1926. 1 result \u2014 same false positive as the 'Unna' search. The name variant Unne also fails to surface a bride with father Halstein."
+    },
+    {
+      "id": "log_031",
+      "plan_item_id": "pli_005",
+      "performed": "2026-09-30T05:56:08.282Z",
+      "tool": "external_site",
+      "query": {
+        "givenName": "Unna",
+        "surname": "Halsteinsdatter",
+        "spouseGivenName": "Anders",
+        "spouseSurname": "Monsen",
+        "recordType": "marriage"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/?name=Unna_Halsteinsdatter&spouse=Anders_Monsen",
+        "capture_received": false
+      },
+      "results_ref": null,
+      "notes": "Ancestry search URL generated for bride Unna Halsteinsdatter with spouse Anders Monsen. Access: subscription required. Cannot browse in automated session \u2014 requires human to access Ancestry Norway marriage records. This is the paid-source backup after Digitalarkivet (free)."
+    },
+    {
+      "id": "log_032",
+      "plan_item_id": "pli_006",
+      "performed": "2026-09-30T05:57:57.492Z",
+      "tool": "record_search",
+      "query": {
+        "tool": "volume_search",
+        "recordTypeGroups": [
+          "Religious",
+          "Religious Marriage"
+        ],
+        "standardPlace": "Hordaland, Norway",
+        "startYear": 1800,
+        "endYear": 1880
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Used volume_search to look for digitized church book image groups covering Hordaland, Norway 1800-1880 with religious/marriage record types. One volume found (Os parish 1816-1825, browse-only, not fulltext-searchable) \u2014 none for Kinsarvik, Ulvik, Vik\u00f8r, Voss, or Hardanger. FamilySearch does not hold digitized church book image volumes for the Hordaland parishes where Halsteinsdatter names concentrate. Image browsing (pli_006) cannot proceed through FamilySearch \u2014 records exist only on Digitalarkivet.no or in physical archives. This is a confirmed blocker for automated research."
+    },
+    {
+      "id": "log_033",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-30T06:01:13.175Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Anders",
+        "fatherGivenName": "Mons",
+        "collectionId": "1468080",
+        "recordCountry": "Norway",
+        "isPrincipal": true,
+        "recordType": "marriage",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_033.json",
+      "results_available": 267,
+      "notes": "Searched for groom Anders with fatherGivenName Mons in Norway Marriages 1660-1926 (collection 1468080). 267 results. No bride name is shown in these stub results; this search identifies grooms whose father was named Mons. Cannot identify the correct record without bride name, date, or location. One result from Hordaland (batch M42135-7, birthplace Lund Bergen). Strategy: use bride's patronymic surname to find the record instead."
+    },
+    {
+      "id": "log_034",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-30T06:01:13.185Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Anders",
+        "fatherGivenName": "Mons",
+        "collectionId": "4237104",
+        "recordCountry": "Norway",
+        "isPrincipal": true,
+        "recordType": "marriage",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_034.json",
+      "results_available": 1168,
+      "notes": "Searched for groom Anders with fatherGivenName Mons in Norway Church Books 1797-1958 (collection 4237104). 1,168 results. One entry stands out: Anders Monsen Skeidseide with father Mons Monsen (matching the tree's father Mons Monsen). Reading that specific record to determine location. Results too broad to evaluate without dates or location."
+    },
+    {
+      "id": "log_035",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-30T06:05:27.905Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:68Q7-3MZ4"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Read record to verify an Anders Monsen result from collection 1468080. This individual (Anders Monsen Skeidseide) married Cecilie Gurine Jacobsdr on 15 Nov 1860 in Kopervik, Karm\u00f8y, Rogaland \u2014 not our subject. Father is Mons Monsen (matches tree) but bride is wrong and location is Rogaland, not the expected Hordaland. Staged file pruned after session break."
+    },
+    {
+      "id": "log_036",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-30T06:05:27.905Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Halsteinsdatter",
+        "collectionId": "1468080",
+        "recordCountry": "Norway",
+        "isPrincipal": true,
+        "count": 100
+      },
+      "outcome": "negative",
+      "results_examined": 100,
+      "external_site": null,
+      "results_ref": "results/log_036.json",
+      "results_available": 1022,
+      "notes": "Searched collection 1468080 for surname 'Halsteinsdatter' to find brides with this patronymic. All 1,022 results are male grooms with the male patronymic form (Halsteinsen/Halstensen/Halsteensen). The female form 'Halsteinsdatter' is not separately indexed as a bride surname in this collection \u2014 fuzzy matching collapses female and male patronymic forms together. Bride searches in this collection must rely on fatherGivenName rather than bride surname. Notable: batchNumber M01637-9 covers Voss, Hordaland area."
+    },
+    {
+      "id": "log_037",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-30T06:05:27.918Z",
+      "tool": "record_search",
+      "query": {
+        "batchNumber": "M01637-9",
+        "givenName": "Unna",
+        "isPrincipal": true
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Searched Hordaland/Voss batch M01637-9 for any principal named Unna. Zero results. This batch does not contain a marriage record for a bride named Unna."
+    },
+    {
+      "id": "log_038",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-30T06:05:27.918Z",
+      "tool": "record_search",
+      "query": {
+        "batchNumber": "M01637-9",
+        "fatherGivenName": "Halstein",
+        "isPrincipal": true,
+        "sex": "Female"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Searched Hordaland/Voss batch M01637-9 for female principals with father named Halstein. Zero results. No bride with father Halstein is indexed in this batch."
+    },
+    {
+      "id": "log_039",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-30T06:06:52.164Z",
+      "tool": "record_search",
+      "query": {
+        "batchNumber": "M01637-9",
+        "givenName": "Anders",
+        "count": 100
+      },
+      "outcome": "partial",
+      "results_examined": 100,
+      "external_site": null,
+      "results_ref": "results/log_039.json",
+      "results_available": 222,
+      "notes": "Searched batch M01637-9 (Hordaland area) for all grooms named Anders. 222 total results, 100 examined. Notable candidate: 'Anders Monsen R\u00f8sland' born 1853 in Hasanger (Ulvik, Hardanger, Hordaland) \u2014 Hasanger is in the exact geographic area where the Halsteinsdatter patronymic concentrates in 1865 census. Reading this record to check bride identity."
+    },
+    {
+      "id": "log_040",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-30T06:06:52.187Z",
+      "tool": "record_search",
+      "query": {
+        "batchNumber": "M01637-9",
+        "spouseGivenName": "Unna"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Searched batch M01637-9 for any groom with spouse named Unna. Zero results. Spouse indexing is incomplete in this collection."
+    },
+    {
+      "id": "log_041",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-30T06:07:33.785Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:NW4M-XZF"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_041.json",
+      "notes": "Read record for Anders Monsen R\u00f8sland (batch M01637-9, Hasanger). Father is Mons Endresen R\u00f8sland (not Mons Monsen as in our tree). Bride is Karine Eriksdatter, not Unna Halsteinsdatter. Marriage in Bergen 14 Jun 1896. Not our subject."
+    },
+    {
+      "id": "log_042",
+      "plan_item_id": null,
+      "performed": "2026-09-30T06:08:04.406Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Unna +Halsteinsdatter",
+        "recordPlace1": "Norway"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Full-text co-occurrence search for Unna and Halsteinsdatter in Norwegian records. Zero results. FamilySearch full-text corpus has no coverage of Norwegian church records containing these names \u2014 confirms minimal Norwegian full-text indexing."
+    },
+    {
+      "id": "log_043",
+      "plan_item_id": null,
+      "performed": "2026-09-30T06:08:04.406Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Anders +Monsen +Halsteinsdatter"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Full-text co-occurrence search for Anders Monsen Halsteinsdatter across all FamilySearch records. Zero results. Norwegian church records are not in the full-text corpus."
+    },
+    {
+      "id": "log_044",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-30T06:11:00.162Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Unna",
+        "surname": "Halsteinsdatter",
+        "collectionId": "3756102"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Searched 1865 Norwegian census for Unna Halsteinsdatter by name. Zero results. Unna is not indexed by her patronymic in the 1865 census."
+    },
+    {
+      "id": "log_045",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-30T06:11:00.162Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Anders",
+        "surname": "Monsen",
+        "spouseGivenName": "Unna",
+        "collectionId": "1468080",
+        "count": 100
+      },
+      "outcome": "negative",
+      "results_examined": 100,
+      "external_site": null,
+      "results_ref": "results/log_045.json",
+      "results_available": 255,
+      "notes": "Searched collection 1468080 for groom Anders Monsen with spouse Unna. All 255 results show relativeTerms.spouse.status: 'absent' \u2014 none have a spouse named Unna indexed. The spouseGivenName filter only surfaces records where no spouse is indexed (silent records) or where the spouse matches. No match for Unna found."
+    },
+    {
+      "id": "log_046",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-30T06:11:00.169Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Unna",
+        "surname": "Halsteinsdatter",
+        "recordCountry": "Norway",
+        "count": 100
+      },
+      "outcome": "negative",
+      "results_examined": 15,
+      "external_site": null,
+      "results_ref": "results/log_046.json",
+      "results_available": 15,
+      "notes": "Searched all Norwegian records for Unna Halsteinsdatter. 15 results, all with match score below 0.01 per the ranker diagnostic \u2014 genuine negative. Results are mostly male patronymic forms (Halstensen/Halstensdr abbreviations) or the 1900 census entry for Unni Halsteinsdtr born 1898 already found. No match for our subject. One record (NWD5-3L9) shows Halstensdr as bride for Anders Andersen \u2014 reading to check bride's full given name."
+    },
+    {
+      "id": "log_047",
+      "plan_item_id": null,
+      "performed": "2026-09-30T06:12:10.319Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:NWD5-3L9"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_047.json",
+      "notes": "Read record NWD5-3L9: bride recorded only as 'Halstensdr' (no given name indexed). Marriage 19 Sep 1778, Her\u00f8y, M\u00f8re og Romsdal \u2014 wrong century, wrong location, wrong groom name (Anders Andersen not Anders Monsen). Not relevant."
+    },
+    {
+      "id": "log_048",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-30T06:12:10.322Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Anders",
+        "surname": "Monsen",
+        "spouseGivenName": "Unne",
+        "collectionId": "1468080",
+        "count": 100
+      },
+      "outcome": "negative",
+      "results_examined": 100,
+      "external_site": null,
+      "results_ref": "results/log_048.json",
+      "results_available": 255,
+      "notes": "Searched collection 1468080 for groom Anders Monsen with spouse Unne. All 100 ranked results have no spouse indexed (relativeTerms.spouse absent). The ranker confirms: spouse name not indexed in this collection for any of these records. All results show Anders Monsen as Father of Bride or Father of Groom \u2014 not as a groom himself. Confirmed negative."
+    },
+    {
+      "id": "log_049",
+      "plan_item_id": null,
+      "performed": "2026-09-30T06:21:10.834Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1467014",
+        "recordCountry": "Norway",
+        "fatherGivenName": "Anders",
+        "motherGivenName": "Unna",
+        "isPrincipal": true
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 60,
+      "notes": "Norway Baptisms 1634-1927 (1467014): indirect search for children of Anders Monsen + Unna Halsteinsdatter via parental given names. 60 results returned; top 50 examined \u2014 all showed mothers with surnames like Andersdr, Amundsdr, Eriksdatter; none showed Unna Halsteinsdatter as mother of a child whose father is named Anders. No match confirmed. Ranking not yet run against subject LKFW-9XH."
+    },
+    {
+      "id": "log_050",
+      "plan_item_id": null,
+      "performed": "2026-09-30T06:21:10.834Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1467014",
+        "recordCountry": "Norway",
+        "givenName": "Unna",
+        "fatherGivenName": "Halstein",
+        "isPrincipal": true
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Norway Baptisms 1634-1927 (1467014): searched for Unna as daughter of Halstein, to find Unna Halsteinsdatter's own baptism record. Zero results \u2014 her baptism as daughter of Halstein is not indexed in this collection. Patronymic 'Halsteinsdatter' is apparently not indexed under father given name 'Halstein' in this collection for this name."
+    },
+    {
+      "id": "log_051",
+      "plan_item_id": null,
+      "performed": "2026-09-30T06:21:10.834Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1467014",
+        "recordCountry": "Norway",
+        "givenName": "Unna",
+        "isPrincipal": true
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 521,
+      "notes": "Norway Baptisms 1634-1927 (1467014): broad search for any baptism with given name Unna to identify parishes where Unna Halsteinsdatter's birth might be found. 521 results \u2014 too many to examine without ranking. Noted: some Ulvik results (early 1700s, too early) and Vossestrand hit (Unna baptized 7 Apr 1871 \u2014 plausible era). Requires ranking against subject KZHH-VTX to be actionable."
+    },
+    {
+      "id": "log_052",
+      "plan_item_id": null,
+      "performed": "2026-09-30T06:23:16.134Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1467014",
+        "recordCountry": "Norway",
+        "fatherGivenName": "Anders",
+        "fatherSurname": "Monsen",
+        "motherGivenName": "Unna",
+        "isPrincipal": true
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Norway Baptisms 1634-1927 (1467014): refined indirect search for children of Anders Monsen + Unna Halsteinsdatter, adding fatherSurname Monsen to narrow to this specific family. Zero results \u2014 no baptism record indexed under a father named Anders Monsen with a mother named Unna. Either the family had no children in FamilySearch's indexed coverage, or the records are unindexed (held on Digitalarkivet)."
+    },
+    {
+      "id": "log_053",
+      "plan_item_id": null,
+      "performed": "2026-09-30T06:26:32.373Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "3756102",
+        "recordCountry": "Norway",
+        "givenName": "Unna",
+        "fatherGivenName": "Halstein",
+        "isPrincipal": false
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "1865 Norway Census (3756102): searched for Unna as non-principal record where fatherGivenName is Halstein, to locate her in a household alongside a person named Halstein. Zero results \u2014 either Unna was already married by 1865 (and thus in Anders Monsen's household rather than her father's), or the record is not indexed in this collection."
+    },
+    {
+      "id": "log_054",
+      "plan_item_id": null,
+      "performed": "2026-09-30T06:26:32.373Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "4237104",
+        "recordCountry": "Norway",
+        "givenName": "Unna",
+        "fatherGivenName": "Halstein"
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_054.json",
+      "results_available": 4,
+      "notes": "Norway Church Books 1797-1958 (4237104): searched for any record of Unna with fatherGivenName Halstein. 4 results \u2014 all false matches. Fathers' names abbreviated as 'H: Herlossen', 'H Ingebrigts', 'H. Kristensen', 'H Jensen S\u00e5stalen' fuzzy-matched to 'Halstein'. No genuine Unna Halsteinsdatter record found. The collection indexes many fathers only by initial 'H:', making this combination unreliable."
+    },
+    {
+      "id": "log_055",
+      "plan_item_id": null,
+      "performed": "2026-09-30T06:26:32.378Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "3756102",
+        "recordCountry": "Norway",
+        "givenName": "Halstein",
+        "isPrincipal": true
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_055.json",
+      "results_available": 9221,
+      "notes": "1865 Norway Census (3756102): searched for Halstein men as household principals to identify candidate fathers of Unna Halsteinsdatter. 9,221 results \u2014 too many to search exhaustively. Top 20 examined. Hordaland candidates in target parishes identified: Halstein Halsteinsen (Kinsarvik, born 1809, ark:/61903/1:1:DXCQ-MZPZ); Halstein Asguts\u00f8n (Ulvik, born 1818, ark:/61903/1:1:DXCW-M4ZM); Halstein Asbj\u00f8rnsen (Ulvik, born 1813, ark:/61903/1:1:DXW9-M66Z). All are married in 1865 with plausible birth years to be Unna's father (Unna est. born 1830-1855). Will read their household records."
+    },
+    {
+      "id": "log_056",
+      "plan_item_id": null,
+      "performed": "2026-09-30T06:26:32.387Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1468080",
+        "recordCountry": "Norway",
+        "givenName": "Unna",
+        "fatherGivenName": "Halstein",
+        "isPrincipal": true
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_056.json",
+      "results_available": 1,
+      "notes": "Norway Marriages 1660-1926 (1468080): bride Unna with fatherGivenName Halstein. 1 result \u2014 false match: groom 'Pettersen Lied', father name 'Petter H. Lied', where 'H.' fuzzy-matched 'Halstein'. Role is GROOM, not bride. No genuine marriage record for Unna Halsteinsdatter found via this approach. The marriage collection does not appear to index Unna's marriage under her father Halstein's name."
+    },
+    {
+      "id": "log_057",
+      "plan_item_id": null,
+      "performed": "2026-09-30T06:27:46.875Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "3756102",
+        "recordCountry": "Norway",
+        "givenName": "Halstein",
+        "isPrincipal": true,
+        "otherGivenName": "Unna"
+      },
+      "outcome": "negative",
+      "results_examined": 15,
+      "external_site": null,
+      "results_ref": "results/log_057.json",
+      "results_available": 15,
+      "notes": "1865 Norway Census (3756102): searched for Halstein as principal in households where a co-person named Unna is also indexed. 15 results \u2014 all show relativeTerms.other.status: 'unknown' (co-persons present but none indexed as 'Unna'). The 15 returned results are households with middle initials 'H.' that fuzzy-matched 'Halstein' \u2014 none are the Hordaland Halstein candidates identified in log_055. The Kinsarvik and Ulvik Halstein households were excluded, confirming their indexed household members do not include anyone named 'Unna' exactly."
+    },
+    {
+      "id": "log_058",
+      "plan_item_id": null,
+      "performed": "2026-09-30T06:27:46.881Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:DXCQ-MZPZ"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_058.json",
+      "results_available": 1,
+      "notes": "Read 1865 census household of Halstein Halsteinsen (born 1809, Kinsarvik). Household contains only two persons: Halstein Halsteinsen (male, born 1809, Kingservigs Prgj.) and wife Sigri Johannesdatter (female, born 1809, Kingservigs Prgj.) \u2014 both married. No children listed in the 1865 household. Halstein remains a possible father of Unna if she had already married and moved out by 1865; household composition inferred from indexed co-persons in the same record. Will check the 1875 census and read Ulvik Halstein households."
+    },
+    {
+      "id": "log_059",
+      "plan_item_id": null,
+      "performed": "2026-09-30T06:29:17.950Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:DXCW-M4ZM"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_059.json",
+      "results_available": 1,
+      "notes": "Read 1865 census household of Halstein Asguts\u00f8n (born 1818, Ulvik, Hordaland). Five household members indexed: Halstein (head, married), wife Kristi S\u00f8lf\u00e6stsdatter (born 1821), son S\u00f8lf\u00e6st Halstens\u00f8n (born 1847), daughter Kari Halstensdatter (born 1851), and widowed Ceselja Henriksdatter (born 1781, possibly a parent). No daughter named Unna. Household composition from co-indexed persons in the same record. If Unna was born ~1835-1845 to this Halstein, she would have been ~20-30 in 1865 and likely already married and out of the household."
+    },
+    {
+      "id": "log_060",
+      "plan_item_id": null,
+      "performed": "2026-09-30T06:29:17.954Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:DXW9-M66Z"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_060.json",
+      "results_available": 1,
+      "notes": "Read 1865 census household of Halstein Asbj\u00f8rnsen (born 1813, Ulvik, Hordaland). Four household members indexed: Halstein (head, married), wife Christi Pedersdatter (born 1826), daughter Katrina Halstensdatter (born 1847), daughter Margrete Halstensdatter (born 1862). No daughter named Unna. Household composition from co-indexed persons in the same record. If Unna was born ~1835-1845 to this Halstein, she would have been ~20-30 in 1865 and likely already married and out of the household. Among the three Hordaland Halstein candidates examined (Kinsarvik, Ulvik x2), none has Unna present in the 1865 census."
+    },
+    {
+      "id": "log_061",
+      "plan_item_id": "pli_007",
+      "performed": "2026-09-30T06:36:29.428Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "4135961",
+        "recordCountry": "Norway",
+        "givenName": "Anders",
+        "surname": "Monsen",
+        "isPrincipal": true
+      },
+      "outcome": "negative",
+      "results_examined": 32,
+      "external_site": null,
+      "results_ref": "results/log_061.json",
+      "results_available": 32,
+      "notes": "Norway Census 1870 (4135961): searched for Anders Monsen as principal. 32 results returned, all from Bergen city; max matchScore 0.00065 (well below 0.01 threshold). Ranker diagnostic confirms real negative. All 32 candidates placed in Bergen city \u2014 collection 4135961 appears to cover mainly Bergen and other Norwegian urban areas in this interim census, not rural Hordaland parishes where Anders Monsen (inner Hardanger/Voss area) would have lived. No match for our subject."
+    },
+    {
+      "id": "log_062",
+      "plan_item_id": "pli_007",
+      "performed": "2026-09-30T06:36:29.443Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "4135961",
+        "recordCountry": "Norway",
+        "givenName": "Unna",
+        "surname": "Halsteinsdatter",
+        "isPrincipal": true
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Norway Census 1870 (4135961): searched for Unna Halsteinsdatter as principal. Zero results. Consistent with patronymic indexing gap and the collection's apparent urban-only coverage (Bergen city). Target couple lived in rural Hordaland, not indexed here."
+    },
+    {
+      "id": "log_063",
+      "plan_item_id": "pli_008",
+      "performed": "2026-09-30T06:38:58.391Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1661306",
+        "recordCountry": "Norway",
+        "givenName": "Anders",
+        "surname": "Monsen",
+        "subjectId": "LKFW-9XH"
+      },
+      "outcome": "negative",
+      "results_examined": 38,
+      "external_site": null,
+      "results_ref": "results/log_063.json",
+      "results_available": 38,
+      "notes": "38 results returned; max matchScore 0.0036, below the 0.01 threshold \u2014 ranker classifies as real negative for Anders Monsen probate in Norwegian Probate Index Cards 1640-1903."
+    },
+    {
+      "id": "log_064",
+      "plan_item_id": "pli_008",
+      "performed": "2026-09-30T06:38:58.403Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1661306",
+        "recordCountry": "Norway",
+        "givenName": "Mons",
+        "surname": "Monsen",
+        "subjectId": "LKFW-9ML"
+      },
+      "outcome": "partial",
+      "results_examined": 28,
+      "external_site": null,
+      "results_ref": "results/log_064.json",
+      "results_available": 28,
+      "notes": "28 results; top two hits scored 0.0146 (above 0.01 threshold): ark:/61903/1:1:6KRN-JWKS and ark:/61903/1:1:6KPZ-HGSB, both showing Mons Monsen probate in Bergen, Bergen, Norge. Bergen is Hordaland's main city and consistent with a rural Hordaland family's probate. These records may name son Anders and wife Unna \u2014 to be read."
+    },
+    {
+      "id": "log_065",
+      "plan_item_id": "pli_008",
+      "performed": "2026-09-30T06:39:37.570Z",
+      "tool": "record_read",
+      "query": {
+        "recordIds": [
+          "ark:/61903/1:1:6KRN-JWKS",
+          "ark:/61903/1:1:6KPZ-HGSB"
+        ]
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Both probate index cards show Mons Monsen in Bergen 1782-1796 (digital artifact date range). This is far too early to be the father of Anders Monsen (who was born ~1837-1840). The above-threshold matchScore of 0.0146 reflected surname match only; the date range eliminates both entries. Neither names any heirs or family members \u2014 probate index cards contain only the decedent's name and jurisdiction."
+    },
+    {
+      "id": "log_066",
+      "plan_item_id": "pli_009",
+      "performed": "2026-09-30T06:44:21.419Z",
+      "tool": "external_site",
+      "query": {
+        "givenName": "Unna",
+        "surname": "Halsteinsdatter",
+        "recordType": "marriage"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": {
+        "site": "digitalarkivet",
+        "url_generated": "https://www.digitalarkivet.no/en/search/persons/advanced?firstname=Unna&lastname=Halsteinsdatter",
+        "capture_received": false
+      },
+      "results_ref": null,
+      "notes": "URL generated for Unna Halsteinsdatter at Digitalarkivet.no (Norwegian National Archives, free public website). Requires human browser. Target parishes: Ulvik, Kinsarvik, Granvin, Voss (Hordaland). Also try: Una, Unne; Halstensdr., Halsteinsd."
+    },
+    {
+      "id": "log_067",
+      "plan_item_id": "pli_009",
+      "performed": "2026-09-30T06:44:21.419Z",
+      "tool": "external_site",
+      "query": {
+        "givenName": "Anders",
+        "surname": "Monsen",
+        "recordType": "marriage"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": {
+        "site": "digitalarkivet",
+        "url_generated": "https://www.digitalarkivet.no/en/search/persons/advanced?firstname=Anders&lastname=Monsen",
+        "capture_received": false
+      },
+      "results_ref": null,
+      "notes": "Alternate groom-search URL for Anders Monsen at Digitalarkivet.no. Norwegian marriage records were kept in the bride's parish, so the Unna search URL is primary; this is a secondary cross-check. Requires human browser."
+    },
+    {
+      "id": "log_068",
+      "plan_item_id": "pli_010",
+      "performed": "2026-09-30T07:07:02.787Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "4067726",
+        "givenName": "Anders",
+        "surname": "Monsen",
+        "residencePlace": "Hordaland, Norway",
+        "residenceYearFrom": 1891,
+        "residenceYearTo": 1891,
+        "sex": "Male",
+        "isPrincipal": true
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_068.json",
+      "results_available": 87,
+      "notes": "87 results for Anders/Andreas Monsen across Hordaland; ranker diagnostic: no candidate above 0.01 threshold (top matchScore 0.0037). All candidates in the plausible birth-year window (1833\u20131840) are from coastal Nordhordland parishes (Herdlo/Herl\u00f8, Manger, Hosanger) \u2014 none from inner Hardanger (Ulvik, Kinsarvik, Granvin area) where Unna Halsteinsdatter's family is concentrated. Real negative: Anders Monsen does not appear in the indexed 1891 Hordaland census with a recognizable inner Hardanger connection, either because he died before 1891, emigrated, or appears under a farm name not recoverable by surname search."
+    },
+    {
+      "id": "log_069",
+      "plan_item_id": "pli_011",
+      "performed": "2026-09-30T07:08:16.919Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "3744863",
+        "givenName": "Anders",
+        "surname": "Monsen",
+        "residencePlace": "Hordaland, Norway",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "sex": "Male",
+        "isPrincipal": true
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_069.json",
+      "results_available": 96,
+      "notes": "96 results for Anders/Andreas Monsen across Hordaland; ranker diagnostic: no candidate above 0.01 threshold (top matchScore 0.0044). All plausible birth-year candidates (1829\u20131846) are from coastal western Hordaland (Herdla, Manger, Ask\u00f8y, Hosanger, Os) \u2014 none from inner Hardanger. Matchrank 42 (Andreas Monsen, b.1835, Fosse Kvam) appears in inner Hardanger but scores only 0.000158 and is a non-head in another household \u2014 inconsistent with our subject. Real negative: Anders Monsen does not appear in the indexed 1900 Hordaland census with a recoverable Hardanger connection via patronymic surname search."
+    },
+    {
+      "id": "log_070",
+      "plan_item_id": "pli_012",
+      "performed": "2026-09-30T07:09:15.935Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1529106",
+        "givenName": "Anders",
+        "surname": "Monsen",
+        "residencePlace": "Hordaland, Norway",
+        "residenceYearFrom": 1875,
+        "residenceYearTo": 1875,
+        "sex": "Male",
+        "isPrincipal": true
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil result \u2014 zero matches. Collection 1529106 returned nothing for Anders Monsen in Hordaland in 1875. The nil combined with the national birth-year search (next log entry) confirms this collection has very sparse name-indexing for rural Hordaland; inner Hardanger parishes (Ulvik, Kinsarvik, Granvin) are not covered. The 1875 Norway census is substantially browse-only for the area of interest."
+    },
+    {
+      "id": "log_071",
+      "plan_item_id": "pli_012",
+      "performed": "2026-09-30T07:09:15.935Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1529106",
+        "givenName": "Anders",
+        "surname": "Monsen",
+        "birthYearFrom": 1834,
+        "birthYearTo": 1843,
+        "sex": "Male",
+        "isPrincipal": true
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_071.json",
+      "results_available": 3,
+      "notes": "Broader national birth-year search returned only 3 results: all from Hedmark and Akershus, none from Hordaland. This confirms collection 1529106 is sparsely indexed nationally for the 1875 census \u2014 fewer than a handful of entries for a common Norwegian name and birth-year range. Ruling out as a usable name-indexed source for inner Hardanger."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Norway, Marriages, 1660-1926\", FamilySearch (https://familysearch.org/ark:/61903/1:1:NW4M-XZF : accessed 30 September 2026), entry for Anders Monsen R\u00f8sland, 1896; index entry, original not examined.",
+      "citation_detail": {
+        "who": "Anders Monsen R\u00f8sland (groom) and Karine Eriksdatter (bride)",
+        "what": "Norway, Marriages, 1660-1926 \u2014 index entry for marriage record",
+        "when_created": "14 Jun 1896",
+        "when_accessed": "30 September 2026",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Entry for Anders Monsen R\u00f8sland, ark:/61903/1:1:NW4M-XZF"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-09-30",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:NW4M-XZF",
+      "notes": "Index-only derivative; original parish register image not examined. Candidate examined for q_001 (Anders Monsen / Unna Halsteinsdatter marriage) and eliminated: groom's father is Mons Endresen R\u00f8sland, not Mons Monsen (tree LKFW-9ML), and bride is Karine Eriksdatter, not Unna Halsteinsdatter \u2014 this is a different Anders Monsen from Hasanger.",
+      "log_entry_id": "log_039",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Norway, Probate Index Cards, 1640-1903\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6KRN-JWKS : accessed 2026-09-30), Entry for Mons Monsen.",
+      "citation_detail": {
+        "who": "Mons Monsen",
+        "what": "Norway, Probate Index Cards, 1640-1903 \u2014 index card entry",
+        "when_created": "1782-1796 (digital artifact date range)",
+        "when_accessed": "2026-09-30",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Collection 1661306; ark:/61903/1:1:6KRN-JWKS; image ark:/61903/3:1:3Q9M-CSZC-J9KC-7"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-09-30",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6KRN-JWKS",
+      "notes": "Original not examined \u2014 index card only; underlying probate register not reached. This Bergen probate (digital artifact date range 1782-1796) was examined as a FAN candidate for Mons Monsen (LKFW-9ML), father of Anders Monsen (LKFW-9XH, subject of q_001). Chronologically incompatible: a father of Anders Monsen born approximately 1837-1840 could not have had his probate concluded by 1796 at the latest. This is a different Mons Monsen. No heirs, family members, or other persons named in the index card.",
+      "log_entry_id": "log_064",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Norway, Probate Index Cards, 1640-1903\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6KPZ-HGSB : accessed 2026-09-30), Entry for Mons Monsen.",
+      "citation_detail": {
+        "who": "Mons Monsen",
+        "what": "Probate index card, Norway, Probate Index Cards, 1640-1903 (collection 1661306)",
+        "when_created": "1782-1796 (digital artifact date range)",
+        "when_accessed": "2026-09-30",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "ark:/61903/1:1:6KPZ-HGSB"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-09-30",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6KPZ-HGSB",
+      "notes": "Index card only; original probate record not examined. Digital artifact date range 1782-1796 places this Mons Monsen's probate in late 18th-century Bergen \u2014 chronologically incompatible with being the father of Anders Monsen (born ~1837-1840). Examined for q_001 as a possible FAN record for Mons Monsen (LKFW-9ML) and ruled out on chronological grounds. This is a second entry from the same Norway, Probate Index Cards series as record 6KRN-JWKS, both examined together in log_064/log_065. No heirs, family members, or other persons named in the index card.",
+      "log_entry_id": "log_064",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"Norges folketelling, 1865\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:DXCQ-MZPZ : accessed 2026-09-30), Entry for Halstein Halsteinsen and Sigri Johannesdatter, 1865.",
+      "citation_detail": {
+        "who": "Halstein Halsteinsen and Sigri Johannesdatter",
+        "what": "Norway Census 1865 household entry, FamilySearch index (collection 3756102)",
+        "when_created": "1865",
+        "when_accessed": "2026-09-30",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Kinsarvik, Hordaland, Norway; household of Halstein Halsteinsen"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:DXCQ-MZPZ",
+      "access_date": "2026-09-30",
+      "notes": "FamilySearch index of the 1865 Norwegian census (Norges folketelling, 1865). Original image available at ark:/61903/3:1:3QHV-53VY-M9C3-C but not examined in this extraction \u2014 original not examined (image not consulted). This household was examined as a candidate father's household for Unna Halsteinsdatter (q_001): Halstein Halsteinsen, born 1809 Kinsarvik, is a plausible father given Unna's patronymic. No daughter named Unna appears in the 1865 household.",
+      "log_entry_id": "log_055",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "\"Norges folketelling, 1865,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:DXW9-M66Z : accessed 30 September 2026), entry for Halstein Asbj\u00f8rnsen household, Ulvik, Hordaland, Norway, 1865.",
+      "citation_detail": {
+        "who": "Halstein Asbj\u00f8rnsen and household",
+        "what": "Norway, Census, 1865 \u2014 FamilySearch indexed transcript",
+        "when_created": "1865",
+        "when_accessed": "30 September 2026",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Collection 3756102; record ark:/61903/1:1:DXW9-M66Z; household of Halstein Asbj\u00f8rnsen, Ulvik, Hordaland"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-09-30",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:DXW9-M66Z",
+      "notes": "Original not examined \u2014 FamilySearch index/transcript only; original census image available at ark:/61903/3:1:3QHV-53VY-M9C4-P but not opened. This household was examined as a candidate father's household for Unna Halsteinsdatter (q_001): no daughter named Unna is present in the 1865 census. The head Halstein Asbj\u00f8rnsen (born 1813, Ulvik) is in the geographic area where Halsteinsdatter patronymics concentrate, but the household cannot be confirmed as Unna's family of origin from this record alone.",
+      "log_entry_id": "log_055",
+      "gedcomx_source_description_id": "S5"
+    },
+    {
+      "id": "src_006",
+      "citation": "\"Norges folketelling, 1865,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:DXCW-M4ZM : accessed 30 September 2026), Entry for Halstein Asguts\u00f8n and Kristi S\u00f8lf\u00e6stsdatter, 1865; citing FamilySearch collection 3756102.",
+      "citation_detail": {
+        "who": "Halstein Asguts\u00f8n household",
+        "what": "Norway Census 1865, FamilySearch index entry (collection 3756102)",
+        "when_created": "1865",
+        "when_accessed": "30 September 2026",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Household of Halstein Asguts\u00f8n, Ulvik, Hordaland"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:DXCW-M4ZM",
+      "access_date": "2026-09-30",
+      "log_entry_id": "log_059",
+      "notes": "FamilySearch index (derivative) of the 1865 Norway census. Original census image available at ark:/61903/3:1:3QHV-R3VY-M967-G but not examined during this extraction \u2014 only the indexed entry was reviewed. Examined as a candidate father's household for Unna Halsteinsdatter (q_001): this Halstein Asguts\u00f8n was born 1818 in Ulvik, Hordaland, placing him in the correct geographic and generational range, but no daughter named Unna appears in this household in 1865.",
+      "gedcomx_source_description_id": "S6"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:NW4M-XZF",
+      "record_persona_id": "p_11815482915",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Anders Monsen R\u00f8sland",
+      "structured_value": {
+        "given": "Anders",
+        "surname": "Monsen R\u00f8sland"
+      },
+      "information_quality": "primary",
+      "informant": "Anders Monsen R\u00f8sland (groom)",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_039",
+      "informant_bias_notes": "Index entry; groom stated his own name. Examined as candidate for q_001 but eliminated \u2014 groom's father is Mons Endresen R\u00f8sland, not Mons Monsen (LKFW-9ML); bride is Karine Eriksdatter, not Unna Halsteinsdatter. This Anders Monsen from Hasanger is a different individual.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:NW4M-XZF",
+      "record_persona_id": "p_11815482915",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Anders Monsen R\u00f8sland (groom)",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_039",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:NW4M-XZF",
+      "record_persona_id": "p_11815482915",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "born 1853",
+      "date": "~1853",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "Anders Monsen R\u00f8sland (groom)",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_039",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:NW4M-XZF",
+      "record_persona_id": "p_11815482915",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "born in Hasanger",
+      "place": "Hasanger, Ulvik, Hardanger, Hordaland, Norway",
+      "information_quality": "primary",
+      "informant": "Anders Monsen R\u00f8sland (groom)",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_039",
+      "informant_bias_notes": "Birthplace stated by groom on the marriage record. Geographic overlap with area of interest for q_001 was the basis for surfacing this candidate; groom's father eliminates the match.",
+      "source_id": "src_001",
+      "standard_place": "Ulvik, Hordaland, Norway"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:NW4M-XZF",
+      "record_persona_id": "p_11815482915",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "married 14 Jun 1896 in Bergen, Hordaland, Norway",
+      "date": "14 Jun 1896",
+      "date_certainty": "exact",
+      "place": "Bergen, Hordaland, Norway",
+      "information_quality": "primary",
+      "informant": "Anders Monsen R\u00f8sland (groom)",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_039",
+      "informant_bias_notes": "Marriage event stated in index. Parties participated firsthand. Examined for q_001; eliminated \u2014 bride is Karine Eriksdatter, not Unna Halsteinsdatter.",
+      "source_id": "src_001",
+      "standard_place": "Bergen, Hordaland, Norway"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:NW4M-XZF",
+      "record_persona_id": "p_11815482915",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Mons Endresen R\u00f8sland",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parent"
+      },
+      "information_quality": "primary",
+      "informant": "Anders Monsen R\u00f8sland (groom)",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_039",
+      "informant_bias_notes": "Groom stated his father's name. Father is Mons Endresen R\u00f8sland \u2014 not Mons Monsen (tree LKFW-9ML) \u2014 which is the primary basis for eliminating this record as a candidate for q_001.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:NW4M-XZF",
+      "record_persona_id": "p_11815482916",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Mons Endresen R\u00f8sland",
+      "structured_value": {
+        "given": "Mons",
+        "surname": "Endresen R\u00f8sland"
+      },
+      "information_quality": "primary",
+      "informant": "Anders Monsen R\u00f8sland (groom)",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_039",
+      "informant_bias_notes": "Father's name stated by groom. Patronymic 'Endresen' (son of Endre) distinguishes this man from tree person Mons Monsen (LKFW-9ML, son of Mons) \u2014 the key differentiator eliminating this record for q_001.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:NW4M-XZF",
+      "record_persona_id": "p_11815482913",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Karine Eriksdatter",
+      "structured_value": {
+        "given": "Karine",
+        "surname": "Eriksdatter"
+      },
+      "information_quality": "primary",
+      "informant": "Karine Eriksdatter (bride)",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_039",
+      "informant_bias_notes": "Bride stated her own name. Bride is Karine Eriksdatter, not Unna Halsteinsdatter \u2014 second basis for eliminating this record as a candidate for q_001.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:NW4M-XZF",
+      "record_persona_id": "p_11815482913",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Karine Eriksdatter (bride)",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_039",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:NW4M-XZF",
+      "record_persona_id": "p_11815482913",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "born 1873",
+      "date": "~1873",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "Karine Eriksdatter (bride)",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_039",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:NW4M-XZF",
+      "record_persona_id": "p_11815482913",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "born in Hammer",
+      "place": "Hammer, Hordaland, Norway",
+      "information_quality": "primary",
+      "informant": "Karine Eriksdatter (bride)",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_039",
+      "source_id": "src_001",
+      "standard_place": "Hammer, Hordaland, Norway"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:NW4M-XZF",
+      "record_persona_id": "p_11815482913",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Erik Johannesen",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parent"
+      },
+      "information_quality": "primary",
+      "informant": "Karine Eriksdatter (bride)",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_039",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:NW4M-XZF",
+      "record_persona_id": "p_11815482914",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Erik Johannesen",
+      "structured_value": {
+        "given": "Erik",
+        "surname": "Johannesen"
+      },
+      "information_quality": "primary",
+      "informant": "Karine Eriksdatter (bride)",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_039",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:NW4M-XZF",
+      "record_persona_id": "p_11815482916",
+      "record_role": "father_of_groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Anders Monsen R\u00f8sland (groom)",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_039",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:NW4M-XZF",
+      "record_persona_id": "p_11815482914",
+      "record_role": "father_of_bride",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Karine Eriksdatter (bride)",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_039",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:6KRN-JWKS",
+      "record_persona_id": "p_298781924972",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Mons Monsen",
+      "structured_value": {
+        "given": "Mons",
+        "surname": "Monsen"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "informant_bias_notes": "Index card only; original probate register not examined. Informant for name in the underlying probate register is unknown through this derivative. Examined for q_001 as a FAN candidate for Mons Monsen (LKFW-9ML), father of Anders Monsen (LKFW-9XH); ruled out on chronological grounds \u2014 digital artifact date range 1782-1796 is incompatible with being the father of a man born approximately 1837-1840.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_064",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:6KRN-JWKS",
+      "record_persona_id": "p_298781924972",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "informant_bias_notes": "Index card only; original probate register not examined. Informant unknown through this derivative.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_064",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:6KRN-JWKS",
+      "record_persona_id": "p_298781924972",
+      "record_role": "deceased",
+      "fact_type": "probate",
+      "value": "Probate in Bergen, Bergen, Norway",
+      "place": "Bergen, Bergen, Norway",
+      "standard_place": "Bergen, Bergen, Norway",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "informant_bias_notes": "Index card only; original probate register not examined. Digital artifact date range 1782-1796 establishes this probate predates by at least 60 years the earliest plausible death of Mons Monsen (LKFW-9ML), father of Anders Monsen born approximately 1837-1840. This is a different individual of the same name.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_064",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:6KPZ-HGSB",
+      "record_persona_id": "p_298728235888",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Mons Monsen",
+      "structured_value": {
+        "given": "Mons",
+        "surname": "Monsen"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "informant_bias_notes": "Index card only; original probate record not examined. The informant who supplied the name to the original probate register is unknown. This Mons Monsen's probate falls in digital artifact date range 1782-1796, making him chronologically incompatible with being the father of Anders Monsen (born ~1837-1840). Examined and ruled out for q_001. Second entry from the same Bergen probate register series as 6KRN-JWKS.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_064",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:6KPZ-HGSB",
+      "record_persona_id": "p_298728235888",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "informant_bias_notes": "Index card only; sex stated in record. Informant for the original probate register unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_064",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:6KPZ-HGSB",
+      "record_persona_id": "p_298728235888",
+      "record_role": "deceased",
+      "fact_type": "probate",
+      "value": "Probate in Bergen, Bergen, Norway",
+      "place": "Bergen, Bergen, Norway",
+      "standard_place": "Bergen, Bergen, Norway",
+      "date": "1782/1796",
+      "date_certainty": "between",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "informant_bias_notes": "Index card only; original probate record not examined. Digital artifact date range 1782-1796 is the only date evidence \u2014 the exact probate date within that range is unknown. This probate date range rules out this Mons Monsen as the father of Anders Monsen (born ~1837-1840): a man whose estate was probated by 1796 could not have fathered a child in ~1837-1840. Examined for q_001 as a FAN candidate and ruled out on chronological grounds. Second entry from same Bergen probate register series as 6KRN-JWKS.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_064",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:DXCQ-MZPZ",
+      "record_persona_id": "p_272867949700",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Halstein Halsteinsen",
+      "structured_value": {
+        "given": "Halstein",
+        "surname": "Halsteinsen"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Pre-1940 census; respondent unknown. Patronymic 'Halsteinsen' is consistent with having a daughter named Unna Halsteinsdatter. Examined as candidate father's household for Unna Halsteinsdatter (q_001).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_055",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:DXCQ-MZPZ",
+      "record_persona_id": "p_272867949700",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_055",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:DXCQ-MZPZ",
+      "record_persona_id": "p_272867949700",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born 1809",
+      "date": "1809",
+      "date_certainty": "approximate",
+      "place": "Kingservigs Prgj.",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Pre-1940 census; respondent unknown. 'Kingservigs Prgj.' is the abbreviated form of Kinsarvik parish (Hardanger, Hordaland). If this Halstein is Unna Halsteinsdatter's father, his 1809 birth date and Kinsarvik origin is consistent with Unna born est. 1830-1850.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_055",
+      "source_id": "src_004",
+      "standard_place": "Kinsarvik Kyrkjegard, Ullensvang, Vestland, Norway"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:DXCQ-MZPZ",
+      "record_persona_id": "p_272867949700",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:DXCQ-MZPZ",
+      "record_persona_id": "p_272867949700",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Kinsarvik, Hordaland, Norway",
+      "place": "Kinsarvik, Hordaland, Norway",
+      "date": "1865",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_055",
+      "source_id": "src_004",
+      "standard_place": "Kinsarvik, Hordaland, Norway"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:DXCQ-MZPZ",
+      "record_persona_id": "p_272840133400",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Sigri Johannesdatter",
+      "structured_value": {
+        "given": "Sigri",
+        "surname": "Johannesdatter"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Pre-1940 census; respondent unknown. Patronymic 'Johannesdatter' indicates her father was named Johannes. As wife of candidate father Halstein Halsteinsen, she is a possible mother of Unna Halsteinsdatter.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_055",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:DXCQ-MZPZ",
+      "record_persona_id": "p_272840133400",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:DXCQ-MZPZ",
+      "record_persona_id": "p_272840133400",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born 1809",
+      "date": "1809",
+      "date_certainty": "approximate",
+      "place": "Kingservigs Prgj.",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Pre-1940 census; respondent unknown. 'Kingservigs Prgj.' abbreviated form of Kinsarvik parish. Both Halstein and Sigri born 1809 in same parish.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_004",
+      "standard_place": "Kinsarvik Kyrkjegard, Ullensvang, Vestland, Norway"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:DXCQ-MZPZ",
+      "record_persona_id": "p_272840133400",
+      "record_role": "wife",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:DXCQ-MZPZ",
+      "record_persona_id": "p_272840133400",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Kinsarvik, Hordaland, Norway",
+      "place": "Kinsarvik, Hordaland, Norway",
+      "date": "1865",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_004",
+      "standard_place": "Kinsarvik, Hordaland, Norway"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:DXCQ-MZPZ",
+      "record_persona_id": "p_272867949700",
+      "record_role": "absent",
+      "fact_type": "name",
+      "value": "Unna Halsteinsdatter absent from 1865 household of Halstein Halsteinsen in Kinsarvik, Hordaland \u2014 no daughter named Unna present",
+      "record_basis": "absent",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "This household was examined as a candidate for Unna Halsteinsdatter's father (q_001): Halstein Halsteinsen born 1809 Kinsarvik is a plausible father given the patronymic. No daughter named Unna appears in the 1865 household. Absence is consistent with Unna (est. born 1830-1850) having already married out by 1865 and residing in her husband's household. Alternative explanations: Halstein Halsteinsen is not Unna's father; Unna predeceased 1865; indexing omission; enumerator error. The absence neither confirms nor eliminates this Halstein as Unna's father. Original image not consulted \u2014 derivative index only.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_055",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272792622100",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Halstein Asbj\u00f8rnsen",
+      "structured_value": {
+        "given": "Halstein",
+        "surname": "Asbj\u00f8rnsen"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_055",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272792622100",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_055",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272792622100",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_055",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272792622100",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born 1813",
+      "structured_value": {
+        "year": "1813",
+        "place": "Ulvig Prgj."
+      },
+      "date": "1813",
+      "date_certainty": "approximate",
+      "place": "Ulvig Prgj.",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_055",
+      "source_id": "src_005",
+      "standard_place": "Ulvik, Hordaland, Norway"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272792622100",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Ulvik, Hordaland, Norway, 1865",
+      "structured_value": {
+        "place": "Ulvik, Hordaland, Norway"
+      },
+      "date": "1865",
+      "date_certainty": "exact",
+      "place": "Ulvik, Hordaland, Norway",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_055",
+      "source_id": "src_005",
+      "standard_place": "Ulvik, Hordaland, Norway"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272849973000",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Christi Pedersdatter",
+      "structured_value": {
+        "given": "Christi",
+        "surname": "Pedersdatter"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272849973000",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272849973000",
+      "record_role": "wife",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272849973000",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born 1826",
+      "structured_value": {
+        "year": "1826",
+        "place": "Ulvig Prgj."
+      },
+      "date": "1826",
+      "date_certainty": "approximate",
+      "place": "Ulvig Prgj.",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_005",
+      "standard_place": "Ulvik, Hordaland, Norway"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272849973000",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Ulvik, Hordaland, Norway, 1865",
+      "structured_value": {
+        "place": "Ulvik, Hordaland, Norway"
+      },
+      "date": "1865",
+      "date_certainty": "exact",
+      "place": "Ulvik, Hordaland, Norway",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_005",
+      "standard_place": "Ulvik, Hordaland, Norway"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272849973000",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "wife of Halstein Asbj\u00f8rnsen",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272829239000",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Katrina Halstensdatter",
+      "structured_value": {
+        "given": "Katrina",
+        "surname": "Halstensdatter"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272829239000",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272829239000",
+      "record_role": "child_1",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272829239000",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born 1847",
+      "structured_value": {
+        "year": "1847",
+        "place": "Ulvig Prgj."
+      },
+      "date": "1847",
+      "date_certainty": "approximate",
+      "place": "Ulvig Prgj.",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_005",
+      "standard_place": "Ulvik, Hordaland, Norway"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272829239000",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Ulvik, Hordaland, Norway, 1865",
+      "structured_value": {
+        "place": "Ulvik, Hordaland, Norway"
+      },
+      "date": "1865",
+      "date_certainty": "exact",
+      "place": "Ulvik, Hordaland, Norway",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_005",
+      "standard_place": "Ulvik, Hordaland, Norway"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272829239000",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "daughter of Halstein Asbj\u00f8rnsen",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272829722200",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Margrete Halstensdatter",
+      "structured_value": {
+        "given": "Margrete",
+        "surname": "Halstensdatter"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272829722200",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272829722200",
+      "record_role": "child_2",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_005",
+      "standard_place": "Ulvik, Hordaland, Norway"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272829722200",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born 1862",
+      "structured_value": {
+        "year": "1862",
+        "place": "Ulvig Prgj."
+      },
+      "date": "1862",
+      "date_certainty": "approximate",
+      "place": "Ulvig Prgj.",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_005",
+      "standard_place": "Ulvika, Tjeldsund, Troms, Norway"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272829722200",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Ulvik, Hordaland, Norway, 1865",
+      "structured_value": {
+        "place": "Ulvik, Hordaland, Norway"
+      },
+      "date": "1865",
+      "date_certainty": "exact",
+      "place": "Ulvik, Hordaland, Norway",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_005",
+      "standard_place": "Ulvik, Hordaland, Norway"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272829722200",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "daughter of Halstein Asbj\u00f8rnsen",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_055",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:DXW9-M66Z",
+      "record_persona_id": "p_272792622100",
+      "record_role": "absent",
+      "fact_type": "identity",
+      "value": "No daughter named Unna (or variant: Una, Anne) present in the 1865 household of Halstein Asbj\u00f8rnsen, Ulvik, Hordaland \u2014 household examined as candidate father's household for Unna Halsteinsdatter (q_001). Daughters present are Katrina (b. 1847) and Margrete (b. 1862); no daughter in the expected birth range c. 1830\u20131850 named Unna is listed.",
+      "record_basis": "absent",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "Absence may reflect: (1) Unna already married out of the household by 1865 \u2014 consistent with her estimated birth c. 1830-1850 and this Halstein household still being her family of origin; (2) this Halstein Asbj\u00f8rnsen is not Unna's father; (3) indexing omission or a daughter listed under a different name variant. Alternative explanations must be weighed before ruling out this household entirely. The original census image at ark:/61903/3:1:3QHV-53VY-M9C4-P was not examined; the image could reveal additional household members or a name-variant daughter not captured in the index.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_055",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272869566600",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Halstein Asguts\u00f8n",
+      "structured_value": {
+        "given": "Halstein",
+        "surname": "Asguts\u00f8n"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Pre-1940 census; enumerator did not record who answered. Household examined as candidate father's household for Unna Halsteinsdatter (q_001). This is a derivative (index); original image not examined.",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272869566600",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272869566600",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272869566600",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born 1818",
+      "date": "1818",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Birth year as indexed; pre-1940 census, respondent unknown. Ulvik birthplace noted in delegation context but recorded in index as 'Ulviik' (apparent spelling variant).",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272869566600",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born Ulviik",
+      "place": "Ulviik, Hordaland, Norway",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "'Ulviik' is an apparent spelling variant of Ulvik, Hordaland. This birthplace places Halstein in the correct geographic area where the Halsteinsdatter patronymic concentrates, relevant to q_001.",
+      "source_id": "src_006",
+      "standard_place": "Hordaland, Norway"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272869566600",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Ulvik, Hordaland, Norway, 1865",
+      "date": "1865",
+      "place": "Ulvik, Hordaland, Norway",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_006",
+      "standard_place": "Ulvik, Hordaland, Norway"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272842152400",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Kristi S\u00f8lf\u00e6stsdatter",
+      "structured_value": {
+        "given": "Kristi",
+        "surname": "S\u00f8lf\u00e6stsdatter"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272842152400",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272842152400",
+      "record_role": "wife",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272842152400",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born 1821",
+      "date": "1821",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272842152400",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born Ulviik",
+      "place": "Ulviik, Hordaland, Norway",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006",
+      "standard_place": "Hordaland, Norway"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272842152400",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Ulvik, Hordaland, Norway, 1865",
+      "date": "1865",
+      "place": "Ulvik, Hordaland, Norway",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006",
+      "standard_place": "Ulvik, Hordaland, Norway"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272870809300",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "S\u00f8lf\u00e6st Halstens\u00f8n",
+      "structured_value": {
+        "given": "S\u00f8lf\u00e6st",
+        "surname": "Halstens\u00f8n"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272870809300",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272870809300",
+      "record_role": "child_1",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272870809300",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born 1847",
+      "date": "1847",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272870809300",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born Ulviik",
+      "place": "Ulviik, Hordaland, Norway",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006",
+      "standard_place": "Hordaland, Norway"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272870809300",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Ulvik, Hordaland, Norway, 1865",
+      "date": "1865",
+      "place": "Ulvik, Hordaland, Norway",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006",
+      "standard_place": "Ulvik, Hordaland, Norway"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272868821400",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Kari Halstensdatter",
+      "structured_value": {
+        "given": "Kari",
+        "surname": "Halstensdatter"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272868821400",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_077",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272868821400",
+      "record_role": "child_2",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_078",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272868821400",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born 1851",
+      "date": "1851",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_079",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272868821400",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born Ulviik",
+      "place": "Ulviik, Hordaland, Norway",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006",
+      "standard_place": "Hordaland, Norway"
+    },
+    {
+      "id": "a_080",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272868821400",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Ulvik, Hordaland, Norway, 1865",
+      "date": "1865",
+      "place": "Ulvik, Hordaland, Norway",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006",
+      "standard_place": "Ulvik, Hordaland, Norway"
+    },
+    {
+      "id": "a_081",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272795682000",
+      "record_role": "co_resident_1",
+      "fact_type": "name",
+      "value": "Ceselja Henriksdatter",
+      "structured_value": {
+        "given": "Ceselja",
+        "surname": "Henriksdatter"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Ceselja Henriksdatter is an elderly widowed co-resident (born 1781), approximately 84 in 1865. Relationship to Halstein Asguts\u00f8n's household is not stated in the index; she is a FAN-associate lead \u2014 possible kin of unspecified relationship (parent, in-law, or other). Her tie to the head is ambiguous and should not be resolved without evidence.",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_082",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272795682000",
+      "record_role": "co_resident_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_083",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272795682000",
+      "record_role": "co_resident_1",
+      "fact_type": "marital_status",
+      "value": "Widowed",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_084",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272795682000",
+      "record_role": "co_resident_1",
+      "fact_type": "birth",
+      "value": "born 1781",
+      "date": "1781",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_085",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272795682000",
+      "record_role": "co_resident_1",
+      "fact_type": "birth",
+      "value": "born Ulviik",
+      "place": "Ulviik, Hordaland, Norway",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006",
+      "standard_place": "Hordaland, Norway"
+    },
+    {
+      "id": "a_086",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272795682000",
+      "record_role": "co_resident_1",
+      "fact_type": "residence",
+      "value": "Ulvik, Hordaland, Norway, 1865",
+      "date": "1865",
+      "place": "Ulvik, Hordaland, Norway",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [],
+      "source_id": "src_006",
+      "standard_place": "Ulvik, Hordaland, Norway"
+    },
+    {
+      "id": "a_087",
+      "record_id": "ark:/61903/1:1:DXCW-M4ZM",
+      "record_persona_id": "p_272869566600",
+      "record_role": "absent",
+      "fact_type": "residence",
+      "value": "Unna Halsteinsdatter absent from 1865 Ulvik, Hordaland, Norway census household of Halstein Asguts\u00f8n \u2014 no daughter named Unna or variant present among the five enumerated persons",
+      "date": "1865",
+      "place": "Ulvik, Hordaland, Norway",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "record_basis": "absent",
+      "log_entry_id": "log_055",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Halstein Asguts\u00f8n (born 1818, Ulvik) was examined as a candidate father for Unna Halsteinsdatter (q_001). Unna, estimated born 1830-1850, would have been approximately 15-35 in 1865 and may already have been married and removed to her husband's parish. Her absence is not conclusive evidence against Halstein being her father. Alternative explanations: married before 1865 and moved to husband's parish; died before 1865; lived in a different enumerated household; enumerator error or indexing omission; this Halstein Asguts\u00f8n is not her father at all. The two children present (S\u00f8lf\u00e6st b.1847, Kari b.1851) are younger than Unna's estimated birth range, leaving room for older children no longer in the household by 1865. Original image not examined \u2014 only the FamilySearch index.",
+      "source_id": "src_006",
+      "standard_place": "Ulvik, Hordaland, Norway"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_022",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Halstein Halsteinsen (born 1809, Kinsarvik, Hordaland) is a newly minted stub created solely from this 1865 census record. No prior tree person existed for this individual. The persona and stub are one and the same source; same_person score is null because the candidate was minted from this very persona. The stub is created as a research lead: Halstein Halsteinsen's patronymic 'Halsteinsen' is consistent with having a daughter named Unna Halsteinsdatter, and his Kinsarvik, Hordaland location and birth year 1809 place him in the correct geographic and generational range to be Unna's father. No daughter Unna appears in this 1865 household, but absence is not conclusive (Unna, estimated born 1830-1850, may have married out before 1865). Confidence capped at probable: single-source, unconfirmed candidate household.",
+      "created": "2026-09-30"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_027",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sigri Johannesdatter (born 1809, Kinsarvik, Hordaland) is a newly minted stub created solely from this 1865 census record as wife of candidate father Halstein Halsteinsen (I1). No prior tree person existed for this individual. Same_person score is null: candidate minted from this persona. Stub created as a research lead \u2014 if Halstein Halsteinsen proves to be Unna Halsteinsdatter's father, Sigri Johannesdatter would be Unna's mother. Confidence capped at probable: single-source, unconfirmed candidate household.",
+      "created": "2026-09-30"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_033",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Halstein Asbj\u00f8rnsen (born 1813, Ulvik, Hordaland) is a newly minted stub created solely from this 1865 census record. No prior tree person existed. Same_person score is null: candidate minted from this persona. Stub created as a research lead: as head of household, Halstein's given name is the source of the patronymic 'Halsteinsdatter' \u2014 his daughters would carry that patronymic \u2014 and his Ulvik, Hordaland birthplace and 1813 birth year are consistent with being Unna Halsteinsdatter's father (born est. 1830-1850). Daughters present (Katrina b.1847, Margrete b.1862) confirm he fathered daughters with patronymic 'Halstensdatter.' No daughter Unna present in 1865 (consistent with marriage out before 1865). Confidence capped at probable: single-source, unconfirmed candidate household.",
+      "created": "2026-09-30"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_038",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Christi Pedersdatter (born 1826, Ulvik, Hordaland) is a newly minted stub created solely from this 1865 census record as wife of candidate father Halstein Asbj\u00f8rnsen (I3). No prior tree person existed. Same_person score is null: candidate minted from this persona. Stub created as a research lead \u2014 if Halstein Asbj\u00f8rnsen proves to be Unna Halsteinsdatter's father, Christi Pedersdatter would be Unna's mother. Note: Christi born 1826 and Halstein born 1813; an estimated birth of Unna c.1830-1850 would require Christi to have given birth at age 4-24, so if Unna is an older child she may have had a different mother. Confidence capped at probable: single-source, unconfirmed candidate household.",
+      "created": "2026-09-30"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_057",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Halstein Asguts\u00f8n (born 1818, Ulvik, Hordaland) is a newly minted stub created solely from this 1865 census record. No prior tree person existed. Same_person score is null: candidate minted from this persona. Stub created as a research lead: Halstein's given name is the source of the patronymic 'Halsteinsdatter' his daughters would carry. Ulvik, Hordaland birthplace and 1818 birth year are consistent with being Unna Halsteinsdatter's father. Children present (S\u00f8lf\u00e6st b.1847, Kari b.1851) indicate he had children in the right birth range for siblings of Unna, but no daughter named Unna appears (consistent with Unna having married out before 1865). The 'Asguts\u00f8n' patronymic (son of Asgut) is distinct from the other two Halstein candidates. Confidence capped at probable: single-source, unconfirmed candidate household.",
+      "created": "2026-09-30"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_063",
+      "person_id": "I6",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Kristi S\u00f8lf\u00e6stsdatter (born 1821, Ulvik, Hordaland) is a newly minted stub created solely from this 1865 census record as wife of candidate father Halstein Asguts\u00f8n (I5). No prior tree person existed. Same_person score is null: candidate minted from this persona. Stub created as a research lead \u2014 if Halstein Asguts\u00f8n proves to be Unna Halsteinsdatter's father, Kristi S\u00f8lf\u00e6stsdatter would be Unna's mother. Kristi born 1821; a daughter Unna born est. 1830-1850 would have had Kristi as mother at age 9-29, making her a plausible mother for younger birth estimates but marginal for older estimates. Confidence capped at probable: single-source, unconfirmed candidate household.",
+      "created": "2026-09-30"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Norway",
+      "for_place": "Norway",
+      "time_period": "1750-1900",
+      "jurisdictions": [
+        {
+          "name": "Norway (under Danish crown)",
+          "date_range": "1536-1814"
+        },
+        {
+          "name": "Norway (personal union with Sweden)",
+          "date_range": "1814-1905"
+        },
+        {
+          "name": "Norway (independent)",
+          "date_range": "1905-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1468080",
+          "title": "Norway, Marriages, 1660-1926",
+          "date_range": "1660-1926"
+        },
+        {
+          "id": "4237104",
+          "title": "Norway, Church Books, 1797-1958",
+          "date_range": "1797-1958"
+        },
+        {
+          "id": "1467014",
+          "title": "Norway, Baptisms, 1634-1927",
+          "date_range": "1634-1927"
+        },
+        {
+          "id": "1468081",
+          "title": "Norway, Burials, 1666-1927",
+          "date_range": "1666-1927"
+        },
+        {
+          "id": "3733603",
+          "title": "Norway, Census, 1801",
+          "date_range": "1801-1801"
+        },
+        {
+          "id": "3756102",
+          "title": "Norway, Census, 1865",
+          "date_range": "1865-1865"
+        },
+        {
+          "id": "4135961",
+          "title": "Norway, Census, 1870",
+          "date_range": "1870-1870"
+        },
+        {
+          "id": "1529106",
+          "title": "Norway, Census, 1875",
+          "date_range": "1875-1875"
+        },
+        {
+          "id": "4067726",
+          "title": "Norway, Census, 1891",
+          "date_range": "1891-1891"
+        },
+        {
+          "id": "3744863",
+          "title": "Norway, Census, 1900",
+          "date_range": "1900-1900"
+        },
+        {
+          "id": "1661306",
+          "title": "Norway, Probate Index Cards, 1640-1903",
+          "date_range": "1640-1903"
+        }
+      ],
+      "quirks": [
+        "Parish identification is prerequisite: patronymic naming means name alone is insufficient \u2014 determine the parish via census or farm books before searching church records.",
+        "Marriage took place in the bride's home parish \u2014 search Unna Halsteinsdatter's parish register, not the groom's.",
+        "Norway Marriages 1660-1926 at FamilySearch (collection 1468080) is a legacy collection \u2014 index only, not complete for any parish; verify any hit with the original image in Digitalarkivet or the Church Books collection (4237104).",
+        "Digitalarkivet (digitalarkivet.no) is the primary free resource for Norwegian church records with index and images; often more complete than FamilySearch for specific parishes.",
+        "Farm names (gaardnavne) indicate residence, not surname \u2014 'Anders Monsen Bakke' and 'Anders Monsen' are the same person; farm name changes when family moves.",
+        "The -datter suffix was frequently abbreviated in records as d., dr., or dtr. \u2014 search for Halsteinsd. and variants.",
+        "Spelling was not standardized until 1917 \u2014 search name variants: Halstein/Hallstein/Halsten/Halstein, Unna/Una/Anne.",
+        "Duplicate registers exist from 1814 (intermittent to 1820, compulsory again 1870): priest's copy and sexton's copy were both sent to the regional state archive (Statsarkiv).",
+        "No civil registration in Norway until 1876 (statistical use only); for 1750-1900 the Lutheran church register is the sole vital registration system.",
+        "After 1830s, marriage records include fathers' names and birthplaces of both parties \u2014 a post-1830s marriage record is particularly informative.",
+        "Records are in Danish (pre-~1800) or Norwegian and commonly use Gothic handwriting; the FamilySearch Norwegian Genealogical Word List and Handwriting guide are essential aids.",
+        "Volume_search returned 19,533 digitized image groups for Norway marriage/religious records in this period; the majority are browse-only (0% indexed, not full-text searchable) \u2014 must be read image-by-image once the correct parish volume is identified."
+      ],
+      "guide_markdown": "# Norway Locality Guide \u2014 Marriage Research (1750\u20131900)\n\n## Jurisdictional Context\nNorway (standardPlace: 'Norway', country-level since +872). For 1750\u20131900: under Danish crown until 1814, then personal union with Sweden 1814\u20131905. Standard printed register format introduced 1814. Counties renamed from *amt* to *fylke* in 1917. Jurisdiction: country \u2192 county \u2192 clerical district (prestegjeld) \u2192 parish (sogn). Parish is the key working unit.\n\n## Naming Customs\nMonsen (son of Mons) and Halsteinsdatter (daughter of Halstein) are classic patronymics. Patronymics changed each generation. Farm names indicate residence, not surname. Spelling unstandardized until 1917. Must know the parish to search effectively.\n\n## Primary Record Type: Lutheran Church Records (Kirkeb\u00f8ker)\nMarriage records contain: names, date, place of residence, bachelor/widow status, occupations, bondsmen (witnesses), banns dates. After 1830s: fathers' names and birthplaces. Couples married in bride's home parish. Duplicate sexton copies from 1814 (compulsory again 1870).\n\n## Key Collections\n- **Digitalarkivet** (free, index + images): https://www.digitalarkivet.no/en/\n- **Norway, Church Books, 1797-1958** (FS collection 4237104): index + images \u2014 best FamilySearch option\n- **Norway, Marriages, 1660-1926** (FS collection 1468080): index only, legacy/partial\n- Ancestry ($): Norway Marriages 1600-1800 and 1660-1926\n- MyHeritage ($): Norway Marriages 1660-1926 and Church Records 1815-1938\n- Norwegian Historical Data Centre: https://www.rhd.uit.no/indexeng.html\n\n## Civil Registration\nNo civil registration until 1876 (statistical only). Folkeregistre began 1915. Church records are sole vital registration system for 1750-1900.\n\n## Supporting Records\nCensus (1801, 1865, 1870, 1875, 1891, 1900), farm books (bygdeb\u00f8ker), probate records (skifte), moving records (inn/out migration lists in church registers).",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-09-30"
+    }
+  ]
+}
