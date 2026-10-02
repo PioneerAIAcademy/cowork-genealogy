@@ -41,6 +41,12 @@ requests inside a few minutes did it — and **not** on concurrency. So
 concurrency buys latency for free, while a large `N` buys the degraded regime
 for the whole session.
 
+The item leg is issued with `attempts: 1`. `fetchWithRetry` defaults to 3 and
+retries every 429/5xx — exactly what the service answers once volume pushes it
+into the degraded regime — so the default would turn a capped 25 item calls
+into as many as 75 under precisely the condition the cap is sized against. The
+search leg keeps its retries; it is one request.
+
 `hydrate` therefore defaults to **10** and is capped at **25**. Ten item calls
 per search leaves room for roughly thirteen searches (150 ÷ 11 requests per call) before approaching the
 volume that degraded the service, and at the degraded 11 s with all ten in
@@ -123,11 +129,20 @@ here — concurrency equals `hydrate`, so they all start together — which make
 the per-call timeout the only lever left on a slow one. `person-read.ts`'s own comment on that phase
 records what an escaped fetch costs: it made an unrelated test fail 4 runs in 10.
 
-**Concurrency is the budget arithmetic's load-bearing assumption**, so it is
-pinned: the in-flight limit **is** `hydrate`. `mapWithConcurrency`'s own default
-is 8; at a concurrency of 1 the same ten degraded calls take 110 s and the only
-symptom is `hydrationTimedOut: true`. A test asserts all `hydrate` calls are in
-flight at once.
+**Concurrency is the budget arithmetic's load-bearing assumption**: every item
+call must be in flight at once. At a concurrency of 1 the same ten degraded
+calls take 110 s and the only symptom is `hydrationTimedOut: true`.
+
+What enforces that is **the slice, not the limit argument**. `targets` is
+already `slice(0, hydrate)`, so `mapWithConcurrency`'s
+`Math.max(1, Math.min(limit, items.length))` always equals `targets.length` and
+the limit can never bind — the call is an unconditional `Promise.all`, and the
+test asserting a peak of 4 is observing that rather than a lever. Stated
+plainly because an earlier draft of this section described `hydrate`-as-limit
+as a tunable knob, which it is not. The argument is kept as a backstop: it
+costs nothing, and it means removing the slice cannot silently turn one tool
+call into 200 parallel requests. To actually vary concurrency, a separate
+constant would have to be introduced and the slice widened.
 
 ## Endpoints
 
@@ -355,7 +370,8 @@ result set rather than as another page.
 
 | condition | message |
 |---|---|
-| no searchable field given | names the eight fields and says at least one is required — refused before any request |
+| no searchable field given | names the eight fields and says at least one is required — refused before any request. "Given" means a value the query can **carry**: the guard and `buildQuery` ask the same question (`searchableValue`), because a guard testing presence while `buildQuery` tested `typeof === "string"` let `filmNumber: 568142` through to a query with no `q.*` filter at all — the whole catalogue's top 25, returned as if they answered. The MCP boundary does not validate against `inputSchema` (`server.ts` casts `arguments`), so a number, `null` or a blank string is a live input |
+| `year` non-integer (including `NaN`, which is `typeof "number"`) | names the value; otherwise `q.year=NaN` goes on the wire and buys a 400 |
 | `count` outside 1–200, or `hydrate` outside 0–25, or either non-integer | names the range and the value given. Both bounds are checked, not just the cap: `hydrate: -1` passed a one-sided `> MAX` test, and `slice(0, -1)` then kept all-but-one hit as targets while `mapWithConcurrency` clamped `-1` to **one** worker — 59 serial item calls against a cap of 25 |
 | place resolution spends the whole budget | names the place and says to retry without `standardPlace`; the alternative is a bare `timed out after 0ms` quoting the query URL |
 | no session | `getValidToken` throws the shared not-logged-in instruction, before the Catalog request. On the `standardPlace` path the resolver's own Places calls go out first and swallow their auth failure to `null`, so the session error arrives after them |
@@ -393,6 +409,17 @@ result set rather than as another page.
 | the **first** RSLINK url is surfaced and its markup stays out of `notes` | one URL field, and raw `<a href>` was being handed to the LLM as prose |
 | `exactPlace`, `year`, `availability` and `count` reach the query, and `q.place.exact` is omitted with no place | six inputs the suite never asserted on; `.exact` alone 400s, and `q.availability` is case-sensitive (`Online` 472, `online` 0) |
 | the search leg spending the budget sets `hydrationTimedOut` | the task guard makes `work` win the race deterministically, so this does not fall out of the race |
+| a one-hit answer whose `searchHits` collapsed to an object | `.map` on it threw the whole search away; it is the last repeated field that was not read through `asArray` |
+| the item url is found when it is **not** the first `identifier`, and an off-host one among several is still refused | a catalogue entry carries external ids beside its item URL; the widening must not weaken the host check |
+| a bare-string `title` / `repositoryCalls` / `identifier` is read | `asArray` preserves a bare string as `{ text }`, and a reader checking only `.value` lost exactly that shape |
+| an unquoted `filmNumber` reaches `q.filmNumber`; `null`, blank and object values are refused | the guard and `buildQuery` must ask the same question |
+| `year` is refused at `NaN` and `18.5` | `typeof NaN === "number"` |
+| a bound given as a string names its type | `count is 10` read as a value that already satisfied the rule |
+| an item call is tried **once** | `fetchWithRetry`'s default 3 attempts multiply the load under the degraded regime the cap is sized against |
+| three targets sharing the fallback fixture all hydrate | guards the test helper: one shared `Response` can be read once, so later calls failed into `hydrated: false` |
+| an off-host hit does not consume a hydration slot | `hydrateRequested` is "the first N with a usable url", not the first N positions |
+| a 401 and a 403 carry the upstream detail, and the 403 does not blame the user-agent | the detail was parsed then discarded, and the old 403 named an action nobody can take |
+| every film-note field maps to its own key | seven near-identical spreads where one mistyped repeat would be invisible |
 | `hydrateRequested` is echoed | with the defaults 15 of 25 hits are `hydrated: false` purely for sitting past the window |
 | place resolution eating the budget names the place | otherwise a bare `timed out after 0ms` quoting the query URL |
 | a 400 carries the Catalog's own `detail` | the service says which parameter it rejected; discarding it left the agent retrying the same query |

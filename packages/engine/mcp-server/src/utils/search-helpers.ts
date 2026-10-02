@@ -82,15 +82,21 @@ export function normalizeSex(value: string): string | null {
 export function parseUpstreamErrorBody(body: unknown): string | null {
   if (!body || typeof body !== "object") return null;
 
-  // RFC7807. Only `detail` is taken: `title` restates the HTTP status line
-  // ("Bad Request") that every caller already puts in its message.
-  const detailField = (body as { detail?: unknown }).detail;
-  if (typeof detailField === "string" && detailField.length > 0) {
-    return detailField;
-  }
-
+  // `errors` is tried FIRST and RFC7807 `detail` is only the fallback. The
+  // search endpoints' `errors[].message` names the offending parameter
+  // ("q.birthLikeDate.from must precede .to"); RFC7807 `detail` is generic
+  // ("Validation failure"). A body carrying both must not lose the specific
+  // one — record_search, person_search and person_ancestors built their
+  // messages around it long before the Catalog needed this helper.
   const errors = (body as { errors?: unknown }).errors;
-  if (!Array.isArray(errors) || errors.length === 0) return null;
+  if (!Array.isArray(errors) || errors.length === 0) {
+    // RFC7807, the Catalog's shape. `title` is skipped: it restates the HTTP
+    // status line every caller already puts in its message.
+    const detailField = (body as { detail?: unknown }).detail;
+    return typeof detailField === "string" && detailField.length > 0
+      ? detailField
+      : null;
+  }
   const detail = errors
     .map((e) => {
       if (typeof e === "string") return e;

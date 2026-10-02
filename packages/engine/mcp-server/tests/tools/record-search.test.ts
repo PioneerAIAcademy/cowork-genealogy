@@ -876,6 +876,29 @@ describe("helpers", () => {
       })
     ).toBe("a; b");
   });
+
+  it("parseUpstreamErrorBody reads the Catalog's RFC7807 detail", () => {
+    expect(
+      parseUpstreamErrorBody({
+        detail: "Validation failure",
+        instance: "/v3/search",
+        status: 400,
+        title: "Bad Request",
+      })
+    ).toBe("Validation failure");
+  });
+
+  it("parseUpstreamErrorBody prefers errors[] over a generic detail", () => {
+    // Pins the ORDER. `detail` is generic ("Bad Request"); errors[].message
+    // names the offending parameter, which is what three callers' messages
+    // were built around. Checking detail first silently swapped them.
+    expect(
+      parseUpstreamErrorBody({
+        detail: "Bad Request",
+        errors: [{ message: "q.birthLikeDate.from must precede .to" }],
+      })
+    ).toBe("q.birthLikeDate.from must precede .to");
+  });
 });
 
 describe("recordSearchTool — User-Agent contract", () => {

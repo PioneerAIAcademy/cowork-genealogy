@@ -73,6 +73,24 @@ function asArray(value: unknown): Collapsed[] {
   });
 }
 
+/** The text of a collapsed element, whichever spelling it arrived under.
+ *  `asArray` preserves a bare-string collapse as `{ text }`, so a reader that
+ *  checks only `.value` loses exactly the shape asArray went to the trouble
+ *  of keeping. */
+function textOf(v: Collapsed | undefined): string | undefined {
+  return str(v?.value) ?? str(v?.text);
+}
+
+/** A searchable input the query can actually carry: a non-blank string, or a
+ *  number (film and call numbers arrive unquoted). Returns the trimmed text.
+ *  The emptiness guard and `buildQuery` MUST agree on this — the guard
+ *  checking presence while buildQuery checked `typeof === "string"` let
+ *  `filmNumber: 568142` through to a query with no `q.*` filter at all. */
+function searchableValue(v: unknown): string | undefined {
+  const text = str(v);
+  return text === undefined ? undefined : text.trim() || undefined;
+}
+
 function str(value: unknown): string | undefined {
   if (typeof value === "string") return value.length > 0 ? value : undefined;
   // filmno / digital_film_no arrive unquoted when they carry no leading zero.
@@ -88,16 +106,18 @@ interface SearchBody {
   // `unknown`: the service collapses a one-value list to a bare object on
   // this response exactly as it does on the item response, and typing them
   // as arrays is what made `.map` throw the whole search away.
-  searchHits?: {
-    metadataHit?: {
-      metadata?: {
-        title?: unknown;
-        creator?: unknown;
-        identifier?: unknown;
-        repositoryCalls?: unknown;
-      };
+  searchHits?: unknown;
+}
+
+interface SearchHit {
+  metadataHit?: {
+    metadata?: {
+      title?: unknown;
+      creator?: unknown;
+      identifier?: unknown;
+      repositoryCalls?: unknown;
     };
-  }[];
+  };
 }
 
 function buildQuery(input: CatalogSearchInput, repId: string | null): string {
@@ -123,8 +143,8 @@ function buildQuery(input: CatalogSearchInput, repId: string | null): string {
     ["availability", "q.availability"],
   ];
   for (const [field, param] of simple) {
-    const v = input[field];
-    if (typeof v === "string" && v.length > 0) q.set(param, v);
+    const v = searchableValue(input[field]);
+    if (v) q.set(param, v);
   }
   if (typeof input.year === "number") q.set("q.year", String(input.year));
   q.set("count", String(input.count ?? DEFAULT_COUNT));
@@ -156,20 +176,27 @@ function hydrateFromSource(hit: CatalogHit, source: Record<string, unknown>): vo
     .map((s) => str(s?.value) ?? str(s?.text) ?? "")
     .filter(Boolean);
 
-  hit.filmNotes = asArray(source.film_note).map((f): CatalogFilmNote => ({
-    ...(str(f?.filmno) ? { filmNumber: str(f.filmno) } : {}),
-    // The DGS is image_search's and fulltext_search's `imageGroupNumber`.
-    ...(str(f?.digital_film_no)
-      ? { imageGroupNumber: str(f.digital_film_no) }
-      : {}),
-    ...(str(f?.fs_indexed) ? { indexed: str(f.fs_indexed) } : {}),
-    ...(str(f?.shelf) ? { shelf: str(f.shelf) } : {}),
-    ...(str(f?.copy_location) ? { copyLocation: str(f.copy_location) } : {}),
-    ...(str(f?.text) ? { text: str(f.text) } : {}),
-    ...(str(f?.item_image_start_no)
-      ? { imageStartNumber: str(f.item_image_start_no) }
-      : {}),
-  }));
+  // One table, read once per field. Written as seven `str(x) ? {k: str(x)}`
+  // spreads it named each source key twice, so a single mistyped repeat
+  // would be invisible to both review and these tests.
+  // The DGS is image_search's and fulltext_search's `imageGroupNumber`.
+  const FILM_FIELDS: [keyof CatalogFilmNote, string][] = [
+    ["filmNumber", "filmno"],
+    ["imageGroupNumber", "digital_film_no"],
+    ["indexed", "fs_indexed"],
+    ["shelf", "shelf"],
+    ["copyLocation", "copy_location"],
+    ["text", "text"],
+    ["imageStartNumber", "item_image_start_no"],
+  ];
+  hit.filmNotes = asArray(source.film_note).map((f) => {
+    const note: CatalogFilmNote = {};
+    for (const [key, from] of FILM_FIELDS) {
+      const v = str(f?.[from]);
+      if (v) note[key] = v;
+    }
+    return note;
+  });
 
   const online = source.available_online;
   if (typeof online === "boolean") hit.availableOnline = online;
@@ -196,7 +223,7 @@ export async function catalogSearchTool(
 ): Promise<CatalogSearchResult> {
   const deadline = Date.now() + TOTAL_BUDGET_MS;
 
-  if (!SEARCHABLE.some((f) => input[f] !== undefined && input[f] !== "")) {
+  if (!SEARCHABLE.some((f) => searchableValue(input[f]) !== undefined)) {
     throw new Error(
       "catalog_search needs at least one of standardPlace, keywords, surname, " +
         "title, author, subject, filmNumber or callNumber — an empty query " +
@@ -209,14 +236,26 @@ export async function catalogSearchTool(
   // a cap of 25, which is the degraded regime the cap exists to avoid.
   const count = input.count ?? DEFAULT_COUNT;
   if (!Number.isInteger(count) || count < 1 || count > MAX_COUNT) {
+    // JSON.stringify, not interpolation: the MCP boundary does not validate
+    // against inputSchema, so `count: "10"` arrives as a string and
+    // `count is 10` reads as a value that already satisfies the rule.
     throw new Error(
-      `count is ${count}; it must be a whole number from 1 to ${MAX_COUNT}.`,
+      `count is ${JSON.stringify(count)}; it must be a whole number from 1 ` +
+        `to ${MAX_COUNT}.`,
+    );
+  }
+  if (input.year !== undefined && !Number.isInteger(input.year)) {
+    // `typeof NaN === "number"`, so without this `q.year=NaN` goes on the
+    // wire and buys a 400 plus an agent turn.
+    throw new Error(
+      `year is ${JSON.stringify(input.year)}; it must be a whole year, ` +
+        "not a decade, a range or a fraction.",
     );
   }
   const hydrate = input.hydrate ?? DEFAULT_HYDRATE;
   if (!Number.isInteger(hydrate) || hydrate < 0 || hydrate > MAX_HYDRATE) {
     throw new Error(
-      `hydrate is ${hydrate}; it must be a whole number from 0 to ` +
+      `hydrate is ${JSON.stringify(hydrate)}; it must be a whole number from 0 to ` +
         `${MAX_HYDRATE} — each hit hydrated is an extra request, and the ` +
         "service degrades on volume.",
     );
@@ -271,14 +310,17 @@ export async function catalogSearchTool(
       // fsFetch has already re-read tokens.json once; a 401 still here means
       // the session is genuinely not accepted, which is the user's to fix.
       throw new Error(
-        "FamilySearch session not accepted; call the login tool to re-authenticate.",
+        "FamilySearch session not accepted; call the login tool to " +
+          "re-authenticate." + (detail ? ` Upstream said: ${detail}` : ""),
       );
     }
     if (res.status === 403) {
       throw new Error(
-        "FamilySearch Catalog search was refused (403). This is the edge " +
-          "blocking the request, not a permissions problem — the call must " +
-          "send a browser User-Agent.",
+        "FamilySearch Catalog search was refused (403) by the edge, not by " +
+          "permissions. The browser User-Agent it requires is already sent, " +
+          "so this is rate limiting or IP reputation: wait and retry, and do " +
+          "not re-send the same query immediately." +
+          (detail ? ` Upstream said: ${detail}` : ""),
       );
     }
     throw new Error(
@@ -288,11 +330,20 @@ export async function catalogSearchTool(
   }
 
   const body = (await res.json()) as SearchBody;
-  const hits: CatalogHit[] = (body.searchHits ?? []).map((h) => {
+  // `searchHits` collapses to a bare object for a one-hit answer exactly as
+  // its children do — a precise query (a film number) is the common way to
+  // get one — and `.map` on it threw the whole search away.
+  const hits: CatalogHit[] = asArray(body.searchHits).map((raw) => {
+    const h = raw as SearchHit;
     const m = h.metadataHit?.metadata ?? {};
-    const url = itemUrlOf(asArray(m.identifier)[0]?.value);
-    const title = str(asArray(m.title)[0]?.value);
-    const creator = str(asArray(m.creator)[0]?.value);
+    // EVERY identifier is searched, not just the first: a catalogue entry
+    // routinely carries external ids (an ISBN) beside its item URL, and
+    // reading only [0] cost the hit its url, its id and its hydration.
+    const url = asArray(m.identifier)
+      .map((i) => itemUrlOf(textOf(i)))
+      .find((u): u is string => u !== undefined);
+    const title = textOf(asArray(m.title)[0]);
+    const creator = textOf(asArray(m.creator)[0]);
     return {
       ...(url ? { id: url.slice(ITEM_URL_PREFIX.length) } : {}),
       title: title ?? "(untitled)",
@@ -302,7 +353,9 @@ export async function catalogSearchTool(
       // six times. The field is an access signal, not a holdings count.
       repositoryCalls: [
         ...new Set(
-          asArray(m.repositoryCalls).map((r) => str(r?.title) ?? "").filter(Boolean),
+          asArray(m.repositoryCalls)
+            .map((r) => str(r?.title) ?? textOf(r) ?? "")
+            .filter(Boolean),
         ),
       ],
       ...(url ? { url } : {}),
@@ -324,12 +377,29 @@ export async function catalogSearchTool(
     // exists to carry.
     hydrationTimedOut = true;
   } else if (targets.length > 0) {
+    // `hydrate` as the limit is a BACKSTOP, not a lever: `targets` is already
+    // sliced to `hydrate`, so mapWithConcurrency's
+    // `Math.max(1, Math.min(limit, items.length))` always equals
+    // `targets.length` and every call is in flight at once — which is what
+    // the budget arithmetic assumes. It is kept so that removing the slice
+    // cannot silently turn one tool call into 200 parallel requests.
     const work = mapWithConcurrency(targets, hydrate, async (hit) => {
       const remaining = deadline - Date.now();
       // Never start work the budget cannot pay for.
       if (remaining <= 0) return;
       try {
-        const r = await fsFetch(principal, hit.url as string, { headers: HEADERS }, remaining);
+        // attempts: 1. fetchWithRetry defaults to 3 and retries every
+        // 429/5xx — which is precisely what the service answers once volume
+        // pushes it into the degraded regime. At the cap that turns 25 item
+        // calls into as many as 75, multiplying the load the cap exists to
+        // bound. The search leg keeps its retries; it is one request.
+        const r = await fsFetch(
+          principal,
+          hit.url as string,
+          { headers: HEADERS },
+          remaining,
+          { attempts: 1 },
+        );
         if (!r.ok) return;
         const item = (await r.json()) as { source?: Record<string, unknown> };
         // A task abandoned by the race keeps running. Without this check its

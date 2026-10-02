@@ -45,7 +45,12 @@ function respond(searchBody: unknown, ...items: unknown[]): void {
   mockFetch.mockReset();
   mockFetch.mockResolvedValueOnce(json(searchBody));
   for (const i of items) mockFetch.mockResolvedValueOnce(json(i));
-  mockFetch.mockResolvedValue(json({ source: {} }));
+  // mockImplementation, NOT mockResolvedValue: the latter installs ONE
+  // Response instance and a body can be read once, so the second and later
+  // item calls threw "Body is unusable" into the tool's catch and reported
+  // `hydrated: false` as if the item had no detail. Measured: three targets
+  // against one shared fallback gave t1:true t2:false t3:false.
+  mockFetch.mockImplementation(async () => json({ source: {} }));
 }
 
 const searchUrl = (): string => String(mockFetch.mock.calls[0][0]);
@@ -220,6 +225,33 @@ describe("catalog_search — hydration", () => {
     expect(r.hits[0].subjects).toEqual(["s1"]);
     expect(r.hits[1].subjects).toEqual(["s1", "s2"]);
     expect(r.hits[2].subjects).toEqual([]);
+  });
+
+  it("maps every film-note field to its own key", async () => {
+    // Seven fields written as seven near-identical spreads, where one
+    // mistyped repeat would be invisible; only two were asserted.
+    respond(
+      { totalHits: 1, searchHits: [hit("koha:1")] },
+      { source: { film_note: {
+        filmno: "111",
+        digital_film_no: "999",
+        fs_indexed: "Yes",
+        shelf: "US/CAN Film",
+        copy_location: "Granite Mountain Record Vault",
+        text: "Baptisms 1750-1790",
+        item_image_start_no: "42",
+      } } },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.hits[0].filmNotes?.[0]).toEqual({
+      filmNumber: "111",
+      imageGroupNumber: "999",
+      indexed: "Yes",
+      shelf: "US/CAN Film",
+      copyLocation: "Granite Mountain Record Vault",
+      text: "Baptisms 1750-1790",
+      imageStartNumber: "42",
+    });
   });
 
   it("surfaces digital_film_no as imageGroupNumber", async () => {
@@ -414,6 +446,192 @@ describe("catalog_search — shapes the service actually returns", () => {
     );
     const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
     expect(r.hits[0].availableOnline).toBe(expected);
+  });
+});
+
+describe("catalog_search — shapes the second review found", () => {
+  it("answers a one-hit search whose searchHits collapsed to an object", async () => {
+    // A precise query (a film number) is the ordinary way to get one hit,
+    // and `.map` on the collapsed object threw the whole search away.
+    mockFetch.mockReset();
+    mockFetch.mockImplementation(async () =>
+      json({ totalHits: 1, searchHits: hit("koha:1") }),
+    );
+    const r = await catalogSearchTool({ keywords: "x", hydrate: 0 }, LOCAL);
+    expect(r.returned).toBe(1);
+    expect(r.hits[0].title).toBe("A register");
+  });
+
+  it("finds the item url when it is not the first identifier", async () => {
+    // A catalogue entry routinely carries an external id beside its item
+    // URL; reading only [0] cost the hit its url, its id and its hydration.
+    respond(
+      {
+        totalHits: 1,
+        searchHits: [{ metadataHit: { metadata: {
+          title: [{ value: "T" }],
+          identifier: [{ value: "urn:isbn:0123456789" }, { value: `${ITEM}koha:1` }],
+          repositoryCalls: [],
+        } } }],
+      },
+      { source: { note: { text: "n" } } },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.hits[0].url).toBe(`${ITEM}koha:1`);
+    expect(r.hits[0].id).toBe("koha:1");
+    expect(r.hits[0].hydrated).toBe(true);
+  });
+
+  it("still refuses an off-host identifier when several are present", async () => {
+    // The other direction: widening the search over identifiers must not
+    // weaken the host check.
+    respond({
+      totalHits: 1,
+      searchHits: [{ metadataHit: { metadata: {
+        title: [{ value: "T" }],
+        identifier: [
+          { value: "urn:isbn:1" },
+          { value: "https://evil.example/service/search/catalog/item/koha:1" },
+        ],
+        repositoryCalls: [],
+      } } }],
+    });
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(r.hits[0].url).toBeUndefined();
+  });
+
+  it("reads a title, repository and identifier that collapsed to bare strings", async () => {
+    // asArray preserves a bare string as { text }; a reader checking only
+    // .value lost exactly the shape asArray went to the trouble of keeping.
+    respond(
+      {
+        totalHits: 1,
+        searchHits: [{ metadataHit: { metadata: {
+          title: "A bare string title",
+          identifier: `${ITEM}koha:1`,
+          repositoryCalls: "Online",
+        } } }],
+      },
+      { source: {} },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.hits[0].title).toBe("A bare string title");
+    expect(r.hits[0].repositoryCalls).toEqual(["Online"]);
+    expect(r.hits[0].url).toBe(`${ITEM}koha:1`);
+  });
+});
+
+describe("catalog_search — inputs the MCP boundary does not validate", () => {
+  // server.ts casts `arguments` with `as unknown as CatalogSearchInput`, so
+  // inputSchema constrains nothing at runtime and every shape below is a
+  // plausible LLM call.
+  it("accepts a film number that arrived unquoted", async () => {
+    // The emptiness guard checked presence while buildQuery checked type, so
+    // this passed the guard, was dropped by buildQuery, and went out as a
+    // query with NO q.* filter — the top 25 of the whole catalogue returned
+    // as if they answered the question.
+    respond({ totalHits: 1, searchHits: [] });
+    await catalogSearchTool({ filmNumber: 568142 } as never, LOCAL);
+    expect(new URL(searchUrl()).searchParams.get("q.filmNumber")).toBe("568142");
+  });
+
+  it.each([
+    ["a null place", { standardPlace: null }],
+    ["blank keywords", { keywords: "   " }],
+    ["an empty-object field", { title: {} }],
+  ])("refuses %s rather than searching unfiltered", async (_label, input) => {
+    await expect(catalogSearchTool(input as never, LOCAL)).rejects.toThrow(
+      /at least one of standardPlace/,
+    );
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it.each([Number.NaN, 18.5])("refuses year %s before fetching", async (year) => {
+    await expect(
+      catalogSearchTool({ keywords: "x", year } as never, LOCAL),
+    ).rejects.toThrow(/whole year/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("carries the upstream explanation into a 401 and a 403", async () => {
+    // The detail was parsed and then discarded on exactly the two statuses
+    // most likely to carry one.
+    for (const [status, pattern] of [
+      [401, /session not accepted.*Upstream said: Token expired/s],
+      [403, /rate limiting or IP reputation.*Upstream said: Token expired/s],
+    ] as [number, RegExp][]) {
+      mockFetch.mockReset();
+      mockFetch.mockImplementation(async () =>
+        json({ detail: "Token expired" }, status),
+      );
+      await expect(catalogSearchTool({ keywords: "x" }, LOCAL)).rejects.toThrow(
+        pattern,
+      );
+    }
+  });
+
+  it("does not tell the agent to send a header the tool already sends", async () => {
+    // The old 403 named an action nobody can take: HEADERS always sets the
+    // browser UA, so the agent could only retry identically or misreport.
+    mockFetch.mockReset();
+    mockFetch.mockImplementation(async () => json({}, 403));
+    await expect(catalogSearchTool({ keywords: "x" }, LOCAL)).rejects.toThrow(
+      /already sent/,
+    );
+  });
+
+  it("names the type when a bound is given as a string", async () => {
+    // `count is 10` read as a value that already satisfied the stated rule.
+    await expect(
+      catalogSearchTool({ keywords: "x", count: "10" } as never, LOCAL),
+    ).rejects.toThrow(/count is "10"/);
+  });
+});
+
+describe("catalog_search — request volume", () => {
+  it("does not retry an item call", async () => {
+    // fetchWithRetry defaults to 3 attempts and retries every 429/5xx, which
+    // is what the service answers once volume degrades it — turning the cap
+    // of 25 into as many as 75 requests, under the exact condition the cap
+    // was sized against.
+    mockFetch.mockReset();
+    mockFetch.mockImplementationOnce(async () =>
+      json({ totalHits: 1, searchHits: [hit("koha:1")] }),
+    );
+    mockFetch.mockImplementation(async () => json({}, 503));
+    const r = await catalogSearchTool({ keywords: "x", hydrate: 1 }, LOCAL);
+
+    expect(mockFetch).toHaveBeenCalledTimes(2); // the search, then ONE item try
+    expect(r.hits[0].hydrated).toBe(false);
+  });
+
+  it("hydrates every target when more than one shares the fallback fixture", async () => {
+    // Guards the test helper itself: a single shared Response instance can be
+    // read once, so later item calls failed into `hydrated: false` and any
+    // future test would have been written against that wrong baseline.
+    respond({
+      totalHits: 3,
+      searchHits: [hit("koha:1"), hit("koha:2"), hit("koha:3")],
+    });
+    const r = await catalogSearchTool({ keywords: "x", hydrate: 3 }, LOCAL);
+    expect(r.hits.map((h) => h.hydrated)).toEqual([true, true, true]);
+  });
+
+  it("does not let an off-host hit consume a hydration slot", async () => {
+    // hydrateRequested is documented as "the first N that carry a usable
+    // url", not the first N positions.
+    const off = (n: string) => ({ metadataHit: { metadata: {
+      title: [{ value: n }], identifier: { value: `https://evil.example/${n}` },
+      repositoryCalls: [],
+    } } });
+    respond(
+      { totalHits: 3, searchHits: [off("a"), off("b"), hit("koha:1")] },
+      { source: {} },
+    );
+    const r = await catalogSearchTool({ keywords: "x", hydrate: 1 }, LOCAL);
+    expect(r.hits[2].hydrated).toBe(true);
+    expect(r.hydrateRequested).toBe(1);
   });
 });
 
