@@ -27,6 +27,7 @@ from unittest.mock import patch
 import pytest
 
 from e2e.rule_adherence_report import (
+    RULES,
     AdherenceRule,
     RuleResult,
     _introduced_date_cache,
@@ -520,3 +521,84 @@ def test_read_of_other_file_is_obeyed(tmp_path: Path):
 def test_main_unknown_rule_exits_nonzero(capsys):
     assert main(["--rule", "nonexistent-rule", "--since", "all"]) == 1
     assert "Unknown rule" in capsys.readouterr().err
+
+
+# ── real RULES registry ───────────────────────────────────────────────────
+
+
+def test_real_rules_scan_a_fixture(tmp_path: Path):
+    """The shipped RULES registry must work against an actual fixture —
+    not just _make_rule() with custom predicates."""
+    src = FIXTURES / "post_rule_obeyed_capture.json"
+    dest = tmp_path / "run-2026-08-15_10-00-00.json"
+    shutil.copy(src, dest)
+
+    with _patch_introduced():
+        _introduced_date_cache.clear()
+        results, problems = scan_rules([dest], list(RULES))
+
+    assert not problems
+    # Rule 1 (project_context): the fixture has tool_use:project_context
+    r1 = results[0]
+    assert r1.rule_id == "gps-mentor-opens-with-project-context"
+    assert r1.episodes == 1
+    assert r1.obeyed == 1
+
+    # Rule 2 (no research.json Read): the fixture has no Read calls
+    r2 = results[1]
+    assert r2.rule_id == "gps-mentor-no-research-json-read"
+    assert r2.episodes == 0  # no Read calls in this fixture
+
+
+# ── error / edge-case paths ───────────────────────────────────────────────
+
+
+def test_corrupt_json_lands_in_problems(tmp_path: Path):
+    """A run log with corrupt JSON must be reported in problems, not raise."""
+    bad = tmp_path / "run-2026-08-15_10-00-00.json"
+    bad.write_text("{not valid json", encoding="utf-8")
+
+    rule = _make_rule()
+
+    with _patch_introduced():
+        _introduced_date_cache.clear()
+        results, problems = scan_rules([bad], [rule])
+
+    assert len(problems) == 1
+    assert "run-2026-08-15" in problems[0]
+    r = results[0]
+    assert r.episodes == 0
+    assert r.pre_rule_excluded == 0  # never reached the dating logic
+
+
+def test_dating_unknown_when_both_methods_fail(tmp_path: Path):
+    """When git_sha is absent AND _introduced_date returns None, the run
+    is conservatively excluded with method 'unknown'."""
+    _write(
+        tmp_path,
+        "run-2026-08-15_10-00-00.json",
+        {
+            "subagents": [_capture("gps-mentor", ["project_context"])],
+            "tool_calls": [],
+        },
+    )
+
+    rule = _make_rule()
+    run_path = tmp_path / "run-2026-08-15_10-00-00.json"
+
+    # Patch _introduced_date to return None (git unavailable)
+    with patch("e2e.rule_adherence_report._introduced_date", return_value=None):
+        _introduced_date_cache.clear()
+        post, method = is_post_rule(rule, {}, run_path)
+
+    assert post is False
+    assert method == "unknown"
+
+    # Also verify scan_rules treats this as pre-rule excluded
+    with patch("e2e.rule_adherence_report._introduced_date", return_value=None):
+        _introduced_date_cache.clear()
+        results, _ = scan_rules([run_path], [rule])
+
+    r = results[0]
+    assert r.episodes == 0
+    assert r.pre_rule_excluded == 1
