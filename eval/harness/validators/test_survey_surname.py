@@ -146,33 +146,28 @@ def test_positive_writes_table(builtin_tool_calls, test):
 
 # --- d5: recordArk grouping and slave-schedule sectioning -------------
 
-def test_household_grouping_and_slave_schedule(builtin_tool_calls, test):
-    """d5: the Write content must group stubs sharing a recordArk into one
-    household row, and must place the slave schedule under its own heading."""
+def test_household_grouping_and_slave_schedule(text_response, test):
+    """d5: the response must group stubs sharing a recordArk into one
+    household row, and must place the slave schedule under its own heading.
+
+    Uses ``text_response`` rather than the Write content because the run
+    log truncates Write args to 200 characters."""
     if "household-grouping" not in test.get("tags", []):
         pytest.skip("not a household-grouping test")
-    writes = _builtin_calls(builtin_tool_calls, "Write")
-    survey_writes = [
-        w for w in writes
-        if "surname-survey" in (w.get("args", {}).get("file_path") or "")
-    ]
-    assert survey_writes, "no surname-survey Write found"
-    content = survey_writes[0].get("args", {}).get("content", "")
+    assert text_response, "no text_response to check"
+    resp = text_response.lower()
 
-    # Edmund and Mary share recordArk — they must appear as one household,
-    # so the table should NOT list both as separate head-of-household rows.
-    edmund_count = content.lower().count("edmund")
-    mary_count = content.lower().count("mary")
-    assert edmund_count >= 1, "Edmund Dixon missing from table"
-    # Mary should appear in the same row as Edmund (grouped), not as a
-    # separate household head row. We check she's mentioned but the total
-    # distinct "Dixon" head rows for that ark is 1, not 2.
-    # A simple proxy: "Edmund" and "Mary" both appear, and the content
-    # does not list Mary as a separate head-of-household entry.
+    # Edmund and Mary share recordArk — they must appear as one household.
+    assert "edmund" in resp, (
+        "Edmund Dixon missing from response — expected the shared-recordArk "
+        "household to appear"
+    )
+    assert "mary" in resp, (
+        "Mary Dixon missing from response — expected her grouped with Edmund"
+    )
 
-    # Slave schedule must be in its own section/heading
-    content_lower = content.lower()
-    assert "slave" in content_lower, (
-        "slave schedule not mentioned in table — expected a separate "
-        "section or heading for the slave schedule entry"
+    # Slave schedule must be separately identified.
+    assert "slave" in resp, (
+        "slave schedule not mentioned in response — expected a separate "
+        "section or note for the slave schedule entry"
     )
