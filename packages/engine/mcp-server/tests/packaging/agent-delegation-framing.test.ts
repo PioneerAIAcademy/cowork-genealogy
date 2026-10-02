@@ -514,7 +514,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // left worded as-is because each rewording buys that skill a paid run.
   ["project-status -> locality-guide", ""],
   ["research-plan -> locality-guide", ""],
-  ["search-external-sites -> locality-guide", ""],
   ["search-records -> locality-guide", ""],
   ["translation -> locality-guide", ""],
   // hypothesis-tracking entered agentOnly when issue #2792 deleted its skill
@@ -524,9 +523,8 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["conflict-resolution -> hypothesis-tracking", ""],
   ["timeline -> hypothesis-tracking", ""],
   // search-external-sites entered agentOnly when issue #2802 deleted its skill.
-  // All five are routing-boundary prose naming it as the owner of an
+  // All four are routing-boundary prose naming it as the owner of an
   // external-site search ("use search-external-sites"), none a delegation.
-  ["locality-guide -> search-external-sites", ""],
   ["project-status -> search-external-sites", ""],
   ["question-selection -> search-external-sites", ""],
   ["record-extraction -> search-external-sites", ""],
