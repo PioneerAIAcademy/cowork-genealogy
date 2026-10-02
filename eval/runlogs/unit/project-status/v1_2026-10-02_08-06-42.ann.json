@@ -1,0 +1,286 @@
+{
+  "run_log": "v1_2026-10-02_08-06-42.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_project_status_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Counts and statuses checked against flynn-multi-conflict: 4 sources, 13 assertions, c_001 and c_002 unresolved, q_001 in progress, q_002 resolved. The primary/secondary calls match the project's own classifications (enumerator-witnessed residence and physician-signed death date primary; son-in-law statements secondary)."
+    },
+    {
+      "test_id": "ut_project_status_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both conflicts named and distinguished (fact vs identity), plus questions, plan, log, evidence, hypothesis, timeline and proof tier."
+    },
+    {
+      "test_id": "ut_project_status_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Every GPS element with state is reported; empty ones omitted."
+    },
+    {
+      "test_id": "ut_project_status_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every GPS element with state is reported; empty ones omitted."
+    },
+    {
+      "test_id": "ut_project_status_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Statuses, conflict types and evidence classes all match the project data."
+    },
+    {
+      "test_id": "ut_project_status_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Concrete next steps tied to real gaps: resolve c_002 first (identity), finish pli_006 (probate), then widen to the 1870/1880/1900 censuses."
+    },
+    {
+      "test_id": "ut_project_status_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Plain-language story and a structured GPS-state report, each fit for its audience."
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Status 'completed' and ps_001 'proved' match the project. The birthplace conflict is accurately described as resolved; the censuses are correctly framed as indirect evidence and the death certificate as direct (stated) evidence from a secondary informant."
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All GPS elements for the resolved question reported, including the nil probate result as part of the exhaustive search."
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP calls; it read the files directly, as instructed."
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Questions, plans, searches, sources, assertions, links, the conflict, the hypothesis and the proof are all covered."
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Counts and statuses match; the record_basis vs information_quality distinction on a_013 is handled correctly."
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The test says a closed project gets no new research directions. The reply still names '1870, 1880, and 1900 census searches' as 'the natural starting point' for extending the work. The 'if you ever want' hedge softens it but it's still a proposed direction. Otherwise it correctly reports the project as complete."
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Plain-language story and a structured GPS-state report."
+    },
+    {
+      "test_id": "ut_project_status_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every count and claim checked against mid-research-flynn: 9 sources, src_001 and src_002 both mapped to S1, src_005–009 with no log entry, 13 assertions (2 primary / 2 secondary / 9 indeterminate), 3 confident and 3 probable links, 4 positive searches and 1 nil. All correct."
+    },
+    {
+      "test_id": "ut_project_status_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both audiences served, every GPS element covered, and empty categories named rather than skipped."
+    },
+    {
+      "test_id": "ut_project_status_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP calls; it read the files directly, as instructed."
+    },
+    {
+      "test_id": "ut_project_status_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Questions, plans, log, evidence, conflicts, the hypothesis, the timeline and the proof are all reported."
+    },
+    {
+      "test_id": "ut_project_status_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All tallies and statuses verified; the integrity warnings are real."
+    },
+    {
+      "test_id": "ut_project_status_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The strongest part: it noticed the 1881 will (src_006) is already a source while the probate plan item (pli_006) is still in progress, and recommended reconciling them. A specific, real audit-trail gap, then the 1870/1880/1900 census gap."
+    },
+    {
+      "test_id": "ut_project_status_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A consistent plain-language story and a structured GPS-state report."
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context returned no_project, and the reply reports that plainly with no invented project state."
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Empty folder: redirecting to init-project, with no summary, is the complete answer."
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One valid project_context call, which is the right way to check for a project."
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly produces no GPS summary when there's no project."
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Makes no claims beyond 'no project here'; nothing to misreport."
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Two concrete paths: start a new project (asking for exactly what init-project needs), or point it at another folder."
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly produces neither when there's no project to summarize."
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Counts checked against mid-research-flynn: 2 questions, 2 plans, 5 log entries, 9 sources, 13 assertions, and 6 person_evidence rows covering 5 distinct assertions (8 unlinked). The resolved Ireland/Pennsylvania conflict and the src_005–009 integrity warnings are accurate."
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every GPS element reported, and it says what moves Probable to Proved (the probate will, then the 1870/1880/1900 censuses)."
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP calls; it read the files directly, as instructed."
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All elements covered, with empty categories named."
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All tallies and statuses verified, including 5 of 13 assertions linked; record_basis and information_quality are handled correctly on the death certificate."
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Spotted that the 1881 will (src_006) is already recorded with no log entry or assertions while pli_006 is still in progress, and recommended completing it. Specific and grounded."
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A plain-language story without jargon, and a structured report using GPS identifiers."
+    }
+  ]
+}
