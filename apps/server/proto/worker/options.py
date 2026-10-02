@@ -137,6 +137,10 @@ WRITE_DENY_REASON = (
 )
 
 
+# U7 (proto/enqueue.py): the worker signs its held-message release with these when set.
+SQS_STATIC_KEY_VARS = ("GENEALOGY_SQS_ACCESS_KEY", "GENEALOGY_SQS_SECRET_KEY")
+
+
 def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, str]]:
     """``(model, env)`` for ``MODEL_PROVIDER``: the CLI ``--model`` and the variables
     that pin the provider. The gateway's model travels as ``ANTHROPIC_MODEL`` (the ``[1m]``
@@ -617,6 +621,11 @@ def build_worker_options(
     }
     if env_in.get("TMPDIR"):
         env["TMPDIR"] = env_in["TMPDIR"]
+    # U7: the worker's static SQS pair is the worker's. Blank, not absent, like
+    # ANTHROPIC_API_KEY: the CLI inherits the worker's environment.
+    for name in SQS_STATIC_KEY_VARS:
+        if env_in.get(name):
+            env[name] = ""
     hooks: dict[str, Any] = {
         "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook], timeout=PRETOOL_TIMEOUT_S)],
         # Both outcomes stamp the duration: a tool that errored still ran for that long.
