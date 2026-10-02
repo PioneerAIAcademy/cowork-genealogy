@@ -19,7 +19,7 @@ model: claude-sonnet-4-6
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
-  # `Genealogy_Research` (bare display_name). See CLAUDE.md, "Dual-spelled tool names", for the
+  # `Genealogy_Research` (bare display_name). See record-extractor.md for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   #
   # The grant is the tool the folded skill declared, plus the built-ins it

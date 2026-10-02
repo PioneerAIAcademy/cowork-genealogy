@@ -71,8 +71,7 @@ user already holds, to make prior research visible to later skills
 (question-selection, research-plan), and to capture perishable oral leads
 before they are lost. Holdings are lightweight survey notes, not sources
 or assertions — they become proper sources only when the researcher later
-brings the actual document, extraction writes it as a source, and citation
-polishes it.
+brings the actual document and record-extraction/citation promote them.
 
 ### Evaluating What You Find
 
