@@ -512,6 +512,48 @@ describe("image_search — item / itemImage", () => {
     }
   });
 
+  it("reports a film lookup that runs past the deadline as the deadline", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      const start = Date.now();
+      mockFetch.mockImplementation(async () => {
+        vi.setSystemTime(start + 45_500);
+        throw new DOMException("The operation timed out.", "TimeoutError");
+      });
+      await expect(
+        imageSearchTool({ imageGroupNumber: "004528134", item: 5 }, LOCAL),
+      ).rejects.toThrow(/gave up on film 004528134 after 45s, before listing its groups/);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("names the film when its group list is not JSON", async () => {
+    serveFilm(filmGroups());
+    const inner = mockFetch.getMockImplementation()!;
+    mockFetch.mockImplementation(async (url: string, init: unknown) => {
+      if (url.endsWith("/group/TH-FILM/children")) {
+        return { ok: true, status: 200, json: async () => JSON.parse("<html>blocked</html>") };
+      }
+      return inner(url, init);
+    });
+    await expect(
+      imageSearchTool({ imageGroupNumber: "004528134", item: 5 }, LOCAL),
+    ).rejects.toThrow("Could not list the items of film 004528134: the response was not JSON.");
+  });
+
+  it("names the film when its group list is refused", async () => {
+    serveFilm(filmGroups());
+    const inner = mockFetch.getMockImplementation()!;
+    mockFetch.mockImplementation(async (url: string, init: unknown) => {
+      if (url.endsWith("/group/TH-FILM/children")) return { ok: false, status: 403, statusText: "Forbidden" };
+      return inner(url, init);
+    });
+    await expect(
+      imageSearchTool({ imageGroupNumber: "004528134", item: 5 }, LOCAL),
+    ).rejects.toThrow("Could not list the items of film 004528134: 403 Forbidden.");
+  });
+
   it("coerces a numeric string", async () => {
     serveFilm(filmGroups());
     const r = await imageSearchTool(

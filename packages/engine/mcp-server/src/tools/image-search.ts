@@ -271,21 +271,39 @@ async function resolveItem(
   clock: Clock,
 ): Promise<ResolvedItem> {
   const timing = clock.timing;
-  const apid = await fetchApid(imageGroupNumber, principal, timing());
-  const response = await fsGet(
-    `${GROUP_SERVICE_BASE}/group/${encodeURIComponent(apid)}/children`,
-    principal,
-    timing(),
-  );
-  if (!response.ok) {
-    throw new Error(
-      `Could not list the items of film ${imageGroupNumber}: ${response.status} ${response.statusText}.`,
+  const gaveUpBeforeListing = () =>
+    new Error(
+      `image_search gave up on film ${imageGroupNumber} after ${ITEM_DEADLINE_MS / 1000}s, ` +
+        "before listing its groups; try again.",
     );
+  let childIds: string[];
+  try {
+    const apid = await fetchApid(imageGroupNumber, principal, timing());
+    const response = await fsGet(
+      `${GROUP_SERVICE_BASE}/group/${encodeURIComponent(apid)}/children`,
+      principal,
+      timing(),
+    );
+    if (!response.ok) {
+      throw new Error(
+        `Could not list the items of film ${imageGroupNumber}: ${response.status} ${response.statusText}.`,
+      );
+    }
+    let children: unknown;
+    try {
+      children = await response.json();
+    } catch {
+      throw new Error(
+        `Could not list the items of film ${imageGroupNumber}: the response was not JSON.`,
+      );
+    }
+    childIds = Array.isArray(children)
+      ? children.filter((c): c is string => typeof c === "string" && c.length > 0)
+      : [];
+  } catch (error) {
+    if (error instanceof ItemDeadlineError || clock.expired()) throw gaveUpBeforeListing();
+    throw error;
   }
-  const children = (await response.json()) as unknown;
-  const childIds = Array.isArray(children)
-    ? children.filter((c): c is string => typeof c === "string" && c.length > 0)
-    : [];
 
   const readList = async (groupId: string): Promise<ChildList> => {
     try {
