@@ -282,19 +282,35 @@ const EVENT_IN_OTHER_COUNTRY_SKIP: ReadonlySet<string> = new Set([
 /**
  * Java MobWarnings.hasEventBeforeBirth (warnings.java:918).
  *
- * Fires when the gap between the earliest fact of any type and the latest
- * birth-like fact is more than `days` days. Java calls this with `days = 730`
+ * Fires when the earliest fact of any type is dated more than `days` days
+ * before the latest birth-like fact. Java calls this with `days = 730`
  * (2 years) under the tag `hasEventBeforeBirth365_2`.
+ *
+ * KNOWING DIVERGENCE FROM THE JAVA PORT — do not "restore" the Java math.
+ * Java computes `latestBirthLikeDay − earliestAnyFactDay > days`, the two
+ * bounds that MAXIMISE the gap, so an imprecise date fires against itself: a
+ * lone Birth `Abt 1868` spans 1867..1869, both bounds come from the one
+ * fact, and the tool reported a contradiction on a person with nothing else
+ * recorded (issue #1962). Two approximate facts in the same year, and a
+ * year-only date read as 1 January, fire the same way.
+ *
+ * This reads each date as generously as it allows instead: the latest
+ * birth-like fact at its EARLIEST possible day, against the earliest fact at
+ * its LATEST possible day. Pairing a fact with itself then gives at most 0,
+ * which never exceeds `days`, so no identity check is needed. Exact dates
+ * give the same answer as Java. `factDaysDiffLatestEarliest` (the
+ * `hasBurialAfterDeath` fix) cannot be used: its first set is "any fact", so
+ * its latest bound is the last fact recorded and the check would never fire.
+ *
+ * The same predicate serves the merge-mode
+ * `relativesHasEventBeforeBirth365_2` mirror and the merged-mob check that
+ * `calculateWarnings` runs in merge mode (a Block in `merge_warnings`).
  */
 export function hasEventBeforeBirth(mob: Mob, days: number): boolean {
-  const diff = factDaysDiffEarliestLatest(
-    mob,
-    null,
-    null,
-    BIRTHLIKE_FACT_TYPES,
-    null,
-  );
-  return diff !== null && diff > days;
+  const latestBirthRead = latestDayOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES, null, 0, "min");
+  const earliestEventRead = earliestDayOfSelfFacts(mob, null, null, 0, "max");
+  if (latestBirthRead === null || earliestEventRead === null) return false;
+  return latestBirthRead - earliestEventRead > days;
 }
 
 /**

@@ -455,7 +455,7 @@ imprecise dates are widened per § Date Parsing Rules.
 
 | Tag | Severity | Rule | Cause |
 |-----|----------|------|-------|
-| `hasEventBeforeBirth365_2` | contradiction | The person's earliest fact of any type is dated more than 2 years before their latest birth-like fact | Wrong birth date, wrong event attribution, or identity confusion |
+| `hasEventBeforeBirth365_2` | contradiction | The person's earliest fact of any type is dated more than 2 years before their latest birth-like fact, with each date read as generously as it allows — see the divergence note below | Wrong birth date, wrong event attribution, or identity confusion |
 | `hasEventAfterDeath1` | contradiction | An event is dated more than 1 year after the person's latest death-like fact (the nine-type death-like family raises the anchor; see the `hasEventAfterDeath1` section above) | A same-name person's records merged in, a wrong death date, or a posthumous mention typed outside the death-like family |
 | `hasAgeRangeGreaterThan120` | contradiction | Earliest death-like year minus latest birth-like year is greater than 120 | Wrong birth or death date, or two people merged |
 | `hasChristeningBeforeBirth` | contradiction | The latest Christening day is strictly before the earliest Birth day (year-only dates get a year of slack each side) | Data-entry error or wrong attribution |
@@ -536,6 +536,43 @@ no true positive that was expressed precisely; what it drops are exactly the
 cases where the recorded precision cannot support the claim. The helper it
 calls, `factDaysDiffLatestEarliest`, exists only for this and has no Java
 counterpart.
+
+**`hasEventBeforeBirth365_2` diverges from the Java port on purpose, for the
+same reason.** Java computes `latestBirthLike − earliestAnyFact > 730`, the
+two bounds that maximise the gap. An imprecise date then fires against
+itself: a lone Birth `Abt 1868` spans 1867..1869, both bounds come from that
+one fact, and the tool reported a contradiction on a person with nothing else
+recorded. Two approximate facts in the same year, and a year-only date read
+as 1 January, fire the same way.
+
+The implementation reads the latest birth-like fact at its **earliest**
+possible day and the earliest fact at its **latest** possible day, so it fires
+only when an event precedes the birth by more than 2 years under **every**
+reading the recorded dates permit. A fact paired with itself gives at most 0,
+so no identity check is needed. `factDaysDiffLatestEarliest` is not usable
+here: its first set is "any fact", whose latest bound is the last fact
+recorded.
+
+| Event | Latest birth-like | Java pairing | Generous pairing | Fires now? |
+|---|---|---|---|---|
+| (none) | Birth `Abt 1868` | +1,094 | −1,094 | no (was a false positive) |
+| Residence `Abt 1870` | Birth `Abt 1870` | +1,094 | −1,094 | no (was a false positive) |
+| Residence `1858` | Birth `1860` | +1,094 | +366 | no |
+| Birth `1893` | Baptism `9 Sep 1895` | +981 | +617 | no |
+| Residence `Abt 1850` | Birth `Abt 1860` | +4,744 | +2,556 | **yes** |
+| Death `1 Jan 1847` | Birth `1 Jan 1850` | +1,095 | +1,095 | **yes** |
+
+Measured 2026-10-02 over every tree in the repo (e2e unstripped and starting
+trees, scenario trees, `person-read` fixtures; 1,882 persons): fires fell from
+308 to 49, and none was added. Of the 259 removed, 251 were a fact firing
+against its own bounds, and 8 were distinct facts whose gap is under 2 years
+on the generous reading (late baptisms, year-only residences). No removed
+fire rested on exact dates.
+
+In `merge_warnings` this is a Block, so it now blocks only on the generous
+reading too: two records with approximate births a few years apart (`Abt
+1850`, `Abt 1853`) no longer block a merge. That spread is still advised by
+`birthRangeGreaterThan3` and `birthLikeRangeGreaterThan8`.
 
 #### Family structure and names (`implausible`)
 
@@ -774,8 +811,8 @@ renamed from the retired `error` / `warning`.
 > - `BIRTH_AFTER_FATHER_DEATH` → `hasDeathBeforeChildBirth365_2` (loose)
 >   and `hasDeathBeforeChildBirth30_10` (exact-day).
 > - `MARRIAGE_BEFORE_BIRTH` → covered by `hasEventBeforeBirth365_2`, which
->   fires on any event dated more than 2 years before birth, marriage
->   included.
+>   fires on any event dated more than 2 years before birth under every
+>   reading of the dates, marriage included.
 > - `CHILD_TOO_OLD` → covered by the `earliestChildBirthToBirth` family: a
 >   child older than the parent yields a parent-age below the cutoff and
 >   fires the check.
