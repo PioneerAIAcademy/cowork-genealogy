@@ -50,7 +50,7 @@ interface LoadedTable {
 }
 
 // One lazily built table per path, module-level cached (same pattern as
-// browseBudgetSeen in image-transcribe.ts).
+// seenInProcess in utils/browse-budget.ts).
 const tables = new Map<string, LoadedTable>();
 
 function buildTable(tablePath: string): LoadedTable {

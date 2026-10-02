@@ -554,11 +554,6 @@ Returns **text only**:
     found?: "FOUND" | "NOT FOUND"
     truncated?: true
   }
-  browseBudget?: {           // advisory, present only from the 21st distinct image in one group/project (§5.8)
-    imageGroup: string       // the image-group prefix, e.g. "004261111"
-    distinctImagesRead: number
-    notice: string           // pivot advice; independent of `truncated` — the two can co-occur
-  }
   metadata: {
     imageId?: string
     ark?: string
@@ -660,7 +655,7 @@ derive it from run-log `usage.timeline` gaps**: those are per SDK message, not
 per tool call, and the figures they gave here (p90 79s, max 167s) were both
 inflated and a model generation stale.
 
-### 5.8 Browse budget
+### 5.8 Image cap (hard, shared, persisted)
 
 An agent can enter an unbounded page-by-page hunt through a browse-only image
 volume — binary-searching a film for one register page, one OCR round-trip at a
@@ -669,115 +664,95 @@ bisecting a single image group, no give-up condition, until it burned the harnes
 wall-clock cap with no proof written. The per-invocation `image-reader` bound does
 not reach it (nothing counts *across* invocations), and skill prose does not either
 (over half the long hunts run in sessions that never load `search-images`). So the
-budget lives on the tool.
+bound lives on the tools.
 
-The budget bounds that hunt; it does not replace it. `volume_bisect`
-(`docs/specs/volume-bisect-tool-spec.md`) is what owns the probe sequence itself —
-one page per call, a bracket the agent cannot lose track of, and a stop condition
-when year headings stop resolving the volume. The budget stays here because the
-hand-driven hunt is still reachable: nothing forces an agent through `volume_bisect`.
+**What it does.** `image_read`, `image_transcribe` and `volume_bisect`
+share **one** count of distinct `imageId`s per **image group per project** (the
+group is the digits before the underscore). When an `imageId` is new and its group
+already holds `IMAGE_BROWSE_CAP` (**20**), the tool **throws** before the scan
+fetch, and here before the OCR (`volume_bisect`'s `image_search` listing runs first,
+because it is what names the probe's `imageId`). The error names
+the group, the count, and the refused image's film-viewer link (`imageViewerUrl`),
+and tells the agent to log the browse as `partial` with `research_log_append` (the
+group, the pages read, what it was looking for), move to other routes, and name the
+unfinished browse in its final summary with that link. The `image_read` and
+`image_transcribe` refusal adds "run `volume_bisect` first, then read the narrowed
+range", so no agent or skill body has to change; `volume_bisect`'s refusal asks
+instead for the bracket reached so far. Re-reading any image already counted
+never refuses and never advances the count; an image read by two tools counts once.
 
-**What it does.** From the `BROWSE_BUDGET_IMAGES + 1`-th (currently the **21st**)
-distinct image transcribed within **one image group in one project**, a successful
-result carries an advisory `browseBudget` field naming the count, the group, and a
-pivot instruction (log the browse with a negative outcome and move to the indexed
-route, or ask the user). The field is additive and independent of `truncated`:
-`browseBudget` reports a browse-count advisory, not read completeness, so a
-budget-advised read can also be output-cap truncated (the two co-occur).
+**Where the count lives.** `src/utils/browse-budget.ts` (`checkImageBrowseCap`
+before the fetch, `recordImageBrowse` once the read succeeded, so a failed fetch
+spends nothing). `image_read` and `image_transcribe` record after the fetch: an
+OpenRouter failure after a good fetch does use a slot, and a retry of that image is
+free because it is already counted. `volume_bisect` records after the probe's OCR,
+as it always has, so a failed probe spends nothing. The count is persisted in the
+project as `results/image-browse.jsonl`, one line the first time each `imageId` is read
+(`{"image_group","image_id","tool","at"}`) — `.jsonl` because `results-staging.ts`
+scans `results/*.json`. Beside it, an in-process count keyed
+`` `${projectScope(projectPath)}\0${group}` `` (the bound store's `projectId` on the
+shared-process `http.ts` entrypoint, else the normalized `projectPath`, else
+`<no-project>` — so two patrons on one shared process never share a count). The
+two are unioned on every check.
+**Best-effort in both directions:** an absent, unreadable or garbled log, or a
+failed append, falls back to the in-process count and never refuses or fails a
+read on its own. A `projectPath` that is not a project counts in memory only and
+writes nothing (the file store's `appendText` would otherwise create `results/` in
+any folder). Calls running in parallel can overshoot by however many are in
+flight; accepted, because recording at check time would charge failed fetches.
 
-**Counting.** A module-level `Map<string, Set<string>>` in `utils/browse-budget.ts`
-(`browseBudgetSeen`, keyed
-`` `${projectScope(projectPath)}\0${imageGroup}` ``) holds the distinct `imageId`s seen
-per group per project; the group is the digits before the underscore in the `imageId`.
-The scope is the bound store's `projectId` where it has one (patron isolation on the
-shared-process `http.ts` entrypoint — see the shared `projectScope` helper in
-`image-store.ts`, which the truncation cap keys on too), else the normalized
-`projectPath`, else the `<no-project>` sentinel when the LLM passed no `projectPath`.
-The map is process-lifetime and **never persisted**; re-reading an image already in the
-set does not advance the count. `__clearBrowseBudgetForTests` resets it between tests.
+**Calls with no `projectPath`.** On `http.ts` the bound store carries an
+`anchorPath` (`ProjectStore.anchorPath`), so the call is counted against that
+project's log. On the file backend (desktop `.mcpb`, both harnesses, hosted E2B)
+it is counted in memory under `<no-project>`, so **it does not survive a restart**.
+That is 236 of the 501 `imageId` calls in the committed e2e corpus (2026-10-01),
+including the largest over-cap group (`elena-asmundsdotter-origin`
+`run-2026-09-18_21-35-53`, group `004514823`, 43 distinct images, none with a
+`projectPath`). Within one process the cap still fires. Making `projectPath`
+required was rejected: it changes an MCP parameter contract and breaks ad-hoc
+no-project reads.
 
-**Two producers, one counter.** The budget left this tool for
-`utils/browse-budget.ts` when `volume_bisect` shipped: it charges a
-bisect probe to the same `(project, group)` counter this tool charges a
-transcription to. They must share it — a hunt that alternates between the two
-tools is invisible to a per-tool counter, which is the failure the budget exists
-to catch. `recordBrowseAndCheckBudget`'s `kind` argument changes only the notice's
-wording: "pivot to the indexed route" is right against a page-by-page hunt and
-wrong against a bisect that is converging, so the bisect's notice reports the
-spend and points at the bracket instead.
+Because such a call cannot say which project it belongs to, its check also counts
+every in-process read of that group, and a call with a `projectPath` also counts the
+group's no-path reads — otherwise a subagent called without `projectPath` would get
+a second 20 beside the project's. **The cost:** the desktop process outlives one
+project, so a no-path read in one project can be refused for pages an earlier project
+read in the same session (in memory only — a restart clears it). Accepted because the
+alternative under-counts every delegated read; the refusal says "this server session"
+for that case.
 
-**The threshold is calibrated for one producer.** `BROWSE_BUDGET_IMAGES = 20` was
-derived below from `image_transcribe` distinct-image counts alone (highest
-non-noticing block: 18). With a second producer charging the same counter the
-bound is reached sooner in wall-clock terms. That is not a reason to raise it —
-the two producers are reading the same volume for the same answer — but it does
-mean the 18 figure no longer bounds a live hunt, so **re-measure across both tools
-before changing the constant**, not from this section's numbers.
+**Known limitation — header-less http requests share a bucket.** A request with no
+`X-Genealogy-Project-Id` header binds an *unbound* store (no `projectId`, and its
+I/O refuses), so its reads count in memory under the no-project scope, as on the
+file backend: two header-less patrons can advance one another's count. They never
+pool a bound patron's count — reads recorded under a `projectId` are excluded from
+that union. Accepted: such a session already fails every persistence call.
 
-**Key by project, not group alone.** The MCP server process outlives one
-conversation (on the desktop `.mcpb` it lives as long as Claude Desktop runs; the
-hosted path holds one persistent SDK client per session). A group-only key would
-tell a *second* project that opens a volume an earlier project browsed that it has
-already read 20 pages on page one — an argument to abandon a legitimate browse.
-Keying on project prevents that, and a unit test pins it (a same-group read under a
-different `projectPath` starts fresh). What no unit test or `make e2e-run` can
-observe is the intended flip side — that within one live process the count carries
-*across* conversations on the same project — because both start a fresh process; that
-rests on the process-lifetime map and is verified by reading, not by a test.
+**The trade, stated.** Because the count is persisted, a legitimate 21st page in
+the same project is refused **permanently** — a restart no longer resets it. The
+only release valve is the viewer link the refusal carries: the researcher can page
+on by hand. There is no override parameter (ADR-0011: none until a false deny is
+observed; ADR-0006: a caller-supplied parameter is a request, not a constraint).
 
-On the shared-process `http.ts` entrypoint every request presents the *same* anchor
-`projectPath` (`/project`), so the "project" the key isolates is the bound store's
-`projectId`, not the anchor — the same `projectScope` scope the truncation cap keys on
-(§8.6). On the desktop `.mcpb` (one process, one project) that `projectId` is undefined
-and the scope is the normalized `projectPath`; a unit test pins patron isolation under
-a shared-process store binding. **Known limitation — header-less requests share a
-bucket.** A request that presents *no* `X-Genealogy-Project-Id` header binds an
-*unbound* store whose `projectId` is undefined (it does not 400; only a *malformed* id
-does), so two header-less patrons fall back to the same `projectPath`/`<no-project>`
-scope and can advance one another's browse counter. Unlike the truncation cap — whose
-store I/O throws before any cap is recorded, so its identical fallback is never reached
-— `recordBrowseAndCheckBudget` performs no store I/O, so the fallback is genuinely
-reachable here. Accepted, not fixed: any such session is already failing every
-persistence call with the unbound store's instruction message long before it reaches 21
-images in one group, and the consequence is only an advisory field on a *successful*
-read — nothing is refused (the ADR-0011 read-tool carve-out below). A 400 on a missing
-header would change the entrypoint's contract and is out of scope for a cache key.
+**Why the threshold is 20.** Replayed over the committed e2e corpus
+(2026-10-01: 597 runs, 501 `imageId` calls across the three tools): **6 groups in
+5 runs** pass 20 distinct images, for **69** distinct images refused (74 refused
+calls, counting repeats). Five refused images are cited in their run's `sources[]`, all in `elena-asmundsdotter-origin`,
+and none backs a correct finding: the 2026-09-01 run graded all six expected
+findings false, and in the 2026-09-18 run the one refused image tied to a graded
+finding (`004514823_00106`) backs f2's "partial" for the wrong father in the wrong
+parish (its `.ann.json`). The corpus holds no `volume_bisect` calls, so the bisect
+side is unmeasured. Re-measure before changing the constant.
 
-**Advisory, not a refusal — an ADR-0011 read-tool carve-out.** ADR-0011 lists "an
-advisory instead of a refusal" as a rejected alternative, but that evidence is about
-a *state* gate, where an advisory let a run complete over an unresolved identity
-conflict. A page read persists nothing, so the asymmetry inverts: a wrong refusal
-would hard-block a researcher mid-browse with no way around it but restarting the
-server, and no production telemetry would ever surface that happening
-(`docs/architecture.md` §9.4). A caller-supplied override parameter is ruled out
-separately under ADR-0006 — the caller supplies the input, so a parameter is a
-request, not a constraint. The budget therefore ships as a field on a *successful*
-result and knowingly does nothing if the agent ignores it.
+**Known limitation — ARK input is not counted.** A `3:1:`/`3:2:` ARK carries no
+image-group number, so a hunt driven by one never advances the count; nor do `file`
+and `memoryArtifactUrl` inputs. A DGS distribution URL passed as `ark`
+(`…/dgs:<imageId>/dist.jpg`) embeds its `imageId` and **is** counted. Resolving an
+ARK to its group is deliberately out of scope.
 
-**Why the threshold is 20.** Measured over the committed e2e corpus, distinct
-images per group for every block of ≥8 were 41, 26, 18, 17, 15, 14, 9, 8, 8. At 20,
-exactly two blocks carry a notice, both in one run — which passed, citing no image
-from either block (both yielded only a negative finding, which is the pivot the
-notice asks for, after 41 and 26 pages instead of 20). The highest non-noticing
-block is 18, so the budget does not fire on ordinary reads. Re-measure before
-changing it.
-
-**Two things it knowingly does not do** (accepted trades, not gaps to close here):
-
-- **An advisory cannot make the agent stop.** The motivating run already had a
-  skill-level pivot instruction available and bisected for two hours anyway. This is
-  the price of never blocking a researcher mid-browse.
-- **The delegated path never sees the notice.** The `image-reader` subagent's return
-  contract is a closed enumeration and its verbatim relay only fires when the tool
-  *throws*, so a notice riding a successful transcription dies in the subagent's
-  throwaway context. Corpus-wide about 40% of `image_transcribe` calls are
-  main-thread and see it directly; one measured run is fully delegated and would see
-  nothing. Teaching the agent to relay it is a separate task with its own reviewer
-  and paid eval slot.
-
-**Known limitation — ARK input is not counted.** An ARK carries no image-group
-number, so a hunt driven by `ark` rather than `imageId` never advances the budget.
-Resolving an ARK to its group is deliberately out of scope.
+**Not checked by anything:** whether the model obeys the refusal (logs `partial`,
+surfaces the link), and how often production researchers are refused
+(`docs/architecture.md` §9.4). The unit tests prove only that the refusal fires.
 
 ### 5.9 Runtime failure: one retry, transport only
 
@@ -928,8 +903,7 @@ success and the caller cannot tell a half-read census page from a whole one.
   consistent, not contradictory.
 - The `transcription` stays **verbatim** — the signal rides the sibling
   fields, never spliced into the OCR text (that would re-create the
-  prose/OCR blend a truncation notice must never introduce; the
-  `browseBudget.notice` precedent is the same shape).
+  prose/OCR blend a truncation notice must never introduce).
 - **Suppress `found` on a truncated read.** The FOUND/NOT FOUND marker rides
   a final line the model never reached, and a target may sit below the cut,
   so a half-read page must never surface a clean `NOT FOUND` negative.
@@ -1145,7 +1119,7 @@ can add a `true` badge, never a false "verified whole").
   both joins the cap and protects its scan from the sweep. It lives in
   `image-store.ts`, not `image-transcribe.ts`, because both the writer
   (`image_transcribe`) and the reader (`research_append`) already import that
-  module. Process-lifetime and never persisted (as `browseBudgetSeen` is, §5.8), and
+  module. Process-lifetime and never persisted (unlike the image cap's log, §5.8), and
   scoped the same way — both now key on the shared `projectScope` helper
   (`image-store.ts`): the bound store's `projectId` where it has one, else the
   normalized `projectPath` — so both isolate patrons on the shared-process entrypoint.
@@ -1170,8 +1144,8 @@ can add a `true` badge, never a false "verified whole").
   that a zero-content capped read throws rather than returning `truncated: true`
   (§6.2).
 
-**Known limitation — the join needs a persisted image.** Like the browse
-budget's ARK blind spot (§5.8), this derivation has a hole, but a *different*
+**Known limitation — the join needs a persisted image.** Like the image
+cap's ARK blind spot (§5.8), this derivation has a hole, but a *different*
 one, because the key is `image_filename`, not imageId:
 
 - A read with no `projectPath` persists no scan, so its source has no
@@ -1179,7 +1153,7 @@ one, because the key is `image_filename`, not imageId:
   read is still visible in the tool response; only the persisted marker is lost.)
 - The cache is process-lifetime and never persisted, so a cap recorded in one
   MCP-server process is lost if the process restarts before the `research_append`
-  that cites the image — the same boundedness the browse budget carries.
+  that cites the image.
 - An **ARK** read is *not* a blind spot here: `saveSourceImage` mints an
   `image_filename` for an ARK label just as for an imageId, so it joins. This is
   the one place this mechanism reaches further than the imageId-keyed browse
@@ -1203,8 +1177,8 @@ one, because the key is `image_filename`, not imageId:
 - `src/utils/ocr.ts` — the OpenRouter leg (`runOcr`, `OCR_TIMEOUT_MS`,
   `OCR_MAX_TOKENS`, `MAX_OCR_INPUT_BYTES`, `buildOcrPrompt`), shared with
   `volume_bisect`.
-- `src/utils/browse-budget.ts` — the browse counter (§5.8), shared with
-  `volume_bisect`.
+- `src/utils/browse-budget.ts` — the hard image cap (§5.8), shared with
+  `image_read` and `volume_bisect`.
 
 ## 10. Migration (skills + subagent)
 
@@ -1365,9 +1339,10 @@ passed unedited across the move:*
   constants' measured derivations (the 126-call `OCR_MAX_TOKENS` scan, the
   14-25 MiB upload case, the 70/70 and 46/46 transport probes) stayed in this
   spec rather than travelling with them, so read §5 here for provenance
-- `src/utils/browse-budget.ts` — the browse counter, lifted whole
+- `src/utils/browse-budget.ts` — the browse counter, lifted whole (it became the
+  hard image cap on 2026-10-01)
 - `src/tools/image-transcribe.ts` — imports both; re-exports
-  `__clearBrowseBudgetForTests`, `OCR_MAX_TOKENS` and `MAX_OCR_INPUT_BYTES` so
+  `OCR_MAX_TOKENS` and `MAX_OCR_INPUT_BYTES` so
   existing importers keep their paths
 - `docs/specs/volume-bisect-tool-spec.md` — the second producer's contract
 
