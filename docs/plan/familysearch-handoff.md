@@ -1,6 +1,6 @@
 # Handing the search agent to FamilySearch
 
-**Status:** In progress (2026-10-01): U2 built (PR #3039); U5 built (PR #3083); proven offline and on compose; AWS half is U13; U8's code half built (PR #3071; the instance-profile hop waits on U13); U7 built (PR #3100), proven offline, on compose, against real SQS with SSO credentials and as an EC2 instance profile from Docker; Beanstalk itself is U13; the rest not started.
+**Status:** In progress (2026-10-01): U2 built (PR #3039); U5 built (PR #3083); proven offline and on compose; AWS half is U13; U8's code half built (PR #3071; the instance-profile hop waits on U13); U7 built (PR #3100), proven offline, on compose, against real SQS with SSO credentials and as an EC2 instance profile from Docker; Beanstalk itself is U13; U25 built (PR #3111); the rest not started.
 **Owner:** Dallan. Written for Richard, the FamilySearch employee on the project. List 1 is Dallan's team's work; list 2 is FamilySearch's, routed through Richard; list 3 is for FamilySearch engineers.
 
 See [the prototype report](../search-agent-prototype-report.md) (its legend defines D, P and R) and [the prototype plan](search-agent-prototype.md).
@@ -65,7 +65,7 @@ Two premises moved since the plan:
 | U22 | Correct the ARB draft (SC-12457) | Wrong premises | go-live; before F17's request | — |
 | U23 | Live Stop, held release, $35 cap, Stop mid-delegation | Bounds untried | integ | — |
 | U24 | Continuous-work behaviour | Turns overrun their deliverable; a lookup ends `no_progress` | go-live | — |
-| U25 | Hard image cap (issue #3010) | Image browsing unbounded | go-live (cost) | — |
+| U25 | Hard image cap (issue #3010) | Built (PR #3111); a delegated read relaying the refusal is unverified | go-live (cost) | — |
 | U26 | Session time limit: every run ends within 1,800 s | Multi-hour runs | go-live | `cost-latency-10x.md` lands |
 | U27 | Foreground rewrite covers a flagless delegation | Delegation dies at turn end | **done in PR #3011** | — |
 
