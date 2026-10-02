@@ -131,6 +131,9 @@ const EXTERNAL_SITE_VALUES = new Set([
   // and `italian_genealogy` are keyword-only — see build-external-search-url.ts.
   "archives_gov", "archive_org", "billiongraves", "digitalarkivet",
   "antenati", "library_archives_canada", "american_ancestors", "italian_genealogy",
+  // Browse sites (issue #2802): German church books, reached through the
+  // parish page rather than a name search.
+  "archion", "matricula",
 ]);
 
 /**
@@ -522,7 +525,7 @@ export const RESEARCH_SHAPES = {
     "project", "researcher_profile", "known_holdings", "questions", "plans",
     "log", "sources", "assertions", "person_evidence", "conflicts",
     "hypotheses", "timelines", "proof_summaries", "evaluations",
-    "localities",
+    "localities", "warning_justifications",
   ]),
   project: new Set([
     "id", "title", "objective", "subject_person_ids", "status",
@@ -625,6 +628,9 @@ export const RESEARCH_SHAPES = {
     "id", "place", "for_place", "time_period", "jurisdictions",
     "collections", "quirks", "guide_markdown", "pages_read", "source",
     "created", "updated",
+  ]),
+  warning_justification: new Set([
+    "warning_id", "justification", "person_ids", "tool", "recorded_at",
   ]),
 };
 
@@ -1662,6 +1668,25 @@ function validateLocalities(
       if ("section" in pr) {
         checkEnum(pr.section, "locality_page_section", `${lp}/pages_read[${j}]`, report);
       }
+    }
+  }
+
+  const wjs = Array.isArray(data.warning_justifications) ? data.warning_justifications : [];
+  for (let i = 0; i < wjs.length; i++) {
+    const wj = wjs[i];
+    const wp = `${path}/warning_justifications[${i}]`;
+    if (!isObjectEntry(wj, wp, report)) continue;
+    checkRequired(
+      wj,
+      ["warning_id", "justification", "person_ids", "tool", "recorded_at"],
+      wp,
+      report,
+      NULLABLE_FIELDS
+    );
+    checkAllowedKeys(wj, RESEARCH_SHAPES.warning_justification, "warning_justifications", wp, report);
+    if ("recorded_at" in wj) checkIsoDate(wj, "recorded_at", wp, report);
+    if ("person_ids" in wj && !Array.isArray(wj.person_ids)) {
+      report.errors.push({ path: `${wp}/person_ids`, message: "must be an array" });
     }
   }
 }
