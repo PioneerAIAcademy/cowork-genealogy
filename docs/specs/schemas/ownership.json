@@ -189,7 +189,7 @@
       "artifact": "research.json",
       "section": "log",
       "owner": null,
-      "reason": "Append-only and multi-writer by design. Every search and extraction skill appends its own entries through `research_log_append`, which owns entry structure and id allocation and takes no `section` argument at all. No single skill owns the section; the permitted writers are listed in `callers`.",
+      "reason": "Append-only and multi-writer by design. Every search and extraction skill appends its own entries through `research_log_append`, which owns entry structure and id allocation and takes no `section` argument at all; `build_external_search_url` appends its in-flight `external_site` hand-off entry by calling the same function when given a `projectPath`. No single skill owns the section; the permitted writers are listed in `callers`.",
       "callers": [
         "skill:search-records",
         "skill:search-external-sites",
@@ -212,7 +212,8 @@
         }
       ],
       "writerTools": [
-        "research_log_append"
+        "research_log_append",
+        "build_external_search_url"
       ],
       "enforceableAt": [
         "unit",
