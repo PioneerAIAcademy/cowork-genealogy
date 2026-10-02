@@ -27,6 +27,7 @@ from validators_lib import new_log_entries as _new_log_entries
 from validators_lib import record_search_sent as _record_search_sent
 from validators_lib import tool_input_keys as _tool_input_keys
 from validators_lib import (
+    assert_topical_fixture_used,
     assert_capture_pending_item_not_terminal as _assert_capture_pending_item_not_terminal,
 )
 
@@ -819,57 +820,34 @@ def test_census_wiki_fixture_actually_used(tool_calls, test):
     Enforcement as "None", so without this the move ships while doing nothing:
     the agent skips the fetch, states the schedule from memory as it does today,
     and every dimension still grades green. The same failure mode the
-    historical-context validator was written for (issue #2283) -- copied
-    deliberately rather than re-invented.
+    historical-context validator was written for (issue #2283).
 
-    Asserts at least one tool call's `response_fixture` is the census page.
+    The membership half and the map/tag guard are
+    `validators_lib.assert_topical_fixture_used`, shared with
+    `test_historical_context` -- two copies was the signal to lift it. What stays
+    here is the ORDER arm below, which that caller does not need.
+
+    `prefix_match` is on because the expected stem is the COUNTRY page and the
+    skill may follow Step 2's per-year link; any `wiki-read-...-census*` stem
+    satisfies "the schedule was read before searching", which is what this
+    grades. (The per-year fixtures themselves were removed in 320f4d098 -- the
+    generic predicate is a case-insensitive substring match, so a per-year URL
+    is served the country page, which is the one stating the relationship-column
+    date range.)
     """
-    tags = test.get("tags", [])
+    expected = assert_topical_fixture_used(
+        tool_calls,
+        test,
+        _TOPICAL_FIXTURE_BY_TEST_ID,
+        map_name="_TOPICAL_FIXTURE_BY_TEST_ID",
+        prefix_match=True,
+    )
+
     test_id = test.get("id")
-    # Check the map -> tag direction BEFORE the skip, or the skip swallows it:
-    # dropping the tag from a test spec would otherwise silently disarm this
-    # guard while the run log still reads `passed`.
-    assert test_id not in _TOPICAL_FIXTURE_BY_TEST_ID or (
-        "topical-fixture-required" in tags
-    ), (
-        f"{test_id} has a _TOPICAL_FIXTURE_BY_TEST_ID entry but no "
-        "'topical-fixture-required' tag - restore the tag or delete the entry"
-    )
-    if "topical-fixture-required" not in tags:
-        pytest.skip("not a topical-fixture-required test")
-    expected = _TOPICAL_FIXTURE_BY_TEST_ID.get(test_id)
-    assert expected is not None, (
-        f"{test_id} carries 'topical-fixture-required' but has no entry in "
-        "_TOPICAL_FIXTURE_BY_TEST_ID -- add one naming its topical fixture stem"
-    )
-    hit_fixtures = [
-        c.get("response_fixture") for c in (tool_calls or []) if c.get("response_fixture")
-    ]
 
     def _is_census_page(stem: object) -> bool:
-        """The country page OR that year's page both satisfy Step 2.
-
-        Each test stocks its own `wiki-read-united-states-census-{year}` ahead of
-        the generic `wiki-read-united-states-census`, so a per-year request stamps
-        the per-year stem rather than the generic one. Step 2 is satisfied either
-        way — it asks for the jurisdiction's census page and names the per-year
-        link as the follow-up — so matching on the prefix keeps this guard about
-        "was the schedule read before searching" rather than about which of the
-        two URLs the model happened to construct.
-        """
+        """Prefix, to match whatever census page the skill constructed."""
         return isinstance(stem, str) and stem.startswith(expected)
-    # Unlike historical-context, this skip is effectively unreachable here: every
-    # search-records test makes fixture-backed record_search calls, so the guard
-    # stays live rather than being swallowed by a non-activating test.
-    if not hit_fixtures:
-        pytest.skip("no fixture-backed tool calls - non-activation is reported elsewhere")
-    assert any(_is_census_page(s) for s in hit_fixtures), (
-        f"{test_id}: this is a census search, so Step 2's pre-work block must "
-        f"fetch the jurisdiction's census page, but no '{expected}*' fixture "
-        "matched a call. Either the wiki_read was skipped entirely, or its "
-        "URL missed the fixture's args predicate. "
-        f"Fixtures actually hit: {hit_fixtures or '(none)'}"
-    )
 
     # ORDER, not merely occurrence. Step 2 calls this "pre-work ... before
     # constructing the query": a page fetched AFTER the search cannot have

@@ -266,6 +266,23 @@ describe("requirePre1880CensusHedge with a staged census payload", () => {
     );
   });
 
+  it("does not let an ordinary English word cancel the gate", () => {
+    // The first carve-out carried a bare `will`, which the VERB matched, so a
+    // note that had been refused silently stopped being. A missing deny fails
+    // open where a missing allow merely annoys, so the carve-out is positional:
+    // the source must be named BEFORE the household it qualifies.
+    bad(`${H4K} Will pass to extraction.`, [1850]);
+    bad(`${H4K} It will be attached next.`, [1850]);
+    bad(`${H4K} Cross-check the parish register next.`, [1850]);
+  });
+
+  it("allows a note that is ABOUT another record type", () => {
+    ok("Marriage record 1861: Sarah, of the household of William Mullen.", [1850]);
+    ok("Death certificate 1866 lists the household of William Mullen.", [1850]);
+    ok("Obituary 1869 names the household of William Mullen.", [1850]);
+    ok("Will of John Mullen, 1854, naming the household of William Mullen.", [1850]);
+  });
+
   it("keeps the parish carve-out load-bearing", () => {
     // Without the namesOtherSource guard this refuses: an untitled parish row can
     // share a staged payload with the titled 1850 census rows that produced the

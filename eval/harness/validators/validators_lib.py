@@ -451,3 +451,56 @@ def hashable_key(value: Any) -> str:
     """A grouping key for any JSON value, so a list-valued field cannot crash a
     validator that groups by it."""
     return json.dumps(value, sort_keys=True, default=str)
+
+
+def assert_topical_fixture_used(
+    tool_calls: list[dict],
+    test: dict,
+    fixture_by_test_id: dict[str, str],
+    *,
+    tag: str = "topical-fixture-required",
+    map_name: str = "the topical-fixture map",
+    prefix_match: bool = False,
+) -> str | None:
+    """Assert a tagged test actually consumed its subject-matter fixture.
+
+    Shared by `test_historical_context` and `test_search_records`: both stock a
+    topical fixture ahead of a generic fallback, and without this the model's
+    phrasing can drift off the topical predicate and silently fall through, so
+    the judge grades against fallback content the test exists not to use.
+
+    Checks the map -> tag direction BEFORE skipping, or the skip swallows it:
+    `ValidatorRunResult` keeps `passed=True` on a skip, so dropping a tag from a
+    test spec would disarm the guard while the run log still reads `passed`.
+
+    `prefix_match` accepts a stem that STARTS WITH the expected one, for a
+    caller whose fixture family shares a prefix. Returns the expected stem so
+    the caller can make further assertions (ordering, for instance), or None
+    when the test is not in scope.
+    """
+    import pytest  # local: keep the module importable outside a pytest run
+
+    tags = test.get("tags", [])
+    test_id = test.get("id")
+    assert test_id not in fixture_by_test_id or tag in tags, (
+        f"{test_id} has an entry in {map_name} but no '{tag}' tag - "
+        "restore the tag or delete the entry"
+    )
+    if tag not in tags:
+        pytest.skip(f"not a {tag} test")
+    expected = fixture_by_test_id.get(test_id)
+    assert expected is not None, (
+        f"{test_id} carries '{tag}' but has no entry in {map_name}"
+    )
+    hit = [c.get("response_fixture") for c in (tool_calls or []) if c.get("response_fixture")]
+
+    def matches(stem: object) -> bool:
+        if not isinstance(stem, str):
+            return False
+        return stem.startswith(expected) if prefix_match else stem == expected
+
+    assert any(matches(s) for s in hit), (
+        f"{test_id}: expected fixture '{expected}' was never served - the call "
+        f"fell through to a fallback. Fixtures actually served: {sorted(set(s for s in hit if isinstance(s, str)))}"
+    )
+    return expected

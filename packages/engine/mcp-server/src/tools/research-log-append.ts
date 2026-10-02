@@ -428,15 +428,20 @@ export function censusMentions(notes: string): CensusMention[] {
  * top-ranked row only" trusts `results[0]`, which is the best match only when
  * ranking ran.
  *
- * THE NOTE NO LONGER HAS TO REPEAT THE YEAR (2026-10-02). It used to, so that a
- * parish-register note logged against an 1850 census search was not refused for
- * a household the census never showed -- but `stagedPre1880UsCensusYears`
- * already returns [] unless EVERY titled row is a pre-1880 US federal census, so
- * in this branch there is no parish-register row for the note to be about. The
- * requirement only hid real misses: `ut_search_records_001` ("...in household of
- * Thomas Flynn", birth year 1845 and no census year) and `_017` ("...in household
- * of William Mullen", birth year 1852) both wrote flat and were caught by the
- * eval validator afterwards instead of refused at the write.
+ * THE NOTE NO LONGER HAS TO REPEAT THE YEAR (2026-10-02). The requirement hid
+ * real misses: `ut_search_records_001` ("...in household of Thomas Flynn", birth
+ * year 1845 and no census year) and `_017` ("...in household of William Mullen",
+ * birth year 1852) both wrote flat and were caught by the eval validator
+ * afterwards instead of refused at the write.
+ *
+ * What the year requirement HAD been guarding is real and is kept by other
+ * means. `stagedPre1880UsCensusYears` counts only rows carrying a
+ * `collectionTitle`, so an UNTITLED parish-register row can sit in the same
+ * staged payload as the titled 1850 rows that produced the years -- the payload
+ * cannot prove the note is about a census row. The positional carve-out below
+ * is what now separates them: a note ABOUT another source names it before the
+ * household it qualifies. Do not delete that carve-out on the strength of
+ * "every titled row is a census row"; the untitled ones are the hole.
  *
  * This does NOT reopen the whole-note fallback the lead declined on 2026-09-29
  * (issue #2945): that was `saysCensus && /\b18[0-7]\d\b/` scanning the note for
@@ -462,7 +467,8 @@ export function requirePre1880CensusHedge(
   //
   // The payload overrides it deliberately: a note logged against a staged
   // pre-1880 US census search is about that search's results, not a plan, so
-  // it is judged whatever word it uses. That also closes the word hole -- a note
+  // it is judged whatever word it uses -- unless it names another record type
+  // first, which is the carve-out below. That also closes the word hole -- a note
   // that never says "census" -- for `record_search` only. A note with no census
   // payload behind it (every other tool, a nil search) still returns here.
   // Measured at dc9766b15 (dev/measure-census-hedge-refusals.ts): the override
@@ -478,7 +484,8 @@ export function requirePre1880CensusHedge(
   // census shows Daniel in one dwelling with Margaret and sons Thomas and
   // Stephen; marriage 1871, Adams County"). The staged-payload trigger still
   // fires for `record_search` entries whose staged rows name a pre-1880 US
-  // census, provided the payload year appears in the note text.
+  // census; since 2026-10-02 the payload decides without the note repeating the
+  // year, bounded by the positional carve-out below.
   // Decided (lead, 2026-09-29), issue #2945: the whole-note fallback
   // (`saysCensus && /\b18[0-7]\d\b/`) made 46 of 223 note-only refusals over
   // ~4,000 distinct corpus notes, about 38 of them wrong on reading.
@@ -487,15 +494,37 @@ export function requirePre1880CensusHedge(
   // payload cannot rule that out: `stagedPre1880UsCensusYears` counts only rows
   // carrying a `collectionTitle`, so an untitled parish-register row can sit in
   // the same staged payload as the 1850 census rows that produced the years.
-  // Where the note names such a source, the payload stops deciding and the note
-  // must bind its own census year, as it did before 2026-10-02.
-  const namesOtherSource =
-    /\b(parish register|church (?:book|record)|baptism|christening|burial register|probate|will|deed|land record|passenger list|draft (?:card|registration)|city directory|gravestone|headstone)\b/.test(
-      text,
-    );
+  // Where the note is ABOUT such a source, the payload stops deciding and the
+  // note must bind its own census year, as it did before 2026-10-02.
+  //
+  // POSITIONAL, not a bare word list. The source must be named BEFORE the
+  // household it qualifies -- a note that is about a parish register leads with
+  // it ("Parish register 1861: baptism of Sarah, in the household of ..."),
+  // while a census note that merely mentions one later is still a census note.
+  // A list alone fails open: the first version carried a bare `will`, which the
+  // ordinary verb matched, so "...in the household of Nancy Doss. Will pass to
+  // extraction." silently skipped a gate that had refused it. Every entry below
+  // is a phrase that names a RECORD (`will of`, never `will`); adding a term
+  // that doubles as ordinary English reopens that hole, and a missing deny here
+  // fails open and silently where a missing allow merely annoys.
+  const SOURCE_NAMED = new RegExp(
+    String.raw`\b(parish register|church (?:book|record)|baptism|christening|` +
+      String.raw`burial register|probate|will of|last will|will and testament|` +
+      String.raw`will book|deed|land record|passenger list|draft (?:card|registration)|` +
+      String.raw`city directory|gravestone|headstone|obituary|` +
+      String.raw`marriage (?:record|certificate|licen[cs]e|register)|` +
+      String.raw`death (?:certificate|record|register)|` +
+      String.raw`birth (?:certificate|record|register)|` +
+      String.raw`vital record|naturali[sz]ation|pension file)\b`,
+  );
+  const HOUSEHOLD_ANCHOR = /\b(household|dwelling|co-?resident|enumerated with|living with)\b/;
+  const sourceAt = text.search(SOURCE_NAMED);
+  const householdAt = text.search(HOUSEHOLD_ANCHOR);
+  const isAboutOtherSource =
+    sourceAt >= 0 && (householdAt < 0 || sourceAt < householdAt);
   const namesColumnlessCensus = bound.length > 0
     ? bound.some((m) => m.year < m.columnFrom)
-    : payloadYears.length > 0 && !namesOtherSource;
+    : payloadYears.length > 0 && !isAboutOtherSource;
   if (!namesColumnlessCensus) return;
 
   const describesHousehold =
