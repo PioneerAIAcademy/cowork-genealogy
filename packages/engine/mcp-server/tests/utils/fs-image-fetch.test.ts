@@ -268,6 +268,20 @@ describe("fs-image-fetch — memory artifacts", () => {
     expect(mockedGetValidToken).not.toHaveBeenCalled();
   });
 
+  it("sends NO Authorization header for a url the Memories RESOLVER produced", async () => {
+    // The shape dev/probe-memory-page.ts saw live on all 5 artifacts, which is
+    // not the shape ARTIFACT above invents. A page url reaches the fetcher only
+    // after resolveMemoryPageUrl, and the bearer used for THAT lookup must not
+    // follow the url it returned — that url arrived inside a response body.
+    const RESOLVED =
+      "https://sg30p0.familysearch.org/service/records/storage/dascloud/patron/v2/TH-7768-103723-9979-62/dist.jpg?ctx=ArtCtxPublic";
+    mockTypedResponse("image/jpeg");
+    await fetchFsImageBytes(RESOLVED, undefined, LOCAL, true);
+    const headers = new Headers(mockFetch.mock.calls[0][1].headers as HeadersInit);
+    expect(headers.get("Authorization")).toBeNull();
+    expect(mockedGetValidToken).not.toHaveBeenCalled();
+  });
+
   it("still sends Authorization for a page scan", async () => {
     mockedGetValidToken.mockResolvedValue("tok");
     mockTypedResponse("image/jpeg");
