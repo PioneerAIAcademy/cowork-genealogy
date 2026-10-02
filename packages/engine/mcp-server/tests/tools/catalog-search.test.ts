@@ -56,7 +56,18 @@ beforeEach(() => {
   mockStandardPlaceToRepId.mockResolvedValue("333");
   mockFetch.mockReset();
 });
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  // Trap 2 holds for every search this suite makes, not just the one test
+  // that names it: without the flag the service ORs the terms and answers
+  // 2,046,826 hits where the same query should answer 12,344. calls[0] is
+  // always the search; a test that refuses before fetching makes none.
+  const search = mockFetch.mock.calls[0];
+  if (search) {
+    const p = new URL(String(search[0])).searchParams;
+    expect(p.get("m.queryRequireDefault")).toBe("on");
+  }
+  vi.restoreAllMocks();
+});
 
 describe("catalog_search — the query", () => {
   it("sends the place REP id, not the place id", async () => {
@@ -97,6 +108,7 @@ describe("catalog_search — the query", () => {
     );
     expect(headers.get("Accept")).toBe("application/json");
     expect(headers.get("User-Agent")).toBe(BROWSER_USER_AGENT);
+    expect(headers.get("Authorization")).toBe("Bearer tok");
   });
 
   it("falls back to matching the place by name when it does not resolve", async () => {
@@ -119,9 +131,11 @@ describe("catalog_search — the query", () => {
 
 describe("catalog_search — hydration", () => {
   it("fetches identifier.value verbatim, including an olib hit", async () => {
-    // The fixture's olib identifier is deliberately NOT reconstructible from
-    // the id: a parser rebuilding {ns}:{n} would produce a different URL, and
-    // a reconstruction that happened to match would make this test vacuous.
+    // `id` is DERIVED from identifier.value (url.slice(prefix)), so no fixture
+    // can make the two disagree while the tool reads them this way — this
+    // pins that an `olib:`-namespaced identifier is fetched as given and
+    // hydrates, and it is the test that reds if a future change ever
+    // reconstructs the URL from a parsed id instead.
     const olib = `${ITEM}olib:2333650`;
     respond(
       {
@@ -166,8 +180,25 @@ describe("catalog_search — hydration", () => {
     // array for several, absent for none.
     respond(
       { totalHits: 3, searchHits: [hit("koha:1"), hit("koha:2"), hit("koha:3")] },
-      { source: { film_note: { filmno: "111", digital_film_no: "999" } } },
-      { source: { film_note: [{ filmno: "222" }, { filmno: "333" }] } },
+      // one value: a bare object
+      {
+        source: {
+          film_note: { filmno: "111", digital_film_no: "999" },
+          note: { text: "n1" },
+          author: { value: "a1" },
+          subject: { value: "s1" },
+        },
+      },
+      // several: an array
+      {
+        source: {
+          film_note: [{ filmno: "222" }, { filmno: "333" }],
+          note: [{ text: "n1" }, { text: "n2" }],
+          author: [{ value: "a1" }, { value: "a2" }],
+          subject: [{ value: "s1" }, { value: "s2" }],
+        },
+      },
+      // none: the key is absent entirely
       { source: {} },
     );
     const r = await catalogSearchTool({ keywords: "x", hydrate: 3 }, LOCAL);
@@ -176,6 +207,18 @@ describe("catalog_search — hydration", () => {
     expect(r.hits[0].filmNotes?.[0].imageGroupNumber).toBe("999");
     expect(r.hits[1].filmNotes).toHaveLength(2);
     expect(r.hits[2].filmNotes).toEqual([]);
+
+    expect(r.hits[0].notes).toEqual(["n1"]);
+    expect(r.hits[1].notes).toEqual(["n1", "n2"]);
+    expect(r.hits[2].notes).toEqual([]);
+
+    expect(r.hits[0].authors).toEqual(["a1"]);
+    expect(r.hits[1].authors).toEqual(["a1", "a2"]);
+    expect(r.hits[2].authors).toEqual([]);
+
+    expect(r.hits[0].subjects).toEqual(["s1"]);
+    expect(r.hits[1].subjects).toEqual(["s1", "s2"]);
+    expect(r.hits[2].subjects).toEqual([]);
   });
 
   it("surfaces digital_film_no as imageGroupNumber", async () => {
@@ -280,9 +323,54 @@ describe("catalog_search — the budget", () => {
       vi.useRealTimers();
     }
   });
+
+  it("spends a slow search out of the budget hydration draws on", async () => {
+    // The anchor is tool ENTRY: a search costing 45 s leaves hydration 5 s,
+    // not a fresh 50 s. Re-anchored at the hydration phase, the item
+    // resolving 10 s later would land and both assertions below invert —
+    // which is what makes this the test for the anchor.
+    vi.useFakeTimers();
+    try {
+      mockFetch.mockReset();
+      mockFetch.mockImplementationOnce(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(
+              () => resolve(json({ totalHits: 1, searchHits: [hit("koha:1")] })),
+              45_000,
+            ),
+          ),
+      );
+      mockFetch.mockImplementation(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(() => resolve(json({ source: { note: { text: "n" } } })), 10_000),
+          ),
+      );
+      const promise = catalogSearchTool({ keywords: "x" }, LOCAL);
+      await vi.advanceTimersByTimeAsync(120_000);
+      const r = await promise;
+
+      expect(r.hits[0].hydrated).toBe(false);
+      expect(r.hydrationTimedOut).toBe(true);
+      expect(r.returned).toBe(1); // the search itself still answered
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe("catalog_search — errors", () => {
+  it("gives the shared re-auth instruction on a 401", async () => {
+    // fsFetch re-reads tokens.json once before this; a 401 still here is the
+    // user's session, not a stale in-process token.
+    mockFetch.mockReset();
+    mockFetch.mockResolvedValue(json({}, 401));
+    await expect(catalogSearchTool({ keywords: "x" }, LOCAL)).rejects.toThrow(
+      /session not accepted; call the login tool/,
+    );
+  });
+
   it("names the user-agent requirement on a 403", async () => {
     mockFetch.mockReset();
     mockFetch.mockResolvedValue(new Response("", { status: 403 }));

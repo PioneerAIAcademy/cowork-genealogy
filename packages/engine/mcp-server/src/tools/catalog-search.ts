@@ -204,6 +204,13 @@ export async function catalogSearchTool(
     { headers: HEADERS },
     Math.max(0, deadline - Date.now()),
   );
+  if (res.status === 401) {
+    // fsFetch has already re-read tokens.json once; a 401 still here means the
+    // session is genuinely not accepted, which is the user's to fix.
+    throw new Error(
+      "FamilySearch session not accepted; call the login tool to re-authenticate.",
+    );
+  }
   if (res.status === 403) {
     throw new Error(
       "FamilySearch Catalog search was refused (403). This is the edge " +

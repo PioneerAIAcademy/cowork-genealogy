@@ -337,7 +337,7 @@ result set rather than as another page.
 |---|---|
 | no searchable field given | names the eight fields and says at least one is required — refused before any request |
 | `count` > 200 or `hydrate` > 25 | names the cap and the value given |
-| no session | `getValidToken` throws the shared not-logged-in instruction, before any request |
+| no session | `getValidToken` throws the shared not-logged-in instruction, before the Catalog request. On the `standardPlace` path the resolver's own Places calls go out first and swallow their auth failure to `null`, so the session error arrives after them |
 | 401 **from the service** | `fsFetch` re-reads `tokens.json` once, then the shared "FamilySearch session not accepted; call the login tool to re-authenticate." |
 | 403 from the search | names the browser user-agent requirement; this is Imperva, not a permissions error |
 | other non-2xx from the search | `FamilySearch Catalog search failed: {status} {statusText}` |
@@ -357,10 +357,11 @@ result set rather than as another page.
 | a failing item call leaves the search successful | one bad item must not fail the answer |
 | `digital_film_no` surfaces as `imageGroupNumber` | the bridge to `image_search` |
 | the item call uses `identifier.value` verbatim | the id-parse failure class |
-| an `olib:` hit hydrates, from a fixture whose `identifier.value` is **not** reconstructible from `id` | a reconstruction produces a byte-identical URL otherwise, so the break would red nothing |
+| an `olib:` hit hydrates | `id` is derived from `identifier.value`, so no fixture can make the two disagree while the tool reads them this way; the row pins that a non-`koha:` namespace is fetched as given, and reds if a later change reconstructs the URL from a parsed id |
 | a hit whose `identifier.value` is off-host is never fetched | the bearer must not reach a host we did not measure |
 | all `hydrate` item calls are in flight at once | the budget arithmetic's assumption |
-| a search that consumes the whole budget skips hydration | that the clock starts at tool entry, not at the phase |
+| a search leg costing 45 s leaves hydration 5 s, not a fresh 50 s | that the clock starts at tool entry, not at the phase. The budget cannot be consumed *entirely* by the search — each leg's own `timeoutMs` is the remaining budget, so an exhausted search aborts and throws rather than reaching hydration |
+| a 401 from the search gives the shared re-auth instruction | the error table's 401 row; the generic `!res.ok` arm would answer `failed: 401 Unauthorized`, which is not LLM-actionable |
 | `Accept: application/json` is sent | a 200 of XML otherwise |
 
 ## Live check

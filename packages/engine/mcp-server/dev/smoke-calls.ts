@@ -494,13 +494,16 @@ export const CALL_PLAN: readonly SmokeStep[] = [
       detail: brief(res),
     }),
   },
+  // The Catalog search service answers 401 with an empty body when no bearer
+  // is sent, so this is a token tool despite the catalogue being public data.
+  tokenStep("catalog_search", {
+    standardPlace: "Maine, United States",
+    exactPlace: true,
+    count: 3,
+    hydrate: 2,
+  }),
 
   // Public-network tools: no token, must succeed.
-  {
-    tool: "catalog_search",
-    args: () => ({ standardPlace: "Maine, United States", exactPlace: true, count: 3, hydrate: 2 }),
-    expect: noError,
-  },
   { tool: "wikipedia_search", args: () => ({ query: "Genealogy" }), expect: noError },
   { tool: "wiki_search", args: () => ({ query: "parish registers" }), expect: noError },
   {
