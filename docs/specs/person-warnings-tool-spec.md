@@ -761,12 +761,16 @@ family has a twin, so the usual way to get this wrong is to wire one and not
 the other. Only a unit test that drives `calculateWarnings` proves step 3; write
 one per check, not one per pair.
 
-**Two tools consume these warnings, not one.** `merge_warnings` imports
-`calculateWarnings` and surfaces the result as its pre-merge coherence gate, so a
-new tag changes that tool's output too — its `warningCount` rises, and a
-`contradiction` severity there is load-bearing in a way `implausible` is not.
-A grep for an existing tag name will not find this: the consumer imports the
-function, not a tag. Grep for `calculateWarnings` when sizing the blast radius.
+**A new tag reaches two more sites than this tool.** Both import
+`calculateWarnings`, not a tag, so a grep for an existing tag name finds neither.
+Grep for `calculateWarnings` when sizing the blast radius.
+- `merge_warnings` surfaces the result as its pre-merge coherence gate. Its
+  `warningCount` rises; only `contradiction` blocks there.
+- `src/validation/introduced-warnings.ts` is the write gate for `tree_edit`,
+  `tree_correct`, `materialize_facts` and `merge_tree_persons`. It refuses a write
+  that introduces a warning at any severity until the caller justifies it, unless
+  the tag is in `GATE_EXEMPT_TYPES`. A new `implausible` tag therefore can refuse a
+  tree write. Decide whether it belongs in that exempt set.
 
 **The prose counts in this spec are not linted.** `catalogueTags()` compares the
 tag *set* only, so every sentence stating a total ("the N tags", "M of the K
