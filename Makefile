@@ -1052,6 +1052,17 @@ e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over commit
 	# whole corpus. A report, not a gate (see its own "Limits" footer).
 	cd eval/harness && uv run python -m e2e.agent_tool_usage_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
+.PHONY: e2e-rule-adherence
+e2e-rule-adherence: ## Per-instruction adherence over committed e2e runs (issue #2483): make e2e-rule-adherence | RULE=<id> | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis over committed run JSONs — no live run, no API.
+	#
+	# For each registered rule (an instruction in a shipped agent body), how
+	# many episodes obeyed it? Reports counts with denominators, never a rate.
+	# Seeded with two gps-mentor rules (project_context open, no research.json
+	# Read). Windowed to 14 days like every reader; SINCE=all for the whole
+	# corpus. A report, not a gate.
+	cd eval/harness && uv run python -m e2e.rule_adherence_report $(if $(RULE),--rule $(RULE),) $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
+
 .PHONY: e2e-writer-attribution
 e2e-writer-attribution: ## Which subagent wrote a project document, and whether an ownership row says it may (issue #2575): make e2e-writer-attribution | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis over committed run JSONs -- no live run, no API.
