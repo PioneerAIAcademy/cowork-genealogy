@@ -709,6 +709,8 @@ def test_a_detach_sentence_that_names_no_record_still_fails():
         "The Minnesota Death Index is wrong. Detach the Minnesota Death Index.",
         "The Minnesota Death Index gives 1954 against the profile's 1945. Detach the Death Index record.",
         "The Minnesota Death Index gives 1954 against 1945. This Index entry should be detached.",
+        "The Minnesota Death Index gives 1954 against the profile's 1945. Unlike the 1900 Census, it does not fit him, so detach it.",
+        "The Minnesota Death Index gives 1954 against the profile's 1945. Detach it and rely on the 1900 Census instead.",
         _X6B_PARAGRAPH + " Detach it as well.",
     ):
         try:

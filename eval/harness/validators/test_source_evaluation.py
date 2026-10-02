@@ -224,6 +224,10 @@ _CLAUSE_RE = re.compile(r"(?:;|\s+and\s+|(?<=\))\s*,\s*|\.\s+)")
 # noun in "correct the index" is not, and must not count as naming a record.
 _RECORD_TITLE_RE = re.compile(r"\b(?:Census|Index|Register|Registration|Collection|Records)\b")
 _SENTENCE_RE = re.compile(r"(?<=[.!?])\s+(?=[A-Z*])")
+_DETACH_PRONOUN_RE = re.compile(
+    r"\bdetach(?:ing|ed)?\s+(?:it|this|that|them|these|those)\b",
+    re.IGNORECASE,
+)
 
 
 def _detach_names_another_record(block: str, protected: str) -> bool:
@@ -248,6 +252,7 @@ def _detach_names_another_record(block: str, protected: str) -> bool:
     return bool(detaching) and all(
         protected.lower() not in x.lower()
         and any(m.group(0).lower() not in protected.lower() for m in _RECORD_TITLE_RE.finditer(x))
+        and not _DETACH_PRONOUN_RE.search(x)
         for x in detaching
     )
 
