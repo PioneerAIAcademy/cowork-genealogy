@@ -408,8 +408,8 @@ sit inside this range while still failing the self-check below.
 
 **Breadth self-check — run this before writing the plan, not after the
 user asks "was anything missed?"** Answer `references/planning-standards.md`
-Standard 17's five self-check questions against the plan you are about
-to write:
+Standard 17's five self-check questions, plus a sixth, against the plan
+you are about to write:
 1. Sufficient breadth of record types (not just census/vital)?
 2. All relevant repositories identified (not just the most convenient)?
 3. Variant spellings/name forms accounted for?
@@ -417,6 +417,10 @@ to write:
 5. All relevant time periods included — do the plan's `date_range`s
    span the question's whole window, from the birth estimate to the
    death or last-known date?
+6. If no baptism can be expected (Step 3), is there an item for the
+   **subject's own** death or burial entry, dated after the birth window
+   and placed in the parish where the subject last lived — not a parent's,
+   a spouse's or a child's?
 If any answer is no, add the missing item(s) now, before Step 5 — not as
 a revision after being asked. A plan that hits the size range above while
 staying narrow in record-type diversity is not reasonably exhaustive.
