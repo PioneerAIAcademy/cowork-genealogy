@@ -118,7 +118,6 @@ search through it rather than running it yourself.
 
 - **The search is a census search** (the plan item's `record_type` is `census`, or the user asked for a census): `wiki_read({ url: "https://www.familysearch.org/en/wiki/{Country}_Census" })` for the jurisdiction's country — `United_States_Census`, `England_Census`, `Norway_Census`, `Luxembourg_Census`. Take the country from the jurisdiction string when it names one; when it names only a county and state, resolve the country from those and say which you did. Never state what a census schedule collected from memory.
 - **If that page does not settle which fields the schedule collected for the year you are searching**, follow its own per-year link (`United_States_Census_{year}`) before asserting or denying a field.
-- **Fetch each page once per invocation.** If you already hold it from an earlier step or an earlier search in this run, reuse it; do not re-fetch.
 - A constructed URL that 404s, or a page that comes back generic, is a gap to record and report — not a prompt to fill from memory.
 
 **Choose a search strategy:**
@@ -502,9 +501,7 @@ candidates; you still confirm the top ones:
   candidate reasoning is settled.
   **When a match turns on a field — or before calling one absent — check what
   that year's schedule actually collected, from the census page fetched in
-  Step 2. If the search was not a census search and a census record came back
-  anyway, fetch that page now, before writing the claim.** Three rules hold
-  whatever the page says:
+  Step 2. Three rules hold whatever the page says:**
   - **State what the schedule recorded; label everything else inferred, and name
     what it was inferred from** (surname, age, listing order). This is not only
     about relationships: any fact the schedule did not collect that year —
@@ -517,6 +514,8 @@ candidates; you still confirm the top ones:
     conflict.** Some immigrants made several trips; a later census may record a
     return rather than the original emigration. Flag it for investigation
     instead of resolving it.
+  If the search was not a census search and a census record came back anyway,
+  fetch that page now, before writing the claim.
   Non-federal **state censuses** follow their own schedules and often carry
   fields the federal census of that decade lacks — read the collection
   description rather than assuming the federal pattern.
