@@ -6,6 +6,8 @@
 // src/http-server.ts). A new tool's dispatch arm goes
 // here, in the chain below, never in an entrypoint.
 
+import { catalogSearchTool } from "./tools/catalog-search.js";
+import type { CatalogSearchInput } from "./types/catalog-search.js";
 import type { Principal } from "./auth/principal.js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
@@ -148,6 +150,21 @@ export function createServer(principal: Principal): Server {
       try {
         const args = request.params.arguments as unknown as WikipediaSearchInput;
         const result = await wikipediaSearch(args);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "catalog_search") {
+      try {
+        const args = request.params.arguments as unknown as CatalogSearchInput;
+        const result = await catalogSearchTool(args, principal);
         return {
           content: [{ type: "text", text: JSON.stringify(result) }]
         };

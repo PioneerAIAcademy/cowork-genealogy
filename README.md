@@ -54,7 +54,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 50 tools.
+The MCP server exposes 51 tools.
 
 ### FamilySearch records and places
 
@@ -63,6 +63,7 @@ The MCP server exposes 50 tools.
 | `place_search` | FamilySearch place data + Wikipedia enrichment | None |
 | `place_search_all` | Like `place_search`, but expands each match to every jurisdiction the place has belonged to over time — for boundary or parent-jurisdiction changes across a research period | None |
 | `collections_search` | Lists FamilySearch record collections for a place (returns the derived `scope`); optional `startYear`/`endYear` filter | OAuth |
+| `catalog_search` | Searches the FamilySearch **Catalog** — microfilm, books, manuscripts and finding aids — and hydrates its top hits with holdings detail: where the originals are held, and an `imageGroupNumber` for `image_search`/`fulltext_search` where one was filmed. A different index from `collections_search` | OAuth |
 | `record_search` | FamilySearch historical-record search for a person | OAuth |
 | `record_read` | Fetch a FamilySearch historical record by its record-persona ARK (`1:1:`, i.e. `record_search`'s `recordId`) or bare entity ID — returns full simplified GEDCOMX; with `projectPath` the record is also staged (`staged.resultsRef`) so `research_log_append` retains it as a sidecar | OAuth |
 | `person_search` | FamilySearch Family Tree search for a person — ranked candidate tree persons to pick and research (chains into `person_read`) | OAuth |
@@ -465,7 +466,7 @@ then narrows the search.
 
 What's shipped:
 
-- **50 MCP tools.** See the tables above for the full catalog, by category:
+- **51 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
 - **16 shipped skills.** Full GPS research cycle from `init-project`
