@@ -71,13 +71,24 @@ export function normalizeSex(value: string): string | null {
 }
 
 /**
- * Pull a human-readable detail out of an FS search 400 error body
- * (shape: `{ errors: [{ message }] }` or `{ errors: ["..."] }`). Returns
+ * Pull a human-readable detail out of an FS search 400 error body.
+ *
+ * Two shapes, because FamilySearch is not one service: the search endpoints
+ * answer `{ errors: [{ message }] }` / `{ errors: ["..."] }`, while the
+ * Catalog answers RFC7807 — `{ detail, title, status, instance }`. Returns
  * null when nothing usable is present, so callers can fall back to a
  * generic message.
  */
 export function parseUpstreamErrorBody(body: unknown): string | null {
   if (!body || typeof body !== "object") return null;
+
+  // RFC7807. Only `detail` is taken: `title` restates the HTTP status line
+  // ("Bad Request") that every caller already puts in its message.
+  const detailField = (body as { detail?: unknown }).detail;
+  if (typeof detailField === "string" && detailField.length > 0) {
+    return detailField;
+  }
+
   const errors = (body as { errors?: unknown }).errors;
   if (!Array.isArray(errors) || errors.length === 0) return null;
   const detail = errors

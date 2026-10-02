@@ -50,9 +50,12 @@ export interface CatalogHit {
    *  Vault", "HSB (Headquarters Storage Building)", and others. */
   repositoryCalls: string[];
   url?: string;
-  /** False when the item call failed, was refused by the host check, or the
-   *  budget did not reach it. Never an error — one bad item must not fail the
-   *  search. */
+  /** False for four distinct reasons: the hit was past the first
+   *  `hydrateRequested` hits and was never attempted, the item call failed,
+   *  it was refused by the host check, or the budget did not reach it.
+   *  Compare against `hydrateRequested` and `hydrationTimedOut` to tell
+   *  "never tried" from "tried and has no detail". Never an error — one bad
+   *  item must not fail the search. */
   hydrated: boolean;
   notes?: string[];
   authors?: string[];
@@ -71,7 +74,12 @@ export interface CatalogSearchResult {
    *  query fell back to matching the place by name. */
   placeResolved: boolean;
   /** True when the entry-anchored budget ran out before every requested hit
-   *  was hydrated. */
+   *  was hydrated — including when the search leg spent it and hydration was
+   *  never attempted at all. Means "retry later", not "no detail exists". */
   hydrationTimedOut: boolean;
+  /** How many hits hydration was asked for (the `hydrate` input, default 10).
+   *  Hits past this many are `hydrated: false` because they were never tried,
+   *  which is not a failure and needs no retry of the whole search. */
+  hydrateRequested: number;
   hits: CatalogHit[];
 }

@@ -69,9 +69,22 @@ So: **a 50 s deadline taken at `catalogSearchTool` entry**. It bounds
 `deadline - Date.now()` at phase start, and skips entirely when little is left.
 
 It does **not** abort them, and that limit is worth stating rather than
-implying. `standardPlaceToRepId` exposes no budget parameter — it takes only
-`{ contextName }` — so a pathological place resolution still exceeds the Cowork
-cap with nothing this tool can do. The search leg *is* cappable and is capped:
+implying. `standardPlaceToRepId` exposes no budget parameter, so a pathological
+place resolution still exceeds the Cowork cap with nothing this tool can do.
+What it must not do is carry on: the deadline is re-checked **after**
+resolution, because `Math.max(0, deadline - Date.now())` is then `0` and
+`AbortSignal.timeout(0)` turns the search into `Request to <whole query URL>
+timed out after 0ms`, which names neither the Catalog nor a way out. The tool
+throws its own error there instead, naming the place and telling the caller to
+retry without `standardPlace`.
+
+Its `contextName` option is **not** a label and must not be given one: it is a
+parent place used to disambiguate same-name places, and any other value
+suppresses the context the resolver derives from the input itself
+(`contextName ?? deriveContextName(name)`). A tool name there matches no
+candidate, so `"Paris, Idaho, United States"` loses its `Idaho` filter and
+resolves to Paris, France — the Maine → Timor-Leste failure one layer up. The
+tool passes no options at all. The search leg *is* cappable and is capped:
 it goes out with `timeoutMs = Math.max(0, deadline - Date.now())`. What the
 entry anchor buys is that the common case never **adds** 50 s on top of an
 already-slow search.
@@ -79,7 +92,13 @@ already-slow search.
 `standardPlaceToRepId` also swallows every error and returns `null`, so the
 `placeResolved: false` fallback below covers auth and network failures as well
 as a genuinely unknown place. Hits the deadline does not reach come back `hydrated: false`
-with `hydrationTimedOut: true` on the response. A partial answer inside the cap
+with `hydrationTimedOut: true` on the response — **including** when the search
+leg spent the whole budget and hydration was never attempted. That case needs
+stating because it does not fall out of the race: every task short-circuits on
+its own `remaining <= 0` guard, so `work` settles in microtasks and beats the
+expiry macrotask deterministically, reporting `false`. The flag means "retry
+later"; `hydrated: false` alone means "this item has no detail", and conflating
+them tells the caller to stop when it should retry. A partial answer inside the cap
 beats a complete one the runtime kills.
 
 The mechanism is the shipped shape in `person-read.ts`'s transcription phase —
@@ -161,8 +180,8 @@ present** — the service will answer an empty query with millions of hits.
 | `callNumber` | string | `q.callNumber` | |
 | `year` | number | `q.year` | an **exact year**, not a decade: `q.year=1800` → 22 hits, against the year facet's 1800 bucket of 185 |
 | `availability` | string | `q.availability` | **case-sensitive**: `Online` → 472, `online` → 0 |
-| `count` | number | `count` | the tool sends 25 when omitted; max 200 (201 → 400). The *service's* default was never measured — every probe query passes `count` |
-| `hydrate` | number | — | item calls to make, default 10, max 25 |
+| `count` | integer, 1–200 | `count` | the tool sends 25 when omitted; max 200 (201 → 400). The *service's* default was never measured — every probe query passes `count` |
+| `hydrate` | integer, 0–25 | — | item calls to make, default 10; `0` skips hydration |
 
 Everything ANDs: place id 333 + `exactPlace` → 803; plus `keywords=census` → 54.
 
@@ -213,6 +232,7 @@ an error; the flag tells the agent its place filter is looser than it asked for.
   returned: number,
   placeResolved: boolean,
   hydrationTimedOut: boolean,
+  hydrateRequested: number,     // how many hits hydration was asked for
   hits: [{
     id: string,                 // "koha:123456"
     title: string,
@@ -336,11 +356,12 @@ result set rather than as another page.
 | condition | message |
 |---|---|
 | no searchable field given | names the eight fields and says at least one is required — refused before any request |
-| `count` > 200 or `hydrate` > 25 | names the cap and the value given |
+| `count` outside 1–200, or `hydrate` outside 0–25, or either non-integer | names the range and the value given. Both bounds are checked, not just the cap: `hydrate: -1` passed a one-sided `> MAX` test, and `slice(0, -1)` then kept all-but-one hit as targets while `mapWithConcurrency` clamped `-1` to **one** worker — 59 serial item calls against a cap of 25 |
+| place resolution spends the whole budget | names the place and says to retry without `standardPlace`; the alternative is a bare `timed out after 0ms` quoting the query URL |
 | no session | `getValidToken` throws the shared not-logged-in instruction, before the Catalog request. On the `standardPlace` path the resolver's own Places calls go out first and swallow their auth failure to `null`, so the session error arrives after them |
 | 401 **from the service** | `fsFetch` re-reads `tokens.json` once, then the shared "FamilySearch session not accepted; call the login tool to re-authenticate." |
 | 403 from the search | names the browser user-agent requirement; this is Imperva, not a permissions error |
-| other non-2xx from the search | `FamilySearch Catalog search failed: {status} {statusText}` |
+| other non-2xx from the search | `FamilySearch Catalog search failed: {status} {statusText} — {detail}`. The Catalog answers RFC7807 (`{"detail":"Validation failure","instance":"/v3/search",...}`), so `parseUpstreamErrorBody` was widened to read that shape alongside the search endpoints' `{errors:[…]}`. Every error path reads the body first, which also releases the undici socket |
 | item call fails | **not** an error — that hit returns `hydrated: false`; one bad item must not fail the search |
 | `standardPlace` does not resolve | **not** an error — falls back to `q.place` with `placeResolved: false` |
 
@@ -363,6 +384,18 @@ result set rather than as another page.
 | a search leg costing 45 s leaves hydration 5 s, not a fresh 50 s | that the clock starts at tool entry, not at the phase. The budget cannot be consumed *entirely* by the search — each leg's own `timeoutMs` is the remaining budget, so an exhausted search aborts and throws rather than reaching hydration |
 | a 401 from the search gives the shared re-auth instruction | the error table's 401 row; the generic `!res.ok` arm would answer `failed: 401 Unauthorized`, which is not LLM-actionable |
 | `Accept: application/json` is sent | a 200 of XML otherwise |
+| the resolver is called with the place and **no options** | a `contextName` that is not a parent place suppresses the derived one; asserted as the whole argument list, since `expect.anything()` for the opts passes either way |
+| `count` and `hydrate` are refused outside their range, non-integer, and `NaN`; and accepted at 1 / 200 / 0 / 25 | the one-sided `> MAX` hole, and the other direction — that the legitimate edges still pass |
+| a search body whose repeated fields collapsed to one object still answers | `.map` on a raw `repositoryCalls` threw the whole search away |
+| an unquoted `filmno` / `digital_film_no` is read | a JSON number yielded a film note of `{}` with `hydrated: true` |
+| a note that collapsed to a bare string survives | text content with no attributes collapses to a string, the ordinary free-text `<note>` |
+| `available_online` is read as `true`/`false`/`"Y"`/`"N"` | a boolean fell through the string-only reader |
+| the **first** RSLINK url is surfaced and its markup stays out of `notes` | one URL field, and raw `<a href>` was being handed to the LLM as prose |
+| `exactPlace`, `year`, `availability` and `count` reach the query, and `q.place.exact` is omitted with no place | six inputs the suite never asserted on; `.exact` alone 400s, and `q.availability` is case-sensitive (`Online` 472, `online` 0) |
+| the search leg spending the budget sets `hydrationTimedOut` | the task guard makes `work` win the race deterministically, so this does not fall out of the race |
+| `hydrateRequested` is echoed | with the defaults 15 of 25 hits are `hydrated: false` purely for sitting past the window |
+| place resolution eating the budget names the place | otherwise a bare `timed out after 0ms` quoting the query URL |
+| a 400 carries the Catalog's own `detail` | the service says which parameter it rejected; discarding it left the agent retrying the same query |
 
 ## Live check
 

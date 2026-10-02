@@ -8,6 +8,7 @@
  * figure cited below is measured in dev/probe-catalog.ts.
  */
 import type { Principal } from "../auth/principal.js";
+import { parseUpstreamErrorBody } from "../utils/search-helpers.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetch } from "../utils/fs-fetch.js";
 import {
@@ -62,24 +63,38 @@ type Collapsed = Record<string, unknown>;
 function asArray(value: unknown): Collapsed[] {
   if (value === undefined || value === null) return [];
   const list = Array.isArray(value) ? value : [value];
-  return list.filter(
-    (v): v is Collapsed => typeof v === "object" && v !== null,
-  );
+  return list.flatMap((v): Collapsed[] => {
+    // XML-to-JSON collapse yields a BARE STRING whenever an element has text
+    // content and no attributes, which is the ordinary shape of a free-text
+    // <note>. Dropping it returned `notes: []` for an item whose only
+    // holdings note was text-only, which reads as "this item has no notes".
+    if (typeof v === "string") return v.length > 0 ? [{ text: v }] : [];
+    return typeof v === "object" && v !== null ? [v as Collapsed] : [];
+  });
 }
 
 function str(value: unknown): string | undefined {
-  return typeof value === "string" && value.length > 0 ? value : undefined;
+  if (typeof value === "string") return value.length > 0 ? value : undefined;
+  // filmno / digital_film_no arrive unquoted when they carry no leading zero.
+  // Rejecting them produced a film note of `{}` with hydrated: true — the hit
+  // claimed a film and named neither it nor the DGS image_search needs.
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return undefined;
 }
 
 interface SearchBody {
   totalHits?: number;
+  // Every repeated field here is read through `asArray`, so these stay
+  // `unknown`: the service collapses a one-value list to a bare object on
+  // this response exactly as it does on the item response, and typing them
+  // as arrays is what made `.map` throw the whole search away.
   searchHits?: {
     metadataHit?: {
       metadata?: {
-        title?: { value?: string }[];
-        creator?: { value?: string }[];
-        identifier?: { value?: string };
-        repositoryCalls?: { title?: string }[];
+        title?: unknown;
+        creator?: unknown;
+        identifier?: unknown;
+        repositoryCalls?: unknown;
       };
     };
   }[];
@@ -127,7 +142,13 @@ function itemUrlOf(identifier: unknown): string | undefined {
 
 function hydrateFromSource(hit: CatalogHit, source: Record<string, unknown>): void {
   const notes = asArray(source.note);
-  hit.notes = notes.map((n) => str(n?.text) ?? str(n?.value) ?? "").filter(Boolean);
+  // An RSLINK note is an anchor tag, not holdings prose. It is surfaced as
+  // digitalLibraryUrl below; leaving it in `notes` handed the LLM raw
+  // `<a href="...">` markup to quote as if it were text.
+  hit.notes = notes
+    .filter((n) => String(n?.type ?? "") !== "RSLINK")
+    .map((n) => str(n?.text) ?? str(n?.value) ?? "")
+    .filter(Boolean);
   hit.authors = asArray(source.author)
     .map((a) => str(a?.value) ?? str(a?.text) ?? "")
     .filter(Boolean);
@@ -150,16 +171,21 @@ function hydrateFromSource(hit: CatalogHit, source: Record<string, unknown>): vo
       : {}),
   }));
 
-  if (str(source.available_online)) {
-    hit.availableOnline = String(source.available_online).toUpperCase() === "Y";
-  }
+  const online = source.available_online;
+  if (typeof online === "boolean") hit.availableOnline = online;
+  else if (str(online)) hit.availableOnline = String(online).toUpperCase() === "Y";
   // A digitized book has no film at all; its link is HTML inside an RSLINK note.
   for (const n of notes) {
     if (String(n?.type ?? "") !== "RSLINK") continue;
     const m = /https:\/\/www\.familysearch\.org\/library\/books\/idurl\/[^"'<\s]+/.exec(
       String(n?.text ?? n?.value ?? ""),
     );
-    if (m) hit.digitalLibraryUrl = m[0];
+    // FIRST match wins and stops: the field holds one URL, and running on
+    // kept whichever happened to be last in the collapsed array.
+    if (m) {
+      hit.digitalLibraryUrl = m[0];
+      break;
+    }
   }
   hit.hydrated = true;
 }
@@ -177,15 +203,22 @@ export async function catalogSearchTool(
         "returns millions of hits.",
     );
   }
+  // Both bounds, and whole numbers. A one-sided `> MAX` check let `hydrate:
+  // -1` through, where `slice(0, -1)` keeps all-but-one hit as targets and
+  // mapWithConcurrency clamps -1 to ONE worker: 59 serial item calls against
+  // a cap of 25, which is the degraded regime the cap exists to avoid.
   const count = input.count ?? DEFAULT_COUNT;
-  if (count > MAX_COUNT) {
-    throw new Error(`count is ${count}; the Catalog accepts at most ${MAX_COUNT}.`);
+  if (!Number.isInteger(count) || count < 1 || count > MAX_COUNT) {
+    throw new Error(
+      `count is ${count}; it must be a whole number from 1 to ${MAX_COUNT}.`,
+    );
   }
   const hydrate = input.hydrate ?? DEFAULT_HYDRATE;
-  if (hydrate > MAX_HYDRATE) {
+  if (!Number.isInteger(hydrate) || hydrate < 0 || hydrate > MAX_HYDRATE) {
     throw new Error(
-      `hydrate is ${hydrate}; at most ${MAX_HYDRATE} item calls are made per ` +
-        "search, to stay out of the service's degraded regime.",
+      `hydrate is ${hydrate}; it must be a whole number from 0 to ` +
+        `${MAX_HYDRATE} — each hit hydrated is an extra request, and the ` +
+        "service degrades on volume.",
     );
   }
 
@@ -193,9 +226,25 @@ export async function catalogSearchTool(
   // States") is 16, which the Catalog reads as Timor-Leste and answers.
   let repId: string | null = null;
   if (input.standardPlace) {
-    repId = await standardPlaceToRepId(input.standardPlace, {
-      contextName: "catalog_search",
-    });
+    // No `contextName`: that option is a PARENT PLACE used to disambiguate
+    // same-name places, and passing anything else SUPPRESSES the context the
+    // resolver derives from the input itself (`contextName ?? deriveContextName`).
+    // A tool name there matches no candidate, so "Paris, Idaho, United States"
+    // loses its "Idaho" filter and resolves to Paris, France — the same
+    // wrong-answer-not-an-error class as Maine -> Timor-Leste, one layer up.
+    repId = await standardPlaceToRepId(input.standardPlace);
+
+    // Resolution is unbudgeted (withRetry x3 over a 30s fetch). Overrunning
+    // leaves the search a timeoutMs of 0, whose abort reads "timed out after
+    // 0ms" and names the query URL but neither the Catalog nor a way out.
+    if (Date.now() >= deadline) {
+      throw new Error(
+        `catalog_search spent its ${TOTAL_BUDGET_MS / 1000}s budget resolving ` +
+          `the place '${input.standardPlace}' and never reached the Catalog. ` +
+          "Retry without standardPlace, narrowing with keywords or title " +
+          "instead, or retry later.",
+      );
+    }
   }
 
   const res = await fsFetch(
@@ -204,40 +253,56 @@ export async function catalogSearchTool(
     { headers: HEADERS },
     Math.max(0, deadline - Date.now()),
   );
-  if (res.status === 401) {
-    // fsFetch has already re-read tokens.json once; a 401 still here means the
-    // session is genuinely not accepted, which is the user's to fix.
-    throw new Error(
-      "FamilySearch session not accepted; call the login tool to re-authenticate.",
-    );
-  }
-  if (res.status === 403) {
-    throw new Error(
-      "FamilySearch Catalog search was refused (403). This is the edge " +
-        "blocking the request, not a permissions problem — the call must send " +
-        "a browser User-Agent.",
-    );
-  }
   if (!res.ok) {
+    // Drained before every throw below: an unconsumed undici body holds its
+    // socket until GC. Parsed too, because the Catalog says WHICH parameter
+    // it rejected ({"detail":"Validation failure",...}) and discarding that
+    // left the agent retrying the same query against nine candidates.
+    const raw = await res.text().catch(() => "");
+    let parsed: unknown = null;
+    try {
+      parsed = raw ? JSON.parse(raw) : null;
+    } catch {
+      parsed = null;
+    }
+    const detail = parseUpstreamErrorBody(parsed);
+
+    if (res.status === 401) {
+      // fsFetch has already re-read tokens.json once; a 401 still here means
+      // the session is genuinely not accepted, which is the user's to fix.
+      throw new Error(
+        "FamilySearch session not accepted; call the login tool to re-authenticate.",
+      );
+    }
+    if (res.status === 403) {
+      throw new Error(
+        "FamilySearch Catalog search was refused (403). This is the edge " +
+          "blocking the request, not a permissions problem — the call must " +
+          "send a browser User-Agent.",
+      );
+    }
     throw new Error(
-      `FamilySearch Catalog search failed: ${res.status} ${res.statusText}`.trim(),
+      `FamilySearch Catalog search failed: ${res.status} ${res.statusText}`.trim() +
+        (detail ? ` — ${detail}` : ""),
     );
   }
 
   const body = (await res.json()) as SearchBody;
   const hits: CatalogHit[] = (body.searchHits ?? []).map((h) => {
     const m = h.metadataHit?.metadata ?? {};
-    const url = itemUrlOf(m.identifier?.value);
+    const url = itemUrlOf(asArray(m.identifier)[0]?.value);
+    const title = str(asArray(m.title)[0]?.value);
+    const creator = str(asArray(m.creator)[0]?.value);
     return {
       ...(url ? { id: url.slice(ITEM_URL_PREFIX.length) } : {}),
-      title: str(m.title?.[0]?.value) ?? "(untitled)",
-      ...(str(m.creator?.[0]?.value) ? { creator: str(m.creator?.[0]?.value) } : {}),
+      title: title ?? "(untitled)",
+      ...(creator ? { creator } : {}),
       // Deduped: the service repeats an entry per copy, so an item on six
       // reels lists "Granite Mountain Record Vault, FamilySearch Library"
       // six times. The field is an access signal, not a holdings count.
       repositoryCalls: [
         ...new Set(
-          (m.repositoryCalls ?? []).map((r) => str(r?.title) ?? "").filter(Boolean),
+          asArray(m.repositoryCalls).map((r) => str(r?.title) ?? "").filter(Boolean),
         ),
       ],
       ...(url ? { url } : {}),
@@ -251,7 +316,14 @@ export async function catalogSearchTool(
   // return value (so losing the race loses nothing).
   const targets = hits.filter((h) => h.url).slice(0, hydrate);
   let hydrationTimedOut = false;
-  if (targets.length > 0) {
+  if (targets.length > 0 && Date.now() >= deadline) {
+    // The search leg spent the budget. Every task would short-circuit on its
+    // own `remaining <= 0` guard and `work` would win the race in microtasks,
+    // reporting false — telling the caller "these items have no detail" when
+    // the truth is "retry later", which is the one distinction this flag
+    // exists to carry.
+    hydrationTimedOut = true;
+  } else if (targets.length > 0) {
     const work = mapWithConcurrency(targets, hydrate, async (hit) => {
       const remaining = deadline - Date.now();
       // Never start work the budget cannot pay for.
@@ -291,6 +363,7 @@ export async function catalogSearchTool(
     returned: hits.length,
     placeResolved: input.standardPlace ? repId !== null : true,
     hydrationTimedOut,
+    hydrateRequested: hydrate,
     hits,
   };
 }
@@ -339,7 +412,7 @@ export const catalogSearchSchema = {
       },
       callNumber: { type: "string", description: "Call number." },
       year: {
-        type: "number",
+        type: "integer",
         description: "An EXACT year, not a decade or a range.",
       },
       availability: {
@@ -348,15 +421,19 @@ export const catalogSearchSchema = {
           "Case-sensitive, e.g. 'Online'. Lowercase returns nothing.",
       },
       count: {
-        type: "number",
+        type: "integer",
+        minimum: 1,
+        maximum: 200,
         description: "Hits to return. Default 25, max 200.",
       },
       hydrate: {
-        type: "number",
+        type: "integer",
+        minimum: 0,
+        maximum: 25,
         description:
           "How many of those hits to fetch holdings detail for. Default 10, " +
           "max 25 — each one is an extra request, and the service degrades " +
-          "on volume.",
+          "on volume. 0 skips hydration.",
       },
     },
   },
