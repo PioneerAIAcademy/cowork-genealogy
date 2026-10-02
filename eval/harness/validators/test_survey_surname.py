@@ -96,17 +96,29 @@ def test_negative_makes_no_write(builtin_tool_calls, test):
 # --- Positive: log entry per record_search page ----------------------
 
 def test_positive_logs_each_search_page(tool_calls, before_state, after_state, test):
-    """Each positive test must append one research_log_append per
-    record_search call."""
+    """Each positive test must log every record_search page. The agent may
+    batch several pages into one ``research_log_append`` call via the ``ops``
+    array, so we count logged *operations* (one per ``ops`` entry, or one per
+    non-batched call) rather than raw call count."""
     if test.get("type") != "positive":
         pytest.skip("only positive tests")
     if before_state.get("research_json") is None:
         pytest.skip("no research.json in scenario")
     searches = _mcp_calls(tool_calls, "record_search")
     logs = _mcp_calls(tool_calls, "research_log_append")
-    assert len(logs) >= len(searches), (
-        f"expected at least one research_log_append per record_search; "
-        f"got {len(logs)} log calls for {len(searches)} search calls"
+    # Count total logged operations: each call with an ``ops`` array counts
+    # as len(ops); a call without ``ops`` counts as 1.
+    logged_ops = 0
+    for lc in logs:
+        ops = lc.get("args", {}).get("ops")
+        if isinstance(ops, list) and ops:
+            logged_ops += len(ops)
+        else:
+            logged_ops += 1
+    assert logged_ops >= len(searches), (
+        f"expected at least one logged operation per record_search; "
+        f"got {logged_ops} logged ops across {len(logs)} log calls "
+        f"for {len(searches)} search calls"
     )
 
 
