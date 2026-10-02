@@ -239,12 +239,16 @@ def _detach_names_another_record(block: str, protected: str) -> bool:
     Deliberately one-sided. A passage is cleared only if each sentence carrying
     a detach term names some record by title and does not name `protected`. A
     detach sentence that names no record ("Detach it.") keeps the whole block
-    attributed, so the cross-sentence case the guard exists for still fires.
+    attributed, so the cross-sentence case the guard exists for still fires. A
+    title word `protected` itself contains does not count, so a shortened name
+    for it ("Detach the Death Index record.") stays attributed too.
     """
     sentences = [x for x in _SENTENCE_RE.split(block) if x.strip()]
     detaching = [x for x in sentences if _recommends_detach(x)]
     return bool(detaching) and all(
-        protected.lower() not in x.lower() and _RECORD_TITLE_RE.search(x) for x in detaching
+        protected.lower() not in x.lower()
+        and any(m.group(0).lower() not in protected.lower() for m in _RECORD_TITLE_RE.finditer(x))
+        for x in detaching
     )
 
 
