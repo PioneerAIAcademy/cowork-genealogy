@@ -680,17 +680,17 @@ def _info(agents: set[str], skills: int, extra_agents: tuple[str, ...] = ()) -> 
 
 
 def test_registration_passes_with_every_bare_agent_and_every_skill():
-    assert options.check_registration(_info(AGENTS, 15, ("general-purpose", "genealogy-research:gps-mentor")),
-                                      expected_agents=AGENTS, expected_skills=15) == []
+    assert options.check_registration(_info(AGENTS, 14, ("general-purpose", "genealogy-research:gps-mentor")),
+                                      expected_agents=AGENTS, expected_skills=14) == []
 
 
 def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
-    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 15, ("genealogy-research:gps-mentor",)),
-                                          expected_agents=AGENTS, expected_skills=15)
+    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 14, ("genealogy-research:gps-mentor",)),
+                                          expected_agents=AGENTS, expected_skills=14)
     assert problems and "gps-mentor" in problems[0] and "bare" in problems[0]
-    problems = options.check_registration(_info(AGENTS, 14), expected_agents=AGENTS, expected_skills=15)
-    assert problems == ["14 genealogy-research:* commands registered, expected 15"]
-    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=15)
+    problems = options.check_registration(_info(AGENTS, 13), expected_agents=AGENTS, expected_skills=14)
+    assert problems == ["13 genealogy-research:* commands registered, expected 14"]
+    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=14)
 
 
 def test_the_plugin_ships_eighteen_agents_and_fourteen_skills():
