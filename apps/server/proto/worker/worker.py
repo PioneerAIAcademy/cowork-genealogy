@@ -942,7 +942,7 @@ def _apply_schema_once(
     dsn: str, *, connect_timeout: int = SCHEMA_CONNECT_TIMEOUT_S, sql_dir: Path = SQL_DIR,
 ) -> list[str]:
     """Run ../sql/*.sql in name order (every statement idempotent), once. Every exception
-    goes through: ``schema_loop`` is what retries, and only a refused or silent Postgres."""
+    goes through: ``schema_loop`` is what retries, and only the errors it names as transient."""
     files = sorted(sql_dir.glob("*.sql"))
     if not files:
         raise RuntimeError(f"no schema files under {sql_dir}")
@@ -1227,10 +1227,13 @@ def readiness() -> dict[str, Any]:
 
 def schema_loop(dsn: str | None = None) -> None:
     """Apply the schema, retrying ``psycopg.OperationalError`` (a refused or silent
-    Postgres) with backoff ``SCHEMA_BACKOFF_FIRST_S`` doubling to ``SCHEMA_BACKOFF_MAX_S``,
-    taken as ``SHUTDOWN.wait`` so a SIGTERM ends it at once. Any other error (bad SQL,
-    ``42501`` under a DML-only role) is a misconfiguration: it stops the loop and leaves
-    ``schema`` failing with its label. One log line per change."""
+    Postgres) and the errors an apply racing another one raises (the web tier, or a second
+    worker, applies the same files at boot: ``23505`` and ``42P07``/``42710`` on a fresh
+    database, ``XX000`` "tuple concurrently updated" on an applied one; the next attempt
+    finds the schema in place), with backoff ``SCHEMA_BACKOFF_FIRST_S`` doubling to
+    ``SCHEMA_BACKOFF_MAX_S``, taken as ``SHUTDOWN.wait`` so a SIGTERM ends it at once. Any
+    other error (bad SQL, ``42501`` under a DML-only role) is a misconfiguration: it stops
+    the loop and leaves ``schema`` failing with its label. One log line per change."""
     global _SCHEMA_ERROR
     dsn = PG_DSN if dsn is None else dsn
     delay = SCHEMA_BACKOFF_FIRST_S
@@ -1238,7 +1241,8 @@ def schema_loop(dsn: str | None = None) -> None:
     while True:
         try:
             applied = _apply_schema_once(dsn, connect_timeout=SCHEMA_CONNECT_TIMEOUT_S)
-        except psycopg.OperationalError as exc:
+        except (psycopg.OperationalError, psycopg.errors.UniqueViolation, psycopg.errors.InternalError_,
+                psycopg.errors.DuplicateTable, psycopg.errors.DuplicateObject) as exc:
             label = ready_label(exc)
             if label != logged:
                 logged = label

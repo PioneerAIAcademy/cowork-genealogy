@@ -3810,23 +3810,33 @@ def test_healthz_is_503_when_prepare_failed(monkeypatch, tmp_path, name, apply, 
     assert all(v == {"ok": True} for v in others.values()), body
 
 
-def test_schema_thread_retries_until_postgres_answers(monkeypatch, tmp_path):
+@pytest.mark.parametrize("transient", [
+    lambda: worker.psycopg.OperationalError("connection refused"),
+    # An apply racing the web tier's (or a second worker's) at boot.
+    lambda: worker.psycopg.errors.UniqueViolation('duplicate key value violates "pg_type_typname_nsp_index"'),
+    lambda: worker.psycopg.errors.InternalError_("tuple concurrently updated"),
+    lambda: worker.psycopg.errors.DuplicateTable('relation "projects" already exists'),
+    lambda: worker.psycopg.errors.DuplicateObject('type "projects" already exists'),
+], ids=["refused", "23505", "XX000", "42P07", "42710"])
+def test_schema_thread_retries_until_postgres_answers(monkeypatch, tmp_path, transient):
     _ready(monkeypatch, tmp_path)
     monkeypatch.setattr(worker, "_SCHEMA_ERROR", "pending")
     monkeypatch.setattr(worker, "SCHEMA_BACKOFF_FIRST_S", 0.0)
-    monkeypatch.setattr(worker, "log", lambda **f: None)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
     seen: list[str | None] = []
 
     def flaky(dsn, **kw):
         seen.append(worker._SCHEMA_ERROR)
         assert kw.get("connect_timeout"), "an attempt inside connect must be bounded"
         if len(seen) < 3:
-            raise worker.psycopg.OperationalError("connection refused")
+            raise transient()
         return ["001_schema.sql"]
 
     monkeypatch.setattr(worker, "_apply_schema_once", flaky)
     worker.schema_loop("postgresql://x@127.0.0.1:1/p")
     assert seen == ["pending", "pending", "pending"] and worker._SCHEMA_ERROR is None
+    assert [f.get("retrying") for f in logged] == [True, None], "one line per change"
     status, body, _ = _healthz()
     assert status == 200 and body["checks"]["schema"] == {"ok": True}
 
@@ -3834,6 +3844,8 @@ def test_schema_thread_retries_until_postgres_answers(monkeypatch, tmp_path):
 
     def denied(dsn, **kw):
         calls.append(1)
+        if len(calls) > 1:
+            worker.SHUTDOWN.set()  # a retry would spin at backoff 0; end it so the assert fails
         raise worker.psycopg.errors.InsufficientPrivilege("permission denied for schema public")
 
     monkeypatch.setattr(worker, "_apply_schema_once", denied)
