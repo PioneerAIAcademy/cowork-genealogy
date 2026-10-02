@@ -1263,10 +1263,13 @@ export const recordSearchToolSchema = {
     "the span you mean as a range rather than relying on a single year. " +
     "PLACES: pass the full hierarchical standardized string when you have one " +
     "(`'Lehi, Utah County, Utah, United States'`); a non-standardized string " +
-    "falls back to brittle string matching. Unqualified, a place field matches " +
-    "the place given AND places up to three jurisdiction levels above it, " +
-    "which is why a county scope barely discriminates; whether an `*Exact` " +
-    "place still descends to child localities is NOT established.",
+    "falls back to brittle string matching. Unqualified, a place field also " +
+    "matches places ABOVE the one given, and measurably far wider than the " +
+    "nominal three jurisdiction levels: a county scope barely discriminates at " +
+    "all, and the WRONG county returned a total within about a tenth of a " +
+    "percent of the right one. Read a county-level total as saying almost " +
+    "nothing about whether the records are in that county. Whether an `*Exact` " +
+    "place still descends to CHILD localities is NOT established.",
   // The `*Exact` descriptions below state only what is specific to each
   // parameter; the rule they share lives in the tool-level description above and
   // is deliberately not repeated per parameter. They cover the effect on the

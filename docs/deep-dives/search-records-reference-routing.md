@@ -235,6 +235,17 @@ no other shape.
 reverted: neither moved the rate, and an unmeasured prose change is not worth a
 paid run.
 
+**This table is the record — the run logs behind it are not committed and cannot
+be.** `.gitignore` excludes `eval/runlogs/unit/*/scratch_*.json`, because a
+`--runs-per-test` scratch run is by design a throwaway. So the three runs on the
+shipped tree (fail, pass, pass → aggregate `pass`, `flaky: true`), which are what
+clears the bar issues #2816 and #2243 set, exist only in this table. Re-derive
+rather than ask for the file:
+
+```sh
+cd eval/harness && uv run python run_tests.py --test ut_search_records_023 --runs-per-test 3
+```
+
 The behaviour is bimodal with no middle. A passing run makes **1–2**
 `record_search` calls and 12–15 turns; a failing run makes **9–10** calls and
 33–41 turns, wandering the generic lever ladder.

@@ -60,7 +60,8 @@ update/delete (forbidden by Rule 3), and `tree.gedcomx.json`.
 
 | Fact | Source |
 |------|--------|
-| Append-only rule; nil searches still logged; outputs link back via `log_entry_id` | `search-records/SKILL.md` Step 5 (formerly `references/research-log-protocol.md`, now deleted) |
+| Append-only rule; nil searches still logged | `search-records/SKILL.md` Step 5 (formerly `references/research-log-protocol.md`, now deleted) |
+| Outputs link back via `log_entry_id` | `agents/record-extractor.md` + `research-schema-spec.md` §`sources`/§`assertions`. Never `search-records`' rule: this skill writes the log entry, and the **extracting** agent stamps the back-reference onto each source and assertion |
 | Log entry fields + `external_site` shape | `docs/specs/research-schema-spec.md` §5.4 |
 | Sidecar shape `{ log_id, tool, retrieved, returned_count, payload }`; nil → no sidecar | `research-schema-spec.md` §5.4.1 |
 | Required log fields, `log_outcome` enum, `external_site` required when `tool==="external_site"`, `EXTERNAL_SITE_VALUES` | `validateResearch`'s log loop (`"tool is 'external_site' but external_site object is null"`, `EXTERNAL_SITE_VALUES`) |

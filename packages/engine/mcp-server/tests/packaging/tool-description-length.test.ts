@@ -157,9 +157,12 @@ const DOCUMENTED_TOTALS: Array<[string, number]> = [
   // search-records/references/place-date-mechanics.md, which was the only place
   // that stated them and which no agent can read. Stated once at tool level
   // rather than per parameter, exactly as the CEILING rule below requires.
-  // Measured independently (2241 tool-level + 14364 params), not copied from the
-  // failure message.
-  ["record_search", 16605],
+  // 16605 -> 16819: the place clause first carried the deleted file's NOMINAL
+  // "within 3 jurisdiction levels" figure, which that same file's measured
+  // section contradicts ("far broader than '3 levels' suggests"); it now states
+  // the measured behaviour instead. Measured independently (2455 tool-level +
+  // 14364 params), not copied from the failure message.
+  ["record_search", 16819],
   // 5292 -> 5302: the tool-level description gained "siblings, " when the
   // sibling fan-out landed (#2593). 5302 -> 5281: it lost " with relatives:
   // true" when person_read started ignoring that flag (#2696). Measured
