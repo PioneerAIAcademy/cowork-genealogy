@@ -659,10 +659,10 @@ The narrative is a markdown document printed to the conversation as the agent's 
 user-facing output. It must follow this structure:
 
 ```markdown
-# Mentor review: <focus> on <target_id>
+# Mentor review: <what was reviewed, in plain words>
 
 ## What you've done well
-[Specific praise, naming assertion IDs, conflict IDs, and standards]
+[Specific praise, in plain words]
 
 ## What to address before moving on
 [must_address items framed as next-step guidance — omit this section if none]
@@ -674,6 +674,15 @@ user-facing output. It must follow this structure:
 [For each must_address item, the specific evidence or analysis that would resolve it
 — omit this section if must_address is empty]
 ```
+
+The heading may carry a `q_`/`ps_` id but never a focus name (`proof-critique`,
+`pre-exhaustiveness`, …), which is our vocabulary rather than the researcher's. In the
+narrative a tier is named as the viewer shows it — well established, likely, tentative,
+not established, ruled out (`StatusBadge.tsx`) — and the narrative never says GPS, proof,
+proved or exhaustive. It says genealogy standards, a finding (a conclusion once well
+established), and what we searched and what we could not reach; the researcher's
+`narration_guidance` carries the same rule. Numbered standards stay in the structured `standard` fields, which are for the
+machine; the narrative praises and advises in plain words.
 
 For a craft-only `on-demand` run, the required scope sentence of §6.4 comes first —
 before the `# Mentor review:` heading — so the reader meets it before any praise. The
@@ -712,11 +721,11 @@ focus. A refusal writes a verdict with `verdict: "refused"` and a one-line
 
 | Focus | Refuse when | Refusal message (narrative_for_user) |
 |-------|-------------|--------------------------------------|
-| `pre-exhaustiveness` | Any plan item for the question has `status: "in_progress"` | "Plan items still in progress: [list pli_ IDs]. Complete them before pre-exhaustiveness review." |
+| `pre-exhaustiveness` | Any plan item for the question has `status: "in_progress"` | "Some planned searches are still in progress: [list pli_ IDs]. Finish them, then ask me to review whether the searching is complete." |
 | `pre-exhaustiveness` | No plan exists for the question | "No plan exists for q_XXX. Invoke research-plan first." |
-| `conclusion-readiness` | Question is not at `status: "exhaustive_declared"` | "This question is at status '<current>'. Run pre-exhaustiveness review first, then declare exhaustive via research-exhaustiveness, then return for conclusion-readiness review." |
-| `proof-critique` | No `proof_summaries[id == target_id]` in research.json | "No proof summary with id <target_id> exists. Did you mean conclusion-readiness on a question, or proof-critique on a different ps_id?" |
-| `on-demand`, narrative-craft request (§6.4) | No proof summary exists to read | "There's no written proof summary to read yet, and a craft review needs finished prose. Run proof-conclusion first, then ask me how it reads." |
+| `conclusion-readiness` | Question is not at `status: "exhaustive_declared"` | "This question is not ready for a conclusion review yet. First record what we searched and what we could not reach (research-exhaustiveness), then come back for the review." |
+| `proof-critique` | No `proof_summaries[id == target_id]` in research.json | "There is no written-up finding <target_id>. Did you mean a review of a question, or a different finding?" |
+| `on-demand`, narrative-craft request (§6.4) | No proof summary exists to read | "There's no written-up finding to read yet, and a craft review needs finished prose. Run proof-conclusion first, then ask me how it reads." |
 
 The narrative-craft row is a direct extension of the `proof-critique` row above it,
 not a fresh decision: both refuse for the same reason — there is no written
@@ -1016,7 +1025,7 @@ These rules are absolute and must be reflected in the agent implementation:
 | Agent disagrees with `research-exhaustiveness` declaration | Verdict is `address_first`. The mechanical 7-point check can pass on a plan that was too narrow. The genealogist (agent) is the final judge. |
 | Agent disagrees with `proof-conclusion`'s tier | Same — `address_first` with `must_address` naming the tier mismatch. |
 | `target_id` references a `q_` ID that does not exist in research.json | Return `refused` with message: "No question with id <target_id> found in research.json." |
-| `target_id` for `proof-critique` is a `q_` ID, not a `ps_` ID | Return `refused`: "proof-critique requires a ps_ ID. Did you mean conclusion-readiness on q_XXX?" |
+| `target_id` for `proof-critique` is a `q_` ID, not a `ps_` ID | Return `refused`: "q_XXX is a question, not a written-up finding. Did you mean a review of whether it is ready for a conclusion?" |
 | research.json fails schema validation | Surface the schema errors as `must_address` items (no standard citation needed — just list the validation errors). Still write the verdict file. |
 | `evaluations/` directory cannot be created (permissions, etc.) | Report the error explicitly in the narrative; do not silently skip the file write. |
 

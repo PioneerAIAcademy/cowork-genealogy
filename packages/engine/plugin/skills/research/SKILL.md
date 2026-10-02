@@ -138,7 +138,7 @@ defensible?" — is not a destination. Invoke `@plugin:gps-mentor` at once
    | If research.json has... | Invoke |
    |-------------------------|--------|
    | Objective but no questions | `question-selection` (derive first question) |
-   | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
+   | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
    | A question with no plan, and its jurisdiction **already has a `localities` entry** | `research-plan` |
    | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `exhausted` plan, which a revision leaves behind still `planned` | `search-records` (or `search-external-sites` for non-FS sources) |
    | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly | `search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_read`) |
@@ -199,8 +199,9 @@ defensible?" — is not a destination. Invoke `@plugin:gps-mentor` at once
    **Every spawn names `projectPath` and the id the agent works on** — a
    `questionId` for `@plugin:research-exhaustiveness` and
    `@plugin:proof-conclusion`, the assertion ids for
-   `@plugin:person-evidence`, and the `h_`/`c_`/assertion ids at issue for
-   `@plugin:hypothesis-tracking`. The agent runs in fresh context and reads the
+   `@plugin:person-evidence`, the `h_`/`c_`/assertion ids at issue for
+   `@plugin:hypothesis-tracking`, the place and period for
+   `@plugin:locality-guide`. The agent runs in fresh context and reads the
    project itself; a delegation missing `projectPath` fails on its first tool
    call.
 

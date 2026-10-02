@@ -10,11 +10,12 @@
       "ireland",
       "pre-famine",
       "no-civil-registration",
-      "1840s"
+      "1840s",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I'm researching an ancestor who lived in County Cork, Ireland in the 1830s-1840s before emigrating. What records would be available for that locality and period?",
+    "delegation": "I'm researching an ancestor who lived in County Cork, Ireland in the 1830s-1840s before emigrating. What records would be available for that locality and period?",
     "scenario": null
   },
   "execution": {
