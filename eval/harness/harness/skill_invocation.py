@@ -1102,6 +1102,12 @@ DEDICATED_AGENT_NAMES = frozenset(
         # legitimate -- `ownership.json` names `agent:hypothesis-tracking` on
         # that row. Do not read its presence here as evidence of a hook route.
         "hypothesis-tracking",
+        # Same shape as `search-images`, `citation`, and `search-wikipedia`
+        # (issue #2804): a cost-motivated conversion, no hook route, and it
+        # writes no project state. Listed because the set is asserted equal to
+        # the shipped agent files. Do not read its presence here as evidence of
+        # a hook route.
+        "translation",
         # Same shape as citation (issue #2805): a converted skill, not a
         # hook-routed pair. It writes tree persons, relationships and sources,
         # and `ownership.json` names `agent:tree-edit` on those rows as the
@@ -1117,6 +1123,11 @@ DEDICATED_AGENT_NAMES = frozenset(
         # it to `localities` and routes nothing to it; `ownership.json` names
         # `agent:locality-guide` on that row.
         "locality-guide",
+        # Same shape as convert-dates (issue #2800): a converted skill with no
+        # hook route. It writes no project state at all -- its output is a
+        # narrative to the user -- so `ownership.json` names it on no row. Listed
+        # because the set is asserted equal to the shipped agent files.
+        "historical-context",
     }
 )
 

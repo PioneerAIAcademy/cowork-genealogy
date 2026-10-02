@@ -1747,7 +1747,7 @@ describe("calculateWarnings — orchestrator", () => {
     expect(tags).toContain("earliestChildBirthToBirth12");
   });
 
-  it("FEMALE anchor with young-child fires earliestChildBirthToBirth12 only (not Male14)", () => {
+  it("FEMALE anchor with young-child fires the two female-applicable tags, not Male14", () => {
     const tree: SimplifiedGedcomX = {
       persons: [
         {
@@ -1776,6 +1776,9 @@ describe("calculateWarnings — orchestrator", () => {
     );
     expect(tags).not.toContain("earliestChildBirthToBirthMale14");
     expect(tags).toContain("earliestChildBirthToBirth12");
+    // The second of the "two female-applicable tags" the title claims. Without
+    // this the retitle asserts something nothing checks.
+    expect(tags).toContain("earliestChildBirthToBirthFemale14");
   });
 
   it("returns the hasEventAfterDeath1 warning for Mary PosthumousCensus", () => {
@@ -3325,6 +3328,170 @@ describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
     expect(w).toBeDefined();
     expect(w?.facts).toBeUndefined();
   });
+
+  // ── issue #2007 / #1962 PR 1: the female lower bound ──────────────────────
+  //
+  // The gap-14 case is the acceptance check. The MALE-at-14 case is the gender
+  // gate, which is the whole reason this is a new tag rather than a widened
+  // `earliestChildBirthToBirth12` — without it the decision collapses.
+
+  it("female anchor at gap 14 fires earliestChildBirthToBirthFemale14", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "P",
+          gender: "Female",
+          names: [{ id: "N", given: "Anchor", surname: "S" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1820", standard_date: "1820" },
+          ],
+        },
+        {
+          id: "C",
+          gender: "Male",
+          names: [{ id: "N2", given: "The", surname: "Child" }],
+          facts: [
+            { id: "F2", type: "Birth", date: "1834", standard_date: "1834" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R", type: "ParentChild", parent: "P", child: "C" },
+      ],
+    };
+    const tags = finalWarnings(new Mob(tree, "P")).map((w) => w.issueType);
+    expect(tags).toContain("earliestChildBirthToBirthFemale14");
+  });
+
+  it("female anchor at gap 15 does not fire it", () => {
+    // One year the other side of the cutoff. This is the direction a break does
+    // not test: moving the cutoff to 15 reds the gap-14 case above while this
+    // one keeps passing, so both are needed to pin `<= 14`.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "P",
+          gender: "Female",
+          names: [{ id: "N", given: "Anchor", surname: "S" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1820", standard_date: "1820" },
+          ],
+        },
+        {
+          id: "C",
+          gender: "Male",
+          names: [{ id: "N2", given: "The", surname: "Child" }],
+          facts: [
+            { id: "F2", type: "Birth", date: "1835", standard_date: "1835" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R", type: "ParentChild", parent: "P", child: "C" },
+      ],
+    };
+    const tags = finalWarnings(new Mob(tree, "P")).map((w) => w.issueType);
+    expect(tags).not.toContain("earliestChildBirthToBirthFemale14");
+  });
+
+  it("female anchor at gap 8 fires it as well as earliestChildBirthToBirth12", () => {
+    // Double-firing is by design — the male pair already does it.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "P",
+          gender: "Female",
+          names: [{ id: "N", given: "Anchor", surname: "S" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1820", standard_date: "1820" },
+          ],
+        },
+        {
+          id: "C",
+          gender: "Male",
+          names: [{ id: "N2", given: "The", surname: "Child" }],
+          facts: [
+            { id: "F2", type: "Birth", date: "1828", standard_date: "1828" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R", type: "ParentChild", parent: "P", child: "C" },
+      ],
+    };
+    const tags = finalWarnings(new Mob(tree, "P")).map((w) => w.issueType);
+    expect(tags).toContain("earliestChildBirthToBirthFemale14");
+    expect(tags).toContain("earliestChildBirthToBirth12");
+  });
+
+  it("MALE anchor at gap 14 does not fire the female tag", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "P",
+          gender: "Male",
+          names: [{ id: "N", given: "Anchor", surname: "S" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1820", standard_date: "1820" },
+          ],
+        },
+        {
+          id: "C",
+          gender: "Male",
+          names: [{ id: "N2", given: "The", surname: "Child" }],
+          facts: [
+            { id: "F2", type: "Birth", date: "1834", standard_date: "1834" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R", type: "ParentChild", parent: "P", child: "C" },
+      ],
+    };
+    const tags = finalWarnings(new Mob(tree, "P")).map((w) => w.issueType);
+    expect(tags).not.toContain("earliestChildBirthToBirthFemale14");
+    expect(tags).toContain("earliestChildBirthToBirthMale14");
+  });
+
+  it("femaleRelativesEarliestChildBirthToBirth14 fires for a female relative and is silent for a male one", () => {
+    // The twin, and the only thing that proves it is wired: the spec-drift lint
+    // is a regex over `issueType:` in the source, so it matches this tag inside
+    // an unwired check body just as happily.
+    const base = (relGender: "Male" | "Female"): SimplifiedGedcomX => ({
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "Anchor", surname: "S" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1858", standard_date: "1858" },
+          ],
+        },
+        {
+          id: "I2",
+          gender: relGender,
+          names: [{ given: "Parent", surname: "S" }],
+          facts: [
+            { id: "F2", type: "Birth", date: "1844", standard_date: "1844" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+      ],
+    });
+
+    const femaleTags = finalWarnings(new Mob(base("Female"), "I1")).map(
+      (w) => w.issueType,
+    );
+    expect(femaleTags).toContain("femaleRelativesEarliestChildBirthToBirth14");
+
+    const maleTags = finalWarnings(new Mob(base("Male"), "I1")).map(
+      (w) => w.issueType,
+    );
+    expect(maleTags).not.toContain("femaleRelativesEarliestChildBirthToBirth14");
+  });
+
 });
 
 // ────────────────────────────────────────────────────────────────────
