@@ -1,4 +1,4 @@
-"""Offline tests for the prototype worker (apps/server/proto/worker/), D9-10 + D15.
+﻿"""Offline tests for the prototype worker (apps/server/proto/worker/), D9-10 + D15.
 
 No Postgres, no SDK process, no model: the row writers run against a fake connection
 that records SQL; event routing runs on canned ``map_message`` outputs; the deny
@@ -88,7 +88,7 @@ TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
 AGENTS = {"check-warnings", "citation", "convert-dates", "gps-mentor", "hypothesis-tracking", "image-reader", "locality-guide", "person-evidence", "proof-conclusion", "record-extractor", "research-exhaustiveness", "search-familysearch-wiki", "search-images", "search-wikipedia", "translation", "tree-edit", "validate-schema"}
 
 
-# â”€â”€ fakes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── fakes ─────────────────────────────────────────────────────────────────────────
 
 
 class FakeCursor:
@@ -205,7 +205,7 @@ TURN = {
 }
 
 
-# â”€â”€ claim / complete / idempotent completion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── claim / complete / idempotent completion ─────────────────────────────────────
 
 
 def test_claim_upserts_sessions_and_turns_with_the_receive_count():
@@ -351,7 +351,7 @@ def test_is_real_turn_needs_text():
     assert not worker.is_real_turn({"text": 42})
 
 
-# â”€â”€ event routing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── event routing ─────────────────────────────────────────────────────────────────
 
 
 @pytest.mark.parametrize("event", [
@@ -426,7 +426,7 @@ def test_is_init_message_picks_the_clis_session_declaration_only():
     assert not worker.is_init_message(Other()) and not worker.is_init_message(Assistant())
 
 
-# â”€â”€ session store rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── session store rows ───────────────────────────────────────────────────────────
 
 
 def test_session_store_rows_take_the_constructors_project_and_ignore_the_keys():
@@ -436,7 +436,7 @@ def test_session_store_rows_take_the_constructors_project_and_ignore_the_keys():
     assert rows[0][:3] == ("proj-1", "sid", "subagents/agent-1")
 
 
-# â”€â”€ deny.py â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── deny.py ───────────────────────────────────────────────────────────────────────
 
 
 def test_a_read_under_the_anchor_is_denied_and_routed(tmp_path):
@@ -482,7 +482,7 @@ def test_read_route_chooser():
     assert deny.read_route("/project", "/project") == "project_context"
 
 
-# â”€â”€ the PreToolUse hook â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── the PreToolUse hook ──────────────────────────────────────────────────────────
 
 
 def _hook(rows: list[dict], cwd: str, config_root: str, record=None):
@@ -620,7 +620,7 @@ def test_blocked_tools_are_denied_by_bare_name_under_any_server_spelling(tmp_pat
 
 
 def test_person_warnings_is_allowed_while_block_is_on(tmp_path):
-    # person_warnings reads the local stripped tree only (no live mode â€” lead
+    # person_warnings reads the local stripped tree only (no live mode — lead
     # ruling 2026-09-27, reverses issue #2225 D1). Always allowed.
     rows: list[dict] = []
     hook = options.make_pretool_hook(
@@ -669,7 +669,7 @@ def test_the_hook_never_raises(tmp_path):
     assert rows[-1]["decision"] == "allow"
 
 
-# â”€â”€ D15: registration precondition â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── D15: registration precondition ───────────────────────────────────────────────
 
 
 def _info(agents: set[str], skills: int, extra_agents: tuple[str, ...] = ()) -> dict:
@@ -746,7 +746,7 @@ def test_registration_problems_compares_against_the_constants_not_the_loaded_set
 
     assert list(inspect.signature(worker.registration_problems).parameters) == ["info"]
     # The mutation the first build let through: a plugin copy short one skill folder
-    # registers 14, and a count of that same copy would have expected 14.
+    # registers 15, and a count of that same copy would have expected 15.
     copy = tmp_path / "plugin"
     shutil.copytree(PLUGIN_DIR / "skills", copy / "skills")
     shutil.rmtree(next(d for d in sorted((copy / "skills").iterdir()) if (d / "SKILL.md").is_file()))
@@ -756,7 +756,7 @@ def test_registration_problems_compares_against_the_constants_not_the_loaded_set
     ]
 
 
-# â”€â”€ the option set â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── the option set ───────────────────────────────────────────────────────────────
 
 
 WORKER_ENV = {
@@ -921,7 +921,7 @@ def test_every_shipped_agent_model_has_a_gateway_id():
     assert not unmapped, f"add a Bedrock id to GATEWAY_AGENT_MODELS for {unmapped}"
 
 
-# â”€â”€ the container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── the container ─────────────────────────────────────────────────────────────────
 
 
 def _compose() -> dict:
@@ -1007,6 +1007,9 @@ def test_worker_dockerfile_shape():
         "the worker releases held messages through proto/enqueue.py; the image must carry it"
     source = (PROTO / "worker" / "worker.py").read_text(encoding="utf-8")
     assert "from proto import enqueue" in source, "and that is the module it imports"
+    # U7: enqueue.py imports botocore at module scope to sign. Without it on the pip line
+    # the worker exits at start with QUEUE_URL set; the venv has it, so nothing else sees.
+    assert re.search(r'"botocore==[0-9.]+"', body), "the worker image must install botocore (enqueue.py signs with it)"
     assert re.search(r"mkdir -p /project", body)
     assert "tokens.json" not in body
     # The one place a key becomes an image layer: compose interpolates it at run time,
@@ -1071,7 +1074,7 @@ def test_tool_server_headers_require_a_project_id():
     assert options.tool_server_headers({}, fs_access_token=None, project_id="p") == {"X-Genealogy-Project-Id": "p"}
 
 
-# â”€â”€ run_turn: every guard seen firing, on a fake client â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── run_turn: every guard seen firing, on a fake client ──────────────────────────
 
 
 class FakeSessionStore:
@@ -1259,7 +1262,7 @@ def test_run_turn_refuses_to_bill_when_the_registration_is_short(turn_env):
     assert turn_env["client"].disconnected and not _turn_done_written(turn_env["conn"])
 
 
-# â”€â”€ the resume rule: a redelivery that produced no model turn (D17) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── the resume rule: a redelivery that produced no model turn (D17) ───────────────
 
 
 class TwoPassClient(FakeClient):
@@ -1399,7 +1402,7 @@ def test_the_first_delivery_of_a_resumed_turn_is_never_re_queried(turn_env, monk
     assert not [f for f in logged if f.get("ev") == "resume_synthetic_result"]
 
 
-# â”€â”€ 0a: the resume guard and its bounded retry â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── 0a: the resume guard and its bounded retry ───────────────────────────────────
 #
 # The plan gated the guard on a live probe of the synthetic result, and named THIS as the
 # accepted evidence if the probe would not fire on demand after two billed attempts: a
@@ -1677,7 +1680,7 @@ def test_every_guard_binds_on_the_re_query_too(turn_env, second, error, match):
     assert turn_env["client"].disconnected, "the CLI is always released"
 
 
-# â”€â”€ PostToolUse: the duration stamp (acceptance criterion 4) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── PostToolUse: the duration stamp (acceptance criterion 4) ──────────────────────
 
 
 def test_the_row_carries_the_tool_use_id_and_the_post_hook_finishes_it(tmp_path):
@@ -1730,7 +1733,7 @@ def test_options_bind_the_post_hook_on_success_and_on_failure(tmp_path):
     assert opts.hooks["PostToolUse"][0].hooks == [post] and opts.hooks["PostToolUseFailure"][0].hooks == [post]
 
 
-# â”€â”€ 1b / 1c: Stop, the held message, and what a turn's ending is called â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── 1b / 1c: Stop, the held message, and what a turn's ending is called ───────────
 
 _STOP_KW = dict(research=None, nudges_used=0, max_nudges=5, tool_count=0, tool_count_at_last_nudge=-1)
 
@@ -1927,6 +1930,7 @@ def test_the_release_actually_enqueues_on_the_configured_queue(monkeypatch):
         return "<SendMessageResponse><MessageId>msg-7</MessageId></SendMessageResponse>"
 
     import proto.enqueue as enq
+    monkeypatch.setattr(enq, "credentials_ready", lambda timeout=None: True)
     monkeypatch.setattr(enq, "sqs_call", fake_sqs)
     conn = FakeConn()
     assert worker.release_queued_turn(conn, "sess-1") == "msg-7"
@@ -1948,6 +1952,7 @@ def test_a_failed_release_puts_the_message_back_rather_than_losing_it(monkeypatc
     logged: list[dict] = []
     monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
     import proto.enqueue as enq
+    monkeypatch.setattr(enq, "credentials_ready", lambda timeout=None: True)
     monkeypatch.setattr(enq, "sqs_call", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("queue down")))
     conn = FakeConn()
     assert worker.release_queued_turn(conn, "sess-1") is None
@@ -1956,7 +1961,166 @@ def test_a_failed_release_puts_the_message_back_rather_than_losing_it(monkeypatc
     assert [f["ev"] for f in logged] == ["queued_release_failed"]
 
 
-# â”€â”€ 1e: the per-session spend bound â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+@pytest.mark.parametrize("failure", ["no_credentials", "raises"])
+def test_a_release_with_no_sqs_credentials_never_claims_the_message(monkeypatch, failure):
+    """U7: the credentials are resolved BEFORE the claim. A worker that cannot sign must
+    leave the held row exactly as it was -- not claim it and put it back -- and say why
+    under its own event, since there may have been nothing held at all."""
+    monkeypatch.setattr(worker, "QUEUE_URL", "http://q/000000000000/turns")
+    claimed: list[str] = []
+    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid: claimed.append(sid) or {"turn_id": "h"})
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    import proto.enqueue as enq
+
+    def ready(timeout=None):
+        if failure == "raises":
+            raise RuntimeError("botocore went away")
+        return False
+
+    monkeypatch.setattr(enq, "credentials_ready", ready)
+    monkeypatch.setattr(enq, "sqs_call", lambda *a, **k: pytest.fail("sent without credentials"))
+    conn = FakeConn()
+    assert worker.release_queued_turn(conn, "sess-1") is None
+    assert claimed == [], "the message was claimed by a worker that cannot send it"
+    assert conn.executed == [], "no SQL at all"
+    [ev] = logged
+    assert ev["ev"] == "sqs_credentials_unavailable" and ev["session_id"] == "sess-1"
+    assert ("botocore went away" in ev["reason"]) if failure == "raises" else ev["reason"] == "no AWS credentials"
+
+
+# ── U7: SQS credentials at start ─────────────────────────────────────────────────
+
+
+class _PrepareRan(Exception):
+    pass
+
+
+def _stop_at_prepare(monkeypatch):
+    def prepare():
+        raise _PrepareRan("ran past the check")
+    monkeypatch.setattr(worker, "prepare", prepare)
+
+
+def test_queue_startup_fields_exits_2_and_ignores_stray_keys_without_a_queue(monkeypatch, capsys):
+    monkeypatch.setenv("GENEALOGY_SQS_ACCESS_KEY", "AKIASTRAY")
+    _stop_at_prepare(monkeypatch)
+    monkeypatch.setattr(worker, "QUEUE_URL", "http://elasticmq:9324/000000000000/turns")
+    with pytest.raises(SystemExit) as exc:
+        worker.main()
+    assert exc.value.code == 2
+    err = capsys.readouterr().err.strip().splitlines()
+    assert len(err) == 1 and err[0].startswith("worker: ") and "GENEALOGY_SQS_SECRET_KEY" in err[0], err
+    assert "AKIASTRAY" not in err[0]
+
+    monkeypatch.setattr(worker, "QUEUE_URL", "")
+    with pytest.raises(_PrepareRan):
+        worker.main()
+    assert worker.queue_startup_fields({"GENEALOGY_SQS_ACCESS_KEY": "AKIASTRAY"}) == {}
+
+    # And the check runs before prepare() -- which applies the schema and parses agents.
+    tree = ast.parse(inspect.getsource(worker.main))
+    calls = [n.func.id for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)]
+    assert "queue_startup_fields" in calls and "prepare" in calls
+    lines = {name: min(n.lineno for n in ast.walk(tree) if isinstance(n, ast.Call)
+                       and isinstance(n.func, ast.Name) and n.func.id == name)
+             for name in ("queue_startup_fields", "prepare")}
+    assert lines["queue_startup_fields"] < lines["prepare"]
+
+
+def _start_only(monkeypatch):
+    """main() up to ev=start, with nothing real started."""
+    monkeypatch.setattr(worker, "prepare", lambda: None)
+
+    class Server:
+        def __init__(self, *a, **k):
+            pass
+
+        def serve_forever(self):
+            return None
+
+        def server_close(self):
+            return None
+
+    monkeypatch.setattr(worker, "ThreadingHTTPServer", Server)
+    monkeypatch.setattr(worker, "start_sweep", lambda *a, **k: None)
+    monkeypatch.setattr(worker, "install_signal_handlers", lambda server: None)
+    monkeypatch.setattr(worker, "_SHUTDOWN_THREAD", None)
+
+
+def _start_event(out: str) -> dict:
+    [ev] = [json.loads(line) for line in out.splitlines() if line.startswith("{") and '"ev":"start"' in line]
+    return ev
+
+
+def test_ev_start_carries_sqs_mode_and_region_never_a_key(monkeypatch, capsys):
+    import proto.enqueue as enq
+
+    _start_only(monkeypatch)
+    prewarmed: list[int] = []
+    real_prewarm = enq.prewarm
+    monkeypatch.setattr(enq, "prewarm", lambda: prewarmed.append(1) or real_prewarm())
+    monkeypatch.setenv("GENEALOGY_SQS_ACCESS_KEY", "AKIAWORKERSTART")
+    monkeypatch.setenv("GENEALOGY_SQS_SECRET_KEY", "worker-start-secret")
+    monkeypatch.setattr(worker, "QUEUE_URL", "http://elasticmq:9324/000000000000/turns")
+    worker.main()
+    out = capsys.readouterr().out
+    ev = _start_event(out)
+    assert ev["sqs_credentials"] == "static keys" and ev["sqs_region"] == "us-east-1"
+    assert "worker-start-secret" not in out and "AKIAWORKERSTART" not in out
+    assert prewarmed == [1], "credentials are warmed at start, before the first release needs them"
+
+    monkeypatch.setattr(worker, "QUEUE_URL", "")
+    worker.main()
+    ev = _start_event(capsys.readouterr().out)
+    assert "sqs_credentials" not in ev and "sqs_region" not in ev
+    assert prewarmed == [1]
+
+
+def test_cli_env_blanks_static_sqs_keys():
+    sqs = {"GENEALOGY_SQS_ACCESS_KEY": "AKIACLI", "GENEALOGY_SQS_SECRET_KEY": "cli-secret"}
+    for provider_env in ({}, {"MODEL_PROVIDER": "gateway", "GATEWAY_BASE_URL": "http://gw"}):
+        opts = _options(worker_env={**WORKER_ENV, **provider_env, **sqs})
+        assert opts.env["GENEALOGY_SQS_ACCESS_KEY"] == "" and opts.env["GENEALOGY_SQS_SECRET_KEY"] == "", provider_env
+    opts = _options()
+    assert "GENEALOGY_SQS_ACCESS_KEY" not in opts.env, "nothing to blank, nothing added"
+
+
+def test_a_release_with_static_sqs_keys_claims_and_sends(monkeypatch):
+    """The real ``credentials_ready`` (not a stub), with the static pair configured."""
+    monkeypatch.setattr(worker, "QUEUE_URL", "http://q/000000000000/turns")
+    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid: {"turn_id": "h"})
+    import proto.enqueue as enq
+
+    enq.configure({"GENEALOGY_SQS_ACCESS_KEY": "AKIDX", "GENEALOGY_SQS_SECRET_KEY": "sx"}, worker.QUEUE_URL)
+    monkeypatch.setattr(enq, "sqs_call", lambda *a, **k: "<R><MessageId>m-s</MessageId></R>")
+    assert worker.release_queued_turn(FakeConn(), "sess-1") == "m-s"
+
+
+def test_the_credentials_cap_reaches_credentials_ready(monkeypatch):
+    """The deadline check counts RELEASE_CREDENTIALS_TIMEOUT_S, so the cap must arrive at
+    ``credentials_ready`` itself: dropped there, a shutdown release blocks on an uncapped
+    IMDS refresh and overruns the stop grace period. An ordinary release passes none."""
+    monkeypatch.setattr(worker, "QUEUE_URL", "http://q/000000000000/turns")
+    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid: {"turn_id": "h"})
+    import proto.enqueue as enq
+
+    given: list = []
+    monkeypatch.setattr(enq, "credentials_ready", lambda timeout=None: given.append(timeout) or True)
+    monkeypatch.setattr(enq, "sqs_call", lambda *a, **k: "<R><MessageId>m</MessageId></R>")
+
+    assert worker.release_queued_turn(FakeConn(), "sess-1") == "m"
+    assert worker.release_queued_turn(
+        FakeConn(), "sess-1", credentials_timeout=worker.RELEASE_CREDENTIALS_TIMEOUT_S) == "m"
+    assert given == [None, worker.RELEASE_CREDENTIALS_TIMEOUT_S]
+
+    given.clear()
+    worker.defer_release("sess-2", "turn-2")
+    worker.run_deferred_releases(connect=lambda dsn, **kw: FakeConn(), deadline=time.monotonic() + 60)
+    assert given == [worker.RELEASE_CREDENTIALS_TIMEOUT_S], "the shutdown path, deadline to credentials_ready"
+
+
+# ── 1e: the per-session spend bound ──────────────────────────────────────────────
 
 RUNLOGS_E2E = SERVER.parents[1] / "eval" / "runlogs" / "e2e"
 
@@ -2425,7 +2589,7 @@ def test_every_turn_records_the_spend_estimate_for_calibration(turn_env, monkeyp
     assert params[2].obj["spend_estimate_usd"] == pytest.approx(1.2345), "and it reaches the feed"
 
 
-# â”€â”€ D18: the Stop hook (the harness's continue-nudge, ported) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── D18: the Stop hook (the harness's continue-nudge, ported) ─────────────────────
 
 
 _INCOMPLETE = {"project": {"status": "in_progress"}}
@@ -2476,7 +2640,7 @@ def test_the_stop_hook_blocks_a_vetoable_stop_with_the_harness_reason_verbatim()
     # silent-stop fallback the worker mirrors. Since 2026-09-20 a second such dict
     # carries the "Yes." reply to a well-formed hand-back, whose reason is a NAME
     # (`reply`) rather than a constant, so it is skipped here by shape and named in
-    # CONTINUE_REASON's comment â€” if that branch ever spells a literal too, this
+    # CONTINUE_REASON's comment — if that branch ever spells a literal too, this
     # collects two and fails, which is the re-sync this test exists to force.
     tree = ast.parse(ORCHESTRATOR.read_text(encoding="utf-8"))
     blocks = [
@@ -2595,7 +2759,7 @@ def test_prepare_logs_a_bad_cap_and_runs_with_the_hook_off_instead_of_dying(monk
     assert next(f for f in logged if f.get("step") == "agents")["autonomous_max_nudges"] == 20
 
 
-# â”€â”€ 1a: the cap rides the queue message â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── 1a: the cap rides the queue message ──────────────────────────────────────────
 
 
 @pytest.mark.parametrize("message, fallback, expected", [
@@ -3200,9 +3364,19 @@ def test_deferred_releases_are_bounded_by_their_deadline(monkeypatch):
     worker.defer_release("sess-2", "turn-2")
     worker.run_deferred_releases(connect=connect, deadline=time.monotonic() + 60)
     assert kwargs == [{"connect_timeout": worker.RELEASE_CONNECT_TIMEOUT_S}]
-    assert seen == [{"sqs_timeout": worker.RELEASE_SQS_TIMEOUT_S}]
-    assert worker.RELEASE_CONNECT_TIMEOUT_S + worker.RELEASE_SQS_TIMEOUT_S < worker.RELEASE_BUDGET_S, \
+    # U7: resolving the SQS credentials (an IMDS refresh, at worst) is capped and counted.
+    assert seen == [{"sqs_timeout": worker.RELEASE_SQS_TIMEOUT_S,
+                     "credentials_timeout": worker.RELEASE_CREDENTIALS_TIMEOUT_S}]
+    assert (worker.RELEASE_CONNECT_TIMEOUT_S + worker.RELEASE_CREDENTIALS_TIMEOUT_S
+            + worker.RELEASE_SQS_TIMEOUT_S < worker.RELEASE_BUDGET_S), \
         "otherwise every release after a timed-out drain is skipped"
+
+    worker.defer_release("sess-3", "turn-3")
+    worker.run_deferred_releases(
+        connect=connect,
+        deadline=time.monotonic() + worker.RELEASE_CONNECT_TIMEOUT_S + worker.RELEASE_SQS_TIMEOUT_S + 0.1)
+    assert [f["session_id"] for f in logged if f.get("ev") == "deferred_release_skipped"] == ["sess-1", "sess-3"], \
+        "the deadline check counts the credentials cap too"
 
 
 def test_an_attempt_stopped_by_shutdown_answers_as_a_shutdown(monkeypatch):
