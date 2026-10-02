@@ -14,7 +14,9 @@
 // GENEALOGY_S3_FORCE_PATH_STYLE is one stderr line and exit 2 before listen.
 // With neither S3 key set the AWS SDK default chain supplies credentials
 // (environment, ~/.aws shared config/SSO, web identity, then instance
-// metadata); one stderr line names the mode, never a key.
+// metadata); one stderr line names the mode, never a key. Nothing connects
+// before listen: `GET /healthz` probes Postgres (schema included) and S3 per
+// request and answers 503 while either is unreachable, never exiting.
 import { parseArgs } from "node:util";
 import { LOCAL } from "./auth/principal.js";
 import { loadConfig } from "./auth/config.js";
@@ -74,6 +76,7 @@ const server = await startHttpServer({
   baseConfig,
   bindStore: (projectId, signal) =>
     new PgS3ProjectStore(backend, { projectId, anchorPath: storeEnv.anchorPath, signal }),
+  checkReady: () => backend.checkReady(),
 });
 
 const address = server.address();
