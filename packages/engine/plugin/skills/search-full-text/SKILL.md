@@ -197,7 +197,7 @@ fulltext_search({ keywords: "+Patrick +Flynn", projectPath })
 # includeFacets: get real FTS partition IDs from the first call
 fulltext_search({ keywords: "+Flynn +Patrick", includeFacets: true, projectPath })
 # Scoped follow-up using a facet-derived collectionId
-fulltext_search({ keywords: "+Flynn +Patrick", collectionId: "<facets[0].items[0].filterParam>", projectPath })
+fulltext_search({ keywords: "+Flynn +Patrick", collectionId: "<filterParam from the Collection group in facets>", projectPath })
 
 # Compound-surname parentage: co-occurrence
 fulltext_search({ keywords: "+Naveda +Somarriba", projectPath })

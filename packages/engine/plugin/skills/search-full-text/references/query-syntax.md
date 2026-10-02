@@ -91,7 +91,7 @@ real FTS partition that already returned hits.
 # Step 1: unscoped, with facets
 fulltext_search({ keywords: "+Flynn +Patrick", includeFacets: true, projectPath })
 # Step 2: scoped to one facet-derived partition
-fulltext_search({ keywords: "+Flynn +Patrick", collectionId: "<facets[0].items[0].filterParam>", projectPath })
+fulltext_search({ keywords: "+Flynn +Patrick", collectionId: "<filterParam from the Collection group in facets>", projectPath })
 ```
 
 **Never borrow a `collectionId` from `record_search` or `collections_search`.**

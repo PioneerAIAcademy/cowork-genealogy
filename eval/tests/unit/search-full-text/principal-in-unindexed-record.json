@@ -8,7 +8,7 @@
     "tags": ["fulltext", "principal-search", "unindexed-records"]
   },
   "input": {
-    "user_message": "Thomas Flynn may have deeded property in Schuylkill County, Pennsylvania around 1877–1882. The deed books from that period are digitized as scanned images on FamilySearch but the index entries were never transcribed into the genealogy name search — the names are not in the indexed record database. Search the full-text AI-transcribed image index for any deed or land record that names Thomas Flynn as a grantor, grantee, or party to a transaction.",
+    "user_message": "Thomas Flynn may have deeded property in Schuylkill County, Pennsylvania around 1877–1882. The deed books from that period were digitized as scanned images on FamilySearch, but the names were never transcribed into the indexed genealogy database. Search for any deed or land record naming Thomas Flynn as a grantor, grantee, or party to a transaction.",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [

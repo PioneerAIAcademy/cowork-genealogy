@@ -354,8 +354,7 @@ export const fulltextSearchToolSchema = {
       name: {
         type: "string",
         description:
-          "Search within name fields only. Auto-handles last-name-first inversions. " +
-          "Do not prefix terms with + (terms are already required by m.queryRequireDefault). " +
+          "Search within name fields only. Do not prefix terms with + (m.queryRequireDefault requires at least one term to match). " +
           "Use get_name_variants to get explicit variant forms before querying.",
       },
       place: {

@@ -23,9 +23,11 @@ persons' given names, marginalia, tax-list and store-account entries.
 ## Core tactic: name only → filter
 
 Search a name (or surname + contextual keyword), then filter by
-Place → Year → Record Type using post-search filters. Do NOT put
-place in the initial query — it causes false positives from
-collection-metadata matching.
+Place → Year → Record Type. Do NOT use the `place` query field — it
+searches collection metadata, not document text, and causes false positives.
+Use `recordPlace*` filter parameters instead, which filter records by their
+actual place metadata and are safe on the first call when the jurisdiction
+is known from the plan item or the user's message.
 
 ## Decision tree by hit count
 
