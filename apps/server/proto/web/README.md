@@ -98,7 +98,10 @@ and drops the one the 202's `seq` names; everything else relays.
   in worker mode — it proves the tier, not the resume, since the D3 stub's turn ends inside
   stream A (the driver says so in its own table).
 - **From the venv** (`make proto-web`): the same tier via `python proto/web/app.py`
-  against the compose postgres (`:5434`) and elasticmq (`:9324`).
+  against the compose postgres (`:5434`) and elasticmq (`:9324`). Compose and the venv
+  both sign SendMessage (U7) with dummies elasticmq ignores: compose through the default
+  chain's `AWS_*` env, the venv recipe with a static `GENEALOGY_SQS_*` pair, so neither
+  reads `~/.aws` or probes IMDS.
 - **The SPA** (`make web-proto`, Chrome on `127.0.0.1:5173`) — **verified in review on
   the compose stack 2026-09-14**: the auth stubs answer, sessions list and create, two
   messages round-trip POST → queue → shim → worker → `turn_done` → SSE with exactly two
@@ -115,7 +118,11 @@ a posted turn stays `turn_active` until a script closes it (the driver's seeder 
 `worker.complete()` itself).
 
 Env: `PG_DSN`, `QUEUE_URL` (a full queue URL, the shim's shape), `POLL_S` (1),
-`SSE_PING_S` (15).
+`SSE_PING_S` (15). With `QUEUE_URL` set (and only then), `GENEALOGY_SQS_ACCESS_KEY` +
+`GENEALOGY_SQS_SECRET_KEY` (both or neither; neither signs with the default AWS chain, the
+instance profile on AWS; one alone refuses to start) and `GENEALOGY_SQS_REGION` (else the
+`QUEUE_URL` host's region). The start line names the mode, never a key:
+`queue: <url>; sqs credentials: <mode>; region <r>`.
 
 ## The driver (`../drive.py`)
 
