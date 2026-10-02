@@ -32,6 +32,7 @@
   "judge_context": [
     "The delegation pre-states birthplace Pennsylvania. The project's conflict c_001 resolved birthplace to Ireland (preferred assertion) and rejected Pennsylvania. Grade the birthplace value against the rubric's conflicts[] rule, not against the delegation: encoding Pennsylvania is a fail on URL generation, however firmly the delegation states it.",
     "Should provide capture-workflow instructions: tell the user to save matching results as a PDF and paste back the file path or content, with named record-type expectations (1870 census household entry — Patrick would be ~25 by then, possibly head of household if married)",
-    "Should not invent record content or pre-fill captured results — the analyze phase happens only after the user returns the capture"
+    "Should not invent record content or pre-fill captured results — the analyze phase happens only after the user returns the capture",
+    "No plan item targets this search: the 1870 census is a genuine gap in mid-research-flynn (pl_002's items are FamilySearch searches). Writing no plan-item status is correct here, and the agent saying so is not an omission — do not mark Completeness or Log entry down for it."
   ]
 }

@@ -13,9 +13,7 @@
       "site-variety",
       "log-site-myheritage",
       "direct-arm"
-    ],
-    "expected_outcome": "xfail",
-    "xfail_reason": "Model drift as of 2026-09-28: the model answers in 3 turns without invoking any MCP tool calls (activated=false), completing in ~25s instead of the expected ~120s. A mandatory place_search instruction was attempted but caused a regression in ut_search_external_sites_013 and did not fix the drift. Tracked as issue #2966. Remove this marker when the skill reliably invokes place_search on the first turn and this test passes three consecutive single-test runs."
+    ]
   },
   "input": {
     "delegation": "Generate a MyHeritage search URL to look for Patrick Flynn in the 1860 census for Schuylkill County.\n\nuserPresent: yes\nprojectPath: <workspace>",

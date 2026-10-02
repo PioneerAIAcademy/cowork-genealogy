@@ -84,9 +84,15 @@ Each invocation does one of three things, and returns:
 2. **Triage** — a capture came back. Steps 5–7: match it to its `awaitingUser`
    row, triage it, log the closing entry, update the plan item, and return the
    numbered list. A "no access" reply is this invocation too, logged
-   `outcome: "error"`.
+   `outcome: "error"`. **If no `awaitingUser` row matches**, the search was never
+   handed off: run steps 1–3 first (resolve the place, fetch the curated links,
+   check FamilySearch's holdings, build the URL without `projectPath`), then
+   triage.
 3. **Report** — the researcher reports a result without a capture, a nil
-   included. Log it now (step 6) and return.
+   included. Build the search's URL with `build_external_search_url` (step 3,
+   without `projectPath`) — never write a URL yourself — then log the result
+   now (step 6) with that URL, and give the capture steps (step 4) so a
+   capture can later confirm it.
 
 You cannot wait for the researcher inside an invocation. What happens next — a
 capture, a choice of record — arrives as a later invocation.
@@ -495,7 +501,8 @@ such entry in `awaitingUser` until a later entry for the same URL closes it.
 
 Then present the URL, with every note from the tool's response, and the
 **hand-off** in full — the researcher has to fetch this themselves, so give them:
-1. the URL;
+1. the URL, exactly as the tool returned it — character for character, never
+   shortened or rewritten;
 2. what the record would settle, in plain words (for example: "her mother's name,
    from the three-generation family register");
 3. exactly what to look for — the register or volume, the folio or page, the
