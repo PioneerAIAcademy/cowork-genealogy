@@ -8,7 +8,9 @@
 -- web tier's owner check compares it with the caller and NULL never matches.
 --
 -- familysearch_tokens is keyed by user so U3 has one row per patron to lock, and
--- granted_at is set at sign-in and never on refresh: it is U3's 24 h clock. The alpha's
+-- granted_at is set at sign-in and never on refresh: it records the sign-in. A FamilySearch
+-- session lasts 8 h idle / 24 h at most, but the refresh token starts a new session, so
+-- the grant does not end at 24 h; U3 tracks the session's start. The alpha's
 -- expires_at moves on every refresh, so it cannot serve. Both token columns hold
 -- Fernet ciphertext only (web/auth.py encrypts before the store sees the value).
 

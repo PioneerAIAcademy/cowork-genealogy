@@ -348,6 +348,14 @@ export interface Locality {
   updated?: string
 }
 
+export interface WarningJustification {
+  warning_id: string
+  justification: string
+  person_ids: string[]
+  tool: string
+  recorded_at: string
+}
+
 export interface ResearchData {
   project: Project
   researcher_profile?: ResearcherProfile
@@ -364,6 +372,7 @@ export interface ResearchData {
   proof_summaries: ProofSummary[]
   evaluations: EvaluationEntry[]
   localities?: Locality[]
+  warning_justifications?: WarningJustification[]
 }
 
 // ============================================================

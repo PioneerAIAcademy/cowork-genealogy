@@ -85,7 +85,7 @@ PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
-AGENTS = {"check-warnings", "citation", "convert-dates", "gps-mentor", "image-reader", "person-evidence", "proof-conclusion", "record-extractor", "research-exhaustiveness", "search-familysearch-wiki", "search-images", "search-wikipedia", "tree-edit", "validate-schema"}
+AGENTS = {"check-warnings", "citation", "convert-dates", "gps-mentor", "hypothesis-tracking", "image-reader", "locality-guide", "person-evidence", "proof-conclusion", "record-extractor", "research-exhaustiveness", "search-familysearch-wiki", "search-images", "search-wikipedia", "tree-edit", "validate-schema"}
 
 
 # ── fakes ─────────────────────────────────────────────────────────────────────────
@@ -680,27 +680,27 @@ def _info(agents: set[str], skills: int, extra_agents: tuple[str, ...] = ()) -> 
 
 
 def test_registration_passes_with_every_bare_agent_and_every_skill():
-    assert options.check_registration(_info(AGENTS, 18, ("general-purpose", "genealogy-research:gps-mentor")),
-                                      expected_agents=AGENTS, expected_skills=18) == []
+    assert options.check_registration(_info(AGENTS, 16, ("general-purpose", "genealogy-research:gps-mentor")),
+                                      expected_agents=AGENTS, expected_skills=16) == []
 
 
 def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
-    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 18, ("genealogy-research:gps-mentor",)),
-                                          expected_agents=AGENTS, expected_skills=18)
+    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 16, ("genealogy-research:gps-mentor",)),
+                                          expected_agents=AGENTS, expected_skills=16)
     assert problems and "gps-mentor" in problems[0] and "bare" in problems[0]
-    problems = options.check_registration(_info(AGENTS, 17), expected_agents=AGENTS, expected_skills=18)
-    assert problems == ["17 genealogy-research:* commands registered, expected 18"]
-    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=18)
+    problems = options.check_registration(_info(AGENTS, 15), expected_agents=AGENTS, expected_skills=16)
+    assert problems == ["15 genealogy-research:* commands registered, expected 16"]
+    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=16)
 
 
-def test_the_plugin_ships_fourteen_agents_and_eighteen_skills():
+def test_the_plugin_ships_sixteen_agents_and_sixteen_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
-    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 18
+    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 16
     # A literal in the source, not an expression over the plugin dir (the mutation the
     # review named: both sides of the check shrinking together).
-    assert "\nEXPECTED_SKILLS = 18\n" in Path(worker.__file__).read_text(encoding="utf-8")
+    assert "\nEXPECTED_SKILLS = 16\n" in Path(worker.__file__).read_text(encoding="utf-8")
 
 
 def test_expected_agents_is_the_shipped_set():
@@ -723,7 +723,7 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
     loaded = set(load_agent_definitions(copy))
     assert loaded == AGENTS - {"gps-mentor"} and loaded != worker.EXPECTED_AGENTS
     agents, error = worker.load_plugin_agents(str(copy))
-    assert agents is None, "thirteen agents must not become the expectation"
+    assert agents is None, "fifteen agents must not become the expectation"
     assert error == f"plugin agents ['gps-mentor'] missing under {copy}/agents"
     # An agent the plugin does not ship is named too (the name is the frontmatter's,
     # not the file's), so a mis-typed `name:` shows both halves.
@@ -735,24 +735,24 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
 
 
 def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
-    # Fourteen agents and 18 skills registered: clean. Thirteen, or 17: the miss, whatever loaded --
+    # Sixteen agents and 16 skills registered: clean. Fifteen, or 15: the miss, whatever loaded --
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
-    assert worker.registration_problems(_info(AGENTS, 18)) == []
-    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 18, ("genealogy-research:gps-mentor",)))
+    assert worker.registration_problems(_info(AGENTS, 16)) == []
+    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 16, ("genealogy-research:gps-mentor",)))
     assert problems == ["agents not registered under their bare names: ['gps-mentor']"]
-    assert worker.registration_problems(_info(AGENTS, 17)) == ["17 genealogy-research:* commands registered, expected 18"]
+    assert worker.registration_problems(_info(AGENTS, 15)) == ["15 genealogy-research:* commands registered, expected 16"]
     import inspect
 
     assert list(inspect.signature(worker.registration_problems).parameters) == ["info"]
     # The mutation the first build let through: a plugin copy short one skill folder
-    # registers 17, and a count of that same copy would have expected 17.
+    # registers 15, and a count of that same copy would have expected 15.
     copy = tmp_path / "plugin"
     shutil.copytree(PLUGIN_DIR / "skills", copy / "skills")
     shutil.rmtree(next(d for d in sorted((copy / "skills").iterdir()) if (d / "SKILL.md").is_file()))
-    assert worker.count_skills(str(copy)) == 17
+    assert worker.count_skills(str(copy)) == 15
     assert worker.registration_problems(_info(AGENTS, worker.count_skills(str(copy)))) == [
-        "17 genealogy-research:* commands registered, expected 18"
+        "15 genealogy-research:* commands registered, expected 16"
     ]
 
 
@@ -1007,6 +1007,9 @@ def test_worker_dockerfile_shape():
         "the worker releases held messages through proto/enqueue.py; the image must carry it"
     source = (PROTO / "worker" / "worker.py").read_text(encoding="utf-8")
     assert "from proto import enqueue" in source, "and that is the module it imports"
+    # U7: enqueue.py imports botocore at module scope to sign. Without it on the pip line
+    # the worker exits at start with QUEUE_URL set; the venv has it, so nothing else sees.
+    assert re.search(r'"botocore==[0-9.]+"', body), "the worker image must install botocore (enqueue.py signs with it)"
     assert re.search(r"mkdir -p /project", body)
     assert "tokens.json" not in body
     # The one place a key becomes an image layer: compose interpolates it at run time,
@@ -1197,7 +1200,7 @@ def turn_env(monkeypatch, tmp_path):
 
 
 def _run(state: dict, messages: list[Any], info: dict | None = None, *, receive_count: int = 1) -> dict:
-    state["client"] = FakeClient(messages, _info(AGENTS, 18) if info is None else info, state)
+    state["client"] = FakeClient(messages, _info(AGENTS, 16) if info is None else info, state)
     return asyncio.run(worker.run_turn(TURN, receive_count, SID, agents={"gps-mentor": object()}))
 
 
@@ -1297,7 +1300,7 @@ def _run_passes(
     ``receive_count`` > 1 (the shim redelivered this message); the default is the D17
     shape, a second delivery of a resumed turn."""
     state["entries"] = entries
-    state["client"] = TwoPassClient(streams, _info(AGENTS, 18), state)
+    state["client"] = TwoPassClient(streams, _info(AGENTS, 16), state)
     return asyncio.run(worker.run_turn(TURN, receive_count, SID, agents={"gps-mentor": object()}))
 
 
@@ -1927,6 +1930,7 @@ def test_the_release_actually_enqueues_on_the_configured_queue(monkeypatch):
         return "<SendMessageResponse><MessageId>msg-7</MessageId></SendMessageResponse>"
 
     import proto.enqueue as enq
+    monkeypatch.setattr(enq, "credentials_ready", lambda timeout=None: True)
     monkeypatch.setattr(enq, "sqs_call", fake_sqs)
     conn = FakeConn()
     assert worker.release_queued_turn(conn, "sess-1") == "msg-7"
@@ -1948,12 +1952,172 @@ def test_a_failed_release_puts_the_message_back_rather_than_losing_it(monkeypatc
     logged: list[dict] = []
     monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
     import proto.enqueue as enq
+    monkeypatch.setattr(enq, "credentials_ready", lambda timeout=None: True)
     monkeypatch.setattr(enq, "sqs_call", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("queue down")))
     conn = FakeConn()
     assert worker.release_queued_turn(conn, "sess-1") is None
     assert any("SET outcome = %s" in sql and p[:2] == ("queued", "held-1")
                for sql, p in conn.executed), conn.executed
     assert [f["ev"] for f in logged] == ["queued_release_failed"]
+
+
+@pytest.mark.parametrize("failure", ["no_credentials", "raises"])
+def test_a_release_with_no_sqs_credentials_never_claims_the_message(monkeypatch, failure):
+    """U7: the credentials are resolved BEFORE the claim. A worker that cannot sign must
+    leave the held row exactly as it was -- not claim it and put it back -- and say why
+    under its own event, since there may have been nothing held at all."""
+    monkeypatch.setattr(worker, "QUEUE_URL", "http://q/000000000000/turns")
+    claimed: list[str] = []
+    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid: claimed.append(sid) or {"turn_id": "h"})
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    import proto.enqueue as enq
+
+    def ready(timeout=None):
+        if failure == "raises":
+            raise RuntimeError("botocore went away")
+        return False
+
+    monkeypatch.setattr(enq, "credentials_ready", ready)
+    monkeypatch.setattr(enq, "sqs_call", lambda *a, **k: pytest.fail("sent without credentials"))
+    conn = FakeConn()
+    assert worker.release_queued_turn(conn, "sess-1") is None
+    assert claimed == [], "the message was claimed by a worker that cannot send it"
+    assert conn.executed == [], "no SQL at all"
+    [ev] = logged
+    assert ev["ev"] == "sqs_credentials_unavailable" and ev["session_id"] == "sess-1"
+    assert ("botocore went away" in ev["reason"]) if failure == "raises" else ev["reason"] == "no AWS credentials"
+
+
+# ── U7: SQS credentials at start ─────────────────────────────────────────────────
+
+
+class _PrepareRan(Exception):
+    pass
+
+
+def _stop_at_prepare(monkeypatch):
+    def prepare():
+        raise _PrepareRan("ran past the check")
+    monkeypatch.setattr(worker, "prepare", prepare)
+
+
+def test_queue_startup_fields_exits_2_and_ignores_stray_keys_without_a_queue(monkeypatch, capsys):
+    monkeypatch.setenv("GENEALOGY_SQS_ACCESS_KEY", "AKIASTRAY")
+    _stop_at_prepare(monkeypatch)
+    monkeypatch.setattr(worker, "QUEUE_URL", "http://elasticmq:9324/000000000000/turns")
+    with pytest.raises(SystemExit) as exc:
+        worker.main()
+    assert exc.value.code == 2
+    err = capsys.readouterr().err.strip().splitlines()
+    assert len(err) == 1 and err[0].startswith("worker: ") and "GENEALOGY_SQS_SECRET_KEY" in err[0], err
+    assert "AKIASTRAY" not in err[0]
+
+    monkeypatch.setattr(worker, "QUEUE_URL", "")
+    with pytest.raises(_PrepareRan):
+        worker.main()
+    assert worker.queue_startup_fields({"GENEALOGY_SQS_ACCESS_KEY": "AKIASTRAY"}) == {}
+
+    # And the check runs before prepare() -- which applies the schema and parses agents.
+    tree = ast.parse(inspect.getsource(worker.main))
+    calls = [n.func.id for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)]
+    assert "queue_startup_fields" in calls and "prepare" in calls
+    lines = {name: min(n.lineno for n in ast.walk(tree) if isinstance(n, ast.Call)
+                       and isinstance(n.func, ast.Name) and n.func.id == name)
+             for name in ("queue_startup_fields", "prepare")}
+    assert lines["queue_startup_fields"] < lines["prepare"]
+
+
+def _start_only(monkeypatch):
+    """main() up to ev=start, with nothing real started."""
+    monkeypatch.setattr(worker, "prepare", lambda: None)
+
+    class Server:
+        def __init__(self, *a, **k):
+            pass
+
+        def serve_forever(self):
+            return None
+
+        def server_close(self):
+            return None
+
+    monkeypatch.setattr(worker, "ThreadingHTTPServer", Server)
+    monkeypatch.setattr(worker, "start_sweep", lambda *a, **k: None)
+    monkeypatch.setattr(worker, "install_signal_handlers", lambda server: None)
+    monkeypatch.setattr(worker, "_SHUTDOWN_THREAD", None)
+
+
+def _start_event(out: str) -> dict:
+    [ev] = [json.loads(line) for line in out.splitlines() if line.startswith("{") and '"ev":"start"' in line]
+    return ev
+
+
+def test_ev_start_carries_sqs_mode_and_region_never_a_key(monkeypatch, capsys):
+    import proto.enqueue as enq
+
+    _start_only(monkeypatch)
+    prewarmed: list[int] = []
+    real_prewarm = enq.prewarm
+    monkeypatch.setattr(enq, "prewarm", lambda: prewarmed.append(1) or real_prewarm())
+    monkeypatch.setenv("GENEALOGY_SQS_ACCESS_KEY", "AKIAWORKERSTART")
+    monkeypatch.setenv("GENEALOGY_SQS_SECRET_KEY", "worker-start-secret")
+    monkeypatch.setattr(worker, "QUEUE_URL", "http://elasticmq:9324/000000000000/turns")
+    worker.main()
+    out = capsys.readouterr().out
+    ev = _start_event(out)
+    assert ev["sqs_credentials"] == "static keys" and ev["sqs_region"] == "us-east-1"
+    assert "worker-start-secret" not in out and "AKIAWORKERSTART" not in out
+    assert prewarmed == [1], "credentials are warmed at start, before the first release needs them"
+
+    monkeypatch.setattr(worker, "QUEUE_URL", "")
+    worker.main()
+    ev = _start_event(capsys.readouterr().out)
+    assert "sqs_credentials" not in ev and "sqs_region" not in ev
+    assert prewarmed == [1]
+
+
+def test_cli_env_blanks_static_sqs_keys():
+    sqs = {"GENEALOGY_SQS_ACCESS_KEY": "AKIACLI", "GENEALOGY_SQS_SECRET_KEY": "cli-secret"}
+    for provider_env in ({}, {"MODEL_PROVIDER": "gateway", "GATEWAY_BASE_URL": "http://gw"}):
+        opts = _options(worker_env={**WORKER_ENV, **provider_env, **sqs})
+        assert opts.env["GENEALOGY_SQS_ACCESS_KEY"] == "" and opts.env["GENEALOGY_SQS_SECRET_KEY"] == "", provider_env
+    opts = _options()
+    assert "GENEALOGY_SQS_ACCESS_KEY" not in opts.env, "nothing to blank, nothing added"
+
+
+def test_a_release_with_static_sqs_keys_claims_and_sends(monkeypatch):
+    """The real ``credentials_ready`` (not a stub), with the static pair configured."""
+    monkeypatch.setattr(worker, "QUEUE_URL", "http://q/000000000000/turns")
+    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid: {"turn_id": "h"})
+    import proto.enqueue as enq
+
+    enq.configure({"GENEALOGY_SQS_ACCESS_KEY": "AKIDX", "GENEALOGY_SQS_SECRET_KEY": "sx"}, worker.QUEUE_URL)
+    monkeypatch.setattr(enq, "sqs_call", lambda *a, **k: "<R><MessageId>m-s</MessageId></R>")
+    assert worker.release_queued_turn(FakeConn(), "sess-1") == "m-s"
+
+
+def test_the_credentials_cap_reaches_credentials_ready(monkeypatch):
+    """The deadline check counts RELEASE_CREDENTIALS_TIMEOUT_S, so the cap must arrive at
+    ``credentials_ready`` itself: dropped there, a shutdown release blocks on an uncapped
+    IMDS refresh and overruns the stop grace period. An ordinary release passes none."""
+    monkeypatch.setattr(worker, "QUEUE_URL", "http://q/000000000000/turns")
+    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid: {"turn_id": "h"})
+    import proto.enqueue as enq
+
+    given: list = []
+    monkeypatch.setattr(enq, "credentials_ready", lambda timeout=None: given.append(timeout) or True)
+    monkeypatch.setattr(enq, "sqs_call", lambda *a, **k: "<R><MessageId>m</MessageId></R>")
+
+    assert worker.release_queued_turn(FakeConn(), "sess-1") == "m"
+    assert worker.release_queued_turn(
+        FakeConn(), "sess-1", credentials_timeout=worker.RELEASE_CREDENTIALS_TIMEOUT_S) == "m"
+    assert given == [None, worker.RELEASE_CREDENTIALS_TIMEOUT_S]
+
+    given.clear()
+    worker.defer_release("sess-2", "turn-2")
+    worker.run_deferred_releases(connect=lambda dsn, **kw: FakeConn(), deadline=time.monotonic() + 60)
+    assert given == [worker.RELEASE_CREDENTIALS_TIMEOUT_S], "the shutdown path, deadline to credentials_ready"
 
 
 # ── 1e: the per-session spend bound ──────────────────────────────────────────────
@@ -2622,7 +2786,7 @@ def test_turn_max_nudges_prefers_the_body_and_falls_back_on_anything_unusable(me
 def test_run_turn_takes_the_caps_from_the_message_over_the_module_global(turn_env, monkeypatch):
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 0)
     turn = {**TURN, "message": {**TURN["message"], "max_nudges": 60}}
-    turn_env["client"] = FakeClient(_good(), _info(AGENTS, 18), turn_env)
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, 16), turn_env)
     summary = asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
     assert callable(turn_env["options"]["stop_hook"]), \
         "the browser's turn arms the Stop hook even though the worker's own cap is 0"
@@ -2633,7 +2797,7 @@ def test_run_turn_takes_the_caps_from_the_message_over_the_module_global(turn_en
     # container and the value rides the message.
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
     turn = {**TURN, "message": {**TURN["message"], "max_nudges": 0}}
-    turn_env["client"] = FakeClient(_good(), _info(AGENTS, 18), turn_env)
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, 16), turn_env)
     summary = asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
     assert turn_env["options"]["stop_hook"] is None and summary["max_nudges"] == 0
 
@@ -2710,7 +2874,7 @@ class NudgingClient(FakeClient):
 
 def test_two_vetoes_land_on_the_turns_row_and_in_the_summary(turn_env, monkeypatch):
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 5)
-    turn_env["client"] = NudgingClient(_info(AGENTS, 18), turn_env)
+    turn_env["client"] = NudgingClient(_info(AGENTS, 16), turn_env)
     summary = asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
     assert summary["nudges"] == 2
     sql, params = next((s, p) for s, p in turn_env["conn"].executed if s.startswith("UPDATE turns SET completed_at"))
@@ -3200,9 +3364,19 @@ def test_deferred_releases_are_bounded_by_their_deadline(monkeypatch):
     worker.defer_release("sess-2", "turn-2")
     worker.run_deferred_releases(connect=connect, deadline=time.monotonic() + 60)
     assert kwargs == [{"connect_timeout": worker.RELEASE_CONNECT_TIMEOUT_S}]
-    assert seen == [{"sqs_timeout": worker.RELEASE_SQS_TIMEOUT_S}]
-    assert worker.RELEASE_CONNECT_TIMEOUT_S + worker.RELEASE_SQS_TIMEOUT_S < worker.RELEASE_BUDGET_S, \
+    # U7: resolving the SQS credentials (an IMDS refresh, at worst) is capped and counted.
+    assert seen == [{"sqs_timeout": worker.RELEASE_SQS_TIMEOUT_S,
+                     "credentials_timeout": worker.RELEASE_CREDENTIALS_TIMEOUT_S}]
+    assert (worker.RELEASE_CONNECT_TIMEOUT_S + worker.RELEASE_CREDENTIALS_TIMEOUT_S
+            + worker.RELEASE_SQS_TIMEOUT_S < worker.RELEASE_BUDGET_S), \
         "otherwise every release after a timed-out drain is skipped"
+
+    worker.defer_release("sess-3", "turn-3")
+    worker.run_deferred_releases(
+        connect=connect,
+        deadline=time.monotonic() + worker.RELEASE_CONNECT_TIMEOUT_S + worker.RELEASE_SQS_TIMEOUT_S + 0.1)
+    assert [f["session_id"] for f in logged if f.get("ev") == "deferred_release_skipped"] == ["sess-1", "sess-3"], \
+        "the deadline check counts the credentials cap too"
 
 
 def test_an_attempt_stopped_by_shutdown_answers_as_a_shutdown(monkeypatch):

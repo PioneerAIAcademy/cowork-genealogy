@@ -135,14 +135,14 @@ regardless of how directly the request named the destination.
    | If research.json has... | Invoke |
    |-------------------------|--------|
    | Objective but no questions | `question-selection` (derive first question) |
-   | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
+   | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
    | A question with no plan, and its jurisdiction **already has a `localities` entry** | `research-plan` |
    | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `exhausted` plan, which a revision leaves behind still `planned` | `search-records` (or `search-external-sites` for non-FS sources) |
    | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly | `search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_read`) |
    | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | `record-extraction` (see the enforced contract below) |
    | Assertions not yet linked to persons | `@plugin:person-evidence` — **always the agent, never inline.** You (the orchestrator) never write `person_evidence` entries or add record-derived facts/relationships to tree persons yourself: person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links. Writing `pe_` links inline skips that check — it is exactly how a same-named stranger's record gets attached to the subject (a b. 1814 man was given a 1918 death, age 104, this way). The record-extractor agent deliberately cannot and does not link; its output ALWAYS flows through person-evidence next |
    | Evidence conflicts present | `conflict-resolution` |
-   | Identity uncertainty across assertions | `hypothesis-tracking` |
+   | Identity uncertainty across assertions | `@plugin:hypothesis-tracking` |
    | Analyzed evidence now plausibly answers the active question | `@plugin:research-exhaustiveness` (consult the stop criteria *before* draining the rest of the plan; it sends you back to `research-plan` if the question — e.g. a completeness "did they have *any other* children?" question — is not yet reasonably exhausted) |
    | All plan items for a question are `completed` or `skipped`, and analysis above is done | `@plugin:research-exhaustiveness` |
    | `research-exhaustiveness` returned "not yet exhaustive" with gaps to fill | `research-plan` (extend the plan) or `question-selection` (FAN pivot) |
@@ -198,7 +198,9 @@ regardless of how directly the request named the destination.
    **Every spawn names `projectPath` and the id the agent works on** — a
    `questionId` for `@plugin:research-exhaustiveness` and
    `@plugin:proof-conclusion`, the assertion ids for
-   `@plugin:person-evidence`. The agent runs in fresh context and reads the
+   `@plugin:person-evidence`, the `h_`/`c_`/assertion ids at issue for
+   `@plugin:hypothesis-tracking`, the place and period for
+   `@plugin:locality-guide`. The agent runs in fresh context and reads the
    project itself; a delegation missing `projectPath` fails on its first tool
    call.
 

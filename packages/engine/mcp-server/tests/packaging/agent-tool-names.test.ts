@@ -607,6 +607,27 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // locality-guide (issue #2117) holds exactly the eleven tools the skill it
+  // replaced declared, plus `Read`: Step 6 persists only when research.json
+  // exists at the project path, and the narration line reads it.
+  "locality-guide.md": {
+    tools: [
+      "Read",
+      "collections_search",
+      "external_links_search",
+      "place_population",
+      "place_search",
+      "place_search_all",
+      "research_append",
+      "volume_search",
+      "wiki_place_page",
+      "wiki_read",
+      "wiki_search",
+      "wikipedia_search",
+    ],
+    denies: [],
+  },
+
   "search-images.md": {
     tools: [
       "Read",
@@ -655,6 +676,10 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // spawn (lead ruling 2026-09-23). `agent-tool-names.test.ts` fails a Task or
   // Agent grant outright; this comment records that the omission is deliberate
   // rather than an oversight.
+  "hypothesis-tracking.md": {
+    tools: ["Read", "research_append", "validate_research_schema"],
+    denies: [],
+  },
   "search-wikipedia.md": {
     tools: ["Write", "wikipedia_search"],
     denies: [],
