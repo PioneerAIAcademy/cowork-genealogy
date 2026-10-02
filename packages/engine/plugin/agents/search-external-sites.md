@@ -81,13 +81,15 @@ Each invocation does one of three things, and returns:
    logged, the plan item goes to `in_progress`, and you return the URL with the
    hand-off. With `userPresent: no`, follow "No user is waiting to capture"
    instead.
-2. **Triage** — a capture came back. Steps 5–7: match it to its `awaitingUser`
-   row, triage it, log the closing entry, update the plan item, and return the
-   numbered list. A "no access" reply is this invocation too, logged
-   `outcome: "error"`. **If no `awaitingUser` row matches**, the search was never
-   handed off: run steps 1–3 first (resolve the place, fetch the curated links,
-   check FamilySearch's holdings, build the URL without `projectPath`), then
-   triage.
+2. **Triage** — a capture came back, or the results are in the delegation.
+   1. Call `project_context` and look for the `awaitingUser` row whose
+      `urlGenerated` the results came from.
+   2. **No row matches** → the search was never handed off. Run steps 1–3 in
+      full first: `place_search`, `external_links_search`, `collections_search`,
+      then `build_external_search_url` without `projectPath`.
+   3. Steps 5–7: triage, log the closing entry, update the plan item, and
+      return the numbered list. A "no access" reply is this invocation too,
+      logged `outcome: "error"`.
 3. **Report** — the researcher reports a result without a capture, a nil
    included. Build the search's URL with `build_external_search_url` (step 3,
    without `projectPath`) — never write a URL yourself — then log the result
@@ -502,7 +504,8 @@ such entry in `awaitingUser` until a later entry for the same URL closes it.
 Then present the URL, with every note from the tool's response, and the
 **hand-off** in full — the researcher has to fetch this themselves, so give them:
 1. the URL, exactly as the tool returned it — character for character, never
-   shortened or rewritten;
+   shortened or rewritten — on a line of its own as plain text, not as the
+   target of a markdown link;
 2. what the record would settle, in plain words (for example: "her mother's name,
    from the three-generation family register");
 3. exactly what to look for — the register or volume, the folio or page, the
