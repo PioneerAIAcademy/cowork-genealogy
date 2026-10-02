@@ -20,7 +20,7 @@
     "packages/engine/plugin/agents/search-wikipedia.md": 6843,
     "packages/engine/plugin/agents/tree-edit.md": 30669,
     "packages/engine/plugin/agents/validate-schema.md": 4382,
-    "packages/engine/plugin/skills/conflict-resolution/SKILL.md": 27776,
+    "packages/engine/plugin/skills/conflict-resolution/SKILL.md": 29118,
     "packages/engine/plugin/skills/forget-and-rederive/SKILL.md": 13208,
     "packages/engine/plugin/skills/historical-context/SKILL.md": 15449,
     "packages/engine/plugin/skills/hypothesis-tracking/SKILL.md": 13498,
