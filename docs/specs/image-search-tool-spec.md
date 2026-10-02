@@ -310,13 +310,13 @@ all other authenticated tools. Do not re-implement token plumbing.
 | `item` / `itemImage` not an integer ≥ 1 | Throw, naming the parameter and the value |
 | `itemImage` without `item` | Throw |
 | `item` with a split `imageGroupNumber` | Throw: the split form already is one item |
-| A key not in the schema that looks like an address (see Within-item addressing) | Throw, naming the key: "image_search has no parameter `limit`; to address one item use `item` / `itemImage`" |
+| A key not in the schema that looks like an address (see Within-item addressing) | Throw, naming the key: "image_search has no parameter `limit`; to address one item use `item` / `itemImage`, or drop it to list the whole group." |
 | `item` beyond the film's image groups | Throw, naming the range: `film {dgs} has {K} items with images; item must be 1–{K}` |
 | Bare film with no image-bearing child group | Throw: `film {dgs} is not split into items; call image_search without item` |
 | A child at or before the target refused, failed, or all-null | Throw, naming the child: positions after it are unknown |
 | `itemImage` beyond the item | Throw, naming the range: `item {N} has {M} images; itemImage must be 1–{M}` |
 | `itemImage` given, and the item's list is still missing entries after the defect retry | Throw: a gap shifts every later image, so counts within the item are unknown. Without `itemImage` the short list is returned, as a browse |
-| 45 s deadline passed on the `item` path (a request is not started with under 1 s left; a failure landing after the deadline counts as the deadline) | Throw, saying how far the resolution got |
+| 45 s deadline (or the caller's lower `timeoutMs`) passed on the `item` path (a request is not started with under 1 s left; a failure landing after the deadline counts as the deadline) | Throw, saying how far the resolution got |
 | Group name lookup refused or failed | Not an error: position-built name, `place: null` |
 
 ---
@@ -375,10 +375,9 @@ npx tsx dev/try-image-search.ts 007621224                # bare form (apid path)
 npx tsx dev/try-image-search.ts 004528134 5 10           # item 5, image 10 → 004528134_00632
 ```
 
-> No confirmed live examples yet — verifying the live request/response
-> (including whether `children/names` paginates for large volumes) is
-> part of implementation. `M922-722` (from `image-search.txt`) and
-> `007621224_005_M99P-2TQ` are reasonable starting fixtures.
+> Live-confirmed 2026-10-02 for the bare, split and `item` paths on 004528134
+> (see Resolution logic). Whether `children/names` paginates for very large
+> volumes is still unverified.
 
 ---
 
