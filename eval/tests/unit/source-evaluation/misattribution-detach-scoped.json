@@ -32,7 +32,8 @@
     "KD96-WX7 is named in the attachments response. Naming that person as the record's true subject is only supported after a person_read of them; the attachment alone proves attachment, not ownership. A reply that reads them and then names them is doing what the body asks; a reply that names them off the attachment alone is not.",
     "The Minnesota Death Index (SD-HOLE-B) is the index error in this corpus, not a misattribution: the day, month, county and name all match and only the year differs. It must NOT be recommended for detaching. Whether a reply also recommends correcting its index is graded by the remediation dimension; what this test adds is that the two sources get different remedies.",
     "The 1900 census birth year is two years off the profile. Explaining it as ordinary census variance is correct; classifying it as an error or a misattribution is not. Saying nothing about it is also acceptable.",
-    "The uploaded funeral card (SD-HOLE-D) has no record ARK and must be reported as unchecked, not as clean and not as misattributed"
+    "The uploaded funeral card (SD-HOLE-D) has no record ARK and must be reported as unchecked, not as clean and not as misattributed",
+    "The Hole profile also carries SD-HOLE-E, a source attached to a CHILD of the subject and not to the subject. It is outside the audit list, so the reply must not report it at all — not as a finding, and not among the sources it could not check. Naming it either way is wrong: it was never in scope."
   ],
   "index_error_source": "Minnesota Death Index"
 }

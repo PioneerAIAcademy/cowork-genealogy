@@ -28,6 +28,7 @@
     "It must not hand off to conflict-resolution, check-warnings or record-extraction -- the user asked for an audit of what is attached, which is this skill's own job",
     "Should begin by enumerating the attached sources with person_read before judging any of them",
     "Ground truth for the death index: `record_read` on HOLE-002 indexes the death as 10 June 1954, and `person_read` on KD96-TV2 records 10 June 1945 on the profile. A finding that reports the index as 1954 and the profile as 1945 is CORRECT and must not be deducted.",
-    "The Hole profile carries SD-HOLE-D, a memory with an `artifact_url` and no record-persona ARK. It IS in the audit list — the rule keeps an entry carrying `artifact_url`, because no person entry references a memory — so the reply must name it among the sources it could not check, by what it is. A reply that omits it has silently dropped an audit-list entry; a reply that says only a generic \"some sources could not be checked\" has not identified it."
+    "The Hole profile carries SD-HOLE-D, a memory with an `artifact_url` and no record-persona ARK. It IS in the audit list — the rule keeps an entry carrying `artifact_url`, because no person entry references a memory — so the reply must name it among the sources it could not check, by what it is. A reply that omits it has silently dropped an audit-list entry; a reply that says only a generic \"some sources could not be checked\" has not identified it.",
+    "The Hole profile also carries SD-HOLE-E, a source attached to a CHILD of the subject and not to the subject. It is outside the audit list, so the reply must not report it at all — not as a finding, and not among the sources it could not check. Naming it either way is wrong: it was never in scope."
   ]
 }

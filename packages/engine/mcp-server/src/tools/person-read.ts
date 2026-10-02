@@ -1243,8 +1243,11 @@ function toTreeSourceRef(r: { ref?: string; page?: string; quality?: number }): 
  * URLs to descriptions FamilySearch does not return in this body (0/102 and
  * 2/79 resolve), and a `SD_*` target is filtered out of `sources[]`. Carrying
  * relatives' own sources is what the relatives-sources phase above now does: it fetches
- * those descriptions and rewrites the refs to bare ids BEFORE this runs, so they resolve
- * here instead of being dropped. Run this after that merge, never before.
+ * those descriptions BEFORE this runs, so they resolve here instead of being dropped.
+ * The ref itself is rewritten earlier still, at conversion time — `simplifySourceRef`
+ * prefers `descriptionId` over the full-URL `description` (`gedcomx-convert.ts`), which
+ * is what makes a relative's ref comparable to a description id at all. Run this after
+ * the merge, never before.
  */
 function keepResolvablePersonSourceRefs(result: PersonReadResult): void {
   const ids = new Set(result.sources.map((s) => s.id));

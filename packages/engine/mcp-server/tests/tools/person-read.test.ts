@@ -1872,7 +1872,8 @@ describe("personReadTool relatives' attached sources (#1689 Half 3)", () => {
   });
 
   it("a failed relative fetch returns the tree read unchanged, and does not throw", async () => {
-    // Acceptance #5: fail-soft, silent to the agent. This is what test 29 has been
+    // Fail-soft: the tree read survives. NOT silent — the skipped relative is named
+    // in top-level `notes[]` (asserted separately). This is what test 29 has been
     // exercising since the feature landed — the fetch falls through and nothing changes.
     mockOk(bodyWithRelativeRef());
     mockFetch.mockRejectedValueOnce(new Error("upstream down"));

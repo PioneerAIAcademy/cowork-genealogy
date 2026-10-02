@@ -1038,7 +1038,7 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 | 31 | The living 204 stub carries no `sources` key | Living person |
 | 32 | Fetches a relative's attached descriptions and KEEPS the ref that would otherwise dangle | Relatives' sources |
 | 33 | Top level stays exactly `{persons, relationships, sources}` with relatives' sources merged | No discriminator |
-| 34 | A failed relative read returns the tree read unchanged and does not throw | Fail-soft |
+| 34 | A failed relative read returns the tree read with the subject's own sources intact, and does not throw | Fail-soft |
 | 35 | A relative with no attached refs costs no call | No speculative reads |
 | 36 | A source shared by two relatives appears once | Dedupe |
 | 37 | The subject's own sources are not re-fetched | Already in the body |

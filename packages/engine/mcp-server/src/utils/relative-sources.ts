@@ -35,6 +35,7 @@
  */
 import type { Principal } from "../auth/principal.js";
 import type { GedcomXSourceDescription } from "../types/gedcomx.js";
+import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetch } from "./fs-fetch.js";
 import { mapWithConcurrency } from "./place-resolver.js";
 
@@ -72,7 +73,18 @@ async function fetchOne(
     const res = await fsFetch(
       principal,
       `${TREE_BASE}/${encodeURIComponent(personId)}/sources`,
-      { headers: { Accept: ACCEPT_HEADER, "Accept-Language": "en" } },
+      {
+        headers: {
+          Accept: ACCEPT_HEADER,
+          "Accept-Language": "en",
+          // Same host as the memories fetch, which sends this for the reason
+          // CLAUDE.md records: FamilySearch sits behind Imperva, which 403s a
+          // non-browser UA. The probe got 3/3 without it, so this is consistency
+          // with the sibling call rather than a reproduced failure — but the
+          // sibling added it after one.
+          "User-Agent": BROWSER_USER_AGENT,
+        },
+      },
       Math.min(RELATIVE_READ_TIMEOUT_MS, left),
     );
     // 204 is a person with no sources — an answer, not a failure.

@@ -66,20 +66,26 @@
         ]
       },
       {
-        "id": "REL-0001",
+        "id": "K2QT-DR4",
         "gender": "Male",
         "living": false,
         "names": [
           {
-            "given": "Honora",
+            "given": "Jeremiah",
             "surname": "Driscoll",
             "preferred": true
           }
         ],
-        "facts": [],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "1849",
+            "standard_date": "1849"
+          }
+        ],
         "sources": [
           {
-            "ref": "SD-REL-9WD"
+            "ref": "SD-DRIS-H"
           }
         ]
       }
@@ -87,12 +93,9 @@
     "relationships": [
       {
         "type": "ParentChild",
-        "person1": {
-          "resource": "#GJ72-9WD"
-        },
-        "person2": {
-          "resource": "#REL-0001"
-        }
+        "parent": "GJ72-9WD",
+        "child": "K2QT-DR4",
+        "subtype": "Biological"
       }
     ],
     "sources": [
@@ -143,10 +146,10 @@
         "url": "https://familysearch.org/ark:/61903/1:1:DRIS-006"
       },
       {
-        "id": "SD-REL-9WD",
-        "title": "Honora Driscoll, \"Ireland Civil Registration, 1845-1913\"",
-        "citation": "\"Ireland Civil Registration, 1845-1913,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:REL-9999 : accessed 1 October 2026), Honora Driscoll, 1872; citing Birth, Skibbereen, Cork, Ireland.",
-        "url": "https://www.familysearch.org/ark:/61903/1:1:REL-9999"
+        "id": "SD-DRIS-H",
+        "title": "Jeremiah Driscoll, \"Ireland, Catholic Parish Registers, 1655-1915\"",
+        "citation": "\"Ireland, Catholic Parish Registers, 1655-1915,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MJ4T-2QB : accessed 1 October 2026), Jeremiah Driscoll, baptised 3 Feb 1849; citing Skibbereen, Cork, Ireland.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MJ4T-2QB"
       }
     ]
   }

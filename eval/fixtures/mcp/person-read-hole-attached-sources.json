@@ -59,20 +59,26 @@
         ]
       },
       {
-        "id": "REL-0001",
-        "gender": "Female",
+        "id": "K2QT-BH1",
+        "gender": "Male",
         "living": false,
         "names": [
           {
-            "given": "Bergit",
+            "given": "Sivert",
             "surname": "Hole",
             "preferred": true
           }
         ],
-        "facts": [],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "1903",
+            "standard_date": "1903"
+          }
+        ],
         "sources": [
           {
-            "ref": "SD-REL-TV2"
+            "ref": "SD-HOLE-E"
           }
         ]
       }
@@ -80,12 +86,9 @@
     "relationships": [
       {
         "type": "ParentChild",
-        "person1": {
-          "resource": "#KD96-TV2"
-        },
-        "person2": {
-          "resource": "#REL-0001"
-        }
+        "parent": "KD96-TV2",
+        "child": "K2QT-BH1",
+        "subtype": "Biological"
       }
     ],
     "sources": [
@@ -118,10 +121,10 @@
         "artifact_url": "https://sg30p0.familysearch.org/service/memories/SD-HOLE-D"
       },
       {
-        "id": "SD-REL-TV2",
-        "title": "Bergit Hole, \"Norway Baptisms, 1634-1927\"",
-        "citation": "\"Norway Baptisms, 1634-1927,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:REL-9999 : accessed 1 October 2026), Bergit Hole, 12 Mar 1861; citing Baptism, Ringebu, Oppland, Norway.",
-        "url": "https://www.familysearch.org/ark:/61903/1:1:REL-9999"
+        "id": "SD-HOLE-E",
+        "title": "Sivert Hole, \"Minnesota, County Marriages, 1860-1949\"",
+        "citation": "\"Minnesota, County Marriages, 1860-1949,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MH7Q-9KZ : accessed 1 October 2026), Sivert Hole and Anna Lund, 14 Jun 1927; citing Polk, Minnesota, United States.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MH7Q-9KZ"
       }
     ]
   }

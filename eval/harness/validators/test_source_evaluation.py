@@ -394,6 +394,15 @@ def test_quality_detail_call_carries_detail_flag(tool_calls, test):
     )
 
 
+#: ARKs that belong to a RELATIVE's own source in the two source-evaluation
+#: fixtures, and to nothing else. Deliberately unremarkable: an earlier revision
+#: used `1:1:REL-9999` on a person `REL-0001` with source `SD-REL-*`, so a model
+#: could skip the entry by reading "REL" in the id and never apply the audit-list
+#: rule at all -- and this validator could not tell that apart from the rule
+#: working.
+RELATIVE_ONLY_ARKS = ("MH7Q-9KZ", "MJ4T-2QB")
+
+
 def test_a_relatives_source_is_not_audited(tool_calls, test):
     """A relative's attached source must never be `record_read` as the subject's.
 
@@ -404,16 +413,16 @@ def test_a_relatives_source_is_not_audited(tool_calls, test):
     recommends detaching a record that is "about a different person" -- which a
     sibling's record correctly is, so the advice is wrong and confident.
 
-    The fixtures carry one relative source, `SD-REL-*`, pointing at
-    `1:1:REL-9999`. Nothing else grades which sources were read, so without this
-    the relative in the fixture tests nothing.
+    Each fixture carries one relative-only source (`SD-HOLE-E` / `SD-DRIS-H`),
+    whose ARK appears nowhere else. Nothing else grades WHICH sources were
+    read, so without this the planted relative tests nothing.
     """
     read_arks = [
         str((c.get("args") or {}).get("url") or (c.get("args") or {}).get("recordId") or "")
         for c in (tool_calls or [])
         if (c.get("tool") or "").rsplit("__", 1)[-1] == "record_read"
     ]
-    audited = [a for a in read_arks if "REL-9999" in a]
+    audited = [a for a in read_arks if any(k in a for k in RELATIVE_ONLY_ARKS)]
     assert not audited, (
         "a RELATIVE's attached source was audited as the subject's: "
         f"{audited}. `person_read`'s `sources[]` carries the relatives' sources too; "
