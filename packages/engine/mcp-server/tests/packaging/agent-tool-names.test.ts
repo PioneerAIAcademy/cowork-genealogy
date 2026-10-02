@@ -578,8 +578,10 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
 
   // Read-only by contract: it reports project state and never writes. It calls
   // no MCP tool at all — `eval/harness/validators/test_project_status.py`
-  // enforces that — so `Read` is the whole grant, and this is the first agent
-  // to hold only built-in tools (issue #2793).
+  // enforces that — so `Read` is the whole grant (issue #2793). `translation.md`
+  // holds the same shape, so both are skipped by `noMcpByDesign` below; neither
+  // can be covered by the "parses at least one MCP entry" arm, because there is
+  // no MCP entry to parse.
   "project-status.md": {
     tools: ["Read"],
     denies: [],
