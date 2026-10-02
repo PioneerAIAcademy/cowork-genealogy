@@ -153,15 +153,24 @@ def test_filtered_nil_retry_passes_when_filtered_call_returns_results():
     check_filtered_nil_retry([c])
 
 
-def test_filtered_nil_retry_passes_when_positive_overlapping_term_exists():
-    """Validator passes when a spelling variant's nil is covered by a positive result
-    sharing a required term. E.g. +Flinn returned nil but +Flynn found results — the
-    topic is resolved and no retry for +Flinn is needed."""
+def test_filtered_nil_variant_is_not_covered_by_the_canonical_spelling():
+    """SKILL.md step 4: a variant's filtered nil needs its own unfiltered retry."""
     calls = [
-        _unfiltered_call("+Flynn +witness"),  # positive result
-        _filtered_nil_call("+Flinn +witness", recordPlace1="Pennsylvania"),  # variant, no retry needed
+        _unfiltered_call("+Flynn +witness"),
+        _filtered_nil_call("+Flinn +witness", recordPlace1="Pennsylvania"),
     ]
-    check_filtered_nil_retry(calls)
+    with pytest.raises(AssertionError):
+        check_filtered_nil_retry(calls)
+
+
+def test_filtered_nil_is_not_covered_by_a_broader_positive_search():
+    """A positive +Flynn search does not retry the +Flynn +Patrick nil."""
+    calls = [
+        _unfiltered_call("+Flynn"),
+        _filtered_nil_call("+Flynn +Patrick", recordPlace1="Pennsylvania"),
+    ]
+    with pytest.raises(AssertionError):
+        check_filtered_nil_retry(calls)
 
 
 # --- test_plan_item_completion_matches_its_own_record_type --------------
