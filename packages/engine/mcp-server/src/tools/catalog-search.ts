@@ -29,6 +29,11 @@ const SEARCH_URL =
 const ITEM_URL_PREFIX =
   "https://www.familysearch.org/service/search/catalog/item/";
 
+/** A catalogue holding is a record, not a prediction: nothing is filmed from
+ *  before the first millennium and nothing is catalogued far ahead of now. */
+const MIN_YEAR = 1000;
+const MAX_YEAR = 2200;
+
 const DEFAULT_COUNT = 25;
 const MAX_COUNT = 200;
 const DEFAULT_HYDRATE = 10;
@@ -44,6 +49,20 @@ const HEADERS: Record<string, string> = {
   Accept: "application/json",
   "User-Agent": BROWSER_USER_AGENT,
 };
+
+/** Every field that becomes a `q.*` filter. A superset of SEARCHABLE:
+ *  `availability` narrows but cannot make a query searchable on its own. */
+const QUERY_FIELDS = [
+  "standardPlace",
+  "keywords",
+  "surname",
+  "title",
+  "author",
+  "subject",
+  "filmNumber",
+  "callNumber",
+  "availability",
+] as const;
 
 const SEARCHABLE = [
   "standardPlace",
@@ -84,6 +103,19 @@ function asArray(value: unknown): Collapsed[] {
  *  `asArray` preserves a bare-string collapse as `{ text }`, so a reader that
  *  checks only `.value` loses exactly the shape asArray went to the trouble
  *  of keeping. */
+/** The first real object in a collapsed container. `item.source` is the
+ *  PARENT of note/author/subject/film_note — all four are defended against
+ *  the object-for-one / array-for-several collapse and their container was
+ *  not, so `source: [{...}]` reported `hydrated: true` with every field
+ *  empty: "not filmed, not online, no notes", the opposite of the truth and
+ *  indistinguishable from a genuinely detail-free item. */
+function firstObject(v: unknown): Record<string, unknown> | undefined {
+  const list = Array.isArray(v) ? v : [v];
+  return list.find(
+    (x): x is Record<string, unknown> => typeof x === "object" && x !== null,
+  );
+}
+
 function textOf(v: Collapsed | undefined): string | undefined {
   return str(v?.value) ?? str(v?.text);
 }
@@ -170,20 +202,70 @@ function buildQuery(
  *  bearer to whatever it is handed. Refuse anything we did not measure. */
 function itemUrlOf(identifier: unknown): string | undefined {
   const v = typeof identifier === "string" ? identifier : undefined;
-  return v && v.startsWith(ITEM_URL_PREFIX) ? v : undefined;
+  // Longer than the prefix, not merely starting with it: the bare prefix
+  // passes a startsWith check, yields `id: ""` for the citation, and spends a
+  // hydration slot on a request that can only 404.
+  return v && v.length > ITEM_URL_PREFIX.length && v.startsWith(ITEM_URL_PREFIX)
+    ? v
+    : undefined;
+}
+
+function isRslink(n: Collapsed | undefined): boolean {
+  return String(n?.type ?? "") === "RSLINK";
+}
+
+/** `http` or `https`, with or without `www.` — the hardcoded `https://www.`
+ *  made either variant fall out of both `digitalLibraryUrl` and `notes`. */
+const DIGITAL_LIBRARY_RE =
+  /https?:\/\/(?:www\.)?familysearch\.org\/library\/books\/idurl\/[^"'<\s]+/;
+
+/** Anchor markup is not prose. Kept deliberately crude: this runs on a
+ *  catalogue note, never on anything executed or re-rendered. */
+function stripTags(text: string): string {
+  return text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/** A note as readable text. An unconsumed RSLINK keeps its href alongside its
+ *  link text — stripping the markup alone would drop the URL, which for an
+ *  Archive.org or non-library FamilySearch link is the whole content of the
+ *  note and the item's only online-access information. */
+function renderNote(n: Collapsed | undefined): string {
+  const raw = textOf(n) ?? "";
+  const text = stripTags(raw);
+  if (!isRslink(n)) return text;
+  const href = /href\s*=\s*["']([^"']+)["']/i.exec(raw)?.[1];
+  if (!href) return text;
+  return text && text !== href ? `${text} (${href})` : href;
 }
 
 function hydrateFromSource(hit: CatalogHit, source: Record<string, unknown>): void {
   const notes = asArray(source.note);
-  // An RSLINK note is an anchor tag, not holdings prose. It is surfaced as
-  // digitalLibraryUrl below; leaving it in `notes` handed the LLM raw
-  // `<a href="...">` markup to quote as if it were text.
+
+  // A digitized book has no film at all; its link is HTML inside an RSLINK
+  // note. Extracted BEFORE `notes` is built, because which RSLINK notes were
+  // consumed decides which stay. FIRST match wins: the field holds one URL.
+  for (const n of notes) {
+    if (!isRslink(n)) continue;
+    const m = DIGITAL_LIBRARY_RE.exec(textOf(n) ?? "");
+    if (m) {
+      hit.digitalLibraryUrl = m[0];
+      break;
+    }
+  }
+
+  // Only the RSLINK note that BECAME digitalLibraryUrl is dropped. Filtering
+  // every RSLINK assumed the regex below caught them all, and the two are not
+  // the same set: an Archive.org link, or an `http://`/www-less FamilySearch
+  // one, vanished from `notes` AND produced no url — the item's only
+  // online-access information gone while the hit read `hydrated: true`.
+  // Markup is stripped rather than passed through: raw `<a href>` handed to
+  // the LLM reads as prose.
   // `textOf` everywhere below: written out by hand, `notes` read `.text`
   // before `.value` while authors/subjects/title read `.value` first, so one
   // element carrying both spellings was read two different ways.
   hit.notes = notes
-    .filter((n) => String(n?.type ?? "") !== "RSLINK")
-    .map((n) => textOf(n) ?? "")
+    .filter((n) => !(isRslink(n) && textOf(n)?.includes(hit.digitalLibraryUrl ?? "\u0000")))
+    .map(renderNote)
     .filter(Boolean);
   hit.authors = asArray(source.author).map((a) => textOf(a) ?? "").filter(Boolean);
   hit.subjects = asArray(source.subject).map((x) => textOf(x) ?? "").filter(Boolean);
@@ -208,24 +290,15 @@ function hydrateFromSource(hit: CatalogHit, source: Record<string, unknown>): vo
       if (v) note[key] = v;
     }
     return note;
-  });
+  })
+    // A note carrying only blank or unmapped keys becomes `{}`, which claims
+    // the item was filmed while naming neither the film nor the DGS — the
+    // same shape the unquoted-number fix closed, by a different route.
+    .filter((n) => Object.keys(n).length > 0);
 
   const online = source.available_online;
   if (typeof online === "boolean") hit.availableOnline = online;
   else if (str(online)) hit.availableOnline = String(online).toUpperCase() === "Y";
-  // A digitized book has no film at all; its link is HTML inside an RSLINK note.
-  for (const n of notes) {
-    if (String(n?.type ?? "") !== "RSLINK") continue;
-    const m = /https:\/\/www\.familysearch\.org\/library\/books\/idurl\/[^"'<\s]+/.exec(
-      String(n?.text ?? n?.value ?? ""),
-    );
-    // FIRST match wins and stops: the field holds one URL, and running on
-    // kept whichever happened to be last in the collapsed array.
-    if (m) {
-      hit.digitalLibraryUrl = m[0];
-      break;
-    }
-  }
   hit.hydrated = true;
 }
 
@@ -256,16 +329,23 @@ export async function catalogSearchTool(
         `to ${MAX_COUNT}.`,
     );
   }
-  // Every other field is type-guarded through `searchableValue`; this one was
-  // read raw, so an object/array/number reached `normalizeKey` and surfaced
-  // `s.trim is not a function` to the agent.
-  const place = searchableValue(input.standardPlace);
-  if (input.standardPlace !== undefined && place === undefined) {
-    throw new Error(
-      `standardPlace is ${JSON.stringify(input.standardPlace)}; it must be a ` +
-        "non-blank place name, e.g. 'Maine, United States'.",
-    );
+  // EVERY query-carrying field, not just the ones that make a query
+  // searchable. Dropping an unusable field silently widens the answer: with
+  // `{ standardPlace: "Maine, United States", keywords: {} }` the keywords
+  // vanished and the agent got the top 25 of all 3,902 Maine items back as
+  // the answer to "Maine + parish registers", with placeResolved: true and
+  // nothing saying a filter had been dropped. An earlier fix closed only the
+  // case where EVERY field was unusable.
+  for (const field of QUERY_FIELDS) {
+    if (input[field] !== undefined && searchableValue(input[field]) === undefined) {
+      throw new Error(
+        `${field} is ${JSON.stringify(input[field])}; it must be a non-blank ` +
+          "string. The Catalog cannot carry that value, and dropping it " +
+          "would silently widen the answer.",
+      );
+    }
   }
+  const place = searchableValue(input.standardPlace);
   if (input.exactPlace && place === undefined) {
     // Silently dropping it returned the wider set with nothing saying so, and
     // the agent read the hit count as an answer to a narrower question.
@@ -274,12 +354,19 @@ export async function catalogSearchTool(
         "standardPlace beside it; given alone the Catalog refuses the query.",
     );
   }
-  if (input.year !== undefined && !Number.isInteger(input.year)) {
-    // `typeof NaN === "number"`, so without this `q.year=NaN` goes on the
-    // wire and buys a 400 plus an agent turn.
+  // Integrality is not enough: `1e21` IS an integer and reaches the wire as
+  // `q.year=1e%2B21`, which costs the same 400 and the same agent turn the
+  // NaN case was guarded against. `0` and `-1850` likewise.
+  if (
+    input.year !== undefined &&
+    (!Number.isInteger(input.year) ||
+      input.year < MIN_YEAR ||
+      input.year > MAX_YEAR)
+  ) {
     throw new Error(
-      `year is ${JSON.stringify(input.year)}; it must be a whole year, ` +
-        "not a decade, a range or a fraction.",
+      `year is ${JSON.stringify(input.year)}; it must be a whole year ` +
+        `between ${MIN_YEAR} and ${MAX_YEAR}, not a decade, a range or a ` +
+        "fraction.",
     );
   }
   const hydrate = input.hydrate ?? DEFAULT_HYDRATE;
@@ -362,7 +449,26 @@ export async function catalogSearchTool(
     );
   }
 
-  const body = (await res.json()) as SearchBody;
+  // Guarded: every non-2xx path in this file is framed for the LLM and the
+  // 2xx-but-unparseable one was not. Imperva fronts this host, and answering
+  // 200 with a challenge page is its ordinary behaviour — the exact thing the
+  // `Accept` header exists to prevent, with no fallback if it is ignored. A
+  // raw `SyntaxError: Unexpected token '<'` names neither the Catalog nor an
+  // action. A body of literal `null` parses fine and then fails on property
+  // access, so the shape is checked too.
+  let body: SearchBody;
+  try {
+    const parsed: unknown = await res.json();
+    if (!parsed || typeof parsed !== "object") throw new Error("not an object");
+    body = parsed as SearchBody;
+  } catch {
+    throw new Error(
+      "FamilySearch Catalog answered 200 with a body that is not JSON. This " +
+        "is usually an edge challenge or interstitial page rather than the " +
+        "Catalog itself, so retrying shortly is the fix; the query was not " +
+        "refused and does not need changing.",
+    );
+  }
   // `searchHits` collapses to a bare object for a one-hit answer exactly as
   // its children do — a precise query (a film number) is the common way to
   // get one — and `.map` on it threw the whole search away.
@@ -391,7 +497,13 @@ export async function catalogSearchTool(
       repositoryCalls: [
         ...new Set(
           asArray(m.repositoryCalls)
-            .map((r) => str(r?.title) ?? textOf(r) ?? "")
+            // `title` can itself be a collapsed element ({ value: "Online" }),
+            // and dropping it loses the access signal the spec calls the one
+            // useful field a search hit carries.
+            .map(
+              (r) =>
+                str(r?.title) ?? textOf(asArray(r?.title)[0]) ?? textOf(r) ?? "",
+            )
             .filter(Boolean),
         ),
       ],
@@ -422,7 +534,13 @@ export async function catalogSearchTool(
     // cannot silently turn one tool call into 200 parallel requests.
     const work = mapWithConcurrency(targets, hydrate, async (hit) => {
       const remaining = deadline - Date.now();
-      // Never start work the budget cannot pay for.
+      // A BACKSTOP, not a reachable branch, and so asserted by no test:
+      // every task starts in the same tick as the pre-check above, which
+      // already returns when the budget is gone. It covers only the window
+      // where the clock crosses the deadline between the two. Kept because
+      // the alternative is issuing a request with a timeout of 0, whose
+      // abort reads "timed out after 0ms". Deleting it reds nothing — said
+      // here so that is a known property rather than a later discovery.
       if (remaining <= 0) return;
       try {
         // attempts: 1. fetchWithRetry defaults to 3 and retries every
@@ -450,7 +568,8 @@ export async function catalogSearchTool(
         // call returns different data depending on how the event loop was
         // scheduled. Discard anything that arrives past the budget.
         if (Date.now() >= deadline) return;
-        if (item.source) hydrateFromSource(hit, item.source);
+        const src = firstObject(item.source);
+        if (src) hydrateFromSource(hit, src);
       } catch {
         // One bad item must not fail the search.
       }
@@ -471,8 +590,20 @@ export async function catalogSearchTool(
     }
   }
 
+  // Coerced and floored at `returned`: an absent field defaulted to 0, so a
+  // body of `{ searchHits: [oneHit] }` answered "0 hits exist" alongside a
+  // non-empty array, and a quoted "803" passed straight through a field its
+  // own contract types as a number. totalHits is what tells the agent its
+  // query was too broad or too narrow — the number the whole spec is argued
+  // in — so a contradictory one is worse than a conservative one.
+  const upstreamTotal = Number(body.totalHits);
+  const totalHits =
+    Number.isFinite(upstreamTotal) && upstreamTotal >= hits.length
+      ? upstreamTotal
+      : hits.length;
+
   return {
-    totalHits: body.totalHits ?? 0,
+    totalHits,
     returned: hits.length,
     // Boolean(repId), matching buildQuery's own `if (repId)`: `"" !== null`
     // reported the place as resolved while the query used the name fallback.

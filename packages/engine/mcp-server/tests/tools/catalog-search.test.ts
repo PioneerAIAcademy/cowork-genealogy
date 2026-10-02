@@ -657,7 +657,7 @@ describe("catalog_search — the place input", () => {
     // `s.trim is not a function` to the agent.
     await expect(
       catalogSearchTool({ keywords: "x", standardPlace: value } as never, LOCAL),
-    ).rejects.toThrow(/standardPlace is .*non-blank place name/s);
+    ).rejects.toThrow(/standardPlace is .*non-blank string/s);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
@@ -758,6 +758,279 @@ describe("catalog_search — reader consistency", () => {
   });
 });
 
+describe("catalog_search — numbers the suite never looked at", () => {
+  it("reports totalHits and returned as different numbers", async () => {
+    // EVERY fixture set totalHits === searchHits.length, the one combination
+    // that cannot tell the two apart — and a combination never true in
+    // production, which is the whole reason `count` exists. Swapping the two
+    // fields left all 74 tests green.
+    respond(
+      { totalHits: 803, searchHits: [hit("koha:1"), hit("koha:2")] },
+      { source: {} },
+      { source: {} },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.totalHits).toBe(803);
+    expect(r.returned).toBe(2);
+  });
+
+  it.each([
+    ["absent", undefined, 1],
+    ["a quoted number", "803", 803],
+    ["smaller than the hits beside it", 0, 1],
+  ])("never contradicts the hits when totalHits is %s", async (_l, raw, want) => {
+    respond(
+      { ...(raw === undefined ? {} : { totalHits: raw }), searchHits: [hit("koha:1")] },
+      { source: {} },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.totalHits).toBe(want);
+    expect(typeof r.totalHits).toBe("number");
+  });
+
+  it("defaults count to 25 and hydrate to 10", async () => {
+    // Both constants were pinned by nothing: every test passed them
+    // explicitly, so changing DEFAULT_HYDRATE to 25 left the suite green —
+    // the one number the spec defends hardest.
+    respond({
+      totalHits: 40,
+      searchHits: Array.from({ length: 40 }, (_, i) => hit(`koha:${i}`)),
+    });
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(new URL(searchUrl()).searchParams.get("count")).toBe("25");
+    expect(mockFetch.mock.calls.length - 1).toBe(10); // item calls
+    expect(r.hydrateRequested).toBe(10);
+  });
+
+  it("reports hydrateRequested as asked, not as attempted", async () => {
+    // Both existing assertions used hydrate: 1 against exactly one usable
+    // target, where `hydrate` and `targets.length` coincide; they differ
+    // whenever fewer hits come back than were asked for, which is the common
+    // case with the defaults.
+    respond({ totalHits: 1, searchHits: [hit("koha:1")] }, { source: {} });
+    const r = await catalogSearchTool({ keywords: "x", hydrate: 5 }, LOCAL);
+    expect(r.hydrateRequested).toBe(5);
+    expect(r.hits).toHaveLength(1);
+  });
+
+  it("caps each leg's timeout at the remaining budget", async () => {
+    // The spec calls both load-bearing; neither was observed, because the
+    // budget tests' mocks ignore the abort signal entirely. Dropping either
+    // argument falls back to the 30s default and left the suite green.
+    const spy = vi.spyOn(AbortSignal, "timeout");
+    respond({ totalHits: 1, searchHits: [hit("koha:1")] }, { source: {} });
+    await catalogSearchTool({ keywords: "x", hydrate: 1 }, LOCAL);
+    const budgets = spy.mock.calls.map((c) => c[0]);
+    expect(budgets).toHaveLength(2); // search, then one item
+    // Both are the remaining budget, not the 30s default.
+    for (const b of budgets) expect(b).toBeGreaterThan(30_000);
+    expect(budgets[0]).toBeLessThanOrEqual(50_000);
+    expect(budgets[1]).toBeLessThanOrEqual(budgets[0]);
+  });
+
+  it("returns the creator from a search hit, in every collapse shape", async () => {
+    // `creator` is one quarter of the pre-hydration answer and the string
+    // never appeared in this file; deleting its spread left the suite green.
+    respond({
+      totalHits: 3,
+      searchHits: [
+        { metadataHit: { metadata: { title: [{ value: "A" }], creator: [{ value: "Smith, John" }], identifier: { value: `${ITEM}koha:1` }, repositoryCalls: [] } } },
+        { metadataHit: { metadata: { title: [{ value: "B" }], creator: "Bare String", identifier: { value: `${ITEM}koha:2` }, repositoryCalls: [] } } },
+        { metadataHit: { metadata: { title: [{ value: "C" }], identifier: { value: `${ITEM}koha:3` }, repositoryCalls: [] } } },
+      ],
+    });
+    const r = await catalogSearchTool({ keywords: "x", hydrate: 0 }, LOCAL);
+    expect(r.hits[0].creator).toBe("Smith, John");
+    expect(r.hits[1].creator).toBe("Bare String");
+    expect(r.hits[2].creator).toBeUndefined();
+  });
+});
+
+describe("catalog_search — shapes found by the fourth review", () => {
+  it("hydrates from a source that collapsed to an array", async () => {
+    // `source` is the PARENT of the four fields already defended against
+    // this collapse. It reported hydrated: true with every field empty —
+    // "not filmed, not online, no notes" — with the film number sitting in
+    // the payload.
+    respond(
+      { totalHits: 1, searchHits: [hit("koha:1")] },
+      { source: [{ note: { text: "n1" }, film_note: { filmno: "111" } }] },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.hits[0].filmNotes?.[0].filmNumber).toBe("111");
+    expect(r.hits[0].notes).toEqual(["n1"]);
+  });
+
+  it("does not claim hydration from a source that is not an object", async () => {
+    respond(
+      { totalHits: 1, searchHits: [hit("koha:1")] },
+      { source: "a string" },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.hits[0].hydrated).toBe(false);
+  });
+
+  it("keeps an RSLINK that is not a digital-library link, with its url", async () => {
+    // Filtering every RSLINK assumed the regex caught them all. It does not:
+    // the Archive.org link vanished from `notes` AND produced no url, so the
+    // item's only online-access information disappeared.
+    respond(
+      { totalHits: 1, searchHits: [hit("koha:1")] },
+      { source: { note: [
+        { type: "RSLINK", text: '<a href="https://archive.org/details/foo">Full text at Archive.org</a>' },
+        { text: "prose" },
+      ] } },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.hits[0].notes).toEqual([
+      "Full text at Archive.org (https://archive.org/details/foo)",
+      "prose",
+    ]);
+  });
+
+  it.each([
+    ["http, no www", "http://familysearch.org/library/books/idurl/1/555"],
+    ["https, no www", "https://familysearch.org/library/books/idurl/1/555"],
+  ])("matches a digital-library url given as %s", async (_l, url) => {
+    respond(
+      { totalHits: 1, searchHits: [hit("koha:1")] },
+      { source: { note: { type: "RSLINK", text: `<a href="${url}">B</a>` } } },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.hits[0].digitalLibraryUrl).toBe(url);
+  });
+
+  it("reads the digital-library url from .value as well as .text", async () => {
+    // Three lines from a comment saying "textOf everywhere below", this one
+    // read .text first — the same defect that comment records fixing.
+    respond(
+      { totalHits: 1, searchHits: [hit("koha:1")] },
+      { source: { note: {
+        type: "RSLINK",
+        text: "Click here",
+        value: '<a href="https://www.familysearch.org/library/books/idurl/1/555">B</a>',
+      } } },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.hits[0].digitalLibraryUrl).toBe(
+      "https://www.familysearch.org/library/books/idurl/1/555",
+    );
+  });
+
+  it("keeps a repository title that is itself a collapsed element", async () => {
+    respond({
+      totalHits: 1,
+      searchHits: [{ metadataHit: { metadata: {
+        title: [{ value: "T" }],
+        identifier: { value: `${ITEM}koha:1` },
+        repositoryCalls: [{ title: { value: "Online" } }, { title: "FamilySearch Library" }],
+      } } }],
+    });
+    const r = await catalogSearchTool({ keywords: "x", hydrate: 0 }, LOCAL);
+    expect(r.hits[0].repositoryCalls).toEqual(["Online", "FamilySearch Library"]);
+  });
+
+  it("drops a film note that names neither a film nor a DGS", async () => {
+    // `{}` claims the item was filmed while naming nothing — the shape the
+    // unquoted-number fix closed, reached by a different route.
+    respond(
+      { totalHits: 1, searchHits: [hit("koha:1")] },
+      { source: { film_note: { filmno: "", digital_film_no: "", note_text: "x" } } },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.hits[0].filmNotes).toEqual([]);
+  });
+
+  it("refuses the bare item prefix as an identifier", async () => {
+    // It passes a startsWith check, yields `id: ""` for the citation, and
+    // spends a hydration slot on a request that can only 404.
+    respond({
+      totalHits: 1,
+      searchHits: [{ metadataHit: { metadata: {
+        title: [{ value: "T" }], identifier: { value: ITEM }, repositoryCalls: [],
+      } } }],
+    });
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(mockFetch).toHaveBeenCalledTimes(1); // no item call
+    expect(r.hits[0].id).toBeUndefined();
+    expect(r.hits[0].url).toBeUndefined();
+  });
+
+  it("names the Catalog when a 200 is not JSON", async () => {
+    mockFetch.mockReset();
+    mockFetch.mockImplementation(
+      async () => new Response('<?xml version="1.0"?><a/>', { status: 200 }),
+    );
+    await expect(catalogSearchTool({ keywords: "x" }, LOCAL)).rejects.toThrow(
+      /answered 200 with a body that is not JSON/,
+    );
+  });
+
+  it("names the Catalog when a 200 body is literal null", async () => {
+    mockFetch.mockReset();
+    mockFetch.mockImplementation(async () => json(null));
+    await expect(catalogSearchTool({ keywords: "x" }, LOCAL)).rejects.toThrow(
+      /answered 200 with a body that is not JSON/,
+    );
+  });
+});
+
+describe("catalog_search — a dropped filter is a wider answer", () => {
+  it.each([
+    ["keywords", {}],
+    ["title", ["a"]],
+    ["availability", ["Online"]],
+    ["surname", null],
+  ])("refuses an unusable %s even when another field is usable", async (field, value) => {
+    // The emptiness guard passes because standardPlace IS usable, and the
+    // unusable field was then dropped from the query. The agent asked
+    // "Maine + parish registers" and got the top 25 of all 3,902 Maine
+    // items, with placeResolved: true and nothing saying so.
+    await expect(
+      catalogSearchTool(
+        { standardPlace: "Maine, United States", [field]: value } as never,
+        LOCAL,
+      ),
+    ).rejects.toThrow(new RegExp(`${field} is .*non-blank string`, "s"));
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("still carries every usable field onto the query", async () => {
+    // The other direction: refusing unusable values must not start refusing
+    // legitimate ones.
+    respond({ totalHits: 0, searchHits: [] });
+    await catalogSearchTool(
+      {
+        standardPlace: "Maine, United States",
+        keywords: "parish registers",
+        title: "Registers",
+        availability: "Online",
+      },
+      LOCAL,
+    );
+    const p = new URL(searchUrl()).searchParams;
+    expect(p.get("q.keywords")).toBe("parish registers");
+    expect(p.get("q.title")).toBe("Registers");
+    expect(p.get("q.availability")).toBe("Online");
+    expect(p.get("q.placeId")).toBe("333");
+  });
+
+  it.each([1e21, 0, -1850, Number.MAX_SAFE_INTEGER])(
+    "refuses year %s", async (year) => {
+      await expect(
+        catalogSearchTool({ keywords: "x", year } as never, LOCAL),
+      ).rejects.toThrow(/whole year between 1000 and 2200/);
+      expect(mockFetch).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([1000, 1850, 2200])("accepts year %s", async (year) => {
+    respond({ totalHits: 0, searchHits: [] });
+    await catalogSearchTool({ keywords: "x", year }, LOCAL);
+    expect(new URL(searchUrl()).searchParams.get("q.year")).toBe(String(year));
+  });
+});
+
 describe("catalog_search — the digitized-book link", () => {
   const rslink = (n: number) => ({
     type: "RSLINK",
@@ -766,7 +1039,8 @@ describe("catalog_search — the digitized-book link", () => {
 
   it("surfaces the first RSLINK url and keeps its markup out of notes", async () => {
     // The only route to a digitized book, which has no film note at all, and
-    // the one hand-written parser in the tool.
+    // the one hand-written parser in the tool. The SECOND rslink is not the
+    // one consumed, so it survives as readable text carrying its href.
     respond(
       { totalHits: 1, searchHits: [hit("koha:1")] },
       { source: { note: [{ text: "holdings prose" }, rslink(111), rslink(222)] } },
@@ -775,7 +1049,11 @@ describe("catalog_search — the digitized-book link", () => {
     expect(r.hits[0].digitalLibraryUrl).toBe(
       "https://www.familysearch.org/library/books/idurl/1/111",
     );
-    expect(r.hits[0].notes).toEqual(["holdings prose"]);
+    expect(r.hits[0].notes).toEqual([
+      "holdings prose",
+      "Book (https://www.familysearch.org/library/books/idurl/1/222)",
+    ]);
+    expect(r.hits[0].notes?.join()).not.toContain("<a");
   });
 
   it("leaves digitalLibraryUrl unset when no note is an RSLINK", async () => {

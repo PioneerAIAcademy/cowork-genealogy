@@ -72,7 +72,10 @@ of search before a hydration clock would even start.
 
 So: **a 50 s deadline taken at `catalogSearchTool` entry**. It bounds
 **hydration**: place resolution and the search spend from it, hydration gets
-`deadline - Date.now()` at phase start, and skips entirely when little is left.
+`deadline - Date.now()` at phase start, and is skipped entirely when **nothing**
+is left — not merely when little is. A search leaving 50 ms still starts every
+item call; each then carries that 50 ms as its own `timeoutMs` and aborts
+itself.
 
 It does **not** abort them, and that limit is worth stating rather than
 implying. `standardPlaceToRepId` exposes no budget parameter, so a pathological
@@ -249,7 +252,8 @@ an error; the flag tells the agent its place filter is looser than it asked for.
   hydrationTimedOut: boolean,
   hydrateRequested: number,     // how many hits hydration was asked for
   hits: [{
-    id: string,                 // "koha:123456"
+    id?: string,                // "koha:123456"; absent with `url`, since it
+                                // is derived from it
     title: string,
     creator?: string,
     repositoryCalls: string[],  // access signal, see below
@@ -373,7 +377,9 @@ result set rather than as another page.
 | no searchable field given | names the eight fields and says at least one is required — refused before any request. "Given" means a value the query can **carry**: the guard and `buildQuery` ask the same question (`searchableValue`), because a guard testing presence while `buildQuery` tested `typeof === "string"` let `filmNumber: 568142` through to a query with no `q.*` filter at all — the whole catalogue's top 25, returned as if they answered. The MCP boundary does not validate against `inputSchema` (`server.ts` casts `arguments`), so a number, `null` or a blank string is a live input |
 | `standardPlace` present but not a usable name (object, array, blank) | names the value. It was the one field read unguarded, so the resolver's internal `s.trim is not a function` reached the agent verbatim. A number is coerced to its text, as `str` does for unquoted film numbers, and simply fails to resolve |
 | `exactPlace` without a place | refused, not dropped: `.exact` alone 400s, and silently dropping it returned the WIDER set with nothing saying so, so the agent read the hit count as an answer to the narrower question it asked |
-| `year` non-integer (including `NaN`, which is `typeof "number"`) | names the value; otherwise `q.year=NaN` goes on the wire and buys a 400 |
+| `year` non-integer, or outside 1000–2200 | names the range and the value. Integrality alone is not enough: `1e21` **is** an integer and reaches the wire as `q.year=1e%2B21`, costing the same 400 as the `NaN` the guard was written for; `0` and `-1850` likewise |
+| any `q.*` field present but not a value the query can carry | refused, never dropped. Dropping one silently WIDENS the answer: with `{ standardPlace: "Maine, United States", keywords: {} }` the keywords vanished and the agent got the top 25 of all 3,902 Maine items as the answer to "Maine + parish registers", `placeResolved: true`, nothing saying a filter had gone. An earlier fix closed only the case where every field was unusable |
+| a 200 whose body is not a JSON object | names the Catalog and says to retry. Imperva fronts this host and answering 200 with a challenge page is ordinary for it — the thing `Accept` exists to prevent, with no fallback if it is ignored. Unguarded, the agent got `SyntaxError: Unexpected token '<'` |
 | `count` outside 1–200, or `hydrate` outside 0–25, or either non-integer | names the range and the value given. Both bounds are checked, not just the cap: `hydrate: -1` passed a one-sided `> MAX` test, and `slice(0, -1)` then kept all-but-one hit as targets while `mapWithConcurrency` clamped `-1` to **one** worker — 59 serial item calls against a cap of 25 |
 | place resolution spends the whole budget | names the place and says to retry without `standardPlace`; the alternative is a bare `timed out after 0ms` quoting the query URL |
 | no session | `getValidToken` throws the shared not-logged-in instruction, before the Catalog request. On the `standardPlace` path the resolver's own Places calls go out first and swallow their auth failure to `null`, so the session error arrives after them |
