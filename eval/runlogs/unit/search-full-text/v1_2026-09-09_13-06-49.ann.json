@@ -1,0 +1,249 @@
+{
+  "run_log": "v1_2026-09-09_13-06-49.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_full_text_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_011",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null
+    },
+    {
+      "test_id": "ut_search_full_text_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Negative test: search-full-text correctly did NOT activate (activated=false), but the agent performed question-selection's job (generated research questions) instead of declining and routing. This is the documented corpus-wide negative-routing pattern (#1860 lane, #2104 closed) — a triggering/routing concern, not the skill body, and unrelated to this card's sidecar-prose edit. Flapper: passed clean on the 2026-09-08 log."
+    },
+    {
+      "test_id": "ut_search_full_text_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Negative test: search-full-text correctly did NOT activate (activated=false), but the agent performed question-selection's job (generated research questions) instead of declining and routing. This is the documented corpus-wide negative-routing pattern (#1860 lane, #2104 closed) — a triggering/routing concern, not the skill body, and unrelated to this card's sidecar-prose edit. Flapper: passed clean on the 2026-09-08 log."
+    },
+    {
+      "test_id": "ut_search_full_text_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Eval-lane fixture gap, not a skill defect: the first call `+Fl?n* +witness` hit fixture_not_found because write-result-sidecar.json declares no matching wildcard fixture (the `~*` fulltext-search-flynn-prefix-wildcard-variant exists but is undeclared here — the same class this card declared for _011, but _010 is out of this card's scope). The skill recovered with `+Flynn +witness` and returned a valid record. Corrected up: the skill is not at fault for the harness lacking the fixture."
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Eval-lane fixture gap, not a skill defect: the first call `+Fl?n* +witness` hit fixture_not_found because write-result-sidecar.json declares no matching wildcard fixture (the `~*` fulltext-search-flynn-prefix-wildcard-variant exists but is undeclared here — the same class this card declared for _011, but _010 is out of this card's scope). The skill recovered with `+Flynn +witness` and returned a valid record. Corrected up: the skill is not at fault for the harness lacking the fixture."
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Eval-lane fixture gap, not a skill defect: the first call `+Fl?n* +witness` hit fixture_not_found because write-result-sidecar.json declares no matching wildcard fixture (the `~*` fulltext-search-flynn-prefix-wildcard-variant exists but is undeclared here — the same class this card declared for _011, but _010 is out of this card's scope). The skill recovered with `+Flynn +witness` and returned a valid record. Corrected up: the skill is not at fault for the harness lacking the fixture."
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3
+    }
+  ]
+}
