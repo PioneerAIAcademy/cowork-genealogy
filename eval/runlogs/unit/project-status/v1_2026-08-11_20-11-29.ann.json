@@ -1,0 +1,422 @@
+{
+  "run_log": "v1_2026-08-11_20-11-29.json",
+  "annotator": "eruth937@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_project_status_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response was mostly factually correct and well grounded in the research state. The project status, research conclusion, search results, exhaustiveness reasoning, and overall narrative were accurate. However, there was one significant evidence-classification error. The 1908 death certificate was described as “solid direct evidence” of Patrick Flynn’s father, but the source metadata classifies the birth information as secondary because the informant, James Brown (Patrick’s son-in-law), was reporting information rather than firsthand knowledge. This should be corrected to preserve accurate genealogical evidence classification."
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response was complete and addressed all required elements. It provided both a plain-language research narrative and a detailed GPS-state summary. It covered the research questions, completed plans, searches, sources, assertions, conflict, hypothesis, timeline gap, proof tier, and exhaustiveness assessment. No required information was omitted."
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP/tool calls were required or made. The project-status skill relied on the existing research and tree state to produce the summary. Therefore, this criterion was not applicable."
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The summary thoroughly represented the project state. It correctly included the two resolved questions, two completed plans, six searches with four positive and two negative outcomes, 13 assertions, one resolved conflict, one supported hypothesis, the proof conclusion at the Proved tier, and the documented exhaustive-search assessment. The response also correctly identified that there were no open questions or unresolved conflicts"
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Most project statistics, statuses, and conclusions were accurate. The main accuracy problem was the classification of the 1908 death certificate evidence. The response treated it as direct evidence, while the source metadata identifies it as secondary information for birth facts because James Brown was the informant and was reporting hearsay. This is a material genealogical evidence-classification error, although it does not invalidate the overall project conclusion."
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response appropriately recognized that the project was completed and that no additional research direction was required. It correctly presented the negative probate search as part of the completed research rather than treating it as an unresolved gap. The response also respected the closed scope of the project and did not recommend unnecessary follow-up research."
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both required summaries were clearly present and served different purposes. The first provided a conversational explanation of the research and conclusion, while the second provided a structured GPS-state summary containing the detailed project information. This fully satisfied the requirement for both summary formats."
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}
