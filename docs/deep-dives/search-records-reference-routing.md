@@ -218,6 +218,42 @@ indexing began 1860–1870. The plugin ships zero Luxembourg content
 (`grep -rni luxembourg packages/engine/plugin/` → nothing), so the fetch gives
 the agent a locality fact it has never had, for a place nobody pre-wrote.
 
+## The per-year census pages do not state relationship availability
+
+Measured 2026-10-02 against the committed fixtures. The country page carries
+the fact the `pre-1880-census-household` validator grades, in a dated table:
+
+| Page | `Relationships` stated? | What it says |
+|---|---|---|
+| `United_States_Census` (33,782 B) | **yes** | `\| Relationships \| 1880-1950 \|`, plus "Determine family relationships (more recent than 1880 as shown above)" |
+| `United_States_Census_1850` (8,155 B) | **no** | only "Identify probable relationships-be careful!" |
+
+Neither page contains the strings `no relationship`, `relationship to head`,
+`head of household`, `infer` or `not stated`. The country page settles the
+question by date range; the per-year page does not address it.
+
+This matters because Step 2's second bullet sends the agent to the per-year
+page when the country page "does not settle which fields the schedule
+collected" — and for *relationships* the country page does settle it, for every
+year at once. All **9** `pre-1880-census-household`-tagged tests now carry a
+per-year fixture (the 16 wired tests include all 9 tagged ones), so an agent
+that follows that bullet on a relationship question reads the weaker of the two
+pages.
+
+**Not established: whether this causes a failure.** Across the
+`--runs-per-test 3` scratch runs of 2026-10-02, every run that read only the
+country page passed (4 of 4: three at `42df8f6d1`, one on branch), and of the
+two that additionally read the per-year page one failed — Fisher p≈0.33, which
+is no evidence at all. The content gap above is a fact about the corpus; the
+causal claim is not, and was not promoted to one. `ut_search_records_012` was
+3/3 at `42df8f6d1` and 2/3 on branch with the cause unidentified.
+
+**The per-year fixtures are still load-bearing.** The branch agent followed the
+bullet-2 link in 2 of 3 runs, so the path is reachable; without those fixtures
+the call returns `fixture_not_found` (a Type 2 miss) and fails Tool Arguments.
+Removing them to dodge the content gap would trade a weak-source read for a
+hard error.
+
 ## `ut_search_records_023` flaps at ~55%, and prose is not the lever
 
 Measured 2026-09-30 across **nine** `--runs-per-test 3` runs on three variants of
