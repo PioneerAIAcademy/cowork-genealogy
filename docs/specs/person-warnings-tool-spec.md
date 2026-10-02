@@ -690,6 +690,17 @@ smallest possible gap between the latest possible birth-like-or-`Stillbirth`
 day and the earliest possible Death day is still >= 365 days (fudge 0, not
 365).
 
+**Two more consumers, and none of the four is gate-exempt.** All four run
+inside `calculateWarnings`, so they also reach `merge_warnings`, where only the
+three contradictions block, and the tree-write gate in
+`src/validation/introduced-warnings.ts`. None is in `GATE_EXEMPT_TYPES`, so a
+`tree_edit`, `tree_correct`, `materialize_facts` or `merge_tree_persons` write
+that introduces one is refused until the caller justifies it. For the three
+contradictions that is the point: a write that gives a child to a couple marked
+as never having children should have to say why. `hasDelayedBurial365` stays out
+for the reason the `implausible` parent-age tags do. A reburial or a later burial
+of ashes is legitimate but rare, and a one-line justification records it.
+
 ---
 
 ## Error Handling
