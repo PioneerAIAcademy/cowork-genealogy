@@ -113,7 +113,7 @@ way project state changes.
 | `person_quality` | FamilySearch's data-quality score for a tree person, as plain-English issues in four categories. `detail: true` adds the per-fact breakdown — which attached sources touch each fact and whether each agrees, plus the disagreements between sources | OAuth |
 | `rank_search_matches` | Rank search results against a named subject | None |
 | `convert_calendar` | Convert between Julian, Gregorian, and regnal/quaker dates | None |
-| `build_external_search_url` | Build a pre-filled search URL for a supported external genealogy site (Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, Chronicling America, a state/regional digital newspaper archive, the National Archives Catalog, Internet Archive, BillionGraves, Digitalarkivet, Portale Antenati, Library and Archives Canada, American Ancestors, or the Italian Genealogy forum) from structured search attributes, including each site's access classification (free, free-but-bot-protected, or subscription) | None |
+| `build_external_search_url` | Build a pre-filled search URL for a supported external genealogy site (Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, Chronicling America, a state/regional digital newspaper archive, the National Archives Catalog, Internet Archive, BillionGraves, Digitalarkivet, Portale Antenati, Library and Archives Canada, American Ancestors, or the Italian Genealogy forum) from structured search attributes, or a parish-page link for the Archion and Matricula church-book browse sites, including each site's access classification (free, free-but-bot-protected, or subscription) | None |
 
 ### Reference and context
 
@@ -123,7 +123,7 @@ way project state changes.
 | `place_population` | Historical population data + indexed record counts | None |
 | `place_distance` | Distance between two FamilySearch places | None |
 | `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) or by ark (a document-image ARK, resolver URL, or resolved distribution URL) and return bytes + metadata; optional `projectPath` saves the scan and returns `imageRef`. Refuses scans over ~700 KB raw. Kept for the Issue #28 OCR-comparison pipeline — no skill or agent calls it, and the eval harness denies it on the main thread. | OAuth |
-| `image_transcribe` | OCR a FamilySearch image by imageId or ark, a memory artifact URL, or an **uploaded image/PDF inside the project folder** (`file`, e.g. `uploads/scan.jpg` — no FamilySearch login) host-side (Gemini Flash via OpenRouter) and return **text**; with `projectPath` the transcription is also staged (`staged.resultsRef` + a `digest`). No bytes cross the MCP transport; inputs over 14 MiB are refused with the remedy. The `image-reader` subagent's reader. | OpenRouter (+ OAuth for imageId/ark) |
+| `image_transcribe` | OCR a FamilySearch image by imageId or ark, a memory (its artifact URL or its `photos/artifacts/<id>` / `memories/<id>` page URL), or an **uploaded image/PDF inside the project folder** (`file`, e.g. `uploads/scan.jpg` — no FamilySearch login) host-side (Gemini Flash via OpenRouter) and return **text**; with `projectPath` the transcription is also staged (`staged.resultsRef` + a `digest`). No bytes cross the MCP transport; inputs over 14 MiB are refused with the remedy. The `image-reader` subagent's reader. | OpenRouter (+ OAuth for imageId/ark) |
 | `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives. Reads tree.gedcomx.json from the local project — offline | None |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
 | `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with cited sources, sources with record ids) — the context call agents make instead of reading project files | None |
@@ -190,7 +190,7 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 |-------|-------------|----------|
 | **search-records** | Searches FamilySearch indexed records (census, vital, probate, etc.). Triages results by match quality. | "Search for Patrick Flynn in the 1850 census" |
 | **search-full-text** | Full-text search of FS AI-transcribed document images. Finds witnesses, neighbors, heirs, and other non-principal mentions. | "Full-text search for Flynn in Schuylkill County deeds" |
-| **search-external-sites** | Generates search URLs for Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, and ten other genealogy sites (`build_external_search_url`'s full site list). Walks the click-capture-analyze loop. | "Search Ancestry for Thomas Flynn" |
+| **search-external-sites** | Generates search URLs for Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, and twelve other genealogy sites (`build_external_search_url`'s full site list). Walks the click-capture-analyze loop. | "Search Ancestry for Thomas Flynn" |
 
 ### Analyzing evidence
 
@@ -317,7 +317,7 @@ about you. Every project gets the same `researcher_profile` in
 is one house-style string that every skill but one reads and follows
 verbatim:
 
-> Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence.
+> Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence.
 
 Subscription sites are not asked about either. Access is assumed
 available, so nothing is recorded unless you mention a site yourself —

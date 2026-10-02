@@ -385,11 +385,39 @@ consistent across schema, manifest, and skill.)*
   skipped, the filter missed, or the OCR failed on; there is no other way to
   read one, since a memory URL is neither an image-group `imageId` nor a
   `3:1:`/`3:2:` ARK. Three things make it unlike the other two shapes:
-  - It is **already a direct bytes URL**, so it is passed through rather than
-    resolved, and carries no `fallbackUrl`.
+  - **Two forms are accepted.** The direct bytes URL is passed through rather
+    than resolved, and carries no `fallbackUrl`. A Memories **page** URL —
+    `familysearch.org/photos/artifacts/<id>`, or `/memories/<id>`, which is
+    what a `person_read` memory source carries as its `url` — is first resolved
+    to the bytes URL through
+    `GET https://api.familysearch.org/platform/memories/memories/<id>`, whose
+    `sourceDescriptions[0].about` is the same field the memories fetch already
+    reads. Not `links.image.href`: it carries the same value but sits beside
+    `image-thumbnail`, `image-icon` and `image-deep-zoom-lite`, which are other
+    sizes. The page pattern is anchored at `^`, so a URL that merely *contains*
+    a FamilySearch page URL is refused before any request. The resolved URL then
+    goes through the same host check as a directly-supplied one — resolving
+    changes what is accepted, never what is trusted. The resolve is a step in
+    **this tool**, not in the shared input resolver: `image_read` shares that
+    resolver and already accepts a direct `memoryArtifactUrl` without
+    advertising it, so moving the resolve there would hand it page-URL support
+    against the `image_transcribe`-only ruling — and it would mostly pay the
+    lookup only to refuse the bytes on its inline size cap.
+  - When a **page** URL was resolved, the artifact URL it resolved to comes back
+    on `metadata.memoryArtifactUrl`, so a later read can pass it directly and
+    skip the lookup. It is absent when a direct artifact URL was supplied —
+    there was nothing to resolve.
   - It is fetched with **no Authorization header and needs no FamilySearch
-    login**. Measured 2026-09-15 on one artifact with three header sets: no
-    headers at all → 200, UA only → 200, bearer+UA → 200. Sending a token would
+    login**, and neither does the page-URL lookup. Measured 2026-09-15 on one
+    artifact with three header sets: no headers at all → 200, UA only → 200,
+    bearer+UA → 200; and again 2026-09-30 over 5 artifacts for the lookup,
+    authenticated and anonymous byte-identical on every one
+    (`dev/probe-memory-page.ts`). The lookup is therefore **unauthenticated**,
+    and retries once with the bearer only on a 401/403: going through the
+    authenticated fetcher unconditionally would demand a token before any
+    request and refuse a logged-out caller a public artifact. Every artifact
+    reachable was `ctx=ArtCtxPublic`, so a restricted one is unmeasured — the
+    retry is what covers it. Sending a token would
     also mean handing a credential to a URL that arrived inside a response
     body, which is why the host is **validated, not trusted**: it must be
     `sg30p0.familysearch.org` with a path ending `/dist.<ext>` (221 of 221 in
@@ -470,7 +498,9 @@ This mirrors `fulltext_search`'s `nameExpansion` without
 1. **Acquire the bytes.** For `imageId` / `ark` / `memoryArtifactUrl`: resolve + fetch the
    FS distribution image host-side via the shared fetcher lifted from `image-read.ts` (§8),
    reusing `getValidToken(principal)` and `BROWSER_USER_AGENT` — do **not** re-implement
-   token or fetch logic. For `file`: classify the project, check the ref shape, read the
+   token or fetch logic. A `memoryArtifactUrl` that is a **page** URL adds one prior,
+   **unauthenticated** Memories lookup (§5.3) before this step; a memory artifact is then
+   fetched with no token either way. For `file`: classify the project, check the ref shape, read the
    bytes through the ProjectStore, sniff the type (§5.3) — no token.
 2. **Refuse an oversize payload** (§7): more than `MAX_OCR_INPUT_BYTES` (14 MiB raw) on
    **any** input source is refused before the data URL is built, with the size, the cap
@@ -567,6 +597,9 @@ list the caller can turn into assertions.
 | `file` missing / a directory / not an image or PDF | `'<ref>' was not found under the project folder …` / `is a directory` / `is not an image or a PDF (by its content, not its name) …` |
 | Payload over `MAX_OCR_INPUT_BYTES` (any input) | `This <type> is N MiB, over the 14 MiB the OCR request can carry … It was not sent. Ask the user to re-save … or split a multi-page PDF …` (§7) |
 | Bad imageId/ark | reuse `image_read`'s existing messages (§8) |
+| `memoryArtifactUrl` is neither a memory artifact URL nor a Memories page URL | the shared `Unrecognized memoryArtifactUrl.` message, which names **both** accepted forms — a near-miss page URL (`http://`, a singular `/photos/artifact/`, a non-numeric id) lands here, so it must not name only the artifact form. Refused before any request |
+| A Memories page lookup returns non-200, after the 401/403 retry | `FamilySearch Memories lookup failed (<status>) for artifact <id>.` Says to open the page URL in a browser to confirm the memory exists and is visible; if restricted, call `login` and retry; otherwise transcribe by another route |
+| A Memories page resolves to no readable artifact | `FamilySearch returned no readable artifact for memory <id>.` Names the likely cause — a story with no attached file, or an audio memory — and directs to `person_read`'s source text instead |
 | No OpenRouter key configured | LLM-instruction error directing the user to set `openRouterApiKey` in `~/.familysearch-mcp/config.json` directly (§6.3). The tool never accepts an API key as a parameter. |
 | FS image fetch non-2xx | `FamilySearch image fetch failed: {status} {statusText}` (reused; `{statusText}` and its separating space are omitted when the response carries none). On a **400 or 404** for a `3:1:`/`3:2:` ark that is not a memory artifact, appends: the ark may not be a valid document-image identifier; directs to `record_read`'s `imageArk` field, and to passing the full page URL when the ark carries `i=`/`cc=`/`groupId=` context. It states that `image_search` returns image ids rather than arks. Every other status — including 401/403 (rights-restricted image) and 429 — keeps the bare message. |
 | Response not an image | `Expected an image response but got content-type: {type}` (reused) |
