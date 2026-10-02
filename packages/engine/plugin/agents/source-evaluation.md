@@ -149,6 +149,8 @@ link, none of which carry a readable record id.
 
 From FamilySearch's own profile checklist — suggestions, not
 errors, and not counted above:
+  CONSISTENCY
+    · FamilySearch flags this birth year too — finding 1 above.
   VERIFIABILITY
     · The marriage has no tagged sources.
   COMPLETENESS
