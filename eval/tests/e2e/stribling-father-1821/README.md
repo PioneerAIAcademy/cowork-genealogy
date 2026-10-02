@@ -448,8 +448,8 @@ Read these before attributing a failed headless run.
   are never rewritten.
 - **2026-08-18 — second scored run (`run-2026-08-18_02-03-06`), and run 1 re-graded.**
   `stop_reason: cost_cap`, but the cap fired at the *end* of a completed trajectory, not
-  mid-flow: `research-exhaustiveness`, `proof-conclusion` and the mandatory `gps-mentor`
-  critique all ran, `question-selection` declared an autonomous stop point, and
+  mid-flow: `research-exhaustiveness`, `proof-conclusion` and the `gps-mentor`
+  critique (then mandatory) all ran, `question-selection` declared an autonomous stop point, and
   `project.status` was set to `completed` before the cap. Read it as a finished run that
   ran out of budget on the way out, not as a truncated one. Blind grade: **f1 `true`,
   f2 `true`, f3 `false`, f4 `true`** — 3 of 4, so `partial`. Proof quality **3 of 3**:

@@ -99,14 +99,13 @@ flowchart TD
 
     PC["proof-conclusion<br/>thin router"]
     PC ==> PCA["proof-conclusion · agent<br/>proof_summaries[] · resolves the question<br/>encodes the conclusion in the tree"]
-    PCA --> GM["gps-mentor · agent<br/>evaluations[]"]
-    GM --> GATE{"all questions resolved,<br/>tree encoded,<br/>critique on record?"}
+    PCA --> GATE{"all questions resolved,<br/>tree encoded?"}
     GATE -- no --> QS
     GATE -- yes --> DONE["proof-conclusion agent writes<br/>project.status = completed"]
 
     subgraph ASK ["Reached only by asking — no routing row"]
         direction LR
-        U1["timeline · historical-context · convert-dates"]
+        U1["timeline · historical-context · convert-dates<br/>gps-mentor (second opinion)"]
         U2["project-status<br/>forget-and-rederive · the two wiki searches"]
     end
 
@@ -142,8 +141,8 @@ unreachable from an autonomous run.
 | 9 | **`hypothesis-tracking`** (agent) | Spawned as `@plugin:hypothesis-tracking`. Identity uncertainty across assertions | `hypotheses` — the `active` → `supported` / `ruled_out` transitions and the reasoning behind each | `research.json` `hypotheses`, `assertions`, `person_evidence`, `questions` by whole-file `Read` | `hypotheses[]` only — `research_append` |
 | 10 | **`research-exhaustiveness`** (agent) | Spawned as `@plugin:research-exhaustiveness` when analyzed evidence now plausibly answers the question — **even with plan items still `planned`** — or all items are `completed`/`skipped`. Carries `questionId` + `projectPath`, and confirms the question by TEXT when the id does not resolve or disagrees with the prose. Refuses while an item on the question's **active** plan is `in_progress` | The seven stop criteria, assessed in order as a gate and stopping at the first that fails. The **only** caller permitted to set `exhaustive_declaration.declared: true` | `research_query` joins across `questions`, `plans`/`plan_items`, `log`, `assertions`, `person_evidence`; `Read` also granted | `questions[].exhaustive_declaration`, and on the declare path only `questions[].status = "exhaustive_declared"` — one `research_append` update |
 | 11 | **`proof-conclusion`** (agent) | Spawned as `@plugin:proof-conclusion` when a question is at `exhaustive_declared` with no `proof_summaries` entry, or re-invoked because a tier-≥-probable conclusion is not yet in the tree. Carries `questionId` + `projectPath`. Its own three-check gate — unresolved conflicts, unclassified assertions, unlinked persons — hard-blocks before Step 1 | Tier and form selection, the self-contained narrative, and the tree encoding | `research_query` projections (never a raw whole-file `Read`), `sources[].citation`, tree facts and relationships, `source_attachments`, `merge_warnings` | `proof_summaries[]` + the question's `status`/`resolved`/`resolution_assertion_ids` in one batch, and `project` — `research_append`; tree `relationships`, `persons[].facts[]` and `sources` at tier ≥ probable — `tree_edit` / `tree_correct` |
-| 12 | **`gps-mentor`** (agent) | `proof-conclusion` wrote a `ps_id`, and either tier < probable or the conclusion is now in the tree. Skipped when `evaluations/` already holds a `proof-critique-<ps_id>-*.json` newer than the summary | One structured advisory verdict on the finished proof, read as a standalone document. **Mandatory to invoke and record; advisory in what it recommends.** It holds no search tool — it grades what was gathered | `project_context`, `research_query` (`evaluations`, `conflicts`, `hypotheses`, and the proof's `narrative_markdown`), the `evaluations/` verdict files via `sidecar_read`, `validate_research_schema`, `collections_search` | `evaluations[]` in `research.json` — `research_append` — plus `superseded_by` on the prior entry for the same focus and target. The verdict file under `evaluations/` is written by the tool, not by the agent |
-| 13 | **`proof-conclusion`** (agent), re-entered | Every question `resolved`, **and** both gates pass: each tier-≥-probable conclusion encoded in the tree, and each resolved question's `ps_id` carrying a `proof-critique` verdict. The orchestrator is to route here and not write; `research/SKILL.md` still tells it to make the write itself | Closing the project | `research_query` | `project.status = "completed"` — `research_append`, refused by the tool while a blocking conflict is unresolved or a mentor verdict is missing |
+| — | **`gps-mentor`** (agent) | **No routing row.** Only when the user asks — "second opinion", "review my work", "is this defensible?" — with `focus: "on-demand"`, including on a completed project. `proof-conclusion`'s closing summary tells the user they can ask. An existing non-blocking verdict for the same focus and target is surfaced instead unless `force_reevaluate` is passed | One structured advisory verdict, read as a standalone document; advisory in what it recommends. It holds no search tool — it grades what was gathered | `project_context`, `research_query` (`evaluations`, `conflicts`, `hypotheses`, and the proof's `narrative_markdown`), the `evaluations/` verdict files via `sidecar_read`, `validate_research_schema`, `collections_search` | `evaluations[]` in `research.json` — `research_append` — plus `superseded_by` on the prior entry for the same focus and target. The verdict file under `evaluations/` is written by the tool, not by the agent |
+| 12 | **`proof-conclusion`** (agent), re-entered | Every question `resolved`, **and** each tier-≥-probable conclusion encoded in the tree. The orchestrator routes here and does not write | Closing the project | `research_query` | `project.status = "completed"` — `research_append`, refused by the tool while a blocking conflict is unresolved |
 
 ---
 
@@ -157,7 +156,7 @@ one holds a piece of the answer. The table below is the split **as ruled** on
 |---|---|---|
 | **`question-selection`** | Whether the **objective** is answered. Its step 1b is the autonomous stop point: every *independent* part of the objective `resolved` with a `proof_summary` at `probable` or better, with corroboration explicitly not required | Any write to `project`. It signals and returns |
 | **`research`** (orchestrator) | The routing decision — which component runs next, and re-invoking `proof-conclusion` once the stop point is reached | The write. Its `allowed-tools` names only `research_query` and `validate_research_schema` — but that field is a grant, not a restriction, so it denies nothing; the body still instructs the write at its completion gate |
-| **`proof-conclusion`** (agent) | The `project.status = "completed"` write, alongside the two gates that guard it — every tier-≥-probable conclusion encoded in the tree, and a `proof-critique` verdict on record for each resolved question's `ps_id` | Any view of `project.objective`. It never reads that field |
+| **`proof-conclusion`** (agent) | The `project.status = "completed"` write, and the tree-encoding check before it — every tier-≥-probable conclusion encoded in the tree (the tool warns rather than refuses when one is not) | Any view of `project.objective`. It never reads that field |
 
 Ruled 2026-08-25 on issue #1335, against a routing table that still says the orchestrator
 writes it. Three planes already match the ruling: the `project` row of the ownership
@@ -176,9 +175,8 @@ same batch as the summary — so its own condition is true the moment it finishe
 **first** question of an objective that will need a second one, before
 `question-selection` has minted the next. The agent cannot tell the two cases apart: it
 holds no view of the objective, and "all questions resolved" is a proxy that is briefly
-true on the way to every multi-question objective. On the first pass the tool still
-refuses — no `proof-critique` verdict exists yet for the summary just written — so the
-premature write lands only when the agent is re-invoked after the mentor gate has run.
+true on the way to every multi-question objective. The tool refuses the write only while
+a blocking conflict is unresolved, so the premature write can land on that first pass.
 
 What closes the gap is the re-invocation seam, not a wider condition: `question-selection`
 returns its stop-point signal, the orchestrator re-invokes `proof-conclusion`, and that
@@ -271,10 +269,11 @@ touch either side.
    directly"; the ownership manifest names `proof-conclusion`. — issue #1335, **ruled
    2026-08-25: the `proof-conclusion` agent owns the write.** The three sites still
    disagree on disk until that lands; the manifest is the one that is already right.
-2. **What an `address_first` mentor verdict does.** `research/SKILL.md` carries two
-   verdict tables, one after the other. The first says stop and ask the user (interactive)
-   or invoke the suggested skill (autonomous); the second says "do not block, re-open the
-   resolved question, or force a remediation skill." They are opposites. — issue #1335,
+2. **What an `address_first` mentor verdict does.** — **RESOLVED:** `research/SKILL.md`
+   now carries one verdict table, under **Second opinion**, and it is the "do not block"
+   one. Before that it carried two verdict tables, one after the other. The first said stop and ask the user (interactive)
+   or invoke the suggested skill (autonomous); the second said "do not block, re-open the
+   resolved question, or force a remediation skill." They were opposites. — issue #1335,
    **ruled 2026-08-25: the second table is doctrine** and the first is deleted along with
    its reinforcement paragraph.
 3. **Whether `gps-mentor` touches `research.json`.** The orchestrator says it "writes

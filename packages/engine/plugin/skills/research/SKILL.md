@@ -66,13 +66,16 @@ skill or artifact directly, treat it as "drive the routing table forward
 to that outcome" — not as permission to invoke that skill immediately.
 Re-enter step 1 of "What to do," re-derive the current state from
 `research.json`, and walk the routing table from wherever the project
-actually is: unclassified assertions, unresolved conflicts, un-run Mentor
-gates, and any person the conclusion depends on not yet identity-linked all
-still apply. Only reach the downstream destination once the routing table's
+actually is: unclassified assertions, unresolved conflicts, and any person
+the conclusion depends on not yet identity-linked all still apply. Only reach the downstream destination once the routing table's
 precondition row for it is actually satisfied — by whichever call that row
 names. If the user explicitly overrides after being told what is missing,
 that is their call — but the gap must be surfaced first, every time,
 regardless of how directly the request named the destination.
+
+A review request — "second opinion", "review my work", "is this
+defensible?" — is not a destination. Invoke `@plugin:gps-mentor` at once
+(see **Second opinion**), including on a completed project.
 
 ## What to do
 
@@ -147,9 +150,8 @@ regardless of how directly the request named the destination.
    | All plan items for a question are `completed` or `skipped`, and analysis above is done | `@plugin:research-exhaustiveness` |
    | `research-exhaustiveness` returned "not yet exhaustive" with gaps to fill | `research-plan` (extend the plan) or `question-selection` (FAN pivot) |
     | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship or fact is not yet in `tree.gedcomx.json`** (a parentage link, a Couple, or a vital fact — e.g. the concluded death date/place, bounded expressions included; check each claim's own relationship when `claims[]` is present, not just the scalar's) | `@plugin:proof-conclusion` again for the same question — it must encode the conclusion before you proceed (see **Tree-encoding gate**) |
-    | `proof-conclusion` wrote `<ps_id>`, and (tier < probable, or its concluded relationship or fact is now in `tree.gedcomx.json`) | **Mentor gate** (`proof-critique` on `<ps_id>`) — **mandatory to invoke and record, not optional.** This is the last of the three mentor checkpoints and the only one that reads the proof's `narrative_markdown` as a self-contained document — it is specifically designed to catch things like a summary sentence that contradicts the list two paragraphs below it, a tier claim the cited assertions don't support, or hedging language inconsistent with a "Proved" tier. None of the earlier checkpoints check for this; skipping this one means nothing does. "Mandatory" means the gate must run and its verdict must land in `evaluations[]` before the question can be considered done — it does NOT mean you must apply its suggested fix; see **Mentor checkpoints** for that distinction. |
     | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `@plugin:proof-conclusion` |
-    | All questions are `resolved` and `project.status` still `active` | **First verify BOTH gates, in order — do not write `completed` until both hold:** (1) **Tree-encoding** — every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. (2) **Mentor verdict on record** — does every `ps_id` referenced by a resolved question have a corresponding `evaluations[]` entry with `focus: "proof-critique"` and matching `target_id`? If not, run the mentor gate on it first. Marking a question `resolved` is not, by itself, evidence either check happened. Once both are verified, re-invoke `@plugin:proof-conclusion` for the last resolved question — its §8 owns the `project.status` write. **You never write it yourself:** this router holds no writer tool, and `docs/specs/schemas/ownership.json` names `proof-conclusion`, not this router, as the `project` section's only skill caller. Then stop. |
+    | All questions are `resolved` and `project.status` still `active` | **First verify the tree-encoding gate — do not write `completed` until it holds:** every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. Marking a question `resolved` is not, by itself, evidence the check happened. Once it is verified, re-invoke `@plugin:proof-conclusion` for the last resolved question — its §8 owns the `project.status` write. **You never write it yourself:** this router holds no writer tool, and `docs/specs/schemas/ownership.json` names `proof-conclusion`, not this router, as the `project` section's only skill caller. Then stop. |
    | All questions are `resolved` and `project.status` is `completed` | Stop |
 
    **Record-extraction contract — enforced, not advisory.** Inline
@@ -167,9 +169,8 @@ regardless of how directly the request named the destination.
    **Conflict/hypothesis contract — enforced, not advisory.** Inline
    elimination of a namesake or other candidate, or inline comparison of
    two records for possible shared identity, is **forbidden** outside
-   `conflict-resolution` / `hypothesis-tracking` — including mid-critique,
-   when you are revising a proof narrative in response to a mentor
-   verdict. Persist the reasoning first (a `hypotheses` entry for a
+   `conflict-resolution` / `hypothesis-tracking` — including while you are
+   revising a proof narrative. Persist the reasoning first (a `hypotheses` entry for a
    competing/ruled-out candidate, a `conflicts` entry for two records
    compared), then cite the resulting `h_`/`c_` id in the narrative — never
    the reverse. A proof narrative that names an elimination or an identity
@@ -312,84 +313,34 @@ After `proof-conclusion` writes `<ps_id>` at tier ≥ probable:
    tree and is not a gate failure, even though the scalar `tier` (the
    stronger of the per-claim tiers) already reads `probable`.
 2. **If it is missing, re-invoke `@plugin:proof-conclusion` for the same question** (its
-    §6 writes the relationship or fact). Do this *before* the `proof-critique` mentor
-    review and before anything marks the question resolved.
- 3. **This is a hard gate — and so, separately, is the proof-critique mentor
-    gate on that `<ps_id>`** (see **Mentor checkpoints** and the routing
-    table): never let `question-selection` mark the question resolved, and
-    never let `project.status` reach `"completed"`, while either check fails —
-    any tier-≥-probable conclusion unencoded in the tree, or any resolved
-    question's `ps_id` with no `proof-critique` verdict on record. A run does
-    not finish with a conclusion that never reached the tree, or that never
-    went through its mandatory review.
+    §6 writes the relationship or fact). Do this before anything marks the
+    question resolved.
+ 3. **This is a hard gate:** never let `question-selection` mark the question
+    resolved, and never let `project.status` reach `"completed"`, while any
+    tier-≥-probable conclusion is unencoded in the tree. A run does not finish
+    with a conclusion that never reached the tree.
 
 At tier `possible` / `not_proved` / `disproved` no tree write is expected (the
 conclusion is a documented lead, not a tree assertion), so the gate is satisfied
 trivially.
 
-## Mentor checkpoints
+## Second opinion
 
-After `proof-conclusion` writes a proof summary, invoke the
-`gps-mentor` subagent once for an independent `proof-critique` of the
-finished proof. The mentor reads project state in a fresh context,
-evaluates the written conclusion against a focused rubric, and records
-a structured verdict. It is **read-only** — it never modifies project
-files; it writes only to `evaluations/`.
-
-**One gate, at the end — mandatory to invoke and record; advisory only in
-what it recommends.**
-It runs *after* the answer is already persisted, so its verdict cannot force
-a rewrite of a conclusion the researcher already reached, and it never
-re-opens a resolved question by itself. But per the routing table's final
-completion check, a question is not actually done — and `project.status`
-may not go to `completed` — until this gate has run and a matching
-`proof-critique` verdict is on record in `evaluations[]` for every `ps_id`
-a resolved question references. Marking a question `resolved` is not, by
-itself, evidence this happened. (The former `pre-exhaustiveness` and
-`conclusion-readiness` pre-gates were removed for a *different* reason: they
-duplicated `research-exhaustiveness`'s own 7-point check and
-`proof-conclusion`'s tier analysis, the read-only mentor cannot verify
-exhaustiveness without search tools, and their forced rework starved the
-proof step. That history doesn't apply to this final gate, which only
-requires a verdict on record, not that the researcher act on it. The mentor
-still *supports* those focuses **on-demand** — see below.)
-
-### When to invoke
-
-| Trigger | Focus | Target |
-|---------|-------|--------|
-| `proof-conclusion` just wrote `<ps_id>` | `proof-critique` | `<ps_id>` |
-| User asks "review my work", "is this defensible?", "critique my proof", "am I ready to conclude?", "second opinion", "mentor" | `on-demand` | most recent question / proof summary / `"project"` |
-
-For the `proof-critique` gate, first check `evaluations/` for an existing
-`proof-critique-<ps_id>-*.json` newer than the last edit to that proof
-summary; if a current verdict exists, act on it rather than re-invoking.
-Otherwise invoke `@plugin:gps-mentor` naming the focus and target_id.
-
-### Verdict handling — the recommendation is advisory; invoking the gate isn't
-
-For each gated transition, check `evaluations/` for an existing
-verdict file matching `<focus>-<target_id>-*.json` that is newer
-than the most recent state change to the target (latest log entry,
-assertion, conflict, plan-item update, or proof_summary edit
-referencing the target). If a current verdict exists, skip the
-re-invocation and act on the existing verdict. Otherwise, invoke
-`@plugin:gps-mentor` with a delegation message naming the focus
-and target_id.
+`gps-mentor` runs only when the user asks for it — "review my work", "is
+this defensible?", "what would a senior genealogist say?", "critique my
+proof", "am I ready to conclude?", "mentor", "second opinion", or any
+equivalent — never as a routing step. When they do,
+invoke `@plugin:gps-mentor` with a delegation message naming the focus
+and target_id: `focus: on-demand`, and `target_id` set to the most recent
+question, proof summary, or the literal string `"project"` if no specific
+target is implied. It is read-only on the tree and on every section except
+`evaluations[]`.
 
 | Verdict | Action |
 |---------|--------|
 | `looks_solid` / `consider_addressing` | Surface `narrative_for_user`; continue. |
-| `address_first` | Surface `narrative_for_user` and record each `must_address` item to the audit trail. **Do not block, re-open the resolved question, or force a remediation skill.** Log it and continue; the watching researcher may choose to act on it. The mentor is a support, not a gatekeeper. |
+| `address_first` | Surface `narrative_for_user`. **Do not block, re-open a resolved question, or force a remediation skill.** The user decides whether to act on it. |
 | `refused` | Surface the refusal message; it names the correct target. |
-
-### On-demand invocation
-
-When the user says "review my work", "is this defensible?", "what
-would a senior genealogist say?", "mentor", "second opinion", or
-any equivalent, invoke `@plugin:gps-mentor` with `focus: on-demand`
-and `target_id` set to the most recent question, proof summary, or
-the literal string `"project"` if no specific target is implied.
 
 ## When to stop
 
@@ -441,10 +392,9 @@ write to the sub-skill it routes to. It does **not** insert defensive
 `validate_research_schema` passes between steps (the writer tools each
 validate the whole project before persisting); it calls
 `validate_research_schema` (read-only) only to confirm an external/manual
-edit to the files. The only side-channel writes
-during a run come from the `gps-mentor` subagent it invokes, which
-writes verdict files under `evaluations/` and never touches
-`research.json` or `tree.gedcomx.json`.
+edit to the files. When the user asks for a second opinion, the
+`gps-mentor` subagent it invokes records its verdict in `evaluations[]`
+and never touches `tree.gedcomx.json`.
 
 **On repeat invocation:** safe to re-run at any point. It re-reads
 `research.json` and resumes routing from the current state — the same

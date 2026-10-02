@@ -143,10 +143,15 @@ artifact is what every downstream check joins on.
 | `concluded` | a proof summary carries `question_id` = this question |
 | `critiqued` | every such summary has a live `proof-critique` evaluation |
 
+`critiqued` is reached only when the user asked for a gps-mentor review — the
+mentor is not on the default `/research` path — so it records that a critique
+exists and gates nothing. A superseded verdict does not count — a
+replacement is itself present and satisfies the join; if nothing replaced it, the
+critique no longer stands.
+
 `nextStep` orders by what blocks what: an unresolved conflict outranks a missing
-critique, which outranks a missing resolve, which outranks a missing summary. A
-superseded verdict does not count — a replacement is itself present and satisfies
-the join; if nothing replaced it, the critique no longer stands.
+resolve, which outranks a missing summary. A missing critique is never a next
+step.
 
 **`storedStatus` is reported, `state` is derived, and they are allowed to
 disagree.** `state` is this tool's reading of the documents by the ladder above;
@@ -166,12 +171,12 @@ open ones.
 Neither field gates anything. Adding `storedStatus` moves no rung and changes no
 `state`, `nextStep` or `openConflictIds` value.
 
-**`critiqued` is the last rung of the ladder, not the end of the work.** The
-ladder tracks what was *produced*, and the `resolved` write produces nothing, so
-it has no rung of its own — but it is still outstanding, and it is the transition
-no skill body claims. A question that is `critiqued` and not yet resolved reports
-that resolve as its next step. `nextStep` is null only when the question is both
-`critiqued` and resolved.
+**A conclusion is not the end of the work.** The ladder tracks what was
+*produced*, and the `resolved` write produces nothing, so it has no rung of its
+own — but it is still outstanding, and it is the transition no skill body claims.
+A question that is `concluded` or `critiqued` and not yet resolved reports that
+resolve as its next step. `nextStep` is null only when the question has a proof
+summary and is resolved.
 
 **Nothing gates on this field, and that is the design.** `research_append`
 evaluates its own completion preconditions against the document at write time,

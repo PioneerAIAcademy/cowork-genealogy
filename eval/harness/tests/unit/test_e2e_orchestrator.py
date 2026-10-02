@@ -800,20 +800,19 @@ def test_check_guardrail_compliance_is_empty_for_a_clean_run():
     assert check_guardrail_compliance([], {}, {}, starting_tree={"persons": []}) == []
 
 
-def test_check_guardrail_compliance_aggregates_all_three_checks():
-    """One call, three non-windowed §4.4 arms. The `mentor` arm below reads
-    only research.json, which is why compliance is a real result even on a
-    run that produced no tree."""
+def test_check_guardrail_compliance_is_a_real_result_on_a_treeless_run():
+    """The proof-conclusion arm reads only research.json, which is why
+    compliance is a real result even on a run that produced no tree. A
+    resolved question's uncritiqued proof summary is not a violation: the
+    gps-mentor critique runs only on request."""
     research = {
         "questions": [{"id": "q1", "status": "resolved"}],
         "proof_summaries": [{"id": "ps1", "question_id": "q1"}],
-        "exhaustive_declaration": {"declared": True},
+        "evaluations": [],
     }
     violations = check_guardrail_compliance([], research, None)
-    # The gps-mentor arm reads only research.json...
-    assert any("proof-critique" in v for v in violations)
-    # ...and the proof-conclusion arm fires from the same call.
     assert any("proof-conclusion" in v for v in violations)
+    assert not any("proof-critique" in v for v in violations)
 
 
 # --- load_seed_person_ids (issue #963 seed read; fail-open) ------------------

@@ -3,12 +3,9 @@ name: gps-mentor
 description: >-
   BCG-style senior genealogist who reviews research work and tells the
   user what to address to improve it. Returns a structured verdict plus a
-  mentoring narrative. Invoked by /research once per proof — a mandatory
-  `proof-critique` after `proof-conclusion` writes a summary (must be
-  invoked and recorded; its recommendation stays advisory, never forcing
-  rework) — and on-demand when the user says "review my work", "is this
-  defensible?", "mentor", "second opinion", "is this a good read",
-  "polish this for my family". Never modifies research.json
+  mentoring narrative. Invoked on request, when the user says "review my
+  work", "is this defensible?", "mentor", "second opinion",
+  "is this a good read", "polish this for my family". Never modifies research.json
   (except appending to evaluations[]) or tree.gedcomx.json. Do NOT use for
   schema validation (use validate-schema), to execute new searches (use
   search-records or search-external-sites), or to write proof conclusions

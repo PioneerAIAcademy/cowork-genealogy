@@ -550,9 +550,9 @@ function normalize(text: string): string {
  * as a mention of `image-reader`, while `record-extractors` and
  * `sub-image-reader` still are. Loses nothing `includes` catches, and adds a
  * markdown hyphen hard-wrap. Builds no RegExp from a filename, so an odd
- * basename cannot throw. Case-SENSITIVE on purpose: question-selection's "the
- * mandatory GPS-mentor review" is prose, and a capitalised `@plugin:` spelling
- * would not resolve at runtime anyway.
+ * basename cannot throw. Case-SENSITIVE on purpose: gps-mentor.md's "# GPS
+ * Mentor" heading is prose, and a capitalised `@plugin:` spelling would not
+ * resolve at runtime anyway.
  *
  * Four attempts at this function regressed on first pass. A plain
  * `includes(agent)` false-fails a legitimate `image-reader-opus` edge; a

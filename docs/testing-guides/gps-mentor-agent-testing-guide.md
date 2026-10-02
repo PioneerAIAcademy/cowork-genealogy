@@ -13,9 +13,10 @@ The agent file itself lives at
 
 `gps-mentor` is a Board for Certification of Genealogists (BCG)-style
 senior genealogist who reviews the researcher's work and tells them
-what to address next. It runs at three checkpoints in the `/research`
-flow (pre-exhaustiveness, conclusion-readiness, proof-critique) and
-on-demand when the user asks for a review.
+what to address next. `/research` never invokes it on its own; it runs
+only when the user asks for a review ("second opinion", "review my work",
+"is this defensible?"), with `focus: on-demand`, including on a completed
+project.
 
 Unlike a tool, this agent has structured side effects on the project
 folder:

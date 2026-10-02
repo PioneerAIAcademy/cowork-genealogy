@@ -92,10 +92,8 @@ the conflict re-enables that plan's progress.
 Gate new-question creation on **answered**, not **proved.** Once every
 *independent* part of the objective has a question whose `status` is
 `resolved` — not merely `in_progress` with a `proof_summary` already
-written at a defensible tier (`probable` or better); a proof_summary can
-exist, and sit at a defensible tier, before the mandatory GPS-mentor
-critique moves `status` to `resolved` — the objective is answered. That is
-the autonomous stop point. Do **NOT** spawn a new question to
+written at a defensible tier (`probable` or better) — the objective is
+answered. That is the autonomous stop point. Do **NOT** spawn a new question to
 **corroborate** or upgrade the tier of a part on a question already
 `resolved` (a second source to move `probable` → `proved`): that is optional
 corroboration, not required for autonomous completion, and chasing it after

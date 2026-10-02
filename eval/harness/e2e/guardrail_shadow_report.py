@@ -97,7 +97,6 @@ from harness.skill_invocation import (
     find_citation_nulling_in_conclusions,
     find_citation_nulling_in_tree_sources,
     find_conclusions_without_tree_encoding,
-    find_missing_mentor_verdicts,
     find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
     find_tree_facts_disagreeing_with_assertions,
@@ -1180,9 +1179,8 @@ def format_unnamed_delegate(scan: UnnamedDelegateScan, *, replay: bool) -> str:
 
 
 # ── Hosted feedback bundles (issue #1558) ────────────────────────────────────
-# Run the two detectors valid over a feedback bundle — the transcript-only
-# `find_unguarded_protected_writes` and the research.json-only
-# `find_missing_mentor_verdicts`. The tree-reading §8 arms cannot run over a
+# Run the one detector valid over a feedback bundle — the transcript-only
+# `find_unguarded_protected_writes`. The tree-reading §8 arms cannot run over a
 # bundle (redacted tree, no starting_tree baseline — see
 # docs/specs/guardrail-enforcement-spec.md § "Options set aside"), and
 # `check_guardrail_compliance` / `find_effects_without_invocation` are excluded
@@ -1361,35 +1359,10 @@ def _dropped_transcripts(bundle_dir: Path) -> list[str]:
     return [n for n in names if isinstance(n, str)] if isinstance(names, list) else []
 
 
-def _submitted_research(bundle_dir: Path, research_path: Path) -> str:
-    """The research.json the tester *submitted*, not the one triage rewrote.
-
-    `make feedback-case` git-inits the case dir with an `imported` baseline and
-    the agent mutates it as it works (`make feedback-reset` exists for exactly
-    that), so the working-tree research.json can be a replay — a mentor-verdict
-    finding present at submission may have been written away. When the bundle
-    dir is a git repo, read the committed baseline; otherwise fall back to the
-    file (a fresh unzip with no .git — the state is the submitted one)."""
-    if (bundle_dir / ".git").exists():
-        try:
-            import subprocess
-
-            return subprocess.run(
-                ["git", "-C", str(bundle_dir), "show", "HEAD:research.json"],
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                check=True,
-            ).stdout
-        except (subprocess.CalledProcessError, OSError):
-            pass  # no committed research.json — fall back to the working tree
-    return research_path.read_text(encoding="utf-8")
-
-
 def scan_feedback_bundle(
     bundle_dir: Path, *, window: int = _FEEDBACK_WINDOW, platform: str | None = None
 ) -> dict[str, Any]:
-    """Per-bundle facts + both detectors' raw findings for one unpacked bundle
+    """Per-bundle facts + the detector's raw findings for one unpacked bundle
     directory. `platform` is supplied by the caller (from the feedback issue's
     `Platform:` line — not knowable from the bundle alone)."""
     bundle_dir = Path(bundle_dir)
@@ -1398,7 +1371,6 @@ def scan_feedback_bundle(
     # feedback.ts), and `unzip -d` preserves that layout — read it there, not at
     # the bundle root, or every real bundle silently reports has_transcript=False.
     transcript = bundle_dir / "_feedback" / "session-log.jsonl"
-    research_path = bundle_dir / "research.json"
     submitted, meta_platform = _bundle_metadata(bundle_dir)
     dropped_transcripts = _dropped_transcripts(bundle_dir)
     out: dict[str, Any] = {
@@ -1440,13 +1412,7 @@ def scan_feedback_bundle(
         "tool_call_count": 0,
         "skill_call_count": 0,
         "session_ids": [],
-        # A missing or unreadable research.json must not read as "0 findings" —
-        # that is indistinguishable from a clean bundle. Track it so the report
-        # shows it and drops it from the mentor-verdict denominator.
-        "has_research": research_path.exists(),
-        "research_unreadable": False,
         "unguarded_writes": [],
-        "missing_mentor_verdicts": [],
     }
 
     if out["has_transcript"]:
@@ -1456,17 +1422,13 @@ def scan_feedback_bundle(
             # `UnicodeDecodeError` is a ValueError, and `parse_jsonl` catches
             # only OSError, so one cp1252 byte or smart quote in one bundle's
             # transcript killed the whole directory scan. Tag this bundle and
-            # keep going -- the same shape `research_unreadable` already has.
+            # keep going.
             # Caught here rather than widened inside the shared `parse_jsonl`,
             # which would silently hand its other caller [] instead of raising.
             # `adapt_bundle` also catches PER FILE, so one bad subagent
             # transcript no longer discards its parent's findings.
             adapted = None
             out["transcript_unreadable"] = True
-        # Do NOT early-return when the transcript is unreadable or unadaptable:
-        # research.json is a separate file and may be perfectly readable, so the
-        # mentor-verdict scan below must still run. Only the transcript-derived
-        # fields are gated on a successful adapt.
         if adapted is not None:
             tool_calls = adapted["tool_calls"]
             out["truncated"] = adapted["truncated"]
@@ -1505,28 +1467,6 @@ def scan_feedback_bundle(
                 for group in adapted["groups"]
                 for v in find_unguarded_protected_writes(group["tool_calls"], window=window)
             ]
-
-    if research_path.exists():
-        try:
-            research = json.loads(_submitted_research(bundle_dir, research_path))
-            # Valid JSON of the wrong TYPE is the gap `research_unreadable`
-            # otherwise misses. `_redact_living` rewrites only tree.gedcomx.json
-            # and says so ("a privacy filter, not a validator"), so research.json
-            # enters the bundle as raw bytes with nothing checking its shape. A
-            # truthy non-dict (a non-empty array, a string, a number) survives
-            # `research or {}` and reaches `.get()`, which raises and takes every
-            # other bundle's result down with it. Falsy non-dicts (`[]`, `null`)
-            # never crashed, but they are not a research document either.
-            if not isinstance(research, dict):
-                raise json.JSONDecodeError("research.json is not a JSON object", "", 0)
-        except (ValueError, OSError):
-            # ValueError, not json.JSONDecodeError: `UnicodeDecodeError` is a
-            # ValueError and is NOT a JSONDecodeError, so a cp1252 research.json
-            # escaped and took the whole scan down. `_load_json` in this same
-            # module already catches exactly this tuple, for exactly this reason.
-            research = None
-            out["research_unreadable"] = True
-        out["missing_mentor_verdicts"] = find_missing_mentor_verdicts(research)
 
     return out
 
@@ -1587,10 +1527,6 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
         if excluded_here or r.get("excluded_unknown_owner"):
             named = ", ".join(excluded_here) or "owner unknown"
             tag += f" [subagent transcript excluded: {named}]"
-        if r.get("research_unreadable"):
-            tag += " [research unreadable]"
-        elif not r.get("has_research"):
-            tag += " [no research.json]"
         # Name the arms that could not have been seen for THIS bundle, rather
         # than disclaiming them globally in the footer for every bundle.
         blind = sorted(a for a, v in (r.get("arms") or {}).items() if v == "unknown")
@@ -1606,8 +1542,7 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
             f"\n  {r['bundle']} (platform={r['platform']}, "
             f"submitted={r.get('submitted') or 'unknown'}){tag}: "
             f"{r['tool_call_count']} tool calls, {r['skill_call_count']} Skill calls, "
-            f"{len(r['unguarded_writes'])} unguarded-write finding(s), "
-            f"{len(r['missing_mentor_verdicts'])} missing-mentor-verdict finding(s)"
+            f"{len(r['unguarded_writes'])} unguarded-write finding(s)"
             + (f", session_ids={r['session_ids']}" if len(r['session_ids']) > 1 else "")
             + shape_warn
         )
@@ -1616,10 +1551,7 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
         # its source, the same `fixture` key scan_one adds.
         for v in r["unguarded_writes"]:
             lines.append(format_detail([{**v, "fixture": r["bundle"]}]))
-    # Totals with their denominators — never a combined number across detectors.
-    # The mentor-verdict denominator is only bundles with a readable research.json;
-    # a missing/unreadable one contributes no signal and must not inflate it.
-    with_research = [r for r in results if r["has_research"] and not r["research_unreadable"]]
+    # Totals with their denominator.
     # Attributable = has a transcript we could adapt AND that wasn't truncated;
     # a truncated, unadaptable, or undecodable transcript can't attribute a
     # write, so none is in the denominator. An unreadable transcript never ran
@@ -1632,14 +1564,11 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
         and not r.get("transcript_unreadable")
     ]
     unguarded_total = sum(len(r["unguarded_writes"]) for r in attributable)
-    mentor_total = sum(len(r["missing_mentor_verdicts"]) for r in with_research)
     lines.append(
         f"\nTotals: unguarded-write findings {unguarded_total} across "
         f"{len(attributable)} attributable transcript(s) "
         f"({len(truncated)} truncated, {len(could_not_adapt)} could not adapt, "
-        f"{len(unreadable_transcripts)} unreadable, excluded); "
-        f"missing-mentor-verdict findings {mentor_total} across "
-        f"{len(with_research)} bundle(s) with a readable research.json. "
+        f"{len(unreadable_transcripts)} unreadable, excluded). "
         f"Corpus is small and self-selected — a signal, not a rate."
     )
 
@@ -1649,12 +1578,9 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
     lines.append("\nBy platform (the ruling in #1558 — never a combined number):")
     for plat in sorted({str(r["platform"]) for r in results}):
         p_attr = [r for r in attributable if str(r["platform"]) == plat]
-        p_res = [r for r in with_research if str(r["platform"]) == plat]
         lines.append(
             f"  {plat}: unguarded-write {sum(len(r['unguarded_writes']) for r in p_attr)} "
-            f"across {len(p_attr)} attributable transcript(s); "
-            f"missing-mentor-verdict {sum(len(r['missing_mentor_verdicts']) for r in p_res)} "
-            f"across {len(p_res)} bundle(s) with a readable research.json"
+            f"across {len(p_attr)} attributable transcript(s)"
         )
 
     # Owner-arm visibility, decided per bundle and per agent rather than asserted

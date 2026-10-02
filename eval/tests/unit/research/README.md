@@ -40,12 +40,11 @@ that is still a skill is stubbed at its `Skill` call only.
 
 ## What is NOT covered (and why)
 
-Two routing-table rows are blocked on #1492 (research/SKILL.md reconciliation):
-
-- **Row 14 post-verdict**: the `address_first` verdict handler has two
-  contradictory tables. The routing decision TO `proof-critique` is testable;
-  the handler for its return is not.
-- **Row 16**: who writes `project.status = "completed"` — the routing table,
+- **Second-opinion verdict handling**: gps-mentor is not a routing row; it
+  runs only on request. The on-demand hand-off is tested
+  (`second-opinion-completed.json`); what the router does with the verdict it
+  returns is not.
+- **Row 16** (blocked on #1492, research/SKILL.md reconciliation): who writes `project.status = "completed"` — the routing table,
   the ownership validator, the tool comments, and the empirical run logs all
   disagree. Cannot test until the ruling lands.
 
