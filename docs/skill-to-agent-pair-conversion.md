@@ -31,11 +31,13 @@ written for the first:
   `effort:` pin (`docs/architecture.md` §3.5), and a folded body stops occupying
   the orchestrator's context. This buys no attribution and needs none.
 
-A cost-motivated conversion is the cheaper build: **no hook route, no ownership
-row, and no writer-tool precondition.** `AGENT_WRITABLE_SECTIONS.get(caller)` in
-`guard_project_files.py` returns `None` for an unlisted agent, so the
-out-of-lane check never fires, and the only routed targets are `proof_summaries`
-and `questions.exhaustive_declaration`. Everything else here — the fold order,
+A cost-motivated conversion is the cheaper build: **no hook route and no
+writer-tool precondition** — the only routed targets are `proof_summaries` and
+`questions.exhaustive_declaration`. It still needs a **lane**: an agent granted
+`research_append` must have an `AGENT_WRITABLE_SECTIONS` entry in
+`guard_project_files.py` naming the sections it writes
+(`plugin-hooks.test.ts`, "gives every agent granted research_append a lane"),
+and an ownership row that names it as `agent:<name>` if it owns a section. Everything else here — the fold order,
 the baseline, the fixture audit — applies to both.
 
 **The general rule this is a worked instance of is ADR-0011**

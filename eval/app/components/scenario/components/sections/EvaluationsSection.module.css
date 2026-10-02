@@ -1,0 +1,51 @@
+.section {
+  padding: var(--spacing-xl);
+}
+
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.empty {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  font-style: italic;
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.row {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: baseline;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  min-width: 104px;
+  flex-shrink: 0;
+}
+
+.value {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.targetKind,
+.plainTarget {
+  color: var(--text-secondary);
+}

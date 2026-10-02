@@ -146,6 +146,11 @@ function registeredServerKey(site: (typeof SERVER_KEY_SITES)[number]): string | 
 
 const agentFiles = readdirSync(agentsDir).filter((f) => f.endsWith(".md"));
 const knownTools = new Set(allToolSchemas.map((s) => s.name));
+const manifestTools = new Set<string>(
+  (JSON.parse(readFileSync(join(mcpRoot, "manifest.json"), "utf8")).tools as { name: string }[]).map(
+    (t) => t.name,
+  ),
+);
 
 /** Bare tool names an agent names in BOTH `tools:` and `disallowedTools:`.
  *
@@ -282,30 +287,30 @@ describe("plugin agent tool names", () => {
       const text = readFileSync(join(agentsDir, file), "utf8");
 
       for (const key of ["tools", "disallowedTools"] as const) {
-        const parsed = extractList(text, key);
-        const entries = parsed.filter((t) => t.startsWith("mcp__"));
-        if (key === "disallowedTools" && parsed.length === 0) continue;
+        const entries = extractList(text, key).filter((t) => t.startsWith("mcp__"));
+        // No agent ships a disallowedTools block; restore the pre-guard behaviour
+        // for empty disallowedTools so the describe is not registered at all —
+        // only the tools: side carries the parser regression guard.
+        if (key === "disallowedTools" && entries.length === 0) continue;
+
+        // An agent whose AGENT_PERMISSIONS row contains no manifest MCP tool
+        // holds none by design (currently: translation, which holds only Read).
+        // AGENT_PERMISSIONS stores BARE names ("research_append"), so testing
+        // for mcp__ prefix — as the previous version did — was always false and
+        // always waived the assertion. Test manifest membership instead.
+        const noMcpByDesign =
+          key === "tools" &&
+          !(AGENT_PERMISSIONS[file]?.tools ?? []).some((t: string) => manifestTools.has(t));
 
         describe(key, () => {
           it("parses at least one MCP entry", () => {
-            // Two things at once. It guards the assertions below against
-            // passing vacuously if the frontmatter parser stops matching the
-            // block-sequence form — and, because it counts only `mcp__`-
-            // prefixed entries, it also catches an agent whose MCP grants were
-            // all written as BARE names, which leaves the subagent toolless
-            // (CLAUDE.md, "Dual-spelled tool names" — that has broken every
-            // agent in Cowork twice while CI stayed green).
-            //
-            // Exempt ONLY an agent whose own AGENT_PERMISSIONS row pins no MCP
-            // tool at all — today `project-status` alone, which is read-only
-            // and holds `Read` (issue #2793). Keying the exemption to the
-            // PINNED row rather than to whatever the frontmatter parses to is
-            // what keeps the bare-name arm alive: bare-naming a real grant
-            // would have to edit the snapshot in the same commit to escape
-            // this, and that is reviewable as a diff.
-            if (key === "tools" && pinsNoMcpTool(file)) return;
+            // Guards the assertions below against passing vacuously if the
+            // frontmatter parser stops matching the block-sequence form.
+            if (noMcpByDesign) return;
             expect(entries.length).toBeGreaterThan(0);
           });
+
+          if (entries.length === 0) return;
 
           it("uses only recognized server prefixes", () => {
             for (const entry of entries) {
@@ -631,6 +636,27 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // locality-guide (issue #2117) holds exactly the eleven tools the skill it
+  // replaced declared, plus `Read`: Step 6 persists only when research.json
+  // exists at the project path, and the narration line reads it.
+  "locality-guide.md": {
+    tools: [
+      "Read",
+      "collections_search",
+      "external_links_search",
+      "place_population",
+      "place_search",
+      "place_search_all",
+      "research_append",
+      "volume_search",
+      "wiki_place_page",
+      "wiki_read",
+      "wiki_search",
+      "wikipedia_search",
+    ],
+    denies: [],
+  },
+
   "search-images.md": {
     tools: [
       "Read",
@@ -679,8 +705,17 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // spawn (lead ruling 2026-09-23). `agent-tool-names.test.ts` fails a Task or
   // Agent grant outright; this comment records that the omission is deliberate
   // rather than an oversight.
+  "hypothesis-tracking.md": {
+    tools: ["Read", "research_append", "validate_research_schema"],
+    denies: [],
+  },
   "search-wikipedia.md": {
     tools: ["Write", "wikipedia_search"],
+    denies: [],
+  },
+
+  "translation.md": {
+    tools: ["Read"],
     denies: [],
   },
 };
@@ -688,22 +723,6 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
 /** Bare name for an MCP entry; non-MCP built-ins (`Read`) pass through as-is. */
 function bareOrBuiltin(entry: string): string {
   return entry.startsWith("mcp__") ? bareName(entry) : entry;
-}
-
-/** Cowork built-ins, which are granted bare. Every OTHER name in an
- *  `AGENT_PERMISSIONS` row is an MCP tool recorded under its bare name, so a
- *  row consisting only of these pins no MCP tool. */
-const BUILT_IN_GRANTS = new Set(["Read", "Write"]);
-
-/** True when this agent's pinned permission row holds no MCP tool at all —
- *  the one case where the "parses at least one MCP entry" arm cannot apply.
- *  Reads `AGENT_PERMISSIONS` at call time, from inside an `it()` body, so the
- *  const below it is initialised by then. */
-function pinsNoMcpTool(file: string): boolean {
-  const pinned = AGENT_PERMISSIONS[file]?.tools;
-  return (
-    Array.isArray(pinned) && pinned.length > 0 && pinned.every((t) => BUILT_IN_GRANTS.has(t))
-  );
 }
 
 describe("plugin agent permission surface", () => {

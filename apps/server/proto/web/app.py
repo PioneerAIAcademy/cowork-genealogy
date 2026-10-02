@@ -43,10 +43,15 @@ hosted runner.
 
 Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto), QUEUE_URL (a full SQS
 queue URL, the shim's shape; unset -> NullQueue, turns are recorded but not enqueued),
-POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (60 -- see ``max_nudges``). Startup
-applies proto/sql/*.sql (all idempotent).
+POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (60 -- see ``max_nudges``). With
+QUEUE_URL set (and only then): GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
+or neither; neither signs SendMessage with the default AWS chain, the instance profile on
+AWS; one alone refuses to start) and GENEALOGY_SQS_REGION (else the QUEUE_URL host's
+region). Startup applies proto/sql/*.sql (all idempotent) and logs
+``queue: <url>; sqs credentials: <mode>; region <r>``.
 
-Run: from apps/server, ``uv run python proto/web/app.py``.
+Run: ``make proto-web`` (from the venv, with the dummy GENEALOGY_SQS_* pair elasticmq
+ignores).
 """
 
 from __future__ import annotations
@@ -80,10 +85,20 @@ SQL_DIR = PROTO_DIR / "sql"
 if str(PROTO_DIR) not in sys.path:
     sys.path.insert(0, str(PROTO_DIR))
 
-import enqueue  # noqa: E402  (the D3 SQS query-API client; reused, not edited)
+import enqueue  # noqa: E402  (the SQS query-API client; signs SigV4)
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
 
 log = logging.getLogger("proto.web")
+# What the patron sees when SendMessage fails. Never the exception: an AWS refusal names the
+# account id and the instance role's ARN. The log line beside the 502 carries the detail.
+ENQUEUE_FAILED_MESSAGE = "queue send failed; please try again"
+# uvicorn configures only its own loggers, so without a handler of its own every INFO line
+# here -- the schema and the ``queue: ...; sqs credentials: ...`` start line -- is dropped.
+if not log.handlers:
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter("%(levelname)s:     %(name)s: %(message)s"))
+    log.addHandler(_handler)
+    log.setLevel(logging.INFO)
 
 DEFAULT_PG_DSN = "postgresql://postgres:proto@localhost:5434/proto"
 DEFAULT_TITLE = "New research session"
@@ -694,7 +709,7 @@ class PgStore:
         self, user_id: str, access_token_enc: str, refresh_token_enc: str | None, expires_at: datetime
     ) -> None:
         """One statement, ciphertext only. granted_at restarts on every sign-in and never
-        on refresh (U3's 24 h clock); a response without a refresh token keeps the one
+        on refresh (it records the sign-in); a response without a refresh token keeps the one
         already stored."""
         async with await self._connect() as conn:
             await conn.execute(
@@ -712,9 +727,10 @@ class PgStore:
 
 
 class SqsQueue:
-    """SendMessage over the SQS query API via enqueue.sqs_call. QUEUE_URL is a full queue
-    URL (the shim's shape); the endpoint is its scheme+host, and the URL itself goes down
-    as QueueUrl -- elasticmq keys on the path, so the in-network host is fine."""
+    """SendMessage over the SQS query API via enqueue.sqs_call, SigV4-signed. QUEUE_URL is
+    a full queue URL (the shim's shape); the endpoint is its scheme+host, which is also the
+    Host the request is signed for, and the URL itself goes down as QueueUrl -- elasticmq
+    keys on the path, so the in-network host is fine."""
 
     def __init__(self, queue_url: str) -> None:
         parsed = urlparse(queue_url)
@@ -852,8 +868,15 @@ def create_app(
         if app.state.queue is None:
             queue_url = os.environ.get("QUEUE_URL")
             if queue_url:
+                try:
+                    sqs_auth = await asyncio.to_thread(enqueue.configure, os.environ, queue_url)
+                except enqueue.SqsConfigError as exc:
+                    raise RuntimeError(str(exc)) from exc
                 app.state.queue = SqsQueue(queue_url)
-                log.info("queue: %s", queue_url)
+                log.info("queue: %s; %s", queue_url, enqueue.describe(sqs_auth))
+                if sqs_auth.method is None:
+                    log.warning("no AWS credentials found yet: SendMessage retries the chain "
+                                "and fails until it resolves")
             else:
                 app.state.queue = NullQueue()
                 log.warning("QUEUE_URL unset: turns are recorded but NOT enqueued (NullQueue)")
@@ -1157,7 +1180,7 @@ def create_app(
             # the 502 names its seq: the SPA still has an echo to drop.
             raise HTTPException(
                 status_code=502,
-                detail={"message": f"queue send failed: {exc}", "turn_id": failed_id, "seq": turn.seq},
+                detail={"message": ENQUEUE_FAILED_MESSAGE, "turn_id": failed_id, "seq": turn.seq},
             ) from exc
         return {"turn_id": turn.turn_id, "seq": turn.seq, "message_id": message_id, "queued": held}
 

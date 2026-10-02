@@ -80,6 +80,9 @@ SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 #     description, which this set does not measure.
 #   - `search-familysearch-wiki` left on 2026-09-29, same reason (issue
 #     #2794), NOT re-listed, same caveat for `agents/search-familysearch-wiki.md`.
+#   - `hypothesis-tracking` left on 2026-09-29 for the same reason (issue
+#     #2792), and is likewise NOT re-listed. `research/SKILL.md` now spawns
+#     `agents/hypothesis-tracking.md` as `@plugin:hypothesis-tracking`.
 #   - `tree-edit` left on 2026-09-30, same reason (issue #2805), NOT re-listed,
 #     same caveat for `agents/tree-edit.md`.
 #   - `validate-schema` left on 2026-09-30, same reason (issue #2798), NOT
@@ -88,10 +91,8 @@ DARK_SKILLS_2026_09_01 = frozenset(
     {
         "forget-and-rederive",
         "historical-context",
-        "hypothesis-tracking",
         "source-evaluation",
         "timeline",
-        "translation",
     }
 )
 
