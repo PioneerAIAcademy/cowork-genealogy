@@ -14,7 +14,7 @@ Postgres/S3, selected by the `X-Genealogy-Project-Id` header.
 |---|---|
 | `POST /mcp` | Stateless Streamable HTTP, JSON responses (`sessionIdGenerator: undefined`, `enableJsonResponse: true`). One `Server` + transport per request, closed after the response. |
 | `GET` / `DELETE` / anything else on `/mcp` | `405`, `Allow: POST`, `{"jsonrpc":"2.0","error":{"code":-32000,"message":"Method not allowed."},"id":null}` — answered by the entrypoint before any transport exists, so a client's post-initialize `GET` never gets a held-open SSE stream. The SDK client and the Claude Code CLI treat that 405 as "no server-push stream" and continue. |
-| `GET /healthz` | `200 {"ok":true,"tools":<allToolSchemas.length>}` — the compose healthcheck and `make engine-smoke-http`'s readiness wait. |
+| `GET /healthz` | Readiness: a fresh Postgres connection that sees the store tables (`documents`, `blobs`, `staging`, `projects`) and `HeadBucket` on the bucket, under one 1.5 s deadline. `200` when both pass, `503` when either fails, same body either way: `{"ok":<bool>,"tools":<allToolSchemas.length>,"checks":{"postgres":{"ok":<bool>,"error"?:<label>},"s3":{…}}}`. `error` is a label only (an error code such as `ECONNREFUSED`, a name such as `TimeoutError`, or `schema: missing <tables>`), never a message; the message goes to stderr once per state change. A probe that rejects or outlives 2 s is `503` with no `checks`. A failing store never exits the process. The compose healthcheck and `make engine-smoke-http`'s readiness wait. |
 | `X-Genealogy-Project-Id` (request header) | The project the request's tools run against, matched against `PROJECT_ID_RE` (`src/store/project-id.ts`). Exactly one value; malformed or duplicated → `400 {"jsonrpc":"2.0","error":{"code":-32600,"message":"Invalid X-Genealogy-Project-Id header."},"id":null}` before any transport exists. |
 | any other path | `404` JSON. |
 
@@ -127,7 +127,9 @@ and `minio` `service_healthy`, reads the Postgres the worker reads (`GENEALOGY_P
 the worker's `PG_DSN`) under the worker's anchor (`GENEALOGY_ANCHOR_PATH` is its
 `WORKER_CWD`), and `proto-up` waits on it while `proto-up-core` does not.
 `apps/server/tests/test_proto_worker.py` pins the consumer's two headers.
-`packages/engine/mcp-server/tests/http/` covers the server itself (405 guard, `/healthz`,
+`packages/engine/mcp-server/tests/http/` covers the server itself (405 guard, `/healthz` 200/503 from the readiness report and the spawned server's 503 with both stores unreachable,
 no-`LOCAL`, per-request bearers, per-request stores that cannot read each other, the
 missing-header instruction, the malformed-header 400); `http-server-pg.test.ts` runs the
-isolation case on the real Pg store under `make proto-store-test`.
+isolation case and a healthy `/healthz` on the real Pg store under `make proto-store-test`.
+`tests/store/pg-s3-project-store.test.ts` covers the probe itself (deadline, single flight,
+no S3 retry, label-only errors, the missing-schema and saturated-pool cases).
