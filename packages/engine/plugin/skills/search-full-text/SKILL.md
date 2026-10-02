@@ -144,7 +144,16 @@ Read `references/query-syntax.md` for operator details and wildcards.
   be off, so apply them more cautiously than place. **If a filtered
   search returns zero results, re-run it without that filter before
   logging anything as not found** — a nil under a filter may reflect a
-  metadata mismatch rather than a true absence.
+  metadata mismatch rather than a true absence. **This applies to every
+  filtered nil, including spelling and abbreviation variant queries.**
+  If `+Flynn +Thos` with place filters returns zero, retry `+Flynn +Thos`
+  without filters before logging it as negative — do not assume the
+  unfiltered retry for the canonical form (`+Flynn +Thomas`) covers it.
+  **When variant searches run in parallel and any variant returns zero
+  with filters, issue an immediate follow-up unfiltered retry for that
+  variant in the same turn before logging any results.** Do not log the
+  nil and move on — the retry must come first, even if the parallel batch
+  already completed.
 - **Never borrow a `collectionId` from `record_search` or a collections
   survey.** The FTS corpus uses its own auto-generated partitions that
   do not map 1:1 onto indexed-record collection IDs; a borrowed ID
@@ -153,7 +162,13 @@ Read `references/query-syntax.md` for operator details and wildcards.
   `facets` array gives `filterParam` values that are real FTS partition
   IDs. Use only those on scoped follow-up calls — never a borrowed ID.
   See `references/query-syntax.md` "Scoping FTS to a collection ID" for
-  the two-call pattern.
+  the two-call pattern. **This is a mandatory sequential two-step: (1)
+  send a call with `includeFacets: true` explicitly and wait for its
+  response, (2) use a `filterParam` value from that response's `facets`
+  array as the `collectionId` on the follow-up call. You MUST send
+  `includeFacets: true` — the server may return facets without it, but
+  those do not authorize a scoped follow-up. Never submit the scoped
+  call in the same parallel batch as the `includeFacets: true` call.**
 - **Decompose a compound surname into co-occurrence, not a phrase.**
   For an Iberian / Latin-American name (`Given Paterno Materno`, e.g.
   "Francisco **Naveda Somarriba**"), require the two surnames as
@@ -198,7 +213,11 @@ fulltext_search({ keywords: "+Fl?nn +Patrick" })
 
 Call `fulltext_search` with the constructed query. This skill **logs
 every search**, so `projectPath` (the absolute path to the project
-folder) is **mandatory on every call** — never omit it. When supplied,
+folder) is **mandatory on every call** — never omit it. **Execute every
+planned search for the task before logging any results or calling
+`research_append`.** Do not stop after the first search if the plan
+item or the user's message requires multiple queries (e.g., separate
+searches for two different people). When supplied,
 the host stages the raw results and the response gains a
 `staged.resultsRef` handle you hand to `research_log_append` in step 7
 to retain them — you never serialize the payload yourself.
@@ -259,7 +278,10 @@ attachment status. Let the user confirm which records to examine.
 ### 7. Retain results and write the log entry
 
 **Every search gets a log entry — no exceptions.** Call
-`research_log_append` once per search. **`query` must mirror exactly the
+`research_log_append` once per search. **Complete all retries for a
+search topic before logging any of them.** If a filtered search returns
+zero and requires an unfiltered retry, run the retry first — then log
+both (or just the final result if the retry was positive). **`query` must mirror exactly the
 arguments the `fulltext_search` call actually sent.** Record only a filter
 the call actually sent — never add one the call itself omitted, even one
 the user mentioned, one a later call will add, or one that matches the
