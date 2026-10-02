@@ -514,8 +514,6 @@ candidates; you still confirm the top ones:
     conflict.** Some immigrants made several trips; a later census may record a
     return rather than the original emigration. Flag it for investigation
     instead of resolving it.
-  If the search was not a census search and a census record came back anyway,
-  fetch that page now, before writing the claim.
   Non-federal **state censuses** follow their own schedules and often carry
   fields the federal census of that decade lacks — read the collection
   description rather than assuming the federal pattern.

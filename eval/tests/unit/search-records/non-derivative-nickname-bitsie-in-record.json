@@ -21,7 +21,6 @@
     "scenario": "mid-research-jackson-nickname"
   },
   "mcp_fixtures": [
-    "wiki-read-united-states-census-1900",
     "wiki-read-united-states-census",
     "record-search-jackson-1900-mary-no-results",
     "record-search-jackson-1900-bitsie-record",

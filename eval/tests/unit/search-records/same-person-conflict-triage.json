@@ -26,7 +26,6 @@
     "max_wall_clock_seconds": 600
   },
   "mcp_fixtures": [
-    "wiki-read-united-states-census-1850",
     "wiki-read-united-states-census",
     "record-search-conflict-household-flynn",
     "rank-search-matches-flynn-conflict",

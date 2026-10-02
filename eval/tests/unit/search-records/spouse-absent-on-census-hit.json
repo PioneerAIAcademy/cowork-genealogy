@@ -21,7 +21,6 @@
     "scenario": "census-household-absent-spouse"
   },
   "mcp_fixtures": [
-    "wiki-read-united-states-census-1860",
     "wiki-read-united-states-census",
     "record-search-ackerman-1860-spouse-absent",
     "rank-search-matches-ackerman-1860-spouse-absent",

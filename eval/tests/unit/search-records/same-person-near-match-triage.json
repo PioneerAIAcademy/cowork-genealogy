@@ -22,7 +22,6 @@
     "scenario": "flynn-record-matching"
   },
   "mcp_fixtures": [
-    "wiki-read-united-states-census-1850",
     "wiki-read-united-states-census",
     "record-search-near-match-age-off-flynn",
     "rank-search-matches-flynn-near-match",
