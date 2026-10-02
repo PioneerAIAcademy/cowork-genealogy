@@ -6,7 +6,7 @@
   },
   "prompts": {
     "CLAUDE.md": 56971,
-    "packages/engine/plugin/agents/check-warnings.md": 47377,
+    "packages/engine/plugin/agents/check-warnings.md": 47535,
     "packages/engine/plugin/agents/citation.md": 44479,
     "packages/engine/plugin/agents/convert-dates.md": 11387,
     "packages/engine/plugin/agents/gps-mentor.md": 40731,

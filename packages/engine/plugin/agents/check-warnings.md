@@ -349,6 +349,7 @@ treating as established.
 #### Parent at extreme age
 - `earliestChildBirthToBirth12` -- parent had a child before age 12.
 - `earliestChildBirthToBirthMale14` -- father had a child before age 14.
+- `earliestChildBirthToBirthFemale14` -- mother had a child before age 14.
 - `latestChildBirthToBirth80` -- child born 80+ years after this person's birth.
 - `latestChildBirthToBirthFemale45` -- mother was age 45 or older at a child's birth.
 
@@ -412,6 +413,7 @@ The current set of relative-mob tags: `relativesDeathRangeGreaterThan2`,
 `relativesEarliestChildBirthToBirth12`,
 `relativesHasEventBeforeChristening365_3`,
 `maleRelativesEarliestChildBirthToBirth14`,
+`femaleRelativesEarliestChildBirthToBirth14`,
 `femaleRelativesLatestChildBirthToBirth45`,
 `relativesHasDeathBeforeChildBirth365_2`,
 `relativesHasDeathBeforeChildBirth30_10`,
@@ -564,10 +566,10 @@ already organized around them:
 - Each event date should be plausible given the others
 
 #### Reasonable age differences
-- Parent-child age gap: typically 12-45 years for mothers, 14+ for
+- Parent-child age gap: typically 14-45 years for mothers, 14+ for
   fathers -- covered by `earliestChildBirthToBirth12`,
-  `earliestChildBirthToBirthMale14`, `latestChildBirthToBirthFemale45`,
-  `latestChildBirthToBirth80`
+  `earliestChildBirthToBirthMale14`, `earliestChildBirthToBirthFemale14`,
+  `latestChildBirthToBirthFemale45`, `latestChildBirthToBirth80`
 - Marriage age: typically 14-90 -- covered by `hasEarlyMarriage14`
   and `hasLateMarriage90`
 - Child-spacing across a family: under 40 years between oldest
