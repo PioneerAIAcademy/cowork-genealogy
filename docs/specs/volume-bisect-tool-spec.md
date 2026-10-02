@@ -138,14 +138,14 @@ Probes count toward the **same** hard cap as `image_read` and `image_transcribe`
 A hunt that alternates between the tools must hit one bound or the bound means
 nothing. Decided 2026-10-01: the bisect is not exempt.
 
-- **Checked before the probe's fetch, recorded after its OCR succeeds.** The check cannot come
-  before every network call: the probe's `imageId` is only known after this call's
-  `image_search`, so that one request is always made.
+- **Checked before the probe's fetch, recorded after its OCR succeeds.** The check
+  cannot come before every network call: the probe's `imageId` is only known after
+  this call's `image_search`, so that one request is always made.
 - **The 21st distinct image refuses.** The refusal is the shared one, plus the
   bracket the readings reached (positions and years) and an instruction to report
-  it as the browse's result. A
-  bisect needs about ten probes, so it is refused mid-convergence only when the
-  agent has already spent most of the group's 20 on other reads.
+  it as the browse's result. A bisect needs about ten probes, so it is refused
+  mid-convergence only when the agent has already spent most of the group's 20 on
+  other reads.
 - **The count is keyed on the bare prefix** (`imageId.split("_")[0]`), so every
   sub-volume of one film shares a bucket, while this tool's input domain is the
   sub-volume. That is correct — the cap should see the whole film — but it is

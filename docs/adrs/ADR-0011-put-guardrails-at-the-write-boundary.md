@@ -16,7 +16,8 @@
 - **Status:** Accepted
 - **Decided:** 2026-08-09 (on the fourth independent re-derivation in one week)
 - **Last updated:** 2026-10-01 (a read tool's resource budget is a hard refusal
-  at the tool, not an advisory field. Previously 2026-09-10, when the bridge — a rule that appears to require
+  at the tool, not an advisory field. Previously 2026-09-10, when the bridge — a
+  rule that appears to require
   observing that a step *ran* becomes decidable once the step is made to deposit
   its output — is written into the decision procedure and into "Rulings that
   generalize". Previously 2026-09-05, when a ruling that generalizes began being

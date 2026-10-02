@@ -294,6 +294,9 @@ describe("tool server over Streamable HTTP", () => {
     const fetchedB = await b.callTool({ name: "image_read", arguments: { imageId: next, projectPath: SCOPED_ANCHOR } });
     expect(textOf(fetchedB)).not.toMatch(/Image cap reached/);
     expect(upstream.calls.filter((c) => c.authorization === "Bearer tok-B").length).toBeGreaterThan(0);
+    // B's bare call on a new image: counted against B's own project, never A's full group.
+    const bareB = await b.callTool({ name: "image_read", arguments: { imageId: `${group}_00022` } });
+    expect(textOf(bareB)).not.toMatch(/Image cap reached/);
   });
 
   it("5. /healthz is 200 with the tool count; GET (SSE accept) and DELETE on /mcp are 405 with Allow: POST", async () => {

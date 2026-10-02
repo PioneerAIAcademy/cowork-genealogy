@@ -873,6 +873,14 @@ describe("imageTranscribeTool — hard image cap (#3010, spec §5.8)", () => {
         /Image cap reached/,
       );
     });
+
+    // A header-less request binds a store with no projectId. Its bare call pools
+    // the unbound counts, but never a bound patron's — A's 20 stay A's.
+    const unbound = {} as unknown as ProjectStore;
+    await runWithProjectStore(unbound, async () => {
+      const r = await transcribe({ imageId: img(24) }, LOCAL);
+      expect(r.transcription).toBe("page text");
+    });
   });
 });
 

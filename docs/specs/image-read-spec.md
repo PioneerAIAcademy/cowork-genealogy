@@ -207,7 +207,8 @@ The tool returns two content blocks:
 one count of distinct `imageId`s per image group per project, refused from the 21st,
 checked before the fetch and recorded after it succeeds. The contract, the persisted
 log and its limits are in `image-transcribe-tool-spec.md` §5.8; this tool follows it
-unchanged. `ark` and `memoryArtifactUrl` inputs are not counted.
+unchanged. A `3:1:`/`3:2:` `ark` and a `memoryArtifactUrl` are not counted; a DGS
+distribution URL passed as `ark` embeds its `imageId` and is.
 
 ## Auth
 

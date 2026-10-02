@@ -686,13 +686,14 @@ before the fetch, `recordImageBrowse` once the read succeeded, so a failed fetch
 spends nothing). `image_read` and `image_transcribe` record after the fetch: an
 OpenRouter failure after a good fetch does use a slot, and a retry of that image is
 free because it is already counted. `volume_bisect` records after the probe's OCR,
-as it always has, so a failed probe spends nothing. The count is persisted in the project as
-`results/image-browse.jsonl`, one line the first time each `imageId` is read
+as it always has, so a failed probe spends nothing. The count is persisted in the
+project as `results/image-browse.jsonl`, one line the first time each `imageId` is read
 (`{"image_group","image_id","tool","at"}`) — `.jsonl` because `results-staging.ts`
 scans `results/*.json`. Beside it, an in-process count keyed
 `` `${projectScope(projectPath)}\0${group}` `` (the bound store's `projectId` on the
 shared-process `http.ts` entrypoint, else the normalized `projectPath`, else
-`<no-project>` — so two patrons on one shared process never share a count). The two are unioned on every check.
+`<no-project>` — so two patrons on one shared process never share a count). The
+two are unioned on every check.
 **Best-effort in both directions:** an absent, unreadable or garbled log, or a
 failed append, falls back to the in-process count and never refuses or fails a
 read on its own. A `projectPath` that is not a project counts in memory only and
@@ -704,6 +705,13 @@ flight; accepted, because recording at check time would charge failed fetches.
 `anchorPath` (`ProjectStore.anchorPath`), so the call is counted against that
 project's log. On the file backend (desktop `.mcpb`, both harnesses, hosted E2B)
 it is counted in memory under `<no-project>`, so **it does not survive a restart**.
+That is 236 of the 501 `imageId` calls in the committed e2e corpus (2026-10-01),
+including the largest over-cap group (`elena-asmundsdotter-origin`
+`run-2026-09-18_21-35-53`, group `004514823`, 43 distinct images, none with a
+`projectPath`). Within one process the cap still fires. Making `projectPath`
+required was rejected: it changes an MCP parameter contract and breaks ad-hoc
+no-project reads.
+
 Because such a call cannot say which project it belongs to, its check also counts
 every in-process read of that group, and a call with a `projectPath` also counts the
 group's no-path reads — otherwise a subagent called without `projectPath` would get
@@ -712,12 +720,13 @@ project, so a no-path read in one project can be refused for pages an earlier pr
 read in the same session (in memory only — a restart clears it). Accepted because the
 alternative under-counts every delegated read; the refusal says "this server session"
 for that case.
-That is 236 of the 501 `imageId` calls in the committed e2e corpus (2026-10-01),
-including the largest over-cap group (`elena-asmundsdotter-origin`
-`run-2026-09-18_21-35-53`, group `004514823`, 43 distinct images, none with a
-`projectPath`). Within one process the cap still fires. Making `projectPath`
-required was rejected: it changes an MCP parameter contract and breaks ad-hoc
-no-project reads.
+
+**Known limitation — header-less http requests share a bucket.** A request with no
+`X-Genealogy-Project-Id` header binds an *unbound* store (no `projectId`, and its
+I/O refuses), so its reads count in memory under the no-project scope, as on the
+file backend: two header-less patrons can advance one another's count. They never
+pool a bound patron's count — reads recorded under a `projectId` are excluded from
+that union. Accepted: such a session already fails every persistence call.
 
 **The trade, stated.** Because the count is persisted, a legitimate 21st page in
 the same project is refused **permanently** — a restart no longer resets it. The
@@ -728,8 +737,7 @@ observed; ADR-0006: a caller-supplied parameter is a request, not a constraint).
 **Why the threshold is 20.** Replayed over the committed e2e corpus
 (2026-10-01: 597 runs, 501 `imageId` calls across the three tools): **6 groups in
 5 runs** pass 20 distinct images, for **69** distinct images refused (74 refused
-calls, counting repeats). Five refused
-images are cited in their run's `sources[]`, all in `elena-asmundsdotter-origin`,
+calls, counting repeats). Five refused images are cited in their run's `sources[]`, all in `elena-asmundsdotter-origin`,
 and none backs a correct finding: the 2026-09-01 run graded all six expected
 findings false, and in the 2026-09-18 run the one refused image tied to a graded
 finding (`004514823_00106`) backs f2's "partial" for the wrong father in the wrong
@@ -739,8 +747,8 @@ side is unmeasured. Re-measure before changing the constant.
 **Known limitation — ARK input is not counted.** A `3:1:`/`3:2:` ARK carries no
 image-group number, so a hunt driven by one never advances the count; nor do `file`
 and `memoryArtifactUrl` inputs. A DGS distribution URL passed as `ark`
-(`…/dgs:<imageId>/dist.jpg`) embeds its `imageId` and **is** counted. Resolving an ARK to its group is
-deliberately out of scope.
+(`…/dgs:<imageId>/dist.jpg`) embeds its `imageId` and **is** counted. Resolving an
+ARK to its group is deliberately out of scope.
 
 **Not checked by anything:** whether the model obeys the refusal (logs `partial`,
 surfaces the link), and how often production researchers are refused

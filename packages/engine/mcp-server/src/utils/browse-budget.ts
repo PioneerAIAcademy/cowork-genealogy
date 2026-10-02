@@ -10,8 +10,8 @@
  * runs first because it is what names the probe's imageId — and
  * `recordImageBrowse` only once the read succeeded: after the fetch for
  * image_read and image_transcribe, after the probe's OCR for volume_bisect.
- * A failed fetch spends no budget. Calls running in parallel can overshoot by however many are
- * in flight; accepted.
+ * A failed fetch spends no budget. Calls running in parallel can overshoot by
+ * however many are in flight; accepted.
  *
  * The count lives in the project store as `results/image-browse.jsonl` (`.jsonl`
  * because `results-staging.ts` scans `results/*.json`), so it survives a
@@ -44,10 +44,14 @@ export type CapTool = "image_read" | "image_transcribe" | "volume_bisect";
 // the bound store's patron-isolating projectId on http (#2771), else the
 // normalized projectPath, else `<no-project>`.
 const seenInProcess = new Map<string, Set<string>>();
+// Keys recorded under a bound store (a `projectId`): a patron's own count, never
+// pooled into an unbound call's.
+const boundKeys = new Set<string>();
 
 /** Test-only reset of the in-process count (a restart, as far as the cap can tell). */
 export function __clearImageBrowseMemoryForTests(): void {
   seenInProcess.clear();
+  boundKeys.clear();
 }
 
 export interface BrowseTicket {
@@ -55,6 +59,8 @@ export interface BrowseTicket {
   group: string;
   tool: CapTool;
   memKey: string;
+  /** Checked under a bound store (`projectId` set). */
+  bound: boolean;
   /** The project to append to, when the call resolved to one. */
   persistPath?: string;
   /** Already in the persisted log — recording it again would be a duplicate line. */
@@ -66,6 +72,7 @@ function inProcessSeen(memKey: string, group: string, projectPath: string | unde
   const noPath = `${projectScope(undefined)}\0${group}`;
   const ids: string[] = [];
   for (const [key, set] of seenInProcess) {
+    if (boundKeys.has(key)) continue;
     const sameGroup = key.endsWith(`\0${group}`);
     if (key === memKey || (sameGroup && (projectPath === undefined || key === noPath))) ids.push(...set);
   }
@@ -144,7 +151,8 @@ export async function checkImageBrowseCap(
   if (!seen.has(imageId) && seen.size >= IMAGE_BROWSE_CAP) {
     throw refusal(tool, imageId, group, bracket);
   }
-  return { imageId, group, tool, memKey, persistPath, inLog: logged.has(imageId) };
+  const bound = getProjectStore().projectId !== undefined;
+  return { imageId, group, tool, memKey, bound, persistPath, inLog: logged.has(imageId) };
 }
 
 /** Count the image: in process always, and in the project's log when it is not there yet. */
@@ -156,6 +164,7 @@ export async function recordImageBrowse(ticket: BrowseTicket | undefined): Promi
     seenInProcess.set(ticket.memKey, seen);
   }
   seen.add(ticket.imageId);
+  if (ticket.bound) boundKeys.add(ticket.memKey);
   if (!ticket.persistPath || ticket.inLog) return;
   const line = JSON.stringify({
     image_group: ticket.group,

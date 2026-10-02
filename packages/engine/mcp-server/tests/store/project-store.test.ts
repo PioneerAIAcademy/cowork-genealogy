@@ -14,9 +14,9 @@ import {
 // backend.
 
 /** Every `ProjectStore` method. The interface's two data properties, `projectId`
- *  and `anchorPath`, are `Omit`ted — the loop below calls each entry as a method, and a data
- *  property is not callable. `satisfies` makes a method added to the interface
- *  and forgotten here a tsc error in the `pretest` typecheck; a runtime walk of
+ *  and `anchorPath`, are `Omit`ted — the loop below calls each entry as a
+ *  method, and a data property is not callable. `satisfies` makes a method added
+ *  to the interface and forgotten here a tsc error in the `pretest` typecheck; a runtime walk of
  *  `FsProjectStore.prototype` would trip on its private helpers. */
 const METHODS = {
   withTransaction: true,
