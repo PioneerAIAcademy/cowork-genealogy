@@ -283,14 +283,23 @@ describe("plugin agent tool names", () => {
 
       for (const key of ["tools", "disallowedTools"] as const) {
         const entries = extractList(text, key).filter((t) => t.startsWith("mcp__"));
-        if (entries.length === 0) continue;
+        // An agent whose AGENT_PERMISSIONS row lists no MCP tool holds none by
+        // design (currently: translation; project-status once #3092 lands).
+        // The parser guard still runs for them so a parser regression surfaces;
+        // only the >0 assertion is waived.
+        const noMcpByDesign = !(AGENT_PERMISSIONS[file]?.tools ?? []).some((t: string) =>
+          t.startsWith("mcp__"),
+        );
 
         describe(key, () => {
           it("parses at least one MCP entry", () => {
             // Guards the assertions below against passing vacuously if the
             // frontmatter parser stops matching the block-sequence form.
+            if (noMcpByDesign) return;
             expect(entries.length).toBeGreaterThan(0);
           });
+
+          if (entries.length === 0) return;
 
           it("uses only recognized server prefixes", () => {
             for (const entry of entries) {
