@@ -6,135 +6,58 @@
   "$comment": "Retired identifiers, kept here so the rename is discoverable from the schema rather than only from the lint that enforces it (ADR-0008's \"revisit if a first value removal ever happens\" row; issue #2524). 2026-09-18: `evidence_type` (direct | indirect | negative) was renamed to `record_basis` (stated | inferred | absent). Committed run logs under eval/runlogs/ are deliberately NOT migrated and still carry the retired spelling; packages/engine/mcp-server/tests/packaging/retired-field-names.test.ts bans it everywhere else.",
   "$defs": {
     "question_status": {
-      "enum": [
-        "open",
-        "in_progress",
-        "exhaustive_declared",
-        "resolved"
-      ]
+      "enum": ["open", "in_progress", "exhaustive_declared", "resolved"]
     },
     "plan_status": {
-      "enum": [
-        "active",
-        "completed",
-        "superseded"
-      ]
+      "enum": ["active", "completed", "superseded"]
     },
     "plan_item_status": {
-      "enum": [
-        "planned",
-        "in_progress",
-        "completed",
-        "skipped"
-      ]
+      "enum": ["planned", "in_progress", "completed", "skipped"]
     },
     "skip_category": {
       "description": "Why a plan item was set to `skipped`, as a machine-readable distinction the exhaustiveness gate can read; a bare `skipped` status cannot tell these apart. `answered`: evidence in hand answers the question and this source would only corroborate. `inaccessible`: paid, offline, on-site, or unreachable by any available tool. `no_coverage`: the repository or collection does not cover this place or period. `fallback_not_triggered`: the primary item succeeded, so this fallback was never needed. `out_of_scope`: it bears on a different question. `premise_invalidated`: the assumption behind the item is now known false -- not a skip verdict so much as the signal that the PLAN needs revising. `user_declined`: the user asked for it to be skipped; kept separate from `out_of_scope` so a user's refusal is not merged into the agent's own judgement, which is what makes steer compliance measurable (lead, 2026-09-27). Only `inaccessible` and `no_coverage` describe a source that could not be evaluated; the other five are decisions taken with the source reachable, which is the line the gate's pursued-and-unavailable exception turns on. Optional: an item skipped before this field existed carries neither it nor `skip_reason`.",
-      "enum": [
-        "answered",
-        "inaccessible",
-        "no_coverage",
-        "fallback_not_triggered",
-        "out_of_scope",
-        "premise_invalidated",
-        "user_declined"
-      ]
+      "enum": ["answered", "inaccessible", "no_coverage", "fallback_not_triggered", "out_of_scope", "premise_invalidated", "user_declined"]
     },
     "log_outcome": {
-      "enum": [
-        "positive",
-        "negative",
-        "partial",
-        "error"
-      ]
+      "enum": ["positive", "negative", "partial", "error"]
     },
     "source_classification": {
-      "enum": [
-        "original",
-        "derivative",
-        "authored"
-      ]
+      "enum": ["original", "derivative", "authored"]
     },
     "information_quality": {
-      "enum": [
-        "primary",
-        "secondary",
-        "indeterminate"
-      ]
+      "enum": ["primary", "secondary", "indeterminate"]
     },
     "record_basis": {
       "description": "What the record mechanically did with this value: `stated` it outright, left it to be `inferred`, or was `absent` where the value was expected. This is NOT the GPS direct/indirect/negative evidence judgment — that is relative to the question being asked, and is not persisted. Renamed from `evidence_type` 2026-09-18 (#2524).",
-      "enum": [
-        "stated",
-        "inferred",
-        "absent"
-      ]
+      "enum": ["stated", "inferred", "absent"]
     },
     "conflict_type": {
-      "enum": [
-        "fact",
-        "identity"
-      ]
+      "enum": ["fact", "identity"]
     },
     "conflict_status": {
-      "enum": [
-        "unresolved",
-        "resolved",
-        "moot"
-      ]
+      "enum": ["unresolved", "resolved", "moot"]
     },
     "hypothesis_status": {
-      "enum": [
-        "active",
-        "supported",
-        "ruled_out"
-      ]
+      "enum": ["active", "supported", "ruled_out"]
     },
     "proof_tier": {
-      "enum": [
-        "proved",
-        "probable",
-        "possible",
-        "not_proved",
-        "disproved"
-      ]
+      "enum": ["proved", "probable", "possible", "not_proved", "disproved"]
     },
     "proof_vehicle": {
-      "enum": [
-        "statement",
-        "summary",
-        "argument"
-      ]
+      "enum": ["statement", "summary", "argument"]
     },
     "proof_shortfall": {
       "description": "Why a conclusion is not at a higher tier — remediability, orthogonal to the confidence `tier` carries. `ceiling`: the reachable record is exhausted and a higher tier is not obtainable (reachable = retrievable by an MCP tool or constructible as a subscription-site handoff). `gap`: reachable sources remain unsearched. `conflict`: blocked by an unresolved conflict naming this question in its blocks_question_ids. `none`: on a conclusive conclusion — `proved` or `disproved`, both of which are final answers with nothing holding them back. `not_proved` is NOT conclusive (it reached no answer either way) and always carries one of the other three. Note one asymmetry inherited from proof-conclusion's decision rules, which block only Proved on an unresolved conflict: a `disproved` conclusion whose question is still named in an open conflict's blocks_question_ids therefore takes `none`, not `conflict`.",
-      "enum": [
-        "ceiling",
-        "gap",
-        "conflict",
-        "none"
-      ]
+      "enum": ["ceiling", "gap", "conflict", "none"]
     },
     "person_evidence_confidence": {
-      "enum": [
-        "confident",
-        "probable",
-        "speculative"
-      ]
+      "enum": ["confident", "probable", "speculative"]
     },
     "project_status": {
-      "enum": [
-        "active",
-        "paused",
-        "completed"
-      ]
+      "enum": ["active", "paused", "completed"]
     },
     "priority": {
-      "enum": [
-        "high",
-        "medium",
-        "low"
-      ]
+      "enum": ["high", "medium", "low"]
     },
     "selection_basis": {
       "enum": [
@@ -172,19 +95,10 @@
     },
     "date_certainty_timeline": {
       "description": "Subset of date_certainty — directional qualifiers (before, after, between) don't apply to timeline positioning.",
-      "enum": [
-        "exact",
-        "approximate",
-        "estimated",
-        "calculated"
-      ]
+      "enum": ["exact", "approximate", "estimated", "calculated"]
     },
     "severity": {
-      "enum": [
-        "high",
-        "medium",
-        "low"
-      ]
+      "enum": ["high", "medium", "low"]
     },
     "fact_type_recommended": {
       "description": "Open enum. Skills should prefer these values; new values may be added when existing values don't fit. Document new values in the assertion's notes. An event's place and date are ATTRIBUTES of the event fact (the `place`/`date` fields), not their own types: a birthplace is `birth` with `place` set, a place of death is `death` with `place` set — there is no `birthplace`/`deathplace` fact_type (matching the tree + GedcomX).",
@@ -270,38 +184,14 @@
       "pattern": "^[a-z][a-z0-9_]*$"
     },
     "external_site": {
-      "description": "Sites supported by the generate-click-capture-analyze workflow. Not all are commercial: chronicling_america (Library of Congress) and digital_newspaper_archive (state/regional free archives such as Utah Digital Newspapers, California Digital Newspaper Collection — identified by url_generated) are free to search, but sit behind bot protection that blocks automated fetch, so they use the same click-capture loop. findagrave, archives_gov, archive_org, billiongraves, digitalarkivet (Norwegian National Archives), antenati (Italian civil/parish records), american_ancestors (NEHGS — free to search; a subscription may still be needed to view full results) and italian_genealogy (a forum, keyword search only) are also free to search, with no automated-fetch barrier — they use the same click-capture loop because this workflow never fetches any site directly, not because of bot protection. library_archives_canada (Canadian census) is free to search but Cloudflare-challenged to an automated fetch (measured 2026-09-15), so it sits with the bot-protected pair.",
-      "enum": [
-        "ancestry",
-        "myheritage",
-        "findmypast",
-        "familysearch_web",
-        "findagrave",
-        "newspapers",
-        "chronicling_america",
-        "digital_newspaper_archive",
-        "archives_gov",
-        "archive_org",
-        "billiongraves",
-        "digitalarkivet",
-        "antenati",
-        "library_archives_canada",
-        "american_ancestors",
-        "italian_genealogy"
-      ]
+      "description": "Sites supported by the generate-click-capture-analyze workflow. Not all are commercial: chronicling_america (Library of Congress) and digital_newspaper_archive (state/regional free archives such as Utah Digital Newspapers, California Digital Newspaper Collection — identified by url_generated) are free to search, but sit behind bot protection that blocks automated fetch, so they use the same click-capture loop. findagrave, archives_gov, archive_org, billiongraves, digitalarkivet (Norwegian National Archives), antenati (Italian civil/parish records), american_ancestors (NEHGS — free to search; a subscription may still be needed to view full results) and italian_genealogy (a forum, keyword search only) are also free to search, with no automated-fetch barrier — they use the same click-capture loop because this workflow never fetches any site directly, not because of bot protection. library_archives_canada (Canadian census) is free to search but Cloudflare-challenged to an automated fetch (measured 2026-09-15), so it sits with the bot-protected pair. archion (German Protestant church books; viewing needs a paid pass) and matricula (Catholic church books; free) are browse sites, not searches: the URL is the parish page the agent read from the wiki, reached parish → register → volume → image.",
+      "enum": ["ancestry", "myheritage", "findmypast", "familysearch_web", "findagrave", "newspapers", "chronicling_america", "digital_newspaper_archive", "archives_gov", "archive_org", "billiongraves", "digitalarkivet", "antenati", "library_archives_canada", "american_ancestors", "italian_genealogy", "archion", "matricula"]
     },
     "gender": {
-      "enum": [
-        "Male",
-        "Female",
-        "Unknown"
-      ]
+      "enum": ["Male", "Female", "Unknown"]
     },
     "relationship_type": {
-      "enum": [
-        "ParentChild",
-        "Couple"
-      ]
+      "enum": ["ParentChild", "Couple"]
     },
     "gedcomx_fact_type_recommended": {
       "description": "Open enum for tree.gedcomx.json facts. PascalCase preserved from GedcomX URI suffixes. The pattern enforces only the upper-initial (the part the runtime validator hard-fails on — a lowercase `birth` copied from research.json would lint clean and then fail tree_edit mid-run); the value list stays open.",
@@ -363,19 +253,11 @@
       ]
     },
     "holding_confidence": {
-      "enum": [
-        "confident",
-        "unsure"
-      ]
+      "enum": ["confident", "unsure"]
     },
     "experience_level": {
       "description": "Researcher's genealogy experience, set by init-project. Drives narration density via researcher_profile.narration_guidance.",
-      "enum": [
-        "novice",
-        "intermediate",
-        "experienced",
-        "professional"
-      ]
+      "enum": ["novice", "intermediate", "experienced", "professional"]
     },
     "subscription": {
       "description": "One way the researcher can reach a pay-walled genealogy site; search-external-sites reads it only to flag a named site the researcher has no access to on file. Mostly site brand names, not the lowercase_with_underscores used elsewhere. Free access counts: 'FamilySearch-Partner' is a partner subscription granted through a FamilySearch account, and 'LibraryAccess' is a public library, family history centre, or FamilySearch affiliate library. Neither names which sites it unlocks, because that varies by institution and changes over time — treat both as 'ask before assuming a paywall blocks them'. A plain FamilySearch account is the product's baseline and is never stored here; someone with only that has 'none'.",
@@ -403,11 +285,7 @@
     },
     "evaluation_target_type": {
       "description": "What kind of thing an evaluation entry targets.",
-      "enum": [
-        "question",
-        "proof_summary",
-        "project"
-      ]
+      "enum": ["question", "proof_summary", "project"]
     },
     "evaluation_verdict": {
       "description": "An evaluation entry's verdict.",

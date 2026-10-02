@@ -90,7 +90,6 @@ DARK_SKILLS_2026_09_01 = frozenset(
         "project-status",
         "source-evaluation",
         "timeline",
-        "translation",
     }
 )
 

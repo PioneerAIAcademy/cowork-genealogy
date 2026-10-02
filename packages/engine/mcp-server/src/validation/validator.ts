@@ -140,6 +140,9 @@ const EXTERNAL_SITE_VALUES = new Set([
   // and `italian_genealogy` are keyword-only — see build-external-search-url.ts.
   "archives_gov", "archive_org", "billiongraves", "digitalarkivet",
   "antenati", "library_archives_canada", "american_ancestors", "italian_genealogy",
+  // Browse sites (issue #2802): German church books, reached through the
+  // parish page rather than a name search.
+  "archion", "matricula",
 ]);
 
 /**
