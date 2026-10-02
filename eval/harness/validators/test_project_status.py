@@ -20,19 +20,30 @@ import pytest
 
 # --- Tool allowlist ---
 
+# The read-only project-state tools a status report may use. An allowlist, not a
+# denylist of writers, so a new or unlisted tool fails closed. `project_context`
+# and `research_query` are how the repo reads project state rather than whole-file
+# Reads; forbidding them (as this check did until 2026-10-02) failed
+# ut_project_status_003 for reading the project the sanctioned way.
+_READ_ONLY_STATE_TOOLS = frozenset({
+    "project_context",
+    "research_query",
+    "validate_research_schema",
+})
+
+
 def test_no_mcp_tools_called(tool_calls):
-    """project-status is read-only narrative analysis — no *research* MCP
-    calls. The universal `validate_research_schema` is exempted: post
-    commit 861d3c9 it's the built-in schema verifier any skill may
-    call, not a research tool."""
+    """project-status is read-only narrative analysis: it may read project state
+    through the read-only tools above, and calls nothing else -- no search, no
+    fetch, and above all no writer."""
     mcp_calls = [
         tc for tc in tool_calls
         if tc.get("tool", "").startswith("mcp__")
-        and tc.get("tool", "").rsplit("__", 1)[-1] != "validate_research_schema"
+        and tc.get("tool", "").rsplit("__", 1)[-1] not in _READ_ONLY_STATE_TOOLS
     ]
     assert not mcp_calls, (
-        f"project-status should not call MCP tools (other than "
-        f"validate_research_schema), but called: "
+        f"project-status may only read project state "
+        f"({sorted(_READ_ONLY_STATE_TOOLS)}), but called: "
         f"{[tc['tool'] for tc in mcp_calls]}"
     )
 
