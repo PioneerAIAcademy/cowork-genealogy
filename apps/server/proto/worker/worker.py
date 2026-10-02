@@ -103,8 +103,9 @@ Startup (U10): a ``TMPDIR`` that is not absolute, missing, not a directory or no
 writable exits 2 before anything else (``check_tmpdir``); then the SQS credentials and
 region are settled (U7: a half pair exits 2; the default chain may ask IMDS); then the
 plugin's agents are parsed once, the server binds, and ../sql/*.sql (all idempotent) is
-applied on a daemon thread that retries a refused or silent Postgres with backoff -- so
-Postgres is never waited on before listen, and no failed store ever exits the process.
+applied on a daemon thread that retries a refused or silent Postgres, and an apply that
+raced the web tier's or another worker's (``schema_loop``), with backoff -- so Postgres
+is never waited on before listen, and no failed store ever exits the process.
 ``GET /healthz`` is readiness: 200 or 503 with ``{ok, checks}`` over ``postgres`` (a
 fresh connection that sees every table, under one ``READY_TIMEOUT_S`` deadline),
 ``schema`` (the start apply), ``agents``, ``cwd``, ``tmpdir`` and ``transcript`` (the
