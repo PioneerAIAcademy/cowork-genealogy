@@ -54,7 +54,7 @@ After invoking any routed Skill, stop. Do not read files, call MCP tools, or pro
 
 GPS Element 1 (Reasonably Exhaustive Research) — execution layer:
 
-- **Collect impartially.** Record contradicting evidence with the same care as supporting evidence. Do not let a working hypothesis decide what you collect — evidence that complicates it is worth as much as evidence that confirms it, and a log holding only positive results is a red flag for cherry-picking.
+- **Collect impartially.** Record contradicting evidence with the same care as supporting evidence; do not let a working hypothesis decide what you collect. A log holding only positive results is a cherry-picking signal — check yours before claiming exhaustiveness.
 - **Index entries are pointers, not records.** Always attempt to locate the underlying original.
 - **Negative results are findings.** Log them with the same detail as positive results.
 - **Evaluate the database before interpreting results.** Read the collection description before searching.
@@ -118,6 +118,7 @@ search through it rather than running it yourself.
 
 - **The search is a census search** (the plan item's `record_type` is `census`, or the user asked for a census): `wiki_read({ url: "https://www.familysearch.org/en/wiki/{Country}_Census" })` for the jurisdiction's country — `United_States_Census`, `England_Census`, `Norway_Census`, `Luxembourg_Census`. Take the country from the jurisdiction string when it names one; when it names only a county and state, resolve the country from those and say which you did. Never state what a census schedule collected from memory.
 - **If that page does not settle which fields the schedule collected for the year you are searching**, follow its own per-year link (`United_States_Census_{year}`) before asserting or denying a field.
+- **Fetch each page once per invocation.** If you already hold it from an earlier step or an earlier search in this run, reuse it; do not re-fetch.
 - A constructed URL that 404s, or a page that comes back generic, is a gap to record and report — not a prompt to fill from memory.
 
 **Choose a search strategy:**
@@ -501,7 +502,9 @@ candidates; you still confirm the top ones:
   candidate reasoning is settled.
   **When a match turns on a field — or before calling one absent — check what
   that year's schedule actually collected, from the census page fetched in
-  Step 2. Three rules hold whatever the page says:**
+  Step 2. If the search was not a census search and a census record came back
+  anyway, fetch that page now, before writing the claim.** Three rules hold
+  whatever the page says:
   - **State what the schedule recorded; label everything else inferred, and name
     what it was inferred from** (surname, age, listing order). This is not only
     about relationships: any fact the schedule did not collect that year —
@@ -593,7 +596,7 @@ Call `research_log_append` once per search — it assigns the next `log_` id, st
 | `record_read`, several | `{"recordIds": ["ark:/61903/1:1:…", "ark:/61903/1:1:…"]}` |
 | `image_transcribe`, `image_read` | `{"imageArk": "ark:/61903/3:1:XXXX-XXXX-XXX"}` |
 
-Never write a bare sentence there. An ARK is dense with `:` and `/`, and prose containing one produces `InputValidationError: … could not be parsed as JSON` — the call is rejected **before** the tool runs, so nothing is logged and the whole turn is wasted. Keep ARKs in a keyed field.
+Never write a bare sentence there — a prose `query` carrying an ARK is rejected before the tool runs, so nothing is logged. Keep ARKs in a keyed field.
 
 Pass: `projectPath`, `tool`, `planItemId`, `query` (enough detail to reproduce the search), `outcome`, `resultsExamined`, `resultsAvailable`, `notes` (a one-line summary), and `stagedResultsRef` from Step 3 (the `staged.resultsRef` handle, when present).
 

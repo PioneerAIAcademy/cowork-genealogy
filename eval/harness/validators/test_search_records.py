@@ -845,15 +845,52 @@ def test_census_wiki_fixture_actually_used(tool_calls, test):
     hit_fixtures = [
         c.get("response_fixture") for c in (tool_calls or []) if c.get("response_fixture")
     ]
+
+    def _is_census_page(stem: object) -> bool:
+        """The country page OR that year's page both satisfy Step 2.
+
+        Each test stocks its own `wiki-read-united-states-census-{year}` ahead of
+        the generic `wiki-read-united-states-census`, so a per-year request stamps
+        the per-year stem rather than the generic one. Step 2 is satisfied either
+        way — it asks for the jurisdiction's census page and names the per-year
+        link as the follow-up — so matching on the prefix keeps this guard about
+        "was the schedule read before searching" rather than about which of the
+        two URLs the model happened to construct.
+        """
+        return isinstance(stem, str) and stem.startswith(expected)
     # Unlike historical-context, this skip is effectively unreachable here: every
     # search-records test makes fixture-backed record_search calls, so the guard
     # stays live rather than being swallowed by a non-activating test.
     if not hit_fixtures:
         pytest.skip("no fixture-backed tool calls - non-activation is reported elsewhere")
-    assert expected in hit_fixtures, (
+    assert any(_is_census_page(s) for s in hit_fixtures), (
         f"{test_id}: this is a census search, so Step 2's pre-work block must "
-        f"fetch the jurisdiction's census page, but the fixture '{expected}' "
-        "never matched a call. Either the wiki_read was skipped entirely, or its "
+        f"fetch the jurisdiction's census page, but no '{expected}*' fixture "
+        "matched a call. Either the wiki_read was skipped entirely, or its "
         "URL missed the fixture's args predicate. "
         f"Fixtures actually hit: {hit_fixtures or '(none)'}"
+    )
+
+    # ORDER, not merely occurrence. Step 2 calls this "pre-work ... before
+    # constructing the query": a page fetched AFTER the search cannot have
+    # informed it, so a run that searches first and reads the schedule
+    # afterwards satisfies the membership check above while doing the thing the
+    # block exists to prevent. `tool_calls` is in call order.
+    calls = tool_calls or []
+    first_fetch = next(
+        (i for i, c in enumerate(calls) if _is_census_page(c.get("response_fixture"))),
+        None,
+    )
+    first_search = next(
+        (i for i, c in enumerate(calls) if "record_search" in (c.get("tool") or "")),
+        None,
+    )
+    if first_search is None:
+        return  # nothing was searched, so there is no ordering to enforce
+    assert first_fetch < first_search, (
+        f"{test_id}: the census page was fetched at call {first_fetch + 1}, AFTER "
+        f"the first record_search at call {first_search + 1}. Step 2 requires it "
+        "before the query is constructed — a schedule read afterwards cannot have "
+        "shaped the search, and reading it late is how a run states from memory "
+        "and then confirms itself."
     )

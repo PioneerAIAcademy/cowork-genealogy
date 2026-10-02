@@ -18,6 +18,7 @@
     "scenario": "search-continue-authorized-in-message"
   },
   "mcp_fixtures": [
+    "wiki-read-united-states-census-1880",
     "wiki-read-united-states-census",
     "record-search-1880-census-sheahan",
     "record-search-church-sheahan-collectionid",

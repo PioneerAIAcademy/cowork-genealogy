@@ -21,6 +21,7 @@
     "scenario": "mullen-price-child-middle-name"
   },
   "mcp_fixtures": [
+    "wiki-read-united-states-census-1880",
     "wiki-read-united-states-census",
     "record-search-1880-census-price-sarah",
     "record-search-1860-census-mullen-sarah",

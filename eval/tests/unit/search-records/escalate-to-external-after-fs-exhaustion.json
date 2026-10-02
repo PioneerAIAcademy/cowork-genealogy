@@ -23,6 +23,7 @@
     "scenario": "flynn-census-nil"
   },
   "mcp_fixtures": [
+    "wiki-read-united-states-census-1850",
     "wiki-read-united-states-census",
     "record-search-patrick-flynn-no-results",
     "record-search-patrick-flinn-no-results",

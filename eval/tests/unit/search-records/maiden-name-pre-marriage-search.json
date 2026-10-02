@@ -25,6 +25,7 @@
     "max_wall_clock_seconds": 600
   },
   "mcp_fixtures": [
+    "wiki-read-united-states-census-1860",
     "wiki-read-united-states-census",
     "record-search-1860-census-mullen-sarah",
     "record-search-price-no-results",
