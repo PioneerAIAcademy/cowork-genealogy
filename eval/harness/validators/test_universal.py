@@ -1900,3 +1900,39 @@ def report_no_internal_identifiers_in_response(text_response, test):
     # on every suite, and a verdict-shaped sentence ("should never see") reads
     # as a rule where the judge prompt says a match is not a verdict.
     assert not hits, "internal identifiers in the reply: " + ", ".join(hits)
+
+
+# --- Lay mode: no GPS vocabulary in user-facing text ----------------------
+
+# Issue #2984 (lead ruling 2026-09-14): "GPS", "proof"/"proved" and
+# "exhaustive" stay out of what the researcher reads; `disproved` is the
+# same tier family. Whole words only, so `improved` and `not_proved` do not
+# count, and the hyphenated agent names (`proof-conclusion`, `proof-critique`,
+# `gps-mentor`) are ours to route by.
+_GPS_JARGON_RE = re.compile(
+    r"\b(?:GPS|proofs?|(?:dis)?proved|exhaustive)\b(?!-(?:conclusion|critique|mentor))",
+    re.IGNORECASE,
+)
+
+
+def report_no_gps_jargon_in_response(text_response, test):
+    """Tier 2 — reports, never gates (issue #2984).
+
+    Advisory because a gated version would fail about 18% of current runs
+    across 16 skills (measured 2026-09-28: "GPS" as a whole word in 76 of 412
+    `text_response`s). A word the test's own prompt uses is left alone: a
+    reply to "does my proof meet the GPS" may say both back.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("negative test — the decline text is graded elsewhere")
+    response = text_response or ""
+    if not response.strip():
+        pytest.skip("no assistant text")
+    # The runner threads both in flat (orchestrator.py), `user_message`
+    # already falling back to `delegation`; there is no `input` key here.
+    prompt = test.get("user_message") or test.get("delegation") or ""
+    echoed = {m.group(0).lower() for m in _GPS_JARGON_RE.finditer(prompt)}
+    hits = sorted({
+        m.group(0).lower() for m in _GPS_JARGON_RE.finditer(response)
+    } - echoed)
+    assert not hits, "GPS vocabulary in the reply: " + ", ".join(hits)
