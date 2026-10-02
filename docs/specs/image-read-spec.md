@@ -183,7 +183,16 @@ The tool returns two content blocks:
 | Invalid ark format | "Unrecognized ark. Expected a FamilySearch document-image ARK (ark:/61903/3:1:... or 3:2:..., a bare 3:1:.../3:2:... id, an unprefixed XXXX-XXXX-XXXX-X id (treated as 3:1:), or a resolver URL for one), a DeepZoomCloud ARK URL (ending in /$dist), or a DGS distribution URL (dgs:.../dist.jpg). Pass the FamilySearch page URL or ARK exactly as the user gave it, including its 3:1:/3:2: prefix; do not build an imageId from a groupId or an i= index." |
 | FamilySearch returns non-2xx | "FamilySearch image fetch failed: {status} {statusText}" (the `{statusText}` and its separating space are omitted when the response carries none). On a **400 or 404** for a `3:1:`/`3:2:` ark that is not a memory artifact, appends: the ark may not be a valid document-image identifier; directs to `record_read`'s `imageArk` field, and to passing the full page URL when the ark carries `i=`/`cc=`/`groupId=` context. It states that `image_search` returns image ids rather than arks. Every other status — including 401/403 (rights-restricted image) and 429 — keeps the bare message, because the ark is real and re-fetching it returns the same one. |
 | Response is not an image | "Expected an image response but got content-type: {type}" |
+| 21st distinct image in one image group in one project | "Image cap reached: 20 distinct images from image group {group} have already been read in this project, …" — thrown before the fetch. See §"Image cap" below. |
 | Image exceeds the inline size cap | "FamilySearch image {imageId or ark} is {N} MB — too large to return inline. The MCP transport caps a single response near 1 MB and base64 encoding inflates the image by ~33%, so returning it would crash the session. OCR it with image_transcribe instead (it reads the scan host-side and returns text, with no size limit), or read the indexed record with record_read / record_search." |
+
+## Image cap
+
+`image_read` shares the hard image cap with `image_transcribe` and `volume_bisect`:
+one count of distinct `imageId`s per image group per project, refused from the 21st,
+checked before the fetch and recorded after it succeeds. The contract, the persisted
+log and its limits are in `image-transcribe-tool-spec.md` §5.8; this tool follows it
+unchanged. `ark` and `memoryArtifactUrl` inputs are not counted.
 
 ## Auth
 

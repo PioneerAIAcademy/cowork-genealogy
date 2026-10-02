@@ -1,111 +1,171 @@
 /**
- * The browse budget: how many distinct pages one caller has read from one image
- * group in one project, and the advisory that fires once that passes a bound.
+ * The hard image cap (issue #3010, spec image-transcribe §5.8): at most
+ * `IMAGE_BROWSE_CAP` distinct images from one image group in one project.
+ * `image_read`, `image_transcribe` and `volume_bisect` share ONE count, because
+ * all three take the same `imageId` — a hunt that alternates between them must
+ * hit one bound or the bound means nothing.
  *
- * Lifted out of `tools/image-transcribe.ts` (issue #2183) because it now has two
- * producers. `image_transcribe` charges a transcription; `volume_bisect` charges
- * a bisect probe. Both must land in the SAME counter or a hunt that alternates
- * between them is invisible to the bound — which is the failure the budget
- * exists to catch.
+ * Each tool calls `checkImageBrowseCap` before it fetches the scan (and, for
+ * image_transcribe, before the OCR) — volume_bisect's `image_search` listing
+ * runs first because it is what names the probe's imageId — and
+ * `recordImageBrowse` only once the read succeeded: after the fetch for
+ * image_read and image_transcribe, after the probe's OCR for volume_bisect.
+ * A failed fetch spends no budget. Calls running in parallel can overshoot by however many are
+ * in flight; accepted.
  *
- * **The threshold is calibrated for one producer.** `BROWSE_BUDGET_IMAGES = 20`
- * was derived from `image_transcribe` distinct-image counts alone over the
- * committed e2e corpus (the highest non-noticing block was 18). With a second
- * producer the effective threshold is reached sooner in wall-clock terms;
- * re-measure before changing the constant, and see
- * `docs/specs/image-transcribe-tool-spec.md` §5.8.
+ * The count lives in the project store as `results/image-browse.jsonl` (`.jsonl`
+ * because `results-staging.ts` scans `results/*.json`), so it survives a
+ * restart. Best-effort in both directions: a log that cannot be read or written
+ * falls back to the in-process count, and never refuses or fails a read on its
+ * own. A call whose `projectPath` (or, on the shared-process http entrypoint,
+ * the bound store's `anchorPath`) is not a project counts in memory only.
+ *
+ * Not counted: an `ark` that carries no group (a 3:1:/3:2: ARK — a DGS
+ * distribution URL passed as `ark` embeds its imageId and IS counted), `file`
+ * and `memoryArtifactUrl` inputs.
+ *
+ * On the file backend (no bound `projectId`) a call without `projectPath` cannot
+ * say which project it belongs to, so its check also counts every in-process
+ * read of that group, and a call with one also counts the group's no-path reads.
+ * Without that, a subagent called without `projectPath` would get a second 20.
  */
+import { getProjectStore } from "../store/project-store.js";
+import { classifyProjectPath } from "./project-io.js";
 import { projectScope } from "./image-store.js";
+import { dgsImageId, imageViewerUrl } from "./ark.js";
 
-const BROWSE_BUDGET_IMAGES = 20;
+export const IMAGE_BROWSE_CAP = 20;
 
-// Distinct imageIds seen per (project, image-group), keyed
-// `${projectScope(projectPath)}\0${imageGroup}` — the scope being the bound store's
-// patron-isolating projectId where there is one (shared-process http.ts, where every
-// request presents the same anchor projectPath, so a projectPath key would collide
-// patrons), else the normalized projectPath, else the `<no-project>` sentinel. Keyed
-// by PROJECT deliberately: the MCP server process outlives one conversation, so a
-// group-only key would tell a second project it had already browsed 20 pages on its
-// first read. Process-lifetime, never persisted; re-reading an image already in the
-// set does not advance the count. Follows place-search.ts's module-cache precedent.
-const browseBudgetSeen = new Map<string, Set<string>>();
+const LOG_REF = "results/image-browse.jsonl";
 
-/** Test-only reset — the Map is module-level and persists across `it()` blocks,
- *  which `vi` mock resets do not clear. Mirrors `__clearPlaceSearchCacheForTests`. */
-export function __clearBrowseBudgetForTests(): void {
-  browseBudgetSeen.clear();
+export type CapTool = "image_read" | "image_transcribe" | "volume_bisect";
+
+// Distinct imageIds per `${projectScope(projectPath)}\0${group}` — the scope is
+// the bound store's patron-isolating projectId on http (#2771), else the
+// normalized projectPath, else `<no-project>`.
+const seenInProcess = new Map<string, Set<string>>();
+
+/** Test-only reset of the in-process count (a restart, as far as the cap can tell). */
+export function __clearImageBrowseMemoryForTests(): void {
+  seenInProcess.clear();
 }
 
-/** The advisory a caller relays once the group passes the bound. Standalone
- *  rather than `ImageTranscribeResult["browseBudget"]`, because two tools now
- *  return it. */
-export interface BrowseBudgetAdvisory {
-  /** The image-group prefix, e.g. "004261111". */
-  imageGroup: string;
-  /** Distinct images read from this group in this project so far. */
-  distinctImagesRead: number;
-  /** The advisory the caller should act on. */
-  notice: string;
+export interface BrowseTicket {
+  imageId: string;
+  group: string;
+  tool: CapTool;
+  memKey: string;
+  /** The project to append to, when the call resolved to one. */
+  persistPath?: string;
+  /** Already in the persisted log — recording it again would be a duplicate line. */
+  inLog: boolean;
 }
 
-/** How the caller reached the page, which decides the advisory's wording: a
- *  page-by-page transcription hunt and a converging bisect want different
- *  pivots. */
-export type BrowseKind = "transcribe" | "bisect";
-
-function noticeFor(
-  kind: BrowseKind,
-  count: number,
-  imageGroup: string,
-): string {
-  if (kind === "bisect") {
-    // "Pivot to the indexed route" is sound against a hand-hunt and wrong
-    // against a bisect that is converging — it would tell the tool built to
-    // end the 58-call hunt to abandon a search that is working. Report the
-    // spend and let the bracket speak instead.
-    return (
-      `This bisect has now read ${count} distinct images from image group ` +
-      `${imageGroup} in this project. A bracket still wide after this many ` +
-      `probes is the signal that year headings are not resolving it — check ` +
-      `the bracket and its confidence, and consider the indexed route ` +
-      `(record_search, fulltext_search) or asking the user.`
-    );
+function inProcessSeen(memKey: string, group: string, projectPath: string | undefined): string[] {
+  if (getProjectStore().projectId !== undefined) return [...(seenInProcess.get(memKey) ?? [])];
+  const noPath = `${projectScope(undefined)}\0${group}`;
+  const ids: string[] = [];
+  for (const [key, set] of seenInProcess) {
+    const sameGroup = key.endsWith(`\0${group}`);
+    if (key === memKey || (sameGroup && (projectPath === undefined || key === noPath))) ids.push(...set);
   }
-  return (
-    `You have now transcribed ${count} distinct images from image group ` +
-    `${imageGroup} in this project. Page-by-page browsing rarely pays past this ` +
-    `point. Log the browse with a negative outcome (research_log_append) and ` +
-    `pivot to the indexed route — record_search, record_read, or fulltext_search ` +
-    `— or ask the user whether to keep paging.`
+  return ids;
+}
+
+async function persistTarget(projectPath: string | undefined): Promise<string | undefined> {
+  const target = projectPath ?? getProjectStore().anchorPath;
+  if (target === undefined) return undefined;
+  try {
+    return (await classifyProjectPath(target)) === "project" ? target : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+async function loggedIds(projectPath: string, group: string): Promise<Set<string>> {
+  const ids = new Set<string>();
+  let text: string;
+  try {
+    text = await getProjectStore().readText(projectPath, LOG_REF);
+  } catch {
+    return ids;
+  }
+  for (const line of text.split("\n")) {
+    if (!line.trim()) continue;
+    try {
+      const entry = JSON.parse(line) as { image_group?: unknown; image_id?: unknown };
+      if (entry.image_group === group && typeof entry.image_id === "string") ids.add(entry.image_id);
+    } catch {
+      // A torn or hand-edited line is skipped, never fatal.
+    }
+  }
+  return ids;
+}
+
+function refusal(tool: CapTool, imageId: string, group: string, bracket?: string): Error {
+  const link = imageViewerUrl({ imageId });
+  const where = link ? ` (${link})` : "";
+  const withLink = link ? " with this link" : "";
+  const bisect =
+    tool === "volume_bisect"
+      ? ` Report the bracket your readings reached so far as the browse's result${bracket ? ` (${bracket})` : ""}.`
+      : " To find one year's page in a browse-only volume, run volume_bisect first, then read the narrowed range.";
+  return new Error(
+    `Image cap reached: ${IMAGE_BROWSE_CAP} distinct images from image group ${group} have already ` +
+      `been read in this project (or in this server session, for reads with no projectPath), so ` +
+      `${imageId}${where} was not fetched. Re-reading any of those ` +
+      `${IMAGE_BROWSE_CAP} still works.${bisect} Log this browse as partial with research_log_append ` +
+      `(the group, the pages you read, what you were looking for), move to other routes ` +
+      `(record_search, fulltext_search, other collections), and name the unfinished browse in your ` +
+      `final summary${withLink} so the researcher can continue it by hand.`,
   );
 }
 
 /**
- * Record this image against the (project, group) browse counter and return the
- * advisory once the group passes `BROWSE_BUDGET_IMAGES` distinct images.
- *
- * Returns `undefined` for an ark-only call: an ARK carries no image-group number,
- * so a hunt driven by `ark` is never counted (spec §5.8 known limitation). A
- * bisect probe must therefore pass `imageId`, never `ark`, or it is invisible here.
+ * Refuse (throw) when `imageId` is new and its group already holds
+ * `IMAGE_BROWSE_CAP` distinct images in this project. Returns the ticket to pass
+ * to `recordImageBrowse` once the fetch succeeds, or `undefined` for an
+ * uncounted call (no `imageId`). `bracket` is volume_bisect's bracket so far,
+ * quoted in its refusal.
  */
-export function recordBrowseAndCheckBudget(
-  imageId: string | undefined,
+export async function checkImageBrowseCap(
+  input: { imageId?: string; ark?: string },
   projectPath: string | undefined,
-  kind: BrowseKind = "transcribe",
-): BrowseBudgetAdvisory | undefined {
+  tool: CapTool,
+  bracket?: string,
+): Promise<BrowseTicket | undefined> {
+  const imageId = input.imageId || (input.ark ? dgsImageId(input.ark) : undefined);
   if (!imageId) return undefined;
-  const imageGroup = imageId.split("_")[0];
-  const key = `${projectScope(projectPath)}\0${imageGroup}`;
-  let seen = browseBudgetSeen.get(key);
+  const group = imageId.split("_")[0];
+  const memKey = `${projectScope(projectPath)}\0${group}`;
+  const persistPath = await persistTarget(projectPath);
+  const logged = persistPath ? await loggedIds(persistPath, group) : new Set<string>();
+  const seen = new Set([...inProcessSeen(memKey, group, projectPath), ...logged]);
+  if (!seen.has(imageId) && seen.size >= IMAGE_BROWSE_CAP) {
+    throw refusal(tool, imageId, group, bracket);
+  }
+  return { imageId, group, tool, memKey, persistPath, inLog: logged.has(imageId) };
+}
+
+/** Count the image: in process always, and in the project's log when it is not there yet. */
+export async function recordImageBrowse(ticket: BrowseTicket | undefined): Promise<void> {
+  if (!ticket) return;
+  let seen = seenInProcess.get(ticket.memKey);
   if (!seen) {
     seen = new Set<string>();
-    browseBudgetSeen.set(key, seen);
+    seenInProcess.set(ticket.memKey, seen);
   }
-  seen.add(imageId);
-  if (seen.size <= BROWSE_BUDGET_IMAGES) return undefined;
-  return {
-    imageGroup,
-    distinctImagesRead: seen.size,
-    notice: noticeFor(kind, seen.size, imageGroup),
-  };
+  seen.add(ticket.imageId);
+  if (!ticket.persistPath || ticket.inLog) return;
+  const line = JSON.stringify({
+    image_group: ticket.group,
+    image_id: ticket.imageId,
+    tool: ticket.tool,
+    at: new Date().toISOString(),
+  });
+  try {
+    await getProjectStore().appendText(ticket.persistPath, LOG_REF, `${line}\n`);
+  } catch {
+    // Best-effort: the in-process count still holds for this process.
+  }
 }

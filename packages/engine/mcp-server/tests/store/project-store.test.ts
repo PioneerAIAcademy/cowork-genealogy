@@ -13,8 +13,8 @@ import {
 // bound nothing fails instead of reaching another project's store or the file
 // backend.
 
-/** Every `ProjectStore` method. The interface's one data property, `projectId`,
- *  is `Omit`ted — the loop below calls each entry as a method, and a data
+/** Every `ProjectStore` method. The interface's two data properties, `projectId`
+ *  and `anchorPath`, are `Omit`ted — the loop below calls each entry as a method, and a data
  *  property is not callable. `satisfies` makes a method added to the interface
  *  and forgotten here a tsc error in the `pretest` typecheck; a runtime walk of
  *  `FsProjectStore.prototype` would trip on its private helpers. */
@@ -32,7 +32,7 @@ const METHODS = {
   writeBytes: true,
   appendText: true,
   remove: true,
-} satisfies Record<keyof Omit<ProjectStore, "projectId">, true>;
+} satisfies Record<keyof Omit<ProjectStore, "projectId" | "anchorPath">, true>;
 
 const tick = (): Promise<void> => new Promise((resolve) => setImmediate(resolve));
 

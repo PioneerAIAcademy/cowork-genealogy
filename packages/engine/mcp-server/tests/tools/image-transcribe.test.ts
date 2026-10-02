@@ -23,7 +23,6 @@ vi.mock("../../src/utils/fs-image-fetch.js", async (importOriginal) => {
 
 import {
   imageTranscribeTool,
-  __clearBrowseBudgetForTests,
   MAX_OCR_INPUT_BYTES,
   sniffContentType,
 } from "../../src/tools/image-transcribe.js";
@@ -31,6 +30,9 @@ import {
   sourceImageCapState,
   __clearTruncatedSourceImagesForTests,
 } from "../../src/utils/image-store.js";
+import { __clearImageBrowseMemoryForTests } from "../../src/utils/browse-budget.js";
+import { imageReadTool } from "../../src/tools/image-read.js";
+import { FsProjectStore } from "../../src/store/fs-project-store.js";
 import {
   runWithProjectStore,
   type ProjectStore,
@@ -103,10 +105,10 @@ function mockOpenRouterStatus(status: number, body = "") {
 }
 
 beforeEach(() => {
-  // The browse-budget Map is module-level and survives across it() blocks; a
-  // vi mock reset does not clear it, so reset it explicitly or the budget tests
-  // become order-dependent.
-  __clearBrowseBudgetForTests();
+  // The image cap's in-process count is module-level and survives across it()
+  // blocks; a vi mock reset does not clear it, so reset it explicitly or the cap
+  // tests become order-dependent.
+  __clearImageBrowseMemoryForTests();
   __clearTruncatedSourceImagesForTests();
   mockFetch.mockReset();
   getOpenRouterApiKeyMock.mockReset();
@@ -655,9 +657,10 @@ describe("imageTranscribeTool — input validation", () => {
   });
 });
 
-describe("imageTranscribeTool — browse budget (#1081, spec §5.8)", () => {
+describe("imageTranscribeTool — hard image cap (#3010, spec §5.8)", () => {
   const GROUP = "004261111";
   const img = (seq: number) => `${GROUP}_${String(seq).padStart(5, "0")}`;
+  let project: string;
 
   // A persistent OK OCR response: each transcribe consumes one fetch, and these
   // tests make many calls where the exact text does not matter.
@@ -671,139 +674,204 @@ describe("imageTranscribeTool — browse budget (#1081, spec §5.8)", () => {
     });
   }
 
-  it("does not attach browseBudget for the first 20 distinct images in one group/project", async () => {
+  beforeEach(async () => {
+    project = await mkdtemp(join(tmpdir(), "imgt-cap-"));
+    await writeFile(join(project, "research.json"), "{}");
     mockOcrAlwaysOk();
-    for (let i = 1; i <= 20; i++) {
-      const result = await transcribe({ imageId: img(i), projectPath: "/p" }, LOCAL);
-      expect(result.browseBudget).toBeUndefined();
-    }
   });
 
-  it("attaches browseBudget on the 21st distinct image, naming the count, group, and pivot actions", async () => {
-    mockOcrAlwaysOk();
-    for (let i = 1; i <= 20; i++) {
-      await transcribe({ imageId: img(i), projectPath: "/p" }, LOCAL);
-    }
-    const result = await transcribe({ imageId: img(21), projectPath: "/p" }, LOCAL);
-
-    expect(result.browseBudget).toBeDefined();
-    expect(result.browseBudget?.imageGroup).toBe(GROUP);
-    expect(result.browseBudget?.distinctImagesRead).toBe(21);
-    const notice = result.browseBudget?.notice ?? "";
-    expect(notice).toContain("21");
-    expect(notice).toContain(GROUP);
-    // The concrete pivot actions must survive verbatim — a paraphrase fails here.
-    expect(notice).toContain("research_log_append");
-    expect(notice).toContain("record_search");
-    expect(notice).toContain("record_read");
-    expect(notice).toContain("fulltext_search");
+  afterEach(async () => {
+    await rm(project, { recursive: true, force: true });
   });
 
-  it("leaves transcription / found / imageRef / metadata untouched on the noticing call", async () => {
-    mockOcrAlwaysOk("Wilkins register page 93");
-    const dir = await mkdtemp(join(tmpdir(), "imgt-budget-"));
+  async function readTwenty(projectPath: string) {
+    for (let i = 1; i <= 20; i++) await transcribe({ imageId: img(i), projectPath }, LOCAL);
+  }
+
+  it("refuses the 21st distinct image before fetching it, naming the group, the link and the actions", async () => {
+    await readTwenty(project);
+    fetchFsImageBytesMock.mockClear();
+    mockFetch.mockClear();
+
+    const err = await imageTranscribeTool({ imageId: img(21), projectPath: project }, LOCAL).catch((e) => e);
+
+    expect(err).toBeInstanceOf(Error);
+    const msg = (err as Error).message;
+    expect(msg).toContain(GROUP);
+    expect(msg).toContain("20 distinct images");
+    expect(msg).toContain(`https://www.familysearch.org/search/film/${GROUP}?i=20`);
+    expect(msg).toContain("partial");
+    expect(msg).toContain("research_log_append");
+    expect(msg).toContain("final summary");
+    expect(msg).toContain("run volume_bisect first, then read the narrowed range");
+    expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("shares one count with image_read: 10 reads + 11 transcriptions, the 21st refuses", async () => {
+    for (let i = 1; i <= 20; i++) {
+      if (i % 2 === 0) await imageReadTool({ imageId: img(i), projectPath: project }, LOCAL);
+      else await transcribe({ imageId: img(i), projectPath: project }, LOCAL);
+    }
+    fetchFsImageBytesMock.mockClear();
+    await expect(imageTranscribeTool({ imageId: img(21), projectPath: project }, LOCAL)).rejects.toThrow(
+      /Image cap reached/,
+    );
+    await expect(imageReadTool({ imageId: img(22), projectPath: project }, LOCAL)).rejects.toThrow(/Image cap reached/);
+    expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
+  });
+
+  it("re-reading one of the first 20 still works, and an image read by both tools counts once", async () => {
+    await imageReadTool({ imageId: img(1), projectPath: project }, LOCAL);
+    await readTwenty(project);
+    const again = await transcribe({ imageId: img(7), projectPath: project }, LOCAL);
+    expect(again.transcription).toBe("page text");
+  });
+
+  it("still refuses after a restart: the count is read back from the project's log", async () => {
+    await readTwenty(project);
+    __clearImageBrowseMemoryForTests();
+    await expect(imageTranscribeTool({ imageId: img(21), projectPath: project }, LOCAL)).rejects.toThrow(
+      /Image cap reached/,
+    );
+    const log = await readFile(join(project, "results", "image-browse.jsonl"), "utf-8");
+    const lines = log.trim().split("\n").map((l) => JSON.parse(l));
+    expect(lines).toHaveLength(20);
+    expect(lines[0]).toMatchObject({ image_group: GROUP, image_id: img(1), tool: "image_transcribe" });
+  });
+
+  it("a re-read writes no second log line", async () => {
+    await readTwenty(project);
+    await transcribe({ imageId: img(3), projectPath: project }, LOCAL);
+    const log = await readFile(join(project, "results", "image-browse.jsonl"), "utf-8");
+    expect(log.trim().split("\n")).toHaveLength(20);
+  });
+
+  it("a failed log write never fails the read, and the in-process count still refuses", async () => {
+    const real = new FsProjectStore();
+    const failingAppend = Object.assign(Object.create(Object.getPrototypeOf(real)), real, {
+      appendText: async () => {
+        throw new Error("S3 down");
+      },
+    }) as ProjectStore;
+    await runWithProjectStore(failingAppend, async () => {
+      await readTwenty(project);
+      await expect(imageTranscribeTool({ imageId: img(21), projectPath: project }, LOCAL)).rejects.toThrow(
+        /Image cap reached/,
+      );
+    });
+    await expect(readFile(join(project, "results", "image-browse.jsonl"), "utf-8")).rejects.toThrow();
+  });
+
+  it("a failed fetch does not advance the count", async () => {
+    for (let i = 1; i <= 19; i++) await transcribe({ imageId: img(i), projectPath: project }, LOCAL);
+    fetchFsImageBytesMock.mockRejectedValueOnce(new Error("FamilySearch image fetch failed: 503"));
+    await expect(imageTranscribeTool({ imageId: img(20), projectPath: project }, LOCAL)).rejects.toThrow(/503/);
+    const r = await transcribe({ imageId: img(21), projectPath: project }, LOCAL);
+    expect(r.transcription).toBe("page text");
+  });
+
+  it("the same group under a different projectPath starts fresh", async () => {
+    await readTwenty(project);
+    const other = await mkdtemp(join(tmpdir(), "imgt-cap-other-"));
     try {
-      for (let i = 1; i <= 20; i++) {
-        await transcribe({ imageId: img(i), projectPath: dir }, LOCAL);
-      }
-      const result = await transcribe({ imageId: img(21), projectPath: dir }, LOCAL);
-
-      expect(result.browseBudget?.distinctImagesRead).toBe(21);
-      // Everything else is exactly the un-noticed path's output.
-      expect(result.transcription).toBe("Wilkins register page 93");
-      expect(result.found).toBeUndefined();
-      expect(result.imageRef).toBe(`images/${img(21)}.jpg`);
-      expect(result.metadata).toEqual({
-        imageId: img(21),
-        contentType: "image/jpeg",
-        model: MODEL,
-        sizeBytes: 3,
-      });
+      await writeFile(join(other, "research.json"), "{}");
+      const r = await transcribe({ imageId: img(21), projectPath: other }, LOCAL);
+      expect(r.transcription).toBe("page text");
     } finally {
-      await rm(dir, { recursive: true, force: true });
+      await rm(other, { recursive: true, force: true });
     }
   });
 
-  it("truncation and browseBudget co-occur independently on one read (@yinkid28)", async () => {
-    // browseBudget (:359) and truncated (:317) are computed independently; a
-    // future refactor must not make them mutually exclusive. Queue 20 complete
-    // reads, then a 21st that BOTH trips the budget AND is truncated (FIFO
-    // mockResolvedValueOnce, so the length response lands on call 21).
-    for (let i = 1; i <= 20; i++) mockOpenRouterOk("page text", "stop");
-    mockOpenRouterOk("page 21, cut off", "length");
-    for (let i = 1; i <= 20; i++) {
-      await transcribe({ imageId: img(i), projectPath: "/p" }, LOCAL);
-    }
-    const result = await transcribe({ imageId: img(21), projectPath: "/p" }, LOCAL);
-    expect(result.truncated).toBe(true);
-    expect(result.truncationNotice).toMatch(/INCOMPLETE/i);
-    expect(result.browseBudget?.distinctImagesRead).toBe(21);
-    expect(result.browseBudget?.imageGroup).toBe(GROUP);
+  it("does not carry the count to a different image group", async () => {
+    await readTwenty(project);
+    const r = await transcribe({ imageId: "999999999_00001", projectPath: project }, LOCAL);
+    expect(r.transcription).toBe("page text");
   });
 
-  it("does not carry the budget to a different image group in the same process", async () => {
-    mockOcrAlwaysOk();
-    for (let i = 1; i <= 21; i++) {
-      await transcribe({ imageId: img(i), projectPath: "/p" }, LOCAL);
+  it("an unreadable log line is skipped, and a non-project folder counts in memory without writing the log", async () => {
+    await mkdir(join(project, "results"), { recursive: true });
+    await writeFile(join(project, "results", "image-browse.jsonl"), "{not json\n");
+    await readTwenty(project);
+    await expect(imageTranscribeTool({ imageId: img(21), projectPath: project }, LOCAL)).rejects.toThrow(
+      /Image cap reached/,
+    );
+
+    const notProject = await mkdtemp(join(tmpdir(), "imgt-cap-noproj-"));
+    try {
+      await readTwenty(notProject);
+      await expect(imageTranscribeTool({ imageId: img(21), projectPath: notProject }, LOCAL)).rejects.toThrow(
+        /Image cap reached/,
+      );
+      // results/.staging may exist (image_transcribe stages its text); the cap's log must not.
+      expect(await readdir(join(notProject, "results")).catch(() => [])).not.toContain("image-browse.jsonl");
+    } finally {
+      await rm(notProject, { recursive: true, force: true });
     }
-    const other = await transcribe({ imageId: "999999999_00001", projectPath: "/p" }, LOCAL);
-    expect(other.browseBudget).toBeUndefined();
   });
 
-  it("keys by project: the same group under a different projectPath starts fresh", async () => {
-    mockOcrAlwaysOk();
-    for (let i = 1; i <= 21; i++) {
-      await transcribe({ imageId: img(i), projectPath: "/p1" }, LOCAL);
-    }
-    const p2 = await transcribe({ imageId: img(1), projectPath: "/p2" }, LOCAL);
-    expect(p2.browseBudget).toBeUndefined();
+  it("with no projectPath on the file backend, counts in memory and still refuses within the process", async () => {
+    for (let i = 1; i <= 20; i++) await transcribe({ imageId: img(i) }, LOCAL);
+    await expect(imageTranscribeTool({ imageId: img(21) }, LOCAL)).rejects.toThrow(/Image cap reached/);
   });
 
-  it("does not advance the count when an already-read image is re-read", async () => {
-    mockOcrAlwaysOk();
-    for (let i = 1; i <= 20; i++) {
-      await transcribe({ imageId: img(i), projectPath: "/p" }, LOCAL);
+  it("a read without projectPath does not get a second 20 on the file backend, in either order", async () => {
+    await readTwenty(project);
+    await expect(imageTranscribeTool({ imageId: img(21) }, LOCAL)).rejects.toThrow(/Image cap reached/);
+
+    __clearImageBrowseMemoryForTests();
+    const fresh = await mkdtemp(join(tmpdir(), "imgt-cap-fresh-"));
+    try {
+      await writeFile(join(fresh, "research.json"), "{}");
+      for (let i = 1; i <= 20; i++) await transcribe({ imageId: img(i) }, LOCAL);
+      await expect(imageTranscribeTool({ imageId: img(21), projectPath: fresh }, LOCAL)).rejects.toThrow(
+        /Image cap reached/,
+      );
+    } finally {
+      await rm(fresh, { recursive: true, force: true });
     }
-    // Re-read all 20 — the set does not grow, so still no notice.
-    for (let i = 1; i <= 20; i++) {
-      const r = await transcribe({ imageId: img(i), projectPath: "/p" }, LOCAL);
-      expect(r.browseBudget).toBeUndefined();
-    }
-    // The 21st DISTINCT image trips it at exactly 21, proving re-reads did not inflate.
-    const r21 = await transcribe({ imageId: img(21), projectPath: "/p" }, LOCAL);
-    expect(r21.browseBudget?.distinctImagesRead).toBe(21);
   });
 
-  it("isolates patrons under a shared-process store binding — same anchor path, different projectId, no collision (#2771, same class as #2457 B2)", async () => {
-    mockOcrAlwaysOk();
+  it("counts a DGS distribution URL passed as ark, which embeds its imageId", async () => {
+    await readTwenty(project);
+    const dgs = `https://familysearch.org/das/v2/dgs:${img(21)}/dist.jpg`;
+    await expect(imageTranscribeTool({ ark: dgs, projectPath: project }, LOCAL)).rejects.toThrow(/Image cap reached/);
+    const again = await transcribe({ ark: `https://familysearch.org/das/v2/dgs:${img(5)}/dist.jpg`, projectPath: project }, LOCAL);
+    expect(again.transcription).toBe("page text");
+  });
+
+  it("does not count ark-only reads", async () => {
+    await readTwenty(project);
+    const r = await transcribe({ ark: "https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/3:1:3QS7-L9S9-ABCD/$dist", projectPath: project }, LOCAL);
+    expect(r.transcription).toBe("page text");
+  });
+
+  it("isolates patrons under a shared-process store binding — same anchor path, different projectId (#2771)", async () => {
     // Under http.ts every request presents the SAME anchor projectPath (`/project`);
-    // the bound store's projectId is the real identity. Keying the budget on projectId
-    // (not the anchor) keeps patron A's count out of patron B's fresh read, while still
-    // carrying A's own count across A's turns. saveSourceImage throws on this method-
-    // less mock and is swallowed, so imageRef is undefined and the budget still counts.
+    // the bound store's projectId is the real identity. This method-less store
+    // cannot classify, so the cap counts in memory keyed by projectId.
     const store = (projectId: string) => ({ projectId }) as unknown as ProjectStore;
 
-    // Patron A drives the group past the budget under the shared /project anchor.
     await runWithProjectStore(store("proj-A"), async () => {
-      for (let i = 1; i <= 20; i++) {
-        const r = await transcribe({ imageId: img(i), projectPath: "/project" }, LOCAL);
-        expect(r.browseBudget).toBeUndefined();
-      }
-      const r21 = await transcribe({ imageId: img(21), projectPath: "/project" }, LOCAL);
-      expect(r21.browseBudget?.distinctImagesRead).toBe(21);
+      for (let i = 1; i <= 20; i++) await transcribe({ imageId: img(i), projectPath: "/project" }, LOCAL);
+      await expect(imageTranscribeTool({ imageId: img(21), projectPath: "/project" }, LOCAL)).rejects.toThrow(
+        /Image cap reached/,
+      );
     });
 
-    // Patron B: identical anchor path and group, must NOT inherit A's count.
     await runWithProjectStore(store("proj-B"), async () => {
-      const rB = await transcribe({ imageId: img(1), projectPath: "/project" }, LOCAL);
-      expect(rB.browseBudget).toBeUndefined();
+      const rB = await transcribe({ imageId: img(21), projectPath: "/project" }, LOCAL);
+      expect(rB.transcription).toBe("page text");
+      // A bare call (no projectPath) under B must not see A's reads either: the
+      // no-path union is for the file backend only, never across bound projects.
+      const bare = await transcribe({ imageId: img(23) }, LOCAL);
+      expect(bare.transcription).toBe("page text");
     });
 
-    // A still carries its own count (the across-turns join survives the B turn):
-    // a 22nd distinct image under A trips the budget at exactly 22.
     await runWithProjectStore(store("proj-A"), async () => {
-      const r22 = await transcribe({ imageId: img(22), projectPath: "/project" }, LOCAL);
-      expect(r22.browseBudget?.distinctImagesRead).toBe(22);
+      await expect(imageTranscribeTool({ imageId: img(22), projectPath: "/project" }, LOCAL)).rejects.toThrow(
+        /Image cap reached/,
+      );
     });
   });
 });
