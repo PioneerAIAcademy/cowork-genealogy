@@ -1,6 +1,6 @@
 # FamilySearch quality issues vs. `person_warnings` — coverage table
 
-**Measured 2026-09-26 against `main` at `d4ee13393`; #2727's changes to `person_warnings` (the D6 facts, the burial pairing) move no row.** Step 2 of issue #2225: every
+**Measured 2026-09-26 against `main` at `d4ee13393`; #2727's changes to `person_warnings` (the D6 facts, the burial pairing) move no row. The tag tally moved to 77 (49 self-checks, 28 mirrors) after `hasEventInOtherCountry` and the female lower age bound at childbirth both shipped; the rows themselves were not re-measured.** Step 2 of issue #2225: every
 FamilySearch quality `issueType` set against the `person_warnings` tag catalogue, so
 the uncovered set is counted rather than asserted. Step 3 was to add checks only for what
 this table leaves uncovered; it was ruled none (§ Step 3: ruled none). The tally is under "The count" below.
@@ -17,10 +17,10 @@ this table leaves uncovered; it was ruled none (§ Step 3: ruled none). The tall
   in [`person-quality-tool-spec.md`](specs/person-quality-tool-spec.md) § Missing-template
   fallback), and the API may add types. Those are not counted, and a live profile can
   surface one through the fallback sentence.
-- **`person_warnings` side:** the 74 tags in the § Tag Catalogue of
-  [`person-warnings-tool-spec.md`](specs/person-warnings-tool-spec.md): 47 self-checks
-  plus 27 relative mirrors. `person-warnings-spec-drift.test.ts` holds that catalogue
-  and `ALL_WARNING_TAGS` in exact agreement, so 74 is the shipped count.
+- **`person_warnings` side:** the 77 tags in the § Tag Catalogue of
+  [`person-warnings-tool-spec.md`](specs/person-warnings-tool-spec.md): 49 self-checks
+  plus 28 relative mirrors. `person-warnings-spec-drift.test.ts` holds that catalogue
+  and `ALL_WARNING_TAGS` in exact agreement, so 77 is the shipped count.
 - **No live profiles were read.** Every verdict comes from the template text and the
   tag rules, not from observed co-occurrence on a real person. Where the FamilySearch
   threshold is unpublished (its `profile*` fields come from a norm we never see), the
@@ -95,7 +95,7 @@ All profile-versus-source comparisons, which `person_warnings` never makes.
 | `PARTNER_DIED_TOO_YOUNG_FOR_COUPLE_RELATIONSHIP` | Covered | `hasYoungSpouse15` | yes | Ours fires at spouse death age < 15; FamilySearch's age is unpublished |
 | `CHILDREN_BORN_TOO_CLOSE` | Covered | `hasCloseChildBirthsIgnoreSimilarChildren` | yes | Ours: two non-similar children's exact births 2–240 days apart |
 | `COPARENTS_CHILDREN_BORN_TOO_CLOSE` | Covered | `hasCloseChildBirthsIgnoreSimilarChildren` | yes | Same check run on the father: the coparent's children are his |
-| `YOUNG_BIRTH` | Covered | `earliestChildBirthToBirth12`, `earliestChildBirthToBirthMale14` (+ mirrors) | yes | Thresholds 12 / male 14; FamilySearch's are unpublished |
+| `YOUNG_BIRTH` | Covered | `earliestChildBirthToBirth12`, `earliestChildBirthToBirthMale14`, `earliestChildBirthToBirthFemale14` (+ mirrors) | yes | Thresholds 12 / male 14 / female 14; FamilySearch's are unpublished |
 | `CHILD_COUNT` | Partial | `tooManyChildren18` | yes | Ours is a fixed 18; FamilySearch compares to a per-profile norm (`profileChildCount`), likely lower |
 | `OLD_DEATH` | Partial | `hasAgeRangeGreaterThan120` | yes | Ours fires above 120, as an impossibility; FamilySearch's "older than usual" is a lower norm |
 | `OLD_MARRIAGE` | Partial | `hasLateMarriage90` | yes | Same shape: our extreme vs. their norm |
@@ -208,4 +208,4 @@ With step 3 ruled none, it rides with check-warnings' next scheduled run.
   9 months apart"), but `hasCloseChildBirthsIgnoreSimilarChildren` checks exactly that, at
   2–240 days. A skill following the file is told not to report a condition its own tool
   returns.
-- **Its relative-mob list names 17 tags;** the spec's catalogue has 27.
+- **Its relative-mob list names 17 tags;** the spec's catalogue has 28.
