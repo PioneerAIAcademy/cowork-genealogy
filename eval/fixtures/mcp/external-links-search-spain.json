@@ -1,0 +1,58 @@
+{
+  "tool": "external_links_search",
+  "description": "Curated external links for Vélez-Málaga, 1815-1860. Captured live 2026-10-02 for the garcia-romero-compound-surname scenario (issue #2251, the {Country}_Naming_Customs pre-work fetch). Ten of 111 returned links kept verbatim (baptism, marriage and death indexes, church-archive guides, the Granada chancery); the rest are books, newspapers, other regions and duplicates. totalForPlace is the live value.",
+  "args": {
+    "standardPlace": "~laga"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Vélez-Málaga, Málaga, Andalusia, Spain",
+      "startYear": 1815,
+      "endYear": 1860
+    },
+    "totalForPlace": 123,
+    "returned": 10,
+    "results": [
+      {
+        "url": "https://www.ancestry.com/search/collections/60164",
+        "linkText": "Spain, Select Baptisms, 1502-1940"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60165",
+        "linkText": "Spain, Select Deaths, 1600-1920"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30056/spain-baptisms-1502-1940",
+        "linkText": "Spain, Baptisms, 1502-1940"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30057/spain-marriages-1565-1950",
+        "linkText": "Spain Marriages, 1565-1950"
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-Records/spain-baptisms-1502-1940",
+        "linkText": "Spain Baptisms, 1502-1940"
+      },
+      {
+        "url": "https://www.culturaydeporte.gob.es/dam/jcr:f28cc317-7893-40a3-9561-d821b6caf030/archivosiglesia.pdf",
+        "linkText": "Guía de los Archivos de la Iglesia en España"
+      },
+      {
+        "url": "http://censoarchivos.mcu.es/CensoGuia/portada.htm",
+        "linkText": "Censo-Guía de Archivos de España e Iberoamérica"
+      },
+      {
+        "url": "https://www.juntadeandalucia.es/cultura/archivos/realchancilleria",
+        "linkText": "Archivo de la Real Chancillería de Granada"
+      },
+      {
+        "url": "https://sede.mjusticia.gob.es/en/tramites/certificado-nacimiento",
+        "linkText": "link to order a birth certificate"
+      },
+      {
+        "url": "http://pares.mcu.es/Catastro/",
+        "linkText": "PARES Catastro de Ensenada"
+      }
+    ]
+  }
+}

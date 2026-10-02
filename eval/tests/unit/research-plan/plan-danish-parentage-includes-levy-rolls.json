@@ -5,7 +5,7 @@
     "name": "Danish patronymic parentage plan includes the conscription (lægdsruller) item",
     "type": "positive",
     "description": "blyeberg-first-plan: q_001 (who was the father of Mikkel Nielsen Blyeberg, b. 1779 Stagstrup, Thisted, Denmark?) has no plan yet, but a `localities` entry (loc_001, Denmark / Thisted) is already present — the orchestrator ran locality-guide first, and that entry records the lægdsruller fact (males enrolled under the father's name from 1789 = direct parentage evidence). research-plan is a pure consumer: it reads that entry and must produce a sound first plan that includes a dedicated conscription-roll item alongside the baptism/church and parents'-marriage items. Guards the record-type-guide 'sons in conscription countries' improvement (issue #574: the lægdsruller were never planned).",
-    "tags": ["planning", "parentage", "denmark", "conscription-rolls", "record-type-selection", "reads-localities-entry", "research-plan-new-plan-for-q-001", "new-plan-items-planned-status"]
+    "tags": ["planning", "parentage", "denmark", "conscription-rolls", "record-type-selection", "reads-localities-entry", "research-plan-new-plan-for-q-001", "new-plan-items-planned-status", "wiki-prework"]
   },
   "input": {
     "user_message": "Create the first research plan for q_001 — who was the father of Mikkel Nielsen Blyeberg?",
@@ -17,10 +17,13 @@
     "place-search-all-stagstrup",
     "collections-search-denmark",
     "external-links-search-denmark",
-    "volume-search-thisted"
+    "volume-search-thisted",
+    "wiki-read-denmark-military-records",
+    "wiki-read-denmark-naming-customs"
   ],
   "judge_context": [
     "A `localities` entry (loc_001) for Denmark / Thisted is ALREADY in research.json — the orchestrator ran locality-guide before research-plan, and its quirks record the lægdsruller fact (males enrolled under the father's name from 1789 = direct parentage evidence) plus the patronymic and browse-only-register notes. The skill should READ that entry; it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools). Do NOT fail it for not surveying.",
+    "SKILL.md Step 3 pre-work REQUIRES two wiki_read fetches for this subject (male, Danish, parentage question; patronymic two-word surname 'Nielsen Blyeberg'): Denmark_Military_Records and Denmark_Naming_Customs. Both are expected and both fixtures are served; do not mark either call down as out of scope. The fetched military page dates the levying rolls from 1788 (the 1788 regulation; the rolls themselves run from 1789), so either year in a rationale is acceptable. That page does not itself say the army rolls list the father's name; the loc_001 quirk does, and SKILL.md keys the levy-roll item on the page OR the localities entry.",
     "The plan MUST include at least one plan item targeting the Danish military levy rolls / conscription registers (lægdsruller) — record_type 'military', or an item whose jurisdiction/rationale unambiguously names the levy rolls. The localities entry names 'Denmark, Military Levying Rolls (Lægdsruller), 1789-1861', and research-plan may confirm it via collections_search / volume_search.",
     "The levy-roll item's rationale should gesture at why the rolls bear on parentage — males are enrolled under the father's name (the father's entry directly above the son's), making the roll direct evidence of the father for a male subject born 1779 (enrolled from the system's 1789 start). An adequate gesture passes; verbatim enumeration is not required.",
     "Whether any plan item targets the conscription/levy rolls for a male subject in a conscription jurisdiction is what Record type selection turns on for this test.",

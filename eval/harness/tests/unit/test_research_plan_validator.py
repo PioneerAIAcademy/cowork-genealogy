@@ -824,3 +824,179 @@ def test_passes_vacuously_when_fact_has_neither_date_nor_value():
     not raise even though the response never mentions Patrick."""
     response = "No mention of anyone."
     check(BEFORE_STATE_NO_DATE_NO_VALUE, response, TAGGED)  # does not raise
+
+
+# --- Step 3 pre-work fetch (issue #2251) ------------------------------------
+
+from test_research_plan import (  # noqa: E402
+    test_pre_register_birth_plans_death_route as check_death_route,
+    test_wiki_prework_fetches_triggered_pages as check_prework,
+)
+
+DK = {"id": "ut_research_plan_015", "tags": ["planning", "wiki-prework"]}
+DK_STEMS = ("wiki-read-denmark-military-records", "wiki-read-denmark-naming-customs")
+
+
+def _wiki(stem, tool=QUAL + "wiki_read"):
+    return {"tool": tool, "args": {"url": "x"}, "response_fixture": stem}
+
+
+def test_prework_fires_when_no_page_was_fetched():
+    """The gps-mentor pattern: the body names the call and none is made."""
+    calls = [{"tool": QUAL + "collections_search", "response_fixture": "collections-search-denmark"}]
+    with pytest.raises(AssertionError, match="never served"):
+        check_prework(calls, DK)
+
+
+def test_prework_fires_on_zero_and_none_tool_calls():
+    for calls in ([], None):
+        with pytest.raises(AssertionError, match="never served"):
+            check_prework(calls, DK)
+
+
+def test_prework_fires_on_a_404_slug():
+    """A guessed slug misses the page predicate and is served no fixture: the
+    mock records `response_fixture: None` with a fixture_not_found body."""
+    calls = [_wiki(None), _wiki("wiki-read-denmark-naming-customs")]
+    with pytest.raises(AssertionError, match="denmark-military-records"):
+        check_prework(calls, DK)
+
+
+def test_prework_fires_when_only_one_of_two_triggered_pages_is_fetched():
+    with pytest.raises(AssertionError, match="denmark-naming-customs"):
+        check_prework([_wiki("wiki-read-denmark-military-records")], DK)
+
+
+def test_prework_fires_when_a_sibling_wiki_tool_serves_the_stem():
+    """wiki_search / wiki_place_page are locality-guide's tools; a stem they
+    serve is not the constructed-URL page read the pre-work names."""
+    calls = [_wiki(s, tool=QUAL + "wiki_search") for s in DK_STEMS]
+    with pytest.raises(AssertionError, match="never served"):
+        check_prework(calls, DK)
+
+
+@pytest.mark.parametrize("prefix", [
+    "mcp__genealogy__",
+    "mcp__remote-devices__Genealogy_Research__",
+    "mcp__Genealogy_Research__",
+])
+def test_prework_passes_on_every_server_spelling(prefix):
+    check_prework([_wiki(s, tool=prefix + "wiki_read") for s in DK_STEMS], DK)
+
+
+def test_prework_passes_with_extra_unrelated_calls():
+    calls = [_wiki(s) for s in DK_STEMS] + [
+        {"tool": QUAL + "volume_search", "response_fixture": "volume-search-thisted"},
+        _wiki(None),
+    ]
+    check_prework(calls, DK)
+
+
+def test_prework_skips_an_untagged_test():
+    with pytest.raises(pytest.skip.Exception):
+        check_prework([], {"id": "ut_research_plan_005", "tags": ["planning"]})
+
+
+def test_prework_map_entry_without_its_tag_fails_before_the_skip():
+    """Dropping the tag from a spec must not silently disarm the guard."""
+    with pytest.raises(AssertionError, match="no 'wiki-prework'"):
+        check_prework([], {"id": "ut_research_plan_015", "tags": ["planning"]})
+
+
+def test_prework_tag_without_a_map_entry_fails():
+    with pytest.raises(AssertionError, match="no entry"):
+        check_prework([], {"id": "ut_research_plan_zzz", "tags": ["wiki-prework"]})
+
+
+DTH = {"id": "ut_research_plan_dth", "tags": ["planning", "pre-register-birth"]}
+
+
+def _plan_states(items):
+    before = {"plans": []}
+    after = {"plans": [{"id": "pl_001", "question_id": "q_001", "status": "active", "items": items}]}
+    return {"research_json": before}, {"research_json": after}
+
+
+def _pli(i, record_type, date_range, rationale, jurisdiction="Barsebäck, Malmöhus, Sweden"):
+    return {"id": f"pli_{i:03d}", "sequence": i, "record_type": record_type,
+            "jurisdiction": jurisdiction, "date_range": date_range,
+            "repository": "FamilySearch", "rationale": rationale,
+            "fallback_for": None, "status": "planned"}
+
+
+BAPTISM = _pli(1, "church", "1678-1695", "Elena's baptism in Västra Karaby, if the register reaches it.")
+BURIAL = _pli(2, "cemetery", "1718-1770",
+              "Elena's own burial entry in Barsebäck; death entries can state an age and a birthplace.")
+
+
+def test_death_route_fires_on_the_e2e_shape_all_church_no_death_item():
+    """run-2026-09-18_21-35-53: ten items, all church, no death or burial item."""
+    items = [_pli(i, "church", "1675-1712", f"Elena household examination {i}") for i in range(1, 11)]
+    b, a = _plan_states(items)
+    with pytest.raises(AssertionError) as e:
+        check_death_route(b, a, DTH)
+    assert "own death or burial" in str(e.value) and "one record_type" in str(e.value)
+
+
+def test_death_route_fires_when_the_death_item_is_someone_elses():
+    """A rationale about the husband's death does not target Elena's entry."""
+    jons = _pli(2, "cemetery", "1718-1770", "Jöns Jönsson's burial entry, to date the widowhood.")
+    b, a = _plan_states([BAPTISM, jons])
+    with pytest.raises(AssertionError, match="own death or burial"):
+        check_death_route(b, a, DTH)
+
+
+def test_death_route_fires_when_death_is_mentioned_on_a_baptism_window_item():
+    item = _pli(2, "church", "1675-1695", "Elena's baptism; she died in Barsebäck later.")
+    b, a = _plan_states([BAPTISM, item])
+    with pytest.raises(AssertionError, match="own death or burial"):
+        check_death_route(b, a, DTH)
+
+
+def test_death_route_fires_on_a_death_item_but_one_record_type():
+    burial_as_church = _pli(2, "church", "1718-1770", "Elena's burial entry in the Barsebäck register.")
+    b, a = _plan_states([BAPTISM, burial_as_church])
+    with pytest.raises(AssertionError, match="one record_type"):
+        check_death_route(b, a, DTH)
+
+
+def test_death_route_fires_on_an_undated_death_item():
+    undated = _pli(2, "cemetery", "unknown", "Elena's burial entry.")
+    b, a = _plan_states([BAPTISM, undated])
+    with pytest.raises(AssertionError, match="own death or burial"):
+        check_death_route(b, a, DTH)
+
+
+def test_death_route_fires_when_no_plan_was_written():
+    b, a = _plan_states([])
+    a["research_json"]["plans"] = []
+    with pytest.raises(AssertionError, match="no new plan items"):
+        check_death_route(b, a, DTH)
+
+
+def test_death_route_passes_a_mixed_plan_with_her_burial_item():
+    b, a = _plan_states([BAPTISM, BURIAL])
+    check_death_route(b, a, DTH)
+
+
+@pytest.mark.parametrize("rationale,date_range", [
+    ("Search the Sweden, Burials index for Elena Asmundsdotter.", "1712-1770"),
+    ("Browse Barsebäck's Döde section for Elena's death entry.", "1718–1768"),
+    ("ELENA'S BURIED entry — begravna, Barsebäck.", "1745"),
+])
+def test_death_route_passes_legitimate_variants(rationale, date_range):
+    """Reflowed wording, Swedish register terms, an en dash, a single year."""
+    b, a = _plan_states([BAPTISM, _pli(2, "church", date_range, rationale), _pli(3, "tax", "1700-1712", "mantalslängder")])
+    check_death_route(b, a, DTH)
+
+
+def test_death_route_skips_an_untagged_test():
+    b, a = _plan_states([BAPTISM])
+    with pytest.raises(pytest.skip.Exception):
+        check_death_route(b, a, {"id": "ut_research_plan_005", "tags": ["planning"]})
+
+
+def test_death_route_map_entry_without_its_tag_fails_before_the_skip():
+    b, a = _plan_states([BAPTISM, BURIAL])
+    with pytest.raises(AssertionError, match="no 'pre-register-birth'"):
+        check_death_route(b, a, {"id": "ut_research_plan_dth", "tags": ["planning"]})
