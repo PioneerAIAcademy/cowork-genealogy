@@ -68,8 +68,15 @@ function asArray(value: unknown): Collapsed[] {
     // content and no attributes, which is the ordinary shape of a free-text
     // <note>. Dropping it returned `notes: []` for an item whose only
     // holdings note was text-only, which reads as "this item has no notes".
-    if (typeof v === "string") return v.length > 0 ? [{ text: v }] : [];
-    return typeof v === "object" && v !== null ? [v as Collapsed] : [];
+    // Through `str`, so a bare NUMBER collapses like a bare string. `str`
+    // carries a number branch because film numbers arrive unquoted; an
+    // element-level unquoted collapse was being dropped, reporting
+    // `notes: []` with `hydrated: true` — "this item has no notes".
+    if (typeof v !== "object" || v === null) {
+      const text = str(v);
+      return text === undefined ? [] : [{ text }];
+    }
+    return [v as Collapsed];
   });
 }
 
@@ -120,17 +127,23 @@ interface SearchHit {
   };
 }
 
-function buildQuery(input: CatalogSearchInput, repId: string | null): string {
+function buildQuery(
+  input: CatalogSearchInput,
+  repId: string | null,
+  place: string | undefined,
+): string {
   const q = new URLSearchParams();
   // Not a tunable: without it `lutheran` is 2,046,826 hits instead of 12,344.
   q.set("m.queryRequireDefault", "on");
 
+  // `place` is the trimmed value, never `input.standardPlace`: a blank place
+  // the emptiness guard treats as unsearchable was still reaching the wire as
+  // `q.place=+++`, filtering the Catalog on nothing.
   if (repId) q.set("q.placeId", repId);
-  else if (input.standardPlace) q.set("q.place", input.standardPlace);
-  // `.exact` needs a place beside it; alone it 400s.
-  if (input.exactPlace && (repId || input.standardPlace)) {
-    q.set("q.place.exact", "on");
-  }
+  else if (place) q.set("q.place", place);
+  // `.exact` needs a place beside it; alone it 400s. Refused up front, so by
+  // here one is always present.
+  if (input.exactPlace) q.set("q.place.exact", "on");
 
   const simple: [keyof CatalogSearchInput, string][] = [
     ["keywords", "q.keywords"],
@@ -165,16 +178,15 @@ function hydrateFromSource(hit: CatalogHit, source: Record<string, unknown>): vo
   // An RSLINK note is an anchor tag, not holdings prose. It is surfaced as
   // digitalLibraryUrl below; leaving it in `notes` handed the LLM raw
   // `<a href="...">` markup to quote as if it were text.
+  // `textOf` everywhere below: written out by hand, `notes` read `.text`
+  // before `.value` while authors/subjects/title read `.value` first, so one
+  // element carrying both spellings was read two different ways.
   hit.notes = notes
     .filter((n) => String(n?.type ?? "") !== "RSLINK")
-    .map((n) => str(n?.text) ?? str(n?.value) ?? "")
+    .map((n) => textOf(n) ?? "")
     .filter(Boolean);
-  hit.authors = asArray(source.author)
-    .map((a) => str(a?.value) ?? str(a?.text) ?? "")
-    .filter(Boolean);
-  hit.subjects = asArray(source.subject)
-    .map((s) => str(s?.value) ?? str(s?.text) ?? "")
-    .filter(Boolean);
+  hit.authors = asArray(source.author).map((a) => textOf(a) ?? "").filter(Boolean);
+  hit.subjects = asArray(source.subject).map((x) => textOf(x) ?? "").filter(Boolean);
 
   // One table, read once per field. Written as seven `str(x) ? {k: str(x)}`
   // spreads it named each source key twice, so a single mistyped repeat
@@ -244,6 +256,24 @@ export async function catalogSearchTool(
         `to ${MAX_COUNT}.`,
     );
   }
+  // Every other field is type-guarded through `searchableValue`; this one was
+  // read raw, so an object/array/number reached `normalizeKey` and surfaced
+  // `s.trim is not a function` to the agent.
+  const place = searchableValue(input.standardPlace);
+  if (input.standardPlace !== undefined && place === undefined) {
+    throw new Error(
+      `standardPlace is ${JSON.stringify(input.standardPlace)}; it must be a ` +
+        "non-blank place name, e.g. 'Maine, United States'.",
+    );
+  }
+  if (input.exactPlace && place === undefined) {
+    // Silently dropping it returned the wider set with nothing saying so, and
+    // the agent read the hit count as an answer to a narrower question.
+    throw new Error(
+      "exactPlace excludes subordinate jurisdictions and needs a " +
+        "standardPlace beside it; given alone the Catalog refuses the query.",
+    );
+  }
   if (input.year !== undefined && !Number.isInteger(input.year)) {
     // `typeof NaN === "number"`, so without this `q.year=NaN` goes on the
     // wire and buys a 400 plus an agent turn.
@@ -264,14 +294,14 @@ export async function catalogSearchTool(
   // The REP id, never the place id: standardPlaceToPlaceId("Maine, United
   // States") is 16, which the Catalog reads as Timor-Leste and answers.
   let repId: string | null = null;
-  if (input.standardPlace) {
+  if (place) {
     // No `contextName`: that option is a PARENT PLACE used to disambiguate
     // same-name places, and passing anything else SUPPRESSES the context the
     // resolver derives from the input itself (`contextName ?? deriveContextName`).
     // A tool name there matches no candidate, so "Paris, Idaho, United States"
     // loses its "Idaho" filter and resolves to Paris, France — the same
     // wrong-answer-not-an-error class as Maine -> Timor-Leste, one layer up.
-    repId = await standardPlaceToRepId(input.standardPlace);
+    repId = await standardPlaceToRepId(place);
 
     // Resolution is unbudgeted (withRetry x3 over a 30s fetch). Overrunning
     // leaves the search a timeoutMs of 0, whose abort reads "timed out after
@@ -279,7 +309,7 @@ export async function catalogSearchTool(
     if (Date.now() >= deadline) {
       throw new Error(
         `catalog_search spent its ${TOTAL_BUDGET_MS / 1000}s budget resolving ` +
-          `the place '${input.standardPlace}' and never reached the Catalog. ` +
+          `the place '${place}' and never reached the Catalog. ` +
           "Retry without standardPlace, narrowing with keywords or title " +
           "instead, or retry later.",
       );
@@ -288,7 +318,7 @@ export async function catalogSearchTool(
 
   const res = await fsFetch(
     principal,
-    `${SEARCH_URL}?${buildQuery(input, repId)}`,
+    `${SEARCH_URL}?${buildQuery(input, repId, place)}`,
     { headers: HEADERS },
     Math.max(0, deadline - Date.now()),
   );
@@ -317,9 +347,12 @@ export async function catalogSearchTool(
     if (res.status === 403) {
       throw new Error(
         "FamilySearch Catalog search was refused (403) by the edge, not by " +
-          "permissions. The browser User-Agent it requires is already sent, " +
-          "so this is rate limiting or IP reputation: wait and retry, and do " +
-          "not re-send the same query immediately." +
+          "permissions as far as this tool can tell. The browser User-Agent " +
+          "it requires is already sent, so this is USUALLY rate limiting or " +
+          "IP reputation, where waiting and retrying is the fix — but a 403 " +
+          "alone cannot be told from a missing Catalog entitlement, which " +
+          "waiting will never clear. Check any upstream detail below before " +
+          "retrying." +
           (detail ? ` Upstream said: ${detail}` : ""),
       );
     }
@@ -345,7 +378,11 @@ export async function catalogSearchTool(
     const title = textOf(asArray(m.title)[0]);
     const creator = textOf(asArray(m.creator)[0]);
     return {
-      ...(url ? { id: url.slice(ITEM_URL_PREFIX.length) } : {}),
+      // The item segment only: everything after the prefix would carry a
+      // query string or a trailing path into a citation.
+      ...(url
+        ? { id: url.slice(ITEM_URL_PREFIX.length).split(/[/?#]/)[0] }
+        : {}),
       title: title ?? "(untitled)",
       ...(creator ? { creator } : {}),
       // Deduped: the service repeats an entry per copy, so an item on six
@@ -400,13 +437,19 @@ export async function catalogSearchTool(
           remaining,
           { attempts: 1 },
         );
-        if (!r.ok) return;
+        if (!r.ok) {
+          // Drained for the same reason the search leg drains: an unconsumed
+          // undici body holds its socket until GC, and under the degraded
+          // regime a hydrate of 25 produces 25 of them per call.
+          await r.text().catch(() => "");
+          return;
+        }
         const item = (await r.json()) as { source?: Record<string, unknown> };
         // A task abandoned by the race keeps running. Without this check its
         // late result still lands on the hit AFTER the deadline, so the same
         // call returns different data depending on how the event loop was
         // scheduled. Discard anything that arrives past the budget.
-        if (Date.now() > deadline) return;
+        if (Date.now() >= deadline) return;
         if (item.source) hydrateFromSource(hit, item.source);
       } catch {
         // One bad item must not fail the search.
@@ -431,7 +474,9 @@ export async function catalogSearchTool(
   return {
     totalHits: body.totalHits ?? 0,
     returned: hits.length,
-    placeResolved: input.standardPlace ? repId !== null : true,
+    // Boolean(repId), matching buildQuery's own `if (repId)`: `"" !== null`
+    // reported the place as resolved while the query used the name fallback.
+    placeResolved: place ? Boolean(repId) : true,
     hydrationTimedOut,
     hydrateRequested: hydrate,
     hits,

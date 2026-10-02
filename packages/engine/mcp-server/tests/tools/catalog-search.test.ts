@@ -571,6 +571,17 @@ describe("catalog_search — inputs the MCP boundary does not validate", () => {
     }
   });
 
+  it("does not state the 403's cause as fact", async () => {
+    // A 403 alone cannot be told from a missing Catalog entitlement, which
+    // waiting will never clear — so "wait and retry" must not be asserted as
+    // the answer.
+    mockFetch.mockReset();
+    mockFetch.mockImplementation(async () => json({}, 403));
+    await expect(catalogSearchTool({ keywords: "x" }, LOCAL)).rejects.toThrow(
+      /USUALLY rate limiting.*entitlement/s,
+    );
+  });
+
   it("does not tell the agent to send a header the tool already sends", async () => {
     // The old 403 named an action nobody can take: HEADERS always sets the
     // browser UA, so the agent could only retry identically or misreport.
@@ -635,6 +646,118 @@ describe("catalog_search — request volume", () => {
   });
 });
 
+describe("catalog_search — the place input", () => {
+  it.each([
+    ["an object", {}],
+    ["an array", ["Maine", "United States"]],
+    ["a blank string", "   "],
+  ])("refuses standardPlace given as %s", async (_label, value) => {
+    // Every other field is type-guarded; this one was read raw, so an
+    // object/array/number reached normalizeKey and surfaced the internal
+    // `s.trim is not a function` to the agent.
+    await expect(
+      catalogSearchTool({ keywords: "x", standardPlace: value } as never, LOCAL),
+    ).rejects.toThrow(/standardPlace is .*non-blank place name/s);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("treats an unquoted place as its text rather than crashing", async () => {
+    // `searchableValue` coerces a number for the same reason `str` does
+    // (unquoted film numbers), so this resolves as the name "1850" and comes
+    // back unresolved — the point is that it no longer surfaces the
+    // resolver's internal `s.trim is not a function` to the agent.
+    mockStandardPlaceToRepId.mockResolvedValue(null);
+    respond({ totalHits: 0, searchHits: [] });
+    const r = await catalogSearchTool(
+      { standardPlace: 1850 } as never,
+      LOCAL,
+    );
+    expect(mockStandardPlaceToRepId).toHaveBeenCalledWith("1850");
+    expect(r.placeResolved).toBe(false);
+  });
+
+  it("trims the place before it reaches the query", async () => {
+    // A blank place the emptiness guard calls unsearchable still went out as
+    // `q.place=+++`, filtering the Catalog on nothing.
+    mockStandardPlaceToRepId.mockResolvedValue(null);
+    respond({ totalHits: 0, searchHits: [] });
+    await catalogSearchTool({ standardPlace: "  Maine, United States  " }, LOCAL);
+    expect(mockStandardPlaceToRepId).toHaveBeenCalledWith("Maine, United States");
+    expect(new URL(searchUrl()).searchParams.get("q.place")).toBe(
+      "Maine, United States",
+    );
+  });
+
+  it("reports placeResolved false when the rep id is empty", async () => {
+    // buildQuery branches on `if (repId)`, so an empty rep id takes the name
+    // fallback; `repId !== null` called that resolved.
+    mockStandardPlaceToRepId.mockResolvedValue("");
+    respond({ totalHits: 0, searchHits: [] });
+    const r = await catalogSearchTool({ standardPlace: "Nowhere" }, LOCAL);
+    expect(new URL(searchUrl()).searchParams.has("q.placeId")).toBe(false);
+    expect(r.placeResolved).toBe(false);
+  });
+});
+
+describe("catalog_search — reader consistency", () => {
+  it("keeps a note element that collapsed to a bare number", async () => {
+    // `str` carries a number branch for unquoted film numbers; the same
+    // collapse one level up was dropped, reporting "no notes".
+    respond(
+      { totalHits: 1, searchHits: [hit("koha:1")] },
+      { source: { note: 1416754 } },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.hits[0].notes).toEqual(["1416754"]);
+  });
+
+  it("reads .value before .text identically for notes, authors and subjects", async () => {
+    // notes read .text first while authors/subjects/title read .value first,
+    // so one element carrying both was read two different ways.
+    const both = { value: "from-value", text: "from-text" };
+    respond(
+      { totalHits: 1, searchHits: [hit("koha:1")] },
+      { source: { note: both, author: both, subject: both } },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.hits[0].notes).toEqual(["from-value"]);
+    expect(r.hits[0].authors).toEqual(["from-value"]);
+    expect(r.hits[0].subjects).toEqual(["from-value"]);
+  });
+
+  it("takes only the item segment as id", async () => {
+    // Everything after the prefix carried a query string into a citation.
+    respond(
+      {
+        totalHits: 1,
+        searchHits: [{ metadataHit: { metadata: {
+          title: [{ value: "T" }],
+          identifier: { value: `${ITEM}koha:3308785?lang=en` },
+          repositoryCalls: [],
+        } } }],
+      },
+      { source: {} },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.hits[0].id).toBe("koha:3308785");
+  });
+
+  it("drains a failed item response", async () => {
+    // Under the degraded regime a hydrate of 25 produced 25 unconsumed undici
+    // bodies per call, each holding its socket until GC.
+    mockFetch.mockReset();
+    mockFetch.mockImplementationOnce(async () =>
+      json({ totalHits: 1, searchHits: [hit("koha:1")] }),
+    );
+    const body = JSON.stringify({ error: "upstream" });
+    const res = new Response(body, { status: 503 });
+    mockFetch.mockImplementation(async () => res);
+    const r = await catalogSearchTool({ keywords: "x", hydrate: 1 }, LOCAL);
+    expect(r.hits[0].hydrated).toBe(false);
+    expect(res.bodyUsed).toBe(true);
+  });
+});
+
 describe("catalog_search — the digitized-book link", () => {
   const rslink = (n: number) => ({
     type: "RSLINK",
@@ -687,11 +810,14 @@ describe("catalog_search — the query parameters nothing else covers", () => {
     expect(p.get("count")).toBe("7");
   });
 
-  it("omits q.place.exact when no place is given", async () => {
-    // `.exact` alone 400s, so it must not be sent without a place beside it.
-    respond({ totalHits: 0, searchHits: [] });
-    await catalogSearchTool({ keywords: "x", exactPlace: true }, LOCAL);
-    expect(new URL(searchUrl()).searchParams.has("q.place.exact")).toBe(false);
+  it("refuses exactPlace given without a place", async () => {
+    // `.exact` alone 400s. Dropping it silently returned the WIDER set with
+    // nothing saying so, and the agent read the hit count as an answer to
+    // the narrower question it asked.
+    await expect(
+      catalogSearchTool({ keywords: "x", exactPlace: true }, LOCAL),
+    ).rejects.toThrow(/needs a standardPlace beside it/);
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 });
 
@@ -721,6 +847,37 @@ describe("catalog_search — the budget, continued", () => {
       expect(r.hydrationTimedOut).toBe(true);
       expect(r.hits[0].hydrated).toBe(false);
       expect(mockFetch).toHaveBeenCalledTimes(1); // no item call was made
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("discards an item result that lands exactly on the deadline", async () => {
+    // The expiry timer fires AT the deadline, so a `>` guard let a task
+    // completing in that same millisecond write to a hit after the race had
+    // already settled to "expired" — and `hits` is returned by reference.
+    vi.useFakeTimers();
+    try {
+      mockFetch.mockReset();
+      mockFetch.mockImplementationOnce(async () =>
+        json({ totalHits: 1, searchHits: [hit("koha:1")] }),
+      );
+      mockFetch.mockImplementation(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(
+              () => resolve(json({ source: { note: { text: "late" } } })),
+              50_000,
+            ),
+          ),
+      );
+      const promise = catalogSearchTool({ keywords: "x", hydrate: 1 }, LOCAL);
+      await vi.advanceTimersByTimeAsync(120_000);
+      const r = await promise;
+
+      expect(r.hydrationTimedOut).toBe(true);
+      expect(r.hits[0].hydrated).toBe(false);
+      expect(r.hits[0].notes).toBeUndefined();
     } finally {
       vi.useRealTimers();
     }

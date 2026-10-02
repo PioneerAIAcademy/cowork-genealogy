@@ -304,7 +304,7 @@ So: the value must be a string beginning
 and **no request is made for it**. Nothing is reconstructed — the check only
 refuses a URL we did not measure.
 
-`id` on the response is the last path segment of that URL (`koha:3308785`),
+`id` on the response is the item segment following the prefix (`koha:3308785`) — the remainder stripped at the first `/`, `?` or `#`, not the whole remainder, which would carry a query string or a trailing path into a citation. The probe measured 25/25 bare ids, so the two read the same today; they are written to stay that way —
 carried for citation, not used to build the request. Both namespaces occur —
 `koha:` (2,987 of 2,991 sampled) and `olib:` (4) — and because the URL is used
 verbatim, neither needs special handling. A test hydrates an `olib:` hit anyway,
@@ -371,6 +371,8 @@ result set rather than as another page.
 | condition | message |
 |---|---|
 | no searchable field given | names the eight fields and says at least one is required — refused before any request. "Given" means a value the query can **carry**: the guard and `buildQuery` ask the same question (`searchableValue`), because a guard testing presence while `buildQuery` tested `typeof === "string"` let `filmNumber: 568142` through to a query with no `q.*` filter at all — the whole catalogue's top 25, returned as if they answered. The MCP boundary does not validate against `inputSchema` (`server.ts` casts `arguments`), so a number, `null` or a blank string is a live input |
+| `standardPlace` present but not a usable name (object, array, blank) | names the value. It was the one field read unguarded, so the resolver's internal `s.trim is not a function` reached the agent verbatim. A number is coerced to its text, as `str` does for unquoted film numbers, and simply fails to resolve |
+| `exactPlace` without a place | refused, not dropped: `.exact` alone 400s, and silently dropping it returned the WIDER set with nothing saying so, so the agent read the hit count as an answer to the narrower question it asked |
 | `year` non-integer (including `NaN`, which is `typeof "number"`) | names the value; otherwise `q.year=NaN` goes on the wire and buys a 400 |
 | `count` outside 1–200, or `hydrate` outside 0–25, or either non-integer | names the range and the value given. Both bounds are checked, not just the cap: `hydrate: -1` passed a one-sided `> MAX` test, and `slice(0, -1)` then kept all-but-one hit as targets while `mapWithConcurrency` clamped `-1` to **one** worker — 59 serial item calls against a cap of 25 |
 | place resolution spends the whole budget | names the place and says to retry without `standardPlace`; the alternative is a bare `timed out after 0ms` quoting the query URL |
@@ -419,6 +421,17 @@ result set rather than as another page.
 | three targets sharing the fallback fixture all hydrate | guards the test helper: one shared `Response` can be read once, so later calls failed into `hydrated: false` |
 | an off-host hit does not consume a hydration slot | `hydrateRequested` is "the first N with a usable url", not the first N positions |
 | a 401 and a 403 carry the upstream detail, and the 403 does not blame the user-agent | the detail was parsed then discarded, and the old 403 named an action nobody can take |
+| `standardPlace` as an object/array/blank is refused, and as a number is coerced rather than crashing | it was the one field read unguarded |
+| the place is trimmed before both the resolver and `q.place` | `q.place=+++` was filtering the Catalog on nothing |
+| an empty rep id reports `placeResolved: false` | `buildQuery` branches on truthiness, so the flag must too |
+| `exactPlace` alone is refused | silently dropping it answered a wider question than the agent asked |
+| a bare-number element survives `asArray` | `str` has a number branch; the element level did not |
+| `notes`, `authors` and `subjects` read one element the same way | `notes` read `.text` first and the others `.value` first |
+| an item url carrying a query string still yields a bare `id` | the response field and its spec disagreed |
+| a failed item response is drained | 25 unconsumed undici bodies per call under the degraded regime |
+| an item landing exactly on the deadline is discarded | the expiry timer fires AT the deadline, so `>` let it write after the race settled |
+| the 403 does not state its cause as fact | a 403 cannot be told from a missing entitlement, which waiting never clears |
+| `parseUpstreamErrorBody` falls through to `detail` when `errors` yields nothing | present-but-unusable is not absent |
 | every film-note field maps to its own key | seven near-identical spreads where one mistyped repeat would be invisible |
 | `hydrateRequested` is echoed | with the defaults 15 of 25 hits are `hydrated: false` purely for sitting past the window |
 | place resolution eating the budget names the place | otherwise a bare `timed out after 0ms` quoting the query URL |

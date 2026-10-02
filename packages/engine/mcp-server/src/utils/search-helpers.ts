@@ -89,26 +89,30 @@ export function parseUpstreamErrorBody(body: unknown): string | null {
   // one — record_search, person_search and person_ancestors built their
   // messages around it long before the Catalog needed this helper.
   const errors = (body as { errors?: unknown }).errors;
-  if (!Array.isArray(errors) || errors.length === 0) {
-    // RFC7807, the Catalog's shape. `title` is skipped: it restates the HTTP
-    // status line every caller already puts in its message.
-    const detailField = (body as { detail?: unknown }).detail;
-    return typeof detailField === "string" && detailField.length > 0
-      ? detailField
-      : null;
-  }
-  const detail = errors
-    .map((e) => {
-      if (typeof e === "string") return e;
-      if (e && typeof e === "object") {
-        const msg = (e as { message?: unknown }).message;
-        if (typeof msg === "string") return msg;
-      }
-      return null;
-    })
-    .filter((s): s is string => s !== null)
-    .join("; ");
-  return detail || null;
+  const fromErrors = Array.isArray(errors)
+    ? errors
+        .map((e) => {
+          if (typeof e === "string") return e;
+          if (e && typeof e === "object") {
+            const msg = (e as { message?: unknown }).message;
+            if (typeof msg === "string") return msg;
+          }
+          return null;
+        })
+        .filter((s): s is string => s !== null)
+        .join("; ")
+    : "";
+  if (fromErrors) return fromErrors;
+
+  // Fallen through, not branched past: `errors` being PRESENT but yielding
+  // nothing usable (`[{ code: 400 }]`) must still reach the RFC7807 detail,
+  // or a body carrying both loses its only readable explanation.
+  // `title` is skipped — it restates the HTTP status line every caller
+  // already puts in its message.
+  const detailField = (body as { detail?: unknown }).detail;
+  return typeof detailField === "string" && detailField.length > 0
+    ? detailField
+    : null;
 }
 
 /**

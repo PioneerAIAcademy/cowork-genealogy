@@ -888,6 +888,18 @@ describe("helpers", () => {
     ).toBe("Validation failure");
   });
 
+  it("parseUpstreamErrorBody falls through to detail when errors yields nothing", () => {
+    // PRESENT but unusable is not the same as absent. Branching on the
+    // array's shape up front returned null and lost the only readable
+    // explanation the body carried.
+    expect(
+      parseUpstreamErrorBody({
+        errors: [{ code: 400 }],
+        detail: "Validation failure",
+      })
+    ).toBe("Validation failure");
+  });
+
   it("parseUpstreamErrorBody prefers errors[] over a generic detail", () => {
     // Pins the ORDER. `detail` is generic ("Bad Request"); errors[].message
     // names the offending parameter, which is what three callers' messages
