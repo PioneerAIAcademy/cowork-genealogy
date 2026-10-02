@@ -266,10 +266,24 @@ no other shape.
 | As shipped | fail, pass, pass | pass |
 | Pointer moved into `SKILL.md`'s Step 2 pre-work block | fail, fail, pass | fail |
 | Norway entry restructured instruction-first, provenance last | fail, pass, pass | pass |
+| **Pre-slim file restored** (8,408 B, this PR's own cut reverted) | fail, pass, pass | pass |
 
-**5 pass / 4 fail, wording-independent.** Both experimental variants were
-reverted: neither moved the rate, and an unmeasured prose change is not worth a
-paid run.
+**7 pass / 5 fail, wording-independent *and* size-independent.** Both
+experimental variants were reverted: neither moved the rate, and an unmeasured
+prose change is not worth a paid run.
+
+**The pre-slim row settles a question the first three rows could not.** All
+three variants above are variants of the *slimmed* file, so none of them tested
+whether this PR's own cut (8,408 -> 5,984 B) caused the failures — and `_023`
+passed in all 5 committed run logs predating this PR, which reads like a
+regression. Measured 2026-10-02 by restoring the pre-slim file into the current
+tree and changing nothing else: **identical per-run outcomes**, and the same
+bimodal timing (the failing run 408s of skill time, the two passing ones 205s
+and 178s). The Norway entry itself is byte-identical across the slimming — one
+trailing blank line — so there was no mechanism for the cut to act through. The
+5-of-5 pre-PR record is small-sample luck: at the measured ~1-in-3 rate, five
+single runs come back all-green about 13% of the time. Issue #3054 stands as
+filed; this PR did not cause it.
 
 **This table is the record — the run logs behind it are not committed and cannot
 be.** `.gitignore` excludes `eval/runlogs/unit/*/scratch_*.json`, because a
