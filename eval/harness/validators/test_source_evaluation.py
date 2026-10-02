@@ -420,37 +420,3 @@ def test_a_relatives_source_is_not_audited(tool_calls, test):
         "the audit list is the entries `persons[0].sources[].ref` names, plus entries "
         "carrying `artifact_url`."
     )
-
-
-def test_a_memory_is_still_audited(tool_calls, text_response, test):
-    """The other half of the same rule, and the one easy to lose.
-
-    No person entry references a memory -- 14 of 14 on one measured profile -- so
-    scoping the audit to "entries the subject's refs point at" silently drops every
-    memory. The rule keeps them by `artifact_url`, and this fails if a fix to the
-    rule above takes them with it.
-
-    Memories carry no `1:1:` ARK, so the evidence is that the response ACCOUNTS for
-    the unreadable one rather than that it was read.
-    """
-    # ONLY WHERE AN AUDIT ACTUALLY RAN. A negative test routes away without
-    # reading anything, so asking it to name an unreadable source is meaningless.
-    # The first version of this validator did exactly that and failed
-    # `ut_source_evaluation_h3t`, which had correctly declined and handed off to
-    # check-warnings. The gate is a `record_read`: no audit, nothing to say.
-    if test.get("type") != "positive":
-        pytest.skip("negative test: no audit is performed")
-    if not any(
-        (c.get("tool") or "").rsplit("__", 1)[-1] == "record_read"
-        for c in (tool_calls or [])
-    ):
-        pytest.skip("no source was read, so there is no audit to inspect")
-    body = (text_response or "").lower()
-    mentions_unreadable = any(
-        p in body for p in ("could not", "cannot", "not readable", "no readable", "memory", "memories")
-    )
-    assert mentions_unreadable, (
-        "the audit named no unreadable source. A memory is in the audit list "
-        "(it carries `artifact_url`) but has no `1:1:` ARK, so it must be reported "
-        "as one that could not be checked -- not silently dropped."
-    )

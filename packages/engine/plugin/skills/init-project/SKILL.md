@@ -151,7 +151,7 @@ A relationship needs its OWN `sources` ref too — on the relationship object it
 { "id": "R1", "type": "Couple", "person1": "I1", "person2": "I2", "facts": [ ... ], "sources": [{ "ref": "S1", "quality": 1 }] }
 ```
 
-The top-level `sources[]` array you already surveyed above is not the same thing as this per-fact `sources` ref — a fact with no ref yet just means you haven't attached one, not that no sources exist at all. If `person_read`'s result is too large to `Read` directly, count `len(sources)` on the top-level array before drawing any conclusion about how many sources are attached.
+The top-level `sources[]` array you already surveyed above is not the same thing as this per-fact `sources` ref — a fact with no ref yet just means you haven't attached one, not that no sources exist at all. If `person_read`'s result is too large to `Read` directly, count only the entries `persons[0].sources[].ref` names, plus any carrying an `artifact_url`, before drawing any conclusion about how many sources are attached to the SUBJECT. The top-level `sources` array also carries every relative's attached sources, so `len(sources)` is the family's total, not this person's — on one measured profile that is 197 against 17.
 
 `person_read` facts arrive with two standardized sidecars — `standard_place` and `standard_date`. **Carry both through exactly as returned; never re-derive either from the raw `place`/`date`.** Hand-entered places, and any returned fact with a `place` but no `standard_place`: resolve with `place_search` and use `standardPlace` from the first result. Never copy `place` into `standard_place`.
 

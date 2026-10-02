@@ -35,6 +35,7 @@
     "No numeric score, band or percentage may be stated. overallScore is in the response and must not be surfaced — the thresholds behind it are unknown, so repeating it would pass a guess off as official.",
     "The closing line about backend artifacts must give the number of KINDS omitted, not a count of occurrences. (D5 as ruled says 'the count omitted'; kinds is the reading that survives repeated internal ids recurring across records.)",
     "The two real findings must still be reported as findings: the 1885 state census misattribution and the Minnesota death index discrepancy. The checklist is additive; it does not replace the audit.",
-    "Grade the reply against the four-fact profile person_read returned — Birth 1875, Marriage 1898, one Residence 1900, Death 1945, no burial — and its 2-issue checklist. The scenario README describes a 7-issue captured fixture used by a different suite; that is not what this test runs."
+    "Grade the reply against the four-fact profile person_read returned — Birth 1875, Marriage 1898, one Residence 1900, Death 1945, no burial — and its 2-issue checklist. The scenario README describes a 7-issue captured fixture used by a different suite; that is not what this test runs.",
+    "The Hole profile carries SD-HOLE-D, a memory with an `artifact_url` and no record-persona ARK. It IS in the audit list — the rule keeps an entry carrying `artifact_url`, because no person entry references a memory — so the reply must name it among the sources it could not check, by what it is. A reply that omits it has silently dropped an audit-list entry; a reply that says only a generic \"some sources could not be checked\" has not identified it."
   ]
 }

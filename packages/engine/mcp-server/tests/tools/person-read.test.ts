@@ -2217,3 +2217,65 @@ describe("a skipped relative is reported in the response (#1689 Half 3)", () => 
     expect(out.notes!.join(" ")).toMatch(/could not be read/);
   });
 });
+
+// The subject is `persons[0]`, GUARANTEED rather than inherited from FamilySearch's
+// order. source-evaluation depends on it to tell the subject's own sources from the
+// relatives' — and after a 301 the id the caller passed names nobody in the response,
+// so the id cannot be the discriminator.
+//
+// Review proved this was untested: `if (false && subjectAt > 0)` left all 2544 tool
+// tests green, because every other fixture happens to list the subject first. This one
+// lists it SECOND, which is the only way the reorder is exercised at all.
+describe("the subject is persons[0] (#1689 Half 3)", () => {
+  it("moves the subject to the front when upstream lists it second", async () => {
+    mockOk({
+      persons: [
+        {
+          id: "KID-0001",
+          living: false,
+          gender: { type: "http://gedcomx.org/Female" },
+          names: [{ nameForms: [{ fullText: "Bea Child" }] }],
+        },
+        {
+          id: "SUBJ-001",
+          living: true,
+          names: [{ nameForms: [{ fullText: "Ann Subject" }] }],
+        },
+      ],
+      childAndParentsRelationships: [
+        { parent1: { resourceId: "SUBJ-001" }, child: { resourceId: "KID-0001" } },
+      ],
+      sourceDescriptions: [],
+    } as never);
+    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    expect(out.persons[0].id).toBe("SUBJ-001");
+    expect(out.persons.map((p) => p.id).sort()).toEqual(["KID-0001", "SUBJ-001"]);
+  });
+
+  it("holds for a MERGED subject, where the requested id names nobody", async () => {
+    // The case the guarantee exists for: after a 301 the response carries the
+    // post-redirect id, so "the person whose id I asked for" matches no entry.
+    mockStatus(301, "https://api.familysearch.org/platform/tree/persons/GDZW-NZZ");
+    mockOk({
+      persons: [
+        {
+          id: "KID-0002",
+          living: false,
+          gender: { type: "http://gedcomx.org/Male" },
+          names: [{ nameForms: [{ fullText: "Cal Child" }] }],
+        },
+        {
+          id: "GDZW-NZZ",
+          living: true,
+          names: [{ nameForms: [{ fullText: "Merged Subject" }] }],
+        },
+      ],
+      childAndParentsRelationships: [
+        { parent1: { resourceId: "GDZW-NZZ" }, child: { resourceId: "KID-0002" } },
+      ],
+      sourceDescriptions: [],
+    } as never);
+    const out = await personReadTool({ personId: "K2QT-J56" }, LOCAL);
+    expect(out.persons[0].id).toBe("GDZW-NZZ");
+  });
+});

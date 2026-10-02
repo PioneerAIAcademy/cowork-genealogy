@@ -15,6 +15,8 @@ person linking to its own through `persons[].sources`). Siblings are a second
 hop costing one read per parent (see "The sibling fan-out" below). For a
 non-living subject the read also pages that person's source-style memories.
 
+**`persons[0]` is the subject**, guaranteed rather than inherited from the order FamilySearch sent. A consumer that needs the subject's own entries — `source-evaluation` separates them from the relatives' — cannot use the requested `personId`, because after a 301 the response carries the post-redirect id and the requested one names nobody.
+
 **Both reads are always on (lead ruling, 2026-09-27).** The
 `relatives` and `sourceDescriptions` inputs are still accepted, so a prompt that
 passes them does not start erroring, and their values are ignored. The opt-in
@@ -1048,6 +1050,8 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 | 43 | A skipped relative is named in top-level `notes[]`, not only on stderr | Budget visible |
 | 44 | No note when every relative was read | `notes[]` means something |
 | 45 | A rejecting relative fetch does not take the process down | Unhandled rejection |
+| 46 | The subject is moved to `persons[0]` when upstream lists it second | Subject first |
+| 47 | …and for a MERGED subject, where the requested id names no entry | Subject first |
 
 `tests/utils/relative-sources.test.ts` covers the fetch module directly — the per-read
 bound, the raw-description passthrough, dedupe, partial failure and 204. Those are not

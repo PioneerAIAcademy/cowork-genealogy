@@ -41,7 +41,7 @@ Your job is the remaining case: the sources on the profile are there, and the qu
 
 ### 1. Read the profile and its attached sources
 
-Call `person_read({ personId, sourceDescriptions: true })`. Entries whose id starts with `SD_` never appear; the tool already filters them as metadata.
+Call `person_read({ personId })`. Entries whose id starts with `SD_` never appear; the tool already filters them as metadata.
 
 **The audit list is not the whole `sources[]` array** — that also carries the relatives' attached sources. **The subject is `persons[0]`.** The audit list is:
 

@@ -64,8 +64,8 @@
         "living": false,
         "names": [
           {
-            "given": "Relative",
-            "surname": "Notaudited",
+            "given": "Bergit",
+            "surname": "Hole",
             "preferred": true
           }
         ],
@@ -119,8 +119,8 @@
       },
       {
         "id": "SD-REL-TV2",
-        "title": "A source attached to the RELATIVE, not the subject",
-        "citation": "Relative's own record — must not be audited as the subject's.",
+        "title": "Bergit Hole, \"Norway Baptisms, 1634-1927\"",
+        "citation": "\"Norway Baptisms, 1634-1927,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:REL-9999 : accessed 1 October 2026), Bergit Hole, 12 Mar 1861; citing Baptism, Ringebu, Oppland, Norway.",
         "url": "https://www.familysearch.org/ark:/61903/1:1:REL-9999"
       }
     ]
