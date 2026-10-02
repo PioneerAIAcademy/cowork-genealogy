@@ -43,15 +43,21 @@ hosted runner.
 
 Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto), QUEUE_URL (a full SQS
 queue URL, the shim's shape; unset -> NullQueue, turns are recorded but not enqueued),
-POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (60 -- see ``max_nudges``). Startup
-applies proto/sql/*.sql (all idempotent) and syncs the allowlist, one inline attempt each
-under one ``STARTUP_BUDGET_S``; a failure is retried in the background and never stops
-the tier listening (U10). Until the allowlist has synced, a FamilySearch-configured tier
-answers 503 at both allowlist checks rather than read a table an earlier boot left.
-``GET /api/health`` is readiness: 200 or 503, the same keys either way, plus ``checks``
-(``postgres``, ``schema``, ``allowlist``) whose ``error`` is a label, never a message.
+POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (60 -- see ``max_nudges``). With
+QUEUE_URL set (and only then): GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
+or neither; neither signs SendMessage with the default AWS chain, the instance profile on
+AWS; one alone refuses to start) and GENEALOGY_SQS_REGION (else the QUEUE_URL host's
+region). Startup applies proto/sql/*.sql (all idempotent) and syncs the allowlist, one
+inline attempt each under one ``STARTUP_BUDGET_S``; a failure is retried in the
+background and never stops the tier listening (U10). It logs
+``queue: <url>; sqs credentials: <mode>; region <r>``. Until the allowlist has synced, a
+FamilySearch-configured tier answers 503 at both allowlist checks rather than read a
+table an earlier boot left. ``GET /api/health`` is readiness: 200 or 503, the same keys
+either way, plus ``checks`` (``postgres``, ``schema``, ``allowlist``) whose ``error`` is a
+label, never a message.
 
-Run: from apps/server, ``uv run python proto/web/app.py``.
+Run: ``make proto-web`` (from the venv, with the dummy GENEALOGY_SQS_* pair elasticmq
+ignores).
 """
 
 from __future__ import annotations
@@ -87,16 +93,20 @@ SQL_DIR = PROTO_DIR / "sql"
 if str(PROTO_DIR) not in sys.path:
     sys.path.insert(0, str(PROTO_DIR))
 
-import enqueue  # noqa: E402  (the D3 SQS query-API client; reused, not edited)
+import enqueue  # noqa: E402  (the SQS query-API client; signs SigV4)
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
 
 log = logging.getLogger("proto.web")
-# uvicorn configures only its own loggers, so without this Python's last-resort handler
-# prints WARNING and up and every info line (an ok health transition included) is lost.
+# What the patron sees when SendMessage fails. Never the exception: an AWS refusal names the
+# account id and the instance role's ARN. The log line beside the 502 carries the detail.
+ENQUEUE_FAILED_MESSAGE = "queue send failed; please try again"
+# uvicorn configures only its own loggers, so without a handler of its own every INFO line
+# here -- the schema, the ``queue: ...; sqs credentials: ...`` start line and an ok health
+# transition -- is dropped.
 if not log.handlers:
-    _stderr = logging.StreamHandler()
-    _stderr.setFormatter(logging.Formatter("%(message)s"))
-    log.addHandler(_stderr)
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter("%(levelname)s:     %(name)s: %(message)s"))
+    log.addHandler(_handler)
     log.setLevel(logging.INFO)
 
 DEFAULT_PG_DSN = "postgresql://postgres:proto@localhost:5434/proto"
@@ -832,9 +842,10 @@ class PgStore:
 
 
 class SqsQueue:
-    """SendMessage over the SQS query API via enqueue.sqs_call. QUEUE_URL is a full queue
-    URL (the shim's shape); the endpoint is its scheme+host, and the URL itself goes down
-    as QueueUrl -- elasticmq keys on the path, so the in-network host is fine."""
+    """SendMessage over the SQS query API via enqueue.sqs_call, SigV4-signed. QUEUE_URL is
+    a full queue URL (the shim's shape); the endpoint is its scheme+host, which is also the
+    Host the request is signed for, and the URL itself goes down as QueueUrl -- elasticmq
+    keys on the path, so the in-network host is fine."""
 
     def __init__(self, queue_url: str) -> None:
         parsed = urlparse(queue_url)
@@ -1002,8 +1013,25 @@ def create_app(
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         auth.preflight()  # before anything binds: a misconfigured tier must not come up
-        # U10 D8: the store goes on app.state FIRST, so every route and /api/health see it
-        # while Postgres is down; neither step below can stop the tier listening.
+        # U7: a half SQS pair refuses here, before a startup step or its background retry
+        # exists, so the refusal leaves nothing running.
+        if app.state.queue is None:
+            queue_url = os.environ.get("QUEUE_URL")
+            if queue_url:
+                try:
+                    sqs_auth = await asyncio.to_thread(enqueue.configure, os.environ, queue_url)
+                except enqueue.SqsConfigError as exc:
+                    raise RuntimeError(str(exc)) from exc
+                app.state.queue = SqsQueue(queue_url)
+                log.info("queue: %s; %s", queue_url, enqueue.describe(sqs_auth))
+                if sqs_auth.method is None:
+                    log.warning("no AWS credentials found yet: SendMessage retries the chain "
+                                "and fails until it resolves")
+            else:
+                app.state.queue = NullQueue()
+                log.warning("QUEUE_URL unset: turns are recorded but NOT enqueued (NullQueue)")
+        # U10 D8: the store goes on app.state before either step, so every route and
+        # /api/health see it while Postgres is down; neither step can stop the tier listening.
         steps: dict[str, Callable[[], Awaitable[Any]]] = {}
         if app.state.store is None:
             app.state.store = PgStore(os.environ.get("PG_DSN") or DEFAULT_PG_DSN)
@@ -1027,14 +1055,6 @@ def create_app(
             log.warning("startup: Postgres did not answer within %ss; retrying in the background", STARTUP_BUDGET_S)
         failing = {name: step for name, step in steps.items() if startup[name] != "ok"}
         retry = asyncio.create_task(retry_startup(startup, failing)) if failing else None
-        if app.state.queue is None:
-            queue_url = os.environ.get("QUEUE_URL")
-            if queue_url:
-                app.state.queue = SqsQueue(queue_url)
-                log.info("queue: %s", queue_url)
-            else:
-                app.state.queue = NullQueue()
-                log.warning("QUEUE_URL unset: turns are recorded but NOT enqueued (NullQueue)")
         try:
             yield
         finally:
@@ -1373,7 +1393,7 @@ def create_app(
             # the 502 names its seq: the SPA still has an echo to drop.
             raise HTTPException(
                 status_code=502,
-                detail={"message": f"queue send failed: {exc}", "turn_id": failed_id, "seq": turn.seq},
+                detail={"message": ENQUEUE_FAILED_MESSAGE, "turn_id": failed_id, "seq": turn.seq},
             ) from exc
         return {"turn_id": turn.turn_id, "seq": turn.seq, "message_id": message_id, "queued": held}
 

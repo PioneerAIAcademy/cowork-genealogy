@@ -25,8 +25,8 @@ The real turn: the SDK session id is CHOSEN by the worker at claim time --
 first transcript append can never land under an id no row names -- and passed as
 ``session_id=`` on a fresh session or ``resume=`` when the session store already holds
 entries for it (a mid-turn kill on either path resumes on redelivery); the options from
-``options.py``; ``get_server_info()`` checked for the fifteen bare agent names
-(``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 17
+``options.py``; ``get_server_info()`` checked for the seventeen bare agent names
+(``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 15
 ``genealogy-research:<skill>`` commands (``EXPECTED_SKILLS``, a literal -- never a count
 of the directory the SDK loads from) BEFORE the query bills a token (D15) -- a miss
 is a 500; the CLI's ``system/init`` must arrive and declare the chosen id, or the
@@ -94,13 +94,17 @@ MODEL_PROVIDER + ANTHROPIC_API_KEY / GATEWAY_BASE_URL, GATEWAY_API_KEY and
 GATEWAY_TOOL_SEARCH, TOOL_SERVER_URL and FS_ACCESS_TOKEN (see options.py);
 SQSD_MAX_RETRIES (0 = no last-receive close), SQSD_VISIBILITY_TIMEOUT_S,
 SQSD_RETENTION_PERIOD_S (unset = no backstop), SWEEP_INTERVAL_S (300; 0 = off) and
-SHUTDOWN_GRACE_S (20).
+SHUTDOWN_GRACE_S (20). With QUEUE_URL set (and only then): GENEALOGY_SQS_ACCESS_KEY +
+GENEALOGY_SQS_SECRET_KEY (both or neither; neither signs with the default AWS chain, the
+instance profile on AWS; one alone exits 2) and GENEALOGY_SQS_REGION (else the QUEUE_URL
+host's region).
 
 Startup (U10): a ``TMPDIR`` that is not absolute, missing, not a directory or not
-writable exits 2 before anything else (``check_tmpdir``); then the plugin's agents are
-parsed once, the server binds, and ../sql/*.sql (all idempotent) is applied on a daemon
-thread that retries a refused or silent Postgres with backoff -- so nothing that touches
-the network runs before listen, and no failed store ever exits the process.
+writable exits 2 before anything else (``check_tmpdir``); then the SQS credentials and
+region are settled (U7: a half pair exits 2; the default chain may ask IMDS); then the
+plugin's agents are parsed once, the server binds, and ../sql/*.sql (all idempotent) is
+applied on a daemon thread that retries a refused or silent Postgres with backoff -- so
+Postgres is never waited on before listen, and no failed store ever exits the process.
 ``GET /healthz`` is readiness: 200 or 503 with ``{ok, checks}`` over ``postgres`` (a
 fresh connection that sees every table, under one ``READY_TIMEOUT_S`` deadline),
 ``schema`` (the start apply), ``agents``, ``cwd``, ``tmpdir`` and ``transcript`` (the
@@ -126,6 +130,7 @@ import tempfile
 import threading
 import time
 import uuid
+from collections.abc import Mapping
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Callable, Iterator
@@ -209,6 +214,7 @@ EXPECTED_AGENTS = frozenset({
     "gps-mentor",
     "hypothesis-tracking",
     "image-reader",
+    "locality-guide",
     "person-evidence",
     "proof-conclusion",
     "record-extractor",
@@ -216,13 +222,14 @@ EXPECTED_AGENTS = frozenset({
     "search-familysearch-wiki",
     "search-images",
     "search-wikipedia",
+    "translation",
     "tree-edit",
     "validate-schema",
 })
 # The other half of the same precondition, a literal for the same reason: a count of
-# the directory the SDK loads the plugin from shrinks with it -- an image shipping 16
-# skills registers 16 and passes. test_proto_worker pins this against the repo.
-EXPECTED_SKILLS = 17
+# the directory the SDK loads the plugin from shrinks with it -- an image shipping 15
+# skills registers 15 and passes. test_proto_worker pins this against the repo.
+EXPECTED_SKILLS = 15
 
 _stdout_lock = threading.Lock()
 
@@ -351,9 +358,14 @@ SHUTDOWN_GRACE_S = _env_float("SHUTDOWN_GRACE_S", 20.0)
 # The deferred last-receive releases run after the grace, inside their own budget: a
 # release starts only if its connect and its SendMessage, each capped below, can finish
 # before ``started + SHUTDOWN_GRACE_S + RELEASE_BUDGET_S``. That sum is what compose's
-# worker ``stop_grace_period`` must cover (test_proto_config pins it).
+# worker ``stop_grace_period`` must cover (test_proto_config pins it). The SQS
+# credentials are resolved before the claim, inside the budget: they are pre-warmed at
+# start, so that is normally instant, and RELEASE_CREDENTIALS_TIMEOUT_S caps the rare
+# IMDS refresh (a real IMDS answers in milliseconds) -- past it the release is not
+# started and the row stays held for the web tier's rescue.
 RELEASE_BUDGET_S = 6.0
 RELEASE_CONNECT_TIMEOUT_S = 2
+RELEASE_CREDENTIALS_TIMEOUT_S = 0.5
 RELEASE_SQS_TIMEOUT_S = 3.0
 # The fast sweep path waits this long past the last receive's visibility, so sqsd has
 # certainly given up on the message before the worker closes its turn.
@@ -719,14 +731,28 @@ def record_nudge(conn: psycopg.Connection, turn_id: str, cumulative: int) -> Non
 
 def release_queued_turn(
     conn: psycopg.Connection, session_id: str, *, sqs_timeout: float = 30,
+    credentials_timeout: float | None = None,
 ) -> str | None:
     """Enqueue the session's held message now that the turn holding it has ended (1b).
-    Returns the SQS MessageId, or None when nothing was held or no queue is configured.
-    ``sqs_timeout`` bounds the SendMessage (the shutdown release passes a short one).
+    Returns the SQS MessageId, or None when nothing was held, no queue is configured, or
+    there are no SQS credentials to sign with. ``sqs_timeout`` bounds the SendMessage and
+    ``credentials_timeout`` resolving the credentials (the shutdown release passes both).
+
+    The credentials are resolved BEFORE the claim, so a worker that cannot sign leaves the
+    message held rather than claiming it and putting it back.
 
     Never raises: a turn that did its work must not be reported as failed because the
     handover failed. A failed send puts the message back."""
     if not QUEUE_URL:
+        return None
+    try:
+        from proto import enqueue
+
+        ready, reason = enqueue.credentials_ready(credentials_timeout), "no AWS credentials"
+    except Exception as exc:  # noqa: BLE001 - never raises
+        ready, reason = False, f"{type(exc).__name__}: {exc}"
+    if not ready:
+        log(ev="sqs_credentials_unavailable", session_id=session_id, reason=reason)
         return None
     body = take_queued_turn(conn, session_id)
     # Committed before the send (a no-op on an autocommit connection), so the claim is
@@ -735,8 +761,6 @@ def release_queued_turn(
     if body is None:
         return None
     try:
-        from proto import enqueue
-
         parsed = urlparse(QUEUE_URL)
         doc = enqueue.sqs_call(
             f"{parsed.scheme}://{parsed.netloc}",
@@ -761,7 +785,10 @@ TURN_ACTIVE_SQL = (
 )
 
 
-def release_next_held(conn: psycopg.Connection, session_id: str, *, sqs_timeout: float = 30) -> str | None:
+def release_next_held(
+    conn: psycopg.Connection, session_id: str, *, sqs_timeout: float = 30,
+    credentials_timeout: float | None = None,
+) -> str | None:
     """The one way the worker releases a held message (U5 D3): nothing while the session
     has a running turn, else ``release_queued_turn``. The guard is what lets the
     ``already_completed`` redelivery release a stranded held row without enqueuing a
@@ -771,7 +798,8 @@ def release_next_held(conn: psycopg.Connection, session_id: str, *, sqs_timeout:
         row = cur.fetchone()
     if row and row[0]:
         return None
-    return release_queued_turn(conn, session_id, sqs_timeout=sqs_timeout)
+    return release_queued_turn(conn, session_id, sqs_timeout=sqs_timeout,
+                               credentials_timeout=credentials_timeout)
 
 
 def session_sdk_id(conn: psycopg.Connection, session_id: str) -> str | None:
@@ -1402,12 +1430,14 @@ def run_deferred_releases(*, connect=pg_connect, deadline: float | None = None) 
         for sid, _ in ready:
             del _DEFERRED_RELEASES[sid]
     for session_id, turn_id in ready:
-        if deadline is not None and time.monotonic() + RELEASE_CONNECT_TIMEOUT_S + RELEASE_SQS_TIMEOUT_S > deadline:
+        if deadline is not None and (time.monotonic() + RELEASE_CONNECT_TIMEOUT_S
+                                     + RELEASE_CREDENTIALS_TIMEOUT_S + RELEASE_SQS_TIMEOUT_S > deadline):
             log(ev="deferred_release_skipped", session_id=session_id, turn_id=turn_id, reason="deadline")
             continue
         try:
             with connect(PG_DSN, connect_timeout=RELEASE_CONNECT_TIMEOUT_S) as conn:
-                release_next_held(conn, session_id, sqs_timeout=RELEASE_SQS_TIMEOUT_S)
+                release_next_held(conn, session_id, sqs_timeout=RELEASE_SQS_TIMEOUT_S,
+                                  credentials_timeout=RELEASE_CREDENTIALS_TIMEOUT_S)
         except Exception as exc:  # noqa: BLE001 - the web tier's rescue is the fallback
             log(ev="deferred_release_failed", session_id=session_id, turn_id=turn_id,
                 error=f"{type(exc).__name__}: {exc}")
@@ -2307,6 +2337,23 @@ class Handler(BaseHTTPRequestHandler):
             self._reply(status, payload)
 
 
+def queue_startup_fields(env: Mapping[str, str]) -> dict[str, str]:
+    """U7: settle the SQS credentials and region the held-message release signs with, at
+    start. ``{}`` without a QUEUE_URL (nothing is read, so a stray key is inert); a half
+    ``GENEALOGY_SQS_*`` pair or a contradictory region prints ``worker: <reason>`` and
+    exits 2 before anything else starts. Otherwise the ``ev=start`` fields."""
+    if not QUEUE_URL:
+        return {}
+    from proto import enqueue
+
+    try:
+        auth = enqueue.configure(env, QUEUE_URL)
+    except enqueue.SqsConfigError as exc:
+        print(f"worker: {exc}", file=sys.stderr)
+        raise SystemExit(2) from None
+    return {"sqs_credentials": auth.mode, "sqs_region": enqueue.region_for(QUEUE_URL, auth.region)}
+
+
 def main() -> None:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -2317,6 +2364,11 @@ def main() -> None:
     if bad_tmpdir is not None:
         log(ev="prepare", step="tmpdir", error=bad_tmpdir, tmpdir=os.environ.get("TMPDIR"))
         sys.exit(2)
+    sqs = queue_startup_fields(os.environ)
+    if sqs:
+        from proto import enqueue
+
+        enqueue.prewarm()
     prepare()
     server = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
     install_signal_handlers(server)
@@ -2329,7 +2381,7 @@ def main() -> None:
         sqsd_max_retries=SQSD_MAX_RETRIES, sqsd_visibility_timeout_s=SQSD_VISIBILITY_TIMEOUT_S,
         sqsd_retention_period_s=SQSD_RETENTION_PERIOD_S, sweep_interval_s=SWEEP_INTERVAL_S,
         sweep=sweeper is not None, shutdown_grace_s=SHUTDOWN_GRACE_S,
-        tmpdir=tempfile.gettempdir(), tmpdir_free_mb=tmpdir_free_mb())
+        tmpdir=tempfile.gettempdir(), tmpdir_free_mb=tmpdir_free_mb(), **sqs)
     server.serve_forever()
     if _SHUTDOWN_THREAD is not None:
         # A daemon: its second wait, the releases and ev=shutdown run after

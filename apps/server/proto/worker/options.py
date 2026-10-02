@@ -7,7 +7,7 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
 
 - ``cwd`` is the empty anchor (``/project``); ``setting_sources=[]`` explicitly, so no
   ``CLAUDE.md`` or ``.claude/`` in any parent of cwd is loaded; no ``add_dirs``.
-- the plugin loads from disk for its skills; the fifteen agents travel as ``agents=`` (bare
+- the plugin loads from disk for its skills; the sixteen agents travel as ``agents=`` (bare
   names, parsed once at worker start by ``plugin_agents.py``) -- never staged into cwd.
 - the shell is removed with ``disallowed_tools`` -- the only lever that reaches the
   main thread; ``Write``/``Edit`` stay granted (denying them is whole-tool).
@@ -135,6 +135,10 @@ WRITE_DENY_REASON = (
     "research_log_append, tree_edit or tree_correct. These validate before persisting. "
     "Direct file writes never validate."
 )
+
+
+# U7 (proto/enqueue.py): the worker signs its held-message release with these when set.
+SQS_STATIC_KEY_VARS = ("GENEALOGY_SQS_ACCESS_KEY", "GENEALOGY_SQS_SECRET_KEY")
 
 
 def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, str]]:
@@ -617,6 +621,11 @@ def build_worker_options(
     }
     if env_in.get("TMPDIR"):
         env["TMPDIR"] = env_in["TMPDIR"]
+    # U7: the worker's static SQS pair is the worker's. Blank, not absent, like
+    # ANTHROPIC_API_KEY: the CLI inherits the worker's environment.
+    for name in SQS_STATIC_KEY_VARS:
+        if env_in.get(name):
+            env[name] = ""
     hooks: dict[str, Any] = {
         "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook], timeout=PRETOOL_TIMEOUT_S)],
         # Both outcomes stamp the duration: a tool that errored still ran for that long.

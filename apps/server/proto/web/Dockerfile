@@ -12,9 +12,10 @@ WORKDIR /app
 
 # [binary] bundles libpq, so no apt step on -slim. itsdangerous signs the session and
 # OAuth-state cookies, cryptography encrypts the grant at rest, httpx is the FamilySearch
-# round-trip.
+# round-trip. botocore signs enqueue.py's SQS calls, pinned to apps/server/uv.lock's
+# version (test_proto_config checks the two agree).
 RUN pip install "fastapi>=0.115,<1" "uvicorn[standard]>=0.30,<1" "psycopg[binary]>=3.2,<4" \
-  "itsdangerous>=2.1,<3" "cryptography>=42,<47" "httpx>=0.27,<1"
+  "itsdangerous>=2.1,<3" "cryptography>=42,<47" "httpx>=0.27,<1" "botocore==1.43.106"
 
 COPY apps/server/proto/enqueue.py ./
 COPY apps/server/proto/sql ./sql

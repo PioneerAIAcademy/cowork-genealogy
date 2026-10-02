@@ -822,18 +822,42 @@ def test_the_real_begin_turn_clears_the_stop_flag():
     assert "CLEAR_STOP_SQL" in source, "begin_turn must clear the flag, or a stopped session never resumes"
 
 
-async def test_post_message_on_queue_failure_marks_the_turn_and_returns_502():
+async def test_post_message_on_queue_failure_marks_the_turn_and_returns_502(caplog):
     store, queue = FakeStore(), FakeQueue(fail=True)
     row = store.seed_session()
-    async with make_client(store, queue) as c:
-        r = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "hello"})
+    with caplog.at_level("ERROR", logger="proto.web"):
+        async with make_client(store, queue) as c:
+            r = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "hello"})
     assert r.status_code == 502
     detail = r.json()["detail"]
-    assert "elasticmq is down" in detail["message"]
+    assert detail["message"] == app.ENQUEUE_FAILED_MESSAGE
+    assert "elasticmq is down" in caplog.text, "the operator keeps the queue's own error"
     # The user_msg row stays; the 502 names its seq so the SPA can still drop the echo.
     assert detail == {"message": detail["message"], "turn_id": store.turns[0].turn_id, "seq": 1}
     assert store.failed == [(store.turns[0].turn_id, "enqueue_failed")]
     assert queue.sent == []
+
+
+async def test_a_queue_refusal_never_reaches_the_patron(caplog):
+    """A real SQS AccessDenied (measured on AWS, 2026-10-01) names the account id and the
+    caller's role ARN. The 502 body is shown to the patron; the log line is the operator's."""
+    refusal = ("SQS SendMessage failed: HTTP 403 AccessDenied: User: arn:aws:sts::123456789012:"
+               "assumed-role/aws-elasticbeanstalk-ec2-role/i-0abc is not authorized to perform: sqs:sendmessage")
+
+    class RefusingQueue(FakeQueue):
+        async def send(self, body: dict[str, Any]) -> str:
+            raise app.enqueue.SqsError(refusal)
+
+    store, queue = FakeStore(), RefusingQueue()
+    row = store.seed_session()
+    with caplog.at_level("ERROR", logger="proto.web"):
+        async with make_client(store, queue) as c:
+            r = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "hello"})
+    assert r.status_code == 502
+    body = r.text
+    for secret in ("123456789012", "arn:aws", "AccessDenied", "elasticbeanstalk"):
+        assert secret not in body, secret
+    assert refusal in caplog.text
 
 
 async def test_post_message_rejects_empty_or_blank_text_and_unknown_session():
@@ -1011,6 +1035,91 @@ def test_web_service_is_published_and_depends_on_postgres_and_the_queue_only():
 def test_web_service_sends_to_the_queue_the_shim_reads():
     services = _compose()["services"]
     assert _env(services["web"])["QUEUE_URL"] == _env(services["shim"])["QUEUE_URL"]
+
+
+def test_compose_web_and_worker_carry_dummy_sqs_chain_env():
+    """U7: both tiers sign SendMessage. In compose they sign with dummies elasticmq ignores,
+    through the default chain's env provider, and IMDS stays off so a laptop never waits
+    on 169.254.169.254. Not GENEALOGY_*: the worker holds no store credentials."""
+    services = _compose()["services"]
+    web, worker_env = _env(services["web"]), _env(services["worker"])
+    for name in ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"):
+        assert web[name] and web[name] == worker_env[name], name
+    assert web["AWS_EC2_METADATA_DISABLED"] == "true"
+    assert worker_env["AWS_EC2_METADATA_DISABLED"] == "true"
+    assert not [k for k in worker_env if k.startswith("GENEALOGY_")]
+
+
+# ── U7: the signed queue ─────────────────────────────────────────────────────────
+
+QUEUE = "http://elasticmq:9324/000000000000/turns"
+
+
+async def test_lifespan_refuses_a_half_sqs_pair_only_with_a_queue(monkeypatch):
+    monkeypatch.setenv("GENEALOGY_SQS_ACCESS_KEY", "AKIAHALFPAIR")
+    monkeypatch.setenv("QUEUE_URL", QUEUE)
+    application = create_app(store=FakeStore())
+    with pytest.raises(RuntimeError, match="GENEALOGY_SQS_SECRET_KEY") as exc:
+        async with application.router.lifespan_context(application):
+            pass
+    assert "AKIAHALFPAIR" not in str(exc.value)
+
+    monkeypatch.delenv("QUEUE_URL")
+    application = create_app(store=FakeStore())
+    async with application.router.lifespan_context(application):
+        assert isinstance(application.state.queue, app.NullQueue)
+
+
+async def test_lifespan_start_line_names_mode_and_region(monkeypatch, caplog):
+    monkeypatch.setenv("GENEALOGY_SQS_ACCESS_KEY", "AKIASTARTLINE")
+    monkeypatch.setenv("GENEALOGY_SQS_SECRET_KEY", "start-line-secret")
+    monkeypatch.setenv("QUEUE_URL", QUEUE)
+    application = create_app(store=FakeStore())
+    with caplog.at_level("INFO", logger="proto.web"):
+        async with application.router.lifespan_context(application):
+            assert isinstance(application.state.queue, app.SqsQueue)
+    lines = [r.getMessage() for r in caplog.records if r.getMessage().startswith("queue: ")]
+    assert lines == [f"queue: {QUEUE}; sqs credentials: static keys; region us-east-1"]
+    assert not any("start-line-secret" in r.getMessage() or "AKIASTARTLINE" in r.getMessage()
+                   for r in caplog.records)
+
+
+def test_the_start_line_reaches_the_container_log():
+    """uvicorn configures only its own loggers: without a handler of its own, proto.web's
+    INFO start line is dropped in the container while caplog still sees it here."""
+    import logging
+
+    assert app.log.handlers, "proto.web has no handler: its INFO lines never reach the log"
+    assert app.log.getEffectiveLevel() <= logging.INFO
+
+
+async def test_lifespan_warns_when_the_chain_finds_nothing(monkeypatch, caplog):
+    monkeypatch.setenv("QUEUE_URL", QUEUE)
+    application = create_app(store=FakeStore())
+    with caplog.at_level("INFO", logger="proto.web"):
+        async with application.router.lifespan_context(application):
+            pass
+    assert f"queue: {QUEUE}; sqs credentials: default chain (none found); region us-east-1" in caplog.messages
+    assert any(r.levelname == "WARNING" and "no AWS credentials" in r.getMessage() for r in caplog.records)
+
+
+async def test_sqs_queue_send_signs_over_the_wire():
+    from _sigv4 import Capture, verify_sigv4
+
+    app.enqueue.configure({"GENEALOGY_SQS_ACCESS_KEY": "AKIAWEB", "GENEALOGY_SQS_SECRET_KEY": "web-secret"}, None)
+    server = Capture()
+    try:
+        queue = app.SqsQueue(server.url + "/000000000000/turns")
+        assert await queue.send({"turn_id": "t"}) == "m1"
+    finally:
+        server.close()
+    [req] = server.requests
+    assert verify_sigv4(req["method"], req["path"], req["headers"], req["body"], "web-secret", "us-east-1", "sqs")
+    form = dict(pair.split("=", 1) for pair in req["body"].decode("utf-8").split("&"))
+    from urllib.parse import unquote_plus
+
+    assert unquote_plus(form["MessageBody"]) == json.dumps({"turn_id": "t"})
+    assert unquote_plus(form["QueueUrl"]) == server.url + "/000000000000/turns"
 
 
 def test_web_build_context_carries_enqueue_sql_and_the_client_config():

@@ -152,6 +152,12 @@ services:
       # knows a turn finished -- the web tier is stateless and the browser may be closed
       # -- so the handover is its job. Unset means no release.
       QUEUE_URL: http://elasticmq:9324/000000000000/turns
+      # U7: the release is SigV4-signed (proto/enqueue.py). elasticmq ignores signatures;
+      # these dummies exercise the default-chain (env) path and keep it off IMDS. Not
+      # GENEALOGY_*: the worker holds no store credentials, and the test says so.
+      AWS_ACCESS_KEY_ID: x
+      AWS_SECRET_ACCESS_KEY: x
+      AWS_EC2_METADATA_DISABLED: "true"
       # U5: sqsd's MaxRetries and VisibilityTimeout as the worker's last-receive close and
       # sweep read them. 0 is off: no close, no sweep. No SQSD_RETENTION_PERIOD_S here, so
       # the sweep's backstop is off too; docker-compose.sqsd.yml sets all three.
@@ -196,6 +202,11 @@ services:
       PG_DSN: postgresql://postgres:proto@postgres:5432/proto
       # The same queue the shim reads (QUEUE_URL below); the tier keys SendMessage on it.
       QUEUE_URL: http://elasticmq:9324/000000000000/turns
+      # U7: SendMessage is SigV4-signed (proto/enqueue.py). elasticmq ignores signatures;
+      # these dummies exercise the default-chain (env) path and keep it off IMDS.
+      AWS_ACCESS_KEY_ID: x
+      AWS_SECRET_ACCESS_KEY: x
+      AWS_EC2_METADATA_DISABLED: "true"
       POLL_S: "1"
       SSE_PING_S: "15"
       # U2 sign-in (web/auth.py). The defaults are dev-only; web/auth.py refuses to start

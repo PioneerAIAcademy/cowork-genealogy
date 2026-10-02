@@ -482,17 +482,21 @@ proto-down: ## D3 prototype: stop the stack and drop its volumes (the schema re-
 proto-logs: ## D3 prototype: follow the stack's logs (SERVICE=shim to narrow)
 	$(PROTO_COMPOSE) logs -f $(SERVICE)
 
+# U7: proto/enqueue.py signs SigV4. These host-venv recipes sign with a dummy static pair
+# (elasticmq ignores signatures), so they never read ~/.aws or probe IMDS.
+PROTO_SQS_ENV := GENEALOGY_SQS_ACCESS_KEY=x GENEALOGY_SQS_SECRET_KEY=x
+
 .PHONY: proto-send
 proto-send: ## D3 prototype: enqueue one turn on elasticmq: make proto-send ARGS="--behaviour ok"
-	cd apps/server && uv run python proto/enqueue.py $(ARGS)
+	cd apps/server && $(PROTO_SQS_ENV) uv run python proto/enqueue.py $(ARGS)
 
 .PHONY: proto-smoke
 proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / ceiling turns through the shim
-	cd apps/server && uv run python proto/smoke.py
+	cd apps/server && $(PROTO_SQS_ENV) uv run python proto/smoke.py $(ARGS)
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py
 
 # D9–10 acceptance, billed (two short Sonnet turns). Same `up` as proto-up (env.sh);
 # refuses to run without a model key. The Stop hook is off (AUTONOMOUS_MAX_NUDGES=0,
@@ -649,7 +653,7 @@ PROTO_PG_DSN ?= postgresql://postgres:proto@localhost:5434/proto
 .PHONY: proto-web
 proto-web: ## D11–12 web tier from the venv on :8085, against the compose postgres + elasticmq
 	cd apps/server && PG_DSN=$(PROTO_PG_DSN) QUEUE_URL=http://localhost:9324/000000000000/turns \
-	  uv run python proto/web/app.py
+	  $(PROTO_SQS_ENV) uv run python proto/web/app.py
 
 .PHONY: proto-drive
 proto-drive: ## D13 acceptance: post, stream, drop mid-turn, resume on Last-Event-ID, miss nothing (embedded Postgres + seeder; BASE=http://localhost:8085 runs --worker against a stack)
