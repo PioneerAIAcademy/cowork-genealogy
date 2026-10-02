@@ -713,7 +713,7 @@ const SITE_NOTES: Partial<Record<ExternalSearchSite, string>> = {
   // The `access` value for this site is the class default, not a fact about
   // the archive in `baseUrl`. A baseUrl on another SUPPORTED site's domain is
   // refused (baseUrlHostError), but every other host falls through, so a paid
-  // archive outside the fifteen still reports `free_bot_protected` — measured
+  // archive outside the seventeen still reports `free_bot_protected` — measured
   // 2026-09-15 for genealogybank.com, newspaperarchive.com, newsbank.com and
   // britishnewspaperarchive.co.uk. SKILL.md tells the model never to raise
   // access for a site reported free, so the hedge has to travel with the value.

@@ -533,8 +533,8 @@ The static `access` value each site returns (§3.1). `digital_newspaper_archive`
 returns the class value state archives carry generally, `"free_bot_protected"`,
 for whichever archive `baseUrl` names — **not verified per archive** — and
 refuses a `baseUrl` on another supported site's own domain (`invalid_base_url`
-naming that site, §3.2). That refusal covers the other fourteen sites and
-nothing else: a **subscription archive outside** the fifteen still receives the
+naming that site, §3.2). That refusal covers the other sixteen sites and
+nothing else: a **subscription archive outside** the seventeen still receives the
 class default, measured 2026-09-15 returning `free_bot_protected` for
 genealogybank.com, newspaperarchive.com, newsbank.com and
 britishnewspaperarchive.co.uk. This matters because `SKILL.md` instructs the
