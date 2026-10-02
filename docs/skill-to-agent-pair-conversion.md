@@ -36,22 +36,19 @@ written for the first:
   the orchestrator's context. This buys no attribution and needs none.
 
 A cost-motivated conversion is the cheaper build: **no hook route and no
-writer-tool precondition.** At runtime, `AGENT_WRITABLE_SECTIONS.get(caller)` in
-`guard_project_files.py` returns `None` for an unlisted agent, so the
-out-of-lane check never fires, and the only routed targets are `proof_summaries`
-and `questions.exhaustive_declaration`. Everything else here — the fold order,
+writer-tool precondition** — the only routed targets are `proof_summaries` and
+`questions.exhaustive_declaration`. It still needs a **lane**: an agent granted
+`research_append` must have an `AGENT_WRITABLE_SECTIONS` entry in
+`guard_project_files.py` naming the sections it writes
+(`plugin-hooks.test.ts`, "gives every agent granted research_append a lane"),
+and an ownership row that names it as `agent:<name>` if it owns a section. Everything else here — the fold order,
 the baseline, the fixture audit — applies to both.
 
-**It still needs a hook lane and an ownership row — the runtime does not, the
-repo does.** "The guard does not fire" is true and is not the same as "nothing
-requires the declaration": `plugin-hooks.test.ts` fails any agent granted
-`research_append` that has no `AGENT_WRITABLE_SECTIONS` row, and
-`docs/specs/schemas/ownership.json` needs an `agentCallers` entry for it on every
-row it writes. Declaring what an agent writes is a repo requirement independent
-of whether a route enforces it. Say so in a comment beside each, so no reader
-takes the lane for a route. (Measured on #2115, where the card asserted the
-opposite and CI refused it.) The full list of what an added agent trips is
-[below](#what-adding-an-agent-trips).
+The lane and the row are a repo requirement, not a runtime one: the guard does
+not fire for an unlisted agent, but the tests above refuse it. Say so in a
+comment beside each, so no reader takes the lane for a route. (Measured on
+#2115, where the card asserted the opposite and CI refused it.) The full list of
+what an added agent trips is [below](#what-adding-an-agent-trips).
 
 **The general rule this is a worked instance of is ADR-0011**
 (`docs/adrs/ADR-0011-put-guardrails-at-the-write-boundary.md`), and it applies

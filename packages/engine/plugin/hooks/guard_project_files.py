@@ -186,6 +186,12 @@ AGENT_WRITABLE_SECTIONS = {
     # writes `declared: false`, which the guard already permits, so this lane
     # widens nothing (issue #2115).
     "question-selection": frozenset({"questions"}),
+    # locality-guide writes one `localities` entry per surveyed place, and
+    # nothing else in research.json.
+    "locality-guide": frozenset({"localities"}),
+    # hypothesis-tracking states, links and rules out hypotheses, and writes
+    # nothing else in research.json.
+    "hypothesis-tracking": frozenset({"hypotheses"}),
 }
 
 # The deny NAMES THE ROUTE OUT, and that is load-bearing rather than polite.

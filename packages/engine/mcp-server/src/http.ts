@@ -10,8 +10,13 @@
 // outside a request binding fails instead of reaching the file backend. The
 // Pg/S3 configuration is the one process-wide thing, read from the
 // GENEALOGY_* environment (store/pg-s3-env.ts; the project id is the header,
-// never a variable); a missing variable is one stderr line and exit 2 before
-// listen.
+// never a variable); a missing variable, a half-set S3 key pair or an invalid
+// GENEALOGY_S3_FORCE_PATH_STYLE is one stderr line and exit 2 before listen.
+// With neither S3 key set the AWS SDK default chain supplies credentials
+// (environment, ~/.aws shared config/SSO, web identity, then instance
+// metadata); one stderr line names the mode, never a key. Nothing connects
+// before listen: `GET /healthz` probes Postgres (schema included) and S3 per
+// request and answers 503 while either is unreachable, never exiting.
 import { parseArgs } from "node:util";
 import { LOCAL } from "./auth/principal.js";
 import { loadConfig } from "./auth/config.js";
@@ -39,6 +44,17 @@ if (storeEnv.missing.length > 0) {
   process.stderr.write(`http: required environment not set: ${storeEnv.missing.join(", ")}\n`);
   process.exit(2);
 }
+if (storeEnv.invalid.length > 0) {
+  process.stderr.write(
+    `http: environment set to an invalid value (expected true or false): ${storeEnv.invalid.join(", ")}\n`,
+  );
+  process.exit(2);
+}
+const s3Options = storeEnv.backendOptions.s3;
+process.stderr.write(
+  `s3 credentials: ${s3Options.accessKeyId ? "static keys" : "SDK default chain"}; ` +
+    `region ${s3Options.region}; endpoint ${s3Options.endpoint ?? "AWS default"}\n`,
+);
 
 // One pool and one S3 client for the process; a store per request over them.
 const backend = createPgS3Backend(storeEnv.backendOptions);
@@ -60,6 +76,7 @@ const server = await startHttpServer({
   baseConfig,
   bindStore: (projectId, signal) =>
     new PgS3ProjectStore(backend, { projectId, anchorPath: storeEnv.anchorPath, signal }),
+  checkReady: () => backend.checkReady(),
 });
 
 const address = server.address();
