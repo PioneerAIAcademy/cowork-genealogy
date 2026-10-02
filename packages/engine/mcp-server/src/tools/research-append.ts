@@ -1703,6 +1703,7 @@ function planItemSkipInvariants(
   item: any,
   fields: Record<string, unknown>,
   isAppend: boolean,
+  storedRationale?: unknown,
 ): string[] {
   const pid = item?.id ?? "(new)";
   const errors: string[] = [];
@@ -1722,11 +1723,15 @@ function planItemSkipInvariants(
   // the false deny ADR-0011's first limit exists to prevent. Re-wording the
   // rationale while completing an item is a documented, legitimate edit
   // (`(d4-logattr) ACCEPTS an update re-sending status: completed …`).
-  if (
-    !isAppend &&
-    fields?.status === "skipped" &&
-    Object.prototype.hasOwnProperty.call(fields, "rationale")
-  ) {
+  //
+  // It fires on a CHANGED rationale, not merely a present one. An agent that
+  // re-sends the whole entry unchanged alongside the status move has destroyed
+  // nothing, and refusing it would be a refusal for no defect — the shape a
+  // batched update takes most naturally (review, 2026-10-01).
+  const rationaleTouched =
+    Object.prototype.hasOwnProperty.call(fields ?? {}, "rationale") &&
+    fields.rationale !== storedRationale;
+  if (!isAppend && fields?.status === "skipped" && rationaleTouched) {
     errors.push(
       `plan_items[${pid}]: this op sets status 'skipped' and rewrites rationale in the same ` +
         `call. rationale is why the item was PLANNED — overwriting it while disposing of the ` +
@@ -3422,17 +3427,18 @@ function applyOne(
     // call: re-stating a bare skip written before this rule existed changes
     // nothing, and refusing it would strand every pre-existing project. Only a
     // NEW skip is held to it.
-    const wasSkipped =
-      op.op === "update" &&
-      (Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []).some(
-        (pl: any) =>
-          pl &&
-          Array.isArray(pl.items) &&
-          pl.items.some((it: any) => it && it.id === resultEntry?.id && it.status === "skipped"),
-      );
+    const storedItem = (Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : [])
+      .flatMap((pl: any) => (pl && Array.isArray(pl.items) ? pl.items : []))
+      .find((it: any) => it && it.id === resultEntry?.id);
+    const wasSkipped = op.op === "update" && storedItem?.status === "skipped";
     if (statusTouchedThisOp && !wasSkipped) {
       invariantErrors.push(
-        ...planItemSkipInvariants(resultEntry, itemFields, op.op === "append"),
+        ...planItemSkipInvariants(
+          resultEntry,
+          itemFields,
+          op.op === "append",
+          storedItem?.rationale,
+        ),
       );
     }
   }

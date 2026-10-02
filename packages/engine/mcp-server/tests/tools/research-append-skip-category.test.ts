@@ -136,6 +136,19 @@ describe("research_append refuses a bare skipped", () => {
     }
   });
 
+  it("ACCEPTS re-sending the UNCHANGED rationale alongside the skip", async () => {
+    // A batched update that re-sends the whole entry has destroyed nothing.
+    // Firing on mere presence refused a shape with no defect in it, which is
+    // how an agent most naturally sends a status move (review, 2026-10-01).
+    seed([item()]);
+    const r = await update({
+      status: "skipped",
+      skip_category: "answered",
+      rationale: "Why this item was planned.", // identical to the stored value
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+  });
+
   it("REFUSES an op that sets status and rewrites rationale together", async () => {
     seed([item()]);
     const r = await update({
