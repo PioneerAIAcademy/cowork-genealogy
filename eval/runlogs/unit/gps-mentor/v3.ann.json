@@ -1,9 +1,9 @@
 {
-  "run_log": "v6_2026-10-01_19-27-18.json",
+  "run_log": "v3.json",
   "annotator": "florencemashipei4@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_research_005",
+      "test_id": "ut_gps_mentor_k4p",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_005",
+      "test_id": "ut_gps_mentor_k4p",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_005",
+      "test_id": "ut_gps_mentor_k4p",
+      "dimension_source": "rubric",
+      "dimension_name": "Focus discipline and refusal",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_gps_mentor_k4p",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,15 +35,63 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_017",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
+      "test_id": "ut_gps_mentor_k4p",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity and citation discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_017",
+      "test_id": "ut_gps_mentor_k4p",
+      "dimension_source": "rubric",
+      "dimension_name": "Mentor voice and actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_gps_mentor_k4p",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool work: reading the state the verdict rests on",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool work: reading the state the verdict rests on",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity and citation discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
+      "dimension_source": "rubric",
+      "dimension_name": "Focus discipline and refusal",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -43,7 +99,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_017",
+      "test_id": "ut_gps_mentor_m2r",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -51,73 +107,9 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_008",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_008",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_008",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_016",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_016",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_016",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_011",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_011",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_011",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "test_id": "ut_gps_mentor_m2r",
+      "dimension_source": "rubric",
+      "dimension_name": "Mentor voice and actionability",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
