@@ -49,7 +49,7 @@ birth country.
 
 | Trigger | Page |
 |---|---|
-| Male subject of a parentage question, born in a country that kept conscription or levy rolls of boys | `{Country}_Military_Records` |
+| Male subject of a parentage question, born in a country whose levy rolls enrolled boys by name from childhood (an adult draft or a volunteer army is not this) | `{Country}_Military_Records` |
 | Compound (two-surname) or patronymic surname | `{Country}_Naming_Customs` |
 
 **On failure** (`No wiki page found`, any error, or an empty page): the
@@ -58,8 +58,11 @@ entry, never from memory. Because ADR-0012 records wiki-call failure as a
 common path, the levy-roll rule (§3) keys on "the fetched page **or** the
 `localities` entry's quirks", so a failed fetch does not drop the item.
 
-**Known limit:** whether a country "kept levy rolls of boys" is the model's
-judgement, per the ruling's wording. Nothing deterministic decides it. A test
+**Known limit:** whether a country's levy rolls enrolled boys is the model's
+judgement, per the ruling's wording. The first wording ("kept conscription or
+levy rolls of boys") fired on a Pennsylvania-born subject on the 2026-10-02
+full run (`United_States_Military_Records`), which is why the trigger now
+excludes an adult draft or a volunteer army by name. Nothing deterministic decides it. A test
 whose subject should not trigger it (Patrick Flynn, born in Ireland) carries an
 `Ireland_Military_Records` fixture as a safety net, so a stray call is served the
 real page rather than aborting the run.
@@ -114,7 +117,7 @@ objective's target first. Watch r3d's ordering on every run after this change.
 |---|---|---|
 | `planning-standards.md` | 3 — craft | BCG Standards 9–18. ADR-0012 measured the wiki as carrying none of the GPS planning craft. |
 | `record-type-guide.md` | 3 — craft, trimmed | The record-type-by-goal table, FAN "others mentioned", the parents'-marriage item, the levy-roll and death-route reasoning, less-consulted types, and the contextual checklist. The Danish dates and session notations, and the Iberian surname convention, were removed; they come from the fetched pages. Record destruction now points at the `localities` entry. |
-| ~~`places-guidance.md`~~ | deleted | Lead ruling 2026-08-31: delete the `places-guidance.md` family rather than adjudicate its copies. The two rules the body needed (use `standardPlace` verbatim; broaden by dropping the leading component and combining the levels) are inlined in SKILL.md's **Places:** line. |
+| ~~`places-guidance.md`~~ | deleted | Lead ruling 2026-08-31: delete the `places-guidance.md` family rather than adjudicate its copies. The rules the body needed are inlined in SKILL.md's **Places:** line: use `standardPlace` verbatim, and broaden by dropping the leading component only when the specific level returns nothing usable. An earlier wording ("call again, then combine the levels") roughly doubled discovery calls on several tests in the 2026-10-02 full run (fbn 6 to 12) and pushed calls off their fixtures, so the conditional form is deliberate. |
 | ~~`locality-survey-guide.md`~~ | deleted | Named by nothing. A genealogist's verdict (2026-08-24, `docs/deep-dives/research-plan-findings-2026-08-24.md`) found every live item restated elsewhere. Its substitute-sources passage is place-shaped and belongs in the `localities` entry. |
 
 The skill-to-agent conversion's fold deletes `references/`; the two surviving files are what it

@@ -25,7 +25,7 @@ allowed-tools:
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
-**Places:** Resolve a place with `place_search` and use the first match's `standardPlace` verbatim on plan items and as the input to `collections_search`, `volume_search` and `external_links_search`; use `place_search_all` when jurisdictions changed across the period. Those three tools return results for the exact place passed. Each level holds different records (the parish or county, the state or province archive, the national index), so to broaden, drop the leading comma-delimited component and call again, then combine the levels. Bias to the specific end; pull the national level only on first contact with a country or when the local levels are sparse.
+**Places:** Resolve a place with `place_search` and use the first match's `standardPlace` verbatim on plan items and as the input to `collections_search`, `volume_search` and `external_links_search`; use `place_search_all` when jurisdictions changed across the period. Those three tools return results for the exact place passed. Stay at the most specific level; only when it returns nothing usable, broaden by dropping the leading comma-delimited component and calling once more.
 
 **Write `plans` and `plan_items` only through `research_append` — never hand-edit `research.json`.** It assigns ids, enforces the schema and the one-active-plan invariant, and writes atomically; on `{ ok: false, errors }` nothing is written, so fix the input and re-issue. No separate `validate_research_schema` step is needed.
 
@@ -236,9 +236,9 @@ subject's birth country. Issue them as PARALLEL calls in one turn. They are
 members of this block, not options: a page you did not fetch is a record
 type you will plan from memory.
 
-- **A male subject of a parentage question, born in a country that kept
-  conscription or levy rolls of boys** → `{Country}_Military_Records`.
-  REQUIRED.
+- **A male subject of a parentage question, born in a country whose
+  levy rolls enrolled boys by name from childhood** (an adult draft or a
+  volunteer army is not this) → `{Country}_Military_Records`. REQUIRED.
 - **The subject carries a compound (two-surname) or patronymic surname** →
   `{Country}_Naming_Customs`. REQUIRED.
 

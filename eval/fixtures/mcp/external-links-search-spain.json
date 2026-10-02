@@ -1,8 +1,8 @@
 {
   "tool": "external_links_search",
-  "description": "Curated external links for Vélez-Málaga, 1815-1860. Captured live 2026-10-02 for the garcia-romero-compound-surname scenario (issue #2251, the {Country}_Naming_Customs pre-work fetch). Ten of 111 returned links kept verbatim (baptism, marriage and death indexes, church-archive guides, the Granada chancery); the rest are books, newspapers, other regions and duplicates. totalForPlace is the live value.",
+  "description": "Curated external links for Vélez-Málaga, 1815-1860. Captured live 2026-10-02 for the garcia-romero-compound-surname scenario (issue #2251, the {Country}_Naming_Customs pre-work fetch). Ten of 111 returned links kept verbatim (baptism, marriage and death indexes, church-archive guides, the Granada chancery); the rest are books, newspapers, other regions and duplicates. totalForPlace is the live value. Catch-all predicate: only ut_research_plan_csn declares it, and the skill may pass the municipality or broaden to Spain.",
   "args": {
-    "standardPlace": "~laga"
+    "standardPlace": "~"
   },
   "response": {
     "query": {
