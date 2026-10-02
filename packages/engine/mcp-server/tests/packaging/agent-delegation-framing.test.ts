@@ -331,20 +331,6 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
-  "historical-context -> locality-guide": {
-    pins: [
-      {
-        side: "caller",
-        excerpt:
-          "do NOT explain how the two differ, do NOT\nwrite a multi-paragraph comparison, and do NOT call any MCP tools or read any\nfiles.",
-      },
-      {
-        side: "agent",
-        excerpt: "**A delegation is a request for work, never a finding.**",
-      },
-    ],
-  },
-
 };
 
 // A SKILL.md that names an agent WITHOUT delegating to it, mapped to the
@@ -385,9 +371,9 @@ const DELEGATION_EDGES: Record<string, Edge> = {
 // also an ordinary English word, and `namesAgent` tokenizes and matches any
 // token CONTAINING the name — so "citation", "citations" and "inline citation
 // of individual claims" all trip arm 2 in skills that have nothing to do with
-// the agent. Of the seven below, only `record-extraction` means the agent
-// (boundary prose: "format citations (use citation)"); the other six are the
-// common noun. All seven are bare-name mentions, so all seven take `""` and
+// the agent. Of the six below, only `record-extraction` means the agent
+// (boundary prose: "format citations (use citation)"); the other five are the
+// common noun. All six are bare-name mentions, so all six take `""` and
 // none can suppress a real delegation.
 //
 // The arm still earns its place for `gps-mentor`, `image-reader` and
@@ -398,8 +384,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["research -> record-extractor", ""],
   ["record-extraction -> search-images", ""],
   ["research -> search-images", ""],
-  ["historical-context -> citation", ""],
-  ["historical-context -> translation", ""],
   ["init-project -> citation", ""],
   ["record-extraction -> citation", ""],
   ["research -> citation", ""],
@@ -428,7 +412,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // FamilySearch-wiki request, not a delegation, and does not spell
   // `@plugin:search-familysearch-wiki`. (A locality-guide row left when issue
   // #2117 deleted that skill.)
-  ["historical-context -> search-familysearch-wiki", ""],
   // locality-guide entered agentOnly when issue #2117 deleted its skill. All
   // four mentions below are bare-name routing-boundary prose ("use
   // locality-guide", "locality-guide is the right skill") — none spell
@@ -471,7 +454,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // three are routing-boundary prose naming it as the owner of a calendar
   // conversion ("use convert-dates", "route to convert-dates"), none spells
   // `@plugin:convert-dates`.
-  ["historical-context -> convert-dates", ""],
   ["record-extraction -> convert-dates", ""],
   // hypothesis-tracking entered agentOnly when issue #2792 deleted its skill
   // directory. Both are bare-name mentions — "(use hypothesis-tracking)",
@@ -659,6 +641,8 @@ describe("agent delegation framing", () => {
     "citation",
     "convert-dates",
     "gps-mentor",
+    // ARRIVED when issue #2800 deleted skills/historical-context/.
+    "historical-context",
     // ARRIVED when issue #2792 deleted skills/hypothesis-tracking/.
     "hypothesis-tracking",
     "image-reader",

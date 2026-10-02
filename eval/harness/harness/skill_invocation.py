@@ -1116,6 +1116,11 @@ DEDICATED_AGENT_NAMES = frozenset(
         # it to `localities` and routes nothing to it; `ownership.json` names
         # `agent:locality-guide` on that row.
         "locality-guide",
+        # Same shape as convert-dates (issue #2800): a converted skill with no
+        # hook route. It writes no project state at all -- its output is a
+        # narrative to the user -- so `ownership.json` names it on no row. Listed
+        # because the set is asserted equal to the shipped agent files.
+        "historical-context",
     }
 )
 

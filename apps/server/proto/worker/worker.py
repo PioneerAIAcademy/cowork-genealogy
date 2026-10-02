@@ -25,8 +25,8 @@ The real turn: the SDK session id is CHOSEN by the worker at claim time --
 first transcript append can never land under an id no row names -- and passed as
 ``session_id=`` on a fresh session or ``resume=`` when the session store already holds
 entries for it (a mid-turn kill on either path resumes on redelivery); the options from
-``options.py``; ``get_server_info()`` checked for the eighteen bare agent names
-(``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 15
+``options.py``; ``get_server_info()`` checked for the nineteen bare agent names
+(``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 13
 ``genealogy-research:<skill>`` commands (``EXPECTED_SKILLS``, a literal -- never a count
 of the directory the SDK loads from) BEFORE the query bills a token (D15) -- a miss
 is a 500; the CLI's ``system/init`` must arrive and declare the chosen id, or the
@@ -97,17 +97,33 @@ SQSD_RETENTION_PERIOD_S (unset = no backstop), SWEEP_INTERVAL_S (300; 0 = off) a
 SHUTDOWN_GRACE_S (20). With QUEUE_URL set (and only then): GENEALOGY_SQS_ACCESS_KEY +
 GENEALOGY_SQS_SECRET_KEY (both or neither; neither signs with the default AWS chain, the
 instance profile on AWS; one alone exits 2) and GENEALOGY_SQS_REGION (else the QUEUE_URL
-host's region). Startup
-applies ../sql/*.sql (all idempotent) and parses the plugin's agents once. ``GET /healthz`` -> 200.
+host's region).
+
+Startup (U10): a ``TMPDIR`` that is not absolute, missing, not a directory or not
+writable exits 2 before anything else (``check_tmpdir``); then the SQS credentials and
+region are settled (U7: a half pair exits 2; the default chain may ask IMDS); then the
+plugin's agents are parsed once, the server binds, and ../sql/*.sql (all idempotent) is
+applied on a daemon thread that retries a refused or silent Postgres, and an apply that
+raced the web tier's or another worker's (``schema_loop``), with backoff -- so Postgres
+is never waited on before listen, and no failed store ever exits the process.
+``GET /healthz`` is readiness: 200 or 503 with ``{ok, checks}`` over ``postgres`` (a
+fresh connection that sees every table, under one ``READY_TIMEOUT_S`` deadline),
+``schema`` (the start apply), ``agents``, ``cwd``, ``tmpdir`` and ``transcript`` (the
+last model turn appended entries); each ``error`` is a label, never a message.
 ThreadingHTTPServer, so a second POST is served while a turn is running.
+
+A model turn that appended no transcript entries (D6) closes ``transcript_lost`` and
+answers 500; its redelivery finds the row closed and answers 200 without running.
 """
 
 from __future__ import annotations
 
 import asyncio
 import contextlib
+import errno
 import json
 import os
+import re
 import shutil
 import signal
 import sys
@@ -166,7 +182,26 @@ PORT = env_int("PORT", 8080)
 WORKER_CWD = os.environ.get("WORKER_CWD", "/project")
 _REPO = HERE.parents[3]  # apps/server/proto/worker -> the repo root (venv runs only)
 ENGINE_PLUGIN_DIR = os.environ.get("ENGINE_PLUGIN_DIR", str(_REPO / "packages" / "engine" / "plugin"))
-SCHEMA_RETRIES = 30
+
+# U10: readiness. One deadline for the whole Postgres probe, under the image
+# HEALTHCHECK's urlopen(timeout=2); psycopg's own connect_timeout floor is 2 s, so the
+# deadline is a race (probe_postgres), not a connect option.
+READY_TIMEOUT_S = 1.5
+READY_CONNECT_TIMEOUT_S = 2
+READY_STATEMENT_TIMEOUT_MS = 1500
+# Bounds a probe whose host goes silent after the handshake, which connect_timeout and the
+# server-side statement_timeout do not: unacknowledged data (tcp_user_timeout, Linux) and
+# an idle wait for the reply (keepalives) each give up in ~3 s, not TCP's ~15 min.
+READY_TCP_OPTIONS = {"tcp_user_timeout": 3000, "keepalives": 1, "keepalives_idle": 1,
+                     "keepalives_interval": 1, "keepalives_count": 2}
+# Every table and function the worker queries; a missing one fails `postgres`.
+WORKER_TABLES = ("sessions", "turns", "session_events", "session_seq", "session_activity",
+                 "session_entries", "tool_calls", "documents")
+WORKER_FUNCTIONS = ("next_session_seq(text)",)
+# The start schema apply's thread: one attempt's connect bound, and its backoff.
+SCHEMA_CONNECT_TIMEOUT_S = 5
+SCHEMA_BACKOFF_FIRST_S = 1.0
+SCHEMA_BACKOFF_MAX_S = 30.0
 
 # The agents the plugin ships, by bare name. The D15 precondition compares
 # get_server_info() against THIS set, never against whatever agents/*.md happened to
@@ -178,6 +213,7 @@ EXPECTED_AGENTS = frozenset({
     "citation",
     "convert-dates",
     "gps-mentor",
+    "historical-context",
     "hypothesis-tracking",
     "image-reader",
     "locality-guide",
@@ -194,9 +230,9 @@ EXPECTED_AGENTS = frozenset({
     "validate-schema",
 })
 # The other half of the same precondition, a literal for the same reason: a count of
-# the directory the SDK loads the plugin from shrinks with it -- an image shipping 14
-# skills registers 15 and passes. test_proto_worker pins this against the repo.
-EXPECTED_SKILLS = 14
+# the directory the SDK loads the plugin from shrinks with it -- an image shipping 13
+# skills registers 13 and passes. test_proto_worker pins this against the repo.
+EXPECTED_SKILLS = 13
 
 _stdout_lock = threading.Lock()
 
@@ -204,7 +240,9 @@ _stdout_lock = threading.Lock()
 _AGENTS: dict[str, Any] | None = None
 _AGENTS_ERROR: str | None = None
 _BLOCKED: frozenset[str] = frozenset()  # BLOCKED_TOOLS, the harness's tree-read block
-# AUTONOMOUS_MAX_NUDGES (D18): the Stop hook's veto cap per turn; 0 = no Stop hook.
+# AUTONOMOUS_MAX_NUDGES (D18): the Stop hook's veto cap for a message WITHOUT max_nudges
+# (turn_max_nudges); 0 = no Stop hook for those. The web tier stamps its own cap on every
+# message it enqueues, so this value does not govern a web-tier turn.
 _AUTONOMOUS_MAX_NUDGES: int = 0
 
 # turns.outcome. 0a adds the first value that is not "ok": a turn the worker closed
@@ -214,6 +252,20 @@ NO_PROGRESS_OUTCOME = "no_progress"
 # U5 D3: the worker closed the turn because its message ran out of receives -- on the
 # last receive itself, or from the sweep once no delivery can reach it any more.
 RETRIES_EXHAUSTED_OUTCOME = "retries_exhausted"
+# U10 D6: a model turn whose transcript never reached the store -- the worker closed it,
+# because every redelivery would re-run the paid turn and fail the same way (the cause
+# is this instance's configuration), and the spend cap cannot see a turn with no entries.
+TRANSCRIPT_LOST_OUTCOME = "transcript_lost"
+# halt() stops a turn at this many tool calls with no append attempted. The user-prompt frame
+# is committed ~0.9 s after the claim, before the first model response (2026-10-01, n = 1
+# tool-using turn), so the measured count before the first entry is 0; 3 is the margin.
+# The count includes ToolSearch: the PreToolUse hook has no matcher.
+TRANSCRIPT_LOST_AFTER_TOOL_CALLS = 3
+# Text the MODEL reads as the turn halts, like options.py's STOP_REASON.
+TRANSCRIPT_LOST_REASON = (
+    "A server problem is keeping this run's conversation from being saved, so it is "
+    "stopping here. Findings already written to the project are kept."
+)
 
 # PR #2870 item 1e: what one SITTING may spend before the worker stops it.
 #
@@ -279,6 +331,16 @@ class ResumeFailure(RuntimeError):
     is NOT complete and must be redelivered. Raised rather than completed, which
     serve_real_turn answers 500 and decide.py requeues. The cap is what keeps that
     bounded: at ZERO_PROGRESS_CAP the worker closes the turn 200 instead."""
+
+
+class TranscriptLost(RuntimeError):
+    """A model turn appended no transcript entries (U10 D6). Raised only AFTER the turn
+    is closed ``transcript_lost``, so serve_real_turn answers 500 and the redelivery finds
+    the row closed. ``summary`` is the closed turn's summary."""
+
+    def __init__(self, summary: dict[str, Any]) -> None:
+        super().__init__(summary)
+        self.summary = summary
 
 
 def log(**fields: object) -> None:
@@ -394,8 +456,11 @@ def price_usd(tokens: tuple) -> float:
     """Tokens (input, cache_write, cache_read, output) priced at PRICE_PER_MTOK.
 
     The shared estimator, so the prototype's cap and the alpha's cannot disagree about
-    what a session has cost."""
-    return shared_price_usd(tokens)
+    what a session has cost. ``int()`` first: Postgres returns a ``sum`` of ``bigint`` as
+    ``numeric``, which psycopg hands back as ``Decimal``, and ``Decimal * float`` raises
+    -- which made halt()'s spend clause raise on every tool call, and the hook allow it
+    (U10). The sums are integral, so the conversion is exact."""
+    return shared_price_usd(tuple(int(t or 0) for t in tokens))
 
 
 def session_spend_usd(conn: psycopg.Connection, sdk_session_id: str) -> float:
@@ -425,7 +490,8 @@ def complete(
     """Append the turn_done event (per-session seq via next_session_seq) and close the
     turn -- with the ResultMessage's figures when there are any, the token sum over
     ``session_entries`` when ``sdk_session_id`` is given, and the Stop hook's veto count
-    (``nudges``, the completing attempt's, like cost_usd) -- in ONE commit.
+    (``nudges``: the cumulative count record_nudge persisted, else 0, since a turn the
+    hook never vetoed has nothing on the row) -- in ONE commit.
 
     ``outcome`` is ``"ok"`` for every ordinary close. 0a passes
     ``NO_PROGRESS_OUTCOME`` when the worker closes the turn itself because redelivering
@@ -471,7 +537,7 @@ def complete(
                 "cache_creation_tokens = COALESCE(%s, cache_creation_tokens), "
                 "cache_read_tokens = COALESCE(%s, cache_read_tokens), "
                 "output_tokens = COALESCE(%s, output_tokens), "
-                "nudges = COALESCE(%s, nudges) WHERE turn_id = %s"
+                "nudges = COALESCE(%s, nudges, 0) WHERE turn_id = %s"
                 + (" AND completed_at IS NULL" if only_if_open else ""),
                 (outcome, cost_usd, num_turns, duration_ms, *tokens, nudges, turn["turn_id"]),
             )
@@ -875,23 +941,60 @@ def ensure_cwd(path: str) -> None:
     Path(path).mkdir(parents=True, exist_ok=True)
 
 
-def apply_schema(dsn: str, sql_dir: Path = SQL_DIR, retries: int = SCHEMA_RETRIES) -> list[str]:
-    """Run ../sql/*.sql in name order (every statement idempotent), waiting for Postgres."""
+def _apply_schema_once(
+    dsn: str, *, connect_timeout: int = SCHEMA_CONNECT_TIMEOUT_S, sql_dir: Path = SQL_DIR,
+) -> list[str]:
+    """Run ../sql/*.sql in name order (every statement idempotent), once. Every exception
+    goes through: ``schema_loop`` is what retries, and only the errors it names as transient."""
     files = sorted(sql_dir.glob("*.sql"))
     if not files:
         raise RuntimeError(f"no schema files under {sql_dir}")
-    last: Exception | None = None
-    for _ in range(retries):
+    with psycopg.connect(dsn, connect_timeout=connect_timeout) as conn:
+        for path in files:
+            conn.execute(path.read_text(encoding="utf-8"))
+        conn.commit()
+    return [p.name for p in files]
+
+
+def _errno_label(exc: OSError) -> str:
+    return errno.errorcode.get(exc.errno or 0, type(exc).__name__)
+
+
+def check_tmpdir() -> str | None:
+    """None when temp files can really be written where the CLI will write them, else a
+    label (U10 D5). A set ``TMPDIR`` must be absolute and a directory, take one ``mkdtemp``
+    with one byte in it, and be what Python's ``tempfile`` picks; unset, the write test
+    runs on ``tempfile.gettempdir()``. A write, not ``os.access``: that says yes as root
+    and on a full disk. Python falls back to /tmp silently on a bad ``TMPDIR`` while the
+    CLI is handed the raw value, so the two would disagree about where temp files go."""
+    raw = os.environ.get("TMPDIR")
+    if raw:
+        if not os.path.isabs(raw):
+            return "not_absolute"
+        if not os.path.isdir(raw):
+            return "ENOTDIR" if os.path.exists(raw) else "ENOENT"
+    target = raw or tempfile.gettempdir()
+    try:
+        probe = tempfile.mkdtemp(prefix="worker-tmpcheck-", dir=target)
         try:
-            with psycopg.connect(dsn) as conn:
-                for path in files:
-                    conn.execute(path.read_text(encoding="utf-8"))
-                conn.commit()
-            return [p.name for p in files]
-        except psycopg.OperationalError as exc:
-            last = exc
-            time.sleep(1)
-    raise RuntimeError(f"postgres not reachable after {retries}s: {last}")
+            with open(os.path.join(probe, "probe"), "wb") as fh:
+                fh.write(b"\0")
+        finally:
+            shutil.rmtree(probe, ignore_errors=True)
+    except OSError as exc:
+        return _errno_label(exc)
+    if raw and tempfile.gettempdir() != os.path.abspath(raw):
+        return "fallback"
+    return None
+
+
+def tmpdir_free_mb() -> int | None:
+    """Free MB under the temp dir, for the start line; no threshold until U13 measures it."""
+    try:
+        st = os.statvfs(tempfile.gettempdir())
+    except (AttributeError, OSError):
+        return None
+    return int(st.f_bavail * st.f_frsize // (1024 * 1024))
 
 
 def count_skills(plugin_dir: str) -> int:
@@ -916,17 +1019,14 @@ def load_plugin_agents(plugin_dir: str) -> tuple[dict[str, Any] | None, str | No
 
 
 def prepare() -> None:
-    """Everything a real turn needs, done once; a failure is logged and fails only the
-    real turns (the stub arms keep working)."""
+    """Everything a real turn needs that touches no network, done once; a failure is
+    logged, fails only the real turns (the stub arms keep working) and fails /healthz.
+    The schema is applied after listen, by ``start_schema_thread``."""
     global _AGENTS, _AGENTS_ERROR, _BLOCKED, _AUTONOMOUS_MAX_NUDGES
     try:
         ensure_cwd(WORKER_CWD)
     except OSError as exc:
         log(ev="prepare", step="cwd", error=f"{type(exc).__name__}: {exc}", cwd=WORKER_CWD)
-    try:
-        log(ev="prepare", step="schema", applied=apply_schema(PG_DSN))
-    except Exception as exc:  # noqa: BLE001 - reported, then the server still serves /healthz
-        log(ev="prepare", step="schema", error=f"{type(exc).__name__}: {exc}")
     _AGENTS, _AGENTS_ERROR = load_plugin_agents(ENGINE_PLUGIN_DIR)
     _BLOCKED = parse_blocked_tools(os.environ.get("BLOCKED_TOOLS"))
     try:
@@ -963,6 +1063,213 @@ def pg_connect(*args: Any, **kwargs: Any) -> psycopg.Connection:
     """``psycopg.connect``, looked up per call: the ``connect=`` defaults below bind this,
     so replacing ``psycopg.connect`` (test_proto_shutdown's harness) reaches every one."""
     return psycopg.connect(*args, **kwargs)
+
+
+# -- readiness (U10) -----------------------------------------------------------
+
+# Process state /healthz reports; the tests' autouse fixture resets each to this value.
+# The start schema apply: None once applied, "pending" until then, else the label of the
+# error that stopped it.
+_SCHEMA_ERROR: str | None = "pending"
+# "no_entries" after a transcript_lost turn (D6), cleared by the next model turn that
+# appends entries. Per instance, because the cause is this instance's configuration.
+_TRANSCRIPT_ERROR: str | None = None
+# Each check's last outcome, so a down store probed every 5 s writes one log line.
+_READY_LAST: dict[str, bool] = {}
+# The one Postgres probe in flight, shared by every /healthz thread until its probe thread
+# exits: a caller arriving after the race was lost gets that TimeoutError, not a new
+# connection.
+_READY_LOCK = threading.Lock()
+_READY_FLIGHT: dict[str, Any] | None = None
+
+READY_SQL = (
+    "SELECT t FROM unnest(%s::text[]) t WHERE to_regclass(t) IS NULL "
+    "UNION ALL SELECT f FROM unnest(%s::text[]) f WHERE to_regprocedure(f) IS NULL"
+)
+_DSN_CREDENTIALS = re.compile(r"\b[\w.+-]+://[^\s@/]*@")
+
+
+class ReadyCheckError(Exception):
+    """A readiness failure whose label is not an error code or type name."""
+
+    def __init__(self, label: str, message: str) -> None:
+        super().__init__(message)
+        self.label = label
+
+
+def ready_label(exc: BaseException) -> str:
+    """What a failed check reports: the SQLSTATE when there is one (``28P01``,
+    ``42501``), else the type name. Never ``str(exc)``: /healthz is unauthenticated, and
+    psycopg's message carries the host, the port and the user."""
+    if isinstance(exc, ReadyCheckError):
+        return exc.label
+    sqlstate = getattr(exc, "sqlstate", None)
+    return str(sqlstate) if sqlstate else type(exc).__name__
+
+
+def redact(text: str) -> str:
+    """A message for the log, with any ``scheme://user:password@`` taken out."""
+    return _DSN_CREDENTIALS.sub("", text)
+
+
+def note_check(name: str, check: dict[str, Any], detail: str = "") -> None:
+    """One ``ev=health`` line on the first probe and on every ok/fail change."""
+    with _READY_LOCK:
+        changed = _READY_LAST.get(name) is not check["ok"]
+        _READY_LAST[name] = check["ok"]
+    if changed:
+        log(ev="health", check=name, ok=check["ok"],
+            error=None if check["ok"] else (detail or check.get("error")))
+
+
+def _probe_postgres_once(dsn: str) -> None:
+    """A fresh connection (never a turn's), and every worker table and function present."""
+    with psycopg.connect(dsn, connect_timeout=READY_CONNECT_TIMEOUT_S,
+                         options=f"-c statement_timeout={READY_STATEMENT_TIMEOUT_MS}",
+                         **READY_TCP_OPTIONS) as conn:
+        with conn.cursor() as cur:
+            cur.execute(READY_SQL, (list(WORKER_TABLES), list(WORKER_FUNCTIONS)))
+            missing = [str(row[0]) for row in cur.fetchall()]
+    if missing:
+        names = ",".join(missing)
+        raise ReadyCheckError(f"schema: missing {names}", f"worker tables or functions missing: {names}")
+
+
+def probe_postgres(dsn: str, timeout_s: float | None = None) -> dict[str, Any]:
+    """The ``postgres`` check, raced against ``timeout_s`` (``READY_TIMEOUT_S``, read per
+    call): the probe runs on a daemon thread and a loss reports ``TimeoutError``, the
+    loser finishing in the background inside ``READY_TCP_OPTIONS`` and its connect and
+    statement timeouts. Every caller shares the one probe until its thread exits, so a
+    stalled host costs one connection however often /healthz is asked."""
+    global _READY_FLIGHT
+    timeout_s = READY_TIMEOUT_S if timeout_s is None else timeout_s
+    with _READY_LOCK:
+        flight = _READY_FLIGHT
+        owner = flight is None
+        if owner:
+            flight = _READY_FLIGHT = {"raced": threading.Event(), "check": None,
+                                      "returned": False, "exited": False}
+    if not owner:
+        flight["raced"].wait(timeout_s + 1)
+        return dict(flight["check"] or {"ok": False, "error": "TimeoutError"})
+
+    def release_if_finished() -> None:
+        # Under _READY_LOCK. The slot goes when both the race is answered and the thread
+        # has exited, whichever is last.
+        global _READY_FLIGHT
+        if flight["returned"] and flight["exited"] and _READY_FLIGHT is flight:
+            _READY_FLIGHT = None
+
+    try:
+        done = threading.Event()
+        box: dict[str, Any] = {}
+
+        def target() -> None:
+            try:
+                _probe_postgres_once(dsn)
+                box["check"] = {"ok": True}
+            except Exception as exc:  # noqa: BLE001 - every failure is a label
+                box["check"] = {"ok": False, "error": ready_label(exc)}
+                box["detail"] = redact(f"{type(exc).__name__}: {exc}")
+            finally:
+                with _READY_LOCK:
+                    flight["exited"] = True
+                    release_if_finished()
+                done.set()
+
+        thread = threading.Thread(target=target, daemon=True, name="ready-postgres")
+        try:
+            thread.start()
+        except BaseException:
+            flight["exited"] = True
+            raise
+        if done.wait(timeout_s):
+            check, detail = box["check"], box.get("detail", "")
+        else:
+            check, detail = {"ok": False, "error": "TimeoutError"}, f"no answer within {timeout_s}s"
+        flight["check"] = check
+        note_check("postgres", check, detail)
+        return dict(check)
+    finally:
+        with _READY_LOCK:
+            flight["returned"] = True
+            release_if_finished()
+        flight["raced"].set()
+
+
+def _agents_label(error: str | None) -> str:
+    if not error:
+        return "not_loaded"
+    return "mismatch" if error.startswith("plugin agents") else error.split(":", 1)[0]
+
+
+def _dir_label(path: str) -> str | None:
+    if os.path.isdir(path):
+        return None
+    return "ENOTDIR" if os.path.exists(path) else "ENOENT"
+
+
+def readiness() -> dict[str, Any]:
+    """``/healthz``'s report: ``{ok, checks}``, every ``error`` a label (D2). Not checked:
+    the tools service (``proto-up-core`` runs without it), the model key, S3 (the worker
+    has no S3 client)."""
+    checks = {"postgres": probe_postgres(PG_DSN)}
+    local = {
+        "schema": (_SCHEMA_ERROR, ""),
+        "agents": (None if _AGENTS is not None else _agents_label(_AGENTS_ERROR), _AGENTS_ERROR or ""),
+        "cwd": (_dir_label(WORKER_CWD), WORKER_CWD),
+        "tmpdir": (check_tmpdir(), os.environ.get("TMPDIR") or ""),
+        "transcript": (_TRANSCRIPT_ERROR, ""),
+    }
+    for name, (label, detail) in local.items():
+        check = {"ok": True} if label is None else {"ok": False, "error": label}
+        note_check(name, check, f"{label}: {detail}" if label and detail else "")
+        checks[name] = check
+    return {"ok": all(c["ok"] for c in checks.values()), "checks": checks}
+
+
+def schema_loop(dsn: str | None = None) -> None:
+    """Apply the schema, retrying ``psycopg.OperationalError`` (a refused or silent
+    Postgres) and the errors an apply racing another one raises (the web tier, or a second
+    worker, applies the same files at boot: ``23505`` and ``42P07``/``42710`` on a fresh
+    database, ``XX000`` "tuple concurrently updated" on an applied one; the next attempt
+    finds the schema in place), with backoff ``SCHEMA_BACKOFF_FIRST_S`` doubling to
+    ``SCHEMA_BACKOFF_MAX_S``, taken as ``SHUTDOWN.wait`` so a SIGTERM ends it at once. Any
+    other error (bad SQL, ``42501`` under a DML-only role) is a misconfiguration: it stops
+    the loop and leaves ``schema`` failing with its label. One log line per change."""
+    global _SCHEMA_ERROR
+    dsn = PG_DSN if dsn is None else dsn
+    delay = SCHEMA_BACKOFF_FIRST_S
+    logged: str | None = None
+    while True:
+        try:
+            applied = _apply_schema_once(dsn, connect_timeout=SCHEMA_CONNECT_TIMEOUT_S)
+        except (psycopg.OperationalError, psycopg.errors.UniqueViolation, psycopg.errors.InternalError_,
+                psycopg.errors.DuplicateTable, psycopg.errors.DuplicateObject) as exc:
+            label = ready_label(exc)
+            if label != logged:
+                logged = label
+                log(ev="prepare", step="schema", error=redact(f"{type(exc).__name__}: {exc}"), retrying=True)
+        except Exception as exc:  # noqa: BLE001 - reported, and /healthz answers 503
+            _SCHEMA_ERROR = ready_label(exc)
+            log(ev="prepare", step="schema", error=redact(f"{type(exc).__name__}: {exc}"), retrying=False)
+            return
+        else:
+            _SCHEMA_ERROR = None
+            log(ev="prepare", step="schema", applied=applied)
+            return
+        if SHUTDOWN.wait(delay):
+            return
+        delay = min(delay * 2, SCHEMA_BACKOFF_MAX_S)
+
+
+def start_schema_thread() -> threading.Thread:
+    """``schema_loop`` after listen, on a daemon that watches SHUTDOWN: a thread retrying
+    against a down Postgres must not hold the interpreter open past main()'s return.
+    An attempt already inside ``connect`` is bounded by ``SCHEMA_CONNECT_TIMEOUT_S``."""
+    thread = threading.Thread(target=schema_loop, daemon=True, name="schema")
+    thread.start()
+    return thread
 
 
 # -- shutdown (U5 D2) ----------------------------------------------------------
@@ -1278,6 +1585,7 @@ async def _run_turn(
     *,
     agents: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    global _TRANSCRIPT_ERROR
     from claude_agent_sdk import ClaudeSDKClient, MirrorErrorMessage, ResultMessage
 
     from app.agent.real_agent import TRANSIENT_KINDS, map_message
@@ -1344,6 +1652,21 @@ async def _run_turn(
                 terminal["halted"] = True
                 log(ev="handover", turn_id=turn_id, session_id=session_id)
                 return HANDOVER_REASON
+            # U10 D6: the transcript is not reaching the store (eager flush appends after
+            # every frame, and the prompt's own frame is sent before the first model
+            # response), so stop now rather than pay for a whole run the post-loop check
+            # will close transcript_lost anyway. Keyed on ``append`` (counted on entry,
+            # before any I/O), not ``entries_appended`` (counted after the commit): a
+            # dropped frame never calls append, a failed one is MirrorError, and a slow
+            # one must not halt a healthy turn. Before the spend clause: a hook that
+            # raises allows the call, so nothing after a raising clause runs.
+            if (counters["tool_calls"] >= TRANSCRIPT_LOST_AFTER_TOOL_CALLS
+                    and store.calls["append"] == 0):
+                terminal["reason"] = TRANSCRIPT_LOST_OUTCOME
+                terminal["halted"] = True
+                log(ev="transcript_lost_halt", turn_id=turn_id, session_id=session_id,
+                    tool_calls=counters["tool_calls"])
+                return TRANSCRIPT_LOST_REASON
             # 1e: the spend bound, enforced HERE for the same reason Stop is -- this hook
             # fires every few seconds, where a yield-gated check fires about once a run.
             if SPEND_CAP_USD > 0:
@@ -1490,6 +1813,17 @@ async def _run_turn(
                     receive_count=receive_count, query=index + 1,
                     result=str(result.result or "")[:200])
 
+            # U10 D6: a model turn that appended nothing. The SDK flushes every pending
+            # frame before it yields each ResultMessage, so the count is final here. The
+            # halt clause's reason is read too: a frame can still land after the halt,
+            # before the result, and keyed on the count alone that cut-off turn would
+            # answer 200 unflagged.
+            # num_turns == 0 with no halt is D17's synthetic result, left to 0a.
+            transcript_lost = (
+                terminal["reason"] == TRANSCRIPT_LOST_OUTCOME
+                or (int(result.num_turns or 0) > 0 and store.calls["entries_appended"] == 0)
+            )
+
             # 0a. A REDELIVERED attempt that did no work has not redone the work the kill
             # interrupted, so completing it records a half-finished run as finished --
             # exactly what PR #2695's acceptance run did on 2026-09-20, in 10 ms, leaving
@@ -1505,8 +1839,9 @@ async def _run_turn(
             # 1b/1c: what the browser renders for this ending. The Stop hook's verdict
             # wins when it fired; a turn halted by the PreToolUse hook may never reach a
             # Stop dispatch at all, so the flag is re-read here rather than assumed.
-            outcome = terminal["reason"] or (
-                TERMINAL_STOPPED if stop_requested(conn, session_id) else OK_OUTCOME
+            outcome = TRANSCRIPT_LOST_OUTCOME if transcript_lost else (
+                terminal["reason"]
+                or (TERMINAL_STOPPED if stop_requested(conn, session_id) else OK_OUTCOME)
             )
             # A stopped turn is NOT a zero-progress attempt, and the order matters twice
             # over. A turn killed at the ceiling (or by a crash, a deploy or SIGTERM)
@@ -1520,6 +1855,7 @@ async def _run_turn(
             # exists for, arriving by the other door.
             stopped_here = outcome == TERMINAL_STOPPED
             if (not stopped_here
+                    and not transcript_lost
                     and receive_count > 1
                     and not attempt_did_work(result, counters["tool_calls"])):
                 zero_progress = bump_zero_progress(conn, turn_id)
@@ -1551,7 +1887,8 @@ async def _run_turn(
                 # is 0 whenever THIS attempt vetoed nothing, and 31% of runs never yield
                 # at all -- so a plain assignment walks a cumulative count of 5 back to 0
                 # on the attempt that happens to finish, destroying the figure the column
-                # was added for. Zero is not a measurement here; it is "nothing to add".
+                # was added for. Zero is not a measurement here; it is "nothing to add" --
+                # complete()'s trailing 0 is what a turn no attempt vetoed ends up with.
                 nudges=counters["nudges"] or None,
                 # U5 D3: SIGTERM's last-receive close may have closed the row first; then
                 # this writes nothing, returns None, and releases nothing.
@@ -1597,6 +1934,13 @@ async def _run_turn(
         "tool_calls": counters["tool_calls"],
         "nudges": counters["nudges"],
     }
+    # U10 D6: closed (above) and released before it fails, so the redelivery answers 200
+    # without re-running a paid turn that would lose its transcript the same way.
+    if transcript_lost:
+        _TRANSCRIPT_ERROR = "no_entries"
+        raise TranscriptLost(summary)
+    if store.calls["entries_appended"] > 0:
+        _TRANSCRIPT_ERROR = None
     return summary
 
 
@@ -1738,6 +2082,20 @@ def serve_real_turn(
     kind, value = await_attempt(entry, lambda: run(turn, receive_count, sdk_session_id))
     if kind == "shutdown" or isinstance(value, WorkerShutdown):
         return shutdown_reply(turn, receive_count, connect=connect, sdk_session_id=sdk_session_id)
+    if kind == "error" and isinstance(value, TranscriptLost):
+        # U10 D6: the turn is already closed transcript_lost. 500 so sqsd redelivers and
+        # the redelivery answers 200 already_completed; on the last receive the close
+        # finds the row closed and answers that 200 now.
+        summary = value.summary
+        log(ev="turn", turn_id=turn_id, session_id=turn["session_id"], receive_count=receive_count,
+            **{**summary, "status": 500, "error": TRANSCRIPT_LOST_OUTCOME})
+        if is_last_receive(receive_count):
+            closed = close_on_last_receive(turn, receive_count, connect=connect, cause="error",
+                                           sdk_session_id=sdk_session_id, error=TRANSCRIPT_LOST_OUTCOME)
+            if closed is not None:
+                return closed
+        return 500, {**summary, "ok": False, "turn_id": turn_id, "error": TRANSCRIPT_LOST_OUTCOME,
+                     "outcome": TRANSCRIPT_LOST_OUTCOME}
     if kind == "error":
         error = f"{type(value).__name__}: {value}"
         log(ev="turn", turn_id=turn_id, session_id=turn["session_id"], receive_count=receive_count,
@@ -1930,7 +2288,14 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         if self.path == "/healthz":
-            self._reply(200, {"ok": True})
+            # U10: readiness, never a 500 -- a report that raises is a 503 without checks.
+            try:
+                report = readiness()
+            except Exception as exc:  # noqa: BLE001 - the image HEALTHCHECK reads the status
+                log(ev="health", error=redact(f"{type(exc).__name__}: {exc}"))
+                self._reply(503, {"ok": False})
+                return
+            self._reply(200 if report["ok"] else 503, report)
         else:
             self._reply(404, {"ok": False, "error": "not found"})
 
@@ -2000,6 +2365,12 @@ def main() -> None:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
         sys.stderr.reconfigure(encoding="utf-8")
+    # U10 D5: static instance configuration that does not heal, so it blocks start --
+    # first, before anything that could wait on Postgres.
+    bad_tmpdir = check_tmpdir()
+    if bad_tmpdir is not None:
+        log(ev="prepare", step="tmpdir", error=bad_tmpdir, tmpdir=os.environ.get("TMPDIR"))
+        sys.exit(2)
     sqs = queue_startup_fields(os.environ)
     if sqs:
         from proto import enqueue
@@ -2008,12 +2379,16 @@ def main() -> None:
     prepare()
     server = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
     install_signal_handlers(server)
+    # U10 D4: after listen, so a down Postgres never stalls the bind; /healthz says
+    # `schema` pending until it lands.
+    start_schema_thread()
     sweeper = start_sweep()
-    log(ev="start", port=PORT, pg_dsn=PG_DSN.split("@")[-1], cwd=WORKER_CWD,
+    log(ev="start", port=server.server_address[1], pg_dsn=PG_DSN.split("@")[-1], cwd=WORKER_CWD,
         provider=os.environ.get("MODEL_PROVIDER") or "anthropic",
         sqsd_max_retries=SQSD_MAX_RETRIES, sqsd_visibility_timeout_s=SQSD_VISIBILITY_TIMEOUT_S,
         sqsd_retention_period_s=SQSD_RETENTION_PERIOD_S, sweep_interval_s=SWEEP_INTERVAL_S,
-        sweep=sweeper is not None, shutdown_grace_s=SHUTDOWN_GRACE_S, **sqs)
+        sweep=sweeper is not None, shutdown_grace_s=SHUTDOWN_GRACE_S,
+        tmpdir=tempfile.gettempdir(), tmpdir_free_mb=tmpdir_free_mb(), **sqs)
     server.serve_forever()
     if _SHUTDOWN_THREAD is not None:
         # A daemon: its second wait, the releases and ev=shutdown run after

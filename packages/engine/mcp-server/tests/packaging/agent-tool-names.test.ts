@@ -579,9 +579,9 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // Read-only by contract: it reports project state and never writes. It calls
   // no MCP tool at all — `eval/harness/validators/test_project_status.py`
   // enforces that — so `Read` is the whole grant (issue #2793). `translation.md`
-  // holds the same shape, so both are skipped by `noMcpByDesign` below; neither
-  // can be covered by the "parses at least one MCP entry" arm, because there is
-  // no MCP entry to parse.
+  // was the first agent to hold only built-in tools and holds the same shape, so
+  // both are skipped by `noMcpByDesign` below; neither can be covered by the
+  // "parses at least one MCP entry" arm, because there is no MCP entry to parse.
   "project-status.md": {
     tools: ["Read"],
     denies: [],
@@ -652,6 +652,25 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "research_append",
       "volume_search",
       "wiki_place_page",
+      "wiki_read",
+      "wiki_search",
+      "wikipedia_search",
+    ],
+    denies: [],
+  },
+
+  // The folded historical-context skill (issue #2800) holds the six tools that
+  // skill declared, plus the built-in `Read` for research.json's
+  // narration_guidance. No `Write` and no project-state tool: this agent writes
+  // nothing. No spawn tool: a request belonging to locality-guide,
+  // search-records, translation, convert-dates or conflict-resolution is handed
+  // BACK by name for the main thread to spawn (lead ruling 2026-09-23).
+  "historical-context.md": {
+    tools: [
+      "Read",
+      "place_population",
+      "place_search",
+      "place_search_all",
       "wiki_read",
       "wiki_search",
       "wikipedia_search",

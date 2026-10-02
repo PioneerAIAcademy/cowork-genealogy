@@ -6,15 +6,15 @@ description: >-
   user-friendly narrative for casual users. Detects broken foreign keys and
   serves as the "resume project" agent when returning to existing work. Use when
   the user says "where are we?", "summarize progress", "status", "tell me the
-  story", "what have we found?", "give me an overview", when the user opens an
-  existing project folder, or resumes a project that already has research
-  progress. Do NOT use when the user is asking what research question to pursue
-  or add next (use question-selection), when the user asks to see, recap, or
-  review the research PLAN ("what does the research plan look like?", "review
-  the plan" — use research-plan), when no research.json exists in the folder
-  (use init-project instead), when the user wants to start a new project (use
-  init-project), or when the user wants to execute a specific research step (use
-  the appropriate skill directly).
+  story", "what have we found?", "give me an overview", or when the user opens
+  an existing project folder. Do NOT use when the user asks to drive the
+  research workflow forward or work the next question (use research), when the
+  user is asking what research question to pursue or add next (use
+  question-selection), when the user asks to see, recap, or review the research
+  PLAN ("what does the research plan look like?", "review the plan" — use
+  research-plan), when no research.json exists or the user wants to start a new
+  project (use init-project), or when the user wants to execute a specific
+  research step (use the appropriate skill directly).
 model: claude-sonnet-4-6
 tools:
   - Read
