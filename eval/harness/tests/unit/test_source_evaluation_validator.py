@@ -614,6 +614,78 @@ def test_checklist_guard_skips_an_untagged_test():
         _restate(_OV_CALLS, "", {"tags": ["direct-arm"]})
 
 
+# --- a checklist pointer carries no action (o3c, v1_2026-10-02_10-48-01) ---
+
+_pointer = _VALIDATOR.test_checklist_pointer_carries_no_action
+_O3C_RETURN = (
+    "Next: detach this source from Christian P. Hole (KD96-TV2). The record belongs to the "
+    "other Christian Hole (KD96-WX7).\n\n---\n\n"
+    "From FamilySearch's own profile checklist — suggestions for the profile, not errors in a "
+    "source, and not counted above:\n\n"
+    "**CONSISTENCY**\n"
+    "- FamilySearch flags the death date discrepancy too — finding 2 above.\n"
+    "- FamilySearch flags the birth year discrepancy from the 1885 census too — finding 3 above "
+    "(the record is misattributed and should be detached).\n\n"
+    "**VERIFIABILITY**\n- The marriage has no tagged sources.\n\n"
+    "**COMPLETENESS**\n- A marriage place is missing a city."
+)
+_O3C_CLEAN = _O3C_RETURN.replace(
+    " (the record is misattributed and should be detached)", ""
+)
+
+
+def _pointer_fails(reply: str, why: str) -> None:
+    try:
+        _pointer("", _OV_TEST, agent_returns=_returns(reply))
+    except AssertionError as exc:
+        assert why in str(exc), str(exc)
+        return
+    raise AssertionError(f"passed: {reply[-300:]!r}")
+
+
+def test_the_o3c_pointer_with_a_detach_fails():
+    assert _O3C_CLEAN != _O3C_RETURN
+    _pointer_fails(_O3C_RETURN, "carries an action")
+
+
+def test_a_pointer_carrying_any_remedy_fails():
+    for tail in (
+        "finding 1 above. Re-read the original.",
+        "finding 1 above; correct the index entry.",
+        "finding 1 above, so keep the source attached.",
+        "finding 1 above — this one needs to be fixed.",
+    ):
+        _pointer_fails(f"**CONSISTENCY**\n- FamilySearch flags this death date too — {tail}", "carries an action")
+
+
+def test_bare_pointers_pass_in_any_heading_style():
+    _pointer("", _OV_TEST, agent_returns=_returns(_O3C_CLEAN))
+    _pointer("", _OV_TEST, agent_returns=_returns(
+        "From FamilySearch's own profile checklist:\n  CONSISTENCY\n"
+        "    · FamilySearch flags this death date too — finding 1 above.\n"
+        "    · It flags the birth date against the 1885 census — Finding 2 above.\n"
+        "  VERIFIABILITY\n    · The marriage has no tagged sources."
+    ))
+
+
+def test_a_findings_own_next_line_is_out_of_scope():
+    reply = (
+        "Finding 2 — death index. Same discrepancy as finding 1 above. Next: re-read the original.\n\n"
+        "### CONSISTENCY\n- FamilySearch flags this death date too — finding 2 above.\n"
+        "### VERIFIABILITY\n- The marriage has no tagged sources — keep in mind (see finding 2 above, correct it)."
+    )
+    _pointer("", _OV_TEST, agent_returns=_returns(reply))
+
+
+def test_pointer_guard_fails_when_it_has_nothing_to_check():
+    for reply in (
+        "From FamilySearch's own profile checklist:\n- The marriage has no tagged sources.",
+        "**CONSISTENCY**\n- The death date disagrees with the index.\n**VERIFIABILITY**\n- x",
+        "",
+    ):
+        _pointer_fails(reply, "checks nothing")
+
+
 # --- a multi-source closing paragraph (x6b, v1_2026-10-01_19-24-15) -------
 
 _X6B_PARAGRAPH = (

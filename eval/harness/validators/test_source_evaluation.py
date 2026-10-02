@@ -546,3 +546,51 @@ def test_checklist_does_not_restate_a_finding(tool_calls, text_response, test, a
         "the checklist restated a finding instead of pointing to it: "
         f"{restated[0][:160]!r}"
     )
+
+
+_SCORE_HEADING_RE = re.compile(r"^\W*(COHERENCE|CONSISTENCY|VERIFIABILITY|COMPLETENESS)\W*$")
+_POINTER_RE = re.compile(r"\bfinding\s+\d+\s+above\b", re.IGNORECASE)
+# Imperatives and modals a pointer has no business carrying. The detach and
+# go-to-source vocabularies above cover the two remedies by name; this covers
+# the rest ("should be removed", "keep it", "verify the year").
+_POINTER_ACTION_RE = re.compile(
+    r"\b(?:should|must|needs?\s+to|recommend\w*|correct(?:ed|ion)?|fix|verify|keep|remove)\b",
+    re.IGNORECASE,
+)
+
+
+def test_checklist_pointer_carries_no_action(text_response, test, agent_returns=None):
+    """Tag-gated (`checklist-overlap`), issue #2796 finding 3.
+
+    The pointer replaces a restated CONSISTENCY sentence so the block files no
+    finding twice. A pointer that repeats the finding's remedy ("finding 3 above
+    (the record is misattributed and should be detached)", o3c,
+    v1_2026-10-02_10-48-01) files it twice anyway, under "suggestions". Reads
+    only the CONSISTENCY group, so a finding's own "Next:" line is out of scope,
+    and fails when that group holds no pointer, since then it checks nothing.
+    """
+    if "checklist-overlap" not in (test.get("tags") or []):
+        pytest.skip("test does not declare checklist-overlap")
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, "source-evaluation", test)
+    group: list[str] | None = None
+    for line in reply.splitlines():
+        heading = _SCORE_HEADING_RE.match(line.strip())
+        if heading:
+            if group is not None:
+                break
+            if heading.group(1) == "CONSISTENCY":
+                group = []
+        elif group is not None:
+            group.append(line)
+    pointers = [line for line in group or [] if _POINTER_RE.search(line)]
+    assert pointers, (
+        "no pointer line under a CONSISTENCY heading, so this guard checks nothing: "
+        "the group is missing, unheaded, or carries no 'finding N above'"
+    )
+    acting = [
+        p for p in pointers
+        if _recommends_detach(p) or _GO_TO_SOURCE_PATTERN.search(p) or _POINTER_ACTION_RE.search(p)
+    ]
+    assert not acting, f"a checklist pointer carries an action: {acting[0].strip()[:200]!r}"
