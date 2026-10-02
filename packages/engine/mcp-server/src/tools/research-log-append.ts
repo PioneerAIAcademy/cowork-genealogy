@@ -421,16 +421,28 @@ export function censusMentions(notes: string): CensusMention[] {
  * derived by `stagedPre1880UsCensusYears`, never the envelope itself.
  *
  * The payload decides only when EVERY titled row is a pre-1880 US federal
- * census, only when the note binds no census year of its own (a bound year keeps
- * precedence, so every note-only verdict is unchanged), and only when the note
- * contains one of those census years. Two rejected options: "any row is a
- * pre-1880 US census" refuses a parish-register or 1880-row note whenever the
- * same search also returned an 1850 row; "the top-ranked row only" trusts
- * `results[0]`, which is the best match only when ranking ran. The year in the
- * note is what ties the note to the census it was logged with: without it, a
- * parish-register note logged against an 1850 census search is refused for a
- * household the census never showed. A note that omits the year still passes,
- * which is the same limit the author-supplied year already had.
+ * census, and only when the note binds no census year of its own (a bound year
+ * keeps precedence, so every note-only verdict is unchanged). Two rejected
+ * options: "any row is a pre-1880 US census" refuses a parish-register or
+ * 1880-row note whenever the same search also returned an 1850 row; "the
+ * top-ranked row only" trusts `results[0]`, which is the best match only when
+ * ranking ran.
+ *
+ * THE NOTE NO LONGER HAS TO REPEAT THE YEAR (2026-10-02). It used to, so that a
+ * parish-register note logged against an 1850 census search was not refused for
+ * a household the census never showed -- but `stagedPre1880UsCensusYears`
+ * already returns [] unless EVERY titled row is a pre-1880 US federal census, so
+ * in this branch there is no parish-register row for the note to be about. The
+ * requirement only hid real misses: `ut_search_records_001` ("...in household of
+ * Thomas Flynn", birth year 1845 and no census year) and `_017` ("...in household
+ * of William Mullen", birth year 1852) both wrote flat and were caught by the
+ * eval validator afterwards instead of refused at the write.
+ *
+ * This does NOT reopen the whole-note fallback the lead declined on 2026-09-29
+ * (issue #2945): that was `saysCensus && /\b18[0-7]\d\b/` scanning the note for
+ * any year, which made 46 of 223 note-only refusals with about 38 wrong on
+ * reading. This branch reads no year out of the note at all; the payload --
+ * which the caller does not author -- is what decides.
  */
 export function requirePre1880CensusHedge(
   notes: string,
@@ -471,9 +483,19 @@ export function requirePre1880CensusHedge(
   // (`saysCensus && /\b18[0-7]\d\b/`) made 46 of 223 note-only refusals over
   // ~4,000 distinct corpus notes, about 38 of them wrong on reading.
   const bound = censusMentions(notes);
+  // A note naming a DIFFERENT record type is not about the census rows, and the
+  // payload cannot rule that out: `stagedPre1880UsCensusYears` counts only rows
+  // carrying a `collectionTitle`, so an untitled parish-register row can sit in
+  // the same staged payload as the 1850 census rows that produced the years.
+  // Where the note names such a source, the payload stops deciding and the note
+  // must bind its own census year, as it did before 2026-10-02.
+  const namesOtherSource =
+    /\b(parish register|church (?:book|record)|baptism|christening|burial register|probate|will|deed|land record|passenger list|draft (?:card|registration)|city directory|gravestone|headstone)\b/.test(
+      text,
+    );
   const namesColumnlessCensus = bound.length > 0
     ? bound.some((m) => m.year < m.columnFrom)
-    : payloadYears.some((y) => new RegExp(String.raw`\b${y}\b`).test(notes));
+    : payloadYears.length > 0 && !namesOtherSource;
   if (!namesColumnlessCensus) return;
 
   const describesHousehold =
