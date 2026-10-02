@@ -234,7 +234,7 @@ describe('SseSessionConnection — send', () => {
   it('a rejected POST surfaces an error, ends the turn the UI started, and still drops the echo', async () => {
     // The tier commits the user_msg row BEFORE the queue send and keeps it on 502, so the
     // 502's detail names the seq; without dropping it the message would appear twice.
-    stubFetch(502, { detail: { message: 'queue send failed: elasticmq is down', turn_id: 't', seq: 1 } })
+    stubFetch(502, { detail: { message: 'queue send failed; please try again', turn_id: 't', seq: 1 } })
     const conn = new SseSessionConnection('s1')
     const seen = listen(conn)
     conn.connect()
@@ -243,7 +243,7 @@ describe('SseSessionConnection — send', () => {
     await flush()
     const events = seen.filter((m) => m.type === 'agent_event').map((m) => m.event as { kind: string; text?: string })
     expect(events.map((e) => e.kind)).toEqual(['error', 'turn_done'])
-    expect(events[0].text).toContain('elasticmq is down')
+    expect(events[0].text).toContain('queue send failed')
     last().frame({ type: 'user_msg', text: 'hello', turn_id: 't', seq: 1 }) // the echo of the kept row
     last().frame({ type: 'user_msg', text: 'other', turn_id: 't2', seq: 2 }) // not ours: relayed
     expect(seen.filter((m) => m.type === 'user_msg').map((m) => m.seq)).toEqual([2])

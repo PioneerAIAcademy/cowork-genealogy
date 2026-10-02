@@ -739,8 +739,40 @@ def test_web_dockerfile_installs_auth_deps():
     so a missing pip line passes every test and fails only when the image starts."""
     dockerfile = (PROTO / "web" / "Dockerfile").read_text(encoding="utf-8")
     pip = " ".join(dockerfile.split("RUN pip install", 1)[1].split("\n\n", 1)[0].split())
-    for dep in ("itsdangerous", "cryptography", "httpx"):
+    for dep in ("itsdangerous", "cryptography", "httpx", "botocore"):
         assert f'"{dep}' in pip, f"the web image does not install {dep}"
+
+
+def _locked_version(package: str) -> str:
+    lock = (PROTO.parent / "uv.lock").read_text(encoding="utf-8")
+    m = re.search(rf'^\[\[package\]\]\nname = "{re.escape(package)}"\nversion = "([^"]+)"', lock, re.M)
+    assert m, f"{package} is not in apps/server/uv.lock"
+    return m.group(1)
+
+
+def _pip_pins(dockerfile: Path, package: str) -> list[str]:
+    """Every ``"<package>==X"`` on a RUN pip line, continuation lines joined first."""
+    text = dockerfile.read_text(encoding="utf-8").replace("\\\n", " ")
+    runs = [line for line in text.splitlines() if re.match(r"\s*RUN\b.*\bpip\b", line)]
+    return [v for line in runs for v in re.findall(rf'"{re.escape(package)}==([^"]+)"', line)]
+
+
+def test_proto_images_pin_the_locked_botocore():
+    """U7: proto/enqueue.py signs with botocore, which the tests run at uv.lock's version.
+    Both images pin the same one, so what the vectors proved is what the images sign with."""
+    locked = _locked_version("botocore")
+    for dockerfile in (PROTO / "web" / "Dockerfile", PROTO / "worker" / "Dockerfile"):
+        assert _pip_pins(dockerfile, "botocore") == [locked], f"{dockerfile.relative_to(PROTO)} vs uv.lock {locked}"
+
+
+def test_host_venv_sqs_recipes_use_static_dummies():
+    """U7: the recipes that run enqueue.py from the host venv sign with a dummy static
+    pair, so they never read the developer's ~/.aws or probe IMDS."""
+    defined = [line for line in MAKEFILE.read_text(encoding="utf-8").splitlines()
+               if line.startswith("PROTO_SQS_ENV")]
+    assert defined and "GENEALOGY_SQS_ACCESS_KEY=" in defined[0] and "GENEALOGY_SQS_SECRET_KEY=" in defined[0]
+    for target in ("proto-send", "proto-smoke", "proto-web"):
+        assert any(re.search(r"\$\(PROTO_SQS_ENV\)\s+uv run\b", line) for line in _recipe(target)), target
 
 
 # ── D18 grading recipes ─────────────────────────────────────────────────────────
