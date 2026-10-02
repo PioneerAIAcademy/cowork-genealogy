@@ -79,8 +79,8 @@
         "facts": [
           {
             "type": "Birth",
-            "date": "1849",
-            "standard_date": "1849"
+            "date": "1852",
+            "standard_date": "1852"
           }
         ],
         "sources": [
@@ -147,8 +147,8 @@
       },
       {
         "id": "SD-DRIS-H",
-        "title": "Jeremiah Driscoll, \"Ireland, Catholic Parish Registers, 1655-1915\"",
-        "citation": "\"Ireland, Catholic Parish Registers, 1655-1915,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MJ4T-2QB : accessed 1 October 2026), Jeremiah Driscoll, baptised 3 Feb 1849; citing Skibbereen, Cork, Ireland.",
+        "title": "Jeremiah Driscoll, \"Quebec, Catholic Parish Registers, 1621-1979\"",
+        "citation": "\"Quebec, Catholic Parish Registers, 1621-1979,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MJ4T-2QB : accessed 1 October 2026), Jeremiah Driscoll, baptised 3 Feb 1852; citing St. Patrick, Sherbrooke, Quebec, Canada.",
         "url": "https://www.familysearch.org/ark:/61903/1:1:MJ4T-2QB"
       }
     ]

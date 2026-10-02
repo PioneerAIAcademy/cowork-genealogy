@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
 
 /**
  * `person_read` must hand the relatives fetch the SHARED budget, not a fresh one.
@@ -25,10 +25,22 @@ const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 const mockedFetchRelatives = vi.mocked(fetchRelativeSources);
 
+/** Advanced by the mocked tree read so elapsed time is observable. */
+let clockOffset = 0;
+const realNow = Date.now.bind(Date);
+vi.spyOn(Date, "now").mockImplementation(() => realNow() + clockOffset);
+
+// `Date.now` is a shared global and the last test leaves the offset at 20s. File
+// isolation contains that today; this keeps it contained if `isolate` ever changes.
+afterAll(() => {
+  vi.mocked(Date.now).mockRestore();
+});
+
 /** Mirrors `OCR_PHASE_BUDGET_MS` in person-read.ts. */
 const OCR_PHASE_BUDGET_MS = 40_000;
 
 beforeEach(() => {
+  clockOffset = 0;
   mockFetch.mockReset();
   mockedFetchRelatives.mockClear();
   vi.mocked(getValidToken).mockResolvedValue("test-token");
@@ -64,42 +76,58 @@ function treeBody() {
 }
 
 describe("person_read hands the relatives fetch the shared budget", () => {
-  it("passes a deadline no later than the one anchored for the whole read", async () => {
-    const before = Date.now();
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve(treeBody()),
-      headers: new Headers(),
+  /**
+   * THE CLOCK HAS TO MOVE, or this file cannot see the bug that matters.
+   *
+   * An earlier version caught only `Date.now() + 999_999_999`. It did NOT catch the
+   * realistic defect — a fresh `Date.now() + OCR_PHASE_BUDGET_MS` anchored at the call
+   * site, AFTER the tree read. With an instant mocked fetch, that second budget lands
+   * within milliseconds of the first, so every assertion passed; review made exactly
+   * that edit and all 2580 tool tests stayed green.
+   *
+   * Advancing the clock inside the tree-read mock is what separates them: a deadline
+   * anchored at entry stays one budget from `before`, while one anchored after the read
+   * is a budget PLUS the elapsed 20s.
+   */
+  function mockTreeReadTaking(ms: number): void {
+    mockFetch.mockImplementationOnce(async () => {
+      clockOffset += ms;
+      return {
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(treeBody()),
+        headers: new Headers(),
+      };
     });
+  }
+
+  it("anchors the deadline at ENTRY, not after the tree read", async () => {
+    const before = Date.now();
+    mockTreeReadTaking(20_000);
     await personReadTool({ personId: "SUBJ-001" }, LOCAL);
 
     expect(mockedFetchRelatives).toHaveBeenCalledTimes(1);
     const deadline = mockedFetchRelatives.mock.calls[0][2] as number;
     expect(typeof deadline).toBe("number");
-    // ONE budget from entry, within a tolerance for the few ms between `before` and
-    // the anchor inside the tool. The tolerance is wide enough to be stable and far
-    // narrower than the things it must reject: a second budget would land a whole
-    // OCR_PHASE_BUDGET_MS beyond, and an unbounded value further still.
-    const TOLERANCE_MS = 5_000;
-    expect(deadline - before).toBeGreaterThan(OCR_PHASE_BUDGET_MS - TOLERANCE_MS);
-    expect(deadline - before).toBeLessThan(OCR_PHASE_BUDGET_MS + TOLERANCE_MS);
+    // Entry-anchored: ~40s from `before`. Anchored after a 20s read: ~60s, which this
+    // rejects. The 5s tolerance absorbs scheduling, not a whole phase.
+    //
+    // ONE-SIDED ON PURPOSE. A tighter sub-budget — `Math.min(deadline, now + 10s)` —
+    // is legitimate: it cannot outlive the shared deadline, which is the whole property.
+    // An equality bound here rejected that variant, so the floor that actually matters
+    // (the phase must get usable time, not an expired deadline) is the next test's
+    // `remaining > 0`, where it belongs.
+    expect(deadline - before).toBeLessThan(OCR_PHASE_BUDGET_MS + 5_000);
   });
 
-  it("is the SAME deadline the memories phase shares, not a second one", async () => {
-    // The budget covers the fan-out, memories and this together. Two independent
-    // budgets would let the read run to twice the bound the 60s bridge abort assumes.
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve(treeBody()),
-      headers: new Headers(),
-    });
-    const before = Date.now();
+  it("gives the relatives phase what is LEFT of the budget, not a fresh one", async () => {
+    // The same property stated from the consumer's side: after 20s of tree read, the
+    // relatives phase must see ~20s remaining, never a full 40s.
+    mockTreeReadTaking(20_000);
     await personReadTool({ personId: "SUBJ-001" }, LOCAL);
     const deadline = mockedFetchRelatives.mock.calls[0][2] as number;
-    // Within the budget window anchored at entry — a per-phase budget would sit a
-    // full OCR_PHASE_BUDGET_MS beyond it.
-    expect(deadline - before).toBeLessThan(OCR_PHASE_BUDGET_MS + 5_000);
+    const remaining = deadline - Date.now();
+    expect(remaining).toBeLessThan(OCR_PHASE_BUDGET_MS - 10_000);
+    expect(remaining).toBeGreaterThan(0);
   });
 });
