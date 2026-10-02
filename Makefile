@@ -482,17 +482,21 @@ proto-down: ## D3 prototype: stop the stack and drop its volumes (the schema re-
 proto-logs: ## D3 prototype: follow the stack's logs (SERVICE=shim to narrow)
 	$(PROTO_COMPOSE) logs -f $(SERVICE)
 
+# U7: proto/enqueue.py signs SigV4. These host-venv recipes sign with a dummy static pair
+# (elasticmq ignores signatures), so they never read ~/.aws or probe IMDS.
+PROTO_SQS_ENV := GENEALOGY_SQS_ACCESS_KEY=x GENEALOGY_SQS_SECRET_KEY=x
+
 .PHONY: proto-send
 proto-send: ## D3 prototype: enqueue one turn on elasticmq: make proto-send ARGS="--behaviour ok"
-	cd apps/server && uv run python proto/enqueue.py $(ARGS)
+	cd apps/server && $(PROTO_SQS_ENV) uv run python proto/enqueue.py $(ARGS)
 
 .PHONY: proto-smoke
 proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / ceiling turns through the shim
-	cd apps/server && uv run python proto/smoke.py
+	cd apps/server && $(PROTO_SQS_ENV) uv run python proto/smoke.py $(ARGS)
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py
 
 # D9–10 acceptance, billed (two short Sonnet turns). Same `up` as proto-up (env.sh);
 # refuses to run without a model key.
@@ -643,7 +647,7 @@ PROTO_PG_DSN ?= postgresql://postgres:proto@localhost:5434/proto
 .PHONY: proto-web
 proto-web: ## D11–12 web tier from the venv on :8085, against the compose postgres + elasticmq
 	cd apps/server && PG_DSN=$(PROTO_PG_DSN) QUEUE_URL=http://localhost:9324/000000000000/turns \
-	  uv run python proto/web/app.py
+	  $(PROTO_SQS_ENV) uv run python proto/web/app.py
 
 .PHONY: proto-drive
 proto-drive: ## D13 acceptance: post, stream, drop mid-turn, resume on Last-Event-ID, miss nothing (embedded Postgres + seeder; BASE=http://localhost:8085 runs --worker against a stack)
@@ -664,10 +668,22 @@ proto-up-store: ## D6–8 store: start postgres + minio (+ the bucket one-shot) 
 	$(PROTO_COMPOSE) up -d postgres minio minio-init
 	$(PROTO_COMPOSE) up -d --wait postgres minio
 
+# Two arms. Static: the MinIO keys as GENEALOGY_S3_* (via PROTO_S3_*), with any exported
+# AWS_* keys unset so they cannot mask it. Keyless (U8): PROTO_S3_KEYLESS=1, the MinIO keys
+# as AWS_* and also as PROTO_S3_* (so a helper that stopped dropping them goes red), and
+# ~/.aws, SSO and instance metadata isolated, so the SDK default chain's environment
+# provider is the only way the store can sign.
 .PHONY: proto-store-test
 proto-store-test: proto-up-store ## D6–8 store: PgS3ProjectStore conformance + Postgres-specific cases against the compose postgres/minio
-	cd $(ENGINE_DIR) && PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 \
+	cd $(ENGINE_DIR) && env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY \
+	  PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 \
 	  PROTO_S3_BUCKET=projects PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
+	  npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts
+	cd $(ENGINE_DIR) && env -u AWS_PROFILE -u AWS_SESSION_TOKEN \
+	  PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 PROTO_S3_BUCKET=projects \
+	  PROTO_S3_KEYLESS=1 PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
+	  AWS_ACCESS_KEY_ID=proto AWS_SECRET_ACCESS_KEY=protoproto \
+	  AWS_SHARED_CREDENTIALS_FILE=/nonexistent AWS_CONFIG_FILE=/nonexistent AWS_EC2_METADATA_DISABLED=true \
 	  npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts
 
 .PHONY: engine-test

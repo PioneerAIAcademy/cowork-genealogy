@@ -43,7 +43,7 @@ Asking a question and then stopping to wait is a failure: the project never gets
 
 Do not ask about experience level or anything else about the researcher. Every project gets the same profile: `experience_level: "novice"` and this `narration_guidance`, stored verbatim:
 
-> Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence.
+> Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence.
 
 A stated level in the message ("I'm a professional genealogist") is not persisted. Store both fields in `research.json` `researcher_profile` (Step 4).
 

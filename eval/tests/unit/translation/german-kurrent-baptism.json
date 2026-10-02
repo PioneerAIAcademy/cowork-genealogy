@@ -5,13 +5,14 @@
     "name": "Translate a German baptism record with genealogically significant terms",
     "type": "positive",
     "description": "Translate a short German church record entry. Tests whether the skill (a) translates accurately, (b) preserves the precise meaning of genealogically significant terms (relationship words, occupation, baptismal sponsors), and (c) surfaces cultural context that affects research interpretation.",
-    "tags": ["german", "kurrent", "baptism", "church-record", "genealogical-terminology"]
+    "tags": ["german", "kurrent", "baptism", "church-record", "genealogical-terminology", "direct-arm"]
   },
   "input": {
-    "user_message": "Translate this German baptism record: 'Den 15. März 1845 wurde Johann Friedrich, ehelicher Sohn des Thomas Flynn, Bergmann, und seiner Ehefrau Maria geb. Kelly, getauft. Taufpaten: Patrick O'Brien und Bridget Mahoney.'",
+    "delegation": "Translate this German baptism record: 'Den 15. März 1845 wurde Johann Friedrich, ehelicher Sohn des Thomas Flynn, Bergmann, und seiner Ehefrau Maria geb. Kelly, getauft. Taufpaten: Patrick O'Brien und Bridget Mahoney.'",
     "scenario": null
   },
   "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
     "Should faithfully render the structural shape of the entry — date, baptized child, parents (with the wife's maiden name preserved via née), godparents — in clear English",
     "Should identify and explain each genealogically significant term: `ehelicher Sohn` (legitimate son — distinct from `unehelicher` illegitimate, which would have different inheritance implications), `Bergmann` (miner — occupational evidence consistent with Schuylkill County coal country), `geb.` (née/born — the wife's maiden name follows), `Taufpaten` (godparents — often relatives or close family friends, useful for FAN research)",
     "Should flag the cultural mismatch: the names (Flynn, Kelly, O'Brien, Mahoney) are Irish, but the record is in German. This suggests an Irish family using a German parish, which is documented in Pennsylvania mining communities where the resident priest was German-speaking. Worth noting for the research narrative",
