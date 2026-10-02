@@ -26,3 +26,37 @@ os.environ["DATABASE_URL"] = ""              # tests always run on SQLite, never
 # in apps/server/.env, every TestClient test would die on that refusal locally while CI
 # (which has no .env) stayed green.
 os.environ["PUBLIC_URL"] = "http://127.0.0.1:1837"
+
+
+import sys  # noqa: E402
+
+import pytest  # noqa: E402
+
+_SQS_ENV_PREFIXES = ("AWS_", "GENEALOGY_SQS_")
+
+
+def _reset_sqs_clients() -> None:
+    # proto/enqueue.py is imported twice: as `enqueue` (the web image's layout) and as
+    # `proto.enqueue` (the worker's), each with its own installed configuration.
+    for name in ("enqueue", "proto.enqueue"):
+        module = sys.modules.get(name)
+        if module is not None and hasattr(module, "reset"):
+            module.reset()
+
+
+@pytest.fixture(autouse=True)
+def _isolated_sqs_credentials(monkeypatch):
+    """U7: proto/enqueue.py resolves AWS credentials for every SQS call, and a test that
+    reaches botocore's default chain would read the developer's ~/.aws, or probe IMDS for
+    a second or two and find nothing on CI -- results that depend on the machine. Every
+    test starts with no AWS environment, no shared files, IMDS off, and nothing installed;
+    a test that wants IMDS deletes AWS_EC2_METADATA_DISABLED itself."""
+    for name in list(os.environ):
+        if name.startswith(_SQS_ENV_PREFIXES):
+            monkeypatch.delenv(name)
+    monkeypatch.setenv("AWS_EC2_METADATA_DISABLED", "true")
+    monkeypatch.setenv("AWS_SHARED_CREDENTIALS_FILE", "/nonexistent")
+    monkeypatch.setenv("AWS_CONFIG_FILE", "/nonexistent")
+    _reset_sqs_clients()
+    yield
+    _reset_sqs_clients()

@@ -86,8 +86,8 @@ import {
   type ConvertCalendarInput,
 } from "./tools/convert-calendar.js";
 import {
-  buildExternalSearchUrl,
-  type BuildExternalSearchUrlInput,
+  buildExternalSearchUrlTool,
+  type BuildExternalSearchUrlToolInput,
 } from "./tools/build-external-search-url.js";
 import { treeEdit, type TreeEditInput } from "./tools/tree-edit.js";
 import { treeCorrect, type TreeCorrectInput } from "./tools/tree-correct.js";
@@ -658,8 +658,8 @@ export function createServer(principal: Principal): Server {
     }
     if (request.params.name === "build_external_search_url") {
       try {
-        const args = request.params.arguments as unknown as BuildExternalSearchUrlInput;
-        const result = buildExternalSearchUrl(args);
+        const args = request.params.arguments as unknown as BuildExternalSearchUrlToolInput;
+        const result = await buildExternalSearchUrlTool(args);
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

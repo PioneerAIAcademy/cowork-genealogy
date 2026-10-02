@@ -10,7 +10,7 @@ import { ALL_WARNING_TAGS } from "../../src/tools/person-warnings.js";
 // `ALL_WARNING_TAGS` in src/tools/person-warnings.ts states the same tags as the
 // data the tool emits. Nothing compared them — CLAUDE.md holds that "a live tool
 // must have a live spec", but no CI job enforces it, so the spec drifted to
-// documenting three warnings the tool never emitted while the tool grew to 74
+// documenting three warnings the tool never emitted while the tool grew to 77
 // FamilySearch tags (issue: person-warnings spec/impl reconciliation). This is
 // that lint. Modeled on record-type-group-drift.test.ts; ADR-0008 tier 3 (Lint):
 // the prose copy cannot be eliminated because prose is what the genealogists
@@ -80,16 +80,16 @@ describe("person-warnings spec catalogue and the shipped tags agree", () => {
   // heading or a broken pattern turns every assertion below into a comparison of
   // empty sets, which passes and reads as coverage.
   it("finds the tags to compare on all three sides", () => {
-    expect(shipped.size, "ALL_WARNING_TAGS is empty or lost entries").toBe(79);
+    expect(shipped.size, "ALL_WARNING_TAGS is empty or lost entries").toBe(81);
     expect(
       catalogueTags().size,
       "no tag rows parsed from the spec's § Tag Catalogue — if its heading or " +
         "table shape changed, fix this parser rather than deleting the test",
-    ).toBe(79);
+    ).toBe(81);
     expect(
       emittedTags().size,
       "no `issueType:` emit sites parsed from person-warnings.ts",
-    ).toBe(79);
+    ).toBe(81);
   });
 
   // (1) Keeps the hand-maintained array honest: it must be exactly the tags the

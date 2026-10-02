@@ -159,9 +159,12 @@ const COHERENCE = "COHERENCE";
 // Java MobWarnings warning tags. These strings match warnings.java exactly so
 // the TS port emits the same `issueType` identifiers a Java caller would —
 // except the two `...Female45` tags below, whose cutoff we lowered from the
-// port's 55 (issue #1191).
+// port's 55 (issue #1191), and the two `...Female14` tags, which the port does
+// not have at all: Java gates the lower bound on males only, so a mother's
+// age-14 birth cleared every floor (issue #2007, via issue #1962).
 const HAS_EVENT_BEFORE_BIRTH_365_2 = "hasEventBeforeBirth365_2";
 const EARLIEST_CHILD_BIRTH_TO_BIRTH_MALE_14 = "earliestChildBirthToBirthMale14";
+const EARLIEST_CHILD_BIRTH_TO_BIRTH_FEMALE_14 = "earliestChildBirthToBirthFemale14";
 const HAS_EVENT_AFTER_DEATH_1 = "hasEventAfterDeath1";
 const HAS_AGE_RANGE_GREATER_THAN_120 = "hasAgeRangeGreaterThan120";
 const HAS_BURIAL_AFTER_DEATH_31 = "hasBurialAfterDeath31";
@@ -201,6 +204,7 @@ const RELATIVES_DEATH_RANGE_GREATER_THAN_2 = "relativesDeathRangeGreaterThan2";
 const RELATIVES_EARLIEST_CHILD_BIRTH_TO_BIRTH_12 = "relativesEarliestChildBirthToBirth12";
 const RELATIVES_HAS_EVENT_BEFORE_CHRISTENING_365_3 = "relativesHasEventBeforeChristening365_3";
 const MALE_RELATIVES_EARLIEST_CHILD_BIRTH_TO_BIRTH_14 = "maleRelativesEarliestChildBirthToBirth14";
+const FEMALE_RELATIVES_EARLIEST_CHILD_BIRTH_TO_BIRTH_14 = "femaleRelativesEarliestChildBirthToBirth14";
 const FEMALE_RELATIVES_LATEST_CHILD_BIRTH_TO_BIRTH_45 = "femaleRelativesLatestChildBirthToBirth45";
 const RELATIVES_HAS_DEATH_BEFORE_CHILD_BIRTH_365_2 = "relativesHasDeathBeforeChildBirth365_2";
 const RELATIVES_HAS_DEATH_BEFORE_CHILD_BIRTH_30_10 = "relativesHasDeathBeforeChildBirth30_10";
@@ -1346,6 +1350,42 @@ function checkEarliestChildBirthToBirthMale14(
   };
 }
 
+/** The female lower bound (issue #2007). Gender gate copied from
+ *  `checkLatestChildBirthToBirthFemale45`; the predicate and the age arithmetic are
+ *  the male check's, because that is the check sharing `earliestChildBirthToBirth`.
+ *  `checkLatestChildBirthToBirthFemale45` computes a LATEST-child age, which is the
+ *  wrong arithmetic here. Double-firing with `earliestChildBirthToBirth12` is by
+ *  design — the family already does it for the male pair. */
+function checkEarliestChildBirthToBirthFemale14(
+  mob: Mob,
+): PersonWarning | null {
+  if (mob.getGender() !== "Female") return null;
+  if (!earliestChildBirthToBirth(mob, 14)) return null;
+
+  const earliestChildBirth = earliestYearOfChildFacts(
+    mob,
+    BIRTHLIKE_FACT_TYPES,
+  );
+  const earliestBirth = earliestYearOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES);
+  // Non-null here because the predicate would have returned false otherwise.
+  const ageAtEarliestChildBirth = earliestChildBirth! - earliestBirth!;
+
+  const child = childWithEarliestYear(mob, BIRTHLIKE_FACT_TYPES);
+  const childC = relativeContribution(child, BIRTHLIKE_FACT_TYPES);
+  return {
+    scoreType: COHERENCE,
+    issueType: EARLIEST_CHILD_BIRTH_TO_BIRTH_FEMALE_14,
+    severity: "implausible",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    facts: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.facts),
+    ...(childC.relatedPersonId
+      ? { relatedPersonId: childC.relatedPersonId }
+      : {}),
+    message: `Earliest child was born when this person was at most ${ageAtEarliestChildBirth}, which is normally before motherhood age (14).`,
+  };
+}
+
 function checkHasEventAfterDeath(mob: Mob): PersonWarning | null {
   if (!hasEventAfterDeath(mob, 365)) return null;
   return {
@@ -2101,6 +2141,34 @@ function checkMaleRelativesEarliestChildBirthToBirth14(
     relatedPersonId: c.relatedPersonId,
     message:
       "A male relative of this person had a child before age 14, which is normally before fatherhood age.",
+  };
+}
+
+/** The relative-mob twin of `checkEarliestChildBirthToBirthFemale14` (issue #2007).
+ *  Every check in this family has a twin and a missing one is silent, so this is
+ *  wired in `calculateWarnings`'s relative block beside the male mirror. */
+function checkFemaleRelativesEarliestChildBirthToBirth14(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  const females = relativeMobs.filter((r) => r.getGender() === "Female");
+  const rel = females.find((r) => earliestChildBirthToBirth(r, 14));
+  if (!rel) return null;
+  const child = childWithEarliestYear(rel, BIRTHLIKE_FACT_TYPES);
+  const c = relativeMobContribution(rel, BIRTHLIKE_FACT_TYPES);
+  return {
+    scoreType: COHERENCE,
+    issueType: FEMALE_RELATIVES_EARLIEST_CHILD_BIRTH_TO_BIRTH_14,
+    severity: "implausible",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    facts: unionFactIds(
+      c.facts,
+      relativeContribution(child, BIRTHLIKE_FACT_TYPES).facts,
+    ),
+    relatedPersonId: c.relatedPersonId,
+    message:
+      "A female relative of this person had a child before age 14, which is normally before motherhood age.",
   };
 }
 
@@ -3230,6 +3298,7 @@ const BIRTH_RANGE_GREATER_THAN_3 = "birthRangeGreaterThan3";
 export const ALL_WARNING_TAGS = [
   HAS_EVENT_BEFORE_BIRTH_365_2,
   EARLIEST_CHILD_BIRTH_TO_BIRTH_MALE_14,
+  EARLIEST_CHILD_BIRTH_TO_BIRTH_FEMALE_14,
   HAS_EVENT_AFTER_DEATH_1,
   HAS_AGE_RANGE_GREATER_THAN_120,
   HAS_BURIAL_AFTER_DEATH_31,
@@ -3265,6 +3334,7 @@ export const ALL_WARNING_TAGS = [
   RELATIVES_EARLIEST_CHILD_BIRTH_TO_BIRTH_12,
   RELATIVES_HAS_EVENT_BEFORE_CHRISTENING_365_3,
   MALE_RELATIVES_EARLIEST_CHILD_BIRTH_TO_BIRTH_14,
+  FEMALE_RELATIVES_EARLIEST_CHILD_BIRTH_TO_BIRTH_14,
   FEMALE_RELATIVES_LATEST_CHILD_BIRTH_TO_BIRTH_45,
   RELATIVES_HAS_EVENT_AFTER_DEATH_1,
   RELATIVES_HAS_EVENT_BEFORE_BIRTH_365_2,
@@ -3809,6 +3879,9 @@ export function calculateWarnings(
   const w2 = checkEarliestChildBirthToBirthMale14(mergedMob);
   if (w2) warnings.push(w2);
 
+  const w2f = checkEarliestChildBirthToBirthFemale14(mergedMob);
+  if (w2f) warnings.push(w2f);
+
   const w3 = checkHasEventAfterDeath(mergedMob);
   if (w3) warnings.push(w3);
 
@@ -3925,6 +3998,12 @@ export function calculateWarnings(
     relativeMobs,
   );
   if (relEventBeforeChristening) warnings.push(relEventBeforeChristening);
+
+  const femaleRelChild14 = checkFemaleRelativesEarliestChildBirthToBirth14(
+    mergedMob,
+    relativeMobs,
+  );
+  if (femaleRelChild14) warnings.push(femaleRelChild14);
 
   const maleRelChild14 = checkMaleRelativesEarliestChildBirthToBirth14(
     mergedMob,

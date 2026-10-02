@@ -1,6 +1,6 @@
 # FamilySearch quality issues vs. `person_warnings` — coverage table
 
-**Measured 2026-09-26 against `main` at `d4ee13393`; #2727's changes to `person_warnings` (the D6 facts, the burial pairing) move no row. Updated for PR #2994, which adds four checks and corrects the rows that counted a merge-only check.** Step 2 of issue #2225: every
+**Measured 2026-09-26 against `main` at `d4ee13393`; #2727's changes to `person_warnings` (the D6 facts, the burial pairing) move no row. Updated for PR #2994, which adds four checks and corrects the rows that counted a merge-only check. The tag tally moved to 81 (53 self-checks, 28 mirrors) after `hasEventInOtherCountry`, the female lower age bound at childbirth and PR #2994's four checks shipped; the rows themselves were not re-measured, apart from the ones PR #2994 changes.** Step 2 of issue #2225: every
 FamilySearch quality `issueType` set against the `person_warnings` tag catalogue, so
 the uncovered set is counted rather than asserted. Step 3 was to add checks only for what
 this table leaves uncovered; PR #2994 added four (§ Step 3), and the rows below include them. The tally is under "The count" below.
@@ -17,10 +17,10 @@ this table leaves uncovered; PR #2994 added four (§ Step 3), and the rows below
   in [`person-quality-tool-spec.md`](specs/person-quality-tool-spec.md) § Missing-template
   fallback), and the API may add types. Those are not counted, and a live profile can
   surface one through the fallback sentence.
-- **`person_warnings` side:** the 79 tags in the § Tag Catalogue of
-  [`person-warnings-tool-spec.md`](specs/person-warnings-tool-spec.md): 52 self-checks
-  plus 27 relative mirrors. `person-warnings-spec-drift.test.ts` holds that catalogue
-  and `ALL_WARNING_TAGS` in exact agreement, so 79 is the shipped count. Not every tag
+- **`person_warnings` side:** the 81 tags in the § Tag Catalogue of
+  [`person-warnings-tool-spec.md`](specs/person-warnings-tool-spec.md): 53 self-checks
+  plus 28 relative mirrors. `person-warnings-spec-drift.test.ts` holds that catalogue
+  and `ALL_WARNING_TAGS` in exact agreement, so 81 is the shipped count. Not every tag
   fires in `person_warnings`: the catalogue marks the ones that fire only in merge mode
   (`merge_warnings`), and a verdict below counts only what `person_warnings` runs.
 - **No live profiles were read.** Every verdict comes from the template text and the
@@ -97,7 +97,7 @@ All profile-versus-source comparisons, which `person_warnings` never makes.
 | `PARTNER_DIED_TOO_YOUNG_FOR_COUPLE_RELATIONSHIP` | Covered | `hasYoungSpouse15` | yes | Ours fires at spouse death age < 15; FamilySearch's age is unpublished |
 | `CHILDREN_BORN_TOO_CLOSE` | Covered | `hasCloseChildBirthsIgnoreSimilarChildren` | yes | Ours: two non-similar children's exact births 2–240 days apart |
 | `COPARENTS_CHILDREN_BORN_TOO_CLOSE` | Covered | `hasCloseChildBirthsIgnoreSimilarChildren` | yes | Same check run on the father: the coparent's children are his |
-| `YOUNG_BIRTH` | Covered | `earliestChildBirthToBirth12`, `earliestChildBirthToBirthMale14` (+ mirrors) | yes | Thresholds 12 / male 14; FamilySearch's are unpublished |
+| `YOUNG_BIRTH` | Covered | `earliestChildBirthToBirth12`, `earliestChildBirthToBirthMale14`, `earliestChildBirthToBirthFemale14` (+ mirrors) | yes | Thresholds 12 / male 14 / female 14; FamilySearch's are unpublished |
 | `CHILD_COUNT` | Partial | `tooManyChildren18` | yes | Ours is a fixed 18; FamilySearch compares to a per-profile norm (`profileChildCount`), likely lower |
 | `OLD_DEATH` | Partial | `hasAgeRangeGreaterThan120` | yes | Ours fires above 120, as an impossibility; FamilySearch's "older than usual" is a lower norm |
 | `OLD_MARRIAGE` | Partial | `hasLateMarriage90` | yes | Same shape: our extreme vs. their norm |
@@ -204,7 +204,10 @@ PR #2994 corrects it, with the check-warnings run that needs:
 - **Six tags `person_warnings` emits had no entry:** `similarChildren`,
   `similarChildrenConflictingDates`, `similarSpouses`, `similarSpousesConflictingDates`,
   `hasCloseChildBirthsIgnoreSimilarChildren` and `hasDissimilarSpousesWithSameMarriageYear`.
-  Each now has one.
-- **Its relative-mob list names 17 tags, and that is correct.** An earlier version of this
-  section called it a discrepancy against the spec's 27. The other 10 relative mirrors fire
-  only in merge mode, which `person_warnings` never enters, and the spec now marks them.
+  Each now has one. So does each of the female lower age bound's two tags,
+  `earliestChildBirthToBirthFemale14` and `femaleRelativesEarliestChildBirthToBirth14`,
+  which shipped without an entry.
+- **Its relative-mob list names 18 tags, and that is correct.** An earlier version of this
+  section called a shorter list a discrepancy against the spec's relative mirrors, 28 now.
+  The other 10 fire only in merge mode, which `person_warnings` never enters, and the spec
+  now marks them.
