@@ -2,7 +2,7 @@
   "schema_version": 3,
   "skill": "research",
   "version": 7,
-  "released": false,
+  "released": true,
   "releasable": true,
   "invocation": "skill",
   "timestamp": "2026-10-02_10-46-28",
