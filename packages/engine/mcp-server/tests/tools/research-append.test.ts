@@ -1819,6 +1819,38 @@ describe("research_append (Phase 2)", () => {
     expect(r.ok).toBe(true);
   });
 
+  it("refuses [?] preference when corroborator is on the same record", async () => {
+    const research = phase2Research();
+    research.assertions = [
+      { ...validAssertion("a_001"), value: "Jannetje [?] van Noord", fact_type: "birth" },
+      { ...validAssertion("a_002"), value: "Tannetje van Noord", fact_type: "birth" },
+      // Same record as a_001 (both default to validAssertion's record_id) — must not count
+      { ...validAssertion("a_003"), value: "Jannetje van Noord", fact_type: "birth" },
+    ];
+    research.conflicts = [{
+      ...validConflict(),
+      id: "c_001",
+      competing_assertion_ids: ["a_001", "a_002", "a_003"],
+    }];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "conflicts",
+      op: "update",
+      entryId: "c_001",
+      fields: {
+        status: "resolved",
+        independence_analysis: "independent sources",
+        weighing_analysis: "same record agrees",
+        resolution_rationale: "corroborated by same record",
+        preferred_assertion_id: "a_001",
+      },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/uncertain reading/);
+  });
+
   it("accepts a non-[?] preference on a resolved conflict", async () => {
     const research = phase2Research();
     research.conflicts = [{ ...validConflict(), id: "c_001" }];

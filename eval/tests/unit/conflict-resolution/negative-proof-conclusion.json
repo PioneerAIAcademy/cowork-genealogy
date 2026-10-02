@@ -1,0 +1,28 @@
+{
+  "test": {
+    "id": "ut_conflict_resolution_012",
+    "skill": "conflict-resolution",
+    "name": "Proof conclusion writing request should not trigger conflict-resolution",
+    "type": "negative",
+    "description": "User asks to write up the research conclusions about Patrick Flynn's parentage. That is proof-conclusion's job. Conflict-resolution prepares evidence for a conclusion by resolving disagreements; drafting the final narrative proof summary belongs to proof-conclusion.",
+    "tags": ["near-miss", "proof-conclusion-vs-conflict-resolution", "routing"]
+  },
+
+  "input": {
+    "user_message": "Write up our conclusions about Patrick Flynn's parentage based on the evidence we've gathered.",
+    "scenario": "flynn-with-birthplace-conflict"
+  },
+
+  "negative": {
+    "correct_skill": ["proof-conclusion"],
+    "explanation": "The user wants a written proof summary synthesizing all accumulated evidence into a determination about Patrick Flynn's parentage. The SKILL.md says: 'Do NOT use when the user wants to write a conclusion (use proof-conclusion).' Conflict-resolution has already done its job (or must do it first); drafting the narrative synthesis belongs to proof-conclusion."
+  },
+
+  "judge_context": [
+    "Should route to proof-conclusion rather than starting a conflict analysis",
+    "The tell: 'write up our conclusions' is a synthesis request — the user wants a narrative output, not a conflict resolved"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
