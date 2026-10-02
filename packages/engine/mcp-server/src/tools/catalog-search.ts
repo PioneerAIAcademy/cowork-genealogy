@@ -103,6 +103,16 @@ function asArray(value: unknown): Collapsed[] {
  *  `asArray` preserves a bare-string collapse as `{ text }`, so a reader that
  *  checks only `.value` loses exactly the shape asArray went to the trouble
  *  of keeping. */
+/** Every real object in a collapsed container. Used where a bare scalar is
+ *  not a legitimate value — `source` is a block of fields, so a string there
+ *  is a malformed response, not a one-value collapse, and must not be
+ *  rendered as `{ text }` by `asArray` and then hydrated from. */
+function objectsIn(v: unknown): Collapsed[] {
+  return (Array.isArray(v) ? v : [v]).filter(
+    (x): x is Collapsed => typeof x === "object" && x !== null,
+  );
+}
+
 /** The first real object in a collapsed container. `item.source` is the
  *  PARENT of note/author/subject/film_note — all four are defended against
  *  the object-for-one / array-for-several collapse and their container was
@@ -120,11 +130,30 @@ function textOf(v: Collapsed | undefined): string | undefined {
   return str(v?.value) ?? str(v?.text);
 }
 
+/** A scalar read the collapse-safe way. `str` alone handles a bare string or
+ *  number and DROPS `{value:"x"}`, `{text:"x"}` and `["x"]` — the same shapes
+ *  every container-level reader here defends against. Every scalar taken off
+ *  a response body goes through this, so a new field cannot be half-defended
+ *  the way the seven FILM_FIELDS keys, `available_online`, `totalHits` and
+ *  `note.type` each were. */
+function scalarOf(v: unknown): string | undefined {
+  return str(v) ?? textOf(asArray(v)[0]);
+}
+
 /** A searchable input the query can actually carry: a non-blank string, or a
  *  number (film and call numbers arrive unquoted). Returns the trimmed text.
  *  The emptiness guard and `buildQuery` MUST agree on this — the guard
  *  checking presence while buildQuery checked `typeof === "string"` let
  *  `filmNumber: 568142` through to a query with no `q.*` filter at all. */
+/** A value as the caller wrote it. `JSON.stringify` renders NaN and Infinity
+ *  as the literal `null`, so `count: NaN` was refused with "count is null" —
+ *  a value the agent never sent and cannot find in its own call, which is the
+ *  lost turn stringifying was introduced to prevent. */
+function show(v: unknown): string {
+  if (typeof v === "number" && !Number.isFinite(v)) return String(v);
+  return JSON.stringify(v) ?? String(v);
+}
+
 function searchableValue(v: unknown): string | undefined {
   const text = str(v);
   return text === undefined ? undefined : text.trim() || undefined;
@@ -211,7 +240,10 @@ function itemUrlOf(identifier: unknown): string | undefined {
 }
 
 function isRslink(n: Collapsed | undefined): boolean {
-  return String(n?.type ?? "") === "RSLINK";
+  // scalarOf, not String(): `{ value: "RSLINK" }` was not recognised, which
+  // lost the href from BOTH digitalLibraryUrl and the note. Case-insensitive
+  // because the attribute is a type name, not data.
+  return (scalarOf(n?.type) ?? "").toUpperCase() === "RSLINK";
 }
 
 /** `http` or `https`, with or without `www.` — the hardcoded `https://www.`
@@ -238,17 +270,29 @@ function renderNote(n: Collapsed | undefined): string {
   return text && text !== href ? `${text} (${href})` : href;
 }
 
-function hydrateFromSource(hit: CatalogHit, source: Record<string, unknown>): void {
-  const notes = asArray(source.note);
+/** Reads across EVERY source block. The upstream's repeated-element rule
+ *  applies to `<source>` itself, so the repeated children are gathered from
+ *  all of them rather than from whichever happened to be first. */
+function hydrateFromSource(hit: CatalogHit, sources: Collapsed[]): void {
+  const across = (key: string): Collapsed[] =>
+    sources.flatMap((s) => asArray(s?.[key]));
+  const notes = across("note");
 
   // A digitized book has no film at all; its link is HTML inside an RSLINK
   // note. Extracted BEFORE `notes` is built, because which RSLINK notes were
   // consumed decides which stay. FIRST match wins: the field holds one URL.
-  for (const n of notes) {
+  // The INDEX of the note consumed, not its text. Filtering by
+  // `.includes(digitalLibraryUrl)` is a substring test, so a second, distinct
+  // library link having the first as a prefix (.../idurl/1/123 and
+  // .../idurl/1/1234 — sequential ids make that ordinary) was dropped from
+  // `notes` as well, appearing in neither field.
+  let consumed = -1;
+  for (const [i, n] of notes.entries()) {
     if (!isRslink(n)) continue;
     const m = DIGITAL_LIBRARY_RE.exec(textOf(n) ?? "");
     if (m) {
       hit.digitalLibraryUrl = m[0];
+      consumed = i;
       break;
     }
   }
@@ -264,11 +308,11 @@ function hydrateFromSource(hit: CatalogHit, source: Record<string, unknown>): vo
   // before `.value` while authors/subjects/title read `.value` first, so one
   // element carrying both spellings was read two different ways.
   hit.notes = notes
-    .filter((n) => !(isRslink(n) && textOf(n)?.includes(hit.digitalLibraryUrl ?? "\u0000")))
+    .filter((_n, i) => i !== consumed)
     .map(renderNote)
     .filter(Boolean);
-  hit.authors = asArray(source.author).map((a) => textOf(a) ?? "").filter(Boolean);
-  hit.subjects = asArray(source.subject).map((x) => textOf(x) ?? "").filter(Boolean);
+  hit.authors = across("author").map((a) => textOf(a) ?? "").filter(Boolean);
+  hit.subjects = across("subject").map((x) => textOf(x) ?? "").filter(Boolean);
 
   // One table, read once per field. Written as seven `str(x) ? {k: str(x)}`
   // spreads it named each source key twice, so a single mistyped repeat
@@ -283,10 +327,10 @@ function hydrateFromSource(hit: CatalogHit, source: Record<string, unknown>): vo
     ["text", "text"],
     ["imageStartNumber", "item_image_start_no"],
   ];
-  hit.filmNotes = asArray(source.film_note).map((f) => {
+  hit.filmNotes = across("film_note").map((f) => {
     const note: CatalogFilmNote = {};
     for (const [key, from] of FILM_FIELDS) {
-      const v = str(f?.[from]);
+      const v = scalarOf(f?.[from]);
       if (v) note[key] = v;
     }
     return note;
@@ -296,9 +340,22 @@ function hydrateFromSource(hit: CatalogHit, source: Record<string, unknown>): vo
     // same shape the unquoted-number fix closed, by a different route.
     .filter((n) => Object.keys(n).length > 0);
 
-  const online = source.available_online;
+  // Only a recognised spelling sets the field. `=== "Y"` made every other
+  // truthy value ("YES", "true", 1) assert availableOnline: FALSE — a
+  // positive claim that the item cannot be seen online, indistinguishable
+  // from a genuine "N", which stops the agent planning a visit it could have
+  // made from a desk. An unrecognised value now leaves the field absent,
+  // which reads as "not stated".
+  const online = sources.map((s) => s?.available_online).find((v) => v !== undefined);
   if (typeof online === "boolean") hit.availableOnline = online;
-  else if (str(online)) hit.availableOnline = String(online).toUpperCase() === "Y";
+  else {
+    const text = scalarOf(online)?.trim().toUpperCase();
+    if (text === "Y" || text === "YES" || text === "TRUE" || text === "1") {
+      hit.availableOnline = true;
+    } else if (text === "N" || text === "NO" || text === "FALSE" || text === "0") {
+      hit.availableOnline = false;
+    }
+  }
   hit.hydrated = true;
 }
 
@@ -319,13 +376,22 @@ export async function catalogSearchTool(
   // -1` through, where `slice(0, -1)` keeps all-but-one hit as targets and
   // mapWithConcurrency clamps -1 to ONE worker: 59 serial item calls against
   // a cap of 25, which is the degraded regime the cap exists to avoid.
+  // `?? DEFAULT` treats null as absent, so `count: null` was silently
+  // defaulted while null on every other field is refused — the asymmetry
+  // that produced both earlier wrong-answer bugs.
+  if (input.count === null || input.hydrate === null) {
+    throw new Error(
+      "count and hydrate must be whole numbers or omitted; null is neither. " +
+        "Omit the field to take its default.",
+    );
+  }
   const count = input.count ?? DEFAULT_COUNT;
   if (!Number.isInteger(count) || count < 1 || count > MAX_COUNT) {
     // JSON.stringify, not interpolation: the MCP boundary does not validate
     // against inputSchema, so `count: "10"` arrives as a string and
     // `count is 10` reads as a value that already satisfies the rule.
     throw new Error(
-      `count is ${JSON.stringify(count)}; it must be a whole number from 1 ` +
+      `count is ${show(count)}; it must be a whole number from 1 ` +
         `to ${MAX_COUNT}.`,
     );
   }
@@ -339,11 +405,24 @@ export async function catalogSearchTool(
   for (const field of QUERY_FIELDS) {
     if (input[field] !== undefined && searchableValue(input[field]) === undefined) {
       throw new Error(
-        `${field} is ${JSON.stringify(input[field])}; it must be a non-blank ` +
+        `${field} is ${show(input[field])}; it must be a non-blank ` +
           "string. The Catalog cannot carry that value, and dropping it " +
           "would silently widen the answer.",
       );
     }
+  }
+  // `exactPlace` is a boolean and is NOT in QUERY_FIELDS, so the loop above
+  // never saw it and line `if (input.exactPlace)` was a bare truthiness
+  // test: "false", "no", 0-as-a-string, [] and {} all silently turned the
+  // NARROWING filter on, answering 803 of Maine's 3,902 items as the whole
+  // set. Both prior sweeps hunted silent widening and walked past it because
+  // this one narrows.
+  if (input.exactPlace !== undefined && typeof input.exactPlace !== "boolean") {
+    throw new Error(
+      `exactPlace is ${show(input.exactPlace)}; it must be true or false. It ` +
+        "excludes subordinate jurisdictions, so a wrong value silently " +
+        "changes which holdings are counted.",
+    );
   }
   const place = searchableValue(input.standardPlace);
   if (input.exactPlace && place === undefined) {
@@ -364,7 +443,7 @@ export async function catalogSearchTool(
       input.year > MAX_YEAR)
   ) {
     throw new Error(
-      `year is ${JSON.stringify(input.year)}; it must be a whole year ` +
+      `year is ${show(input.year)}; it must be a whole year ` +
         `between ${MIN_YEAR} and ${MAX_YEAR}, not a decade, a range or a ` +
         "fraction.",
     );
@@ -372,7 +451,7 @@ export async function catalogSearchTool(
   const hydrate = input.hydrate ?? DEFAULT_HYDRATE;
   if (!Number.isInteger(hydrate) || hydrate < 0 || hydrate > MAX_HYDRATE) {
     throw new Error(
-      `hydrate is ${JSON.stringify(hydrate)}; it must be a whole number from 0 to ` +
+      `hydrate is ${show(hydrate)}; it must be a whole number from 0 to ` +
         `${MAX_HYDRATE} — each hit hydrated is an extra request, and the ` +
         "service degrades on volume.",
     );
@@ -459,8 +538,18 @@ export async function catalogSearchTool(
   let body: SearchBody;
   try {
     const parsed: unknown = await res.json();
-    if (!parsed || typeof parsed !== "object") throw new Error("not an object");
-    body = parsed as SearchBody;
+    // `typeof [] === "object"`, so an ARRAY body walked through the guard
+    // that exists to catch exactly this and answered
+    // `{ totalHits: 0, returned: 0, hits: [] }` — a clean, authoritative
+    // "the Catalog holds nothing for this place", which the agent records as
+    // negative evidence it never obtained. That is the worst output this
+    // tool can produce, so the top-level body is unwrapped like every
+    // container below it rather than merely type-tested.
+    const unwrapped = Array.isArray(parsed) ? firstObject(parsed) : parsed;
+    if (!unwrapped || typeof unwrapped !== "object") {
+      throw new Error("not an object");
+    }
+    body = unwrapped as SearchBody;
   } catch {
     throw new Error(
       "FamilySearch Catalog answered 200 with a body that is not JSON. This " +
@@ -472,9 +561,14 @@ export async function catalogSearchTool(
   // `searchHits` collapses to a bare object for a one-hit answer exactly as
   // its children do — a precise query (a film number) is the common way to
   // get one — and `.map` on it threw the whole search away.
-  const hits: CatalogHit[] = asArray(body.searchHits).map((raw) => {
-    const h = raw as SearchHit;
-    const m = h.metadataHit?.metadata ?? {};
+  const hits: CatalogHit[] = asArray(body.searchHits).map((h) => {
+    // Both containers unwrapped. These are the PARENTS of title, creator,
+    // identifier and repositoryCalls — the same relationship that made
+    // `item.source` a finding, two layers further up. Read raw, a collapsed
+    // metadataHit turned a real holding into a blank "(untitled)" row with no
+    // url, which counts toward `returned` and reads as a dead end.
+    const mh = firstObject((h as SearchHit).metadataHit);
+    const m = (firstObject(mh?.metadata) ?? {}) as Record<string, unknown>;
     // EVERY identifier is searched, not just the first: a catalogue entry
     // routinely carries external ids (an ISBN) beside its item URL, and
     // reading only [0] cost the hit its url, its id and its hydration.
@@ -500,11 +594,17 @@ export async function catalogSearchTool(
             // `title` can itself be a collapsed element ({ value: "Online" }),
             // and dropping it loses the access signal the spec calls the one
             // useful field a search hit carries.
-            .map(
-              (r) =>
-                str(r?.title) ?? textOf(asArray(r?.title)[0]) ?? textOf(r) ?? "",
-            )
-            .filter(Boolean),
+            // flatMap, not [0]: an entry listing several titles reported
+            // only the first, so an "Online" sitting behind a vault name was
+            // lost — and repositoryCalls is the access signal.
+            .flatMap((r) => {
+              const titles = asArray(r?.title)
+                .map((t) => textOf(t) ?? "")
+                .filter(Boolean);
+              if (titles.length > 0) return titles;
+              const direct = str(r?.title) ?? textOf(r);
+              return direct ? [direct] : [];
+            }),
         ),
       ],
       ...(url ? { url } : {}),
@@ -562,14 +662,26 @@ export async function catalogSearchTool(
           await r.text().catch(() => "");
           return;
         }
-        const item = (await r.json()) as { source?: Record<string, unknown> };
+        // Shape-guarded like the search leg: an Imperva 200-with-HTML on the
+        // item endpoint used to land in the catch below and report
+        // `hydrated: false`, which the contract reads as "this item has no
+        // detail". Unwrapped for the same array collapse as the search body.
+        const rawItem: unknown = await r.json();
+        const item = (Array.isArray(rawItem) ? firstObject(rawItem) : rawItem) as
+          | { source?: unknown }
+          | undefined;
+        if (!item || typeof item !== "object") return;
         // A task abandoned by the race keeps running. Without this check its
         // late result still lands on the hit AFTER the deadline, so the same
         // call returns different data depending on how the event loop was
         // scheduled. Discard anything that arrives past the budget.
         if (Date.now() >= deadline) return;
-        const src = firstObject(item.source);
-        if (src) hydrateFromSource(hit, src);
+        // EVERY source block, not just the first. `firstObject` closed the
+        // array-of-one collapse and silently dropped an array of several,
+        // taking its notes, authors, subjects and imageGroupNumbers with it —
+        // while every sibling container reads all elements through asArray.
+        const sources = objectsIn(item.source);
+        if (sources.length > 0) hydrateFromSource(hit, sources);
       } catch {
         // One bad item must not fail the search.
       }
@@ -596,7 +708,7 @@ export async function catalogSearchTool(
   // own contract types as a number. totalHits is what tells the agent its
   // query was too broad or too narrow — the number the whole spec is argued
   // in — so a contradictory one is worse than a conservative one.
-  const upstreamTotal = Number(body.totalHits);
+  const upstreamTotal = Number(scalarOf(body.totalHits) ?? body.totalHits);
   const totalHits =
     Number.isFinite(upstreamTotal) && upstreamTotal >= hits.length
       ? upstreamTotal

@@ -1031,6 +1031,207 @@ describe("catalog_search — a dropped filter is a wider answer", () => {
   });
 });
 
+describe("catalog_search — the exhaustive sweep", () => {
+  it("never answers an empty catalogue from a collapsed body", async () => {
+    // `typeof [] === "object"`, so an array body walked through the guard
+    // meant to catch exactly this and returned a clean, authoritative
+    // "the Catalog holds nothing" — negative evidence the agent never got.
+    mockFetch.mockReset();
+    mockFetch.mockImplementation(async () =>
+      json([{ totalHits: 803, searchHits: [hit("koha:1")] }]),
+    );
+    const r = await catalogSearchTool({ keywords: "x", hydrate: 0 }, LOCAL);
+    expect(r.totalHits).toBe(803);
+    expect(r.returned).toBe(1);
+  });
+
+  it("reads a hit whose metadataHit collapsed to an array", async () => {
+    // The two containers ABOVE title/creator/identifier/repositoryCalls —
+    // the same parent relationship that made item.source a finding.
+    respond(
+      {
+        totalHits: 1,
+        searchHits: [{ metadataHit: [{ metadata: {
+          title: [{ value: "Real" }],
+          identifier: { value: `${ITEM}koha:1` },
+          repositoryCalls: [],
+        } }] }],
+      },
+      { source: {} },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.hits[0].title).toBe("Real");
+    expect(r.hits[0].url).toBe(`${ITEM}koha:1`);
+    expect(r.hits[0].hydrated).toBe(true);
+  });
+
+  it.each([
+    ["{value}", { value: "1416754" }],
+    ["{text}", { text: "1416754" }],
+    ["array", ["1416754"]],
+    ["array of objects", [{ value: "1416754" }]],
+  ])("reads a film number given as %s", async (_l, filmno) => {
+    // All seven FILM_FIELDS keys were read with a bare `str()` that drops
+    // every collapse shape, so the note became {} and was then removed —
+    // "this item was never filmed", with the film sitting in the payload.
+    respond(
+      { totalHits: 1, searchHits: [hit("koha:1")] },
+      { source: { film_note: { filmno } } },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.hits[0].filmNotes?.[0].filmNumber).toBe("1416754");
+  });
+
+  it.each([
+    [{ value: "Y" }, true],
+    [["Y"], true],
+    ["YES", true],
+    ["true", true],
+    [1, true],
+    ["NO", false],
+    ["N", false],
+  ])("reads available_online %s as %s", async (raw, expected) => {
+    // `=== "Y"` made every other truthy spelling assert FALSE — a positive
+    // claim the item cannot be seen online, which stops the agent planning a
+    // visit it could have made from a desk.
+    respond(
+      { totalHits: 1, searchHits: [hit("koha:1")] },
+      { source: { available_online: raw } },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.hits[0].availableOnline).toBe(expected);
+  });
+
+  it("leaves availableOnline absent for a spelling it does not know", async () => {
+    // Absent reads as "not stated"; false is a claim.
+    respond(
+      { totalHits: 1, searchHits: [hit("koha:1")] },
+      { source: { available_online: "sometimes" } },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.hits[0].availableOnline).toBeUndefined();
+  });
+
+  it("reads totalHits that collapsed to an object", async () => {
+    respond({ totalHits: { value: 803 }, searchHits: [hit("koha:1")] }, { source: {} });
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.totalHits).toBe(803);
+  });
+
+  it("recognises an RSLINK whose type collapsed", async () => {
+    respond(
+      { totalHits: 1, searchHits: [hit("koha:1")] },
+      { source: { note: {
+        type: { value: "RSLINK" },
+        text: '<a href="https://www.familysearch.org/library/books/idurl/1/555">B</a>',
+      } } },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.hits[0].digitalLibraryUrl).toBe(
+      "https://www.familysearch.org/library/books/idurl/1/555",
+    );
+  });
+
+  it("hydrates from every source block, not just the first", async () => {
+    respond(
+      { totalHits: 1, searchHits: [hit("koha:1")] },
+      { source: [
+        { note: { text: "n1" }, film_note: { filmno: "111" } },
+        { note: { text: "n2" }, film_note: { filmno: "222" } },
+      ] },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.hits[0].notes).toEqual(["n1", "n2"]);
+    expect(r.hits[0].filmNotes?.map((f) => f.filmNumber)).toEqual(["111", "222"]);
+  });
+
+  it("keeps a second library link whose url has the first as a prefix", async () => {
+    // The filter was a substring test; sequential idurl ids make the prefix
+    // relationship ordinary, and the second note vanished from both fields.
+    const link = (n: string) => ({
+      type: "RSLINK",
+      text: `<a href="https://www.familysearch.org/library/books/idurl/1/${n}">B${n}</a>`,
+    });
+    respond(
+      { totalHits: 1, searchHits: [hit("koha:1")] },
+      { source: { note: [link("123"), link("1234")] } },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.hits[0].digitalLibraryUrl).toBe(
+      "https://www.familysearch.org/library/books/idurl/1/123",
+    );
+    expect(r.hits[0].notes).toHaveLength(1);
+    expect(r.hits[0].notes?.[0]).toContain("idurl/1/1234");
+  });
+
+  it("keeps every title a repository entry lists", async () => {
+    respond({
+      totalHits: 1,
+      searchHits: [{ metadataHit: { metadata: {
+        title: [{ value: "T" }],
+        identifier: { value: `${ITEM}koha:1` },
+        repositoryCalls: [{ title: [{ value: "Vault" }, { value: "Online" }] }],
+      } } }],
+    });
+    const r = await catalogSearchTool({ keywords: "x", hydrate: 0 }, LOCAL);
+    expect(r.hits[0].repositoryCalls).toEqual(["Vault", "Online"]);
+  });
+
+  it("falls back to (untitled) rather than shipping a hit with no title", async () => {
+    // CatalogHit.title is a required string; undefined would be dropped by
+    // JSON.stringify and cross the MCP boundary with no title key at all.
+    respond({
+      totalHits: 1,
+      searchHits: [{ metadataHit: { metadata: {
+        identifier: { value: `${ITEM}koha:1` }, repositoryCalls: [],
+      } } }],
+    });
+    const r = await catalogSearchTool({ keywords: "x", hydrate: 0 }, LOCAL);
+    expect(r.hits[0].title).toBe("(untitled)");
+  });
+
+  it("clears the expiry timer when hydration finishes early", async () => {
+    // Left pending, it holds the Node event loop open for the rest of the
+    // 50s budget after the tool has returned.
+    const clear = vi.spyOn(globalThis, "clearTimeout");
+    respond({ totalHits: 1, searchHits: [hit("koha:1")] }, { source: {} });
+    await catalogSearchTool({ keywords: "x", hydrate: 1 }, LOCAL);
+    expect(clear).toHaveBeenCalled();
+  });
+
+  it.each([
+    ["a string", "false"],
+    ["a number", 1],
+    ["an array", []],
+    ["an object", {}],
+  ])("refuses exactPlace given as %s", async (_l, value) => {
+    // The one field with no type guard: every truthy shape silently turned
+    // the NARROWING filter on, so two sweeps hunting widening walked past it.
+    await expect(
+      catalogSearchTool(
+        { standardPlace: "Maine, United States", exactPlace: value } as never,
+        LOCAL,
+      ),
+    ).rejects.toThrow(/exactPlace is .*true or false/s);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it.each(["count", "hydrate"])("refuses %s given as null", async (field) => {
+    await expect(
+      catalogSearchTool({ keywords: "x", [field]: null } as never, LOCAL),
+    ).rejects.toThrow(/null is neither/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it.each([Number.NaN, Infinity])("names %s as itself when refusing", async (v) => {
+    // JSON.stringify renders both as the literal "null", so the agent was
+    // told it sent a value it never sent.
+    await expect(
+      catalogSearchTool({ keywords: "x", count: v }, LOCAL),
+    ).rejects.toThrow(new RegExp(`count is ${String(v)}`));
+  });
+});
+
 describe("catalog_search — the digitized-book link", () => {
   const rslink = (n: number) => ({
     type: "RSLINK",

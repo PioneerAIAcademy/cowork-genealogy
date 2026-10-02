@@ -378,7 +378,10 @@ result set rather than as another page.
 | `standardPlace` present but not a usable name (object, array, blank) | names the value. It was the one field read unguarded, so the resolver's internal `s.trim is not a function` reached the agent verbatim. A number is coerced to its text, as `str` does for unquoted film numbers, and simply fails to resolve |
 | `exactPlace` without a place | refused, not dropped: `.exact` alone 400s, and silently dropping it returned the WIDER set with nothing saying so, so the agent read the hit count as an answer to the narrower question it asked |
 | `year` non-integer, or outside 1000–2200 | names the range and the value. Integrality alone is not enough: `1e21` **is** an integer and reaches the wire as `q.year=1e%2B21`, costing the same 400 as the `NaN` the guard was written for; `0` and `-1850` likewise |
+| `exactPlace` not a boolean | refused. It was the one field with no type guard, and a bare truthiness test: `"false"`, `"no"`, `[]` and `{}` all silently turned the **narrowing** filter on, answering 803 of Maine's 3,902 items as the whole set. Two sweeps hunting silent *widening* walked past it because this one narrows |
+| `count` or `hydrate` given as `null` | refused. `?? DEFAULT` treats null as absent, so these were silently defaulted while null on every other field is refused — the asymmetry both earlier wrong-answer bugs came from |
 | any `q.*` field present but not a value the query can carry | refused, never dropped. Dropping one silently WIDENS the answer: with `{ standardPlace: "Maine, United States", keywords: {} }` the keywords vanished and the agent got the top 25 of all 3,902 Maine items as the answer to "Maine + parish registers", `placeResolved: true`, nothing saying a filter had gone. An earlier fix closed only the case where every field was unusable |
+| a 200 whose body is not a JSON object, **including a top-level array** | `typeof [] === "object"`, so an array body walked through the guard written for exactly this and answered `{ totalHits: 0, returned: 0, hits: [] }` — a clean, authoritative "the Catalog holds nothing here", which an agent records as negative evidence it never obtained. The body is now unwrapped like every container inside it |
 | a 200 whose body is not a JSON object | names the Catalog and says to retry. Imperva fronts this host and answering 200 with a challenge page is ordinary for it — the thing `Accept` exists to prevent, with no fallback if it is ignored. Unguarded, the agent got `SyntaxError: Unexpected token '<'` |
 | `count` outside 1–200, or `hydrate` outside 0–25, or either non-integer | names the range and the value given. Both bounds are checked, not just the cap: `hydrate: -1` passed a one-sided `> MAX` test, and `slice(0, -1)` then kept all-but-one hit as targets while `mapWithConcurrency` clamped `-1` to **one** worker — 59 serial item calls against a cap of 25 |
 | place resolution spends the whole budget | names the place and says to retry without `standardPlace`; the alternative is a bare `timed out after 0ms` quoting the query URL |
@@ -388,6 +391,33 @@ result set rather than as another page.
 | other non-2xx from the search | `FamilySearch Catalog search failed: {status} {statusText} — {detail}`. The Catalog answers RFC7807 (`{"detail":"Validation failure","instance":"/v3/search",...}`), so `parseUpstreamErrorBody` was widened to read that shape alongside the search endpoints' `{errors:[…]}`. Every error path reads the body first, which also releases the undici socket |
 | item call fails | **not** an error — that hit returns `hydrated: false`; one bad item must not fail the search |
 | `standardPlace` does not resolve | **not** an error — falls back to `q.place` with `placeResolved: false` |
+
+### Reading a collapsed response
+
+The upstream is an XML→JSON bridge: a one-element list arrives as a bare
+object, several as an array, a text-only element as a bare scalar, and nothing
+at all when empty. **That rule applies at every level**, which is the single
+thing this tool got wrong most often — five reviews found it at a new depth
+each time, always in a node whose siblings were already defended:
+`repositoryCalls`, then `searchHits`, then `identifier`, then `title`/
+`creator`, then `item.source` (the *parent* of four defended fields), then
+`metadataHit`/`metadata` (two layers further up), the seven `film_note` keys,
+`available_online`, `totalHits`, `note.type`, and finally the top-level body
+itself.
+
+Patching them one at a time is what kept failing. There are now exactly three
+readers and every access uses one of them:
+
+| reader | for | behaviour |
+|---|---|---|
+| `asArray` | a repeated child | object → `[object]`, array → itself, bare scalar → `[{ text }]`, absent → `[]` |
+| `objectsIn` | a container where a bare scalar is malformed, not a collapse (`source`) | every real object, nothing else |
+| `scalarOf` | **every** scalar taken off a response | `str(v)`, else the text of the first collapsed element |
+
+`scalarOf` is the one that keeps a new field from being half-defended: a bare
+`str()` reads a string or a number and silently drops `{value}`, `{text}` and
+`["x"]`, which is how all seven film-note keys, `available_online` and
+`note.type` each failed while their neighbours worked.
 
 ## Tests
 
