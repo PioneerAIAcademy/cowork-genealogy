@@ -48,6 +48,8 @@ Hand it back — call no tool, analyse nothing, and return the one caller-facing
 - **One person's own data is impossible** (death before birth, a 130-year lifespan, an event after death) → `check-warnings`. That needs no source read at all.
 - **A newly found record needs its contents turned into assertions** → `record-extraction`. You evaluate what is attached; you do not extract.
 
+This check comes first: a request that is one of these is handed back here even when it names no person or only a first name.
+
 Your job is the remaining case: the sources on the profile are there, and the question is whether they belong there and whether what was indexed from them is right.
 
 ## Steps
