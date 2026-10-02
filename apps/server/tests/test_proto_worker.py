@@ -1,4 +1,4 @@
-﻿"""Offline tests for the prototype worker (apps/server/proto/worker/), D9-10 + D15.
+"""Offline tests for the prototype worker (apps/server/proto/worker/), D9-10 + D15.
 
 No Postgres, no SDK process, no model: the row writers run against a fake connection
 that records SQL; event routing runs on canned ``map_message`` outputs; the deny
