@@ -86,11 +86,9 @@ SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 DARK_SKILLS_2026_09_01 = frozenset(
     {
         "forget-and-rederive",
-        "historical-context",
         "project-status",
         "source-evaluation",
         "timeline",
-        "translation",
     }
 )
 

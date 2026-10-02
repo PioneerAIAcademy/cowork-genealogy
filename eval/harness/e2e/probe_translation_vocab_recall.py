@@ -1,8 +1,8 @@
 """Cold-recall probe: do the bundled vocabulary tables earn their place?
 
 WHY THIS EXISTS
-    The `translation` skill ships 49 reference rows in
-    `references/vocabulary-and-record-structures.md`: 22 common genealogy
+    The `translation` agent ships 49 reference rows inline in
+    `packages/engine/plugin/agents/translation.md`: 22 common genealogy
     vocabulary terms, 16 Latin church-register abbreviations, and 11 German
     abbreviations. Issue #2259 would move them to the FamilySearch wiki under
     ADR-0012. Issue #2543 asks a prior question: does the production model
@@ -63,10 +63,8 @@ VOCAB_FILE = (
     / "packages"
     / "engine"
     / "plugin"
-    / "skills"
-    / "translation"
-    / "references"
-    / "vocabulary-and-record-structures.md"
+    / "agents"
+    / "translation.md"
 )
 OUTPUT_FILE = Path(__file__).parent / "probe_translation_vocab_recall_raw.json"
 
@@ -76,9 +74,9 @@ MAX_TOKENS = 512
 
 # Sections in the order they appear in the reference file.
 _SECTION_HEADERS = {
-    "## Common Genealogy Vocabulary": "vocabulary",
-    "## Latin Abbreviations in Church Registers": "latin_abbreviations",
-    "## German Abbreviations": "german_abbreviations",
+    "### Common Genealogy Vocabulary": "vocabulary",
+    "### Latin Abbreviations in Church Registers": "latin_abbreviations",
+    "### German Abbreviations": "german_abbreviations",
 }
 
 # Rows with special grading rules (matched by term string, exact).
@@ -90,7 +88,7 @@ def _parse_vocab_file() -> list[dict[str, Any]]:
     """Parse the three table sections from VOCAB_FILE.
 
     Returns a list of row dicts, one per table row, in file order.
-    Stops collecting when it hits any ## heading not in _SECTION_HEADERS
+    Stops collecting when it hits any ### heading not in _SECTION_HEADERS
     (i.e. the Record Structure Templates section).
     """
     text = VOCAB_FILE.read_text(encoding="utf-8")

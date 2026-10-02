@@ -1,5 +1,7 @@
 """Runs the real ``worker.main()`` for test_proto_shutdown.py, with only what CI lacks
-replaced: ``prepare`` (Postgres schema, plugin agents), ``psycopg.connect`` (a fake that
+replaced: ``prepare`` (plugin agents), ``_apply_schema_once`` (the schema thread's
+attempt, which would otherwise make its own ``connect_timeout`` connect at start and
+print ``ev=harness_release`` before any shutdown), ``psycopg.connect`` (a fake that
 answers ``claim``, ``turn_completed``, ``choose_sdk_session_id`` and a last-receive close;
 the shutdown release's connect -- the one passing ``connect_timeout`` -- prints
 ``ev=harness_release``) and the attempt's body, which prints ``ev=harness_attempt`` and
@@ -75,6 +77,7 @@ async def _blocking_attempt(turn, receive_count, sdk_session_id, *, agents=None)
 
 
 worker.prepare = lambda: None
+worker._apply_schema_once = lambda dsn, **kw: []
 def _connect(*args: object, **kwargs: object) -> _Conn:
     if "connect_timeout" in kwargs:
         print(json.dumps({"ev": "harness_release"}), flush=True)
