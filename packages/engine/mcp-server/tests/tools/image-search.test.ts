@@ -429,8 +429,10 @@ describe("image_search — item / itemImage", () => {
     expect(r.imageId).toBeUndefined();
   });
 
-  it("does not read groups after the target", async () => {
+  it("ignores a failure after the target and starts no request once the target is found", async () => {
     const groups = filmGroups();
+    // G3 is already in flight when item 2 resolves; its failure must not count.
+    groups[2] = { id: "G3", status: 500 };
     groups[6] = { id: "MMXT-1", status: 500 };
     groups.push(...Array.from({ length: 10 }, (_, i) => ({ id: `LATE-${i}`, status: 500 })));
     serveFilm(groups);
@@ -554,6 +556,61 @@ describe("image_search — item / itemImage", () => {
     ).rejects.toThrow("Could not list the items of film 004528134: 403 Forbidden.");
   });
 
+  it("lowers the item path's deadline to opts.timeoutMs and says so", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      const start = Date.now();
+      mockFetch.mockImplementation(async () => {
+        vi.setSystemTime(start + 6_500);
+        throw new DOMException("The operation timed out.", "TimeoutError");
+      });
+      await expect(
+        imageSearchTool({ imageGroupNumber: "004528134", item: 5 }, LOCAL, { timeoutMs: 6_000 }),
+      ).rejects.toThrow(/gave up on film 004528134 after 6s, before listing its groups/);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps the re-login guidance when the group list answers 401", async () => {
+    serveFilm(filmGroups());
+    const inner = mockFetch.getMockImplementation()!;
+    mockFetch.mockImplementation(async (url: string, init: unknown) => {
+      if (url.endsWith("/group/TH-FILM/children")) return { ok: false, status: 401, statusText: "Unauthorized" };
+      return inner(url, init);
+    });
+    await expect(
+      imageSearchTool({ imageGroupNumber: "004528134", item: 5 }, LOCAL),
+    ).rejects.toThrow(/call the login tool to re-authenticate/);
+  });
+
+  it("keeps six requests in flight, so one slow group does not hold back the rest", async () => {
+    const groups = filmGroups();
+    groups.push(...Array.from({ length: 6 }, (_, i) => ({ id: `MORE-${i}`, images: [] as string[] })));
+    serveFilm(groups);
+    const inner = mockFetch.getMockImplementation()!;
+    let releaseG1!: () => void;
+    const g1Held = new Promise<void>((resolve) => (releaseG1 = resolve));
+    let seventhRequestedWhileG1Held = false;
+    let g1Done = false;
+    mockFetch.mockImplementation(async (url: string, init: unknown) => {
+      if (url.endsWith("/artifact/group/G1/children/names")) {
+        await g1Held;
+        g1Done = true;
+      }
+      if (url.endsWith("/artifact/group/MMXT-1/children/names") && !g1Done) {
+        seventhRequestedWhileG1Held = true;
+        releaseG1();
+      }
+      return inner(url, init);
+    });
+    setTimeout(() => releaseG1(), 2_000);
+    await expect(
+      imageSearchTool({ imageGroupNumber: "004528134", item: 99 }, LOCAL),
+    ).rejects.toThrow("film 004528134 has 6 items with images; item must be 1–6.");
+    expect(seventhRequestedWhileG1Held).toBe(true);
+  });
+
   it("coerces a numeric string", async () => {
     serveFilm(filmGroups());
     const r = await imageSearchTool(
@@ -593,7 +650,9 @@ describe("image_search — item / itemImage", () => {
   ])("rejects the misspelled address %s instead of serving the whole film", async (key, value) => {
     await expect(
       imageSearchTool({ imageGroupNumber: "004528134", [key]: value } as never, LOCAL),
-    ).rejects.toThrow(`image_search has no parameter \`${key}\``);
+    ).rejects.toThrow(
+      `image_search has no parameter \`${key}\`; to address one item use \`item\` / \`itemImage\`, or drop it to list the whole group.`,
+    );
     expect(mockFetch).not.toHaveBeenCalled();
   });
 

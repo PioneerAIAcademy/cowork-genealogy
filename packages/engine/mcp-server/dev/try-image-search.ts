@@ -26,14 +26,21 @@ if (!imageGroupNumber) {
 }
 
 const started = Date.now();
-const result = await imageSearchTool(
-  {
-    imageGroupNumber,
-    ...(item !== undefined ? { item: Number(item) } : {}),
-    ...(itemImage !== undefined ? { itemImage: Number(itemImage) } : {}),
-  },
-  LOCAL,
-);
+let result;
+try {
+  result = await imageSearchTool(
+    {
+      imageGroupNumber,
+      ...(item !== undefined ? { item: Number(item) } : {}),
+      ...(itemImage !== undefined ? { itemImage: Number(itemImage) } : {}),
+    },
+    LOCAL,
+  );
+} catch (error) {
+  console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+  console.error(`${Date.now() - started} ms`);
+  process.exit(1);
+}
 const { imageIds, ...rest } = result;
 console.log(
   JSON.stringify(

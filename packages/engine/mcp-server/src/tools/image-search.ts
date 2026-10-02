@@ -3,7 +3,6 @@ import { BROWSER_USER_AGENT } from "../constants.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { fsFetch } from "../utils/fs-fetch.js";
 import { describeFetchError } from "../utils/http.js";
-import { mapWithConcurrency } from "../utils/place-resolver.js";
 import type {
   ImageSearchInput,
   ImageSearchResult,
@@ -76,7 +75,6 @@ async function fetchApid(
 
 /** The item a bare film resolved to: its position, images and label. */
 interface ResolvedItem {
-  groupId: string;
   imageIds: string[];
   /** Entries the item's list lost to a defective response, after the retry. */
   dropped: number;
@@ -206,7 +204,8 @@ function rejectUnknownAddressKeys(input: Record<string, unknown>): void {
       typeof value === "number" || (typeof value === "string" && /^\s*\d+\s*$/.test(value));
     if (/item|image/i.test(key) || numeric) {
       throw new Error(
-        `image_search has no parameter \`${key}\`; to address one item use \`item\` / \`itemImage\`.`,
+        `image_search has no parameter \`${key}\`; to address one item use \`item\` / \`itemImage\`, ` +
+          "or drop it to list the whole group.",
       );
     }
   }
@@ -229,6 +228,7 @@ function readPositiveInteger(name: string, raw: unknown): number | undefined {
  * deadline is reported as the deadline, not as the request that ran out.
  */
 interface Clock {
+  ms: number;
   timing: () => Timing;
   expired: () => boolean;
 }
@@ -236,9 +236,10 @@ interface Clock {
 function deadline(ms: number): Clock {
   const end = Date.now() + ms;
   return {
+    ms,
     timing: () => {
       const remaining = end - Date.now();
-      if (remaining < MIN_REQUEST_MS) throw new ItemDeadlineError();
+      if (remaining < MIN_REQUEST_MS) throw new ItemDeadlineError(ms);
       return { timeoutMs: Math.min(PER_REQUEST_TIMEOUT_MS, remaining), budgetMs: remaining };
     },
     expired: () => end - Date.now() < MIN_REQUEST_MS,
@@ -246,10 +247,8 @@ function deadline(ms: number): Clock {
 }
 
 class ItemDeadlineError extends Error {
-  constructor() {
-    super(
-      `image_search gave up resolving the item after ${ITEM_DEADLINE_MS / 1000}s; try again.`,
-    );
+  constructor(ms: number) {
+    super(`image_search gave up resolving the item after ${ms / 1000}s; try again.`);
   }
 }
 
@@ -258,8 +257,8 @@ type ChildList =
   | { ok: false; deadline: boolean; error: string };
 
 /**
- * The `item`-th image-bearing child of a bare film. Image lists are fetched a
- * batch at a time and read in film order, so the walk stops at the target. A
+ * The `item`-th image-bearing child of a bare film. Image lists are fetched
+ * six at a time and read in film order, so the walk stops at the target. A
  * child at or before the target whose list was refused, failed, or came back
  * all-null makes every later position unknown, so it throws rather than being
  * counted out; a child after the target is never read.
@@ -273,7 +272,7 @@ async function resolveItem(
   const timing = clock.timing;
   const gaveUpBeforeListing = () =>
     new Error(
-      `image_search gave up on film ${imageGroupNumber} after ${ITEM_DEADLINE_MS / 1000}s, ` +
+      `image_search gave up on film ${imageGroupNumber} after ${clock.ms / 1000}s, ` +
         "before listing its groups; try again.",
     );
   let childIds: string[];
@@ -284,6 +283,11 @@ async function resolveItem(
       principal,
       timing(),
     );
+    if (response.status === 401) {
+      throw new Error(
+        "FamilySearch session not accepted; call the login tool to re-authenticate."
+      );
+    }
     if (!response.ok) {
       throw new Error(
         `Could not list the items of film ${imageGroupNumber}: ${response.status} ${response.statusText}.`,
@@ -317,29 +321,47 @@ async function resolveItem(
     }
   };
 
+  // A rolling pool of ITEM_LIST_CONCURRENCY requests, read back in film order:
+  // a slot refills as soon as any request finishes, so one slow group delays
+  // only itself, and no new request starts once the target is found.
+  const results: (ChildList | undefined)[] = new Array(childIds.length);
+  const inFlight = new Map<number, Promise<void>>();
+  let next = 0;
+  let scanned = 0;
   let position = 0;
-  for (let start = 0; start < childIds.length; start += ITEM_LIST_CONCURRENCY) {
-    const batch = childIds.slice(start, start + ITEM_LIST_CONCURRENCY);
-    const lists = await mapWithConcurrency(batch, ITEM_LIST_CONCURRENCY, readList);
-    for (const [i, list] of lists.entries()) {
-      const childId = batch[i];
+  const launch = () => {
+    const index = next++;
+    inFlight.set(
+      index,
+      readList(childIds[index]).then((list) => {
+        results[index] = list;
+        inFlight.delete(index);
+      }),
+    );
+  };
+
+  for (;;) {
+    while (scanned < childIds.length && results[scanned] !== undefined) {
+      const index = scanned++;
+      const list = results[index]!;
+      const childId = childIds[index];
       if (!list.ok) {
         if (list.deadline) {
           throw new Error(
-            `image_search gave up on film ${imageGroupNumber} after ${ITEM_DEADLINE_MS / 1000}s, ` +
-              `having read ${start + i} of its ${childIds.length} groups; try again.`,
+            `image_search gave up on film ${imageGroupNumber} after ${clock.ms / 1000}s, ` +
+              `having read ${index} of its ${childIds.length} groups; try again.`,
           );
         }
         throw new Error(
           `Could not count the items of film ${imageGroupNumber}: group ${childId} ` +
-            `(${start + i + 1} of ${childIds.length}) could not be read (${list.error}), so the ` +
+            `(${index + 1} of ${childIds.length}) could not be read (${list.error}), so the ` +
             `position of every later item is unknown.`,
         );
       }
       if (list.imageIds.length === 0 && list.dropped > 0) {
         throw new Error(
           `Could not count the items of film ${imageGroupNumber}: group ${childId} ` +
-            `(${start + i + 1} of ${childIds.length}) returned a defective image list, so the ` +
+            `(${index + 1} of ${childIds.length}) returned a defective image list, so the ` +
             `position of every later item is unknown.`,
         );
       }
@@ -347,13 +369,15 @@ async function resolveItem(
       position += 1;
       if (position === item) {
         return {
-          groupId: childId,
           imageIds: list.imageIds,
           dropped: list.dropped,
           ...(await itemLabel(imageGroupNumber, childId, position, principal, timing)),
         };
       }
     }
+    if (scanned >= childIds.length) break;
+    while (next < childIds.length && inFlight.size < ITEM_LIST_CONCURRENCY) launch();
+    await Promise.race(inFlight.values());
   }
 
   if (position === 0) {
@@ -412,7 +436,8 @@ export async function imageSearchTool(
   principal: Principal,
   /** Lower the per-attempt fetch budget. The 30s default, doubled by the
    *  defect-retry path, would spend Cowork's whole 60s call ceiling on the
-   *  resolve alone (volume-bisect-tool-spec.md §8). */
+   *  resolve alone (volume-bisect-tool-spec.md §8). With `item` it lowers the
+   *  whole item path's deadline instead, below its 45s default. */
   opts: { timeoutMs?: number } = {}
 ): Promise<ImageSearchResult> {
   if (!input.imageGroupNumber) {
@@ -438,7 +463,8 @@ export async function imageSearchTool(
         "list it without item.",
     );
   }
-  const resolved = await resolveItem(input.imageGroupNumber, item, principal, deadline(ITEM_DEADLINE_MS));
+  const itemDeadlineMs = Math.min(ITEM_DEADLINE_MS, opts.timeoutMs ?? ITEM_DEADLINE_MS);
+  const resolved = await resolveItem(input.imageGroupNumber, item, principal, deadline(itemDeadlineMs));
   if (itemImage !== undefined && resolved.dropped > 0) {
     // A list missing an image shifts every image after the gap, so a count
     // within the item cannot be trusted; the browse without itemImage can.
