@@ -4,11 +4,16 @@ import { fsFetch } from "../utils/fs-fetch.js";
 import { toSimplified } from "../utils/gedcomx-convert.js";
 import { repIdToStandardPlace } from "../utils/place-resolver.js";
 import { readStagedResults, stageSearchResults } from "../utils/results-staging.js";
+import { recordIndexFields } from "../utils/record-index-fields.js";
 import { toArk, arkToBareId, isDocumentImageArk, imageViewerUrl } from "../utils/ark.js";
 import { extractImageContextQuery } from "../utils/fs-image-fetch.js";
 import type { GedcomX, SimplifiedGedcomX } from "../types/gedcomx.js";
 import type { RecordSearchResult } from "../types/record-search.js";
-import type { RecordReadInput, RecordReadResult } from "../types/record-read.js";
+import type {
+  RecordReadInput,
+  RecordReadResult,
+  StagedRecordReadElement,
+} from "../types/record-read.js";
 
 const RECAPI_BASE =
   "https://sg30p0.familysearch.org/service/cds/recapi/records/persona";
@@ -182,6 +187,10 @@ export async function recordReadTool(
   // `{ recordId, gedcomx }` shape record_search stages, so `readFromSidecar`
   // above reads it back unchanged and `research_log_append` finalizes it with
   // `tool: "record_read"`. Best-effort: a staging failure never fails the read.
+  // Off the RAW body, not `simplified` — `toSimplified` has already dropped
+  // `fields[]` by this point.
+  const indexFields = recordIndexFields(body);
+
   if (typeof projectPath === "string" && projectPath.trim() !== "") {
     let staged: RecordReadResult["staged"];
     let stagingError: string | undefined;
@@ -191,7 +200,20 @@ export async function recordReadTool(
         tool: "record_read",
         response: {
           query: { recordId: recordId.trim() },
-          results: [{ recordId: entityId, gedcomx: simplified }],
+          // `indexFields` rides beside `gedcomx`, not inside it. `toSimplified`
+          // drops the raw `fields[]`, and that is where a census keeps which
+          // person is the head and what order the household was enumerated in —
+          // the two things the code extractor's role rule needs. Putting them on
+          // a persona instead would be a tree-schema change (CLAUDE.md) for data
+          // no tree person should carry. Omitted entirely when no persona has
+          // any, so a record type with no index fields stages what it always did.
+          results: [
+            {
+              recordId: entityId,
+              gedcomx: simplified,
+              ...(indexFields ? { indexFields } : {}),
+            },
+          ],
         },
       });
     } catch (error) {
@@ -296,10 +318,16 @@ async function readFromSidecar(
   // Validate the CALLER's id before reading the sidecar, so a 1:2:/3:1: ARK is
   // refused on this path too rather than only on the live one.
   const wanted = extractEntityId(recordId);
+  // `StagedRecordReadElement`, not `RecordSearchResult`: this path reads back
+  // BOTH shapes — a `record_search` sidecar and a `record_read` one — and only
+  // the former is a search result. The two differ by `indexFields`, which a
+  // record_read sidecar carries and a search sidecar does not, and typing the
+  // read-back as the search shape left that field unrepresented on the one path
+  // that reads it.
   const results = (await readStagedResults(
     projectPath,
     resultsRef,
-  )) as RecordSearchResult[];
+  )) as StagedRecordReadElement[];
   // Reduce each STAGED id with the lenient arkToBareId, not the validating
   // extractEntityId above. These values are stored data, not caller input: a
   // record_search sidecar carries 1:1: personas, but if one ever did not, a

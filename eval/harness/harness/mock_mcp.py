@@ -695,6 +695,36 @@ def _stage_and_compact_search_results(
         return None, response, [], ranked
 
 
+def _stage_record_read(
+    workspace: Path, args: dict[str, Any], response: dict[str, Any]
+) -> dict[str, Any]:
+    """Stage a canned live `record_read` the way `record-read.ts` does, and
+    return the response with `staged` beside the record.
+
+    The payload is production's: `{ query: { recordId }, results: [{ recordId,
+    gedcomx, indexFields? }] }` under tool `record_read`. It goes through the
+    same compiled `stageSearchResults` the search tools use. A fixture may carry
+    `indexFields` beside the GedcomX (a captured `record_read` sidecar does);
+    it is staged and kept off the inline response, which production never
+    returns it on. On a node failure the read comes back with `staged: null`
+    and a `stagingError`, matching production's best-effort staging.
+    """
+    record_id = str(args.get("recordId") or "").strip()
+    gedcomx = {k: v for k, v in response.items() if k not in ("indexFields", "staged", "imageArk")}
+    element: dict[str, Any] = {"recordId": record_id, "gedcomx": gedcomx}
+    index_fields = response.get("indexFields")
+    if isinstance(index_fields, dict) and index_fields:
+        element["indexFields"] = index_fields
+    payload = {"query": {"recordId": record_id}, "results": [element]}
+    staged, _payload, _unlogged, _ranked = _stage_and_compact_search_results(
+        workspace, "record_read", payload
+    )
+    inline = {k: v for k, v in response.items() if k != "indexFields"}
+    if staged is None:
+        return {**inline, "staged": None, "stagingError": "mock: staging the canned record failed"}
+    return {**inline, "staged": staged}
+
+
 def _unlogged_staged_handles(workspace: Path) -> list[dict[str, Any]]:
     """The staged backlog for a call that stages nothing (a nil search).
 
@@ -965,6 +995,23 @@ def create_mock_server(
                 _unlogged_staged = _unlogged_staged_handles(_workspace)
             else:
                 _unlogged_staged = []
+
+            # A LIVE record_read given a projectPath stages the record and returns
+            # `staged.resultsRef` beside it, and extraction_append's extractor mode
+            # reads that sidecar. Without this the canned read staged nothing, the
+            # extractor refused ("no results sidecar"), and every FamilySearch
+            # record in the unit suite fell back to record-extractor, so no
+            # committed run could exercise the code path. A read WITH `resultsRef`
+            # is a sidecar read and stages nothing, exactly as production.
+            if (
+                _name == "record_read"
+                and _workspace is not None
+                and "error" not in response
+                and args.get("projectPath")
+                and not args.get("resultsRef")
+                and isinstance(response.get("persons"), list)
+            ):
+                response = _stage_record_read(_workspace, args, response)
 
             # Fold in the ranking the real record_search performs when the
             # caller names a subject. Matched against the test's own

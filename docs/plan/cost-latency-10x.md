@@ -231,9 +231,11 @@ convert the skill→agent pair into a tool pair so extraction costs a tool call 
 than a spawn. It matters to this plan for one reason: at **2.10 spawns/run × ~6
 assistant messages** it is ~12.6 of 174 model calls, and turn count is the master
 variable. Its token saving is small (all record-extractor generation is **$0.218/run**),
-so do not count it toward the cost target. The evidence, the architecture and the three
-writer-tool preconditions live on that card. Related: **issue #2818** goes the other
-direction, **issue #2475** owns the precondition join, **issue #2256** the census year.
+so do not count it toward the cost target. The evidence, the architecture and the ONE
+writer-tool precondition that lives on that card (`informant_proximity: "unknown"` implies
+`information_quality: "indeterminate"`) are there. Related: **issue #2818** goes the other
+direction, and **issue #2475** owns both the precondition join and the census-year
+refusal, which moved to it from issue #2256 on 2026-09-27.
 
 ## 7. Wave 4 — the floor search
 

@@ -864,6 +864,7 @@ audit's recommendation #5):
 | Section / op | Invariant (reject if violated) | Source |
 |--------------|-------------------------------|--------|
 | `assertions` append or update, `fact_type: relationship` | **`structured_value.relationship_type` must not contradict what `value` says about the record SUBJECT.** `relationship_type` is the subject's own role and `related_person_role` is the other party's, so a death certificate naming the father is `"child"` on the deceased, not `"parent"`. The legal categories are `parent`, `child`, `spouse` and `sibling` — `sibling` included, which earlier guidance omitted, and the omission is the live defect: 5 sightings across three of the five current record-extraction run logs, every one a sister typed `child`. **Position decides whose role the value names**, and that is why two earlier guards on this field were abandoned: `child of Jim Neal` states the subject's role, while `father named as Casper` and `father: Jan Roelfs` label the other party and are skipped. Comparing relation words without regard to position refused 22 of the 37 it flagged over the e2e run logs, and 27 of 47 over the full population below — re-derivable with `measure_relationship_direction.py --counterfactual`. Unknown spellings fail open, never refused — 63 assertions across 16 spellings over the e2e run logs, 73 across 18 over the full population (`grandparent`, `ParentChild`, `administrator`, `ward`, `grandchild` are the commonest; `stepfather` and `father_in_law` occur nowhere in any of them and are not useful examples). Forward direction only, on the ops being written, so a project holding an assertion written before this rule stays writable | Refuses **21 of 2586 (0.8%)** across the e2e run logs, the unit run logs, the scenario fixtures and the hosted seed — 19 distinct assertions, since a unit log carries an id-less write op beside its persisted copy; **0** in the fixtures and **0** in the seed. All read individually, all true positives. Measured at 1d5656fe3 by `eval/harness/scripts/measure_relationship_direction.py`. ADR-0011 |
+| `assertions` append or update | **`informant_proximity: "unknown"` implies `information_quality: "indeterminate"`.** If the informant cannot be identified, neither firsthand knowledge nor its absence has been established, so the Layer-2 decision tree terminates at its first question and never reaches the primary/secondary split. **Forward only, and deliberately not a biconditional**: `indeterminate` does NOT imply `unknown` — a NAMED informant whose relationship to the specific fact cannot be established is the tree's "cannot tell" branch at a known proximity, which is the ordinary census shape, and an `iff` reading would refuse it. Fires only for the two in-enum values that claim a determination: a missing `information_quality` is `checkRequired`'s error and an out-of-enum one is `checkEnum`'s, and adding this on top would name the wrong fix — not hypothetical, `mid-research-flynn-bad-enum` a_001 is `unknown` + `tertiary` and `ut_validate_schema_004` pins the validator at exactly ONE error for it. The update arm validates the MERGED entry, which is the case the rule exists for: flipping proximity to `unknown` and leaving a stale `secondary` behind | Prose in `record-extractor.md`, and prose did not hold: the model broke it on **248 of 982** `unknown` assertions across the committed e2e corpus. Mirrored at the document tier in `validator.ts`; six scenario assertions backfilled with it |
 | `conflicts` append (fact) | ≥2 `competing_assertion_ids`; identity ≥1 | `validateResearch` (`"fact conflict requires at least 2 competing_assertion_ids"`) |
 | `conflicts` append (fact), or an update that (re)sets `competing_assertion_ids` | **no competing pair whose `place` values are in a containment relationship, when the dispute is about place** — "Ireland" and "County Cork, Ireland" are one claim at two levels of precision, not a disagreement, so the entry asserts a dispute the sources do not have. Three conditions, each load-bearing. **(a) `disputed_attribute` must name place and nothing else**, matched against an exact allow-list: the field is free text — 28 distinct values across the 102 corpus fact conflicts, including whole sentences and two compounds (`birth_year_and_birthplace`) — so a dispute about the *year* between two places in containment is a real dispute, and refusing it with a message saying they "do not disagree" is false about the axis actually in dispute. **(b) no pair may disagree at all**: `compatiblePlace` is true for EQUAL places as well as for containment, so the canonical Flynn conflict (Ireland / Ireland / Pennsylvania) has two compatible Irelands beside a Pennsylvania that genuinely disagrees. **(c) at least one pair must be a *strict* containment** — compatible with differing hierarchy depth, counted in normalized segments via `placeSegments`, which is what the comparator itself counts; a raw comma count disagrees with it in both directions ("Ireland" vs "Ireland," wrongly refused, "Cork, Ireland" vs "Ireland," wrongly allowed). A place that is blank or comma-only is "no place" and is skipped, not read as a disagreement, which would silently disable the guard for the whole entry. Reads free-text `place` because that is the value the comparator is built for and the one every assertion carries however it was authored — not because `standard_place` is empty (it is empty on the hand-authored fixtures only; `research_append` resolves and writes it itself on every assertion append carrying a place). Siblings ("Schuylkill, Pennsylvania" vs "Allegheny, Pennsylvania") are incompatible and stay allowed. Scoped to ops that set the pairing, so a conflict written before the rule existed stays editable. `conflict_type: "identity"` is out of scope | Alpha feedback 2026-08-28: the agent filed a country-vs-county pair as a birthplace dispute, and corrected itself only when the researcher pushed back. Measured cost: **0 of 37** corpus fact conflicts are refused, and 0 of the 102 fact conflicts across the wider 406-document corpus. A predicate keyed on any-compatible-pair — the first revision — refused **35 of 37** |
 | `conflicts` update → `resolved` | `independence_analysis`, `weighing_analysis`, `resolution_rationale` all set — each a **non-blank string**, trimmed, since a whitespace-only value satisfies the field and states nothing and a non-string satisfies no emptiness comparison at all; `preferred_assertion_id` ∈ `competing_assertion_ids` **when non-null**. Null is legal and load-bearing: a conflict the researcher weighed and honestly could not settle is recorded `resolved` with the three analyses, `resolution_rationale` saying why it cannot be settled and what would settle it, and no preferred assertion — a deferral is a finding (`gps-research-flow.md`, "A conflict that can't be resolved yet is written down as a finding"), and it is not `moot`, which asserts the conflict no longer matters. The completion gate below refuses on such a conflict while it stays `unresolved`, so this is the shape that clears it | audit; `validator.ts` NULLABLE set; `conflictInvariants` checks membership only under `preferred_assertion_id != null` |
@@ -1129,6 +1130,27 @@ A **warning** — never a rejection — emitted when this call's `assertions`
   several, and the one-assertion backlink would be the wrong shape for it.
 
 ---
+
+### 5.4 Transcription-without-a-page nudge (warning, not a precondition)
+
+A `sources` op that lands a non-empty `transcription` with no `image_filename`
+emits one `validation.warnings` line naming the source id and where the value
+comes from (`imageRef`, which `image_read` / `image_transcribe` return when
+called with a `projectPath`). A transcription is a claim about a page, and the
+page it came from is normally nameable.
+
+**Never a refusal**, and the reason is not squeamishness: two legitimate shapes
+reach here with no filename — a PDF capture, and an `image_transcribe` run with
+no `projectPath`, which stages nothing and so has no file to name. Refusing
+either would block correct work to catch a documentation gap.
+
+Fires on `update` as well as `append` — a transcription added later is the same
+gap — and reads the PERSISTED entry rather than the op's `fields`, so an update
+setting only `transcription` is judged against the `image_filename` already on
+disk instead of re-warning about one that is there. One line per offending
+entry, so a batch sourcing several records names each.
+
+Marked advisory in `guardrail-enforcement-spec.md`'s instrument table.
 
 ## 6. Decisions recorded
 
@@ -1527,3 +1549,224 @@ a set value on `extraction_append` waits on both sides of the commit. Nothing
 else may read them. Keep a hold well under 60 s: the CLI's MCP client times the call out at
 60,013 ms (measured, D17 2026-09-23) while the server still commits when the hold
 ends, so the agent reads a committed write as a failure and retries it.
+
+### 11.6 Extractor mode — a FamilySearch record extracted in code
+
+Supplying `logEntryId` switches `extraction_append` out of the ops form: it
+resolves the record from that log entry's sidecar, decides roles, the three
+classification layers and every assertion **in code**, and persists the source
+plus the assertions through the ordinary writer. Sending `logEntryId` and `ops`
+together is refused naming both — they describe the same write from opposite
+ends, and preferring one silently would make the ignored half invisible.
+
+**Why code.** Measured over the committed e2e corpus: across repeat runs of one
+fixture the model gives the same persona the same exact role only 62.9% of the
+time (81.8% by role class), and disagrees with itself on `record_basis` 15.6%,
+`informant_proximity` 22.6% and `information_quality` 21.4%. Code is identical
+every time.
+
+**The input must be a LIVE `record_read` sidecar.** `record_read` returns early
+through `readFromSidecar` whenever `resultsRef` is supplied, and that path stages
+nothing; only the live branch stages. And a `record_search` response populates
+`fields[]` for the **searched persona only** — every co-resident comes back with
+names and facts and nothing else, measured 1-of-6, 1-of-8 and 1-of-4 across three
+census collections against 6/6, 8/8 and 4/4 from the raw `record_read` body. A
+search sidecar therefore cannot feed a per-person role rule. Evidence:
+`packages/engine/mcp-server/dev/probe-census-persona-fields.ts`.
+
+**What that costs, stated rather than assumed.** Requiring a live read adds one
+FamilySearch round trip per record that a search had already returned. What it
+removes is a `record-extractor` spawn: about 136 s per document, 82% of it model
+reasoning, and 2.10 spawns per run across the committed corpus. The trade is
+heavily favourable — a round trip against an episode — but it is a real addition
+on a card whose warrant is turns and latency, and a reader should see both
+numbers rather than only the saving.
+
+#### The census relationship-column year table
+
+| Jurisdiction | Schedule states a relationship from |
+|---|---|
+| United States | **1880** |
+| England and Wales | **1851** |
+
+Hard-coded, by lead ruling 2026-09-27, and decided from jurisdiction and year —
+**never** from whether `PR_RELATIONSHIP_TO_HEAD` is populated. A jurisdiction not
+in the table returns `null`, and the caller treats relationships as unstated,
+which withholds assertions rather than inventing them.
+
+Reading the field's presence instead is not a near-miss, it is wrong on a real
+and common record: the **1870 US census has no relationship column, yet the
+FamilySearch index supplies `PR_RELATIONSHIP_TO_HEAD="Head"` on 8 of 8 probed
+records**. A presence-keyed rule would call 1870 a stated-relationship census and
+emit parent-child assertions the schedule never made. The converse is equally
+real — a blank indexer cell on one person of an 1880 household looks identical to
+a schedule with no column.
+
+Corroborated where the table does apply, one household per collection: the field
+is on 6/6 US-1880 personas, 4/4 E&W-1861, and 0/8 US-1850. The boundary years the
+table actually turns on — E&W 1851, E&W 1841, and 1880 from the 1870 side — rest
+on the ruling, not on that probe, which read 1861 and not 1851.
+
+#### Roles
+
+Per household, grouped by `SOURCE_HOUSEHOLD_ID_ORIG` — a record can hold more
+than one — and ordered by `FS_SORT_KEY`, then `SOURCE_PERSON_NBR_ORIG`, then
+`PR_EXT_LINE_NBR_ORIG`, then array order.
+
+`FS_SORT_KEY` is the ordering key and `SOURCE_PERSON_NBR` is not, though the
+latter is the obvious candidate: it is **absent on US 1850 and E&W 1861**, which
+are exactly the no-relationship-column schedules the positional rule exists for.
+The sort key was present on 24/24 probed households and ends in a zero-padded
+person ordinal matching `SOURCE_PERSON_NBR_ORIG` wherever both exist. **The sort
+was never observed to differ from array order** (0 of 24); it is kept because the
+issue reports array order is sometimes scrambled, which that sample neither
+reproduces nor refutes.
+
+- **Census WITH the column** — read the stated relation: Head/Self →
+  `head_of_household`, Wife → `wife`, Son/Daughter → `child_N`, Boarder →
+  `boarder_N`, otherwise the stated relation, numbered.
+- **Census WITHOUT the column** — first in order is `head_of_household`; the next
+  adult of the opposite sex sharing the head's surname with a plausible age gap is
+  `wife`; later persons with the head's surname young enough to be the couple's
+  are `child_N`; everyone else is `household_member_N`. The same tokens a later
+  census states, per the 2026-09-27 ruling. "First is the head" is measured, not
+  assumed: where a probed record stated a Head at all, it was the sort-first
+  person in 8 of 8 households.
+- **Marriage** — the Couple edge **carrying the Marriage fact** is the marrying
+  pair (a marriage record routinely states the parents' marriages too, and the
+  parents' edge is often listed first); their ParentChild edges give
+  `father_of_groom` and siblings of that form; everyone else `witness_N`.
+- **Death / burial** — principal → `deceased`; parents and grandparents from
+  edges; everyone else `other_N`.
+- **Birth / christening** — principal → `child`; parents and grandparents from
+  edges; everyone else `other_N`.
+- **Draft registration** — principal → `registrant`.
+
+`record_role` is an **open** enum, so these need no closed-enum migration; the
+`record_role_recommended` description lists them.
+
+#### Relationship assertions
+
+A census's relationship claims come from the **stated column** or from nowhere.
+Its `relationships[]` edges are the indexer's reading of household position —
+the same inference the positional rule makes — so **no census persists an edge**.
+Pre-1880 that is the no-relationship-assertion rule verbatim; on an 1880 record it stops
+the stated tie and the inferred edge being written twice for one marriage.
+
+Every relationship assertion carries `structured_value.related_person_role`, or
+`materialize_facts`' persona arm cannot corroborate it, and a
+`relationship_type` naming the **record subject's own** role — the direction
+§5's relationship row enforces.
+
+The extractor **never** emits the literal `record_role: "absent"`. Negative
+evidence is a claim about a person the record does not contain, which no document
+can supply; the caller passes `absentPersons` and those entries are built from it.
+
+#### Classification
+
+Keyed on record type × role family × fact class. Measured against the 255
+`expected_classifications` cells in the 19 unit fixtures that pin them: 249/255
+agree. **That figure is in-sample** — the table was built by reading the same
+cells the eval checks, so it states internal consistency, not predictive
+accuracy.
+
+| Record type | Fact class | informant | proximity | quality |
+|---|---|---|---|---|
+| census | residence / the census event | census enumerator | `witness` | `primary` |
+| census | everything else | unknown household member | `household_member` | `indeterminate` |
+| census | a parent's birthplace, from the parent-birthplace columns (see below) | unknown household member | `household_member` | `secondary` |
+| marriage | a party's or parent's facts | the party | `self` | `primary` |
+| marriage | a witness's facts | the witness | `witness` | `primary` |
+| death | the death event | the certifying official | `official_duty` | `primary` |
+| death | the decedent's biography | the personal informant | `family_not_present` | `secondary` |
+| burial, church register | the burial event | the officiant | `official_duty` | `primary` |
+| burial, church register | everything else | unknown | `unknown` | `indeterminate` |
+| burial, cemetery or grave index | anything | unknown | `unknown` | `indeterminate` |
+| christening | the christening event | the officiant | `official_duty` | `primary` |
+| christening | a godparent's or sponsor's facts (any non-family party) | the officiant | `official_duty` | `primary` |
+| christening | everything else | the presenting parent | `household_member` | `primary` |
+| birth | anything, the birth included | the informant (usually a parent) | `household_member` | `primary` |
+| birth, delayed (title says "Delayed") | anything | the informant | `household_member` | `secondary` |
+| **anything else** | **anything** | **unknown** | **`unknown`** | **`indeterminate`** |
+
+**Parent-birthplace columns** (genealogist ruling, 2026-09-30). A census with a
+relationship column also carries "father's birthplace" and "mother's
+birthplace" on each person's line. These are written **only when that parent
+is in the household**, as a birth-place assertion on the parent's own persona.
+They are always `secondary`, because no household respondent could have
+witnessed a parent's birth. The parent is matched from the stated relation
+alone:
+
+- a son or daughter of the head: the head, or the head's spouse, by sex;
+- the head: the member stated "father" or "mother";
+- the head's wife: the member stated "father-in-law" or "mother-in-law".
+
+Anyone else (grandchild, stepchild, boarder) writes nothing. So does a parent
+who is missing or matched more than once, and the summary says how many
+columns went unwritten. Identical claims about one parent collapse into **one**
+assertion, which names how many lines state it: repeated cells from one
+respondent are one piece of evidence. The parent's own-line birthplace is still
+written separately, so where the two disagree the record is seen disagreeing
+with itself. The captured 1880 household does exactly that: its twelve children's
+columns give the father's and mother's birthplaces the reverse way round from
+the parents' own lines.
+
+The burial rows are real rows, not the default, so neither is listed as a gap.
+A cemetery or grave index names no informant at all (a funeral director is an
+informant only on a death certificate that names one). On a church burial
+register, the officiant recorded the burial they conducted, so the event is
+theirs, as on the christening row (genealogist ruling, 2026-09-29). The two are
+told apart by collection title, in `burialSourceKind`: cemetery words win, then
+church words (`church`, `catholic`, `parish`, `diocese`, `Kirchenbücher`,
+`Burials`, …), and a title matching neither is read as an index, since `unknown`
+claims less. Over the 20 burial-typed scorer-corpus records, that gives 12
+indexes (Find a Grave 11, Chile Cemetery Records 1) and 8 registers.
+A record carrying **both** a Death and a Burial fact is typed by its collection
+title, because both shapes are common: a burial index states the death date, and
+a death certificate states the burial. 20 of the 319 role-scorer corpus records
+carry both. Find a Grave (11) and Norway Burials (2) are burial indexes, and NYC
+and Texas Deaths are death records.
+
+The census row is `household_member` and never `self` because a pre-1940 census
+does not record who answered. The christening row is never `self` because a
+christened infant cannot report.
+
+The christening and birth rows are the genealogist's rulings (2026-09-30):
+
+- **Birth vs christening.** A civil registrar recorded the birth but did not
+  witness it, so a birth record's birth comes from its informant, not the
+  official.
+- **Godparents.** They are recorded by the officiant. Every non-family party on
+  a christening takes that row, because the index does not label a godparent
+  apart from a witness.
+- **Delayed records.** A delayed birth record is recollection filed long after
+  the birth, so it is `secondary`. It is told apart by its collection title.
+  The scorer corpus holds no delayed title, so that match rests on the title
+  alone.
+
+**A defaulted row is named in the output.** Every assertion that took the last
+row rather than a real one is listed in the result and echoed into
+`validation.warnings`. This is load-bearing rather than tidy: `unknown` switches
+off `contradictionIsCredible`, so a silently-defaulted row weakens a guard on
+exactly the record types — probate, obituary, military — where the informant is
+often knowable. About 10% of corpus assertions are on types with no row today;
+genealogists add rows over time, and a missing one must show up.
+
+`record_basis` is `stated` for anything the record puts in a field. The one
+`inferred` value is a birth **year** computed from a stated age — and because
+FamilySearch folds that year and the birthplace into one `Birth` fact, the
+extractor splits them: the place is its own `stated` assertion, the year its own
+`inferred` one at `date_certainty: "approximate"`. They cannot share a basis.
+
+**`source_classification` is `derivative`, always.** What was read is
+FamilySearch's index of the record, not the schedule or register; `original`
+would claim an examination that did not happen. A researcher who then reads the
+page image has examined the original and may upgrade it — a later, evidenced
+edit, not this tool's guess.
+
+#### Return
+
+`extraction`: the record type, `censusStatesRelationships` for a census, the
+assertion count, the distinct roles assigned, and any notes. The caller never
+sees the record, so reporting the extraction is its job and `results[]` alone
+would say how many entries landed without saying what they say.
