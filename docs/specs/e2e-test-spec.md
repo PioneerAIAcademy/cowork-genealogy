@@ -1955,8 +1955,11 @@ main-stream entries — which is why the array is not chronological across agent
 filename, `agent_type` from its `meta.json`, and `is_error` from the transcript's
 own `tool_result` — so a backfilled entry carries `agent_id`/`agent_type` **even
 when its result never arrived**, unlike the main-stream "result never came" case
-above. Dedup is by `agent_id`: a synchronous subagent is already in the stream
-under its id and is never backfilled. These entries are **recorded, not
+above. Only agents the log announced as background (an `Agent`/`Task` result
+reading "Async agent launched … agentId: `<id>`") are backfilled, so a
+synchronous subagent is never backfilled, even when its stream entries carry no
+`agent_id` — which they do not when its result never arrived or its call was
+refused before the hook ran. These entries are **recorded, not
 re-scored** — the guardrail and `same_person` scanners run before the backfill,
 so a background subagent's calls land in `tool_calls` but were (and remain)
 invisible to compliance grading.

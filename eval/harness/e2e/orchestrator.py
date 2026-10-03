@@ -1394,6 +1394,14 @@ def apply_tool_result(entry: dict[str, Any], block: ToolResultBlock, summary: st
     entry["result_chars"] = _raw_result_chars(block.content)
 
 
+# The spawn announcement an `Agent`/`Task` result carries for a background
+# subagent: "Async agent launched … agentId: <id>". This is the canonical way to
+# identify a background agent — the same signal issue #3045's measurement recipe
+# uses — and the only one that distinguishes it from a synchronous agent whose
+# stream entries happen to carry no `agent_id`.
+_ASYNC_AGENT_ID = re.compile(r"Async agent launched.*?agentId:\s*([A-Za-z0-9]+)", re.S)
+
+
 def backfill_background_tool_calls(
     workspace: Path, tool_calls: list[dict[str, Any]]
 ) -> None:
@@ -1416,12 +1424,16 @@ def backfill_background_tool_calls(
     are therefore RECORDED, not re-scored; they were invisible to those scanners
     before this existed and remain so.
 
-    Dedup is by `agent_id`: a transcript whose id already appears in `tool_calls`
-    is a synchronous agent the stream captured, so it is skipped BEFORE parsing —
-    which also keeps the large synchronous transcripts from being re-read. The
-    dedup assumes a streamed subagent call always carries a truthy `agent_id`
-    (true since #1027); `agent_id` is the only key shared by transcript and stream,
-    since `tool_use_id` is popped off the final `tool_calls` entry.
+    Only agents the log ANNOUNCED as background are backfilled — those with an
+    `Agent`/`Task` result reading "Async agent launched … agentId: <id>". A
+    synchronous agent is therefore never backfilled, even when its stream entries
+    carry no `agent_id` (an entry whose result never arrived at a cap/timeout, or
+    a call to a nonexistent tool refused before the hook runs, both leave
+    `agent_id` unset — so an "already in `existing`" test alone would re-add them).
+    A transcript already present in `existing` is skipped too, before parsing,
+    which keeps the large synchronous transcripts from being re-read. If a
+    background announcement is ever absent, that agent stays missing, which is the
+    behaviour today.
 
     Backfilled entries carry `agent_id` (from the filename) and `agent_type` (from
     `meta.json`) even when the call's result never arrived — unlike the sync
@@ -1432,10 +1444,16 @@ def backfill_background_tool_calls(
     unparseable transcript leaves `tool_calls` exactly as it was.
     """
     try:
+        background = {
+            m.group(1)
+            for tc in tool_calls
+            if tc.get("tool") in ("Agent", "Task")
+            for m in _ASYNC_AGENT_ID.finditer(str(tc.get("response_summary") or ""))
+        }
         existing = {tc["agent_id"] for tc in tool_calls if tc.get("agent_id")}
         for jsonl, meta_path in find_subagent_transcripts(workspace):
             agent_id = transcript_agent_id(jsonl)
-            if agent_id is None or agent_id in existing:
+            if agent_id not in background or agent_id in existing:
                 continue
             records = parse_jsonl(jsonl, errors="replace")
             if not records:
@@ -1455,7 +1473,7 @@ def backfill_background_tool_calls(
                         "tool": raw["tool"],
                         "args": raw["args"],
                         "response_summary": (
-                            _summarize_tool_response(content)
+                            _summarize_tool_response(content, tool_name=raw["tool"])
                             if content is not None
                             else None
                         ),
