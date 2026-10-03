@@ -1,0 +1,3756 @@
+{
+  "schema_version": 3,
+  "skill": "survey-surname",
+  "version": 1,
+  "released": false,
+  "releasable": true,
+  "invocation": "skill",
+  "timestamp": "2026-10-02_16-41-45",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/agents/survey-surname.md": "df2ce77b4b5be553520ae663c4b5fd235055320ccbddd27575820f77c32e3459",
+    "eval/tests/unit/survey-surname/negative-single-person-search.json": "ec4792ae64e1a51454b8594a9bb7d42b18b21fca4c493d56572d81eb5f6334de",
+    "eval/tests/unit/survey-surname/post-1850-household-grouping.json": "65e5e2954e9022da04328440c010ed23baf08278d31fa60c510375350977e2df",
+    "eval/tests/unit/survey-surname/pre-1850-heads-only.json": "dd9259ff79adc9ac33b2da87e10ab3688f9159a1586c447b0e714882a233faf1",
+    "eval/tests/unit/survey-surname/rubric.md": "497727c8a119211ae38c3f1827410f21bd267820cb2d301c3ab79b9d75c963f9",
+    "eval/tests/unit/survey-surname/statewide-sweep.json": "8c567336c5db37d56d9f44d5a6465da2084c27aeabe94b2319b7ed1d0d627a4c",
+    "eval/tests/unit/survey-surname/year-over-threshold.json": "fc530a02d4e85c1de5baaa4a1c9262994602d33f1e5fe65d7a33d42af341e959",
+    "eval/fixtures/scenarios/mid-research-flynn/README.md": "f7020ae65e077c8a6c1a25013de7f884210cffc17fea88eae2c8b48558702ddc",
+    "eval/fixtures/scenarios/mid-research-flynn/research.json": "e3e19c382517435b52ef58c3675a0fece91d25c78b28311f7dc4e9d0cfaa2cda",
+    "eval/fixtures/scenarios/mid-research-flynn/tree.gedcomx.json": "efb4f78453dd94f4d94c6ff8d2bd16ae9519b67a6a8aa179d9e9bf41d1326d86",
+    "eval/fixtures/mcp/place-search-virginia.json": "fa1a06d5fb16643fe7f930b81affc77e7efcec89aaeab239fd97ea93862ba2cd",
+    "eval/fixtures/mcp/record-search-dixon-virginia-1820-census.json": "6f1e54eacb9378636e65c74d45b63636944390ea1dc5601bf68bb486285e8ee7",
+    "eval/fixtures/mcp/record-search-dixon-virginia-1830-census.json": "41cacbee5b195aaf6e9fe3d4e092941c1afef3366a9e2bee4f78a9aba1d472c5",
+    "eval/fixtures/mcp/record-search-dixon-virginia-1840-census.json": "aedddf18c88599e52c4d29e162557362281e748f25f33c0506ec696b5df82300",
+    "eval/fixtures/mcp/record-search-dixon-virginia-1840-census-page2.json": "3ff05abb1c2b660d5e9e7fcfa43fe099fb4233165ac462a3692ccaaed4c4d54b",
+    "eval/fixtures/mcp/record-search-dixon-virginia-1850-census.json": "fe191d45ed2cb419b0a6c62d89cffa65e4af0f431f1bd31a44b7c4b717caf7bc",
+    "eval/fixtures/mcp/record-search-dixon-virginia-1850-census-over-threshold.json": "87425b2abeb8af5485c1c4b3e5bdb2d2989ad96eaaedbb923fae7300657e79f2"
+  },
+  "tests": [
+    {
+      "test_id": "ut_survey_surname_d4",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The agent correctly identified that the request is for a single person's census record, not a surname survey. It declined to perform its own task and appropriately routed the user to the search-records skill, which is the correct tool for single-person record searches. The response is factually accurate and makes the right distinction."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The agent fully addressed the negative test requirement: it recognized the out-of-scope request and provided a clear, complete decline with appropriate routing guidance. The response 'That's a search for one person's record \u2014 please use search-records' directly explains why the request is out of scope and where to go instead."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The agent correctly declined without invoking any tools (no place_search, record_search, research_log_append, or Write calls), which is the required behavior for this negative test. N/A applies."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The agent correctly identified that the request is for a single person's census record, not a surname survey. It declined to perform its own task and appropriately routed the user to the search-records skill, which is the correct tool for single-person record searches. The response is factually accurate and makes the right distinction."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The agent fully addressed the negative test requirement: it recognized the out-of-scope request and provided a clear, complete decline with appropriate routing guidance. The response 'That's a search for one person's record \u2014 please use search-records' directly explains why the request is out of scope and where to go instead."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The agent correctly declined without invoking any tools (no place_search, record_search, research_log_append, or Write calls), which is the required behavior for this negative test. N/A applies."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 11982.512199989287,
+        "duration_api_ms": 9612.0,
+        "judge_duration_ms": 4492.666400008602,
+        "wall_clock_ms": 17238.656282424927,
+        "num_turns": 2,
+        "input_tokens": 532,
+        "cached_input_tokens": 28047,
+        "cache_creation_input_tokens": 14896,
+        "output_tokens": 228,
+        "judge_input_tokens": 6331,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 333,
+        "skill_cost_usd": 0.0680581,
+        "judge_cost_usd": 0.007996,
+        "total_cost_usd": 0.0760541
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_survey_surname_d4_2026-10-02_16-41-45_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 11982.512199989287,
+          "duration_api_ms": 9612.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 532,
+          "cached_input_tokens": 28047,
+          "cache_creation_input_tokens": 14896,
+          "output_tokens": 228,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 526,
+              "outputTokens": 18,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000616,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 6,
+              "outputTokens": 210,
+              "cacheReadInputTokens": 28047,
+              "cacheCreationInputTokens": 14896,
+              "webSearchRequests": 0,
+              "costUSD": 0.06744209999999999,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "skill_cost_usd": 0.0680581,
+          "output": {
+            "text_response": "That's a search for one person's record \u2014 please use search-records.",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Survey surname subagent delegation",
+                  "prompt": "Find Edmund Dixon's 1850 census record.\n\nprojectPath: <workspace>",
+                  "subagent_type": "survey-surname"
+                }
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "survey-surname",
+                "text": "That's a search for one person's record \u2014 please use search-records."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: missing tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_household_grouping_and_slave_schedule",
+                "passed": true,
+                "error": "skipped: not a household-grouping test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_negative_makes_no_mcp_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_negative_makes_no_write",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_paging_offsets_1840",
+                "passed": true,
+                "error": "skipped: only statewide and threshold tests exercise 1840 paging",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_positive_logs_each_search_page",
+                "passed": true,
+                "error": "skipped: only positive tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_positive_writes_table",
+                "passed": true,
+                "error": "skipped: only positive tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_threshold_year_gets_one_record_search",
+                "passed": true,
+                "error": "skipped: not a threshold test",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The agent correctly identified that the request is for a single person's census record, not a surname survey. It declined to perform its own task and appropriately routed the user to the search-records skill, which is the correct tool for single-person record searches. The response is factually accurate and makes the right distinction."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The agent fully addressed the negative test requirement: it recognized the out-of-scope request and provided a clear, complete decline with appropriate routing guidance. The response 'That's a search for one person's record \u2014 please use search-records' directly explains why the request is out of scope and where to go instead."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The agent correctly declined without invoking any tools (no place_search, record_search, research_log_append, or Write calls), which is the required behavior for this negative test. N/A applies."
+              }
+            ],
+            "judge_cost_usd": 0.007996,
+            "duration_ms": 4492.666400008602,
+            "error": null,
+            "input_tokens": 6331,
+            "cached_input_tokens": 0,
+            "output_tokens": 333
+          },
+          "started_at": 1790959410.7106998,
+          "ended_at": 1790959427.949356
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_survey_surname_d5",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [
+        "place-search-virginia",
+        "record-search-dixon-virginia-1850-census"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly identified 5 Dixon matches in Virginia 1850 census (3 population households + 1 slave schedule entry), accurately described the heads of household (Edmund, William, James) and their counties (Ohio/Wheeling, Rockingham, Augusta), and correctly noted the shared recordArk for Edmund and Mary Dixon. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill completed all required work: called place_search for Virginia, called record_search for 1850 only, logged the search with research_log_append (log_006), wrote the markdown table file, and provided a summary. All 5 results were examined and reported. No omissions of required items."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All three tool calls passed correct arguments. place_search received 'Virginia' and 'United States' (matched predicate). record_search received surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', residenceYearFrom/To both 1850, and projectPath (matched predicate). research_log_append received correct projectPath, tool name, outcome, counts, and stagedResultsRef (matched live). No fixture_not_found errors."
+          },
+          {
+            "source": "rubric",
+            "name": "Place resolution",
+            "score": 3,
+            "rationale": "The agent called place_search with 'Virginia' and 'United States', received the correct state result, and correctly mapped it to record_search parameters: recordCountry='United States' and recordSubdivision='Virginia'. The place resolution was accurate and properly scoped the census search."
+          },
+          {
+            "source": "rubric",
+            "name": "Census coverage",
+            "score": 3,
+            "rationale": "The agent called record_search once for 1850 only (residenceYearFrom=1850, residenceYearTo=1850) with recordType='census'. The year span was 1850-1850, so only one census year was required and was correctly searched. No years were missed or searched outside the span."
+          },
+          {
+            "source": "rubric",
+            "name": "Threshold compliance",
+            "score": 3,
+            "rationale": "totalMatches was 5, well under the 600 threshold. The agent fetched all results on one page (count=100, returned=5, hasMore=false) without needing to ask for county refinement. Threshold compliance does not apply as a limiting factor here, but the agent correctly handled the under-threshold case."
+          },
+          {
+            "source": "rubric",
+            "name": "Table structure",
+            "score": 3,
+            "rationale": "Per the per-test context, the agent must group Edmund Dixon (XJQV-1850-A) and Mary Dixon (XJQV-1850-B) as one household (shared recordArk 'ark:/61903/1:2:XJQV-HH1850-A'), place William and James as separate households, and put the slave schedule entry (Edmund XJQV-1850-SL) in its own sub-section. The agent wrote the file with research_log_append and Write, creating log_006 and the markdown table. The response indicates the file was written with proper sectioning by census year and collection type, with required columns (year, county, head of household, other surname members, record ARK, ruled out). All three structural requirements are met."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly identified 5 Dixon matches in Virginia 1850 census (3 population households + 1 slave schedule entry), accurately described the heads of household (Edmund, William, James) and their counties (Ohio/Wheeling, Rockingham, Augusta), and correctly noted the shared recordArk for Edmund and Mary Dixon. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill completed all required work: called place_search for Virginia, called record_search for 1850 only, logged the search with research_log_append (log_006), wrote the markdown table file, and provided a summary. All 5 results were examined and reported. No omissions of required items."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All three tool calls passed correct arguments. place_search received 'Virginia' and 'United States' (matched predicate). record_search received surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', residenceYearFrom/To both 1850, and projectPath (matched predicate). research_log_append received correct projectPath, tool name, outcome, counts, and stagedResultsRef (matched live). No fixture_not_found errors."
+          },
+          {
+            "source": "rubric",
+            "name": "Place resolution",
+            "score": 3,
+            "rationale": "The agent called place_search with 'Virginia' and 'United States', received the correct state result, and correctly mapped it to record_search parameters: recordCountry='United States' and recordSubdivision='Virginia'. The place resolution was accurate and properly scoped the census search."
+          },
+          {
+            "source": "rubric",
+            "name": "Census coverage",
+            "score": 3,
+            "rationale": "The agent called record_search once for 1850 only (residenceYearFrom=1850, residenceYearTo=1850) with recordType='census'. The year span was 1850-1850, so only one census year was required and was correctly searched. No years were missed or searched outside the span."
+          },
+          {
+            "source": "rubric",
+            "name": "Threshold compliance",
+            "score": 3,
+            "rationale": "totalMatches was 5, well under the 600 threshold. The agent fetched all results on one page (count=100, returned=5, hasMore=false) without needing to ask for county refinement. Threshold compliance does not apply as a limiting factor here, but the agent correctly handled the under-threshold case."
+          },
+          {
+            "source": "rubric",
+            "name": "Table structure",
+            "score": 3,
+            "rationale": "Per the per-test context, the agent must group Edmund Dixon (XJQV-1850-A) and Mary Dixon (XJQV-1850-B) as one household (shared recordArk 'ark:/61903/1:2:XJQV-HH1850-A'), place William and James as separate households, and put the slave schedule entry (Edmund XJQV-1850-SL) in its own sub-section. The agent wrote the file with research_log_append and Write, creating log_006 and the markdown table. The response indicates the file was written with proper sectioning by census year and collection type, with required columns (year, county, head of household, other surname members, record ARK, ruled out). All three structural requirements are met."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 41349.158400000306,
+        "duration_api_ms": 38386.0,
+        "judge_duration_ms": 11447.524400005932,
+        "wall_clock_ms": 53037.2588634491,
+        "num_turns": 2,
+        "input_tokens": 557,
+        "cached_input_tokens": 81457,
+        "cache_creation_input_tokens": 17709,
+        "output_tokens": 1779,
+        "judge_input_tokens": 10346,
+        "judge_cached_input_tokens": 4183,
+        "judge_output_tokens": 954,
+        "skill_cost_usd": 0.11792785000000001,
+        "judge_cost_usd": 0.0155343,
+        "total_cost_usd": 0.13346215
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_survey_surname_d5_2026-10-02_16-41-45_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 41349.158400000306,
+          "duration_api_ms": 38386.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 557,
+          "cached_input_tokens": 81457,
+          "cache_creation_input_tokens": 17709,
+          "output_tokens": 1779,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 547,
+              "outputTokens": 18,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000637,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 10,
+              "outputTokens": 1761,
+              "cacheReadInputTokens": 81457,
+              "cacheCreationInputTokens": 17709,
+              "webSearchRequests": 0,
+              "costUSD": 0.11729085000000002,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "skill_cost_usd": 0.11792785000000001,
+          "output": {
+            "text_response": "Here's what the survey-surname agent found:\n\n**Dixon households in Virginia \u2014 1850 Federal Census**\n\n- **3 population-schedule households** and **1 slave-schedule entry** were found across Virginia.\n\n| County | Head of Household | Notes |\n|---|---|---|\n| Ohio County | Edmund Dixon | Mary Dixon also present; also appears on slave schedule |\n| Rockingham County | William Dixon | \u2014 |\n| Augusta County | James Dixon | \u2014 |\n\n**File saved:** `surname-survey-dixon-virginia.md` in your workspace  \n**Research log:** `log_006` created\n\n**Next step:** Open the individual record ARKs on FamilySearch to confirm full household details, and mark any households that don't fit your research target in the \"Ruled Out\" column.",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__place_search",
+                "args": {
+                  "placeName": "Virginia",
+                  "contextName": "United States"
+                },
+                "expected_args": {
+                  "placeName": "~Virginia"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "place-search-virginia"
+              },
+              {
+                "tool": "mcp__genealogy__record_search",
+                "args": {
+                  "surname": "Dixon",
+                  "recordType": "census",
+                  "recordCountry": "United States",
+                  "recordSubdivision": "Virginia",
+                  "residenceYearFrom": 1850,
+                  "residenceYearTo": 1850,
+                  "count": 100,
+                  "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d5-0-0-47rj5xll"
+                },
+                "expected_args": {
+                  "surname": "~Dixon",
+                  "residenceYearFrom": 1850,
+                  "residenceYearTo": 1850
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "record-search-dixon-virginia-1850-census",
+                "response": {
+                  "query": {
+                    "surname": "Dixon",
+                    "recordType": "census",
+                    "recordCountry": "United States",
+                    "recordSubdivision": "Virginia",
+                    "residenceYearFrom": 1850,
+                    "residenceYearTo": 1850,
+                    "count": 100,
+                    "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d5-0-0-47rj5xll"
+                  },
+                  "totalMatches": 5,
+                  "paginationCappedAt": 4999,
+                  "returned": 5,
+                  "offset": 0,
+                  "hasMore": false,
+                  "rankingSkipped": "No `subjectId`, so match-score ranking and marriage jurisdiction hints did not run. Pass the tree person this search is about as `subjectId` to enable both. Omit it only when the search is not about a specific tree person \u2014 a broad survey, or a person not yet in the tree.",
+                  "results": [
+                    {
+                      "personId": "XJQV-1850-A",
+                      "recordId": "XJQV-1850-A",
+                      "personName": "Edmund Dixon",
+                      "score": 0.92,
+                      "sex": "Male",
+                      "birthDate": "1810",
+                      "birthPlace": "Virginia",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1850",
+                          "place": "Wheeling, Ohio, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1401638",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1850-A",
+                      "primaryId": "P1"
+                    },
+                    {
+                      "personId": "XJQV-1850-B",
+                      "recordId": "XJQV-1850-B",
+                      "personName": "Mary Dixon",
+                      "score": 0.89,
+                      "sex": "Female",
+                      "birthDate": "1815",
+                      "birthPlace": "Virginia",
+                      "role": "Other",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1850",
+                          "place": "Wheeling, Ohio, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1401638",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1850-A",
+                      "primaryId": "P2"
+                    },
+                    {
+                      "personId": "XJQV-1850-C",
+                      "recordId": "XJQV-1850-C",
+                      "personName": "William Dixon",
+                      "score": 0.85,
+                      "sex": "Male",
+                      "birthDate": "1820",
+                      "birthPlace": "Virginia",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1850",
+                          "place": "Rockingham, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1401638",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1850-C",
+                      "primaryId": "P1"
+                    },
+                    {
+                      "personId": "XJQV-1850-D",
+                      "recordId": "XJQV-1850-D",
+                      "personName": "James Dixon",
+                      "score": 0.82,
+                      "sex": "Male",
+                      "birthDate": "1825",
+                      "birthPlace": "Virginia",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1850",
+                          "place": "Augusta, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1401638",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1850-D",
+                      "primaryId": "P1"
+                    },
+                    {
+                      "personId": "XJQV-1850-SL",
+                      "recordId": "XJQV-1850-SL",
+                      "personName": "Edmund Dixon",
+                      "score": 0.78,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1850",
+                          "place": "Ohio, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1420440",
+                      "recordArk": "ark:/61903/1:2:XJQV-SL1850-A",
+                      "primaryId": "P1"
+                    }
+                  ],
+                  "collections": {
+                    "1401638": "United States Census, 1850",
+                    "1420440": "United States Census (Slave Schedule), 1850"
+                  },
+                  "staged": {
+                    "resultsRef": "results/.staging/7ac4caa9-9fab-48f7-b330-d844ee3babb2.json",
+                    "returnedCount": 5
+                  }
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_log_append",
+                "args": {
+                  "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d5-0-0-47rj5xll",
+                  "tool": "record_search",
+                  "outcome": "positive",
+                  "resultsExamined": 5,
+                  "resultsAvailable": 5,
+                  "stagedResultsRef": "results/.staging/7ac4caa9-9fab-48f7-b330-d844ee3babb2.json",
+                  "notes": "Surveyed Dixon in Virginia 1850 census: 5 total matches, page 1. Includes 4 population schedule households and 1 slave schedule entry."
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_log_append",
+                "response": {
+                  "ok": true,
+                  "logId": "log_006",
+                  "performed": "2026-10-02T16:43:37.334Z",
+                  "resultsRef": "results/log_006.json",
+                  "returnedCount": 5,
+                  "filesWritten": [
+                    "research.json",
+                    "results/log_006.json"
+                  ],
+                  "validation": {
+                    "valid": true,
+                    "warnings": []
+                  }
+                }
+              }
+            ],
+            "files_created": [
+              "results/log_006.json",
+              "surname-survey-dixon-virginia.md"
+            ],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Survey Dixon households in Virginia 1850 census",
+                  "prompt": "List every Dixon household in the Virginia 1850 census.\n\nsurname: Dixon\nplace: Virginia\nyearSpan: 1850-1850\nprojectPath: <workspace>",
+                  "subagent_type": "survey-surname"
+                }
+              },
+              {
+                "tool": "Write",
+                "args": {
+                  "file_path": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d5-0-0-47rj5xll\\surname-survey-dixon-virginia.md",
+                  "content": "# Dixon Surname Survey \u2014 Virginia, 1850 Census\n\n## 1850 \u2014 United States Census, 1850 (collection 1401638)\n\n| Census Year | County | Head of Household | Other Dixon Members (birth year) | Record ARK | "
+                },
+                "agent_id": "a1368bb4c69cb35b0"
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "survey-surname",
+                "text": "- Place surveyed: Virginia, United States\n- 1850: 5 matches \u2014 3 population-schedule households, 1 slave-schedule entry\n- File written: `C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d5-0-0-47rj5xll\\surname-survey-dixon-virginia.md`\n- Log id created: log_006\n- Next step: review the table and mark any households to rule out, then open the individual record ARKs on FamilySearch to confirm members and county details\n\n---\n\nFederal census records for the surname Dixon in Virginia were searched for the year 1850, covering both the population schedule (which names all household members) and the slave schedule (which names slaveholders). Three Dixon households turned up in the population census \u2014 one headed by Edmund Dixon in Ohio County with Mary Dixon also present, one headed by William Dixon in Rockingham County, and one headed by James Dixon in Augusta County. A separate slave schedule entry also names an Edmund Dixon in Ohio County. The table lists each household with its county, the head of household, any other Dixon members found on the same record, and the record identifier.\n\nThe next step is to open the individual records on FamilySearch to confirm full household details, and to mark any households that do not fit your research target in the \"Ruled Out\" column."
+              }
+            ],
+            "file_changes": {
+              "research.json": {
+                "sections_modified": [
+                  "log"
+                ],
+                "diff": {
+                  "log": {
+                    "added": [
+                      {
+                        "id": "log_006",
+                        "plan_item_id": null,
+                        "performed": "2026-10-02T16:43:37.334Z",
+                        "tool": "record_search",
+                        "query": {
+                          "surname": "Dixon",
+                          "recordType": "census",
+                          "recordCountry": "United States",
+                          "recordSubdivision": "Virginia",
+                          "residenceYearFrom": 1850,
+                          "residenceYearTo": 1850,
+                          "count": 100
+                        },
+                        "outcome": "positive",
+                        "results_examined": 5,
+                        "external_site": null,
+                        "results_ref": "results/log_006.json",
+                        "results_available": 5,
+                        "notes": "Surveyed Dixon in Virginia 1850 census: 5 total matches, page 1. Includes 4 population schedule households and 1 slave schedule entry."
+                      }
+                    ],
+                    "modified": [],
+                    "deleted": []
+                  }
+                }
+              }
+            },
+            "warnings": [
+              {
+                "kind": "prose_observation",
+                "check": "report_no_internal_identifiers_in_response",
+                "observation": "internal identifiers in the reply: log_006"
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_household_grouping_and_slave_schedule",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_negative_makes_no_mcp_calls",
+                "passed": true,
+                "error": "skipped: only negative tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_negative_makes_no_write",
+                "passed": true,
+                "error": "skipped: only negative tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_paging_offsets_1840",
+                "passed": true,
+                "error": "skipped: only statewide and threshold tests exercise 1840 paging",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_positive_logs_each_search_page",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_positive_writes_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_threshold_year_gets_one_record_search",
+                "passed": true,
+                "error": "skipped: not a threshold test",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly identified 5 Dixon matches in Virginia 1850 census (3 population households + 1 slave schedule entry), accurately described the heads of household (Edmund, William, James) and their counties (Ohio/Wheeling, Rockingham, Augusta), and correctly noted the shared recordArk for Edmund and Mary Dixon. No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill completed all required work: called place_search for Virginia, called record_search for 1850 only, logged the search with research_log_append (log_006), wrote the markdown table file, and provided a summary. All 5 results were examined and reported. No omissions of required items."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "All three tool calls passed correct arguments. place_search received 'Virginia' and 'United States' (matched predicate). record_search received surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', residenceYearFrom/To both 1850, and projectPath (matched predicate). research_log_append received correct projectPath, tool name, outcome, counts, and stagedResultsRef (matched live). No fixture_not_found errors."
+              },
+              {
+                "source": "rubric",
+                "name": "Place resolution",
+                "score": 3,
+                "rationale": "The agent called place_search with 'Virginia' and 'United States', received the correct state result, and correctly mapped it to record_search parameters: recordCountry='United States' and recordSubdivision='Virginia'. The place resolution was accurate and properly scoped the census search."
+              },
+              {
+                "source": "rubric",
+                "name": "Census coverage",
+                "score": 3,
+                "rationale": "The agent called record_search once for 1850 only (residenceYearFrom=1850, residenceYearTo=1850) with recordType='census'. The year span was 1850-1850, so only one census year was required and was correctly searched. No years were missed or searched outside the span."
+              },
+              {
+                "source": "rubric",
+                "name": "Threshold compliance",
+                "score": 3,
+                "rationale": "totalMatches was 5, well under the 600 threshold. The agent fetched all results on one page (count=100, returned=5, hasMore=false) without needing to ask for county refinement. Threshold compliance does not apply as a limiting factor here, but the agent correctly handled the under-threshold case."
+              },
+              {
+                "source": "rubric",
+                "name": "Table structure",
+                "score": 3,
+                "rationale": "Per the per-test context, the agent must group Edmund Dixon (XJQV-1850-A) and Mary Dixon (XJQV-1850-B) as one household (shared recordArk 'ark:/61903/1:2:XJQV-HH1850-A'), place William and James as separate households, and put the slave schedule entry (Edmund XJQV-1850-SL) in its own sub-section. The agent wrote the file with research_log_append and Write, creating log_006 and the markdown table. The response indicates the file was written with proper sectioning by census year and collection type, with required columns (year, county, head of household, other surname members, record ARK, ruled out). All three structural requirements are met."
+              }
+            ],
+            "judge_cost_usd": 0.0155343,
+            "duration_ms": 11447.524400005932,
+            "error": null,
+            "input_tokens": 10346,
+            "cached_input_tokens": 4183,
+            "output_tokens": 954
+          },
+          "started_at": 1790959397.1237524,
+          "ended_at": 1790959450.1610112
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_survey_surname_d2",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [
+        "place-search-virginia",
+        "record-search-dixon-virginia-1820-census"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly identified three Dixon households in the 1820 Virginia census (William Dixon in Rockingham, James Dixon in Augusta, Thomas Dixon in Fairfax). The place_search and record_search calls were properly executed with correct parameters. The response accurately reflects the tool results: totalMatches of 3, all results returned on one page (hasMore: false), and the correct collection title (United States Census, 1820). No fabricated claims about household members beyond the heads of household, which is appropriate for pre-1850 census data that only records heads of household by name."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill completed all required tasks: called place_search for Virginia, called record_search for the 1820 census year only, logged the search with research_log_append (log_006 created), and wrote a markdown table file. The response addressed the full scope of the delegation: surveying all Dixon families in Virginia for 1820. All three households found were included in the output. The next-step guidance (review and mark ruled-out households) is appropriate and complete."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All three tool calls passed arguments matching the fixture's expected_args. place_search received placeName: 'Virginia' and contextName: 'United States' (expected ~Virginia). record_search received surname: 'Dixon', recordType: 'census', residenceYearFrom: 1820, residenceYearTo: 1820, recordCountry: 'United States', recordSubdivision: 'Virginia', and projectPath (all matching expected args). research_log_append received correct query parameters and staging reference. No fixture_not_found errors occurred. All critical identifiers and parameters were correct."
+          },
+          {
+            "source": "rubric",
+            "name": "Place resolution",
+            "score": 3,
+            "rationale": "The agent called place_search with 'Virginia' and 'United States' as context, receiving the standardPlace result 'Virginia, United States' with type 'State'. This result was correctly mapped to record_search parameters: recordCountry set to 'United States' and recordSubdivision set to 'Virginia'. The place resolution was accurate and properly scoped the census search to the state level as required."
+          },
+          {
+            "source": "rubric",
+            "name": "Census coverage",
+            "score": 3,
+            "rationale": "The agent called record_search exactly once for the 1820 census year, which is the only year in the requested span (1820-1820). The call used residenceYearFrom: 1820 and residenceYearTo: 1820, with recordType: 'census'. This matches the requirement for year-by-year census calls within the delegation's span. No additional years were searched, and the single year was correctly targeted."
+          },
+          {
+            "source": "rubric",
+            "name": "Threshold compliance",
+            "score": 3,
+            "rationale": "The record_search returned totalMatches: 3, which is well under the 600 per-year threshold. The agent correctly fetched all results on a single page (returned: 3, hasMore: false) without attempting additional pagination. No threshold violation occurred, and the agent appropriately handled the under-threshold result by including all households in the output without asking for county-level refinement."
+          },
+          {
+            "source": "rubric",
+            "name": "Table structure",
+            "score": 3,
+            "rationale": "The agent wrote a markdown file (surname-survey-dixon-virginia.md) with a table sectioned by census year (1820). The response indicates three households were included with the required information: census year, county (Rockingham, Augusta, Fairfax), head of household (William Dixon, James Dixon, Thomas Dixon), and record ARK values from the tool results. The per-test context confirms that if the Write call is present with proper column headers and a 1820 section, Table structure scores 3. The file was written and the response confirms the table structure meets requirements."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly identified three Dixon households in the 1820 Virginia census (William Dixon in Rockingham, James Dixon in Augusta, Thomas Dixon in Fairfax). The place_search and record_search calls were properly executed with correct parameters. The response accurately reflects the tool results: totalMatches of 3, all results returned on one page (hasMore: false), and the correct collection title (United States Census, 1820). No fabricated claims about household members beyond the heads of household, which is appropriate for pre-1850 census data that only records heads of household by name."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill completed all required tasks: called place_search for Virginia, called record_search for the 1820 census year only, logged the search with research_log_append (log_006 created), and wrote a markdown table file. The response addressed the full scope of the delegation: surveying all Dixon families in Virginia for 1820. All three households found were included in the output. The next-step guidance (review and mark ruled-out households) is appropriate and complete."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All three tool calls passed arguments matching the fixture's expected_args. place_search received placeName: 'Virginia' and contextName: 'United States' (expected ~Virginia). record_search received surname: 'Dixon', recordType: 'census', residenceYearFrom: 1820, residenceYearTo: 1820, recordCountry: 'United States', recordSubdivision: 'Virginia', and projectPath (all matching expected args). research_log_append received correct query parameters and staging reference. No fixture_not_found errors occurred. All critical identifiers and parameters were correct."
+          },
+          {
+            "source": "rubric",
+            "name": "Place resolution",
+            "score": 3,
+            "rationale": "The agent called place_search with 'Virginia' and 'United States' as context, receiving the standardPlace result 'Virginia, United States' with type 'State'. This result was correctly mapped to record_search parameters: recordCountry set to 'United States' and recordSubdivision set to 'Virginia'. The place resolution was accurate and properly scoped the census search to the state level as required."
+          },
+          {
+            "source": "rubric",
+            "name": "Census coverage",
+            "score": 3,
+            "rationale": "The agent called record_search exactly once for the 1820 census year, which is the only year in the requested span (1820-1820). The call used residenceYearFrom: 1820 and residenceYearTo: 1820, with recordType: 'census'. This matches the requirement for year-by-year census calls within the delegation's span. No additional years were searched, and the single year was correctly targeted."
+          },
+          {
+            "source": "rubric",
+            "name": "Threshold compliance",
+            "score": 3,
+            "rationale": "The record_search returned totalMatches: 3, which is well under the 600 per-year threshold. The agent correctly fetched all results on a single page (returned: 3, hasMore: false) without attempting additional pagination. No threshold violation occurred, and the agent appropriately handled the under-threshold result by including all households in the output without asking for county-level refinement."
+          },
+          {
+            "source": "rubric",
+            "name": "Table structure",
+            "score": 3,
+            "rationale": "The agent wrote a markdown file (surname-survey-dixon-virginia.md) with a table sectioned by census year (1820). The response indicates three households were included with the required information: census year, county (Rockingham, Augusta, Fairfax), head of household (William Dixon, James Dixon, Thomas Dixon), and record ARK values from the tool results. The per-test context confirms that if the Write call is present with proper column headers and a 1820 section, Table structure scores 3. The file was written and the response confirms the table structure meets requirements."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 78378.4530999983,
+        "duration_api_ms": 72952.0,
+        "judge_duration_ms": 12294.183199992403,
+        "wall_clock_ms": 91754.87565994263,
+        "num_turns": 2,
+        "input_tokens": 557,
+        "cached_input_tokens": 80753,
+        "cache_creation_input_tokens": 17328,
+        "output_tokens": 1763,
+        "judge_input_tokens": 9761,
+        "judge_cached_input_tokens": 4183,
+        "judge_output_tokens": 1067,
+        "skill_cost_usd": 0.11604790000000001,
+        "judge_cost_usd": 0.015514300000000002,
+        "total_cost_usd": 0.13156220000000002
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_survey_surname_d2_2026-10-02_16-41-45_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 78378.4530999983,
+          "duration_api_ms": 72952.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 557,
+          "cached_input_tokens": 80753,
+          "cache_creation_input_tokens": 17328,
+          "output_tokens": 1763,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 547,
+              "outputTokens": 18,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000637,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 10,
+              "outputTokens": 1745,
+              "cacheReadInputTokens": 80753,
+              "cacheCreationInputTokens": 17328,
+              "webSearchRequests": 0,
+              "costUSD": 0.11541090000000001,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "skill_cost_usd": 0.11604790000000001,
+          "output": {
+            "text_response": "The survey-surname agent found **3 Dixon households** in the Virginia 1820 census:\n\n| Head of Household | County |\n|---|---|\n| William Dixon | Rockingham |\n| James Dixon | Augusta |\n| Thomas Dixon | Fairfax |\n\nA summary file has been written to `surname-survey-dixon-virginia.md` in the workspace, and a research log entry was created (`log_006`).\n\n**Note:** The 1820 census only recorded the head of household by name \u2014 no other family members are named in the records.\n\n**Next step:** Review these three households and rule out any that don't fit your research target, or broaden the year span if you need more coverage.",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__place_search",
+                "args": {
+                  "placeName": "Virginia",
+                  "contextName": "United States"
+                },
+                "expected_args": {
+                  "placeName": "~Virginia"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "place-search-virginia"
+              },
+              {
+                "tool": "mcp__genealogy__record_search",
+                "args": {
+                  "surname": "Dixon",
+                  "recordType": "census",
+                  "recordCountry": "United States",
+                  "recordSubdivision": "Virginia",
+                  "residenceYearFrom": 1820,
+                  "residenceYearTo": 1820,
+                  "count": 100,
+                  "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d2-0-0-akly_94e"
+                },
+                "expected_args": {
+                  "surname": "~Dixon",
+                  "residenceYearFrom": 1820,
+                  "residenceYearTo": 1820
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "record-search-dixon-virginia-1820-census",
+                "response": {
+                  "query": {
+                    "surname": "Dixon",
+                    "recordType": "census",
+                    "recordCountry": "United States",
+                    "recordSubdivision": "Virginia",
+                    "residenceYearFrom": 1820,
+                    "residenceYearTo": 1820,
+                    "count": 100,
+                    "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d2-0-0-akly_94e"
+                  },
+                  "totalMatches": 3,
+                  "paginationCappedAt": 4999,
+                  "returned": 3,
+                  "offset": 0,
+                  "hasMore": false,
+                  "rankingSkipped": "No `subjectId`, so match-score ranking and marriage jurisdiction hints did not run. Pass the tree person this search is about as `subjectId` to enable both. Omit it only when the search is not about a specific tree person \u2014 a broad survey, or a person not yet in the tree.",
+                  "results": [
+                    {
+                      "personId": "XJQV-1820-A",
+                      "recordId": "XJQV-1820-A",
+                      "personName": "William Dixon",
+                      "score": 0.88,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1820",
+                          "place": "Rockingham, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1803958",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1820-A"
+                    },
+                    {
+                      "personId": "XJQV-1820-B",
+                      "recordId": "XJQV-1820-B",
+                      "personName": "James Dixon",
+                      "score": 0.85,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1820",
+                          "place": "Augusta, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1803958",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1820-B"
+                    },
+                    {
+                      "personId": "XJQV-1820-C",
+                      "recordId": "XJQV-1820-C",
+                      "personName": "Thomas Dixon",
+                      "score": 0.82,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1820",
+                          "place": "Fairfax, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1803958",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1820-C"
+                    }
+                  ],
+                  "collections": {
+                    "1803958": "United States Census, 1820"
+                  },
+                  "staged": {
+                    "resultsRef": "results/.staging/8465cefd-3cbf-4c35-ad0f-525cc224a544.json",
+                    "returnedCount": 3
+                  }
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_log_append",
+                "args": {
+                  "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d2-0-0-akly_94e",
+                  "tool": "record_search",
+                  "query": {
+                    "surname": "Dixon",
+                    "recordType": "census",
+                    "residenceYearFrom": 1820,
+                    "residenceYearTo": 1820,
+                    "recordCountry": "United States",
+                    "recordSubdivision": "Virginia"
+                  },
+                  "outcome": "positive",
+                  "resultsExamined": 3,
+                  "resultsAvailable": 3,
+                  "stagedResultsRef": "results/.staging/8465cefd-3cbf-4c35-ad0f-525cc224a544.json",
+                  "notes": "Surveyed Dixon in Virginia 1820 census: 3 total matches, page 1."
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_log_append",
+                "response": {
+                  "ok": true,
+                  "logId": "log_006",
+                  "performed": "2026-10-02T16:42:33.613Z",
+                  "resultsRef": "results/log_006.json",
+                  "returnedCount": 3,
+                  "filesWritten": [
+                    "research.json",
+                    "results/log_006.json"
+                  ],
+                  "validation": {
+                    "valid": true,
+                    "warnings": []
+                  }
+                }
+              }
+            ],
+            "files_created": [
+              "results/log_006.json",
+              "surname-survey-dixon-virginia.md"
+            ],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Survey Dixon families in Virginia 1820 census",
+                  "prompt": "Find all Dixon families in the Virginia 1820 census.\n\nsurname: Dixon\nplace: Virginia\nyearSpan: 1820-1820\nprojectPath: <workspace>",
+                  "subagent_type": "survey-surname"
+                }
+              },
+              {
+                "tool": "Write",
+                "args": {
+                  "file_path": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d2-0-0-akly_94e\\surname-survey-dixon-virginia.md",
+                  "content": "# Surname Survey: Dixon in Virginia\n\n**Surname:** Dixon\n**Place:** Virginia, United States\n**Census years covered:** 1820\n**Survey date:** 2026-10-02\n\n---\n\n## 1820 Census\n\n### United States Census, 18"
+                },
+                "agent_id": "a3f0accf91a6ec4f3"
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "survey-surname",
+                "text": "Place surveyed: Virginia, United States. Census year: 1820.\n1820: 3 households found \u2014 William Dixon (Rockingham), James Dixon (Augusta), Thomas Dixon (Fairfax).\nFile written: `C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d2-0-0-akly_94e\\surname-survey-dixon-virginia.md`\nLog ID created: log_006\nNext step: review the table and mark any households to rule out, or broaden the year span if more coverage is needed.\n\n---\n\nThe 1820 United States federal census for Virginia was searched for all households carrying the Dixon surname. Three families were found, each in a different county: one headed by William Dixon in Rockingham County, one by James Dixon in Augusta County, and one by Thomas Dixon in Fairfax County. Because the 1820 census only recorded the name of the head of household, no other family members are listed by name in the table.\n\nThe next step is to review these three households and, if any can be ruled out based on what you already know, note the reason in the \"Ruled Out\" column."
+              }
+            ],
+            "file_changes": {
+              "research.json": {
+                "sections_modified": [
+                  "log"
+                ],
+                "diff": {
+                  "log": {
+                    "added": [
+                      {
+                        "id": "log_006",
+                        "plan_item_id": null,
+                        "performed": "2026-10-02T16:42:33.613Z",
+                        "tool": "record_search",
+                        "query": {
+                          "surname": "Dixon",
+                          "recordType": "census",
+                          "residenceYearFrom": 1820,
+                          "residenceYearTo": 1820,
+                          "recordCountry": "United States",
+                          "recordSubdivision": "Virginia"
+                        },
+                        "outcome": "positive",
+                        "results_examined": 3,
+                        "external_site": null,
+                        "results_ref": "results/log_006.json",
+                        "results_available": 3,
+                        "notes": "Surveyed Dixon in Virginia 1820 census: 3 total matches, page 1."
+                      }
+                    ],
+                    "modified": [],
+                    "deleted": []
+                  }
+                }
+              }
+            },
+            "warnings": [
+              {
+                "kind": "prose_observation",
+                "check": "report_no_internal_identifiers_in_response",
+                "observation": "internal identifiers in the reply: log_006"
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_household_grouping_and_slave_schedule",
+                "passed": true,
+                "error": "skipped: not a household-grouping test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_negative_makes_no_mcp_calls",
+                "passed": true,
+                "error": "skipped: only negative tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_negative_makes_no_write",
+                "passed": true,
+                "error": "skipped: only negative tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_paging_offsets_1840",
+                "passed": true,
+                "error": "skipped: only statewide and threshold tests exercise 1840 paging",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_positive_logs_each_search_page",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_positive_writes_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_threshold_year_gets_one_record_search",
+                "passed": true,
+                "error": "skipped: not a threshold test",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly identified three Dixon households in the 1820 Virginia census (William Dixon in Rockingham, James Dixon in Augusta, Thomas Dixon in Fairfax). The place_search and record_search calls were properly executed with correct parameters. The response accurately reflects the tool results: totalMatches of 3, all results returned on one page (hasMore: false), and the correct collection title (United States Census, 1820). No fabricated claims about household members beyond the heads of household, which is appropriate for pre-1850 census data that only records heads of household by name."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill completed all required tasks: called place_search for Virginia, called record_search for the 1820 census year only, logged the search with research_log_append (log_006 created), and wrote a markdown table file. The response addressed the full scope of the delegation: surveying all Dixon families in Virginia for 1820. All three households found were included in the output. The next-step guidance (review and mark ruled-out households) is appropriate and complete."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "All three tool calls passed arguments matching the fixture's expected_args. place_search received placeName: 'Virginia' and contextName: 'United States' (expected ~Virginia). record_search received surname: 'Dixon', recordType: 'census', residenceYearFrom: 1820, residenceYearTo: 1820, recordCountry: 'United States', recordSubdivision: 'Virginia', and projectPath (all matching expected args). research_log_append received correct query parameters and staging reference. No fixture_not_found errors occurred. All critical identifiers and parameters were correct."
+              },
+              {
+                "source": "rubric",
+                "name": "Place resolution",
+                "score": 3,
+                "rationale": "The agent called place_search with 'Virginia' and 'United States' as context, receiving the standardPlace result 'Virginia, United States' with type 'State'. This result was correctly mapped to record_search parameters: recordCountry set to 'United States' and recordSubdivision set to 'Virginia'. The place resolution was accurate and properly scoped the census search to the state level as required."
+              },
+              {
+                "source": "rubric",
+                "name": "Census coverage",
+                "score": 3,
+                "rationale": "The agent called record_search exactly once for the 1820 census year, which is the only year in the requested span (1820-1820). The call used residenceYearFrom: 1820 and residenceYearTo: 1820, with recordType: 'census'. This matches the requirement for year-by-year census calls within the delegation's span. No additional years were searched, and the single year was correctly targeted."
+              },
+              {
+                "source": "rubric",
+                "name": "Threshold compliance",
+                "score": 3,
+                "rationale": "The record_search returned totalMatches: 3, which is well under the 600 per-year threshold. The agent correctly fetched all results on a single page (returned: 3, hasMore: false) without attempting additional pagination. No threshold violation occurred, and the agent appropriately handled the under-threshold result by including all households in the output without asking for county-level refinement."
+              },
+              {
+                "source": "rubric",
+                "name": "Table structure",
+                "score": 3,
+                "rationale": "The agent wrote a markdown file (surname-survey-dixon-virginia.md) with a table sectioned by census year (1820). The response indicates three households were included with the required information: census year, county (Rockingham, Augusta, Fairfax), head of household (William Dixon, James Dixon, Thomas Dixon), and record ARK values from the tool results. The per-test context confirms that if the Write call is present with proper column headers and a 1820 section, Table structure scores 3. The file was written and the response confirms the table structure meets requirements."
+              }
+            ],
+            "judge_cost_usd": 0.015514300000000002,
+            "duration_ms": 12294.183199992403,
+            "error": null,
+            "input_tokens": 9761,
+            "cached_input_tokens": 4183,
+            "output_tokens": 1067
+          },
+          "started_at": 1790959305.305614,
+          "ended_at": 1790959397.0604897
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_survey_surname_d1",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [
+        "place-search-virginia",
+        "record-search-dixon-virginia-1820-census",
+        "record-search-dixon-virginia-1830-census",
+        "record-search-dixon-virginia-1840-census-page2",
+        "record-search-dixon-virginia-1840-census"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly identified 12 Dixon households across Virginia in 1820, 1830, and 1840 censuses. All household counts match the tool responses: 3 in 1820 (William, James, Thomas), 3 in 1830 (Robert, John, George), and 6 in 1840 (Edmund, William, James, Henry, Samuel, Richard). Counties and names are accurately reported from the record_search results. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all requirements: surveyed all three census years in the 1820-1840 span, retrieved all available results (paging through 1840's two pages), logged all searches via research_log_append, and produced a markdown table with the required structure and columns. The summary_for_user block was provided at the end with two paragraphs in plain language."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All tool calls used correct arguments. place_search called with placeName 'Virginia' and contextName 'United States'. Four record_search calls made: three for years 1820, 1830, 1840 with residenceYearFrom=residenceYearTo for each year, surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', count 100, and projectPath. The 1840 second page call correctly added offset 100. research_log_append calls properly passed stagedResultsRef from each search response."
+          },
+          {
+            "source": "rubric",
+            "name": "Place resolution",
+            "score": 3,
+            "rationale": "The agent called place_search with 'Virginia' and received the standardPlace result 'Virginia, United States'. This was correctly mapped to recordSubdivision 'Virginia' in all four record_search calls, with recordCountry set to 'United States'. The place resolution was accurate and properly scoped the census searches."
+          },
+          {
+            "source": "rubric",
+            "name": "Census coverage",
+            "score": 3,
+            "rationale": "The agent called record_search for all three US federal census years within the 1820-1840 span: 1820, 1830, and 1840. Each call used residenceYearFrom=residenceYearTo set to the target year, recordType 'census', and the correct place parameters. No years outside the span were searched, and all years within the span were covered."
+          },
+          {
+            "source": "rubric",
+            "name": "Threshold compliance",
+            "score": 3,
+            "rationale": "All three years returned totalMatches under 600 (1820: 3, 1830: 3, 1840: 6). The agent correctly fetched all results without asking for county narrowing. For 1840, which had hasMore: true on page 1, the agent properly paged with offset 100 to retrieve the remaining 2 results. No threshold was exceeded, and the agent handled pagination correctly."
+          },
+          {
+            "source": "rubric",
+            "name": "Table structure",
+            "score": 3,
+            "rationale": "The skill wrote a markdown file with proper sectioning by census year (1820, 1830, 1840) and included the required columns: year, county, head of household, other surname members (noted as empty for pre-1850 censuses), record ARK, and ruled out. Households were correctly grouped by recordArk. The file was written using the Write tool with the correct naming pattern surname-survey-dixon-virginia.md."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly identified 12 Dixon households across Virginia in 1820, 1830, and 1840 censuses. All household counts match the tool responses: 3 in 1820 (William, James, Thomas), 3 in 1830 (Robert, John, George), and 6 in 1840 (Edmund, William, James, Henry, Samuel, Richard). Counties and names are accurately reported from the record_search results. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all requirements: surveyed all three census years in the 1820-1840 span, retrieved all available results (paging through 1840's two pages), logged all searches via research_log_append, and produced a markdown table with the required structure and columns. The summary_for_user block was provided at the end with two paragraphs in plain language."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All tool calls used correct arguments. place_search called with placeName 'Virginia' and contextName 'United States'. Four record_search calls made: three for years 1820, 1830, 1840 with residenceYearFrom=residenceYearTo for each year, surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', count 100, and projectPath. The 1840 second page call correctly added offset 100. research_log_append calls properly passed stagedResultsRef from each search response."
+          },
+          {
+            "source": "rubric",
+            "name": "Place resolution",
+            "score": 3,
+            "rationale": "The agent called place_search with 'Virginia' and received the standardPlace result 'Virginia, United States'. This was correctly mapped to recordSubdivision 'Virginia' in all four record_search calls, with recordCountry set to 'United States'. The place resolution was accurate and properly scoped the census searches."
+          },
+          {
+            "source": "rubric",
+            "name": "Census coverage",
+            "score": 3,
+            "rationale": "The agent called record_search for all three US federal census years within the 1820-1840 span: 1820, 1830, and 1840. Each call used residenceYearFrom=residenceYearTo set to the target year, recordType 'census', and the correct place parameters. No years outside the span were searched, and all years within the span were covered."
+          },
+          {
+            "source": "rubric",
+            "name": "Threshold compliance",
+            "score": 3,
+            "rationale": "All three years returned totalMatches under 600 (1820: 3, 1830: 3, 1840: 6). The agent correctly fetched all results without asking for county narrowing. For 1840, which had hasMore: true on page 1, the agent properly paged with offset 100 to retrieve the remaining 2 results. No threshold was exceeded, and the agent handled pagination correctly."
+          },
+          {
+            "source": "rubric",
+            "name": "Table structure",
+            "score": 3,
+            "rationale": "The skill wrote a markdown file with proper sectioning by census year (1820, 1830, 1840) and included the required columns: year, county, head of household, other surname members (noted as empty for pre-1850 censuses), record ARK, and ruled out. Households were correctly grouped by recordArk. The file was written using the Write tool with the correct naming pattern surname-survey-dixon-virginia.md."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 93326.70839999628,
+        "duration_api_ms": 87360.0,
+        "judge_duration_ms": 10624.360400004662,
+        "wall_clock_ms": 105378.04698944092,
+        "num_turns": 2,
+        "input_tokens": 559,
+        "cached_input_tokens": 103619,
+        "cache_creation_input_tokens": 22023,
+        "output_tokens": 3620,
+        "judge_input_tokens": 14747,
+        "judge_cached_input_tokens": 4183,
+        "judge_output_tokens": 977,
+        "skill_cost_usd": 0.16837295,
+        "judge_cost_usd": 0.0200503,
+        "total_cost_usd": 0.18842325
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_survey_surname_d1_2026-10-02_16-41-45_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 93326.70839999628,
+          "duration_api_ms": 87360.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 559,
+          "cached_input_tokens": 103619,
+          "cache_creation_input_tokens": 22023,
+          "output_tokens": 3620,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 548,
+              "outputTokens": 18,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000638,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 11,
+              "outputTokens": 3602,
+              "cacheReadInputTokens": 103619,
+              "cacheCreationInputTokens": 22023,
+              "webSearchRequests": 0,
+              "costUSD": 0.16773495,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "skill_cost_usd": 0.16837295,
+          "output": {
+            "text_response": "Here is the subagent's report:\n\n---\n\n**Place surveyed:** Virginia, United States\n**Years covered:** 1820, 1830, 1840\n\n**Summary by census year:**\n- **1820:** 3 households \u2014 Rockingham, Augusta, Fairfax\n- **1830:** 3 households \u2014 Rockingham, Henrico, Frederick\n- **1840:** 6 households \u2014 Ohio, Rockingham, Augusta, Fairfax, Henrico, Frederick\n\n**Total:** 12 Dixon-headed households across the three censuses.\n\nA detailed table has been written to:\n`surname-survey-dixon-virginia.md`\n\nLog IDs created: log_006, log_007, log_008, log_009\n\n---\n\n**Notes:** Early federal censuses (1820\u20131840) only name the head of household; other family members are tallied but not named in the index. The \"Ruled Out\" column in the table is empty pending your review criteria.\n\n**Next step:** Open the table, review the households, and mark any that can be eliminated based on what you already know \u2014 wrong county, implausible age, etc. \u2014 to narrow your focus for deeper research.",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__place_search",
+                "args": {
+                  "placeName": "Virginia",
+                  "contextName": "United States"
+                },
+                "expected_args": {
+                  "placeName": "~Virginia"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "place-search-virginia"
+              },
+              {
+                "tool": "mcp__genealogy__record_search",
+                "args": {
+                  "surname": "Dixon",
+                  "recordType": "census",
+                  "recordCountry": "United States",
+                  "recordSubdivision": "Virginia",
+                  "residenceYearFrom": 1820,
+                  "residenceYearTo": 1820,
+                  "count": 100,
+                  "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d1-0-0-ty6qm7tl"
+                },
+                "expected_args": {
+                  "surname": "~Dixon",
+                  "residenceYearFrom": 1820,
+                  "residenceYearTo": 1820
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "record-search-dixon-virginia-1820-census",
+                "response": {
+                  "query": {
+                    "surname": "Dixon",
+                    "recordType": "census",
+                    "recordCountry": "United States",
+                    "recordSubdivision": "Virginia",
+                    "residenceYearFrom": 1820,
+                    "residenceYearTo": 1820,
+                    "count": 100,
+                    "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d1-0-0-ty6qm7tl"
+                  },
+                  "totalMatches": 3,
+                  "paginationCappedAt": 4999,
+                  "returned": 3,
+                  "offset": 0,
+                  "hasMore": false,
+                  "rankingSkipped": "No `subjectId`, so match-score ranking and marriage jurisdiction hints did not run. Pass the tree person this search is about as `subjectId` to enable both. Omit it only when the search is not about a specific tree person \u2014 a broad survey, or a person not yet in the tree.",
+                  "results": [
+                    {
+                      "personId": "XJQV-1820-A",
+                      "recordId": "XJQV-1820-A",
+                      "personName": "William Dixon",
+                      "score": 0.88,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1820",
+                          "place": "Rockingham, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1803958",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1820-A"
+                    },
+                    {
+                      "personId": "XJQV-1820-B",
+                      "recordId": "XJQV-1820-B",
+                      "personName": "James Dixon",
+                      "score": 0.85,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1820",
+                          "place": "Augusta, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1803958",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1820-B"
+                    },
+                    {
+                      "personId": "XJQV-1820-C",
+                      "recordId": "XJQV-1820-C",
+                      "personName": "Thomas Dixon",
+                      "score": 0.82,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1820",
+                          "place": "Fairfax, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1803958",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1820-C"
+                    }
+                  ],
+                  "collections": {
+                    "1803958": "United States Census, 1820"
+                  },
+                  "staged": {
+                    "resultsRef": "results/.staging/91725e98-8c35-473b-9175-b3faa8e91923.json",
+                    "returnedCount": 3
+                  }
+                }
+              },
+              {
+                "tool": "mcp__genealogy__record_search",
+                "args": {
+                  "surname": "Dixon",
+                  "recordType": "census",
+                  "recordCountry": "United States",
+                  "recordSubdivision": "Virginia",
+                  "residenceYearFrom": 1830,
+                  "residenceYearTo": 1830,
+                  "count": 100,
+                  "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d1-0-0-ty6qm7tl"
+                },
+                "expected_args": {
+                  "surname": "~Dixon",
+                  "residenceYearFrom": 1830,
+                  "residenceYearTo": 1830
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 1
+                },
+                "response_fixture": "record-search-dixon-virginia-1830-census",
+                "response": {
+                  "query": {
+                    "surname": "Dixon",
+                    "recordType": "census",
+                    "recordCountry": "United States",
+                    "recordSubdivision": "Virginia",
+                    "residenceYearFrom": 1830,
+                    "residenceYearTo": 1830,
+                    "count": 100,
+                    "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d1-0-0-ty6qm7tl"
+                  },
+                  "totalMatches": 3,
+                  "paginationCappedAt": 4999,
+                  "returned": 3,
+                  "offset": 0,
+                  "hasMore": false,
+                  "rankingSkipped": "No `subjectId`, so match-score ranking and marriage jurisdiction hints did not run. Pass the tree person this search is about as `subjectId` to enable both. Omit it only when the search is not about a specific tree person \u2014 a broad survey, or a person not yet in the tree.",
+                  "unloggedSearches": "1 earlier staged search response(s) in this project have no research.json log entry: results/.staging/91725e98-8c35-473b-9175-b3faa8e91923.json. Call `research_log_append` for each, passing that ref as `stagedResultsRef` \u2014 the staged file holds the search's own query, so the entry is filled in host-side and needs no reconstruction from memory. Log each as you go rather than batching them at the end. A search with no log entry is a search that did not happen, and the staged response is deleted 24h after it was made.",
+                  "results": [
+                    {
+                      "personId": "XJQV-1830-A",
+                      "recordId": "XJQV-1830-A",
+                      "personName": "Robert Dixon",
+                      "score": 0.87,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1830",
+                          "place": "Rockingham, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1803959",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1830-A"
+                    },
+                    {
+                      "personId": "XJQV-1830-B",
+                      "recordId": "XJQV-1830-B",
+                      "personName": "John Dixon",
+                      "score": 0.84,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1830",
+                          "place": "Henrico, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1803959",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1830-B"
+                    },
+                    {
+                      "personId": "XJQV-1830-C",
+                      "recordId": "XJQV-1830-C",
+                      "personName": "George Dixon",
+                      "score": 0.81,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1830",
+                          "place": "Frederick, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1803959",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1830-C"
+                    }
+                  ],
+                  "collections": {
+                    "1803959": "United States Census, 1830"
+                  },
+                  "staged": {
+                    "resultsRef": "results/.staging/64dca06e-93e3-4c32-be9f-611d643e23af.json",
+                    "returnedCount": 3
+                  }
+                }
+              },
+              {
+                "tool": "mcp__genealogy__record_search",
+                "args": {
+                  "surname": "Dixon",
+                  "recordType": "census",
+                  "recordCountry": "United States",
+                  "recordSubdivision": "Virginia",
+                  "residenceYearFrom": 1840,
+                  "residenceYearTo": 1840,
+                  "count": 100,
+                  "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d1-0-0-ty6qm7tl"
+                },
+                "expected_args": {
+                  "surname": "~Dixon",
+                  "residenceYearFrom": 1840,
+                  "residenceYearTo": 1840
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 3
+                },
+                "response_fixture": "record-search-dixon-virginia-1840-census",
+                "response": {
+                  "query": {
+                    "surname": "Dixon",
+                    "recordType": "census",
+                    "recordCountry": "United States",
+                    "recordSubdivision": "Virginia",
+                    "residenceYearFrom": 1840,
+                    "residenceYearTo": 1840,
+                    "count": 100,
+                    "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d1-0-0-ty6qm7tl"
+                  },
+                  "totalMatches": 6,
+                  "paginationCappedAt": 4999,
+                  "returned": 4,
+                  "offset": 0,
+                  "hasMore": true,
+                  "rankingSkipped": "No `subjectId`, so match-score ranking and marriage jurisdiction hints did not run. Pass the tree person this search is about as `subjectId` to enable both. Omit it only when the search is not about a specific tree person \u2014 a broad survey, or a person not yet in the tree.",
+                  "unloggedSearches": "2 earlier staged search response(s) in this project have no research.json log entry: results/.staging/91725e98-8c35-473b-9175-b3faa8e91923.json, results/.staging/64dca06e-93e3-4c32-be9f-611d643e23af.json. Call `research_log_append` for each, passing that ref as `stagedResultsRef` \u2014 the staged file holds the search's own query, so the entry is filled in host-side and needs no reconstruction from memory. Log each as you go rather than batching them at the end. A search with no log entry is a search that did not happen, and the staged response is deleted 24h after it was made.",
+                  "results": [
+                    {
+                      "personId": "XJQV-1840-A",
+                      "recordId": "XJQV-1840-A",
+                      "personName": "Edmund Dixon",
+                      "score": 0.9,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1840",
+                          "place": "Ohio, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1803960",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1840-A"
+                    },
+                    {
+                      "personId": "XJQV-1840-B",
+                      "recordId": "XJQV-1840-B",
+                      "personName": "William Dixon",
+                      "score": 0.86,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1840",
+                          "place": "Rockingham, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1803960",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1840-B"
+                    },
+                    {
+                      "personId": "XJQV-1840-C",
+                      "recordId": "XJQV-1840-C",
+                      "personName": "James Dixon",
+                      "score": 0.83,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1840",
+                          "place": "Augusta, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1803960",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1840-C"
+                    },
+                    {
+                      "personId": "XJQV-1840-D",
+                      "recordId": "XJQV-1840-D",
+                      "personName": "Henry Dixon",
+                      "score": 0.8,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1840",
+                          "place": "Fairfax, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1803960",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1840-D"
+                    }
+                  ],
+                  "collections": {
+                    "1803960": "United States Census, 1840"
+                  },
+                  "staged": {
+                    "resultsRef": "results/.staging/f6f545b2-311f-4f88-bbe4-382bb0661025.json",
+                    "returnedCount": 4
+                  }
+                }
+              },
+              {
+                "tool": "mcp__genealogy__record_search",
+                "args": {
+                  "surname": "Dixon",
+                  "recordType": "census",
+                  "recordCountry": "United States",
+                  "recordSubdivision": "Virginia",
+                  "residenceYearFrom": 1840,
+                  "residenceYearTo": 1840,
+                  "count": 100,
+                  "offset": 100,
+                  "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d1-0-0-ty6qm7tl"
+                },
+                "expected_args": {
+                  "surname": "~Dixon",
+                  "residenceYearFrom": 1840,
+                  "residenceYearTo": 1840,
+                  "offset": 100
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 2
+                },
+                "response_fixture": "record-search-dixon-virginia-1840-census-page2",
+                "response": {
+                  "query": {
+                    "surname": "Dixon",
+                    "recordType": "census",
+                    "recordCountry": "United States",
+                    "recordSubdivision": "Virginia",
+                    "residenceYearFrom": 1840,
+                    "residenceYearTo": 1840,
+                    "count": 100,
+                    "offset": 100,
+                    "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d1-0-0-ty6qm7tl"
+                  },
+                  "totalMatches": 6,
+                  "paginationCappedAt": 4999,
+                  "returned": 2,
+                  "offset": 100,
+                  "hasMore": false,
+                  "rankingSkipped": "No `subjectId`, so match-score ranking and marriage jurisdiction hints did not run. Pass the tree person this search is about as `subjectId` to enable both. Omit it only when the search is not about a specific tree person \u2014 a broad survey, or a person not yet in the tree.",
+                  "unloggedSearches": "3 earlier staged search response(s) in this project have no research.json log entry: results/.staging/91725e98-8c35-473b-9175-b3faa8e91923.json, results/.staging/64dca06e-93e3-4c32-be9f-611d643e23af.json, results/.staging/f6f545b2-311f-4f88-bbe4-382bb0661025.json. Call `research_log_append` for each, passing that ref as `stagedResultsRef` \u2014 the staged file holds the search's own query, so the entry is filled in host-side and needs no reconstruction from memory. Log each as you go rather than batching them at the end. A search with no log entry is a search that did not happen, and the staged response is deleted 24h after it was made.",
+                  "results": [
+                    {
+                      "personId": "XJQV-1840-E",
+                      "recordId": "XJQV-1840-E",
+                      "personName": "Samuel Dixon",
+                      "score": 0.78,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1840",
+                          "place": "Henrico, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1803960",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1840-E"
+                    },
+                    {
+                      "personId": "XJQV-1840-F",
+                      "recordId": "XJQV-1840-F",
+                      "personName": "Richard Dixon",
+                      "score": 0.75,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1840",
+                          "place": "Frederick, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1803960",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1840-F"
+                    }
+                  ],
+                  "collections": {
+                    "1803960": "United States Census, 1840"
+                  },
+                  "staged": {
+                    "resultsRef": "results/.staging/a64289ff-7e65-439b-88f3-6f30036c2dd9.json",
+                    "returnedCount": 2
+                  }
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_log_append",
+                "args": {
+                  "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d1-0-0-ty6qm7tl",
+                  "ops": [
+                    {
+                      "tool": "record_search",
+                      "outcome": "positive",
+                      "resultsExamined": 3,
+                      "resultsAvailable": 3,
+                      "stagedResultsRef": "results/.staging/91725e98-8c35-473b-9175-b3faa8e91923.json",
+                      "notes": "Surveyed Dixon in Virginia 1820 census: 3 total matches, page 1."
+                    },
+                    {
+                      "tool": "record_search",
+                      "outcome": "positive",
+                      "resultsExamined": 3,
+                      "resultsAvailable": 3,
+                      "stagedResultsRef": "results/.staging/64dca06e-93e3-4c32-be9f-611d643e23af.json",
+                      "notes": "Surveyed Dixon in Virginia 1830 census: 3 total matches, page 1."
+                    },
+                    {
+                      "tool": "record_search",
+                      "outcome": "positive",
+                      "resultsExamined": 4,
+                      "resultsAvailable": 6,
+                      "stagedResultsRef": "results/.staging/f6f545b2-311f-4f88-bbe4-382bb0661025.json",
+                      "notes": "Surveyed Dixon in Virginia 1840 census: 6 total matches, page 1."
+                    }
+                  ]
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_log_append",
+                "response": {
+                  "ok": true,
+                  "results": [
+                    {
+                      "logId": "log_006",
+                      "performed": "2026-10-02T16:42:25.092Z",
+                      "resultsRef": "results/log_006.json",
+                      "returnedCount": 3
+                    },
+                    {
+                      "logId": "log_007",
+                      "performed": "2026-10-02T16:42:25.106Z",
+                      "resultsRef": "results/log_007.json",
+                      "returnedCount": 3
+                    },
+                    {
+                      "logId": "log_008",
+                      "performed": "2026-10-02T16:42:25.115Z",
+                      "resultsRef": "results/log_008.json",
+                      "returnedCount": 4
+                    }
+                  ],
+                  "filesWritten": [
+                    "research.json",
+                    "results/log_006.json",
+                    "results/log_007.json",
+                    "results/log_008.json"
+                  ],
+                  "validation": {
+                    "valid": true,
+                    "warnings": []
+                  }
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_log_append",
+                "args": {
+                  "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d1-0-0-ty6qm7tl",
+                  "tool": "record_search",
+                  "outcome": "positive",
+                  "resultsExamined": 2,
+                  "resultsAvailable": 6,
+                  "stagedResultsRef": "results/.staging/a64289ff-7e65-439b-88f3-6f30036c2dd9.json",
+                  "notes": "Surveyed Dixon in Virginia 1840 census: 6 total matches, page 2."
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_log_append",
+                "response": {
+                  "ok": true,
+                  "logId": "log_009",
+                  "performed": "2026-10-02T16:42:41.168Z",
+                  "resultsRef": "results/log_009.json",
+                  "returnedCount": 2,
+                  "filesWritten": [
+                    "research.json",
+                    "results/log_009.json"
+                  ],
+                  "validation": {
+                    "valid": true,
+                    "warnings": []
+                  }
+                }
+              }
+            ],
+            "files_created": [
+              "results/log_006.json",
+              "results/log_007.json",
+              "results/log_008.json",
+              "results/log_009.json",
+              "surname-survey-dixon-virginia.md"
+            ],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Survey Dixon households in Virginia 1820-1840",
+                  "prompt": "List every Dixon household in Virginia, 1820-1840.\n\nsurname: Dixon\nplace: Virginia\nyearSpan: 1820-1840\nprojectPath: <workspace>",
+                  "subagent_type": "survey-surname"
+                }
+              },
+              {
+                "tool": "Write",
+                "args": {
+                  "file_path": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d1-0-0-ty6qm7tl\\surname-survey-dixon-virginia.md",
+                  "content": "# Dixon Household Survey \u2014 Virginia, 1820\u20131840\n\n## 1820 Census\n### United States Census, 1820\n\n| Census Year | County | Head of Household | Other Members (Dixon surname) | Record ARK | Ruled Out |\n|--"
+                },
+                "agent_id": "ae40fa6b59dd74887"
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "survey-surname",
+                "text": "Place surveyed: Virginia, United States\nYears covered: 1820, 1830, 1840\n\n- 1820: 3 households (Rockingham, Augusta, Fairfax)\n- 1830: 3 households (Rockingham, Henrico, Frederick)\n- 1840: 6 households (Ohio, Rockingham, Augusta, Fairfax, Henrico, Frederick)\n\nFile written: `C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d1-0-0-ty6qm7tl\\surname-survey-dixon-virginia.md`\n\nLog IDs created: log_006, log_007, log_008, log_009\n\nNext step: review the table and mark any households to rule out, or narrow a specific year by county if you want deeper coverage.\n\n---\n\nCensus records for the Dixon surname across Virginia were searched for the years 1820, 1830, and 1840. In total, twelve Dixon-headed households turned up: three in 1820 spread across Rockingham, Augusta, and Fairfax counties; three in 1830 in Rockingham, Henrico, and Frederick counties; and six in 1840 across Ohio, Rockingham, Augusta, Fairfax, Henrico, and Frederick counties. Because these early federal censuses only record the head of household by name, the table lists one row per household with the head's name and county \u2014 other family members are tallied in the original record but not named in the index. The \"Ruled Out\" column is empty because no filtering criteria were provided with this request.\n\nThe next step is to open the table, review the households, and note in the \"Ruled Out\" column any that can be eliminated based on what you already know about your Dixon line \u2014 for example, wrong county or implausible age \u2014 so you can focus further research on the remaining candidates."
+              }
+            ],
+            "file_changes": {
+              "research.json": {
+                "sections_modified": [
+                  "log"
+                ],
+                "diff": {
+                  "log": {
+                    "added": [
+                      {
+                        "id": "log_006",
+                        "plan_item_id": null,
+                        "performed": "2026-10-02T16:42:25.092Z",
+                        "tool": "record_search",
+                        "query": {
+                          "surname": "Dixon",
+                          "recordType": "census",
+                          "recordCountry": "United States",
+                          "recordSubdivision": "Virginia",
+                          "residenceYearFrom": 1820,
+                          "residenceYearTo": 1820,
+                          "count": 100
+                        },
+                        "outcome": "positive",
+                        "results_examined": 3,
+                        "external_site": null,
+                        "results_ref": "results/log_006.json",
+                        "results_available": 3,
+                        "notes": "Surveyed Dixon in Virginia 1820 census: 3 total matches, page 1."
+                      },
+                      {
+                        "id": "log_007",
+                        "plan_item_id": null,
+                        "performed": "2026-10-02T16:42:25.106Z",
+                        "tool": "record_search",
+                        "query": {
+                          "surname": "Dixon",
+                          "recordType": "census",
+                          "recordCountry": "United States",
+                          "recordSubdivision": "Virginia",
+                          "residenceYearFrom": 1830,
+                          "residenceYearTo": 1830,
+                          "count": 100
+                        },
+                        "outcome": "positive",
+                        "results_examined": 3,
+                        "external_site": null,
+                        "results_ref": "results/log_007.json",
+                        "results_available": 3,
+                        "notes": "Surveyed Dixon in Virginia 1830 census: 3 total matches, page 1."
+                      },
+                      {
+                        "id": "log_008",
+                        "plan_item_id": null,
+                        "performed": "2026-10-02T16:42:25.115Z",
+                        "tool": "record_search",
+                        "query": {
+                          "surname": "Dixon",
+                          "recordType": "census",
+                          "recordCountry": "United States",
+                          "recordSubdivision": "Virginia",
+                          "residenceYearFrom": 1840,
+                          "residenceYearTo": 1840,
+                          "count": 100
+                        },
+                        "outcome": "positive",
+                        "results_examined": 4,
+                        "external_site": null,
+                        "results_ref": "results/log_008.json",
+                        "results_available": 6,
+                        "notes": "Surveyed Dixon in Virginia 1840 census: 6 total matches, page 1."
+                      },
+                      {
+                        "id": "log_009",
+                        "plan_item_id": null,
+                        "performed": "2026-10-02T16:42:41.168Z",
+                        "tool": "record_search",
+                        "query": {
+                          "surname": "Dixon",
+                          "recordType": "census",
+                          "recordCountry": "United States",
+                          "recordSubdivision": "Virginia",
+                          "residenceYearFrom": 1840,
+                          "residenceYearTo": 1840,
+                          "count": 100,
+                          "offset": 100
+                        },
+                        "outcome": "positive",
+                        "results_examined": 2,
+                        "external_site": null,
+                        "results_ref": "results/log_009.json",
+                        "results_available": 6,
+                        "notes": "Surveyed Dixon in Virginia 1840 census: 6 total matches, page 2."
+                      }
+                    ],
+                    "modified": [],
+                    "deleted": []
+                  }
+                }
+              }
+            },
+            "warnings": [
+              {
+                "kind": "prose_observation",
+                "check": "report_no_internal_identifiers_in_response",
+                "observation": "internal identifiers in the reply: log_006, log_007, log_008, log_009"
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_household_grouping_and_slave_schedule",
+                "passed": true,
+                "error": "skipped: not a household-grouping test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_negative_makes_no_mcp_calls",
+                "passed": true,
+                "error": "skipped: only negative tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_negative_makes_no_write",
+                "passed": true,
+                "error": "skipped: only negative tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_paging_offsets_1840",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_positive_logs_each_search_page",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_positive_writes_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_threshold_year_gets_one_record_search",
+                "passed": true,
+                "error": "skipped: not a threshold test",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly identified 12 Dixon households across Virginia in 1820, 1830, and 1840 censuses. All household counts match the tool responses: 3 in 1820 (William, James, Thomas), 3 in 1830 (Robert, John, George), and 6 in 1840 (Edmund, William, James, Henry, Samuel, Richard). Counties and names are accurately reported from the record_search results. No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed all requirements: surveyed all three census years in the 1820-1840 span, retrieved all available results (paging through 1840's two pages), logged all searches via research_log_append, and produced a markdown table with the required structure and columns. The summary_for_user block was provided at the end with two paragraphs in plain language."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "All tool calls used correct arguments. place_search called with placeName 'Virginia' and contextName 'United States'. Four record_search calls made: three for years 1820, 1830, 1840 with residenceYearFrom=residenceYearTo for each year, surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', count 100, and projectPath. The 1840 second page call correctly added offset 100. research_log_append calls properly passed stagedResultsRef from each search response."
+              },
+              {
+                "source": "rubric",
+                "name": "Place resolution",
+                "score": 3,
+                "rationale": "The agent called place_search with 'Virginia' and received the standardPlace result 'Virginia, United States'. This was correctly mapped to recordSubdivision 'Virginia' in all four record_search calls, with recordCountry set to 'United States'. The place resolution was accurate and properly scoped the census searches."
+              },
+              {
+                "source": "rubric",
+                "name": "Census coverage",
+                "score": 3,
+                "rationale": "The agent called record_search for all three US federal census years within the 1820-1840 span: 1820, 1830, and 1840. Each call used residenceYearFrom=residenceYearTo set to the target year, recordType 'census', and the correct place parameters. No years outside the span were searched, and all years within the span were covered."
+              },
+              {
+                "source": "rubric",
+                "name": "Threshold compliance",
+                "score": 3,
+                "rationale": "All three years returned totalMatches under 600 (1820: 3, 1830: 3, 1840: 6). The agent correctly fetched all results without asking for county narrowing. For 1840, which had hasMore: true on page 1, the agent properly paged with offset 100 to retrieve the remaining 2 results. No threshold was exceeded, and the agent handled pagination correctly."
+              },
+              {
+                "source": "rubric",
+                "name": "Table structure",
+                "score": 3,
+                "rationale": "The skill wrote a markdown file with proper sectioning by census year (1820, 1830, 1840) and included the required columns: year, county, head of household, other surname members (noted as empty for pre-1850 censuses), record ARK, and ruled out. Households were correctly grouped by recordArk. The file was written using the Write tool with the correct naming pattern surname-survey-dixon-virginia.md."
+              }
+            ],
+            "judge_cost_usd": 0.0200503,
+            "duration_ms": 10624.360400004662,
+            "error": null,
+            "input_tokens": 14747,
+            "cached_input_tokens": 4183,
+            "output_tokens": 977
+          },
+          "started_at": 1790959305.3085787,
+          "ended_at": 1790959410.6866257
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_survey_surname_d3",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [
+        "place-search-virginia",
+        "record-search-dixon-virginia-1840-census-page2",
+        "record-search-dixon-virginia-1840-census",
+        "record-search-dixon-virginia-1850-census-over-threshold"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The agent correctly resolved Virginia via place_search and used it to scope both census searches with recordCountry and recordSubdivision. It called record_search for 1840 and 1850 with correct parameters (residenceYearFrom/To set to the respective years, recordType: census). For 1840, it fetched all 6 results across two pages (page 1 returned 4, page 2 returned 2, hasMore: false). For 1850, it correctly recognized the 2218 totalMatches exceeded the 600 threshold and stopped after page 1 without fetching additional pages. It logged all three searches (log_006, log_007, log_008) with research_log_append. The response accurately reported 6 Dixon households in 1840 across named counties and correctly stated 2218 matches for 1850 with a request for county narrowing. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The agent addressed all requirements from the delegation: surveyed Dixon surname in Virginia across the 1840-1850 span, called place_search to resolve Virginia, executed record_search for both 1840 and 1850 census years, fetched all available results for 1840 (under threshold), recognized and respected the 600-household threshold for 1850, logged all searches, and wrote the markdown file. It provided the file path and log IDs created. The response included a clear next-step instruction asking for county specification to complete the 1850 survey. No major portions of the requested work were omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All MCP tool calls passed arguments matching expected_args semantically. place_search received placeName: 'Virginia' (matches ~Virginia). Both record_search calls for 1840 and 1850 passed surname: 'Dixon', residenceYearFrom/To set correctly to the respective years, recordType: 'census', recordCountry: 'United States', and recordSubdivision: 'Virginia'. The second 1840 call correctly added offset: 100 to fetch page 2. research_log_append calls passed correct projectPath, tool, outcome, resultsExamined, resultsAvailable, stagedResultsRef, and notes. No critical identifiers were wrong, no fixture_not_found errors occurred, and no noisy extra arguments were added."
+          },
+          {
+            "source": "rubric",
+            "name": "Place resolution",
+            "score": 3,
+            "rationale": "The agent called place_search with 'Virginia' and 'United States' as contextName, receiving the correct standardPlace result 'Virginia, United States'. It then used this result to set recordCountry: 'United States' and recordSubdivision: 'Virginia' on both record_search calls (1840 and 1850). The place was correctly mapped to the appropriate record_search parameters for a state-level survey."
+          },
+          {
+            "source": "rubric",
+            "name": "Census coverage",
+            "score": 3,
+            "rationale": "The agent called record_search for both US federal census years within the 1840-1850 span: 1840 and 1850. Each call set residenceYearFrom and residenceYearTo to the respective year, and recordType was set to 'census'. The agent did not search years outside the span or use year ranges. Coverage of the requested span was complete."
+          },
+          {
+            "source": "rubric",
+            "name": "Threshold compliance",
+            "score": 3,
+            "rationale": "The 1840 search returned totalMatches: 6 (under 600 threshold), so the agent correctly paged normally, fetching all results across two pages. The 1850 search returned totalMatches: 2218 (over 600 threshold). The agent correctly did NOT fetch additional pages for 1850 after the first page returned 2 results. It reported the count (2218) to the user and explicitly asked which counties to survey for 1850 to narrow the results. The agent also logged the 1850 first-page search with research_log_append despite not paging further, as required. Threshold compliance was fully respected."
+          },
+          {
+            "source": "rubric",
+            "name": "Table structure",
+            "score": 3,
+            "rationale": "The agent wrote a markdown file (surname-survey-dixon-virginia.md) with a table sectioned by census year. The 1840 section includes all six households (Edmund, William, James, Henry, Samuel, Richard Dixon) with counties (Ohio, Rockingham, Augusta, Fairfax, Henrico, Frederick) and record ARKs. The 1850 section notes the 2218 total matches and that counties are needed, without listing household rows (correct behavior when over threshold). The table structure includes the required columns: census year, county, head of household, record ARK, and appropriate sectioning. The response correctly did not include 1850 household rows since the threshold was exceeded and user input is needed."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The agent correctly resolved Virginia via place_search and used it to scope both census searches with recordCountry and recordSubdivision. It called record_search for 1840 and 1850 with correct parameters (residenceYearFrom/To set to the respective years, recordType: census). For 1840, it fetched all 6 results across two pages (page 1 returned 4, page 2 returned 2, hasMore: false). For 1850, it correctly recognized the 2218 totalMatches exceeded the 600 threshold and stopped after page 1 without fetching additional pages. It logged all three searches (log_006, log_007, log_008) with research_log_append. The response accurately reported 6 Dixon households in 1840 across named counties and correctly stated 2218 matches for 1850 with a request for county narrowing. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The agent addressed all requirements from the delegation: surveyed Dixon surname in Virginia across the 1840-1850 span, called place_search to resolve Virginia, executed record_search for both 1840 and 1850 census years, fetched all available results for 1840 (under threshold), recognized and respected the 600-household threshold for 1850, logged all searches, and wrote the markdown file. It provided the file path and log IDs created. The response included a clear next-step instruction asking for county specification to complete the 1850 survey. No major portions of the requested work were omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All MCP tool calls passed arguments matching expected_args semantically. place_search received placeName: 'Virginia' (matches ~Virginia). Both record_search calls for 1840 and 1850 passed surname: 'Dixon', residenceYearFrom/To set correctly to the respective years, recordType: 'census', recordCountry: 'United States', and recordSubdivision: 'Virginia'. The second 1840 call correctly added offset: 100 to fetch page 2. research_log_append calls passed correct projectPath, tool, outcome, resultsExamined, resultsAvailable, stagedResultsRef, and notes. No critical identifiers were wrong, no fixture_not_found errors occurred, and no noisy extra arguments were added."
+          },
+          {
+            "source": "rubric",
+            "name": "Place resolution",
+            "score": 3,
+            "rationale": "The agent called place_search with 'Virginia' and 'United States' as contextName, receiving the correct standardPlace result 'Virginia, United States'. It then used this result to set recordCountry: 'United States' and recordSubdivision: 'Virginia' on both record_search calls (1840 and 1850). The place was correctly mapped to the appropriate record_search parameters for a state-level survey."
+          },
+          {
+            "source": "rubric",
+            "name": "Census coverage",
+            "score": 3,
+            "rationale": "The agent called record_search for both US federal census years within the 1840-1850 span: 1840 and 1850. Each call set residenceYearFrom and residenceYearTo to the respective year, and recordType was set to 'census'. The agent did not search years outside the span or use year ranges. Coverage of the requested span was complete."
+          },
+          {
+            "source": "rubric",
+            "name": "Threshold compliance",
+            "score": 3,
+            "rationale": "The 1840 search returned totalMatches: 6 (under 600 threshold), so the agent correctly paged normally, fetching all results across two pages. The 1850 search returned totalMatches: 2218 (over 600 threshold). The agent correctly did NOT fetch additional pages for 1850 after the first page returned 2 results. It reported the count (2218) to the user and explicitly asked which counties to survey for 1850 to narrow the results. The agent also logged the 1850 first-page search with research_log_append despite not paging further, as required. Threshold compliance was fully respected."
+          },
+          {
+            "source": "rubric",
+            "name": "Table structure",
+            "score": 3,
+            "rationale": "The agent wrote a markdown file (surname-survey-dixon-virginia.md) with a table sectioned by census year. The 1840 section includes all six households (Edmund, William, James, Henry, Samuel, Richard Dixon) with counties (Ohio, Rockingham, Augusta, Fairfax, Henrico, Frederick) and record ARKs. The 1850 section notes the 2218 total matches and that counties are needed, without listing household rows (correct behavior when over threshold). The table structure includes the required columns: census year, county, head of household, record ARK, and appropriate sectioning. The response correctly did not include 1850 household rows since the threshold was exceeded and user input is needed."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 101383.61900000018,
+        "duration_api_ms": 96099.0,
+        "judge_duration_ms": 14876.358499997878,
+        "wall_clock_ms": 117449.6259689331,
+        "num_turns": 2,
+        "input_tokens": 561,
+        "cached_input_tokens": 100269,
+        "cache_creation_input_tokens": 21031,
+        "output_tokens": 3656,
+        "judge_input_tokens": 13095,
+        "judge_cached_input_tokens": 4183,
+        "judge_output_tokens": 1307,
+        "skill_cost_usd": 0.16421995,
+        "judge_cost_usd": 0.0200483,
+        "total_cost_usd": 0.18426825
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_survey_surname_d3_2026-10-02_16-41-45_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 101383.61900000018,
+          "duration_api_ms": 96099.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 561,
+          "cached_input_tokens": 100269,
+          "cache_creation_input_tokens": 21031,
+          "output_tokens": 3656,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 550,
+              "outputTokens": 15,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000625,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 11,
+              "outputTokens": 3641,
+              "cacheReadInputTokens": 100269,
+              "cacheCreationInputTokens": 21031,
+              "webSearchRequests": 0,
+              "costUSD": 0.16359495,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "skill_cost_usd": 0.16421995,
+          "output": {
+            "text_response": "Here is the subagent's response:\n\n---\n\n**Place surveyed:** Virginia, United States\n\n**Results Summary:**\n- **1840:** 6 Dixon households found (complete) \u2014 Ohio, Rockingham, Augusta, Fairfax, Henrico, Frederick counties\n- **1850:** 2,218 matches \u2014 over the 600-household threshold; stopped after page 1\n- **File written:** `surname-survey-dixon-virginia.md`\n- **Log IDs created:** log_006 (1840 p.1), log_007 (1850 p.1, stopped), log_008 (1840 p.2)\n\n---\n\n**1840 Dixon Households in Virginia (complete):**\nSix households were found, headed by Edmund, William, James, Henry, Samuel, and Richard Dixon \u2014 spread across Ohio, Rockingham, Augusta, Fairfax, Henrico, and Frederick counties. (In 1840, only the head of household was named by census takers.)\n\n**1850 Results (incomplete):**\nOver 2,200 matches were returned statewide \u2014 too many to enumerate reliably. Only a single household from the first page was captured: **Edmund Dixon in Wheeling, Ohio County**.\n\n---\n\n**Next step:** To complete the 1850 survey, provide one or more specific Virginia counties to narrow the search (e.g., \"Ohio County,\" \"Rockingham County\"). The subagent can continue from where it left off once a county filter is applied.",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__place_search",
+                "args": {
+                  "placeName": "Virginia",
+                  "contextName": "United States"
+                },
+                "expected_args": {
+                  "placeName": "~Virginia"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "place-search-virginia"
+              },
+              {
+                "tool": "mcp__genealogy__record_search",
+                "args": {
+                  "surname": "Dixon",
+                  "recordType": "census",
+                  "recordCountry": "United States",
+                  "recordSubdivision": "Virginia",
+                  "residenceYearFrom": 1840,
+                  "residenceYearTo": 1840,
+                  "count": 100,
+                  "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d3-0-0-gws3__ah"
+                },
+                "expected_args": {
+                  "surname": "~Dixon",
+                  "residenceYearFrom": 1840,
+                  "residenceYearTo": 1840
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 1
+                },
+                "response_fixture": "record-search-dixon-virginia-1840-census",
+                "response": {
+                  "query": {
+                    "surname": "Dixon",
+                    "recordType": "census",
+                    "recordCountry": "United States",
+                    "recordSubdivision": "Virginia",
+                    "residenceYearFrom": 1840,
+                    "residenceYearTo": 1840,
+                    "count": 100,
+                    "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d3-0-0-gws3__ah"
+                  },
+                  "totalMatches": 6,
+                  "paginationCappedAt": 4999,
+                  "returned": 4,
+                  "offset": 0,
+                  "hasMore": true,
+                  "rankingSkipped": "No `subjectId`, so match-score ranking and marriage jurisdiction hints did not run. Pass the tree person this search is about as `subjectId` to enable both. Omit it only when the search is not about a specific tree person \u2014 a broad survey, or a person not yet in the tree.",
+                  "results": [
+                    {
+                      "personId": "XJQV-1840-A",
+                      "recordId": "XJQV-1840-A",
+                      "personName": "Edmund Dixon",
+                      "score": 0.9,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1840",
+                          "place": "Ohio, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1803960",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1840-A"
+                    },
+                    {
+                      "personId": "XJQV-1840-B",
+                      "recordId": "XJQV-1840-B",
+                      "personName": "William Dixon",
+                      "score": 0.86,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1840",
+                          "place": "Rockingham, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1803960",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1840-B"
+                    },
+                    {
+                      "personId": "XJQV-1840-C",
+                      "recordId": "XJQV-1840-C",
+                      "personName": "James Dixon",
+                      "score": 0.83,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1840",
+                          "place": "Augusta, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1803960",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1840-C"
+                    },
+                    {
+                      "personId": "XJQV-1840-D",
+                      "recordId": "XJQV-1840-D",
+                      "personName": "Henry Dixon",
+                      "score": 0.8,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1840",
+                          "place": "Fairfax, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1803960",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1840-D"
+                    }
+                  ],
+                  "collections": {
+                    "1803960": "United States Census, 1840"
+                  },
+                  "staged": {
+                    "resultsRef": "results/.staging/3b2e0f9d-fb46-4a28-bc32-a34b16fc0b30.json",
+                    "returnedCount": 4
+                  }
+                }
+              },
+              {
+                "tool": "mcp__genealogy__record_search",
+                "args": {
+                  "surname": "Dixon",
+                  "recordType": "census",
+                  "recordCountry": "United States",
+                  "recordSubdivision": "Virginia",
+                  "residenceYearFrom": 1850,
+                  "residenceYearTo": 1850,
+                  "count": 100,
+                  "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d3-0-0-gws3__ah"
+                },
+                "expected_args": {
+                  "surname": "~Dixon",
+                  "residenceYearFrom": 1850,
+                  "residenceYearTo": 1850
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 2
+                },
+                "response_fixture": "record-search-dixon-virginia-1850-census-over-threshold",
+                "response": {
+                  "query": {
+                    "surname": "Dixon",
+                    "recordType": "census",
+                    "recordCountry": "United States",
+                    "recordSubdivision": "Virginia",
+                    "residenceYearFrom": 1850,
+                    "residenceYearTo": 1850,
+                    "count": 100,
+                    "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d3-0-0-gws3__ah"
+                  },
+                  "totalMatches": 2218,
+                  "paginationCappedAt": 4999,
+                  "returned": 2,
+                  "offset": 0,
+                  "hasMore": true,
+                  "rankingSkipped": "No `subjectId`, so match-score ranking and marriage jurisdiction hints did not run. Pass the tree person this search is about as `subjectId` to enable both. Omit it only when the search is not about a specific tree person \u2014 a broad survey, or a person not yet in the tree.",
+                  "unloggedSearches": "1 earlier staged search response(s) in this project have no research.json log entry: results/.staging/3b2e0f9d-fb46-4a28-bc32-a34b16fc0b30.json. Call `research_log_append` for each, passing that ref as `stagedResultsRef` \u2014 the staged file holds the search's own query, so the entry is filled in host-side and needs no reconstruction from memory. Log each as you go rather than batching them at the end. A search with no log entry is a search that did not happen, and the staged response is deleted 24h after it was made.",
+                  "results": [
+                    {
+                      "personId": "XJQV-1850-A",
+                      "recordId": "XJQV-1850-A",
+                      "personName": "Edmund Dixon",
+                      "score": 0.92,
+                      "sex": "Male",
+                      "birthDate": "1810",
+                      "birthPlace": "Virginia",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1850",
+                          "place": "Wheeling, Ohio, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1401638",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1850-A",
+                      "primaryId": "P1"
+                    },
+                    {
+                      "personId": "XJQV-1850-B",
+                      "recordId": "XJQV-1850-B",
+                      "personName": "Mary Dixon",
+                      "score": 0.89,
+                      "sex": "Female",
+                      "birthDate": "1815",
+                      "birthPlace": "Virginia",
+                      "role": "Other",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1850",
+                          "place": "Wheeling, Ohio, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1401638",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1850-A",
+                      "primaryId": "P2"
+                    }
+                  ],
+                  "collections": {
+                    "1401638": "United States Census, 1850"
+                  },
+                  "staged": {
+                    "resultsRef": "results/.staging/09de3d0c-69be-4421-a3b7-4ee249047653.json",
+                    "returnedCount": 2
+                  }
+                }
+              },
+              {
+                "tool": "mcp__genealogy__record_search",
+                "args": {
+                  "surname": "Dixon",
+                  "recordType": "census",
+                  "recordCountry": "United States",
+                  "recordSubdivision": "Virginia",
+                  "residenceYearFrom": 1840,
+                  "residenceYearTo": 1840,
+                  "count": 100,
+                  "offset": 100,
+                  "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d3-0-0-gws3__ah"
+                },
+                "expected_args": {
+                  "surname": "~Dixon",
+                  "residenceYearFrom": 1840,
+                  "residenceYearTo": 1840,
+                  "offset": 100
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "record-search-dixon-virginia-1840-census-page2",
+                "response": {
+                  "query": {
+                    "surname": "Dixon",
+                    "recordType": "census",
+                    "recordCountry": "United States",
+                    "recordSubdivision": "Virginia",
+                    "residenceYearFrom": 1840,
+                    "residenceYearTo": 1840,
+                    "count": 100,
+                    "offset": 100,
+                    "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d3-0-0-gws3__ah"
+                  },
+                  "totalMatches": 6,
+                  "paginationCappedAt": 4999,
+                  "returned": 2,
+                  "offset": 100,
+                  "hasMore": false,
+                  "rankingSkipped": "No `subjectId`, so match-score ranking and marriage jurisdiction hints did not run. Pass the tree person this search is about as `subjectId` to enable both. Omit it only when the search is not about a specific tree person \u2014 a broad survey, or a person not yet in the tree.",
+                  "unloggedSearches": "2 earlier staged search response(s) in this project have no research.json log entry: results/.staging/3b2e0f9d-fb46-4a28-bc32-a34b16fc0b30.json, results/.staging/09de3d0c-69be-4421-a3b7-4ee249047653.json. Call `research_log_append` for each, passing that ref as `stagedResultsRef` \u2014 the staged file holds the search's own query, so the entry is filled in host-side and needs no reconstruction from memory. Log each as you go rather than batching them at the end. A search with no log entry is a search that did not happen, and the staged response is deleted 24h after it was made.",
+                  "results": [
+                    {
+                      "personId": "XJQV-1840-E",
+                      "recordId": "XJQV-1840-E",
+                      "personName": "Samuel Dixon",
+                      "score": 0.78,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1840",
+                          "place": "Henrico, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1803960",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1840-E"
+                    },
+                    {
+                      "personId": "XJQV-1840-F",
+                      "recordId": "XJQV-1840-F",
+                      "personName": "Richard Dixon",
+                      "score": 0.75,
+                      "sex": "Male",
+                      "role": "Principal",
+                      "events": [
+                        {
+                          "type": "Residence",
+                          "date": "1840",
+                          "place": "Frederick, Virginia, United States"
+                        }
+                      ],
+                      "collectionId": "1803960",
+                      "recordArk": "ark:/61903/1:2:XJQV-HH1840-F"
+                    }
+                  ],
+                  "collections": {
+                    "1803960": "United States Census, 1840"
+                  },
+                  "staged": {
+                    "resultsRef": "results/.staging/721e9e07-bb1d-4898-8cfa-a1fa938c2c18.json",
+                    "returnedCount": 2
+                  }
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_log_append",
+                "args": {
+                  "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d3-0-0-gws3__ah",
+                  "tool": "record_search",
+                  "outcome": "positive",
+                  "resultsExamined": 4,
+                  "resultsAvailable": 6,
+                  "stagedResultsRef": "results/.staging/3b2e0f9d-fb46-4a28-bc32-a34b16fc0b30.json",
+                  "notes": "Surveyed Dixon in Virginia 1840 census: 6 total matches, page 1."
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_log_append",
+                "response": {
+                  "ok": true,
+                  "logId": "log_006",
+                  "performed": "2026-10-02T16:42:29.792Z",
+                  "resultsRef": "results/log_006.json",
+                  "returnedCount": 4,
+                  "filesWritten": [
+                    "research.json",
+                    "results/log_006.json"
+                  ],
+                  "validation": {
+                    "valid": true,
+                    "warnings": []
+                  }
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_log_append",
+                "args": {
+                  "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d3-0-0-gws3__ah",
+                  "tool": "record_search",
+                  "outcome": "positive",
+                  "resultsExamined": 2,
+                  "resultsAvailable": 2218,
+                  "stagedResultsRef": "results/.staging/09de3d0c-69be-4421-a3b7-4ee249047653.json",
+                  "notes": "Surveyed Dixon in Virginia 1850 census: 2218 total matches \u2014 over 600 threshold. Stopping; asking user for county narrowing."
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_log_append",
+                "response": {
+                  "ok": true,
+                  "logId": "log_007",
+                  "performed": "2026-10-02T16:42:33.745Z",
+                  "resultsRef": "results/log_007.json",
+                  "returnedCount": 2,
+                  "filesWritten": [
+                    "research.json",
+                    "results/log_007.json"
+                  ],
+                  "validation": {
+                    "valid": true,
+                    "warnings": []
+                  }
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_log_append",
+                "args": {
+                  "projectPath": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d3-0-0-gws3__ah",
+                  "tool": "record_search",
+                  "outcome": "positive",
+                  "resultsExamined": 2,
+                  "resultsAvailable": 6,
+                  "stagedResultsRef": "results/.staging/721e9e07-bb1d-4898-8cfa-a1fa938c2c18.json",
+                  "notes": "Surveyed Dixon in Virginia 1840 census: 6 total matches, page 2 (final)."
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_log_append",
+                "response": {
+                  "ok": true,
+                  "logId": "log_008",
+                  "performed": "2026-10-02T16:42:52.348Z",
+                  "resultsRef": "results/log_008.json",
+                  "returnedCount": 2,
+                  "filesWritten": [
+                    "research.json",
+                    "results/log_008.json"
+                  ],
+                  "validation": {
+                    "valid": true,
+                    "warnings": []
+                  }
+                }
+              }
+            ],
+            "files_created": [
+              "results/log_006.json",
+              "results/log_007.json",
+              "results/log_008.json",
+              "surname-survey-dixon-virginia.md"
+            ],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Survey Dixon households in Virginia censuses 1840-1850",
+                  "prompt": "List every Dixon household in Virginia censuses, 1840-1850.\n\nsurname: Dixon\nplace: Virginia\nyearSpan: 1840-1850\nprojectPath: <workspace>",
+                  "subagent_type": "survey-surname"
+                }
+              },
+              {
+                "tool": "Write",
+                "args": {
+                  "file_path": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d3-0-0-gws3__ah\\surname-survey-dixon-virginia.md",
+                  "content": "# Dixon Surname Survey \u2014 Virginia, 1840\u20131850\n\n## 1840 Census\n\n### United States Census, 1840\n\n| Census Year | County | Head of Household | Other Dixon Members | Record ARK | Ruled Out |\n|-------------"
+                },
+                "agent_id": "aeb00f30381aa60cb"
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "survey-surname",
+                "text": "- **Place surveyed:** Virginia, United States\n- **1840:** 6 Dixon households found (complete) \u2014 Ohio, Rockingham, Augusta, Fairfax, Henrico, Frederick counties\n- **1850:** 2,218 matches \u2014 over the 600-household threshold; stopped after page 1\n- **File written:** `C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\eval-ut_survey_surname_d3-0-0-gws3__ah\\surname-survey-dixon-virginia.md`\n- **Log IDs created:** log_006 (1840 p.1), log_007 (1850 p.1, stopped), log_008 (1840 p.2)\n- **Next step:** Provide one or more Virginia counties to narrow the 1850 search \u2014 for example, \"Ohio County\" or \"Rockingham County\" \u2014 so the 1850 households can be fully enumerated\n\n---\n\nThe 1840 federal census for Virginia was searched in full, turning up six Dixon households spread across Ohio, Rockingham, Augusta, Fairfax, Henrico, and Frederick counties. Each household is headed by a named individual \u2014 Edmund, William, James, Henry, Samuel, and Richard Dixon \u2014 as was typical for that era, when only the head of household was recorded by name. For 1850, the search returned over 2,200 matches statewide, far too many to list reliably without a county filter, so only a single household glimpsed in the first page (Edmund Dixon in Wheeling, Ohio County) appears in the table.\n\nTo complete the 1850 portion of this survey, please name the specific Virginia county or counties you want searched."
+              }
+            ],
+            "file_changes": {
+              "research.json": {
+                "sections_modified": [
+                  "log"
+                ],
+                "diff": {
+                  "log": {
+                    "added": [
+                      {
+                        "id": "log_006",
+                        "plan_item_id": null,
+                        "performed": "2026-10-02T16:42:29.792Z",
+                        "tool": "record_search",
+                        "query": {
+                          "surname": "Dixon",
+                          "recordType": "census",
+                          "recordCountry": "United States",
+                          "recordSubdivision": "Virginia",
+                          "residenceYearFrom": 1840,
+                          "residenceYearTo": 1840,
+                          "count": 100
+                        },
+                        "outcome": "positive",
+                        "results_examined": 4,
+                        "external_site": null,
+                        "results_ref": "results/log_006.json",
+                        "results_available": 6,
+                        "notes": "Surveyed Dixon in Virginia 1840 census: 6 total matches, page 1."
+                      },
+                      {
+                        "id": "log_007",
+                        "plan_item_id": null,
+                        "performed": "2026-10-02T16:42:33.745Z",
+                        "tool": "record_search",
+                        "query": {
+                          "surname": "Dixon",
+                          "recordType": "census",
+                          "recordCountry": "United States",
+                          "recordSubdivision": "Virginia",
+                          "residenceYearFrom": 1850,
+                          "residenceYearTo": 1850,
+                          "count": 100
+                        },
+                        "outcome": "positive",
+                        "results_examined": 2,
+                        "external_site": null,
+                        "results_ref": "results/log_007.json",
+                        "results_available": 2218,
+                        "notes": "Surveyed Dixon in Virginia 1850 census: 2218 total matches \u2014 over 600 threshold. Stopping; asking user for county narrowing."
+                      },
+                      {
+                        "id": "log_008",
+                        "plan_item_id": null,
+                        "performed": "2026-10-02T16:42:52.348Z",
+                        "tool": "record_search",
+                        "query": {
+                          "surname": "Dixon",
+                          "recordType": "census",
+                          "recordCountry": "United States",
+                          "recordSubdivision": "Virginia",
+                          "residenceYearFrom": 1840,
+                          "residenceYearTo": 1840,
+                          "count": 100,
+                          "offset": 100
+                        },
+                        "outcome": "positive",
+                        "results_examined": 2,
+                        "external_site": null,
+                        "results_ref": "results/log_008.json",
+                        "results_available": 6,
+                        "notes": "Surveyed Dixon in Virginia 1840 census: 6 total matches, page 2 (final)."
+                      }
+                    ],
+                    "modified": [],
+                    "deleted": []
+                  }
+                }
+              }
+            },
+            "warnings": [
+              {
+                "kind": "prose_observation",
+                "check": "report_no_internal_identifiers_in_response",
+                "observation": "internal identifiers in the reply: log_006, log_007, log_008"
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_household_grouping_and_slave_schedule",
+                "passed": true,
+                "error": "skipped: not a household-grouping test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_negative_makes_no_mcp_calls",
+                "passed": true,
+                "error": "skipped: only negative tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_negative_makes_no_write",
+                "passed": true,
+                "error": "skipped: only negative tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_paging_offsets_1840",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_positive_logs_each_search_page",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_positive_writes_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_threshold_year_gets_one_record_search",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The agent correctly resolved Virginia via place_search and used it to scope both census searches with recordCountry and recordSubdivision. It called record_search for 1840 and 1850 with correct parameters (residenceYearFrom/To set to the respective years, recordType: census). For 1840, it fetched all 6 results across two pages (page 1 returned 4, page 2 returned 2, hasMore: false). For 1850, it correctly recognized the 2218 totalMatches exceeded the 600 threshold and stopped after page 1 without fetching additional pages. It logged all three searches (log_006, log_007, log_008) with research_log_append. The response accurately reported 6 Dixon households in 1840 across named counties and correctly stated 2218 matches for 1850 with a request for county narrowing. No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The agent addressed all requirements from the delegation: surveyed Dixon surname in Virginia across the 1840-1850 span, called place_search to resolve Virginia, executed record_search for both 1840 and 1850 census years, fetched all available results for 1840 (under threshold), recognized and respected the 600-household threshold for 1850, logged all searches, and wrote the markdown file. It provided the file path and log IDs created. The response included a clear next-step instruction asking for county specification to complete the 1850 survey. No major portions of the requested work were omitted."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "All MCP tool calls passed arguments matching expected_args semantically. place_search received placeName: 'Virginia' (matches ~Virginia). Both record_search calls for 1840 and 1850 passed surname: 'Dixon', residenceYearFrom/To set correctly to the respective years, recordType: 'census', recordCountry: 'United States', and recordSubdivision: 'Virginia'. The second 1840 call correctly added offset: 100 to fetch page 2. research_log_append calls passed correct projectPath, tool, outcome, resultsExamined, resultsAvailable, stagedResultsRef, and notes. No critical identifiers were wrong, no fixture_not_found errors occurred, and no noisy extra arguments were added."
+              },
+              {
+                "source": "rubric",
+                "name": "Place resolution",
+                "score": 3,
+                "rationale": "The agent called place_search with 'Virginia' and 'United States' as contextName, receiving the correct standardPlace result 'Virginia, United States'. It then used this result to set recordCountry: 'United States' and recordSubdivision: 'Virginia' on both record_search calls (1840 and 1850). The place was correctly mapped to the appropriate record_search parameters for a state-level survey."
+              },
+              {
+                "source": "rubric",
+                "name": "Census coverage",
+                "score": 3,
+                "rationale": "The agent called record_search for both US federal census years within the 1840-1850 span: 1840 and 1850. Each call set residenceYearFrom and residenceYearTo to the respective year, and recordType was set to 'census'. The agent did not search years outside the span or use year ranges. Coverage of the requested span was complete."
+              },
+              {
+                "source": "rubric",
+                "name": "Threshold compliance",
+                "score": 3,
+                "rationale": "The 1840 search returned totalMatches: 6 (under 600 threshold), so the agent correctly paged normally, fetching all results across two pages. The 1850 search returned totalMatches: 2218 (over 600 threshold). The agent correctly did NOT fetch additional pages for 1850 after the first page returned 2 results. It reported the count (2218) to the user and explicitly asked which counties to survey for 1850 to narrow the results. The agent also logged the 1850 first-page search with research_log_append despite not paging further, as required. Threshold compliance was fully respected."
+              },
+              {
+                "source": "rubric",
+                "name": "Table structure",
+                "score": 3,
+                "rationale": "The agent wrote a markdown file (surname-survey-dixon-virginia.md) with a table sectioned by census year. The 1840 section includes all six households (Edmund, William, James, Henry, Samuel, Richard Dixon) with counties (Ohio, Rockingham, Augusta, Fairfax, Henrico, Frederick) and record ARKs. The 1850 section notes the 2218 total matches and that counties are needed, without listing household rows (correct behavior when over threshold). The table structure includes the required columns: census year, county, head of household, record ARK, and appropriate sectioning. The response correctly did not include 1850 household rows since the threshold was exceeded and user input is needed."
+              }
+            ],
+            "judge_cost_usd": 0.0200483,
+            "duration_ms": 14876.358499997878,
+            "error": null,
+            "input_tokens": 13095,
+            "cached_input_tokens": 4183,
+            "output_tokens": 1307
+          },
+          "started_at": 1790959305.3075764,
+          "ended_at": 1790959422.7572024
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    }
+  ],
+  "totals": {
+    "duration_ms": 326420.45109998435,
+    "duration_api_ms": 304409.0,
+    "judge_duration_ms": 53735.09290000948,
+    "num_turns": 10,
+    "input_tokens": 2766,
+    "cached_input_tokens": 394145,
+    "cache_creation_input_tokens": 92987,
+    "output_tokens": 11046,
+    "judge_input_tokens": 54280,
+    "judge_cached_input_tokens": 16732,
+    "judge_output_tokens": 4638,
+    "skill_cost_usd": 0.63462675,
+    "judge_cost_usd": 0.0791432,
+    "total_cost_usd": 0.71376995,
+    "wall_clock_ms": 144855.39722442627
+  },
+  "review_sample": {
+    "tests": [
+      "ut_survey_surname_d1",
+      "ut_survey_surname_d2",
+      "ut_survey_surname_d3",
+      "ut_survey_surname_d4",
+      "ut_survey_surname_d5"
+    ],
+    "cursor": [],
+    "seed": 2475
+  }
+}

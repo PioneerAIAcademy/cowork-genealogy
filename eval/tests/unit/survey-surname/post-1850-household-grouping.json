@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_survey_surname_d5",
+    "skill": "survey-surname",
+    "name": "Post-1850 census with shared recordArk households and a slave schedule",
+    "type": "positive",
+    "description": "An 1850 census where two stubs (Edmund and Mary Dixon) share a recordArk (same household) and a slave-schedule stub appears in a separate collection. The agent should group the shared-ARK stubs into one household row and put the slave schedule in its own sub-section.",
+    "tags": ["survey", "post-1850", "household-grouping", "slave-schedule", "direct-arm"]
+  },
+  "input": {
+    "delegation": "List every Dixon household in the Virginia 1850 census.\n\nsurname: Dixon\nplace: Virginia\nyearSpan: 1850-1850\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "place-search-virginia",
+    "record-search-dixon-virginia-1850-census"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged.",
+    "Should call place_search for Virginia, then record_search for 1850 only.",
+    "totalMatches is 5 (under 600 threshold), so the agent should fetch all results on one page.",
+    "Two stubs (Edmund Dixon XJQV-1850-A and Mary Dixon XJQV-1850-B) share recordArk 'ark:/61903/1:2:XJQV-HH1850-A' — they are the same household. The agent should group them into ONE household row with Edmund as head (role: Principal) and Mary as another surname member.",
+    "William Dixon (XJQV-1850-C) and James Dixon (XJQV-1850-D) each have unique recordArks — they are separate households.",
+    "Edmund Dixon (XJQV-1850-SL) is from 'United States Census (Slave Schedule), 1850' (collectionId 1420440), a non-population schedule. The agent MUST put this in its own sub-section, never merged with the population households.",
+    "To verify Table structure: check the Write call's content for (a) two sections — one for the population census and one for the slave schedule, (b) Edmund+Mary grouped as one household, (c) the required columns (census year, county, head of household, other surname members, record ARK, ruled out). Score Table structure 3 if all three hold.",
+    "Should log the search with research_log_append and write the table with Write.",
+    "The agent's return should end with the summary_for_user block."
+  ]
+}
