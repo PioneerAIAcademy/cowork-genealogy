@@ -315,6 +315,12 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
             details in your comments.
           </p>
 
+          <p className={styles.notice}>
+            <strong>A team member will read what you send</strong> &mdash; your research
+            log, your notes, and your full session transcript. If your research involves
+            living people, please don't send this report.
+          </p>
+
           <div className={styles.field}>
             <label className={styles.fieldLabel} htmlFor="feedback-email">
               Your email <span className={styles.optional}>(optional)</span>
