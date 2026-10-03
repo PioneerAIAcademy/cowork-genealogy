@@ -1,6 +1,6 @@
 # Handing the search agent to FamilySearch
 
-**Status:** In progress (2026-10-02): U2 built (PR #3039); U5 built (PR #3083); proven offline and on compose; AWS half is U13; U8's code half built (PR #3071; the instance-profile hop waits on U13); U7 built (PR #3100), proven offline, on compose, against real SQS with SSO credentials and as an EC2 instance profile from Docker; Beanstalk itself is U13; U25 built (PR #3111); U12 built (PR #TBD): bundles built and booted offline on AL2023, amd64 and arm64 (local, 2026-10-02, n=1; CI repeats amd64); Beanstalk itself is U13; the rest not started.
+**Status:** In progress (2026-10-02): U2 built (PR #3039); U5 built (PR #3083); proven offline and on compose; AWS half is U13; U8's code half built (PR #3071; the instance-profile hop waits on U13); U7 built (PR #3100), proven offline, on compose, against real SQS with SSO credentials and as an EC2 instance profile from Docker; Beanstalk itself is U13; U25 built (PR #3111); U12 built (PR #3121): bundles built and booted offline on AL2023, amd64 and arm64 (local, 2026-10-02, n=1; CI repeats amd64); Beanstalk itself is U13; the rest not started.
 **Owner:** Dallan. Written for Richard, the FamilySearch employee on the project. List 1 is Dallan's team's work; list 2 is FamilySearch's, routed through Richard; list 3 is for FamilySearch engineers.
 
 See [the prototype report](../search-agent-prototype-report.md) (its legend defines D, P and R) and [the prototype plan](search-agent-prototype.md).
