@@ -806,11 +806,16 @@ def test_proto_images_install_their_requirements_in_hash_mode(tier):
     pips = [line for line in lines if re.match(r"RUN\b.*\bpip3? install\b", line)]
     assert pips, f"{dockerfile.relative_to(PROTO)} has no pip install"
     for pip in pips:
-        words = re.split(r"\s*(?:&&|\|\||;|\|)\s*", pip.split(" install ", 1)[1], maxsplit=1)[0].split()
-        assert "--require-hashes" in words, f"not in hash mode: {pip}"
-        targets = [b for a, b in zip(words, words[1:]) if a in ("-r", "--requirement")]
-        targets += [w.split("=", 1)[1] for w in words if w.startswith("--requirement=")]
-        assert targets and set(targets) <= accepted, f"pip must install only {source} (copied to {dest}): {pip}"
+        # Every command in the RUN: a second pip chained after the first decides hash mode
+        # on its own.
+        for seg in re.split(r"\s*(?:&&|\|\||;|\|)\s*", pip):
+            if not re.search(r"\bpip3? install\b", seg):
+                continue
+            words = seg.split(" install ", 1)[1].split()
+            assert "--require-hashes" in words, f"not in hash mode: {pip}"
+            targets = [b for a, b in zip(words, words[1:]) if a in ("-r", "--requirement")]
+            targets += [w.split("=", 1)[1] for w in words if w.startswith("--requirement=")]
+            assert targets and set(targets) <= accepted, f"pip must install only {source} (copied to {dest}): {pip}"
 
 
 @pytest.mark.parametrize("tier", sorted(REQUIREMENTS))
