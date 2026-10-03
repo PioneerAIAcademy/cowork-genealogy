@@ -593,7 +593,7 @@ Call `research_log_append` once per search — it assigns the next `log_` id, st
 | `record_read`, several | `{"recordIds": ["ark:/61903/1:1:…", "ark:/61903/1:1:…"]}` |
 | `image_transcribe`, `image_read` | `{"imageArk": "ark:/61903/3:1:XXXX-XXXX-XXX"}` |
 
-Never write a bare sentence there. An ARK is dense with `:` and `/`, and prose containing one produces `InputValidationError: … could not be parsed as JSON` — the call is rejected **before** the tool runs, so nothing is logged and the whole turn is wasted. Keep ARKs in a keyed field.
+Never write a bare sentence there — a prose `query` carrying an ARK is rejected before the tool runs, so nothing is logged. Keep ARKs in a keyed field.
 
 Pass: `projectPath`, `tool`, `planItemId`, `query` (enough detail to reproduce the search), `outcome`, `resultsExamined`, `resultsAvailable`, `notes` (a one-line summary), and `stagedResultsRef` from Step 3 (the `staged.resultsRef` handle, when present).
 

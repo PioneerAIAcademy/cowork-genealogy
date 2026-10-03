@@ -328,6 +328,31 @@ card and a decision, not a fourth prose attempt — filed as issue #3054.
 **Read this before re-wording the Norway entry.** Three variants have been
 measured; a fourth needs a mechanism, not a rewrite.
 
+## The ARK sentence was innocent; the "Collect impartially" rewording was not
+
+`2fbd2210c` reverted TWO reworded `SKILL.md` lines together and `ut_search_records_027`
+went 4-of-5 failing to 3/3, which this PR first attributed to both. That attribution was
+collective and wrong. Isolated 2026-10-02, one variable, three runs per arm:
+
+| Collect impartially | ARK sentence | `_027` |
+|---|---|---|
+| shortened | shortened | fail, fail, pass (and 2 further fails in full runs) |
+| original | original | pass, pass, pass |
+| original | **shortened** | pass, pass, pass |
+
+The shortened ARK line sits in both a failing and a passing configuration, so it is not
+the cause — the "Collect impartially" rewording is. n=3 per arm: three greens do not
+prove innocence (at a 1-in-3 rate that happens about 30% of the time), and the strength
+here is the controlled comparison, not the sample size.
+
+**What this licenses.** The shortened ARK wording is behaviour-neutral on the evidence,
+which is what `eval-cosmetic-skip:search-records` asks for — a rule-2 waiver keeps the
+existing run log and its annotations rather than buying a re-run. The body carries
+exactly the measured string and no other variant; a reworded third version would not be
+covered by this table, and `SKILL.md` is byte-identical at 64,277 to the tree these runs
+used. The "Collect impartially" line stays as restored and is NOT a candidate for the
+same treatment.
+
 ## What nothing checks
 
 - **That the census fetch fires in production.** ADR-0012's Enforcement is
