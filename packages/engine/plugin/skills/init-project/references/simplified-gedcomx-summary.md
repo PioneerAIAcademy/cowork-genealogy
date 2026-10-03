@@ -136,8 +136,11 @@ Full spec: `docs/specs/simplified-gedcomx-spec.md`.
 
 `person_read` already returns this format — persons/relationships/sources,
 snake_case, `standard_place` on facts. It is not full GedcomX and needs no
-field renaming. It may also return a top-level `notes` array, reporting a
-relationship it dropped because the other endpoint was not in `persons`; it is
+field renaming. It may also return a top-level `notes` array, reporting
+either a relationship it dropped because the other endpoint was not in `persons`,
+or a relative whose attached sources it could not read. The two mean opposite
+things about whether that person is in the tree — dropped means absent, unread
+sources means present — so read the note rather than assuming. Either way it is
 not part of the tree and is not copied into one. What it does need:
 
 - **Re-id.** Persons get `I` ids; names and relationships arrive with no ids, so

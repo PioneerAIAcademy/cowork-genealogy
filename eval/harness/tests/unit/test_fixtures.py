@@ -149,7 +149,9 @@ def test_load_multiple_fixtures_preserves_order():
 # `shapeRelationships`/`shapeSources`, which always assemble those three keys.
 
 _PERSON_READ_TOP_LEVEL = {"persons", "relationships", "sources"}
-# `notes[]` is emitted ONLY when endpoint closure dropped an edge, so it is
+# `notes[]` has TWO emitters: endpoint closure dropping an edge, and a relative
+    # whose attached sources could not be read (#1689 Half 3). The two mean
+    # opposite things about whether that person is in the tree, so it is
 # optional rather than part of the always-shape (#2593, @chesworthrm).
 _PERSON_READ_OPTIONAL = {"notes"}
 

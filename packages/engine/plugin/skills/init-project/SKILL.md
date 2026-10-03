@@ -136,7 +136,7 @@ Call `person_read({ personId: "<id>", projectPath })`. It returns simplified Ged
 
 Build the simplified-GedcomX document in memory — you pass it to `project_create` in Step 4, which writes it. Do NOT write either project file yourself; `Write` on them is blocked. Follow `references/simplified-gedcomx-summary.md`.
 
-**`person_read` already returns this format** — `{ "persons": [], "relationships": [], "sources": [] }`, snake_case, no field renaming. It also returns a top-level `notes` array when it dropped a relationship whose other end it could not return; that is a sibling of `persons`, not a source field, and never goes in the tree. What it returns is still not persistable as-is: its ids, its source `notes`, and its missing source refs all need work below. Everything else — including both standardized sidecars — is carried through untouched.
+**`person_read` already returns this format** — `{ "persons": [], "relationships": [], "sources": [] }`, snake_case, no field renaming. It also returns a top-level `notes` array for two things it could not do: a relationship whose other end it could not return (that person is absent from the tree), and a relative whose attached sources could not be read (that person IS in the tree; only their sources are missing). The two mean opposite things about whether the person is there.
 
 **Include:** subject person (names, facts), all relatives (parents, siblings, spouse, children), every person's person-level `sources` refs, all relationships, all source descriptions in the top-level `sources` array — minus `notes`, `text`, `image_ref` and `artifact_url`, none of which are allowed source fields and each of which fails the write. (`text` carries a memory's story text or OCR; keep it for Step 4b, then drop it from the tree.) A person object allows only `id`, `ark`, `living`, `gender`, `names`, `facts`, `sources`. `ark` is what marks a person as being *in* the FamilySearch tree, so every person read from it carries `ark: "ark:/61903/4:1:<their FamilySearch person ID>"` — that exact form, which is what `person_search` returns for the same person. Omit the key entirely on local stubs. Never a page URL, never a bare ID.
 
@@ -151,7 +151,7 @@ A relationship needs its OWN `sources` ref too — on the relationship object it
 { "id": "R1", "type": "Couple", "person1": "I1", "person2": "I2", "facts": [ ... ], "sources": [{ "ref": "S1", "quality": 1 }] }
 ```
 
-The top-level `sources[]` array you already surveyed above is not the same thing as this per-fact `sources` ref — a fact with no ref yet just means you haven't attached one, not that no sources exist at all. If `person_read`'s result is too large to `Read` directly, count `len(sources)` on the top-level array before drawing any conclusion about how many sources are attached.
+The top-level `sources[]` array you already surveyed above is not the same thing as this per-fact `sources` ref — a fact with no ref yet just means you haven't attached one, not that no sources exist at all. If `person_read`'s result is too large to `Read` directly, count only the entries `persons[0].sources[].ref` names, plus any carrying an `artifact_url`, before drawing any conclusion about how many sources are attached to the SUBJECT. The top-level `sources` array also carries every relative's attached sources, so `len(sources)` is the family's total, not this person's — on one measured profile that is 197 against 17.
 
 `person_read` facts arrive with two standardized sidecars — `standard_place` and `standard_date`. **Carry both through exactly as returned; never re-derive either from the raw `place`/`date`.** Hand-entered places, and any returned fact with a `place` but no `standard_place`: resolve with `place_search` and use `standardPlace` from the first result. Never copy `place` into `standard_place`.
 
@@ -269,10 +269,16 @@ here, only the framing changes.
 - Known holdings recorded (if any) and what each contributes
 - Any scanned documents or photos on the profile that could not be read this
   time — name each one and say they can be read later
-- If `person_read` returned a top-level `notes` array, one sentence from it: a
-  relative FamilySearch names but does not describe was left out. Say it in
-  plain words — "FamilySearch lists a parent for him but gives no record for
-  that person, so they are not in the tree" — never the count or the field name
+- If `person_read` returned a top-level `notes` array, one sentence per note, in
+  plain words, never the count or the field name. The notes say different things,
+  so read each one rather than reaching for a fixed sentence:
+  - a relative FamilySearch names but does not describe was left out —
+    "FamilySearch lists a parent for him but gives no record for that person, so
+    they are not in the tree"
+  - a relative's own attached sources could not be read — "I could not read what
+    is already attached to some of his relatives, so there may be records there I
+    have not accounted for". **That person IS in the tree**; only their sources
+    are missing, so never say they were left out
 - One sentence on what comes next, defining "objective" and "research
   question" on first use — never "use question-selection to…": "Your objective
   is the overall goal — <restate it>. The next step is the first research

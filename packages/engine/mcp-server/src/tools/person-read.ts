@@ -1,6 +1,9 @@
 import type { Principal } from "../auth/principal.js";
 import { dropDanglingEdges, describeDroppedEdges } from "../utils/tree-graph.js";
-import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
+import {
+  toSimplifiedStandardized,
+  simplifySourceDescription,
+} from "../utils/gedcomx-convert.js";
 import { fsFetch } from "../utils/fs-fetch.js";
 import {
   fetchMemories,
@@ -12,6 +15,10 @@ import {
   rankForTranscription,
   type Memory,
 } from "../utils/memories.js";
+import {
+  fetchRelativeSources,
+  type RelativeSourcesResult,
+} from "../utils/relative-sources.js";
 import { mapWithConcurrency } from "../utils/place-resolver.js";
 import { stageSearchResults } from "../utils/results-staging.js";
 import { imageTranscribeTool } from "./image-transcribe.js";
@@ -53,7 +60,9 @@ export const personReadToolSchema = {
     "Read person data from the FamilySearch Family Tree. " +
     "Returns simplified GEDCOMX (persons, relationships, sources): the person, " +
     "their parents, siblings, spouses and children, and the sources attached " +
-    "to the person, each linked from the person's own `sources` refs. For a " +
+    "to the person AND to each relative, each linked from that person's own " +
+    "`sources` refs — so what is attached to the SUBJECT is the entries its own " +
+    "refs point at, plus any carrying `artifact_url`. For a " +
     "non-living subject it also returns source-style memories (scanned " +
     "wills, certificates, obituaries), transcribed where the " +
     "read's time budget allowed. " +
@@ -71,7 +80,9 @@ export const personReadToolSchema = {
       },
       sourceDescriptions: {
         type: "boolean",
-        description: "Ignored: attached sources are always returned.",
+        description:
+          "Ignored: attached sources are always returned — the subject's and the "
+          + "relatives' own.",
       },
       projectPath: {
         type: "string",
@@ -105,6 +116,19 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
   const pid = personId.trim();
   const { result, resolvedId } = await fetchAndConvert(principal, pid, 0, deadline);
 
+  // The subject is `persons[0]`, GUARANTEED rather than inherited from whatever order
+  // FamilySearch sent. Downstream has to be able to say which entries are the subject's
+  // own -- `source-evaluation` audits the subject's sources and must not audit a
+  // relative's -- and after a 301 the caller's `personId` names nobody in the response,
+  // so the id it asked for cannot be the discriminator. Tests already pinned
+  // `persons[0]` as the subject for the plain read, the merged read and the living stub;
+  // this makes that a property of the tool instead of a habit of the upstream.
+  const subjectAt = result.persons.findIndex((p) => p.id === resolvedId);
+  if (subjectAt > 0) {
+    const [subject] = result.persons.splice(subjectAt, 1);
+    result.persons.unshift(subject);
+  }
+
   // Memories are coupled to sources (lead, 2026-09-27: "coupled everywhere"),
   // and sources are always read, so memories ride every read of a non-living
   // subject.
@@ -120,6 +144,26 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
   // the pre-redirect id against the post-redirect person made this gate false
   // for every merged subject -- no memories, no note, no error, indistinguishable
   // from a person who simply has none.
+  // Issue #1689 Half 3: the relatives' own attached sources. STARTED BEFORE the
+  // memories merge is awaited, so the two reads overlap. They share one deadline, and
+  // run in sequence the memories phase can consume all of it -- OCR waits out the full
+  // budget -- after which every relative is skipped and the response carries a note
+  // saying so instead of their sources.
+  const relativeIds = relativesWithRefs(result, resolvedId);
+  const relativesPending: Promise<RelativeSourcesResult> =
+    relativeIds.length > 0
+      ? // The `.catch` is load-bearing, not defensive. This promise is created BEFORE
+        // `mergeMemories` is awaited, so between those two points it is unhandled: a
+        // rejection ends the PROCESS — the stdio session, or the shared HTTP server —
+        // rather than failing one read. Reproduced with a single `null` in a relative's
+        // `sourceDescriptions` (exit 1). Routing it to the normal skip path keeps the
+        // subject's own sources and loses only the enrichment.
+        fetchRelativeSources(relativeIds, principal, deadline).catch(() => ({
+          descriptions: [],
+          skipped: relativeIds,
+        }))
+      : Promise.resolve({ descriptions: [], skipped: [] });
+
   if (result.persons.some((p) => p.id === resolvedId && !p.living)) {
     result.sources = await mergeMemories(
       resolvedId,
@@ -127,6 +171,23 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
       principal,
       deadline,
       projectPath,
+    );
+  }
+
+  // MUST be applied BEFORE `keepResolvablePersonSourceRefs`: that function drops every
+  // person-level ref whose target is not already in `sources[]`, so merging after it
+  // would fetch every relative's sources and throw them away, all tests still green.
+  try {
+    result.sources = applyRelativeSources(
+      result,
+      await relativesPending,
+      resolvedId,
+      relativeIds.length,
+    );
+  } catch (err) {
+    process.stderr.write(
+      `person_read: relative sources failed for ${resolvedId}, ` +
+        `returning tree sources only: ${String(err)}\n`,
     );
   }
 
@@ -415,6 +476,77 @@ async function mergeMemories(
     );
     return treeSources;
   }
+}
+
+/**
+ * Fetch the relatives' attached sources and fold them into `sources[]`.
+ *
+ * Only relatives are fetched: the subject's own sources are already in the tree-read
+ * body and resolve from it (17/17 and 24/24, probe 2026-09-30).
+ *
+ * Ordinary entries, no discriminator, no new top-level key (lead, 2026-08-27).
+ *
+ * SHAPED THROUGH `shapeSources`, never `simplifySourceDescription` alone. The simplified
+ * form carries `resource_type` and `coverage` — not allowed tree-source fields — may omit
+ * `title`, and skips the `SD_*` metadata filter. `project_create` validates without
+ * sanitizing, so one stray key refuses the whole project: shaping these the short way
+ * produced 180 validation errors on a real subject.
+ */
+function applyRelativeSources(
+  result: PersonReadResult,
+  fetched: RelativeSourcesResult,
+  subjectId: string,
+  relativeCount: number,
+): TreeSource[] {
+  if (fetched.skipped.length > 0) {
+    process.stderr.write(
+      `person_read: relative sources unread for ${fetched.skipped.length} of ` +
+        `${relativeCount} relative(s) of ${subjectId}: ${fetched.skipped.join(", ")}\n`,
+    );
+    // AND in the response. stderr alone leaves the agent seeing relatives with no
+    // attached sources — indistinguishable from relatives that genuinely have none,
+    // which is the #1948 blind spot this whole half exists to close. Measured: when the
+    // tree read and fan-out run slow the relatives phase can start with almost no budget
+    // left, and 11 of 12 relatives were skipped in 3 of 10 runs on one subject.
+    //
+    // `notes[]` is where this belongs and no ruling is being reopened: the spec already
+    // says it is "present only when something was silently dropped", and the lead
+    // required budget expiry to be visible for memories (Half 2, acceptance 11). An
+    // earlier comment here claimed there was "nowhere to report a shortfall"; that was
+    // wrong.
+    result.notes = [
+      ...(result.notes ?? []),
+      `${fetched.skipped.length} of ${relativeCount} relatives' attached sources could ` +
+        `not be read, so their sources are missing from this response.`,
+    ];
+  }
+  if (fetched.descriptions.length === 0) return result.sources;
+
+  const have = new Set(result.sources.map((s) => s.id));
+  const shaped = shapeSources(
+    fetched.descriptions.map(simplifySourceDescription),
+    fetched.descriptions as FSSourceDescription[],
+  );
+  // A source attached to BOTH the subject and a relative is the common case for a
+  // marriage record, and the subject's copy is already in `sources[]`.
+  const added = shaped.filter((d) => !have.has(d.id));
+  return added.length > 0 ? [...result.sources, ...added] : result.sources;
+}
+
+/**
+ * Which relatives are worth a call: only those carrying a ref. A tree whose relatives
+ * have nothing attached must not pay a request each to discover that.
+ *
+ * NOT gated on `living`, deliberately. Review raised it; the ref-presence filter is the
+ * real gate, and a living relative that DOES carry a ref carries a real description —
+ * skipping it would lose data rather than save a call. Nothing measured says living
+ * relatives carry refs at all, so this stays as it is rather than adding a filter on a
+ * guess. If a measurement ever shows otherwise, this is the line to change.
+ */
+function relativesWithRefs(result: PersonReadResult, subjectId: string): string[] {
+  return result.persons
+    .filter((p) => p.id !== subjectId && (p.sources?.length ?? 0) > 0)
+    .map((p) => p.id);
 }
 
 /** A memory as an ordinary source row. No discriminator field and no new
@@ -1110,7 +1242,12 @@ function toTreeSourceRef(r: { ref?: string; page?: string; quality?: number }): 
  * (17/17 on LVJK-9TQ, 24/24 on KNDX-MKG), while relatives' refs are mostly full
  * URLs to descriptions FamilySearch does not return in this body (0/102 and
  * 2/79 resolve), and a `SD_*` target is filtered out of `sources[]`. Carrying
- * relatives' own sources is issue #1689 Half 3.
+ * relatives' own sources is what the relatives-sources phase above now does: it fetches
+ * those descriptions BEFORE this runs, so they resolve here instead of being dropped.
+ * The ref itself is rewritten earlier still, at conversion time — `simplifySourceRef`
+ * prefers `descriptionId` over the full-URL `description` (`gedcomx-convert.ts`), which
+ * is what makes a relative's ref comparable to a description id at all. Run this after
+ * the merge, never before.
  */
 function keepResolvablePersonSourceRefs(result: PersonReadResult): void {
   const ids = new Set(result.sources.map((s) => s.id));
