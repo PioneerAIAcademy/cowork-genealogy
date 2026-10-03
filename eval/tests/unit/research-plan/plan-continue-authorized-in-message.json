@@ -44,7 +44,7 @@
   ],
   "judge_reads_files": true,
   "execution": {
-    "max_wall_clock_seconds": 600,
+    "max_wall_clock_seconds": 1200,
     "max_turns": 30,
     "stub_skills": [
       {
@@ -58,6 +58,14 @@
       {
         "skill": "record-extraction",
         "response": "Extracted the queued records from the earlier positive log entries into research.json and the tree. Returning to the plan's remaining items, without stopping to check in, per your instruction."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Linked the extracted assertions to the matching tree persons. Returning to the plan's remaining items, without stopping to check in, per your instruction."
+      },
+      {
+        "skill": "search-images",
+        "response": "Searched the plan's browse-only volumes and logged each image group for reading. Returning to the plan's remaining items, without stopping to check in, per your instruction."
       }
     ]
   }
