@@ -18,7 +18,6 @@ const canonicalPath = join(repoRoot, "plugin", "references", "places-guidance.md
 // a skill here (and copy the file) when it starts using place tools or writing
 // places.
 const SKILLS_WITH_PLACES_GUIDANCE = [
-  "search-external-sites",
   "timeline",
   "conflict-resolution",
   "record-extraction",

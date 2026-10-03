@@ -10,11 +10,14 @@
       "external-site",
       "subscription-awareness",
       "url-generation",
-      "log-site-myheritage"
-    ]
+      "log-site-myheritage",
+      "direct-arm"
+    ],
+    "expected_outcome": "xfail",
+    "xfail_reason": "Agent-body defect, hand-off presentation: the URL the agent shows is not the URL the builder logged. It either retypes the logged URL with a changed character (epmo.similar became epmo=similar) or builds a second URL and presents that one instead. Measured on the converted agent 2026-10-02: the committed suite run failed, then --runs-per-test 3 went pass/fail/pass. Removal condition: a --runs-per-test 3 run of this test on the agent passes 3 of 3."
   },
   "input": {
-    "user_message": "Search MyHeritage for Patrick Flynn's marriage record in Pennsylvania, around 1865 to 1875.",
+    "delegation": "Search MyHeritage for Patrick Flynn's marriage record in Pennsylvania, around 1865 to 1875.\n\nuserPresent: yes\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn-ancestry-sub"
   },
   "mcp_fixtures": [

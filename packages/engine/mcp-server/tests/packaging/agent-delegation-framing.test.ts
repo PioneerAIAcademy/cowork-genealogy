@@ -260,6 +260,51 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
+  // The agent-conversion (issue #2802) deleted skills/search-external-sites/,
+  // so its three callers became spawns of `@plugin:search-external-sites`.
+  "research -> search-external-sites": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that pre-states a value** — a birthplace, a year, a collection\n  — does not settle it.",
+      },
+    ],
+  },
+
+  "search-records -> search-external-sites": {
+    pins: [
+      {
+        side: "caller",
+        excerpt: "and the plan item — never a value you expect it to find —",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that pre-states a value** — a birthplace, a year, a collection\n  — does not settle it.",
+      },
+    ],
+  },
+
+  "research-plan -> search-external-sites": {
+    pins: [
+      {
+        side: "caller",
+        excerpt: "naming the plan item and never the result you expect.",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that pre-states a value** — a birthplace, a year, a collection\n  — does not settle it.",
+      },
+    ],
+  },
+
   "research -> person-evidence": {
     pins: [
       {
@@ -412,12 +457,11 @@ const PROSE_MENTIONS = new Map<string, string>([
   // FamilySearch-wiki request, not a delegation, and does not spell
   // `@plugin:search-familysearch-wiki`. (A locality-guide row left when issue
   // #2117 deleted that skill.)
-  // locality-guide entered agentOnly when issue #2117 deleted its skill. All
-  // four mentions below are bare-name routing-boundary prose ("use
+  // locality-guide entered agentOnly when issue #2117 deleted its skill. Both
+  // mentions below are bare-name routing-boundary prose ("use
   // locality-guide", "locality-guide is the right skill") — none spell
   // `@plugin:locality-guide`.
   ["research-plan -> locality-guide", ""],
-  ["search-external-sites -> locality-guide", ""],
   ["search-records -> locality-guide", ""],
   // person-evidence gained a skills/<name>/ directory before the agent
   // conversion; when the skill was deleted the name entered agentOnly and
@@ -461,6 +505,12 @@ const PROSE_MENTIONS = new Map<string, string>([
   // `@plugin:hypothesis-tracking`.
   ["conflict-resolution -> hypothesis-tracking", ""],
   ["timeline -> hypothesis-tracking", ""],
+  // search-external-sites entered agentOnly when issue #2802 deleted its skill.
+  // All three are routing-boundary prose naming it as the owner of an
+  // external-site search ("use search-external-sites"), none a delegation.
+  ["question-selection -> search-external-sites", ""],
+  ["record-extraction -> search-external-sites", ""],
+  ["search-full-text -> search-external-sites", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -653,6 +703,8 @@ describe("agent delegation framing", () => {
     "project-status",
     "locality-guide",
     "record-extractor",
+    // ARRIVED when issue #2802 deleted skills/search-external-sites/.
+    "search-external-sites",
     "search-familysearch-wiki",
     "search-images",
     "search-wikipedia",

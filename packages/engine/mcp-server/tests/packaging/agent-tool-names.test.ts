@@ -690,6 +690,25 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // The folded search-external-sites skill (issue #2802): its seven tools plus
+  // `project_context`, which is how a triage invocation finds the open hand-off
+  // in `awaitingUser`. `Read` opens an uploaded capture. No wiki tools: the
+  // parish page arrives in the delegation as `baseUrl`.
+  "search-external-sites.md": {
+    tools: [
+      "Read",
+      "build_external_search_url",
+      "collections_search",
+      "external_links_search",
+      "place_search",
+      "project_context",
+      "research_append",
+      "research_log_append",
+      "research_query",
+    ],
+    denies: [],
+  },
+
   // The folded check-warnings skill (issue #2118). `person_quality` is absent by
   // lead ruling 2026-09-27. No `Read`: with it the agent read research.json and
   // the tree and reported what it found there instead of the tool's answer (4

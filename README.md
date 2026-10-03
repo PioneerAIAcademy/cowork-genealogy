@@ -140,8 +140,8 @@ way project state changes.
 `logout` and `auth_status` are direct-invocation tools — Claude calls
 them in response to the user ("log me out", "am I logged in?") rather
 than as part of any skill workflow. `login` is invoked both directly
-and by the `init-project`, `search-records`, and `search-external-sites`
-skills when a tool call needs authentication.
+by the `init-project` and `search-records` skills, and by the
+`search-external-sites` agent, when a tool call needs authentication.
 
 The `place_population` tool combines data from populstat (234 countries),
 gapminder, and FamilySearch indexed birth records. The `wiki_search`
@@ -161,7 +161,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 13 skills covering the full GPS research cycle. Skills
+The plugin ships 12 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 For a plain-language account of the research method itself — the GPS
 cycle, the judgment made at each stage, and what to expect from a
@@ -189,7 +189,6 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 |-------|-------------|----------|
 | **search-records** | Searches FamilySearch indexed records (census, vital, probate, etc.). Triages results by match quality. | "Search for Patrick Flynn in the 1850 census" |
 | **search-full-text** | Full-text search of FS AI-transcribed document images. Finds witnesses, neighbors, heirs, and other non-principal mentions. | "Full-text search for Flynn in Schuylkill County deeds" |
-| **search-external-sites** | Generates search URLs for Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, and twelve other genealogy sites (`build_external_search_url`'s full site list). Walks the click-capture-analyze loop. | "Search Ancestry for Thomas Flynn" |
 
 ### Analyzing evidence
 
@@ -229,7 +228,7 @@ specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships nineteen Cowork agents. Unlike skills, an agent runs in
+The plugin ships twenty Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 at its mentor checkpoint, or by the skill that delegates to it — you
 don't load it explicitly.
@@ -243,6 +242,7 @@ don't load it explicitly.
 | **research-exhaustiveness** | Judges whether the research on **one** question is reasonably exhaustive — applies the GPS 5 threshold questions and the 7-point stop criteria, then either declares the question exhaustive or names what is still missing. The `research-exhaustiveness` skill delegates to it; it is the only caller allowed to declare a question exhaustive, which is what keeps that claim from being hand-authored around the criteria it rests on. | (not invoked directly — `research-exhaustiveness` delegates) |
 | **person-evidence** | Resolves identity for **one** request — evaluates whether a record's person matches a tree person, writes the `person_evidence` links with their confidence and rationale, and creates stub persons when nothing matches. It is the only writer of `person_evidence`. | (spawned by `/research` directly via the agent description) |
 | **search-images** | Browses a digitized FamilySearch volume page by page when the record set is neither indexed nor full-text searchable, and logs the browse. It finds the image groups covering a place and date range, lists the images inside one, and reads each page as text. | "Browse the images" / "page through the film" |
+| **search-external-sites** | Builds pre-filled search URLs for Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, the Archion and Matricula church-book sites, and the rest of `build_external_search_url`'s site list; hands each over with exactly what to look for, and triages the capture you bring back. Logs every search, nil results included. | "Search Ancestry for Thomas Flynn" |
 | **citation** | Polishes the citations on sources that already exist to Evidence Explained standards (Who/What/When/Where/Where-within), and looks up the office that created a probate record on the FamilySearch wiki rather than carrying one jurisdiction's offices in its prompt. It never creates a source entry: asked to add a record, it declines and routes to `record-extraction`. | "Fix citations" / "Cite this source" |
 | **check-warnings** | Flags genealogical impossibilities and implausible patterns in one person's own data (married before 12, died after 120, child born after parent's death), deterministically from your local tree. Writes nothing. `init-project` runs it on every imported person, and `tree-edit` after every edit or merge. | "Check for warnings" / "Any problems with his dates?" |
 | **locality-guide** | Produces a structured research guide for a place/time — what records exist and where they're held — and, inside a project, saves it so the research plan can use it. `/research` calls it when a question's place has not been surveyed yet. | "What records exist for Schuylkill County?" |
@@ -264,7 +264,7 @@ don't load it explicitly.
 3. research-plan             "How do I answer this question?"
 4. search-records            Execute indexed searches on FamilySearch
    search-full-text          ...or full-text search for witnesses/FAN mentions
-   search-external-sites     ...or on Ancestry/MyHeritage/FindMyPast
+   search-external-sites (agent) ...or on Ancestry/MyHeritage/FindMyPast
 5. record-extraction         Extract assertions from found records
                              (evidence classifications are written
                              here and are final at extraction)
@@ -463,11 +463,11 @@ What's shipped:
 - **50 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
-- **13 shipped skills.** Full GPS research cycle from `init-project`
+- **12 shipped skills.** Full GPS research cycle from `init-project`
   through the conclusion. The three
   e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result, grade-e2e-run)
   are repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
-- **19 Cowork agents.** `translation` (genealogy-specific translation of foreign-language
+- **20 Cowork agents.** `translation` (genealogy-specific translation of foreign-language
   records), `gps-mentor` (BCG-style senior-genealogist review,
   invoked by `/research` at GPS checkpoints and on demand), `record-extractor`
   (per-record assertion extraction), `proof-conclusion` (the proof conclusion
@@ -477,7 +477,8 @@ What's shipped:
   resolution, and the only writer of `person_evidence`), `citation` (Evidence
   Explained refinement of citations on sources that already exist),
   `convert-dates` (calendar-system date conversion), `search-images`
-  (page-by-page browse of an unindexed volume),
+  (page-by-page browse of an unindexed volume), `search-external-sites`
+  (external-site search URLs, the capture hand-off and its triage),
   `check-warnings` (genealogical-impossibility checks on one person's data),
   `validate-schema` (read-only schema audit of both project files),
   `search-familysearch-wiki` (FamilySearch Research Wiki how-to guidance saved
