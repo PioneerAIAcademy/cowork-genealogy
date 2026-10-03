@@ -3614,6 +3614,8 @@ class SilentPostgres:
     """A local listener that accepts and never answers: a blackholed Postgres, no
     network. ``accepted`` counts the connections the probes opened."""
 
+    hang_up = False
+
     def __init__(self) -> None:
         self.sock = socket.socket()
         self.sock.bind(("127.0.0.1", 0))
@@ -3632,7 +3634,10 @@ class SilentPostgres:
                 continue
             except OSError:
                 return
-            self.accepted.append(conn)
+            if self.hang_up:
+                conn.close()
+            else:
+                self.accepted.append(conn)
 
     @property
     def dsn(self) -> str:
@@ -3652,7 +3657,20 @@ def silent_pg():
     pg.close()
 
 
-REFUSED_DSN = "postgresql://probeuser:secretpw@127.0.0.1:1/proto"
+class RefusingPostgres(SilentPostgres):
+    """A local listener that hangs up on every connection at once: a Postgres that is down
+    and says so fast on every OS. Port 1 is not that on Windows, which retries a refused
+    loopback connect for about two seconds, past ``READY_TIMEOUT_S``."""
+
+    hang_up = True
+
+
+@pytest.fixture
+def refused_pg():
+    pg = RefusingPostgres()
+    yield pg
+    pg.close()
+
 
 
 @contextlib.contextmanager
@@ -3700,9 +3718,9 @@ def _ready(monkeypatch, tmp_path, *, postgres_ok: bool = True) -> None:
         monkeypatch.setattr(worker, "probe_postgres", lambda dsn, timeout_s=None: {"ok": True})
 
 
-def test_healthz_is_503_when_postgres_refuses(monkeypatch, tmp_path):
+def test_healthz_is_503_when_postgres_refuses(monkeypatch, tmp_path, refused_pg):
     _ready(monkeypatch, tmp_path, postgres_ok=False)
-    monkeypatch.setattr(worker, "PG_DSN", REFUSED_DSN)
+    monkeypatch.setattr(worker, "PG_DSN", refused_pg.dsn)
     logged: list[dict] = []
     monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
     status, body, raw = _healthz()
