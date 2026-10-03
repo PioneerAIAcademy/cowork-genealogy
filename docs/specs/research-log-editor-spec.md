@@ -519,8 +519,8 @@ Scope, and why it is this narrow:
   a caller who hedged in the exact words they were handed was refused a second
   time with no wording in the message that would clear it.
 
-Measured over the 4,320 distinct `notes` arguments in the committed run logs
-(2026-10-03; re-derive with
+Measured over the 4,322 distinct `notes` arguments in the committed run logs
+(2026-10-04; re-derive with
 `dev/measure-census-hedge-refusals.ts` rather than quote — the corpus moves with
 every committed run, and shrinks as well as grows, because a re-run replaces a
 skill's run log), the note-only rule refuses 144 (3.3%). Of the 1,998 staged
@@ -531,13 +531,13 @@ because of the payload.
 
 Against `main` — the baseline that matters, since it is what ships today — the
 whole of this section's change newly refuses **0 notes and 3 payload ops**, and
-newly frees **42 distinct notes** — 42 on the note-only axis and 11 on the
-payload axis, every one of the 11 already among the 42, so they are repeats of
+newly frees **43 distinct notes** — 43 on the note-only axis and 11 on the
+payload axis, every one of the 11 already among the 43, so they are repeats of
 the same strings rather than a separate population. All three newly refused are
 flat "in household of ⟨Name⟩" claims logged against an 1850 payload, the shape
 the rule exists for.
 
-Every one of the 42 freed was read, and the right summary is that **none is an
+Every one of the 43 freed was read, and the right summary is that **none is an
 unhedged claim** — not that none names anyone. Most are search plans, nil
 results, candidate lists and negative findings, but four are the John Baker
 notes, which list eight household members by name and are freed because each
