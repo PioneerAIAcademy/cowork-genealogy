@@ -149,8 +149,8 @@ Fixed before the run:
 **Grading key:** ✓ correct · PW plausible-wrong · R refusal · M miss (wrong, not plausible-wrong)
 
 **Who graded:** Vocabulary section — developer (LLM first-pass, string-comparable).
-Abbreviation sections — LLM first-pass (Claude Sonnet 4.6, 2026-10-03); cells marked
-⚑ require genealogist confirmation before the result is final.
+Abbreviation sections — LLM first-pass (Claude Sonnet 4.6, 2026-10-03); SS. and Ehem.
+genealogist-adjudicated (mercyokum, 2026-10-03). All rows final.
 
 ### Common genealogy vocabulary (22 rows) — developer-graded
 
@@ -181,7 +181,7 @@ Abbreviation sections — LLM first-pass (Claude Sonnet 4.6, 2026-10-03); cells 
 
 **Section tally: 22/22 carried.**
 
-### Latin abbreviations (16 rows) — genealogist adjudicates
+### Latin abbreviations (16 rows) — graded (SS. genealogist-adjudicated)
 
 | Abbreviation | Full form | T1 | T2 | T3 | Verdict | Notes |
 |--------------|-----------|----|----|----|---------| ------|
@@ -204,7 +204,7 @@ Abbreviation sections — LLM first-pass (Claude Sonnet 4.6, 2026-10-03); cells 
 
 **Section tally: 14/16 carried, 2 kept (d.d., SS.).**
 
-### German abbreviations (11 rows) — genealogist adjudicates
+### German abbreviations (11 rows) — graded (Ehem. genealogist-adjudicated)
 
 | Abbreviation | Full form | T1 | T2 | T3 | Verdict | Notes |
 |--------------|-----------|----|----|----|---------| ------|
@@ -235,7 +235,10 @@ not an abbreviation. The primary denominator is 48 rows / 144 trials.
 **Trial responses:** All 3 trials correctly expand the genitive article
 (T1: "des = of the [genitive masculine/neuter]"; T2 and T3: list multiple
 forms of *der/des* as genitive). No plausible-wrong expansions seen.
-The row is excluded; these results are informational only.
+
+**Disposition for #2259:** Delete this row. It is not an abbreviation and
+therefore excluded from the probe's decision rule, but the model handles
+German genitive correctly in all 3 trials. There is no case for keeping it.
 
 ### `SS.` (dual expansion — genealogist adjudicates)
 
@@ -274,7 +277,7 @@ Carried only if both expansions are named: *parentes* (parents) and
 
 ## Primary verdict
 
-**45 of 48 rows carried by the 3-of-3 rule. 3 rows kept.**
+**45 of 48 rows carried by the 3-of-3 rule (138 of 144 trials correct, 95.8%). 3 rows kept.**
 
 Genealogist adjudication complete (2026-10-03): SS. KEPT, Ehem. KEPT.
 
