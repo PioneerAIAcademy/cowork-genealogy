@@ -204,7 +204,7 @@ genealogist-adjudicated (mercyokum, 2026-10-03). All rows final.
 
 **Section tally: 14/16 carried, 2 kept (d.d., SS.).**
 
-### German abbreviations (11 rows) — graded (Ehem. genealogist-adjudicated)
+### German abbreviations (11 rows; 10 in tally — d./des excluded) — graded (Ehem. genealogist-adjudicated)
 
 | Abbreviation | Full form | T1 | T2 | T3 | Verdict | Notes |
 |--------------|-----------|----|----|----|---------| ------|
