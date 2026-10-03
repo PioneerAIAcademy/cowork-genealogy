@@ -58,8 +58,9 @@ jobs:
           # apps/web and the workspace packages it builds from (the SPA),
           # packages/engine (the tools tier and the worker's plugin) and
           # scripts/ (the builder and the build stamp). The root package.json
-          # pins pnpm, and pnpm-workspace.yaml decides what the SPA build sees.
-          PATTERNS: '^apps/server/|^apps/web/|^packages/|^scripts/|^package\.json$|^pnpm-lock\.yaml$|^pnpm-workspace\.yaml$|^Makefile$|^\.github/workflows/eb-bundles\.yml$'
+          # pins pnpm, and pnpm-workspace.yaml decides what the SPA build sees;
+          # tsconfig.base.json and the root .npmrc feed that build too.
+          PATTERNS: '^apps/server/|^apps/web/|^packages/|^scripts/|^package\.json$|^pnpm-lock\.yaml$|^pnpm-workspace\.yaml$|^tsconfig\.base\.json$|^\.npmrc$|^Makefile$|^\.github/workflows/eb-bundles\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
