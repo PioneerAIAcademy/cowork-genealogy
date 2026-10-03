@@ -10,9 +10,16 @@
  * request while the call ran to 10s. Measured with a hanging `fetch` on
  * 2026-09-30: 10,001ms over 2 requests uncapped, 6,001ms over 1 capped.
  *
- * Asserted on the REQUEST COUNT rather than elapsed time: the count is the
- * mechanism and is deterministic, where a wall-clock assertion on a retrying
- * call is the flaky shape this repo keeps having to diagnose.
+ * Asserted on the REQUEST COUNT rather than elapsed time, but on the count being
+ * SHORT OF THE FULL ATTEMPT SET rather than on an exact number.
+ *
+ * The first version asserted exactly 1 and was flaky at about 7.5%, which is how
+ * it reached `main` and then reddened an unrelated PR. The retry backoff carries
+ * jitter, so whether a second attempt fits inside a 40ms budget is a coin flip:
+ * measured 2026-10-01, 40 runs at `budgetMs: 40` gave 1 request 37 times and 2
+ * requests 3 times. "The count is deterministic" was the wrong half of the
+ * lesson — it is deterministic only against the FULL attempt set, which no
+ * jitter can reach once the budget is this small.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -61,10 +68,12 @@ describe("image_search retry budget", () => {
       ),
     ).rejects.toThrow();
 
-    // Without the budget cap this is 3 — `fetchWithRetry` keeps retrying inside
-    // its own 10s budget, so the call outlives the timeout the caller asked for
-    // and the §8 arithmetic understates this leg.
-    expect(requests).toBe(1);
+    // Uncapped this is 3: `fetchWithRetry` keeps retrying inside its own 10s
+    // budget, so the call outlives the timeout the caller asked for and the §8
+    // arithmetic understates this leg. Capped, the budget expires during the
+    // first backoff, so the attempt set cannot be exhausted — 1 or 2 depending
+    // on the jitter, never 3.
+    expect(requests).toBeLessThan(3);
   });
 
   it("leaves a default-timeout caller on the default retry budget", async () => {
@@ -80,7 +89,9 @@ describe("image_search retry budget", () => {
       imageSearchTool({ imageGroupNumber: "004516861_001_M9S4-SQB" }, LOCAL),
     ).rejects.toThrow();
 
-    expect(requests).toBeGreaterThan(1);
+    // The full attempt set, every time: 3 immediate rejections fit inside the
+    // default 10s budget whatever the jitter does.
+    expect(requests).toBe(3);
   });
 
   it("a lowered timeout narrows the budget even when requests fail fast", async () => {
@@ -95,6 +106,6 @@ describe("image_search retry budget", () => {
       ),
     ).rejects.toThrow();
 
-    expect(requests).toBe(1);
+    expect(requests).toBeLessThan(3);
   });
 });
