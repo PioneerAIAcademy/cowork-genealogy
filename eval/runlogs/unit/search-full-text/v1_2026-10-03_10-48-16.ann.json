@@ -5,14 +5,6 @@
     {
       "test_id": "ut_search_full_text_003",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_003",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
@@ -241,6 +233,14 @@
       "llm_score": 2,
       "corrected_score": 2,
       "comment": "The textDocument for QV9N-YS37 says \"as witnesses\" but Claude wrote \"witness or grantor/grantee\" and noted no role at all for records 2–5"
+    },
+    {
+      "test_id": "ut_search_full_text_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     }
   ]
 }
