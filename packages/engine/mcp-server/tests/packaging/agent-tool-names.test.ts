@@ -576,6 +576,17 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // Read-only by contract: it reports project state and never writes. It calls
+  // no MCP tool at all — `eval/harness/validators/test_project_status.py`
+  // enforces that — so `Read` is the whole grant (issue #2793). `translation.md`
+  // was the first agent to hold only built-in tools and holds the same shape, so
+  // both are skipped by `noMcpByDesign` below; neither can be covered by the
+  // "parses at least one MCP entry" arm, because there is no MCP entry to parse.
+  "project-status.md": {
+    tools: ["Read"],
+    denies: [],
+  },
+
   // convert-dates (issue #2790) holds the one tool the skill it replaced
   // declared, `convert_calendar`, plus `Read` for the Narration line's read of
   // research.json. It persists nothing, so it holds no writer tool and no hook

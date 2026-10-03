@@ -1,6 +1,6 @@
 {
   "run_log": "v10.json",
-  "annotator": "mbadiweikennaya9@gmail.com",
+  "annotator": "edesonchristopher@gmail.com",
   "corrections": [
     {
       "test_id": "ut_init_project_q4v",
@@ -8,7 +8,7 @@
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "The census analysis and targets are right."
+      "comment": null
     },
     {
       "test_id": "ut_init_project_q4v",
@@ -16,138 +16,10 @@
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Both targets are named in the report."
+      "comment": null
     },
     {
       "test_id": "ut_init_project_q4v",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 2,
-      "comment": "Census-derived targets are correct, but the questions write took three tries: no selection_basis, then the invalid 'pedigree_gap', then 'unresolved_conflict', a label for a conflict that doesn't exist (the project has zero conflicts). Landing on a false enum value isn't a competent recovery."
-    },
-    {
-      "test_id": "ut_init_project_q4v",
-      "dimension_source": "rubric",
-      "dimension_name": "Project section seeding & schema validity",
-      "llm_score": 3,
-      "corrected_score": 2,
-      "comment": "Project block and profile are fine, but init-project wrote two research questions. Its own instructions defer questions to question-selection, and the ownership manifest doesn't list init-project as a writer of questions. The judge credited the questions as a plus. test_ownership_table was skipped on this run, so nothing caught it"
-    },
-    {
-      "test_id": "ut_init_project_q4v",
-      "dimension_source": "rubric",
-      "dimension_name": "Stub & tree fidelity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "Six known children, no fabrication"
-    },
-    {
-      "test_id": "ut_init_project_q4v",
-      "dimension_source": "rubric",
-      "dimension_name": "Researcher profile",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "Fixed profile, written once."
-    },
-    {
-      "test_id": "ut_init_project_q4v",
-      "dimension_source": "rubric",
-      "dimension_name": "Place standardization",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "Tool places kept verbatim."
-    },
-    {
-      "test_id": "ut_init_project_q4v",
-      "dimension_source": "rubric",
-      "dimension_name": "Known-holdings capture",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "None volunteered, so empty is right."
-    },
-    {
-      "test_id": "ut_init_project_wm7",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "Arithmetic checked: two tree children alive in 1900 against 3 living, three in 1910 against 4 living, so one missing living child born before 1900, counted once. No deceased target invented.\""
-    },
-    {
-      "test_id": "ut_init_project_wm7",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": " \"Tree built, profile set, warnings run, and the single target named in the report. Judge slip: no research question was written, which is correct for init-project (unlike q4v).\""
-    },
-    {
-      "test_id": "ut_init_project_wm7",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": " \"All calls valid; the only research_append was the researcher profile.\""
-    },
-    {
-      "test_id": "ut_init_project_wm7",
-      "dimension_source": "rubric",
-      "dimension_name": "Stub & tree fidelity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "\"Five people, only the known names and birth years, sourced to S1 at quality 1; no stubs.\""
-    },
-    {
-      "test_id": "ut_init_project_wm7",
-      "dimension_source": "rubric",
-      "dimension_name": "Project section seeding & schema validity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": " \"Project block complete with a short title; questions left to question-selection.\""
-    },
-    {
-      "test_id": "ut_init_project_wm7",
-      "dimension_source": "rubric",
-      "dimension_name": "Researcher profile",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": " \"Fixed novice profile with the house narration string; nothing asked.\""
-    },
-    {
-      "test_id": "ut_init_project_wm7",
-      "dimension_source": "rubric",
-      "dimension_name": "Place standardization",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": " \"Places taken verbatim from person_read.\""
-    },
-    {
-      "test_id": "ut_init_project_wm7",
-      "dimension_source": "rubric",
-      "dimension_name": "Known-holdings capture",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": " \"No documents or prior research volunteered; the census counts are the research premise. Arguably prior knowledge, but not a held document to log.\""
-    },
-    {
-      "test_id": "ut_init_project_q7b",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 3,
-      "comment": "Judge misgrade. The trace shows Agent(check-warnings) was spawned after project_create, as the test requires. In this test that spawn is stubbed, and the stub returns the Bridget Doyle finding (death 1875 vs 1880 census residence). The summary's account of that conflict relays the agent's return; it isn't init-project doing check-warnings' work. The judge missed the spawn because it's a stubbed built-in Agent call, not an MCP call."
-    },
-    {
-      "test_id": "ut_init_project_q7b",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The required step was done: check-warnings was invoked once after project_create and its finding relayed. The judge's \"named omission\" didn't happen; see the Agent(check-warnings) call in the trace."
-    },
-    {
-      "test_id": "ut_init_project_q7b",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -155,7 +27,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_q7b",
+      "test_id": "ut_init_project_q4v",
       "dimension_source": "rubric",
       "dimension_name": "Stub & tree fidelity",
       "llm_score": 3,
@@ -163,7 +35,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_q7b",
+      "test_id": "ut_init_project_q4v",
       "dimension_source": "rubric",
       "dimension_name": "Project section seeding & schema validity",
       "llm_score": 3,
@@ -171,7 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_q7b",
+      "test_id": "ut_init_project_q4v",
       "dimension_source": "rubric",
       "dimension_name": "Researcher profile",
       "llm_score": 3,
@@ -179,7 +51,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_q7b",
+      "test_id": "ut_init_project_q4v",
       "dimension_source": "rubric",
       "dimension_name": "Place standardization",
       "llm_score": 3,
@@ -187,9 +59,33 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_q7b",
+      "test_id": "ut_init_project_q4v",
       "dimension_source": "rubric",
       "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -200,7 +96,7 @@
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Stubs for Sarah (name, ~1920, Boston) and Mary Donovan; the Donovan parent has sex Unknown, so it's not assumed to be the father, as the test requires; no stub for the unknown grandmother. Judge slip: it calls the facts 'FamilySearch-derived', but S1 is 'Researcher-stated family knowledge', which is correct since no FS match exists."
+      "comment": null
     },
     {
       "test_id": "ut_init_project_002",
@@ -208,7 +104,7 @@
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Searched first (five person_search calls, all empty), then built the stubs, relationships, holding, profile and warnings. Judge slip: no research question was written, which is correct for init-project."
+      "comment": null
     },
     {
       "test_id": "ut_init_project_002",
@@ -216,7 +112,7 @@
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Searches, place_search, project_create and both research_append calls (profile, holding) valid."
+      "comment": null
     },
     {
       "test_id": "ut_init_project_002",
@@ -224,7 +120,7 @@
       "dimension_name": "Stub & tree fidelity",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Only known details; surname-only parent of Unknown sex; no fabricated grandmother."
+      "comment": null
     },
     {
       "test_id": "ut_init_project_002",
@@ -232,95 +128,31 @@
       "dimension_name": "Project section seeding & schema validity",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Project block complete, with a short title distinct from the objective; one holding; nothing else seeded."
+      "comment": null
     },
     {
-      "test_id": "ut_init_project_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Researcher profile",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "Fixed novice profile with the house string; nothing asked."
-    },
-    {
-      "test_id": "ut_init_project_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Place standardization",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "'Boston, Massachusetts' resolved via place_search and persisted as returned."
-    },
-    {
-      "test_id": "ut_init_project_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Known-holdings capture",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "The maiden name is captured as oral_knowledge, linked to I1 and I2, and not promoted into sources."
-    },
-    {
-      "test_id": "ut_init_project_004",
+      "test_id": "ut_init_project_003",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Searched by name (no ID given) and chose LZNY-BRF: top score 4.85 vs 3.21/2.10, matching birth ~1845 Ireland, as the test expects. Facts match the user's description, and the event-before-birth warning was surfaced rather than silently fixed."
+      "comment": null
     },
     {
-      "test_id": "ut_init_project_004",
+      "test_id": "ut_init_project_003",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "person_search, then person_read, then project_create and the profile. Judge slip: no research question was written, which is correct for init-project."
+      "comment": null
     },
     {
-      "test_id": "ut_init_project_004",
+      "test_id": "ut_init_project_003",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "person_search had surname Flynn and given name Patrick, with sensible extra filters; person_read used LZNY-BRF."
-    },
-    {
-      "test_id": "ut_init_project_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Stub & tree fidelity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "One person with only the known facts, sourced to S1 at quality 1; no relatives invented."
-    },
-    {
-      "test_id": "ut_init_project_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Project section seeding & schema validity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "Project block complete, with a short title distinct from the objective."
-    },
-    {
-      "test_id": "ut_init_project_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Researcher profile",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "Fixed novice profile with the house string; nothing asked."
-    },
-    {
-      "test_id": "ut_init_project_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Place standardization",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "Places verbatim from person_read."
-    },
-    {
-      "test_id": "ut_init_project_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Known-holdings capture",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "Places verbatim from person_read."
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
     },
     {
       "test_id": "ut_init_project_001",
@@ -328,7 +160,7 @@
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Six persons and seven relationships from person_read, sourced to S1 at quality 1. The user's 'born in Pennsylvania' vs FamilySearch's 'Ireland' is flagged rather than resolved, and no mother is invented where the tool returned none."
+      "comment": null
     },
     {
       "test_id": "ut_init_project_001",
@@ -336,7 +168,7 @@
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Tree, project, profile and warnings done. Of the two FamilySearch memories, it sourced only the transcribed granddaughter account and skipped the untranscribed headstone, which is the behaviour this test's xfail marker says is intermittent. Unexpected pass on one run; keeping the marker until it holds across runs (owner #1689)."
+      "comment": null
     },
     {
       "test_id": "ut_init_project_001",
@@ -344,7 +176,7 @@
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "person_read LZNY-BRF; project_create with local ids; research_append for the profile and the one transcribed memory; person_warnings on all six."
+      "comment": null
     },
     {
       "test_id": "ut_init_project_001",
@@ -352,7 +184,7 @@
       "dimension_name": "Stub & tree fidelity",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Only known fields; no placeholder for the mother the tool didn't return."
+      "comment": null
     },
     {
       "test_id": "ut_init_project_001",
@@ -360,7 +192,7 @@
       "dimension_name": "Project section seeding & schema validity",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Project block complete with a short title; questions left empty, which is correct for init-project."
+      "comment": null
     },
     {
       "test_id": "ut_init_project_001",
@@ -368,7 +200,7 @@
       "dimension_name": "Researcher profile",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Fixed novice profile with the house string; nothing asked."
+      "comment": null
     },
     {
       "test_id": "ut_init_project_001",
@@ -376,7 +208,7 @@
       "dimension_name": "Place standardization",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "standard_place values exactly as person_read returned them."
+      "comment": null
     },
     {
       "test_id": "ut_init_project_001",
@@ -384,7 +216,63 @@
       "dimension_name": "Known-holdings capture",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "None volunteered; empty is correct."
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_init_project_vqx",
@@ -392,10 +280,18 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "Keeping the judge's 2, but for a different reason. Its main objection is wrong: the agent says none of Jean Baptiste's record sources documents his death, and that's correct. The death fact's only source, S7, is the FamilySearch tree page itself, compiled data, not a record. The 2 stands for flagging the missing subtype on Josephine's relationships as an irregularity, which the test says not to present as an error."
+      "comment": "Agree with the 2, not the judge's reason. The death point is accurate: none of Jean Baptiste's three sources (birth, baptism, 1866 census) records his 1889 death. The real defect is the \"Inconsistent parentage labeling\" point. It presents Josephine's missing subtype as an inconsistency, which the test says is not an error. It's the same point the earlier annotations of this test cite."
     },
     {
-      "test_id": "ut_init_project_vqx",
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_wzk",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -403,31 +299,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_vqx",
+      "test_id": "ut_init_project_wzk",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "Four tries to write a question (no basis, then 'pedigree_gap', 'missing_ancestor', 'objective_decomposition'). Repeated rejections, not a clean recovery."
-    },
-    {
-      "test_id": "ut_init_project_vqx",
-      "dimension_source": "rubric",
-      "dimension_name": "Project section seeding & schema validity",
       "llm_score": 3,
-      "corrected_score": 2,
-      "comment": "Project block fine, but init-project wrote a research question. Its instructions defer questions to question-selection, and the ownership manifest doesn't list init-project as a writer of questions. Same lane violation as ut_init_project_q4v."
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_init_project_vqx",
+      "test_id": "ut_init_project_wzk",
       "dimension_source": "rubric",
       "dimension_name": "Stub & tree fidelity",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Person-level sources re-pointed to S1–S6 correctly, and test_person_level_sources_carried passed. That's the failure the xfail marker records, so it's intermittent; keeping the marker (owner #2711)."
+      "comment": null
     },
     {
-      "test_id": "ut_init_project_vqx",
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_wzk",
       "dimension_source": "rubric",
       "dimension_name": "Researcher profile",
       "llm_score": 3,
@@ -435,7 +331,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_vqx",
+      "test_id": "ut_init_project_wzk",
       "dimension_source": "rubric",
       "dimension_name": "Place standardization",
       "llm_score": 3,
@@ -443,7 +339,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_vqx",
+      "test_id": "ut_init_project_wzk",
       "dimension_source": "rubric",
       "dimension_name": "Known-holdings capture",
       "llm_score": 3,
