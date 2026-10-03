@@ -14,10 +14,11 @@ the tier is unreachable):
   turn 1   >= 1 agent_event row; a tool_use and a tool_result naming convert_calendar;
            session_entries > 0 for sessions.sdk_session_id; tool_calls >= 1 with the
            convert_calendar row decision allow; turns.completed_at set; cost_usd > 0;
-           the token columns summed from session_entries (output_tokens > 0, and the
-           input side non-empty)
+           turns.outcome not one of RESUMED_FAILED_OUTCOMES; the token columns summed
+           from session_entries (output_tokens > 0, and the input side non-empty)
   turn 2   session_entries grew; the reply text mentions 1751; completed; cost_usd > 0;
-           token columns filled for this turn alone (output_tokens > 0)
+           turns.outcome not one of RESUMED_FAILED_OUTCOMES; token columns filled for
+           this turn alone (output_tokens > 0)
 
 ``--kill`` (D14, ``make proto-kill``) runs one turn instead: a ``place_search`` question,
 the worker container killed the moment the call's ``tool_calls`` row appears (its
@@ -179,12 +180,13 @@ def run(base: str, dsn: str, deadline_s: float, email: str = DEV_LOGIN_EMAIL) ->
         allowed = one(dsn, "SELECT count(*) FROM tool_calls WHERE turn_id = %s AND tool_name LIKE %s AND decision = 'allow'", (turn1, f"%{TOOL}"))
         checks.append((f"turn 1: tool_calls >= 1, the {TOOL} row decision allow", calls >= 1 and allowed >= 1, f"tool_calls={calls} allowed={allowed}"))
         row = db(dsn, "SELECT completed_at, outcome, cost_usd, num_turns, duration_ms FROM turns WHERE turn_id = %s", (turn1,))
-        completed1, _, cost1, num1, dur1 = row[0] if row else (None, None, None, None, None)
+        completed1, outcome1, cost1, num1, dur1 = row[0] if row else (None, None, None, None, None)
         checks.append(("turn 1: turns.completed_at set", completed1 is not None, f"row={row}"))
         checks.append(("turn 1: turns.cost_usd > 0", cost1 is not None and float(cost1) > 0, f"cost_usd={cost1}"))
+        checks.append(outcome_check("turn 1", outcome1))
         tokens1 = tokens(dsn, turn1)
         checks.append(("turn 1: token columns summed from session_entries", tokens_filled(tokens1), f"tokens={tokens1}"))
-        figures["turn1"].update({"cost_usd": float(cost1) if cost1 is not None else None, "num_turns": num1,
+        figures["turn1"].update({"cost_usd": float(cost1) if cost1 is not None else None, "outcome": outcome1, "num_turns": num1,
                                  "duration_ms": dur1, "events": agent_rows, "entries": entries1, "tool_calls": calls,
                                  "tokens": tokens1})
 
@@ -203,9 +205,10 @@ def run(base: str, dsn: str, deadline_s: float, email: str = DEV_LOGIN_EMAIL) ->
         texts = db(dsn, "SELECT payload->>'text' FROM session_events WHERE session_id = %s AND kind = 'text' AND seq > %s ORDER BY seq", (session_id, user_seq or 0))
         reply = " ".join(t[0] or "" for t in texts)
         checks.append(("turn 2: the reply mentions 1751", "1751" in reply, f"reply={reply[:200]!r}"))
-        row2 = db(dsn, "SELECT completed_at, cost_usd, num_turns, duration_ms FROM turns WHERE turn_id = %s", (turn2,))
-        completed2, cost2, num2, dur2 = row2[0] if row2 else (None, None, None, None)
+        row2 = db(dsn, "SELECT completed_at, outcome, cost_usd, num_turns, duration_ms FROM turns WHERE turn_id = %s", (turn2,))
+        completed2, outcome2, cost2, num2, dur2 = row2[0] if row2 else (None, None, None, None, None)
         checks.append(("turn 2: completed with cost_usd > 0", completed2 is not None and cost2 is not None and float(cost2) > 0, f"row={row2}"))
+        checks.append(outcome_check("turn 2", outcome2))
         tokens2 = tokens(dsn, turn2)
         # The two turns' output columns must fit inside the session's whole output: a turn 2
         # summed from seq 0 would carry turn 1's tokens again and overshoot it.
@@ -217,7 +220,7 @@ def run(base: str, dsn: str, deadline_s: float, email: str = DEV_LOGIN_EMAIL) ->
                        tokens_filled(tokens2) and own and before1 is not None and before2 is not None and before2 > before1,
                        f"output {tokens1.get('output_tokens')} + {tokens2.get('output_tokens')} vs session {session_output}; "
                        f"entries_seq_before {before1} -> {before2}"))
-        figures["turn2"].update({"cost_usd": float(cost2) if cost2 is not None else None, "num_turns": num2,
+        figures["turn2"].update({"cost_usd": float(cost2) if cost2 is not None else None, "outcome": outcome2, "num_turns": num2,
                                  "duration_ms": dur2, "entries": entries2, "reply": reply[:200], "tokens": tokens2})
     return checks, figures
 
@@ -267,8 +270,18 @@ class KillSpec:
 # safe default for a check whose job is to catch one specific defect. `no_progress` is
 # 0a's terminal failure -- the resume did nothing, twice -- which is exactly what a resume
 # probe exists to catch. `retries_exhausted` (U5) is the worker closing the turn because its
-# message ran out of receives: no resume finished it.
-RESUMED_FAILED_OUTCOMES = frozenset({"no_progress", "retries_exhausted"})
+# message ran out of receives: no resume finished it. `transcript_lost` (U10) is a turn
+# whose transcript never reached the store, closed by the worker: a resume that did not work.
+RESUMED_FAILED_OUTCOMES = frozenset({"no_progress", "retries_exhausted", "transcript_lost"})
+
+
+def outcome_check(label: str, outcome: Any) -> Check:
+    """``<label>: turns.outcome is not <RESUMED_FAILED_OUTCOMES>`` -- the two-turn run's
+    check, the same deny-set as the kill arm's. A turn the worker closed ITSELF (the Stop
+    hook's ``no_progress`` on a project-less lookup) still reaches turn_done with
+    completed_at set, so only the outcome says it failed. No outcome at all fails too."""
+    return (f"{label}: turns.outcome is not {'/'.join(sorted(RESUMED_FAILED_OUTCOMES))}",
+            outcome is not None and outcome not in RESUMED_FAILED_OUTCOMES, f"outcome={outcome}")
 
 
 def bare_name(tool_name: str) -> str:

@@ -11,7 +11,7 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 14 skills and 19 agents. Besides the `research` orchestrator itself, its routing
+There are 13 skills and 20 agents. Besides the `research` orchestrator itself, its routing
 table names 13 of them, and 5 more are reached by delegation from a skill the table does
 name. The remaining 7 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
@@ -107,7 +107,7 @@ flowchart TD
     subgraph ASK ["Reached only by asking — no routing row"]
         direction LR
         U1["timeline · historical-context · convert-dates"]
-        U2["project-status<br/>forget-and-rederive · the two wiki searches"]
+        U2["forget-and-rederive · the two wiki searches"]
     end
 
     classDef unrouted stroke-dasharray: 5 5
@@ -194,7 +194,7 @@ sibling skill.
 
 | Skill | Triggered by | Owns | Reads | Writes |
 |---|---|---|---|---|
-| **`project-status`** | "where are we", opening an existing project | The resume summary — plain-language first, then GPS state — plus broken-foreign-key detection | Whole-file `Read` of both project files, deliberately | Nothing |
+| **`project-status`** (an AGENT since issue #2793, not a skill) | "where are we", opening an existing project | The resume summary — plain-language first, then GPS state — plus broken-foreign-key detection | Whole-file `Read` of both project files, deliberately | Nothing |
 | **`timeline`** | "build a timeline"; handoffs from `person-evidence`, `conflict-resolution`, `hypothesis-tracking` | `timelines` — regenerated wholesale, never edited entry by entry — with gaps and geographic feasibility | `research.json` `person_evidence`, `assertions`, `hypotheses`, `timelines`, `conflicts` by whole-file `Read`; `place_search`, `place_distance` | `timelines[]` — `research_append` |
 | **`citation`** (an AGENT since issue #2799, not a skill) | "fix this citation", "format to Evidence Explained" | Refining `citation` and the six `citation_detail` fields on a source that already exists. **Never creates one**. Fetches the creating office for a probate record from `{State}_Probate_Records` rather than carrying one jurisdiction's offices in its body | Whole-file `Read` of `research.json` `sources` and `log`; tree source descriptions; `wiki_read` | `sources[].citation`, `.citation_detail`, `.notes` — `research_append` `op: "update"` only |
 | **`check-warnings`** (an AGENT since issue #2118, not a skill) | After any tree edit or merge; on every person `init-project` imports; "check for problems" | Running the offline impossibility check and interpreting it for a single person's own data. Hands a source conflict, a source audit or a schema check back to its owner instead of doing it. Never fixes anything | `person_warnings` (deterministic, offline) for the person ids the caller names; no file reads | Nothing |
@@ -246,7 +246,7 @@ Two consequences worth holding onto:
   and the `PreToolUse` hook. (`disallowedTools:` was deleted from every agent
   on 2026-08-30 — it only restated the `tools:` omission.)
 - **Only three skills hold `research_query`** — `research`, `search-records`,
-  `search-external-sites` — and four of the eighteen agents. Everything else that needs project
+  `search-external-sites` — and four of the twenty agents. Everything else that needs project
   state does a whole-file `Read`, which is the thing the orchestrator forbids for itself
   because `research.json` reaches 100+ assertions by late run.
 - **The hook carries exactly four rules**, in
@@ -335,8 +335,7 @@ touch either side.
 
 No routing-table row names these, so an autonomous `/research` run never enters them:
 
-`search-full-text` · `timeline` ·
-`forget-and-rederive` · `project-status` ·
+`search-full-text` · `timeline` · `forget-and-rederive` ·
 `source-evaluation` · `init-project` (named in prose, not in the table)
 
 `citation` left this list on 2026-09-23 by ceasing to be a skill (issue #2799),
