@@ -15,6 +15,17 @@ export const statusColorMap: Record<string, BadgeColor> = {
   // Plan item status
   planned: 'gray',
   skipped: 'gray',
+  // Skip category (#1830) — why a skipped item was skipped. Amber is reserved
+  // for the three a reader can still act on: a human can often open what an
+  // autonomous run cannot, and `premise_invalidated` says the PLAN wants
+  // revising rather than this item dropping. The settled four are gray.
+  inaccessible: 'amber',
+  no_coverage: 'amber',
+  premise_invalidated: 'amber',
+  answered: 'gray',
+  fallback_not_triggered: 'gray',
+  out_of_scope: 'gray',
+  user_declined: 'gray',
   // Log outcome
   positive: 'green',
   negative: 'red',

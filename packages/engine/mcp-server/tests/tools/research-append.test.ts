@@ -4420,7 +4420,16 @@ describe("research_append (batch ops)", () => {
     const r = await researchAppend({
       projectPath: dir,
       ops: [
-        { section: "plan_items", op: "update", entryId: "pli_001", fields: { status: "skipped" }, planId: "pl_001" },
+        // `skip_category` is required on a new skip (#1830); this test is about
+        // the terminal-plan gate, so it sends a valid skip rather than asserting
+        // the absence of an unrelated rule.
+        {
+          section: "plan_items",
+          op: "update",
+          entryId: "pli_001",
+          fields: { status: "skipped", skip_category: "answered" },
+          planId: "pl_001",
+        },
       ],
     });
 
@@ -4832,12 +4841,18 @@ describe("research_append (batch ops)", () => {
   });
 
   it("(d4-logattr) NEVER refuses an in_progress or a skipped move", async () => {
+    // This rule is about `completed` only. A `skipped` move separately needs a
+    // `skip_category` (#1830), enforced by its own suite, so the skip arm sends
+    // one. Without it this test asserts the ABSENCE of a rule it was never
+    // about, and reds whenever an unrelated plan-item precondition lands.
     for (const status of ["in_progress", "skipped"]) {
       await writeProject(attrResearch("planned", []));
+      const fields: Record<string, unknown> =
+        status === "skipped" ? { status, skip_category: "answered" } : { status };
       const r = await researchAppend({
         projectPath: dir,
         ops: [
-          { section: "plan_items", op: "update", entryId: "pli_001", fields: { status }, planId: "pl_001" },
+          { section: "plan_items", op: "update", entryId: "pli_001", fields, planId: "pl_001" },
         ],
       } as any);
       expect(errorsOf(r) ?? [], `status ${status}`).toEqual([]);
@@ -9177,7 +9192,10 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       projectPath: dir,
       ops: [
         { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields: { status: "completed" } },
-        { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_002", fields: { status: "skipped" } },
+        // `skip_category` is required on a new skip (#1830). Without it that
+        // refusal pre-empts the G2 one and this test stops exercising the
+        // snapshot-read vector it exists for.
+        { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_002", fields: { status: "skipped", skip_category: "answered" } },
         { section: "questions", op: "update", entryId: "q_001", fields: { exhaustive_declaration: DECLARATION } },
       ],
     } as any);

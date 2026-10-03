@@ -14,6 +14,10 @@
     "plan_item_status": {
       "enum": ["planned", "in_progress", "completed", "skipped"]
     },
+    "skip_category": {
+      "description": "Why a plan item was set to `skipped`, as a machine-readable distinction the exhaustiveness gate can read; a bare `skipped` status cannot tell these apart. `answered`: evidence in hand answers the question and this source would only corroborate. `inaccessible`: paid, offline, on-site, or unreachable by any available tool. `no_coverage`: the repository or collection does not cover this place or period. `fallback_not_triggered`: the primary item succeeded, so this fallback was never needed. `out_of_scope`: it bears on a different question. `premise_invalidated`: the assumption behind the item is now known false -- not a skip verdict so much as the signal that the PLAN needs revising. `user_declined`: the user asked for it to be skipped; kept separate from `out_of_scope` so a user's refusal is not merged into the agent's own judgement, which is what makes steer compliance measurable (lead, 2026-09-27). Only `inaccessible` and `no_coverage` describe a source that could not be evaluated; the other five are decisions taken with the source reachable, which is the line the gate's pursued-and-unavailable exception turns on. Optional: an item skipped before this field existed carries neither it nor `skip_reason`.",
+      "enum": ["answered", "inaccessible", "no_coverage", "fallback_not_triggered", "out_of_scope", "premise_invalidated", "user_declined"]
+    },
     "log_outcome": {
       "enum": ["positive", "negative", "partial", "error"]
     },

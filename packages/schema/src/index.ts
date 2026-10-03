@@ -25,7 +25,7 @@ import type {
   ProjectStatus, ProofShortfall, ProofTier, ProofVehicle, QuestionStatus, SelectionBasis,
   SourceClassification, Severity, ExternalSite, DateCertaintyTimeline,
   EvaluationFocus, EvaluationTargetType, EvaluationVerdict, ExperienceLevel,
-  Subscription, LocalityPageSection,
+  Subscription, LocalityPageSection, SkipCategory,
 } from './enums.generated.js'
 
 // ============================================================
@@ -96,6 +96,8 @@ export interface PlanItem {
   rationale: string
   fallback_for: string | null
   status: PlanItemStatus
+  skip_category?: SkipCategory
+  skip_reason?: string
 }
 
 export interface Plan {

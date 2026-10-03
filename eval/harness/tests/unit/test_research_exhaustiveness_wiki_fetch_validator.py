@@ -34,6 +34,7 @@ from test_research_exhaustiveness import (  # noqa: E402
 POSITIVE = {"tags": ["planning", "exhaustiveness"]}
 NEGATIVE = {"tags": ["near-miss", "exhaustiveness-vs-research-plan"]}
 IN_PROGRESS = {"tags": ["research-exhaustiveness", "refuse-in-progress"]}
+PLANNED = {"tags": ["research-exhaustiveness", "refuse-planned", "direct-arm"]}
 ALREADY_DECLARED = {"tags": ["research-exhaustiveness", "already-declared", "re-invocation"]}
 
 
@@ -96,10 +97,32 @@ def test_skips_a_run_that_returns_at_a_step_0_precondition():
     """ut_005 (in-flight plan item) and ut_006 (already declared) correctly
     return before `## 1. Gather evidence`, so they owe no fetch. Both failed
     this check on v1_2026-09-08_06-48-40 before the gate was added — 4 and 5
-    calls respectively, neither reaching Step 1."""
-    for tags in (IN_PROGRESS, ALREADY_DECLARED):
+    calls respectively, neither reaching Step 1.
+
+    `refuse-planned` is the third member of that population, added for issue
+    #1830, which made an undisposed `planned` item block the gate alongside an
+    `in_progress` one. ut_d6f failed here on v1_2026-09-30_18-26-29 with only
+    `project_context` and `research_query` calls while the judge scored every
+    dimension 3 — the agent body says a Step 0 exit "owes nothing below, the
+    `wiki_read` included", so the check was contradicting its own spec.
+    """
+    for tags in (IN_PROGRESS, PLANNED, ALREADY_DECLARED):
         with pytest.raises(pytest.skip.Exception):
             check([_call("mcp__genealogy__project_context")], tags)
+
+
+def test_the_step_0_gate_is_keyed_on_the_tag_not_on_a_thin_call_list():
+    """The other direction for the #1830 arm.
+
+    A run carrying `refuse-planned` is exempt because of where it stopped, not
+    because it made few calls — so an ordinary positive with the SAME thin call
+    list must still fire. Without this, widening the gate could be mistaken for
+    a licence to skip the fetch whenever little happened.
+    """
+    thin = [_call("mcp__genealogy__project_context"),
+            _call("mcp__genealogy__research_query")]
+    with pytest.raises(AssertionError, match="did not fetch"):
+        check(thin, POSITIVE)
 
 
 def test_still_fires_on_an_ordinary_positive_that_skipped_the_fetch():

@@ -91,9 +91,9 @@ existing declaration and its `stop_criteria` as they stand, and point to
 entry — when it does, say plainly that no further exhaustiveness work is owed.
 
 Only evaluate a question whose **active** plan's items are all `completed` or
-`skipped`. If any is `in_progress`, refuse to declare and recommend finishing
-the in-flight work first. Items on a non-active plan are audit trail and never
-block.
+`skipped`. If any is still `planned` or `in_progress`, refuse to declare and
+recommend finishing the outstanding items first. Items on a non-active plan are
+audit trail and never block.
 
 The `evidence_class` and `independent_verification` criteria in Step 2 are
 meaningless against unclassified assertions, or when the persons the judgment
@@ -140,7 +140,7 @@ Read:
 - The question and its `exhaustive_declaration`
 - Log entries for its plan items (via `plan_item_id`)
 - Assertions from those searches (via each assertion's `log_entry_id`)
-- Skipped plan items and their reasons
+- Skipped plan items — their `skip_category` and `skip_reason` where present
 
 Then **call `wiki_read`** for the jurisdiction's registration start date —
 `{State}_Vital_Records` for a US state, `{Country}_Civil_Registration`
@@ -176,6 +176,16 @@ named in `justification`.
   source remains. Explain what is missing and recommend expanding the plan
   (`research-plan`). **When in doubt, a gap is unsearched, not unobtainable —
   default to `research-plan`.**
+  - A skipped item with **no `skip_category`** is judged on its recorded
+    reason, exactly as before the field existed. Most skipped items on a real
+    project are this shape. A missing value is **not** evidence the source was
+    unsearched, and must never be read as one.
+  - When a `skip_category` IS present it routes the item: `inaccessible` and
+    `no_coverage` are eligible for the exception below, and the exception's own
+    conditions still decide. `answered`, `fallback_not_triggered`,
+    `out_of_scope` and `user_declined` are not — those were disposed of with
+    the source reachable. `premise_invalidated` says the plan wants revising:
+    recommend `research-plan`.
   - *Narrow exception — a source verified **inaccessible*** (a browse-only
     image over the MCP transport cap; a record **sealed by privacy law** —
     e.g. a recent vital record still inside its statutory embargo and
@@ -281,10 +291,10 @@ the offending field — do not blindly retry the same payload.
 - **One declaration at a time.** Each invocation evaluates exactly one
   question.
 - **Plan must be complete.** Only evaluate questions whose **active** plan's
-  items are all `completed` or `skipped`; if any is `in_progress`, recommend
-  completing them first instead of declaring. Items on a plan whose status is
-  not `active` are audit trail — they never block a declaration and are never
-  swept to `skipped`.
+  items are all `completed` or `skipped`; if any is still `planned` or
+  `in_progress`, recommend completing them first instead of declaring. Items
+  on a plan whose status is not `active` are audit trail — they never block a
+  declaration and are never swept to `skipped`.
 - **Exhaustive does not mean exhausting.** `overturn_risk` is one of the
   seven, not the definition: could a real, unsearched source plausibly
   change the conclusion?

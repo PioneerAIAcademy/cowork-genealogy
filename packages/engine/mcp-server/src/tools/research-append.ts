@@ -1667,6 +1667,81 @@ function planItemLogAttributionInvariants(
   ];
 }
 
+/** The seven `skip_category` values, for the refusal message. Kept as a literal
+ *  rather than read from the schema: the validator already enforces membership,
+ *  and what this list is for is telling the agent what to pick. */
+const SKIP_CATEGORIES =
+  "answered, inaccessible, no_coverage, fallback_not_triggered, out_of_scope, " +
+  "premise_invalidated, user_declined";
+
+/** A `skipped` item must say WHY it was skipped, and must not say it in
+ *  `rationale`.
+ *
+ *  Why this is a writer precondition and not prose (ADR-0011's first question):
+ *  it is decidable from the entry alone. Six skills may write a plan item's
+ *  status, so a prose rule would have to be repeated in six bodies and would
+ *  bind in none of them reliably; the tool covers all six at once and cannot be
+ *  argued with.
+ *
+ *  Without it, `skipped` is a way to satisfy the exhaustiveness gate without
+ *  searching: the gate treats `completed`-or-`skipped` as a disposed item, and
+ *  a bare `skipped` tells it nothing about whether the source was ever reached.
+ *  Once every new skip carries a category, the gate has something to read —
+ *  which is why the gate itself was NOT changed to treat a missing value as
+ *  "not searched" (lead ruling 2026-09-30). Existing projects carry bare
+ *  `skipped` items that will never gain one, and `research-exhaustiveness` is
+ *  not a permitted writer of `plan_items`, so a question blocked that way would
+ *  have no route to repair — the unrecoverable false deny ADR-0011's first
+ *  limit exists to prevent.
+ *
+ *  The `rationale` clause is the other half of the same defect. `rationale`
+ *  means why the item was PLANNED and is required; with nowhere else to put it,
+ *  the model was observed rewriting it with the skip reason, destroying the
+ *  planning record to store something `skip_reason` now holds.
+ */
+function planItemSkipInvariants(
+  item: any,
+  fields: Record<string, unknown>,
+  isAppend: boolean,
+  storedRationale?: unknown,
+): string[] {
+  const pid = item?.id ?? "(new)";
+  const errors: string[] = [];
+  if (item?.status === "skipped" && !item?.skip_category) {
+    errors.push(
+      `plan_items[${pid}]: status 'skipped' needs a skip_category saying why, or the ` +
+        `exhaustiveness gate cannot tell a source you decided against from one you could ` +
+        `not reach. Pick one of: ${SKIP_CATEGORIES}. Put the detail in skip_reason — not ` +
+        `in rationale, which records why the item was planned.`,
+    );
+  }
+  // Narrowed to a SKIP deliberately, not every status move. The defect is the
+  // model folding the skip reason into `rationale` for want of anywhere else,
+  // and `skip_reason` is the place to send it instead — so on a skip the
+  // refusal names a remedy. On a `completed` or `in_progress` move there is no
+  // such field, so the same refusal would be a deny with no route out, which is
+  // the false deny ADR-0011's first limit exists to prevent. Re-wording the
+  // rationale while completing an item is a documented, legitimate edit
+  // (`(d4-logattr) ACCEPTS an update re-sending status: completed …`).
+  //
+  // It fires on a CHANGED rationale, not merely a present one. An agent that
+  // re-sends the whole entry unchanged alongside the status move has destroyed
+  // nothing, and refusing it would be a refusal for no defect — the shape a
+  // batched update takes most naturally (review, 2026-10-01).
+  const rationaleTouched =
+    Object.prototype.hasOwnProperty.call(fields ?? {}, "rationale") &&
+    fields.rationale !== storedRationale;
+  if (!isAppend && fields?.status === "skipped" && rationaleTouched) {
+    errors.push(
+      `plan_items[${pid}]: this op sets status 'skipped' and rewrites rationale in the same ` +
+        `call. rationale is why the item was PLANNED — overwriting it while disposing of the ` +
+        `item destroys the planning record. Leave rationale alone and put why it was skipped ` +
+        `in skip_reason.`,
+    );
+  }
+  return errors;
+}
+
 /** The two tiers that are a final answer rather than a stalled one: `proved`
  *  establishes the claim, `disproved` affirmatively refutes it. `not_proved` is
  *  deliberately absent — it is a non-answer, so something IS holding it back. */
@@ -3299,9 +3374,21 @@ function applyOne(
           .filter((it: any) => it && it.status === "completed")
           .map((it: any) => it.id),
       );
+      const alreadySkipped = new Set(
+        (Array.isArray(storedPlan?.items) ? storedPlan.items : [])
+          .filter((it: any) => it && it.status === "skipped")
+          .map((it: any) => it.id),
+      );
       for (const item of Array.isArray(resultEntry?.items) ? resultEntry.items : []) {
         if (item && alreadyCompleted.has(item.id)) continue;
         invariantErrors.push(...planItemLogAttributionInvariants(item, research));
+        // Inline `items[]` on a `plans` op reaches the same field, so the skip
+        // rule has to hold here too or it is one `{ ...entry }` spread away
+        // from being bypassed. `isAppend: true` — an item arriving inline has
+        // no prior rationale to overwrite, so only the category clause applies.
+        if (item && !alreadySkipped.has(item.id)) {
+          invariantErrors.push(...planItemSkipInvariants(item, {}, true));
+        }
       }
     }
   }
@@ -3333,6 +3420,25 @@ function applyOne(
     if (statusTouchedThisOp && !wasCompleted) {
       invariantErrors.push(
         ...planItemLogAttributionInvariants(resultEntry, research, op.op === "append"),
+      );
+    }
+    // A `skipped` item must carry a category. Gated the same way, and
+    // additionally skipped when the item was ALREADY `skipped` before this
+    // call: re-stating a bare skip written before this rule existed changes
+    // nothing, and refusing it would strand every pre-existing project. Only a
+    // NEW skip is held to it.
+    const storedItem = (Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : [])
+      .flatMap((pl: any) => (pl && Array.isArray(pl.items) ? pl.items : []))
+      .find((it: any) => it && it.id === resultEntry?.id);
+    const wasSkipped = op.op === "update" && storedItem?.status === "skipped";
+    if (statusTouchedThisOp && !wasSkipped) {
+      invariantErrors.push(
+        ...planItemSkipInvariants(
+          resultEntry,
+          itemFields,
+          op.op === "append",
+          storedItem?.rationale,
+        ),
       );
     }
   }

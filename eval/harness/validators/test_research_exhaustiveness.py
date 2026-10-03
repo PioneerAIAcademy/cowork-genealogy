@@ -186,16 +186,30 @@ def test_fetches_registration_start_date(tool_calls, test):
     - the four near-miss negatives (ut_002/_007/_008/_011) route away before the
       agent is spawned, so they make no MCP calls at all;
     - a run that correctly returns at a Step 0 precondition — `refuse-in-progress`
-      (an in-flight plan item) and `already-declared` ("stop before any other
-      check") — never reaches `## 1. Gather evidence`, so it owes no fetch.
-      ut_005 made 4 calls and ut_006 made 5, both correctly.
+      (an in-flight plan item), `refuse-planned` (an undisposed one, issue
+      #1830) and `already-declared` ("stop before any other check") — never
+      reaches `## 1. Gather evidence`, so it owes no fetch. ut_005 made 4 calls
+      and ut_006 made 5, both correctly.
 
     Demanding the fetch from those is a defect in this check, not in the agent.
+
+    `refuse-planned` joined that list for issue #1830, which made a `planned`
+    item block the gate alongside an `in_progress` one — a third member of the
+    same population, not a new rule. It was added after ut_d6f failed here on
+    `v1_2026-09-30_18-26-29` having made only `project_context` and
+    `research_query` calls: the judge scored every dimension 3, because
+    stopping there is what the agent body prescribes — "A run that ends at a
+    Step 0 precondition owes nothing below, the `wiki_read` included". The
+    check was contradicting the spec it grades against.
     """
     tags = test.get("tags") or []
     if "near-miss" in tags:
         pytest.skip("negative routing test — the agent is never spawned")
-    if "refuse-in-progress" in tags or "already-declared" in tags:
+    if (
+        "refuse-in-progress" in tags
+        or "refuse-planned" in tags
+        or "already-declared" in tags
+    ):
         pytest.skip("returns at a Step 0 precondition — Step 1 is never reached")
     called = [bare_tool_name(c.get("tool", "")) for c in (tool_calls or [])]
     assert "wiki_read" in called, (
@@ -231,6 +245,24 @@ _SENTENCE_SPLIT = re.compile(
 # and "has not been completed", the last missing only because `been` sat
 # between `not` and `completed`. The acceptance set is the corpus, not this
 # vocabulary: see the offline tests, which run all eight recorded responses.
+#
+# Widened again for issue #1830, which made a `planned` item block the gate
+# too. Two arms, both derived from a recorded response rather than invented —
+# `v1_2026-09-30_18-26-29`'s `_d1a` reply named pli_005 in four sentences and
+# matched none of the list above:
+#
+#   1. The IMPERATIVE. "Complete the death certificate search (`pli_005`)."
+#      says the item is open as plainly as any adjective — nobody is told to
+#      complete what is done. Anchored to the start of the segment, which is
+#      what keeps it from matching the inversion this guard exists to catch:
+#      "The death certificate search WAS COMPLETED last week" is not
+#      segment-initial and still fails.
+#   2. `planned` AS A STATUS, and only as a status. `(?:is|are|remains)
+#      [still] planned` matches; "was explicitly planned because it may name
+#      the parents" does not, and must not — that sentence is the item's
+#      RATIONALE, saying why it was ever on the plan, not that it is open.
+#      It sits in the same recorded reply, which is what makes it a real
+#      counterexample rather than a hypothetical one.
 _STILL_OPEN = re.compile(
     r"in[\s_\-]?progress|in[\s\-]?flight"
     r"|(?:still|currently)\s+\w{0,12}\s?(?:open|running|out|pending|going|active|underway|under\s?way)"
@@ -242,8 +274,36 @@ _STILL_OPEN = re.compile(
     r"(?:finished|completed|complete|returned|come\s+back|done|closed|resolved)"
     r"|unfinished|incomplete|outstanding|unresolved|ongoing|under\s?way|awaiting"
     r"|waiting\s+(?:on|for)|pending|not\s+yet|yet\s+to\s+\w+|still\s+\w+ing"
-    r"|before\s+(?:it|that|this|they)\s+(?:returns?|finishes|completes)",
-    re.I,
+    r"|before\s+(?:it|that|this|they)\s+(?:returns?|finishes|completes)"
+    # (1) The IMPERATIVE. "Complete X" says X is open as plainly as any
+    #     adjective — nobody is told to complete what is done.
+    #
+    #     Two guards make it safe, and both are load-bearing. The imperative
+    #     and the adjective are the SAME WORD, so "Complete the search" and
+    #     "Status: complete" differ only in position and in what follows.
+    #
+    #     a. Segment-initial, optionally behind a short label — the agent
+    #        writes "**Recommended action:** Complete or formally skip
+    #        `pli_005`." Note the colon sits INSIDE the bold, which is why the
+    #        label pattern allows asterisks on either side of it.
+    #     b. The verb must be followed by more content (`\s+\S`). That is what
+    #        keeps "Status: complete." out: the adjective ends the segment,
+    #        the imperative never does.
+    r"|^[\s\-*•>#]*(?:[^.!?\n]{0,40}:\**\s+)?"
+    r"(?:complete|finish|run|perform|execute|conduct|carry\s+out)\s+\S"
+    # (3) The SUBJUNCTIVE COUNTERFACTUAL. "Even if pli_005 were resolved, the
+    #     evidence still has weaknesses" presupposes it is NOT resolved, which
+    #     is the same claim the adjectives make. A real construction rather
+    #     than a patch for one sentence: "even if X were done" cannot be said
+    #     of something done. Bounded so it cannot span a clause boundary, and
+    #     it requires the `even if`, so the inversions — which assert
+    #     completion flatly — are untouched.
+    r"|even\s+if\s+[^.!?\n]{0,40}?(?:were|was|is|had\s+been)\s+"
+    r"(?:resolved|completed|complete|done|finished|closed|obtained)\b"
+    # (2) `planned` as a status, never as a rationale
+    r"|(?:is|are|remains?|stays?|sits?)\s+(?:still\s+)?planned\b"
+    r"|still\s+planned\b",
+    re.I | re.M,
 )
 
 _BLOCKER_TOKEN = re.compile(r"pli_005|death\s+certificate", re.I)
