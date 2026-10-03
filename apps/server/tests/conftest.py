@@ -60,3 +60,13 @@ def _isolated_sqs_credentials(monkeypatch):
     _reset_sqs_clients()
     yield
     _reset_sqs_clients()
+
+
+if sys.platform == "win32":
+    import asyncio  # noqa: E402
+
+    def pytest_asyncio_loop_factories(config, item):
+        """psycopg's async connection refuses Windows' default ProactorEventLoop with an
+        InterfaceError before it connects, so every PgStore probe would report that
+        instead of what the test set up. Production runs on Linux, where this is moot."""
+        return {"selector": asyncio.SelectorEventLoop}

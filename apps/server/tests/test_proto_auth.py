@@ -21,8 +21,8 @@ from urllib.parse import parse_qs, urlparse
 import httpx
 import pytest
 
-from tests.test_proto_web import (  # noqa: F401  (silent_pg is a fixture)
-    AUTH_ENV, PROTO, REFUSED_DSN, USER_A, FakeQueue, FakeStore, make_client, silent_pg,
+from tests.test_proto_web import (  # noqa: F401  (refused_pg and silent_pg are fixtures)
+    AUTH_ENV, PROTO, USER_A, FakeQueue, FakeStore, make_client, refused_pg, silent_pg,
 )
 from web import app, auth
 from web.app import IdentityMismatch, ProjectNotOwned, create_app
@@ -253,8 +253,8 @@ async def test_the_lifespan_syncs_the_allowlist_from_the_environment(monkeypatch
 
 
 @pytest.mark.parametrize("postgres", ["refused", "silent"])
-async def test_the_lifespan_listens_with_postgres_down(monkeypatch, silent_pg, postgres):
-    monkeypatch.setenv("PG_DSN", REFUSED_DSN if postgres == "refused" else silent_pg.dsn)
+async def test_the_lifespan_listens_with_postgres_down(monkeypatch, refused_pg, silent_pg, postgres):
+    monkeypatch.setenv("PG_DSN", (refused_pg if postgres == "refused" else silent_pg).dsn)
     monkeypatch.setattr(app, "READY_TIMEOUT_S", 0.3)
     application = create_app(queue=FakeQueue())
     started = time.monotonic()
