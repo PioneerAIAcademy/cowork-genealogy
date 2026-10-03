@@ -294,6 +294,106 @@ describe("requirePre1880CensusHedge with a staged census payload", () => {
     bad("1850 census: Amos Whitfield in the household of Nancy Doss.", [1850]);
   });
 
+  it("refuses a kinship claim whose only source word comes AFTER it", () => {
+    // Round 2's anchor change, pinned. Before it, `claimAt` read only the
+    // household word, so a kinship claim with no household word left the anchor
+    // at -1 and ANY source word anywhere in the note cancelled the gate. Both
+    // of these pass against the code at c7e34e0c5 and are refused here; without
+    // this test nothing fails if the fix is reverted, and a deny that fails
+    // open and silently is the one shape this PR says must be pinned.
+    bad("1 result: Amos Whitfield with wife Nancy and son Thomas Whitfield. Check baptism next.", [1850]);
+    bad("1 result: Amos Whitfield with wife Nancy and son Thomas Whitfield. Order the death certificate.", [1850]);
+    // The other direction, unchanged: named FIRST, the source still carves out.
+    ok("Baptism register 1852: Amos Whitfield with wife Nancy and son Thomas Whitfield.", [1850]);
+  });
+
+  it("names a source in the PLURAL, which is how notes actually spell it", () => {
+    // Every SOURCE_NAMED alternative used to end on a word boundary after the
+    // singular, so the commonest spelling of its own terms missed the list and
+    // the note was refused. Reported in review; reproduced before the fix.
+    ok("Church records show Sarah in the household of William Mullen.", [1850]);
+    ok("Marriage records: Sarah in the household of William Mullen.", [1850]);
+    ok("Parish registers place Sarah in the household of William Mullen.", [1850]);
+    ok("Deeds of 1854 name the household of William Mullen.", [1850]);
+    // The plural must not import the bare-verb hole the carve-out exists to
+    // avoid: `will`/`wills` is still not a source word on its own.
+    bad("1 result: Amos Whitfield in the Household of Nancy Doss. Wills to check next.", [1850]);
+  });
+});
+
+/**
+ * The household NOUN is not a claim by itself. Splitting the anchor is what
+ * stopped the payload trigger refusing notes that assert no structure, and the
+ * boundary matters in both directions, so each side is pinned.
+ */
+describe("requirePre1880CensusHedge tells a household claim from a household word", () => {
+  const bad = (n: string, years?: number[]) =>
+    expect(() => requirePre1880CensusHedge(n, years)).toThrow(/relationship-to-head/);
+  const ok = (n: string, years?: number[]) => expect(() => requirePre1880CensusHedge(n, years)).not.toThrow();
+
+  it("allows ut_search_records_027's note, which only plans to read the record", () => {
+    // In the released v2 run, and one of the four payload ops this branch
+    // newly refused against main. The words are "household members"; the
+    // sentence asserts nothing and names nobody.
+    ok(
+      "Ad-hoc user-requested search. One result: George Ackerman, Bucks Co., PA, born abt 1818 " +
+        "in PA. Spouse field absent in index — reading full record to view household members " +
+        "and marriage indicator.",
+      [1850],
+    );
+  });
+
+  it.each([
+    // Every one of these is a real corpus note this branch refused and main did
+    // not, or refused on both. None places a named person in a household.
+    "1850 census: William A Bagley (matchScore 0.813), born 1816, Topsham, Orange, Vermont. Reading record for household composition.",
+    "1840 federal census for Geach in Licking County not indexed in FamilySearch. Rebecca's 1840 household cannot be confirmed via this index.",
+    "Retry broadened to all Mississippi 1840. No Stribling found in Amite County in 1840 census. Possible the family had moved, died, or the head-of-household name differs.",
+    "Manually browsed 7 of approximately 34 name-bearing pages in the 1830 US Federal Census Amite County MS image group. Neither 'Stribling' nor 'McDowell' appeared as a household head on any readable page.",
+    "Searched FamilySearch 1850 U.S. Federal Census for a child Patrick Flynn age ca. 5 in Schuylkill County, Pennsylvania. No matching household found.",
+  ])("allows a plan, a nil or a candidate list that names no one in a household (%#)", (n) => ok(n, [1850]));
+
+  it.each([
+    // ...and the claim shapes stay refused. Name after the noun, name before
+    // it, and the relational phrases, which assert co-residence with no name.
+    "1 result: Patrick Flynn, b. 1845 Ireland, in household of Thomas Flynn; matchScore 0.948.",
+    "1 result: Amos Whitfield in the Household of Nancy Doss.",
+    "1 result: Sarah A. Mullen, William Mullen household, Dodge County, Wisconsin.",
+    "1 result: Patrick Flynn, age 15, living with Thomas Flynn and Bridget Flynn.",
+    "1 result: Daniel McElwee, enumerated with Margaret and Hannah.",
+  ])("still refuses a household placed on a person (%#)", (n) => bad(n, [1850]));
+
+  it("still refuses the flat spouse-and-children note the split nearly freed", () => {
+    // Requiring a name of the WHOLE anchor set freed this one on re-measure:
+    // the name precedes "co-resident" at a distance, and neither `spouse` nor
+    // `children` is in KINSHIP_CLAIM. `co-resident` predicates co-residence by
+    // itself, so it needs no name -- which is why the set is split.
+    bad(
+      "1860 census: Elijah Wilkins (male, b.1813, KY) with Sarah Wilkins (female, b.1821, " +
+        "North Carolina) as co-resident spouse. Children: Margaret E (1841), Jesse (1844).",
+    );
+  });
+
+  it("accepts the hedge spelled the way the refusal message spells it", () => {
+    // The message says "relationship-to-head column"; the hedge patterns only
+    // accepted spaces, so hedging in the exact words handed to you was refused
+    // again, with nothing in the message that would clear it. Real corpus note.
+    ok(
+      "User pasted the household listing directly. Eight members enumerated: John Baker " +
+        "(head, ~1822 Bavaria), Barbara Baker (~1825 Bavaria), and six children born Ohio. " +
+        "No relationship-to-head column in 1870 census.",
+    );
+    ok("1 result: Amos Whitfield in the Household of Nancy Doss. No relationship-to-head column.", [1850]);
+    ok("1 result: Amos Whitfield in the Household of Nancy Doss. The relationship-to-head column is absent.", [1850]);
+    // The spaced spellings that already worked still do.
+    ok("1 result: Amos Whitfield in the Household of Nancy Doss. No relationship to head column.", [1850]);
+    ok("1 result: Amos Whitfield in the Household of Nancy Doss. The relationship column is absent.", [1850]);
+  });
+});
+
+describe("requirePre1880CensusHedge with a staged census payload, continued", () => {
+  const ok = (n: string, years?: number[]) => expect(() => requirePre1880CensusHedge(n, years)).not.toThrow();
+
   // The lead's standing proof: a year the note binds itself still wins.
   it.each([
     "1880 US Census, Bertha, Todd, Minnesota. Household of Henry Bottermiller (head, born 1828 Germany, farmer) and Mary Bottermiller (born 1838 Germany).",

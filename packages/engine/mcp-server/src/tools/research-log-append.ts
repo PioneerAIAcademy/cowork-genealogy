@@ -453,12 +453,46 @@ export function censusMentions(notes: string): CensusMention[] {
  * A phrase that NAMES a record of another type. Every entry names a record
  * (`will of`, never `will`): a term that doubles as ordinary English reopens
  * the hole the bare `will` opened, where the verb cancelled the gate.
+ *
+ * EVERY NOUN HEAD CARRIES ITS PLURAL. The first version ended each alternative
+ * on a word boundary after the singular, so "Church records show Sarah in the
+ * household of William Mullen." and "Marriage records: ..." named a source and
+ * missed the list -- a carve-out that fails on the commonest spelling of its
+ * own terms is not a carve-out. The `will` entries stay singular on purpose:
+ * they are the phrases (`will of`, `will book`) that keep the bare verb out.
  */
 const SOURCE_NAMED =
-  /\b(parish register|church (?:book|record)|baptism|christening|burial register|probate|will of|last will|will and testament|will book|deed|land record|passenger list|draft (?:card|registration)|city directory|gravestone|headstone|obituary|marriage (?:record|certificate|licen[cs]e|register)|death (?:certificate|record|register)|birth (?:certificate|record|register)|vital record|naturali[sz]ation|pension file)\b/;
+  /\b(parish registers?|church (?:books?|records?)|baptisms?|christenings?|burial registers?|probate|will of|last will|will and testament|will book|deeds?|land records?|passenger lists?|draft (?:cards?|registrations?)|city director(?:y|ies)|gravestones?|headstones?|obituar(?:y|ies)|marriage (?:records?|certificates?|licen[cs]es?|registers?)|death (?:certificates?|records?|registers?)|birth (?:certificates?|records?|registers?)|vital records?|naturali[sz]ations?|pension files?)\b/;
 
-/** The household wording the hedge rule is about. Lowercased input. */
-const HOUSEHOLD_ANCHOR = /\b(household|dwelling|co-?resident|enumerated with|living with)\b/;
+/**
+ * The RELATIONAL half of the household wording. These predicate co-residence:
+ * there is no way to write "co-resident spouse" or "living with Thomas" that
+ * is not a claim, so they qualify with no name attached. Split from the nouns
+ * below after a corpus re-measure -- requiring a name of the whole set freed
+ * "1860 census: Elijah Wilkins ... with Sarah Wilkins ... as co-resident
+ * spouse", a flat spouse-and-children claim that is exactly what this gate is
+ * for. Searched against `notes`, hence the `i`.
+ */
+const CORESIDENCE_CLAIM = /\b(?:co-?resident|enumerated with|living with)\b/i;
+
+/**
+ * The ABSTRACT half. `household` and `dwelling` are ordinary nouns for the
+ * CONCEPT as much as for a particular one -- "reading the record to view
+ * household members", "cannot identify the correct household", "no Stribling
+ * appeared as a household head on any readable page" -- so one of these counts
+ * only with a name attached. Global: `assertsHousehold` walks every match.
+ */
+const HOUSEHOLD_NOUN = /\b(?:household|dwelling)\b/;
+const HOUSEHOLD_NOUN_G = new RegExp(HOUSEHOLD_NOUN.source, "gi");
+
+/**
+ * The union of the two, for POSITION only -- where the earliest household
+ * mention sits, never whether one is claimed. DERIVED from the halves rather
+ * than spelled a third time: an edit to either half that this missed would
+ * move the carve-out's anchor silently, and a deny whose anchor drifts fails
+ * open. Lowercased input.
+ */
+const HOUSEHOLD_ANCHOR = new RegExp(`${HOUSEHOLD_NOUN.source}|${CORESIDENCE_CLAIM.source}`);
 
 /**
  * Kinship asserted about a NAMED person. Case-sensitive on purpose (the
@@ -466,6 +500,55 @@ const HOUSEHOLD_ANCHOR = /\b(household|dwelling|co-?resident|enumerated with|liv
  */
 const KINSHIP_CLAIM =
   /(?<!\b(?:his|her|their)\s)\b(?:mother|father|wife|husband|sons?|daughters?|parents?)\s+[A-Z]/;
+
+/**
+ * "relationship to head column", HOWEVER IT IS HYPHENATED. The separator is
+ * `[\s-]` because this tool's own refusal message spells it
+ * "relationship-to-head column", and the hedge patterns only accepted spaces:
+ * a researcher who hedged in the exact words they were handed was refused a
+ * second time, with no wording in the message that would clear it. Found in
+ * the corpus -- "Eight members enumerated: John Baker (head, ~1822 Bavaria)
+ * ... No relationship-to-head column in 1870 census" is a properly hedged note
+ * the gate refused.
+ */
+const RELATIONSHIP_COLUMN = String.raw`relationship[\s-]+(?:to[\s-]+head[\s-]+)?column`;
+const NO_RELATIONSHIP_COLUMN = new RegExp(String.raw`\bno\s+${RELATIONSHIP_COLUMN}`);
+const RELATIONSHIP_COLUMN_DENIED = new RegExp(
+  String.raw`${RELATIONSHIP_COLUMN}[^.]{0,40}\b(?:does not|did not|is not|was not|absent|missing)\b`,
+);
+
+/**
+ * Does the note place someone in a household?
+ *
+ * The bare noun is not a claim, and treating it as one is the "cannot tell a
+ * plan from a claim" weakness `requirePre1880CensusHedge` already names below
+ * -- which the staged-payload trigger exposed on a real note.
+ * `ut_search_records_027` logged "Spouse field absent in index -- reading full
+ * record to view household members and marriage indicator" against an 1850
+ * payload and was refused for the words "household members", in a sentence
+ * that asserts no structure and only says what it is about to read. That was
+ * one of four payload ops this branch newly refused against `main`; the other
+ * three are flat "in household of <Name>" claims and stay refused.
+ *
+ * So the abstract nouns ask what the kinship arm already asks: is a NAME
+ * attached? A structure needs at least one named party, and the two shapes
+ * real notes use are `household of Nancy Doss` (name after) and `William
+ * Mullen household` (name before). Both are read, and the forward window stops
+ * at the first `.` or `;` so a name in the NEXT sentence cannot supply one.
+ * The relational phrases bypass the test entirely -- see `CORESIDENCE_CLAIM`.
+ *
+ * Searched against `notes`, not `text`: the capital is the whole signal.
+ */
+function assertsHousehold(notes: string): boolean {
+  if (CORESIDENCE_CLAIM.test(notes)) return true;
+  for (const m of notes.matchAll(HOUSEHOLD_NOUN_G)) {
+    const end = m.index + m[0].length;
+    if (/[A-Z]/.test(notes.slice(end, end + 24).split(/[.;]/, 1)[0] ?? "")) return true;
+    const before = notes.slice(Math.max(0, m.index - 40), m.index);
+    if (/[A-Z][\w.'’-]*(?:\s+[A-Z][\w.'’-]*)*[\s'’]*s?\s*$/.test(before)) return true;
+  }
+  return false;
+}
 
 export function requirePre1880CensusHedge(
   notes: string,
@@ -532,6 +615,13 @@ export function requirePre1880CensusHedge(
   // anywhere in the note allowed it -- "Check baptism next." appended to a flat
   // kinship claim walked straight through the gate it was meant to close.
   // Both claim shapes are anchored now, on the EARLIEST of the two.
+  //
+  // POSITION comes from the broad `HOUSEHOLD_ANCHOR`, not from
+  // `assertsHousehold`, and the two answer different questions: whether a claim
+  // exists, and where the earliest household mention sits. Taking the broad one
+  // can only move `claimAt` earlier, which makes this carve-out HARDER to
+  // trigger -- the fail-closed direction, which is the one to be wrong in for a
+  // clause that cancels a deny.
   const claimAt = [text.search(HOUSEHOLD_ANCHOR), notes.search(KINSHIP_CLAIM)]
     .filter((i) => i >= 0)
     .reduce((a, b) => Math.min(a, b), Number.POSITIVE_INFINITY);
@@ -542,7 +632,7 @@ export function requirePre1880CensusHedge(
     : payloadYears.length > 0 && !isAboutOtherSource;
   if (!namesColumnlessCensus) return;
 
-  const describesHousehold = HOUSEHOLD_ANCHOR.test(text);
+  const describesHousehold = assertsHousehold(notes);
   // Kinship asserted about a NAMED person: "mother Margaret", "plus sons Thos
   // and Stephen". The lookbehind excludes the possessive form -- "searched for
   // his wife Catherine" names a TREE-side relative who may be absent from the
@@ -559,8 +649,8 @@ export function requirePre1880CensusHedge(
     /\bunstated\b/.test(text) ||
     /\bimplied\b/.test(text) ||
     /\bpresum\w*/.test(text) ||
-    /no\s+relationship\s+(?:to\s+head\s+)?column/.test(text) ||
-    /relationship\s+column[^.]{0,40}\b(?:does not|did not|is not|was not|absent|missing)\b/.test(text) ||
+    NO_RELATIONSHIP_COLUMN.test(text) ||
+    RELATIONSHIP_COLUMN_DENIED.test(text) ||
     INDEXED_ROLE_HEDGES.some((re) => re.test(text));
   if (hedged) return;
 
