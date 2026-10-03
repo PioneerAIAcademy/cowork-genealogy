@@ -222,12 +222,31 @@ _CLAUSE_RE = re.compile(r"(?:;|\s+and\s+|(?<=\))\s*,\s*|\.\s+)")
 # A capitalised record-title word. Case-sensitive on purpose: a title in the
 # reply is capitalised ("the 1885 Minnesota State Census"), while the generic
 # noun in "correct the index" is not, and must not count as naming a record.
-_RECORD_TITLE_RE = re.compile(r"\b(?:Census|Index|Register|Registration|Collection|Records)\b")
 _SENTENCE_RE = re.compile(r"(?<=[.!?])\s+(?=[A-Z*])")
-_DETACH_PRONOUN_RE = re.compile(
-    r"\bdetach(?:ing|ed)?\s+(?:it|this|that|them|these|those)\b",
-    re.IGNORECASE,
+_TITLE_WORDS = r"(Census|Index|Register|Registration|Collection|Records)"
+_DETACH_VERB = r"(?i:detach|unlink)\w*"
+# "Detach the 1885 Minnesota State Census": the verb, an optional article, any
+# capitalised or digit-led words, then the title word as the verb's object.
+_DETACH_ACTIVE_ON_TITLE_RE = re.compile(
+    r"\b" + _DETACH_VERB + r"\s+(?:(?i:the|this|that|a|an)\s+)?"
+    r"(?:[A-Z0-9][\w.'-]*\s+)*?" + _TITLE_WORDS + r"\b"
 )
+# "The 1885 Minnesota State Census should be detached": the title word is the
+# sentence's subject, with no comma between it and the verb.
+_DETACH_PASSIVE_ON_TITLE_RE = re.compile(
+    r"^\W*(?:(?i:the|this|that|a|an)\s+)?(?:[A-Z0-9][\w.'-]*\s+)*?"
+    + _TITLE_WORDS + r"\b[^,]*?\b" + _DETACH_VERB
+)
+
+
+def _detach_acts_on_another_title(sentence: str, protected_lower: str) -> bool:
+    """True only when the detach verb's grammatical object is a record-title
+    word that `protected` does not itself contain."""
+    for rx in (_DETACH_ACTIVE_ON_TITLE_RE, _DETACH_PASSIVE_ON_TITLE_RE):
+        for m in rx.finditer(sentence.strip()):
+            if m.group(1).lower() not in protected_lower:
+                return True
+    return False
 
 
 def _detach_names_another_record(block: str, protected: str) -> bool:
@@ -241,18 +260,19 @@ def _detach_names_another_record(block: str, protected: str) -> bool:
     in the next. One block, so the guard flagged a correct report.
 
     Deliberately one-sided. A passage is cleared only if each sentence carrying
-    a detach term names some record by title and does not name `protected`. A
-    detach sentence that names no record ("Detach it.") keeps the whole block
-    attributed, so the cross-sentence case the guard exists for still fires. A
-    title word `protected` itself contains does not count, so a shortened name
-    for it ("Detach the Death Index record.") stays attributed too.
+    a detach term does not name `protected` and makes a record title the detach
+    verb's own object ("Detach the 1885 Census", "The 1885 Census should be
+    detached"). A title merely present elsewhere in the sentence ("Detach it
+    and rely on the 1900 Census", "Unlike the 1900 Census, it should be
+    detached") does not count, nor does a title word `protected` itself
+    contains ("Detach the Death Index record."), so those stay attributed.
     """
     sentences = [x for x in _SENTENCE_RE.split(block) if x.strip()]
     detaching = [x for x in sentences if _recommends_detach(x)]
+    protected_lower = protected.lower()
     return bool(detaching) and all(
-        protected.lower() not in x.lower()
-        and any(m.group(0).lower() not in protected.lower() for m in _RECORD_TITLE_RE.finditer(x))
-        and not _DETACH_PRONOUN_RE.search(x)
+        protected_lower not in x.lower()
+        and _detach_acts_on_another_title(x, protected_lower)
         for x in detaching
     )
 
