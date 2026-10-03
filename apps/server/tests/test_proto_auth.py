@@ -249,6 +249,20 @@ async def test_the_lifespan_syncs_the_allowlist_from_the_environment(monkeypatch
     assert store.allowed == {"a@example.org", "b@example.org"}
 
 
+@pytest.mark.parametrize("raw", ["a@x.org b@x.org", "a@x.org,b@x.org", " A@x.org ,\n b@x.org ", "a@x.org\tb@x.org,,"])
+def test_allowed_emails_split_on_commas_and_whitespace(monkeypatch, raw):
+    """U12 D32: a comma is outside Beanstalk's environment-value character set, so a list
+    of two must be writable space-separated; compose's commas keep working."""
+    monkeypatch.setenv("ALLOWED_EMAILS", raw)
+    assert auth.allowed_emails() == {"a@x.org", "b@x.org"}
+
+
+@pytest.mark.parametrize("raw", ["", "  ", " , \n"])
+def test_allowed_emails_blank_is_empty(monkeypatch, raw):
+    monkeypatch.setenv("ALLOWED_EMAILS", raw)
+    assert auth.allowed_emails() == set()
+
+
 # ── U10: the lifespan listens with Postgres down; the allowlist stays fail-closed ─
 
 
@@ -401,7 +415,7 @@ def _imports_app_package(source: str) -> list[str]:
     return hits
 
 
-@pytest.mark.parametrize("name", ["auth.py", "app.py"])
+@pytest.mark.parametrize("name", ["auth.py", "app.py", "spa.py"])
 def test_web_tier_does_not_import_app_package(name):
     """The web image does not carry apps/server/app, so an import passes every test (the
     suite has the whole tree on the path) and fails only in the container."""
