@@ -1013,7 +1013,12 @@ def test_worker_dockerfile_shape():
     text = DOCKERFILE.read_text(encoding="utf-8")
     body = "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#"))
     assert re.search(r"^FROM ubuntu:24\.04", body, re.M)
-    assert "claude-agent-sdk==0.2.128" in body and "psycopg[binary]" in body
+    # U12: the pins are the proto-worker group's export from uv.lock, installed in hash
+    # mode (test_proto_config checks the export is current and the install shape).
+    assert re.search(r"^COPY apps/server/proto/worker/requirements\.txt\s", body, re.M)
+    requirements = (PROTO / "worker" / "requirements.txt").read_text(encoding="utf-8")
+    assert re.search(r"^claude-agent-sdk==0\.2\.128 ", requirements, re.M)
+    assert re.search(r"^psycopg==", requirements, re.M) and re.search(r"^psycopg-binary==", requirements, re.M)
     # The tools are the `tools` service; the SDK wheel's CLI is a native binary.
     assert not re.search(r"\b(node|nodejs|npm)\b", body), "the worker image carries no Node"
     assert "packages/engine/mcp-server" not in body, "the worker image carries no engine"
@@ -1028,9 +1033,10 @@ def test_worker_dockerfile_shape():
         "the worker releases held messages through proto/enqueue.py; the image must carry it"
     source = (PROTO / "worker" / "worker.py").read_text(encoding="utf-8")
     assert "from proto import enqueue" in source, "and that is the module it imports"
-    # U7: enqueue.py imports botocore at module scope to sign. Without it on the pip line
+    # U7: enqueue.py imports botocore at module scope to sign. Without it in the requirements
     # the worker exits at start with QUEUE_URL set; the venv has it, so nothing else sees.
-    assert re.search(r'"botocore==[0-9.]+"', body), "the worker image must install botocore (enqueue.py signs with it)"
+    assert re.search(r"^botocore==[0-9.]+ ", requirements, re.M), \
+        "the worker image must install botocore (enqueue.py signs with it)"
     assert re.search(r"mkdir -p /project", body)
     assert "tokens.json" not in body
     # The one place a key becomes an image layer: compose interpolates it at run time,

@@ -100,7 +100,9 @@ instance profile on AWS; one alone exits 2) and GENEALOGY_SQS_REGION (else the Q
 host's region).
 
 Startup (U10): a ``TMPDIR`` that is not absolute, missing, not a directory or not
-writable exits 2 before anything else (``check_tmpdir``); then the SQS credentials and
+writable exits 2 before anything else (``check_tmpdir``); so does a plugin-hook
+``python3`` below 3.10 or missing -- the first on the CLI child's ``PATH``, which puts this
+interpreter's directory first (U12, ``check_hook_python``); then the SQS credentials and
 region are settled (U7: a half pair exits 2; the default chain may ask IMDS); then the
 plugin's agents are parsed once, the server binds, and ../sql/*.sql (all idempotent) is
 applied on a daemon thread that retries a refused or silent Postgres, and an apply that
@@ -126,6 +128,7 @@ import os
 import re
 import shutil
 import signal
+import subprocess
 import sys
 import tempfile
 import threading
@@ -164,6 +167,7 @@ from proto.worker.options import (  # noqa: E402
     TERMINAL_STOPPED,
     build_worker_options,
     check_registration,
+    hook_path,
     make_posttool_hook,
     make_pretool_hook,
     make_stop_hook,
@@ -985,6 +989,47 @@ def check_tmpdir() -> str | None:
     if raw and tempfile.gettempdir() != os.path.abspath(raw):
         return "fallback"
     return None
+
+
+# U12 D27: the plugin hook (guard_project_files.py) needs 3.10+ and fails open on 3.9,
+# which is Beanstalk's /usr/bin/python3.
+HOOK_PYTHON_MIN = (3, 10)
+HOOK_PYTHON_TIMEOUT_S = 10
+_VERSION_PROBE = 'import sys; print("%d.%d.%d" % tuple(sys.version_info[:3]))'
+
+
+def check_hook_python(exe_dir: str, path: str | None) -> tuple[str | None, str | None, str | None]:
+    """``(python3, version, error)`` for the ``python3`` the CLI child's hooks will run: the
+    one first on the ``PATH`` ``options.build_worker_options`` gives the child
+    (``hook_path``). ``error`` is a label -- ``missing``, ``unreadable`` or ``too_old`` --
+    or None when that interpreter is ``HOOK_PYTHON_MIN`` or newer."""
+    exe = shutil.which("python3", path=hook_path(exe_dir, path))
+    if exe is None:
+        return None, None, "missing"
+    try:
+        out = subprocess.run([exe, "-c", _VERSION_PROBE], capture_output=True, text=True,
+                             encoding="utf-8", timeout=HOOK_PYTHON_TIMEOUT_S, check=True).stdout
+        version = tuple(int(part) for part in out.strip().split("."))
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return exe, None, "unreadable"
+    label = ".".join(str(part) for part in version)
+    if version[:2] < HOOK_PYTHON_MIN:
+        return exe, label, "too_old"
+    return exe, label, None
+
+
+def require_hook_python(exe_dir: str | None = None, path: str | None = None) -> str:
+    """``"<python3> <version>"`` for ``ev=start``; a refusal logs ``ev=prepare
+    step=hook_python`` and exits 2. Static instance configuration, like ``TMPDIR``."""
+    if exe_dir is None:
+        exe_dir = os.path.dirname(sys.executable)
+    if path is None:
+        path = os.environ.get("PATH")
+    exe, version, error = check_hook_python(exe_dir, path)
+    if error is not None:
+        log(ev="prepare", step="hook_python", error=error, python3=exe, version=version)
+        raise SystemExit(2)
+    return f"{exe} {version}"
 
 
 def tmpdir_free_mb() -> int | None:
@@ -2370,6 +2415,7 @@ def main() -> None:
     if bad_tmpdir is not None:
         log(ev="prepare", step="tmpdir", error=bad_tmpdir, tmpdir=os.environ.get("TMPDIR"))
         sys.exit(2)
+    hook_python = require_hook_python()
     sqs = queue_startup_fields(os.environ)
     if sqs:
         from proto import enqueue
@@ -2387,7 +2433,7 @@ def main() -> None:
         sqsd_max_retries=SQSD_MAX_RETRIES, sqsd_visibility_timeout_s=SQSD_VISIBILITY_TIMEOUT_S,
         sqsd_retention_period_s=SQSD_RETENTION_PERIOD_S, sweep_interval_s=SWEEP_INTERVAL_S,
         sweep=sweeper is not None, shutdown_grace_s=SHUTDOWN_GRACE_S,
-        tmpdir=tempfile.gettempdir(), tmpdir_free_mb=tmpdir_free_mb(), **sqs)
+        tmpdir=tempfile.gettempdir(), tmpdir_free_mb=tmpdir_free_mb(), hook_python=hook_python, **sqs)
     server.serve_forever()
     if _SHUTDOWN_THREAD is not None:
         # A daemon: its second wait, the releases and ev=shutdown run after
