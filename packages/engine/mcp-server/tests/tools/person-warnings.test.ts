@@ -243,6 +243,65 @@ describe("hasEventBeforeBirth predicate", () => {
     // Only fact is the birth itself. earliest event == latest birth, diff = 0.
     expect(hasEventBeforeBirth(new Mob(tree, "I1"), 365 * 2)).toBe(false);
   });
+
+  // Knowing divergence from warnings.java:918 — see the predicate's docstring.
+  // Each date is read as generously as it allows, so imprecision never
+  // manufactures an event-before-birth on its own.
+  const fact = (id: string, type: string, date: string) => ({
+    id,
+    type,
+    date,
+    standard_date: date,
+  });
+  const onePerson = (facts: ReturnType<typeof fact>[]) =>
+    new Mob(
+      {
+        persons: [
+          {
+            id: "I1",
+            gender: "Female",
+            names: [{ id: "N", given: "Margaret", surname: "Mercer" }],
+            facts,
+          },
+        ],
+      },
+      "I1",
+    );
+
+  it.each(["Abt 1868", "Est 1868", "Bef 1868", "Bet 1860 and 1868"])(
+    "is silent when the only fact is an imprecise birth (%s)",
+    (date) => {
+      expect(hasEventBeforeBirth(onePerson([fact("F1", "Birth", date)]), 365 * 2)).toBe(false);
+    },
+  );
+
+  it("is silent on an approximate birth and an approximate residence in the same year", () => {
+    // Abt 1870 spans 1869-01-01..1871-12-31: the Java pairing reads 1,094 days.
+    const mob = onePerson([fact("F1", "Birth", "Abt 1870"), fact("F2", "Residence", "Abt 1870")]);
+    expect(hasEventBeforeBirth(mob, 365 * 2)).toBe(false);
+  });
+
+  it("is silent on year-only dates two years apart (generous gap 366 days)", () => {
+    const mob = onePerson([fact("F1", "Birth", "1860"), fact("F2", "Residence", "1858")]);
+    expect(hasEventBeforeBirth(mob, 365 * 2)).toBe(false);
+  });
+
+  it("still fires when imprecise dates are more than 2 years apart on every reading", () => {
+    // Residence read as late as 1851-12-31, birth as early as 1859-01-01.
+    const mob = onePerson([fact("F1", "Birth", "Abt 1860"), fact("F2", "Residence", "Abt 1850")]);
+    expect(hasEventBeforeBirth(mob, 365 * 2)).toBe(true);
+  });
+
+  it("matches Java on exact dates: a death 3 years before birth fires", () => {
+    const mob = onePerson([fact("F1", "Birth", "1 Jan 1850"), fact("F2", "Death", "1 Jan 1847")]);
+    expect(hasEventBeforeBirth(mob, 365 * 2)).toBe(true);
+  });
+
+  it("matches Java on exact dates: a birth 5 years before the latest christening fires", () => {
+    // The latest birth-like fact is the christening; the birth is the event.
+    const mob = onePerson([fact("F1", "Birth", "1 Jan 1800"), fact("F2", "Christening", "1 Jan 1805")]);
+    expect(hasEventBeforeBirth(mob, 365 * 2)).toBe(true);
+  });
 });
 
 // ────────────────────────────────────────────────────────────────────
@@ -1720,6 +1779,23 @@ describe("calculateWarnings — orchestrator", () => {
       expect(w.personId).toBe("I1");
       expect(w.severity).toBe("contradiction");
     }
+  });
+
+  it("emits no hasEventBeforeBirth365_2 when the only fact is Birth Abt 1868", () => {
+    // ut_init_project_q4v / _wm7 (issue #1962): an approximate birth on an
+    // imported relative was reported as a contradiction against itself.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N", given: "Margaret", surname: "Mercer" }],
+          facts: [{ id: "F1", type: "Birth", date: "Abt 1868", standard_date: "Abt 1868" }],
+        },
+      ],
+    };
+    const tags = finalWarnings(new Mob(tree, "I1")).map((w) => w.issueType);
+    expect(tags).not.toContain("hasEventBeforeBirth365_2");
   });
 
   it("returns both earliestChildBirthToBirthMale14 AND earliestChildBirthToBirth12 for a male young father (Java emits both)", () => {
