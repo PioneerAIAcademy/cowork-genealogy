@@ -216,6 +216,24 @@ def check_runnable(
                 f"{agents_dir}/{name}.md) — the stub would silently never fire",
             )
 
+    # `stop_at_stub` ends the run at the first stubbed hand-off (orchestrator
+    # `_routing_short_circuit_skills`). With nothing stubbed it can never fire,
+    # and on a negative test the routing short-circuit already owns the stop —
+    # both are declarations that silently do nothing, so refuse them here.
+    if spec.execution.get("stop_at_stub"):
+        if spec.type != "positive":
+            return RunnabilityResult(
+                False,
+                "execution.stop_at_stub is for positive tests only; a negative "
+                "test already stops at its correct_skill hand-off",
+            )
+        if not stubbed:
+            return RunnabilityResult(
+                False,
+                "execution.stop_at_stub requires a non-empty stub_skills — with "
+                "nothing stubbed the stop could never fire",
+            )
+
     # A callee in BOTH run_skills and stub_skills is the one combination that
     # is worse than either alone, and the schema's "Mutually exclusive with
     # stub_skills" prose is not itself a constraint — no `not`/`allOf` backs

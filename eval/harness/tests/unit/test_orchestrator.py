@@ -668,6 +668,41 @@ def test_routing_short_circuit_none_for_out_of_scope_negative():
     assert _routing_short_circuit_skills(_negative_spec(correct=[])) is None
 
 
+def _stop_at_stub_spec(execution):
+    d = {
+        "test": {"id": "ut_o_003", "skill": "research-plan", "name": "n",
+                  "type": "positive", "description": "x", "tags": []},
+        "input": {"user_message": "m", "scenario": None},
+        "judge_context": [],
+        "execution": execution,
+    }
+    return load_test_from_dict(d)
+
+
+def test_stop_at_stub_positive_stops_at_its_stubbed_skills():
+    """ut_research_plan_q7m: the hand-off is the deliverable, so the first
+    stubbed delegation ends the run, both entry forms included."""
+    spec = _stop_at_stub_spec({
+        "stop_at_stub": True,
+        "stub_skills": [{"skill": "search-records", "response": "ok"},
+                        "search-external-sites"],
+    })
+    assert _routing_short_circuit_skills(spec) == {
+        "search-records", "search-external-sites",
+    }
+
+
+def test_stubs_without_stop_at_stub_still_deny_and_continue():
+    """The default stub contract is unchanged: no stop set for a positive test."""
+    spec = _stop_at_stub_spec({"stub_skills": ["search-records"]})
+    assert _routing_short_circuit_skills(spec) is None
+
+
+def test_stop_at_stub_false_is_off():
+    spec = _stop_at_stub_spec({"stop_at_stub": False, "stub_skills": ["search-records"]})
+    assert _routing_short_circuit_skills(spec) is None
+
+
 # --- positive tests ------------------------------------------------------
 
 

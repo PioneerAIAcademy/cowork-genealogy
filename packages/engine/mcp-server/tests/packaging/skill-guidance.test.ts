@@ -52,19 +52,10 @@ const AGENTS_WITH_PLACES_GUIDANCE = ["historical-context"];
 //
 // To recompute: shasum -a 256 <path>  (CRLF is normalized to LF first, so a
 // Windows checkout with core.autocrlf=true hashes the same as a Unix one).
-const SKILLS_WITH_SPECIALIZED_COPY: Array<{ skill: string; why: string; sha256: string }> = [
-  {
-    skill: "research-plan",
-    // 8bf43be2 (2026-07-20) split place work by function: locality-guide owns
-    // the place FACTS, research-plan owns record DISCOVERY. It dropped
-    // wiki_search / wiki_place_page / place_population from research-plan's
-    // allowed-tools (place_distance was never there), so its copy reframes
-    // those four as "locality-guide's tools — you read their findings from the
-    // localities entry, you do not call them here."
-    why: "delegates place-fact fetching to locality-guide; canonical names four tools it cannot call",
-    sha256: "0521723c5e9de12e2277909a23963ff1f32e691e3620b31a9351dc7151cad78d",
-  },
-];
+//
+// Empty since issue #2251 deleted research-plan's copy (issue #1112's ruling)
+// and inlined the rules it needed into that SKILL.md.
+const SKILLS_WITH_SPECIALIZED_COPY: Array<{ skill: string; why: string; sha256: string }> = [];
 
 // LF-normalized, matching the eval snapshot's text rule (eval/CLAUDE.md
 // "Normalization rules"). `.gitattributes` now pins every text file to LF, so a

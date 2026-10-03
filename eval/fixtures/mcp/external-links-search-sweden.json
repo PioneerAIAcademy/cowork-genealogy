@@ -1,0 +1,66 @@
+{
+  "tool": "external_links_search",
+  "description": "Curated external links for Barsebäck / Västra Karaby, 1670-1770. Captured live 2026-10-02 for the elena-pre-register-birth scenario (issue #2251). Twelve of 92-97 returned links kept verbatim (archives, tax lists, and the death, burial and marriage indexes on Ancestry, MyHeritage and Findmypast); the rest are newspapers, war graves, Stockholm and Jewish-heritage sites and duplicates. totalForPlace is the live value.",
+  "args": {
+    "standardPlace": "~Sweden"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Barsebäck, Harjager, Malmöhus, Sweden",
+      "startYear": 1670,
+      "endYear": 1770
+    },
+    "totalForPlace": 155,
+    "returned": 12,
+    "results": [
+      {
+        "url": "https://sok.riksarkivet.se/kyrkoarkiv",
+        "linkText": "Kyrkoarkiv - Riksarkivet"
+      },
+      {
+        "url": "https://sok.riksarkivet.se/mantalslangder",
+        "linkText": "Mantalslängder, 1642–1820"
+      },
+      {
+        "url": "https://www.arkivdigital.se/",
+        "linkText": "ArkivDigital: Störst i Sverige på släktforskning"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2225",
+        "linkText": "Sweden, Church Death Records, 1451-1943"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60362",
+        "linkText": "Sweden Select Burials, 1649-1920"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60363",
+        "linkText": "Sweden Select Marriages, 1630-1920"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30100/sweden-burials-1649-1920",
+        "linkText": "Sweden Burials, 1649-1920"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30099/sweden-marriages-1630-1920",
+        "linkText": "Sweden Marriages, 1630-1920"
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-Records/sweden-burials-1649-1920",
+        "linkText": "Sweden Burials, 1649-1920"
+      },
+      {
+        "url": "https://wiki.genealogi.se/index.php?title=Husf%C3%B6rh%C3%B6rsl%C3%A4ngd",
+        "linkText": "Husförhörslängd, Wiki-Rötter"
+      },
+      {
+        "url": "https://sok.riksarkivet.se/nad",
+        "linkText": "Nationell Arkivdatabas (NAD)"
+      },
+      {
+        "url": "https://grav.rotter.se/Gravsoklist.php?cmd=reset",
+        "linkText": "Sweden Inventory of Graves"
+      }
+    ]
+  }
+}

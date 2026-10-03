@@ -1,0 +1,46 @@
+{
+  "test": {
+    "id": "ut_research_plan_dth",
+    "skill": "research-plan",
+    "name": "Pre-register birth: the plan works back from the subject's own death or burial entry",
+    "type": "positive",
+    "description": "elena-pre-register-birth: q_001 asks where Elena Asmundsdotter was born and who her parents were. She married in Västra Karaby in 1712, and loc_002 records that Västra Karaby's birth register begins in 1688, after her c. 1680-1692 birth estimate, so no baptism can be expected there. research-plan must plan her own death or burial entry (Barsebäck, after 1718) as its own item, not ten church-baptism items. Guards the #2676 planning gap merged into #2251: on the elena-asmundsdotter-origin e2e run of 2026-09-18 the one active plan held ten items, all record_type church, and no death or burial item, so the agent never opened the Döde section where her 1745 death entry states her birthplace.",
+    "tags": [
+      "planning",
+      "parentage",
+      "sweden",
+      "pre-register-birth",
+      "record-type-selection",
+      "reads-localities-entry",
+      "research-plan-new-plan-for-q-001",
+      "new-plan-items-planned-status",
+      "wiki-prework"
+    ]
+  },
+  "input": {
+    "user_message": "Create the first research plan for q_001 — where was Elena Asmundsdotter born, and who were her parents?",
+    "scenario": "elena-pre-register-birth"
+  },
+  "mcp_fixtures": [
+    "place-search-barseback",
+    "place-search-vastra-karaby",
+    "volume-search-barseback",
+    "volume-search-vastra-karaby",
+    "collections-search-sweden",
+    "external-links-search-sweden",
+    "wiki-read-sweden-naming-customs"
+  ],
+  "judge_context": [
+    "Two localities entries are ALREADY in research.json (loc_001 Barsebäck, loc_002 Västra Karaby); the orchestrator ran locality-guide first. The skill should READ them. loc_002 records that Västra Karaby's birth register begins in 1688; Elena's birth is estimated c. 1680-1692. Whether the plan recognises that a baptism may not exist is the point of this test.",
+    "THE CENTRAL REQUIREMENT. The plan MUST include an item whose target is Elena's OWN death or burial entry, in Barsebäck where the couple lived from at least 1718, dated to the years after 1718. Its rationale should say why: death or burial entries can state an age or a birthplace, the route to an origin a pre-register birth cannot give. A burial index search (Sweden, Burials, 1649-1920) and a browse of the Barsebäck register's burial section both count. Whether such an item is present is what Record type selection turns on for this test.",
+    "Fail Record type selection (score 1) if every plan item shares one record_type, or if the plan's items are all baptism and household-examination searches for Elena's birth with no death, burial or marriage item. A baptism search in Västra Karaby is a legitimate item, but it cannot carry the plan alone.",
+    "The 1712 Västra Karaby marriage entry is a good companion item (a marriage entry may name the bride's home farm or father). Tax lists (mantalslängder) and household examinations are good breadth. None of these is individually required.",
+    "SKILL.md Step 3 pre-work REQUIRES a wiki_read of Sweden_Naming_Customs for this subject (patronymic surname 'Asmundsdotter'); the fixture is served. Do not mark that call down. No military-page fetch is expected: the subject is female.",
+    "Do NOT expect the plan to know her birth farm, her parents, or her death date: none of those is in the before-state, and a plan item naming them would be fabricated evidence."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "max_turns": 40
+  }
+}

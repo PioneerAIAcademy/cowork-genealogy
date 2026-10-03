@@ -232,6 +232,30 @@ def test_blocks_when_stub_skills_names_a_nonexistent_skill(entry):
     assert "not an existing skill" in result.reason
 
 
+def test_blocks_stop_at_stub_with_nothing_stubbed():
+    result = _stub_check({"stop_at_stub": True})
+    assert result.runnable is False
+    assert "requires a non-empty stub_skills" in result.reason
+
+
+def test_blocks_stop_at_stub_on_a_negative_test():
+    d = _runnable_test_dict()
+    d["test"]["type"] = "negative"
+    d["negative"] = {"correct_skill": ["search-records"], "explanation": "x"}
+    d["execution"] = {"stop_at_stub": True, "stub_skills": ["search-records"]}
+    result = check_runnable(
+        load_test_from_dict(d), scenarios_dir=SCENARIOS,
+        fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS,
+    )
+    assert result.runnable is False
+    assert "positive tests only" in result.reason
+
+
+def test_allows_stop_at_stub_with_a_real_stub():
+    result = _stub_check({"stop_at_stub": True, "stub_skills": ["search-records"]})
+    assert result.runnable is True
+
+
 def test_allows_stub_skills_naming_a_real_skill():
     result = _stub_check(
         {"stub_skills": ["search-external-sites", {"skill": "record-extraction"}]}

@@ -17,6 +17,7 @@ allowed-tools:
   - external_links_search
   - place_search
   - place_search_all
+  - wiki_read
   - research_append
 ---
 
@@ -24,7 +25,7 @@ allowed-tools:
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
-**Places:** When resolving or writing places, follow `references/places-guidance.md` — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
+**Places:** Resolve a place with `place_search` and use the first match's `standardPlace` verbatim on plan items and as the input to `collections_search`, `volume_search` and `external_links_search`; use `place_search_all` when jurisdictions changed across the period. Those three tools return results for the exact place passed. Stay at the most specific level; only when it returns nothing usable, broaden by dropping the leading comma-delimited component and calling once more.
 
 **Write `plans` and `plan_items` only through `research_append` — never hand-edit `research.json`.** It assigns ids, enforces the schema and the one-active-plan invariant, and writes atomically; on `{ ok: false, errors }` nothing is written, so fix the input and re-issue. No separate `validate_research_schema` step is needed.
 
@@ -42,9 +43,10 @@ record-type selection by research goal.
 ## MCP tools used
 
 research-plan does **not** learn *how* to search a place — the facts and
-strategy (jurisdictional history, boundary changes, naming conventions,
-indexing quirks) come from `locality-guide` (Step 2). What research-plan
-does itself is **discover which records exist** and **write the plan**:
+strategy (jurisdictional history, boundary changes, indexing quirks) come
+from `locality-guide` (Step 2). What research-plan does itself is
+**discover which records exist**, **fetch the record-type pages the
+subject triggers** (Step 3 pre-work) and **write the plan**:
 
 | Tool | Purpose |
 |------|---------|
@@ -53,12 +55,14 @@ does itself is **discover which records exist** and **write the plan**:
 | `external_links_search` | FS-curated third-party URLs (Ancestry, MyHeritage, archives) for this place/period |
 | `place_search` | Resolve a place name to its canonical `standardPlace` + hierarchy, for writing plan items |
 | `place_search_all` | Jurisdiction succession over time — the boundary-correct jurisdiction at the event date |
+| `wiki_read` | One FamilySearch wiki record-type page by constructed URL, for the Step 3 pre-work triggers only |
 | `research_append` | Write `plans` / `plan_items` (assigns ids, validates, enforces the one-active-plan invariant) |
 
-The *how-to-search* knowledge — wiki research pages, population context,
-quirks, boundary strategy — comes from `locality-guide` (which owns
-`wiki_search`, `wiki_place_page`, `place_population`), read back from the
-`localities` section. research-plan does not call those.
+The place-shaped *how-to-search* knowledge — wiki research pages,
+population context, quirks, boundary strategy — comes from
+`locality-guide` (which owns `wiki_search`, `wiki_place_page`,
+`place_population`), read back from the `localities` section.
+research-plan does not call those three.
 
 ## Steps
 
@@ -157,9 +161,10 @@ need to plan — a first plan, a fallback jurisdiction, a FAN-cluster
 place — do **not** survey it yourself and do **not** invoke
 locality-guide. **Stop and return to the orchestrator, noting that the
 jurisdiction needs a locality survey**; the orchestrator will run
-`locality-guide` and then re-invoke you. You have no wiki/place-fact
-tools of your own; the `localities` entry is your source for *how* to
-search.
+`locality-guide` and then re-invoke you. You have no place-survey tools;
+for the record-type pages named in Step 3's pre-work, fetch by
+constructed URL. The `localities` entry is your source for *how* to
+search the place.
 
 **(b) Then discover which records exist**, with your own tools, applying
 that know-how:
@@ -224,6 +229,23 @@ fact left only in the guide never reaches the search.
 From the question, the locality survey, and the period, identify which
 record sets could answer it.
 
+**Pre-work — fetch the record-type pages the subject triggers, before
+selecting record types.** Call `wiki_read` with
+`https://www.familysearch.org/en/wiki/{Country}_{Topic}`, using the
+subject's birth country. Issue them as PARALLEL calls in one turn. They are
+members of this block, not options: a page you did not fetch is a record
+type you will plan from memory.
+
+- **A male subject of a parentage question, born in a country whose
+  levy rolls enrolled boys by name from childhood** (an adult draft or a
+  volunteer army is not this) → `{Country}_Military_Records`. REQUIRED.
+- **The subject carries a compound (two-surname) or patronymic surname** →
+  `{Country}_Naming_Customs`. REQUIRED.
+
+On `No wiki page found`, an error, or an empty page, say so in the
+affected item's `rationale` and plan from the `localities` entry; do not
+fill the page from memory.
+
 Load `references/record-type-guide.md` for the record-type-by-goal
 table and contextual factors checklist.
 
@@ -265,16 +287,15 @@ table and contextual factors checklist.
   her: add an item for *each* of her marriage records, not just the one
   to the candidate father, and add items for records that name her
   parents directly (her own birth/baptism, probate, a sibling's record).
-  Never plan a household search keyed on a surname taken off a single
-  marriage record as though it were settled — that surname may be a
-  prior married name, not her birth name. A cheap, quick household check
-  against that surname is fine to include (a free, indexed census costs
-  nothing to rule in or out), but its own rationale must say the surname
-  is unconfirmed, not describe it as her maiden name — and the plan as a
-  whole must not treat that check as sufficient by itself: it needs a
-  companion item, anywhere in the sequence, that tests whether the
-  surname is even hers (an earlier-marriage search) or that names her
-  parents directly (probate, a sibling's record). Where no remarriage is suspected, the marriage record's
+  A surname typed into a search asserts nothing: plan the household and
+  record searches keyed on the surname a single marriage record gives her
+  freely, because running them costs nothing and claims nothing. The
+  caution belongs on what is written down — that surname may be a prior
+  married name, not her birth name, so no rationale calls it her maiden
+  name, and the plan does not treat a search on it as settling the
+  question. Pair it with a companion item, anywhere in the sequence, that
+  tests whether the surname is even hers (an earlier-marriage search) or
+  that names her parents directly (probate, a sibling's record). Where no remarriage is suspected, the marriage record's
   date relative to the child's birth still corroborates a parent named
   only by indirect or derivative evidence (a death certificate, a single
   census co-residence) — but it does **not**, by itself, establish that
@@ -301,15 +322,26 @@ table and contextual factors checklist.
   research window (e.g., ending at the subject's marriage or death)
   excludes most of the range where the record actually sits. State in
   the item's `rationale` whose lifespan set the window's bounds.
-- **For a male subject in a conscription country (Denmark/Norway from
-  1789, and similar continental levy systems), plan the military levy
-  rolls as their own item** — Danish *lægdsruller* enroll boys from
-  early childhood **under the father's name**, so the roll is direct
-  parentage evidence for a son even where parish registers are
-  unindexed or lost. Do not treat the rolls as an obscure fallback; in
-  a patronymic-era Scandinavian parentage plan they rank alongside the
-  baptism and the parents' marriage. See
-  `references/record-type-guide.md` ("sons in conscription countries").
+- **When the fetched `{Country}_Military_Records` page or the `localities`
+  entry's quirks show that boys were enrolled in levy rolls under their
+  father's name, plan those rolls as their own item** (`record_type:
+  military`). A roll naming a boy under his father is direct parentage
+  evidence for a son even where the parish registers are unindexed or
+  lost, so it ranks alongside the baptism and the parents' marriage, not
+  as a fallback. Take the years and the access route from the page or the
+  entry, and cite which in the item's `rationale`. See
+  `references/record-type-guide.md` ("sons enrolled under their father").
+- **When no baptism can be expected — the subject's birth predates the
+  register of the parish where they were born or first appear (the
+  `localities` entry's register start date), or the birth parish is the
+  unknown being sought — plan the subject's own death or burial entry as
+  its own item**, dated to the years after they were last known alive, and
+  an item for each of their marriages. Death, burial and marriage entries
+  routinely state an age, a home parish or a birthplace, and they are the
+  usual route to an origin the birth register cannot give. Say in the
+  item's `rationale` which register start date put the baptism out of
+  reach. A plan whose items all share one `record_type` is not broad,
+  however many items it has.
 - Include the FAN cluster (relatives, neighbors, associates) **when their
   records may contain evidence about the question's subject** — purpose is the
   test, not the relative's presence in the tree. An item whose deliverable is a
@@ -376,8 +408,8 @@ sit inside this range while still failing the self-check below.
 
 **Breadth self-check — run this before writing the plan, not after the
 user asks "was anything missed?"** Answer `references/planning-standards.md`
-Standard 17's five self-check questions against the plan you are about
-to write:
+Standard 17's five self-check questions, plus a sixth, against the plan
+you are about to write:
 1. Sufficient breadth of record types (not just census/vital)?
 2. All relevant repositories identified (not just the most convenient)?
 3. Variant spellings/name forms accounted for?
@@ -385,6 +417,10 @@ to write:
 5. All relevant time periods included — do the plan's `date_range`s
    span the question's whole window, from the birth estimate to the
    death or last-known date?
+6. If no baptism can be expected (Step 3), is there an item for the
+   **subject's own** death or burial entry, dated after the birth window
+   and placed in the parish where the subject last lived — not a parent's,
+   a spouse's or a child's?
 If any answer is no, add the missing item(s) now, before Step 5 — not as
 a revision after being asked. A plan that hits the size range above while
 staying narrow in record-type diversity is not reasonably exhaustive.

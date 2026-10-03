@@ -347,8 +347,17 @@ def _routing_short_circuit_skills(spec: TestSpec) -> set[str] | None:
     (the downstream skill never executes) — see skill_runner. Returns None for
     positive tests and for out-of-scope negatives (`correct_skill: []`), which
     must run normally to be graded.
+
+    A POSITIVE test may opt in with `execution.stop_at_stub: true`: its
+    `stub_skills` then end the run the same way, at the first stubbed hand-off.
+    For a test whose deliverable IS the hand-off (research-plan's
+    continue-authorized case): once the caller delegates, what the callee or an
+    orchestrator above it does next is not the skill under test, and measuring
+    it charged ut_research_plan_q7m 600s of downstream work (2026-10-02).
     """
     if spec.type != "negative":
+        if (spec.execution or {}).get("stop_at_stub"):
+            return set(parse_stub_skills(spec.execution)) or None
         return None
     correct = (spec.negative or {}).get("correct_skill", [])
     return set(correct) or None
