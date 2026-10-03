@@ -279,6 +279,12 @@ def check_runnable(
     # xfail test is an explicitly declared known-failing test, so a
     # correct_skill naming a not-yet-built skill is the documented
     # reason for the xfail (see xfail_reason), not a typo to catch.
+    # An entry naming a CONVERTED skill resolves to its agent file instead of a
+    # skill directory (issue #2793, and the same shape as the `spec.skill`
+    # fallback above). The destination is still real — `project-status` is
+    # reachable by auto-delegation from its own description — so requiring a
+    # directory here would fail a correctly-routed test for a migration the
+    # test is not about. A name matching NEITHER is still the typo this catches.
     if spec.type == "negative" and spec.negative and spec.expected_outcome != "xfail":
         # NOT widened to accept an agent. Issue #2825 ruling C: a converted
         # callee's negatives abort `not_runnable` until that suite's own
@@ -290,11 +296,14 @@ def check_runnable(
         # would have graded a guaranteed `fail` instead of an accepted abort,
         # across every converted-callee negative in every suite.
         for i, name in enumerate(spec.negative.get("correct_skill", []) or []):
-            if not (Path(skills_dir) / name).is_dir():
+            if not (Path(skills_dir) / name).is_dir() and not (
+                Path(agents_dir) / f"{name}.md"
+            ).is_file():
                 return RunnabilityResult(
                     False,
-                    f"negative.correct_skill[{i}]='{name}' is not an "
-                    f"existing skill (no directory at {skills_dir}/{name})",
+                    f"negative.correct_skill[{i}]='{name}' is neither an "
+                    f"existing skill (no directory at {skills_dir}/{name}) "
+                    f"nor an existing agent (no file at {agents_dir}/{name}.md)",
                 )
 
         # `grade_on_invariant` hands the whole verdict to the test's

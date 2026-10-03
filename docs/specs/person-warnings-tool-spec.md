@@ -33,10 +33,10 @@ mob."
   report on a relationship between the anchor and a one-hop relative.
 
 **Single-person warnings run on the anchor *and* its one-hop relatives,
-not the anchor alone.** 28 of the 49 self-checks have a relative-mob variant
+not the anchor alone.** 28 of the 53 self-checks have a relative-mob variant
 (`relatives*`, `maleRelatives*`, `femaleRelatives*`) that fires the same
 condition on a parent, spouse, or child; the flagged relative is named in
-the warning's `personId`/`personName`. The other 21 run on the anchor only.
+the warning's `personId`/`personName`. The other 25 run on the anchor only.
 The relative-variant tags in § Warning Definitions are the evidence.
 
 ---
@@ -202,10 +202,10 @@ All warnings are evaluated relative to the **anchor person** (the
 required `personId`) and its one-hop relatives. Single-person checks
 read the anchor's own facts; relationship checks consider relationships
 in which the anchor participates (as parent, spouse, or child); and 28 of
-the 49 self-checks have a `relatives*`/`maleRelatives*`/`femaleRelatives*`
+the 53 self-checks have a `relatives*`/`maleRelatives*`/`femaleRelatives*`
 variant that fires the same condition on a one-hop relative.
 
-The full catalogue of the **77 tags** the tool emits in `issueType` is
+The full catalogue of the **81 tags** the tool emits in `issueType` is
 the § Tag Catalogue below. It is the source of truth an implementation is
 checked against, and the drift lint
 (`tests/packaging/person-warnings-spec-drift.test.ts`) fails if it and
@@ -439,7 +439,7 @@ tool.
 
 ### Tag Catalogue
 
-The full set of **77** tags the tool emits in `issueType`. Each row is
+The full set of **81** tags the tool emits in `issueType`. Each row is
 `Tag`, `Severity`, `Rule` (the condition that fires it), and `Cause`
 (what it usually indicates). `scoreType` is `COHERENCE` for every tag.
 The bidirectional drift lint
@@ -450,6 +450,14 @@ Numeric suffixes on a tag encode its threshold (e.g. `365` = 1 year of
 day-level tolerance, `30_10` = a 300-day exact-day window, `2` = a
 count-of-two). Tolerances are day-level unless the rule says otherwise;
 imprecise dates are widened per § Date Parsing Rules.
+
+**Not every tag fires in `person_warnings`.** A row whose Rule begins
+"Merge-mode only" fires only from `merge_warnings`, for one of two reasons.
+Either the check compares a target record with a candidate, which cannot
+differ when `person_warnings` passes one record as target, candidate and
+merged. Or the check sits in `calculateNonFinalWarnings`, which
+`person_warnings` skips by calling `calculateWarnings` with
+`isFinalWarnings: true`.
 
 #### Contradictions (`severity: "contradiction"`) — physically impossible
 
@@ -467,6 +475,9 @@ imprecise dates are widened per § Date Parsing Rules.
 | `hasDeathBeforeChildBirthFemale2` | contradiction | Female anchor: the mother's latest Death day is more than 2 days before a child's earliest Birth day (exact Death and Birth fact types, not the death-like/birth-like families; a mother may die the day of birth, not 2+ days before) | Data error or wrong mother attribution |
 | `hasEventsOutsideLifespanFar` | contradiction | Merge-mode only: merging places an event far outside the other record's lifespan (before its birth or after its death) | The two records are not the same person |
 | `hasSameCensus` | contradiction | Merge-mode only: both records cite the same census collection (a census enumerates each person once) | The two records are distinct people captured in one enumeration |
+| `hasNoChildrenConflict` | contradiction | The anchor has a `NoChildren` fact and qualifying children of their own; OR a `CoupleNeverHadChildren` fact on a couple the anchor belongs to (or on the anchor's own parents) is contradicted by a qualifying child of both partners. A qualifying ParentChild edge is biological or unspecified; adoptive, step, foster, and guardian links don't count | FamilySearch's `NO_CHILDREN_CONFLICT`, `COUPLE_NEVER_HAD_CHILDREN_FACT_YET_HAS_CHILDREN`, and `CHILD_OF_CHILDLESS_COUPLE`, folded into one tag — later research added a child the fact predates, or the child is adopted/step/foster/guardian rather than biological |
+| `hasNoCoupleRelationshipsConflict` | contradiction | The anchor has a `NoCoupleRelationships` fact and also has a spouse | A relationship was added after the fact was recorded, or a wrong link |
+| `hasStillbirthConflict` | contradiction | The anchor has a `Stillbirth` fact and also has a spouse, a marriage-like fact, a child, or lived to at least age 1 (most-generous bounds, fudge 0) | The stillbirth fact belongs to a different, similarly-named person, or is simply wrong |
 
 #### Parent / child age and timing (`implausible`)
 
@@ -500,10 +511,11 @@ imprecise dates are widened per § Date Parsing Rules.
 | `tooManyDeathDates2` | implausible | Two or more distinct exact-DMY Death dates spaced more than 14 days apart | As above |
 | `deathRangeGreaterThan2` | implausible | Death-like dates span more than 2 years | Unreconciled conflicting death records |
 | `hasBurialAfterDeath31` | implausible | The **latest possible** Burial is more than 31 days before the **earliest possible** Death (despite the Java name, fires on burial-before-death outliers) — see the divergence note below | Conflicting or mis-typed burial/death dates |
+| `hasDelayedBurial365` | implausible | The earliest possible Burial is more than 365 days after the latest possible Death (most-generous bounds, fudge 0) | A funeral delayed about a year (legitimate in some places), a reburial, a later interment of ashes, or a data error |
 | `birthRangeGreaterThan3` | implausible | Merge-mode only: the merged record's Birth facts span more than 3 years, with no shared marriage date to corroborate the join | The two records are different people |
 | `birthLikeRangeGreaterThan8` | implausible | Merge-mode only: the merged record's birth-like facts span more than 8 years, with no shared marriage date | As above, at the looser birth-like tolerance |
 | `hasCloseChildBirthsIgnoreSimilarChildren` | implausible | Two of this person's children (that are not already flagged as similar) have Birth dates suspiciously close together | Two records of one child attached as two children |
-| `hasCloseChildChristenings6_30` | implausible | Two of this person's children whose names are similar have Christening/Baptism dates 2 to 180 days apart | Two records of one child attached as two children, on christening dates |
+| `hasCloseChildChristenings6_30` | implausible | Merge-mode only: two of this person's children whose names are similar have Christening/Baptism dates 2 to 180 days apart | Two records of one child attached as two children, on christening dates |
 | `similarChildren` | implausible | Two children look like the same individual recorded twice (similar names and dates) | One child duplicated under two records |
 | `similarChildrenConflictingDates` | implausible | Two children have similar names but conflicting dates | Same child recorded twice with a date discrepancy |
 | `similarSpouses` | implausible | Two spouses look like the same individual recorded twice | One spouse duplicated |
@@ -535,8 +547,9 @@ death under **every** reading the recorded dates permit:
 Exact dates collapse both pairings to the same number, so the narrowing costs
 no true positive that was expressed precisely; what it drops are exactly the
 cases where the recorded precision cannot support the claim. The helper it
-calls, `factDaysDiffLatestEarliest`, exists only for this and has no Java
-counterpart.
+calls, `factDaysDiffLatestEarliest`, has no Java counterpart.
+`hasDelayedBurial365` and `hasStillbirthConflict` use it too, for the same
+reason (§ The four `person_quality` parity checks).
 
 #### Family structure and names (`implausible`)
 
@@ -548,34 +561,35 @@ counterpart.
 | `missingFactsAndRelatives` | implausible | Empty stub: no facts other than `GenderChange`, and no relatives | An unfinished record |
 | `hasBlankName` | implausible | A name entry carries a blank (empty-string) given name or surname part — distinct from a name part that is simply absent (see `missingSurnames`/`missingGivenNamesWithoutExactBirthLikeDate`) | An incomplete record |
 | `hasDiffSurnameMale` | implausible | Male anchor has surnames that do not match each other (similarity ≤ 0.5) | Records from two same-given-name men merged |
-| `missingSurnames` | implausible | No recorded surname | Incomplete record; hard to distinguish from same-given-name persons |
-| `missingGivenNamesWithoutExactBirthLikeDate` | implausible | No recorded given name AND no exact birth-like date | Record too sparse to identify |
+| `missingSurnames` | implausible | Merge-mode only: no recorded surname | Incomplete record; hard to distinguish from same-given-name persons |
+| `missingGivenNamesWithoutExactBirthLikeDate` | implausible | Merge-mode only: no recorded given name AND no exact birth-like date | Record too sparse to identify |
 
 #### Relative-mob mirrors (`implausible`)
 
-28 of the 49 self-checks above have a relative-mob variant that fires the
+28 of the 53 self-checks above have a relative-mob variant that fires the
 same condition on a one-hop relative (parent, spouse, or child) instead of
-the anchor; the other 21 run on the anchor only. They are **always
+the anchor; the other 25 run on the anchor only. They are **always
 `implausible`** regardless of the self-check's
 severity — the anchor's own data isn't necessarily wrong; the issue is in
 the relationship — and the flagged relative is named in the warning's
 `personId`/`personName`. Prefix conventions: `relatives*` = any relative,
 `maleRelatives*`/`femaleRelatives*` = gender-restricted. See each row's
-mirrored self-check for the rule.
+mirrored self-check for the rule. Ten of the 28 variants fire only in merge
+mode, marked below, so `person_warnings` can emit 18 of them.
 
 | Tag | Severity | Mirrors |
 |-----|----------|---------|
-| `relativesHasEventBeforeBirth365_2` | implausible | `hasEventBeforeBirth365_2` |
-| `relativesHasEventAfterDeath1` | implausible | `hasEventAfterDeath1` |
+| `relativesHasEventBeforeBirth365_2` | implausible | `hasEventBeforeBirth365_2` (merge-mode only) |
+| `relativesHasEventAfterDeath1` | implausible | `hasEventAfterDeath1` (merge-mode only) |
 | `relativesHasAgeRangeGreaterThan120` | implausible | `hasAgeRangeGreaterThan120` |
 | `relativesHasEventBeforeChristening365_3` | implausible | `hasEventBeforeChristening365_3` |
-| `relativesHasBurialBeforeDeath` | implausible | `hasBurialBeforeDeath` |
-| `relativesHasBurialAfterDeath31` | implausible | `hasBurialAfterDeath31` |
+| `relativesHasBurialBeforeDeath` | implausible | `hasBurialBeforeDeath` (merge-mode only) |
+| `relativesHasBurialAfterDeath31` | implausible | `hasBurialAfterDeath31` (merge-mode only) |
 | `relativesDeathRangeGreaterThan2` | implausible | `deathRangeGreaterThan2` |
-| `relativesTooManyBirthDates2` | implausible | `tooManyBirthDates2` |
-| `relativesTooManyDeathDates2` | implausible | `tooManyDeathDates2` |
-| `relativesBirthLikeRangeGreaterThan8` | implausible | `birthLikeRangeGreaterThan8` |
-| `relativesChildBirthRange40` | implausible | `childBirthRange40` |
+| `relativesTooManyBirthDates2` | implausible | `tooManyBirthDates2` (merge-mode only) |
+| `relativesTooManyDeathDates2` | implausible | `tooManyDeathDates2` (merge-mode only) |
+| `relativesBirthLikeRangeGreaterThan8` | implausible | `birthLikeRangeGreaterThan8` (merge-mode only) |
+| `relativesChildBirthRange40` | implausible | `childBirthRange40` (merge-mode only) |
 | `relativesEarliestChildBirthToBirth12` | implausible | `earliestChildBirthToBirth12` |
 | `maleRelativesEarliestChildBirthToBirth14` | implausible | `earliestChildBirthToBirthMale14` |
 | `femaleRelativesEarliestChildBirthToBirth14` | implausible | `earliestChildBirthToBirthFemale14` |
@@ -590,8 +604,8 @@ mirrored self-check for the rule.
 | `relativesHasDeathBeforeChildBirth365_2` | implausible | `hasDeathBeforeChildBirth365_2` |
 | `femaleRelativesHasDeathBeforeChildBirth365` | implausible | `hasDeathBeforeChildBirthFemale365` |
 | `femaleRelativesHasDeathBeforeChildBirth2` | implausible | `hasDeathBeforeChildBirthFemale2` |
-| `relativesHasEarlyMarriage14` | implausible | `hasEarlyMarriage14` |
-| `relativesHasLateMarriage90` | implausible | `hasLateMarriage90` |
+| `relativesHasEarlyMarriage14` | implausible | `hasEarlyMarriage14` (merge-mode only) |
+| `relativesHasLateMarriage90` | implausible | `hasLateMarriage90` (merge-mode only) |
 | `maleRelativesHasDiffSurname` | implausible | `hasDiffSurnameMale` |
 
 #### Project rules (not ported from FamilySearch)
@@ -599,6 +613,93 @@ mirrored self-check for the rule.
 | Tag | Severity | Rule | Cause |
 |-----|----------|------|-------|
 | `hasEventInOtherCountry` | implausible | A non-migration, non-residence event (on the person or on a Couple relationship) is in a country that bidirectionally contradicts every birth and death anchor country, when those anchors agree | A record attached to the wrong person, or a mis-standardised place |
+
+### The four `person_quality` parity checks
+
+`hasDelayedBurial365`, `hasNoChildrenConflict`,
+`hasNoCoupleRelationshipsConflict`, and `hasStillbirthConflict` model four
+conditions FamilySearch's `person_quality` score reports (`DELAYED_BURIAL`,
+`NO_CHILDREN_CONFLICT`, `NO_COUPLE_RELATIONSHIPS_CONFLICT`,
+`STILLBIRTH_CONFLICT`) that are decidable from `tree.gedcomx.json` alone, so
+they run for every person in the project tree, linked or not. FamilySearch
+publishes no Java source for these — they are not a warnings.java port.
+
+**Fact-type strings.** `NoChildren` and `NoCoupleRelationships` are person
+facts; `CoupleNeverHadChildren` is a fact on a **Couple relationship**, not
+on either person. All three are defined by FamilySearch's own SDK enum
+`FamilySearchFactType` (`FamilySearch/gedcomx-java`, path
+`extensions/familysearch/familysearch-api-model/src/main/java/org/familysearch/platform/ct/FamilySearchFactType.java`,
+namespace `http://familysearch.org/v1/`): `http://familysearch.org/v1/NoChildren`
+("Person fact type: Person had no children."),
+`http://familysearch.org/v1/NoCoupleRelationships` ("Person fact type:
+Person has no couple relationship."), and
+`http://familysearch.org/v1/CoupleNeverHadChildren` ("Couple fact type:
+Couple never had children."). `Stillbirth` is GEDCOM X's own
+`http://gedcomx.org/Stillbirth`. All four already reach `tree.gedcomx.json`
+— `stripFactTypeUri` keeps the trailing path segment of any fact-type URI,
+and `tree-shape.ts` does not restrict fact-type values — so no converter or
+schema change was needed. A test converts a full GedcomX document carrying
+these exact wire URIs through the real `toSimplified()` and asserts that
+`calculateWarnings` emits the matching tags, guarding the constants against
+a converter or spelling drift.
+
+**Delayed burial: 365-day threshold, most-generous bounds.** Burial
+normally happens within days of death, so a gap over a year is most likely a
+data error. But a funeral delayed about a year is legitimate in some places,
+and reburials and a later interment of ashes can also trip it, which is why
+the severity is `implausible`, not `contradiction`. The
+check reads the earliest possible Burial day minus the latest possible
+Death day (`factDaysDiffLatestEarliest`, the conservative pairing
+`hasBurialAfterDeath31` uses, with the two sets swapped), with
+`imperfectDateFudgeDays` at 0 rather than 365: that pairing
+is already the most generous reading, and widening it further would swallow
+the whole 1-to-3-year band this check exists to catch, since every
+year-only hit would then already span 4+ years. Burial is in the death-like
+family, so a burial 3 or more calendar years late already fires
+`deathRangeGreaterThan2` too — both tags firing together on the same person
+is expected, not a bug; `hasDelayedBurial365`'s unique reach is the
+one-to-three-year band under that.
+
+**No Children: three views, one tag.** `hasNoChildrenConflict` folds
+FamilySearch's `NO_CHILDREN_CONFLICT`,
+`COUPLE_NEVER_HAD_CHILDREN_FACT_YET_HAS_CHILDREN`, and
+`CHILD_OF_CHILDLESS_COUPLE` into one issueType, since all three are the same
+shape of contradiction — a "no children" fact somewhere the tree's own
+ParentChild links disagree with: (a) the anchor's own `NoChildren` fact
+contradicted by the anchor's own qualifying children; (b) a
+`CoupleNeverHadChildren` fact on a Couple relationship the anchor belongs
+to, contradicted by a qualifying child of both partners; (c) the same
+couple fact on the anchor's own parents, contradicted by the anchor itself
+being their qualifying child.
+
+A ParentChild edge qualifies only when its `subtype`
+(`gedcomx-convert.ts`'s `uriToSubtype`) is undefined or `"Biological"`. A
+couple marked as never having children can still have raised an adopted,
+step, or foster child, so under the spec's most-generous-reading principle
+only a biological or unspecified link contradicts the marker — an
+`"Adoptive"`, `"Step"`, `"Foster"`, or `"Guardian"` edge does not count, on
+either side of view (b) or (c).
+
+**Stillbirth: the same most-generous age reading.** `hasStillbirthConflict`
+fires on a `Stillbirth` fact plus any of: a spouse, or a marriage-like fact
+on the anchor; a child — unfiltered by subtype, unlike the No Children
+views above, since a stillborn person cannot have raised any child, adopted
+or not; or living to at least age 1,
+where "age 1" is read the same conservative way as the burial check — the
+smallest possible gap between the latest possible birth-like-or-`Stillbirth`
+day and the earliest possible Death day is still >= 365 days (fudge 0, not
+365).
+
+**Two more consumers, and none of the four is gate-exempt.** All four run
+inside `calculateWarnings`, so they also reach `merge_warnings`, where only the
+three contradictions block, and the tree-write gate in
+`src/validation/introduced-warnings.ts`. None is in `GATE_EXEMPT_TYPES`, so a
+`tree_edit`, `tree_correct`, `materialize_facts` or `merge_tree_persons` write
+that introduces one is refused until the caller justifies it. For the three
+contradictions that is the point: a write that gives a child to a couple marked
+as never having children should have to say why. `hasDelayedBurial365` stays out
+for the reason the `implausible` parent-age tags do. A reburial or a later burial
+of ashes is legitimate but rare, and a one-line justification records it.
 
 ---
 
@@ -701,7 +802,7 @@ fixture trees; there are no `extractYear`/`extractEarliestYear`/
 `extractLatestYear` tests, because those helpers do not exist (date
 handling is tested where it lives, under `src/utils/`).
 
-**Per-tag coverage is partial.** Roughly half of the 77 tags are named
+**Per-tag coverage is partial.** Roughly half of the 81 tags are named
 in that test file; the rest are covered indirectly or not at all. The
 drift lint proves a tag is *documented and emitted*, never that its
 catalogue entry reads correctly — so a reviewer verifying a
@@ -746,7 +847,7 @@ and need not be added to that reference.
 5. Add unit tests in `tests/tools/person-warnings.test.ts`.
 6. Add the tag's row to § Tag Catalogue in this spec.
 7. Bump the three hardcoded tag-count assertions in
-   `tests/packaging/person-warnings-spec-drift.test.ts` (the `toBe(77)` guards)
+   `tests/packaging/person-warnings-spec-drift.test.ts` (the `toBe(81)` guards)
    to the new total.
 8. **Run the drift lint** (`make engine-test`, or the
    `tests/packaging/person-warnings-spec-drift.test.ts` suite directly).
