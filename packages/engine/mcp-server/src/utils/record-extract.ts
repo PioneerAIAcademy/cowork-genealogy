@@ -872,9 +872,22 @@ function newspaperRoles(ps: Party[], gx: SimplifiedGedcomX, eventType: string | 
     eventType === "birth" ? "child" : eventType === "marriage" || eventType === "engagement" || eventType === "anniversary" ? "__pair" : "principal";
   const roles = principalRoles(ps, gx, principalRole === "__pair" ? "principal" : principalRole);
   if (principalRole === "__pair") {
+    const sides = new Map<string, string>();
     for (const p of ps.filter((q) => q.person.principal === true)) {
       const female = genderOf(p.person) === "female";
-      roles.set(p.id, eventType === "anniversary" ? (female ? "wife" : "husband") : female ? "bride" : "groom");
+      const side = eventType === "anniversary" ? (female ? "wife" : "husband") : female ? "bride" : "groom";
+      roles.set(p.id, side);
+      sides.set(p.id, side);
+    }
+    // Each party's parents are named by side, as on an indexed marriage, so the
+    // groom's and the bride's fathers are not two unlabelled fathers.
+    const { parentOf } = edges(gx);
+    const byId = new Map(ps.map((q) => [q.id, q]));
+    for (const [child, side] of sides) {
+      for (const parent of parentOf.get(child) ?? []) {
+        const which = genderOf(byId.get(parent)?.person ?? {}) === "female" ? "mother" : "father";
+        roles.set(parent, `${which}_of_${side}`);
+      }
     }
   }
   return roles;

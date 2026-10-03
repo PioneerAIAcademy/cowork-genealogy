@@ -296,4 +296,30 @@ describe("extraction_append: documents", () => {
     expect(r.records[0].summary).toMatch(/Calendar: 18 March 1750/);
     expect((await assertionsFor("capture:baptism-albany")).find((a: any) => a.fact_type === "christening").date).toBe("18 March 1750");
   });
+
+  it("names a wedding notice's parents by side, as an indexed marriage does", async () => {
+    const wedding = {
+      recordType: "newspaper_announcement",
+      recordLabel: "wedding notice",
+      documentForm: "verbatim_transcript",
+      source: { title: "Flynn-Gallagher wedding notice, Shenandoah Herald, 1870", repository: "Shenandoah Herald" },
+      persons: [
+        { id: "p1", principal: true, gender: "male", names: [{ given: "Patrick", surname: "Flynn" }], facts: [{ type: "marriage", date: "15 October 1870" }] },
+        { id: "p2", principal: true, gender: "female", names: [{ given: "Catherine", surname: "Gallagher" }], facts: [] },
+        { id: "p3", gender: "male", statedRelation: "father", names: [{ given: "Thomas", surname: "Flynn" }], facts: [] },
+        { id: "p4", gender: "male", statedRelation: "father", names: [{ given: "James", surname: "Gallagher" }], facts: [] },
+      ],
+      relationships: [
+        { type: "couple", person1: "p1", person2: "p2" },
+        { type: "parent_child", person1: "p3", person2: "p1" },
+        { type: "parent_child", person1: "p4", person2: "p2" },
+      ],
+    };
+    const r = await run([{ recordId: "capture:wedding-1870", document: wedding }]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const roleOf = async (value: string) =>
+      (await assertionsFor("capture:wedding-1870")).find((a: any) => a.fact_type === "name" && a.value === value)?.record_role;
+    expect(await roleOf("Thomas Flynn")).toBe("father_of_groom");
+    expect(await roleOf("James Gallagher")).toBe("father_of_bride");
+  });
 });

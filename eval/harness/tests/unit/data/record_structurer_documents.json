@@ -533,5 +533,264 @@
         }
       ]
     }
+  },
+  "probate-will-and-court-acts": {
+    "recordId": "capture:flynn-will-1888",
+    "document": {
+      "recordType": "probate",
+      "recordLabel": "will and probate",
+      "documentForm": "verbatim_transcript",
+      "source": {
+        "title": "Will of Thomas Flynn, Schuylkill County Register of Wills, Will Book 14, p. 212",
+        "repository": "Schuylkill County Register of Wills",
+        "locator": "Will Book 14, p. 212"
+      },
+      "persons": [
+        {
+          "id": "p1",
+          "principal": true,
+          "gender": "male",
+          "names": [
+            {
+              "given": "Thomas",
+              "surname": "Flynn"
+            }
+          ],
+          "facts": [
+            {
+              "type": "residence",
+              "place": "Shenandoah, Schuylkill County, Pennsylvania"
+            },
+            {
+              "type": "will",
+              "date": "4 March 1885",
+              "place": "Shenandoah"
+            },
+            {
+              "type": "death",
+              "date": "11 November 1888",
+              "place": "Shenandoah"
+            },
+            {
+              "type": "probate",
+              "date": "22 November 1888",
+              "place": "Schuylkill County, Pennsylvania"
+            }
+          ]
+        },
+        {
+          "id": "p2",
+          "gender": "female",
+          "statedRelation": "wife",
+          "names": [
+            {
+              "given": "Mary",
+              "surname": "Flynn"
+            }
+          ],
+          "facts": []
+        },
+        {
+          "id": "p3",
+          "gender": "male",
+          "statedRelation": "son",
+          "names": [
+            {
+              "given": "Patrick",
+              "surname": "Flynn"
+            }
+          ],
+          "facts": []
+        },
+        {
+          "id": "p4",
+          "gender": "female",
+          "statedRelation": "daughter",
+          "names": [
+            {
+              "given": "Bridget",
+              "surname": "Doyle"
+            }
+          ],
+          "facts": []
+        },
+        {
+          "id": "p5",
+          "statedRelation": "witness",
+          "names": [
+            {
+              "given": "Owen",
+              "surname": "Brennan"
+            }
+          ],
+          "facts": []
+        },
+        {
+          "id": "p6",
+          "statedRelation": "witness",
+          "names": [
+            {
+              "given": "James",
+              "surname": "Gallagher"
+            }
+          ],
+          "facts": []
+        }
+      ],
+      "relationships": [
+        {
+          "type": "couple",
+          "person1": "p1",
+          "person2": "p2"
+        },
+        {
+          "type": "parent_child",
+          "person1": "p1",
+          "person2": "p3"
+        },
+        {
+          "type": "parent_child",
+          "person1": "p1",
+          "person2": "p4"
+        }
+      ]
+    }
+  },
+  "newspaper-wedding-notice": {
+    "recordId": "capture:flynn-gallagher-wedding-1870",
+    "document": {
+      "recordType": "newspaper_announcement",
+      "recordLabel": "wedding notice",
+      "documentForm": "verbatim_transcript",
+      "source": {
+        "title": "Flynn–Gallagher wedding notice, Shenandoah Herald, 20 October 1870",
+        "repository": "Shenandoah Herald"
+      },
+      "persons": [
+        {
+          "id": "p1",
+          "principal": true,
+          "gender": "male",
+          "names": [
+            {
+              "given": "Patrick",
+              "surname": "Flynn"
+            }
+          ],
+          "facts": [
+            {
+              "type": "marriage",
+              "date": "15 October 1870",
+              "place": "Church of the Annunciation, Shenandoah"
+            },
+            {
+              "type": "birth",
+              "place": "County Mayo, Ireland"
+            },
+            {
+              "type": "immigration",
+              "date": "1862"
+            },
+            {
+              "type": "occupation",
+              "value": "employed at the Kohinoor colliery"
+            }
+          ]
+        },
+        {
+          "id": "p2",
+          "principal": true,
+          "gender": "female",
+          "names": [
+            {
+              "given": "Catherine",
+              "surname": "Gallagher"
+            }
+          ],
+          "facts": []
+        },
+        {
+          "id": "p3",
+          "gender": "male",
+          "statedRelation": "father",
+          "names": [
+            {
+              "given": "Thomas",
+              "surname": "Flynn"
+            }
+          ],
+          "facts": [
+            {
+              "type": "residence",
+              "place": "Shenandoah"
+            }
+          ]
+        },
+        {
+          "id": "p4",
+          "gender": "male",
+          "statedRelation": "father",
+          "names": [
+            {
+              "given": "James",
+              "surname": "Gallagher"
+            }
+          ],
+          "facts": [
+            {
+              "type": "residence",
+              "place": "Mahanoy City"
+            }
+          ]
+        },
+        {
+          "id": "p5",
+          "gender": "female",
+          "statedRelation": "sister",
+          "names": [
+            {
+              "given": "Ellen",
+              "surname": "Gallagher"
+            }
+          ],
+          "facts": []
+        },
+        {
+          "id": "p6",
+          "gender": "male",
+          "statedRelation": "officiant",
+          "names": [
+            {
+              "given": "Daniel",
+              "surname": "O'Connor",
+              "note": "styled Rev."
+            }
+          ],
+          "facts": []
+        }
+      ],
+      "relationships": [
+        {
+          "type": "couple",
+          "person1": "p1",
+          "person2": "p2"
+        },
+        {
+          "type": "parent_child",
+          "person1": "p3",
+          "person2": "p1"
+        },
+        {
+          "type": "parent_child",
+          "person1": "p4",
+          "person2": "p2"
+        },
+        {
+          "type": "sibling",
+          "person1": "p2",
+          "person2": "p5"
+        }
+      ]
+    }
   }
 }

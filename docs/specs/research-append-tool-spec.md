@@ -2019,6 +2019,10 @@ submitting family knows them firsthand, as with a surviving spouse's name.
   `roleFromRelationship` (son → `child_N`, daughter-in-law →
   `daughter_in_law_N`, executor, `heir_N`, `witness_N`). A party the text
   gives no relation for is `other_N`.
+- **A couple's parents** on a wedding, engagement or anniversary notice are
+  named by side, as on an indexed marriage: `father_of_groom`,
+  `mother_of_bride`, `father_of_husband`. Without it, two stated fathers were
+  `father` and `father_1`, with nothing saying whose each was.
 - **Obituary corners:** the decedent's residence at death is recent family
   knowledge, and **earlier** residences are life history (a residence dated
   before the death year). A **predeceased** spouse's or child's name is life

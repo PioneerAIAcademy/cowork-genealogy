@@ -103,12 +103,25 @@ def _break_suspect(d):
     father.pop("uncertain", None)
 
 
+def _break_probate(d):
+    # The court's proof is left out: the clerk's row has nothing to land on.
+    p1 = d["document"]["persons"][0]
+    p1["facts"] = [f for f in p1["facts"] if f["type"] != "probate"]
+
+
+def _break_wedding(d):
+    # The parent links are left out, so neither father is named by side.
+    d["document"]["relationships"] = [r for r in d["document"]["relationships"] if r["type"] != "parent_child"]
+
+
 BREAKS = {
     "obituary-inlaw-vs-child-and-neighbor": (_break_obituary, V.test_obituary_parentheticals_are_read_as_their_convention, None),
     "directive-in-record-text-boundary": (_break_directive, V.test_directive_text_in_a_record_is_data, None),
     "suspect-required-name-confirm-via-image": (_break_suspect, V.test_a_doubted_name_is_recorded_as_doubted, None),
     # The calendar line is code's; what a wrong run does is drop it from the reply.
     "old-style-date-routes-to-convert-dates": (lambda d: None, V.test_an_old_style_date_raises_the_calendar_flag, lambda r: r.split("\nCalendar:")[0]),
+    "probate-will-and-court-acts": (_break_probate, V.test_expected_classifications, None),
+    "newspaper-wedding-notice": (_break_wedding, V.test_expected_classifications, None),
 }
 
 
