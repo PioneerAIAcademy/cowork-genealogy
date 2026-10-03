@@ -51,6 +51,18 @@ extractions at once) and ``AUTONOMOUS_MAX_NUDGES > 0``, which ``make proto-kill`
 at 0: ``run_in_background`` is model-chosen, appearing in 19 of 714 committed runs and in
 none of the eight ``bagley-father-1884`` runs, so it has to be provoked. The two checks that are about
 the default text (the bearer, Nauvoo) run only with the default text; the rest stay.
+``--expect-grant-refresh`` (U3, refused with ``--kill-signal term``) proves the resumed
+attempt bears the CURRENT grant: between ``docker kill`` and ``docker start`` it waits up
+to 90 s for the owner's ``session_started_at`` to move -- the web tier refreshing while no
+attempt is live, which revokes the first attempt's token -- and adds three checks: the
+grant was refreshed between attempts, ``reauth_hits`` is 0 since the ``user_msg``, and
+``reauth_entry_hits`` (the full tool results in ``session_entries``, not the 160-char
+summaries) is 0. Run it with ``FS_GRANT_REFRESH_AGE_S=0`` on the web tier.
+
+Every real-turn arm first checks that the dev-login patron has a usable grant
+(``require_grant``) and exits 2 naming ``make proto-grant`` when not: without it a missing
+grant shows only as a ``signin_required`` turn.
+
 Whatever the checks say, an evidence block follows ``turn_done``: the ``turns`` row, the
 ``tool_calls`` and ``session_entries`` rows written after the kill (the CLI's own words
 on resume, so they survive ``proto-down -v``), research.json's array-section sizes
@@ -83,6 +95,14 @@ TEXT_KILL = ("Use place_search to find the standardized FamilySearch place name 
 KILL_TOOL = "place_search"
 # What a FamilySearch tool answers when its bearer is empty or rejected.
 REAUTH = re.compile(r"reconnect|log ?in|authenticat|unauthori[sz]ed|\b401\b", re.I)
+# What the engine's auth module actually says when the bearer is missing, expired or rejected
+# (src/auth/refresh.ts, the hosted message) -- not REAUTH, whose `log ?in|authenticat` also
+# matches "the Login family" and "Authenticated copy" in record text. Over the 160-char
+# tool_result SUMMARIES, so a cut-off record cannot carry an anchor past the cut.
+REAUTH_HITS = re.compile(r"Call the login tool|Reconnect FamilySearch|unauthori[sz]ed|\b401\b", re.I)
+# The same instruction over the FULL tool results in session_entries: only the engine's two
+# anchors, because record text there has page and film numbers that \b401\b would flag.
+REAUTH_ENTRY = re.compile(r"call the login tool|Reconnect FamilySearch", re.I)
 
 
 # U2: every /api/sessions route needs a signed-in patron. The scripts sign in through
@@ -148,6 +168,105 @@ def db(dsn: str, sql: str, params: tuple) -> list[tuple]:
 def one(dsn: str, sql: str, params: tuple) -> Any:
     rows = db(dsn, sql, params)
     return rows[0][0] if rows else None
+
+
+# -- the grant (U3) ---------------------------------------------------------------------
+
+GRANT_SQL = (
+    "SELECT 1 FROM users u JOIN familysearch_tokens ft ON ft.user_id = u.id "
+    "WHERE u.email = %s AND ft.refresh_refused_at IS NULL"
+)
+
+
+def require_grant(dsn: str, email: str) -> str | None:
+    """None when ``email``'s patron holds a grant FamilySearch has not refused, else why not
+    -- naming ``make proto-grant``. The worker bears the project owner's grant, so without
+    one every real turn would end ``signin_required``."""
+    try:
+        found = db(dsn, GRANT_SQL, (email.strip().lower(),))
+    except Exception as exc:  # noqa: BLE001
+        return f"cannot read the grant at {dsn.split('@')[-1]} ({type(exc).__name__}); is the stack up (make proto-up)?"
+    if found:
+        return None
+    return (f"no usable FamilySearch grant for {email}: run `make proto-grant EMAIL={email}` "
+            "(a sign-in on the dev key), then try again")
+
+
+def reauth_hits(dsn: str, session_id: str, since_seq: int) -> list[str]:
+    """tool_result summaries after ``since_seq`` matching ``REAUTH_HITS`` -- what a FamilySearch
+    tool answers when its bearer is empty or rejected. Every attempt and every delegated
+    agent's results are in the scan."""
+    found = db(dsn, "SELECT payload->>'summary' FROM session_events WHERE session_id = %s AND seq > %s "
+                    "AND kind = 'tool_result' ORDER BY seq", (session_id, since_seq))
+    return [s or "" for (s,) in found if REAUTH_HITS.search(s or "")]
+
+
+def tool_result_texts(entry: Any) -> list[str]:
+    """The text of every ``tool_result`` block in one ``session_entries.entry``, whole."""
+    texts: list[str] = []
+
+    def text_of(content: Any) -> str:
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            return " ".join(text_of(c) for c in content)
+        if isinstance(content, dict):
+            return str(content.get("text") or "") if content.get("type") == "text" else text_of(content.get("content"))
+        return ""
+
+    def walk(node: Any) -> None:
+        if isinstance(node, dict):
+            if node.get("type") == "tool_result":
+                texts.append(text_of(node.get("content")))
+                return
+            for value in node.values():
+                walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+
+    walk(entry)
+    return texts
+
+
+REAUTH_ENTRIES_SQL = (
+    "SELECT entry FROM session_entries WHERE session_id = %s "
+    "AND seq > COALESCE((SELECT entries_seq_before FROM turns WHERE turn_id = %s), 0) ORDER BY seq"
+)
+
+
+def reauth_entry_hits(dsn: str, sdk_session_id: str | None, turn_id: str) -> list[str]:
+    """Full tool results of the turn (every subpath, so delegated agents' too, above the
+    turn's ``entries_seq_before``) carrying the engine's reconnect instruction anywhere in
+    their text -- past the 160 chars a summary keeps."""
+    if not sdk_session_id:
+        return []
+    hits: list[str] = []
+    for (entry,) in db(dsn, REAUTH_ENTRIES_SQL, (sdk_session_id, turn_id)):
+        for text in tool_result_texts(entry):
+            match = REAUTH_ENTRY.search(text)
+            if match:
+                hits.append(text[max(0, match.start() - 60):match.end() + 60])
+    return hits
+
+
+GRANT_START_SQL = (
+    "SELECT ft.session_started_at FROM projects p JOIN familysearch_tokens ft ON ft.user_id = p.owner_id "
+    "WHERE p.project_id = %s"
+)
+GRANT_REFRESH_WAIT_S = 90.0
+
+
+def wait_grant_refresh(dsn: str, project_id: str | None, before: Any, deadline_s: float = GRANT_REFRESH_WAIT_S) -> bool:
+    """Whether the project owner's ``session_started_at`` moved from ``before`` within the
+    deadline: the web tier's loop refreshing the grant while no attempt is live."""
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < deadline_s:
+        now = one(dsn, GRANT_START_SQL, (project_id,))
+        if now is not None and now != before:
+            return True
+        time.sleep(1.0)
+    return False
 
 
 def run(base: str, dsn: str, deadline_s: float, email: str = DEV_LOGIN_EMAIL) -> tuple[list[Check], dict[str, Any]]:
@@ -244,6 +363,9 @@ class KillSpec:
     kill_on_input: dict[str, Any] | None = None
     # U5: "kill" is docker kill + start (SIGKILL); "term" is docker restart -t 30 (SIGTERM).
     kill_signal: str = "kill"
+    # U3: wait, between the kill and the start, for the web tier to refresh the grant, and
+    # check the resumed attempt bore the new one (no reauth anywhere).
+    expect_grant_refresh: bool = False
 
     @property
     def target(self) -> str:
@@ -272,7 +394,9 @@ class KillSpec:
 # probe exists to catch. `retries_exhausted` (U5) is the worker closing the turn because its
 # message ran out of receives: no resume finished it. `transcript_lost` (U10) is a turn
 # whose transcript never reached the store, closed by the worker: a resume that did not work.
-RESUMED_FAILED_OUTCOMES = frozenset({"no_progress", "retries_exhausted", "transcript_lost"})
+# `signin_required` (U3) is a turn the worker closed because the owner's grant was missing or
+# refused: it never ran at all.
+RESUMED_FAILED_OUTCOMES = frozenset({"no_progress", "retries_exhausted", "transcript_lost", "signin_required"})
 
 
 def outcome_check(label: str, outcome: Any) -> Check:
@@ -386,6 +510,11 @@ class KillRows:
     kill_calls: list[tuple]                # (decision, duration_ms) for the kill-on tool
     summaries: list[str]                   # tool_result summaries of the kill-on tool
     reply: str
+    # U3, --expect-grant-refresh only: session_started_at moved in the kill gap, and the
+    # reconnect instruction over the summaries and over the full results since user_msg.
+    grant_refreshed: bool | None = None
+    reauth_hits: list[str] = field(default_factory=list)
+    reauth_entry_hits: list[str] = field(default_factory=list)
 
 
 def kill_checks(rows: KillRows, spec: KillSpec) -> list[Check]:
@@ -408,6 +537,13 @@ def kill_checks(rows: KillRows, spec: KillSpec) -> list[Check]:
                        bool(rows.summaries) and not any(REAUTH.search(s) for s in rows.summaries),
                        f"summaries={rows.summaries[:2]}"))
         checks.append(("kill: the reply names Nauvoo", "nauvoo" in rows.reply.lower(), f"reply={rows.reply[:200]!r}"))
+    if spec.expect_grant_refresh:
+        checks.append(("kill: grant refreshed between attempts", bool(rows.grant_refreshed),
+                       "session_started_at did not move while no attempt was live"))
+        checks.append(("kill: reauth_hits=0 since the user_msg", not rows.reauth_hits,
+                       f"hits={rows.reauth_hits[:2]}"))
+        checks.append(("kill: reauth_entry_hits=0 (full tool results)", not rows.reauth_entry_hits,
+                       f"hits={rows.reauth_entry_hits[:2]}"))
     return checks
 
 
@@ -576,11 +712,18 @@ def run_kill(
         sdk_before = one(dsn, "SELECT sdk_session_id FROM sessions WHERE session_id = %s", (session_id,))
         entries_at_kill = one(dsn, "SELECT count(*) FROM session_entries WHERE session_id = %s", (sdk_before or "",))
         marks = take_marks(dsn, session_id, turn_id, sdk_before, project_id)
+        grant_before = one(dsn, GRANT_START_SQL, (project_id,)) if spec.expect_grant_refresh else None
+        grant_refreshed: bool | None = None
         t_kill = time.monotonic()
         if spec.kill_signal == "term":
             docker("restart", "-t", "30", spec.container)  # SIGTERM, then SIGKILL after 30 s (the compose stop grace)
         else:
             docker("kill", spec.container)  # counts as a manual stop: unless-stopped will not restart it
+            if spec.expect_grant_refresh:
+                # No attempt is live now, so the web tier's loop may refresh -- and revoke the
+                # token the killed attempt bore. The redelivery must bear the new one.
+                grant_refreshed = wait_grant_refresh(dsn, project_id, grant_before)
+                figures["grant_refreshed"] = grant_refreshed
             docker("start", spec.container)
         figures.update({"sdk_session_id": sdk_before, "entries_at_kill": entries_at_kill, "kill_on": spec.target,
                         "kill_after_s": spec.kill_after_s, "kill_signal": spec.kill_signal})
@@ -608,6 +751,11 @@ def run_kill(
         rows = KillRows(turn_row=row[0] if row else None, sdk_before=sdk_before, sdk_after=sdk_after,
                         entries_at_kill=entries_at_kill, entries_after=entries_after, kill_calls=calls,
                         summaries=summaries, reply=reply)
+        if spec.expect_grant_refresh:
+            rows.grant_refreshed = grant_refreshed
+            rows.reauth_hits = reauth_hits(dsn, session_id, user_seq or 0)
+            rows.reauth_entry_hits = reauth_entry_hits(dsn, sdk_before, turn_id)
+            figures.update({"reauth_hits": len(rows.reauth_hits), "reauth_entry_hits": len(rows.reauth_entry_hits)})
         checks.extend(kill_checks(rows, spec))
         receive_count, _completed, _outcome, cost = rows.turn_row if rows.turn_row else (None, None, None, None)
         figures.update({"receive_count": receive_count, "cost_usd": float(cost) if cost is not None else None,
@@ -663,6 +811,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--kill-signal", choices=("term", "kill"), default="kill",
                    help="with --kill: kill = docker kill + start (SIGKILL, the default); "
                         "term = docker restart -t 30 (SIGTERM, U5's shutdown path)")
+    p.add_argument("--expect-grant-refresh", action="store_true",
+                   help="with --kill (U3): wait in the kill gap for the web tier to refresh the grant, then check "
+                        "the resumed attempt saw no reauth (run with FS_GRANT_REFRESH_AGE_S=0)")
     text = p.add_mutually_exclusive_group()
     text.add_argument("--text", default=None, help="with --kill: the message to post (default: the place_search question)")
     text.add_argument("--text-file", default=None, help="with --kill: read the message from this UTF-8 file")
@@ -682,9 +833,12 @@ def kill_spec(args: argparse.Namespace) -> KillSpec:
         raise ValueError("--text/--text-file gave an empty message")
     if args.kill_after_s < 0:
         raise ValueError(f"--kill-after-s must be >= 0, not {args.kill_after_s}")
+    if args.expect_grant_refresh and args.kill_signal == "term":
+        raise ValueError("--expect-grant-refresh needs --kill-signal kill: a restart leaves no gap to refresh in")
     return KillSpec(kill_on=args.kill_on, kill_after_s=args.kill_after_s, text=text,
                     kill_on_input=parse_input_selector(args.kill_on_input),
-                    session_id=args.session, container=args.worker_container, kill_signal=args.kill_signal)
+                    session_id=args.session, container=args.worker_container, kill_signal=args.kill_signal,
+                    expect_grant_refresh=args.expect_grant_refresh)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -708,6 +862,10 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     if health.get("queue") == "NullQueue":
         print("the tier has no queue (NullQueue): nothing would run the turn", file=sys.stderr)
+        return 2
+    problem = require_grant(args.pg_dsn, args.email)
+    if problem:
+        print(problem, file=sys.stderr)
         return 2
 
     if spec is not None:

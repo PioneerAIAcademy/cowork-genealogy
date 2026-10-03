@@ -13,7 +13,12 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
   main thread; ``Write``/``Edit`` stay granted (denying them is whole-tool).
 - the tool server is the shared Streamable HTTP ``tools`` service at ``TOOL_SERVER_URL``;
   the entry carries the patron's bearer as ``Authorization`` and the turn's project id as
-  ``X-Genealogy-Project-Id`` -- per request, never process state. The entry is written
+  ``X-Genealogy-Project-Id`` -- per request, never process state. The bearer is the turn's
+  project owner's grant, which the worker reads (and locks) at the start of every attempt
+  (U3, ``worker.acquire_grant``); there is no other source, and an empty one is refused
+  rather than shipped. The CLI never inherits ``FS_TOKEN_ENC_KEY``, and the hook denies
+  it ``/proc`` (where the worker's own environment still carries it) and every other
+  turn's config dir (where another patron's bearer sits). The entry is written
   to a 0600 ``mcp.json`` under the per-turn config dir and passed as a PATH
   (``--mcp-config <path>``): a dict is serialised onto the CLI's argv, where the bearer
   is ``ps``-visible to every process in the container.
@@ -30,7 +35,8 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
 
 The hook (``make_pretool_hook``) is the plan's deny-and-log: it denies a raw
 ``Write``/``Edit`` on the project files (the hosted ``direct_project_file_write``),
-denies a ``Read``/``Grep``/``Glob`` under the anchor (``deny.py``), and records EVERY
+denies a ``Read``/``Grep``/``Glob`` under the anchor and any read or write of another
+turn's temp files or of ``/proc`` (``deny.py``), and records EVERY
 call as a ``tool_calls`` row with its decision -- so criterion 3 is a query, not a claim.
 It never raises: any exception allows the call. The turn's identifiers reach it through
 a closure, never a global.
@@ -63,7 +69,7 @@ from app.agent.spend import PRICE_PER_MTOK, SPEND_CAP_USD
 from app.agent.spend import price_usd as shared_price_usd
 from app.agent.real_agent import direct_project_file_write
 
-from proto.worker.deny import project_read_denied
+from proto.worker.deny import host_path_denied, project_read_denied
 
 # DesignSync/Monitor/PushNotification: the CLI adds them only for a non-Bedrock base URL
 # (plan P3g), ~5k tokens per call with tool search off, and none is reachable here.
@@ -139,6 +145,8 @@ WRITE_DENY_REASON = (
 
 # U7 (proto/enqueue.py): the worker signs its held-message release with these when set.
 SQS_STATIC_KEY_VARS = ("GENEALOGY_SQS_ACCESS_KEY", "GENEALOGY_SQS_SECRET_KEY")
+# U3: the key the worker decrypts the patron's grant with (proto/grants.py).
+GRANT_KEY_VAR = "FS_TOKEN_ENC_KEY"
 
 
 def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, str]]:
@@ -179,24 +187,6 @@ def gateway_agent_models(agents: Mapping[str, Any]) -> dict[str, Any]:
     return out
 
 
-def bearer_token(worker_env: Mapping[str, str], fs_access_token: str | None) -> str:
-    """The patron's FamilySearch token for this turn: the message's; else the file
-    ``FS_ACCESS_TOKEN_FILE`` names, read now -- per attempt -- so the operator can refresh
-    it between turns (proto/env.sh writes it; never refresh while a turn is in flight,
-    since a FamilySearch refresh revokes the previous access token); else the worker
-    env's ``FS_ACCESS_TOKEN``; else empty."""
-    if fs_access_token is not None:
-        return fs_access_token or ""
-    path = worker_env.get("FS_ACCESS_TOKEN_FILE")
-    if path:
-        try:
-            with open(path, encoding="utf-8") as f:
-                return f.read().strip()
-        except OSError:
-            pass
-    return worker_env.get("FS_ACCESS_TOKEN", "") or ""
-
-
 # D16 (PR #2659): the shared Streamable HTTP tool server, the compose `tools` service. Its
 # contract is the two headers the entrypoint reads, both per request and never process
 # state: `Authorization: Bearer <patron token>` becomes the request's principal, and
@@ -214,24 +204,21 @@ PROJECT_ID_HEADER = "X-Genealogy-Project-Id"
 MCP_HTTP_TIMEOUT_MS = 1_800_000
 
 
-def tool_server_headers(
-    worker_env: Mapping[str, str], *, fs_access_token: str | None, project_id: str
-) -> dict[str, str]:
-    """``X-Genealogy-Project-Id`` always; ``Authorization: Bearer <token>`` only when there
-    is a token (the server reads a missing header as an empty bearer, and a bare
-    ``Bearer `` would be malformed)."""
-    headers = {PROJECT_ID_HEADER: project_id}
-    token = bearer_token(worker_env, fs_access_token)
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
-    return headers
+def tool_server_headers(*, project_id: str, bearer: str) -> dict[str, str]:
+    """``Authorization: Bearer <grant token>`` and ``X-Genealogy-Project-Id``. An empty
+    bearer raises ValueError: the server reads it as an empty principal and answers every
+    FamilySearch call with the reconnect instruction, a sign-in problem the patron cannot
+    fix by signing in."""
+    if not bearer:
+        raise ValueError("refusing to build the tool server entry with an empty bearer")
+    return {"Authorization": f"Bearer {bearer}", PROJECT_ID_HEADER: project_id}
 
 
 def tool_server_entry(
     worker_env: Mapping[str, str],
     *,
     project_id: str,
-    fs_access_token: str | None,
+    bearer: str,
 ) -> dict[str, Any]:
     """The ``genealogy`` MCP server entry: the shared Streamable HTTP tool server, one
     process for every turn, at ``TOOL_SERVER_URL`` with the bearer as ``Authorization``
@@ -240,7 +227,7 @@ def tool_server_entry(
     return {
         "type": "http",
         "url": worker_env.get("TOOL_SERVER_URL") or TOOL_SERVER_DEFAULT_URL,
-        "headers": tool_server_headers(worker_env, fs_access_token=fs_access_token, project_id=project_id),
+        "headers": tool_server_headers(project_id=project_id, bearer=bearer),
         "timeout": MCP_HTTP_TIMEOUT_MS,
     }
 
@@ -335,6 +322,7 @@ def make_pretool_hook(
     log: Callable[..., None] | None = None,
     blocked: frozenset[str] = frozenset(),
     halt: Callable[[], str | None] | None = None,
+    temp_root: str | None = None,
 ):
     """The worker's ``PreToolUse`` callback. ``config_root`` may be a callable because
     the directory the CLI actually runs in is known only after ``connect()`` on a
@@ -347,7 +335,10 @@ def make_pretool_hook(
     button wired to the Stop hook would take 53 minutes to answer.
 
     A halted call is recorded as a ``tool_calls`` row like any other, with decision
-    ``halt``, so the audit trail shows where the turn was cut."""
+    ``halt``, so the audit trail shows where the turn was cut.
+
+    ``temp_root`` is ``deny.host_path_denied``'s (default ``tempfile.gettempdir()``, where
+    every turn's config dir is made); tests pass one."""
 
     async def _pretool(input_data: Any, tool_use_id: str | None, _context: Any) -> dict[str, Any]:
         decision, reason = "allow", None
@@ -388,6 +379,8 @@ def make_pretool_hook(
                 root = config_root() if callable(config_root) else config_root
                 reason = project_read_denied(
                     tool_name, tool_input, cwd=cwd, project_root=cwd, config_root=root
+                ) or host_path_denied(
+                    tool_name, tool_input, cwd=cwd, project_root=cwd, config_root=root, temp_root=temp_root
                 )
                 if reason is not None:
                     decision = "deny"
@@ -587,7 +580,7 @@ def build_worker_options(
     posttool_hook: Callable[..., Any],
     resume: str | None = None,
     session_id: str | None = None,
-    fs_access_token: str | None = None,
+    bearer: str,
     worker_env: Mapping[str, str] | None = None,
     stderr: Callable[[str], None] | None = None,
     stop_hook: Callable[..., Any] | None = None,
@@ -626,6 +619,11 @@ def build_worker_options(
     for name in SQS_STATIC_KEY_VARS:
         if env_in.get(name):
             env[name] = ""
+    # U3: the grant key is the worker's, for the same reason: with it and PG_DSN the CLI
+    # could decrypt every patron's grant; without it PG_DSN yields only ciphertext. The
+    # worker's own /proc/<pid>/environ still holds it, which deny.host_path_denied closes.
+    if env_in.get(GRANT_KEY_VAR):
+        env[GRANT_KEY_VAR] = ""
     hooks: dict[str, Any] = {
         "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook], timeout=PRETOOL_TIMEOUT_S)],
         # Both outcomes stamp the duration: a tool that errored still ran for that long.
@@ -644,9 +642,7 @@ def build_worker_options(
         mcp_servers=write_mcp_config(
             config_dir,
             {
-                "genealogy": tool_server_entry(
-                    env_in, project_id=project_id, fs_access_token=fs_access_token
-                )
+                "genealogy": tool_server_entry(env_in, project_id=project_id, bearer=bearer)
             },
         ),
         disallowed_tools=list(DISALLOWED_TOOLS),

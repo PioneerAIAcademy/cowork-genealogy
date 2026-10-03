@@ -38,20 +38,25 @@ U2 in `docs/plan/familysearch-handoff.md`.
   publishes the tier on `127.0.0.1:1837`, the dev key's only registered redirect, and
   turns dev-login off. Put your FamilySearch email in `ALLOWED_EMAILS` first. Open the
   SPA at `http://127.0.0.1:5173` rather than `localhost`, because cookies are per host.
-  `make e2e-login` needs the same port, so mint the operator token before bringing the
-  override up.
+  `make e2e-login` and `make proto-grant` need the same port, so stop the override while
+  either runs.
 - **Environment**: `PUBLIC_URL`, `WEB_ORIGIN`, `SESSION_SECRET`, `FS_TOKEN_ENC_KEY`,
   `ALLOWED_EMAILS`, `FAMILYSEARCH_WEB_ENABLED`, `FAMILYSEARCH_CONFIG` (see the
   `web/auth.py` docstring). On an https `PUBLIC_URL` the tier refuses to start with a
   default or empty secret.
 
-**Interim constraint, until U3 merges.** The grant stored at sign-in is written and never
-read. Every turn's FamilySearch calls still run on the operator's token
-(`worker/options.py`). Project data is scoped to its owner, but FamilySearch identity is
-not. The engine only reads from FamilySearch, but those reads run as the operator, so
-allowlist only staff entitled to the operator's FamilySearch access. There is no code
-guard for this, by decision (2026-09-29). Signing in with the operator's own FamilySearch account does not revoke the
-operator token (measured 2026-09-29), so sign-in is safe while a turn runs.
+**Grants (U3).** Every turn's FamilySearch calls run on its project owner's grant, which
+the worker reads from `familysearch_tokens` at the start of each attempt while it holds that
+patron's attempt lock (`proto/grants.py`). This tier is the grant's only refresher:
+`grant_refresh_loop` runs every `FS_GRANT_REFRESH_INTERVAL_S` (30) and refreshes the grant of
+each patron with an open turn once its session is `FS_GRANT_REFRESH_AGE_S` (3600) old, only
+when it can take the patron's attempt lock exclusively, so never under a live attempt (a
+refresh revokes the previous access token at once). The worker's start gate holds an
+attempt off a session older than `FS_GRANT_MAX_START_AGE_S` (26400) until that refresh
+lands. A refusal from FamilySearch ends the patron's next turn `signin_required`, and a new
+sign-in clears it. Sign-in is safe while a turn runs: the callback takes only the grant's
+write lock, and a second sign-in does not revoke the first token (measured 2026-09-29). On
+compose, `make proto-grant` stores the dev-login patron's grant once per stack.
 
 ## The row → wire contract (what the worker writes, what the SPA reads)
 
@@ -159,4 +164,8 @@ frames without ids, `turn_active` after the catch-up rows and false at the end.
 `tests/test_proto_web.py` (`make proto-test`, and `make server-test` runs it): pure
 helpers, the routes over `httpx.ASGITransport` with a fake store and queue, the stream
 generator pulled directly (httpx runs an ASGI app to completion, so an endless stream
-cannot be tested through the route), and the compose/schema shape.
+cannot be tested through the route), and the compose/schema shape. The grant custody
+(U3): `tests/test_proto_grants.py` (the pure decisions and the numbers the locks rest on,
+offline) and `tests/test_proto_grants_pg.py` (the lock interleavings against real Postgres;
+it skips in `make proto-test` without `PROTO_TEST_PG_DSN`, and `make proto-grants-test` and CI
+run it for real).
