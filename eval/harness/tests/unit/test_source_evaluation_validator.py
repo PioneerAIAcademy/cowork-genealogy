@@ -406,3 +406,320 @@ def test_both_guards_pass_on_every_committed_positive_run():
                 _no_detach(reply, test)
                 checked += 1
     assert checked, "replayed no positive runs — the corpus reader is broken"
+
+
+# --- the direct arm: the agent's return is the reply (issue #2796) --------
+#
+# On a direct test the main thread only relays the agent's return, so the two
+# reply guards grade `subject_reply_text`, never the relay.
+
+_DIRECT = dict(_TEST, delegation="Evaluate the sources on KD96-TV2.")
+_DETACH_PROTECTED = (
+    "Minnesota Death Index, 1908-2002 - wrong person. "
+    "Next: detach the Minnesota Death Index from this profile."
+)
+
+
+def _returns(text: str) -> list[dict]:
+    return [{"subagent_type": "source-evaluation", "text": text}]
+
+
+def test_direct_arm_grades_the_agents_return_not_the_relay():
+    # A clean relay over a detaching agent return must fail ...
+    try:
+        _no_detach(_M8Q_REMEDY, _DIRECT, agent_returns=_returns(_DETACH_PROTECTED))
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError("the detach guard read the relay instead of the agent's return")
+    # ... and a clean agent return under a relay that says nothing passes.
+    _recommends_reread("Done.", _DIRECT, agent_returns=_returns(_M8Q_REMEDY))
+    _no_detach("Done.", _DIRECT, agent_returns=_returns(_M8Q_REMEDY))
+
+
+def test_direct_arm_silent_agent_fails_even_when_the_relay_is_right():
+    try:
+        _recommends_reread(_M8Q_REMEDY, _DIRECT, agent_returns=[])
+    except AssertionError:
+        return
+    raise AssertionError("a silent agent passed on the relay's words")
+
+
+def test_another_agents_return_is_not_the_subjects():
+    try:
+        _recommends_reread(
+            "Done.", _DIRECT,
+            agent_returns=[{"subagent_type": "check-warnings", "text": _M8Q_REMEDY}],
+        )
+    except AssertionError:
+        return
+    raise AssertionError("an unrelated agent's return was graded as the audit")
+
+
+# --- the front-door hand-back (ut_source_evaluation_b6h) ------------------
+#
+# b6h is `grade_on_invariant`, so this validator is that test's whole verdict.
+
+_handback = _VALIDATOR.test_scope_handback_calls_no_tool
+_HB_TEST = {
+    "tags": ["scope-handback", "handback-to-conflict-resolution", "direct-arm"],
+    "delegation": "which one should I believe?",
+}
+_HB_REPLY = "Hand-back: conflict-resolution — which of two disagreeing sources to believe."
+
+
+def test_handback_passes_a_clean_handback():
+    _handback([], "", _HB_TEST, agent_returns=_returns(_HB_REPLY))
+
+
+def test_handback_passes_a_backticked_name_beside_a_builtin_read():
+    calls = [{"tool": "Read", "args": {"file_path": "research.json"}}]
+    _handback(calls, "", _HB_TEST,
+              agent_returns=_returns("Hand-back: `conflict-resolution` — a source conflict."))
+
+
+def test_handback_fails_on_any_mcp_call():
+    calls = [{"tool": "mcp__genealogy__person_read", "args": {"personId": "KD96-TV2"}}]
+    try:
+        _handback(calls, "", _HB_TEST, agent_returns=_returns(_HB_REPLY))
+    except AssertionError as exc:
+        assert "person_read" in str(exc)
+        return
+    raise AssertionError("an audit started before the hand-back passed")
+
+
+def test_handback_fails_on_the_wrong_destination_or_none():
+    for reply in ("Hand-back: check-warnings — impossible dates.",
+                  "Please take this to the conflict workflow.", ""):
+        try:
+            _handback([], "", _HB_TEST, agent_returns=_returns(reply))
+        except AssertionError as exc:
+            assert "Hand-back: conflict-resolution" in str(exc)
+            continue
+        raise AssertionError(f"passed on {reply!r}")
+
+
+def test_handback_fails_when_only_the_relay_names_the_destination():
+    try:
+        _handback([], _HB_REPLY, _HB_TEST, agent_returns=_returns("I compared the two censuses."))
+    except AssertionError:
+        return
+    raise AssertionError("graded the relay, not the agent")
+
+
+def test_handback_needs_exactly_one_destination_tag():
+    try:
+        _handback([], "", {"tags": ["scope-handback"], "delegation": "x"}, agent_returns=_returns(_HB_REPLY))
+    except AssertionError as exc:
+        assert "handback-to-" in str(exc)
+        return
+    raise AssertionError("an untargeted hand-back test passed")
+
+
+def test_handback_skips_an_untagged_test():
+    import pytest
+
+    with pytest.raises(pytest.skip.Exception):
+        _handback([], "", {"tags": ["direct-arm"]})
+
+
+# --- a per-source verdict LIST (x6b, v1_2026-10-01_18-58-11) --------------
+
+_X6B_LIST = (
+    "- **1900 United States Census** — keep; the household, place, and dates all fit.\n"
+    "- **Minnesota Death Index, 1908-2002** — keep, but the indexed death year (1954) needs correction to 1945.\n"
+    "- **Funeral card and photograph (uploaded memory)** — cannot be verified from an index read.\n"
+    "- **Minnesota State Census, 1885** — detach; it records a different Christian Hole, born 1852, in a "
+    "different county with a different family. That man is already on the tree as KD96-WX7."
+)
+
+
+def test_a_per_source_verdict_list_passes():
+    _no_detach(_X6B_LIST, _TEST)
+
+
+def test_a_detach_on_the_protected_sources_own_bullet_still_fails():
+    for reply in (
+        _X6B_LIST.replace("— keep, but the indexed death year (1954) needs correction to 1945.",
+                          "— detach it; the year is wrong."),
+        "1. Minnesota Death Index, 1908-2002 — wrong year.\n2. 1900 census — keep.",
+    ):
+        if "wrong year" in reply:
+            reply = reply.replace("wrong year.", "wrong year, so detach it.")
+        try:
+            _no_detach(reply, _TEST)
+        except AssertionError:
+            continue
+        raise AssertionError(f"a detach on the protected source's bullet passed: {reply!r}")
+
+
+def test_a_detach_on_a_continuation_line_stays_with_its_bullet():
+    reply = (
+        "- Minnesota Death Index, 1908-2002 — the year is off by nine.\n"
+        "  Detach it from this profile.\n"
+        "- Minnesota State Census, 1885 — keep."
+    )
+    try:
+        _no_detach(reply, _TEST)
+    except AssertionError:
+        return
+    raise AssertionError("a continuation line's detach was split off its source")
+
+
+# --- the checklist does not restate a finding (o3c, issue #2796 finding 3) -
+
+_restate = _VALIDATOR.test_checklist_does_not_restate_a_finding
+_OVERLAP = json.loads(
+    (_REPO / "eval/fixtures/mcp/person-quality-hole-detail-overlap.json").read_text(encoding="utf-8")
+)
+_OV_CALLS = [{"tool": "mcp__genealogy__person_quality", "response": _OVERLAP["response"]}]
+_OV_TEST = {"tags": ["checklist-overlap", "direct-arm"], "delegation": "audit KD96-TV2"}
+_DEATH_LINE = next(i["sentence"] for i in _OVERLAP["response"]["issues"] if i["conclusionType"] == "DEATH")
+
+
+def test_checklist_pointer_passes():
+    reply = (
+        "From FamilySearch's own profile checklist:\n  CONSISTENCY\n"
+        "    · FamilySearch flags this death date too — finding 1 above.\n"
+        "    · It flags the birth date against the 1885 census — finding 2 above.\n"
+        "  VERIFIABILITY\n    · The marriage has no tagged sources."
+    )
+    _restate(_OV_CALLS, "", _OV_TEST, agent_returns=_returns(reply))
+
+
+def test_checklist_verbatim_restatement_fails_even_rewrapped():
+    wrapped = _DEATH_LINE.replace(", which", ",\n      which")
+    for line in (_DEATH_LINE, wrapped):
+        try:
+            _restate(_OV_CALLS, "", _OV_TEST, agent_returns=_returns("CONSISTENCY\n    · " + line))
+        except AssertionError as exc:
+            assert "restated a finding" in str(exc)
+            continue
+        raise AssertionError(f"a verbatim restatement passed: {line!r}")
+
+
+def test_checklist_guard_fails_when_no_consistency_issue_reached_the_run():
+    try:
+        _restate([], "", _OV_TEST, agent_returns=_returns("anything"))
+    except AssertionError as exc:
+        assert "checks nothing" in str(exc)
+        return
+    raise AssertionError("an empty sweep passed")
+
+
+def test_checklist_guard_skips_an_untagged_test():
+    import pytest
+
+    with pytest.raises(pytest.skip.Exception):
+        _restate(_OV_CALLS, "", {"tags": ["direct-arm"]})
+
+
+# --- a checklist pointer carries no action (o3c, v1_2026-10-02_10-48-01) ---
+
+_pointer = _VALIDATOR.test_checklist_pointer_carries_no_action
+_O3C_RETURN = (
+    "Next: detach this source from Christian P. Hole (KD96-TV2). The record belongs to the "
+    "other Christian Hole (KD96-WX7).\n\n---\n\n"
+    "From FamilySearch's own profile checklist — suggestions for the profile, not errors in a "
+    "source, and not counted above:\n\n"
+    "**CONSISTENCY**\n"
+    "- FamilySearch flags the death date discrepancy too — finding 2 above.\n"
+    "- FamilySearch flags the birth year discrepancy from the 1885 census too — finding 3 above "
+    "(the record is misattributed and should be detached).\n\n"
+    "**VERIFIABILITY**\n- The marriage has no tagged sources.\n\n"
+    "**COMPLETENESS**\n- A marriage place is missing a city."
+)
+_O3C_CLEAN = _O3C_RETURN.replace(
+    " (the record is misattributed and should be detached)", ""
+)
+
+
+def _pointer_fails(reply: str, why: str) -> None:
+    try:
+        _pointer("", _OV_TEST, agent_returns=_returns(reply))
+    except AssertionError as exc:
+        assert why in str(exc), str(exc)
+        return
+    raise AssertionError(f"passed: {reply[-300:]!r}")
+
+
+def test_the_o3c_pointer_with_a_detach_fails():
+    assert _O3C_CLEAN != _O3C_RETURN
+    _pointer_fails(_O3C_RETURN, "carries an action")
+
+
+def test_a_pointer_carrying_any_remedy_fails():
+    for tail in (
+        "finding 1 above. Re-read the original.",
+        "finding 1 above; correct the index entry.",
+        "finding 1 above, so keep the source attached.",
+        "finding 1 above — this one needs to be fixed.",
+    ):
+        _pointer_fails(f"**CONSISTENCY**\n- FamilySearch flags this death date too — {tail}", "carries an action")
+
+
+def test_bare_pointers_pass_in_any_heading_style():
+    _pointer("", _OV_TEST, agent_returns=_returns(_O3C_CLEAN))
+    _pointer("", _OV_TEST, agent_returns=_returns(
+        "From FamilySearch's own profile checklist:\n  CONSISTENCY\n"
+        "    · FamilySearch flags this death date too — finding 1 above.\n"
+        "    · It flags the birth date against the 1885 census — Finding 2 above.\n"
+        "  VERIFIABILITY\n    · The marriage has no tagged sources."
+    ))
+
+
+def test_a_findings_own_next_line_is_out_of_scope():
+    reply = (
+        "Finding 2 — death index. Same discrepancy as finding 1 above. Next: re-read the original.\n\n"
+        "### CONSISTENCY\n- FamilySearch flags this death date too — finding 2 above.\n"
+        "### VERIFIABILITY\n- The marriage has no tagged sources — keep in mind (see finding 2 above, correct it)."
+    )
+    _pointer("", _OV_TEST, agent_returns=_returns(reply))
+
+
+def test_pointer_guard_fails_when_it_has_nothing_to_check():
+    for reply in (
+        "From FamilySearch's own profile checklist:\n- The marriage has no tagged sources.",
+        "**CONSISTENCY**\n- The death date disagrees with the index.\n**VERIFIABILITY**\n- x",
+        "",
+    ):
+        _pointer_fails(reply, "checks nothing")
+
+
+# --- a multi-source closing paragraph (x6b, v1_2026-10-01_19-24-15) -------
+
+_X6B_PARAGRAPH = (
+    "Of the four attached sources, two belong on the profile without question: the 1900 U.S. Census "
+    "(which fits name, household, Polk County residence, and Norwegian birth) and the Minnesota Death "
+    "Index (which fits everything except a death year that needs verification against the original "
+    "certificate). The uploaded funeral card is plausible but unverifiable from the index. The 1885 "
+    "Minnesota State Census should be detached — it documents a different Christian Hole, born 1852, "
+    "residing in Otter Tail County, whose own profile (KD96-WX7) already holds the record correctly."
+)
+
+
+def test_a_detach_sentence_naming_another_record_passes():
+    _no_detach(_X6B_PARAGRAPH, _TEST)
+
+
+def test_a_detach_sentence_that_names_no_record_still_fails():
+    for reply in (
+        "The Minnesota Death Index has the wrong year. Detach it.",
+        "The Minnesota Death Index has the wrong year. The index should be detached.",
+        "The Minnesota Death Index is wrong. Detach the Minnesota Death Index.",
+        "The Minnesota Death Index gives 1954 against the profile's 1945. Detach the Death Index record.",
+        "The Minnesota Death Index gives 1954 against 1945. This Index entry should be detached.",
+        "The Minnesota Death Index gives 1954 against the profile's 1945. Unlike the 1900 Census, it does not fit him, so detach it.",
+        "The Minnesota Death Index gives 1954 against the profile's 1945. Detach it and rely on the 1900 Census instead.",
+        "The Minnesota Death Index gives 1954 against the profile's 1945. Unlike the 1900 Census, it should be detached.",
+        "The Minnesota Death Index gives 1954 against the profile's 1945. It does not match the 1900 Census and should be detached.",
+        "The Minnesota Death Index gives 1954 against the profile's 1945. Unlink it and rely on the 1900 Census instead.",
+        "The Minnesota Death Index gives 1954 against the profile's 1945. Detach the entry and rely on the 1900 Census instead.",
+        "The Minnesota Death Index gives 1954 against the profile's 1945. Detach the record and keep the 1900 Census.",
+        _X6B_PARAGRAPH + " Detach it as well.",
+    ):
+        try:
+            _no_detach(reply, _TEST)
+        except AssertionError:
+            continue
+        raise AssertionError(f"a detach left attributed to the protected source passed: {reply!r}")

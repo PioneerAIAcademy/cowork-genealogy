@@ -161,7 +161,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 13 skills covering the full GPS research cycle. Skills
+The plugin ships 12 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 For a plain-language account of the research method itself — the GPS
 cycle, the judgment made at each stage, and what to expect from a
@@ -196,7 +196,6 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 | Skill | What it does | Say this |
 |-------|-------------|----------|
 | **record-extraction** | Extracts atomic assertions from a record (MCP response, uploaded PDF, or image transcription) with first-and-final three-layer GPS classifications (Primary/Secondary/Indeterminate, Direct/Indirect/Negative) — each record is extracted by the `record-extractor` agent. | "Analyze this record" / "Extract assertions" / "Classify this evidence" |
-| **source-evaluation** | Audits the sources already attached to a person's FamilySearch profile. Classifies each finding as an indexing error (re-read the original and correct the index), a genuinely misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do) — and where the evidence does not decide between the first two, says so rather than picking one. A source that merely states a fact more precisely than the profile is reported as an improvement, not a contradiction. A disagreement between two attached sources is characterised and handed on with no verdict, since weighing them belongs to the conflict workflow. Closes with FamilySearch's own profile checklist — its completeness and source-tagging suggestions, grouped by category and kept out of the findings count, because they are suggestions rather than errors. Read-only. | "Evaluate the sources on this profile" / "Are these sources right?" |
 
 ### Identity resolution and analysis
 
@@ -229,7 +228,7 @@ specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships nineteen Cowork agents. Unlike skills, an agent runs in
+The plugin ships twenty Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 at its mentor checkpoint, or by the skill that delegates to it — you
 don't load it explicitly.
@@ -255,6 +254,7 @@ don't load it explicitly.
 | **hypothesis-tracking** | Tracks competing candidates with evidence for/against each. Manages elimination. | "Could this be the same person?" |
 | **tree-edit** | Direct corrections to the tree file — add or correct a fact, create a person or relationship, check FamilySearch record hints and possible duplicates. Also executes person merges after proof-conclusion confirms identity. After any change it hands back so `check-warnings` runs on the persons it touched. | "Fix this name" / "Merge these two persons" |
 | **validate-schema** | Validates both project files against the published schemas — required fields, enum values, ID prefixes, cross-references — and reports each error with a suggested fix. Read-only: it never edits a file. The writer tools already validate before they persist, so this is an on-demand audit of the whole project. Asked about genealogical impossibilities or GPS quality, it hands the request back by name. | "Validate the project files" / "Is the schema valid?" |
+| **source-evaluation** | Audits the sources already attached to a person's FamilySearch profile. Classifies each finding as an indexing error (re-read the original and correct the index), a genuinely misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do) — and where the evidence does not decide between the first two, says so rather than picking one. A source that merely states a fact more precisely than the profile is reported as an improvement, not a contradiction. A disagreement between two attached sources is characterised and handed on with no verdict, since weighing them belongs to the conflict workflow. Closes with FamilySearch's own profile checklist — its completeness and source-tagging suggestions, grouped by category and kept out of the findings count, because they are suggestions rather than errors. Read-only. | "Evaluate the sources on this profile" / "Are these sources right?" |
 
 ## Recommended workflow
 
@@ -463,11 +463,11 @@ What's shipped:
 - **50 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
-- **13 shipped skills.** Full GPS research cycle from `init-project`
+- **12 shipped skills.** Full GPS research cycle from `init-project`
   through the conclusion. The three
   e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result, grade-e2e-run)
   are repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
-- **19 Cowork agents.** `translation` (genealogy-specific translation of foreign-language
+- **20 Cowork agents.** `translation` (genealogy-specific translation of foreign-language
   records), `gps-mentor` (BCG-style senior-genealogist review,
   invoked by `/research` at GPS checkpoints and on demand), `record-extractor`
   (per-record assertion extraction), `proof-conclusion` (the proof conclusion
@@ -484,7 +484,9 @@ What's shipped:
   as a markdown file), `search-wikipedia` (one encyclopedia lookup saved as a markdown file),
   `tree-edit` (direct corrections to the tree, and person merges after a proof
   conclusion), `hypothesis-tracking` (competing-candidate hypotheses, and the
-  only writer of `hypotheses`), `locality-guide` (the records survey for one
+  only writer of `hypotheses`), `source-evaluation` (read-only audit of the
+  sources attached to one FamilySearch profile), `project-status` (read-only
+  summary of where the research stands), `locality-guide` (the records survey for one
   place and period), `historical-context` (narrative historical context for
   interpreting records — boundary changes, naming conventions, migration) and
   `image-reader` (page OCR).
