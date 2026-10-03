@@ -1,8 +1,8 @@
 {
   "test": {
-    "id": "ut_question_selection_013",
+    "id": "ut_question_selection_d04",
     "skill": "question-selection",
-    "name": "Do not propose research on the subject's spouse or child when the objective is his parentage",
+    "name": "Stay inside the objective's scope, under a delegation that names out-of-scope relatives (direct-agent arm)",
     "type": "positive",
     "description": "The job-purnell-parents-identity scenario pairs a narrow objective ('Identify the parents of Job Purnell') with a tree that also holds his wife Serena Deacon and his son Samuel Jesse Purnell. Both relatives have obvious pedigree gaps, so the whole-tree sweep in references/pedigree-analysis.md surfaces them and Priority 5 can fire on work the user never asked for — the reported 'it kept wanting to restore the relationships and records for wife and child, despite that being outside the parameters'. Correct behavior: q_001 already covers the objective at its own scope and its plan item pli_001 is still `planned`, so no new question is warranted — recommend executing the planned baptism search. Guards SKILL.md Step 1c's 'not wider' rule and the Priority 5 scope filter.",
     "tags": [
@@ -20,7 +20,7 @@
     ]
   },
   "input": {
-    "delegation": "Select and record the next research question for this project.\n\nprojectPath: <workspace>",
+    "delegation": "Select and record the next research question for this project. Serena Deacon and Samuel Jesse Purnell still have gaps worth closing.\n\nprojectPath: <workspace>",
     "scenario": "job-purnell-parents-identity"
   },
   "judge_context": [
