@@ -1951,18 +1951,22 @@ def test_terminal_reason_and_should_continue_run_walk_in_lockstep():
                                 and research is None and nudges < cap), (kw, research, nudges, cap, cont, reason)
 
 
-def test_the_halt_returns_the_sdks_stop_fields_not_a_permission_deny(tmp_path):
-    """1c. `_deny` returns permissionDecision: "deny" -- a tool RESULT the model reads
-    and argues with, then routes around. The SDK's halt fields are separate, and only
-    they end the turn."""
+def test_the_halt_returns_the_sdks_stop_fields_and_denies_the_call(tmp_path):
+    """1c. `_deny` alone is a tool RESULT the model reads and routes around; only the
+    SDK's halt fields end the turn. But they end it after the call runs (U3's live
+    lost-lock run, 2026-10-03: the halted record_search executed on a revoked token), so
+    the halt carries both: the deny keeps this call from running."""
     rows: list[dict] = []
     hook = options.make_pretool_hook(
         turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
         record=rows.append, halt=lambda: "Stopped by the researcher.",
     )
     out = _call(hook, {"tool_name": "mcp__genealogy__record_search", "tool_input": {}})
-    assert out == {"continue_": False, "stopReason": "Stopped by the researcher."}
-    assert "hookSpecificOutput" not in out and "permissionDecision" not in json.dumps(out)
+    assert out["continue_"] is False and out["stopReason"] == "Stopped by the researcher."
+    assert out["hookSpecificOutput"] == {
+        "hookEventName": "PreToolUse", "permissionDecision": "deny",
+        "permissionDecisionReason": "Stopped by the researcher.",
+    }
     assert [r["decision"] for r in rows] == ["halt"], "the audit trail shows where the turn was cut"
 
 

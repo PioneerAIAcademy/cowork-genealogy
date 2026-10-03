@@ -1534,3 +1534,25 @@ async def test_the_refresh_loop_survives_a_failing_store_and_logs_no_token(caplo
     assert any("ev=grant_refresh_tick" in line for line in lines), "the failed tick is reported"
     assert any("user_id=usr_b result=error error=RuntimeError" in line for line in lines)
     assert token not in caplog.text, "no token in any log line"
+
+
+async def test_a_patrons_next_live_period_logs_skipped_live_again(caplog):
+    """The on-change memory is cleared once a patron stops being due (no open turn), so a
+    later run's live attempt is logged rather than hidden behind the previous run's line.
+    Seen live 2026-10-03: a whole second run passed with no grant_refresh line."""
+    store = RefreshingStore(
+        due=[[("usr_a", 10.0)], [("usr_a", 40.0)], [], [("usr_a", 70.0)], [("usr_a", 100.0)]],
+        results={"usr_a": "skipped_live"},
+    )
+    with caplog.at_level("INFO", logger="proto.web"):
+        task = asyncio.create_task(app.grant_refresh_loop(store, interval_s=0.0, refresh_age_s=0,
+                                                          refresh=lambda r: None))
+        for _ in range(200):
+            if store.due_calls >= 6:
+                break
+            await asyncio.sleep(0.005)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+    lines = [r.getMessage() for r in caplog.records if "result=skipped_live" in r.getMessage()]
+    assert len(lines) == 2, f"one line per live period, two periods: {lines}"

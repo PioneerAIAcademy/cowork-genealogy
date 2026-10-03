@@ -1144,6 +1144,9 @@ async def grant_refresh_loop(
         except Exception as exc:  # noqa: BLE001 - the next tick retries
             log.warning("ev=grant_refresh_tick error=%s", type(exc).__name__)
             continue
+        due_ids = {user_id for user_id, _ in due}
+        for user_id in [u for u in last if u not in due_ids]:
+            del last[user_id]  # no open turn: the next live period logs afresh
         for user_id, age_s in due:
             try:
                 result = await store.refresh_grant(user_id, refresh=refresh, refresh_age_s=refresh_age_s)

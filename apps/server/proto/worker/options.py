@@ -267,9 +267,11 @@ def _deny(reason: str) -> dict[str, Any]:
     }
 
 
-# 1c. What Stop returns, and it is NOT `_deny`. A `permissionDecision: "deny"` is a tool
-# RESULT: the model reads it, argues with it, and picks another tool. The SDK's halt
-# fields are separate, and this is the pair that ends the turn.
+# 1c. What Stop returns, and it is NOT `_deny` alone. A `permissionDecision: "deny"` is a
+# tool RESULT: the model reads it, argues with it, and picks another tool. The SDK's halt
+# fields are separate, and this is the pair that ends the turn. But they end it AFTER the
+# call runs (CLI 2.1.220, U3 live lost-lock run 2026-10-03: the halted record_search
+# executed on a just-revoked token), so the halt also denies the call it fires on.
 STOP_REASON = "Stopped by the researcher."
 
 # 1b. The turn ends so the patron's message becomes the next one. Text the MODEL reads as
@@ -289,7 +291,7 @@ SPEND_CAP_REASON = (
 
 
 def _halt(reason: str = STOP_REASON) -> dict[str, Any]:
-    return {"continue_": False, "stopReason": reason}
+    return {"continue_": False, "stopReason": reason, **_deny(reason)}
 
 # Delegation tools whose `run_in_background` the worker overrides. The worker ends a turn at
 # the main thread's ResultMessage and closes the CLI, so a background agent still running
