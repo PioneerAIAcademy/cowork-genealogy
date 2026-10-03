@@ -7,7 +7,7 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
 
 - ``cwd`` is the empty anchor (``/project``); ``setting_sources=[]`` explicitly, so no
   ``CLAUDE.md`` or ``.claude/`` in any parent of cwd is loaded; no ``add_dirs``.
-- the plugin loads from disk for its skills; the seventeen agents travel as ``agents=`` (bare
+- the plugin loads from disk for its skills; the twenty agents travel as ``agents=`` (bare
   names, parsed once at worker start by ``plugin_agents.py``) -- never staged into cwd.
 - the shell is removed with ``disallowed_tools`` -- the only lever that reaches the
   main thread; ``Write``/``Edit`` stay granted (denying them is whole-tool).

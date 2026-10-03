@@ -146,6 +146,11 @@ function registeredServerKey(site: (typeof SERVER_KEY_SITES)[number]): string | 
 
 const agentFiles = readdirSync(agentsDir).filter((f) => f.endsWith(".md"));
 const knownTools = new Set(allToolSchemas.map((s) => s.name));
+const manifestTools = new Set<string>(
+  (JSON.parse(readFileSync(join(mcpRoot, "manifest.json"), "utf8")).tools as { name: string }[]).map(
+    (t) => t.name,
+  ),
+);
 
 /** Bare tool names an agent names in BOTH `tools:` and `disallowedTools:`.
  *
@@ -283,14 +288,29 @@ describe("plugin agent tool names", () => {
 
       for (const key of ["tools", "disallowedTools"] as const) {
         const entries = extractList(text, key).filter((t) => t.startsWith("mcp__"));
+        // No agent ships a disallowedTools block; restore the pre-guard behaviour
+        // for empty disallowedTools so the describe is not registered at all —
+        // only the tools: side carries the parser regression guard.
         if (key === "disallowedTools" && entries.length === 0) continue;
+
+        // An agent whose AGENT_PERMISSIONS row contains no manifest MCP tool
+        // holds none by design (currently: translation, which holds only Read).
+        // AGENT_PERMISSIONS stores BARE names ("research_append"), so testing
+        // for mcp__ prefix — as the previous version did — was always false and
+        // always waived the assertion. Test manifest membership instead.
+        const noMcpByDesign =
+          key === "tools" &&
+          !(AGENT_PERMISSIONS[file]?.tools ?? []).some((t: string) => manifestTools.has(t));
 
         describe(key, () => {
           it("parses at least one MCP entry", () => {
             // Guards the assertions below against passing vacuously if the
             // frontmatter parser stops matching the block-sequence form.
+            if (noMcpByDesign) return;
             expect(entries.length).toBeGreaterThan(0);
           });
+
+          if (entries.length === 0) return;
 
           it("uses only recognized server prefixes", () => {
             for (const entry of entries) {
@@ -556,6 +576,17 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // Read-only by contract: it reports project state and never writes. It calls
+  // no MCP tool at all — `eval/harness/validators/test_project_status.py`
+  // enforces that — so `Read` is the whole grant (issue #2793). `translation.md`
+  // was the first agent to hold only built-in tools and holds the same shape, so
+  // both are skipped by `noMcpByDesign` below; neither can be covered by the
+  // "parses at least one MCP entry" arm, because there is no MCP entry to parse.
+  "project-status.md": {
+    tools: ["Read"],
+    denies: [],
+  },
+
   // convert-dates (issue #2790) holds the one tool the skill it replaced
   // declared, `convert_calendar`, plus `Read` for the Narration line's read of
   // research.json. It persists nothing, so it holds no writer tool and no hook
@@ -621,6 +652,25 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "research_append",
       "volume_search",
       "wiki_place_page",
+      "wiki_read",
+      "wiki_search",
+      "wikipedia_search",
+    ],
+    denies: [],
+  },
+
+  // The folded historical-context skill (issue #2800) holds the six tools that
+  // skill declared, plus the built-in `Read` for research.json's
+  // narration_guidance. No `Write` and no project-state tool: this agent writes
+  // nothing. No spawn tool: a request belonging to locality-guide,
+  // search-records, translation, convert-dates or conflict-resolution is handed
+  // BACK by name for the main thread to spawn (lead ruling 2026-09-23).
+  "historical-context.md": {
+    tools: [
+      "Read",
+      "place_population",
+      "place_search",
+      "place_search_all",
       "wiki_read",
       "wiki_search",
       "wikipedia_search",
@@ -701,6 +751,11 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   },
   "search-wikipedia.md": {
     tools: ["Write", "wikipedia_search"],
+    denies: [],
+  },
+
+  "translation.md": {
+    tools: ["Read"],
     denies: [],
   },
 };

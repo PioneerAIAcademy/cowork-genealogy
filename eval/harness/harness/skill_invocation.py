@@ -1061,6 +1061,13 @@ DEDICATED_AGENT_NAMES = frozenset(
         # `agent:citation` on that row -- rather than an unnamed-delegate
         # bypass. Do not read its presence here as evidence of a hook route.
         "citation",
+        # Same shape as citation (issue #2793): a converted skill, not a
+        # hook-routed pair. No hook routes anything to it, and it writes
+        # NOTHING at all -- it is read-only by contract, so it cannot produce a
+        # protected write to attribute in the first place. It is listed only
+        # because the set is asserted equal to the shipped agent files. Do not
+        # read its presence here as evidence of a hook route.
+        "project-status",
         # A converted skill that writes nothing at all (issue #2118): its only
         # MCP tool is the read-only `person_warnings`. Listed solely because the
         # set is asserted equal to the shipped agent files.
@@ -1088,6 +1095,12 @@ DEDICATED_AGENT_NAMES = frozenset(
         # legitimate -- `ownership.json` names `agent:hypothesis-tracking` on
         # that row. Do not read its presence here as evidence of a hook route.
         "hypothesis-tracking",
+        # Same shape as `search-images`, `citation`, and `search-wikipedia`
+        # (issue #2804): a cost-motivated conversion, no hook route, and it
+        # writes no project state. Listed because the set is asserted equal to
+        # the shipped agent files. Do not read its presence here as evidence of
+        # a hook route.
+        "translation",
         # Same shape as citation (issue #2805): a converted skill, not a
         # hook-routed pair. It writes tree persons, relationships and sources,
         # and `ownership.json` names `agent:tree-edit` on those rows as the
@@ -1109,6 +1122,11 @@ DEDICATED_AGENT_NAMES = frozenset(
         # `ownership.json` names `agent:search-external-sites` on those rows.
         # Listed because the set is asserted equal to the shipped agent files.
         "search-external-sites",
+        # Same shape as convert-dates (issue #2800): a converted skill with no
+        # hook route. It writes no project state at all -- its output is a
+        # narrative to the user -- so `ownership.json` names it on no row. Listed
+        # because the set is asserted equal to the shipped agent files.
+        "historical-context",
     }
 )
 
