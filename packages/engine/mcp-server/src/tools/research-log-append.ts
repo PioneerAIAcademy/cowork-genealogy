@@ -343,12 +343,20 @@ const CENSUS_AFTER = new RegExp(
 
 /**
  * The first census year whose schedule carries a relationship-to-head column.
- * Sources: search-records/references/census-field-availability.md -- US "1880,
- * the dividing line"; England & Wales "1851 onward -- relationships and exact
- * ages", 1841 having none. Scotland follows E&W. A jurisdiction named but not
- * listed here returns null, which SKIPS the rule rather than guessing: the
- * doctrine is documented for these two only, and a wrong refusal blocks a
- * researcher mid-write.
+ *
+ * Sources, re-pointed by issue #2123 when
+ * search-records/references/census-field-availability.md was deleted: the
+ * FamilySearch wiki, which is now the runtime source for census schedules
+ * (ADR-0012). `United_States_Census` states "Relationships | 1880-1950" in its
+ * Federal Population Census Contents table; `England_Census` lists relationship
+ * to head under "1851-1901" and omits it from "1841". Scotland follows E&W.
+ * Both probed against the sidecar 2026-09-29 at 33,782 and 26,351 chars, and
+ * both are captured in eval/fixtures/mcp/wiki-read-united-states-census.json and
+ * wiki-read-england-census.json.
+ *
+ * A jurisdiction named but not listed here returns null, which SKIPS the rule
+ * rather than guessing: the doctrine is documented for these two only, and a
+ * wrong refusal blocks a researcher mid-write.
  */
 function relationshipColumnFrom(qualifier: string): number | null {
   const q = qualifier.toLowerCase();
@@ -413,17 +421,52 @@ export function censusMentions(notes: string): CensusMention[] {
  * derived by `stagedPre1880UsCensusYears`, never the envelope itself.
  *
  * The payload decides only when EVERY titled row is a pre-1880 US federal
- * census, only when the note binds no census year of its own (a bound year keeps
- * precedence, so every note-only verdict is unchanged), and only when the note
- * contains one of those census years. Two rejected options: "any row is a
- * pre-1880 US census" refuses a parish-register or 1880-row note whenever the
- * same search also returned an 1850 row; "the top-ranked row only" trusts
- * `results[0]`, which is the best match only when ranking ran. The year in the
- * note is what ties the note to the census it was logged with: without it, a
- * parish-register note logged against an 1850 census search is refused for a
- * household the census never showed. A note that omits the year still passes,
- * which is the same limit the author-supplied year already had.
+ * census, and only when the note binds no census year of its own (a bound year
+ * keeps precedence, so every note-only verdict is unchanged). Two rejected
+ * options: "any row is a pre-1880 US census" refuses a parish-register or
+ * 1880-row note whenever the same search also returned an 1850 row; "the
+ * top-ranked row only" trusts `results[0]`, which is the best match only when
+ * ranking ran.
+ *
+ * THE NOTE NO LONGER HAS TO REPEAT THE YEAR (2026-10-02). The requirement hid
+ * real misses: `ut_search_records_001` ("...in household of Thomas Flynn", birth
+ * year 1845 and no census year) and `_017` ("...in household of William Mullen",
+ * birth year 1852) both wrote flat and were caught by the eval validator
+ * afterwards instead of refused at the write.
+ *
+ * What the year requirement HAD been guarding is real and is kept by other
+ * means. `stagedPre1880UsCensusYears` counts only rows carrying a
+ * `collectionTitle`, so an UNTITLED parish-register row can sit in the same
+ * staged payload as the titled 1850 rows that produced the years -- the payload
+ * cannot prove the note is about a census row. The positional carve-out below
+ * is what now separates them: a note ABOUT another source names it before the
+ * household it qualifies. Do not delete that carve-out on the strength of
+ * "every titled row is a census row"; the untitled ones are the hole.
+ *
+ * This does NOT reopen the whole-note fallback the lead declined on 2026-09-29
+ * (issue #2945): that was `saysCensus && /\b18[0-7]\d\b/` scanning the note for
+ * any year, which made 46 of 223 note-only refusals with about 38 wrong on
+ * reading. This branch reads no year out of the note at all; the payload --
+ * which the caller does not author -- is what decides.
  */
+/**
+ * A phrase that NAMES a record of another type. Every entry names a record
+ * (`will of`, never `will`): a term that doubles as ordinary English reopens
+ * the hole the bare `will` opened, where the verb cancelled the gate.
+ */
+const SOURCE_NAMED =
+  /\b(parish register|church (?:book|record)|baptism|christening|burial register|probate|will of|last will|will and testament|will book|deed|land record|passenger list|draft (?:card|registration)|city directory|gravestone|headstone|obituary|marriage (?:record|certificate|licen[cs]e|register)|death (?:certificate|record|register)|birth (?:certificate|record|register)|vital record|naturali[sz]ation|pension file)\b/;
+
+/** The household wording the hedge rule is about. Lowercased input. */
+const HOUSEHOLD_ANCHOR = /\b(household|dwelling|co-?resident|enumerated with|living with)\b/;
+
+/**
+ * Kinship asserted about a NAMED person. Case-sensitive on purpose (the
+ * capital starts the name), so it is searched against `notes`, not `text`.
+ */
+const KINSHIP_CLAIM =
+  /(?<!\b(?:his|her|their)\s)\b(?:mother|father|wife|husband|sons?|daughters?|parents?)\s+[A-Z]/;
+
 export function requirePre1880CensusHedge(
   notes: string,
   stagedCensusYears?: readonly number[],
@@ -442,7 +485,8 @@ export function requirePre1880CensusHedge(
   //
   // The payload overrides it deliberately: a note logged against a staged
   // pre-1880 US census search is about that search's results, not a plan, so
-  // it is judged whatever word it uses. That also closes the word hole -- a note
+  // it is judged whatever word it uses -- unless it names another record type
+  // first, which is the carve-out below. That also closes the word hole -- a note
   // that never says "census" -- for `record_search` only. A note with no census
   // payload behind it (every other tool, a nil search) still returns here.
   // Measured at dc9766b15 (dev/measure-census-hedge-refusals.ts): the override
@@ -458,18 +502,47 @@ export function requirePre1880CensusHedge(
   // census shows Daniel in one dwelling with Margaret and sons Thomas and
   // Stephen; marriage 1871, Adams County"). The staged-payload trigger still
   // fires for `record_search` entries whose staged rows name a pre-1880 US
-  // census, provided the payload year appears in the note text.
+  // census; since 2026-10-02 the payload decides without the note repeating the
+  // year, bounded by the positional carve-out below.
   // Decided (lead, 2026-09-29), issue #2945: the whole-note fallback
   // (`saysCensus && /\b18[0-7]\d\b/`) made 46 of 223 note-only refusals over
   // ~4,000 distinct corpus notes, about 38 of them wrong on reading.
   const bound = censusMentions(notes);
+  // A note naming a DIFFERENT record type is not about the census rows, and the
+  // payload cannot rule that out: `stagedPre1880UsCensusYears` counts only rows
+  // carrying a `collectionTitle`, so an untitled parish-register row can sit in
+  // the same staged payload as the 1850 census rows that produced the years.
+  // Where the note is ABOUT such a source, the payload stops deciding and the
+  // note must bind its own census year, as it did before 2026-10-02.
+  //
+  // POSITIONAL, not a bare word list. The source must be named BEFORE the
+  // household it qualifies -- a note that is about a parish register leads with
+  // it ("Parish register 1861: baptism of Sarah, in the household of ..."),
+  // while a census note that merely mentions one later is still a census note.
+  // A list alone fails open: the first version carried a bare `will`, which the
+  // ordinary verb matched, so "...in the household of Nancy Doss. Will pass to
+  // extraction." silently skipped a gate that had refused it. Every entry below
+  // is a phrase that names a RECORD (`will of`, never `will`); adding a term
+  // that doubles as ordinary English reopens that hole, and a missing deny here
+  // fails open and silently where a missing allow merely annoys.
+  const sourceAt = text.search(SOURCE_NAMED);
+  // Anchor on the CLAIM, not on the household word alone. `householdAt < 0 ||`
+  // was the hole: a kinship claim with no household word ("...with wife Nancy
+  // and son Thomas Whitfield.") left the anchor at -1, so ANY source word
+  // anywhere in the note allowed it -- "Check baptism next." appended to a flat
+  // kinship claim walked straight through the gate it was meant to close.
+  // Both claim shapes are anchored now, on the EARLIEST of the two.
+  const claimAt = [text.search(HOUSEHOLD_ANCHOR), notes.search(KINSHIP_CLAIM)]
+    .filter((i) => i >= 0)
+    .reduce((a, b) => Math.min(a, b), Number.POSITIVE_INFINITY);
+  const isAboutOtherSource =
+    sourceAt >= 0 && Number.isFinite(claimAt) && sourceAt < claimAt;
   const namesColumnlessCensus = bound.length > 0
     ? bound.some((m) => m.year < m.columnFrom)
-    : payloadYears.some((y) => new RegExp(String.raw`\b${y}\b`).test(notes));
+    : payloadYears.length > 0 && !isAboutOtherSource;
   if (!namesColumnlessCensus) return;
 
-  const describesHousehold =
-    /\b(household|dwelling|co-?resident|enumerated with|living with)\b/.test(text);
+  const describesHousehold = HOUSEHOLD_ANCHOR.test(text);
   // Kinship asserted about a NAMED person: "mother Margaret", "plus sons Thos
   // and Stephen". The lookbehind excludes the possessive form -- "searched for
   // his wife Catherine" names a TREE-side relative who may be absent from the
@@ -477,8 +550,7 @@ export function requirePre1880CensusHedge(
   // stated. That carve-out is the eval validator's too, and dropping it made
   // this refuse a compliant note.
   const assertsKinship =
-    /(?<!\b(?:his|her|their)\s)\b(?:mother|father|wife|husband|sons?|daughters?|parents?)\s+[A-Z]/.test(notes) ||
-    /\bhead\s+of\s+household\b/.test(text);
+    KINSHIP_CLAIM.test(notes) || /\bhead\s+of\s+household\b/.test(text);
   if (!describesHousehold && !assertsKinship) return;
 
   const hedged =

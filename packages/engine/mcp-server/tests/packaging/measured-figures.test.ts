@@ -101,7 +101,10 @@ const AGENT_SURFACES = [
   "packages/engine/mcp-server/src/tools/fulltext-search.ts",
   "packages/engine/plugin/skills/search-records/SKILL.md",
   "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md",
-  "packages/engine/plugin/skills/search-records/references/place-date-mechanics.md",
+  // `place-date-mechanics.md` was here until issue #2123 deleted it: its place,
+  // date and relative-qualifier findings now live in `record_search`'s own
+  // parameter descriptions, and `record-search.ts` is already an EVIDENCE surface
+  // above, so the wording scan still covers every sentence that moved.
   "packages/engine/plugin/skills/search-records/references/search-strategy-levers.md",
   "packages/engine/plugin/skills/search-records/references/collection-quirks.md",
 ];

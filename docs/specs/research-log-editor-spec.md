@@ -60,12 +60,13 @@ update/delete (forbidden by Rule 3), and `tree.gedcomx.json`.
 
 | Fact | Source |
 |------|--------|
-| Append-only rule; nil searches still logged; outputs link back via `log_entry_id` | `search-records/references/research-log-protocol.md` |
+| Append-only rule; nil searches still logged | `search-records/SKILL.md` Step 5 (formerly `references/research-log-protocol.md`, now deleted) |
+| Outputs link back via `log_entry_id` | `agents/record-extractor.md` + `research-schema-spec.md` §`sources`/§`assertions`. Never `search-records`' rule: this skill writes the log entry, and the **extracting** agent stamps the back-reference onto each source and assertion |
 | Log entry fields + `external_site` shape | `docs/specs/research-schema-spec.md` §5.4 |
 | Sidecar shape `{ log_id, tool, retrieved, returned_count, payload }`; nil → no sidecar | `research-schema-spec.md` §5.4.1 |
 | Required log fields, `log_outcome` enum, `external_site` required when `tool==="external_site"`, `EXTERNAL_SITE_VALUES` | `validateResearch`'s log loop (`"tool is 'external_site' but external_site object is null"`, `EXTERNAL_SITE_VALUES`) |
 | Sidecar checks: `log_id`↔entry↔filename, `returned_count`==`payload.results.length`, orphan detection, path-traversal guard, D5 persona resolution | `validateSidecars` (`src/validation/validator.ts`) |
-| The protocol reference duplicated across the four writing skills | `*/references/research-log-protocol.md` (4 copies) |
+| The protocol reference formerly duplicated across the writing skills | `*/references/research-log-protocol.md` — **0 copies**; it ran 4 → 3 → 1 → 0, the last going when its analytical rules moved into the body. Citations to it elsewhere in this spec are historical: those rules are `search-records/SKILL.md` Step 5, and the mechanical half was always `research_log_append`'s |
 
 ---
 
@@ -354,6 +355,7 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | `tool === "external_links_search"`, `resultsExamined > 0`, `outcome !== "positive"` | written with `outcome: "positive"`, plus a warning naming the outcome sent — the entry grades the fetch, not the search |
 | Staged payload has no `results` array | input error — the integrity check and D5 require `payload.results` (`validateSidecars`, the `"payload has no 'results' array — cannot verify retrieval integrity"` check) |
 | `stagedResultsRef` given for a nil search (`results_examined: 0`, `outcome: negative`) | allowed but discouraged; the caller should omit results for nil searches per §5.4.1 |
+| `query` is prose rather than an object, on a read-style entry (`record_read`, `image_transcribe`, `image_read`) | **not reached** — the MCP input schema rejects it first. An ARK is dense with `:` and `/`, so a sentence containing one fails JSON parsing and the call is refused *before* the tool runs: nothing is logged and the turn is spent. This is why `search-records`' Step 5 prescribes a canonical key per read-style tool (`{"recordId": …}`, `{"recordIds": [...]}`, `{"imageArk": …}`). The MECHANISM — that an ARK is dense with `:` and `/`, so a sentence containing one fails JSON parsing — belongs here rather than in the body, per CLAUDE.md's no-explanatory-prose rule. The body keeps one clause of consequence ("rejected before the tool runs, so nothing is logged"), which is what tells the model why the keyed form is not optional; the measured-neutral wording is pinned by the isolation run recorded in `docs/deep-dives/search-records-reference-routing.md` |
 | `projectPath` missing `research.json` / invalid JSON | input error; write nothing |
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. This is the search-logging path, so it is the one that decides whether a standalone search says anything useful. A directory holding exactly one of the two files is a *broken* project and stays loud. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Appended entry introduces a project-validation error | **write nothing** (unlink the new sidecar; every staged file is kept); return `{ ok: false, errors }`. A pre-existing error the append did not introduce rides as a warning |

@@ -211,8 +211,12 @@ describe("requirePre1880CensusHedge with a staged census payload", () => {
     ok(PARISH, [1850]);
   });
 
-  it("allows a note that omits the census year, the limit the tie accepts", () => {
-    ok("1 result: Amos Whitfield in the Household of Nancy Doss.", [1850]);
+  it("refuses a note that omits the census year, which the payload supplies", () => {
+    // Until 2026-10-02 the payload tie also required one of its years to appear
+    // in the note text, and this note passed. It is a true miss: the staged rows
+    // are all 1850 US federal census, so "the Household of Nancy Doss" is read
+    // off a schedule with no relationship column.
+    bad("1 result: Amos Whitfield in the Household of Nancy Doss.", [1850]);
   });
 
   it("still allows a hedged note", () => {
@@ -226,14 +230,68 @@ describe("requirePre1880CensusHedge with a staged census payload", () => {
     bad(plural, [1850]);
   });
 
-  it("accepts an unbound-census note even with a payload whose year is absent from the note", () => {
-    // Says "census", binds no year, payload year (1850) not in the note text:
-    // undecidable inputs skip (issue #2945), and the payload tie requires the
-    // year to appear in the note, so this passes on both branches.
-    ok(
+  it("refuses an unbound-census note when the payload names the year", () => {
+    // `requirePre1880CensusHedge`'s own docstring listed this sentence under
+    // "What this gives up": it says "census", binds no year to it, and the 1871
+    // it does carry is a marriage. The note-only branch still skips it (issue
+    // #2945 stands -- no year is read out of the note), but the payload decides
+    // it now, which is what that docstring wanted and could not have.
+    bad(
       "The federal census shows Daniel in one dwelling with Margaret and sons Thomas and Stephen; marriage 1871, Adams County.",
       [1850],
     );
+  });
+
+  it("still skips that sentence with no payload behind it", () => {
+    // The other direction: the widening must not leak into the note-only branch.
+    ok("The federal census shows Daniel in one dwelling with Margaret and sons Thomas and Stephen; marriage 1871, Adams County.");
+  });
+
+  it("refuses the two notes the eval validator caught after the write", () => {
+    // ut_search_records_001 and _017, v2_2026-10-02_11-36-52. Both describe a
+    // pre-1880 US census household flat and carry a BIRTH year, not a census
+    // year, so the pre-2026-10-02 tie let them through and the eval validator
+    // failed the run instead.
+    bad(
+      "Fresh search with collection pin (1401638) + residence place + birth year range. " +
+        "Returned 1 result: Patrick Flynn, b. 1845, Ireland, in household of Thomas Flynn " +
+        "-- matchScore 0.9481, unattached to subject in FS tree.",
+      [1850],
+    );
+    bad(
+      "Found Sarah A. Mullen (matchScore 0.9376) in household of William Mullen, Dodge " +
+        "County, Wisconsin -- birth year 1852, birth place Wisconsin; consistent with all " +
+        "known facts. Clean top match, no needs-review flags. Passing to extraction.",
+      [1860],
+    );
+  });
+
+  it("does not let an ordinary English word cancel the gate", () => {
+    // The first carve-out carried a bare `will`, which the VERB matched, so a
+    // note that had been refused silently stopped being. A missing deny fails
+    // open where a missing allow merely annoys, so the carve-out is positional:
+    // the source must be named BEFORE the household it qualifies.
+    bad(`${H4K} Will pass to extraction.`, [1850]);
+    bad(`${H4K} It will be attached next.`, [1850]);
+    bad(`${H4K} Cross-check the parish register next.`, [1850]);
+  });
+
+  it("allows a note that is ABOUT another record type", () => {
+    ok("Marriage record 1861: Sarah, of the household of William Mullen.", [1850]);
+    ok("Death certificate 1866 lists the household of William Mullen.", [1850]);
+    ok("Obituary 1869 names the household of William Mullen.", [1850]);
+    ok("Will of John Mullen, 1854, naming the household of William Mullen.", [1850]);
+  });
+
+  it("keeps the parish carve-out load-bearing", () => {
+    // Without the namesOtherSource guard this refuses: an untitled parish row can
+    // share a staged payload with the titled 1850 census rows that produced the
+    // years, so the payload cannot prove the note is about a census row.
+    ok("Parish register 1861: baptism of Sarah, in the household of William Mullen.", [1850]);
+    ok("Probate 1854: estate of John Mullen, naming the household of William Mullen.", [1850]);
+    // ...but the carve-out must not become a bypass: naming a census alongside
+    // its own bound year still refuses.
+    bad("1850 census: Amos Whitfield in the household of Nancy Doss.", [1850]);
   });
 
   // The lead's standing proof: a year the note binds itself still wins.
