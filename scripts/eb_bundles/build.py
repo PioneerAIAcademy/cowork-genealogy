@@ -372,7 +372,8 @@ def toolchain(tiers: list[str]) -> dict[str, str | None]:
         npm = _version(["npm", "--version"])
         parts = [int(x) for x in (npm or "0.0").split(".")[:2]]
         if npm is None or parts[0] != 11 or parts[1] < 12:
-            raise BuildError(f"npm >= 11.12 < 12 is required (the engine's packageManager), found {npm}")
+            raise BuildError(f"npm >= 11.12 < 12 is required (the engine's packageManager), found {npm}"
+                             f" at {shutil.which('npm')}")
         info["npm"] = npm
     return info
 

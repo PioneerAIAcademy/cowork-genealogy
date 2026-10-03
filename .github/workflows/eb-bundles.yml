@@ -124,7 +124,9 @@ jobs:
 
       - name: Build the bundles
         if: steps.scope.outputs.relevant == 'true'
-        run: make eb-bundles
+        run: |
+          echo "node $(node --version) at $(command -v node); npm $(npm --version) at $(command -v npm)"
+          make eb-bundles
 
       - name: Verify the bundles
         if: steps.scope.outputs.relevant == 'true'
