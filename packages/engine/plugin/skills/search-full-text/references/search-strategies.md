@@ -25,9 +25,11 @@ persons' given names, marginalia, tax-list and store-account entries.
 Search a name (or surname + contextual keyword), then filter by
 Place → Year → Record Type. Do NOT use the `place` query field — it
 searches collection metadata, not document text, and causes false positives.
-Use `recordPlace*` filter parameters instead, which filter records by their
-actual place metadata and are safe on the first call when the jurisdiction
-is known from the plan item or the user's message.
+For place filtering, use `collectionId` with the filterParam value from the
+facets returned by `includeFacets: true` — plain-text `recordPlace*` values
+return zero results in production. Year (`yearFrom`/`yearTo`) and record-type
+filters are also allowed but apply cautiously since collection metadata dates
+can be off.
 
 ## Decision tree by hit count
 

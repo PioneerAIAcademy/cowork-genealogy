@@ -136,12 +136,12 @@ Read `references/query-syntax.md` for operator details and wildcards.
 **Critical rules:**
 - **Always use `+` to require terms in `keywords`.** Default is OR,
   which returns millions of irrelevant results. Do NOT use `+` in the
-  `name` field — terms there are already required by `m.queryRequireDefault`.
-- **Scope by place when the plan or the user names the jurisdiction.**
-  Send `recordPlace*` on the first call when the plan item or the
-  user's message identifies a specific place. Date (`yearFrom`/`yearTo`)
-  and record type are also allowed, but collection metadata dates can
-  be off, so apply them more cautiously than place. **If a filtered
+  `name` field — `m.queryRequireDefault` requires at least one term to match.
+- **Scope by place and date with caution.** `yearFrom`/`yearTo` and record
+  type filters are allowed but collection metadata dates can be off. For
+  `recordPlace*`, only pass the filterParam form returned by `includeFacets`
+  — plain-text values (e.g. `recordPlace1: "Pennsylvania"`) return zero
+  results in production. **If a filtered
   search returns zero results, re-run it without that filter before
   logging anything as not found** — a nil under a filter may reflect a
   metadata mismatch rather than a true absence. **This applies to every
@@ -278,10 +278,13 @@ attachment status. Let the user confirm which records to examine.
 ### 7. Retain results and write the log entry
 
 **Every search gets a log entry — no exceptions.** Call
-`research_log_append` once per search. **Complete all retries for a
-search topic before logging any of them.** If a filtered search returns
-zero and requires an unfiltered retry, run the retry first — then log
-both (or just the final result if the retry was positive). **`query` must mirror exactly the
+`research_log_append` once per search. **Log positive results immediately
+— call `research_log_append` in the same turn as the `fulltext_search`
+that returned them. Do not defer logging while more searches run.**
+For a nil result only: complete all retries for that specific nil query
+first — then log the nil and the retry together. If a filtered search
+returns zero and requires an unfiltered retry, run the retry first — then
+log both (or just the final result if the retry was positive). **`query` must mirror exactly the
 arguments the `fulltext_search` call actually sent.** Record only a filter
 the call actually sent — never add one the call itself omitted, even one
 the user mentioned, one a later call will add, or one that matches the
@@ -296,11 +299,11 @@ research_log_append({
   planItemId: "pli_010",          // null for ad-hoc
   tool: "fulltext_search",
   query: { keywords: "+Flynn +\"Last Will and Testament\"",
-           recordPlace1: "Pennsylvania", yearFrom: 1870, yearTo: 1890 },
+           collectionId: "2220359", yearFrom: 1870, yearTo: 1890 },
   outcome: "positive",
   resultsExamined: 5,
   resultsAvailable: 47,
-  notes: "47 Schuylkill will hits 1870-1890; 5 examined.",
+  notes: "47 PA Land Records will hits 1870-1890; collectionId from includeFacets; 5 examined.",
   stagedResultsRef: staged.resultsRef   // omit for a nil search
 })
 ```

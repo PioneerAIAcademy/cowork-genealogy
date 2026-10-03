@@ -82,10 +82,11 @@ frequently excludes the very FTS volume that holds the answer, silently
 returning zero.
 
 **Safe path — use `includeFacets: true` on the first call.** When
-`includeFacets: true`, the response includes a `facets` array. Each facet
-item carries a `filterParam` string — the exact `collectionId` value to
-pass on a scoped follow-up call. That value is safe because it names a
-real FTS partition that already returned hits.
+`includeFacets: true`, the response includes a `facets` array. Find the
+**Collection** group in `facets`; each item in that group carries a
+`filterParam` string — the exact `collectionId` value to pass on a scoped
+follow-up call. That value is safe because it names a real FTS partition
+that already returned hits.
 
 ```
 # Step 1: unscoped, with facets
