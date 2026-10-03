@@ -1381,3 +1381,59 @@ def test_person_read_staging_degrades_on_node_failure(tmp_path, monkeypatch, fai
     )
     assert calls, "the node call was never reached"
     assert out == response
+
+
+def _hand_off_workspace(tmp_path):
+    """A project whose log a builder hand-off can append to."""
+    research = {
+        "project": {"id": "rp_001", "objective": "T", "status": "active", "created": "2026-01-01", "updated": "2026-01-01"},
+        "questions": [], "plans": [], "log": [], "sources": [], "assertions": [],
+        "person_evidence": [], "conflicts": [], "hypotheses": [], "timelines": [],
+        "proof_summaries": [], "evaluations": [],
+    }
+    (tmp_path / "research.json").write_text(json.dumps(research), encoding="utf-8")
+    (tmp_path / "tree.gedcomx.json").write_text(
+        json.dumps({"persons": [], "relationships": [], "sources": []}), encoding="utf-8"
+    )
+    return tmp_path
+
+
+def _logged(ws):
+    return json.loads((ws / "research.json").read_text(encoding="utf-8"))["log"]
+
+
+@pytest.mark.requires_engine_build
+def test_build_external_search_url_without_projectpath_writes_nothing(tmp_path):
+    """The harness must not hand the builder a projectPath the agent never sent.
+
+    Given one, the builder logs the hand-off itself; production never supplies
+    it on the model's behalf, so injecting it would make every run of today's
+    skill log each URL twice (its own step-4 entry plus the builder's).
+    """
+    ws = _hand_off_workspace(tmp_path)
+    _cfg, _log, tools = create_mock_server([], FIXTURES_DIR, workspace=ws)
+    out = _extract_response_dict(
+        _invoke(tools, "build_external_search_url", {"site": "findagrave", "attributes": {"surname": "Flynn"}})
+    )
+    assert out["ok"] is True
+    assert "logId" not in out
+    assert _logged(ws) == []
+
+
+@pytest.mark.requires_engine_build
+def test_build_external_search_url_with_projectpath_writes_one_entry(tmp_path):
+    """A projectPath the agent sent is rebased onto the workspace and honoured."""
+    ws = _hand_off_workspace(tmp_path)
+    _cfg, _log, tools = create_mock_server([], FIXTURES_DIR, workspace=ws)
+    out = _extract_response_dict(
+        _invoke(
+            tools,
+            "build_external_search_url",
+            {"site": "findagrave", "attributes": {"surname": "Flynn"}, "projectPath": "/somewhere/else"},
+        )
+    )
+    assert out["ok"] is True
+    log = _logged(ws)
+    assert [e["id"] for e in log] == [out["logId"]]
+    assert log[0]["outcome"] == "partial"
+    assert log[0]["external_site"]["url_generated"] == out["url"]

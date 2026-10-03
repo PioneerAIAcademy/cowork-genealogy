@@ -221,14 +221,14 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **16** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **16** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **14** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **18** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The sixteen agents are `gps-mentor`, `record-extractor`, `image-reader`,
+The eighteen agents are `gps-mentor`, `record-extractor`, `image-reader`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
 `search-images`, `citation`, `search-wikipedia`, `convert-dates`,
-`search-familysearch-wiki`, `check-warnings`, `tree-edit`, `validate-schema`,
-`hypothesis-tracking` and `locality-guide`.
+`search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
+`hypothesis-tracking`, `locality-guide` and `historical-context`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -352,7 +352,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-12 of the 16 skills carry a `references/` folder, loaded on demand, in-session,
+10 of the 14 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -1348,6 +1348,7 @@ trustworthy rather than merely present:
 | `results/.staging/<uuid>.json` | a search response staged by its producer, pending `research_log_append` finalizing it; or an acquisition read (`record_read`, `image_transcribe`, `person_read`), which no shipped flow logs. 24h TTL. |
 | `results/.scores/<sha256(record_id)>.json` | the `same_person` attestation: every score the tool actually computed, keyed by (record, assertion, tree person), so a `match_score` on a link can be checked against a call that happened. No TTL. |
 | `images/`, `results/match-scores.jsonl` | retained page scans; `rank_search_matches`' append-only calibration trail. |
+| `results/image-browse.jsonl` | the image cap's log: one line per distinct `imageId` first read through `image_read`, `image_transcribe` or `volume_bisect`, so the 20-per-group cap survives a restart (`image-transcribe-tool-spec.md` §5.8). Append-only, best-effort, no TTL. |
 
 **The dot-directories are load-bearing, not cosmetic.** The validator's orphan
 check lists `results/` non-recursively and errors on any top-level `*.json` no
@@ -1468,8 +1469,8 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-All 16 skills carry a `**Narration:**` line (`init-project` spells it
-`**Narration**`, without the colon) — 15 of them as the first line of the body,
+All 14 skills carry a `**Narration:**` line (`init-project` spells it
+`**Narration**`, without the colon) — 13 of them as the first line of the body,
 the other one further down — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. `init-project` writes the profile from two
@@ -1489,8 +1490,13 @@ duplicated and the *value* it reads is centralized in project state.
 viewer, `eval/app/components/scenario/`. Its **types** are no longer a site:
 `lib/schema.ts` re-exports `@genealogy/schema`, so site 5 covers it and
 `pnpm turbo run typecheck` compiles it. Its **section components** still are —
-11 hand-maintained renderers against `packages/viewer-ui`'s 14, reached by no
-check, which is the parallel of site 7 for that app.)*
+a hand-maintained subset of `packages/viewer-ui/src/components/sections/`,
+reached by no check, which is the parallel of site 7 for that app. One half of one shared
+component is the exception: `eval/app/tests/unit/statusBadgeParity.test.ts`
+fails when a status viewer-ui colours is one this tree renders gray. Its
+sibling `statusLabelMap` has no counterpart here and is pinned by nothing, so
+the same value reads "not proved" in this viewer and "not established" in the
+product one.)*
 
 | # | Site | What catches a miss |
 |---|---|---|
@@ -1920,9 +1926,9 @@ lead you to them:**
 
 - **Unit** (`eval/tests/unit/<skill>/`) — mocked MCP fixtures, a per-skill
   `rubric.md`, a deterministic validator per skill, an LLM judge, snapshot-hashed
-  run logs, and negative routing tests across 26 skill suites. **446** committed
+  run logs, and negative routing tests across 25 skill suites. **446** committed
   test definitions (`make eval-inventory`) — one JSON file per test under
-  `eval/tests/unit/` — and across the 26 live suites the latest run log per suite
+  `eval/tests/unit/` — and across the 25 live suites the latest run log per suite
   totals **446 rows, 389 passing (87%)**. Those two numbers count different things
   and can diverge in either direction: a test defined after its suite's last run
   has no row, and a row survives for a test since deleted. Both numbers are facts
