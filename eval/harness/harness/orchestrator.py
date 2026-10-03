@@ -1374,12 +1374,26 @@ def flag_routing_negative_judge_fail(
     raises. No-op unless the test is negative with a non-empty `correct_skill`,
     the skill under test did not activate, and an accepted skill is in
     `skills_invoked`.
+
+    A `grade_on_invariant` negative takes the same path; only the warning's and
+    rationale's "decided by" clause changes. The `activated` guard is kept for
+    it on purpose: an invariant negative may activate and still pass
+    (`ut_conflict_resolution_010` loads conflict-resolution and declines
+    in-body), and there its 1 is left a 1, which the review sample's first
+    trigger already makes mandatory.
     """
     if not dimensions:
         return dimensions
     negative = spec.negative or {}
-    if negative.get("grade_on_invariant"):
-        return dimensions
+    # Invariant negatives are coerced too (ruling on issue #2190, 2026-09-07):
+    # their dimensions never gate either, and the human corpus split 2-of-3 on
+    # their 1s, the same split with no discriminator that retired the floor.
+    # Only the wording below changes, because routing does not decide them.
+    decided_by = (
+        "its invariant validator alone"
+        if negative.get("grade_on_invariant")
+        else "routing alone"
+    )
     if activated:
         return dimensions
     # The `any()` check below is the only guard needed, and it is load-bearing
@@ -1405,7 +1419,7 @@ def flag_routing_negative_judge_fail(
                     "kind": "coerced_routing_negative_to_na",
                     "advisory": (
                         f"judge scored {dd['name']} 1 on a negative test whose "
-                        f"outcome is decided by routing; coerced to null. "
+                        f"outcome is decided by {decided_by}; coerced to null. "
                         f"Across the committed corpus a human confirmed this 1 "
                         f"in 20 of 24 such cells, so read it before confirming "
                         f"the N/A: if the skill under test carried out its own "
@@ -1432,7 +1446,7 @@ def flag_routing_negative_judge_fail(
             orig = dd.get("rationale") or ""
             dd["rationale"] = (
                 f"[coerced-to-na] this is a correctly-routed negative test, whose "
-                f"outcome is decided by routing alone, so {dd['name']} is N/A and "
+                f"outcome is decided by {decided_by}, so {dd['name']} is N/A and "
                 f"the judge's 1 was coerced to null. READ THE ORIGINAL BELOW "
                 f"BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed "
                 f"corpus the skill under test produced real output first (up to "
@@ -1973,7 +1987,13 @@ def _negative_judge_context(spec: TestSpec) -> list[str]:
     list. Which group wins when they disagree is deliberately not stated: it
     is the open "Note authority" decision on issue #2478.
     """
-    correct = (spec.negative or {}).get("correct_skill", [])
+    # Minus the skill under test: a `correct_skill` naming it (two fixtures do)
+    # would otherwise tell the judge the correct route is the skill it was just
+    # told must not do its own task. A list that empties renders the
+    # no-skill arm.
+    correct = [
+        s for s in (spec.negative or {}).get("correct_skill", []) if s != spec.skill
+    ]
     if correct:
         routing = "decline and route the user to: " + ", ".join(correct)
     else:
