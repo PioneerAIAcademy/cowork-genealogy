@@ -15,7 +15,7 @@
       "issue-1901"
     ],
     "expected_outcome": "xfail",
-    "xfail_reason": "Owned by issue #2711 (next run: init-project). #3066 (2026-10-01) added test_person_level_sources_carried, changed person_read to return person-level sources, and edited this test in one commit; init-project's body does not yet carry those sources into the tree re-pointed at their source ids. Measured 2026-10-02 (PR #3000, v9_2026-10-02_00-01-02): I1 missing both Belgium person-level sources. Remove this marker when init-project's body carries person-level sources and the test passes."
+    "xfail_reason": "Owned by issue #2122 (the init-project agent conversion, whose fold rewrites the body that must carry these sources; #2711 is only the run-queue pointer and #2696 closed with this still red). #3066 (2026-10-01) added test_person_level_sources_carried, changed person_read to return person-level sources, and edited this test in one commit; init-project's body does not yet carry those sources into the tree re-pointed at their source ids. Measured 2026-10-02 (PR #3000, v9_2026-10-02_00-01-02): I1 missing both Belgium person-level sources. Remove this marker when init-project's body carries person-level sources and the test passes."
   },
   "input": {
     "user_message": "Start a new research project. Analyze the sources and family structure for Jean Baptiste Moreau (MRQ1-JBM) and look for errors or inconsistencies.",
