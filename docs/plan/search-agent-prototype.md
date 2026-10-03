@@ -511,8 +511,9 @@ Seven pass criteria, plus one measurement that sets a branch:
   "no persistence", which is why this plan removes the writable *project* directory
   and not the whole filesystem. Proved against a real `SessionStore`: with a read-only
   `CLAUDE_CONFIG_DIR` the turn returns `is_error=False`, the correct answer and empty
-  stderr, while writing **0 files and appending 0 frames**. Add `os.access(dir, W_OK)`
-  at worker start.
+  stderr, while writing **0 files and appending 0 frames**. Built (U10): a `TMPDIR`
+  write test that exits the worker 2 at start, and a per-turn rule that closes a model
+  turn with 0 entries appended as `transcript_lost` (500, and `/healthz` 503).
 - **Frames appended > 0 *strictly before the kill*, and the resumed turn's loaded entry
   count ≥ the count at kill time.** "Frames > 0 per turn" is not enough: under the
   SDK's default batching a single end-of-turn flush satisfies it while the mid-turn

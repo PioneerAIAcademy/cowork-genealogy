@@ -52,6 +52,7 @@ from harness.skill_runner import (
     SkillRunResult,
     agent_return_text,
     direct_dispatch_prompt,
+    judge_skills_slot,
     run_skill,
     spawn_prompts,
     spawned_agents,
@@ -1929,7 +1930,11 @@ def _run_judge(
             judge_text = _returns
     else:
         judge_user_message = spec.user_message
-        judge_ran = result.skills_invoked
+        # Also a VALUE change, not a template change, for the reason above: the
+        # skill path's slot names the agents the skill spawned as well.
+        judge_ran = judge_skills_slot(
+            result.skills_invoked, getattr(result, "builtin_tool_calls", []) or []
+        )
     return grade(
         rubric=judge_rubric,
         judge_context=judge_context,

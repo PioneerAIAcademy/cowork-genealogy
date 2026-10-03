@@ -13,10 +13,14 @@ imports ``enqueue`` as a top-level module because that is how the container lays
 
 from __future__ import annotations
 
+import asyncio
 import json
 import re
+import socket
 import sys
 import pathlib
+import threading
+import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -1325,3 +1329,153 @@ def test_queue_body_carries_no_token_or_user_field():
     would persist in turns.message, SQS and the DLQ."""
     body = app.queue_body("t", SessionRow("s", "p", "t", "m", T0, T0, USER_A.id), "hi", T0.isoformat(), 1)
     assert set(body) == {"turn_id", "session_id", "project_id", "text", "enqueued_at", "max_nudges"}
+
+
+# ── U10: /api/health as readiness ────────────────────────────────────────────────
+
+
+class SilentPostgres:
+    """A local listener that accepts and never answers: a blackholed Postgres, no
+    network. ``accepted`` counts the connections the probes opened."""
+
+    hang_up = False
+
+    def __init__(self) -> None:
+        self.sock = socket.socket()
+        self.sock.bind(("127.0.0.1", 0))
+        self.sock.listen(16)
+        self.sock.settimeout(0.05)
+        self.port = self.sock.getsockname()[1]
+        self.accepted: list[socket.socket] = []
+        self.stopped = threading.Event()
+        threading.Thread(target=self._accept, daemon=True).start()
+
+    def _accept(self) -> None:
+        while not self.stopped.is_set():
+            try:
+                conn, _ = self.sock.accept()
+            except (TimeoutError, socket.timeout):
+                continue
+            except OSError:
+                return
+            if self.hang_up:
+                conn.close()
+            else:
+                self.accepted.append(conn)
+
+    @property
+    def dsn(self) -> str:
+        return f"postgresql://probeuser:secretpw@127.0.0.1:{self.port}/proto"
+
+    def close(self) -> None:
+        self.stopped.set()
+        self.sock.close()
+        for conn in self.accepted:
+            conn.close()
+
+
+@pytest.fixture
+def silent_pg():
+    pg = SilentPostgres()
+    yield pg
+    pg.close()
+
+
+class RefusingPostgres(SilentPostgres):
+    """A local listener that hangs up on every connection at once: a Postgres that is down
+    and says so fast on every OS. Port 1 is not that on Windows, which retries a refused
+    loopback connect for about two seconds, past ``READY_TIMEOUT_S``."""
+
+    hang_up = True
+
+
+@pytest.fixture
+def refused_pg():
+    pg = RefusingPostgres()
+    yield pg
+    pg.close()
+
+
+REFUSED_DSN = "postgresql://probeuser:secretpw@127.0.0.1:1/proto"
+HEALTH_KEYS = {"ok", "tier", "queue", "poll_s", "ping_s"}
+
+
+class ReadyStore(FakeStore):
+    """A FakeStore with the optional probe, answering ``check``."""
+
+    def __init__(self, check: dict[str, Any]) -> None:
+        super().__init__()
+        self.check = check
+
+    async def check_ready(self, timeout_s: float | None = None) -> dict[str, Any]:
+        return {"ok": self.check["ok"], "checks": {"postgres": self.check}}
+
+
+async def test_health_is_503_when_the_store_is_not_ready():
+    store = ReadyStore({"ok": False, "error": "OperationalError"})
+    async with make_client(store, FakeQueue(), user=None) as c:
+        r = await c.get("/api/health")
+    body = r.json()
+    assert r.status_code == 503 and HEALTH_KEYS <= set(body) and body["ok"] is False
+    assert body["queue"] == "FakeQueue", "the keys the drivers read survive a 503"
+    assert body["checks"] == {"postgres": {"ok": False, "error": "OperationalError"}}
+
+
+async def test_health_is_200_with_checks_when_ready():
+    async with make_client(ReadyStore({"ok": True}), FakeQueue(), user=None) as c:
+        r = await c.get("/api/health")
+    assert r.status_code == 200 and r.json()["checks"] == {"postgres": {"ok": True}}
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        r = await c.get("/api/health")
+    assert r.status_code == 200 and "checks" not in r.json(), "a store with no probe keeps today's body"
+
+
+async def test_health_that_raises_is_503_not_500():
+    class Broken(FakeStore):
+        async def check_ready(self, timeout_s=None):
+            raise RuntimeError("probe exploded")
+
+    async with make_client(Broken(), FakeQueue(), user=None) as c:
+        r = await c.get("/api/health")
+    assert r.status_code == 503 and "checks" not in r.json() and HEALTH_KEYS <= set(r.json())
+
+
+def test_the_tier_logs_its_info_lines_under_a_bare_interpreter():
+    """uvicorn configures only its own loggers; an ok health transition is an info line,
+    and the live stack showed none until proto.web had its own handler."""
+    import subprocess
+
+    code = (
+        "import asyncio, sys; sys.path.insert(0, sys.argv[1]); from web import app\n"
+        "store = app.PgStore(sys.argv[2])\n"
+        "async def fake(): return None\n"
+        "store._probe_postgres = fake\n"
+        "asyncio.run(store.check_ready())\n"
+    )
+    out = subprocess.run([sys.executable, "-c", code, str(PROTO), REFUSED_DSN], capture_output=True,
+                         text=True, encoding="utf-8", timeout=60)
+    assert out.returncode == 0, out.stderr
+    assert "ev=health check=postgres ok=true" in out.stderr, out.stderr
+
+
+async def test_pgstore_check_ready_fails_fast_on_refused_and_silent_postgres(refused_pg, silent_pg):
+    refused = await app.PgStore(refused_pg.dsn).check_ready()
+    assert refused == {"ok": False, "checks": {"postgres": {"ok": False, "error": "OperationalError"}}}
+    started = time.monotonic()
+    silent = await app.PgStore(silent_pg.dsn).check_ready(timeout_s=0.3)
+    elapsed = time.monotonic() - started
+    assert silent["checks"]["postgres"] == {"ok": False, "error": "TimeoutError"}
+    assert elapsed < 0.8, f"{elapsed:.2f}s: psycopg's own connect_timeout decided, not the race"
+    for report in (refused, silent):
+        raw = json.dumps(report)
+        assert "probeuser" not in raw and "127.0.0.1" not in raw and "secretpw" not in raw
+
+
+async def test_concurrent_health_share_one_probe(monkeypatch, silent_pg):
+    monkeypatch.setattr(app, "READY_TIMEOUT_S", 0.3)
+    async with make_client(app.PgStore(silent_pg.dsn), FakeQueue(), user=None) as c:
+        replies = await asyncio.gather(*(c.get("/api/health") for _ in range(3)))
+    accepted = len(silent_pg.accepted)
+    assert [r.status_code for r in replies] == [503, 503, 503]
+    assert all(r.json()["checks"]["postgres"] == {"ok": False, "error": "TimeoutError"} for r in replies)
+    assert accepted == 1, f"{accepted} connections: a stalled host must cost one, not one per probe"
