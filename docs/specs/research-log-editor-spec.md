@@ -481,17 +481,37 @@ Scope, and why it is this narrow:
   carrying its plural (`church records`, `marriage records`), and it is anchored
   on the earliest of the household and kinship claims rather than on the
   household word alone.
-- **A household word is not a household claim.** `household` and `dwelling` are
-  ordinary nouns for the concept as much as for a particular one, so one of them
-  counts only with a name attached — `household of Nancy Doss`, `William Mullen
-  household` — and the forward window stops at the first `.` or `;` so a name in
-  the next sentence cannot supply one. Without this the payload trigger refused
-  notes that assert nothing: `ut_search_records_027`'s "Spouse field absent in
-  index — reading full record to view household members and marriage indicator"
-  only says what it is about to read, and "no Stribling appeared as a household
-  head on any readable page" is a negative result. The relational phrases
-  (`co-resident`, `enumerated with`, `living with`) are exempt, because they
-  predicate co-residence with or without a name.
+- **A household word is not a household claim, and the test is grammatical.**
+  `household` and `dwelling` are ordinary nouns for the concept as much as for a
+  particular one, so one of them counts only in a relation that puts someone in
+  it: `household of ⟨X⟩`, `in … household`, `⟨X⟩'s household`, `household
+  includes`, `heads a household`, or a noun compound (`Thomas Flynn household`).
+  Without this the payload trigger refused notes that assert nothing:
+  `ut_search_records_027`'s "Spouse field absent in index — reading full record
+  to view household members and marriage indicator" only says what it is about
+  to read, and "no Stribling appeared as a household head on any readable page"
+  is a negative result. The relational phrases (`co-resident`, `enumerated
+  with`, `living with`) are exempt, because they predicate co-residence on their
+  own. A role labelling a named person — `Amos (head), Nancy (wife)` — counts on
+  the kinship side.
+
+  **Capitalisation is never the test.** The first version asked whether a
+  capital sat within 24 characters of the noun, which is not a test for a name
+  and failed in both directions at once: it missed `amos whitfield in household
+  of nancy doss` and `Amos in the doss household`, and it fired on `no household
+  found in Pike County` and `Bucks Co., PA household: no Whitfield found`. The
+  compound arm is the one clause that still reads case, and there it is one of
+  three conditions — the run must also name no place (`Co`, `County`, `Twp`, a
+  two-letter state abbreviation…), must survive having a sentence-opening
+  determiner stripped off its front, and the noun must carry no abstract
+  complement (`household records`, `household composition`). Each clause and
+  each guard has a test that goes red when that one is removed.
+
+  **Relations are read sentence by sentence**, because one does not reach across
+  a full stop: in "…not indexed in FamilySearch. Rebecca's 1840 household cannot
+  be confirmed" the `in` belongs to the first sentence and the noun to the
+  second. The split is on a terminator followed by a space, so `Bucks Co., PA`
+  and `Sarah A. Mullen` are not cut at their abbreviating periods.
 - **"Indexed" beside a role word is a hedge** ("Role indexed as 'Head'"), as it
   is in the eval-plane validator. Flagging a *name* as indexed is not.
 - **The hedge is accepted however it is hyphenated.** The refusal message spells
@@ -503,23 +523,36 @@ Measured over the 4,320 distinct `notes` arguments in the committed run logs
 (2026-10-03; re-derive with
 `dev/measure-census-hedge-refusals.ts` rather than quote — the corpus moves with
 every committed run, and shrinks as well as grows, because a re-run replaces a
-skill's run log), the note-only rule refuses 152 (3.5%). Of the 1,998 staged
+skill's run log), the note-only rule refuses 144 (3.3%). Of the 1,998 staged
 `record_search` entries with a note, 861 pair to the search response that staged
 them (e2e run logs keep only a truncated summary, so the rest cannot be paired);
-the staged search refuses 30 of those 861 (3.5%), of which 7 are refused only
+the staged search refuses 29 of those 861 (3.4%), of which 7 are refused only
 because of the payload.
 
 Against `main` — the baseline that matters, since it is what ships today — the
 whole of this section's change newly refuses **0 notes and 3 payload ops**, and
-newly frees 34 notes and 10 payload ops. All three newly refused are flat "in
-household of ⟨Name⟩" claims logged against an 1850 payload, the shape the rule
-exists for. Every one of the 44 freed was read: they are search plans, nil
-results, candidate lists and negative findings that name no one in a
-household. An earlier version of the household-claim test required a name of
-the *whole* anchor set and freed a 45th — "1860 census: Elijah Wilkins … with
-Sarah Wilkins … as co-resident spouse. Children: Margaret E (1841)" — which is
-a real violation; that is why the relational phrases are exempt from it, and
-the case is pinned in `pre1880-census-hedge.test.ts`.
+newly frees **42 distinct notes** — 42 on the note-only axis and 11 on the
+payload axis, every one of the 11 already among the 42, so they are repeats of
+the same strings rather than a separate population. All three newly refused are
+flat "in household of ⟨Name⟩" claims logged against an 1850 payload, the shape
+the rule exists for.
+
+Every one of the 42 freed was read, and the right summary is that **none is an
+unhedged claim** — not that none names anyone. Most are search plans, nil
+results, candidate lists and negative findings, but four are the John Baker
+notes, which list eight household members by name and are freed because each
+one ends "No relationship-to-head column in 1870 census". They were refused
+before only because the hedge detector did not accept the hyphenated spelling
+the refusal message itself prints.
+
+Two earlier versions of this test were measured and discarded, and both failures
+are worth keeping. Requiring a name of the *whole* anchor set freed "1860
+census: Elijah Wilkins … with Sarah Wilkins … as co-resident spouse. Children:
+Margaret E (1841)", a real violation — which is why the relational phrases are
+exempt. Dropping the noun-compound arm freed eleven more, including "Thomas
+Flynn household, Dwelling 84, Family 91" — which is why that arm exists despite
+being the one clause that still reads case. Both cases are pinned in
+`pre1880-census-hedge.test.ts`.
 
 Against the fallback-present baseline (before the 2026-09-29 change deleted the
 whole-note `18[0-7]\d` test), 46 notes were newly freed and 0 newly refused
@@ -532,7 +565,7 @@ a 41% refusal rate, non-generalizability outside the US, and the signal being
 author-supplied and optional. `requirePre1880CensusHedge`'s docstring in
 `research-log-append.ts` carries the second verbatim, with the issue it was
 ruled on. The binding above answers the first two — the rate
-is 4.4% of notes, and non-US censuses that carry the column are excluded. The
+is 3.3% of notes, and non-US censuses that carry the column are excluded. The
 staged search answers most of the third for `record_search`: the census is read
 from FamilySearch's response, not from the caller. What still stands is the
 reach: a note logged by any other tool, or with no staged response, is judged on

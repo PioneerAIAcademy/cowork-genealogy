@@ -391,6 +391,108 @@ describe("requirePre1880CensusHedge tells a household claim from a household wor
   });
 });
 
+/**
+ * Every mechanism `assertsHousehold` is built from, pinned one at a time.
+ *
+ * The first version of that predicate asked whether a capital letter sat
+ * within 24 characters of the noun, and review broke it three ways in each
+ * direction at once. Capitalisation is not a test for a name: it misses a
+ * lowercase one and a list of bracketed roles, and it fires on a place. The
+ * predicate reads the GRAMMAR now, and each clause below has a test that goes
+ * red when that clause alone is removed -- the omission the previous round
+ * shipped, where disabling either the backward branch or the sentence stop
+ * left all 88 tests green.
+ */
+describe("assertsHousehold reads the relation, not the capitalisation", () => {
+  const bad = (n: string, years?: number[]) =>
+    expect(() => requirePre1880CensusHedge(n, years)).toThrow(/relationship-to-head/);
+  const ok = (n: string, years?: number[]) => expect(() => requirePre1880CensusHedge(n, years)).not.toThrow();
+
+  it.each([
+    // Each of these is refused on main and was ALLOWED by the capital test.
+    ["a bracketed role list", "1850 census: Amos (head), Nancy (wife), Thomas (son); dwelling 112."],
+    ["an all-lowercase name", "1850 census: amos whitfield in household of nancy doss."],
+    ["a lowercase name before the noun", "1850 census: Amos in the doss household."],
+  ])("refuses %s", (_label, n) => bad(n, [1850]));
+
+  it.each([
+    // ...and each of these is allowed on main and was REFUSED by it, because
+    // the only capital near the noun is a place.
+    ["a nil naming a county", "no household found in Pike County"],
+    ["a state abbreviation before the noun", "Bucks Co., PA household: no Whitfield found"],
+  ])("allows %s", (_label, n) => ok(n, [1850]));
+
+  it("needs each relation on its own, not just whichever one a note happens to carry", () => {
+    // A mutation sweep found `of` and `includes` unpinned: every note that
+    // exercised them also carried an `in`, so deleting either clause left the
+    // suite green. One note per clause, carrying that clause and no other.
+    bad("1850 census. Household of Nancy Doss, Pike County, Kentucky.", [1850]);
+    bad("1850 census. The household also includes: Mary J, age 9, and Thomas, age 4.", [1850]);
+    // Lowercase on purpose: a capitalised possessive is also a compound, so a
+    // capitalised note cannot pin this clause.
+    bad("1850 census. Amos listed at nancy doss's household, Pike County.", [1850]);
+    bad("1850 census. Amos was enumerated with Nancy Doss.", [1850]);
+  });
+
+  it("does not read a capitalised article as a name", () => {
+    // Stripping the sentence opener is what stops the compound arm becoming
+    // the capital test again from the other end. Both of these are mentions.
+    ok("1850 census. The household could not be identified from the index.", [1850]);
+    ok("1850 census. No household was located for this surname.", [1850]);
+  });
+
+  it("needs the noun-compound arm, which no relation reaches", () => {
+    // Eleven corpus notes take this shape. Without hasHouseholdCompound each
+    // is freed: there is no of, no in, no possessive and no kinship word.
+    bad("1850 U.S. Census, Schuylkill County, Pennsylvania - Thomas Flynn household, Dwelling 84, Family 91.", [1850]);
+    bad("1 result: Sarah A. Mullen, William Mullen household, Dodge County, Wisconsin.", [1850]);
+  });
+
+  it("needs the place guard on that arm, and the complement guard", () => {
+    // Both are what stop the compound arm becoming the capital test again.
+    ok("Bucks Co., PA household: no Whitfield found", [1850]);
+    ok("1830 census search for Bagley surname in Vermont. Reading Topsham household records to check age columns.", [1850]);
+  });
+
+  it("needs the sentence stop, because a relation does not cross a full stop", () => {
+    // Real corpus note: the `in` governs FamilySearch in one sentence and the
+    // noun opens the next. Matched against the whole string it is refused.
+    ok(
+      "1840 federal census for Geach in Licking County not indexed in FamilySearch. " +
+        "Rebecca's 1840 household cannot be confirmed via this index.",
+      [1850],
+    );
+    // ...and the stop must not cut at an abbreviating period, or the claim in
+    // this one is split away from its own `in`.
+    bad("1 result: Patrick Flynn, b. 1845 Ireland, in household of Thomas Flynn.", [1850]);
+  });
+
+  it("reads the participle, which is the form the one corpus instance uses", () => {
+    // 'heading own household with John Clark b.1822 Ohio and Sanfrancisco
+    // Clark b.1849 Ohio' - a headship claim that `heads?` alone missed, found
+    // by re-reading the freed list rather than by a test.
+    bad(
+      "CRITICAL LEAD: Christena Clark b.1787 Virginia, Cambridge, Guernsey County, Ohio " +
+        "- heading own household with John Clark b.1822 Ohio and Sanfrancisco Clark b.1849 Ohio.",
+      [1850],
+    );
+  });
+
+  it("wants the role OUTSIDE the bracket and the person outside it", () => {
+    // The loose form of ROLE_IN_PARENS refused four corpus notes that assert
+    // nothing. In each the role heads the parenthetical and the person sits
+    // inside it, which is a gloss; in a claim the person is outside and the
+    // bracket holds only the label.
+    ok("Anders Monsen in Norway Census (spouse Unna) - all 50 results from the 1801 census.", [1850]);
+    ok("c_002 (mother identity) cannot be resolved via this source without image browsing.", [1850]);
+    ok("The better approach is to search for Margret Reagan (the mother, b. 1820).", [1850]);
+    ok("Children named are John Flynn and Mary Ann Dougherty (wife of Patrick Dougherty).", [1850]);
+    // The claim shape, including the one that carries detail after the role.
+    bad("1850 census: Sarah (wife), Jesse (son).", [1850]);
+    bad("1850 census: John Baker (head, ~1822 Bavaria), Barbara Baker (~1825 Bavaria).", [1850]);
+  });
+});
+
 describe("requirePre1880CensusHedge with a staged census payload, continued", () => {
   const ok = (n: string, years?: number[]) => expect(() => requirePre1880CensusHedge(n, years)).not.toThrow();
 

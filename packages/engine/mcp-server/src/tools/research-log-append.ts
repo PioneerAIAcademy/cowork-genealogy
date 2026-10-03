@@ -480,10 +480,136 @@ const CORESIDENCE_CLAIM = /\b(?:co-?resident|enumerated with|living with)\b/i;
  * CONCEPT as much as for a particular one -- "reading the record to view
  * household members", "cannot identify the correct household", "no Stribling
  * appeared as a household head on any readable page" -- so one of these counts
- * only with a name attached. Global: `assertsHousehold` walks every match.
+ * only when something is PUT IN one.
  */
 const HOUSEHOLD_NOUN = /\b(?:household|dwelling)\b/;
-const HOUSEHOLD_NOUN_G = new RegExp(HOUSEHOLD_NOUN.source, "gi");
+
+/**
+ * Someone placed in a household, read off the GRAMMAR rather than off
+ * capitalisation.
+ *
+ * The first version of this test asked whether a capital letter sat within 24
+ * characters of the noun. That is not a test for a name and review broke it
+ * three ways in each direction at once: it missed "1850 census: amos
+ * whitfield in household of nancy doss" and "1850 census: Amos in the doss
+ * household", and it fired on "no household found in Pike County" and "Bucks
+ * Co., PA household: no Whitfield found", where the only capital is a place.
+ * No lexicon of names is available, so no window size fixes either direction.
+ *
+ * What separates the two populations is the RELATION, not the orthography: a
+ * claim puts someone IN a household or names the household OF someone, while
+ * a mention attaches the bare noun to an abstract complement (members,
+ * composition, listing, head, name) or negates it. Every alternative in
+ * `HOUSEHOLD_CLAIM` is one of those relations and every one is case-free.
+ *
+ * `in` admits up to three intervening words so "in the doss household" and
+ * "in the 1850 census household" both read, while "no household found in Pike
+ * County" does not -- there the `in` governs the place and follows the noun.
+ * The possessive arm wants the apostrophe adjacent, so "Rebecca's 1840
+ * household cannot be confirmed" stays a mention.
+ *
+ * ONE SHAPE RESISTS THIS and is handled separately below: the bare noun
+ * compound, "Thomas Flynn household, Dwelling 84, Family 91". There is no
+ * relation word to read, so `hasHouseholdCompound` does read case -- but as
+ * one of three conditions, with a place blocklist and a complement guard.
+ * That blocklist is safe in a way a blocklist of CLAIM shapes would not be:
+ * a place word missing from it causes a false refusal, which is actionable,
+ * where a missing claim shape would cancel a deny silently.
+ */
+const HOUSEHOLD_NOUNS = String.raw`(?:household|dwelling)`;
+
+/**
+ * Words that make the noun ABSTRACT rather than a particular household, read
+ * off the corpus: "household composition", "household records", "household
+ * members", "a household head on any readable page". A compound whose noun
+ * carries one of these is a mention however the modifier is spelled, which is
+ * what keeps "Reading Topsham household records" out.
+ */
+const HOUSEHOLD_COMPLEMENT = String.raw`(?:members?|composition|listing|records?|data|info(?:rmation)?|structure|size|names?|heads?|co-?residents?|schedules?|pages?|groups?|entr(?:y|ies))`;
+
+/**
+ * Tokens that are a PLACE rather than a person, so a capitalised run ending
+ * in one is not a name. Short on purpose: a place word missing here causes a
+ * false refusal, which is actionable, while a person-name word wrongly listed
+ * here would cancel a deny silently.
+ */
+const PLACE_MARKER = String.raw`(?:Co|County|Counties|Twp|Township|Parish|City|Town|State|Precinct|District|Ward|Borough|Village|[A-Z]{2})`;
+
+const HOUSEHOLD_CLAIM = new RegExp(
+  [
+    // "household of Nancy Doss", "Household of William Mullen"
+    String.raw`\b${HOUSEHOLD_NOUNS}\s+of\b`,
+    // "in the doss household", "in one dwelling", "within the household"
+    String.raw`\b(?:in|within)\s+(?:[\w.'’-]+\s+){0,3}${HOUSEHOLD_NOUNS}\b`,
+    // "Nancy Doss's household"
+    String.raw`\b[\w.’-]+(?:'s|s'|’s|s’)\s+${HOUSEHOLD_NOUNS}\b`,
+    // "Household also includes: Mary J", "the dwelling contains"
+    String.raw`\b${HOUSEHOLD_NOUNS}\s+(?:also\s+)?(?:includes?|contains?|comprises?|lists?)\b`,
+    // "heads a household in Justice Precinct 4", "heading own household with
+    // John Clark b.1822" -- the participle is not optional decoration, it is
+    // the form the one corpus instance uses.
+    String.raw`\bhead(?:s|ing|ed)?\s+(?:a|the|his|her|their|own|her\s+own|his\s+own)?\s*${HOUSEHOLD_NOUNS}\b`,
+  ].join("|"),
+  "i",
+);
+
+/**
+ * The NOUN-COMPOUND shape, which the relations above cannot reach: "Thomas
+ * Flynn household, Dwelling 84, Family 91" and "Flynn household: Patrick
+ * Flynn (32, M, Laborer)" are both flat claims and both common in the corpus
+ * -- dropping this arm freed eleven of them.
+ *
+ * Capitalisation is ONE of three conditions here, never the whole test, which
+ * is the correction review asked for. The run must also avoid a place marker,
+ * so "Bucks Co., PA household" does not qualify, and the noun must not carry
+ * an abstract complement, so "Reading Topsham household records" does not
+ * either. Case-sensitive by necessity and searched against `notes`.
+ */
+const HOUSEHOLD_COMPOUND_G = new RegExp(
+  String.raw`((?:[A-Z][\w'’-]*[ ]){1,3})(?:[Hh]ousehold|[Dd]welling)\b(?![ ]${HOUSEHOLD_COMPLEMENT}\b)`,
+  "g",
+);
+const PLACE_MARKER_ONLY = new RegExp(String.raw`^${PLACE_MARKER}$`);
+
+/**
+ * Capitalised only because they open a sentence. Stripped from the front of a
+ * run before it is judged, or "The household also includes: Mary J" reads as
+ * a compound named "The" -- which is the capital test coming back in through
+ * the arm meant to replace it.
+ */
+const SENTENCE_OPENER = /^(?:The|A|An|This|That|These|Those|His|Her|Their|Our|My|No|One|Each|Same|Both|Another|Other|New|Old|Census|Federal|State|Found|Returned|Reading|Result)$/;
+
+/**
+ * The compound arm: after dropping any sentence-opening determiner, the run
+ * must be non-empty and name no place.
+ */
+function hasHouseholdCompound(notes: string): boolean {
+  for (const m of notes.matchAll(HOUSEHOLD_COMPOUND_G)) {
+    const run = m[1].trim().split(/\s+/);
+    while (run.length > 0 && SENTENCE_OPENER.test(run[0])) run.shift();
+    if (run.length > 0 && run.every((t) => !PLACE_MARKER_ONLY.test(t.replace(/\.$/, "")))) return true;
+  }
+  return false;
+}
+
+/**
+ * A role LABELLING a named person is a structural claim whatever else the
+ * note does: "Amos (head), Nancy (wife), Thomas (son); dwelling 112" states a
+ * family in full and names no relation in prose, so neither the household arm
+ * nor `KINSHIP_CLAIM` (which wants `wife` immediately before a capitalised
+ * name) saw it.
+ *
+ * THE SHAPE IS NARROW ON PURPOSE: a word, then a bracket, then the role and
+ * nothing else before the `,` or `)`. A looser `\(\s*role` matched four
+ * corpus notes that assert nothing -- "c_002 (mother identity)", "Anders
+ * Monsen in Norway Census (spouse Unna)", "Margret Reagan (the mother, b.
+ * 1820)" and a will's "Mary Ann Dougherty (wife of Patrick Dougherty)". Those
+ * are glosses, where the role is the head of the parenthetical and the person
+ * is inside it; in a claim the person is OUTSIDE and the bracket holds only
+ * the label. "(head, ~1822 Bavaria)" still counts -- the comma ends the role.
+ */
+const ROLE_IN_PARENS =
+  /[\w.'’]\s*\(\s*(?:head|wife|husband|son|daughter|mother|father|spouse|widow)\s*[,)]/i;
 
 /**
  * The union of the two, for POSITION only -- where the earliest household
@@ -530,24 +656,22 @@ const RELATIONSHIP_COLUMN_DENIED = new RegExp(
  * one of four payload ops this branch newly refused against `main`; the other
  * three are flat "in household of <Name>" claims and stay refused.
  *
- * So the abstract nouns ask what the kinship arm already asks: is a NAME
- * attached? A structure needs at least one named party, and the two shapes
- * real notes use are `household of Nancy Doss` (name after) and `William
- * Mullen household` (name before). Both are read, and the forward window stops
- * at the first `.` or `;` so a name in the NEXT sentence cannot supply one.
- * The relational phrases bypass the test entirely -- see `CORESIDENCE_CLAIM`.
+ * Two arms, each exercised by the suite: the relational phrases, which
+ * predicate co-residence on their own, and `HOUSEHOLD_CLAIM`, which wants the
+ * noun in a relation that puts someone in it. Case-free in both.
  *
- * Searched against `notes`, not `text`: the capital is the whole signal.
+ * SENTENCE BY SENTENCE, because a grammatical relation does not reach across
+ * a full stop. "…not indexed in FamilySearch. Rebecca's 1840 household cannot
+ * be confirmed" is a real corpus note where the `in` belongs to one sentence
+ * and the noun to the next, and matching the whole string refuses it. The
+ * split is on a terminator FOLLOWED BY SPACE, so "Bucks Co., PA" and "Sarah
+ * A. Mullen" are not cut at their abbreviating periods.
  */
 function assertsHousehold(notes: string): boolean {
   if (CORESIDENCE_CLAIM.test(notes)) return true;
-  for (const m of notes.matchAll(HOUSEHOLD_NOUN_G)) {
-    const end = m.index + m[0].length;
-    if (/[A-Z]/.test(notes.slice(end, end + 24).split(/[.;]/, 1)[0] ?? "")) return true;
-    const before = notes.slice(Math.max(0, m.index - 40), m.index);
-    if (/[A-Z][\w.'’-]*(?:\s+[A-Z][\w.'’-]*)*[\s'’]*s?\s*$/.test(before)) return true;
-  }
-  return false;
+  return notes
+    .split(/[.;]\s/)
+    .some((sentence) => HOUSEHOLD_CLAIM.test(sentence) || hasHouseholdCompound(sentence));
 }
 
 export function requirePre1880CensusHedge(
@@ -639,8 +763,13 @@ export function requirePre1880CensusHedge(
   // return, which is a statement about the tree and not about what the census
   // stated. That carve-out is the eval validator's too, and dropping it made
   // this refuse a compliant note.
+  // `ROLE_IN_PARENS` is the third shape: a note that labels each person with a
+  // bracketed role states the family as completely as prose does, and neither
+  // of the other two saw it.
   const assertsKinship =
-    KINSHIP_CLAIM.test(notes) || /\bhead\s+of\s+household\b/.test(text);
+    KINSHIP_CLAIM.test(notes) ||
+    ROLE_IN_PARENS.test(notes) ||
+    /\bhead\s+of\s+(?:the\s+)?household\b/.test(text);
   if (!describesHousehold && !assertsKinship) return;
 
   const hedged =
