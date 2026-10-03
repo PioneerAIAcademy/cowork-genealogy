@@ -1,0 +1,254 @@
+{
+  "run_log": "v1_2026-10-02_16-41-45.json",
+  "annotator": "adeyinkaadedayo1024@mail.com",
+  "corrections": [
+    {
+      "test_id": "ut_survey_surname_d4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly declined single-person search and routed to search-records."
+    },
+    {
+      "test_id": "ut_survey_surname_d4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Declined without performing survey work; named the correct alternative."
+    },
+    {
+      "test_id": "ut_survey_surname_d4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Zero MCP calls, correct for negative test."
+    },
+    {
+      "test_id": "ut_survey_surname_d5",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "3 population households + 1 slave schedule; names and counties match fixture."
+    },
+    {
+      "test_id": "ut_survey_surname_d5",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "place_search, record_search, research_log_append, Write all called."
+    },
+    {
+      "test_id": "ut_survey_surname_d5",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Args match predicates; residenceYearFrom/To 1850; projectPath present."
+    },
+    {
+      "test_id": "ut_survey_surname_d5",
+      "dimension_source": "rubric",
+      "dimension_name": "Place resolution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Virginia resolved to recordSubdivision Virginia."
+    },
+    {
+      "test_id": "ut_survey_surname_d5",
+      "dimension_source": "rubric",
+      "dimension_name": "Census coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Single year 1850 searched once; correct for 1850-1850 span."
+    },
+    {
+      "test_id": "ut_survey_surname_d5",
+      "dimension_source": "rubric",
+      "dimension_name": "Threshold compliance",
+      "llm_score": 3,
+      "corrected_score": null,
+      "comment": "correcting to N/A. totalMatches 5, no year exceeds 600; rubric says null when threshold never triggered."
+    },
+    {
+      "test_id": "ut_survey_surname_d5",
+      "dimension_source": "rubric",
+      "dimension_name": "Table structure",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Edmund+Mary grouped by shared recordArk; slave schedule separately identified."
+    },
+    {
+      "test_id": "ut_survey_surname_d2",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Three 1820 households match fixture data."
+    },
+    {
+      "test_id": "ut_survey_surname_d2",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All tool calls made; table written; summary returned."
+    },
+    {
+      "test_id": "ut_survey_surname_d2",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All args match predicates; no fixture_not_found."
+    },
+    {
+      "test_id": "ut_survey_surname_d2",
+      "dimension_source": "rubric",
+      "dimension_name": "Place resolution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Virginia resolved correctly."
+    },
+    {
+      "test_id": "ut_survey_surname_d2",
+      "dimension_source": "rubric",
+      "dimension_name": "Census coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Single year 1820 searched; correct."
+    },
+    {
+      "test_id": "ut_survey_surname_d2",
+      "dimension_source": "rubric",
+      "dimension_name": "Table structure",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Sectioned by year; required columns present."
+    },
+    {
+      "test_id": "ut_survey_surname_d1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "3+3+6=12 households; counties and names match fixtures."
+    },
+    {
+      "test_id": "ut_survey_surname_d1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All years covered; 1840 paged; all searches logged; table written."
+    },
+    {
+      "test_id": "ut_survey_surname_d1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Four record_search calls correct; page-2 offset 100."
+    },
+    {
+      "test_id": "ut_survey_surname_d1",
+      "dimension_source": "rubric",
+      "dimension_name": "Place resolution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Virginia resolved and applied to all calls."
+    },
+    {
+      "test_id": "ut_survey_surname_d1",
+      "dimension_source": "rubric",
+      "dimension_name": "Census coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "1820, 1830, 1840 all searched; 1840 paged."
+    },
+    {
+      "test_id": "ut_survey_surname_d1",
+      "dimension_source": "rubric",
+      "dimension_name": "Table structure",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Three year sections; required columns; 12 rows."
+    },
+    {
+      "test_id": "ut_survey_surname_d3",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "1840: 6 results across 2 pages. 1850: 2218, correctly stopped."
+    },
+    {
+      "test_id": "ut_survey_surname_d3",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both years searched; 1850 halted; asked for counties; table written."
+    },
+    {
+      "test_id": "ut_survey_surname_d3",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All calls match; 1840 page-2 offset 100; no second 1850 call."
+    },
+    {
+      "test_id": "ut_survey_surname_d3",
+      "dimension_source": "rubric",
+      "dimension_name": "Place resolution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Virginia mapped correctly on both searches."
+    },
+    {
+      "test_id": "ut_survey_surname_d3",
+      "dimension_source": "rubric",
+      "dimension_name": "Census coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "1840 and 1850 both searched; correct for span."
+    },
+    {
+      "test_id": "ut_survey_surname_d3",
+      "dimension_source": "rubric",
+      "dimension_name": "Threshold compliance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "agree. 1850 exceeds 600; threshold applies."
+    },
+    {
+      "test_id": "ut_survey_surname_d3",
+      "dimension_source": "rubric",
+      "dimension_name": "Table structure",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "1840 has 6 rows; 1850 notes threshold and asks for counties."
+    },
+    {
+      "test_id": "ut_survey_surname_d2",
+      "dimension_source": "rubric",
+      "dimension_name": "Threshold compliance",
+      "llm_score": 3,
+      "corrected_score": null,
+      "comment": "totalMatches 3, no year exceeds 600; rubric says null when threshold never triggered."
+    },
+    {
+      "test_id": "ut_survey_surname_d1",
+      "dimension_source": "rubric",
+      "dimension_name": "Threshold compliance",
+      "llm_score": 3,
+      "corrected_score": null,
+      "comment": "N/A — totalMatches 3/3/6, no year exceeds 600; rubric says null when threshold never"
+    }
+  ]
+}
