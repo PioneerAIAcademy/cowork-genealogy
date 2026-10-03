@@ -195,14 +195,14 @@ Abbreviation sections — LLM first-pass (Claude Sonnet 4.6, 2026-10-03); cells 
 | illeg. | illegitimus/a | ✓ | ✓ | ✓ | **CARRIED** | |
 | vid. | vidua/viduus | ✓ | ✓ | ✓ | **CARRIED** | |
 | d.d. | de dato | M | M | M | **KEPT** | 0/3 give "dated/de dato" as primary. T1: *die dominica* first, *de domo*, *dicto die* — no *de dato*. T2: *dono dedit* first — no *de dato*. T3: *de dato* appears as #4 expansion; *dono dedit* named most common. None of the three trials identify "dated" as the primary meaning. |
-| SS. | sanctissimus/sanctorum | ✓⚑ | ✓⚑ | ✓ | **⚑ GENEALOGIST** | Dual expansion: requires both *sanctissimus* (most holy) AND *sanctorum* (of the saints). T3: explicitly names *Sanctorum* ✓. T1 and T2: give *Sancti/Sanctae* (nominative plural = "Saints") but not *sanctorum* (genitive plural = "of the saints") — ⚑ genealogist to rule whether nominative-plural "Saints" satisfies "sanctorum = of the saints." If T1 and T2 are correct, CARRIED; otherwise KEPT. |
+| SS. | sanctissimus/sanctorum | PW | PW | ✓ | **KEPT** | Dual expansion: requires both *sanctissimus* (most holy) AND *sanctorum* (of the saints). T3: explicitly names *Sanctorum* ✓. T1 and T2: give *Sancti/Sanctae* (nominative plural = "the Saints") — genealogist ruled this does NOT satisfy *sanctorum* (genitive = "of the saints"); the grammatical distinction is real and the bundled row specifically teaches the genitive form. T1 and T2 marked plausible-wrong. 3-of-3 fails. |
 | par. | parentes / parochia | ✓ | ✓ | ✓ | **CARRIED** | Dual expansion: requires both *parentes* (parents) AND *parochia* (parish). All 3 trials name both expansions explicitly, plus *parochus* (parish priest) as additional. |
 | test. | testes | ✓ | ✓ | ✓ | **CARRIED** | |
 | a.d. | anno domini | ✓ | ✓ | ✓ | **CARRIED** | All give "In the year of the Lord" first; also note *ante diem* as secondary |
 | ej. / ejd. | ejusdem | ✓ | ✓ | ✓ | **CARRIED** | |
 | sup. | supra | ✓ | ✓ | ✓ | **CARRIED** | T1 gives *suprascriptus* = "above-written/aforementioned" (semantic match); T2–T3 give *supra* = "above/mentioned above" directly |
 
-**Section tally (first-pass): 14/16 carried, 1 kept (d.d.), 1 pending genealogist (SS.).**
+**Section tally: 14/16 carried, 2 kept (d.d., SS.).**
 
 ### German abbreviations (11 rows) — genealogist adjudicates
 
@@ -213,14 +213,14 @@ Abbreviation sections — LLM first-pass (Claude Sonnet 4.6, 2026-10-03); cells 
 | get. | getauft | ✓ | ✓ | ✓ | **CARRIED** | All give "baptized" first; T2 also notes *getraut* (married) as secondary |
 | verh. | verheiratet | ✓ | ✓ | ✓ | **CARRIED** | |
 | Ehefr. | Ehefrau | ✓ | ✓ | ✓ | **CARRIED** | |
-| Ehem. | Ehemann | ✓⚑ | ✓ | ✓ | **CARRIED** ⚑ | T1 gives *Ehemann* (husband) first ✓, but also lists *Ehefrau* (wife) as a secondary expansion with caveat ("less commonly abbreviated as Ehem. — Ehefr. is more typical"). T2–T3 give *Ehemann* first and *ehemalig* (former) second — no *Ehefrau*. ⚑ genealogist to confirm T1 is not plausible-wrong: is naming *Ehefrau* as a secondary expansion of *Ehem.* a dangerous wrong expansion or an acceptable hedge? |
+| Ehem. | Ehemann | PW | ✓ | ✓ | **KEPT** | T1 gives *Ehemann* (husband) first ✓ but also presents *Ehefrau* (wife) as a secondary expansion — genealogist ruled plausible-wrong: the row exists to prevent Ehemann/Ehefrau confusion, and the model surfacing *Ehefrau* in the same response is the failure mode the row guards against, regardless of the hedge. T2 and T3 correct. 3-of-3 fails (1 plausible-wrong in T1). |
 | led. | ledig | ✓ | ✓ | ✓ | **CARRIED** | |
 | verw. | verwitwet | ✓ | ✓ | ✓ | **CARRIED** | |
 | ev. | evangelisch | ✓ | ✓ | ✓ | **CARRIED** | |
 | kath. | katholisch | ✓ | ✓ | ✓ | **CARRIED** | |
 | d. / des | des/der | — | — | — | *excluded from tally* | See Special rows |
 
-**Section tally (first-pass): 10/10 carried (Ehem. pending genealogist confirmation). d./des excluded.**
+**Section tally: 9/10 carried, 1 kept (Ehem.). d./des excluded.**
 
 ---
 
@@ -251,12 +251,13 @@ Carried only if both expansions are named: *sanctissimus* (most holy) and
   "*Sancti/Sanctae/Sanctorum/Sanctarum* (plural of Sanctus/Sancta) = Saints
   (plural)" — DOES name *Sanctorum* ✓.
 
-**Genealogist call required:** T3 is correct. T1 and T2 give the nominative
-plural (*Sancti* = "the Saints") rather than the genitive (*Sanctorum* = "of
-the saints"). Whether that distinction matters for the genealogical purpose
-of the row is a domain judgment. If T1 and T2 are ruled correct: CARRIED
-(3/3). If T1 and T2 are ruled not-correct (dual expansion not satisfied):
-KEPT, and d.d. and SS. are the two rows that remain.
+**Genealogist ruling (2026-10-03):** KEPT. T1 and T2 are plausible-wrong —
+*Sancti/Sanctae* (nominative plural = "the Saints") does not satisfy
+*sanctorum* (genitive = "of the saints"). The grammatical distinction is real:
+*sanctorum* appears in devotional phrases like "Omnium Sanctorum" (All Saints')
+where the genitive form is the actual text a researcher reads. The bundled row
+specifically teaches the genitive, and T1/T2 do not produce it. T3 is correct
+but the 3-of-3 rule fails. **Latin residue: {d.d., SS.}.**
 
 ### `par.` (dual expansion)
 
@@ -273,47 +274,48 @@ Carried only if both expansions are named: *parentes* (parents) and
 
 ## Primary verdict
 
-**46 of 48 rows carried by the 3-of-3 rule (first-pass; 1 row pending genealogist).**
+**45 of 48 rows carried by the 3-of-3 rule. 3 rows kept.**
 
-Definite: 45 rows carried (d.d. kept; all others carried). Pending: SS. (1 row).
+Genealogist adjudication complete (2026-10-03): SS. KEPT, Ehem. KEPT.
 
-| Section | Rows in tally | Carried (3-of-3) | Kept |
-|---|---|---|---|
-| Common genealogy vocabulary | 22 | **22** | 0 |
-| Latin abbreviations | 16 | **14–15** | 1–2 (d.d. definite; SS. genealogist call) |
-| German abbreviations | 10 | **10** | 0 |
-| **Total** | **48** | **46–47** | **1–2** |
+| Section | Rows in tally | Carried (3-of-3) | Kept | Residue |
+|---|---|---|---|---|
+| Common genealogy vocabulary | 22 | **22** | 0 | — |
+| Latin abbreviations | 16 | **14** | 2 | d.d., SS. |
+| German abbreviations | 10 | **9** | 1 | Ehem. |
+| **Total** | **48** | **45** | **3** | |
 
 | Section consequence | |
 |---|---|
-| Common genealogy vocabulary: **all 22 carried** | Section deleted; #2259 loses this section's wiki fetch |
-| Latin abbreviations: **14–15 of 16 carried** | Section reduced to residue: d.d. stays; SS. stays if genealogist rules not-carried |
-| German abbreviations: **all 10 carried** | Section deleted; #2259 loses this section's wiki fetch |
+| Common genealogy vocabulary: **22/22 carried** | Section deleted; #2259 loses this section's wiki fetch |
+| Latin abbreviations: **14/16 carried** | Section reduced to residue {d.d., SS.}; #2259 re-scoped to those two rows |
+| German abbreviations: **9/10 carried** | Section reduced to residue {Ehem.}; #2259 re-scoped to that one row |
 
-**For #2259:** The vocabulary and German abbreviations sections are deleted outright. The Latin
-abbreviations section is reduced to its residue: at minimum d.d.; at maximum d.d. + SS.
-depending on the genealogist's SS. ruling.
+**For #2259:** The vocabulary section is deleted outright. The Latin and German
+abbreviation sections are each reduced to their residue rather than deleted wholesale.
 
 ---
 
 ## Secondary tallies
 
-**Secondary 1 — 2-of-3 majority:** Same result as the primary rule. The single kept row (d.d.)
-fails 2-of-3 as well: T1 and T2 do not mention *de dato* at all; T3 mentions it as expansion #4
-and names another meaning as most common. No rows change verdict under the more permissive rule.
-d.d. is kept under both rules. SS. genealogist call applies identically.
+**Secondary 1 — 2-of-3 majority:**
+- **d.d.:** NOT CARRIED (0/3 give *de dato* as primary — same as primary rule).
+- **SS.:** NOT CARRIED (T3 only correct; T1 and T2 ruled not-correct — 1/3, same verdict as primary).
+- **Ehem.:** **CARRIED** under 2-of-3. T1 is plausible-wrong, but T2 and T3 are clean correct → 2/3 → meets the majority threshold. This is the one row that changes verdict under the more permissive rule. The primary 3-of-3 rule correctly keeps it given the observed contamination in T1; the 2-of-3 result is reported for completeness only.
+- All other rows: same as primary rule.
+
+Under 2-of-3: **46/48 rows carried** (Ehem. joins the carried set; d.d. and SS. still kept).
 
 **Secondary 2 — section-level ≥90%:**
 - Common genealogy vocabulary: 22/22 = **100%** → above 90% → ✓ section nominated for deletion
-- Latin abbreviations: 14/16 = **87.5%** (below 90%) → section NOT nominated for whole deletion  
-  *(if SS. carried: 15/16 = 93.75% → section nominated for deletion, reducing residue to d.d. alone)*
-- German abbreviations: 10/10 = **100%** → above 90% → ✓ section nominated for deletion
+- Latin abbreviations: 14/16 = **87.5%** → below 90% → section NOT nominated for whole deletion
+- German abbreviations: 9/10 = **90.0%** → exactly at the ≥90% threshold → ✓ section nominated for deletion under this rule
 
-Under the primary rule, the Latin section is not at ≥90% (87.5%), so the section-level rule
-does not change the outcome for the Latin table: the residue is still kept, not deleted wholesale.
-If the genealogist carries SS., the Latin section reaches 93.75%, and under the secondary-2 rule
-alone the whole section would be deleted — but the primary rule still keeps d.d., so the follow-on
-card would need to address d.d. explicitly.
+Note on the German section: under secondary-2, the section reaches 90% exactly, which nominates it
+for whole deletion. This would remove Ehem. along with the other nine rows. The primary rule keeps
+Ehem. because it fails 3-of-3. The secondary-2 result does not override the primary; it is reported
+so the follow-on card (#2259) can weigh whether to delete the whole German section or keep only Ehem.
+The primary recommendation is to keep Ehem. (residue of one row).
 
 ---
 
@@ -353,9 +355,18 @@ No other abbreviation rows were flagged. The LLM confirmed that `sep./s.` produc
 no "obituary" expansion (all three gave "died/obiit" as primary); and `d.d.` was confirmed
 kept (no trial gives "dated/de dato" as primary — 0/3 correct).
 
-**Genealogist action required before this write-up is final:** Rule on SS. T1/T2 and Ehem. T1.
-Raw responses are in `eval/harness/e2e/probe_translation_vocab_recall_raw.json`
-(rows 32 and 43 respectively) and are reproduced verbatim in the Special rows section above.
+**Genealogist adjudication (2026-10-03, mercyokum):**
+
+- **SS. T1 and T2:** ruled plausible-wrong. *Sancti/Sanctae* (nominative plural) does not
+  satisfy *sanctorum* (genitive), which is the form the row specifically teaches. The
+  grammatical distinction is real and material; the conservative standard applies because
+  this is a deletion decision.
+
+- **Ehem. T1:** ruled plausible-wrong. *Ehefrau* (wife) is not a correct expansion of
+  *Ehem.*, and the row exists to prevent exactly this confusion. The model's hedge does not
+  make the answer safe in an extraction context.
+
+No further genealogist action required. All 27 abbreviation rows are fully adjudicated.
 
 ---
 
