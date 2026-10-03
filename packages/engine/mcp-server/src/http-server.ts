@@ -7,7 +7,8 @@
 // `X-Genealogy-Project-Id` header names the project whose store the request
 // runs against. Which backend that store is comes from the caller's
 // `bindStore` factory — this module imports no backend, so the unit test
-// supplies a double and never loads `pg`/`@aws-sdk`.
+// supplies a double and never loads `pg`/`@aws-sdk`. Readiness is injected the
+// same way: `/healthz` maps the caller's `checkReady` report to 200 or 503.
 import http, { type IncomingHttpHeaders, type RequestListener } from "node:http";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { bearerPrincipal, type Principal } from "./auth/principal.js";
@@ -19,6 +20,18 @@ import { runWithProjectStore, unboundProjectStore, type ProjectStore } from "./s
 
 export const MCP_PATH = "/mcp";
 export const HEALTHZ_PATH = "/healthz";
+
+/** How long `/healthz` waits on `checkReady` before answering 503 itself: the
+ *  backend's own 1.5 s probe deadline (READY_TIMEOUT_MS) plus 500 ms, so a
+ *  probe that never settles cannot hold the answer. */
+export const HEALTHZ_TIMEOUT_MS = 2_000;
+
+/** What a readiness probe reports. The Pg/S3 backend's report satisfies it
+ *  structurally; `error` is a short label, never a message. */
+export interface ReadyReport {
+  ok: boolean;
+  checks: Record<string, { ok: boolean; error?: string }>;
+}
 
 /** The per-request project header as node:http lower-cases it; on the wire it
  *  is spelled `X-Genealogy-Project-Id`. */
@@ -95,6 +108,37 @@ export interface ToolServerOptions {
    *  that request's client disconnects before its response is written; a store
    *  that writes transactionally rolls back rather than commit after it. */
   bindStore: (projectId: string, signal: AbortSignal) => ProjectStore;
+  /** Whether the stores behind `bindStore` can serve a call. Absent, `/healthz`
+   *  answers 200 without `checks`. */
+  checkReady?: () => Promise<ReadyReport>;
+}
+
+/** `/healthz`: 200 or 503 from the report, the same body shape either way. A
+ *  probe that rejects or outlives HEALTHZ_TIMEOUT_MS is a 503 with no `checks`,
+ *  never a 500. */
+async function handleHealthz(res: http.ServerResponse, options: ToolServerOptions): Promise<void> {
+  const tools = allToolSchemas.length;
+  if (!options.checkReady) {
+    sendJson(res, 200, { ok: true, tools });
+    return;
+  }
+  let timer: NodeJS.Timeout | undefined;
+  const expired = new Promise<undefined>((resolve) => {
+    timer = setTimeout(() => resolve(undefined), HEALTHZ_TIMEOUT_MS);
+  });
+  let report: ReadyReport | undefined;
+  try {
+    report = await Promise.race([options.checkReady(), expired]);
+  } catch {
+    report = undefined;
+  } finally {
+    clearTimeout(timer);
+  }
+  if (!report) {
+    sendJson(res, 503, { ok: false, tools });
+    return;
+  }
+  sendJson(res, report.ok ? 200 : 503, { ok: report.ok, tools, checks: report.checks });
 }
 
 async function handleMcpPost(
@@ -148,7 +192,7 @@ async function route(
 ): Promise<void> {
   const { pathname } = new URL(req.url ?? "/", "http://localhost");
   if (pathname === HEALTHZ_PATH && req.method === "GET") {
-    sendJson(res, 200, { ok: true, tools: allToolSchemas.length });
+    await handleHealthz(res, options);
     return;
   }
   if (pathname !== MCP_PATH) {
@@ -189,7 +233,11 @@ export interface StartHttpServerOptions extends ToolServerOptions {
 export function startHttpServer(options: StartHttpServerOptions): Promise<http.Server> {
   return new Promise((resolve, reject) => {
     const server = http.createServer(
-      createToolServer({ baseConfig: options.baseConfig, bindStore: options.bindStore }),
+      createToolServer({
+        baseConfig: options.baseConfig,
+        bindStore: options.bindStore,
+        checkReady: options.checkReady,
+      }),
     );
     server.once("error", reject);
     server.listen(options.port, options.host, () => {

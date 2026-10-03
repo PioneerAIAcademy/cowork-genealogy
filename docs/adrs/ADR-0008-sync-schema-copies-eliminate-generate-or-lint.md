@@ -219,8 +219,15 @@ parser. The `eval/app` fork was on this list until #1488 deleted it.
 ## Revisit when
 
 - **The scenario viewer's section components are resolved** — `eval/app` imports
-  its types from `@genealogy/schema`, but its 11 hand-maintained section
-  components against `packages/viewer-ui`'s 14 are reached by no tier.
+  its types from `@genealogy/schema`, but its hand-maintained copies of
+  `packages/viewer-ui`'s section components are reached by no tier. Compare
+  `ls eval/app/components/scenario/components/sections/*.tsx` against
+  `ls packages/viewer-ui/src/components/sections/*.tsx`; the counts are
+  deliberately not written here, because this file is one of the four that had
+  them stale at once (`docs/architecture.md`, "Don't restate the section count
+  as a literal anywhere"). Their shared `StatusBadge` **colour map** is the one
+  exception, pinned by a parity test since it drifted far enough to render
+  every gps-mentor verdict gray; the `statusLabelMap` beside it is not.
 - **`packages/schema`'s interfaces start drifting faster than #1165's lint
   catches**, which would make generating them — and moving their doc comments
   into `research.schema.json`, where Python and the fixtures would also see them

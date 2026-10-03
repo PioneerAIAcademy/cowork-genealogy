@@ -1,5 +1,12 @@
-import { describe, it, expect } from "vitest";
-import { buildExternalSearchUrl, buildExternalSearchUrlSchema } from "../../src/tools/build-external-search-url.js";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { mkdtemp, writeFile, readFile, rm } from "fs/promises";
+import { join } from "path";
+import { tmpdir } from "os";
+import {
+  buildExternalSearchUrl,
+  buildExternalSearchUrlSchema,
+  buildExternalSearchUrlTool,
+} from "../../src/tools/build-external-search-url.js";
 import { VALIDATOR_ENUMS } from "../../src/validation/validator.js";
 
 describe("build_external_search_url", () => {
@@ -724,7 +731,7 @@ describe("build_external_search_url", () => {
   });
 
   describe("unsupported site", () => {
-    it("names exactly the fifteen supported sites", () => {
+    it("names exactly the seventeen supported sites", () => {
       const r = buildExternalSearchUrl({
         site: "wiewaswie",
         attributes: { givenName: "Patrick", surname: "Flynn" },
@@ -750,6 +757,8 @@ describe("build_external_search_url", () => {
           "library_archives_canada",
           "american_ancestors",
           "italian_genealogy",
+          "archion",
+          "matricula",
         ].sort(),
       );
     });
@@ -1752,6 +1761,193 @@ describe("build_external_search_url", () => {
       if (second.ok || second.reason !== "unsupported_site") throw new Error("expected unsupported_site");
       expect(second.supportedSites).not.toContain("hacked-in-site");
       expect(buildExternalSearchUrlSchema.inputSchema.properties.site.enum).not.toContain("hacked-in-site");
+    });
+  });
+
+  describe("browse sites: archion and matricula (spec §3.11)", () => {
+    // Real pages, fetched 2026-10-01: the Baiersbronn parish (Dekanat
+    // Freudenstadt, 34 registers), one of its registers in the viewer — the
+    // URL the alpha tester gave in issue #2856 — and a Catholic parish in the
+    // diocese of Passau.
+    const BAIERSBRONN =
+      "https://www.archion.de/de/alle-archive/baden-wuerttemberg/" +
+      "evangelisches-archiv-baden-und-wuerttemberg-wuerttemberg/dekanat-freudenstadt/baiersbronn";
+    const BAIERSBRONN_VIEWER =
+      "https://www.archion.de/en/viewer/churchRegister/118272?cHash=3d6736096fd1064605ebe70d2ed9ac73";
+    const AICHA_VORM_WALD = "https://data.matricula-online.eu/de/deutschland/passau/aicha-vorm-wald/";
+
+    it("archion: the Baiersbronn parish page comes back unchanged, subscription, browse path in notes", () => {
+      const r = buildExternalSearchUrl({ site: "archion", baseUrl: BAIERSBRONN, attributes: {} });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe(BAIERSBRONN);
+      expect(r.access).toBe("subscription");
+      expect(r.notes.join(" ")).toMatch(/browse, not search/);
+      expect(r.notes.join(" ")).toMatch(/Archion pass/);
+      expect(r.notes.join(" ")).not.toMatch(/no parish URL/);
+    });
+
+    it("archion: a viewer URL keeps its cHash", () => {
+      const r = buildExternalSearchUrl({ site: "archion", baseUrl: BAIERSBRONN_VIEWER, attributes: {} });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe(BAIERSBRONN_VIEWER);
+    });
+
+    it("matricula: a Catholic parish page comes back unchanged, free", () => {
+      const r = buildExternalSearchUrl({ site: "matricula", baseUrl: AICHA_VORM_WALD, attributes: {} });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe(AICHA_VORM_WALD);
+      expect(r.access).toBe("free");
+      expect(r.notes.join(" ")).toMatch(/browse, not search/);
+    });
+
+    it("with no baseUrl: the site root and a note asking for the parish page", () => {
+      for (const [site, root] of [
+        ["archion", "https://www.archion.de/de/"],
+        ["matricula", "https://data.matricula-online.eu/de/"],
+      ] as const) {
+        const r = buildExternalSearchUrl({ site, attributes: {} });
+        expect(r.ok, site).toBe(true);
+        if (!r.ok) return;
+        expect(r.url).toBe(root);
+        expect(r.notes.join(" ")).toMatch(/no parish URL supplied/);
+      }
+    });
+
+    it("supplied attributes are noted as unused, and the URL is still the parish page", () => {
+      const r = buildExternalSearchUrl({
+        site: "archion",
+        baseUrl: BAIERSBRONN,
+        attributes: { givenName: "Anna Maria", surname: "Haist", birthYear: 1843 },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe(BAIERSBRONN);
+      expect(r.notes).toContain("'givenName' is not used by archion — supplied but ignored");
+    });
+
+    it("refuses a baseUrl on another host", () => {
+      for (const [site, baseUrl] of [
+        ["archion", AICHA_VORM_WALD],
+        ["matricula", BAIERSBRONN],
+        ["archion", "https://www.ancestry.com/search/"],
+      ] as const) {
+        const r = buildExternalSearchUrl({ site, baseUrl, attributes: {} });
+        expect(r.ok, `${site} ${baseUrl}`).toBe(false);
+        if (r.ok) return;
+        expect(r.reason).toBe("invalid_base_url");
+      }
+    });
+
+    it("a search site with no attributes is still a no_attributes error", () => {
+      const r = buildExternalSearchUrl({ site: "findagrave", attributes: {} });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("no_attributes");
+    });
+  });
+
+  describe("the tool writes the in-flight hand-off when given projectPath (spec §6)", () => {
+    let dir: string;
+    beforeEach(async () => {
+      dir = await mkdtemp(join(tmpdir(), "build-url-log-test-"));
+    });
+    afterEach(async () => {
+      await rm(dir, { recursive: true, force: true });
+    });
+
+    const research = () => ({
+      project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+      questions: [],
+      plans: [],
+      log: [],
+      sources: [],
+      assertions: [],
+      person_evidence: [],
+      conflicts: [],
+      hypotheses: [],
+      timelines: [],
+      proof_summaries: [],
+      evaluations: [],
+    });
+    const TREE = { persons: [], relationships: [], sources: [] };
+    async function writeProject() {
+      await writeFile(join(dir, "research.json"), JSON.stringify(research(), null, 2));
+      await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(TREE));
+    }
+    const readLog = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).log;
+
+    it("appends one partial external_site entry and returns its logId", async () => {
+      await writeProject();
+      const r = await buildExternalSearchUrlTool({
+        site: "ancestry",
+        attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845 },
+        projectPath: dir,
+        planItemId: "pli_003",
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const log = await readLog();
+      expect(log).toHaveLength(1);
+      expect(r.logId).toBe(log[0].id);
+      expect(log[0]).toMatchObject({
+        tool: "external_site",
+        outcome: "partial",
+        results_examined: 0,
+        plan_item_id: "pli_003",
+        query: { givenName: "Patrick", surname: "Flynn", birthYear: 1845 },
+        external_site: { site: "ancestry", url_generated: r.url, capture_received: false },
+      });
+    });
+
+    it("records a browse site's baseUrl in notes", async () => {
+      await writeProject();
+      const baseUrl = "https://www.archion.de/de/alle-archive/baden-wuerttemberg/x/baiersbronn";
+      const r = await buildExternalSearchUrlTool({ site: "archion", baseUrl, attributes: {}, projectPath: dir });
+      expect(r.ok).toBe(true);
+      const log = await readLog();
+      expect(log[0].external_site).toMatchObject({ site: "archion", url_generated: baseUrl });
+      expect(log[0].notes).toBe(`baseUrl: ${baseUrl}`);
+    });
+
+    it("writes nothing without projectPath, and says planItemId was ignored", async () => {
+      await writeProject();
+      const r = await buildExternalSearchUrlTool({
+        site: "findagrave",
+        attributes: { surname: "Flynn" },
+        planItemId: "pli_001",
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.logId).toBeUndefined();
+      expect(r.notes.join(" ")).toMatch(/planItemId' has no effect without projectPath/);
+      expect(await readLog()).toEqual([]);
+    });
+
+    it("writes nothing when the build fails", async () => {
+      await writeProject();
+      const r = await buildExternalSearchUrlTool({ site: "findagrave", attributes: {}, projectPath: dir });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("no_attributes");
+      expect(await readLog()).toEqual([]);
+    });
+
+    it("a bad planItemId fails the call as log_write_failed and leaves the log alone", async () => {
+      await writeProject();
+      const r = await buildExternalSearchUrlTool({
+        site: "findagrave",
+        attributes: { surname: "Flynn" },
+        projectPath: dir,
+        planItemId: "q_001",
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("log_write_failed");
+      expect(r.errors.join(" ")).toMatch(/not a plan-item id/);
+      expect(await readLog()).toEqual([]);
     });
   });
 });

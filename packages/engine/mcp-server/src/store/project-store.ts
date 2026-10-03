@@ -83,6 +83,14 @@ export interface ProjectStore {
   readonly projectId?: string;
 
   /**
+   * The one `projectPath` this store answers to, when the backend is bound to a
+   * single project (`PgS3ProjectStore`, and the http test double). `undefined` on
+   * the file backend. Lets a call that passed no `projectPath` still be counted
+   * against the bound project — the image cap (`utils/browse-budget.ts`).
+   */
+  readonly anchorPath?: string;
+
+  /**
    * Run `fn` serialized against every other writer for the same project. Wrap
    * the ENTIRE tool body — first read to last write — so a read-modify-write
    * cannot interleave with another writer's. On the file backend this is the
