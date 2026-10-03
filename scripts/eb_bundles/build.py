@@ -389,6 +389,19 @@ def _csv(value: str, allowed: tuple[str, ...], what: str) -> list[str]:
     return list(dict.fromkeys(items))
 
 
+CALLER_PATH_VAR = "EB_CALLER_PATH"
+
+
+def use_caller_path(env: dict[str, str] | os._Environ = os.environ) -> None:
+    """Resolve git, node, npm and pnpm on the PATH `make eb-bundles` was called with.
+    `uv run` puts its base interpreter's directory ahead of the caller's PATH; on a GitHub
+    runner that is /usr/local/bin, whose npm 10 shadowed the pinned npm 11 (the first
+    eb-bundles CI run). pip is unaffected: it runs as `sys.executable -m pip`."""
+    caller = env.get(CALLER_PATH_VAR)
+    if caller:
+        env["PATH"] = caller
+
+
 def main(argv: list[str] | None = None) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -399,6 +412,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--out", default="releases")
     ap.add_argument("--rds-ca", metavar="FILE")
     args = ap.parse_args(argv)
+    use_caller_path()
 
     try:
         return build(args.tiers, args.arch, Path(args.out) if Path(args.out).is_absolute() else REPO / args.out,

@@ -442,3 +442,50 @@ def test_build_rejects_an_unknown_tier_or_arch():
         build.main(["--tiers", "web,api"])
     with pytest.raises(SystemExit):
         build.main(["--arch", "arm64"])
+
+
+# ── toolchain resolution ─────────────────────────────────────────────────────────
+
+
+def _fake_bin(directory: Path, versions: dict[str, str]) -> Path:
+    directory.mkdir(parents=True)
+    for name, version in versions.items():
+        exe = directory / name
+        exe.write_text(f"#!/bin/sh\necho {version}\n", encoding="utf-8")
+        exe.chmod(0o755)
+    return directory
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX shell stubs")
+def test_toolchain_resolves_npm_on_the_callers_path_not_uvs(tmp_path, monkeypatch):
+    """The first eb-bundles CI run: `uv run` put /usr/local/bin (npm 10.9.9) ahead of the
+    pinned npm 11.12.1, and the builder refused to build."""
+    shadow = _fake_bin(tmp_path / "uv-interpreter-dir", {"npm": "10.9.9", "node": "v22.22.3"})
+    pinned = _fake_bin(tmp_path / "toolcache", {"npm": "11.12.1", "node": "v24.21.0"})
+    monkeypatch.setenv("PATH", f"{shadow}:{pinned}")
+    with pytest.raises(build.BuildError, match="found 10.9.9"):
+        build.toolchain(["tools"])
+    monkeypatch.setenv(build.CALLER_PATH_VAR, f"{pinned}:{shadow}")
+    build.use_caller_path()
+    assert build.toolchain(["tools"])["npm"] == "11.12.1"
+
+
+def test_use_caller_path_leaves_path_alone_without_the_variable():
+    env = {"PATH": "/a:/b"}
+    build.use_caller_path(env)
+    assert env == {"PATH": "/a:/b"}
+    env[build.CALLER_PATH_VAR] = ""
+    build.use_caller_path(env)
+    assert env["PATH"] == "/a:/b"
+
+
+def test_make_eb_bundles_hands_the_builder_the_callers_path():
+    text = (REPO / "Makefile").read_text(encoding="utf-8")
+    recipe = re.search(r"^eb-bundles:.*\n((?:\t.*\n)+)", text, re.MULTILINE)
+    assert recipe, "Makefile has no eb-bundles recipe"
+    lines = [ln for ln in recipe.group(1).splitlines() if "scripts/eb_bundles/build.py" in ln]
+    assert lines, "eb-bundles does not run scripts/eb_bundles/build.py"
+    for line in lines:
+        before_uv = line.split("uv run", 1)[0]
+        assert f'{build.CALLER_PATH_VAR}="$$PATH"' in before_uv, (
+            f"eb-bundles must pass {build.CALLER_PATH_VAR}=\"$$PATH\" ahead of `uv run`: {line.strip()}")

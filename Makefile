@@ -1372,7 +1372,7 @@ EB_ZIPS   := releases/eb-web.zip releases/eb-worker.zip releases/eb-tools.zip
 
 .PHONY: eb-bundles
 eb-bundles: ## Build the three Beanstalk bundles (web, worker, tools) into releases/: make eb-bundles [ARGS="--arch x86_64"]
-	uv run --no-project --python 3.12 --with pip==$(EB_PIP) python scripts/eb_bundles/build.py $(ARGS)
+	EB_CALLER_PATH="$$PATH" uv run --no-project --python 3.12 --with pip==$(EB_PIP) python scripts/eb_bundles/build.py $(ARGS)
 
 .PHONY: eb-bundles-verify
 eb-bundles-verify: ## Check releases/eb-*.zip: layout, Procfile/PORT, CA path, hook modes, offline pip dry-run per arch
