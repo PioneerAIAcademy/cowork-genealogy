@@ -1459,3 +1459,100 @@ async def test_concurrent_health_share_one_probe(monkeypatch, silent_pg):
     assert [r.status_code for r in replies] == [503, 503, 503]
     assert all(r.json()["checks"]["postgres"] == {"ok": False, "error": "TimeoutError"} for r in replies)
     assert accepted == 1, f"{accepted} connections: a stalled host must cost one, not one per probe"
+
+
+# ── U3: the grant refresh loop ──────────────────────────────────────────────────
+
+
+class RefreshingStore(FakeStore):
+    """A store with PgStore's two refresh methods, answering from scripts."""
+
+    def __init__(self, due=None, results=None) -> None:
+        super().__init__()
+        self.due_script = list(due or [])
+        self.results = dict(results or {})
+        self.due_calls = 0
+        self.refreshed: list[str] = []
+
+    async def due_grant_users(self, refresh_age_s, limit=50):
+        self.due_calls += 1
+        step = self.due_script.pop(0) if self.due_script else []
+        if isinstance(step, Exception):
+            raise step
+        return step
+
+    async def refresh_grant(self, user_id, *, refresh, refresh_age_s):
+        self.refreshed.append(user_id)
+        result = self.results.get(user_id, "refreshed")
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+
+async def test_lifespan_starts_and_cancels_the_grant_refresh_loop(monkeypatch):
+    monkeypatch.setenv("FS_GRANT_REFRESH_INTERVAL_S", "0.01")
+    monkeypatch.setenv("FS_GRANT_REFRESH_AGE_S", "0")
+    store = RefreshingStore()
+    application = create_app(store=store)
+    async with application.router.lifespan_context(application):
+        for _ in range(200):
+            if store.due_calls >= 2:
+                break
+            await asyncio.sleep(0.01)
+        assert store.due_calls >= 2, "the loop ticks while the tier runs"
+    calls = store.due_calls
+    await asyncio.sleep(0.05)
+    assert store.due_calls == calls, "cancelled at lifespan exit"
+
+    plain = FakeStore()  # no refresh_grant: the route tests' store never gets a loop
+    application = create_app(store=plain)
+    async with application.router.lifespan_context(application):
+        await asyncio.sleep(0.03)
+
+
+async def test_the_refresh_loop_survives_a_failing_store_and_logs_no_token(caplog):
+    token = "gAAAAA-secret-access-u3"
+    store = RefreshingStore(
+        due=[RuntimeError(f"db down {token}"), [("usr_a", 4000.0), ("usr_b", 4000.0)],
+             [("usr_a", 4001.0)], [("usr_a", 4002.0)], [("usr_a", 4003.0)]],
+        results={"usr_a": "skipped_live", "usr_b": RuntimeError(token)},
+    )
+    with caplog.at_level("INFO", logger="proto.web"):
+        task = asyncio.create_task(app.grant_refresh_loop(store, interval_s=0.0, refresh_age_s=3600,
+                                                          refresh=lambda r: None))
+        for _ in range(200):
+            if store.due_calls >= 6:
+                break
+            await asyncio.sleep(0.005)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+    assert store.refreshed[:2] == ["usr_a", "usr_b"], "one patron's failure does not stop the next"
+    lines = [r.getMessage() for r in caplog.records if "ev=grant_refresh" in r.getMessage()]
+    assert sum("user_id=usr_a result=skipped_live" in line for line in lines) == 1, \
+        f"skipped_live is logged on change only: {lines}"
+    assert any("ev=grant_refresh_tick" in line for line in lines), "the failed tick is reported"
+    assert any("user_id=usr_b result=error error=RuntimeError" in line for line in lines)
+    assert token not in caplog.text, "no token in any log line"
+
+
+async def test_a_patrons_next_live_period_logs_skipped_live_again(caplog):
+    """The on-change memory is cleared once a patron stops being due (no open turn), so a
+    later run's live attempt is logged rather than hidden behind the previous run's line.
+    Seen live 2026-10-03: a whole second run passed with no grant_refresh line."""
+    store = RefreshingStore(
+        due=[[("usr_a", 10.0)], [("usr_a", 40.0)], [], [("usr_a", 70.0)], [("usr_a", 100.0)]],
+        results={"usr_a": "skipped_live"},
+    )
+    with caplog.at_level("INFO", logger="proto.web"):
+        task = asyncio.create_task(app.grant_refresh_loop(store, interval_s=0.0, refresh_age_s=0,
+                                                          refresh=lambda r: None))
+        for _ in range(200):
+            if store.due_calls >= 6:
+                break
+            await asyncio.sleep(0.005)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+    lines = [r.getMessage() for r in caplog.records if "result=skipped_live" in r.getMessage()]
+    assert len(lines) == 2, f"one line per live period, two periods: {lines}"

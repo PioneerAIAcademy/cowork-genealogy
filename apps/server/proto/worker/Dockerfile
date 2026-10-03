@@ -7,8 +7,9 @@
 #
 # Layout (the plan's "Container layout"): /project is the empty cwd anchor;
 # /opt/genealogy/plugin the skills; /opt/genealogy/server the import root holding app/
-# (map_message) and proto/{worker,sql}. No tokens.json is ever baked -- the patron's
-# FamilySearch bearer travels per turn as the tool server's Authorization header.
+# (map_message) and proto/{worker,sql,enqueue.py,grants.py}. No tokens.json is ever baked
+# -- the bearer is the patron's grant, read from Postgres at the start of each attempt
+# (proto/grants.py) and sent as the tool server's Authorization header.
 # CLAUDE_CONFIG_DIR and TMPDIR live on a tmpfs that compose mounts.
 FROM ubuntu:24.04
 
@@ -24,9 +25,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # The SDK pin is the flush-mode pin (session_store_flush="eager" is SDK-side) and the
 # CLI pin (the wheel bundles Claude Code 2.1.220). [binary] bundles libpq. botocore
-# signs enqueue.py's SQS calls, pinned to apps/server/uv.lock's version.
+# signs enqueue.py's SQS calls and cryptography decrypts the patron's grant (grants.py),
+# both pinned to apps/server/uv.lock's versions.
 RUN python3 -m pip install --break-system-packages \
-        "claude-agent-sdk==0.2.128" "psycopg[binary]>=3.2,<4" "botocore==1.43.106"
+        "claude-agent-sdk==0.2.128" "psycopg[binary]>=3.2,<4" "botocore==1.43.106" "cryptography==48.0.1"
 
 # Plugin: 16 skills + 16 agents + the shipped PreToolUse hook (python3 runs it).
 COPY packages/engine/plugin /opt/genealogy/plugin
@@ -39,6 +41,8 @@ COPY apps/server/proto/sql         /opt/genealogy/server/proto/sql
 # only component that knows a turn finished. enqueue.py is the repo's one SQS client
 # (urllib transport, botocore SigV4), so the handover reuses it rather than growing a second.
 COPY apps/server/proto/enqueue.py  /opt/genealogy/server/proto/enqueue.py
+# U3: the grant custody the web tier shares -- the lock keys, the grant SQL, the decryption.
+COPY apps/server/proto/grants.py   /opt/genealogy/server/proto/grants.py
 COPY apps/server/proto/worker      /opt/genealogy/server/proto/worker
 
 ENV PYTHONPATH=/opt/genealogy/server

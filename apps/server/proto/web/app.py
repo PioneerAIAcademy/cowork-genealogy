@@ -56,6 +56,11 @@ table an earlier boot left. ``GET /api/health`` is readiness: 200 or 503, the sa
 either way, plus ``checks`` (``postgres``, ``schema``, ``allowlist``) whose ``error`` is a
 label, never a message.
 
+Grants (U3): this tier is every FamilySearch grant's only refresher. ``grant_refresh_loop``
+runs every ``FS_GRANT_REFRESH_INTERVAL_S`` (30) and refreshes, between attempts, the grant
+of each patron with an open turn whose session is ``FS_GRANT_REFRESH_AGE_S`` (3600) old,
+under the per-patron advisory locks in ``proto/grants.py``; lines are ``ev=grant_refresh``.
+
 Run: ``make proto-web`` (from the venv, with the dummy GENEALOGY_SQS_* pair elasticmq
 ignores).
 """
@@ -94,6 +99,7 @@ if str(PROTO_DIR) not in sys.path:
     sys.path.insert(0, str(PROTO_DIR))
 
 import enqueue  # noqa: E402  (the SQS query-API client; signs SigV4)
+import grants  # noqa: E402  (U3: grant custody, shared with the worker)
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
 
 log = logging.getLogger("proto.web")
@@ -190,6 +196,12 @@ class User:
 class ProjectNotOwned(Exception):
     """create_session was handed a project the caller may not open. The route answers
     404, the same as for a project that does not exist, so the answer leaks nothing."""
+
+
+class GrantBusy(Exception):
+    """The sign-in's grant write could not take the patron's write lock within
+    ``grants.WRITE_LOCK_TIMEOUT_S`` (a refresher holds it for at most
+    ``REFRESH_HTTP_TIMEOUT_S`` plus two short transactions); the callback answers 503."""
 
 
 class IdentityMismatch(Exception):
@@ -823,19 +835,126 @@ class PgStore:
     async def store_grant(
         self, user_id: str, access_token_enc: str, refresh_token_enc: str | None, expires_at: datetime
     ) -> None:
-        """One statement, ciphertext only. granted_at restarts on every sign-in and never
-        on refresh (it records the sign-in); a response without a refresh token keeps the one
-        already stored."""
+        """Ciphertext only, in ONE transaction under the patron's grant write lock
+        (``grants.WRITE_LOCK_NS``), so a sign-in never interleaves with a refresh: a
+        refresher holding the lock makes this wait, bounded by ``lock_timeout``, and then
+        the sign-in's grant wins. It never takes the attempt lock -- a second sign-in does
+        not revoke the first token (U2), so a live attempt keeps its token and the next one
+        reads this grant. granted_at restarts on every sign-in and never on refresh (it
+        records the sign-in); a sign-in also starts a new session and clears a refusal and
+        an ambiguous-refresh marker. A response without a refresh token keeps the one
+        already stored. Raises GrantBusy on the lock timeout."""
+        from psycopg import errors
+
+        try:
+            async with await self._connect() as conn:
+                async with conn.transaction():
+                    await conn.execute(grants.WRITE_LOCK_TIMEOUT_SQL)
+                    await conn.execute(grants.WRITE_XACT_LOCK_SQL, (grants.WRITE_LOCK_NS, user_id))
+                    await conn.execute(
+                        "INSERT INTO familysearch_tokens "
+                        "(user_id, access_token_enc, refresh_token_enc, expires_at, granted_at, updated_at, "
+                        "session_started_at) "
+                        "VALUES (%s, %s, %s, %s, now(), now(), now()) "
+                        "ON CONFLICT (user_id) DO UPDATE SET access_token_enc = EXCLUDED.access_token_enc, "
+                        "refresh_token_enc = COALESCE(EXCLUDED.refresh_token_enc, familysearch_tokens.refresh_token_enc), "
+                        "expires_at = EXCLUDED.expires_at, granted_at = now(), updated_at = now(), "
+                        "session_started_at = now(), refresh_started_at = NULL, refresh_refused_at = NULL, "
+                        "refresh_refused_reason = NULL",
+                        (user_id, access_token_enc, refresh_token_enc, expires_at),
+                    )
+        except errors.LockNotAvailable as exc:
+            raise GrantBusy(user_id) from exc
+
+    # -- grants (U3): this tier is the only refresher ----------------------------------
+
+    async def due_grant_users(self, refresh_age_s: float, limit: int = grants.DUE_BATCH) -> list[tuple[str, float]]:
+        """``(user_id, session age)`` for every grant the loop should try, oldest first."""
         async with await self._connect() as conn:
-            await conn.execute(
-                "INSERT INTO familysearch_tokens "
-                "(user_id, access_token_enc, refresh_token_enc, expires_at, granted_at, updated_at) "
-                "VALUES (%s, %s, %s, %s, now(), now()) "
-                "ON CONFLICT (user_id) DO UPDATE SET access_token_enc = EXCLUDED.access_token_enc, "
-                "refresh_token_enc = COALESCE(EXCLUDED.refresh_token_enc, familysearch_tokens.refresh_token_enc), "
-                "expires_at = EXCLUDED.expires_at, granted_at = now(), updated_at = now()",
-                (user_id, access_token_enc, refresh_token_enc, expires_at),
-            )
+            cur = await conn.execute(grants.DUE_SQL, (refresh_age_s, limit))
+            return [(str(r["user_id"]), float(r["age_s"] or 0)) for r in await cur.fetchall()]
+
+    async def _grant_connect(self):
+        """A connection of its own for one refresh: its session advisory locks die with it,
+        and the server's keepalives end its backend if this host vanishes mid-refresh."""
+        import psycopg
+        from psycopg.rows import dict_row
+
+        return await psycopg.AsyncConnection.connect(
+            self.dsn, row_factory=dict_row, autocommit=True, options=grants.GRANT_KEEPALIVE_OPTIONS,
+        )
+
+    async def refresh_grant(
+        self, user_id: str, *, refresh: Callable[[str], Awaitable[grants.RefreshResult]], refresh_age_s: float,
+    ) -> str:
+        """One refresh of one patron's grant, only if no attempt of theirs is live.
+
+        1. Try the write lock (``skipped_busy``: another refresher has it), then the attempt
+           lock EXCLUSIVELY (``skipped_live``: an attempt holds it shared, and a refresh
+           would revoke the token it bears).
+        2. Transaction 1: lock the row, re-check it is due (``not_due``: another instance
+           just did it), decrypt the refresh token (an undecryptable one marks the grant
+           refused), set the ambiguous-refresh marker.
+        3. ``refresh``, with no transaction open (``auth.refresh_tokens``: one 30 s total
+           deadline).
+        4. Transaction 2: lock the row and record the outcome -- new tokens and a new
+           session start; the refusal; the marker cleared (``not_sent``, unless it was
+           already set before this refresh: that one came from an earlier refresh this
+           ``not_sent`` says nothing about); or the marker kept (``ambiguous``:
+           FamilySearch may have revoked the stored access token, so no attempt starts on
+           it until a later refresh settles it).
+        5. Close the connection, which releases both locks.
+
+        Returns ``refreshed``, ``skipped_live``, ``skipped_busy``, ``not_due``, ``refused``,
+        ``not_sent`` or ``ambiguous``. Never logs or returns a token."""
+        conn = await self._grant_connect()
+        try:
+            cur = await conn.execute(grants.TRY_LOCK_SQL, (grants.WRITE_LOCK_NS, user_id))
+            if not (await cur.fetchone())["pg_try_advisory_lock"]:
+                return "skipped_busy"
+            cur = await conn.execute(grants.TRY_LOCK_SQL, (grants.ATTEMPT_LOCK_NS, user_id))
+            if not (await cur.fetchone())["pg_try_advisory_lock"]:
+                return "skipped_live"
+            async with conn.transaction():
+                cur = await conn.execute(grants.GRANT_FOR_UPDATE_SQL, (user_id,))
+                row = grants.GrantRow.from_row(await cur.fetchone())
+                if row is None or not grants.refresh_due(row, refresh_age_s=refresh_age_s):
+                    return "not_due"
+                refresh_token = auth.decrypt(row.refresh_token_enc)
+                if not refresh_token:
+                    await conn.execute(grants.REFRESH_REFUSED_SQL, (grants.UNDECRYPTABLE, user_id))
+                    return "refused"
+                # A marker already set is an EARLIER refresh's, one FamilySearch may have
+                # processed; only a ``not_sent`` of a refresh that set it may clear it.
+                inherited_marker = row.refresh_pending
+                await conn.execute(grants.MARK_REFRESH_SQL, (user_id,))
+            try:
+                result = await refresh(refresh_token)
+            except Exception as exc:  # noqa: BLE001 - unknown whether it reached FamilySearch
+                log.warning("ev=grant_refresh_error user_id=%s error=%s", user_id, type(exc).__name__)
+                result = grants.RefreshResult("ambiguous", reason=type(exc).__name__)
+            async with conn.transaction():
+                await conn.execute(grants.GRANT_FOR_UPDATE_SQL, (user_id,))
+                if result.kind == "ok":
+                    await conn.execute(grants.REFRESH_OK_SQL, (
+                        auth.encrypt(result.access_token or ""),
+                        auth.encrypt(result.refresh_token) if result.refresh_token else None,
+                        grants.SESSION_IDLE_S, user_id,
+                    ))
+                    return "refreshed"
+                if result.kind == "refused":
+                    await conn.execute(grants.REFRESH_REFUSED_SQL, (result.reason or "refused", user_id))
+                    return "refused"
+                if result.kind == "not_sent":
+                    await conn.execute(
+                        grants.REFRESH_AMBIGUOUS_SQL if inherited_marker else grants.REFRESH_NOT_SENT_SQL,
+                        (user_id,),
+                    )
+                    return "not_sent"
+                await conn.execute(grants.REFRESH_AMBIGUOUS_SQL, (user_id,))
+                return "ambiguous"
+        finally:
+            await conn.close()
 
 
 # ── queues ───────────────────────────────────────────────────────────────────────
@@ -999,6 +1118,48 @@ async def retry_startup(startup: dict[str, str], steps: dict[str, Callable[[], A
     await asyncio.gather(*(one(name, step) for name, step in steps.items()))
 
 
+# ── grant refresh (U3) ──────────────────────────────────────────────────────────
+
+
+async def grant_refresh_loop(
+    store: Any, *, interval_s: float, refresh_age_s: float,
+    refresh: Callable[[str], Awaitable[grants.RefreshResult]],
+) -> None:
+    """This tier is every grant's only refresher (list 3 step 19). Every ``interval_s`` it
+    asks the store for the grants that are due -- an open turn, a session at least
+    ``refresh_age_s`` old or an ambiguous last refresh -- and tries each under
+    ``PgStore.refresh_grant``'s locks, which skip any patron with a live attempt. It
+    sleeps one interval BEFORE its first tick. Exceptions are caught per user and per
+    tick, so the loop never dies; cancelled at lifespan exit.
+
+    One ``ev=grant_refresh`` line per attempt, never with a token or an email (errors are
+    named by type only, since a message is whatever the failing layer put in it); a
+    ``skipped_live`` only when a patron's result changes, so a 10-hour attempt does not
+    log a line every interval."""
+    last: dict[str, str] = {}
+    while True:
+        await asyncio.sleep(interval_s)
+        try:
+            due = await store.due_grant_users(refresh_age_s)
+        except Exception as exc:  # noqa: BLE001 - the next tick retries
+            log.warning("ev=grant_refresh_tick error=%s", type(exc).__name__)
+            continue
+        due_ids = {user_id for user_id, _ in due}
+        for user_id in [u for u in last if u not in due_ids]:
+            del last[user_id]  # no open turn: the next live period logs afresh
+        for user_id, age_s in due:
+            try:
+                result = await store.refresh_grant(user_id, refresh=refresh, refresh_age_s=refresh_age_s)
+            except Exception as exc:  # noqa: BLE001 - one patron's failure must not stop the others
+                result = "error"
+                log.warning("ev=grant_refresh user_id=%s result=error error=%s", user_id, type(exc).__name__)
+            if result == "skipped_live" and last.get(user_id) == "skipped_live":
+                continue
+            last[user_id] = result
+            if result != "error":
+                log.info("ev=grant_refresh user_id=%s result=%s age_s=%d", user_id, result, int(age_s))
+
+
 def create_app(
     store: Store | None = None,
     queue: Queue | None = None,
@@ -1055,13 +1216,23 @@ def create_app(
             log.warning("startup: Postgres did not answer within %ss; retrying in the background", STARTUP_BUDGET_S)
         failing = {name: step for name, step in steps.items() if startup[name] != "ok"}
         retry = asyncio.create_task(retry_startup(startup, failing)) if failing else None
+        # U3: only a store that can refresh (PgStore) gets the loop; a test's FakeStore never.
+        refresher = None
+        if hasattr(store, "refresh_grant"):
+            interval = grants.env_seconds(os.environ, "FS_GRANT_REFRESH_INTERVAL_S", grants.DEFAULT_REFRESH_INTERVAL_S)
+            refresher = asyncio.create_task(grant_refresh_loop(
+                store, refresh=auth.refresh_tokens,
+                interval_s=interval if interval > 0 else grants.DEFAULT_REFRESH_INTERVAL_S,
+                refresh_age_s=grants.env_seconds(os.environ, "FS_GRANT_REFRESH_AGE_S", grants.DEFAULT_REFRESH_AGE_S),
+            ))
         try:
             yield
         finally:
-            if retry is not None:
-                retry.cancel()
-                with contextlib.suppress(asyncio.CancelledError):
-                    await retry
+            for task in (retry, refresher):
+                if task is not None:
+                    task.cancel()
+                    with contextlib.suppress(asyncio.CancelledError):
+                        await task
 
     app = FastAPI(title="Genealogy search-agent prototype - web tier", lifespan=lifespan)
     app.state.store = store
@@ -1195,7 +1366,10 @@ def create_app(
         Order matters, and each refusal writes nothing: state, code exchange, identity,
         allowlist, then the user (refused if the email is pinned to another FamilySearch
         account), and only then the grant -- encrypted here, so the store sees ciphertext.
-        No refresh: the grant is written once and U3 owns every later write."""
+        The write takes the patron's grant write lock (``PgStore.store_grant``), so it never
+        interleaves with a refresh; while a refresher holds the lock past
+        ``grants.WRITE_LOCK_TIMEOUT_S`` it answers 503 and the patron signs in again. Every
+        later write is the refresh loop's (U3)."""
         fail = "FamilySearch sign-in failed; return to the app and try again."
         data = auth.read_oauth_state_cookie(request.cookies.get(auth.FS_OAUTH_COOKIE))
         if data is None:
@@ -1234,12 +1408,15 @@ def create_app(
                 status_code=403,
             )
         refresh = token_json.get("refresh_token")
-        await store.store_grant(
-            user.id,
-            auth.encrypt(token_json["access_token"]),
-            auth.encrypt(refresh) if isinstance(refresh, str) and refresh else None,
-            auth.expires_at_from(token_json),
-        )
+        try:
+            await store.store_grant(
+                user.id,
+                auth.encrypt(token_json["access_token"]),
+                auth.encrypt(refresh) if isinstance(refresh, str) and refresh else None,
+                auth.expires_at_from(token_json),
+            )
+        except GrantBusy:
+            return HTMLResponse(f"Sign-in is busy; try again. {fail}", status_code=503)
         resp = RedirectResponse(auth.redirect_target(data.get("next")))
         resp.set_cookie(
             auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.COOKIE_MAX_AGE, **auth.cookie_kwargs()
