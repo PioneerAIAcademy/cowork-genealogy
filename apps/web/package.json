@@ -13,15 +13,15 @@
   "dependencies": {
     "@genealogy/schema": "workspace:*",
     "@genealogy/viewer-ui": "workspace:*",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
-    "@testing-library/react": "^16.3.2",
-    "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3",
+    "@testing-library/react": "^16.3.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^5.1.1",
     "jsdom": "^27.0.1",
     "typescript": "^5.9.3",
