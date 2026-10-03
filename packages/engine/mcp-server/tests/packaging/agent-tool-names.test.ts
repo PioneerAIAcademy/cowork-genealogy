@@ -627,6 +627,26 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // timeline (issue #2797) holds exactly the five tools the skill it replaced
+  // declared, plus `Read`: step 2 reads research.json for the linked
+  // assertions, and the narration line reads it too. `place_search` /
+  // `place_search_all` resolve event places, `place_distance` feeds the
+  // geographic-feasibility check that is this agent's own (check-warnings
+  // does not do geography), `wiki_read` fetches each residence country's
+  // census schedule, and `research_append` persists the one `timelines`
+  // entry the hook lane allows it.
+  "timeline.md": {
+    tools: [
+      "Read",
+      "place_distance",
+      "place_search",
+      "place_search_all",
+      "research_append",
+      "wiki_read",
+    ],
+    denies: [],
+  },
+
   // locality-guide (issue #2117) holds exactly the eleven tools the skill it
   // replaced declared, plus `Read`: Step 6 persists only when research.json
   // exists at the project path, and the narration line reads it.

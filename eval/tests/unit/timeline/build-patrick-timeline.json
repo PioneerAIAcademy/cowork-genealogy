@@ -10,11 +10,12 @@
       "chronological",
       "gap-detection",
       "I1",
-      "rejected-assertion-id-a_012"
+      "rejected-assertion-id-a_012",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Build a timeline for Patrick Flynn.",
+    "delegation": "Build the timeline for Patrick Flynn (person I1).\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [

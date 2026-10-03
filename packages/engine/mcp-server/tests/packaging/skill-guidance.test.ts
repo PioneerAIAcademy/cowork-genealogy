@@ -19,7 +19,6 @@ const canonicalPath = join(repoRoot, "plugin", "references", "places-guidance.md
 // places.
 const SKILLS_WITH_PLACES_GUIDANCE = [
   "search-external-sites",
-  "timeline",
   "conflict-resolution",
   "record-extraction",
   "init-project",
@@ -32,8 +31,8 @@ const SKILLS_WITH_PLACES_GUIDANCE = [
 // skill-copy mechanism, which does not apply inside an agent, so the agent
 // inlines the canonical BODY (comment stripped) and this arm asserts that body
 // appears verbatim. historical-context moved here from the skills list when
-// issue #2800 converted it to an agent.
-const AGENTS_WITH_PLACES_GUIDANCE = ["historical-context"];
+// issue #2800 converted it to an agent, and timeline when issue #2797 did.
+const AGENTS_WITH_PLACES_GUIDANCE = ["historical-context", "timeline"];
 
 // Skills whose copy is deliberately specialized, so byte-identical is the wrong
 // contract for them. Each needs a reason — this list is not an escape hatch for

@@ -398,7 +398,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["project-status -> proof-conclusion", ""],
   ["question-selection -> proof-conclusion", ""],
   ["research-exhaustiveness -> proof-conclusion", ""],
-  ["timeline -> proof-conclusion", ""],
   // `search-wikipedia` (issue #2795) is the reverse of the `citation` shape: its
   // name is not an ordinary English word, so the arm DOES discriminate for it,
   // and the one mention below is boundary prose telling the reader this is the
@@ -431,7 +430,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["project-status -> person-evidence", ""],
   ["record-extraction -> person-evidence", ""],
   ["search-records -> person-evidence", ""],
-  ["timeline -> person-evidence", ""],
   // check-warnings (issue #2118): boundary mentions ("use check-warnings",
   // "that is check-warnings' job"), none a delegation. The two real callers,
   // init-project and tree-edit, were registered edges; tree-edit's left when
@@ -439,7 +437,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["conflict-resolution -> check-warnings", ""],
   ["search-records -> check-warnings", ""],
   ["source-evaluation -> check-warnings", ""],
-  ["timeline -> check-warnings", ""],
   // tree-edit entered agentOnly when issue #2805 deleted its skill. The one
   // mention is a DO NOT clause ("Merging is ... a data operation (tree-edit)"),
   // not a delegation; it does not spell `@plugin:tree-edit`.
@@ -454,7 +451,25 @@ const PROSE_MENTIONS = new Map<string, string>([
   // "suggest `hypothesis-tracking`" — and neither spells
   // `@plugin:hypothesis-tracking`.
   ["conflict-resolution -> hypothesis-tracking", ""],
-  ["timeline -> hypothesis-tracking", ""],
+  // timeline entered agentOnly when issue #2797 deleted its skill directory.
+  // None of these five spells `@plugin:timeline`, and they split in two:
+  //
+  // Routing-boundary mentions of the AGENT, verified per file —
+  // conflict-resolution "build a timeline (use timeline)" and "(timeline)",
+  // project-status "Build or refresh the timeline" + "(timeline)",
+  // forget-and-rederive listing it among the sections a forget touches.
+  ["conflict-resolution -> timeline", ""],
+  ["forget-and-rederive -> timeline", ""],
+  ["project-status -> timeline", ""],
+  //
+  // The other two name no agent at all. They match only because
+  // `namesAgent`'s token matcher reads the research.json SECTION word --
+  // init-project's "never restate a timeline", question-selection's
+  // "timeline gaps" and its `timeline_gap` trigger enum. Listed because the
+  // matcher cannot tell a data noun from an agent name, not because either
+  // file routes anywhere.
+  ["init-project -> timeline", ""],
+  ["question-selection -> timeline", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -639,6 +654,8 @@ describe("agent delegation framing", () => {
     "historical-context",
     // ARRIVED when issue #2792 deleted skills/hypothesis-tracking/.
     "hypothesis-tracking",
+    // ARRIVED when issue #2797 deleted skills/timeline/.
+    "timeline",
     "image-reader",
     // ARRIVED when issue #2822 deleted skills/proof-conclusion/. The name is
     // now unambiguous, so the prose arm starts policing its bare-name mentions.

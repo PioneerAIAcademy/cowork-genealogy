@@ -1071,6 +1071,11 @@ DEDICATED_AGENT_NAMES = frozenset(
         # is listed because the set is asserted equal to the shipped agent
         # files. Do not read its presence here as evidence of a hook route.
         "search-wikipedia",
+        # Same shape again (issue #2797): a converted skill, no hook route.
+        # It writes one `timelines` entry, which `ownership.json` names
+        # `agent:timeline` on. Listed because the set is asserted equal to
+        # the shipped agent files.
+        "timeline",
         # Same shape as search-images, and for the same reason (issue #2790):
         # a converted skill, not a hook-routed pair. It writes nothing at all,
         # so no hook routes anything to it and `ownership.json` names it on no

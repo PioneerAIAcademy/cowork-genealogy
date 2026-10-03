@@ -348,9 +348,9 @@
     {
       "artifact": "research.json",
       "section": "timelines",
-      "owner": "skill:timeline",
+      "owner": "agent:timeline",
       "callers": [
-        "skill:timeline"
+        "agent:timeline"
       ],
       "writerTools": [
         "research_append",
@@ -362,10 +362,10 @@
       "enforceableAt": [
         "unit"
       ],
-      "notes": "Zero writes across the committed e2e corpus — the section is regenerated wholesale when it is written at all, and no e2e run has ever routed to the skill. Enforced on the unit plane, where the skill has a suite.",
+      "notes": "Zero writes across the committed e2e corpus — the section is regenerated wholesale when it is written at all, and no e2e run has ever routed to it. Enforced on the unit plane, where the agent has a suite.",
       "requires": "Only timeline regenerates the section; it is replaced wholesale, not edited entry by entry.",
       "failure": "A partially-edited timeline reads as a complete one, and the gaps it exists to expose are hidden.",
-      "remedy": "Regenerate through timeline.",
+      "remedy": "Regenerate through the timeline agent.",
       "override": "none"
     },
     {

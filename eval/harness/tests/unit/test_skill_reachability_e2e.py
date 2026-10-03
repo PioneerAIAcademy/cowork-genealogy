@@ -88,7 +88,6 @@ DARK_SKILLS_2026_09_01 = frozenset(
         "forget-and-rederive",
         "project-status",
         "source-evaluation",
-        "timeline",
     }
 )
 

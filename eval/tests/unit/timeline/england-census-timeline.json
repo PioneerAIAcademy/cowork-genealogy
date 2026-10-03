@@ -11,11 +11,12 @@
       "gap-detection",
       "census-from-wiki",
       "non-us",
-      "I1"
+      "I1",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Build a timeline for William Ashford.",
+    "delegation": "Build the timeline for William Ashford (person I1).\n\nprojectPath: <workspace>",
     "scenario": "england-census-timeline"
   },
   "mcp_fixtures": [

@@ -1,4 +1,4 @@
-"""Skill-specific validators for the timeline skill.
+"""Validators for the timeline agent.
 
 timeline builds a chronological timeline_entry from existing assertions
 in research.json. Narrative-quality dimensions (chronological ordering
@@ -21,7 +21,7 @@ import pytest
 
 from validators_lib import assert_foreign_keys_valid
 
-# US federal decennial census years, per SKILL.md's own list. A non-US life
+# US federal decennial census years, per the agent body's own list. A non-US life
 # must expect its residence jurisdiction's schedule instead (issue #2261).
 US_FEDERAL_CENSUS_YEARS = frozenset({1850, 1860, 1870, 1880, 1900, 1910, 1920})
 _YEAR_RE = re.compile(r"(?<!\d)(1[89]\d\d)(?!\d)")
@@ -31,7 +31,7 @@ _PAREN_RE = re.compile(r"\([^()]*\)")
 # --- Helpers ----------------------------------------------------------
 
 def _produced_timelines(before_state, after_state) -> list[dict]:
-    """Return timelines the skill added or modified.
+    """Return timelines the agent added or modified.
 
     A refresh (Mode C) replaces an existing timeline in-place — the ID is
     present both before and after, but the content changes. Structural
@@ -71,7 +71,7 @@ def _event_sort_key(e: dict) -> str:
     return raw.lstrip("~<> \t")
 
 
-# --- Structural rules from SKILL.md -----------------------------------
+# --- Structural rules from the agent body -----------------------------------
 
 def test_positive_produces_timeline(before_state, after_state, test):
     """Positive timeline tests must add or refresh at least one timeline_entry
@@ -112,7 +112,7 @@ def test_events_have_non_empty_assertion_ids(before_state, after_state, test):
 def test_event_assertion_ids_resolve(before_state, after_state, test):
     """Every assertion_id on a new event must point to an existing
     assertion in research.json. Catches references to assertions the
-    skill imagined into being."""
+    agent imagined into being."""
     if test.get("type") != "positive":
         pytest.skip("only positive tests produce timelines")
     after = after_state.get("research_json")

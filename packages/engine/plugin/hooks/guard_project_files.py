@@ -183,6 +183,10 @@ AGENT_WRITABLE_SECTIONS = {
     # hypothesis-tracking states, links and rules out hypotheses, and writes
     # nothing else in research.json.
     "hypothesis-tracking": frozenset({"hypotheses"}),
+    # timeline regenerates one `timelines` entry wholesale and writes nothing
+    # else in research.json. Its coherence verdict and any geographic
+    # infeasibility have no persisted field at all -- they live in its reply.
+    "timeline": frozenset({"timelines"}),
 }
 
 # The deny NAMES THE ROUTE OUT, and that is load-bearing rather than polite.
