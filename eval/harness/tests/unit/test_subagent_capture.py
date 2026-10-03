@@ -494,3 +494,138 @@ def test_a_malformed_transcript_is_recorded_not_raised(
     workspace = _seed_raw(shortspace, monkeypatch, jsonl, meta)
     _, status = collect_subagents(workspace)
     assert status == expected
+
+
+# ---------------------------------------------------------------------------
+# Per-subagent token accounting (#2582).
+#
+# The trap these pin: Claude Code writes one record per content BLOCK, and every
+# one repeats its message's totals. Measured 2026-10-02 over 52 local subagent
+# transcripts (1,660 distinct message ids), a naive sum overstates cache reads
+# 2.000x and cache writes 2.390x while output moves only 1.018x — because a
+# message's first record carries a start-of-message output snapshot, not a
+# repeated final count.
+# ---------------------------------------------------------------------------
+
+
+def _usage_record(message_id, *, output_tokens, cache_read, role="assistant"):
+    return {
+        "message": {
+            "role": role,
+            "id": message_id,
+            "stop_reason": "end_turn",
+            "content": [{"type": "text"}],
+            "usage": {
+                "input_tokens": 1,
+                "output_tokens": output_tokens,
+                "cache_read_input_tokens": cache_read,
+                "cache_creation_input_tokens": 10,
+            },
+        }
+    }
+
+
+def test_subagent_usage_counts_each_message_once_not_each_record():
+    """The issue's own acceptance fixture: 150 and 20,000, never 151 and 40,000."""
+    records = [
+        _usage_record("msg_a", output_tokens=1, cache_read=20_000),
+        _usage_record("msg_a", output_tokens=150, cache_read=20_000),
+    ]
+    summary = summarize_transcript(records)
+
+    assert summary["usage"]["output_tokens"] == 150
+    assert summary["usage"]["cache_read_input_tokens"] == 20_000
+    # Not the naive sum, which is the whole point.
+    assert summary["usage"]["output_tokens"] != 151
+    assert summary["usage"]["cache_read_input_tokens"] != 40_000
+    # `turns[]` is untouched: the runaway readers and `max_output_tokens` need
+    # one entry per record, so the dedup lives in `usage` alone.
+    assert len(summary["turns"]) == 2
+
+
+def test_subagent_usage_sums_across_distinct_messages():
+    """Deduping must not collapse genuinely different messages."""
+    records = [
+        _usage_record("msg_a", output_tokens=100, cache_read=5),
+        _usage_record("msg_b", output_tokens=200, cache_read=7),
+    ]
+    assert summarize_transcript(records)["usage"]["output_tokens"] == 300
+
+
+def test_subagent_usage_counts_an_id_less_record_once_rather_than_dropping_it():
+    """Those tokens were really spent; two id-less records are two messages."""
+    records = [
+        _usage_record(None, output_tokens=11, cache_read=1),
+        _usage_record(None, output_tokens=13, cache_read=1),
+    ]
+    assert summarize_transcript(records)["usage"]["output_tokens"] == 24
+
+
+def test_subagent_usage_skips_non_assistant_records():
+    """Without the role filter each user record would eat an `__anon_` slot."""
+    records = [
+        _usage_record("msg_a", output_tokens=100, cache_read=5),
+        _usage_record("msg_u", output_tokens=999, cache_read=999, role="user"),
+    ]
+    assert summarize_transcript(records)["usage"]["output_tokens"] == 100
+
+
+@pytest.mark.parametrize("degenerate", ["n/a", [], 42, None])
+def test_subagent_usage_never_raises_on_a_non_dict_usage(degenerate):
+    """The one shape that can raise — and it would cost a paid run its whole log.
+
+    `collect_subagents` did not guard the summarize loop; `parse_jsonl` admits
+    arbitrary JSON objects, so a `message.usage` of `"n/a"` reached `.get` and
+    threw an AttributeError straight out of a function whose docstring promises
+    it never raises.
+    """
+    records = [{"message": {"role": "assistant", "id": "m", "usage": degenerate}}]
+    assert summarize_transcript(records)["usage"]["output_tokens"] == 0
+
+
+def test_subagent_usage_coerces_a_non_numeric_field_to_zero_not_an_error():
+    records = [
+        {
+            "message": {
+                "role": "assistant",
+                "id": "m",
+                "usage": {"output_tokens": "150", "cache_read_input_tokens": None},
+            }
+        }
+    ]
+    usage = summarize_transcript(records)["usage"]
+    assert usage == {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+    }
+
+
+def test_subagent_usage_last_write_wins_only_among_records_carrying_a_usage_dict():
+    """A trailing record with no usage must not zero a real figure.
+
+    Measured over 52 transcripts / 1,660 ids: zero instances today, which is
+    exactly why it is pinned — the shape is cheap to regress into.
+    """
+    records = [
+        _usage_record("msg_a", output_tokens=150, cache_read=20_000),
+        {"message": {"role": "assistant", "id": "msg_a", "content": []}},
+    ]
+    assert summarize_transcript(records)["usage"]["output_tokens"] == 150
+
+
+def test_subagent_usage_is_all_zeros_not_absent_when_nothing_carried_usage():
+    """Captured-and-spent-nothing is a different claim from capture-failed.
+
+    The run-level `subagent_capture_status` carries the second one. A summary
+    written before this field existed has no `usage` key at all, and the merge
+    treats that as unknown.
+    """
+    summary = summarize_transcript([{"message": {"role": "assistant", "content": []}}])
+    assert summary["usage"] == {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+    }
