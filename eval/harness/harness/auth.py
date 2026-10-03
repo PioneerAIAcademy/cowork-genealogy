@@ -14,11 +14,6 @@ Resolution order:
      even in subscription mode and carries it on AuthConfig so the
      judge has it.
 
-     Note: an inherited ANTHROPIC_API_KEY in the SDK subprocess would
-     otherwise take precedence over the subscription session, so
-     env_for_sdk actively suppresses it in subscription mode (see
-     that function).
-
   2. Judge — always uses an ANTHROPIC_API_KEY. The Anthropic SDK (the
      judge talks to it directly, bypassing the Agent SDK) has no
      subscription path. The judge errors if no API key is available.
@@ -164,11 +159,13 @@ def env_for_sdk(auth: AuthConfig) -> dict[str, str]:
     For api_key mode: explicitly inject the key (covers the case where it
     lives in eval/.env but isn't in the shell environment).
 
-    For subscription mode: force the subprocess onto the CLI's subscription
-    session by suppressing any inherited ANTHROPIC_API_KEY (set to empty
-    string — the Claude Code CLI treats it as unset and falls back to its
-    OAuth session). Without this a key in the operator's shell would silently
-    win over the subscription.
+    For subscription mode: blank ANTHROPIC_API_KEY so the agent subprocess
+    uses the CLI's OAuth session rather than billing the metered key that may
+    be present in the shell environment.  Blanking with "" is the historic
+    approach.  A separate issue tracks the fact that CLI >=2.1.278 treats ""
+    as a real (invalid) key and returns is_error=true on successful responses;
+    the proper fix (dropping the key from the subprocess env entirely) requires
+    a version-gated code path and belongs in its own PR.
 
     `ENABLE_TOOL_SEARCH` turns tool search ON, not off — the polarity is the
     opposite of what this comment claimed until issue #1110. Read off the

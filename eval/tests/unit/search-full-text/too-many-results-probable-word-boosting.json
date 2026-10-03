@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_search_full_text_018",
+    "skill": "search-full-text",
+    "name": "Too-many-results: float likely hits with probable-word boosting",
+    "type": "positive",
+    "description": "A broad keywords search for Flynn returns 847 results — too many to review. The skill should float likely matches to the top by adding non-required probable words (spouse name, occupation, record-type phrase, or specific place word) as bare terms. This tests the probable-word boosting step in the too-many-results ladder from search-strategies.md. Closes #2549.",
+    "tags": ["fulltext", "boosting", "too-many-results", "probable-words", "snippet-scanning"]
+  },
+  "input": {
+    "user_message": "Search the full-text index for Thomas Flynn in Schuylkill County. He was a coal miner and land owner in Branch Township in the 1870s–1880s.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "fulltext-search-flynn-broad-with-facets",
+    "fulltext-search-flynn-collection-scoped",
+    "wiki-read-any",
+    "wiki-search-any"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "The first fulltext_search call returns 847 total results — well above the >500 threshold for the too-many-results ladder (search-strategies.md). The skill must narrow before reporting results, either via probable-word boosting or collection scoping from includeFacets.",
+    "PROBABLE-WORD BOOSTING (primary criterion): A skill that adds non-required probable words — bare terms like the occupation ('miner', 'coal'), a location word ('Branch'), a spouse name, or a record-type phrase ('deed', 'will') — to boost likely matches without excluding anything, scores PASS on Query construction. These are bare un-prefixed terms in the keywords or a follow-up call; they raise matching records in ranking without excluding non-matches.",
+    "COLLECTION SCOPING (also acceptable): A skill that uses includeFacets on the first call and scopes a follow-up to a facet-derived collectionId also scores PASS on Query construction. Both paths address the too-many-results problem.",
+    "FAIL path: A skill that reports all 847 results unfiltered, or narrows only via a borrowed collectionId (not from a facet response this turn), scores FAIL on Query construction.",
+    "SNIPPET SCANNING: The skill should note that in a large result set, records where the given name and surname highlights appear adjacent in the snippet are more likely true matches than cross-column false positives where they appear far apart. Mentioning or applying this check scores PASS on Result triage."
+  ]
+}

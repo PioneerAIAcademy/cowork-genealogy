@@ -88,17 +88,6 @@ export interface FulltextFacet {
   items: { name: string; count: number; filterParam: string }[];
 }
 
-export interface NameExpansionInfo {
-  /** The caller's original name input. */
-  original: string;
-  /** The query actually sent (quoted-phrase variants). */
-  expanded: string;
-  /** Which formal names were expanded and to which variant forms. */
-  expansions: Record<string, string[]>;
-  /** Variant forms that appear in result names or highlight terms. */
-  variantsInResults: string[];
-}
-
 export interface FulltextSearchResponse {
   query: Record<string, string | number | boolean>;
   totalResults: number;
@@ -117,9 +106,6 @@ export interface FulltextSearchResponse {
   // reports as not full-text searchable. OPTIONAL, which is what keeps every
   // committed eval fixture valid under mcp-fixture-shape.test.ts.
   notFulltextSearchable?: string;
-  /** Present when the name input contained a recognized given name and was
-   *  expanded with historical diminutives/variants. */
-  nameExpansion?: NameExpansionInfo;
   results: FulltextResult[];
   facets?: FulltextFacet[];
   // Present only when `projectPath` was supplied — see RecordSearchToolResponse.

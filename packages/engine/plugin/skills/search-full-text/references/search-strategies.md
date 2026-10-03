@@ -1,10 +1,8 @@
 # Full-Text Search Strategies — FamilySearch
 
 Strategies for constructing and iterating `fulltext_search` queries.
-FTS `keywords` and `place` fields do not auto-expand abbreviations or
-apply phonetic matching — the agent must generate variants explicitly
-for those fields. The `name` field auto-expands recognized English
-given names with historical diminutives.
+No field auto-expands abbreviations or applies phonetic matching. Use `get_name_variants`
+first to build an explicit given-name variant set and run each as a separate query.
 
 ## When to use FTS vs. indexed Records search
 
@@ -25,9 +23,13 @@ persons' given names, marginalia, tax-list and store-account entries.
 ## Core tactic: name only → filter
 
 Search a name (or surname + contextual keyword), then filter by
-Place → Year → Record Type using post-search filters. Do NOT put
-place in the initial query — it causes false positives from
-collection-metadata matching.
+Place → Year → Record Type. Do NOT use the `place` query field — it
+searches collection metadata, not document text, and causes false positives.
+For place filtering, use `collectionId` with the filterParam value from the
+facets returned by `includeFacets: true` — plain-text `recordPlace*` values
+return zero results in production. Year (`yearFrom`/`yearTo`) and record-type
+filters are also allowed but apply cautiously since collection metadata dates
+can be off.
 
 ## Decision tree by hit count
 
@@ -53,10 +55,10 @@ collection-metadata matching.
 - Fall back to manual image browsing
 - Log negative result with exact query
 
-## Name variant queries for keywords/place (must run explicitly — no auto-expansion)
+## Name variant queries (must run explicitly — no auto-expansion)
 
-The `name` field auto-expands recognized given names. The table below
-applies only to `keywords` and `place` searches.
+No field auto-expands. Use `get_name_variants` for given-name variants. The table below
+covers common abbreviations for `keywords` searches.
 
 | Formal | Abbreviations to search separately |
 |---|---|
@@ -124,8 +126,7 @@ jurisdiction's `{Country}_Naming_Customs` page; read it rather than
 reciting it.
 
 To find the parents, **decompose the compound into a co-occurrence** —
-`+Naveda +Somarriba` — and run it **unscoped** (no `collectionId`; the
-answer often sits in a different FTS collection than you'd guess). Do
+`+Naveda +Somarriba`. Do
 **not** search the adjacent phrase `+"Naveda Somarriba"`: in the
 **father's** own records he carries the paternal surname and the mother
 the maternal one, so those words sit on separate people and are not
@@ -136,7 +137,7 @@ her husband's ("María Somarriba de Naveda"). The co-occurrence is still
 the right query, because it matches that case as well.
 
 Escalate precision as you learn the names:
-1. `+Naveda +Somarriba` (both surnames required, unscoped).
+1. `+Naveda +Somarriba` (both surnames required).
 2. `+"Somarriba González" +Naveda` (mother's fuller form once known).
 3. `+Naveda +Somarriba +Limpias` (add the parish once a locality is in
    hand) — or apply the place *filter* rather than a keyword.
@@ -235,6 +236,23 @@ personal names.
   instead of Name field (or vice versa); try abbreviations; remove
   year filter (collection year ≠ document year)
 - **Wrong matches:** use `-` to exclude noise; switch Name↔Keywords
+
+### Too-many-results boosting ladder
+
+When a wildcard or common-name query returns hundreds of results:
+
+1. **Float probable words as non-required boost terms.** Add them without
+   `+` so they push matching results higher without dropping non-matching
+   ones: `+Flynn "Last Will" testament probate`. Scan `highlightTerms` to
+   see which boost terms actually fired.
+2. **Scan `highlightTerms` for adjacent name highlights.** If the target
+   name and an associated name both appear in `highlightTerms`, the document
+   likely names them in the same context. Prioritize those results for image
+   verification.
+3. **Stop when quality degrades.** Once the top results no longer show both
+   names in `highlightTerms`, narrowing further is unlikely to improve yield.
+   Apply a `recordPlace*` or year filter instead, or declare the search
+   sufficiently searched for the plan item.
 
 ## Cross-reference triggers
 
