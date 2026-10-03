@@ -624,12 +624,6 @@ async def _execute_single_run(
             "expected_classifications": spec.raw.get(
                 "expected_classifications", []
             ),
-            # Also threaded in: `refinement_targets`, the assertion ids a
-            # classification-refinement test expects updated in place —
-            # deterministic ground truth for
-            # test_refinement_preserves_extraction_fields_and_avoids_duplication
-            # (issue #2021, F12; unit-test-spec.md's `refinement_targets`).
-            "refinement_targets": spec.raw.get("refinement_targets", []),
             # Also threaded in: `delegation`, the exact text a direct-agent test
             # hands the pair's agent (issue #2246). The direct-arm validators in
             # test_universal.py gate on it and assert the recorded spawn prompt
@@ -989,6 +983,7 @@ async def _execute_skill_with_retry(
                         # Direct-agent arm: agents staged, no skills. The
                         # conversion doc's acceptance check, made literal.
                         stage_skills=not spec.is_direct,
+                        suite=spec.skill,
                     )
                     before_snapshot = snapshot_files(workspace)
                     result = await run_skill(

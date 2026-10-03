@@ -31,6 +31,23 @@ DEFAULT_PLUGIN_AGENTS = (
     Path(__file__).resolve().parents[3] / "packages" / "engine" / "plugin" / "agents"
 )
 DEFAULT_PLUGIN_SKILLS = DEFAULT_PLUGIN_AGENTS.parent / "skills"
+# Test-only skills (lead, 2026-09-30): staged for unit runs, never shipped. They
+# live outside `packages/engine/plugin/`, so `scripts/package-plugin.mjs` cannot
+# reach them, and neither can the hosted control plane or the e2e harness, which
+# both load the plugin FOLDER. `extraction-append` is the first.
+TEST_ONLY_SKILLS = Path(__file__).resolve().parents[2] / "skills"
+
+
+def skill_dir_for(name: str, skills_dir: Path = DEFAULT_PLUGIN_SKILLS) -> Path:
+    """A skill's directory: the plugin's, else a test-only one of that name.
+
+    Returns the plugin path when neither exists, so an unknown name answers the
+    way it always did."""
+    plugin = Path(skills_dir) / name
+    if plugin.is_dir():
+        return plugin
+    test_only = TEST_ONLY_SKILLS / name
+    return test_only if test_only.is_dir() else plugin
 
 # Reasoning effort pinned into every unit workspace. "high" matches both Cowork
 # and the e2e orchestrator's default, so unit and e2e grade the same behavior.
@@ -60,6 +77,7 @@ def build_workspace(
     agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
     effort_level: str | None = DEFAULT_EFFORT_LEVEL,
     stage_skills: bool = True,
+    suite: str | None = None,
 ) -> Path:
     """Populate target_dir with scenario files and a .claude/skills/ tree.
 
@@ -137,6 +155,10 @@ def build_workspace(
                 shutil.copytree(
                     skill_dir, skills_target / skill_dir.name, dirs_exist_ok=True
                 )
+        # A test-only skill is staged ONLY for its own suite. Staged everywhere,
+        # every other suite's tests would run with a skill production lacks.
+        if suite and (TEST_ONLY_SKILLS / suite).is_dir():
+            shutil.copytree(TEST_ONLY_SKILLS / suite, skills_target / suite, dirs_exist_ok=True)
 
     # Stage plugin subagents as project subagents (.claude/agents/<name>.md),
     # exactly as the e2e orchestrator does.

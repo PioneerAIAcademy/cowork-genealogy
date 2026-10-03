@@ -1267,7 +1267,7 @@ contradiction in past it. An unrelated edit to an assertion written before the
 rule existed is still not refused — the same scoping the place-containment row
 uses, and for the same reason. `extraction_append` delegates to the same writer, so one check binds
 both. The eval validator
-`test_record_extraction.py::test_relationship_type_agrees_with_its_value`
+`extraction_validators.py::test_relationship_type_agrees_with_its_value`
 applies the identical predicate over the corpus; the two are pinned to one
 another by `relationship_direction_cases.json` and a test on each side, because
 the harness and the engine share no runtime.

@@ -86,12 +86,16 @@ Developer validators live separately:
 ```
 eval/harness/validators/
   test_conflict_resolution.py
-  test_record_extraction.py
+  test_extraction_append.py
   test_search_records.py
   ...
+  extraction_validators.py
 ```
 
-One file per skill, following pytest naming conventions.
+One file per skill, following pytest naming conventions. A module without the
+`test_` prefix is shared code the runner never loads on its own:
+`extraction_validators.py` holds the checks the extraction-append and
+record-structurer suites both import.
 
 ---
 
@@ -310,7 +314,6 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
 | `mcp_fixtures` | optional (omit if skill uses no MCP tools) | optional (omit if not needed) |
 | `judge_context` | required, may be empty array | required, may be empty array |
 | `expected_classifications` | optional (see Section 5.10) | omit (a declined skill creates no assertions) |
-| `refinement_targets` | optional (see Section 5.11) | omit (a declined skill updates no assertions) |
 | `index_error_source` | optional (see Section 5.12) | omit (a declined skill produces no audit) |
 | `negative` | omit | required |
 
@@ -450,11 +453,6 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         },
         "additionalProperties": false
       }
-    },
-    "refinement_targets": {
-      "type": "array",
-      "items": { "type": "string" },
-      "description": "Optional list of a_ assertion ids a classification-refinement test expects the run to update in place. Checked mechanically by test_refinement_preserves_extraction_fields_and_avoids_duplication. See Section 5.11."
     },
     "index_error_source": {
       "type": "string",
@@ -1024,7 +1022,7 @@ Default `false` reproduces the legacy counts-only judge input **byte-for-byte fo
 
 ### 5.10 `expected_classifications`
 
-Optional array of matchers — deterministic per-fixture classification ground truth, checked mechanically by the record-extraction validator (`test_expected_classifications` in `eval/harness/validators/test_record_extraction.py`). Each matcher names a `record_role` + `fact_type` pair (exactly as the skill persists them) plus expected values for any of `record_basis`, `informant_proximity`, `information_quality`. Per matcher: at least one NEW assertion (created by the run) with that pair must exist, and every new assertion with that pair must carry each declared value. The LLM judge still grades the classification dimensions; the validator results are the mechanical reference during annotation, so classification doctrine no longer rides on judge phrasing. Only declare pairs and values the doctrine fixes deterministically — an assertion the skill may legitimately omit (e.g. an optional inferred birth year) must not get a matcher, because the existence half would fail doctrine-correct runs.
+Optional array of matchers — deterministic per-fixture classification ground truth, checked mechanically by the record-extraction validator (`test_expected_classifications` in `eval/harness/validators/extraction_validators.py`). Each matcher names a `record_role` + `fact_type` pair (exactly as the skill persists them) plus expected values for any of `record_basis`, `informant_proximity`, `information_quality`. Per matcher: at least one NEW assertion (created by the run) with that pair must exist, and every new assertion with that pair must carry each declared value. The LLM judge still grades the classification dimensions; the validator results are the mechanical reference during annotation, so classification doctrine no longer rides on judge phrasing. Only declare pairs and values the doctrine fixes deterministically — an assertion the skill may legitimately omit (e.g. an optional inferred birth year) must not get a matcher, because the existence half would fail doctrine-correct runs.
 
 A matcher may also pin the fact **value**, not just its classification layers:
 
@@ -1047,33 +1045,11 @@ Two matcher modifiers keep the check both precise and non-flappy:
 
 Read a `coerced_routing_negative_to_na` warning before confirming the N/A. Either the skill carried out its own task inline — a real defect the routing pass hides, and correcting the `null` back to `1` is the only route by which it gets seen — or the judge misread a clean decline. Such a test is **mandatory** in the review sample for exactly that reason (§"Layer 3"): coercion turns the diagnostic `1` into `null`, and the sample's first trigger keys on `1` or `2`.
 
-### 5.11 `refinement_targets`
+### 5.11 `refinement_targets` (retired)
 
-Optional array of `a_` assertion ids — deterministic ground truth for a
-**classification-refinement** test, where the scenario seeds an assertion
-that already exists and the run is expected to correct its classification
-in place rather than create a new one. Checked mechanically by
-`test_refinement_preserves_extraction_fields_and_avoids_duplication`
-(`eval/harness/validators/test_record_extraction.py`) — added because no
-test in the corpus exercised the classification-refinement path at all.
-For each id: the assertion must still exist under the same id in the
-after-state; its extraction fields (`source_id`, `record_id`,
-`record_role`, `fact_type`, `value`, `structured_value`, `date`,
-`date_certainty`, `place`) must be byte-identical to before (a refinement
-corrects classification, not the extracted fact); at least one field must
-actually differ from before (a no-op "update" that changes nothing is not
-a refinement); every other pre-existing assertion must be untouched
-(scope enforcement); and no new assertion may share a target's
-`(source_id, record_role, fact_type)` shape (catches "fixed" via a
-duplicate append rather than an `update` op on the original).
-
-`expected_classifications` (5.10) alone cannot check any of this — its
-matcher looks for *new* assertions (as of the widening below, new-or-
-updated) matching a role/fact pair; it has no notion of "this specific
-existing assertion, and nothing else, changed." `refinement_targets` is
-the complementary check when the scenario's starting state already
-contains the assertion under test, which `expected_classifications`
-alone was never able to express.
+Retired with the classification-refinement test (lead, 2026-09-30). Classifications are now set
+in code at extraction and are not refined per assertion, so no run updates one in place, and
+the field and its validator were removed.
 
 **Widened matching in `expected_classifications`.** To let a matcher find
 the refinement target at all, `test_expected_classifications`'s notion of
@@ -1082,7 +1058,7 @@ run* (an id absent from the before-state, or present with a changed
 value). This is additive only: the candidate pool for every existing
 test's matchers can only grow, never shrink, so a matcher that passed
 under the old "new-only" definition still passes — it cannot introduce a
-new failure on a test that declares no `refinement_targets`.
+new failure.
 
 ### 5.12 `index_error_source`
 
@@ -1113,13 +1089,12 @@ the situation, the validator asserts the rule, and neither has to decide for
 itself which finding is which.
 
 **The value must reach the validator to do anything.** Like
-`refinement_targets` (5.11) and `expected_classifications` (5.10), this is a
+`expected_classifications` (5.10), this is a
 *top-level* field, and `orchestrator.py` assembles the validator-facing
 `test` dict as an explicit whitelist rather than passing the whole test JSON.
 A field declared in the schema and read by a validator but absent from that
 literal arrives as `None` on every run.
-`test_orchestrator_threads_index_error_source_into_validators` pins it, as the
-sibling test does for `refinement_targets`.
+`test_orchestrator_threads_index_error_source_into_validators` pins it.
 
 ---
 

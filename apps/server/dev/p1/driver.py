@@ -68,10 +68,10 @@ DEFAULT_DSN = "postgresql://postgres:p1@127.0.0.1:5433/p1"
 DEFAULT_NAMESPACE = "p1"
 DEFAULT_MODEL = "claude-sonnet-4-6"
 
-# The ut_record_extraction_001 user message, prefixed so the record-extraction
-# skill delegates to @plugin:record-extractor, whose write is extraction_append.
+# The ut_record_extraction_001 user message, prefixed so the main thread spawns
+# @plugin:record-structurer, whose write is extraction_append.
 FIXTURE_MESSAGE = (
-    "Use the record-extraction skill. "
+    "Use the record-structurer agent. "
     "Extract assertions from this 1850 census record for the Thomas Flynn "
     "household in Schuylkill County: Thomas Flynn, age 32, male, born Ireland, "
     "miner; Mary Flynn, age 28, female, born Ireland; Patrick Flynn, age 5, "

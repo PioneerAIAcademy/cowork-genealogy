@@ -797,11 +797,11 @@ describe("ownership manifest — every name resolves", () => {
     // agent-tool-names.test.ts, and pinning it twice would make a legitimate new
     // grant red HERE first — masking the unlisted comparison below, which is the
     // assertion that actually has something to say about it.
-    for (const tool of ["extraction_append", "research_log_append"]) {
-      expect([...(pluginGrants.byHolder.get("agent:record-extractor") ?? [])]).toContain(tool);
-    }
-    expect([...(pluginGrants.byHolder.get("skill:record-extraction") ?? [])]).toContain(
-      "research_log_append",
+    expect([...(pluginGrants.byHolder.get("agent:record-structurer") ?? [])]).toContain(
+      "extraction_append",
+    );
+    expect([...(pluginGrants.byHolder.get("skill:research") ?? [])]).toContain(
+      "extraction_append",
     );
     expect([...(pluginGrants.byHolder.get("skill:forget-and-rederive") ?? [])]).toContain(
       "tree_forget",
@@ -1052,13 +1052,16 @@ describe("ownership manifest — every name resolves", () => {
   it("does not claim a plane for a row with no writers at all", () => {
     // A row nobody may write cannot be enforced: there is no correct call for
     // the check to permit, so claiming a plane overstates coverage.
-    // A row has writers if any of callers, hookCallers, or unitCallers is non-empty.
+    // A row has writers if any of callers, hookCallers, or unitCallers is
+    // non-empty, or a tool authorizes it by identity: research.json
+    // `assertions` has no caller and is written only by `extraction_append`.
     const bad = rows
       .filter(
         (r) =>
           r.callers.length === 0 &&
           (r.hookCallers ?? []).length === 0 &&
           (r.unitCallers ?? []).length === 0 &&
+          (r.toolAuthorized ?? []).length === 0 &&
           r.enforceableAt.length > 0,
       )
       .map((r) => key(r));

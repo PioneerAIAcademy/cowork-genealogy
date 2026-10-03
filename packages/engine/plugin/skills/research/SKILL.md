@@ -15,6 +15,7 @@ description: >-
 allowed-tools:
   - validate_research_schema
   - research_query
+  - extraction_append
 ---
 
 # /research — Full GPS Research Workflow
@@ -139,8 +140,8 @@ regardless of how directly the request named the destination.
    | A question with no plan, and its jurisdiction **already has a `localities` entry** | `research-plan` |
    | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `exhausted` plan, which a revision leaves behind still `planned` | `search-records` (or `search-external-sites` for non-FS sources) |
    | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly | `search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_read`) |
-   | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | `record-extraction` (see the enforced contract below) |
-   | Assertions not yet linked to persons | `@plugin:person-evidence` — **always the agent, never inline.** You (the orchestrator) never write `person_evidence` entries or add record-derived facts/relationships to tree persons yourself: person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links. Writing `pe_` links inline skips that check — it is exactly how a same-named stranger's record gets attached to the subject (a b. 1814 man was given a 1918 death, age 104, this way). The record-extractor agent deliberately cannot and does not link; its output ALWAYS flows through person-evidence next |
+   | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | FamilySearch records: `extraction_append({ recordIds })`, one call for every pending record. Any other source: `@plugin:record-structurer`, one spawn for the batch. (See the enforced contract below.) |
+   | Assertions not yet linked to persons | `@plugin:person-evidence` — **always the agent, never inline.** You (the orchestrator) never write `person_evidence` entries or add record-derived facts/relationships to tree persons yourself: person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links. Writing `pe_` links inline skips that check — it is exactly how a same-named stranger's record gets attached to the subject (a b. 1814 man was given a 1918 death, age 104, this way). Extraction never links; its output ALWAYS flows through person-evidence next |
    | Evidence conflicts present | `conflict-resolution` |
    | Identity uncertainty across assertions | `hypothesis-tracking` |
    | Analyzed evidence now plausibly answers the active question — **even with plan items still `planned`** | `@plugin:research-exhaustiveness` (consult the stop criteria *before* draining the rest of the plan; it sends you back to `research-plan` if the question — e.g. a completeness "did they have *any other* children?" question — is not yet reasonably exhausted) |
@@ -149,20 +150,19 @@ regardless of how directly the request named the destination.
     | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship or fact is not yet in `tree.gedcomx.json`** (a parentage link, a Couple, or a vital fact — e.g. the concluded death date/place, bounded expressions included; check each claim's own relationship when `claims[]` is present, not just the scalar's) | `@plugin:proof-conclusion` again for the same question — it must encode the conclusion before you proceed (see **Tree-encoding gate**) |
     | `proof-conclusion` wrote `<ps_id>`, and (tier < probable, or its concluded relationship or fact is now in `tree.gedcomx.json`) | **Mentor gate** (`proof-critique` on `<ps_id>`) — **mandatory to invoke and record, not optional.** This is the last of the three mentor checkpoints and the only one that reads the proof's `narrative_markdown` as a self-contained document — it is specifically designed to catch things like a summary sentence that contradicts the list two paragraphs below it, a tier claim the cited assertions don't support, or hedging language inconsistent with a "Proved" tier. None of the earlier checkpoints check for this; skipping this one means nothing does. "Mandatory" means the gate must run and its verdict must land in `evaluations[]` before the question can be considered done — it does NOT mean you must apply its suggested fix; see **Mentor checkpoints** for that distinction. |
     | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `@plugin:proof-conclusion` |
-    | All questions are `resolved` and `project.status` still `active` | **First verify BOTH gates, in order — do not write `completed` until both hold:** (1) **Tree-encoding** — every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. (2) **Mentor verdict on record** — does every `ps_id` referenced by a resolved question have a corresponding `evaluations[]` entry with `focus: "proof-critique"` and matching `target_id`? If not, run the mentor gate on it first. Marking a question `resolved` is not, by itself, evidence either check happened. Once both are verified, re-invoke `@plugin:proof-conclusion` for the last resolved question — its §8 owns the `project.status` write. **You never write it yourself:** this router holds no writer tool, and `docs/specs/schemas/ownership.json` names `proof-conclusion`, not this router, as the `project` section's only skill caller. Then stop. |
+    | All questions are `resolved` and `project.status` still `active` | **First verify BOTH gates, in order — do not write `completed` until both hold:** (1) **Tree-encoding** — every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. (2) **Mentor verdict on record** — does every `ps_id` referenced by a resolved question have a corresponding `evaluations[]` entry with `focus: "proof-critique"` and matching `target_id`? If not, run the mentor gate on it first. Marking a question `resolved` is not, by itself, evidence either check happened. Once both are verified, re-invoke `@plugin:proof-conclusion` for the last resolved question — its §8 owns the `project.status` write. **You never write it yourself:** this router's only writer tool is `extraction_append`, which cannot reach `project`, and `docs/specs/schemas/ownership.json` names `proof-conclusion`, not this router, as the `project` section's only skill caller. Then stop. |
    | All questions are `resolved` and `project.status` is `completed` | Stop |
 
-   **Record-extraction contract — enforced, not advisory.** Inline
-   extraction is **forbidden**: you never write sources, assertions, or
-   classifications from this context, no matter how small the record or
-   how deep into the run you are. Every positive/partial log entry that
-   lacks a linked assertion routes through the `record-extraction`
-   skill — invoke it **once per batch of pending records** (it delegates
-   internally, one `record-extractor` agent per record). Classification
-   is **final at extraction**: there is no downstream classification
-   pass, so never re-derive or "refine" `record_basis` /
-   `information_quality` yourself — conflict-resolution and
-   proof-conclusion trust what is recorded.
+   **Extraction contract — enforced, not advisory.** You never compose
+   sources, assertions or classifications yourself. Every positive/partial
+   log entry that lacks a linked assertion is extracted in code: FamilySearch
+   records by **one** `extraction_append({ projectPath, recordIds, questionIds })`
+   call for the whole batch, and every other source (a transcription, a PDF,
+   pasted text) by **one** `@plugin:record-structurer` spawn for the batch.
+   Relay the summary each returns, verbatim. Classifications come from the
+   extraction table and are final: never re-derive `record_basis` /
+   `information_quality` yourself. A disagreement based on evidence outside
+   the record goes to conflict-resolution or proof-conclusion.
 
    **Conflict/hypothesis contract — enforced, not advisory.** Inline
    elimination of a namesake or other candidate, or inline comparison of
@@ -179,7 +179,7 @@ regardless of how directly the request named the destination.
    **Exhaustiveness/proof-conclusion contract — enforced, not advisory.**
    `research-exhaustiveness`, `proof-conclusion` and `person-evidence` are
    `Agent` spawns of `@plugin:<name>`, never inline writes from this context
-   — the same rule as record-extraction above, and for the same reason:
+   — the same rule as extraction above, and for the same reason:
    each of those skills carries analysis this context does not (the
    7-point stop criteria for exhaustiveness; the
    citation and tier checks for proof-conclusion), and a hand-authored

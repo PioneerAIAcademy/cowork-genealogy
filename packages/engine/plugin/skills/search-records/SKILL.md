@@ -3,7 +3,7 @@ name: search-records
 description: Executes searches against FamilySearch historical records per
   the research plan. Routes to the correct MCP search tool based on record
   type, triages results using match scoring, logs every search including nil
-  results, and passes promising records to record-extraction. GPS Step 1 —
+  results, and passes promising records to extraction. GPS Step 1 —
   Reasonably Exhaustive Research (execution phase). Use when the user says
   "search for [person]", "find [person] in [record type]", "execute the
   plan", "run the next search", "search FamilySearch", or when a plan item
@@ -11,7 +11,7 @@ description: Executes searches against FamilySearch historical records per
   Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers.com (use
   search-external-sites), when the user wants to plan what to search (use
   research-plan), or when the user wants to analyze a record already found
-  (use record-extraction).
+  (use extraction_append, or the record-structurer agent).
 allowed-tools:
   - record_search
   - rank_search_matches
@@ -20,6 +20,7 @@ allowed-tools:
   - source_attachments
   - research_log_append
   - research_append
+  - extraction_append
   - research_query
   - wiki_search
   - wiki_read
@@ -29,7 +30,7 @@ allowed-tools:
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
-The bridge between planning (research-plan) and analysis (record-extraction).
+The bridge between planning (research-plan) and extraction (`extraction_append`).
 
 ## Route check — answer before ANY tool call or file read
 
@@ -37,7 +38,7 @@ The bridge between planning (research-plan) and analysis (record-extraction).
 |-----------|--------|
 | User names a non-FamilySearch site (Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, or any other commercial site) | `Skill("search-external-sites")` — stop |
 | User asks what to search, which records to check, whether research is complete, how to find someone, or what to do next (any strategy question rather than executing an already-planned search) | `Skill("research-plan")` — stop |
-| User wants to analyze, extract from, or interpret a record already in hand | `Skill("record-extraction")` — stop |
+| User wants to analyze, extract from, or interpret a record already in hand | `extraction_append({ recordIds })` for a FamilySearch record, `@plugin:record-structurer` for any other source — stop |
 
 **The key test:** is the user asking you to EXECUTE a search or to DECIDE what to search?
 - "Search for X" / "Find X in Y records" / "Execute pli_001" → execute (proceed below)
@@ -602,19 +603,19 @@ Narrate from the tool's summary ("logged as log_006; retained 3 results"); do no
 **Do this now, in the same turn as Step 5 — before Step 7 or presenting anything.** A logged search with no matching plan-item status update is an incomplete step, not a deferred one: if you executed a search against a plan item, this call happens before you do anything else with the results.
 
 Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `entryId`, and `fields: { status: "..." }`:
-- `in_progress`: Search executed — work continues downstream in record-extraction. Use whenever records were found to pass on, OR the search was exhausted with nil results and re-planning may be needed.
+- `in_progress`: Search executed — work continues downstream in extraction. Use whenever records were found to pass on, OR the search was exhausted with nil results and re-planning may be needed.
 - `skipped`: The search was determined to be unnecessary.
 
-**Do not** set status to `completed` from this skill — that is set by record-extraction once assertions have been created.
+**Do not** set status to `completed` from this skill — that is set once extraction has created the assertions.
 
 ### 7. Pass records to extraction
 
 **Distinguish index entries from original records.** Most search results are index entries — derivative sources that are pointers to originals, not the records themselves.
 
-**Hand off the `recordId` explicitly.** Each ranked match (like each `record_search` result) carries a `recordId` field that record-extraction uses as the assertion `record_id`. Pass it through in the handoff (alongside the persona ids you already hold) so record-extraction does **not** have to recover it by re-running `record_search` — that lets its first `research_append` validate without a re-search. The format is the validator's concern (it matches `record_id` by canonical ARK form), so pass `recordId` straight through.
+**Extraction is one call:** `extraction_append({ projectPath, recordIds, questionIds })`, with each promising result's `recordId` field (never `arkId`, `ark`, `id` or `url`). It reads each record live, logs it and extracts it in code, so do not `record_read` first. Relay its summary verbatim.
 
-1. If a record ID or ARK is available, call `record_read` to fetch the full simplified GEDCOMX before passing to record-extraction. **Read it from the sidecar, not live:** pass the Step 3 handle — `record_read({ recordId, resultsRef: staged.resultsRef, projectPath })` — to get the searched person's full gedcomx (facts, source citation, standardized places) **without a network round-trip**. **Do NOT `Read` the sidecar file yourself:** `record_read` pulls just the one record out, whereas reading the whole `results/<log_id>.json` reloads every staged result and defeats the compaction. Omit `resultsRef` for a live read only when you need a **co-resident's** full facts (the sidecar stubs co-residents to a name plus a fact or two), or the record wasn't part of this staged search. **Parameter name:** always `recordId` — the result's `recordId` field, which every result carries (the ARK, when you need it, is `recordArk`). Do NOT use `arkId`, `ark`, `id`, or `url`.
-2. If the full record is unavailable but an image exists, record the image URL in the log and pass to record-extraction, which fetches and transcribes.
+1. If a record ID is available, put it in `recordIds`.
+2. If the full record is unavailable but an image exists, record the image URL in the log. Its page text goes through `@plugin:image-reader`, then `@plugin:record-structurer`.
 3. If only the index entry is available, flag it in log notes as "derivative only — original not located." Never treat an index entry as equivalent to examining the original.
 
 **Passenger lists:** Starting 1820, US passenger manifests list every person aboard by name, including infants and young children — not just heads of household. (Canadian passenger lists are the exception, scarce before 1865.) When a result matches a parent, examine the full manifest for all family members — children's ages and birthplaces can resolve parentage questions.
@@ -638,7 +639,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
    (a) the record type existed in this jurisdiction at this time,
    (b) the collection is reasonably complete for the period,
    (c) the subject should have appeared based on known facts.
-   State each condition clearly. If all three hold, note in the log and suggest record-extraction create a negative assertion. If the collection is incomplete or the subject may have been absent, note this as a limitation rather than a conclusion.
+   State each condition clearly. If all three hold, note in the log and suggest recording it with `extraction_append({ absences })`. If the collection is incomplete or the subject may have been absent, note this as a limitation rather than a conclusion.
 5. **Distinguish "not found" from "does not exist."** A nil result may mean the record is undigitized, unindexed, or indexed under a variant. Note which applies.
    **Low index coverage → pivot to full-text, do not conclude absent.** When the nil is on a collection the locality survey flagged as covering this place+period but whose index coverage is very low (browse-only image volumes — probate, court order books, land/deeds, many pre-1900 registers; `recordSearchablePercent` near 0), the record is almost certainly present as an **un-indexed page image**, not absent. `outcome` is still **`negative`** — that field records what the search returned, not what it means. The *interpretation* goes in `notes` and in the plan-item status: say the collection is browse-only / near-zero indexed and the record is very likely present as un-indexed page text, and keep the plan item **`in_progress`**. **Never let the narrative claim absence** — "no estate record exists" is the error, not the `negative` enum. Then report that a full-text search of that collection's volumes (a co-occurrence search — surname plus a distinguishing term like an heir/administrator's name or `deceased`/`estate`), and possibly image browsing, is the next step. **Do not run or delegate that search yourself** — the caller owns that decision. Absence may only be called after full-text/browse has also come up empty. (Example: a pre-1911 Kentucky death has no statewide certificate; it is established from the county estate administration — bond and settlement — which `record_search` on a ~1%-indexed probate collection will never surface.)
    **Zero results is NOT "service unavailability."** If `record_search` returns `totalMatches: 0` with no error, the search completed — do not attribute this to service issues.
@@ -657,7 +658,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 
 ### 9. Present results
 
-**Accuracy rule — do not overclaim persistence.** This skill writes only `log[]` entries and plan-item `status` — nothing else. Never describe results as "logged with sources," "recorded," "saved to the research project," or any phrasing implying a `sources` or `assertions` entry exists, unless `record-extraction` actually ran in this turn and returned assigned `src_`/`a_` ids. A search result that hasn't been through extraction is a candidate record sitting in a search log — say exactly that, even when the user's own phrasing ("go ahead," "find and list them") sounds like a go-ahead to do the full job.
+**Accuracy rule — do not overclaim persistence.** This skill writes only `log[]` entries and plan-item `status` — nothing else. Never describe results as "logged with sources," "recorded," "saved to the research project," or any phrasing implying a `sources` or `assertions` entry exists, unless extraction actually ran in this turn and returned assigned `src_` ids. A search result that hasn't been through extraction is a candidate record sitting in a search log — say exactly that, even when the user's own phrasing ("go ahead," "find and list them") sounds like a go-ahead to do the full job.
 
 - Summarize what was searched and what was found
 - Show the log entries created
@@ -665,7 +666,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 - Show plan progress: "3 of 5 plan items completed"
 - Suggest next steps:
   - **If the invoking message already authorized continuing** (e.g. "...and continue with exhaustive research," "...don't stop to check in with me between searches") → execute the next `planned` item in the same turn instead of asking. That item is already part of the plan the user asked you to run — it is not a self-initiated idea (see Step 1's ad-hoc/planned distinction), so it does not need a fresh yes. Re-asking a question the message already answered is the defect this guards against, not a safety margin.
-  - Top match clears `needs-review` (Step 4) → "I found N promising record(s) for <person> — want me to run record-extraction now to turn them into sourced, GPS-classified assertions?" Do not present these results as already persisted beyond the search log.
+  - Top match clears `needs-review` (Step 4) → "I found N promising record(s) for <person> — want me to extract them now into sourced, GPS-classified assertions?" Do not present these results as already persisted beyond the search log.
   - Top match is `needs-review` → do not call it promising and do not offer extraction. State the concern plainly, name the anchor that would confirm identity, and propose that narrower search as the next step instead (Step 4).
   - Collection mismatch confirmed (Step 5) → State the mismatch plainly and point to a different source or collection filter. Step 5's ban on variant-spelling escalation covers this summary, not just the tool calls you make: do not float a variant spelling as a possible explanation for the gap, or as one option among several next steps, even hedged — that reintroduces the escalation the mismatch protocol forbids, in the one place the user actually reads a recommendation.
   - More plan items, no prior authorization to continue → "Shall I continue with the next search?"

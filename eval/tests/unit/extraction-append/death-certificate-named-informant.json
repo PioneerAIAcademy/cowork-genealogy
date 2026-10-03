@@ -1,0 +1,126 @@
+{
+  "test": {
+    "id": "ut_extraction_append_012",
+    "skill": "extraction-append",
+    "name": "Extract assertions from a death certificate with a named informant",
+    "type": "positive",
+    "description": "Converted from ut_record_extraction_009: the record the user pasted is now served as a record_read fixture (the 1908 Pennsylvania death certificate index entry for Patrick Flynn; its informant, his wife Mary Flynn, is carried as a persona. FamilySearch rarely indexes the informant, so that shape is deliberate), and extraction runs in code. Extract assertions from a 1908 Pennsylvania death certificate. The certificate names a specific informant (wife Mary Flynn) whose proximity to the death facts (primary — she was present) differs from her proximity to the birth facts (secondary — she was told, not present). Tests the Informant identification rubric dimension on a non-census record where the informant is explicitly named.",
+    "tags": [
+      "extraction",
+      "death-certificate",
+      "named-informant",
+      "informant-proximity"
+    ]
+  },
+  "input": {
+    "user_message": "Extract FamilySearch record ark:/61903/1:1:J6W2-KPT.",
+    "scenario": "empty-project-just-created"
+  },
+  "mcp_fixtures": [
+    "record-read-flynn-death-1908-j6w2-kpt"
+  ],
+  "judge_context": [
+    "The skill makes one extraction_append call with the record id and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you."
+  ],
+  "execution": {
+    "max_turns": 10,
+    "max_wall_clock_seconds": 300
+  },
+  "expected_classifications": [
+    {
+      "record_role": "deceased",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "informant_proximity": "family_not_present"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "occupation",
+      "value": "Coal miner",
+      "record_basis": "stated",
+      "informant_proximity": "family_not_present"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "record_basis": "stated",
+      "informant_proximity": "family_not_present"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "race",
+      "optional": true,
+      "record_basis": "stated",
+      "informant_proximity": "family_not_present"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "death",
+      "record_basis": "stated",
+      "informant_proximity": [
+        "official_duty",
+        "witness"
+      ]
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "cause_of_death",
+      "record_basis": "stated",
+      "informant_proximity": "official_duty"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "age",
+      "record_basis": "stated",
+      "informant_proximity": "family_not_present"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "attribute": "date",
+      "optional": true,
+      "record_basis": "inferred",
+      "informant_proximity": [
+        "family_not_present",
+        "researcher"
+      ]
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "attribute": "place",
+      "record_basis": "stated",
+      "informant_proximity": "family_not_present"
+    },
+    {
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "optional": true,
+      "record_basis": "stated",
+      "informant_proximity": "family_not_present"
+    },
+    {
+      "record_role": "father_of_deceased",
+      "fact_type": "birth",
+      "attribute": "place",
+      "optional": true,
+      "record_basis": "stated",
+      "informant_proximity": "family_not_present"
+    },
+    {
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "optional": true,
+      "record_basis": "stated",
+      "informant_proximity": "family_not_present"
+    },
+    {
+      "record_role": "mother_of_deceased",
+      "fact_type": "birth",
+      "attribute": "place",
+      "optional": true,
+      "record_basis": "stated",
+      "informant_proximity": "family_not_present"
+    }
+  ]
+}

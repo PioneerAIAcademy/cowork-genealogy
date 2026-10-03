@@ -13,8 +13,8 @@ description: Invoke for FamilySearch full-text search (FTS) — immediately
   indexed search by name/date/place (use search-records), and planning what
   to search (use research-plan). Do NOT use to scope a new project or
   propose opening questions with no plan item yet (use question-selection),
-  or when the user has a record in hand wanting extraction (use
-  record-extraction).
+  or when the user has a record in hand wanting extraction (use the
+  record-structurer agent).
 allowed-tools:
   - fulltext_search
   - source_attachments
@@ -346,12 +346,12 @@ collision, not a match (step 8).
 
 ### 11. Pass records to extraction
 
-For each promising record, invoke record-extraction to process it. Always
-pass the result's `id` (the record's ARK) — it is what record-extraction
-needs to reach the record. Staging strips the full transcript, so pass what
-survives — `names`/`places`/`dates`, `title`, `recordType`, `recordPlace`,
-`highlightTerms` — as triage context; record-extraction reads the source
-image itself for the transcript.
+Staging strips the full transcript. For each promising record, get its page
+text from `@plugin:image-reader`, passing the result's `id`. Then spawn
+`@plugin:record-structurer` **once** for all of them. Each source carries its
+`recordId` (the result's `id`) and the transcription as `text`, plus
+`names`/`places`/`dates`, `title`, `recordType`, `recordPlace` and
+`highlightTerms` as triage context. Relay the agent's summary verbatim.
 
 ### 12. Present results
 
@@ -363,7 +363,7 @@ suggest next steps (more plan items, cross-references, or re-plan).
 
 - **Do NOT write to `sources` or `assertions`.** This skill only
   writes to `log` and `plans` (status updates). Creating source
-  entries and extracting assertions is record-extraction's job.
+  entries and extracting assertions is the record-structurer agent's job.
 - **Do NOT add extra fields to plan items.** Plan items have a
   fixed schema (`id`, `sequence`, `record_type`, `jurisdiction`,
   `date_range`, `repository`, `rationale`, `fallback_for`,

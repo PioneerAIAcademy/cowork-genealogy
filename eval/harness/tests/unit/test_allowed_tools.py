@@ -152,8 +152,8 @@ def test_referenced_but_missing_agent_is_ignored(tmp_path):
 # silently restoring a 700 KB-capped path.
 
 
-def test_record_extraction_does_not_union_image_read():
-    tools = compute_allowed_tools("record-extraction", PLUGIN_SKILLS)
+def test_search_full_text_does_not_union_image_read():
+    tools = compute_allowed_tools("search-full-text", PLUGIN_SKILLS)
     # Non-vacuity: the union must have actually run and picked up the surviving
     # reader, or `not in` below would pass on an empty set.
     assert "mcp__genealogy__image_transcribe" in tools
@@ -183,7 +183,6 @@ def test_skill_refs_finds_every_declared_callee():
     callees = skill_refs_for_skill(PLUGIN_SKILLS / "search-records" / "SKILL.md")
     assert callees == [
         "project-status",
-        "record-extraction",
         "research-plan",
         "search-external-sites",
     ]
@@ -240,8 +239,8 @@ def test_skill_refs_for_missing_file_is_empty(tmp_path):
 def test_run_skills_callee_brings_its_own_agents_tools():
     """The union follows the AGENT axis one level down, not just the skill's.
 
-    `record-extraction` delegates to `@plugin:record-extractor`. Union only its
-    `allowed-tools` and the callee runs holding eight fewer tools than it does
+    `search-external-sites` delegates to `@plugin:record-structurer`. Union only
+    its `allowed-tools` and the callee runs holding fewer tools than it does
     standalone — and the failure is silent improvisation, not an error, which
     is the whole bug #1012 closed one level up (#1225 review).
 
@@ -251,12 +250,14 @@ def test_run_skills_callee_brings_its_own_agents_tools():
     """
     as_callee = set(
         compute_allowed_tools(
-            "search-records", PLUGIN_SKILLS, run_skills={"record-extraction"}
+            "search-records", PLUGIN_SKILLS, run_skills={"search-external-sites"}
         )
     )
-    standalone = set(compute_allowed_tools("record-extraction", PLUGIN_SKILLS))
+    standalone = set(compute_allowed_tools("search-external-sites", PLUGIN_SKILLS))
 
-    assert "mcp__genealogy__extraction_append" in as_callee
+    # record-structurer's reader, which search-external-sites does not declare.
+    assert "mcp__genealogy__sidecar_read" in standalone
+    assert "mcp__genealogy__sidecar_read" in as_callee
     assert not (standalone - as_callee), (
         "a run_skills callee must hold every tool it holds standalone; "
         f"missing: {sorted(t.split('__')[-1] for t in standalone - as_callee)}"

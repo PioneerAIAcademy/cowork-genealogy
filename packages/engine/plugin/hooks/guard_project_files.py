@@ -165,7 +165,7 @@ AGENT_WRITABLE_SECTIONS = {
     # through tree_edit/materialize_facts, which carry no `section` for this
     # check to read. Deliberately narrow for the same reason as the row above:
     # a blocker it meets -- an unclassified assertion, a genuinely competing
-    # candidate -- is cleared by record-extraction or conflict-resolution, not
+    # candidate -- is cleared by extraction or conflict-resolution, not
     # by this agent editing those sections itself.
     "person-evidence": frozenset({"person_evidence"}),
     # gps-mentor appends its verdict to `evaluations` and writes nothing else in

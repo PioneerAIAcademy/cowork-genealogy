@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_record_structurer_003",
+    "skill": "record-structurer",
+    "name": "A suspect required-identifier name must be confirmed against the original image, not finalized from the index",
+    "type": "positive",
+    "description": "Converted from ut_record_extraction_016. A page-image transcription whose father's patronymic is doubtful, flagged by the caller. The agent keeps the [?] and says why in the name's note. Graded by test_a_doubted_name_is_recorded_as_doubted.",
+    "tags": [
+      "suspect-transcription",
+      "required-identifier",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Structure this source and write it to the project.\n\nprojectPath: <workspace>\nsources:\n- recordId: capture:birkeland-baptism-1817\n  documentForm: page_image\n  flags: The researcher doubts the father's patronymic 'Nadnesen'; the true reading may be 'Aadnesen'. Record it as the page gives it and say it is doubted.\n  text: <record-data>\nStavanger Domkirke, parish register, baptisms 1817 (transcribed from the page image)\n\nBaptized 20 July 1817, born 11 July: Kristian Fredrik\nFather: Tollev Nadnesen [?]\nMother: Inger Larsdatter\n</record-data>",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "The agent reads the source, makes one extraction_append call carrying one document, and returns the tool's summary verbatim. Roles and classifications are decided in code from the document; grade what the agent READ and whether the reply is the summary, not the classifications."
+  ],
+  "execution": {
+    "max_turns": 12,
+    "max_wall_clock_seconds": 400
+  }
+}

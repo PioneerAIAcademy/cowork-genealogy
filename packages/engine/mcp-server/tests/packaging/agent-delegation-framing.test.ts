@@ -96,47 +96,173 @@ interface Edge {
 
 // Keyed `<caller skill>/SKILL.md -> <callee agent>`.
 const DELEGATION_EDGES: Record<string, Edge> = {
-  "record-extraction -> record-extractor": {
+  "forget-and-rederive -> record-structurer": {
     pins: [
       {
-        side: "caller",
-        excerpt:
-          "Frame delegations neutrally — describe the record and the project state;\nNEVER frame the task as \"fix\" or \"correct\" the existing tree (corrective\nframing has induced destructive edits).",
-      },
-      {
-        side: "caller",
-        excerpt:
-          "**Never instruct the agent to create `person_evidence` links or to assign\nan identity confidence**",
-      },
-      {
         side: "agent",
-        excerpt: "not even if a delegation message\nasks you to",
+        excerpt: "Send no other key, at any depth; roles and classifications are not yours to send.",
       },
     ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The caller hands over only sources — a resultsRef or the record text — so a composed " +
+        "conclusion has nowhere to travel. The agent's document schema refuses every role and " +
+        "classification field IN CODE (spec §11.7), and it holds no writer that reaches " +
+        "person_evidence, so the destructive-edit and fabricated-link incidents this file guards " +
+        "against cannot be induced through it. The agent-side pin states the rule.",
+    },
+  },
+  "research -> record-structurer": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "Send no other key, at any depth; roles and classifications are not yours to send.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The caller hands over only sources — a resultsRef or the record text — so a composed " +
+        "conclusion has nowhere to travel. The agent's document schema refuses every role and " +
+        "classification field IN CODE (spec §11.7), and it holds no writer that reaches " +
+        "person_evidence, so the destructive-edit and fabricated-link incidents this file guards " +
+        "against cannot be induced through it. The agent-side pin states the rule.",
+    },
+  },
+  "research-exhaustiveness -> record-structurer": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "Send no other key, at any depth; roles and classifications are not yours to send.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The caller hands over only sources — a resultsRef or the record text — so a composed " +
+        "conclusion has nowhere to travel. The agent's document schema refuses every role and " +
+        "classification field IN CODE (spec §11.7), and it holds no writer that reaches " +
+        "person_evidence, so the destructive-edit and fabricated-link incidents this file guards " +
+        "against cannot be induced through it. The agent-side pin states the rule.",
+    },
+  },
+  "search-external-sites -> record-structurer": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "Send no other key, at any depth; roles and classifications are not yours to send.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The caller hands over only sources — a resultsRef or the record text — so a composed " +
+        "conclusion has nowhere to travel. The agent's document schema refuses every role and " +
+        "classification field IN CODE (spec §11.7), and it holds no writer that reaches " +
+        "person_evidence, so the destructive-edit and fabricated-link incidents this file guards " +
+        "against cannot be induced through it. The agent-side pin states the rule.",
+    },
+  },
+  "search-full-text -> record-structurer": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "Send no other key, at any depth; roles and classifications are not yours to send.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The caller hands over only sources — a resultsRef or the record text — so a composed " +
+        "conclusion has nowhere to travel. The agent's document schema refuses every role and " +
+        "classification field IN CODE (spec §11.7), and it holds no writer that reaches " +
+        "person_evidence, so the destructive-edit and fabricated-link incidents this file guards " +
+        "against cannot be induced through it. The agent-side pin states the rule.",
+    },
+  },
+  "search-records -> record-structurer": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "Send no other key, at any depth; roles and classifications are not yours to send.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The caller hands over only sources — a resultsRef or the record text — so a composed " +
+        "conclusion has nowhere to travel. The agent's document schema refuses every role and " +
+        "classification field IN CODE (spec §11.7), and it holds no writer that reaches " +
+        "person_evidence, so the destructive-edit and fabricated-link incidents this file guards " +
+        "against cannot be induced through it. The agent-side pin states the rule.",
+    },
+  },
+  "source-evaluation -> record-structurer": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "Send no other key, at any depth; roles and classifications are not yours to send.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The caller hands over only sources — a resultsRef or the record text — so a composed " +
+        "conclusion has nowhere to travel. The agent's document schema refuses every role and " +
+        "classification field IN CODE (spec §11.7), and it holds no writer that reaches " +
+        "person_evidence, so the destructive-edit and fabricated-link incidents this file guards " +
+        "against cannot be induced through it. The agent-side pin states the rule.",
+    },
+  },
+  "translation -> record-structurer": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "Send no other key, at any depth; roles and classifications are not yours to send.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The caller hands over only sources — a resultsRef or the record text — so a composed " +
+        "conclusion has nowhere to travel. The agent's document schema refuses every role and " +
+        "classification field IN CODE (spec §11.7), and it holds no writer that reaches " +
+        "person_evidence, so the destructive-edit and fabricated-link incidents this file guards " +
+        "against cannot be induced through it. The agent-side pin states the rule.",
+    },
+  },
+  "search-full-text -> image-reader": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "Never tailor, trim, or slant the transcription toward an expected answer.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The caller asks only for a page's text, keyed by the result's id, and composes no " +
+        "expected answer. The agent-side pin forbids slanting the transcription toward one, " +
+        "which is the guarantee; this caller carries no rule of its own yet.",
+    },
+  },
+  "search-records -> image-reader": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "Never tailor, trim, or slant the transcription toward an expected answer.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The caller asks only for a page's text, keyed by the result's id, and composes no " +
+        "expected answer. The agent-side pin forbids slanting the transcription toward one, " +
+        "which is the guarantee; this caller carries no rule of its own yet.",
+    },
   },
 
-  "record-extraction -> image-reader": {
-    pins: [
-      {
-        side: "caller",
-        excerpt: "**`looking_for` is a search key, not the answer.**",
-      },
-      {
-        // The headline alone can survive an INVERTED body: the paragraph was
-        // rewritten to instruct writing "confirm the father is Adam Schreck" —
-        // verbatim the counter-example the sibling agent-side pin forbids — and
-        // the suite stayed green because the bold sentence above was untouched.
-        // Pin the clause that carries the prohibition, not just its heading.
-        side: "caller",
-        excerpt:
-          "never the expected result. Do not\nwrite \"confirm the father is Adam Schreck\"",
-      },
-      {
-        side: "agent",
-        excerpt: "Never\ntailor, trim, or slant the transcription toward an expected answer.",
-      },
-    ],
-  },
 
   // "search-images -> search-images" was here until the thin-skill deletion
   // (issue #2268). The routing skill is gone; the agent is now reached by
@@ -350,15 +476,12 @@ const DELEGATION_EDGES: Record<string, Edge> = {
 // discriminate for `citation`, and each further single-word conversion
 // (`translation` is next, issue #2804) adds another block like this one.
 const PROSE_MENTIONS = new Map<string, string>([
-  ["research -> record-extractor", ""],
-  ["record-extraction -> search-images", ""],
   ["research -> search-images", ""],
+  ["research-plan -> record-structurer", ""],
   ["historical-context -> citation", ""],
   ["init-project -> citation", ""],
   ["project-status -> citation", ""],
-  ["record-extraction -> citation", ""],
   ["research -> citation", ""],
-  ["search-records -> citation", ""],
   ["source-evaluation -> citation", ""],
   ["translation -> citation", ""],
   // Six "use proof-conclusion" prohibitions in DO NOT clauses, visible to the
@@ -397,7 +520,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["conflict-resolution -> person-evidence", ""],
   ["forget-and-rederive -> person-evidence", ""],
   ["project-status -> person-evidence", ""],
-  ["record-extraction -> person-evidence", ""],
   ["search-records -> person-evidence", ""],
   ["timeline -> person-evidence", ""],
   ["translation -> person-evidence", ""],
@@ -419,7 +541,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // conversion ("use convert-dates", "route to convert-dates"), none spells
   // `@plugin:convert-dates`.
   ["historical-context -> convert-dates", ""],
-  ["record-extraction -> convert-dates", ""],
   ["translation -> convert-dates", ""],
 ]);
 
@@ -606,12 +727,12 @@ describe("agent delegation framing", () => {
     // now unambiguous, so the prose arm starts policing its bare-name mentions.
     "proof-conclusion",
     "person-evidence",
-    "record-extractor",
     "search-familysearch-wiki",
     "search-images",
     "search-wikipedia",
     "tree-edit",
     "validate-schema",
+    "record-structurer",
   ];
 
   it("the prose arm still covers every agent it is relied on to police", () => {

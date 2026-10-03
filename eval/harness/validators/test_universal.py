@@ -570,6 +570,28 @@ def _remap_collapsing(value, remap: dict[str, str]):
     return value
 
 
+def _explained_by_appends(before_section, after_section) -> bool:
+    """True when `after_section` is `before_section` plus new entries only.
+
+    What `extraction_append` does to each section it writes: it appends a
+    source, its assertions and its log entry, and changes nothing already there.
+    Keyed on entry `id`, so order does not matter; an entry with no `id`, an
+    existing entry changed or removed, or a section that is not a list fails
+    closed.
+    """
+    if not isinstance(before_section, list) or not isinstance(after_section, list):
+        return False
+    after_by_id: dict[str, dict] = {}
+    for e in after_section:
+        if not isinstance(e, dict) or not isinstance(e.get("id"), str):
+            return False
+        after_by_id[e["id"]] = e
+    for e in before_section:
+        if not isinstance(e, dict) or after_by_id.get(e.get("id")) != e:
+            return False
+    return len(after_section) > len(before_section)
+
+
 def _explained_by_merge(before_section, after_section, remap: dict[str, str]) -> bool:
     """True when the section's whole delta is the merge's id permutation.
 
@@ -605,8 +627,12 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
     `research_append` — strictly more than the merge needs, and it reopens the
     failure the `person_evidence` row names.
 
-    Scoped to research.json. `test_tree_ownership_table` does NOT take this
-    path: the tree rows already list `merge_tree_persons` among their
+    `extraction_append` is the second tool-identity path: it decides roles and
+    classifications in code, so which skill calls it does not matter, and it is
+    authorized for appends only (`_explained_by_appends`).
+
+    The merge path is scoped to research.json. `test_tree_ownership_table` does
+    NOT take it: the tree rows already list `merge_tree_persons` among their
     `writerTools` *and* name tree-edit a caller, so the clause would authorize
     nothing there that is not already authorized, while silently widening
     `materialize_facts` and `tree_forget` to callers that have never asked.
@@ -681,6 +707,12 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
             if "merge_tree_persons" in (identity_tools.get(section) or set()) and (
                 "merge_tree_persons" in called
             ) and _explained_by_merge(before.get(section), after.get(section), remap):
+                continue
+            # extraction_append: roles and classifications are set in code, so
+            # any skill may call it. Authorized only for appends.
+            if "extraction_append" in (identity_tools.get(section) or set()) and (
+                "extraction_append" in called
+            ) and _explained_by_appends(before.get(section), after.get(section)):
                 continue
             unauthorized.append(section)
 
@@ -957,6 +989,14 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
                 after_state.get("research_json"),
                 _corrected_assertion_ids(tool_calls),
             )
+        ):
+            continue
+        # extraction_append mints each `S` entry beside the `src_` it writes.
+        if (
+            section == "sources"
+            and "extraction_append" in (identity_tools.get(section) or set())
+            and "extraction_append" in called
+            and _explained_by_appends(before.get(section), after.get(section))
         ):
             continue
         unauthorized.append(section)

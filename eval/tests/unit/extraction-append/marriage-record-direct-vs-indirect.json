@@ -1,0 +1,111 @@
+{
+  "test": {
+    "id": "ut_extraction_append_017",
+    "skill": "extraction-append",
+    "name": "Extract assertions from a marriage record — direct vs indirect evidence",
+    "type": "positive",
+    "description": "Converted from ut_record_extraction_010: the record the user pasted is now served as a record_read fixture (the 1870 Schuylkill County marriage license entry for Patrick Flynn and Catherine Gallagher, naming both sets of parents), and extraction runs in code. Extract assertions from an 1870 Pennsylvania marriage record. The marriage date and place are direct evidence (explicitly stated). The bride's and groom's ages and birthplaces are direct evidence (stated on the record). The parents' names are direct evidence. But the implied birth years (computed from ages) are indirect. Tests Evidence type accuracy on a non-census record.",
+    "tags": [
+      "extraction",
+      "marriage-record",
+      "direct-vs-indirect",
+      "evidence-type"
+    ]
+  },
+  "input": {
+    "user_message": "Extract FamilySearch record ark:/61903/1:1:Q2HN-8WM.",
+    "scenario": "empty-project-just-created"
+  },
+  "mcp_fixtures": [
+    "record-read-flynn-gallagher-1870-q2hn-8wm"
+  ],
+  "judge_context": [
+    "The skill makes one extraction_append call with the record id and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you."
+  ],
+  "execution": {
+    "max_turns": 10,
+    "max_wall_clock_seconds": 300
+  },
+  "expected_classifications": [
+    {
+      "record_role": "groom",
+      "fact_type": "name",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "groom",
+      "fact_type": "age",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "groom",
+      "fact_type": "occupation",
+      "value": "Coal miner",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "groom",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ireland",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "groom",
+      "fact_type": "birth",
+      "attribute": "date",
+      "record_basis": "inferred",
+      "optional": true
+    },
+    {
+      "record_role": "bride",
+      "fact_type": "name",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "bride",
+      "fact_type": "age",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "bride",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Pennsylvania",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "bride",
+      "fact_type": "birth",
+      "attribute": "date",
+      "record_basis": "inferred",
+      "optional": true
+    },
+    {
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "informant_proximity": "self",
+      "information_quality": "primary"
+    },
+    {
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "informant_proximity": "self",
+      "information_quality": "primary"
+    },
+    {
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "informant_proximity": "self",
+      "information_quality": "primary"
+    }
+  ]
+}

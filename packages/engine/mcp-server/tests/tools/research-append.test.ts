@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { LOCAL } from "../../src/auth/principal.js";
 import { singleOk, failure, errorsOf } from "../helpers/narrow.js";
 import { mkdtemp, writeFile, readFile, rm, mkdir, access } from "fs/promises";
 import { join } from "path";
@@ -398,7 +399,7 @@ describe("research_append (Phase 1)", () => {
       expect(r.filesWritten).not.toContain("tree.gedcomx.json");
     });
 
-    it("(8) fires through extraction_append too, not just research_append", async () => {
+    it("(8) is research_append's alone: extraction_append refuses a correction", async () => {
       await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
 
       const r = await extractionAppend({
@@ -407,10 +408,10 @@ describe("research_append (Phase 1)", () => {
         op: "update",
         entryId: "a_011",
         fields: { standard_place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
-      });
-      expect(r.ok).toBe(true);
-      if (!r.ok) return;
-      expect((await factF4()).standard_place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      } as any, LOCAL);
+      expect(r.ok).toBe(false);
+      expect((r.errors ?? []).join(" ")).toMatch(/Correcting an existing assertion is not an extraction/);
+      expect((await factF4()).standard_place).not.toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
     });
 
     it("(9) rewrites every fact carrying the id, and no fact carrying another", async () => {
@@ -7913,32 +7914,33 @@ describe("research_append — relationship direction and the sibling value (#253
     }
   });
 
-  it("binds extraction_append too, which is the path record-extractor uses", async () => {
-    // `extractionAppend` delegates to `researchAppend`, so one precondition
-    // covers both writers — but nothing tested the delegated path, and it is
-    // the one the agent this card edits actually calls.
+  it("binds extraction_append too: the sibling a document states passes it", async () => {
+    // `extractionAppend` writes through `researchAppend`, so the precondition
+    // binds it as well. It builds relationship assertions in code, so what is
+    // checked is that the assertion it builds for a stated sibling is one the
+    // precondition accepts.
     await writeProject();
     const r = await extractionAppend({
       projectPath: dir,
-      ops: [
-        {
-          section: "assertions",
-          op: "append",
-          entry: {
-            ...noId(validAssertion("x", "src_001")),
-            fact_type: "relationship",
-            value: "sibling of Grace (Whitaker) Tolman",
-            structured_value: {
-              relationship_type: "child",
-              related_person_role: "sibling_1",
-            },
-          },
+      documents: [{
+        recordId: "capture:tolman-obituary-1990",
+        document: {
+          recordType: "obituary",
+          documentForm: "verbatim_transcript",
+          source: { title: "Obituary of Grace (Whitaker) Tolman", repository: "Herald Journal" },
+          persons: [
+            { id: "p1", principal: true, gender: "female", names: [{ given: "Grace", surname: "Tolman" }], facts: [{ type: "death", date: "2 May 1990", place: "Logan, Cache, Utah" }] },
+            { id: "p2", gender: "male", statedRelation: "brother", names: [{ given: "Harold", surname: "Whitaker" }], facts: [] },
+          ],
+          relationships: [{ type: "sibling", person1: "p1", person2: "p2" }],
         },
-      ],
-    });
-    expect(r.ok).toBe(false);
-    if (r.ok) return;
-    expect(failure(r).errors?.join(" ")).toMatch(/states the subject is a sibling/);
+      }],
+    } as any, LOCAL);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    const rels = research.assertions.filter((a: any) => a.fact_type === "relationship");
+    expect(rels.map((a: any) => a.structured_value?.relationship_type)).toContain("sibling");
+    expect(rels.some((a: any) => a.structured_value?.relationship_type === "child")).toBe(false);
   });
 
   it("refuses a capitalised value — the case-insensitive flag is load-bearing", async () => {
@@ -8516,14 +8518,13 @@ describe("research_append — sources-without-assertions nudge (#1478)", () => {
     expect(warned(r.validation.warnings)).toBe(false);
   });
 
-  it("fires through extraction_append with a tool-neutral message", async () => {
+  it("names no tool, so it reads right to a caller that does not hold research_append", async () => {
     await write(researchWith(3, 0));
-    const r = await extractionAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) });
+    const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     const warn = r.validation.warnings.find((w) => WARN.test(w));
     expect(warn).toBeTruthy();
-    // record-extractor is denied research_append — the nudge must not name it
     expect(warn).not.toContain("research_append");
   });
 });

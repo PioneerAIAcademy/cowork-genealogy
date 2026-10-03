@@ -441,8 +441,8 @@ function planActiveInvariants(entry: any, research: any): string[] {
  *  when the precondition must be satisfied by someone else. Read live when it is
  *  the same author's own prior step." Neither half is this author's own step —
  *  `ownership.json` gives `hypotheses.callers` as `["skill:hypothesis-tracking"]`
- *  while `conflicts` belongs to `skill:conflict-resolution` and `assertions` to
- *  `skill:record-extraction`. Both of those sections are `enforceableAt:
+ *  while `conflicts` belongs to `skill:conflict-resolution` and `assertions` is
+ *  written only by `extraction_append`. Both of those sections are `enforceableAt:
  *  ["unit"]` only (no hook arm, no tool arm), so under a live read nothing would
  *  stop a session from writing the satisfying conflict or assertion in the same
  *  batch as the promote and clearing this gate from inside the call it gates.
@@ -2848,7 +2848,7 @@ export function relationshipCategory(value: unknown): string | undefined {
 /** The category the VALUE claims for the record subject, or undefined when it
  *  does not speak to the subject's own role. Exported so the cross-language
  *  drift test can pin it against the Python copy in
- *  `eval/harness/validators/test_record_extraction.py`: the rule exists twice
+ *  `eval/harness/validators/extraction_validators.py`: the rule exists twice
  *  because the harness and the engine share no runtime, and nothing else keeps
  *  the two in step. */
 export function subjectRoleInValue(value: string): string | undefined {
@@ -4012,17 +4012,7 @@ async function prepareOps(
       detectionEngaged = true;
       // Existing sources covering any of the batch's record ids, in
       // research.sources array order (deterministic "first match").
-      const sourceIdsForRecords = new Set<string>();
-      for (const a of Array.isArray(research.assertions) ? research.assertions : []) {
-        if (
-          a &&
-          typeof a.record_id === "string" &&
-          typeof a.source_id === "string" &&
-          batchRecordKeys.has(arkToBareId(a.record_id))
-        ) {
-          sourceIdsForRecords.add(a.source_id);
-        }
-      }
+      const sourceIdsForRecords = sourceIdsForRecordIds(research, batchRecordKeys);
       const matched = (Array.isArray(research.sources) ? research.sources : []).filter(
         (s: any) => s && typeof s === "object" && sourceIdsForRecords.has(s.id),
       );
@@ -4580,6 +4570,27 @@ export interface ResearchAppendOptions {
   allowedSections?: ReadonlySet<string>;
   /** Tool name used in lane-rejection text, so a narrow caller names itself. */
   toolName?: string;
+}
+
+/**
+ * The ids of the existing sources that already cover any of `bareRecordIds`,
+ * read off the assertions that cite them (§3.4.1). The one derivation of
+ * "is this record already extracted", shared by source-reuse detection here and
+ * by `extraction_append`'s resend skip, so the two cannot disagree.
+ */
+export function sourceIdsForRecordIds(research: any, bareRecordIds: ReadonlySet<string>): Set<string> {
+  const out = new Set<string>();
+  for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
+    if (
+      a &&
+      typeof a.record_id === "string" &&
+      typeof a.source_id === "string" &&
+      bareRecordIds.has(arkToBareId(a.record_id))
+    ) {
+      out.add(a.source_id);
+    }
+  }
+  return out;
 }
 
 export async function researchAppend(

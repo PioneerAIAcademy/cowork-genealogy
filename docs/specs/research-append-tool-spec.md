@@ -1577,6 +1577,68 @@ heavily favourable — a round trip against an episode — but it is a real addi
 on a card whose warrant is turns and latency, and a reader should see both
 numbers rather than only the saving.
 
+#### The batch call shape (lead, 2026-09-29): `recordIds` and `absences`
+
+The FamilySearch path is **one call**: `extraction_append({ projectPath,
+recordIds, questionIds?, absentPersons? })`. It replaces the three-turn
+`record_read` → `research_log_append` → `extraction_append` sequence. The
+`logEntryId` mode below is its predecessor, and it is removed in the same merge
+as the `record-extraction` skill that calls it.
+
+In order:
+
+1. **Resend skip, first.** Before any read or log write, each id is looked up
+   by `sourceIdsForRecordIds`, the one derivation of "already extracted" that
+   §3.4.1's reuse detection also uses. An id with a source is skipped and named.
+2. **Reads,** in parallel, through `record_read`'s own live code with
+   `projectPath`, so staging is identical. A read that errors, or returns
+   `staged: null`, is reported and skipped; the others proceed.
+3. **One `research_log_append` batch** logs every read (`tool: "record_read"`),
+   finalizing each staged file into its sidecar.
+4. **One `research_append` call per record.** `research_append` accepts exactly
+   one sources append per call, so there is no batch-wide write. A refusal on
+   record *k* leaves the records before it written; the resend skip makes a
+   corrected resend of the whole batch safe.
+
+`absentPersons` entries carry a `recordId`, naming the record the person was
+expected on.
+
+**`absences`** records people a search expected and did not find, when there is
+no record to extract (genealogist ruling, 2026-09-30). Each entry is
+`{ collection, place?, name, note?, logEntryId, questionIds?, repository?,
+sourceClassification? }`. The nil search's log entry must already exist and is
+not written again.
+
+`sourceClassification` says what was searched (genealogist ruling,
+2026-09-30, option B): `derivative` (the default) for an index search, and
+`original` when the page images themselves were browsed, which is stronger
+negative evidence.
+
+Each nil search is **its own source**: the assertion's `record_id` is
+`<collection> [<logEntryId>]`. §3.4.1's reuse detection keys on `record_id`,
+so keyed on the collection alone, an index search and a later image browse
+would merge, and the second would overwrite the first's classification. One
+log entry given two classifications is refused.
+
+Code writes one source per (collection, log entry), and one negative
+assertion per person with the fixed classification a negative always takes:
+`record_role: "absent"`, `record_basis: "absent"`, informant "the researcher"
+at `researcher`, `indeterminate`.
+
+**Return:** `{ ok, records: [{ recordId, status, srcId?, logId?, summary,
+errors?, warnings? }] }`. `status` is one of `extracted`, `already_extracted`,
+`read_failed` or `refused`. `summary` is written by code (`summarizeExtraction`)
+for the caller to relay verbatim. It covers what the record is; its event date
+and place; each person by role, with the facts written about them; computed
+values marked; parent-birthplace claims labelled with how many lines state
+them; a differently-surnamed household head as a lead; notes; and a count of
+defaulted classifications. `ok` is true when at least one record was extracted
+or found already extracted.
+
+The reader is injected (`runExtractionAppend(input, deps, principal)`), so the
+eval harness can serve `record_read` fixtures. It is a function parameter, not
+a schema field, so no model can reach it.
+
 #### The census relationship-column year table
 
 | Jurisdiction | Schedule states a relationship from |
@@ -1673,6 +1735,7 @@ accuracy.
 | marriage | a party's or parent's facts | the party | `self` | `primary` |
 | marriage | a witness's facts | the witness | `witness` | `primary` |
 | death | the death event | the certifying official | `official_duty` | `primary` |
+| death | the cause of death, and the last illness's duration | the certifying physician | `official_duty` | `primary` |
 | death | the decedent's biography | the personal informant | `family_not_present` | `secondary` |
 | burial, church register | the burial event | the officiant | `official_duty` | `primary` |
 | burial, church register | everything else | unknown | `unknown` | `indeterminate` |
@@ -1747,11 +1810,34 @@ exactly the record types — probate, obituary, military — where the informant
 often knowable. About 10% of corpus assertions are on types with no row today;
 genealogists add rows over time, and a missing one must show up.
 
+**The medical section is the physician's** (genealogist ruling, 2026-09-30).
+The law required the attending or examining physician to complete the cause of
+death, so it takes their row even though the FamilySearch index rarely names
+them. Everything else on the certificate stays the personal informant's.
+
 `record_basis` is `stated` for anything the record puts in a field. The one
 `inferred` value is a birth **year** computed from a stated age — and because
 FamilySearch folds that year and the birthplace into one `Birth` fact, the
 extractor splits them: the place is its own `stated` assertion, the year its own
 `inferred` one at `date_certainty: "approximate"`. They cannot share a basis.
+
+Which birth years are computed (genealogist rulings, 2026-09-30):
+
+- **A census:** a bare year (`1845`, `about 1845`) is computed. A date carrying a
+  month (`January 1845`, from the 1900 schedule's month-and-year column) was
+  written on the schedule, and is `stated`.
+- **A death or burial record:** a bare birth year is computed from the age at
+  death.
+- **A marriage record:** a bare birth year is computed only where the party's age
+  is on the record and the year is the marriage year less that age, give or take
+  one. Otherwise it is `stated`: a register can record a year, and nothing shows
+  this one is arithmetic.
+- **A birth or christening record:** the date is the record's own event, and is
+  `stated`.
+
+**Couple events.** A FamilySearch marriage index carries the marriage on the
+Couple relationship, not on either person. Each fact there is written once per
+spouse, through the same rows as a persona fact.
 
 **`source_classification` is `derivative`, always.** What was read is
 FamilySearch's index of the record, not the schedule or register; `original`
@@ -1765,3 +1851,245 @@ edit, not this tool's guess.
 assertion count, the distinct roles assigned, and any notes. The caller never
 sees the record, so reporting the extraction is its job and `results[]` alone
 would say how many entries landed without saying what they say.
+
+### 11.7 Document mode — unindexed sources extracted in code
+
+> **Status:** specified, not built. It lands in the same merge to `main` as §11.6's call shape (lead, 2026-09-29).
+
+§11.6 extracts FamilySearch records. Document mode runs **the same extractor** on
+sources with no index: image transcriptions, full-text hits, external sites,
+pasted prose. The `record-structurer` agent (`record-structurer-agent-spec.md`)
+reads the text and builds one **document** per source. This tool validates each
+document, turns it into an `ExtractDocument`, runs `extractRecord`, and writes
+the result. Roles, the three classification layers, field expansion and the
+census relationship doctrine are therefore one code path, indexed or not.
+
+**One call per batch.** The agent sends every source it read in one call, and
+the tool writes them all. Nothing calls `research_log_append` first: **this tool
+writes the log entry** for each source, as it does on the FamilySearch path
+(§11.6). It is a writer of the `log` section, with its row in
+`docs/specs/schemas/ownership.json`.
+
+**Entered on `documents`.** Sending `documents` together with `recordIds` (the
+FamilySearch path), `absences`, or the older `logEntryId` / `ops` forms (which
+the same merge removes) is refused, naming what was sent.
+
+**Inline, not staged.** A model cannot stage a sidecar. `results_ref` is
+host-written only (`finalizeStagedResults` in `results-staging.ts`), so each
+document travels as a tool parameter.
+
+#### Inputs
+
+| Parameter | Required | Meaning |
+|---|---|---|
+| `documents` | yes | A non-empty list, one entry per source: `{ recordId, document, transcriptionRef?, imageFilename? }`. |
+| `documents[].recordId` | yes | The `capture:<descriptive>`, `ancestry:<collection>:<id>` or ARK that identifies the source. |
+| `documents[].document` | yes | The document below. |
+| `documents[].transcriptionRef` | no | The `results/` ref of the `StagedTranscription` the agent read. The tool finalizes it into this source's log entry (`tool: "image_transcribe"`, `stagedResultsRef`), and copies its `transcription` into the source entry, so no model re-emits the page text. |
+| `documents[].imageFilename` | no | Written to the source's `image_filename`. It is `image_transcribe`'s `imageRef`, relayed. §5.4's warning still fires when a transcription lands without one. |
+| `questionIds` | no | Stamped on every assertion in the batch, as in §11.6. |
+| `absentPersons` | no | Expected-but-absent persons, keyed by `recordId`, as in §11.6. |
+
+A source with no `transcriptionRef` (pasted prose, PDF text, external-site text)
+is logged `tool: "user_provided"` with no sidecar.
+
+**Validated before any write.** Every document is validated before anything is
+written: one malformed document refuses the call, naming its index and JSON
+path, and writes nothing. After validation, the writes are §11.6's. There is one
+log batch, then one `research_append` per source, so a refusal on document *k*
+leaves the earlier ones written. The resend skip (a `recordId` that already has
+a source is skipped and named) makes a corrected resend of the whole batch
+safe.
+
+#### The document
+
+camelCase at the wire, like every tool parameter. The GedcomX-subset keys are
+chosen to be single words (`type`, `date`, `place`, `value`, `given`,
+`surname`, `gender`), so no key has a casing to get wrong.
+`additionalProperties: false` at **every** level.
+
+```
+document: {
+  recordType:   RecordType,            // closed: record-extract.ts's union, plus "obituary"
+  recordLabel?: string,                // free text for the citation: "probate packet", "county history"
+  documentForm: "page_image" | "verbatim_transcript" | "index_entry" | "abstract" | "compiled_work",
+  census?:      { jurisdiction: string, year: number },   // required iff recordType is "census"
+  source: {
+    title: string, repository: string,
+    creator?: string, created?: string, locator?: string, url?: string, notes?: string,
+  },
+  informant?:   { name: string, relation?: string },       // an informant the text NAMES
+  persons: [{                          // IN SOURCE ORDER — array order is enumeration order
+    id: string,                        // local only; relationships refer to it
+    principal?: true,
+    household?: string,                // only when one text covers several households
+    names:  [{ given?: string, surname?: string, uncertain?: true, note?: string }],
+    gender?: "male" | "female",
+    statedRelation?: string,           // the text's own word: "son", "wife", "daughter-in-law", "consent signer", "neighbor"
+    fatherBirthPlace?: string,         // a census's parent-birthplace columns, as written on this person's line
+    motherBirthPlace?: string,
+    facts:  [{
+      type: string,                    // "birth", "death", "residence", "occupation", "age", "marital_status", …
+      value?: string, date?: string, place?: string,
+      computed?: ("value" | "date" | "place")[],   // which attributes the text does NOT give
+      uncertain?: true,                // the reading is doubted: [?] stays in the value; no layer changes
+      note?: string,
+    }],
+  }],
+  relationships?: [{ type: "couple" | "parent_child" | "sibling", person1: string, person2: string, note?: string }],
+  absentPersons?: [{ name: string, factType?: string, note?: string }],
+}
+```
+
+**This is a superset of a sidecar, not the same shape.** A sidecar has none of
+`recordType`, `documentForm`, `census`, `computed`, `uncertain` or
+`statedRelation`. It carries a collection title instead, and `SimplifiedFact`
+has no stated/computed field. The adapter builds an `ExtractDocument` and
+passes these fields to `extractRecord` **alongside** it, as a document-mode
+options argument. The shape is never widened to fit them.
+
+**What the document cannot say** is the reason it exists. It has no key for
+`record_role`, `record_basis`, `informant_proximity`, `information_quality`,
+`informant`, `source_classification` or `record_persona_id`, so a model that
+tries to classify is refused by the schema. It is not left to a prompt.
+
+#### Validation — reject, write nothing
+
+`{ ok: false, errors }` names the JSON path, as the ops form does. It refuses:
+
+- any unknown key, at any depth — the classification fields above included;
+- `recordType` or `documentForm` outside its enum;
+- `recordType: "census"` without `census`, or `census` on anything else;
+- a person with no `names[0]`, or a name with neither `given` nor `surname`;
+- a relationship naming an `id` not in `persons`, or naming one person twice;
+- a `computed` entry naming an attribute the fact does not carry;
+- an empty `persons`.
+
+#### What code decides from the document
+
+| Decision | From | Rule |
+|---|---|---|
+| record type | `recordType` | Taken as given. `detectRecordType` is not run: there is no collection title to read. |
+| census column | `census.jurisdiction`, `census.year` | `censusStatedRelationships`, unchanged. When the table says the schedule had no column, every `statedRelation` is **ignored and named in `notes`**. A model cannot bring a relationship in through a column the schedule did not have. |
+| order | array order of `persons` | Replaces `FS_SORT_KEY`. |
+| roles | `recordType`, `principal`, `statedRelation`, relationships | §11.6's rules. Where those name a party only as `other_N` or `witness_N`, a `statedRelation` is mapped through `roleFromRelationship` instead: `son_in_law_1`, `consent_signer_1`, `neighbor_1`. An `obituary` principal is `deceased`. |
+| `record_basis` | `computed` | `inferred` for a computed attribute, `stated` otherwise. A fact whose attributes differ in mark is **split**, one assertion per group. This is §11.6's birth split, now keyed on the mark and no longer on record type. |
+| `date_certainty` | `computed` includes `date` | `approximate`. |
+| information layer | the §11.6 table | The table keyed on record type × role family × fact class, with one document-only override: `informant.name`, when present, replaces the table's generic informant string. **`uncertain` changes no classification** (genealogist ruling, 2026-09-30): information quality measures what the informant knew, not how well the page was read. The doubt stays in the `[?]` in the value and in `informant_bias_notes`. |
+| `informant_bias_notes` | `note` | Copied verbatim. |
+| `source_classification` | `documentForm` | `compiled_work` → `authored`. **Everything else → `derivative`** (genealogist ruling, 2026-09-30). A transcript someone else made is a step from the original and can carry copying errors. A page image reaches this path only as `image_transcribe`'s machine transcription, which can misread. `documentForm` is still recorded in the source's `notes` (e.g. "read from a machine transcription of the page image"), so it is clear what was examined. Nothing on this path is `original`. |
+| relationship assertions | `relationships` | §11.6's arms, plus `sibling`. Census: none from edges, as §11.6. |
+| `record_persona_id` | — | **Never set.** Local ids name nothing outside the document. |
+| negative evidence | both `absentPersons` lists | Merged. The caller's entries come first, and duplicates by `name` are dropped. |
+
+#### Classification rows this path adds
+
+The §11.6 table gains the rows this path needs. They are code and ship with it,
+and no genealogist sign-off gates them.
+
+| Record type | Fact class | informant | proximity | quality |
+|---|---|---|---|---|
+| obituary | **recent family knowledge:** the decedent's name, the death date and place, residence at death, the funeral and burial (date, place, cemetery), the surviving spouse's name, and each survivor's name and residence | the obituary's author (usually unnamed family) | `household_member` | `indeterminate` |
+| obituary | **life history:** birth, parents, the marriage date, occupation, military service, church membership | the obituary's author | `family_not_present` | `secondary` |
+| probate | **the will's own statements**: the testator's relationships to heirs, heirs' names, residence, bequests | the testator | `self` | `primary` |
+| probate | the will's execution (signing date and place) and the witnesses' names | the witnesses | `witness` | `primary` |
+| probate | the court's acts: will proved, letters granted, date and court | the court clerk | `official_duty` | `primary` |
+| probate | a petition's or administration's statement of the death (date, place) | the petitioner (executor or administrator) | `household_member` | `indeterminate` |
+| probate | heirs named in an intestate petition | the petitioner | `household_member` | `primary` |
+| newspaper announcement | **the announced event and its people**: the principals' names and residences, the date and place, officiant, attendants and guests, the parents' names | the announcement's submitter (usually unnamed family) | `household_member` | `indeterminate` |
+| newspaper announcement | **life history**: the principals' birthplaces and birth dates, education, occupations, earlier residences | the announcement's submitter | `family_not_present` | `secondary` |
+
+When `informant.name` is present it replaces the generic informant string, as
+on every row.
+
+The newspaper-announcement rows (birth, engagement, wedding and anniversary
+notices; obituaries have their own) are the genealogist's ruling (2026-09-30),
+following the obituary split. The parents' names sit with the event: the
+submitting family knows them firsthand, as with a surviving spouse's name.
+`newspaper_announcement` joins the `RecordType` union.
+
+**Roles and obituary corners on this path** (genealogist ruling, 2026-09-30):
+
+- **The principal's role:** `deceased` on an obituary. On probate, `testator`
+  when the file holds a will and `decedent` when it is intestate. On a
+  newspaper announcement, the event's subject: `child` for a birth, `bride` /
+  `groom` for an engagement or wedding, `husband` / `wife` for an
+  anniversary, and `principal` otherwise.
+- **Other parties' roles** come from `statedRelation` through
+  `roleFromRelationship` (son → `child_N`, daughter-in-law →
+  `daughter_in_law_N`, executor, `heir_N`, `witness_N`). A party the text
+  gives no relation for is `other_N`.
+- **A couple's parents** on a wedding, engagement or anniversary notice are
+  named by side, as on an indexed marriage: `father_of_groom`,
+  `mother_of_bride`, `father_of_husband`. Without it, two stated fathers were
+  `father` and `father_1`, with nothing saying whose each was.
+- **Obituary corners:** the decedent's residence at death is recent family
+  knowledge, and **earlier** residences are life history (a residence dated
+  before the death year). A **predeceased** spouse's or child's name is life
+  history. The **parents' names** are life history.
+
+**Interpretations the genealogist confirmed** (2026-09-30), where the rows
+above leave a case open:
+
+- Intestate probate: a fact other than a name, a relationship or the death
+  (e.g. the decedent's residence) is the petitioner's, at
+  `household_member` / `indeterminate`. The administrator's own name is
+  `household_member` / `primary`, as the heirs' row.
+- Probate with a will: an heir's residence or a bequest is the testator's,
+  at `self` / `primary`. A file holds a will when its label says "will" or
+  "testament", or it carries a `will` fact.
+- Obituary: a survivor's facts beyond name and residence are life history.
+  "Parents" and "predeceased" are the parent role, or a stated relation
+  containing "late", "deceased" or "predeceased".
+- Newspaper: a non-principal's fact of the event's own type (the parents'
+  marriage in a wedding notice) is recent family knowledge.
+- A named informant replaces the generic string on the family rows only
+  (`household_member`, `family_not_present`), never on an officiant's,
+  clerk's, enumerator's or witness's row.
+
+The probate rows are the genealogist's ruling (2026-09-30), split by who
+produced each part of the file. A petitioner's statement of the death follows
+the obituary's reading: family, but the file does not say who was present.
+Heirs named by the petitioner are `primary`, like a marriage party naming their
+own parents. `probate` joins the `RecordType` union, and the rows apply on both
+paths.
+
+The obituary split is the genealogist's ruling (2026-09-29, option C). What the
+family knew firsthand and recently is `household_member`, and `indeterminate`
+because the notice does not say who was present. Life history is secondhand
+recollection. The surviving spouse's **name** is recent knowledge, but the
+**marriage date** is life history.
+
+**The census parent-birthplace columns follow §11.6's rule unchanged**
+(genealogist ruling, 2026-09-30): written only when the parent is in the
+household, onto the parent's own persona, `secondary`, one claim per parent.
+A transcribed census carries them as `fatherBirthPlace` / `motherBirthPlace`
+on the person whose line states them. The table's format therefore becomes
+record type × role family × fact class, with an optional field-level
+override, where a row names the field it narrows to.
+
+#### Calendar flag
+
+The summary names every date that the calendar route may apply to, on both
+paths (genealogist ruling, 2026-09-30, the broad trigger):
+
+- any date carrying a day and month before 1752, anywhere;
+- any Quaker numbered month ("3rd month");
+- any double-dated year ("1749/50").
+
+A year-only date never fires, because there is no day or month for a
+correction to act on. The extractor holds **no country table**: `convert-dates`
+owns the cutoffs and gives the verdict, and it clears the dates that needed
+nothing, such as a Catholic country's post-1582 dates. The flag tells the
+caller to run `convert-dates` and correct the assertion. It changes no date
+itself.
+
+#### Return
+
+The **summary** §11.6 returns, one entry per source, written by code: the
+record, the people on it, the key facts extracted, any defaulted-
+classification warnings, every `[suspicious text …]` marker a document
+carried, and a household head whose surname differs from the principal's. That
+last is a lead for hypothesis-tracking, never a relationship. It is not every assertion and not bare counts. The
+agent returns it verbatim, and the caller relays it and decides what comes
+next without a follow-up read.

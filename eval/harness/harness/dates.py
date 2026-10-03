@@ -18,7 +18,7 @@ import re
 # A bare 4-digit year embedded in free text. The `1000`-`2099` *range* is the
 # union of every range this repo's validators/scripts have independently used
 # for the same purpose (test_research_plan.py: 1000-2049;
-# test_record_extraction.py's `_EMBEDDED_YEAR_RE`: 1500-2099; e2e/author.py's
+# extraction_validators.py's `_EMBEDDED_YEAR_RE`: 1500-2099; e2e/author.py's
 # `_YEAR`: 1000-2099) -- widening the *range* only, never narrowing it (PR #2004
 # review, clack391: "the three disagree on what a year is").
 #
@@ -31,7 +31,7 @@ import re
 #     onto this would silently *narrow* it. That -- not its 1800-1999 range --
 #     is why test_timeline stays out of scope: swapping its lookarounds for `\b`
 #     fails the census-wiki validators, whereas widening its range does not.
-#   * A wider range creates false positives. Migrating test_record_extraction.py
+#   * A wider range creates false positives. Migrating extraction_validators.py
 #     (1500-2099) onto 1000-2099 turns sub-1500 street/district numbers into year
 #     matches -- "District 1065, Spalding County, Georgia" (committed in
 #     eval/runlogs/e2e/ogletree-children/) starts matching "1065", and that
@@ -40,7 +40,7 @@ import re
 #
 # `e2e/author.py` is migrated onto this (its old `_YEAR` was byte-identical --
 # same `\b`, same 1000-2099 range -- so no behaviour change);
-# `test_record_extraction.py` still carries its own copy -- migrating that is
+# `extraction_validators.py` still carries its own copy -- migrating that is
 # tracked separately (issue #2330 half 2).
 EMBEDDED_YEAR_RE = re.compile(r"\b(1\d{3}|20\d{2})\b")
 

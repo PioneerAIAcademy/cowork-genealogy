@@ -169,14 +169,14 @@ def test_ownership_table_blocks_cross_skill_writes():
         "hypotheses": [], "timelines": [], "proof_summaries": [],
     }
     research_after = dict(research_before)
-    # record-extraction wrote to conflicts — it owns sources/assertions/log,
-    # NOT conflicts. The universal validator must catch this.
+    # extraction-append wrote to conflicts — extraction writes sources,
+    # assertions and log, NOT conflicts. The universal validator must catch this.
     research_after = {**research_before, "conflicts": [
         {"id": "c_1", "status": "unresolved"}
     ]}
 
     results = run_validators(
-        skill="record-extraction",
+        skill="extraction-append",
         validators_dir=VALIDATORS_DIR,
         before_state={
             "research_json": research_before, "tree_gedcomx_json": None,
@@ -187,13 +187,13 @@ def test_ownership_table_blocks_cross_skill_writes():
             "tree_gedcomx": None, "files": {},
         },
         tool_calls=[],
-        skill_frontmatter={"name": "record-extraction"},
+        skill_frontmatter={"name": "extraction-append"},
     )
     ownership = next((r for r in results if r.name == "test_ownership_table"), None)
     assert ownership is not None
     assert ownership.passed is False
     assert "conflicts" in (ownership.error or "")
-    assert "record-extraction" in (ownership.error or "")
+    assert "extraction-append" in (ownership.error or "")
 
 
 def test_ownership_table_allows_owned_writes():
@@ -247,12 +247,12 @@ def _classification_state(assertions):
 def _run_expected_classifications(assertions, matchers):
     before, after = _classification_state(assertions)
     results = run_validators(
-        skill="record-extraction",
+        skill="extraction-append",
         validators_dir=VALIDATORS_DIR,
         before_state=before,
         after_state=after,
         tool_calls=[],
-        skill_frontmatter={"name": "record-extraction"},
+        skill_frontmatter={"name": "extraction-append"},
         test={"tags": [], "expected_classifications": matchers},
     )
     result = next(
@@ -895,12 +895,12 @@ def test_expected_classifications_relationship_type_facet_no_structured_value():
 def _run_birth_year_rule(assertions):
     before, after = _classification_state(assertions)
     results = run_validators(
-        skill="record-extraction",
+        skill="extraction-append",
         validators_dir=VALIDATORS_DIR,
         before_state=before,
         after_state=after,
         tool_calls=[],
-        skill_frontmatter={"name": "record-extraction"},
+        skill_frontmatter={"name": "extraction-append"},
         test={"tags": []},
     )
     result = next(
@@ -1004,12 +1004,12 @@ def test_birth_year_rule_exempts_a_year_the_before_state_already_stated():
         "assertions": [seeded, _birth_assertion(value="born about 1845, Ohio")],
     }
     results = run_validators(
-        skill="record-extraction",
+        skill="extraction-append",
         validators_dir=VALIDATORS_DIR,
         before_state=before,
         after_state=after,
         tool_calls=[],
-        skill_frontmatter={"name": "record-extraction"},
+        skill_frontmatter={"name": "extraction-append"},
         test={"tags": []},
     )
     result = next(
@@ -1136,12 +1136,12 @@ def test_birth_year_rule_ignores_indirect_and_placeless_assertions():
 def _run_pre1880_rule(assertions, tags):
     before, after = _classification_state(assertions)
     results = run_validators(
-        skill="record-extraction",
+        skill="extraction-append",
         validators_dir=VALIDATORS_DIR,
         before_state=before,
         after_state=after,
         tool_calls=[],
-        skill_frontmatter={"name": "record-extraction"},
+        skill_frontmatter={"name": "extraction-append"},
         test={"tags": tags},
     )
     result = next(
@@ -1239,12 +1239,12 @@ def test_pre_1880_rule_skips_everything_it_should_not_gate(tags):
 def _run_bare_name_rule(assertions):
     before, after = _classification_state(assertions)
     results = run_validators(
-        skill="record-extraction",
+        skill="extraction-append",
         validators_dir=VALIDATORS_DIR,
         before_state=before,
         after_state=after,
         tool_calls=[],
-        skill_frontmatter={"name": "record-extraction"},
+        skill_frontmatter={"name": "extraction-append"},
         test={"tags": []},
     )
     result = next(
@@ -1403,12 +1403,12 @@ def test_bare_name_rule_only_scans_name_facts():
 def _run_rel_agreement(assertions):
     before, after = _classification_state(assertions)
     results = run_validators(
-        skill="record-extraction",
+        skill="extraction-append",
         validators_dir=VALIDATORS_DIR,
         before_state=before,
         after_state=after,
         tool_calls=[],
-        skill_frontmatter={"name": "record-extraction"},
+        skill_frontmatter={"name": "extraction-append"},
         test={"tags": []},
     )
     result = next(
@@ -1552,14 +1552,14 @@ def test_relationship_direction_cases_match_the_shared_table():
     import sys
     from pathlib import Path
 
-    # `test_record_extraction` imports `validators_lib` as a sibling, which
+    # `extraction_validators` imports `validators_lib` as a sibling, which
     # resolves only with the validators dir itself on the path. Every other
     # test in this block reaches the module through `run_validators`, which
     # arranges that; this one imports it directly, so it must arrange it
     # too or it passes only when a neighbour ran first.
     sys.path.insert(0, str(VALIDATORS_DIR))
     try:
-        from validators.test_record_extraction import (
+        from validators.extraction_validators import (
             _RELATION_CATEGORY,
             _subject_role_in_value,
         )
@@ -1580,7 +1580,7 @@ def test_relationship_direction_cases_match_the_shared_table():
         "two implementations have drifted"
     )
 
-    from validators.test_record_extraction import _relationship_category
+    from validators.extraction_validators import _relationship_category
 
     cat_cases = table.get("category_cases") or []
     assert len(cat_cases) >= 5, (
@@ -1658,12 +1658,12 @@ def _run_persona_id_set(assertions, persona_ids=("p_1", "p_2", "p_3")):
     after["files"] = dict(before["files"])
     after["research_json"] = {**after["research_json"], "assertions": assertions}
     results = run_validators(
-        skill="record-extraction",
+        skill="extraction-append",
         validators_dir=VALIDATORS_DIR,
         before_state=before,
         after_state=after,
         tool_calls=[],
-        skill_frontmatter={"name": "record-extraction"},
+        skill_frontmatter={"name": "extraction-append"},
         test={"tags": []},
     )
     result = next(

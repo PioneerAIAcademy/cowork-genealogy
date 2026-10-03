@@ -10,7 +10,18 @@
 sidecar_read({ projectPath, ref, offset?, maxChars? })
   -> { ok: true, ref, totalChars, offset, content, truncated, nextOffset? }
    | { ok: false, reason: "no_project" | "invalid_ref" | "not_found" | "not_text", errors: string[] }
+
+sidecar_read({ projectPath, refs, maxChars? })
+  -> { ok: true, results: [ <one result above per ref> ] }
 ```
+
+**Added for the record-structurer agent** (lead, 2026-09-27 and 2026-09-29). A `results/` ref is served **only** when it holds a staged
+transcription (`image_transcribe`'s `StagedTranscription`, either a staged handle
+or a finalized sidecar): its `transcription` text is returned and paged like a
+file. Any other `results/` ref (a record or search sidecar) is still refused as
+`invalid_ref`, with the `record_read` pointer. `refs` reads several refs in one
+call, each from its start; it is the agent's one "read all" turn. `ref` and
+`refs` together, or an empty `refs`, is refused.
 
 ---
 
@@ -238,8 +249,10 @@ wrapper's exemption.
   `file_path` from `research_query`, or an upload name the researcher gave in
   the conversation. Listing would turn a two-class reader into a filesystem
   browser, which is the surface the P2 posture removes.
-- **No `results/`.** Served by `record_read` / `rank_search_matches`; a second
-  route would let a skill dodge the compaction and ranking those apply.
+- **No `results/` search or record sidecars.** Served by `record_read` /
+  `rank_search_matches`; a second route would let a skill dodge the compaction
+  and ranking those apply. A staged **transcription** is the one exception, since
+  nothing else reads it back and no compaction applies to it.
 - **No images.** `image_read` / `image_transcribe` own the scan class. An
   uploaded image or PDF is read by `image_transcribe({ file: <ref>, projectPath })`, which OCRs it host-side and returns text — so a binary upload is
   refused as `not_text` and the message points there.

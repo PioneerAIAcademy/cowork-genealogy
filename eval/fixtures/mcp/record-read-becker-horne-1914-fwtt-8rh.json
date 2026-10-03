@@ -1,0 +1,209 @@
+{
+  "tool": "record_read",
+  "description": "FamilySearch record_read response for record FWTT-8RH: the 1914 Kentucky marriage index entry for Edward Becker and Ella May Horne, naming both sets of parents. Shaped like a live read (a Record and a Collection source description, per-persona indexFields).",
+  "args": {
+    "recordId": "~FWTT-8RH"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "n_1",
+            "type": "BirthName",
+            "given": "Edward",
+            "surname": "Becker"
+          }
+        ],
+        "principal": true,
+        "facts": [
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Birth",
+            "date": "1887",
+            "place": "Cincinnati, Hamilton, Ohio, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      },
+      {
+        "id": "p_2",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "n_2",
+            "type": "BirthName",
+            "given": "Ella May",
+            "surname": "Horne"
+          }
+        ],
+        "principal": true,
+        "facts": [
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Birth",
+            "date": "1890",
+            "place": "Lexington, Fayette, Kentucky, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      },
+      {
+        "id": "p_3",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "n_3",
+            "type": "BirthName",
+            "given": "John",
+            "surname": "Becker"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      },
+      {
+        "id": "p_4",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "n_4",
+            "type": "BirthName",
+            "given": "Anna"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      },
+      {
+        "id": "p_5",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "n_5",
+            "type": "BirthName",
+            "given": "Harry",
+            "surname": "Horne"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      },
+      {
+        "id": "p_6",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "n_6",
+            "type": "BirthName",
+            "given": "Carrie"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "r_1",
+        "type": "Couple",
+        "person1": "p_1",
+        "person2": "p_2",
+        "facts": [
+          {
+            "type": "Marriage",
+            "date": "30 June 1914",
+            "place": "Kentucky, United States"
+          }
+        ]
+      },
+      {
+        "id": "r_2",
+        "type": "ParentChild",
+        "parent": "p_3",
+        "child": "p_1"
+      },
+      {
+        "id": "r_3",
+        "type": "ParentChild",
+        "parent": "p_4",
+        "child": "p_1"
+      },
+      {
+        "id": "r_4",
+        "type": "ParentChild",
+        "parent": "p_5",
+        "child": "p_2"
+      },
+      {
+        "id": "r_5",
+        "type": "ParentChild",
+        "parent": "p_6",
+        "child": "p_2"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_1",
+        "resource_type": "Record",
+        "title": "Entry for Edward Becker and Ella May Horne, \"Kentucky, Marriages, 1785-1979\"",
+        "citation": "\"Kentucky, Marriages, 1785-1979\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FWTT-8RH : accessed 30 September 2026), Entry for Edward Becker and Ella May Horne.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:FWTT-8RH"
+      },
+      {
+        "id": "sd_c_1",
+        "resource_type": "Collection",
+        "title": "Kentucky, Marriages, 1785-1979"
+      }
+    ],
+    "places": [],
+    "indexFields": {
+      "p_1": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_000"
+      },
+      "p_2": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_001"
+      },
+      "p_3": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_002"
+      },
+      "p_4": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_003"
+      },
+      "p_5": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_004"
+      },
+      "p_6": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_005"
+      }
+    }
+  }
+}

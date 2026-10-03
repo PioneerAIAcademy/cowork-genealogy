@@ -27,7 +27,7 @@ def _runnable_test_dict():
     return {
         "test": {
             "id": "ut_runnability_001",
-            "skill": "record-extraction",
+            "skill": "research",
             "name": "rn",
             "type": "positive",
             "description": "x",
@@ -125,7 +125,7 @@ def test_runnable_when_rubric_missing(tmp_path):
     NOT a runnability failure — the skill is graded on base dimensions
     only."""
     fake_tests = tmp_path / "tests"
-    (fake_tests / "record-extraction").mkdir(parents=True)
+    (fake_tests / "research").mkdir(parents=True)
     # no rubric.md
     spec = load_test_from_dict(_runnable_test_dict())
     result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=fake_tests)
@@ -138,8 +138,8 @@ def test_blocks_when_rubric_empty(tmp_path):
     CRUD UI's parser, so letting it through here would grade the run on base
     dimensions while breaking the skills list the annotator needs."""
     fake_tests = tmp_path / "tests"
-    (fake_tests / "record-extraction").mkdir(parents=True)
-    (fake_tests / "record-extraction" / "rubric.md").write_text("", encoding="utf-8")
+    (fake_tests / "research").mkdir(parents=True)
+    (fake_tests / "research" / "rubric.md").write_text("", encoding="utf-8")
     spec = load_test_from_dict(_runnable_test_dict())
     result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=fake_tests)
     assert result.runnable is False
@@ -148,8 +148,8 @@ def test_blocks_when_rubric_empty(tmp_path):
 
 def test_blocks_when_rubric_malformed(tmp_path):
     fake_tests = tmp_path / "tests"
-    (fake_tests / "record-extraction").mkdir(parents=True)
-    (fake_tests / "record-extraction" / "rubric.md").write_text("no proper structure here", encoding="utf-8")
+    (fake_tests / "research").mkdir(parents=True)
+    (fake_tests / "research" / "rubric.md").write_text("no proper structure here", encoding="utf-8")
     spec = load_test_from_dict(_runnable_test_dict())
     result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=fake_tests)
     assert result.runnable is False
@@ -234,7 +234,7 @@ def test_blocks_when_stub_skills_names_a_nonexistent_skill(entry):
 
 def test_allows_stub_skills_naming_a_real_skill():
     result = _stub_check(
-        {"stub_skills": ["search-external-sites", {"skill": "record-extraction"}]}
+        {"stub_skills": ["search-external-sites", {"skill": "research-plan"}]}
     )
     assert result.runnable is True
 
@@ -286,7 +286,7 @@ def test_allows_run_skills_and_stub_skills_naming_different_callees():
     test. search-records delegates to several skills and a test may reasonably
     execute one and deny another."""
     result = _stub_check(
-        {"run_skills": ["search-external-sites"], "stub_skills": ["record-extraction"]}
+        {"run_skills": ["search-external-sites"], "stub_skills": ["research-plan"]}
     )
     assert result.runnable is True
 
@@ -335,7 +335,7 @@ def test_blocks_grade_trigger_without_stubbed_callees(execution):
 def test_allows_grade_trigger_with_stubbed_callees():
     """The four shipped grade:trigger fixtures all stub their callees, so this
     is the positive control for that population."""
-    result = _check_with(["grade:trigger"], {"stub_skills": ["record-extraction"]})
+    result = _check_with(["grade:trigger"], {"stub_skills": ["research-plan"]})
     assert result.runnable is True
 
 
@@ -363,7 +363,7 @@ def _validators_dir(tmp_path, body):
     (the skill `_runnable_test_dict` uses)."""
     v = tmp_path / "validators"
     v.mkdir()
-    (v / "test_record_extraction.py").write_text(body, encoding="utf-8")
+    (v / "test_research.py").write_text(body, encoding="utf-8")
     return v
 
 
@@ -746,3 +746,22 @@ def test_direct_gate_resolves_the_same_agent_file_as_prompt_for():
     prompt = _prompt_for(spec)
     assert "gps-mentor" in prompt
     assert "Critique ps_001." in prompt
+
+
+def test_a_test_only_skill_passes_the_skill_gate():
+    """`eval/skills/<name>` is a skill the harness stages for its own suite, so
+    the gate resolves it the way the workspace does (`skill_dir_for`)."""
+    d = _runnable_test_dict()
+    d["test"]["skill"] = "extraction-append"
+    spec = load_test_from_dict(d)
+    result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS)
+    assert result.reason is None or "skill not found" not in result.reason
+
+
+def test_an_unknown_skill_still_fails_the_skill_gate():
+    d = _runnable_test_dict()
+    d["test"]["skill"] = "no-such-skill-anywhere"
+    spec = load_test_from_dict(d)
+    result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS)
+    assert result.runnable is False
+    assert "skill not found" in result.reason

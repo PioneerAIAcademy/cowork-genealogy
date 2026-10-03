@@ -1,0 +1,208 @@
+{
+  "tool": "record_read",
+  "description": "FamilySearch record_read response for record MXHY-TP5: the 1850 census household of Patrick Flynn, Schuylkill County, dwelling 214. Shaped like a live read (a Record and a Collection source description, per-persona indexFields).",
+  "args": {
+    "recordId": "~MXHY-TP5"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "n_1",
+            "type": "BirthName",
+            "given": "Patrick",
+            "surname": "Flynn"
+          }
+        ],
+        "principal": true,
+        "facts": [
+          {
+            "type": "Occupation",
+            "value": "Laborer"
+          },
+          {
+            "type": "Census",
+            "date": "1850",
+            "place": "Schuylkill, Pennsylvania, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1818",
+            "place": "Ireland"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      },
+      {
+        "id": "p_2",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "n_2",
+            "type": "BirthName",
+            "given": "Mary",
+            "surname": "Flynn"
+          }
+        ],
+        "principal": true,
+        "facts": [
+          {
+            "type": "Census",
+            "date": "1850",
+            "place": "Schuylkill, Pennsylvania, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1820",
+            "place": "Ireland"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      },
+      {
+        "id": "p_3",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "n_3",
+            "type": "BirthName",
+            "given": "Thomas",
+            "surname": "Flynn"
+          }
+        ],
+        "principal": true,
+        "facts": [
+          {
+            "type": "Census",
+            "date": "1850",
+            "place": "Schuylkill, Pennsylvania, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1841",
+            "place": "Pennsylvania"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      },
+      {
+        "id": "p_4",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "n_4",
+            "type": "BirthName",
+            "given": "Bridget",
+            "surname": "Flynn"
+          }
+        ],
+        "principal": true,
+        "facts": [
+          {
+            "type": "Census",
+            "date": "1850",
+            "place": "Schuylkill, Pennsylvania, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1844",
+            "place": "Pennsylvania"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      },
+      {
+        "id": "p_5",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "n_5",
+            "type": "BirthName",
+            "given": "John",
+            "surname": "Flynn"
+          }
+        ],
+        "principal": true,
+        "facts": [
+          {
+            "type": "Census",
+            "date": "1850",
+            "place": "Schuylkill, Pennsylvania, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1847",
+            "place": "Pennsylvania"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      }
+    ],
+    "relationships": [],
+    "sources": [
+      {
+        "id": "src_r_1",
+        "resource_type": "Record",
+        "title": "Entry for Patrick Flynn and Mary Flynn, \"United States, Census, 1850\"",
+        "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MXHY-TP5 : accessed 30 September 2026), Entry for Patrick Flynn and Mary Flynn.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MXHY-TP5"
+      },
+      {
+        "id": "sd_c_1",
+        "resource_type": "Collection",
+        "title": "United States, Census, 1850"
+      }
+    ],
+    "places": [],
+    "indexFields": {
+      "p_1": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_000",
+        "age": "32",
+        "householdId": "1"
+      },
+      "p_2": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_001",
+        "age": "30",
+        "householdId": "1"
+      },
+      "p_3": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_002",
+        "age": "9",
+        "householdId": "1"
+      },
+      "p_4": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_003",
+        "age": "6",
+        "householdId": "1"
+      },
+      "p_5": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_004",
+        "age": "3",
+        "householdId": "1"
+      }
+    }
+  }
+}

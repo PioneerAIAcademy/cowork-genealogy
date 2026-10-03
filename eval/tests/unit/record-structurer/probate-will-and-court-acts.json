@@ -1,0 +1,102 @@
+{
+  "test": {
+    "id": "ut_record_structurer_005",
+    "skill": "record-structurer",
+    "name": "Probate: a testate file with a will, an executor's petition stating the death, and the court's proof",
+    "type": "positive",
+    "description": "A will plus the court file it was proved in. Each part was produced by a different hand, so each takes its own row (genealogist ruling 2026-09-30): the will's statements are the testator's (self / primary); its execution and its witnesses are the witnesses' (witness / primary); the court's acts are the clerk's (official_duty / primary); and the executor's petition stating the death is family whose presence the file does not show (household_member / indeterminate). Record approved by the genealogist (2026-10-03).",
+    "tags": [
+      "probate",
+      "will",
+      "court-acts",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Structure this source and write it to the project.\n\nprojectPath: <workspace>\nsources:\n- recordId: capture:flynn-will-1888\n  documentForm: verbatim_transcript\n  text: <record-data>\nSchuylkill County, Pennsylvania, Register of Wills, Will Book 14, p. 212\n\nIn the name of God, Amen. I, Thomas Flynn, of the Borough of Shenandoah, County of Schuylkill, being of sound mind, make this my last will and testament. I give to my beloved wife Mary Flynn my house and lot on Main Street for her natural life. I give to my son Patrick Flynn my mining tools and one hundred dollars. I give to my daughter Bridget Doyle fifty dollars. I appoint my son Patrick Flynn executor of this my will. Signed and sealed at Shenandoah this 4th day of March 1885. Thomas Flynn, his mark. Witnesses: Owen Brennan, James Gallagher.\n\nPetition of Patrick Flynn, executor, filed 20 November 1888: that the said Thomas Flynn died at Shenandoah on 11 November 1888.\n\nProved 22 November 1888 before the Register of Wills of Schuylkill County, and letters testamentary granted to Patrick Flynn the same day.\n</record-data>",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "The agent reads the source, makes one extraction_append call carrying one document, and returns the tool's summary verbatim. Roles and classifications are decided in code from the document; grade what the agent READ and whether the reply is the summary, not the classifications."
+  ],
+  "execution": {
+    "max_turns": 12,
+    "max_wall_clock_seconds": 400
+  },
+  "expected_classifications": [
+    {
+      "record_role": "testator",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "informant_proximity": "self",
+      "information_quality": "primary"
+    },
+    {
+      "record_role": "testator",
+      "fact_type": "residence",
+      "value": "Shenandoah",
+      "record_basis": "stated",
+      "informant_proximity": "self",
+      "information_quality": "primary"
+    },
+    {
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Mary Flynn",
+      "record_basis": "stated",
+      "informant_proximity": "self",
+      "information_quality": "primary"
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Patrick Flynn",
+      "record_basis": "stated",
+      "informant_proximity": "self",
+      "information_quality": "primary"
+    },
+    {
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Bridget Doyle",
+      "record_basis": "stated",
+      "informant_proximity": "self",
+      "information_quality": "primary"
+    },
+    {
+      "record_role": "testator",
+      "fact_type": "will",
+      "record_basis": "stated",
+      "informant_proximity": "witness",
+      "information_quality": "primary"
+    },
+    {
+      "record_role": "witness_1",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "informant_proximity": "witness",
+      "information_quality": "primary"
+    },
+    {
+      "record_role": "witness_2",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "informant_proximity": "witness",
+      "information_quality": "primary"
+    },
+    {
+      "record_role": "testator",
+      "fact_type": "probate",
+      "record_basis": "stated",
+      "informant_proximity": "official_duty",
+      "information_quality": "primary"
+    },
+    {
+      "record_role": "testator",
+      "fact_type": "death",
+      "record_basis": "stated",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate"
+    }
+  ]
+}

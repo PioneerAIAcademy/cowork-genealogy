@@ -1,0 +1,61 @@
+{
+  "test": {
+    "id": "ut_extraction_append_014",
+    "skill": "extraction-append",
+    "name": "Extract assertions from the 1890 Ferber–Becker marriage index entry",
+    "type": "positive",
+    "description": "Converted from ut_record_extraction_021: the record the user pasted is now served as a record_read fixture (the 1890 Hamilton County marriage index entry for Wm. H. Ferber and Emma Becker, which records no parents), and extraction runs in code. FamilySearch index entry for the 1890 Hamilton County, Ohio marriage of William H. Ferber and Emma Becker ('Ohio, County Marriages, 1789-2016', ark:/61903/1:1:XZR1-JZP). Real record from the Ferber/Becker research (#799). Sparse index: names + year + county, no parents recorded.",
+    "tags": [
+      "extraction",
+      "marriage-record",
+      "ferber-becker"
+    ]
+  },
+  "input": {
+    "user_message": "Extract FamilySearch record ark:/61903/1:1:XZR1-JZP.",
+    "scenario": "empty-project-just-created"
+  },
+  "mcp_fixtures": [
+    "record-read-ferber-becker-1890-xzr1-jzp"
+  ],
+  "judge_context": [
+    "The skill makes one extraction_append call with the record id and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you."
+  ],
+  "execution": {
+    "max_turns": 10,
+    "max_wall_clock_seconds": 300
+  },
+  "expected_classifications": [
+    {
+      "record_role": "groom",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "informant_proximity": "self"
+    },
+    {
+      "record_role": "bride",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "informant_proximity": "self"
+    },
+    {
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "attribute": "place",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "record_basis": "stated",
+      "informant_proximity": "self"
+    },
+    {
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "optional": true,
+      "record_basis": "stated",
+      "informant_proximity": "self"
+    }
+  ]
+}

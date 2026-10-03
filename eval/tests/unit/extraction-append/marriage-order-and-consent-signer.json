@@ -1,0 +1,73 @@
+{
+  "test": {
+    "id": "ut_extraction_append_016",
+    "skill": "extraction-append",
+    "name": "Extract marriage order and the parental consent signer from an 1893 Hamilton County license",
+    "type": "positive",
+    "description": "Converted from ut_record_extraction_029: the record the user pasted is now served as a record_read fixture (the 1893 Hamilton County marriage license entry for Charles Ferber and Emma Schmidt; Jacob Lang, the minor groom's stepfather who signed consent, is carried as a persona. FamilySearch rarely indexes the consent signer, so that shape is deliberate), and extraction runs in code. 1893 Hamilton County, Ohio marriage license and return. The bride is designated a widow on her second marriage, so her recorded surname (Schmidt) is a prior husband's, not her parents'. The underage groom's consent is signed on the reverse by a man whose surname (Lang) differs from his own, i.e. a stepfather or guardian rather than the father. Exercises the marriage-order and consent-signer capture rules; the alpha-team review (2026-08-14) found nothing instructed the extractor to capture either.",
+    "tags": [
+      "extraction",
+      "marriage-record",
+      "marriage-order",
+      "consent-signer",
+      "surname-evidence"
+    ]
+  },
+  "input": {
+    "user_message": "Extract FamilySearch record ark:/61903/1:1:XZR4-K7Q.",
+    "scenario": "empty-project-just-created"
+  },
+  "mcp_fixtures": [
+    "record-read-ferber-schmidt-1893-xzr4-k7q"
+  ],
+  "judge_context": [
+    "The skill makes one extraction_append call with the record id and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you."
+  ],
+  "execution": {
+    "max_turns": 10,
+    "max_wall_clock_seconds": 300
+  },
+  "expected_classifications": [
+    {
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Ferber",
+      "record_basis": "stated",
+      "informant_proximity": "self"
+    },
+    {
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Schmidt",
+      "record_basis": "stated",
+      "informant_proximity": "self"
+    },
+    {
+      "record_role": "bride",
+      "fact_type": "marital_status",
+      "optional": true,
+      "record_basis": "stated",
+      "informant_proximity": "self"
+    },
+    {
+      "record_role": "groom",
+      "fact_type": "marital_status",
+      "optional": true,
+      "record_basis": "stated",
+      "informant_proximity": "self"
+    },
+    {
+      "record_role": "consent_signer_1",
+      "fact_type": "name",
+      "optional": true,
+      "value": "Lang",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "record_basis": "stated",
+      "informant_proximity": "self"
+    }
+  ]
+}

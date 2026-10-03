@@ -41,10 +41,10 @@ export const STAGING_SEARCH_TOOLS = new Set([
  * producers. A transcription, a record fetched by ARK and a tree person read are
  * retained as a ONE-element `results[]` envelope, so finalize needs no second
  * shape. The acquisition producers carry none of the search notes:
- * record-extraction logs an upload as `user_provided` and a `record_read` with no
- * `stagedResultsRef`, and a `person_read` file is staged for `project_create` to
- * build the starting tree from (issue #2944's Stage B, not yet built) rather than
- * logged, so a nag on any of them would contradict the shipped flow. An
+ * `extraction_append` logs each read it makes with that read's own staged ref,
+ * and an upload as `user_provided`, and a `person_read` file is staged for
+ * `project_create` to build the starting tree from (issue #2944's Stage B, not
+ * yet built) rather than logged, so there is nothing to nag about. An
  * unfinalized acquisition file is simply TTL-pruned.
  */
 export const STAGING_CAPABLE_TOOLS = new Set([

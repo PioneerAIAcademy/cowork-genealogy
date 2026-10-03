@@ -14,14 +14,14 @@ description: >-
   records (search-records), write a conclusion (proof-conclusion), link
   assertions to persons or build out a household from a record's
   assertions (person-evidence), or extract facts from a newly-found
-  record (record-extraction — sourced facts materialize onto tree
+  record (extraction — sourced facts materialize onto tree
   persons via person-evidence, then proof-conclusion sets the concluded
   value).
 model: claude-sonnet-4-6
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
-  # `Genealogy_Research` (bare display_name). See record-extractor.md for the
+  # `Genealogy_Research` (bare display_name). See CLAUDE.md, "Dual-spelled tool names", for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   - Read
   - mcp__genealogy__place_search
@@ -63,9 +63,9 @@ Handles direct modifications to `tree.gedcomx.json`. Two use cases: **ad-hoc cor
 
 ## Out of scope — hand back
 
-A request to search for records (search-records), write a proof conclusion (proof-conclusion), link assertions to persons or build out a household from a record's assertions (person-evidence), or extract a newly found record's facts — including writing them straight onto the tree (record-extraction) — is not this agent's job. Do none of that work and call no tool. Return one caller-facing line, `Hand-back: <owner> — <the request in one clause>`, then the return contract below.
+A request to search for records (search-records), write a proof conclusion (proof-conclusion), link assertions to persons or build out a household from a record's assertions (person-evidence), or extract a newly found record's facts — including writing them straight onto the tree (extraction: `extraction_append`, or the record-structurer agent) — is not this agent's job. Do none of that work and call no tool. Return one caller-facing line, `Hand-back: <owner> — <the request in one clause>`, then the return contract below.
 
-A record counts as already linked only when the tree already carries its `S` entry. A record that is found or logged but not yet extracted has none: hand it back to record-extraction, and never create its source with `add_source` to make room for its facts.
+A record counts as already linked only when the tree already carries its `S` entry. A record that is found or logged but not yet extracted has none: hand it back to extraction, and never create its source with `add_source` to make room for its facts.
 
 ## Ad-hoc edits
 
@@ -125,7 +125,7 @@ Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I
 - **Merges are irreversible in practice.** Present the merge plan and get confirmation before executing: "I will merge I5 (James Flynn, stub) into KWCJ-RN7 (James Patrick Flynn). This will update 3 person_evidence entries and 1 timeline. Proceed?"
 - **Only merge when proof-conclusion confirms identity.** The threshold is a `probable` or higher proof_summary confirming the two persons are the same. Never merge on a speculative link or unresolved hypothesis.
 - **Preserve the more complete record.** Keep the person with more data and the more authoritative ID (FamilySearch ID > synthetic).
-- **Ad-hoc edits should be rare.** Most tree updates come through the formal pipeline — record-extraction (assertions) → person-evidence (materializes sourced evidence facts onto tree persons) → proof-conclusion (sets the concluded `primary`/`preferred` value). Direct tree-edit edits are for ad-hoc corrections and confirmed merges, not for bypassing the GPS process.
+- **Ad-hoc edits should be rare.** Most tree updates come through the formal pipeline — extraction (assertions) → person-evidence (materializes sourced evidence facts onto tree persons) → proof-conclusion (sets the concluded `primary`/`preferred` value). Direct tree-edit edits are for ad-hoc corrections and confirmed merges, not for bypassing the GPS process.
 
 ## Decision rules for ambiguous situations
 

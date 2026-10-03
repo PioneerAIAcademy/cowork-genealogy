@@ -80,6 +80,9 @@ RUNLOGS_DIR = REPO_ROOT / "eval" / "runlogs" / "unit"
 JUDGE_PROMPT_PATH = REPO_ROOT / "eval" / "harness" / "judge" / "prompt.md"
 PLUGIN_SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 TESTS_UNIT_DIR = REPO_ROOT / "eval" / "tests" / "unit"
+# Test-only skills (lead, 2026-09-30): never shipped, but their bodies gate
+# their suites exactly as a plugin skill's does.
+TEST_ONLY_SKILLS_DIR = REPO_ROOT / "eval" / "skills"
 
 
 # Match `eval/runlogs/unit/<skill>/<file>.json`
@@ -1292,7 +1295,7 @@ def main() -> int:
                 touched_skills.add(m.group(1))
             continue
         # Changes to skill files / tests surface their owning skill.
-        m = re.match(r"^(?:packages/engine/plugin/skills|eval/tests/unit)/([^/]+)/", path)
+        m = re.match(r"^(?:packages/engine/plugin/skills|eval/skills|eval/tests/unit)/([^/]+)/", path)
         if m:
             touched_skills.add(m.group(1))
             continue
@@ -1346,12 +1349,12 @@ def main() -> int:
     touched_skills = {
         s
         for s in touched_skills
-        if (PLUGIN_SKILLS_DIR / s).is_dir() or (TESTS_UNIT_DIR / s).is_dir()
+        if (PLUGIN_SKILLS_DIR / s).is_dir() or (TEST_ONLY_SKILLS_DIR / s).is_dir() or (TESTS_UNIT_DIR / s).is_dir()
     }
     fixture_touched_skills = {
         s
         for s in fixture_touched_skills
-        if (PLUGIN_SKILLS_DIR / s).is_dir() or (TESTS_UNIT_DIR / s).is_dir()
+        if (PLUGIN_SKILLS_DIR / s).is_dir() or (TEST_ONLY_SKILLS_DIR / s).is_dir() or (TESTS_UNIT_DIR / s).is_dir()
     }
 
     fails = rule1_max_one_released(touched_releases)

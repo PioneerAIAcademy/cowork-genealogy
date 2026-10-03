@@ -700,8 +700,8 @@ export function createServer(principal: Principal): Server {
       try {
         // Lane scoping lives inside extractionAppend, not here — see
         // ResearchAppendOptions. Dispatch passes only the tool arguments.
-        const args = request.params.arguments as unknown as ResearchAppendInput;
-        const result = await extractionAppend(args);
+        const args = request.params.arguments as unknown as Parameters<typeof extractionAppend>[0];
+        const result = await extractionAppend(args, principal);
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

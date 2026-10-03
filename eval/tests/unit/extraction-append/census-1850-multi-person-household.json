@@ -1,0 +1,145 @@
+{
+  "test": {
+    "id": "ut_extraction_append_003",
+    "skill": "extraction-append",
+    "name": "Extract assertions from a multi-person 1850 census household",
+    "type": "positive",
+    "description": "Converted from ut_record_extraction_003: the record the user pasted is now served as a record_read fixture (the 1850 census household of Patrick Flynn, Schuylkill County, dwelling 214), and extraction runs in code. Tests extraction from a multi-person 1850 U.S. census household provided in context (as search-records hands a found record to record-extraction). The 1850 census lists each person in a dwelling but states no relationships, so no relationship assertions may be written at all — the household links are left to downstream correlation (decided 2026-08-15, #1626).",
+    "tags": [
+      "extraction",
+      "1850-census",
+      "census-household"
+    ]
+  },
+  "input": {
+    "user_message": "Extract FamilySearch record ark:/61903/1:1:MXHY-TP5.",
+    "scenario": "empty-project-just-created"
+  },
+  "mcp_fixtures": [
+    "record-read-flynn-1850-dwelling-214-mxhy-tp5"
+  ],
+  "judge_context": [
+    "The skill makes one extraction_append call with the record id and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you."
+  ],
+  "execution": {
+    "max_turns": 10,
+    "max_wall_clock_seconds": 300
+  },
+  "expected_classifications": [
+    {
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "attribute": "place",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "census",
+      "record_basis": "stated",
+      "informant_proximity": "witness"
+    },
+    {
+      "record_role": "wife",
+      "fact_type": "name",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "wife",
+      "fact_type": "age",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "wife",
+      "fact_type": "birth",
+      "attribute": "place",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "wife",
+      "fact_type": "census",
+      "record_basis": "stated",
+      "informant_proximity": "witness"
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "name",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "age",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "attribute": "place",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "census",
+      "record_basis": "stated",
+      "informant_proximity": "witness"
+    },
+    {
+      "record_role": "child_2",
+      "fact_type": "name",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "child_2",
+      "fact_type": "age",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "attribute": "place",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "child_2",
+      "fact_type": "census",
+      "record_basis": "stated",
+      "informant_proximity": "witness"
+    },
+    {
+      "record_role": "child_3",
+      "fact_type": "name",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "child_3",
+      "fact_type": "age",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "attribute": "place",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "child_3",
+      "fact_type": "census",
+      "record_basis": "stated",
+      "informant_proximity": "witness"
+    }
+  ]
+}

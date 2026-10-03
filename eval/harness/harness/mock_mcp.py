@@ -1137,7 +1137,7 @@ def create_mock_server(
     # registered above, so the test's own declaration wins.
     fixture_backed = set(manifest.keys())
     for live_tool_name in sorted(LIVE_TOOLS - fixture_backed - {"person_quality"}):
-        live_handler = _make_live_handler(live_tool_name, workspace, call_log)
+        live_handler = _make_live_handler(live_tool_name, workspace, call_log, manifest)
         description = tool_descriptions.get(
             live_tool_name, f"Live {live_tool_name} — calls real implementation."
         )
@@ -1179,7 +1179,6 @@ def create_mock_server(
 #: extraction_append's lane restriction (issue #695) lives inside its export,
 #: so calling it directly here — bypassing index.ts — still enforces the lane.
 _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
-    "extraction_append": ("extraction-append.js", "extractionAppend"),
     "tree_edit": ("tree-edit.js", "treeEdit"),
     "tree_correct": ("tree-correct.js", "treeCorrect"),
     "materialize_facts": ("materialize-facts.js", "materializeFacts"),
@@ -1207,8 +1206,11 @@ def _make_live_handler(
     tool_name: str,
     workspace: Path | None,
     call_log: list[dict[str, Any]],
+    manifest: dict[str, Any] | None = None,
 ):
     """Return an async handler for a live tool."""
+    if tool_name == "extraction_append":
+        return _make_extraction_append_handler(workspace, call_log, manifest or {})
     if tool_name == "validate_research_schema":
         return _make_validate_handler(workspace, call_log)
     if tool_name == "research_log_append":
@@ -1593,6 +1595,97 @@ def _make_compiled_tool_handler(
         }
         call_log.append(entry)
         return _tool_envelope(tool_name, response)
+
+    return handler
+
+
+def _make_extraction_append_handler(
+    workspace: Path | None,
+    call_log: list[dict[str, Any]],
+    manifest: dict[str, Any],
+):
+    """The live `extraction_append`, reading FamilySearch records from the test's
+    `record_read` fixtures instead of the network (lead, 2026-09-30).
+
+    `recordIds` makes the tool read each record live. Here each id is matched
+    against the loaded `record_read` fixtures, the canned response is staged
+    through `_stage_record_read` (the compiled stager, so `staged` is real), and
+    the staged responses cross into the node script as a JSON map keyed by the
+    id exactly as the call sent it. `runExtractionAppend`'s injected `readRecord`
+    serves from that map, so every other step (the resend skip, the log batch,
+    the per-record writes, the summary) is the compiled production code. A call
+    with no `recordIds` goes through the same script with an empty map.
+    Principal is `LOCAL`: the harness is one user per process.
+    """
+    tool_js = _MCP_BUILD / "tools" / "extraction-append.js"
+    principal_js = _MCP_BUILD / "auth" / "principal.js"
+
+    def _url(p: Path) -> str:
+        posix = str(p).replace("\\", "/").replace("'", "\\'")
+        return ("file:///" + posix) if sys.platform == "win32" else posix
+
+    async def handler(args, _ws=workspace):
+        if _ws is None or not tool_js.exists():
+            reason = "workspace not provided" if _ws is None else f"build not found: {tool_js}"
+            response: dict[str, Any] = {"ok": False, "errors": [f"extraction_append: {reason}"]}
+        else:
+            input_obj = dict(args)
+            input_obj["projectPath"] = str(_ws).replace("\\", "/")
+            records: dict[str, Any] = {}
+            predicated = (manifest.get("record_read") or {}).get("predicated") or []
+            for rid in input_obj.get("recordIds") or []:
+                if not isinstance(rid, str):
+                    continue
+                key = rid.strip()
+                canned = next(
+                    (resp for pred, resp, *_ in predicated if matches(pred, {"recordId": key})),
+                    None,
+                )
+                if canned is None:
+                    records[key] = {"__error": f"no record_read fixture matches {key}"}
+                else:
+                    records[key] = _stage_record_read(
+                        _ws, {"recordId": key, "projectPath": input_obj["projectPath"]}, canned
+                    )
+            input_obj["__records"] = records
+            script = (
+                f"import {{ runExtractionAppend }} from '{_url(tool_js)}';"
+                f" import {{ LOCAL }} from '{_url(principal_js)}';"
+                " import { readFileSync } from 'node:fs';"
+                " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+                " const records = input.__records; delete input.__records;"
+                " const deps = { readRecord: async ({ recordId }) => {"
+                "   const r = records[String(recordId).trim()];"
+                "   if (!r) throw new Error(`no record_read fixture for ${recordId}`);"
+                "   if (r.__error) throw new Error(r.__error);"
+                "   return r;"
+                " } };"
+                " const r = await runExtractionAppend(input, deps, LOCAL);"
+                " process.stdout.write(JSON.stringify(r));"
+            )
+            try:
+                proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
+                if proc.stdout.strip():
+                    response = json.loads(proc.stdout)
+                else:
+                    stderr_msg = proc.stderr.strip()[:500] if proc.stderr else "no output"
+                    response = {
+                        "ok": False,
+                        "errors": [f"extraction_append: node produced no output (exit {proc.returncode}): {stderr_msg}"],
+                    }
+            except Exception as e:
+                response = {"ok": False, "errors": [f"extraction_append: {e}"]}
+        call_log.append(
+            {
+                "tool": "mcp__genealogy__extraction_append",
+                "args": dict(args),
+                "expected_args": None,
+                "matched": {"kind": "live", "index": None},
+                "response_fixture": "live:extraction_append",
+                "response": response,
+            }
+        )
+        return _tool_envelope("extraction_append", response)
 
     return handler
 
