@@ -385,7 +385,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["record-extraction -> search-images", ""],
   ["research -> search-images", ""],
   ["init-project -> citation", ""],
-  ["project-status -> citation", ""],
   ["record-extraction -> citation", ""],
   ["research -> citation", ""],
   ["search-records -> citation", ""],
@@ -394,7 +393,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
   // is a delegation being silenced -- verified per file before listing.
   ["conflict-resolution -> proof-conclusion", ""],
-  ["project-status -> proof-conclusion", ""],
   ["question-selection -> proof-conclusion", ""],
   ["research-exhaustiveness -> proof-conclusion", ""],
   ["timeline -> proof-conclusion", ""],
@@ -417,7 +415,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // four mentions below are bare-name routing-boundary prose ("use
   // locality-guide", "locality-guide is the right skill") — none spell
   // `@plugin:locality-guide`.
-  ["project-status -> locality-guide", ""],
   ["research-plan -> locality-guide", ""],
   ["search-external-sites -> locality-guide", ""],
   ["search-records -> locality-guide", ""],
@@ -427,10 +424,19 @@ const PROSE_MENTIONS = new Map<string, string>([
   // bare-name mentions — none spell `@plugin:person-evidence`.
   ["conflict-resolution -> person-evidence", ""],
   ["forget-and-rederive -> person-evidence", ""],
-  ["project-status -> person-evidence", ""],
   ["record-extraction -> person-evidence", ""],
   ["search-records -> person-evidence", ""],
   ["timeline -> person-evidence", ""],
+  // project-status lost its skills/<name>/ directory in the agent conversion
+  // (issue #2793), so the name entered agentOnly and every SKILL.md that still
+  // references it needs a registration. All are bare-name mentions — none
+  // spells `@plugin:project-status`, and none is edited to satisfy this test,
+  // because editing a SKILL.md buys that skill a paid eval run.
+  ["init-project -> project-status", ""],
+  ["question-selection -> project-status", ""],
+  ["research -> project-status", ""],
+  ["research-plan -> project-status", ""],
+  ["search-records -> project-status", ""],
   // check-warnings (issue #2118): boundary mentions ("use check-warnings",
   // "that is check-warnings' job"), none a delegation. The two real callers,
   // init-project and tree-edit, were registered edges; tree-edit's left when
@@ -647,6 +653,7 @@ describe("agent delegation framing", () => {
     // now unambiguous, so the prose arm starts policing its bare-name mentions.
     "proof-conclusion",
     "person-evidence",
+    "project-status",
     "locality-guide",
     "record-extractor",
     "search-familysearch-wiki",
