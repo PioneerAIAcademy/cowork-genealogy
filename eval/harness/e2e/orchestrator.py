@@ -97,7 +97,14 @@ from e2e.stop_checker import (
     should_continue_run,
     terminal_reason,
 )
-from e2e.subagent_capture import collect_subagents, sdk_cache_dir
+from e2e.subagent_capture import (
+    collect_subagents,
+    find_subagent_transcripts,
+    pair_tool_calls,
+    parse_jsonl,
+    sdk_cache_dir,
+    transcript_agent_id,
+)
 from e2e import judge as judge_module
 
 
@@ -1385,6 +1392,83 @@ def apply_tool_result(entry: dict[str, Any], block: ToolResultBlock, summary: st
     # The untruncated length, which `response_summary` cannot carry past
     # `_RUNLOG_MAX_CHARS`. See `_raw_result_chars`.
     entry["result_chars"] = _raw_result_chars(block.content)
+
+
+def backfill_background_tool_calls(
+    workspace: Path, tool_calls: list[dict[str, Any]]
+) -> None:
+    """Append a background subagent's tool calls to `tool_calls`, from its transcript.
+
+    A synchronous subagent's calls are recorded by `_consume` from the parent
+    message stream (with `agent_id`/`agent_type` joined from
+    `caller_by_tool_use_id`). A BACKGROUND subagent ("Async agent launched") runs
+    in its own sub-session whose messages never flow through that stream, so its
+    calls were missing from `tool_calls` while its turns still showed up in
+    `subagents[].turns` — the run log contradicted itself (#3045).
+
+    Source is the transcript, not the stream (`subagent_capture.pair_tool_calls`),
+    so these entries are appended AFTER the main-stream entries and `tool_calls`
+    is therefore NOT chronological across agents. Mutating in place is safe only
+    here: every consumer that reads `tool_calls` by order, index or length —
+    `narration`'s `tool_calls_before`, the guardrail shadow-window scanners
+    (`find_unguarded_protected_writes`, `recently_succeeded`) and
+    `same_person_scored_ids` — has already run by this call site. These entries
+    are therefore RECORDED, not re-scored; they were invisible to those scanners
+    before this existed and remain so.
+
+    Dedup is by `agent_id`: a transcript whose id already appears in `tool_calls`
+    is a synchronous agent the stream captured, so it is skipped BEFORE parsing —
+    which also keeps the large synchronous transcripts from being re-read. The
+    dedup assumes a streamed subagent call always carries a truthy `agent_id`
+    (true since #1027); `agent_id` is the only key shared by transcript and stream,
+    since `tool_use_id` is popped off the final `tool_calls` entry.
+
+    Backfilled entries carry `agent_id` (from the filename) and `agent_type` (from
+    `meta.json`) even when the call's result never arrived — unlike the sync
+    "result never came" entry, which carries neither; `docs/specs/e2e-test-spec.md`
+    §8.1.1 records that difference.
+
+    Best-effort — never raises, matching `collect_subagents`: a missing or
+    unparseable transcript leaves `tool_calls` exactly as it was.
+    """
+    try:
+        existing = {tc["agent_id"] for tc in tool_calls if tc.get("agent_id")}
+        for jsonl, meta_path in find_subagent_transcripts(workspace):
+            agent_id = transcript_agent_id(jsonl)
+            if agent_id is None or agent_id in existing:
+                continue
+            records = parse_jsonl(jsonl, errors="replace")
+            if not records:
+                continue
+            agent_type: str | None = None
+            if meta_path is not None:
+                try:
+                    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+                    meta = None
+                if isinstance(meta, dict):
+                    agent_type = meta.get("agentType")
+            for raw in pair_tool_calls(records):
+                content = raw.get("content")
+                tool_calls.append(
+                    {
+                        "tool": raw["tool"],
+                        "args": raw["args"],
+                        "response_summary": (
+                            _summarize_tool_response(content)
+                            if content is not None
+                            else None
+                        ),
+                        "is_error": raw["is_error"],
+                        "result_chars": (
+                            _raw_result_chars(content) if content is not None else 0
+                        ),
+                        "agent_id": agent_id,
+                        "agent_type": agent_type,
+                    }
+                )
+    except Exception:  # noqa: BLE001 — capture must never fail an otherwise-loggable run
+        return
 
 
 def _timeline_tool_label(tool: str, args: dict | None) -> str:
@@ -3437,6 +3521,11 @@ async def run_e2e_test(
         # surfaces a runaway-thinking subagent freeze directly in the committed
         # runlog, which tool_calls alone can't show. See subagent_capture.py.
         subagents, subagent_capture_status = collect_subagents(workspace)
+        # #3045 — a background ("Async agent launched") subagent's tool calls never
+        # reach the message stream `_consume` builds `tool_calls` from, so recover
+        # them here from the same transcripts `collect_subagents` reads and append
+        # them (out of chronological order; see backfill_background_tool_calls).
+        backfill_background_tool_calls(workspace, tool_calls)
 
         result = E2eResult(
             test_id=fixture.id,
