@@ -37,6 +37,7 @@
     "GENERAL RULE UNDER TEST: when the invoking message already carries an execute/continue-authorization phrase in the same turn as the plan request, research-plan must hand off toward execution without an additional round-trip. This is not specific to Bridget Halloran or this question -- the same rule applies to any first-plan request phrased as a compound 'plan AND execute/continue' instruction.",
     "The user's message here is functionally equivalent to a user who, after being shown a plan, replies 'yes, start' -- it just arrived pre-emptively, in the same message as the plan request.",
     "Skill('search-records') AND Skill('search-external-sites') are both stubbed (execution.stub_skills) to return canned confirmations that execution proceeded -- each stands in for that skill's own suite, which already covers its own correctness. Do not grade the content of either canned confirmation. Which of the two the skill hands off to depends on the plan it writes, so either is compliant.",
+    "The run ENDS at the first stubbed hand-off (execution.stop_at_stub): the delegation to search-records or search-external-sites is the deliverable, so the transcript stops there with no closing summary and no canned confirmation consumed. Do not deduct for the missing summary or for any downstream step; an orchestrator invoked above research-plan, if present, is not the skill under test.",
     "COMPLIANT: the skill writes the plan, then invokes Skill('search-records') or Skill('search-external-sites') (which return the canned confirmations) -- or otherwise explicitly states it is proceeding to execute -- rather than posing execution as an open question.",
     "NON-COMPLIANT (the specific failure this test guards against): the skill writes the plan and ends its turn with an open question like 'Would you like me to start executing this plan?' -- re-asking something the invoking message already answered. Score Correctness low ONLY for this pattern.",
     "This judges the CONTROL FLOW after the plan is written, not the plan's record-type content -- do not fail this dimension solely because the plan's breadth or record-type selection is imperfect (that is Record type selection's job); judge only whether the skill stopped to ask despite already having authorization, versus proceeding.",
@@ -46,6 +47,7 @@
   "execution": {
     "max_wall_clock_seconds": 600,
     "max_turns": 30,
+    "stop_at_stub": true,
     "stub_skills": [
       {
         "skill": "search-records",

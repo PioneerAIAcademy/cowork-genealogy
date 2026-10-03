@@ -261,7 +261,8 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
     "max_tool_calls": "number (optional)",
     "max_input_tokens_per_turn": "number (optional)",
     "sdk_message_silence_seconds": "number (optional)",
-    "stub_skills": ["string | { skill, response } (optional)"]
+    "stub_skills": ["string | { skill, response } (optional)"],
+    "stop_at_stub": "boolean (optional, default false)"
   }
 }
 ```
@@ -913,6 +914,7 @@ Optional object overriding the harness's default execution limits. All fields ar
 | `sdk_message_silence_seconds` | integer | 180 | Maximum seconds the harness will wait between SDK messages before aborting with `sdk_stream_silence` (retryable). Bump per-test only for skills whose model spends >180s on a single thinking/generation step before emitting its first message — open-ended conflict-resolution prompts and multi-persona record-extraction are the typical cases. Don't bump the default (60s→180s already covers the long tail) — a tighter watchdog catches real upstream stalls faster |
 | `run_skills` | array | `[]` | **Positive tests only.** Sub-skills this test expects to EXECUTE for real — see below |
 | `stub_skills` | array | `[]` | **Positive tests only.** Sub-skills this test does not want executed — see below |
+| `stop_at_stub` | boolean | `false` | **Positive tests only.** The first hand-off to a stubbed skill ends the run instead of continuing — see below. Requires a non-empty `stub_skills` |
 
 **`stub_skills` — stubbing a sub-skill the test isn't testing.** When the skill
 under test delegates via `Skill(...)`, the callee runs inside the caller's turn
@@ -924,7 +926,19 @@ stubbed agent's spawn is recorded in `builtin_tool_calls` only, so assert either
 with `handoffs`. (This
 is deliberately unlike the negative-test routing short-circuit, which *stops*
 the run: a negative verdict is sealed the moment routing happens, a positive
-test still has work left.)
+test still has work left — unless it opts into `stop_at_stub`, below.)
+
+**`stop_at_stub` — when the hand-off IS the deliverable.** Some positive tests
+grade nothing after the delegation: research-plan's continue-authorized test
+(`ut_research_plan_q7m`) passes or fails on whether the skill hands off to
+execution instead of asking. Deny-and-continue let whatever ran next keep
+working (on 2026-10-02 the `research` orchestrator above research-plan looped
+stubbed `search-records` nine times and ran `record-extraction` for real) until
+the wall-clock cap aborted the run. With `stop_at_stub: true` the first stubbed
+hand-off is denied and the run stops, through the same path the negative-test
+routing short-circuit uses. The runnability gate refuses it on a negative test
+or with nothing stubbed. The transcript ends at the hand-off, so the test's
+`judge_context` must say not to deduct for a missing closing summary.
 
 Two forms, and the choice turns on the **caller's** contract, not the callee's:
 
