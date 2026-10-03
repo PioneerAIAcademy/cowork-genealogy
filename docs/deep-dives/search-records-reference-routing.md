@@ -27,7 +27,7 @@ e2e corpus (477 run logs) except where marked *unit*, which is
 | What place expansion actually costs | delete — already in `SKILL.md`'s "Exact-match qualifiers" and the `birthPlaceExact` description |
 | Filter-based place restriction | delete — `f.*Place` is *"not reachable through `record_search`"*; the file said so itself |
 | Multi-place / multiple events | delete — cardinality is likewise unreachable; `surnameAlt`/`givenNameAlt` are the only pair, already on the tool |
-| Fuzzy date behavior | **tool** — ±2 birth/marriage/death, ±5 any/residence, "state the span as a range" |
+| Fuzzy date behavior | **tool, minus its figure** — "state the span as a range" is on the tool; the file's "±2 birth/marriage/death, ±5 any/residence" is **not**, and was removed as unsourced. `measured-figures.json` does not carry it and it contradicts the estimate-overlap mechanism `birthYearExact`'s own description states — the same defect as the retired "3 jurisdiction levels" |
 | Date granularity | **tool** — only the year is matched; day and month discarded |
 | Exact year | delete — `birthYearExact`'s description carries the estimate-overlap mechanics |
 | Event types | **tool** — the `birthLike`/`deathLike`/`marriageLike`/`residence`/`any` families, plus "a typed date+place pair must match the same event" |
@@ -101,7 +101,7 @@ itself. It was also the last copy in the plugin.
 Each survived because no route takes it, and each says below what *would* retire
 it. Issue #2243 folds these into the agent body.
 
-### `search-strategy-levers.md` — 23,776 → **13,984 B**, 7 reads
+### `search-strategy-levers.md` — 23,919 → **13,984 B**, 7 reads
 
 | Section | Route |
 |---|---|
@@ -131,7 +131,7 @@ are load-bearing for it, and a row whose wording stops matching is *skipped*
 rather than failed — the `checked.length === 6` pin is the only thing that makes
 that visible.
 
-### `name-search-mechanics.md` — 11,909 → **9,967 B**, 2 reads
+### `name-search-mechanics.md` — 12,021 → **9,967 B**, 2 reads
 
 | Section | Route |
 |---|---|
@@ -163,7 +163,7 @@ parses it in both directions against `config/given-name-variants.json`, and that
 config cites it at **21 line numbers** in its provenance notes. It is the
 human-readable seed of a shipped config, not only a prompt.
 
-### `collection-quirks.md` — 8,336 → **5,984 B**, 29 reads (the most-read of the nine)
+### `collection-quirks.md` — 8,408 → **5,984 B**, 29 reads (the most-read of the nine)
 
 | Section | Route |
 |---|---|
@@ -218,27 +218,33 @@ indexing began 1860–1870. The plugin ships zero Luxembourg content
 (`grep -rni luxembourg packages/engine/plugin/` → nothing), so the fetch gives
 the agent a locality fact it has never had, for a place nobody pre-wrote.
 
-## The per-year census pages do not state relationship availability
+## A per-year census page states relationship availability only when the answer is yes
 
-Measured 2026-10-02 against the committed fixtures. The country page carries
-the fact the `pre-1880-census-household` validator grades, in a dated table:
+Measured 2026-10-02 against the committed fixtures; the per-year rows
+**re-measured live 2026-10-03** against `wiki_read`, after review pointed out
+that the original heading generalized from the 1850 page alone.
 
 | Page | `Relationships` stated? | What it says |
 |---|---|---|
-| `United_States_Census` (33,782 B) | **yes** | `\| Relationships \| 1880-1950 \|`, plus "Determine family relationships (more recent than 1880 as shown above)" |
-| `United_States_Census_1850` (8,155 B) | **no** | only "Identify probable relationships-be careful!" |
+| `United_States_Census` (33,782 B) | **yes, by date range** | `\| Relationships \| 1880-1950 \|`, plus "Determine family relationships (more recent than 1880 as shown above)" |
+| `United_States_Census_1850` (8,155 B) | **no** | Contents lists no relationship field; Value offers only "Identify probable relationships—be careful!" |
+| `United_States_Census_1880` | **yes** | Content lists "Relationship to head of household"; Unique Features opens "Asked the relationship to the head of household" |
 
-Neither page contains the strings `no relationship`, `relationship to head`,
-`head of household`, `infer` or `not stated`. The country page settles the
-question by date range; the per-year page does not address it.
+That asymmetry is the point, and it is worse than "the per-year pages are
+quieter". A per-year page records the column when the schedule **had** one and
+says nothing when it did not, so silence on an 1850 page is indistinguishable
+from an incomplete page — and the pre-1880 years are exactly the ones the
+`pre-1880-census-household` validator grades. The 1850 page contains none of
+`no relationship`, `relationship to head`, `head of household`, `infer` or
+`not stated`; the 1880 page carries `relationship to head of household` twice,
+as a thing the schedule *has*. Neither states an absence — only the country
+page does, and it states it for every year at once.
 
 This matters because Step 2's second bullet sends the agent to the per-year
 page when the country page "does not settle which fields the schedule
-collected" — and for *relationships* the country page does settle it, for every
-year at once. All **9** `pre-1880-census-household`-tagged tests now carry a
-per-year fixture (the 16 wired tests include all 9 tagged ones), so an agent
-that follows that bullet on a relationship question reads the weaker of the two
-pages.
+collected" — and for *relationships* the country page does settle it. An agent
+that follows that bullet on a pre-1880 relationship question reads a page that
+cannot answer it.
 
 **Not established: whether this causes a failure.** Across the
 `--runs-per-test 3` scratch runs of 2026-10-02, every run that read only the
@@ -248,11 +254,16 @@ is no evidence at all. The content gap above is a fact about the corpus; the
 causal claim is not, and was not promoted to one. `ut_search_records_012` was
 3/3 at `42df8f6d1` and 2/3 on branch with the cause unidentified.
 
-**The per-year fixtures are still load-bearing.** The branch agent followed the
-bullet-2 link in 2 of 3 runs, so the path is reachable; without those fixtures
-the call returns `fixture_not_found` (a Type 2 miss) and fails Tool Arguments.
-Removing them to dodge the content gap would trade a weak-source read for a
-hard error.
+**The per-year fixtures were load-bearing until they were not, and the reason
+matters.** They were read as load-bearing here because the branch agent
+followed the bullet-2 link in 2 of 3 runs and a missing fixture returns
+`fixture_not_found` (a Type 2 miss) that fails Tool Arguments. That read was
+wrong: the generic predicate is a case-insensitive **substring** match on
+`United_States_Census`, so it already answers a per-year URL with the country
+page. `320f4d098` deleted all five per-year entries on that basis, and no
+`pre-1880-census-household`-tagged test carries one today — the paragraph above
+has been corrected accordingly. What the deletion costs is named under "What
+nothing checks" below.
 
 ## `ut_search_records_023` flaps at ~55%, and prose is not the lever
 
@@ -345,19 +356,31 @@ the cause — the "Collect impartially" rewording is. n=3 per arm: three greens 
 prove innocence (at a 1-in-3 rate that happens about 30% of the time), and the strength
 here is the controlled comparison, not the sample size.
 
-**What this licenses.** The shortened ARK wording is behaviour-neutral on the evidence,
-which is what `eval-cosmetic-skip:search-records` asks for — a rule-2 waiver keeps the
-existing run log and its annotations rather than buying a re-run. The body carries
-exactly the measured string and no other variant; a reworded third version would not be
-covered by this table, and `SKILL.md` is byte-identical at 64,277 to the tree these runs
-used. The "Collect impartially" line stays as restored and is NOT a candidate for the
-same treatment.
+**What this licenses, and why it is not applied here.** The shortened ARK wording is
+behaviour-neutral on the evidence. It was briefly landed on this branch and has been
+**reverted**: it was the only snapshot input to change after the release, which reds
+rule 2, and this card's own argument is that finding #9 has no path to land here. A
+reworded prompt line is not cosmetic enough to carry on a waiver when the release is
+already spent, so the measurement stands as the evidence for whoever applies it on the
+follow-up (issue #3125) and `SKILL.md` stays at 64,412, byte-identical to the
+tree `v2.json` was released against. A reworded third version would not be covered by
+this table. The "Collect impartially" line stays as restored and is NOT a candidate for
+the same treatment.
 
 ## What nothing checks
 
 - **That the census fetch fires in production.** ADR-0012's Enforcement is
   "None". `test_census_wiki_fixture_actually_used` covers the unit tier only,
   across the 16 tests whose search is a census search.
+- **The per-year follow-up, now that its fixtures are gone.** The country page
+  is a coarse table: it settles relationship availability for every year at
+  once, and settles little else. The per-year detail `census-field-availability.md`
+  used to carry — the 1890 schedule loss, the 1900 birth-month column, the 1940
+  informant marker — is reachable only through the per-year page, which the
+  substring predicate now answers with the country page instead. No unit test
+  exercises that path any more, so nothing would show if an agent needed that
+  detail and silently did without it. Worth watching on the next run rather
+  than pre-emptively re-adding five fixtures that measured as a regression.
 - **The non-US branches of the Step 2 block.** All 11 census scenarios in this
   suite are US, so `England_Census` and every other `{Country}_Census` ship
   unexercised by the unit suite.

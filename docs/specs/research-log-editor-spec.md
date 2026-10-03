@@ -355,7 +355,7 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | `tool === "external_links_search"`, `resultsExamined > 0`, `outcome !== "positive"` | written with `outcome: "positive"`, plus a warning naming the outcome sent — the entry grades the fetch, not the search |
 | Staged payload has no `results` array | input error — the integrity check and D5 require `payload.results` (`validateSidecars`, the `"payload has no 'results' array — cannot verify retrieval integrity"` check) |
 | `stagedResultsRef` given for a nil search (`results_examined: 0`, `outcome: negative`) | allowed but discouraged; the caller should omit results for nil searches per §5.4.1 |
-| `query` is prose rather than an object, on a read-style entry (`record_read`, `image_transcribe`, `image_read`) | **not reached** — the MCP input schema rejects it first. An ARK is dense with `:` and `/`, so a sentence containing one fails JSON parsing and the call is refused *before* the tool runs: nothing is logged and the turn is spent. This is why `search-records`' Step 5 prescribes a canonical key per read-style tool (`{"recordId": …}`, `{"recordIds": [...]}`, `{"imageArk": …}`). The MECHANISM — that an ARK is dense with `:` and `/`, so a sentence containing one fails JSON parsing — belongs here rather than in the body, per CLAUDE.md's no-explanatory-prose rule. The body keeps one clause of consequence ("rejected before the tool runs, so nothing is logged"), which is what tells the model why the keyed form is not optional; the measured-neutral wording is pinned by the isolation run recorded in `docs/deep-dives/search-records-reference-routing.md` |
+| `query` is prose rather than an object, on a read-style entry (`record_read`, `image_transcribe`, `image_read`) | **not reached** — the MCP input schema rejects it first. An ARK is dense with `:` and `/`, so a sentence containing one fails JSON parsing and the call is refused *before* the tool runs: nothing is logged and the turn is spent. This is why `search-records`' Step 5 prescribes a canonical key per read-style tool (`{"recordId": …}`, `{"recordIds": [...]}`, `{"imageArk": …}`). The mechanism belongs here rather than in the body, per CLAUDE.md's no-explanatory-prose rule; as of 2026-10-03 the body still restates it, and moving it out edits a snapshot input, so it waits on the next paid `search-records` eval release |
 | `projectPath` missing `research.json` / invalid JSON | input error; write nothing |
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. This is the search-logging path, so it is the one that decides whether a standalone search says anything useful. A directory holding exactly one of the two files is a *broken* project and stays loud. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Appended entry introduces a project-validation error | **write nothing** (unlink the new sidecar; every staged file is kept); return `{ ok: false, errors }`. A pre-existing error the append did not introduce rides as a warning |
@@ -454,30 +454,76 @@ Scope, and why it is this narrow:
   When every titled row is a US federal census before 1880 (matched by title
   shape, never by the note's census patterns, which read an unqualified census as
   US and would take "Ecuador, Census, 1737-1990" for one), the note is judged
-  whatever word it uses, provided it binds no census year of its own and
-  contains one of those census years. A bound year keeps precedence, so no
-  note-only verdict moves. A mixed search (1850 and 1880 rows) does not decide,
-  because the note may describe the other row; nor does "the top-ranked row",
-  which is the best match only when ranking ran. The year in the note is what
-  ties it to that census: a parish-register note logged against an 1850 census
-  search is not refused for a household the census never showed. Other search
-  tools carry no collection title and keep the note-only rule.
+  whatever word it uses, provided it binds no census year of its own. A bound
+  year keeps precedence, so no note-only verdict moves. A mixed search (1850 and
+  1880 rows) does not decide, because the note may describe the other row; nor
+  does "the top-ranked row", which is the best match only when ranking ran.
+  Other search tools carry no collection title and keep the note-only rule.
+- **The note does not have to repeat the census year** (2026-10-02). Until then
+  the payload tie also required one of its years to appear in the note text,
+  which hid real misses: `ut_search_records_001` ("…in household of Thomas
+  Flynn") and `_017` ("…in household of William Mullen") each carry a *birth*
+  year and no census year, wrote flat, and were caught by the eval validator
+  after the write instead of refused at it. This is **not** the whole-note
+  fallback the lead declined on 2026-09-29, which read any
+  `18[0-7]\d` out of the note: this branch reads no year out of the note at all.
+- **A note ABOUT another record type is carved out, positionally.** The payload
+  cannot prove the note is about a census row — `stagedPre1880UsCensusYears`
+  counts only rows carrying a `collectionTitle`, so an untitled parish-register
+  row can share a staged payload with the titled 1850 rows that produced the
+  years. Where the note *names another source before the claim it qualifies*,
+  the payload stops deciding and the note must bind its own census year. The
+  order is what carries it: a note about a parish register leads with it, while
+  a census note that mentions one later ("…in the Household of Nancy Doss.
+  Cross-check the parish register next.") is still a census note. The carve-out
+  is a list of phrases that **name a record** (`will of`, never a bare `will`,
+  which the ordinary verb matched and which cancelled the gate outright), each
+  carrying its plural (`church records`, `marriage records`), and it is anchored
+  on the earliest of the household and kinship claims rather than on the
+  household word alone.
+- **A household word is not a household claim.** `household` and `dwelling` are
+  ordinary nouns for the concept as much as for a particular one, so one of them
+  counts only with a name attached — `household of Nancy Doss`, `William Mullen
+  household` — and the forward window stops at the first `.` or `;` so a name in
+  the next sentence cannot supply one. Without this the payload trigger refused
+  notes that assert nothing: `ut_search_records_027`'s "Spouse field absent in
+  index — reading full record to view household members and marriage indicator"
+  only says what it is about to read, and "no Stribling appeared as a household
+  head on any readable page" is a negative result. The relational phrases
+  (`co-resident`, `enumerated with`, `living with`) are exempt, because they
+  predicate co-residence with or without a name.
 - **"Indexed" beside a role word is a hedge** ("Role indexed as 'Head'"), as it
   is in the eval-plane validator. Flagging a *name* as indexed is not.
+- **The hedge is accepted however it is hyphenated.** The refusal message spells
+  it "relationship-to-head column"; the hedge patterns accepted only spaces, so
+  a caller who hedged in the exact words they were handed was refused a second
+  time with no wording in the message that would clear it.
 
-Measured over the 4,062 distinct `notes` arguments in the committed run logs
-(measured at c70e0214d; re-derive with `dev/measure-census-hedge-refusals.ts`
-rather than quote — the corpus moves with every committed run, and shrinks as
-well as grows, because a re-run replaces a skill's run log), the note-only rule
-refuses 177 (4.4%). Of the
-1,867 staged `record_search` entries with a note, 738 pair to the search
-response that staged them (e2e run logs keep only a truncated summary, so the
-rest cannot be paired); the staged search refuses 29 of those 738 (3.9%),
-of which 4 are refused only because of the payload (the `h4k` note twice, and
-two more flat household claims with no census word).
+Measured over the 4,320 distinct `notes` arguments in the committed run logs
+(2026-10-03; re-derive with
+`dev/measure-census-hedge-refusals.ts` rather than quote — the corpus moves with
+every committed run, and shrinks as well as grows, because a re-run replaces a
+skill's run log), the note-only rule refuses 152 (3.5%). Of the 1,998 staged
+`record_search` entries with a note, 861 pair to the search response that staged
+them (e2e run logs keep only a truncated summary, so the rest cannot be paired);
+the staged search refuses 30 of those 861 (3.5%), of which 7 are refused only
+because of the payload.
+
+Against `main` — the baseline that matters, since it is what ships today — the
+whole of this section's change newly refuses **0 notes and 3 payload ops**, and
+newly frees 34 notes and 10 payload ops. All three newly refused are flat "in
+household of ⟨Name⟩" claims logged against an 1850 payload, the shape the rule
+exists for. Every one of the 44 freed was read: they are search plans, nil
+results, candidate lists and negative findings that name no one in a
+household. An earlier version of the household-claim test required a name of
+the *whole* anchor set and freed a 45th — "1860 census: Elijah Wilkins … with
+Sarah Wilkins … as co-resident spouse. Children: Margaret E (1841)" — which is
+a real violation; that is why the relational phrases are exempt from it, and
+the case is pinned in `pre1880-census-hedge.test.ts`.
+
 Against the fallback-present baseline (before the 2026-09-29 change deleted the
-whole-note `18[0-7]\d` test), 46 notes are newly freed and 0 newly refused
-(note-only); 12 payload ops are newly freed and 0 newly refused. A census
+whole-note `18[0-7]\d` test), 46 notes were newly freed and 0 newly refused
+(note-only); 12 payload ops newly freed and 0 newly refused. A census
 named before 1800 is still refused — it is caught by the year-binding branch,
 not by the deleted fallback.
 
@@ -488,10 +534,10 @@ author-supplied and optional. `requirePre1880CensusHedge`'s docstring in
 ruled on. The binding above answers the first two — the rate
 is 4.4% of notes, and non-US censuses that carry the column are excluded. The
 staged search answers most of the third for `record_search`: the census is read
-from FamilySearch's response, not from the caller. What still stands is the tie:
-a note that omits the census year is not refused, and neither is a note logged
-by any other tool or with no staged response. This narrows a common failure
-rather than closing a hole.
+from FamilySearch's response, not from the caller. What still stands is the
+reach: a note logged by any other tool, or with no staged response, is judged on
+its own text alone and keeps every limit above — chiefly that an unbound census
+year skips the rule. This narrows a common failure rather than closing a hole.
 
 The trigger word was the same hole, and more broadly. On note text alone the
 rule fires on `\bcensus\b`, so a note that describes a pre-1880 census household
