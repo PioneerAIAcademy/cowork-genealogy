@@ -50,6 +50,7 @@ def test_does_not_modify_research_json(before_state, after_state, test):
 # the "topical-fixture-required" tag is added to a test.
 _TOPICAL_FIXTURE_BY_TEST_ID = {
     "ut_historical_context_gsm": "wiki-search-guardianship-stepchildren",
+    "ut_historical_context_u4k": "wiki-search-guardianship-stepchildren",
     "ut_historical_context_hbt": "wiki-search-guardianship-own-children",
     "ut_historical_context_001": "wiki-read-united-states-emigration-and-immigration",
     "ut_historical_context_003": "wiki-read-united-states-emigration-and-immigration",
