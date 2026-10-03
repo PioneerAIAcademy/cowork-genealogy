@@ -66,7 +66,7 @@ export const ALWAYS_LOAD: ReadonlySet<string> = new Set([
   "project_context", // loaded beside research_query in that same first ToolSearch
   "research_append", // most-loaded tool; 76 of its 82 re-loads follow a compaction
   "research_log_append", // logs every search; 67 of its 68 re-loads follow a compaction
-  "record_read", // 2.3 KB and loaded in 31/34 runs. record_search stays deferred at 20.2 KB
+  "record_read", // 2.3 KB and loaded in 31/34 runs. record_search stays deferred at 20.6 KB
 ]);
 
 export const allToolSchemas = [

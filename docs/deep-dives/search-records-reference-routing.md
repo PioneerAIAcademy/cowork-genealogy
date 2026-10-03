@@ -23,7 +23,7 @@ e2e corpus (477 run logs) except where marked *unit*, which is
 |---|---|
 | (title) · Place parameters · Date parameters · Relationship parameters · Other parameters | delete — container headings |
 | Standardized places | **tool** — `record_search` tool-level PLACES clause |
-| Fuzzy place (default) vs. exact place | **tool** — same clause: three-level upward expansion, `.exact` descent unmeasured |
+| Fuzzy place (default) vs. exact place | **tool** — same clause. It carried the deleted file's nominal "three jurisdiction levels" at first; the shipped description now states the measured behaviour instead (a county scope barely discriminates), and `.exact` descent stays unmeasured |
 | What place expansion actually costs | delete — already in `SKILL.md`'s "Exact-match qualifiers" and the `birthPlaceExact` description |
 | Filter-based place restriction | delete — `f.*Place` is *"not reachable through `record_search`"*; the file said so itself |
 | Multi-place / multiple events | delete — cardinality is likewise unreachable; `surnameAlt`/`givenNameAlt` are the only pair, already on the tool |

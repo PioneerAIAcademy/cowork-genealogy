@@ -449,6 +449,24 @@ export function censusMentions(notes: string): CensusMention[] {
  * reading. This branch reads no year out of the note at all; the payload --
  * which the caller does not author -- is what decides.
  */
+/**
+ * A phrase that NAMES a record of another type. Every entry names a record
+ * (`will of`, never `will`): a term that doubles as ordinary English reopens
+ * the hole the bare `will` opened, where the verb cancelled the gate.
+ */
+const SOURCE_NAMED =
+  /\b(parish register|church (?:book|record)|baptism|christening|burial register|probate|will of|last will|will and testament|will book|deed|land record|passenger list|draft (?:card|registration)|city directory|gravestone|headstone|obituary|marriage (?:record|certificate|licen[cs]e|register)|death (?:certificate|record|register)|birth (?:certificate|record|register)|vital record|naturali[sz]ation|pension file)\b/;
+
+/** The household wording the hedge rule is about. Lowercased input. */
+const HOUSEHOLD_ANCHOR = /\b(household|dwelling|co-?resident|enumerated with|living with)\b/;
+
+/**
+ * Kinship asserted about a NAMED person. Case-sensitive on purpose (the
+ * capital starts the name), so it is searched against `notes`, not `text`.
+ */
+const KINSHIP_CLAIM =
+  /(?<!\b(?:his|her|their)\s)\b(?:mother|father|wife|husband|sons?|daughters?|parents?)\s+[A-Z]/;
+
 export function requirePre1880CensusHedge(
   notes: string,
   stagedCensusYears?: readonly number[],
@@ -507,28 +525,24 @@ export function requirePre1880CensusHedge(
   // is a phrase that names a RECORD (`will of`, never `will`); adding a term
   // that doubles as ordinary English reopens that hole, and a missing deny here
   // fails open and silently where a missing allow merely annoys.
-  const SOURCE_NAMED = new RegExp(
-    String.raw`\b(parish register|church (?:book|record)|baptism|christening|` +
-      String.raw`burial register|probate|will of|last will|will and testament|` +
-      String.raw`will book|deed|land record|passenger list|draft (?:card|registration)|` +
-      String.raw`city directory|gravestone|headstone|obituary|` +
-      String.raw`marriage (?:record|certificate|licen[cs]e|register)|` +
-      String.raw`death (?:certificate|record|register)|` +
-      String.raw`birth (?:certificate|record|register)|` +
-      String.raw`vital record|naturali[sz]ation|pension file)\b`,
-  );
-  const HOUSEHOLD_ANCHOR = /\b(household|dwelling|co-?resident|enumerated with|living with)\b/;
   const sourceAt = text.search(SOURCE_NAMED);
-  const householdAt = text.search(HOUSEHOLD_ANCHOR);
+  // Anchor on the CLAIM, not on the household word alone. `householdAt < 0 ||`
+  // was the hole: a kinship claim with no household word ("...with wife Nancy
+  // and son Thomas Whitfield.") left the anchor at -1, so ANY source word
+  // anywhere in the note allowed it -- "Check baptism next." appended to a flat
+  // kinship claim walked straight through the gate it was meant to close.
+  // Both claim shapes are anchored now, on the EARLIEST of the two.
+  const claimAt = [text.search(HOUSEHOLD_ANCHOR), notes.search(KINSHIP_CLAIM)]
+    .filter((i) => i >= 0)
+    .reduce((a, b) => Math.min(a, b), Number.POSITIVE_INFINITY);
   const isAboutOtherSource =
-    sourceAt >= 0 && (householdAt < 0 || sourceAt < householdAt);
+    sourceAt >= 0 && Number.isFinite(claimAt) && sourceAt < claimAt;
   const namesColumnlessCensus = bound.length > 0
     ? bound.some((m) => m.year < m.columnFrom)
     : payloadYears.length > 0 && !isAboutOtherSource;
   if (!namesColumnlessCensus) return;
 
-  const describesHousehold =
-    /\b(household|dwelling|co-?resident|enumerated with|living with)\b/.test(text);
+  const describesHousehold = HOUSEHOLD_ANCHOR.test(text);
   // Kinship asserted about a NAMED person: "mother Margaret", "plus sons Thos
   // and Stephen". The lookbehind excludes the possessive form -- "searched for
   // his wife Catherine" names a TREE-side relative who may be absent from the
@@ -536,8 +550,7 @@ export function requirePre1880CensusHedge(
   // stated. That carve-out is the eval validator's too, and dropping it made
   // this refuse a compliant note.
   const assertsKinship =
-    /(?<!\b(?:his|her|their)\s)\b(?:mother|father|wife|husband|sons?|daughters?|parents?)\s+[A-Z]/.test(notes) ||
-    /\bhead\s+of\s+household\b/.test(text);
+    KINSHIP_CLAIM.test(notes) || /\bhead\s+of\s+household\b/.test(text);
   if (!describesHousehold && !assertsKinship) return;
 
   const hedged =

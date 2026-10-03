@@ -493,6 +493,13 @@ def assert_topical_fixture_used(
         f"{test_id} carries '{tag}' but has no entry in {map_name}"
     )
     hit = [c.get("response_fixture") for c in (tool_calls or []) if c.get("response_fixture")]
+    # A run that never activated has no fixture-backed call to inspect, and
+    # non-activation is reported elsewhere. Both callers skipped here before
+    # this helper existed; dropping it turned a skip into a FAILURE for a
+    # historical-context run that never activates, which is a behaviour change
+    # inside what was described as a pure refactor.
+    if not hit:
+        pytest.skip("no fixture-backed tool calls - non-activation is reported elsewhere")
 
     def matches(stem: object) -> bool:
         if not isinstance(stem, str):

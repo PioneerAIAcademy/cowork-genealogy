@@ -1258,12 +1258,12 @@ export const recordSearchToolSchema = {
     "uncertain rather than guessing a family. " +
     "DATES: only the YEAR is matched, and this tool takes years only — every " +
     "`*YearFrom` must be sent with its `*YearTo`, and a range is INCLUSIVE on " +
-    "both ends. An unqualified range also fuzzes OUTWARD, by roughly two years " +
-    "either side for birth, marriage and death and roughly five for `any` and " +
-    "`residence`, so a range is always at least as wide as it reads. To pin one " +
-    "year without that fuzz use the matching `*YearExact` " +
-    "(`birthYearExact`, `marriageYearExact`, `deathYearExact`, " +
-    "`residenceYearExact`, `anyYearExact`) rather than a one-year range. " +
+    "both ends. An unqualified range also matches by ESTIMATE OVERLAP: a record " +
+    "carrying no date of its own gets an estimated range from the dated people " +
+    "on it, and comes back whenever that overlaps yours. To exclude those, send " +
+    "the range AND the matching `*YearExact` — it is a boolean that narrows a " +
+    "range to indexed dates inside it, not a year of its own, so to pin a single " +
+    "year send `*YearFrom` = `*YearTo` together with `*YearExact: true`. " +
     "PLACES: pass the full hierarchical standardized string when you have one " +
     "(`'Lehi, Utah County, Utah, United States'`); a non-standardized string " +
     "falls back to brittle string matching. Unqualified, a place field also " +

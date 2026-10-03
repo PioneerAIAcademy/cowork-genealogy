@@ -860,7 +860,11 @@ def test_census_wiki_fixture_actually_used(tool_calls, test):
         None,
     )
     first_search = next(
-        (i for i, c in enumerate(calls) if "record_search" in (c.get("tool") or "")),
+        (
+            i
+            for i, c in enumerate(calls)
+            if _bare_tool_name(c.get("tool") or "") == "record_search"
+        ),
         None,
     )
     if first_search is None:
