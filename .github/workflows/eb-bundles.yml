@@ -29,7 +29,7 @@ name: EB bundles
 # the artifact to inspect, and so U13 can deploy exactly what CI built
 # (eb-bundles.json carries each zip's sha256).
 #
-# Advisory until the lead adds `eb-bundles` to protect-main's required checks.
+# Advisory: not a required check (lead, 2026-10-04 — the build time isn't worth gating every PR on).
 #
 # Runs on EVERY pull request — no `paths:` filter — so this check always
 # reports a conclusion and can be required by branch protection. A workflow
