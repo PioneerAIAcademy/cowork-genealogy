@@ -61,7 +61,7 @@ proto-web = [
 # pin (the wheel bundles Claude Code 2.1.220). One lock resolves one version, so this also
 # holds [project]'s claude-agent-sdk at 0.2.128 until it moves here.
 proto-worker = [
-    "claude-agent-sdk==0.2.128",
+    "claude-agent-sdk==0.2.163",
     "psycopg[binary]>=3.3.4",
     "botocore>=1.40",
     "anyio>=4.14.2",
