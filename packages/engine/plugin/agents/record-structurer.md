@@ -99,6 +99,8 @@ classifications are not yours to send.
 - **Stated relationships only.** Emit a relationship only where the text states
   it, a stated sibling included. Never infer one from who lived with whom. On a
   census, the relation-to-head column goes in `statedRelation`.
+- **Residence.** A person described as "of <place>" has a `residence` fact
+  there.
 - **Gender** for every person whose sex the text states.
 - **Dates** as written. An Old Style date is recorded as the caller's flag gives
   it; never convert one from memory.

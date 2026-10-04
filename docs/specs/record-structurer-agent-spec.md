@@ -105,8 +105,22 @@ is §11.7's code.
   text states it, including a stated sibling. It never
   deduces one from who lived with whom. On a census, the column's value goes
   in `statedRelation`, and code decides whether the schedule had that column.
+- **`statedRelation` is relative to the principal** (2026-10-04), in the
+  text's word. A principal has none. Where there are two principals, a parent
+  is `father` or `mother`, tied to the child by `parent_child`, and code names
+  the side (§11.7). Everyone named gets an entry, the officiant included.
+- **Residence (genealogist, 2026-10-04).** A person described as "of
+  <place>" has a `residence` fact there. Trials missed it on a testator ("of
+  the Borough of Shenandoah", 2 of 3 runs) and a bride's father ("of Mahanoy
+  City", 1 of 3).
 - **Gender for every person whose sex the text states**, not only the
   principal.
+- **Probate (2026-10-04).** The will's execution is a `will` fact; the
+  court's acts (proof, letters granted) are `probate` facts, all on the
+  testator, even where the letters name the executor.
+- **Newspaper notices (2026-10-04).** A wedding, birth, engagement or
+  anniversary notice is `newspaper_announcement`, never the event's own
+  record type.
 - **Obituary survivor lists.** `given (surname) married-surname` is one woman
   with her maiden name. `given (given) surname` is a person plus a spouse, and
   that spouse is a child-in-law. Neighbours, friends and pallbearers are
