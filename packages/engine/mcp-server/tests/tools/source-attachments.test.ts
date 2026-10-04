@@ -10,6 +10,7 @@ import {
 } from "../../src/tools/source-attachments.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { LOCAL } from "../../src/auth/principal.js";
+import { socketFetchFailure } from "../helpers/fetch-failed.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -138,6 +139,14 @@ describe("source_attachments", () => {
 
     await expect(sourceAttachmentsTool({ uris }, LOCAL)).rejects.toThrow(
       /call the login tool/,
+    );
+  });
+
+  it("names the socket cause of a network failure", async () => {
+    mockFetch.mockRejectedValue(socketFetchFailure());
+
+    await expect(sourceAttachmentsTool({ uris: [ark(1)] }, LOCAL)).rejects.toThrow(
+      /Could not reach FamilySearch attachments API: fetch failed <- ETIMEDOUT/,
     );
   });
 });

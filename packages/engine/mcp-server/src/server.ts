@@ -29,7 +29,9 @@ import { populationTool, type PopulationToolInput } from "./tools/place-populati
 import { externalLinksSearchTool, type ExternalLinksSearchInput } from "./tools/external-links-search.js";
 import { imageReadTool, type ImageReadInput } from "./tools/image-read.js";
 import { imageTranscribeTool } from "./tools/image-transcribe.js";
+import { volumeBisectTool } from "./tools/volume-bisect.js";
 import type { ImageTranscribeInput } from "./types/image-transcribe.js";
+import type { VolumeBisectInput } from "./types/volume-bisect.js";
 import { recordSearchTool } from "./tools/record-search.js";
 import type { RecordSearchInput } from "./types/record-search.js";
 import { personSearchTool, type PersonSearchInput } from "./tools/person-search.js";
@@ -84,8 +86,8 @@ import {
   type ConvertCalendarInput,
 } from "./tools/convert-calendar.js";
 import {
-  buildExternalSearchUrl,
-  type BuildExternalSearchUrlInput,
+  buildExternalSearchUrlTool,
+  type BuildExternalSearchUrlToolInput,
 } from "./tools/build-external-search-url.js";
 import { treeEdit, type TreeEditInput } from "./tools/tree-edit.js";
 import { treeCorrect, type TreeCorrectInput } from "./tools/tree-correct.js";
@@ -325,6 +327,20 @@ export function createServer(principal: Principal): Server {
         };
       }
     }
+    if (request.params.name === "volume_bisect") {
+      try {
+        const args = request.params.arguments as unknown as VolumeBisectInput;
+        const result = await volumeBisectTool(args, principal);
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true,
+        };
+      }
+    }
+
     if (request.params.name === "image_transcribe") {
       try {
         const args = request.params.arguments as unknown as ImageTranscribeInput;
@@ -642,8 +658,8 @@ export function createServer(principal: Principal): Server {
     }
     if (request.params.name === "build_external_search_url") {
       try {
-        const args = request.params.arguments as unknown as BuildExternalSearchUrlInput;
-        const result = buildExternalSearchUrl(args);
+        const args = request.params.arguments as unknown as BuildExternalSearchUrlToolInput;
+        const result = await buildExternalSearchUrlTool(args);
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

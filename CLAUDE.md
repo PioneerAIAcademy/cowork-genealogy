@@ -21,7 +21,9 @@ We ship two separate artifacts from this single repo:
 - A Cowork plugin folder packaged as a `.zip` (runs in the Cowork VM)
 
 These two pieces are tightly coupled and must be developed together,
-which is why they live in one repo.
+which is why they live in one repo. The search-agent prototype adds three
+Elastic Beanstalk source bundles, web, worker and tools (`make eb-bundles`;
+`docs/plan/familysearch-handoff.md`).
 
 ## Architecture you must understand before changing anything
 
@@ -77,7 +79,8 @@ in the sense that they cannot.
   `packages/engine/mcp-server/build/`. The `.mcpb` is built from this.
 - `packages/engine/plugin/` — The Cowork plugin folder. Packaged as a .zip directly,
   no compilation step.
-- `scripts/` — Build scripts for both artifacts.
+- `scripts/` — Build scripts for every artifact (`scripts/eb_bundles/` for the
+  Beanstalk bundles).
 - `packages/engine/mcp-server/dev/` — Developer-only scripts: `try-*.ts` one-shot
   smoke tests that invoke a tool directly against live APIs (no MCP
   harness; useful for debugging a tool in isolation), plus
@@ -110,7 +113,9 @@ in the sense that they cannot.
 
 This repo is also a pnpm + turborepo monorepo for the hosted web product —
 `packages/schema`, `packages/viewer-ui`, `apps/electron`, `apps/web`,
-`apps/server`. Two rules bind when you touch it:
+`apps/server` — plus `eval/app`, the eval CRUD UI, a member so that it imports
+`@genealogy/schema` rather than hand-forking the types. Two rules bind when you
+touch it:
 
 - **Keep the engine out of the pnpm workspace.** `pnpm-workspace.yaml` carries a
   `!packages/engine/**` negation. Both shipped artifacts install their production
@@ -407,7 +412,7 @@ not add the line to it. The exception moved from the skills to the agents when
 that skill was replaced by an agent on 2026-09-27; re-derive both lists with
 `grep -rL '\*\*Narration' packages/engine/plugin/skills/*/SKILL.md` and
 `grep -rL '\*\*Narration' packages/engine/plugin/agents/*.md`, and note that
-four other agents also carry no line — `search-wikipedia` is the one whose
+six other agents also carry no line — `search-wikipedia` is the one whose
 absence is a *rule*, pinned by
 `tests/packaging/search-wikipedia-no-narration.test.ts`.
 

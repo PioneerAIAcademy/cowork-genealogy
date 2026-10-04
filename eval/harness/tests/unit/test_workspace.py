@@ -106,6 +106,29 @@ def test_scenario_workspace_copies_results_sidecars(tmp_path):
     assert json.loads(sidecar.read_text(encoding="utf-8"))["log_id"] == "log_001"
 
 
+def test_scenario_starting_tree_is_staged_only_when_the_scenario_ships_one(tmp_path):
+    """research_append exempts starting-tree persons from its minted-from-this-
+    record check, so a scenario that ships the baseline must reach the workspace.
+    One that does not must NOT get tree.gedcomx.json copied in its place: that
+    would also exempt persons a mid-research fixture minted in an earlier session."""
+    scenarios = tmp_path / "scenarios"
+    tree = {"persons": [{"id": "I1"}]}
+    for name, ship in (("with-baseline", True), ("without-baseline", False)):
+        scen = scenarios / name
+        scen.mkdir(parents=True)
+        (scen / "research.json").write_text(json.dumps({"log": []}), encoding="utf-8")
+        (scen / "tree.gedcomx.json").write_text(json.dumps(tree), encoding="utf-8")
+        if ship:
+            (scen / "starting-tree.gedcomx.json").write_text(json.dumps(tree), encoding="utf-8")
+    for name, expected in (("with-baseline", True), ("without-baseline", False)):
+        target = tmp_path / f"ws-{name}"
+        target.mkdir()
+        ws = build_workspace(name, scenarios, PLUGIN_SKILLS, target_dir=target)
+        assert (ws / "starting-tree.gedcomx.json").exists() is expected, name
+    staged = json.loads((tmp_path / "ws-with-baseline" / "starting-tree.gedcomx.json").read_text(encoding="utf-8"))
+    assert staged == tree
+
+
 def test_missing_scenario_raises(tmp_path):
     with pytest.raises(InvalidScenarioError):
         build_workspace(

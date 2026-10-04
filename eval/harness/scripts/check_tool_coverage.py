@@ -113,10 +113,11 @@ EXEMPT_TOOLS: dict[str, str] = {
         "would assert something false about a tool 11 of 16 tests exercise."
     ),
     "build_external_search_url": (
-        "registered as a LIVE_TOOL in mock_mcp.py — pure URL-templating from "
+        "registered as a LIVE_TOOL in mock_mcp.py — URL-templating from "
         "structured attributes, so a fixture would have to hard-code the "
         "exact URL string search-external-sites' eval exists to measure. It "
-        "calls the real compiled implementation. No fixture needed; it is "
+        "calls the real compiled implementation, including its hand-off log "
+        "write when the agent passes projectPath. No fixture needed; it is "
         "always available."
     ),
 }

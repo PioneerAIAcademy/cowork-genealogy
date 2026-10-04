@@ -279,13 +279,22 @@ def check_runnable(
     # xfail test is an explicitly declared known-failing test, so a
     # correct_skill naming a not-yet-built skill is the documented
     # reason for the xfail (see xfail_reason), not a typo to catch.
+    # An entry naming a CONVERTED skill resolves to its agent file instead of a
+    # skill directory (issue #2793, and the same shape as the `spec.skill`
+    # fallback above). The destination is still real — `project-status` is
+    # reachable by auto-delegation from its own description — so requiring a
+    # directory here would fail a correctly-routed test for a migration the
+    # test is not about. A name matching NEITHER is still the typo this catches.
     if spec.type == "negative" and spec.negative and spec.expected_outcome != "xfail":
         for i, name in enumerate(spec.negative.get("correct_skill", []) or []):
-            if not (Path(skills_dir) / name).is_dir():
+            if not (Path(skills_dir) / name).is_dir() and not (
+                Path(agents_dir) / f"{name}.md"
+            ).is_file():
                 return RunnabilityResult(
                     False,
-                    f"negative.correct_skill[{i}]='{name}' is not an "
-                    f"existing skill (no directory at {skills_dir}/{name})",
+                    f"negative.correct_skill[{i}]='{name}' is neither an "
+                    f"existing skill (no directory at {skills_dir}/{name}) "
+                    f"nor an existing agent (no file at {agents_dir}/{name}.md)",
                 )
 
         # `grade_on_invariant` hands the whole verdict to the test's
@@ -298,7 +307,12 @@ def check_runnable(
         # enforced it until now. Same failure mode and same gate-time
         # treatment as the correct_skill typo above.
         if spec.negative.get("grade_on_invariant"):
-            gate_tags = tag_gated_validator_tags(validators_dir, spec.skill)
+            # `test_universal.py` runs for every suite, so a gate there binds
+            # this test as surely as one in the skill's own file
+            # (`test_hand_back_names_its_owner`, lifted there by issue #2805).
+            gate_tags = tag_gated_validator_tags(
+                validators_dir, spec.skill
+            ) | tag_gated_validator_tags(validators_dir, "universal")
             matched = sorted(set(spec.tags or []) & gate_tags)
             if not matched:
                 validator_file = (

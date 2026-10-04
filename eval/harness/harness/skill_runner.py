@@ -375,6 +375,47 @@ def handoffs(
     return out
 
 
+def judge_skills_slot(
+    skills_invoked: list[str], builtin_tool_calls: list[dict[str, Any]]
+) -> list[str]:
+    """The judge's "Skills Claude invoked" list on a skill test: `skills_invoked`,
+    with each agent the main thread spawned inserted at its place in call order
+    as "<name> (agent)".
+
+    `skills_invoked` holds `Skill` calls only, so without the spawns a
+    judge_context asking whether the skill delegated to an agent is graded on a
+    call the judge never sees. Measured on `ut_init_project_q7b` under one judge
+    prompt hash: init-project's v6.json made its check-warnings call as a `Skill`
+    and scored 3 on Correctness and Completeness; v7.json and v8.json made the
+    same call as an `Agent` and scored 2 on both, for "no Agent call with
+    subagent_type check-warnings".
+
+    Not `handoffs`, on purpose. It drops a `Skill` call made inside a subagent,
+    which `skills_invoked` counts, and it names a spawn exactly as it names a
+    skill. Every `skills_invoked` entry is kept here, in order, and a run with no
+    named main-thread spawn gets `skills_invoked` back unchanged.
+    """
+    calls = builtin_tool_calls or []
+    spawns = spawned_agents(calls)
+    if not spawns:
+        return list(skills_invoked or [])
+    if not any(call.get("tool") == "Skill" for call in calls):
+        return list(skills_invoked or []) + [f"{name} (agent)" for name in spawns]
+    remaining = list(skills_invoked or [])
+    out: list[str] = []
+    for call in calls:
+        tool = call.get("tool")
+        if tool == "Skill":
+            name, _ = read_skill_tool_input(call.get("args") or {})
+            if name and remaining and remaining[0] == name:
+                out.append(remaining.pop(0))
+        elif tool in SPAWN_TOOL_NAMES and "agent_id" not in call:
+            name = (call.get("args") or {}).get("subagent_type")
+            if name:
+                out.append(f"{name} (agent)")
+    return out + remaining
+
+
 def spawn_stub_denial(
     tool_name: str, input_data: dict[str, Any], stub_agents: dict[str, str | None]
 ) -> dict[str, Any] | None:
@@ -467,6 +508,28 @@ def agent_return_text(agent_returns: list[dict[str, Any]] | None, agent: str) ->
         for entry in (agent_returns or [])
         if entry.get("subagent_type") == agent and entry.get("text")
     )
+
+
+def subject_reply_text(
+    agent_returns: list[dict[str, Any]] | None,
+    text_response: str | None,
+    agent: str,
+    test: dict[str, Any] | None,
+) -> str:
+    """The reply a validator grades: the subject's own words.
+
+    On a DIRECT test (`test["delegation"]` set) the main thread is a dispatcher
+    relaying the agent's return, so only `agent_return_text` counts. An empty
+    return there is the agent saying nothing, and it grades as nothing: falling
+    back to the relay would let a silent agent pass whenever the dispatcher
+    happened to write the right name (review of issue #2805, 2026-09-30). On a
+    ROUTED test the main thread's reply IS the subject's, so `text_response` is
+    the fallback when the agent made no return.
+    """
+    own = agent_return_text(agent_returns, agent)
+    if own or (test or {}).get("delegation"):
+        return own
+    return text_response or ""
 
 
 def _tool_result_text(content: Any) -> str:

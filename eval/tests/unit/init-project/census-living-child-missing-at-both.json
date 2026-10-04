@@ -12,6 +12,7 @@
     "scenario": null
   },
   "execution": {
+    "max_turns": 30,
     "max_wall_clock_seconds": 480,
     "stub_skills": [
       {
@@ -41,6 +42,7 @@
     "The 1900 census (3 born / 3 living) exceeds the two tree children alive in 1900 by one, and the 1910 census (4 born / 4 living) exceeds the three tree children alive in 1910 by one. The single child accounting for both is the SAME living child — born before 1900 and still alive in 1910 — because only one birth (the 1904 child, already in the tree) falls between the censuses.",
     "The Step-5 report / reply must identify exactly ONE missing child: a living child born before 1900 who was still alive at the 1910 census. Counting it twice — once as 'missing at 1900' and once as 'missing at 1910' — and reporting two missing living children is the failure this test guards, and is a FAIL, not a partial.",
     "There are no deceased children to research: children-born equals children-living at both censuses (3/3 and 4/4), so born minus living is zero. The reply must not invent a deceased target.",
-    "Do not penalise correct reasoning about which census window the missing living child belongs to; the graded point is that it is counted once, not two."
+    "Do not penalise correct reasoning about which census window the missing living child belongs to; the graded point is that it is counted once, not two.",
+    "The objective is the researcher's request stored verbatim, so its wording (\"find any of her children\") is not graded and does not make the reply wrong. Grade the number of missing living children the reply reports and the question it sets up: one child, born before 1900 and alive in 1910, is a pass."
   ]
 }

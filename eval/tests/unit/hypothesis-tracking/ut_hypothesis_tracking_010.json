@@ -9,11 +9,12 @@
       "hypothesis",
       "evidence-linkage",
       "contradicting-evidence",
-      "no-status-change"
+      "no-status-change",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I found a marriage record for Thomas Flynn in Philadelphia from 1842. It lists his age as 19, which would put his birth around 1823, not 1818 like we estimated from the 1850 census. I've added the source and assertion to research.json as a_017. Can you link this to our Thomas of Schuylkill hypothesis? It doesn't disprove anything but it's contradicting information about his birth year.",
+    "delegation": "I found a marriage record for Thomas Flynn in Philadelphia from 1842. It lists his age as 19, which would put his birth around 1823, not 1818 like we estimated from the 1850 census. I've added the source and assertion to research.json as a_017. Can you link this to our Thomas of Schuylkill hypothesis? It doesn't disprove anything but it's contradicting information about his birth year.\n\nprojectPath: <workspace>",
     "scenario": "flynn-competing-fathers",
     "scenario_notes": null
   },

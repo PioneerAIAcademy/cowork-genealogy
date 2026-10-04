@@ -29,6 +29,7 @@ export const SCOPED_ANCHOR = "/project";
  */
 export class ScopedFsStore implements ProjectStore {
   private readonly inner = new FsProjectStore();
+  readonly anchorPath = SCOPED_ANCHOR;
 
   constructor(
     private readonly root: string,

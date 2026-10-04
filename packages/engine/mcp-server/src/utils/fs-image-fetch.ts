@@ -8,7 +8,7 @@ import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithTimeout } from "./http.js";
 import { fsFetchWithTimeout } from "./fs-fetch.js";
-import { toArk, arkToUrl, isDocumentImageArk, findDocumentImageArk } from "./ark.js";
+import { toArk, arkToUrl, isDocumentImageArk, findDocumentImageArk, IMAGE_ID_PATTERN, UNPREFIXED_IMAGE_ID_RE } from "./ark.js";
 
 // fetchWithTimeout's budget covers headers and body together, and a full-size
 // page scan at typical throughput needs more than the 30s default to finish
@@ -16,11 +16,6 @@ import { toArk, arkToUrl, isDocumentImageArk, findDocumentImageArk } from "./ark
 // headroom — this is the download leg only, and it is budgeted separately
 // from the OCR call it feeds (image-transcribe.ts's OCR_TIMEOUT_MS).
 const IMAGE_FETCH_TIMEOUT_MS = 90_000;
-
-// An imageId is a digitized-image identifier of the form NUMBER_NUMBER
-// (an image group number, an underscore, and an image sequence number,
-// e.g. "004884748_02613").
-const IMAGE_ID_PATTERN = /^\d+_\d+$/;
 
 // `ark` accepts either an already-resolved distribution URL (the pre-#267
 // input shapes, for callers that already have one) or a FamilySearch
@@ -33,14 +28,6 @@ const IMAGE_ID_PATTERN = /^\d+_\d+$/;
 const ARK_PATTERN = /^https:\/\/sg30p0\.familysearch\.org\/.+\/\$dist$/;
 const DGS_URL_PATTERN =
   /^https:\/\/(www\.)?familysearch\.org\/das\/v2\/dgs:[^/]+\/dist\.jpg$/;
-
-// An image-ARK id with its `3:1:` prefix dropped, as a delegating agent passed
-// it in an alpha-feedback run. Only the 4-4-4-1 shape: in the repo, 161 distinct
-// prefixed ids of that shape are 3:1: and 1 is 3:2: (a test value), while
-// shorter bare ids collide with 1:1: persona ids (XXXX-XXX, XXXX-XXXX) and 4:1:
-// tree ids (XXXX-XXX). Kept here rather than in ark.ts's toArk, which every ARK
-// consumer shares.
-const UNPREFIXED_IMAGE_ID_RE = /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]$/;
 
 // A `3:1:`/`3:2:` ARK is not always self-sufficient: some are waypoints into
 // a multi-image film/register, and the bare resolver redirect can land on an
@@ -180,8 +167,11 @@ export function resolveFsImageInput(
   if (input.memoryArtifactUrl !== undefined) {
     if (!MEMORY_ARTIFACT_PATTERN.test(input.memoryArtifactUrl)) {
       throw new Error(
-        "Unrecognized memoryArtifactUrl. Expected a FamilySearch memory " +
-          "artifact URL on sg30p0.familysearch.org ending in /dist.<ext>."
+        "Unrecognized memoryArtifactUrl. Expected either a FamilySearch memory " +
+          "artifact URL on sg30p0.familysearch.org ending in /dist.<ext>, or " +
+          "(image_transcribe only) a Memories page URL " +
+          "https://www.familysearch.org/photos/artifacts/<id> or " +
+          "https://www.familysearch.org/memories/<id>, where <id> is digits."
       );
     }
     return {
@@ -232,7 +222,9 @@ interface FetchAttempt {
 async function attemptFsImageFetch(
   url: string,
   principal: Principal | null,
-  memoryShape: boolean
+  memoryShape: boolean,
+  /** Lower the per-attempt budget; defaults to the multi-MB scan size. */
+  timeoutMs: number = IMAGE_FETCH_TIMEOUT_MS
 ): Promise<FetchAttempt> {
   // A memory artifact is served publicly: measured 2026-09-15, the same
   // artifact returned 200 with no headers at all, with a UA only, and
@@ -244,8 +236,8 @@ async function attemptFsImageFetch(
     "User-Agent": BROWSER_USER_AGENT,
   };
   const response = principal
-    ? await fsFetchWithTimeout(principal, url, { headers: fetchHeaders }, IMAGE_FETCH_TIMEOUT_MS)
-    : await fetchWithTimeout(url, { headers: fetchHeaders }, IMAGE_FETCH_TIMEOUT_MS);
+    ? await fsFetchWithTimeout(principal, url, { headers: fetchHeaders }, timeoutMs)
+    : await fetchWithTimeout(url, { headers: fetchHeaders }, timeoutMs);
   if (!response.ok) {
     return { ok: false, status: response.status, statusText: response.statusText };
   }
@@ -290,16 +282,20 @@ export async function fetchFsImageBytes(
   url: string,
   fallbackUrl: string | undefined,
   principal: Principal,
-  memoryShape = false
+  memoryShape = false,
+  /** Lower the per-attempt budget. A probe must fit inside Cowork's 60s call
+   *  abort alongside two other legs (volume-bisect-tool-spec.md §8); the default
+   *  is a hang-catcher sized for a multi-MB scan, not for a probe. */
+  opts: { timeoutMs?: number } = {}
 ): Promise<FetchedFsImage> {
   // A memory artifact needs no credential (measured), and asking for one would
   // make a public read fail for an unauthenticated caller with an auth error.
   const authedPrincipal = memoryShape ? null : principal;
 
-  let attempt = await attemptFsImageFetch(url, authedPrincipal, memoryShape);
+  let attempt = await attemptFsImageFetch(url, authedPrincipal, memoryShape, opts.timeoutMs);
   let resolvedUrl = url;
   if (!attempt.ok && fallbackUrl) {
-    attempt = await attemptFsImageFetch(fallbackUrl, authedPrincipal, memoryShape);
+    attempt = await attemptFsImageFetch(fallbackUrl, authedPrincipal, memoryShape, opts.timeoutMs);
     resolvedUrl = fallbackUrl;
   }
 

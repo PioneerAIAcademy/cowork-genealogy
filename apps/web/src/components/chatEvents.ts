@@ -45,7 +45,9 @@ export const TURN_OUTCOME_LABELS: Record<string, string> = {
   budget: 'Paused: this run reached its step budget. Send a message to carry on.',
   no_progress: 'Paused: the agent stopped making progress. Send a message to carry on.',
   decision: 'Waiting on you — see the question above.',
-  mcp_unavailable: 'Paused: the genealogy tools became unavailable.'
+  mcp_unavailable: 'Paused: the genealogy tools became unavailable.',
+  retries_exhausted: 'This run was interrupted too many times and has stopped. Send a message to carry on.',
+  transcript_lost: "Stopped: a server problem kept this run's conversation from being saved. Findings written to the project are kept."
 }
 
 // 1e: `budget` covers two different caps, and they need different advice. The nudge cap

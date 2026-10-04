@@ -13,6 +13,12 @@ Used by:
 | `ut_check_warnings_006` | `detect-impossible-lifespan.json` | `hasAgeRangeGreaterThan120` |
 | `ut_check_warnings_009` | `detect-cluster.json` | `hasEventAfterDeath1`, `hasAgeRangeGreaterThan120`, `tooManyDeathDates2`, `relativesHasAgeRangeGreaterThan120` |
 
+Each test's mocked `person_warnings` response carries only the warnings in its
+row. The project holds every oddity listed below so that each mocked fact
+exists in the tree, not so that one reply reports them all. A reply that
+reports exactly its own row's warnings is correct: the skill reports what the
+tool returns and adds none of its own.
+
 ## Why this scenario exists rather than reusing `mid-research-flynn`
 
 **The project's own files must agree with what the mocked `person_warnings`

@@ -1,18 +1,12 @@
-"""Skill-specific validators for the check-warnings skill.
+"""Validators for the check-warnings agent (a skill until issue #2118).
 
-check-warnings is a read-only analysis skill — it invokes the
-`person_warnings` MCP tool (declared in allowed-tools) and surfaces
-the results as narrative output. It does not modify research.json or
+check-warnings is read-only — it calls the `person_warnings` MCP tool and
+surfaces the results as narrative output. It does not modify research.json or
 tree.gedcomx.json.
 
 The rubric (rubric.md) keeps the narrative-judgment dimensions
 (detection accuracy, severity classification, actionability). The
 mechanical "didn't modify anything" rules live here.
-
-Tool-usage enforcement is handled by the universal `test_tool_allowlist`,
-which validates calls against the skill's `allowed-tools` frontmatter —
-there is no separate `test_no_mcp_tools_called` here because check-warnings
-legitimately calls `person_warnings` as its checking engine.
 
 See test_universal.py module docstring for the full validator
 function-signature contract.
@@ -68,118 +62,6 @@ def test_tree_gedcomx_unmodified(before_state, after_state, test):
     assert before == after, (
         "check-warnings modified tree.gedcomx.json — this skill is read-only."
     )
-
-
-# --- V1: A not-FamilySearch-id answer is reported without naming the id ---
-
-#: A sentence ends at . ! or ? followed by whitespace, or at a newline. NOT at
-#: ; or : — the skill writes its quality line as "FamilySearch quality: …", and
-#: splitting at the colon would separate that label from an id after it, so
-#: "FamilySearch quality: none for I1." would pass rule (b). Caught by its own
-#: must-fail vector before this landed.
-_SENTENCE_SPLIT = r"(?<=[.!?])\s+|\n+"
-
-
-def _not_fs_answers(tool_calls) -> tuple[list[str], list[str], int]:
-    """(ids answered `not_familysearch_id`, their returned sentences, total
-    person_quality calls)."""
-    quality = [
-        c for c in (tool_calls or [])
-        if (c.get("tool") or "").endswith("person_quality")
-    ]
-    ids: list[str] = []
-    sentences: list[str] = []
-    for c in quality:
-        resp = c.get("response")
-        if isinstance(resp, dict) and resp.get("reason") == "not_familysearch_id":
-            pid = str((c.get("args") or {}).get("personId", "")).strip()
-            if pid:
-                ids.append(pid)
-            sentences += [str(e) for e in (resp.get("errors") or [])]
-    return ids, sentences, len(quality)
-
-
-#: Wording that characterises an id or its type — the leak itself. Every form
-#: seen in committed or scratch replies: "synthetic ID" (the original 8 of 20),
-#: "local project ID, not a FamilySearch person ID" (after the word "synthetic"
-#: left the skill), and the false "does not have a FamilySearch ID".
-_ID_TYPE_WORDING_ANY_RUN = (
-    r"\bsynthetic\b|\blocal (?:project |tree )?id\b|"
-    r"\bnot a familysearch (?:person )?id\b|\bno familysearch id\b|"
-    r"\bdoes(?:n't| not) have a familysearch id\b"
-)
-#: Once the tool has answered not_familysearch_id, "project id" and "tree id"
-#: can only be about that id. Without such an answer they are not: a run that
-#: scored KD96-TV2 wrote "the project ID for Christian P. Hole is `KD96-TV2`".
-_ID_TYPE_WORDING = _ID_TYPE_WORDING_ANY_RUN + r"|\bproject id\b|\btree id\b"
-#: A heading line: markdown `#`, a bold-only line, or an all-caps label such as
-#: the report template's "FAMILYSEARCH QUALITY:". A heading labels a section; it
-#: is not a statement about the person.
-_HEADING = r"^\s*(?:#{1,6}\s|\*\*[^*]+\*\*:?\s*$|[A-Z][A-Z ]+:)"
-
-
-def test_not_fs_reply_names_no_id(tool_calls, text_response, test):
-    """V1: when `person_quality` answers `not_familysearch_id`, the reply must not
-    turn that into a remark about the id.
-
-    Tier 1 — gates. The tool looks a project id up in the project tree and, for a
-    person with no FamilySearch link, hands back one true sentence by name; the
-    skill relays it. Fails if:
-      (a) the reply characterises an id or its type, anywhere (`_ID_TYPE_WORDING`);
-      (b) a non-heading sentence mentioning FamilySearch or quality names such an
-          id as a whole token (`I1`, `(I1)`, `` `I1` ``, `I1.` — not `I10`).
-
-    It polices the leak, not the layout. A heading above the sentence and true
-    advice after it ("linking his profile to FamilySearch would give you a score")
-    are allowed: across 15 scratch runs of the relayed-sentence design the skill
-    wrote the tool's sentence verbatim every time and characterised the id in
-    none, while a rule forbidding any extra FamilySearch sentence failed 13 of
-    them for a heading or advice. Replayed before this landed: the design's 18
-    replies pass; all 4 id-type leaks from the neutral-sentence round and all 8
-    original "synthetic ID" leaks fail.
-
-    Keyed on "FamilySearch"/"quality", never "linked" (check-warnings uses it for
-    relationships). Splits at . ! ? and newlines, not at colons, so a quality
-    label and an id after it stay in one sentence.
-
-    On a run with no not-FamilySearch-id answer — including one that never
-    called `person_quality`, which is where all 30 committed "synthetic ID"
-    leaks came from — only (a) applies, with the narrower
-    `_ID_TYPE_WORDING_ANY_RUN`: (b) needs the answered ids to look for.
-
-    Skipped on negative tests.
-    """
-    import re as _re
-
-    if test.get("type") == "negative":
-        pytest.skip("negative test — skill body does not run")
-    ids, _sentences, _calls = _not_fs_answers(tool_calls)
-    response = text_response or ""
-    sentences = [x for x in _re.split(_SENTENCE_SPLIT, response) if x.strip()]
-
-    if not ids:
-        for sentence in sentences:
-            if _re.search(_ID_TYPE_WORDING_ANY_RUN, sentence, _re.I):
-                raise AssertionError(f"the reply characterises an id or its type: {sentence.strip()!r}")
-        return
-
-    for sentence in sentences:
-        if _re.search(_ID_TYPE_WORDING, sentence, _re.I):
-            raise AssertionError(
-                "the reply characterises an id or its type after person_quality "
-                f"answered that it is not a FamilySearch id: {sentence.strip()!r}"
-            )
-
-    tokens = [_re.compile(rf"(?<![A-Za-z0-9]){_re.escape(i)}(?![A-Za-z0-9])", _re.I) for i in ids]
-    for sentence in sentences:
-        if _re.match(_HEADING, sentence):
-            continue
-        low = sentence.lower()
-        if ("familysearch" in low or "quality" in low) and any(t.search(sentence) for t in tokens):
-            raise AssertionError(
-                "a sentence about FamilySearch quality names an id person_quality "
-                f"answered as not a FamilySearch id: {sentence.strip()!r}"
-            )
 
 
 # --- V2: No unsourced 4-digit year in the response ---
@@ -246,44 +128,6 @@ def report_unsourced_year_in_response(tool_calls, text_response, test):
         )
 
 
-# --- V3: Conflict-resolution handoff is completely silent ---
+# --- V3: An out-of-lane request is handed back to its owner ---
 
-def test_conflict_resolution_handoff_is_silent(
-    tool_calls, text_response, skills_invoked, builtin_tool_calls, test
-):
-    """V3: on a conflict-resolution silent-handoff test the run must make zero
-    tool calls, return an empty response, and hand off to 'conflict-resolution'.
-    All three must hold, or it is a violation. The hand-off is read through
-    `handoffs`, since conflict-resolution is an agent the router spawns and a
-    spawn never appears in `skills_invoked` (issue #1852).
-
-    Tier 1 — gates (test_* prefix). Tag-gated: skips unless the test carries
-    the 'silent-handoff' tag. Paired with negative.grade_on_invariant: true on
-    negative-source-conflict.json, this hands the verdict to the validator and
-    drops the judge to diagnostic — stopping the 1/1 grading on a byte-identical
-    compliant run that occurred in 3 of 5 committed logs.
-
-    SKILL.md absolutes:
-      "Spawn `@plugin:conflict-resolution` right away as your first and only
-      action"
-      "Write no reply of your own — no preamble, no explanation, no summary."
-    """
-    if "silent-handoff" not in test.get("tags", []):
-        pytest.skip("not a silent-handoff test")
-
-    assert (tool_calls or []) == [], (
-        "silent handoff must make zero tool calls; got "
-        f"{len(tool_calls or [])} call(s): "
-        + ", ".join(c.get("tool", "?") for c in (tool_calls or []))
-    )
-    assert not (text_response or "").strip(), (
-        "silent handoff must produce an empty response; "
-        f"got {len((text_response or '').strip())} non-whitespace characters"
-    )
-    from harness.skill_runner import handoffs
-
-    made = handoffs(skills_invoked, builtin_tool_calls)
-    assert "conflict-resolution" in made, (
-        "silent handoff must spawn the conflict-resolution agent; "
-        f"handoffs = {made!r}"
-    )
+# Lives in test_universal.py since tree-edit became its second user (issue #2805).

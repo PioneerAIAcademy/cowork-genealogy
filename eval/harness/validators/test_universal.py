@@ -780,8 +780,21 @@ def _person_identity(person: dict) -> tuple:
         for n in (person.get("names") or [])
         if isinstance(n, dict)
     )
+    # Person-level source refs (#2696) are identity too: a fact rewrite must not
+    # move them. Ref STRINGS, sorted, as `_fact_identity` compares, so the
+    # healer's own coercions (a string quality, pruned keys) and a reorder do
+    # not read as a move. The healer also drops a person-level ref naming no
+    # source; that needs a before-tree holding a dangling ref, which the fixture
+    # gate and the runtime validator both reject.
+    person_refs = tuple(
+        sorted(
+            r.get("ref")
+            for r in (person.get("sources") or [])
+            if isinstance(r, dict) and isinstance(r.get("ref"), str)
+        )
+    )
     return (person.get("id"), person.get("gender"), person.get("ark"),
-            person.get("living"), names)
+            person.get("living"), names, person_refs)
 
 
 #: Keys `sanitizeTree` may add or remove on its own, so a difference in one is a
@@ -1144,6 +1157,19 @@ PROJECT_WRITER_TOOLS = {
     "materialize_facts",
     "merge_tree_persons",
 }
+# Writers only when called with a projectPath: `build_external_search_url`
+# appends its in-flight hand-off log entry then, and writes nothing otherwise.
+# Counted only when it carried one, so a pure URL build cannot vouch for a
+# hand edit made in the same run.
+CONDITIONAL_PROJECT_WRITER_TOOLS = {"build_external_search_url"}
+
+
+def _is_project_writer_call(call: dict) -> bool:
+    name = (call.get("tool") or "").rsplit("__", 1)[-1]
+    if name in PROJECT_WRITER_TOOLS:
+        return True
+    args = call.get("args")
+    return name in CONDITIONAL_PROJECT_WRITER_TOOLS and isinstance(args, dict) and bool(args.get("projectPath"))
 
 
 def test_project_file_changes_route_through_writer_tools(
@@ -1189,11 +1215,7 @@ def test_project_file_changes_route_through_writer_tools(
     if not changed:
         return
 
-    writer_calls = [
-        c
-        for c in (tool_calls or [])
-        if (c.get("tool") or "").rsplit("__", 1)[-1] in PROJECT_WRITER_TOOLS
-    ]
+    writer_calls = [c for c in (tool_calls or []) if _is_project_writer_call(c)]
     assert writer_calls, (
         f"project file {' and '.join(changed)} modified with no writer-tool "
         f"call — direct file writes bypass validation/id-allocation; "
@@ -1389,6 +1411,76 @@ def report_direct_delegation_extra_text(test, builtin_tool_calls):
     assert not extras, (
         "the main thread wrapped the delegation in text of its own: "
         + "; ".join(extras)
+    )
+
+
+# --- A Skill call must name a skill that ships ---------------------------
+
+def test_skill_calls_name_a_shipped_skill(builtin_tool_calls):
+    """Every main-thread `Skill` call names a directory under plugin/skills/.
+
+    A skill converted to an agent loses its directory, but a caller body left
+    saying `Skill("<name>")` still passes its suite: the harness's `stub_skills`
+    answers the call with the canned response and `handoffs()` records it, so the
+    test goes green while production fails the call and the step never runs
+    (issue #2118, where three `tree-edit` sites were nearly missed). Main thread
+    only: a subagent record carries `agent_id`. A call whose name cannot be read
+    is skipped here; the runner already surfaces it as `unread_skill_calls`.
+    """
+    from harness.skill_runner import read_skill_tool_input
+    from harness.workspace import DEFAULT_PLUGIN_SKILLS
+
+    missing = []
+    for call in builtin_tool_calls or []:
+        if call.get("tool") != "Skill" or call.get("agent_id"):
+            continue
+        name, _unread = read_skill_tool_input(call.get("args") or {})
+        if not name:
+            continue
+        bare = name.rsplit(":", 1)[-1]
+        if not (DEFAULT_PLUGIN_SKILLS / bare / "SKILL.md").is_file():
+            missing.append(name)
+    assert not missing, (
+        f"Skill call(s) to {sorted(set(missing))}, which ship no "
+        f"plugin/skills/<name>/SKILL.md. A converted skill is an agent now: "
+        f"invoke it as `@plugin:<name>` (an Agent spawn), not `Skill(...)`."
+    )
+
+
+# --- An out-of-lane request is handed back to its owner ------------------
+
+def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_returns=None):
+    """On a hand-back test the agent makes no MCP tool call and its reply names
+    the owner, read off `negative.correct_skill[0]`.
+
+    Tag-gated: skips unless the test carries the 'hand-back' tag. Paired with
+    negative.grade_on_invariant: true, this is the test's whole verdict. Lifted
+    from check-warnings' suite (issue #2118) when tree-edit became its second
+    user (issue #2805).
+
+    The agent bodies say: "Return one caller-facing line, `Hand-back: <owner> —
+    <the request in one clause>`". WHERE in the reply the name sits is not
+    graded, because a routed reply may reword it. WHOSE reply is graded is
+    `subject_reply_text`: on a direct test, the agent's own return and nothing
+    else.
+    """
+    from harness.skill_runner import subject_reply_text
+
+    if "hand-back" not in test.get("tags", []):
+        pytest.skip("not a hand-back test")
+    owners = (test.get("negative") or {}).get("correct_skill") or []
+    assert owners, "a hand-back test must name its owner in negative.correct_skill"
+    owner = owners[0]
+
+    assert (tool_calls or []) == [], (
+        "a hand-back makes no tool call; got "
+        f"{len(tool_calls or [])} call(s): "
+        + ", ".join(c.get("tool", "?") for c in (tool_calls or []))
+    )
+    reply = subject_reply_text(agent_returns, text_response, test.get("skill") or "", test)
+    assert owner in reply.lower(), (
+        f"the reply never names {owner}, so the caller cannot tell which owner "
+        "to spawn"
     )
 
 
@@ -1632,13 +1724,14 @@ def test_no_out_of_lane_section_writes(blocked_owned_section_writes):
 #
 # Bounds reused verbatim from packages/engine/mcp-server/src/tools/
 # person-warnings.ts (earliestChildBirthToBirth12, earliestChildBirthToBirthMale14,
-# latestChildBirthToBirth80) rather than invented here. Known gap this inherits
-# rather than papers over: person-warnings.ts has no female-specific LOWER bound
-# (only general <=12, male-specific <=14), so a mother's age-14 birth -- the exact
-# age in issue #1642 Finding 2's motivating bug (jimmie-jewel-neal/
-# run-2026-07-31_13-02-13, the Wood-family adoption) -- is not caught by either
-# lower bound. That is a separate open question for person-warnings.ts's own
-# coverage, not something this validator papers over.
+# latestChildBirthToBirth80) rather than invented here. person-warnings.ts gained a
+# female-specific LOWER bound (earliestChildBirthToBirthFemale14) in issue #2007, so
+# the tool now catches the mother's age-14 birth that motivated issue #1642 Finding 2
+# (jimmie-jewel-neal/run-2026-07-31_13-02-13, the Wood-family adoption). This
+# validator deliberately does NOT mirror it: adding a bound changes what runs are
+# flagged, which changes grading, and that is a measured change rather than a side
+# effect. Same shape as _PARENT_AGE_UPPER_FEMALE below, which is documented here and
+# likewise not enforced.
 #
 # _PARENT_AGE_UPPER_FEMALE (45, person-warnings.ts's latestChildBirthToBirthFemale45)
 # is deliberately NOT enforced here -- chesworthrm review, issue #1642. It was live
@@ -1710,9 +1803,10 @@ def test_parent_child_age_plausibility_flagged(before_state, after_state):
     Detection primitive reused, not reinvented: the age bounds are a subset of
     what packages/engine/mcp-server/src/tools/person-warnings.ts already treats
     as implausible for `check-warnings` (earliestChildBirthToBirth12 / Male14,
-    latestChildBirthToBirth80) -- see the module comment above for the coverage
-    gaps this inherits (no female-specific lower bound) or deliberately does not
-    enforce yet (Female45 upper bound, dropped pending issue #1837).
+    latestChildBirthToBirth80) -- see the module comment above for the bounds
+    this deliberately does not mirror: the Female14 lower bound, which the tool
+    has and this validator does not enforce, and the Female45 upper bound,
+    dropped pending issue #1837.
 
     A relationship this flags must carry a `notes[]` entry using inference/
     uncertainty language (see _UNCERTAINTY_MARKERS) -- the same shape as
@@ -1817,3 +1911,39 @@ def report_no_internal_identifiers_in_response(text_response, test):
     # on every suite, and a verdict-shaped sentence ("should never see") reads
     # as a rule where the judge prompt says a match is not a verdict.
     assert not hits, "internal identifiers in the reply: " + ", ".join(hits)
+
+
+# --- Lay mode: no GPS vocabulary in user-facing text ----------------------
+
+# Issue #2984 (lead ruling 2026-09-14): "GPS", "proof"/"proved" and
+# "exhaustive" stay out of what the researcher reads; `disproved` is the
+# same tier family. Whole words only, so `improved` and `not_proved` do not
+# count, and the hyphenated agent names (`proof-conclusion`, `proof-critique`,
+# `gps-mentor`) are ours to route by.
+_GPS_JARGON_RE = re.compile(
+    r"\b(?:GPS|proofs?|(?:dis)?proved|exhaustive)\b(?!-(?:conclusion|critique|mentor))",
+    re.IGNORECASE,
+)
+
+
+def report_no_gps_jargon_in_response(text_response, test):
+    """Tier 2 — reports, never gates (issue #2984).
+
+    Advisory because a gated version would fail about 18% of current runs
+    across 16 skills (measured 2026-09-28: "GPS" as a whole word in 76 of 412
+    `text_response`s). A word the test's own prompt uses is left alone: a
+    reply to "does my proof meet the GPS" may say both back.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("negative test — the decline text is graded elsewhere")
+    response = text_response or ""
+    if not response.strip():
+        pytest.skip("no assistant text")
+    # The runner threads both in flat (orchestrator.py), `user_message`
+    # already falling back to `delegation`; there is no `input` key here.
+    prompt = test.get("user_message") or test.get("delegation") or ""
+    echoed = {m.group(0).lower() for m in _GPS_JARGON_RE.finditer(prompt)}
+    hits = sorted({
+        m.group(0).lower() for m in _GPS_JARGON_RE.finditer(response)
+    } - echoed)
+    assert not hits, "GPS vocabulary in the reply: " + ", ".join(hits)

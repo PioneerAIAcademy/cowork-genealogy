@@ -117,8 +117,8 @@ owns; the two are linked by `gedcomx_source_description_id`.
 Out of scope: **person merging / person removal** — that is the merge tools'
 job (`merge_tree_persons` removes a collapsed person and remaps `research.json`);
 `tree_edit` never deletes a person. Also out of scope: `research.json` edits
-(those are `research_append`), and `check-warnings` (a separate skill
-step, run after — see §8).
+(those are `research_append`), and `check-warnings` (a separate agent,
+spawned after — see §8).
 
 ---
 
@@ -429,8 +429,8 @@ Sequence (validate-before-persist, tree-only):
    a stale `factId`/`personId`/`relationshipId` is a clear error, not a silent
    no-op), then **heal legacy shapes** (`src/validation/tree-sanitize.ts`):
    trees written before the validator tightening — `preferred:/primary: false`
-   from the old merge core, top-level `places[]`, person-level `sources`,
-   unknown keys, missing ids, string quality — are repaired in memory with one
+   from the old merge core, top-level `places[]`, unknown keys, missing ids,
+   string quality, a person-level ref that names no source — are repaired in memory with one
    warning per healed class, so a pre-tightening project is never bricked. A
    successful edit persists the healed document (a one-shot migration).
    Ambiguous problems (dangling refs, swapped endpoint keys, duplicate ids)
@@ -515,6 +515,7 @@ Sequence (validate-before-persist, tree-only):
 | `resolveStandardPlace` network call fails | best-effort: set `standard_place: null`, add a warning; never fail the edit on a place-resolution miss |
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. A directory holding exactly one of the two files is a *broken* project and stays loud. Applies to `tree_correct` identically. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Resulting tree carries a **call-introduced** validation error | write nothing; return `{ ok: false, errors }`. A pre-existing error rides as a warning |
+| Write introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", message: "...", warnings: [{ warningId, issueType, severity, personId, personName, message, facts?, relatedPersonId? }] }`. Re-call with `warningJustifications: [{ warningId, justification }]` for each warning. A pre-existing warning needs no justification. |
 
 ---
 

@@ -511,8 +511,9 @@ Seven pass criteria, plus one measurement that sets a branch:
   "no persistence", which is why this plan removes the writable *project* directory
   and not the whole filesystem. Proved against a real `SessionStore`: with a read-only
   `CLAUDE_CONFIG_DIR` the turn returns `is_error=False`, the correct answer and empty
-  stderr, while writing **0 files and appending 0 frames**. Add `os.access(dir, W_OK)`
-  at worker start.
+  stderr, while writing **0 files and appending 0 frames**. Built (U10): a `TMPDIR`
+  write test that exits the worker 2 at start, and a per-turn rule that closes a model
+  turn with 0 entries appended as `transcript_lost` (500, and `/healthz` 503).
 - **Frames appended > 0 *strictly before the kill*, and the resumed turn's loaded entry
   count ≥ the count at kill time.** "Frames > 0 per turn" is not enough: under the
   SDK's default batching a single end-of-turn flush satisfies it while the mid-turn
@@ -1113,6 +1114,22 @@ TAP's route:
 - Both: the bare `claude-sonnet-4-6` is 400, and `tool-search-tool-2025-10-19` is 400
   on Converse. The second was measured this time, not only read.
 
+**Re-run 2026-09-30 on the deployed test bed:** integ, `search-fulltext-agentgateway`
+on v1.6.0-alpha.2 (its #8), with `--max-scans 6 --context-1m --cache-ttl`. It matches
+the local v1.6.0-alpha.2 run: FAIL on `stop_reasons` and `tool_choice` only, with the
+same two 400s.
+- `tool_reference`: passes.
+- Streaming: `text/event-stream`, first body byte 1.06 s of 4.2 s.
+- `body_limit`: 6 scans (5,947,512 bytes) all 200, with no `maxBufferSize` set.
+- Betas: all 12 the CLI sends return 200, including the two 0.12.0 rejected.
+- `context_1m`: 200 on 224,025 input tokens, in 9.5 s.
+- `cache_ttl`: FAIL. The write and the 1 s read hit (7,214 tokens). The read at 6m40s
+  read 0 and rewrote all 7,214, so upstream #3670 holds on the deployed gateway too.
+
+So tool search works through a deployed gateway. F2 still stands, because TAP pins
+v1.5.0. This is the test bed, not TAP's route. It carries only the haiku alias and no
+API-key consumer.
+
 For what the CLI itself sends, `passthrough_proxy.py --upstream http://host:port` now
 fronts a gateway as well as `api.anthropic.com`.
 
@@ -1241,7 +1258,7 @@ without whichever Bedrock refuses.
   configuration-only `update-environment` took 78 s, restarted sqsd and left the app
   process running. API option settings override the same option in `.ebextensions`.
   nginx sits between sqsd and the app with a 60 s `proxy_read_timeout`; the bundle's
-  `.platform` override to 36000 s was required, or nginx cuts first. The 512 MB bundle
+  `.platform` override to 43200 s was required, or nginx cuts first. The 512 MB bundle
   cap and the `.ebextensions/*.config` rule are documented and were not exercised.
 - **D3** docker-compose skeleton: postgres, **elasticmq** (SQS API — not RabbitMQ,
   whose semantics differ and whose client code you would throw away), **minio**, and

@@ -182,7 +182,7 @@ matters when hand-authoring:
   "researcher_profile": {
     "experience_level": "novice",
     "subscriptions": [],
-    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
   },
   "questions": [], "plans": [], "log": [], "sources": [],
   "assertions": [], "person_evidence": [], "conflicts": [],
@@ -673,6 +673,7 @@ the `max_cost_usd` note in §6 step 5.
    | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"` after the continue-nudge budget is exhausted (or a nudge made no progress). The terminal hand-back is classified and counted in `usage.hand_back_classes` — these are the two gate-False reasons that ARE agent defects — see note below |
    | Harness error | `error` | Unhandled exception in the harness or SDK |
    | **Genealogy MCP surface absent** | `mcp_unavailable` | The CLI's `system`/`init` message reports the `genealogy` server `failed` / `needs-auth` / `disabled`, or does not list it at all; **or** the mid-run backstop sees `CONSECUTIVE_TOOL_SEARCH_MISSES` no-match `ToolSearch` results with no `mcp__` call dispatched in between. A *matched* lookup does **not** clear that count — tool search defers the built-ins too, so matching one of those is no evidence about the genealogy surface, and treating it as such let a dead server starve the counter indefinitely. **This run writes no files — see the retention rule below.** |
+   | **Host slept** | `host_slept` | The heartbeat (`SleepDetector`) counted `usage.counted_sleep_seconds >= caps.inactivity_seconds` of host sleep. Outranks the cap/watchdog reason it replaces (`timeout` / `inactivity`) and `completed`, because on Windows `time.monotonic()` advances through Modern Standby, so the sleep is billed against the wall-clock cap and the run is cut mid-standby. **This run IS committed but is not graded and is excluded from outcome rates — see the retention rule below.** |
 
    The `caps.*` values default to those in
    `eval/harness/e2e/orchestrator.py` (`FixtureCaps`), which a fixture may
@@ -741,6 +742,25 @@ the `max_cost_usd` note in §6 step 5.
    `genealogy` server by name: the same list carries the operator's own
    claude.ai connectors, which routinely report `needs-auth`. Thresholds and
    their calibration against the incident: `e2e/mcp_health.py`.
+
+   **`host_slept` retention: committed, ungraded, rate-excluded** (lead ruling
+   2026-09-29). Unlike `mcp_unavailable`, a slept run *is* committed
+   — the `run-` prefix, so the operator can see why a run dropped out of the
+   rates — but the judge is skipped (`verdict: "skipped"`), so it costs no opus
+   call and books no genealogical grade. It is excluded from outcome rates the
+   same way every `skipped` run is (it sits in the `skipped` recall/gate bucket,
+   out of pass/fail); `corpus_report.py` additionally names how many of those
+   skips were `host_slept` so a slept host is not read as that many agent
+   crashes. Why relabel rather than rescue: on Windows `time.monotonic()`
+   advances through Modern Standby, so the sleep is billed against the wall-clock
+   cap and the run is cut mid-standby with only a fraction of its budget spent on
+   real work — grading it would measure the power settings, not the agent.
+   Extending the cap and resuming was rejected: surviving a long standby is
+   unverified, and it rewrites the wait loop. The caps and watchdogs stay on raw
+   monotonic; only the *label* changes, decided by the pure `sleep_relabel`
+   helper (`orchestrator.py`) so the stop decision is unit-testable without the
+   SDK loop. **Nothing checks the live behaviour** — no CI job sleeps a Windows
+   machine; the guarantee rests on the injected-clock unit tests alone.
 
    **`cost_cap` is a post-hoc label, not an enforced cap.** The check reads
    `message.total_cost_usd`, which exists only on the SDK's `ResultMessage` —
@@ -861,9 +881,15 @@ the `max_cost_usd` note in §6 step 5.
    `time.monotonic()`. On macOS/Linux it does **not** advance while the machine
    sleeps, so there a sleeping laptop can't masquerade as a stall and can't
    inflate the metric. On Windows it **does** advance through Modern Standby
-   (S0 low-power idle), so there the caps and timers count standby: a sleep can
-   end a run as `timeout`, or as `inactivity` / a resumed stall. What a slept run
-   should become is not yet decided; the harness only detects and records it.
+   (S0 low-power idle), so there the caps and timers count standby: a sleep would
+   otherwise end a run as `timeout`, or as `inactivity` / a resumed stall. The
+   caps and timers still run on raw monotonic, but a run whose heartbeat counted
+   `>= caps.inactivity_seconds` of sleep is **relabeled `host_slept`** (§6.5) at
+   the abort — and, at the inactivity/progress resume decision, is stopped rather
+   than resumed-as-a-stall. So the failure this section once warned
+   was undecided — a slept laptop booked as a capability `timeout`/`inactivity`,
+   or resumed as if it had stalled — no longer happens: it becomes an ungraded,
+   rate-excluded `host_slept` instead.
 
    Detection is a heartbeat. While `_consume()` runs, a task ticks
    every 5 s and reads `time.monotonic()`. A gap between ticks above 60 s is
@@ -1733,8 +1759,8 @@ consulted before a parentage write.** `find_relationship_writes_without_warnings
 `ParentChild`/`Couple` relationship (diffed against the starting tree, so seeded
 relationships do not count) for which `person_warnings` — the cheapest, LLM-free
 guardrail — was never successfully called. It keys on the `person_warnings`
-**tool** across all server spellings, not the `check-warnings` skill, so it
-catches a direct-tool path and a skill that launches but fails before reaching the
+**tool** across all server spellings, not the `check-warnings` agent, so it
+catches a direct-tool path and an agent that launches but fails before reaching the
 tool. Like the citation-nulling check it **logs to
 `guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
 entries carry `kind: "warnings_unchecked"` for its own bucket

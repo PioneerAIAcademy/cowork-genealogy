@@ -28,6 +28,7 @@ import type {
   MetadataRmsSearchResponse,
   MetadataRmsGroup,
 } from "../../src/types/volume-search.js";
+import { socketFetchFailure } from "../helpers/fetch-failed.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -703,11 +704,10 @@ describe("volumeSearchTool", () => {
 
   // 18. Network error (retried by fetchWithRetry before surfacing)
   it("throws on network error", async () => {
-    mockFetch
-      .mockRejectedValue(new Error("ECONNREFUSED"));
+    mockFetch.mockRejectedValue(socketFetchFailure());
 
     await expect(volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL)).rejects.toThrow(
-      "Could not reach FamilySearch volume search API: ECONNREFUSED."
+      /Could not reach FamilySearch volume search API: fetch failed <- ETIMEDOUT/
     );
   });
 
