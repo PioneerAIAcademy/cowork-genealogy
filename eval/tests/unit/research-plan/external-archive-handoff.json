@@ -25,6 +25,7 @@
   ],
   "execution": {
     "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300,
     "max_turns": 30,
     "stub_skills": [
       {
