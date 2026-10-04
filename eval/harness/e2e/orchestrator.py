@@ -1205,6 +1205,9 @@ _RUNLOG_MAX_CHARS = 4000
 # Shape follows the unit tier's `{(tool, response_key)}` convention (issue #2561).
 _RUNLOG_EXEMPT_KEYS: set[tuple[str, str]] = {
     ("image_transcribe", "transcription"),
+    # The hand-off URL replay rebuilds the log entry from; a curated link can
+    # run past the cut, and a cut URL would replay as a different hand-off.
+    ("build_external_search_url", "url"),
 }
 
 

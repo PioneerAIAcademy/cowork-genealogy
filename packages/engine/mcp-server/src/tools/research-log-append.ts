@@ -649,6 +649,50 @@ async function preflightQueryFilterClaims(op: ResearchLogAppendOp, projectPath: 
   );
 }
 
+const QUERY_REQUIRED_MESSAGE =
+  "`query` is required. Supply it as an object — search parameters for a " +
+  'search entry, or a keyed identifier for a read-style entry (e.g. ' +
+  '`{"recordId": "ark:/61903/1:1:XXXX-XXX"}` for record_read, ' +
+  '`{"imageArk": "..."}` for image_transcribe). It may be omitted only ' +
+  "when `stagedResultsRef` points at a staged payload that already " +
+  "carries the query.";
+
+/**
+ * Fill an omitted `tool` from the staged envelope, then refuse once naming every
+ * required field still missing. Runs first, so every later preflight sees the
+ * filled `tool`. Without it an omitted `tool` reached the staging check as
+ * `'undefined'` and read as a mismatch, and a caller that dropped the staged ref
+ * to get past it lost the search's results (feedback issue #3069).
+ */
+async function preflightRequiredFields(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
+  const ref = asNull(op.stagedResultsRef);
+  if ((op.tool === undefined || op.tool === null || op.tool === "") && typeof ref === "string") {
+    const staged = await readStagedEnvelopeQuery(projectPath, ref);
+    if (!staged) return; // an unreadable ref is preflightStagedRef's error to report
+    op.tool = staged.tool;
+  }
+  const toolMissing = op.tool === undefined || op.tool === null || op.tool === "";
+  const queryMissing = typeof ref !== "string" && (op.query === undefined || op.query === null);
+  const missing: string[] = [];
+  if (toolMissing) missing.push("`tool`");
+  if (op.outcome === undefined || op.outcome === null) missing.push("`outcome`");
+  if (op.resultsExamined === undefined || op.resultsExamined === null) missing.push("`resultsExamined`");
+  if (queryMissing) missing.push("`query`");
+  if (missing.length === 0) return;
+  throw new LogAppendError(
+    `missing required ${missing.length === 1 ? "field" : "fields"} ${missing.join(", ")}.` +
+      (toolMissing
+        ? " `tool` names the tool that produced the entry (e.g. 'record_search'); it may be " +
+          "omitted only alongside a `stagedResultsRef`, which records it."
+        : "") +
+      (queryMissing ? ` ${QUERY_REQUIRED_MESSAGE}` : "") +
+      (typeof ref === "string"
+        ? " Keep the `stagedResultsRef` when re-sending: it is what keeps the search's results " +
+          "with the log entry."
+        : ""),
+  );
+}
+
 /**
  * Check one op's staged ref BEFORE any op is applied — it exists under
  * results/.staging/ and its tool matches — so a bad ref in op[1] is refused
@@ -858,24 +902,25 @@ async function applyLogAppendOp(
   }
   // This entry grades the curated-links FETCH, not the search: any links
   // returned is a positive fetch, even when none fit the plan item's record
-  // type (that goes in notes instead). Enforced mechanically — rather than
-  // left to the model's own judgment call — because it was measured to be
-  // wrong often enough in practice to need a hard gate, not another
-  // reminder in prose. Measured 2026-09-10 against the five run logs this
-  // branch commits: 4 of 66 `external_links_search` entries, across three
-  // tests (ut_search_external_sites_002, _005, _006) and three of the five
-  // logs. (Issue #1950's census said 9 of 48; the corpus has turned over, so
-  // that figure is stale rather than wrong — re-derive rather than reword.)
-  // This gate replaced the eval validator that used to grade the same shape
-  // after the fact; refusing the write is what made that grader unfireable. Scoped to `external_links_search` only: no other
-  // tool value shares this fetch-vs-search distinction, and it is the only
-  // one search-external-sites (its sole caller) uses this way.
-  if (op.tool === "external_links_search" && resultsExamined > 0 && op.outcome !== "positive") {
-    throw new LogAppendError(
-      `tool 'external_links_search' returned ${resultsExamined} result(s), so outcome must be ` +
-        `'positive' (this entry grades the fetch, not the search); got '${op.outcome}'. Note which ` +
-        `results didn't fit the plan item's record type in 'notes' instead.`,
+  // type (that goes in notes instead). Measured 2026-09-10 against the five run
+  // logs then committed, a model got this wrong in 4 of 66
+  // `external_links_search` entries, so prose alone did not hold it.
+  //
+  // Corrected rather than refused: the right value is decidable from the call
+  // itself, so a refusal only bought a retry and, on 2026-10-01, the Tool
+  // Arguments point in every partial of a re-measured suite. The correction is
+  // never silent — a warning names it, so the agent and the transcript both
+  // see it. Scoped to `external_links_search` with links returned: a
+  // zero-link entry keeps the outcome the caller sent, and no other tool value
+  // shares this fetch-vs-search distinction.
+  let outcome: string = op.outcome;
+  if (op.tool === "external_links_search" && resultsExamined > 0 && outcome !== "positive") {
+    warnings.push(
+      `outcome set to 'positive' (was '${outcome}'): tool 'external_links_search' returned ` +
+        `${resultsExamined} result(s), and this entry grades the fetch, not the search — put the ` +
+        `record-type mismatch in 'notes'.`,
     );
+    outcome = "positive";
   }
 
   if (!Array.isArray(research.log)) {
@@ -892,7 +937,7 @@ async function applyLogAppendOp(
     performed,
     tool: op.tool,
     query,
-    outcome: op.outcome,
+    outcome,
     results_examined: resultsExamined,
     external_site: externalSite
       ? {
@@ -1010,14 +1055,7 @@ async function applyLogAppendOp(
   // error — fail loudly here rather than writing an entry the validator will
   // reject on the next append.
   if (entry.query === undefined) {
-    throw new LogAppendError(
-      "`query` is required. Supply it as an object — search parameters for a " +
-        'search entry, or a keyed identifier for a read-style entry (e.g. ' +
-        '`{"recordId": "ark:/61903/1:1:XXXX-XXX"}` for record_read, ' +
-        '`{"imageArk": "..."}` for image_transcribe). It may be omitted only ' +
-        "when `stagedResultsRef` points at a staged payload that already " +
-        "carries the query.",
-    );
+    throw new LogAppendError(QUERY_REQUIRED_MESSAGE);
   }
 
   // 4. Append (append-only — existing entries are never touched).
@@ -1076,6 +1114,7 @@ export async function researchLogAppend(
       if (duplicate) return { ok: false, errors: [duplicate] };
       for (let i = 0; i < input.ops.length; i++) {
         try {
+          await preflightRequiredFields(input.ops[i], projectPath);
           await preflightStagedRef(input.ops[i], projectPath);
           await preflightCensusHedge(input.ops[i], projectPath);
           await preflightQueryFilterClaims(input.ops[i], projectPath);
@@ -1137,6 +1176,7 @@ export async function researchLogAppend(
       externalSite: input.externalSite,
       stagedResultsRef: input.stagedResultsRef,
     };
+    await preflightRequiredFields(singleOp, projectPath);
     await preflightStagedRef(singleOp, projectPath);
     await preflightCensusHedge(singleOp, projectPath);
     await preflightQueryFilterClaims(singleOp, projectPath);
@@ -1218,7 +1258,8 @@ export const researchLogAppendSchema = {
         description:
           "The tool/source that produced this entry, e.g. 'record_search', " +
           "'fulltext_search', 'external_links_search', 'image_search', 'person_read', or " +
-          "'external_site'. Must match the staged file's tool when stagedResultsRef is given.",
+          "'external_site'. Must match the staged file's tool when stagedResultsRef is given; " +
+          "may be omitted alongside stagedResultsRef, which records it.",
       },
       query: {
         type: "object",
@@ -1301,11 +1342,11 @@ export const researchLogAppendSchema = {
             externalSite: { type: ["object", "null"] },
             stagedResultsRef: { type: ["string", "null"] },
           },
-          // `query` is deliberately absent: it may be omitted when
+          // `query` and `tool` are deliberately absent: both may be omitted when
           // `stagedResultsRef` carries a payload the producing tool already
-          // stamped with its own query. Enforced in code (applyLogAppendOp),
-          // which fails loudly when neither source supplies one.
-          required: ["tool", "outcome", "resultsExamined"],
+          // stamped with its own name and query. Enforced in code
+          // (preflightRequiredFields), which names every field still missing.
+          required: ["outcome", "resultsExamined"],
         },
       },
     },

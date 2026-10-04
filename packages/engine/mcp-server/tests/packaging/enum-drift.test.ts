@@ -284,8 +284,11 @@ const EXPECTED: Array<{ relPath: string; enums: string[] }> = [
   // writes none of them (#1135). Declared with ∈ rather than as prose so this
   // lint owns the copy — the instruction it replaced named two values that were
   // never in the enum at all, and nothing noticed.
+  // Re-pointed by issue #2115: the declaration moved to the agent with the
+  // verbatim fold. The router writes nothing, so the statuses it must not write
+  // are stated where the writing is decided.
   {
-    relPath: "skills/question-selection/SKILL.md",
+    relPath: "agents/question-selection.md",
     enums: ["question_status"],
   },
 ];

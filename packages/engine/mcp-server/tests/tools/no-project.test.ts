@@ -45,6 +45,7 @@ import { imageTranscribeTool } from "../../src/tools/image-transcribe.js";
 import { mergeTreePersons } from "../../src/tools/merge-tree-persons.js";
 import { mergeWarnings } from "../../src/tools/merge-warnings.js";
 import { personWarningsTool } from "../../src/tools/person-warnings.js";
+import { buildExternalSearchUrlTool } from "../../src/tools/build-external-search-url.js";
 import {
   NO_PROJECT_MESSAGE_READ,
   NO_PROJECT_MESSAGE_WRITE,
@@ -299,5 +300,37 @@ describe("a project file that is present but unparseable", () => {
     await writeFile(join(dir, "tree.gedcomx.json"), "{not json");
     await expectLoud("tree_edit", CALLS.find((c) => c.tool === "tree_edit")!.call, dir,
       /tree\.gedcomx\.json is not valid JSON/);
+  });
+});
+
+// Not a CALLS row: every CALLS row answers no_project with `ok: false`, and the
+// builder answers it with `ok: true` — the URL still serves a standalone search
+// outside a project; only the hand-off log entry is skipped (spec §6).
+describe("build_external_search_url with projectPath", () => {
+  const call = (projectPath: any) =>
+    buildExternalSearchUrlTool({ site: "findagrave", attributes: { surname: "Flynn" }, projectPath });
+
+  it("an empty directory returns the URL, no logId, and the write sentence as a note", async () => {
+    const r = await call(dir);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.url).toMatch(/^https:\/\/www\.findagrave\.com\//);
+    expect(r.logId).toBeUndefined();
+    expect(r.notes).toContain(NO_PROJECT_MESSAGE_WRITE);
+  });
+
+  it("a directory that does not exist stays loud", async () => {
+    const r = await call(join(dir, "no-such-folder"));
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/projectPath does not exist/);
+  });
+
+  it("half a project stays loud", async () => {
+    await writeTree();
+    const r = await call(dir);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/research\.json not found in projectPath/);
   });
 });

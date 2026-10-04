@@ -1,26 +1,30 @@
-# Converting a skill into a skill-agent pair
+# Converting a skill into an agent
 
-**Read this before converting anything.** It is the measured record of the first
-two conversions (`proof-conclusion`, 2026-08-19/20; `research-exhaustiveness`,
-2026-08-23) and the rules that follow from them. The first took nine paid eval
-runs; most of that was avoidable, and this document exists so the next one does
-not repeat it.
+**We no longer keep skills at all — only agents.** A conversion ends with the
+agent authored and `skills/<name>/` deleted in the same PR. There is no
+skill-agent pair and no thin routing skill (lead ruling 2026-09-22, recorded in
+`docs/specs/unit-test-spec.md`; restated by chesworthrm on PR #3000,
+2026-09-29). Worked cases: `citation` (#2799, PR #2861), `person-evidence`,
+`search-wikipedia` (#2795), `proof-conclusion` (#2822), `question-selection`
+(#2115, PR #3000).
 
-The pair framing that follows predates the lead's 2026-09-22 ruling (recorded
-in `docs/specs/unit-test-spec.md`) and is kept for its measured record, not as
-current instruction.
+**Read this before converting anything.** It is the measured record of the
+conversions so far and the rules that follow from them. The first
+(`proof-conclusion` as a pair, 2026-08-19/20) took nine paid eval runs; most of
+that was avoidable, and this document exists so the next one does not repeat
+it. Much of what follows was measured on pairs, when the routing skill still
+existed. It is kept for those measurements, not as instruction to build one:
+wherever it says "the routing skill", read "the caller" — on the deleted-skill
+path that is the orchestrator or the main thread.
 
-Pairs are still the right instrument. Nothing below argues against pairing — it
-argues about *what to move, in what order*.
-
-**Three skills are exempt from the lead's 2026-09-22 ruling that every skill
-becomes an agent and the skill is deleted:** `research` (the orchestrator),
+**Three exemptions predate the restatement:** `research` (the orchestrator),
 `record-extraction` (ruled 2026-09-21, and since retired: extraction runs in
 code, through `extraction_append` and the `record-structurer` agent), and
 `forget-and-rederive` (ruled
 2026-09-25, issue #2791), whose confirmation step and its rule never to read
 the FamilySearch tree for the rest of the project must bind the main thread
-after setup, which an agent's single return cannot do.
+after setup, which an agent's single return cannot do. They stay until a
+replacement architecture exists (chesworthrm, 2026-09-29).
 
 **Two rationales reach a pair, and they buy different work.** This document was
 written for the first:
@@ -33,12 +37,20 @@ written for the first:
   `effort:` pin (`docs/architecture.md` §3.5), and a folded body stops occupying
   the orchestrator's context. This buys no attribution and needs none.
 
-A cost-motivated conversion is the cheaper build: **no hook route, no ownership
-row, and no writer-tool precondition.** `AGENT_WRITABLE_SECTIONS.get(caller)` in
-`guard_project_files.py` returns `None` for an unlisted agent, so the
-out-of-lane check never fires, and the only routed targets are `proof_summaries`
-and `questions.exhaustive_declaration`. Everything else here — the fold order,
+A cost-motivated conversion is the cheaper build: **no hook route and no
+writer-tool precondition** — the only routed targets are `proof_summaries` and
+`questions.exhaustive_declaration`. It still needs a **lane**: an agent granted
+`research_append` must have an `AGENT_WRITABLE_SECTIONS` entry in
+`guard_project_files.py` naming the sections it writes
+(`plugin-hooks.test.ts`, "gives every agent granted research_append a lane"),
+and an ownership row that names it as `agent:<name>` if it owns a section. Everything else here — the fold order,
 the baseline, the fixture audit — applies to both.
+
+The lane and the row are a repo requirement, not a runtime one: the guard does
+not fire for an unlisted agent, but the tests above refuse it. Say so in a
+comment beside each, so no reader takes the lane for a route. (Measured on
+#2115, where the card asserted the opposite and CI refused it.) The full list of
+what an added agent trips is [below](#what-adding-an-agent-trips).
 
 **The general rule this is a worked instance of is ADR-0011**
 (`docs/adrs/ADR-0011-put-guardrails-at-the-write-boundary.md`), and it applies
@@ -65,6 +77,13 @@ narrower doorway into the same agent, and the wide doorway does not pass through
 it.
 
 ### A pair-conversion PR does not edit `research/SKILL.md`
+
+**Exception: a conversion that deletes the skill flips the cell in the same
+PR.** The table's rule is that an entry not spelled `@plugin:<name>` is a
+`Skill` call, so a bare cell naming a deleted skill routes production research
+to nothing from merge until the follow-up lands. Pay the `research` run in the
+conversion (issue #2115 is the worked case). The rest of this section is about
+a pair, where the skill survives and the ordering below is safe.
 
 The Invoke cell flips to `@plugin:<agent>` in a **separate PR**, opened after
 the conversion merges. Two reasons, and either alone is sufficient: the
@@ -339,6 +358,86 @@ Two things this does NOT close:
   attribution reads the agent that made the write
   (`eval/harness/harness/skill_invocation.py`).
 
+## What adding an agent trips
+
+A card's "what proves it" list is written before the agent file exists, and it
+undercounts. #2115's named five checks; CI refused six more, and found them only
+after the one named packaging test had passed locally.
+Every one below fails CI if skipped. Put the whole list in the card.
+
+| register | what it wants |
+|---|---|
+| `tests/packaging/agent-tool-names.test.ts` | the agent registered, every MCP tool under all three spellings, no `Task`/`Agent` grant |
+| `apps/server/proto/worker/worker.py` `EXPECTED_AGENTS` (+ `EXPECTED_SKILLS` when a skill is deleted) | the shipped set, as a literal; `apps/server/tests/test_proto_worker.py` pins it and names the count in a test name |
+| `tests/packaging/agent-delegation-framing.test.ts` | every caller→agent edge in `DELEGATION_EDGES`, with a verbatim pinned sentence |
+| `tests/packaging/plugin-hooks.test.ts` + `guard_project_files.py` | an `AGENT_WRITABLE_SECTIONS` lane for an agent granted `research_append` — see above |
+| `docs/specs/schemas/ownership.json` | an `agentCallers` entry on every row the agent writes |
+| `tests/packaging/enum-drift.test.ts` | any closed-enum declaration the fold moved into the agent body |
+| `tests/packaging/agent-return-contract.test.ts` | a `summary_for_user` return-contract heading, or a `PENDING` entry naming when it lands |
+| `tests/packaging/prompt-sizes.json` | regenerated (`prompt-budget.test.ts`) |
+| `docs/architecture.md`, `docs/skill-dataflow.md` | the agent count and any per-tool agent tally — re-measure, do not increment |
+| `make agent-smoke` | the only check that reads what the runtime resolved; **no CI job runs it** |
+
+**Deleting the skill trips more, and some of it bills other suites.** Under the
+2026-09-22 ruling every conversion deletes its skill (`citation`,
+`person-evidence` and `question-selection` are the worked cases). On top of
+the table above:
+
+| register | what it wants | paid? |
+|---|---|---|
+| `research/SKILL.md` routing table | any bare cell naming the skill flipped to `@plugin:<agent>` — see the exception in §0 | `research` run |
+| other suites' negatives with `correct_skill` naming the skill | a routed negative counts `Skill` calls only, so an `Agent` spawn never satisfies it and the test aborts `not_runnable` (`runnability.py`). Delete a test whose right answer *is* the agent; trim the name from a multi-target list only when the test is graded on an invariant | one run per suite touched |
+| `execution.stub_skills` naming the skill | nothing — an entry naming an agent stubs its spawn (`stub_agents`) | no |
+| the suite's own routed tests | every `input.user_message` becomes an `input.delegation`, tagged `direct-arm`; a routed original with a same-phrasing twin is deleted | the suite's run |
+| the agent's `description` | the deleted skill's user trigger phrases, now that it is the only thing a user's words match; within 1024 characters (`skill-description-length.test.ts`) | no |
+| `agent-delegation-framing.test.ts` | the router self-edge replaced by the real caller's edge; every bare-name mention in another `SKILL.md` registered in `PROSE_MENTIONS`; the name added to `PROSE_ARM_COVERS` | no |
+| `ownership.json` | `skill:<name>` → `agent:<name>` as owner and caller | no |
+| README, `architecture.md` skill counts; `EXPECTED_SKILLS` | decremented and the row moved to the Agents table | no |
+
+Every check in both tables is local and free to run. Run the whole packaging suite
+(`npx vitest run tests/packaging` in `packages/engine/mcp-server/`) and
+`apps/server`'s `pytest`, not just the file the card names. A packaging file that
+cannot import (a missing `yaml`, say) reports "no tests" rather than failing, so
+read the file count, not just the red count.
+
+## What a cold-started agent gets wrong
+
+Measured on `question-selection` (#2115, five paid runs). None of these showed
+up while the body ran on the main thread, and each cost a run to find.
+
+- **"Trust what you already hold" is false in an agent.** A folded rule saying
+  not to re-read state held "from the same continuous run" made the agent act
+  on the delegation's summary instead. An agent always starts cold; say so.
+- **Check that the agent's tools can return what the body needs.**
+  `project_context` returned no objective, so the only way to see it was to
+  `Read` `research.json` whole — and an agent told to read "only the first
+  lines" paged through the whole file and then skipped the section queries the
+  body requires. Telling it *how* to read does not hold; fix the tool.
+- **The narration line is a file read.** It sends the agent into
+  `research.json` for a fixed house-style string. `record-extractor` carries
+  none; drop it from an agent that should not read that file.
+- **A rule the delegation contradicts loses some of the time.** The agent
+  observed a plan item `in_progress`, said so, and wrote the dependent
+  question anyway because the delegation called the search done — on some runs
+  and not others. Two prose wordings did not hold, so it became a
+  `research_append` precondition. Apply ADR-0011's first question before a
+  second wording.
+- **The return contract changes what the judge should read.** Judge lines
+  written for a router ("gloss the id", "never name a skill") contradict a
+  contract whose caller-facing lines carry ids and a routing hint. Re-point
+  them at the text after the final `---`.
+
+### Proving "consistently"
+
+- **Read every run, not the summary.** With `--runs-per-test 3` the summary
+  table reports each test's majority outcome. 42 runs showed 14/14 pass while
+  three tests had a failed or partial run. Read `tests[].runs[].outcome` and
+  `tests[].flaky`.
+- **Move failing candidate logs out of the suite's run-log directory.** They
+  can never be committed (rule 6) but still occupy keep-newest-5 slots, and
+  the next run's prune then deletes committed, annotated logs (rule 7).
+  Restore any `D` it shows with `git restore`.
+
 ## The process, in order
 
 1. **Green the suite before the refactor, not merely baseline it.** A suite is
@@ -386,10 +485,15 @@ Two things this does NOT close:
    is the worked form, and
    `packages/engine/mcp-server/tests/packaging/agent-return-contract.test.ts`
    refuses an agent body without the heading once its name leaves that test's
-   pending list. The exception is an agent whose whole return is a tool's own
-   output: `record-structurer` returns `extraction_append`'s code-written
-   summary verbatim (lead, 2026-09-29), so it has no paragraphs of its own to
-   write and sits in that test's `EXCLUDED` list beside `image-reader`.
+   pending list. Two agents are EXCLUDED from the contract rather than pending:
+   `image-reader`, which by spec returns a transcription and nothing else, and
+   `project-status` (lead ruling "PS return: A", 2026-09-24, issue #2793), whose
+   two summaries and id-bearing integrity warnings ARE its whole output —
+   conforming would push the detailed summary and the warnings below the
+   caller's print line. Exclusion silences the lint in both directions, so a
+   green run says nothing about an excluded body; read it.
+   `record-structurer` is excluded too: its whole return is `extraction_append`'s
+   code-written summary, verbatim (lead, 2026-09-29).
    **A request that belongs to another agent is handed back, never spawned**
    (lead ruling 2026-09-23): the agent does none of that work, names the
    owning agent in its caller-facing lines, and the main thread spawns it. The

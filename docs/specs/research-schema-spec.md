@@ -85,7 +85,7 @@ flagged. (One row below is the exception, and says so.)
 | `plan_status` | `active`, `completed`, `superseded` | plans |
 | `plan_item_status` | `planned`, `in_progress`, `completed`, `skipped` | plan items |
 | `log_outcome` | `positive`, `negative`, `partial`, `error` | log |
-| `external_site` | `ancestry`, `myheritage`, `findmypast`, `familysearch_web`, `findagrave`, `newspapers`, `chronicling_america`, `digital_newspaper_archive`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `library_archives_canada`, `american_ancestors`, `italian_genealogy` | log entries' `external_site.site` — the sites supported by the generate-click-capture-analyze workflow (Section 5.4) |
+| `external_site` | `ancestry`, `myheritage`, `findmypast`, `familysearch_web`, `findagrave`, `newspapers`, `chronicling_america`, `digital_newspaper_archive`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `library_archives_canada`, `american_ancestors`, `italian_genealogy`, `archion`, `matricula` | log entries' `external_site.site` — the sites supported by the generate-click-capture-analyze workflow (Section 5.4) |
 | `source_classification` | `original`, `derivative`, `authored` | sources |
 | `information_quality` | `primary`, `secondary`, `indeterminate` | assertions |
 | `record_basis` | `stated`, `inferred`, `absent` | assertions |
@@ -246,11 +246,12 @@ described under "Who actually writes a row" below.
 | `assertions` | record-extraction | timeline, conflict-resolution, proof-conclusion, question-selection | Mutable (classification fields, date fields); never delete. convert-dates was listed here and never could write: its only tool is `convert_calendar` and it holds no writer tool |
 | `person_evidence` | person-evidence | all downstream | Mutable (confidence, rationale); never delete, use superseded_by |
 | `conflicts` | conflict-resolution | question-selection, proof-conclusion | Mutable (status, analysis, preferred_assertion_id) |
-| `hypotheses` | hypothesis-tracking | question-selection, proof-conclusion | Mutable (status, assertion lists, ruled_out fields) |
+| `hypotheses` | the hypothesis-tracking agent | question-selection, proof-conclusion | Mutable (status, assertion lists, ruled_out fields) |
 | `timelines` | timeline | question-selection, conflict-resolution | Regeneratable; replaced wholesale when regenerated |
 | `proof_summaries` | proof-conclusion | (terminal) | Mutable (tier, narrative can be revised) |
 | `evaluations` | **the gps-mentor agent** | proof-conclusion, question-selection | Retire an entry by pointing `superseded_by` at its replacement; never delete. The owner is an agent, and the harness ownership check keys on the calling *skill's* name — so this row cannot be enforced there, and is declared unenforceable rather than left to look covered |
 | `localities` | locality-guide | research-plan (+ the Research Viewer) | Mutable; never delete — a re-survey of the same place refreshes the existing `loc_` entry in place (there is no status field to supersede). Optional section — absent on projects that predate it. `search-records` does NOT read it (research-plan pre-translates the fact into `plan_item.rationale`) |
+| `warning_justifications` | (none — writer-tool only) | gps-mentor (audit trail) | Append-only; written by `tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts` as a side-effect of a justified write. Each entry carries `warning_id`, `justification`, `person_ids`, `tool`, `recorded_at`. |
 
 `research_append` also accepts a `plan_items` pseudo-section, which addresses
 `plans[].items[]` rather than a top-level property of this file. It carries the
@@ -601,11 +602,11 @@ Array of log entry objects. **Append-only — entries are never modified or dele
 
 **`external_site`** — Present only when the search was conducted via the generate-click-capture-analyze workflow.
 
-Not every site here is commercial. `chronicling_america`, `digital_newspaper_archive` and `library_archives_canada` are **free to search**, and are in this workflow for a different reason: all three sit behind bot protection (Cloudflare) that blocks automated fetch from the host as firmly as from the sandbox, so the agent cannot retrieve them itself and the user's browser supplies the access. (`library_archives_canada` was reclassified on 2026-09-15: its collection-search host answers 403 with a Cloudflare challenge.) `findagrave`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `american_ancestors` (subscription may still gate full results) and `italian_genealogy` are also free to search, with no fetch barrier at all — they are in this workflow only because it never fetches any site directly, not because of bot protection. Do not read `external_site` as "paywalled" — read it as "the agent could not fetch this directly".
+Not every site here is commercial. `chronicling_america`, `digital_newspaper_archive` and `library_archives_canada` are **free to search**, and are in this workflow for a different reason: all three sit behind bot protection (Cloudflare) that blocks automated fetch from the host as firmly as from the sandbox, so the agent cannot retrieve them itself and the user's browser supplies the access. (`library_archives_canada` was reclassified on 2026-09-15: its collection-search host answers 403 with a Cloudflare challenge.) `findagrave`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `american_ancestors` (subscription may still gate full results) and `italian_genealogy` are also free to search, with no fetch barrier at all — they are in this workflow only because it never fetches any site directly, not because of bot protection. `archion` (German Protestant church books, whose scans need a paid pass) and `matricula` (Catholic church books, free) are *browse* sites: `url_generated` is the parish page, and the user pages parish → register → volume → image. Do not read `external_site` as "paywalled" — read it as "the agent could not fetch this directly".
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `site` | string | yes | `ancestry`, `myheritage`, `findmypast`, `findagrave`, `newspapers`, `familysearch_web`, `chronicling_america`, `digital_newspaper_archive`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `library_archives_canada`, `american_ancestors`, or `italian_genealogy`. `digital_newspaper_archive` is the bucket for state and regional free archives (Utah Digital Newspapers, California Digital Newspaper Collection, …) — which one is identified by `url_generated`, not by a per-state enum value. `ancestry` and `findmypast` also cover their UK-locale domains (`ancestry.co.uk`, `findmypast.co.uk`) via a `locale` argument on the tool, not a separate enum value |
+| `site` | string | yes | `ancestry`, `myheritage`, `findmypast`, `findagrave`, `newspapers`, `familysearch_web`, `chronicling_america`, `digital_newspaper_archive`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `library_archives_canada`, `american_ancestors`, `italian_genealogy`, `archion`, or `matricula`. `digital_newspaper_archive` is the bucket for state and regional free archives (Utah Digital Newspapers, California Digital Newspaper Collection, …) — which one is identified by `url_generated`, not by a per-state enum value. `ancestry` and `findmypast` also cover their UK-locale domains (`ancestry.co.uk`, `findmypast.co.uk`) via a `locale` argument on the tool, not a separate enum value |
 | `url_generated` | string | yes | The search URL presented to the user |
 | `capture_received` | boolean | yes | Whether the results reached the agent. A capture need not be a file: page content already present in the conversation is a capture that arrived without one, and is recorded `true` with `capture_filename` null |
 | `capture_filename` | string or null | no | Filename of the returned capture; null when the capture arrived as conversation content rather than a file |
@@ -974,7 +975,7 @@ Array of evaluation pointer records — a lightweight index of mentor reviews pe
 ### 5.13 `localities`
 
 Array of place/locale research records — the durable knowledge base for "how to find
-records in a place." Written exclusively by the `locality-guide` skill (which reads
+records in a place." Written exclusively by the `locality-guide` agent (which reads
 the FamilySearch Research Wiki place pages plus `place_search_all` /
 `collections_search`), and read by `research-plan` (to stage searches) and the
 Research Viewer. `search-records` does **not** read this section — `research-plan`

@@ -26,6 +26,7 @@ _VALIDATORS_DIR = Path(__file__).resolve().parents[2] / "validators"
 sys.path.insert(0, str(_VALIDATORS_DIR))
 
 from test_universal import (  # noqa: E402
+    report_no_gps_jargon_in_response as check_jargon,
     report_no_internal_identifiers_in_response as check_ids,
     test_no_entries_deleted as check_no_deletes,
     test_ownership_table as check_research,
@@ -91,7 +92,10 @@ def test_non_owner_writing_localities_fails():
             POSITIVE,
         )
     assert "localities" in str(e.value)
-    assert "locality-guide" in str(e.value)
+    # The row's only writer is `agent:locality-guide` (issue #2117), which
+    # `writer_sets` resolves only from locality-guide's own suite, so from
+    # research-plan's vantage point the section has no writer at all.
+    assert "'localities': []" in str(e.value)
 
 
 def test_non_owner_writing_an_already_enforced_section_still_fails():
@@ -589,6 +593,82 @@ def test_identifier_report_skips_a_negative_test():
 def test_identifier_report_skips_an_empty_reply():
     with pytest.raises(pytest.skip.Exception):
         check_ids("", POSITIVE)
+
+
+# --- lay mode: no GPS vocabulary in the reply (tier 2, advisory, #2984) ------
+
+def _jargon(text, prompt=None, key="user_message"):
+    # Flat, as `orchestrator.py` builds the validator's `test` argument —
+    # not the test file's nested `input` block.
+    test = {"type": "positive", key: prompt} if prompt else {"type": "positive"}
+    try:
+        check_jargon(text, test)
+    except AssertionError as exc:
+        return str(exc)
+    return None
+
+
+def test_jargon_report_fires_on_not_proved():
+    msg = _jargon("The parentage is Not Proved yet.")
+    assert msg is not None and "proved" in msg
+
+
+def test_jargon_report_fires_on_disproved():
+    msg = _jargon("That candidate is disproved by the 1850 census.")
+    assert msg is not None and "disproved" in msg
+
+
+def test_jargon_report_fires_on_each_word():
+    msg = _jargon(
+        "Under the GPS the search is exhaustive, and the proof holds; "
+        "a GPS-conformant write-up follows."
+    )
+    assert msg is not None
+    for word in ("gps", "exhaustive", "proof"):
+        assert word in msg
+
+
+def test_jargon_report_passes_improved_and_agent_names():
+    """The other direction: substrings and the hyphenated agent names we route
+    by are not the words the researcher is shielded from."""
+    assert _jargon(
+        "The citation improved. The proof-conclusion step and the "
+        "proof-critique review ran, and gps-mentor read it. not_proved stays."
+    ) is None
+
+
+def test_jargon_report_passes_a_word_the_prompt_used():
+    assert _jargon(
+        "Your proof meets the GPS on four of five points.",
+        prompt="does my proof meet the GPS",
+    ) is None
+
+
+def test_jargon_report_still_fires_on_a_form_the_prompt_did_not_use():
+    msg = _jargon(
+        "Your proof meets the GPS, but parentage is not proved.",
+        prompt="does my proof meet the GPS",
+    )
+    assert msg is not None and "proved" in msg
+    assert "gps" not in msg and "proof," not in msg
+
+
+def test_jargon_report_reads_an_agent_delegation_as_the_prompt():
+    assert _jargon(
+        "The proof summary reads well.",
+        prompt="Review the proof summary for ps_001.\n\nfocus: on-demand",
+        key="delegation",
+    ) is None
+
+
+def test_jargon_report_skips_a_negative_test():
+    with pytest.raises(pytest.skip.Exception):
+        check_jargon("not proved", {"type": "negative"})
+
+
+def test_jargon_report_skips_an_empty_reply():
+    with pytest.raises(pytest.skip.Exception):
+        check_jargon("  ", POSITIVE)
 
 
 # --- An agent-keyed suite's frontmatter reaches the validators (#1253) ------

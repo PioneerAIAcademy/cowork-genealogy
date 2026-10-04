@@ -4533,6 +4533,81 @@ describe("research_append (batch ops)", () => {
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
+  // ── No new question while research is running, bar the conflict exception ──
+  // Every way the exception could be claimed without holding is its own refuse
+  // case; the accept cases are the ones that keep the gate escapable.
+  const newQ = (fields: Record<string, unknown> = {}) => {
+    const { id: _i, created: _c, ...q } = validQuestion("x");
+    return { projectPath: dir, section: "questions", op: "append", entry: { ...q, ...fields } } as any;
+  };
+  const conflict = (status: string, blocks: string[]) => ({
+    id: "c_001",
+    conflict_type: "fact",
+    description: "Two birthplaces",
+    competing_assertion_ids: [],
+    status,
+    blocks_question_ids: blocks,
+  });
+  const running = (conflicts: any[] = []) => {
+    const r = attrResearch("in_progress", []);
+    (r as any).conflicts = conflicts;
+    return r;
+  };
+  const refusedFor = async (research: any, fields: Record<string, unknown>) => {
+    await writeProject(research);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend(newQ(fields));
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/still running: pli_001 \(on q_001\)/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  };
+
+  it("(in-flight) refuses the d01 shape: a question depending on the in-flight question", async () => {
+    await refusedFor(running(), { depends_on: ["q_001"] });
+  });
+  it("(in-flight) refuses an unrelated question", async () => {
+    await refusedFor(running(), { depends_on: [], unblocks: [] });
+  });
+  it("(in-flight) refuses when unblocks names the question but no conflict blocks it", async () => {
+    await refusedFor(running(), { unblocks: ["q_001"] });
+  });
+  it("(in-flight) refuses when the blocking conflict is resolved or moot", async () => {
+    await refusedFor(running([conflict("resolved", ["q_001"])]), { unblocks: ["q_001"] });
+    await refusedFor(running([conflict("moot", ["q_001"])]), { unblocks: ["q_001"] });
+  });
+  it("(in-flight) refuses when a conflict blocks the question but unblocks does not name it", async () => {
+    await refusedFor(running([conflict("unresolved", ["q_001"])]), { unblocks: [] });
+    await refusedFor(running([conflict("unresolved", ["q_009"])]), { unblocks: ["q_001"] });
+  });
+
+  it("(in-flight) allows the conflict exception: an unresolved conflict blocks it and unblocks names it (ut_003)", async () => {
+    await writeProject(running([conflict("unresolved", ["q_001"])]));
+    expect((await researchAppend(newQ({ depends_on: [], unblocks: ["q_001"] }))).ok).toBe(true);
+  });
+  it("(in-flight) allows a new question when the items are only planned", async () => {
+    await writeProject(attrResearch("planned", []));
+    expect((await researchAppend(newQ({ depends_on: ["q_001"] }))).ok).toBe(true);
+  });
+  it("(in-flight) ignores an in_progress item on a superseded plan", async () => {
+    const research = attrResearch("in_progress", []);
+    research.plans[0].status = "superseded";
+    await writeProject(research);
+    expect((await researchAppend(newQ())).ok).toBe(true);
+  });
+  it("(in-flight) ignores an in_progress item left on a resolved question's plan", async () => {
+    const research = attrResearch("in_progress", []);
+    research.questions[0].status = "resolved";
+    await writeProject(research);
+    expect((await researchAppend(newQ())).ok).toBe(true);
+  });
+  it("(in-flight) does not fire on an update to an existing question", async () => {
+    const research = attrResearch("in_progress", []);
+    research.questions = [{ ...validQuestion("q_001") }, { ...validQuestion("q_002"), depends_on: ["q_001"] }];
+    await writeProject(research);
+    const r = await researchAppend({ projectPath: dir, section: "questions", op: "update", entryId: "q_002", fields: { priority: "low" } } as any);
+    expect(r.ok).toBe(true);
+  });
+
   // BREAK IT MORE THAN ONE WAY. Each of these is a different shape of "no entry
   // names it", and each reaches the helper down a different path.
   it("(d4-logattr) refuses when log[] is empty", async () => {
@@ -9776,7 +9851,7 @@ describe("supported evidence floor (#2086)", () => {
   });
 
   it("refuses linking contradicting evidence an unresolved conflict names — the skill's own documented call", async () => {
-    // `hypothesis-tracking/SKILL.md` tells the agent that adding contradicting
+    // `agents/hypothesis-tracking.md` tells the agent that adding contradicting
     // evidence "does not automatically require a status downgrade — only link
     // the evidence and leave the status unchanged". That is this exact op, and
     // it reached no precondition under the narrow gate.
