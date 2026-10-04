@@ -1506,14 +1506,16 @@ def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_return
     graded, because a routed reply may reword it. WHOSE reply is graded is
     `subject_reply_text`: on a direct test, the agent's own return and nothing
     else.
+
+    An empty `correct_skill` means the owner is not a skill (extraction is a
+    tool call and an agent; genealogist ruling 2026-09-30, option B), so the
+    reply must carry a `Hand-back:` line without a name to look for.
     """
     from harness.skill_runner import subject_reply_text
 
     if "hand-back" not in test.get("tags", []):
         pytest.skip("not a hand-back test")
     owners = (test.get("negative") or {}).get("correct_skill") or []
-    assert owners, "a hand-back test must name its owner in negative.correct_skill"
-    owner = owners[0]
 
     assert (tool_calls or []) == [], (
         "a hand-back makes no tool call; got "
@@ -1521,6 +1523,10 @@ def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_return
         + ", ".join(c.get("tool", "?") for c in (tool_calls or []))
     )
     reply = subject_reply_text(agent_returns, text_response, test.get("skill") or "", test)
+    if not owners:
+        assert "hand-back:" in reply.lower(), "the reply carries no `Hand-back:` line"
+        return
+    owner = owners[0]
     assert owner in reply.lower(), (
         f"the reply never names {owner}, so the caller cannot tell which owner "
         "to spawn"

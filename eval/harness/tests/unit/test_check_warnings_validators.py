@@ -82,11 +82,27 @@ def test_no_owner_named_fails(reply):
         check_hand_back([], reply, _spec())
 
 
-def test_a_test_with_no_owner_is_refused():
+def _ownerless():
+    # Genealogist ruling 2026-09-30, option B: extraction is a tool call and an
+    # agent, so no skill is the owner and correct_skill is empty.
     spec = _spec()
     spec["negative"]["correct_skill"] = []
-    with pytest.raises(AssertionError, match="must name its owner"):
-        check_hand_back([], AGENT_RETURN, spec)
+    return spec
+
+
+def test_an_ownerless_hand_back_passes_on_its_hand_back_line():
+    check_hand_back([], "Hand-back: extraction — the record is not extracted yet.", _ownerless())
+
+
+@pytest.mark.parametrize("reply", [RESEARCHER, "", None], ids=["no-line", "empty", "none"])
+def test_an_ownerless_hand_back_without_the_line_fails(reply):
+    with pytest.raises(AssertionError, match="no `Hand-back:` line"):
+        check_hand_back([], reply, _ownerless())
+
+
+def test_an_ownerless_hand_back_still_makes_no_tool_call():
+    with pytest.raises(AssertionError, match="makes no tool call"):
+        check_hand_back([WARNINGS_CALL], "Hand-back: extraction — not extracted.", _ownerless())
 
 
 def test_skips_without_the_hand_back_tag():

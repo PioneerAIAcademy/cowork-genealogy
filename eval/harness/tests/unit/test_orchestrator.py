@@ -2436,3 +2436,35 @@ def test_a_matched_suppressed_call_cannot_mask_an_earlier_uncovered_one():
         "an executed, fixture-matching reaction call raised `covered` and "
         "masked the earlier unregistered call"
     )
+
+
+# --- routing to a converted agent counts as routing ---------------------
+
+
+def _routing_outcome(handoffs_made, correct=("project-status",)):
+    return _compute_outcome(
+        spec=_negative_spec(skill="research-exhaustiveness", correct=list(correct)),
+        validators_passed=True, judge_dimensions=[], aborted_reason=None,
+        activated=False, skills_invoked=[], judge_skipped=True,
+        handoffs_made=handoffs_made,
+    )
+
+
+def test_a_spawn_of_the_correct_agent_routes_a_negative():
+    assert _routing_outcome(["project-status"]) == "pass"
+
+
+@pytest.mark.parametrize("handoffs_made", [[], ["gps-mentor"], None], ids=["none", "other-agent", "not-passed"])
+def test_no_spawn_of_the_correct_agent_still_fails(handoffs_made):
+    assert _routing_outcome(handoffs_made) == "fail"
+
+
+def test_routed_to_reads_spawns_bare_and_main_thread_only():
+    from harness.orchestrator import routed_to
+
+    calls = [
+        {"tool": "Agent", "args": {"subagent_type": "genealogy-research:project-status"}},
+        {"tool": "Agent", "args": {"subagent_type": "citation"}, "agent_id": "a1"},
+        {"tool": "Read", "args": {}},
+    ]
+    assert routed_to(["timeline"], calls) == ["timeline", "project-status"]
