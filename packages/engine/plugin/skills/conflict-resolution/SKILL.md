@@ -214,8 +214,8 @@ extensive rail networks). A quantified distance strengthens or
 eliminates a travel-impossibility argument far more than a subjective
 description of "distant locations." As a rule of thumb, events within ~20 miles (32 km) of each other were plausibly the same community. Where origins are farther apart, consider whether a market town, county seat, or transport hub between them could serve as a meeting point. Terrain often constrains movement more than straight-line distance: a river crossing or mountain pass can make 10 miles more limiting than 30 miles of open road.
 
-**For every date conflict, before concluding the informants disagree:**
-call
+**For every date conflict, before concluding the informants disagree and
+before writing any conflict entry:** call
 
 ```
 convert_calendar({ date, jurisdiction, corrections })
@@ -228,8 +228,8 @@ adoption date or a year-start from memory. The tool returns a zero
 offset where no transition applies. Read `applied[]` — `offsetDays` for a
 Julian→Gregorian day difference, `yearAdjusted` for a year-start move. If the competing dates
 differ by exactly what the tool returns, they are the same day expressed
-two ways, not a substantive disagreement — say so in the weighing
-analysis. A derivative that has already been modernised by its
+two ways, and there is no conflict: write no conflict entry, and give the
+answer in your reply. A derivative that has already been modernised by its
 transcriber must not be corrected a second time.
 
 ### 5. Resolve or defer
