@@ -123,7 +123,9 @@ is §11.7's code.
   record type.
 - **Obituary survivor lists.** `given (surname) married-surname` is one woman
   with her maiden name. `given (given) surname` is a person plus a spouse, and
-  that spouse is a child-in-law. Neighbours, friends and pallbearers are
+  that spouse is a child-in-law who takes the surname outside the parentheses
+  (genealogist, 2026-10-04: "Robert (Linda) Whitaker" gives Linda Whitaker; a
+  trial wrote her as bare "Linda" in 1 of 3 runs). Neighbours, friends and pallbearers are
   `statedRelation: "neighbor"` / `"friend"`, never kin. "Preceded in death by
   …" makes one `absentPersons` entry per person, each naming that person.
 - **Marriage.** One `marital_status` fact per party whenever the text

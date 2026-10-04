@@ -105,8 +105,8 @@ classifications are not yours to send.
 - **Dates** as written. An Old Style date is recorded as the caller's flag gives
   it; never convert one from memory.
 - **Obituary survivor lists.** `Mary (Johnson) Smith` is one woman, with
-  Johnson her maiden name. `John (Mary) Smith` is John plus his wife Mary: a
-  child-in-law, `statedRelation: "daughter-in-law"`. Neighbours, friends and
+  Johnson her maiden name. `John (Mary) Smith` is John plus his wife Mary
+  Smith, who takes the surname outside the parentheses: a child-in-law, `statedRelation: "daughter-in-law"`. Neighbours, friends and
   pallbearers are `"neighbor"` / `"friend"`, never kin. "Preceded in death by …"
   is one `absentPersons` entry per person, and each `note` names that person.
 - **Marriage.** Record a `marital_status` fact per party whenever the text
