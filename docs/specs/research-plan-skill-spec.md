@@ -49,7 +49,7 @@ birth country.
 
 | Trigger | Page |
 |---|---|
-| Male subject of a parentage question, born in a country whose levy rolls enrolled boys by name from childhood (an adult draft or a volunteer army is not this) | `{Country}_Military_Records` |
+| Male subject of a parentage question, born in continental Europe or Scandinavia (not the British Isles or the Americas) | `{Country}_Military_Records` |
 | Compound (two-surname) or patronymic surname | `{Country}_Naming_Customs` |
 
 **On failure** (`No wiki page found`, any error, or an empty page): the
@@ -58,14 +58,15 @@ entry, never from memory. Because ADR-0012 records wiki-call failure as a
 common path, the levy-roll rule (§3) keys on "the fetched page **or** the
 `localities` entry's quirks", so a failed fetch does not drop the item.
 
-**Known limit:** whether a country's levy rolls enrolled boys is the model's
-judgement, per the ruling's wording. The first wording ("kept conscription or
-levy rolls of boys") fired on a Pennsylvania-born subject on the 2026-10-02
-full run (`United_States_Military_Records`), which is why the trigger now
-excludes an adult draft or a volunteer army by name. Nothing deterministic decides it. A test
-whose subject should not trigger it (Patrick Flynn, born in Ireland) carries an
-`Ireland_Military_Records` fixture as a safety net, so a stray call is served the
-real page rather than aborting the run.
+**Trigger history.** Two judgement-based wordings over-fired on the 2026-10-02
+and 2026-10-03 full runs: "kept conscription or levy rolls of boys" fetched
+`United_States_Military_Records` for a Pennsylvania-born subject, and "levy
+rolls that enrolled boys from childhood" still fetched `Ireland_Military_Records`
+for an Irish-born one, on the Flynn tests that were already timing out. The
+trigger is now a coarse region read off the birthplace. It is a scope condition
+on when to fetch, not a fact about records, so the country's own page still
+says whether levy rolls exist. The six Patrick Flynn parentage tests keep an
+`Ireland_Military_Records` fixture as a safety net.
 
 ## 3. Rules that stay in the plugin, and why
 

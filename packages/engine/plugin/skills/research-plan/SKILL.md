@@ -236,9 +236,9 @@ subject's birth country. Issue them as PARALLEL calls in one turn. They are
 members of this block, not options: a page you did not fetch is a record
 type you will plan from memory.
 
-- **A male subject of a parentage question, born in a country whose
-  levy rolls enrolled boys by name from childhood** (an adult draft or a
-  volunteer army is not this) → `{Country}_Military_Records`. REQUIRED.
+- **A male subject of a parentage question, born in continental Europe
+  or Scandinavia** → `{Country}_Military_Records`. REQUIRED. Not for a
+  subject born in the British Isles or the Americas.
 - **The subject carries a compound (two-surname) or patronymic surname** →
   `{Country}_Naming_Customs`. REQUIRED.
 
