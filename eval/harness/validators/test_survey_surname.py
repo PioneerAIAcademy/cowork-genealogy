@@ -146,28 +146,37 @@ def test_positive_writes_table(builtin_tool_calls, test):
 
 # --- d5: recordArk grouping and slave-schedule sectioning -------------
 
-def test_household_grouping_and_slave_schedule(text_response, test):
-    """d5: the response must group stubs sharing a recordArk into one
-    household row, and must place the slave schedule under its own heading.
+def _survey_file(after_state):
+    files = (after_state or {}).get("files") or {}
+    for path, text in files.items():
+        name = path.rsplit("/", 1)[-1]
+        if name.startswith("surname-survey") and name.endswith(".md"):
+            return text
+    return ""
 
-    Uses ``text_response`` rather than the Write content because the run
-    log truncates Write args to 200 characters."""
+
+def test_household_grouping_and_slave_schedule(after_state, test):
+    """d5: in the written table, the two stubs sharing a recordArk (Edmund and
+    Mary) are one row, and the slave-schedule stub sits under its own heading.
+
+    Reads the file from after_state["files"]: the recorded Write args are
+    truncated, and on a direct test text_response is the dispatcher's relay."""
     if "household-grouping" not in test.get("tags", []):
         pytest.skip("not a household-grouping test")
-    assert text_response, "no text_response to check"
-    resp = text_response.lower()
-
-    # Edmund and Mary share recordArk — they must appear as one household.
-    assert "edmund" in resp, (
-        "Edmund Dixon missing from response — expected the shared-recordArk "
-        "household to appear"
+    text = _survey_file(after_state)
+    assert text, "no surname-survey-*.md in the workspace"
+    population, slave, heading = [], [], ""
+    for line in text.lower().splitlines():
+        s = line.strip()
+        if s.startswith("#"):
+            heading = s
+        elif s.startswith("|"):
+            (slave if "slave" in heading else population).append(s)
+    assert slave, "no table rows under a heading naming the slave schedule"
+    assert any("edmund" in r for r in slave), (
+        "the slave-schedule stub is not under the slave-schedule heading"
     )
-    assert "mary" in resp, (
-        "Mary Dixon missing from response — expected her grouped with Edmund"
-    )
-
-    # Slave schedule must be separately identified.
-    assert "slave" in resp, (
-        "slave schedule not mentioned in response — expected a separate "
-        "section or note for the slave schedule entry"
+    mary = [r for r in population if "mary" in r]
+    assert len(mary) == 1 and "edmund" in mary[0], (
+        f"Edmund and Mary share a recordArk and must be one household row; got {mary}"
     )

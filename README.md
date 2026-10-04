@@ -489,7 +489,7 @@ What's shipped:
   only writer of `hypotheses`), `locality-guide` (the records survey for one
   place and period), `historical-context` (narrative historical context for
   interpreting records — boundary changes, naming conventions, migration),
-  `image-reader` (page OCR) and `survey-surname` (surname
+  `image-reader` (page OCR), `project-status` (a read-only report of where the research stands) and `survey-surname` (surname
   household tabulation across censuses).
 - **Researcher profile.** `init-project` asks only the research objective, in
   one non-blocking opening turn; the profile itself is fixed (`novice`, one
