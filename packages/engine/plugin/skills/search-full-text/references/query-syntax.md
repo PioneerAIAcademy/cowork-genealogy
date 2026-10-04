@@ -147,8 +147,8 @@ Filters operate on **collection metadata**, not transcript text:
 - **Record Type** — deeds, probate, court, vital, military, etc.
 
 **Scoping guidance:** Place filters match collection metadata — that is
-the useful place to narrow. Use `recordPlace*` when the plan item or
-the user names a jurisdiction. Date (`yearFrom`/`yearTo`) and record
+the useful place to narrow. Use `recordPlace*` only with a place
+`filterParam` from an `includeFacets` response — plain-text values return zero. Date (`yearFrom`/`yearTo`) and record
 type are allowed too, but collection metadata dates can be off (see
 references/transcription-quirks.md's "Auto-collection dates/places come
 from metadata, not document content"), so apply them more cautiously.

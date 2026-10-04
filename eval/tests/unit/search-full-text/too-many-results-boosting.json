@@ -12,8 +12,8 @@
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
-    "fulltext-search-flynn-broad-with-facets",
     "fulltext-search-flynn-collection-scoped",
+    "fulltext-search-flynn-broad-with-facets",
     "wiki-read-any",
     "wiki-search-any"
   ],

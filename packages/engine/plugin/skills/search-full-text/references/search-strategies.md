@@ -251,7 +251,7 @@ When a wildcard or common-name query returns hundreds of results:
    verification.
 3. **Stop when quality degrades.** Once the top results no longer show both
    names in `highlightTerms`, narrowing further is unlikely to improve yield.
-   Apply a `recordPlace*` or year filter instead, or declare the search
+   Apply a facet-derived `collectionId` or a year filter instead, or declare the search
    sufficiently searched for the plan item.
 
 ## Cross-reference triggers

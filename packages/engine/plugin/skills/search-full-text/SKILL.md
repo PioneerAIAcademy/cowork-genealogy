@@ -290,8 +290,8 @@ the call actually sent — never add one the call itself omitted, even one
 the user mentioned, one a later call will add, or one that matches the
 locality under research; and never one merely because the response echoes
 it back — the tool echoes your own request, so an echoed key you did not
-send is not a filter you applied. An unscoped first call (step 4) logs an
-unscoped `query`; a filter only appears once it is actually sent in a call:
+send is not a filter you applied. A call sent with no filter logs a
+`query` with no filter key; a filter only appears once it is actually sent in a call:
 
 ```
 research_log_append({

@@ -66,14 +66,11 @@ def test_raises_when_no_auth_available(monkeypatch, tmp_path):
         auth.resolve_auth()
 
 
-def test_env_for_sdk_subscription_mode_blanks_api_key():
-    """Subscription mode blanks ANTHROPIC_API_KEY to prevent the agent
-    subprocess from billing the metered key that may be present in the shell."""
+def test_env_for_sdk_subscription_mode_sets_tool_search_and_suppresses_key():
+    """Subscription mode sets ENABLE_TOOL_SEARCH=true and suppresses any
+    inherited ANTHROPIC_API_KEY="" so the CLI falls back to its OAuth session."""
     cfg = auth.AuthConfig(skill_runner_mode="subscription", api_key=None, detail="x")
-    assert auth.env_for_sdk(cfg) == {
-        "ENABLE_TOOL_SEARCH": "true",
-        "ANTHROPIC_API_KEY": "",
-    }
+    assert auth.env_for_sdk(cfg) == {"ENABLE_TOOL_SEARCH": "true", "ANTHROPIC_API_KEY": ""}
 
 
 def test_env_for_sdk_returns_key_and_tool_search_in_api_mode():
@@ -84,13 +81,11 @@ def test_env_for_sdk_returns_key_and_tool_search_in_api_mode():
     }
 
 
-def test_env_for_sdk_subscription_mode_blanks_key_even_if_carried_for_judge():
+def test_env_for_sdk_subscription_mode_suppresses_key_even_if_present():
     """Even when a key is available (carried for the judge), subscription
-    mode blanks ANTHROPIC_API_KEY so the agent subprocess uses OAuth."""
+    mode suppresses it with "" so the CLI OAuth session wins, and still
+    sets ENABLE_TOOL_SEARCH=true."""
     cfg = auth.AuthConfig(
         skill_runner_mode="subscription", api_key="sk-x", detail="x"
     )
-    assert auth.env_for_sdk(cfg) == {
-        "ENABLE_TOOL_SEARCH": "true",
-        "ANTHROPIC_API_KEY": "",
-    }
+    assert auth.env_for_sdk(cfg) == {"ENABLE_TOOL_SEARCH": "true", "ANTHROPIC_API_KEY": ""}
