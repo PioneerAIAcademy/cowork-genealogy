@@ -22,13 +22,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && python3 --version
 
-# The SDK pin is the flush-mode pin (session_store_flush="eager" is SDK-side) and the
-# CLI pin (the wheel bundles Claude Code 2.1.220). [binary] bundles libpq. botocore
-# signs enqueue.py's SQS calls, pinned to apps/server/uv.lock's version.
-RUN python3 -m pip install --break-system-packages \
-        "claude-agent-sdk==0.2.128" "psycopg[binary]>=3.2,<4" "botocore==1.43.106"
+# The proto-worker group's closure, exported from apps/server/uv.lock with hashes
+# (`make proto-requirements`): the SDK pin (flush mode, and the CLI its wheel bundles),
+# psycopg[binary] (bundles libpq) and botocore (signs enqueue.py's SQS calls).
+COPY apps/server/proto/worker/requirements.txt /tmp/worker-requirements.txt
+RUN python3 -m pip install --break-system-packages --require-hashes \
+        -r /tmp/worker-requirements.txt \
+    && rm /tmp/worker-requirements.txt
 
-# Plugin: 15 skills + 18 agents + the shipped PreToolUse hook (python3 runs it).
+# Plugin: 12 skills + 21 agents + the shipped PreToolUse hook (python3 runs it).
 COPY packages/engine/plugin /opt/genealogy/plugin
 
 # The worker and what it imports: app.agent.real_agent (map_message) and proto/sql,

@@ -7,7 +7,7 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
 
 - ``cwd`` is the empty anchor (``/project``); ``setting_sources=[]`` explicitly, so no
   ``CLAUDE.md`` or ``.claude/`` in any parent of cwd is loaded; no ``add_dirs``.
-- the plugin loads from disk for its skills; the eighteen agents travel as ``agents=`` (bare
+- the plugin loads from disk for its skills; the twenty-one agents travel as ``agents=`` (bare
   names, parsed once at worker start by ``plugin_agents.py``) -- never staged into cwd.
 - the shell is removed with ``disallowed_tools`` -- the only lever that reaches the
   main thread; ``Write``/``Edit`` stay granted (denying them is whole-tool).
@@ -41,6 +41,7 @@ from __future__ import annotations
 import dataclasses
 import json
 import os
+import sys
 from collections.abc import Callable, Mapping
 from typing import Any
 
@@ -139,6 +140,15 @@ WRITE_DENY_REASON = (
 
 # U7 (proto/enqueue.py): the worker signs its held-message release with these when set.
 SQS_STATIC_KEY_VARS = ("GENEALOGY_SQS_ACCESS_KEY", "GENEALOGY_SQS_SECRET_KEY")
+
+
+def hook_path(exe_dir: str, path: str | None) -> str:
+    """The CLI child's ``PATH`` (U12 D27): the worker interpreter's directory first, so the
+    plugin hook's ``python3`` is the venv's 3.12 and not the platform's 3.9 (under which
+    ``guard_project_files.py`` fails open). An unset or empty ``PATH`` gets the prepend
+    alone; an empty ``exe_dir`` (no ``sys.executable``) prepends nothing."""
+    parts = [p for p in (exe_dir, path or "") if p]
+    return os.pathsep.join(parts)
 
 
 def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, str]]:
@@ -621,6 +631,7 @@ def build_worker_options(
     }
     if env_in.get("TMPDIR"):
         env["TMPDIR"] = env_in["TMPDIR"]
+    env["PATH"] = hook_path(os.path.dirname(sys.executable), env_in.get("PATH"))
     # U7: the worker's static SQS pair is the worker's. Blank, not absent, like
     # ANTHROPIC_API_KEY: the CLI inherits the worker's environment.
     for name in SQS_STATIC_KEY_VARS:
