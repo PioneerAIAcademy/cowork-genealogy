@@ -1549,9 +1549,32 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
   if (entry?.exhaustive_declaration?.declared !== true) return [];
   const qid = entry?.id;
   if (typeof qid !== "string" || qid === "") return [];
-  const inFlight: string[] = [];
-  for (const plan of Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []) {
-    if (!plan || plan.question_id !== qid) continue;
+  const inFlight = activePlanInProgressItems(preCallResearch, (plan) => plan.question_id === qid).map(
+    (item) => item.itemId,
+  );
+  if (inFlight.length === 0) return [];
+  const ids = inFlight.sort().join(", ");
+  return [
+    `question '${qid}' cannot be declared exhaustive while ${ids} ` +
+      `${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
+      "search has not finished, so the declaration would rest on work still running. " +
+      `Report ${inFlight.length === 1 ? "this item" : "these items"} as the blocker and let ` +
+      "the search finish; declaring is available on the next call once the plan reflects it. " +
+      "Items still at `planned` do not block — consulting the stop criteria before draining " +
+      "the plan is the sanctioned path.",
+  ];
+}
+
+/** Every `in_progress` item on an ACTIVE plan the predicate accepts, read from
+ *  the given snapshot. Shared by the two in-flight gates so which plans and
+ *  items count as in flight is decided once. */
+function activePlanInProgressItems(
+  research: any,
+  includePlan: (plan: any) => boolean,
+): { itemId: string; questionId: unknown }[] {
+  const inFlight: { itemId: string; questionId: unknown }[] = [];
+  for (const plan of Array.isArray(research?.plans) ? research.plans : []) {
+    if (!plan || !includePlan(plan)) continue;
     // ONLY the active plan blocks, and this is what keeps the gate escapable.
     // `research-plan` supersedes a plan by flipping `plans.status` alone — its
     // items keep whatever status they held — and then forbids touching it ever
@@ -1565,20 +1588,12 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
     // is not the plan the question is being worked from.
     if (plan.status !== "active") continue;
     for (const item of Array.isArray(plan.items) ? plan.items : []) {
-      if (item?.status === "in_progress" && typeof item?.id === "string") inFlight.push(item.id);
+      if (item?.status === "in_progress" && typeof item?.id === "string") {
+        inFlight.push({ itemId: item.id, questionId: plan.question_id });
+      }
     }
   }
-  if (inFlight.length === 0) return [];
-  const ids = inFlight.sort().join(", ");
-  return [
-    `question '${qid}' cannot be declared exhaustive while ${ids} ` +
-      `${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
-      "search has not finished, so the declaration would rest on work still running. " +
-      `Report ${inFlight.length === 1 ? "this item" : "these items"} as the blocker and let ` +
-      "the search finish; declaring is available on the next call once the plan reflects it. " +
-      "Items still at `planned` do not block — consulting the stop criteria before draining " +
-      "the plan is the sanctioned path.",
-  ];
+  return inFlight;
 }
 
 /** A new question may not be created while any unresolved question has an
@@ -1612,25 +1627,23 @@ function newQuestionWhileSearchInFlightInvariants(entry: any, preCallResearch: a
     if (c?.status !== "unresolved" || !Array.isArray(c.blocks_question_ids)) continue;
     for (const q of c.blocks_question_ids) if (typeof q === "string") conflictBlocked.add(q);
   }
-  const refused: string[] = [];
-  for (const plan of Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []) {
-    if (!plan || plan.status !== "active" || !unresolvedQuestions.has(plan.question_id)) continue;
-    const excepted = conflictBlocked.has(plan.question_id) && unblocks.has(plan.question_id);
-    if (excepted) continue;
-    for (const item of Array.isArray(plan.items) ? plan.items : []) {
-      if (item?.status === "in_progress" && typeof item?.id === "string") {
-        refused.push(`${item.id} (on ${plan.question_id})`);
-      }
-    }
-  }
+  const refused = activePlanInProgressItems(
+    preCallResearch,
+    (plan) =>
+      unresolvedQuestions.has(plan.question_id) &&
+      !(conflictBlocked.has(plan.question_id) && unblocks.has(plan.question_id)),
+  ).map((item) => `${item.itemId} (on ${item.questionId})`);
   if (refused.length === 0) return [];
   const ids = refused.sort().join(", ");
   return [
     `a new question cannot be opened while research is still running: ${ids} ` +
       `${refused.length === 1 ? "is" : "are"} still 'in_progress'. The plan says that search ` +
       "has not finished, whatever the request that reached you says. Write no question now: " +
-      "report the in-flight item as the reason. The one exception is a question that resolves " +
-      "an unresolved conflict blocking that question — set its `unblocks` to name it.",
+      "report the in-flight item as the reason. Two exceptions: (1) a question that resolves " +
+      "an unresolved conflict whose `blocks_question_ids` lists that question, with the new " +
+      "question's `unblocks` naming it; (2) if this same call also resolves that question — " +
+      "this check reads the project as it stood before the call, so write the resolution in " +
+      "its own call and append the new question in the next one.",
   ];
 }
 
