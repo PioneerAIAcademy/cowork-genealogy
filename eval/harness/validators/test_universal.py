@@ -1443,7 +1443,7 @@ def report_direct_delegation_extra_text(test, builtin_tool_calls):
 
 # --- A Skill call must name a skill that ships ---------------------------
 
-def test_skill_calls_name_a_shipped_skill(builtin_tool_calls):
+def test_skill_calls_name_a_shipped_skill(builtin_tool_calls, test=None):
     """Every main-thread `Skill` call names a directory under plugin/skills/.
 
     A skill converted to an agent loses its directory, but a caller body left
@@ -1453,9 +1453,13 @@ def test_skill_calls_name_a_shipped_skill(builtin_tool_calls):
     (issue #2118, where three `tree-edit` sites were nearly missed). Main thread
     only: a subagent record carries `agent_id`. A call whose name cannot be read
     is skipped here; the runner already surfaces it as `unread_skill_calls`.
+    A test-only skill (`eval/skills/`) counts only in its own suite, the one
+    place the harness stages it.
     """
     from harness.skill_runner import read_skill_tool_input
-    from harness.workspace import DEFAULT_PLUGIN_SKILLS
+    from harness.workspace import DEFAULT_PLUGIN_SKILLS, TEST_ONLY_SKILLS
+
+    suite = (test or {}).get("skill")
 
     missing = []
     for call in builtin_tool_calls or []:
@@ -1465,8 +1469,11 @@ def test_skill_calls_name_a_shipped_skill(builtin_tool_calls):
         if not name:
             continue
         bare = name.rsplit(":", 1)[-1]
-        if not (DEFAULT_PLUGIN_SKILLS / bare / "SKILL.md").is_file():
-            missing.append(name)
+        if (DEFAULT_PLUGIN_SKILLS / bare / "SKILL.md").is_file():
+            continue
+        if bare == suite and (TEST_ONLY_SKILLS / bare / "SKILL.md").is_file():
+            continue
+        missing.append(name)
     assert not missing, (
         f"Skill call(s) to {sorted(set(missing))}, which ship no "
         f"plugin/skills/<name>/SKILL.md. A converted skill is an agent now: "

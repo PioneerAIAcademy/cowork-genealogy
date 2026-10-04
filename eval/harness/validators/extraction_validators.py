@@ -1020,6 +1020,29 @@ def _normalize_record_id(rid):
     return rid[idx:] if idx != -1 else rid
 
 
+def _stored_record_ids_by_log(state):
+    """Map each sidecar's log id -> the record ids it stores, verbatim. A
+    persisted record_id is canonical when it is the stored form in the
+    sidecar of the assertion's own log entry."""
+    import json
+
+    by_log = {}
+    for rel_path, content in (state.get("files") or {}).items():
+        if not (rel_path.startswith("results/") and rel_path.endswith(".json")):
+            continue
+        try:
+            sidecar = json.loads(content)
+        except (ValueError, TypeError):
+            continue
+        log_id = sidecar.get("log_id") or rel_path[len("results/"):-len(".json")]
+        ids = by_log.setdefault(log_id, set())
+        for result in (sidecar.get("payload") or {}).get("results") or []:
+            for key in ("recordId", "arkUrl", "id"):
+                if result.get(key):
+                    ids.add(result[key])
+    return by_log
+
+
 def _staged_sidecar_persona_counts(state):
     """Map each staged sidecar record's normalized id -> the number of
     personas in its `gedcomx.persons[]` (0 when the result carries no
@@ -1053,9 +1076,11 @@ def test_record_persona_id_set(before_state, after_state, test):
     — per-assertion coverage, EXPLICITLY INCLUDING the focus persona (the
     searched person, id = the result's primaryId). "The primary is
     implied" is the known failure mode; "at least one assertion has it" is
-    not coverage. Those assertions must also carry record_id in full
-    arkUrl form — so person-evidence can later resolve the record and call
-    same_person. Sidecar-less scenarios (record_read / image / PDF
+    not coverage. Those assertions must also carry record_id in the form
+    the sidecar of their own log entry stores it (a search's sidecar stores
+    the full arkUrl; a record_read's stores the ARK it was read by) — so
+    person-evidence can later resolve the record and call same_person. With
+    no sidecar for the log entry, the full arkUrl is required. Sidecar-less scenarios (record_read / image / PDF
     extractions) skip: supplying record_persona_id there is a hard error
     by contract."""
     sidecar_ids = _staged_sidecar_record_ids(before_state)
@@ -1081,6 +1106,7 @@ def test_record_persona_id_set(before_state, after_state, test):
     elif not matched:
         pytest.skip("no new assertions from the staged sidecar record")
 
+    stored_by_log = _stored_record_ids_by_log(after_state)
     errors = []
     for a in matched:
         aid = a.get("id", "?")
@@ -1091,7 +1117,14 @@ def test_record_persona_id_set(before_state, after_state, test):
                 f"result's primaryId)"
             )
         rid = a.get("record_id") or ""
-        if not rid.startswith("http"):
+        stored = stored_by_log.get(a.get("log_entry_id"))
+        if stored:
+            if rid not in stored:
+                errors.append(
+                    f"{aid}: record_id {rid!r} is not the form its log entry "
+                    f"{a.get('log_entry_id')}'s sidecar stores ({sorted(stored)})"
+                )
+        elif not rid.startswith("http"):
             errors.append(f"{aid}: record_id {rid!r} is not a full arkUrl")
 
     # Corruption signature (ut_006): one persona id stamped across DIFFERENT

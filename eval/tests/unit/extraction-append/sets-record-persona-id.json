@@ -4,7 +4,7 @@
     "skill": "extraction-append",
     "name": "Set record_persona_id on assertions from a record_search result",
     "type": "positive",
-    "description": "Converted from ut_record_extraction_006; extraction runs in code. Extract assertions from a record_search result handed over by search-records. Because the record came from record_search (logged as log_001 with a results sidecar), each assertion must carry record_persona_id — the GedcomX person id of its persona within the result's gedcomx — and the persisted record_id must be the sidecar's stored form (extraction_append canonicalizes any submitted ARK form — full URL, bare ark:/61903/1:1:<id>, or entity id — to the sidecar's recordId, here the full URL). The focus persona's record_persona_id must equal the result's primaryId.",
+    "description": "Converted from ut_record_extraction_006; extraction runs in code. Extract assertions from a record_search result handed over by search-records. Because the record came from record_search (logged as log_001 with a results sidecar), each assertion must carry record_persona_id — the GedcomX person id of its persona within the result's gedcomx — and the persisted record_id must be the stored form in the sidecar of the assertion's own log entry (extraction_append reads the record and logs that read, so here the ARK it was read by). The focus persona's record_persona_id must equal the result's primaryId.",
     "tags": [
       "extraction",
       "record-search",
@@ -19,7 +19,8 @@
     "record-read-patrick-flynn-mxhy-tp4"
   ],
   "judge_context": [
-    "The skill makes one extraction_append call and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you."
+    "The skill makes one extraction_append call and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you.",
+    "The test hands the skill this record; whether it bears on the project's research objective or names the project's people is not graded."
   ],
   "execution": {
     "max_turns": 10,

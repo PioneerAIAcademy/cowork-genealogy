@@ -21,7 +21,8 @@
     "record-read-becker-1910-mlfm-gc8"
   ],
   "judge_context": [
-    "The skill makes one extraction_append call with the record id and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you."
+    "The skill makes one extraction_append call with the record id and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you.",
+    "The test hands the skill this record; whether it bears on the project's research objective or names the project's people is not graded."
   ],
   "execution": {
     "max_turns": 10,

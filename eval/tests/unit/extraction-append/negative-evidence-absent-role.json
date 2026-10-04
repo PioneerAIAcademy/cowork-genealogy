@@ -19,7 +19,8 @@
   "mcp_fixtures": [],
   "judge_context": [
     "The skill makes one extraction_append call and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you.",
-    "There is no record to extract: the call is extraction_append with `absences`, citing log_006, not `recordIds`."
+    "There is no record to extract: the call is extraction_append with `absences`, citing log_006, not `recordIds`.",
+    "The test hands the skill this record; whether it bears on the project's research objective or names the project's people is not graded."
   ],
   "execution": {
     "max_turns": 10,

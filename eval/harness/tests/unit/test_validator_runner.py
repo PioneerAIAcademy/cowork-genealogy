@@ -3598,3 +3598,49 @@ def test_a_failing_validator_is_not_recorded_as_skipped(tmp_path):
     assert results[0].passed is False
     assert results[0].skipped is False
     assert results[0].outcome == "failed"
+
+
+# --- record_id form: the stored form of the assertion's own log entry ---
+
+_BARE_ARK = "ark:/61903/1:1:ABCD-123"
+
+
+def _run_record_id_form(record_id, log_entry_id):
+    """log_001 is the search sidecar (full arkUrl); log_002 a record_read
+    sidecar of the same record, stored by the bare ARK it was read by."""
+    import json
+
+    before = _empty_research_state()
+    before["files"] = _persona_sidecar_files(["p_1"])
+    after = _empty_research_state()
+    after["files"] = {
+        **before["files"],
+        "results/log_002.json": json.dumps({
+            "log_id": "log_002", "tool": "record_read",
+            "payload": {"results": [{"recordId": _BARE_ARK, "gedcomx": {"persons": [{"id": "p_1"}]}}]},
+        }),
+    }
+    after["research_json"] = {**after["research_json"], "assertions": [
+        {"id": "a_1", "record_id": record_id, "log_entry_id": log_entry_id,
+         "record_role": "principal", "record_persona_id": "p_1"},
+    ]}
+    results = run_validators(
+        skill="extraction-append", validators_dir=VALIDATORS_DIR,
+        before_state=before, after_state=after, tool_calls=[],
+        skill_frontmatter={"name": "extraction-append"}, test={"tags": []},
+    )
+    return next(r for r in results if r.name == "test_record_persona_id_set")
+
+
+@pytest.mark.parametrize("record_id,log_entry_id", [(_BARE_ARK, "log_002"), (_PERSONA_ARK, "log_001")],
+                         ids=["record-read-bare", "search-full-url"])
+def test_record_id_in_its_own_sidecars_form_passes(record_id, log_entry_id):
+    result = _run_record_id_form(record_id, log_entry_id)
+    assert result.passed is True, result.error
+
+
+@pytest.mark.parametrize("record_id,log_entry_id", [(_BARE_ARK, "log_001"), (_PERSONA_ARK, "log_002"), (_BARE_ARK, None)],
+                         ids=["bare-on-search-entry", "full-url-on-read-entry", "no-log-entry"])
+def test_record_id_not_in_its_own_sidecars_form_fails(record_id, log_entry_id):
+    result = _run_record_id_form(record_id, log_entry_id)
+    assert result.passed is False and "record_id" in (result.error or "")
