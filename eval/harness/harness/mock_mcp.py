@@ -145,9 +145,11 @@ LIVE_TOOLS: set[str] = {
     # whenever tool_calls is empty, so the defect switched off the dimension that
     # covers it. conflict-resolution declares it too. Issue #1654 (deep dive).
     "convert_calendar",
-    # Same rationale as convert_calendar: pure URL-templating, no workspace or
-    # network dependency, so a canned fixture would supply the exact URL string
-    # search-external-sites' eval exists to measure.
+    # Same rationale as convert_calendar: URL-templating with no network
+    # dependency, so a canned fixture would supply the exact URL string
+    # search-external-sites' eval exists to measure. Its one workspace write
+    # (the hand-off log entry, only when the agent passes projectPath) runs
+    # against the harness workspace — see _OPTIONAL_PROJECT_PATH_TOOLS.
     "build_external_search_url",
     # Same rationale as convert_calendar: a pure table lookup with no workspace
     # or network dependency. Nothing calls it until issue #1828; kept live so
@@ -1175,7 +1177,8 @@ def create_mock_server(
 #: Tools served by `_make_compiled_tool_handler`: tool name -> (compiled file
 #: under build/tools/, exported function). The generic handler injects the
 #: workspace as `projectPath`; a tool that reads no projectPath
-#: (convert_calendar, build_external_search_url) ignores the inert extra key.
+#: (convert_calendar) ignores the inert extra key. A tool whose projectPath is
+#: OPTIONAL is in `_OPTIONAL_PROJECT_PATH_TOOLS` instead and is only rebased.
 #: extraction_append's lane restriction (issue #695) lives inside its export,
 #: so calling it directly here — bypassing index.ts — still enforces the lane.
 _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
@@ -1189,10 +1192,18 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "research_query": ("research-query.js", "researchQuery"),
     "project_create": ("project-create.js", "projectCreate"),
     "convert_calendar": ("convert-calendar.js", "convertCalendar"),
-    "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrl"),
+    "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrlTool"),
     "sidecar_read": ("sidecar-read.js", "sidecarRead"),
     "get_name_variants": ("name-variants.js", "getNameVariants"),
 }
+
+#: Compiled tools whose `projectPath` is optional and changes what the call
+#: does: given one, `build_external_search_url` also writes the in-flight
+#: hand-off log entry. Production never supplies it on the model's behalf, so
+#: injecting it here would make every run write an entry the agent never asked
+#: for. These get the `person_quality` treatment: a projectPath the agent sent
+#: is rebased onto the workspace, and none is added.
+_OPTIONAL_PROJECT_PATH_TOOLS: frozenset[str] = frozenset({"build_external_search_url"})
 
 #: Compiled tools whose exported function takes a `Principal` as its last
 #: argument. CLAUDE.md requires every credential read to take one explicitly, so
@@ -1521,8 +1532,10 @@ def _make_compiled_tool_handler(
     share this builder (one exported async function taking the input object).
 
     Calls the compiled TS tool via `node --input-type=module` against the
-    workspace path. The skill passes its own projectPath arg, but we always
-    override it with workspace (the harness tempdir) to avoid path drift.
+    workspace path. The skill passes its own projectPath arg, but we override
+    it with workspace (the harness tempdir) to avoid path drift — always,
+    except for `_OPTIONAL_PROJECT_PATH_TOOLS`, where only a projectPath the
+    agent actually sent is rebased.
 
     Input is piped via stdin (as JSON) to avoid shell/JS string escaping
     issues with values that may contain quotes, backslashes, or newlines.
@@ -1542,8 +1555,10 @@ def _make_compiled_tool_handler(
 
             # Override projectPath with workspace; pipe the full input via
             # stdin so no value needs JS-string escaping.
+            # An optional projectPath is rebased only when the agent sent one.
             input_obj = dict(args)
-            input_obj["projectPath"] = str(_ws).replace("\\", "/")
+            if tool_name not in _OPTIONAL_PROJECT_PATH_TOOLS or "projectPath" in args:
+                input_obj["projectPath"] = str(_ws).replace("\\", "/")
 
             # Tools whose entry point takes a Principal as its last argument. The
             # harness is one user per process, so LOCAL is the right one — the same

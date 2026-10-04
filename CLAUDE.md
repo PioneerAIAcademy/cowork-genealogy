@@ -21,7 +21,9 @@ We ship two separate artifacts from this single repo:
 - A Cowork plugin folder packaged as a `.zip` (runs in the Cowork VM)
 
 These two pieces are tightly coupled and must be developed together,
-which is why they live in one repo.
+which is why they live in one repo. The search-agent prototype adds three
+Elastic Beanstalk source bundles, web, worker and tools (`make eb-bundles`;
+`docs/plan/familysearch-handoff.md`).
 
 ## Architecture you must understand before changing anything
 
@@ -77,7 +79,8 @@ in the sense that they cannot.
   `packages/engine/mcp-server/build/`. The `.mcpb` is built from this.
 - `packages/engine/plugin/` — The Cowork plugin folder. Packaged as a .zip directly,
   no compilation step.
-- `scripts/` — Build scripts for both artifacts.
+- `scripts/` — Build scripts for every artifact (`scripts/eb_bundles/` for the
+  Beanstalk bundles).
 - `packages/engine/mcp-server/dev/` — Developer-only scripts: `try-*.ts` one-shot
   smoke tests that invoke a tool directly against live APIs (no MCP
   harness; useful for debugging a tool in isolation), plus

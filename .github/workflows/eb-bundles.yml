@@ -1,0 +1,156 @@
+name: EB bundles
+
+# Builds the prototype's three Elastic Beanstalk source bundles (U12,
+# docs/plan/familysearch-handoff.md), verifies them, and boots each one offline
+# from its unzipped zip with its Procfile command. Before this, nothing built a
+# deployable artifact for the search-agent prototype at all, so a dependency or
+# layout break would first surface on U13's Beanstalk deploy.
+#
+# Node 24, unlike every other JS job here: the U12 text says to build and test
+# the tools bundle on Node 24 (Beanstalk's "Node.js 24 AL2023" branch), so the
+# engine suite runs again under it. The .mcpb stays on Node 22 in
+# engine-tests.yml's `vitest` job, which this deliberately does NOT extend: a
+# matrix there would rename the required `vitest` context and leave every PR
+# waiting on a status that never reports.
+#
+# What each step proves:
+#   make eb-bundles         the builder: wheels for x86_64 AND aarch64 (pip
+#                           picks the tag on the instance), the SSE SPA, the
+#                           engine's production node_modules, the RDS CA.
+#   make eb-bundles-verify  scripts/eb_bundles/verify.py, which shares no code
+#                           with the builder: layout, Procfile/PORT, CA path,
+#                           hook modes, and an offline pip dry-run PER ARCH --
+#                           the only aarch64 coverage CI has (this runner is
+#                           x86_64; the arm64 boot is run locally).
+#   make eb-bundles-smoke   each bundle booted under --network none, web and
+#                           worker on amazonlinux:2023, tools on node:24-slim,
+#                           so a dependency the bundle forgot to vendor fails.
+# The zips are uploaded even on a red run, so a failed verify still hands you
+# the artifact to inspect, and so U13 can deploy exactly what CI built
+# (eb-bundles.json carries each zip's sha256).
+#
+# Advisory: not a required check (lead, 2026-10-04 — the build time isn't worth gating every PR on).
+#
+# Runs on EVERY pull request — no `paths:` filter — so this check always
+# reports a conclusion and can be required by branch protection. A workflow
+# skipped by `paths:` reports nothing at all, and a required check that never
+# reports leaves its PR stuck on "Expected — waiting for status to be reported".
+# The path scope lives in the first job step instead; an unrelated PR pays one
+# ~5s step rather than the ~10 minute build.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  eb-bundles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Does this PR touch a bundle input?
+        id: scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          # The bundles take apps/server (web, worker, templates, pins),
+          # apps/web and the workspace packages it builds from (the SPA),
+          # packages/engine (the tools tier and the worker's plugin) and
+          # scripts/ (the builder and the build stamp). The root package.json
+          # pins pnpm, and pnpm-workspace.yaml decides what the SPA build sees;
+          # tsconfig.base.json and the root .npmrc feed that build too.
+          PATTERNS: '^apps/server/|^apps/web/|^packages/|^scripts/|^package\.json$|^pnpm-lock\.yaml$|^pnpm-workspace\.yaml$|^tsconfig\.base\.json$|^\.npmrc$|^Makefile$|^\.github/workflows/eb-bundles\.yml$'
+        run: |
+          set -euo pipefail
+          files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
+                     --paginate --jq '.[].filename')"
+          if printf '%s\n' "$files" | grep -qE "$PATTERNS"; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No bundle input changed; reporting success without building the bundles."
+          fi
+
+      - name: Check out PR
+        if: steps.scope.outputs.relevant == 'true'
+        uses: actions/checkout@v7
+
+      # pnpm BEFORE setup-node so the cache step can find it. Version is read
+      # from the root package.json `packageManager` field.
+      - if: steps.scope.outputs.relevant == 'true'
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node 24
+        if: steps.scope.outputs.relevant == 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install the pinned npm (from the packageManager field)
+        if: steps.scope.outputs.relevant == 'true'
+        run: |
+          # The engine's .npmrc sets engine-strict with an npm >=11.12 <12
+          # bound, and the builder refuses any other npm, so install the
+          # pinned one before any engine `npm ci`. Version comes from
+          # packageManager (single source of truth).
+          NPM_VER="$(node -p "require('./packages/engine/mcp-server/package.json').packageManager.split('@')[1]")"
+          npm install -g "npm@${NPM_VER}"
+          echo "Using node $(node --version), npm $(npm --version)"
+
+      - name: Install uv (+ pinned Python)
+        if: steps.scope.outputs.relevant == 'true'
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: '3.12'
+          enable-cache: true
+          cache-dependency-glob: 'apps/server/uv.lock'
+
+      # `--filter web...` is apps/web plus the workspace packages it depends
+      # on, which skips apps/electron and its binary download.
+      - name: Install the web workspace
+        if: steps.scope.outputs.relevant == 'true'
+        run: pnpm install --frozen-lockfile --filter web...
+
+      - name: Install the engine
+        if: steps.scope.outputs.relevant == 'true'
+        working-directory: packages/engine/mcp-server
+        run: npm ci
+
+      - name: Run the engine suite on Node 24 (pretest builds first)
+        if: steps.scope.outputs.relevant == 'true'
+        working-directory: packages/engine/mcp-server
+        run: npm test
+
+      - name: Build the bundles
+        if: steps.scope.outputs.relevant == 'true'
+        run: |
+          echo "node $(node --version) at $(command -v node); npm $(npm --version) at $(command -v npm)"
+          make eb-bundles
+
+      - name: Verify the bundles
+        if: steps.scope.outputs.relevant == 'true'
+        run: make eb-bundles-verify
+
+      - name: Boot each bundle offline (amd64)
+        if: steps.scope.outputs.relevant == 'true'
+        run: make eb-bundles-smoke
+
+      - name: Upload the bundles
+        if: ${{ !cancelled() && steps.scope.outputs.relevant == 'true' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: eb-bundles
+          path: |
+            releases/eb-web.zip
+            releases/eb-worker.zip
+            releases/eb-tools.zip
+            releases/eb-bundles.json
+          retention-days: 14
+          # The zips are already deflated (the wheels stored); a second pass only costs time.
+          compression-level: 0
+          # `warn`, not `error`: the common failure is the build failing before
+          # any zip exists, where `error` would add a second red step blaming a
+          # missing artifact instead of the build error that broke it.
+          if-no-files-found: warn

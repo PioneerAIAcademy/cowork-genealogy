@@ -18,14 +18,22 @@ const canonicalPath = join(repoRoot, "plugin", "references", "places-guidance.md
 // a skill here (and copy the file) when it starts using place tools or writing
 // places.
 const SKILLS_WITH_PLACES_GUIDANCE = [
-  "locality-guide",
-  "historical-context",
   "search-external-sites",
   "timeline",
   "conflict-resolution",
   "record-extraction",
   "init-project",
 ];
+
+// Agents that inline the canonical places guidance verbatim in their body
+// (CLAUDE.md "No playbook/reference files for agents": an agent carries its own
+// doctrine, so the guidance is inlined rather than loaded from a references/
+// file). The canonical file carries a leading HTML comment describing the
+// skill-copy mechanism, which does not apply inside an agent, so the agent
+// inlines the canonical BODY (comment stripped) and this arm asserts that body
+// appears verbatim. historical-context moved here from the skills list when
+// issue #2800 converted it to an agent.
+const AGENTS_WITH_PLACES_GUIDANCE = ["historical-context"];
 
 // Skills whose copy is deliberately specialized, so byte-identical is the wrong
 // contract for them. Each needs a reason — this list is not an escape hatch for
@@ -88,6 +96,27 @@ describe("places-guidance drift lint", () => {
       const copy = readFileSync(copyPath, "utf8");
       // Byte-identical: edit the canonical, then re-copy into every skill.
       expect(copy).toBe(canonical);
+    });
+  }
+
+  // The canonical body (the leading HTML comment, which only describes the
+  // skill-copy mechanism, stripped) must appear verbatim in each agent that
+  // inlines the guidance. LF-normalized so a CRLF checkout matches.
+  const canonicalBody = canonical
+    .replace(/\r\n/g, "\n")
+    .replace(/^<!--[\s\S]*?-->\n*/, "")
+    .trim();
+
+  for (const agent of AGENTS_WITH_PLACES_GUIDANCE) {
+    it(`${agent} agent inlines the canonical places-guidance body verbatim`, () => {
+      const agentPath = join(repoRoot, "plugin", "agents", `${agent}.md`);
+      expect(existsSync(agentPath), `missing agent: ${agentPath}`).toBe(true);
+      const body = readFileSync(agentPath, "utf8").replace(/\r\n/g, "\n");
+      expect(
+        body.includes(canonicalBody),
+        `${agent}.md no longer contains the canonical places-guidance body ` +
+          `verbatim. Edit the canonical, then re-inline it into the agent.`,
+      ).toBe(true);
     });
   }
 

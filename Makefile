@@ -482,23 +482,31 @@ proto-down: ## D3 prototype: stop the stack and drop its volumes (the schema re-
 proto-logs: ## D3 prototype: follow the stack's logs (SERVICE=shim to narrow)
 	$(PROTO_COMPOSE) logs -f $(SERVICE)
 
+# U7: proto/enqueue.py signs SigV4. These host-venv recipes sign with a dummy static pair
+# (elasticmq ignores signatures), so they never read ~/.aws or probe IMDS.
+PROTO_SQS_ENV := GENEALOGY_SQS_ACCESS_KEY=x GENEALOGY_SQS_SECRET_KEY=x
+
 .PHONY: proto-send
 proto-send: ## D3 prototype: enqueue one turn on elasticmq: make proto-send ARGS="--behaviour ok"
-	cd apps/server && uv run python proto/enqueue.py $(ARGS)
+	cd apps/server && $(PROTO_SQS_ENV) uv run python proto/enqueue.py $(ARGS)
 
 .PHONY: proto-smoke
 proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / ceiling turns through the shim
-	cd apps/server && uv run python proto/smoke.py
+	cd apps/server && $(PROTO_SQS_ENV) uv run python proto/smoke.py $(ARGS)
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py
 
 # D9–10 acceptance, billed (two short Sonnet turns). Same `up` as proto-up (env.sh);
-# refuses to run without a model key.
+# refuses to run without a model key. The Stop hook is off (AUTONOMOUS_MAX_NUDGES=0,
+# unless the caller sets it non-empty): a lookup on a project-less session is never
+# "completed", so the hook would veto every stop and end the turn no_progress. `:-0`,
+# not `-0`: an empty value would reach compose's `:-60` on the web tier and turn it on.
 .PHONY: proto-turn
 proto-turn: $(ENGINE_DEPS) ## D9–10 acceptance: two real turns through web tier → queue → shim → worker, the second resuming the first (needs ANTHROPIC_API_KEY or eval/.env)
-	. apps/server/proto/env.sh && \
+	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; \
+	  . apps/server/proto/env.sh && \
 	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-turn: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
 	  $(PROTO_COMPOSE) up -d --build && \
 	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools && \
@@ -542,7 +550,7 @@ proto-kill: ## D14: one real turn killed at its first place_search call (docker 
 .PHONY: proto-probe-resume
 proto-probe-resume: ## 0a probe: kill a real turn inside a BACKGROUND delegation and watch the resume — SESSION=<id> (proto-seed first); billed, ~1 h
 	@test -n "$(SESSION)" || { echo "proto-probe-resume: SESSION=<id> is required (make proto-seed FIXTURE=... first)" >&2; exit 2; }
-	AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-40}" $(MAKE) proto-kill SESSION="$(SESSION)" \
+	AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-40}" $(MAKE) proto-kill SESSION="$(SESSION)" \
 	  ARGS="--kill-on Agent --kill-on-input run_in_background=true --kill-after-s $${KILL_AFTER_S-20} \
 	        --text-file proto/probes/background-delegation.txt --deadline-s $${DEADLINE_S-2400} $(ARGS)"
 
@@ -568,10 +576,12 @@ proto-audit: ## Acceptance criteria 3 and 4 over a session's tool_calls rows —
 # the harness's tree-read block (BLOCKED_TOOLS; `BLOCKED_TOOLS= make proto-demo` lifts it),
 # since every e2e fixture's answer still sits in the live tree. On a docker-compose-only
 # machine: make proto-demo PROTO_COMPOSE="docker-compose -f apps/server/proto/docker-compose.yml"
+# The Stop hook is off unless the caller sets AUTONOMOUS_MAX_NUDGES non-empty -- `:-0`, as
+# in proto-turn, since an empty value would reach compose's `:-60` on the web tier.
 .PHONY: proto-demo
 proto-demo: $(ENGINE_DEPS) ## D19 demo: seed FIXTURE (default bagley-father-1884), run one real research turn to turn_done with the tree-read block, print the acceptance queries; ARGS="--prompt '…' | --session <id>"
 	export BLOCKED_TOOLS="$${BLOCKED_TOOLS-person_read,person_search,person_ancestors,person_record_matches,person_person_matches,person_quality}"; \
-	  export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-0}"; \
+	  export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; \
 	  . apps/server/proto/env.sh && \
 	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-demo: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
 	  $(PROTO_COMPOSE) up -d --build && \
@@ -598,7 +608,7 @@ proto-demo: $(ENGINE_DEPS) ## D19 demo: seed FIXTURE (default bagley-father-1884
 # attempt at the ceiling is redelivered mid-flight; test_proto_config.py compares the two.
 .PHONY: proto-demo-auto
 proto-demo-auto: ## D18: proto-demo with the continue-nudge Stop hook (AUTONOMOUS_MAX_NUDGES, default 40) at the pinned 1800 s per-attempt ceiling (READ_TIMEOUT_S), waiting out the six attempts a whole run may take; FIXTURE=… ARGS=…
-	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-40}"; \
+	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-40}"; \
 	  export READ_TIMEOUT_S="$${READ_TIMEOUT_S:-1800}"; \
 	  $(MAKE) proto-demo FIXTURE="$(FIXTURE)" ARGS="--deadline-s $$((6 * READ_TIMEOUT_S + 300)) $(ARGS)"
 
@@ -643,7 +653,7 @@ PROTO_PG_DSN ?= postgresql://postgres:proto@localhost:5434/proto
 .PHONY: proto-web
 proto-web: ## D11–12 web tier from the venv on :8085, against the compose postgres + elasticmq
 	cd apps/server && PG_DSN=$(PROTO_PG_DSN) QUEUE_URL=http://localhost:9324/000000000000/turns \
-	  uv run python proto/web/app.py
+	  $(PROTO_SQS_ENV) uv run python proto/web/app.py
 
 .PHONY: proto-drive
 proto-drive: ## D13 acceptance: post, stream, drop mid-turn, resume on Last-Event-ID, miss nothing (embedded Postgres + seeder; BASE=http://localhost:8085 runs --worker against a stack)
@@ -664,10 +674,22 @@ proto-up-store: ## D6–8 store: start postgres + minio (+ the bucket one-shot) 
 	$(PROTO_COMPOSE) up -d postgres minio minio-init
 	$(PROTO_COMPOSE) up -d --wait postgres minio
 
+# Two arms. Static: the MinIO keys as GENEALOGY_S3_* (via PROTO_S3_*), with any exported
+# AWS_* keys unset so they cannot mask it. Keyless (U8): PROTO_S3_KEYLESS=1, the MinIO keys
+# as AWS_* and also as PROTO_S3_* (so a helper that stopped dropping them goes red), and
+# ~/.aws, SSO and instance metadata isolated, so the SDK default chain's environment
+# provider is the only way the store can sign.
 .PHONY: proto-store-test
 proto-store-test: proto-up-store ## D6–8 store: PgS3ProjectStore conformance + Postgres-specific cases against the compose postgres/minio
-	cd $(ENGINE_DIR) && PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 \
+	cd $(ENGINE_DIR) && env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY \
+	  PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 \
 	  PROTO_S3_BUCKET=projects PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
+	  npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts
+	cd $(ENGINE_DIR) && env -u AWS_PROFILE -u AWS_SESSION_TOKEN \
+	  PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 PROTO_S3_BUCKET=projects \
+	  PROTO_S3_KEYLESS=1 PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
+	  AWS_ACCESS_KEY_ID=proto AWS_SECRET_ACCESS_KEY=protoproto \
+	  AWS_SHARED_CREDENTIALS_FILE=/nonexistent AWS_CONFIG_FILE=/nonexistent AWS_EC2_METADATA_DISABLED=true \
 	  npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts
 
 .PHONY: engine-test
@@ -1307,7 +1329,7 @@ feedback-reset: ## Reset a feedback case dir to its imported state between attem
 	@test -n "$(CASE)" || { echo "ERROR: set CASE, e.g. make feedback-reset CASE=~/feedback/feedback-2026-07-21T09-14-22Z" >&2; exit 1; }
 	bash scripts/reset-feedback-case.sh $(CASE)
 
-# ── Artifacts (the existing Cowork/desktop deliverables) ─────────
+# ── Artifacts (desktop/Cowork deliverables and the Beanstalk bundles) ─────────
 # The build scripts are cross-platform Node (no bash / no `zip`, so the Windows
 # BuildMcpb.bat / BuildPlugin.bat call them too) and self-install + self-build
 # the engine, so these stay thin wrappers (no hidden dep to surface here).
@@ -1335,6 +1357,38 @@ cowork-install: mcpb plugin ## Build BOTH artifacts and print the install click-
 	@printf '   (the Cowork tab and the Code tab keep separate plugin lists)\n\n'
 	@printf '3. Fully QUIT and reopen Claude Desktop.\n\n'
 	@ls -l releases/genealogy-mcp.mcpb releases/genealogy-plugin.zip 2>/dev/null || true
+
+# The prototype's three Elastic Beanstalk source bundles (U12, docs/plan/familysearch-handoff.md),
+# every dependency vendored: releases/eb-{web,worker,tools}.zip + releases/eb-bundles.json. The
+# builder stages outside the repo and needs node >= 22 with the engine's npm, the pnpm workspace
+# installed, and the network (PyPI, npm, the RDS truststore). pip is the version the AL2023
+# Python 3.12 platform ships; pyyaml is apps/server/uv.lock's (test_eb_bundles checks it).
+# ARGS passes through to the builder only (make eb-bundles ARGS="--arch x86_64 --rds-ca FILE"); the
+# verifier always dry-runs both arches, so a single-arch build fails it.
+EB_PIP    := 26.2.1
+EB_PYYAML := 6.0.3
+EB_PLATFORM ?= linux/amd64
+EB_ZIPS   := releases/eb-web.zip releases/eb-worker.zip releases/eb-tools.zip
+
+.PHONY: eb-bundles
+eb-bundles: ## Build the three Beanstalk bundles (web, worker, tools) into releases/: make eb-bundles [ARGS="--arch x86_64"]
+	EB_CALLER_PATH="$$PATH" uv run --no-project --python 3.12 --with pip==$(EB_PIP) python scripts/eb_bundles/build.py $(ARGS)
+
+.PHONY: eb-bundles-verify
+eb-bundles-verify: ## Check releases/eb-*.zip: layout, Procfile/PORT, CA path, hook modes, offline pip dry-run per arch
+	uv run --no-project --python 3.12 --with pip==$(EB_PIP) --with pyyaml==$(EB_PYYAML) python scripts/eb_bundles/verify.py $(EB_ZIPS)
+
+.PHONY: eb-bundles-smoke
+eb-bundles-smoke: ## Boot each bundle offline in Docker (AL2023 / node:24-slim): make eb-bundles-smoke [EB_PLATFORM=linux/arm64]
+	uv run --no-project --python 3.12 --with pyyaml==$(EB_PYYAML) python scripts/eb_bundles/smoke.py --platform $(EB_PLATFORM)
+
+# Run from apps/server so the header uv writes matches the committed files. `--locked`, not
+# `--frozen`: a group edited in pyproject.toml without `uv lock` fails here instead of
+# exporting the stale lock.
+.PHONY: proto-requirements
+proto-requirements: ## Export uv.lock's proto-web/proto-worker groups to apps/server/proto/{web,worker}/requirements.txt (hashes; commit both after any uv.lock change)
+	cd apps/server && uv export --quiet --locked --only-group proto-web --no-emit-project --format requirements-txt -o proto/web/requirements.txt
+	cd apps/server && uv export --quiet --locked --only-group proto-worker --no-emit-project --format requirements-txt -o proto/worker/requirements.txt
 
 # Builds and pushes the E2B agent image. `make deploy` runs this too, so the
 # control plane and the sandbox ship together; it stays a standalone target for

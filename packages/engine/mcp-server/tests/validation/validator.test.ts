@@ -2765,6 +2765,21 @@ describe("Research closed shapes", () => {
     expect(result.valid).toBe(true);
   });
 
+  // #2802 — the two church-book browse sites. A capture from either could not
+  // be logged before: `external_site.site` is a closed enum.
+  it("accepts the archion and matricula browse sites on external_site.site", async () => {
+    for (const site of ["archion", "matricula"]) {
+      const research = maximalResearch();
+      research.log[1].external_site.site = site;
+      const result = await validateParsed(research, maximalTree);
+      expect(result.errors, site).toEqual([]);
+    }
+    const research = maximalResearch();
+    research.log[1].external_site.site = "archion_de";
+    const result = await validateParsed(research, maximalTree);
+    expect(JSON.stringify(result.errors)).toMatch(/'archion_de' is not a valid site/);
+  });
+
   // #1270 — pages_read[].section is the `locality_page_section` closed enum.
   // validateLocalities never descended into pages_read before, so a misspelled
   // section reached disk with valid: true. The maximal document above carries
@@ -3163,6 +3178,7 @@ describe("Research closed shapes", () => {
       proof_claim_relationship: schema.$defs.proof_claim_relationship,
       evaluation_entry: schema.$defs.evaluation_entry,
       locality: schema.$defs.locality,
+      warning_justification: schema.$defs.warning_justification,
     };
 
     expect(Object.keys(defFor).sort()).toEqual(Object.keys(RESEARCH_SHAPES).sort());

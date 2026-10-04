@@ -107,6 +107,8 @@ export type MaterializeFactsInput = Partial<MaterializeFactsOp> &
     // and writes once (all-or-nothing). Ids assigned earlier in the batch are
     // visible to later ops (the allocator rescans the live tree).
     ops?: MaterializeFactsAnyOp[];
+    // Justifications for genealogical warnings this write introduces (issue #2840).
+    warningJustifications?: Array<{ warningId: string; justification: string }>;
   };
 
 /** The per-persona result payload — the body of a single call's success, or
