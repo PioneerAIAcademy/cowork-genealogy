@@ -1,0 +1,14 @@
+{
+  // U12 D11: the transport smoke compiled to plain JS, so the tools Beanstalk bundle can
+  // run it as `node smoke/dev/smoke-http.js` with only its production node_modules --
+  // no tsx, no npm, no registry. scripts/eb_bundles/build.py compiles it into the
+  // bundle's smoke/; nothing else emits it. dev/smoke-calls.ts imports
+  // ../src/auth/config.js, so the output holds smoke/dev/ and smoke/src/.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./smoke-build",
+    "declaration": false
+  },
+  "include": ["dev/smoke-http.ts"]
+}

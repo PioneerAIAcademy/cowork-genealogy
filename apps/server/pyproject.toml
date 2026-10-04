@@ -33,9 +33,9 @@ dev = [
     # tests/test_proto_config.py parses apps/server/proto/docker-compose.yml.
     # Already present transitively (uvicorn[standard]); declared because we import it.
     "pyyaml>=6.0",
-    # proto/enqueue.py's SigV4 signer (U7). The proto web and worker images pip-install
-    # it at the version this lock pins (test_proto_config checks the two agree). It sits
-    # here, not in [project], so deploy/Dockerfile's `uv sync --no-dev` image does not grow.
+    # proto/enqueue.py's SigV4 signer (U7). The proto web and worker images install it
+    # from the proto-web/proto-worker exports of this lock (below). It sits here, not in
+    # [project], so deploy/Dockerfile's `uv sync --no-dev` image does not grow.
     "botocore>=1.40",
 ]
 # proto/drive.py --embedded-pg: a pip-installed PostgreSQL 16 so the D11-13 acceptance
@@ -43,6 +43,28 @@ dev = [
 # `uv sync` or CI; `make proto-drive` runs `uv run --group proto`.
 proto = [
     "pgserver>=0.1.4",
+]
+# The proto web and worker tiers' runtime closures (U12). `make proto-requirements` exports
+# each to apps/server/proto/{web,worker}/requirements.txt, which the images and the Beanstalk
+# bundles install with --require-hashes; test_proto_config checks the export is current.
+# Never installed by `uv sync` or CI.
+proto-web = [
+    "fastapi>=0.140.13",
+    "uvicorn[standard]>=0.51.0",
+    "psycopg[binary]>=3.3.4",
+    "itsdangerous>=2.2",
+    "cryptography>=48.0.1",
+    "httpx>=0.27",
+    "botocore>=1.40",
+]
+# The SDK pin is the flush-mode pin (session_store_flush="eager" is SDK-side) and the CLI
+# pin (the wheel bundles Claude Code 2.1.220). One lock resolves one version, so this also
+# holds [project]'s claude-agent-sdk at 0.2.128 until it moves here.
+proto-worker = [
+    "claude-agent-sdk==0.2.128",
+    "psycopg[binary]>=3.3.4",
+    "botocore>=1.40",
+    "anyio>=4.14.2",
 ]
 
 [tool.pytest.ini_options]

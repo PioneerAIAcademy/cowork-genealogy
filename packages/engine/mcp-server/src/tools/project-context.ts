@@ -66,6 +66,8 @@ export type ProjectContextResult =
       /** The engine build (`<base>+<date>.<sha>[.dirty]` or `<base>+dev`) — on every branch, #2126. */
       buildId: string;
       projectStatus: string | null;
+      /** research.project.objective verbatim; null when absent. No other tool returns it (#3026). */
+      objective: string | null;
       openQuestions: ProjectContextQuestion[];
       /** Advisory per-question state and next step. Nothing gates on it. */
       questionStatuses: QuestionStatus[];
@@ -261,6 +263,10 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
     research?.project && typeof research.project === "object" && typeof research.project.status === "string"
       ? research.project.status
       : null;
+  const objective =
+    research?.project && typeof research.project === "object" && typeof research.project.objective === "string"
+      ? research.project.objective
+      : null;
 
   // Advisory only — nothing gates on this. It tells the router what each
   // question is waiting on, computed from the document rather than from
@@ -274,6 +280,7 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
     ok: true,
     buildId,
     projectStatus,
+    objective,
     openQuestions,
     questionStatuses,
     persons,
@@ -290,6 +297,8 @@ export const projectContextSchema = {
   description:
     "Read-only compact projection of the project state — call this INSTEAD of " +
     "reading research.json or tree.gedcomx.json. Returns projectStatus; " +
+    "objective (research.project.objective verbatim, including any stated doubt " +
+    "about its premise); " +
     "openQuestions [{id, question}] (unresolved only, text truncated); persons " +
     "[{id, name, gender, sourceRefs}] — every tree person with the distinct S ids " +
     "it already cites; and sources [{id, repository, " +
