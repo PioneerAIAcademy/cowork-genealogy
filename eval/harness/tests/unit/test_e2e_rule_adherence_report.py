@@ -367,6 +367,22 @@ def test_git_sha_ancestry_determines_post_rule(tmp_path: Path):
     assert method == "git_sha"
 
 
+def test_same_day_as_introduced_leaves_denominator(tmp_path: Path):
+    """A run dated on the same day as the introduced commit must leave the
+    denominator — its filename timestamp cannot prove it ran after the
+    commit landed (review comment #1)."""
+    rule = _make_rule()
+    run_data = {}  # no git_sha — forces filename-date fallback
+    same_day_path = tmp_path / "run-2026-07-31_10-00-00.json"
+
+    with _patch_introduced():
+        _introduced_date_cache.clear()
+        post, method = is_post_rule(rule, run_data, same_day_path)
+
+    assert post is False
+    assert method == "filename_date"
+
+
 def test_filename_date_fallback_when_no_git_sha(tmp_path: Path):
     """When no git_sha, fall back to filename date vs introduced commit date."""
     rule = _make_rule()
@@ -386,39 +402,31 @@ def test_filename_date_fallback_when_no_git_sha(tmp_path: Path):
 
 
 def test_dating_method_counts_reported(tmp_path: Path):
-    """The report shows how many episodes were dated by each method."""
+    """The report shows how many *episodes* were dated by each method,
+    not how many runs.  A single run with two gps-mentor captures
+    must report dated_by_filename == 2 (one per episode)."""
     _write(
         tmp_path,
         "run-2026-08-15_10-00-00.json",
         {
             "subagents": [
-                _capture("gps-mentor", ["project_context", "research_query"])
-            ],
-            "tool_calls": [],
-        },
-    )
-    _write(
-        tmp_path,
-        "run-2026-08-16_10-00-00.json",
-        {
-            "subagents": [
-                _capture("gps-mentor", ["project_context"])
+                _capture("gps-mentor", ["project_context", "research_query"]),
+                _capture("gps-mentor", ["project_context"]),
             ],
             "tool_calls": [],
         },
     )
 
     rule = _make_rule()
-    paths = [
-        tmp_path / "run-2026-08-15_10-00-00.json",
-        tmp_path / "run-2026-08-16_10-00-00.json",
-    ]
+    paths = [tmp_path / "run-2026-08-15_10-00-00.json"]
 
     with _patch_introduced():
         _introduced_date_cache.clear()
         results, _ = scan_rules(paths, [rule])
 
     r = results[0]
+    # One run, two episodes — dated_by_filename must count episodes
+    assert r.episodes == 2
     assert r.dated_by_filename == 2
     assert r.dated_by_sha == 0
 

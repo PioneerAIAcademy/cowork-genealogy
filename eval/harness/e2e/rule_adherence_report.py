@@ -85,6 +85,16 @@ class AdherenceRule:
 
 
 # ---------------------------------------------------------------------------
+# Shared constants — used in both predicates and RULES so a typo in one
+# cannot silently diverge from the other (review comment #3).
+# ---------------------------------------------------------------------------
+
+_GPS_MENTOR = "gps-mentor"
+_PROJECT_CONTEXT = "project_context"
+_RESEARCH_JSON = "research.json"
+
+
+# ---------------------------------------------------------------------------
 # Episode + obeyed helpers for the two seed rules
 # ---------------------------------------------------------------------------
 
@@ -95,7 +105,7 @@ def _gps_mentor_tool_using_captures(run_data: dict) -> list[dict]:
     for sub in run_data.get("subagents") or []:
         if not isinstance(sub, dict):
             continue
-        if sub.get("agent_type") != "gps-mentor":
+        if sub.get("agent_type") != _GPS_MENTOR:
             continue
         called = tools_from_capture(sub)
         if called:
@@ -116,15 +126,15 @@ def _capture_called_project_context(episode: dict, run_data: dict) -> bool:
     """
     # Source 1: capture blocks
     called = tools_from_capture(episode)
-    if "project_context" in called:
+    if _PROJECT_CONTEXT in called:
         return True
     # Source 2: tool_calls attribution
     for tc in run_data.get("tool_calls") or []:
         if not isinstance(tc, dict):
             continue
-        if tc.get("agent_type") != "gps-mentor":
+        if tc.get("agent_type") != _GPS_MENTOR:
             continue
-        if bare_tool_name(tc.get("tool") or tc.get("name") or "") == "project_context":
+        if bare_tool_name(tc.get("tool") or tc.get("name") or "") == _PROJECT_CONTEXT:
             return True
     return False
 
@@ -135,7 +145,7 @@ def _gps_mentor_read_calls(run_data: dict) -> list[dict]:
     for tc in run_data.get("tool_calls") or []:
         if not isinstance(tc, dict):
             continue
-        if tc.get("agent_type") != "gps-mentor":
+        if tc.get("agent_type") != _GPS_MENTOR:
             continue
         tool = bare_tool_name(tc.get("tool") or tc.get("name") or "")
         if tool == "Read":
@@ -146,7 +156,7 @@ def _gps_mentor_read_calls(run_data: dict) -> list[dict]:
 def _read_does_not_open_research_json(episode: dict, _run_data: dict) -> bool:
     """Obeyed for rule 2: args do not name ``research.json``."""
     args = episode.get("args") or {}
-    return "research.json" not in json.dumps(args)
+    return _RESEARCH_JSON not in json.dumps(args)
 
 
 # ---------------------------------------------------------------------------
@@ -159,20 +169,20 @@ RULES: list[AdherenceRule] = [
         file="packages/engine/plugin/agents/gps-mentor.md",
         instruction="Open every invocation with:",
         introduced="09c8195d3",
-        agent="gps-mentor",
+        agent=_GPS_MENTOR,
         enumerate_episodes=_gps_mentor_tool_using_captures,
         is_obeyed=_capture_called_project_context,
-        observable_tool="project_context",
+        observable_tool=_PROJECT_CONTEXT,
     ),
     AdherenceRule(
         id="gps-mentor-no-research-json-read",
         file="packages/engine/plugin/agents/gps-mentor.md",
         instruction="**Do not open `research.json`.**",
         introduced="09c8195d3",
-        agent="gps-mentor",
+        agent=_GPS_MENTOR,
         enumerate_episodes=_gps_mentor_read_calls,
         is_obeyed=_read_does_not_open_research_json,
-        observable_pattern="research.json",
+        observable_pattern=_RESEARCH_JSON,
     ),
 ]
 
@@ -252,7 +262,7 @@ def is_post_rule(
     rd = run_date(run_path)
     intro_d = _introduced_date(rule.introduced)
     if rd is not None and intro_d is not None:
-        return (rd >= intro_d, "filename_date")
+        return (rd > intro_d, "filename_date")
     # Neither method worked — conservatively exclude
     return (False, "unknown")
 
@@ -352,14 +362,14 @@ def scan_rules(
                 pre_rule_excluded[i] += 1
                 continue
 
-            if method == "git_sha":
-                dated_sha[i] += 1
-            elif method == "filename_date":
-                dated_filename[i] += 1
-            else:
-                dated_unknown[i] += 1
-
             rule_episodes = rule.enumerate_episodes(data)
+
+            if method == "git_sha":
+                dated_sha[i] += len(rule_episodes)
+            elif method == "filename_date":
+                dated_filename[i] += len(rule_episodes)
+            else:
+                dated_unknown[i] += len(rule_episodes)
             episodes_count[i] += len(rule_episodes)
             for ep in rule_episodes:
                 if rule.is_obeyed(ep, data):
@@ -519,8 +529,10 @@ def main(argv: list[str] | None = None) -> int:
     for problem in problems:
         print(f"  skip {problem}", file=sys.stderr)
 
-    # Post-scan checks
-    result_errors = check_results(selected, results)
+    # Post-scan checks — run safety checks against the whole corpus so a
+    # rule with zero episodes in the window (because it is being obeyed)
+    # does not exit non-zero (review comment #2).
+    result_errors = check_results(selected, scan_rules(all_result_jsons(), selected)[0])
     if result_errors:
         # Print the report first so the numbers are visible alongside the error
         print(describe_window(cutoff, n_runs=len(paths), n_total=len(all_paths)))
