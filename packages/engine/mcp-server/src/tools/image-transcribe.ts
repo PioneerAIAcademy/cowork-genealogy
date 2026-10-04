@@ -1,16 +1,27 @@
 import type { Principal } from "../auth/principal.js";
 import { getOpenRouterApiKey, getOpenRouterModel } from "../auth/config.js";
+import { memoryPageId, resolveMemoryArtifactUrl } from "../utils/memories.js";
 import {
   resolveFsImageInput,
   fetchFsImageBytes,
+  extractImageContextQuery,
 } from "../utils/fs-image-fetch.js";
+import { imageViewerUrl } from "../utils/ark.js";
 import {
   saveSourceImage,
   recordImageReadCap,
   projectScope,
 } from "../utils/image-store.js";
-import { fetchWithTimeout, isFetchTimeout } from "../utils/http.js";
 import { expandLookingFor } from "../utils/name-variants.js";
+import {
+  runOcr,
+  buildOcrPrompt,
+  parseFound,
+  OCR_TIMEOUT_MS,
+  OCR_MAX_TOKENS,
+  MAX_OCR_INPUT_BYTES,
+} from "../utils/ocr.js";
+import { checkImageBrowseCap, recordImageBrowse } from "../utils/browse-budget.js";
 import { getProjectStore } from "../store/project-store.js";
 import {
   classifyProjectPath,
@@ -27,194 +38,13 @@ import type {
   StagedTranscription,
 } from "../types/image-transcribe.js";
 
-const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-
-// Browse budget (issue #1081, spec §5.8). From the (N+1)th distinct image in one
-// image group in one project onward, a successful transcription carries an
-// advisory `browseBudget` — the page read still returns in full; nothing is
-// refused (a read persists nothing, so a wrong refusal would hard-block a
-// researcher mid-browse with no reset but a server restart — the ADR-0011
-// read-tool carve-out).
-const BROWSE_BUDGET_IMAGES = 20;
-
-// Distinct imageIds seen per (project, image-group), keyed
-// `${projectScope(projectPath)}\0${imageGroup}` — the scope being the bound store's
-// patron-isolating projectId where there is one (shared-process http.ts, where every
-// request presents the same anchor projectPath, so a projectPath key would collide
-// patrons — #2771, the browse-budget twin of the #2457 B2 cap fix), else the
-// normalized projectPath, else the `<no-project>` sentinel. Keyed by PROJECT
-// deliberately: the MCP server process outlives one conversation, so a group-only key
-// would tell a second project it had already browsed 20 pages on its first read.
-// Process-lifetime, never persisted; re-reading an image already in the set does not
-// advance the count. Follows place-search.ts's module-cache precedent.
-const browseBudgetSeen = new Map<string, Set<string>>();
-
-/** Test-only reset — the Map is module-level and persists across `it()` blocks,
- *  which `vi` mock resets do not clear. Mirrors `__clearPlaceSearchCacheForTests`. */
-export function __clearBrowseBudgetForTests(): void {
-  browseBudgetSeen.clear();
-}
-
-/**
- * Record this image against the (project, group) browse counter and return the
- * advisory once the group passes `BROWSE_BUDGET_IMAGES` distinct images.
- *
- * Returns `undefined` for an ark-only call: an ARK carries no image-group number,
- * so a hunt driven by `ark` is never counted (spec §5.8 known limitation).
- */
-function recordBrowseAndCheckBudget(
-  imageId: string | undefined,
-  projectPath: string | undefined,
-): ImageTranscribeResult["browseBudget"] {
-  if (!imageId) return undefined;
-  const imageGroup = imageId.split("_")[0];
-  const key = `${projectScope(projectPath)}\0${imageGroup}`;
-  let seen = browseBudgetSeen.get(key);
-  if (!seen) {
-    seen = new Set<string>();
-    browseBudgetSeen.set(key, seen);
-  }
-  seen.add(imageId);
-  if (seen.size <= BROWSE_BUDGET_IMAGES) return undefined;
-  return {
-    imageGroup,
-    distinctImagesRead: seen.size,
-    notice:
-      `You have now transcribed ${seen.size} distinct images from image group ` +
-      `${imageGroup} in this project. Page-by-page browsing rarely pays past this ` +
-      `point. Log the browse with a negative outcome (research_log_append) and ` +
-      `pivot to the indexed route — record_search, record_read, or fulltext_search ` +
-      `— or ask the user whether to keep paging.`,
-  };
-}
-
-// VLM OCR on a full page scan is the slowest call this server makes, and the
-// budget has to clear a slow-but-genuine read without waiting out a hung one.
-// Measured 2026-09-08 over 59 live reads on the current default model, the whole
-// call runs p50 18.7s / p90 40.6s / max 50.1s. So 180s is not a latency budget
-// but a hang-catcher, 3.6x the slowest healthy read. Sized in the spec, not
-// guessed — re-measure there after a model change, and never from run-log
-// timelines, which are per SDK message rather than per tool call. This budget
-// holds only where the call is not bridged (the harnesses and the hosted
-// control plane, both verified over stdio): in Cowork the device bridge aborts
-// every MCP call at 60s, so any OCR past a minute is lost there regardless of
-// this value. Whether the desktop `.mcpb` is bridged too has not been measured;
-// see docs/architecture.md "Other environment differences that bite".
-const OCR_TIMEOUT_MS = 180_000;
-
-// Explicit output-token budget. Setting it makes the cap OURS and the
-// truncation case reproducible. Note the DIRECTION: for the current default
-// google/gemini-3.7-flash OpenRouter's /api/v1/models reports
-// top_provider.max_completion_tokens = 65536 and we previously sent no
-// `max_tokens`, so 16000 LOWERS the effective cap rather than raising it. It is
-// still well above a page's content. Measured 2026-09-07 over the committed e2e
-// run logs: of 455 image_transcribe calls, 219 are excluded by the harness's
-// 14-day capture strip and 126 have a transcription size recoverable from the
-// `full length N chars` marker (or an unelided summary). Over those 126 the
-// largest is 6,443 chars (~1.6k output tokens), median 1,573; under the current
-// default specifically, 36 calls with a max of 4,940 chars (~1.2k tokens).
-// Re-derive by scanning eval/runlogs/e2e/** for that marker — NOT with
-// `make e2e-transcribe-failures`, which reports reachability, not sizes.
-// Treat it as a dated bound, not a proof: reasoning tokens draw on this SAME
-// budget (Gemini is reasoning-capable and reasoning is not disabled), so a
-// reasoning-heavy read could reach 16000 before the page ends.
-// A cap that does bind surfaces as `truncated` (detection reads finish_reason
-// AND native_finish_reason, case-insensitively), so it is visible, never silent.
-export const OCR_MAX_TOKENS = 16000;
-
-// The largest input the tool will send to the OCR model, in RAW bytes, on every
-// input source (issue #2048). The bytes travel host→OpenRouter as a base64 data
-// URL inside a JSON body, and the only documented limit in that chain is the
-// default model's provider: Gemini's "inline image data limits your total
-// request size (text prompts, system instructions, and inline bytes) to 20MB"
-// (ai.google.dev, image-understanding). OpenRouter documents no request-body
-// cap of its own. 14 MiB raw × 4/3 base64 = 19.6 MB, under 20 MB with the
-// prompt. Refused with an actionable error rather than downscaled: image
-// pre-processing was measured to LOWER accuracy and double hallucinations
-// (spec §7, PR 723), and the engine ships no native binary. The figure is
-// Gemini's; an `openRouterModel` override changes the true limit, and this
-// stays a conservative constant. Uploads may be up to 25 MiB
-// (apps/server sessions.py), so a 14–25 MiB upload is the case this names.
-export const MAX_OCR_INPUT_BYTES = 14 * 1024 * 1024;
+// Re-exported so existing importers (tests, dev/probe-ocr-finish-reason.ts) keep
+// their import path after the extraction to src/utils/ (issue #2183).
+export { OCR_MAX_TOKENS, MAX_OCR_INPUT_BYTES };
 
 // The digest's bounded excerpt (issue #2489): enough for a caller to triage a
 // staged transcription without asking for the full text.
 const DIGEST_EXCERPT_CHARS = 300;
-
-// One retry, transport failures only. Measured over the committed e2e corpus,
-// 24 of 175 classifiable calls (14%) died at the transport with no socket code
-// and 6 timed out; on one run two consecutive losses led the agent to declare
-// the OCR route "network-unreachable in this environment" and abandon images
-// for the rest of the run, concluding from an indexed namesake instead. Probes
-// on both sides found the path healthy minutes later (70/70, then 46/46), so
-// the failures are intermittent — which is what a single retry is for. Whether
-// the transience is host-side or provider-side is still unclassified, and does
-// not change this: a bounded retry is the right response either way.
-const OCR_TRANSPORT_RETRIES = 1;
-const OCR_TRANSPORT_RETRY_DELAY_MS = 1_000;
-
-// OpenRouter attribution headers (recommended, not required). Stable app id.
-const APP_REFERER = "https://github.com/PioneerAIAcademy/cowork-genealogy";
-const APP_TITLE = "cowork-genealogy";
-
-// The OCR prompt is baked into the tool (never caller-supplied) so behavior
-// matches today's Claude-vision `image-reader` read: faithful full-page
-// transcription, original spelling/language, illegible marked not guessed.
-function buildOcrPrompt(lookingFor?: string): string {
-  const base =
-    "Transcribe every genealogically relevant entry on this record image " +
-    "verbatim: names, dates, places, ages, relationships, sponsors/witnesses, " +
-    "and any marginal notes. Preserve the original spelling, capitalization, " +
-    "and line/row layout. Do not modernize or normalize. Mark anything you " +
-    "cannot read [illegible] — never guess.";
-  const key = lookingFor?.trim();
-  if (key) {
-    return (
-      base +
-      `\n\nAfter the transcription, on a final line, report whether the page ` +
-      `mentions "${key}" by writing exactly FOUND or NOT FOUND. This is a ` +
-      `locate hint only — it must not change or shorten the transcription above.`
-    );
-  }
-  return base;
-}
-
-// Node's global `fetch` rejects with `TypeError: fetch failed` and hangs the
-// real socket-level reason (ECONNRESET, ENOTFOUND, UND_ERR_*, a TLS error) off
-// `.cause` — the bare `.message` is always the useless string "fetch failed".
-// Walk that chain so the thrown "Could not reach OpenRouter" carries the code
-// that tells host-side from provider-side (#1594). `AggregateError.errors` is
-// flattened too — a DNS attempt arrives as a bundle. Depth- and cycle-bounded
-// so a self-referential cause cannot loop. `fetchWithTimeout`'s own timeout
-// error already carries a full message and no `.cause`, so it passes through
-// unchanged.
-function describeFetchError(error: unknown): string {
-  const parts: string[] = [];
-  const seen = new Set<unknown>();
-  const push = (label: string) => {
-    if (label && !parts.includes(label)) parts.push(label);
-  };
-  const labelOf = (e: unknown): string => {
-    if (!(e instanceof Error)) return String(e);
-    const code = (e as { code?: unknown }).code;
-    return typeof code === "string" && code.length > 0
-      ? `${code}: ${e.message}`
-      : e.message;
-  };
-  let current: unknown = error;
-  for (
-    let depth = 0;
-    depth < 6 && current != null && !seen.has(current);
-    depth++
-  ) {
-    seen.add(current);
-    push(labelOf(current));
-    const agg = (current as { errors?: unknown }).errors;
-    if (Array.isArray(agg)) for (const e of agg) push(labelOf(e));
-    current = (current as { cause?: unknown }).cause;
-  }
-  return parts.join(" <- ") || "unknown error";
-}
 
 /**
  * The content type an uploaded file actually IS, decided by its magic bytes and
@@ -270,20 +100,6 @@ function captureIdFor(ref: string): string {
   return `capture:${base.replace(/\.[A-Za-z0-9]+$/, "")}`;
 }
 
-function parseFound(text: string): "FOUND" | "NOT FOUND" | undefined {
-  // The prompt asks for the marker on a FINAL line ("write exactly FOUND or
-  // NOT FOUND"). Read the last non-empty line and require the marker at its
-  // start, so body text like "infant found abandoned" cannot spoof it.
-  const lines = text
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter(Boolean);
-  const last = lines[lines.length - 1] ?? "";
-  if (/^\W*NOT\s+FOUND\b/i.test(last)) return "NOT FOUND";
-  if (/^\W*FOUND\b/i.test(last)) return "FOUND";
-  return undefined;
-}
-
 /**
  * OCR a FamilySearch page scan via a hosted VLM (OpenRouter, default
  * Gemini Flash) and return the transcription as text. The image bytes go
@@ -324,6 +140,8 @@ export async function imageTranscribeTool(
   let contentType: string;
   let sizeBytes: number;
   let label: string;
+  let pageId: string | null = null;
+  let resolvedMemoryUrl = "";
   let apiKey: string;
   let model: string;
 
@@ -372,12 +190,40 @@ export async function imageTranscribeTool(
     sizeBytes = bytes.length;
     label = input.file;
   } else {
-    const resolved = resolveFsImageInput(input, "image_transcribe");
+    // A Memories *page* URL carries no path to the bytes, so it is resolved to
+    // the direct artifact URL first. resolveFsImageInput stays synchronous, and
+    // its MEMORY_ARTIFACT_PATTERN check then runs on the RESOLVED url — that is
+    // the host check, unchanged.
+    //
+    // This resolution lives HERE, not in resolveFsImageInput, on purpose.
+    // `ImageReadInput extends FsImageInput`, so image_read already accepts
+    // memoryArtifactUrl without advertising it — lifting the resolve into the
+    // shared resolver would quietly give image_read page-URL support, against
+    // the image_transcribe-only ruling (lead, 2026-09-29; placement confirmed
+    // 2026-09-30). image_read would also mostly pay the lookup and then refuse
+    // the bytes on its 700 KB inline cap. One caller, so it stays in the tool
+    // until there is a second.
+    pageId = input.memoryArtifactUrl !== undefined ? memoryPageId(input.memoryArtifactUrl) : null;
+    if (pageId !== null) resolvedMemoryUrl = await resolveMemoryArtifactUrl(pageId, principal);
+    const forFetch =
+      pageId !== null ? { ...input, memoryArtifactUrl: resolvedMemoryUrl } : input;
+
+    const resolved = resolveFsImageInput(forFetch, "image_transcribe");
+    // Deliberately the RESOLVED url: it feeds imageKey and the staged element's
+    // id, so a page-URL read and a direct-URL read of one artifact land on the
+    // same images/<key>.jpg instead of retaining the scan twice. The staged
+    // `source` below keeps the url the agent actually passed.
     label = resolved.label;
 
-    // Resolve credentials/config BEFORE fetching the image: a missing key
-    // should fail fast (and never leave a fetched scan unused). getOpenRouterApiKey
-    // throws an LLM-actionable error naming config.json when absent.
+    // The hard image cap (§5.8): refuse before the fetch and the OCR.
+    const browse = await checkImageBrowseCap(input, input.projectPath, "image_transcribe");
+
+    // Resolve credentials/config before FETCHING the image: a missing key should
+    // fail fast and never leave a fetched scan unused. It sits below the input
+    // resolve on purpose — hoisting it above made a malformed ark report a
+    // missing OpenRouter key instead of its own shape error. The Memories lookup
+    // above is the one call a keyless page-URL request can still waste, and it
+    // is small; the image fetch, which is not, is still behind this.
     apiKey = await getOpenRouterApiKey(principal);
     model = await getOpenRouterModel(principal);
 
@@ -387,21 +233,12 @@ export async function imageTranscribeTool(
       principal,
       resolved.memoryShape,
     );
+    await recordImageBrowse(browse);
     bytes = fetched.bytes;
     contentType = fetched.contentType;
     sizeBytes = fetched.sizeBytes;
   }
 
-  if (sizeBytes > MAX_OCR_INPUT_BYTES) {
-    throw new Error(
-      `This ${contentType} is ${(sizeBytes / (1024 * 1024)).toFixed(1)} MiB, over the ` +
-        `${MAX_OCR_INPUT_BYTES / (1024 * 1024)} MiB the OCR request can carry (the model's ` +
-        "documented 20 MB request limit, after base64 encoding). It was not sent. Ask the " +
-        "user to re-save the image at a lower quality or resolution, or to split a " +
-        "multi-page PDF into single pages, and upload that instead.",
-    );
-  }
-  const dataUrl = `data:${contentType};base64,${Buffer.from(bytes).toString("base64")}`;
   // Expand recognized given names in lookingFor with historical diminutives
   // (issue #607). The VLM reads this as natural language, so all forms
   // (including scribal abbreviations with periods) are included.
@@ -409,144 +246,23 @@ export async function imageTranscribeTool(
     ? expandLookingFor(input.lookingFor)
     : null;
   const expandedLookingFor = lookingForExpansion?.expanded ?? input.lookingFor;
-  const prompt = buildOcrPrompt(expandedLookingFor);
 
-  let response!: Response;
-  for (let attempt = 0; ; attempt++) {
-    try {
-      response = await fetchWithTimeout(
-        OPENROUTER_URL,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-            "HTTP-Referer": APP_REFERER,
-            "X-Title": APP_TITLE,
-          },
-          body: JSON.stringify({
-            model,
-            temperature: 0,
-            max_tokens: OCR_MAX_TOKENS,
-            // Privacy: FamilySearch scans are PII — do not let the provider
-            // retain prompts for training. See spec §11.
-            provider: { data_collection: "deny" },
-            messages: [
-              {
-                role: "user",
-                content: [
-                  { type: "text", text: prompt },
-                  { type: "image_url", image_url: { url: dataUrl } },
-                ],
-              },
-            ],
-          }),
-        },
-        Math.max(1, Math.min(opts.ocrTimeoutMs ?? OCR_TIMEOUT_MS, OCR_TIMEOUT_MS)),
-      );
-      break;
-    } catch (error) {
-      // Retry a TRANSPORT failure once; never a timeout. A timeout has already
-      // spent OCR_TIMEOUT_MS, so a second attempt doubles the worst case — the
-      // objection that kept a retry out until now. The transport branch is the
-      // cheaper one to re-attempt, but only USUALLY: it catches every non-timeout
-      // fetch rejection, which includes a reset after the request was sent and
-      // inference may already have been billed. The corpus cannot separate those
-      // — 0 of 30 recorded failures carry a socket cause code — so this is a
-      // reasoned default, not a measured one. Re-check it once coded failures
-      // accumulate.
-      if (attempt >= OCR_TRANSPORT_RETRIES || isFetchTimeout(error)) {
-        throw new Error(
-          `Could not reach OpenRouter${attempt > 0 ? " (2 attempts)" : ""}. ` +
-            `(${describeFetchError(error)})` +
-            (attempt > 0
-              ? " A retry already failed, so this is more than one transient blip" +
-                " — but it is still one image, not a verdict on the network."
-              : ""),
-        );
-      }
-      await new Promise((r) => setTimeout(r, OCR_TRANSPORT_RETRY_DELAY_MS));
-    }
-  }
-
-  // Auth failures are LLM-actionable — the key needs replacing in config.json. Transient
-  // failures (429/5xx) are not; they surface as retryable, not a re-prompt.
-  if (response.status === 401) {
-    throw new Error(
-      "The OpenRouter API key was rejected (401). Tell the user to update the " +
-        "\"openRouterApiKey\" field in ~/.familysearch-mcp/config.json with a " +
-        "current key from https://openrouter.ai/keys.",
-    );
-  }
-  if (response.status === 402) {
-    throw new Error(
-      "OpenRouter reports the account is out of credits (402). Ask the user " +
-        "to add credits at https://openrouter.ai.",
-    );
-  }
-  if (!response.ok) {
-    let body = "";
-    try {
-      body = (await response.text()).slice(0, 300);
-    } catch {
-      // ignore — the status line is enough
-    }
-    throw new Error(
-      `OpenRouter OCR failed: ${response.status} ${response.statusText}` +
-        (body ? ` — ${body}` : ""),
-    );
-  }
-
-  const data = (await response.json()) as OpenRouterChatResponse;
-  const choice = data.choices?.[0];
-  const transcription = choice?.message?.content?.trim() ?? "";
-
-  // Output-token-cap truncation, computed BEFORE the empty-content guard: a cap
-  // can bind while the model is still emitting reasoning tokens, leaving content
-  // empty, so reading finish_reason only after a non-empty check would discard
-  // the very signal this exists to surface (the empty read would misfile as an
-  // unreadable scan). A cap is marked by finish_reason OR native_finish_reason —
-  // OpenAI-normalized "length" or a provider's native "MAX_TOKENS" — matched
-  // case-insensitively so a lowercase/odd-cased spelling (some models via
-  // OpenRouter emit "max_tokens") is still caught, regardless of which field it
-  // lands in. Out of scope: a model that stops early on its own ("stop", page
-  // unfinished) and a transport cut (already thrown by fetchWithTimeout) — #1974.
-  // `reason` is typed string|null but arrives via the unchecked `as
-  // OpenRouterChatResponse` cast, so guard the type before `.trim()` — a number,
-  // boolean, array or object would otherwise throw and turn a complete read into
-  // a spurious tool error (the `=== "length"` this replaced could not throw).
-  const marksCap = (reason: unknown): boolean => {
-    if (typeof reason !== "string") return false;
-    const v = reason.trim().toUpperCase();
-    return v === "LENGTH" || v === "MAX_TOKENS";
-  };
-  const truncated =
-    marksCap(choice?.finish_reason) || marksCap(choice?.native_finish_reason);
-
-  if (transcription.length === 0) {
-    // Throw either way — a zero-content read has nothing to return — but name
-    // WHICH failure it was, so the invariant "truncated:true never ships beside
-    // an empty transcription" holds while the caller still learns a cap bound.
-    throw new Error(
-      truncated
-        ? "OpenRouter hit its output-token limit before returning any " +
-            "transcription (the budget was likely spent on reasoning). The page " +
-            "was not read — do not fabricate; a retry at this cap is unlikely to " +
-            "help, so pivot to the indexed record (record_read / record_search)."
-        : "OpenRouter returned an empty transcription. Do not fabricate a read — " +
-            "pivot to the indexed record for this image (record_read / record_search).",
-    );
-  }
-
-  // A capped read with content is non-empty, so it would otherwise pass as an
-  // ordinary success. The transcription stays verbatim — the signal rides the
-  // sibling fields below (spec §6.2).
-  const truncationNotice = truncated
-    ? "This transcription is INCOMPLETE — the OCR hit its output-token limit and " +
-      "stopped partway down the page. The transcription above is what was read; the " +
-      "rest of the page is UNREAD, not blank. Do not treat any target as absent from " +
-      "this partial read."
-    : undefined;
+  // The transport, the size refusal, the single transport retry, the status
+  // triage and the truncation detection all live in utils/ocr.ts (issue #2183)
+  // so volume_bisect can probe a page without pasting them.
+  const ocr = await runOcr({
+    bytes,
+    contentType,
+    sizeBytes,
+    prompt: buildOcrPrompt(expandedLookingFor),
+    apiKey,
+    model,
+    timeoutMs: opts.ocrTimeoutMs,
+    maxTokens: OCR_MAX_TOKENS,
+  });
+  const transcription = ocr.text;
+  const truncated = ocr.truncated;
+  const truncationNotice = ocr.truncationNotice;
 
   // Persist the scan for a retained source (§8.5, design B) — best-effort: the
   // transcription is the primary payload, so a save failure (e.g. a bad
@@ -569,10 +285,12 @@ export async function imageTranscribeTool(
       if (!contentType.toLowerCase().startsWith("image/")) throw new Error("not an image");
       imageRef = await saveSourceImage({
         projectPath: input.projectPath,
-        // `label` is the caller's input verbatim, which for a memory artifact
-        // is a whole URL -- it sanitizes to a ~70-character filename carrying
-        // the host and the ctx param. person_read passes the memory id
-        // instead, so the scan lands at images/<memory id>.jpg.
+        // `label` is the caller's input verbatim EXCEPT on a Memories page url,
+        // which resolves to the artifact url first — so both routes to one
+        // artifact share a key instead of retaining the scan twice. For a
+        // memory artifact it is a whole URL: it sanitizes to a ~70-character
+        // filename carrying the host and the ctx param. person_read passes the
+        // memory id instead, so the scan lands at images/<memory id>.jpg.
         imageKey: opts.imageKey ?? label,
         bytes,
       });
@@ -586,11 +304,6 @@ export async function imageTranscribeTool(
     // image_filename joins on.
     if (imageRef) recordImageReadCap(input.projectPath, imageRef, truncated);
   }
-
-  const browseBudget = recordBrowseAndCheckBudget(
-    input.imageId,
-    input.projectPath,
-  );
 
   // Suppress found on a truncated read: the FOUND/NOT FOUND marker rides a final
   // line the model never reached, and a target may sit below the cut — a
@@ -645,15 +358,20 @@ export async function imageTranscribeTool(
     };
   }
 
+  const viewerUrl = imageViewerUrl(
+    { imageId: input.imageId, ark: input.ark },
+    extractImageContextQuery,
+  );
+
   return {
     transcription,
+    ...(viewerUrl ? { viewerUrl } : {}),
     ...(truncated ? { truncated: true as const, truncationNotice } : {}),
     ...(found ? { found } : {}),
     ...(imageRef ? { imageRef } : {}),
     ...(staged !== undefined ? { staged } : {}),
     ...(stagingError !== undefined ? { stagingError } : {}),
     ...(digest !== undefined ? { digest } : {}),
-    ...(browseBudget ? { browseBudget } : {}),
     ...(lookingForExpansion && input.lookingFor
       ? {
           nameExpansion: {
@@ -667,6 +385,11 @@ export async function imageTranscribeTool(
       ...(input.imageId !== undefined ? { imageId: input.imageId } : {}),
       ...(input.ark !== undefined ? { ark: input.ark } : {}),
       ...(input.file !== undefined ? { file: input.file } : {}),
+      // The artifact url a Memories PAGE url resolved to. Returned so the caller
+      // can pass it directly next time: person_read's spec tells readers
+      // artifact_url "saves the lookup", and without this the one caller that
+      // just performed the lookup is the only one that cannot benefit from it.
+      ...(pageId !== null ? { memoryArtifactUrl: resolvedMemoryUrl } : {}),
       contentType,
       model,
       sizeBytes,
@@ -681,7 +404,9 @@ export const imageTranscribeToolSchema = {
     "this for large scans that image_read refuses (over its inline size cap): " +
     "the image is OCR'd host-side and never enters the conversation, so there " +
     "is no size limit. Also transcribes a FamilySearch MEMORY artifact " +
-    "(memoryArtifactUrl), including a PDF, and an UPLOADED image or PDF already " +
+    "(memoryArtifactUrl) — its direct artifact URL or its page URL " +
+    "(familysearch.org/photos/artifacts/<id> or /memories/<id>) — " +
+    "including a PDF, and an UPLOADED image or PDF already " +
     "inside the project folder (file, e.g. uploads/scan.jpg, with projectPath). " +
     "Provide exactly one of imageId, ark, memoryArtifactUrl, or file. Requires " +
     "FamilySearch auth (call login) for imageId/ark only; memoryArtifactUrl and " +
@@ -704,7 +429,8 @@ export const imageTranscribeToolSchema = {
         description:
           "A FamilySearch document-image ARK when no imageId is available — " +
           "ark:/61903/3:1:... or 3:2:... (e.g. fulltext_search's `id`), a bare " +
-          "3:1:.../3:2:... id, a resolver URL for one, or a resolved distribution URL. " +
+          "3:1:.../3:2:... id, an unprefixed XXXX-XXXX-XXXX-X id (treated as 3:1:), " +
+          "a resolver URL for one, or a resolved distribution URL. " +
           "IMPORTANT: some document-image ARKs are waypoints into a multi-image " +
           "film/register — the bare ARK can silently resolve to the WRONG image " +
           "within that group. If the record was reached via a FamilySearch page " +
@@ -715,11 +441,13 @@ export const imageTranscribeToolSchema = {
       memoryArtifactUrl: {
         type: "string",
         description:
-          "A FamilySearch memory artifact URL, as carried by a person_read " +
-          "source that came from a person's memories (a scanned will, " +
-          "certificate, obituary clipping or compiled history uploaded by a " +
-          "relative). PDFs are supported here as well as images. Needs no " +
-          "FamilySearch login.",
+          "A FamilySearch memory: a scanned will, certificate, obituary " +
+          "clipping or compiled history uploaded by a relative. Either form " +
+          "works — the direct artifact URL (a person_read source's " +
+          "artifact_url) or the page URL a person sees " +
+          "(familysearch.org/photos/artifacts/<id>, or /memories/<id>, which " +
+          "is that source's url); a page URL is resolved first. PDFs are " +
+          "supported as well as images. Needs no FamilySearch login.",
       },
       file: {
         type: "string",

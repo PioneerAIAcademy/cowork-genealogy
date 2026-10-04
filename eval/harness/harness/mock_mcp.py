@@ -99,19 +99,11 @@ LIVE_TOOLS: set[str] = {
     "tree_correct",
     "materialize_facts",
     "merge_warnings",
-    # Local by default, and that is the only mode this harness permits: the
-    # default path computes every tag from the workspace tree, so a live
-    # handler is both possible and more faithful than a canned answer. It is
-    # NOT that the tool cannot reach the network -- since #2225 D1 a
-    # `live: true` call fetches from FamilySearch via `personReadTool` and
-    # `getValidToken`. What keeps it safe here is that the compiled-tool
-    # handler REFUSES `live: true` outright (see `_COMPILED_TOOLS_WITH_PRINCIPAL`
-    # below); measured, an unrefused live call really does reach FamilySearch
-    # from a suite whose contract is that it makes none. Live since 2026-09-03
-    # (lead ruling on PR #2151): it was fixture-backed, no person-evidence test
-    # declared a `person-warnings-*` fixture, so every call in every committed
-    # person-evidence run log since August reported the tool missing -- the
-    # skill launched, the check never ran.
+    # Local-only: reads tree.gedcomx.json from the workspace. The compiled-tool
+    # handler computes every tag deterministically from the workspace tree, so a
+    # live handler is more faithful than a canned answer. Live since 2026-09-03
+    # (lead ruling on PR #2151). `person_quality` is NOT here and must not be:
+    # it calls FamilySearch.
     "person_warnings",
     # Served by its own handler (`_make_person_quality_handler`), registered
     # outside both loops below. The tool first decides what to score with no
@@ -153,10 +145,16 @@ LIVE_TOOLS: set[str] = {
     # whenever tool_calls is empty, so the defect switched off the dimension that
     # covers it. conflict-resolution declares it too. Issue #1654 (deep dive).
     "convert_calendar",
-    # Same rationale as convert_calendar: pure URL-templating, no workspace or
-    # network dependency, so a canned fixture would supply the exact URL string
-    # search-external-sites' eval exists to measure.
+    # Same rationale as convert_calendar: URL-templating with no network
+    # dependency, so a canned fixture would supply the exact URL string
+    # search-external-sites' eval exists to measure. Its one workspace write
+    # (the hand-off log entry, only when the agent passes projectPath) runs
+    # against the harness workspace — see _OPTIONAL_PROJECT_PATH_TOOLS.
     "build_external_search_url",
+    # Same rationale as convert_calendar: a pure table lookup with no workspace
+    # or network dependency. Nothing calls it until issue #1828; kept live so
+    # that PR's eval doesn't quietly get the answer from a canned fixture.
+    "get_name_variants",
 }
 
 # Path to the compiled MCP server build output, used by live tool handlers.
@@ -281,8 +279,8 @@ def _run_node_eval(
     """Run a Node ESM ``--eval`` script and return the completed process.
 
     The single choke point for every ``node --input-type=module --eval``
-    invocation in this file (eight call sites as of 2026-09-24 — seven raised to
-    ``NODE_EVAL_TIMEOUT_LONG``, the catalog probe left on the default; three
+    invocation in this file (every call site but the catalog probe raises its
+    timeout to ``NODE_EVAL_TIMEOUT_LONG``; three
     separate code-review passes flagged the hand-duplicated ``subprocess.run(...,
     capture_output=True, text=True, encoding="utf-8", timeout=...)`` shape).
     ``encoding="utf-8"`` is load-bearing, not cosmetic: without it, ``text=True``
@@ -730,6 +728,57 @@ def _unlogged_staged_handles(workspace: Path) -> list[dict[str, Any]]:
         return []
 
 
+def _stage_person_read(
+    workspace: Path, args: dict[str, Any], response: dict[str, Any]
+) -> dict[str, Any]:
+    """Stage a canned `person_read` response the way the real tool does (#2944).
+
+    Production stages every `person_read` given a `projectPath` and returns
+    `staged` (plus `stagingError` when staging failed). The envelope is built by
+    the COMPILED `stagePersonRead`, so its shape has one definition, in
+    person-read.ts. No `resolvedId` is passed: a fixture has no merge redirect,
+    and the export defaults it to the requested id.
+
+    Returns the response with the staging keys merged in, or the response
+    untouched when node is unavailable or fails: a harness fault is not a
+    production staging failure, so it must not surface as `stagingError`.
+    """
+    person_read_js = _MCP_BUILD / "tools" / "person-read.js"
+    if not person_read_js.exists():
+        return response
+
+    posix = str(person_read_js).replace("\\", "/").replace("'", "\\'")
+    url = ("file:///" + posix) if sys.platform == "win32" else posix
+    script = (
+        f"import {{ stagePersonRead }} from '{url}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify(await stagePersonRead(input)));"
+    )
+    input_obj = {
+        "projectPath": str(workspace).replace("\\", "/"),
+        "input": {
+            k: args[k]
+            for k in ("personId", "relatives", "sourceDescriptions")
+            if k in args
+        },
+        "result": response,
+    }
+    try:
+        proc = _run_node_eval(
+            script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG
+        )
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            return response
+        parsed = json.loads(out)
+        if not isinstance(parsed, dict) or "staged" not in parsed:
+            return response
+        return {**response, **parsed}
+    except Exception:
+        return response
+
+
 def create_mock_server(
     fixture_names: list[str],
     fixtures_dir: Path,
@@ -844,6 +893,17 @@ def create_mock_server(
                 and "error" not in response
             ):
                 entry["attested"] = _record_match_score(_workspace, args, response)
+
+            # Production's person_read stages its result whenever it is given a
+            # projectPath (#2944), with the same trimmed gate.
+            if (
+                _name == "person_read"
+                and _workspace is not None
+                and "error" not in response
+                and isinstance(args.get("projectPath"), str)
+                and args["projectPath"].strip()
+            ):
+                response = _stage_person_read(_workspace, args, response)
 
             # Production's record_search and fulltext_search return (and stage)
             # `query: echoQuery(input)` — every argument the call sent — while a
@@ -1070,7 +1130,8 @@ def create_mock_server(
 #: Tools served by `_make_compiled_tool_handler`: tool name -> (compiled file
 #: under build/tools/, exported function). The generic handler injects the
 #: workspace as `projectPath`; a tool that reads no projectPath
-#: (convert_calendar, build_external_search_url) ignores the inert extra key.
+#: (convert_calendar) ignores the inert extra key. A tool whose projectPath is
+#: OPTIONAL is in `_OPTIONAL_PROJECT_PATH_TOOLS` instead and is only rebased.
 #: extraction_append's lane restriction (issue #695) lives inside its export,
 #: so calling it directly here — bypassing index.ts — still enforces the lane.
 _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
@@ -1084,9 +1145,18 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "research_query": ("research-query.js", "researchQuery"),
     "project_create": ("project-create.js", "projectCreate"),
     "convert_calendar": ("convert-calendar.js", "convertCalendar"),
-    "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrl"),
+    "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrlTool"),
     "sidecar_read": ("sidecar-read.js", "sidecarRead"),
+    "get_name_variants": ("name-variants.js", "getNameVariants"),
 }
+
+#: Compiled tools whose `projectPath` is optional and changes what the call
+#: does: given one, `build_external_search_url` also writes the in-flight
+#: hand-off log entry. Production never supplies it on the model's behalf, so
+#: injecting it here would make every run write an entry the agent never asked
+#: for. These get the `person_quality` treatment: a projectPath the agent sent
+#: is rebased onto the workspace, and none is added.
+_OPTIONAL_PROJECT_PATH_TOOLS: frozenset[str] = frozenset({"build_external_search_url"})
 
 #: Compiled tools whose exported function takes a `Principal` as its last
 #: argument. CLAUDE.md requires every credential read to take one explicitly, so
@@ -1094,7 +1164,7 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
 #: handler script below is built from a Python f-string, no typechecker catches
 #: the mismatch. A tool missing from this set calls with one argument and its
 #: `principal` arrives `undefined`.
-_COMPILED_TOOLS_WITH_PRINCIPAL: frozenset[str] = frozenset({"person_warnings"})
+_COMPILED_TOOLS_WITH_PRINCIPAL: frozenset[str] = frozenset()
 
 
 def _make_live_handler(
@@ -1415,8 +1485,10 @@ def _make_compiled_tool_handler(
     share this builder (one exported async function taking the input object).
 
     Calls the compiled TS tool via `node --input-type=module` against the
-    workspace path. The skill passes its own projectPath arg, but we always
-    override it with workspace (the harness tempdir) to avoid path drift.
+    workspace path. The skill passes its own projectPath arg, but we override
+    it with workspace (the harness tempdir) to avoid path drift — always,
+    except for `_OPTIONAL_PROJECT_PATH_TOOLS`, where only a projectPath the
+    agent actually sent is rebased.
 
     Input is piped via stdin (as JSON) to avoid shell/JS string escaping
     issues with values that may contain quotes, backslashes, or newlines.
@@ -1424,22 +1496,7 @@ def _make_compiled_tool_handler(
     tool_js = _MCP_BUILD / "tools" / js_filename
 
     async def handler(args, _ws=workspace, _tjs=tool_js):
-        if tool_name in _COMPILED_TOOLS_WITH_PRINCIPAL and args.get("live"):
-            # Refused, not run. This suite is hermetic — every response is a
-            # fixture — and a compiled tool's live mode is real code that makes an
-            # authenticated FamilySearch request. Measured: without this it really
-            # does fetch. Injecting projectPath instead would be worse: the tool
-            # rejects projectPath and live together, so the judge would score the
-            # refusal against a skill that called correctly. This names the harness.
-            response: dict[str, Any] = {
-                "ok": False,
-                "errors": [
-                    f"{tool_name}: live mode is not available in the unit harness "
-                    "(it makes a real FamilySearch request and this suite is "
-                    "hermetic). Pass projectPath to check the workspace tree."
-                ],
-            }
-        elif _ws is None or not _tjs.exists():
+        if _ws is None or not _tjs.exists():
             reason = "workspace not provided" if _ws is None else f"build not found: {_tjs}"
             response = {
                 "ok": False,
@@ -1451,19 +1508,10 @@ def _make_compiled_tool_handler(
 
             # Override projectPath with workspace; pipe the full input via
             # stdin so no value needs JS-string escaping.
-            #
-            # A live-mode call is REFUSED here rather than run. The unit harness is
-            # hermetic — every response is a fixture — and person_warnings' live
-            # mode is real compiled code behind `_COMPILED_TOOLS`, so letting it
-            # through makes an authenticated FamilySearch request from a suite whose
-            # whole contract is that it makes none. Measured: it really does fetch.
-            #
-            # Injecting the workspace instead would be worse than refusing. The tool
-            # rejects projectPath and live together (they read different trees), so
-            # the skill would be blamed by the judge for a call it made correctly.
-            # This error names the harness as the limitation.
+            # An optional projectPath is rebased only when the agent sent one.
             input_obj = dict(args)
-            input_obj["projectPath"] = str(_ws).replace("\\", "/")
+            if tool_name not in _OPTIONAL_PROJECT_PATH_TOOLS or "projectPath" in args:
+                input_obj["projectPath"] = str(_ws).replace("\\", "/")
 
             # Tools whose entry point takes a Principal as its last argument. The
             # harness is one user per process, so LOCAL is the right one — the same

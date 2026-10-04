@@ -1,6 +1,5 @@
 import type { Principal } from "../auth/principal.js";
 import { getProjectStore } from "../store/project-store.js";
-import { getValidToken } from "../auth/refresh.js";
 import { scorePair } from "../utils/match-engine.js";
 import { mapWithConcurrency, withRetry } from "../utils/place-resolver.js";
 import { assertInsideProject, isInsideProject } from "../utils/project-io.js";
@@ -74,8 +73,7 @@ export async function rankSearchMatches(
     };
   }
 
-  // ── 3. Score every candidate (one token, bounded fan-out, retried) ─────────
-  const token = await getValidToken(principal);
+  // ── 3. Score every candidate (bounded fan-out, retried) ────────────────────
   const scored = await mapWithConcurrency(
     results,
     SCORE_CONCURRENCY,
@@ -93,7 +91,7 @@ export async function rankSearchMatches(
             result.primaryId as string,
             subjectDoc,
             subjectId,
-            token,
+            principal,
           ),
         );
         const out: ScoredCandidate = {

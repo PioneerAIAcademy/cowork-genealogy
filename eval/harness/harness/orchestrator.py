@@ -50,7 +50,9 @@ from harness.skill_runner import (
     DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
     SKILL_TOOL_NAME_KEYS,
     SkillRunResult,
+    agent_return_text,
     direct_dispatch_prompt,
+    judge_skills_slot,
     run_skill,
     spawn_prompts,
     spawned_agents,
@@ -609,6 +611,7 @@ async def _execute_single_run(
         # prompts. `skills_invoked` cannot answer "did the agent run" on a
         # direct test, which invokes no skill at all.
         builtin_tool_calls=result.builtin_tool_calls,
+        agent_returns=getattr(result, "agent_returns", []) or [],
         activated=activated,
         num_turns=_num_turns,
         output_tokens=_output_tokens,
@@ -657,6 +660,11 @@ async def _execute_single_run(
             # the only text the run was handed, so it takes that slot — without
             # the fallback a year the delegation supplied reads as invented.
             "user_message": spec.user_message or (spec.delegation or ""),
+            # Also threaded in: `negative`, so a hand-back validator can read
+            # the owner a direct-arm negative names in `correct_skill`
+            # (test_check_warnings.test_hand_back_names_its_owner, issue #2118).
+            # Without it that validator failed every compliant run.
+            "negative": spec.negative,
         },
     )
     validators_passed = compute_validators_passed(
@@ -826,6 +834,13 @@ async def _execute_single_run(
             **(
                 {"builtin_tool_calls": result.builtin_tool_calls}
                 if result.builtin_tool_calls
+                else {}
+            ),
+            # Same omit-when-empty rule as the field above: a routed run spawns
+            # nothing and writes the run_output it always has.
+            **(
+                {"agent_returns": getattr(result, "agent_returns", []) or []}
+                if getattr(result, "agent_returns", None)
                 else {}
             ),
             **({"file_changes": file_changes} if file_changes else {}),
@@ -1876,6 +1891,7 @@ def _run_judge(
     # the unsearched Massachusetts birth registration. Without this the arm grades
     # backwards: a twin that survives the attack is failed for surviving it, and
     # intermittently, since the same test passed its four previous runs.
+    judge_text = result.text_response
     if spec.is_direct:
         judge_user_message = (
             "(NO USER TURN. This test exercises the direct-agent route, so the text "
@@ -1894,16 +1910,38 @@ def _run_judge(
             f"{name} (agent, spawned directly — no skill was invoked)"
             for name in _spawned
         ]
+        # Grade the AGENT's own return, not the dispatcher's relay of it.
+        # `result.text_response` is main-thread text, and on this arm the main
+        # thread only forwards someone else's work -- it paraphrases, and the
+        # paraphrase is not the subject under test. Measured on
+        # eval/runlogs/unit/search-wikipedia/v1_2026-09-28_09-49-04: six tests
+        # failed on reply shape while every deterministic validator passed
+        # 10/10, and a live capture of ut_search_wikipedia_002 the same day
+        # showed the agent returning its one required line while the dispatcher
+        # rewrote it as "The subagent has completed the task. It looked up ...".
+        #
+        # Falls back to `text_response` when the spawn returned nothing, so a
+        # run whose agent produced no text is still graded on what there is
+        # rather than on silence.
+        _returns = agent_return_text(
+            getattr(result, "agent_returns", None), spec.skill
+        )
+        if _returns:
+            judge_text = _returns
     else:
         judge_user_message = spec.user_message
-        judge_ran = result.skills_invoked
+        # Also a VALUE change, not a template change, for the reason above: the
+        # skill path's slot names the agents the skill spawned as well.
+        judge_ran = judge_skills_slot(
+            result.skills_invoked, getattr(result, "builtin_tool_calls", []) or []
+        )
     return grade(
         rubric=judge_rubric,
         judge_context=judge_context,
         scenario_readme=scenario_readme,
         user_message=judge_user_message,
         skills_invoked=judge_ran,
-        text_response=result.text_response,
+        text_response=judge_text,
         file_changes_summary=_summarize_changes(
             file_changes, result.tool_calls, include_content=spec.judge_reads_files
         ),
@@ -1926,8 +1964,14 @@ def _negative_judge_context(spec: TestSpec) -> list[str]:
     as an incomplete attempt at the skill's task and score Correctness /
     Completeness as failures. These leading lines tell it that a clean,
     correctly-routed decline is the pass condition. The test's own
-    `judge_context` (spec §6 step 3 "additional criteria") is appended
-    after the framing.
+    `judge_context` (spec §6 step 3 "additional criteria") follows.
+
+    The two are returned as separately labeled groups, one item each, with
+    their lines nested beneath the label. judge.py renders every item as one
+    `- ` bullet under a heading that calls the notes binding, so a flat list
+    would show the harness's lines and the test author's as one anonymous
+    list. Which group wins when they disagree is deliberately not stated: it
+    is the open "Note authority" decision on issue #2478.
     """
     correct = (spec.negative or {}).get("correct_skill", [])
     if correct:
@@ -1937,7 +1981,7 @@ def _negative_judge_context(spec: TestSpec) -> list[str]:
             "decline without invoking any skill — the request is out of "
             "scope for every skill"
         )
-    return [
+    framing = [
         f"This is a NEGATIVE test. Correct behavior is for the skill under "
         f"test ({spec.skill}) to NOT perform its own task here — it should "
         f"{routing}.",
@@ -1949,8 +1993,24 @@ def _negative_judge_context(spec: TestSpec) -> list[str]:
         f"produced substantive output when it should have declined or stayed "
         f"silent, score Correctness and Completeness as fail (1) — polished "
         f"output for the wrong behavior is still a failure, not a pass.",
-        *spec.judge_context,
     ]
+    groups = [_labeled_group(_HARNESS_FRAMING_LABEL, framing)]
+    if spec.judge_context:
+        groups.append(_labeled_group(_AUTHOR_NOTES_LABEL, spec.judge_context))
+    return groups
+
+
+_HARNESS_FRAMING_LABEL = (
+    "Harness framing (written by the eval harness for every negative test, "
+    "not by this test's author):"
+)
+_AUTHOR_NOTES_LABEL = "Test author's notes (written for this test):"
+
+
+def _labeled_group(label: str, lines: list[str]) -> str:
+    # A line's own newlines are indented too, so a multi-line note stays inside
+    # its group instead of rendering flush left after it.
+    return label + "".join("\n  - " + line.replace("\n", "\n    ") for line in lines)
 
 
 # Caps for the opt-in content block (test.judge_reads_files). The per-field

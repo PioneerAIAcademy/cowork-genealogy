@@ -18,7 +18,7 @@
     "scenario": null
   },
   "mcp_fixtures": [
-    "person-read-flynn", "person-quality-clean-LZNY-BRF"],
+    "person-read-flynn"],
   "judge_context": [
     "Should ask the user what they want to research (the objective) in the opening turn, alongside proceeding with the rest of initialization -- asking is expected, but it must not be the only thing that happens this turn.",
     "Should NOT ask about experience level, subscriptions, or anything else about the researcher: the profile is fixed (lead ruling 2026-09-18).",
@@ -28,6 +28,7 @@
     "`researcher_profile.subscriptions` must be ABSENT. The user said nothing about access and was not asked, so there is nothing to record -- `[\"none\"]` would assert they told us they have nothing, the opposite of what is assumed, and an empty `[]` is the same defect. Absence is the correct output here, not an omission"
   ],
   "execution": {
+    "max_wall_clock_seconds": 480,
     "stub_skills": [
       {
         "skill": "question-selection",

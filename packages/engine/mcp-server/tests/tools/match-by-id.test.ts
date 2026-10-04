@@ -12,6 +12,7 @@ import {
   recordRecordMatches,
 } from "../../src/tools/match-by-id.js";
 import { getValidToken } from "../../src/auth/refresh.js";
+import { socketFetchFailure } from "../helpers/fetch-failed.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -84,10 +85,11 @@ describe("URL construction", () => {
     mockJson(EMPTY_BODY);
     await personRecordMatches({ id: "KNDX-MKG" }, LOCAL);
     const [, init] = mockFetch.mock.calls[0];
-    expect(init.headers.Authorization).toBe("Bearer test-token");
-    expect(init.headers.Accept).toBe("application/json");
-    expect(typeof init.headers["User-Agent"]).toBe("string");
-    expect((init.headers["User-Agent"] as string).length).toBeGreaterThan(10);
+    const hdrs = new Headers(init.headers as HeadersInit);
+    expect(hdrs.get("Authorization")).toBe("Bearer test-token");
+    expect(hdrs.get("Accept")).toBe("application/json");
+    expect(typeof hdrs.get("User-Agent")).toBe("string");
+    expect((hdrs.get("User-Agent") as string).length).toBeGreaterThan(10);
   });
 });
 
@@ -443,8 +445,10 @@ describe("Error handling", () => {
   });
 
   it("translates a network error", async () => {
-    mockFetch.mockRejectedValue(new Error("ETIMEDOUT"));
-    await expect(personRecordMatches({ id: "KNDX-MKG" }, LOCAL)).rejects.toThrow(/Could not reach/);
+    mockFetch.mockRejectedValue(socketFetchFailure());
+    await expect(personRecordMatches({ id: "KNDX-MKG" }, LOCAL)).rejects.toThrow(
+      /Could not reach FamilySearch match API: fetch failed <- ETIMEDOUT/,
+    );
   });
 
   it("rejects malformed JSON body", async () => {

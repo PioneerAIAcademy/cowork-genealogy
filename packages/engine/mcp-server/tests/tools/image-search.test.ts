@@ -8,6 +8,7 @@ vi.mock("../../src/auth/refresh.js", () => ({
 import { imageSearchTool } from "../../src/tools/image-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
+import { socketFetchFailure } from "../helpers/fetch-failed.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -167,12 +168,12 @@ it("throws on 401 with re-login guidance", async () => {
 
 // Test 10 — network error (retried by fetchWithRetry before surfacing)
 it("throws on network error", async () => {
-  mockFetch.mockRejectedValue(new Error("ECONNREFUSED"));
+  mockFetch.mockRejectedValue(socketFetchFailure());
 
   await expect(
     imageSearchTool({ imageGroupNumber: "007621224_005_M99P-2TQ" }, LOCAL)
   ).rejects.toThrow(
-    "Could not reach FamilySearch image search API: ECONNREFUSED."
+    /Could not reach FamilySearch image search API: fetch failed <- ETIMEDOUT/
   );
 });
 
@@ -183,11 +184,11 @@ it("sends correct headers on children/names call", async () => {
   await imageSearchTool({ imageGroupNumber: "007621224_005_M99P-2TQ" }, LOCAL);
 
   const init = mockFetch.mock.calls[0][1] as RequestInit;
-  const hdrs = init.headers as Record<string, string>;
-  expect(hdrs["Authorization"]).toBe("Bearer test-token");
-  expect(hdrs["Accept"]).toBe("application/json");
-  expect(hdrs["User-Agent"]).toBe(BROWSER_USER_AGENT);
-  expect(hdrs["FS-User-Agent-Chain"]).toBe("chesworth");
+  const hdrs = new Headers(init.headers as HeadersInit);
+  expect(hdrs.get("Authorization")).toBe("Bearer test-token");
+  expect(hdrs.get("Accept")).toBe("application/json");
+  expect(hdrs.get("User-Agent")).toBe(BROWSER_USER_AGENT);
+  expect(hdrs.get("FS-User-Agent-Chain")).toBe("chesworth");
 });
 
 // ---------------------------------------------------------------------------

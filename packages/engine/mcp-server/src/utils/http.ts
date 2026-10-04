@@ -115,6 +115,43 @@ export async function fetchWithTimeout(
   return guardBodyReads(response, url, timeoutMs);
 }
 
+// Node's global `fetch` rejects with `TypeError: fetch failed` and hangs the
+// real socket-level reason (ECONNRESET, ENOTFOUND, UND_ERR_*, a TLS error) off
+// `.cause` — the bare `.message` is always the useless string "fetch failed".
+// Walk that chain so a thrown "Could not reach …" carries the code that tells
+// host-side from provider-side (#1594, #3031). `AggregateError.errors` is
+// flattened too — a DNS attempt arrives as a bundle. Depth- and cycle-bounded
+// so a self-referential cause cannot loop. `fetchWithTimeout`'s own timeout
+// error already carries a full message and no `.cause`, so it passes through
+// unchanged.
+export function describeFetchError(error: unknown): string {
+  const parts: string[] = [];
+  const seen = new Set<unknown>();
+  const push = (label: string) => {
+    if (label && !parts.includes(label)) parts.push(label);
+  };
+  const labelOf = (e: unknown): string => {
+    if (!(e instanceof Error)) return String(e);
+    const code = (e as { code?: unknown }).code;
+    return typeof code === "string" && code.length > 0
+      ? `${code}: ${e.message}`
+      : e.message;
+  };
+  let current: unknown = error;
+  for (
+    let depth = 0;
+    depth < 6 && current != null && !seen.has(current);
+    depth++
+  ) {
+    seen.add(current);
+    push(labelOf(current));
+    const agg = (current as { errors?: unknown }).errors;
+    if (Array.isArray(agg)) for (const e of agg) push(labelOf(e));
+    current = (current as { cause?: unknown }).cause;
+  }
+  return parts.join(" <- ") || "unknown error";
+}
+
 // ─── Retry with budget cap (issue #2054) ─────────────────────────────────────
 
 /** HTTP statuses worth retrying: throttling and transient server faults. */
@@ -179,6 +216,7 @@ export async function fetchWithRetry(
   } = retryOpts;
   const deadline = Date.now() + budgetMs;
   let lastErr: unknown;
+  let lastSocketErr: unknown;
   let lastResponse: Response | undefined;
 
   for (let attempt = 0; attempt < attempts; attempt++) {
@@ -195,13 +233,16 @@ export async function fetchWithRetry(
     } catch (err) {
       // Network error or per-attempt timeout — retryable.
       lastErr = err;
+      if (!isFetchTimeout(err)) lastSocketErr = err;
       if (attempt >= attempts - 1) break;
       const remaining = deadline - Date.now();
       if (remaining <= 0) break;
       const backoff = baseMs * 2 ** attempt;
-      const jitter = backoff * 0.5 * Math.random();
-      const delay = Math.min(backoff + jitter, remaining);
-      if (delay > 0) await retrySleep(delay);
+      const delay = backoff + backoff * 0.5 * Math.random();
+      // A backoff that would spend the rest of the budget leaves the next
+      // attempt nothing to run on, so stop instead of sleeping into it.
+      if (delay >= remaining) break;
+      await retrySleep(delay);
       continue;
     }
 
@@ -229,15 +270,29 @@ export async function fetchWithRetry(
       );
     }
 
-    const backoff = baseMs * 2 ** attempt;
-    const jitter = backoff * 0.5 * Math.random();
-    const delay = ra ?? Math.min(backoff + jitter, remaining);
-    if (delay > 0) await retrySleep(Math.min(delay, remaining));
+    if (ra === null) {
+      const backoff = baseMs * 2 ** attempt;
+      const delay = backoff + backoff * 0.5 * Math.random();
+      if (delay >= remaining) break;
+      await retrySleep(delay);
+    } else if (ra > 0) {
+      await retrySleep(ra);
+    }
   }
 
   // Exhausted: return the last retryable Response if we have one (so the
   // caller's !response.ok block can produce an LLM-actionable error), or
   // re-throw the last error (network/timeout).
   if (lastResponse !== undefined) return lastResponse;
+  // A retry runs on what is left of the budget, so a late attempt can time
+  // out after an earlier one failed with a real socket code. Hang that code
+  // off the timeout so `describeFetchError` still names it (#3031).
+  if (
+    isFetchTimeout(lastErr) &&
+    lastSocketErr !== undefined &&
+    (lastErr as { cause?: unknown }).cause === undefined
+  ) {
+    (lastErr as { cause?: unknown }).cause = lastSocketErr;
+  }
   throw lastErr;
 }

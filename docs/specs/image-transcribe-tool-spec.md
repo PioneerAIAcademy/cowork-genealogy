@@ -375,8 +375,9 @@ consistent across schema, manifest, and skill.)*
 - Exactly one of `imageId` / `ark` / `memoryArtifactUrl` / `file`, checked in the tool
   **before** the shared resolver (which knows only the three FamilySearch shapes). The first two resolve
   **identically to `image_read`** (§8 shares the resolver). Accept the same
-  shapes `image_read` accepts today (`3:1:`/`3:2:` ARKs, resolver URLs,
-  `/$dist`, `dgs:.../dist.jpg`).
+  shapes `image_read` accepts today (`3:1:`/`3:2:` ARKs, an unprefixed
+  `XXXX-XXXX-XXXX-X` id treated as `3:1:`, resolver URLs, `/$dist`,
+  `dgs:.../dist.jpg`).
 - `memoryArtifactUrl` is a person's **memory** artifact, as carried by a
   `person_read` source that came from the memories API — a scanned will,
   certificate, obituary clipping or compiled history uploaded by a relative. It
@@ -384,11 +385,39 @@ consistent across schema, manifest, and skill.)*
   skipped, the filter missed, or the OCR failed on; there is no other way to
   read one, since a memory URL is neither an image-group `imageId` nor a
   `3:1:`/`3:2:` ARK. Three things make it unlike the other two shapes:
-  - It is **already a direct bytes URL**, so it is passed through rather than
-    resolved, and carries no `fallbackUrl`.
+  - **Two forms are accepted.** The direct bytes URL is passed through rather
+    than resolved, and carries no `fallbackUrl`. A Memories **page** URL —
+    `familysearch.org/photos/artifacts/<id>`, or `/memories/<id>`, which is
+    what a `person_read` memory source carries as its `url` — is first resolved
+    to the bytes URL through
+    `GET https://api.familysearch.org/platform/memories/memories/<id>`, whose
+    `sourceDescriptions[0].about` is the same field the memories fetch already
+    reads. Not `links.image.href`: it carries the same value but sits beside
+    `image-thumbnail`, `image-icon` and `image-deep-zoom-lite`, which are other
+    sizes. The page pattern is anchored at `^`, so a URL that merely *contains*
+    a FamilySearch page URL is refused before any request. The resolved URL then
+    goes through the same host check as a directly-supplied one — resolving
+    changes what is accepted, never what is trusted. The resolve is a step in
+    **this tool**, not in the shared input resolver: `image_read` shares that
+    resolver and already accepts a direct `memoryArtifactUrl` without
+    advertising it, so moving the resolve there would hand it page-URL support
+    against the `image_transcribe`-only ruling — and it would mostly pay the
+    lookup only to refuse the bytes on its inline size cap.
+  - When a **page** URL was resolved, the artifact URL it resolved to comes back
+    on `metadata.memoryArtifactUrl`, so a later read can pass it directly and
+    skip the lookup. It is absent when a direct artifact URL was supplied —
+    there was nothing to resolve.
   - It is fetched with **no Authorization header and needs no FamilySearch
-    login**. Measured 2026-09-15 on one artifact with three header sets: no
-    headers at all → 200, UA only → 200, bearer+UA → 200. Sending a token would
+    login**, and neither does the page-URL lookup. Measured 2026-09-15 on one
+    artifact with three header sets: no headers at all → 200, UA only → 200,
+    bearer+UA → 200; and again 2026-09-30 over 5 artifacts for the lookup,
+    authenticated and anonymous byte-identical on every one
+    (`dev/probe-memory-page.ts`). The lookup is therefore **unauthenticated**,
+    and retries once with the bearer only on a 401/403: going through the
+    authenticated fetcher unconditionally would demand a token before any
+    request and refuse a logged-out caller a public artifact. Every artifact
+    reachable was `ctx=ArtCtxPublic`, so a restricted one is unmeasured — the
+    retry is what covers it. Sending a token would
     also mean handing a credential to a URL that arrived inside a response
     body, which is why the host is **validated, not trusted**: it must be
     `sg30p0.familysearch.org` with a path ending `/dist.<ext>` (221 of 221 in
@@ -469,7 +498,9 @@ This mirrors `fulltext_search`'s `nameExpansion` without
 1. **Acquire the bytes.** For `imageId` / `ark` / `memoryArtifactUrl`: resolve + fetch the
    FS distribution image host-side via the shared fetcher lifted from `image-read.ts` (§8),
    reusing `getValidToken(principal)` and `BROWSER_USER_AGENT` — do **not** re-implement
-   token or fetch logic. For `file`: classify the project, check the ref shape, read the
+   token or fetch logic. A `memoryArtifactUrl` that is a **page** URL adds one prior,
+   **unauthenticated** Memories lookup (§5.3) before this step; a memory artifact is then
+   fetched with no token either way. For `file`: classify the project, check the ref shape, read the
    bytes through the ProjectStore, sniff the type (§5.3) — no token.
 2. **Refuse an oversize payload** (§7): more than `MAX_OCR_INPUT_BYTES` (14 MiB raw) on
    **any** input source is refused before the data URL is built, with the size, the cap
@@ -505,6 +536,11 @@ Returns **text only**:
 ```typescript
 {
   transcription: string      // faithful full-page OCR (the primary payload) — never doctored
+  viewerUrl?: string         // FamilySearch viewer URL for the image.
+                             // Present for imageId and ark inputs; absent for file and memoryArtifactUrl.
+                             // DGS: https://www.familysearch.org/search/film/<dgs>?i=<n-1> (zero-indexed,
+                             //   verified 2026-10-01: image 00697 of film 004528077 opens at i=696).
+                             // ARK: the resolver URL, preserving i=/cc=/groupId= context params.
   truncated?: true           // present when the OCR hit its output-token cap (finish_reason or native_finish_reason marks it — §6.2); transcription is PARTIAL
   truncationNotice?: string  // tool-voiced plain sentence companion to `truncated`; present iff `truncated`
   found?: "FOUND" | "NOT FOUND"  // present only when lookingFor was set, the read was not truncated (§6.2), AND the model emitted the marker on the final line
@@ -517,11 +553,6 @@ Returns **text only**:
     excerpt: string          // first 300 chars
     found?: "FOUND" | "NOT FOUND"
     truncated?: true
-  }
-  browseBudget?: {           // advisory, present only from the 21st distinct image in one group/project (§5.8)
-    imageGroup: string       // the image-group prefix, e.g. "004261111"
-    distinctImagesRead: number
-    notice: string           // pivot advice; independent of `truncated` — the two can co-occur
   }
   metadata: {
     imageId?: string
@@ -561,6 +592,9 @@ list the caller can turn into assertions.
 | `file` missing / a directory / not an image or PDF | `'<ref>' was not found under the project folder …` / `is a directory` / `is not an image or a PDF (by its content, not its name) …` |
 | Payload over `MAX_OCR_INPUT_BYTES` (any input) | `This <type> is N MiB, over the 14 MiB the OCR request can carry … It was not sent. Ask the user to re-save … or split a multi-page PDF …` (§7) |
 | Bad imageId/ark | reuse `image_read`'s existing messages (§8) |
+| `memoryArtifactUrl` is neither a memory artifact URL nor a Memories page URL | the shared `Unrecognized memoryArtifactUrl.` message, which names **both** accepted forms — a near-miss page URL (`http://`, a singular `/photos/artifact/`, a non-numeric id) lands here, so it must not name only the artifact form. Refused before any request |
+| A Memories page lookup returns non-200, after the 401/403 retry | `FamilySearch Memories lookup failed (<status>) for artifact <id>.` Says to open the page URL in a browser to confirm the memory exists and is visible; if restricted, call `login` and retry; otherwise transcribe by another route |
+| A Memories page resolves to no readable artifact | `FamilySearch returned no readable artifact for memory <id>.` Names the likely cause — a story with no attached file, or an audio memory — and directs to `person_read`'s source text instead |
 | No OpenRouter key configured | LLM-instruction error directing the user to set `openRouterApiKey` in `~/.familysearch-mcp/config.json` directly (§6.3). The tool never accepts an API key as a parameter. |
 | FS image fetch non-2xx | `FamilySearch image fetch failed: {status} {statusText}` (reused; `{statusText}` and its separating space are omitted when the response carries none). On a **400 or 404** for a `3:1:`/`3:2:` ark that is not a memory artifact, appends: the ark may not be a valid document-image identifier; directs to `record_read`'s `imageArk` field, and to passing the full page URL when the ark carries `i=`/`cc=`/`groupId=` context. It states that `image_search` returns image ids rather than arks. Every other status — including 401/403 (rights-restricted image) and 429 — keeps the bare message. |
 | Response not an image | `Expected an image response but got content-type: {type}` (reused) |
@@ -583,7 +617,7 @@ headers and body together:
 | Leg | Constant | Budget |
 |---|---|---|
 | FS image download (and its fallback-URL retry) | `IMAGE_FETCH_TIMEOUT_MS` (`utils/fs-image-fetch.ts`) | 90s per attempt |
-| OpenRouter OCR | `OCR_TIMEOUT_MS` (`tools/image-transcribe.ts`) | 180s |
+| OpenRouter OCR | `OCR_TIMEOUT_MS` (`utils/ocr.ts`) | 180s |
 
 Worst case for one `image_transcribe` is therefore 90 + 90 + 180 = **360s**,
 inside the e2e harness's 600s inactivity window — and a timeout returns as a
@@ -621,7 +655,7 @@ derive it from run-log `usage.timeline` gaps**: those are per SDK message, not
 per tool call, and the figures they gave here (p90 79s, max 167s) were both
 inflated and a model generation stale.
 
-### 5.8 Browse budget
+### 5.8 Image cap (hard, shared, persisted)
 
 An agent can enter an unbounded page-by-page hunt through a browse-only image
 volume — binary-searching a film for one register page, one OCR round-trip at a
@@ -630,90 +664,95 @@ bisecting a single image group, no give-up condition, until it burned the harnes
 wall-clock cap with no proof written. The per-invocation `image-reader` bound does
 not reach it (nothing counts *across* invocations), and skill prose does not either
 (over half the long hunts run in sessions that never load `search-images`). So the
-budget lives on the tool.
+bound lives on the tools.
 
-**What it does.** From the `BROWSE_BUDGET_IMAGES + 1`-th (currently the **21st**)
-distinct image transcribed within **one image group in one project**, a successful
-result carries an advisory `browseBudget` field naming the count, the group, and a
-pivot instruction (log the browse with a negative outcome and move to the indexed
-route, or ask the user). The field is additive and independent of `truncated`:
-`browseBudget` reports a browse-count advisory, not read completeness, so a
-budget-advised read can also be output-cap truncated (the two co-occur).
+**What it does.** `image_read`, `image_transcribe` and `volume_bisect`
+share **one** count of distinct `imageId`s per **image group per project** (the
+group is the digits before the underscore). When an `imageId` is new and its group
+already holds `IMAGE_BROWSE_CAP` (**20**), the tool **throws** before the scan
+fetch, and here before the OCR (`volume_bisect`'s `image_search` listing runs first,
+because it is what names the probe's `imageId`). The error names
+the group, the count, and the refused image's film-viewer link (`imageViewerUrl`),
+and tells the agent to log the browse as `partial` with `research_log_append` (the
+group, the pages read, what it was looking for), move to other routes, and name the
+unfinished browse in its final summary with that link. The `image_read` and
+`image_transcribe` refusal adds "run `volume_bisect` first, then read the narrowed
+range", so no agent or skill body has to change; `volume_bisect`'s refusal asks
+instead for the bracket reached so far. Re-reading any image already counted
+never refuses and never advances the count; an image read by two tools counts once.
 
-**Counting.** A module-level `Map<string, Set<string>>` (`browseBudgetSeen`, keyed
-`` `${projectScope(projectPath)}\0${imageGroup}` ``) holds the distinct `imageId`s seen
-per group per project; the group is the digits before the underscore in the `imageId`.
-The scope is the bound store's `projectId` where it has one (patron isolation on the
-shared-process `http.ts` entrypoint — see the shared `projectScope` helper in
-`image-store.ts`, which the truncation cap keys on too), else the normalized
-`projectPath`, else the `<no-project>` sentinel when the LLM passed no `projectPath`.
-The map is process-lifetime and **never persisted**; re-reading an image already in the
-set does not advance the count. `__clearBrowseBudgetForTests` resets it between tests.
+**Where the count lives.** `src/utils/browse-budget.ts` (`checkImageBrowseCap`
+before the fetch, `recordImageBrowse` once the read succeeded, so a failed fetch
+spends nothing). `image_read` and `image_transcribe` record after the fetch: an
+OpenRouter failure after a good fetch does use a slot, and a retry of that image is
+free because it is already counted. `volume_bisect` records after the probe's OCR,
+as it always has, so a failed probe spends nothing. The count is persisted in the
+project as `results/image-browse.jsonl`, one line the first time each `imageId` is read
+(`{"image_group","image_id","tool","at"}`) — `.jsonl` because `results-staging.ts`
+scans `results/*.json`. Beside it, an in-process count keyed
+`` `${projectScope(projectPath)}\0${group}` `` (the bound store's `projectId` on the
+shared-process `http.ts` entrypoint, else the normalized `projectPath`, else
+`<no-project>` — so two patrons on one shared process never share a count). The
+two are unioned on every check.
+**Best-effort in both directions:** an absent, unreadable or garbled log, or a
+failed append, falls back to the in-process count and never refuses or fails a
+read on its own. A `projectPath` that is not a project counts in memory only and
+writes nothing (the file store's `appendText` would otherwise create `results/` in
+any folder). Calls running in parallel can overshoot by however many are in
+flight; accepted, because recording at check time would charge failed fetches.
 
-**Key by project, not group alone.** The MCP server process outlives one
-conversation (on the desktop `.mcpb` it lives as long as Claude Desktop runs; the
-hosted path holds one persistent SDK client per session). A group-only key would
-tell a *second* project that opens a volume an earlier project browsed that it has
-already read 20 pages on page one — an argument to abandon a legitimate browse.
-Keying on project prevents that, and a unit test pins it (a same-group read under a
-different `projectPath` starts fresh). What no unit test or `make e2e-run` can
-observe is the intended flip side — that within one live process the count carries
-*across* conversations on the same project — because both start a fresh process; that
-rests on the process-lifetime map and is verified by reading, not by a test.
+**Calls with no `projectPath`.** On `http.ts` the bound store carries an
+`anchorPath` (`ProjectStore.anchorPath`), so the call is counted against that
+project's log. On the file backend (desktop `.mcpb`, both harnesses, hosted E2B)
+it is counted in memory under `<no-project>`, so **it does not survive a restart**.
+That is 236 of the 501 `imageId` calls in the committed e2e corpus (2026-10-01),
+including the largest over-cap group (`elena-asmundsdotter-origin`
+`run-2026-09-18_21-35-53`, group `004514823`, 43 distinct images, none with a
+`projectPath`). Within one process the cap still fires. Making `projectPath`
+required was rejected: it changes an MCP parameter contract and breaks ad-hoc
+no-project reads.
 
-On the shared-process `http.ts` entrypoint every request presents the *same* anchor
-`projectPath` (`/project`), so the "project" the key isolates is the bound store's
-`projectId`, not the anchor — the same `projectScope` scope the truncation cap keys on
-(§8.6). On the desktop `.mcpb` (one process, one project) that `projectId` is undefined
-and the scope is the normalized `projectPath`; a unit test pins patron isolation under
-a shared-process store binding. **Known limitation — header-less requests share a
-bucket.** A request that presents *no* `X-Genealogy-Project-Id` header binds an
-*unbound* store whose `projectId` is undefined (it does not 400; only a *malformed* id
-does), so two header-less patrons fall back to the same `projectPath`/`<no-project>`
-scope and can advance one another's browse counter. Unlike the truncation cap — whose
-store I/O throws before any cap is recorded, so its identical fallback is never reached
-— `recordBrowseAndCheckBudget` performs no store I/O, so the fallback is genuinely
-reachable here. Accepted, not fixed: any such session is already failing every
-persistence call with the unbound store's instruction message long before it reaches 21
-images in one group, and the consequence is only an advisory field on a *successful*
-read — nothing is refused (the ADR-0011 read-tool carve-out below). A 400 on a missing
-header would change the entrypoint's contract and is out of scope for a cache key.
+Because such a call cannot say which project it belongs to, its check also counts
+every in-process read of that group, and a call with a `projectPath` also counts the
+group's no-path reads — otherwise a subagent called without `projectPath` would get
+a second 20 beside the project's. **The cost:** the desktop process outlives one
+project, so a no-path read in one project can be refused for pages an earlier project
+read in the same session (in memory only — a restart clears it). Accepted because the
+alternative under-counts every delegated read; the refusal says "this server session"
+for that case.
 
-**Advisory, not a refusal — an ADR-0011 read-tool carve-out.** ADR-0011 lists "an
-advisory instead of a refusal" as a rejected alternative, but that evidence is about
-a *state* gate, where an advisory let a run complete over an unresolved identity
-conflict. A page read persists nothing, so the asymmetry inverts: a wrong refusal
-would hard-block a researcher mid-browse with no way around it but restarting the
-server, and no production telemetry would ever surface that happening
-(`docs/architecture.md` §9.4). A caller-supplied override parameter is ruled out
-separately under ADR-0006 — the caller supplies the input, so a parameter is a
-request, not a constraint. The budget therefore ships as a field on a *successful*
-result and knowingly does nothing if the agent ignores it.
+**Known limitation — header-less http requests share a bucket.** A request with no
+`X-Genealogy-Project-Id` header binds an *unbound* store (no `projectId`, and its
+I/O refuses), so its reads count in memory under the no-project scope, as on the
+file backend: two header-less patrons can advance one another's count. They never
+pool a bound patron's count — reads recorded under a `projectId` are excluded from
+that union. Accepted: such a session already fails every persistence call.
 
-**Why the threshold is 20.** Measured over the committed e2e corpus, distinct
-images per group for every block of ≥8 were 41, 26, 18, 17, 15, 14, 9, 8, 8. At 20,
-exactly two blocks carry a notice, both in one run — which passed, citing no image
-from either block (both yielded only a negative finding, which is the pivot the
-notice asks for, after 41 and 26 pages instead of 20). The highest non-noticing
-block is 18, so the budget does not fire on ordinary reads. Re-measure before
-changing it.
+**The trade, stated.** Because the count is persisted, a legitimate 21st page in
+the same project is refused **permanently** — a restart no longer resets it. The
+only release valve is the viewer link the refusal carries: the researcher can page
+on by hand. There is no override parameter (ADR-0011: none until a false deny is
+observed; ADR-0006: a caller-supplied parameter is a request, not a constraint).
 
-**Two things it knowingly does not do** (accepted trades, not gaps to close here):
+**Why the threshold is 20.** Replayed over the committed e2e corpus
+(2026-10-01: 597 runs, 501 `imageId` calls across the three tools): **6 groups in
+5 runs** pass 20 distinct images, for **69** distinct images refused (74 refused
+calls, counting repeats). Five refused images are cited in their run's `sources[]`, all in `elena-asmundsdotter-origin`,
+and none backs a correct finding: the 2026-09-01 run graded all six expected
+findings false, and in the 2026-09-18 run the one refused image tied to a graded
+finding (`004514823_00106`) backs f2's "partial" for the wrong father in the wrong
+parish (its `.ann.json`). The corpus holds no `volume_bisect` calls, so the bisect
+side is unmeasured. Re-measure before changing the constant.
 
-- **An advisory cannot make the agent stop.** The motivating run already had a
-  skill-level pivot instruction available and bisected for two hours anyway. This is
-  the price of never blocking a researcher mid-browse.
-- **The delegated path never sees the notice.** The `image-reader` subagent's return
-  contract is a closed enumeration and its verbatim relay only fires when the tool
-  *throws*, so a notice riding a successful transcription dies in the subagent's
-  throwaway context. Corpus-wide about 40% of `image_transcribe` calls are
-  main-thread and see it directly; one measured run is fully delegated and would see
-  nothing. Teaching the agent to relay it is a separate task with its own reviewer
-  and paid eval slot.
+**Known limitation — ARK input is not counted.** A `3:1:`/`3:2:` ARK carries no
+image-group number, so a hunt driven by one never advances the count; nor do `file`
+and `memoryArtifactUrl` inputs. A DGS distribution URL passed as `ark`
+(`…/dgs:<imageId>/dist.jpg`) embeds its `imageId` and **is** counted. Resolving an
+ARK to its group is deliberately out of scope.
 
-**Known limitation — ARK input is not counted.** An ARK carries no image-group
-number, so a hunt driven by `ark` rather than `imageId` never advances the budget.
-Resolving an ARK to its group is deliberately out of scope.
+**Not checked by anything:** whether the model obeys the refusal (logs `partial`,
+surfaces the link), and how often production researchers are refused
+(`docs/architecture.md` §9.4). The unit tests prove only that the refusal fires.
 
 ### 5.9 Runtime failure: one retry, transport only
 
@@ -806,7 +845,8 @@ the condition to re-check on.
 ```
 
 - `temperature: 0` — OCR is not a creative task.
-- `max_tokens` (`OCR_MAX_TOKENS`, `image-transcribe.ts`) is set **explicitly**.
+- `max_tokens` (`OCR_MAX_TOKENS`, `utils/ocr.ts`, re-exported from
+  `image-transcribe.ts`) is set **explicitly**.
   Setting it makes the cap ours and the truncation case (§6.2) reproducible.
   Mind the **direction**: for the current default `google/gemini-3.7-flash`
   OpenRouter reports a 65536 max-completion ceiling and the tool previously sent
@@ -863,8 +903,7 @@ success and the caller cannot tell a half-read census page from a whole one.
   consistent, not contradictory.
 - The `transcription` stays **verbatim** — the signal rides the sibling
   fields, never spliced into the OCR text (that would re-create the
-  prose/OCR blend a truncation notice must never introduce; the
-  `browseBudget.notice` precedent is the same shape).
+  prose/OCR blend a truncation notice must never introduce).
 - **Suppress `found` on a truncated read.** The FOUND/NOT FOUND marker rides
   a final line the model never reached, and a target may sit below the cut,
   so a half-read page must never surface a clean `NOT FOUND` negative.
@@ -912,16 +951,15 @@ and the answer splits on whether the server is a process a user installed or a p
 something else starts. Where a user installed it, the config is the file they own.
 Where an orchestrator starts it — the hosted sandbox, the e2e harness — that
 orchestrator writes the file before the server runs. Where the server is a **container**
-(the two search-agent prototype entrypoints), the entrypoint builds the config from its
+(the search-agent prototype's `build/http.js`), the entrypoint builds the config from its
 own environment before constructing the server, because a container receives a secret
-as environment and not as a file baked into an image — and `hosted-stdio.js` receives
-it per TURN, from the worker, which no file could do:
+as environment and not as a file baked into an image:
 
 | Runtime | Server runs | How `openRouterApiKey` reaches `config.json` |
 |---|---|---|
 | **Cowork desktop** | host (`.mcpb`) | the user edits `~/.familysearch-mcp/config.json` directly |
 | **Hosted web** | inside the E2B sandbox | Fly secret `OPENROUTER_API_KEY` → `config.py` `Settings.openrouter_api_key` → a `write_config(sandbox, {openRouterApiKey})` sibling of `fs_oauth.write_tokens`, written into the sandbox's `~/.familysearch-mcp/config.json` at session create (`sessions.py`) |
-| **Search-agent prototype** | a container (`build/http.js`, the shared compose `tools` service; `build/hosted-stdio.js`, the worker's per-turn fork) | compose passes the stack's `OPENROUTER_API_KEY` to the service, and the worker passes it to each fork; both entrypoints layer it and the other three per-user keys over whatever config they start from (`src/hosted-config-env.ts`) before building the server |
+| **Search-agent prototype** | a container (`build/http.js`, the shared compose `tools` service) | compose passes the stack's `OPENROUTER_API_KEY` to the service; the entrypoint layers it and the other three per-user keys over the config it starts from (`src/hosted-config-env.ts`) before building the server |
 | **e2e harness** | node subprocess of the harness | the harness reads `OPENROUTER_API_KEY` from `eval/.env` and stages `openRouterApiKey` into the `~/.familysearch-mcp/config.json` the subprocess reads (consistent with e2e already depending on the developer's real `tokens.json` there) |
 
 So in every runtime the env var is **bridged into the config** rather than consulted
@@ -929,8 +967,7 @@ when the key is needed: no tool reads a credential from the environment, and
 `getOpenRouterApiKey` stays the single resolution point with a single source. That is
 what the "no env-var fallback" rule protects, and it holds. What does **not** hold, and
 was claimed here until 2026-09-20, is the stronger sentence that the server makes zero
-`process.env` reads: `hosted-stdio.ts` has read these four since the D9–10 engine half,
-`http.ts` since the tool-server default moved to it, and a shipped tool
+`process.env` reads: `http.ts` reads these four, and a shipped tool
 (`research-append.ts`) reads two debug-hold variables. The bridge is at the
 **entrypoint** for a container and at the **orchestrator** for a sandbox; both are
 outside the tool, which is the line that matters. The hosted-path
@@ -1082,7 +1119,7 @@ can add a `true` badge, never a false "verified whole").
   both joins the cap and protects its scan from the sweep. It lives in
   `image-store.ts`, not `image-transcribe.ts`, because both the writer
   (`image_transcribe`) and the reader (`research_append`) already import that
-  module. Process-lifetime and never persisted (as `browseBudgetSeen` is, §5.8), and
+  module. Process-lifetime and never persisted (unlike the image cap's log, §5.8), and
   scoped the same way — both now key on the shared `projectScope` helper
   (`image-store.ts`): the bound store's `projectId` where it has one, else the
   normalized `projectPath` — so both isolate patrons on the shared-process entrypoint.
@@ -1107,8 +1144,8 @@ can add a `true` badge, never a false "verified whole").
   that a zero-content capped read throws rather than returning `truncated: true`
   (§6.2).
 
-**Known limitation — the join needs a persisted image.** Like the browse
-budget's ARK blind spot (§5.8), this derivation has a hole, but a *different*
+**Known limitation — the join needs a persisted image.** Like the image
+cap's ARK blind spot (§5.8), this derivation has a hole, but a *different*
 one, because the key is `image_filename`, not imageId:
 
 - A read with no `projectPath` persists no scan, so its source has no
@@ -1116,7 +1153,7 @@ one, because the key is `image_filename`, not imageId:
   read is still visible in the tool response; only the persisted marker is lost.)
 - The cache is process-lifetime and never persisted, so a cap recorded in one
   MCP-server process is lost if the process restarts before the `research_append`
-  that cites the image — the same boundedness the browse budget carries.
+  that cites the image.
 - An **ARK** read is *not* a blind spot here: `saveSourceImage` mints an
   `image_filename` for an ARK label just as for an imageId, so it joins. This is
   the one place this mechanism reaches further than the imageId-keyed browse
@@ -1137,6 +1174,11 @@ one, because the key is `image_filename`, not imageId:
   referenced.
 - `dev/try-image-transcribe.ts` — one-shot live smoke test against real
   OpenRouter + a real FS image (mirrors `dev/try-image-read.ts`).
+- `src/utils/ocr.ts` — the OpenRouter leg (`runOcr`, `OCR_TIMEOUT_MS`,
+  `OCR_MAX_TOKENS`, `MAX_OCR_INPUT_BYTES`, `buildOcrPrompt`), shared with
+  `volume_bisect`.
+- `src/utils/browse-budget.ts` — the hard image cap (§5.8), shared with
+  `image_read` and `volume_bisect`.
 
 ## 10. Migration (skills + subagent)
 
@@ -1290,6 +1332,19 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `tests/tools/{image-transcribe,record-read,no-project,research-log-append,sidecar-read}.test.ts`, `tests/utils/results-staging.test.ts`
 - `eval/harness/tests/unit/test_mock_mcp.py` (parity lint compares the SEARCH sets), `eval/CLAUDE.md` (parity list)
 - `docs/specs/search-result-staging-spec.md` §2 / §5 / §11, `docs/specs/sidecar-read-tool-spec.md` §7, `README.md`
+
+*Extracted for `volume_bisect` — behaviour unchanged, 88/88 of this tool's tests
+passed unedited across the move:*
+- `src/utils/ocr.ts` — the OpenRouter leg. The code moved unchanged; the
+  constants' measured derivations (the 126-call `OCR_MAX_TOKENS` scan, the
+  14-25 MiB upload case, the 70/70 and 46/46 transport probes) stayed in this
+  spec rather than travelling with them, so read §5 here for provenance
+- `src/utils/browse-budget.ts` — the browse counter, lifted whole (it became the
+  hard image cap on 2026-10-01)
+- `src/tools/image-transcribe.ts` — imports both; re-exports
+  `OCR_MAX_TOKENS` and `MAX_OCR_INPUT_BYTES` so
+  existing importers keep their paths
+- `docs/specs/volume-bisect-tool-spec.md` — the second producer's contract
 
 *Image-persistence increment (§8.5):*
 - `src/tools/research-append.ts` — TTL-GC sweep of unreferenced `images/*.jpg` after each write

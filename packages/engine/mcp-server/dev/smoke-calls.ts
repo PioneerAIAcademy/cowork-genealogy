@@ -347,19 +347,6 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: noError,
   },
   {
-    // Live mode, and the ONLY check that the schema still accepts a call with
-    // no projectPath. `required` is ["personId"] alone because projectPath is
-    // conditionally required, which an input schema cannot express — so if it
-    // were re-added, the client would reject this before the tool ran and no
-    // vitest file would notice. A schema rejection does not carry
-    // HOSTED_REAUTH_INSTRUCTION, so `reauth` fails on it rather than passing.
-    // Not `offline`: live mode fetches the person from FamilySearch.
-    tool: "person_warnings",
-    label: "person_warnings live",
-    args: () => ({ personId: "KD96-TV2", live: true }),
-    expect: reauth,
-  },
-  {
     tool: "merge_warnings",
     offline: true,
     args: (ctx) => ({
@@ -438,16 +425,26 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     args: () => ({ site: "findagrave", attributes: { surname: "Smoke" } }),
     expect: okTrue,
   },
+  {
+    // Exact count pins row-co-occurrence behavior (not the transitive merge
+    // the OLD given-name-variants.json loader does) — proves the bundled
+    // table shipped and the loader read it correctly, not just "non-empty".
+    tool: "get_name_variants",
+    offline: true,
+    args: () => ({ name: "fred" }),
+    expect: (res) => ({
+      ok: !res.isError && Array.isArray(res.body?.variants) && res.body.variants.length === 6,
+      detail: brief(res),
+    }),
+  },
 
   // FamilySearch-token tools: each reaches getValidToken after synchronous
   // arg validation and before any I/O.
   tokenStep("record_search", { surname: "Smoke" }),
   tokenStep("person_search", { surname: "Smoke", givenName: "Test" }),
-  // `relatives` on purpose: without it the smoke never touches the sibling
-  // fan-out, so the only advertised path with a second wave of requests goes
-  // uncovered. Breaks no rule either way -- the harness asks only that each
-  // advertised tool be called -- but one argument buys the coverage (#2593).
-  tokenStep("person_read", { personId: FS_PID, relatives: true }),
+  // Every read now runs the sibling fan-out and the memories leg, so the smoke
+  // reaches both with no flag (the tool ignores `relatives`).
+  tokenStep("person_read", { personId: FS_PID }),
   tokenStep("person_ancestors", { personId: FS_PID }),
   tokenStep("record_read", { recordId: "QVS9-DHDB" }),
   tokenStep("fulltext_search", { keywords: "smoke" }),
@@ -484,6 +481,18 @@ export const CALL_PLAN: readonly SmokeStep[] = [
       if (!ctx.openRouterKeyConfigured) return keyMissing(res);
       return reauth(res, ctx);
     },
+  },
+  {
+    // Same key-before-fetch ordering as image_transcribe. Deliberately given a
+    // BARE prefix: the refusal is argument validation and returns before any
+    // network leg, so the smoke never spends a billed OCR probe. The happy path
+    // needs a real Natural Group name and is dev/try-volume-bisect.ts's job.
+    tool: "volume_bisect",
+    args: () => ({ imageGroupNumber: "004516861", targetYear: 1695 }),
+    expect: (res) => ({
+      ok: res.isError === true && carries(res, "volume_search"),
+      detail: brief(res),
+    }),
   },
 
   // Public-network tools: no token, must succeed.

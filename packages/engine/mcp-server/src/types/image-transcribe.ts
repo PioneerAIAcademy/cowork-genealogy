@@ -28,6 +28,9 @@ export interface ImageTranscribeResult {
    *  truncation is signalled by the sibling `truncated`/`truncationNotice`
    *  fields, not by splicing prose into this text. */
   transcription: string;
+  /** FamilySearch viewer URL for the image that was transcribed. Present for
+   *  imageId and ark inputs; absent for file and memoryArtifactUrl (issue #2854). */
+  viewerUrl?: string;
   /** True only when the OCR hit its output-token cap (finish_reason or
    *  native_finish_reason marks it — see §6.2 for the exact match): the
    *  transcription above is PARTIAL and the rest of the page is unread, not
@@ -42,18 +45,6 @@ export interface ImageTranscribeResult {
   /** Project-relative path of the saved scan (images/<key>.jpg), present only
    *  when projectPath was supplied and the save succeeded (§8.5). */
   imageRef?: string;
-  /** Present only from the (N+1)th distinct image in one image group in one
-   *  project onward. Advisory only, and independent of `truncated` — the two can
-   *  co-occur (a browse-budget read can also be output-cap truncated). See spec
-   *  §5.8. */
-  browseBudget?: {
-    /** The image-group prefix, e.g. "004261111". */
-    imageGroup: string;
-    /** Distinct images transcribed from this group in this project so far. */
-    distinctImagesRead: number;
-    /** The advisory the caller should act on (pivot to indexed search). */
-    notice: string;
-  };
   /** Present when `lookingFor` contained a recognized given name and
    *  expansion fired. Tells the caller what the VLM was primed with. */
   nameExpansion?: {
@@ -88,6 +79,10 @@ export interface ImageTranscribeResult {
     ark?: string;
     /** The project-relative ref that was read, for a `file` input. */
     file?: string;
+    /** The artifact URL a Memories *page* URL resolved to, so a later read can
+     *  pass it directly and skip the lookup. Absent when a direct artifact URL
+     *  was supplied — there was nothing to resolve. */
+    memoryArtifactUrl?: string;
     /** The content type sent to the OCR model (`image/jpeg`, `application/pdf`, …). */
     contentType: string;
     /** The OpenRouter model slug actually used. */

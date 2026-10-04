@@ -27,6 +27,7 @@ vi.mock("../../src/auth/config.js", () => ({
 import { wikiPlacePageTool, wikiPlacePageSchema } from "../../src/tools/wiki-place-page.js";
 import { WIKI_PAGE_SECTIONS } from "../../src/types/wikiPage.js";
 import { VALIDATOR_ENUMS } from "../../src/validation/validator.js";
+import { socketFetchFailure } from "../helpers/fetch-failed.js";
 
 const API_BASE = "http://localhost:8000";
 
@@ -170,6 +171,17 @@ describe("wikiPlacePageTool — home section", () => {
     await expect(
       wikiPlacePageTool({ standardPlace: "Portugal", section: "home" }, LOCAL)
     ).rejects.toThrow(/Could not reach wiki-query-api/);
+  });
+
+  it("names the socket cause, not just \"fetch failed\"", async () => {
+    mockFetch.mockRejectedValue(socketFetchFailure());
+
+    const err = await wikiPlacePageTool({ standardPlace: "Portugal", section: "home" }, LOCAL).catch(
+      (e: Error) => e,
+    );
+    expect((err as Error).message).toMatch(/Could not reach wiki-query-api.*ETIMEDOUT/s);
+    expect((err as Error).message).toContain(API_BASE);
+    expect((err as Error).message).not.toMatch(/Is the server running/);
   });
 });
 

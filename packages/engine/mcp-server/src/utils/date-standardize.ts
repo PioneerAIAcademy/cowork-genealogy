@@ -14,6 +14,7 @@ import {
   BC_WORDS,
   AD_WORDS,
   WFT_PATTERN,
+  FILLER_WORDS,
 } from "./date-constants.js";
 
 // ---------- Token types ----------
@@ -29,6 +30,7 @@ interface DateParts {
   month?: string;       // 3-letter abbreviation
   year?: number;
   splitYear?: string;   // e.g. "24", "00"
+  droppedSplit?: boolean; // a "/NN" after the year that was not read as a split year
   bc?: boolean;
   uncertain?: boolean;
   quarter?: number;     // 1-4 for quarter dates
@@ -88,6 +90,14 @@ function preProcess(raw: string): { text: string; trailingParen: string; uncerta
   let trailingParen = '';
   let uncertain = false;
   const orDates: string[] | null = null;
+
+  // The legal and probate idioms "on or about/before/after" are one modifier
+  // each. Rewritten before anything reads `or`, which otherwise marks an
+  // ambiguous date and omits ("1850 or 1851").
+  text = text
+    .replace(/\bon\s+or\s+about\b/gi, 'abt')
+    .replace(/\bon\s+or\s+before\b/gi, 'bef')
+    .replace(/\bon\s+or\s+after\b/gi, 'aft');
 
   // Convert em-dashes/en-dashes to hyphens
   text = text.replace(/[\u2013\u2014]/g, '-');
@@ -259,9 +269,17 @@ function parseDateTokens(tokens: Token[], startIdx: number, endIdx: number): Dat
         continue;
       }
 
-      // Check for ordinal suffix after number
-      if (ORDINAL_SUFFIXES.has(lower) && pendingNums.length > 0) {
+      // Check for ordinal suffix after number. `pendingNums` is empty when the
+      // month came first ("Jan 1st, 1901" stores the day directly), so the
+      // previous token decides too.
+      if (ORDINAL_SUFFIXES.has(lower) && (pendingNums.length > 0 || (i > 0 && tokens[i - 1].type === 'num'))) {
         // Just ignore the suffix; the number is already stored
+        i++;
+        continue;
+      }
+
+      // Filler words carry no date meaning (see FILLER_WORDS)
+      if (FILLER_WORDS.has(lower)) {
         i++;
         continue;
       }
@@ -360,7 +378,12 @@ function parseDateTokens(tokens: Token[], startIdx: number, endIdx: number): Dat
           const suffixVal = parseInt(suffixTok.value, 10);
 
           if (num >= 1000 && num <= 1752) {
-            // Valid split year range
+            // Valid split year range. Deliberate, not a bug to widen: Britain
+            // and its colonies started the year on 25 March (Lady Day) until
+            // they adopted the Gregorian calendar in 1752, so only a Jan-Mar
+            // date up to then carries both years ("28 Feb 1623/24"). After
+            // 1752 a "/NN" is not dual dating, and the year is omitted below
+            // (droppedSplit) rather than read.
             const nextYear = num + 1;
             const suffixLen = suffixTok.value.length;
 
@@ -401,6 +424,10 @@ function parseDateTokens(tokens: Token[], startIdx: number, endIdx: number): Dat
             // Year > 1752, not valid split year — don't consume / and next num
             // Leave them for other processing
           }
+          // A "/NN" that was not read as a split year is never parsed by
+          // anything after this ("1850/51", "1750/52", "1799/00"), so the year
+          // alone would be a partial.
+          if (parts.splitYear === undefined) parts.droppedSplit = true;
         }
         continue;
       }
@@ -449,6 +476,62 @@ function parseDateTokens(tokens: Token[], startIdx: number, endIdx: number): Dat
   }
 
   return parts;
+}
+
+// ---------- Never emit a partial ----------
+//
+// Lead ruling on issue #2124 (2026-09-18): when any token of the input is
+// unparsed, return "" so the standard_date sidecar is omitted, and never take a
+// day of month from an age. Before this, an unrecognized word was skipped and
+// the rest emitted: "13 ene 1752" -> "13 1752", "1872 AGE 3 YRS" -> "3 1872".
+
+/** Whether a word token is part of the date vocabulary. An ordinal suffix
+ *  counts only straight after a number. */
+function isDateWord(tokens: Token[], i: number): boolean {
+  const lower = tokens[i].value.toLowerCase();
+  if (ORDINAL_SUFFIXES.has(lower)) return i > 0 && tokens[i - 1].type === 'num';
+  return (
+    MONTHS.has(lower) || MODIFIERS.has(lower) || FILLER_WORDS.has(lower) ||
+    QUARTER_WORDS.has(lower) || BC_WORDS.has(lower) || AD_WORDS.has(lower)
+  );
+}
+
+/** Checked over the WHOLE input before any branch, because several branches
+ *  return without parsing every token: the ambiguous `__OR__` form, the `Q`
+ *  prefix, and anything in front of a Bet/From/To keyword. */
+function hasUnparsedWord(text: string, tokens: Token[]): boolean {
+  // The tokenizer builds words from ASCII letters only and drops the rest, so
+  // a Cyrillic or CJK word would otherwise never be seen ("январь 1860" ->
+  // "1860"). Any letter left after accent folding is unparsed.
+  // `º`/`ª` are Spanish/Portuguese ordinal marks ("1º de enero"), not words.
+  if (/\p{L}/u.test(text.replace(/[a-zA-Zºª]/g, ''))) return true;
+  for (let i = 0; i < tokens.length; i++) {
+    if (tokens[i].type === 'str' && !isDateWord(tokens, i)) return true;
+  }
+  return false;
+}
+
+/** The standalone From/To branches parse only what follows the keyword, so
+ *  anything in front of it other than a filler ("1682 bis 1694",
+ *  "um 1850 bis 1860") would be dropped. */
+function droppedBefore(tokens: Token[], keywordIdx: number): boolean {
+  for (let i = 0; i < keywordIdx; i++) {
+    const t = tokens[i];
+    if (t.type !== 'str' || !FILLER_WORDS.has(t.value.toLowerCase())) return true;
+  }
+  return false;
+}
+
+/** A day with no month is a number taken from somewhere that is not a date
+ *  (an age, a scanning error) or a month the parser did not read. */
+function dayWithoutMonth(d: DateParts): boolean {
+  return d.day !== undefined && !d.month;
+}
+
+/** Whether formatting `d` would emit a partial: a day with no month, or a
+ *  year whose "/NN" suffix was not read as a split year. */
+function dropsAPart(d: DateParts): boolean {
+  return dayWithoutMonth(d) || d.droppedSplit === true;
 }
 
 // Find all positions of a modifier keyword (checks both str and sym tokens)
@@ -506,10 +589,18 @@ export function stdDate(raw: string): string {
 
   if (!text) return '';
 
+  // Never emit a partial: every word of the input must be understood.
+  const normalizedText = normalizeAccents(text);
+  const allTokens = tokenize(normalizedText);
+  if (hasUnparsedWord(normalizedText, allTokens)) return '';
+
   // Check for __OR__ pattern (ambiguous date)
   if (text.includes('__OR__')) {
     const orParts = text.match(/__OR__(.*?)__OR__(.*?)__OR__/);
     if (orParts) {
+      // Anything outside the ambiguous segment ("abt 3/9/1978") would be
+      // dropped from the output, so the result would be a partial.
+      if (text.replace(/__OR__.*?__OR__.*?__OR__/, '').trim() !== '') return '';
       const interp1 = orParts[1].trim();
       const interp2 = orParts[2].trim();
 
@@ -521,16 +612,14 @@ export function stdDate(raw: string): string {
     }
   }
 
-  // Tokenize
-  const allTokens = tokenize(normalizeAccents(text));
-
   if (allTokens.length === 0) return '';
 
   // Check for "Q" prefix for quarters (e.g., "Q1")
   if (allTokens.length >= 2 && allTokens[0].type === 'str' &&
       allTokens[0].value.toLowerCase() === 'q' && allTokens[1].type === 'num') {
     const qNum = parseInt(allTokens[1].value, 10);
-    if (qNum >= 1 && qNum <= 4 && allTokens.length >= 3) {
+    // Exactly "Q<n> <year>": anything after ("Q1 1850 to Q2 1851") would be dropped.
+    if (qNum >= 1 && qNum <= 4 && allTokens.length === 3) {
       const yearTok = allTokens[2];
       if (yearTok.type === 'num') {
         const year = parseInt(yearTok.value, 10);
@@ -559,6 +648,7 @@ export function stdDate(raw: string): string {
 
       // Range gap filling
       fillRangeGaps(date1, date2);
+      if (dropsAPart(date1) || dropsAPart(date2)) return '';
 
       const d1str = formatDate(date1);
       const d2str = formatDate(date2);
@@ -579,6 +669,7 @@ export function stdDate(raw: string): string {
       const date2 = parseDateTokens(allTokens, toIdx + 1, allTokens.length);
 
       fillRangeGaps(date1, date2);
+      if (dropsAPart(date1) || dropsAPart(date2)) return '';
 
       const d1str = formatDate(date1);
       const d2str = formatDate(date2);
@@ -590,11 +681,16 @@ export function stdDate(raw: string): string {
     }
   }
 
+  // A conjunction that no range branch consumed would be dropped by every path
+  // below: "1850 or 1851" would give 1851, "Bef 1850 and Aft 1840" Bef 1840.
+  if (andPositions.length > 0 || findAllModifier(allTokens, 'or').length > 0) return '';
+
   // Standalone From → Aft
   if (fromPositions.length > 0 && toPositions.length === 0 && andPositions.length === 0) {
     const fromIdx = fromPositions[0];
+    if (droppedBefore(allTokens, fromIdx)) return '';
     const date = parseDateTokens(allTokens, fromIdx + 1, allTokens.length);
-    if (!date.year) return '';
+    if (!date.year || dropsAPart(date)) return '';
     date.modifier = 'Aft';
     let result = formatDate(date);
     if (trailingParen) result += ' ' + trailingParen;
@@ -605,8 +701,9 @@ export function stdDate(raw: string): string {
   // Standalone To → Bef
   if (toPositions.length > 0 && fromPositions.length === 0) {
     const toIdx = toPositions[0];
+    if (droppedBefore(allTokens, toIdx)) return '';
     const date = parseDateTokens(allTokens, toIdx + 1, allTokens.length);
-    if (!date.year) return '';
+    if (!date.year || dropsAPart(date)) return '';
     date.modifier = 'Bef';
     let result = formatDate(date);
     if (trailingParen) result += ' ' + trailingParen;
@@ -626,6 +723,10 @@ export function stdDate(raw: string): string {
       return result;
     }
   }
+
+  // A day with no month, e.g. the "3" of "1872 AGE 3 YRS". After the quarter
+  // branch, whose leftover number ("1st quarter") sets day on purpose.
+  if (dropsAPart(date)) return '';
 
   // Validate
   if (!date.year && !date.month && !date.day) {
