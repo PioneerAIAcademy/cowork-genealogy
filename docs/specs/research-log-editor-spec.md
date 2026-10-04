@@ -502,10 +502,30 @@ Scope, and why it is this narrow:
   found in Pike County` and `Bucks Co., PA household: no Whitfield found`. The
   compound arm is the one clause that still reads case, and there it is one of
   three conditions — the run must also name no place (`Co`, `County`, `Twp`, a
-  two-letter state abbreviation…), must survive having a sentence-opening
-  determiner stripped off its front, and the noun must carry no abstract
-  complement (`household records`, `household composition`). Each clause and
-  each guard has a test that goes red when that one is removed.
+  two-letter state abbreviation…), must survive having its leading
+  non-name tokens stripped (sentence-opening determiners, and the ordinary
+  words that start these notes' sentences: `Census`, `Federal`, `State`,
+  `Found`, `Reading`, `Result`), and the noun must carry no abstract complement
+  (`household records`, `household composition`).
+
+  **Every clause and guard goes red when it alone is removed**, which is
+  checked by `dev/mutate-census-hedge.ts` rather than asserted. Run it rather
+  than trusting this sentence: it takes each of the eighteen out in turn and
+  reports any that the suite does not notice. Two rounds of this card shipped a
+  mechanism no test exercised, each time because a note written for one clause
+  incidentally satisfied a neighbour, so reading the tests does not substitute.
+  A green row means the clause needs a test **or** is inert — one was deleted on
+  that finding rather than given a test it could not fail.
+
+  **Negation and intent are not read.** A note that names a household in one of
+  these relations is refused however it frames it: with a staged pre-1880
+  payload, "Searched Whitfield household in Dodge Precinct: nil", "plan to check
+  the Thomas Flynn household" and "no co-resident spouse found" are all refused,
+  and none asserts a household. The corpus nils pass only because they name
+  nobody ("No matching household found"), which is an accident of phrasing
+  rather than a rule. The refusal costs a turn and is actionable, so the limit
+  is tolerable where a silent miss would not be; closing it is a widening of a
+  deny and needs the corpus re-measure, not a keyword list.
 
   **Relations are read sentence by sentence**, because one does not reach across
   a full stop: in "…not indexed in FamilySearch. Rebecca's 1840 household cannot
@@ -523,7 +543,7 @@ Measured over the 4,322 distinct `notes` arguments in the committed run logs
 (2026-10-04; re-derive with
 `dev/measure-census-hedge-refusals.ts` rather than quote — the corpus moves with
 every committed run, and shrinks as well as grows, because a re-run replaces a
-skill's run log), the note-only rule refuses 144 (3.3%). Of the 1,998 staged
+skill's run log), the note-only rule refuses 146 (3.4%). Of the 1,998 staged
 `record_search` entries with a note, 861 pair to the search response that staged
 them (e2e run logs keep only a truncated summary, so the rest cannot be paired);
 the staged search refuses 29 of those 861 (3.4%), of which 7 are refused only
@@ -531,19 +551,36 @@ because of the payload.
 
 Against `main` — the baseline that matters, since it is what ships today — the
 whole of this section's change newly refuses **0 notes and 3 payload ops**, and
-newly frees **43 distinct notes** — 43 on the note-only axis and 11 on the
-payload axis, every one of the 11 already among the 43, so they are repeats of
+newly frees **41 distinct notes** — 41 on the note-only axis and 11 on the
+payload axis, every one of the 11 already among the 41, so they are repeats of
 the same strings rather than a separate population. All three newly refused are
 flat "in household of ⟨Name⟩" claims logged against an 1850 payload, the shape
 the rule exists for.
 
-Every one of the 43 freed was read, and the right summary is that **none is an
+Every one of the 41 freed was read, and the right summary is that **none is an
 unhedged claim** — not that none names anyone. Most are search plans, nil
-results, candidate lists and negative findings, but four are the John Baker
-notes, which list eight household members by name and are freed because each
-one ends "No relationship-to-head column in 1870 census". They were refused
-before only because the hedge detector did not accept the hyphenated spelling
-the refusal message itself prints.
+results, candidate lists and negative findings. Two groups are not, and both
+are deliberate:
+
+- **Four John Baker notes** list eight household members by name and are freed
+  because each ends "No relationship-to-head column in 1870 census". They were
+  refused before only because the hedge detector did not accept the hyphenated
+  spelling the refusal message itself prints.
+- **Three verbatim transcriptions** — the pasted Thomas Flynn 1850 listing, the
+  pasted Silas Kerrigan 1860 listing and the Josiah Barnes 1855 result — give a
+  household's members with ages, birthplaces and occupations and assert **no
+  relationship**: no "wife", no "son", and the brackets hold an age rather than
+  a role. On a pre-1880 schedule co-residence *is* stated and only kinship is
+  not, so recording the one without the other is the compliant shape, not a
+  violation of it.
+
+An earlier version of this round freed two more that **were** unhedged claims,
+and both are now refused: "wife is listed as Mary A. Ranny" on an 1870 schedule
+(a rejection note, which this spec's own §8.2 position says still writes the
+claim) and "children Thomas (b.1829), Mary (b.1830) … confirms Thomas and
+Elizabeth Young as a married couple" on an 1841 England schedule. The first
+needed a report verb between the role and the name, the second needed
+`children` in the kinship list.
 
 Two earlier versions of this test were measured and discarded, and both failures
 are worth keeping. Requiring a name of the *whole* anchor set freed "1860
@@ -565,7 +602,7 @@ a 41% refusal rate, non-generalizability outside the US, and the signal being
 author-supplied and optional. `requirePre1880CensusHedge`'s docstring in
 `research-log-append.ts` carries the second verbatim, with the issue it was
 ruled on. The binding above answers the first two — the rate
-is 3.3% of notes, and non-US censuses that carry the column are excluded. The
+is 3.4% of notes, and non-US censuses that carry the column are excluded. The
 staged search answers most of the third for `record_search`: the census is read
 from FamilySearch's response, not from the caller. What still stands is the
 reach: a note logged by any other tool, or with no staged response, is judged on

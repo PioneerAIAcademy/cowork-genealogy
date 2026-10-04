@@ -499,8 +499,21 @@ const HOUSEHOLD_NOUN = /\b(?:household|dwelling)\b/;
  * What separates the two populations is the RELATION, not the orthography: a
  * claim puts someone IN a household or names the household OF someone, while
  * a mention attaches the bare noun to an abstract complement (members,
- * composition, listing, head, name) or negates it. Every alternative in
- * `HOUSEHOLD_CLAIM` is one of those relations and every one is case-free.
+ * composition, listing, head, name). Every alternative in `HOUSEHOLD_CLAIM`
+ * is one of those relations and every one is case-free.
+ *
+ * NEGATION AND INTENT ARE NOT READ, and the limit is worth stating rather
+ * than discovering. A note that names a household in a relation is refused
+ * however it frames it, so with a staged pre-1880 payload behind them
+ * "Searched Whitfield household in Dodge Precinct: nil", "plan to check the
+ * Thomas Flynn household" and "no co-resident spouse found" are all refused
+ * -- each names a household and none asserts one. The corpus nils survive
+ * only because they name nobody ("No matching household found"), which is
+ * luck about phrasing rather than a rule. Adding a negation or intent clause
+ * is a widening of a deny and needs the corpus re-measure in
+ * `dev/measure-census-hedge-refusals.ts`, not a keyword list: the refusal
+ * costs a turn and is actionable, so the limit is tolerable where a silent
+ * miss would not be.
  *
  * `in` admits up to three intervening words so "in the doss household" and
  * "in the 1850 census household" both read, while "no household found in Pike
@@ -543,12 +556,16 @@ const HOUSEHOLD_CLAIM = new RegExp(
     String.raw`\b(?:in|within)\s+(?:[\w.'’-]+\s+){0,3}${HOUSEHOLD_NOUNS}\b`,
     // "Nancy Doss's household"
     String.raw`\b[\w.’-]+(?:'s|s'|’s|s’)\s+${HOUSEHOLD_NOUNS}\b`,
-    // "Household also includes: Mary J", "the dwelling contains"
-    String.raw`\b${HOUSEHOLD_NOUNS}\s+(?:also\s+)?(?:includes?|contains?|comprises?|lists?)\b`,
+    // "Household also includes: Mary J", "Dwelling 112 holds Nancy Doss".
+    // The optional number is how a schedule numbers the dwelling it is about.
+    String.raw`\b${HOUSEHOLD_NOUNS}\s+(?:\d+\s+)?(?:also\s+)?(?:includes?|contains?|comprises?|lists?|holds?)\b`,
     // "heads a household in Justice Precinct 4", "heading own household with
     // John Clark b.1822" -- the participle is not optional decoration, it is
     // the form the one corpus instance uses.
     String.raw`\bhead(?:s|ing|ed)?\s+(?:a|the|his|her|their|own|her\s+own|his\s+own)?\s*${HOUSEHOLD_NOUNS}\b`,
+    // ...and the reverse order, which is how a note usually writes it:
+    // "household headed by Nancy Doss".
+    String.raw`\b${HOUSEHOLD_NOUNS}\s+head(?:s|ing|ed)?\s+by\b`,
   ].join("|"),
   "i",
 );
@@ -572,10 +589,13 @@ const HOUSEHOLD_COMPOUND_G = new RegExp(
 const PLACE_MARKER_ONLY = new RegExp(String.raw`^${PLACE_MARKER}$`);
 
 /**
- * Capitalised only because they open a sentence. Stripped from the front of a
- * run before it is judged, or "The household also includes: Mary J" reads as
- * a compound named "The" -- which is the capital test coming back in through
- * the arm meant to replace it.
+ * Tokens that are capitalised for a reason other than being a name --
+ * sentence-opening determiners, and the handful of ordinary words that
+ * routinely start a note's sentences here (`Census`, `Federal`, `State`,
+ * `Found`, `Reading`, `Result`). Stripped from the front of a run before it
+ * is judged, or "The household also includes: Mary J" reads as a compound
+ * named "The" -- the capital test coming back in through the arm meant to
+ * replace it.
  */
 const SENTENCE_OPENER = /^(?:The|A|An|This|That|These|Those|His|Her|Their|Our|My|No|One|Each|Same|Both|Another|Other|New|Old|Census|Federal|State|Found|Returned|Reading|Result)$/;
 
@@ -599,17 +619,24 @@ function hasHouseholdCompound(notes: string): boolean {
  * nor `KINSHIP_CLAIM` (which wants `wife` immediately before a capitalised
  * name) saw it.
  *
- * THE SHAPE IS NARROW ON PURPOSE: a word, then a bracket, then the role and
- * nothing else before the `,` or `)`. A looser `\(\s*role` matched four
- * corpus notes that assert nothing -- "c_002 (mother identity)", "Anders
- * Monsen in Norway Census (spouse Unna)", "Margret Reagan (the mother, b.
- * 1820)" and a will's "Mary Ann Dougherty (wife of Patrick Dougherty)". Those
- * are glosses, where the role is the head of the parenthetical and the person
- * is inside it; in a claim the person is OUTSIDE and the bracket holds only
- * the label. "(head, ~1822 Bavaria)" still counts -- the comma ends the role.
+ * THE SHAPE IS NARROW ON PURPOSE: the bracket holds the role and nothing else
+ * before the `,` or `)`. A looser `\(\s*role` matched four corpus notes that
+ * assert nothing -- "c_002 (mother identity)", "Anders Monsen in Norway
+ * Census (spouse Unna)", "Margret Reagan (the mother, b. 1820)" and a will's
+ * "Mary Ann Dougherty (wife of Patrick Dougherty)". Those are glosses, where
+ * the role heads the parenthetical and the person sits inside it; in a claim
+ * the bracket holds only the label. "(head, ~1822 Bavaria)" still counts --
+ * the comma ends the role.
+ *
+ * An earlier version also required a word character BEFORE the bracket, to
+ * say the person stands outside it. THAT CONDITION WAS INERT and is gone:
+ * `.` sat in its character class, so a sentence-ending period satisfied it,
+ * and relaxing it moved nothing across 4,322 corpus notes. Review asked for a
+ * test that fails without it; there is none to write, because it did nothing,
+ * and a guard that cannot fail reads as coverage. Deleted instead.
  */
 const ROLE_IN_PARENS =
-  /[\w.'’]\s*\(\s*(?:head|wife|husband|son|daughter|mother|father|spouse|widow)\s*[,)]/i;
+  /\(\s*(?:head|wife|husband|son|daughter|mother|father|spouse|widow)\s*[,)]/i;
 
 /**
  * The union of the two, for POSITION only -- where the earliest household
@@ -623,9 +650,26 @@ const HOUSEHOLD_ANCHOR = new RegExp(`${HOUSEHOLD_NOUN.source}|${CORESIDENCE_CLAI
 /**
  * Kinship asserted about a NAMED person. Case-sensitive on purpose (the
  * capital starts the name), so it is searched against `notes`, not `text`.
+ *
+ * `children` was missing and cost a real catch: "Household confirmed
+ * as correct family: Thomas Young ... and children Thomas (b.1829), Mary
+ * (b.1830)" states a family in full off an 1841 England schedule, which has
+ * no relationship column, and nothing else in the note reaches it. PLURAL
+ * ONLY: the singular refused "first child Martha J. born ~1860 (nine months
+ * later)", a marriage-record note reasoning from the wedding date, which
+ * asserts nothing about a census household. `spouse`
+ * is deliberately still absent -- it would re-refuse "Norway Census (spouse
+ * Unna)", a search annotation, and widening to it needs the corpus re-measure
+ * tracked on issue #3125.
+ *
+ * A role may be separated from the name by a REPORT VERB: "wife is listed as
+ * Mary A. Ranny" is the indexer's inference stated as fact, which is what
+ * this gate exists to catch. `indexed` is not among those verbs -- an index
+ * attribution is a hedge, though `INDEXED_ROLE_HEDGES` honours it only beside
+ * head/relationship/co-resident/role, never beside a bare kinship word.
  */
 const KINSHIP_CLAIM =
-  /(?<!\b(?:his|her|their)\s)\b(?:mother|father|wife|husband|sons?|daughters?|parents?)\s+[A-Z]/;
+  /(?<!\b(?:his|her|their)\s)\b(?:mother|father|wife|husband|sons?|daughters?|parents?|children)\s+(?:(?:is|was|are|were)\s+(?:listed|recorded|shown|given|named)\s+as\s+)?[A-Z]/;
 
 /**
  * "relationship to head column", HOWEVER IT IS HYPHENATED. The separator is

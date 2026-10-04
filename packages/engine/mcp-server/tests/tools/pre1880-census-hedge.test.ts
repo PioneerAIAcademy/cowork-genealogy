@@ -441,6 +441,71 @@ describe("assertsHousehold reads the relation, not the capitalisation", () => {
     ok("1850 census. No household was located for this surname.", [1850]);
   });
 
+  it("reads headship in both orders, and a numbered dwelling that holds people", () => {
+    // All three are refused on main and were freed by the round-4 rewrite:
+    // the headship arm read `head` BEFORE the noun only, and the third note's
+    // "her son" is suppressed by KINSHIP_CLAIM's possessive carve-out, so
+    // nothing was left once the bare noun stopped counting.
+    bad("1850 census: household headed by Nancy Doss", [1850]);
+    bad("1850 census: the household headed by Nancy Doss includes Amos.", [1850]);
+    bad("1850 census: Dwelling 112 holds Nancy Doss and her son Amos.", [1850]);
+  });
+
+  it("refuses the two corpus claims the round-4 rewrite freed", () => {
+    // Both are refused on main. Neither reaches any household relation, so
+    // each is caught on the kinship side.
+    //
+    // 'wife is listed as Mary A. Ranny' is the indexer's inference for a role
+    // an 1870 schedule does not carry, written flat. It is a REJECTION note,
+    // and the position this PR took when it declined round 2's #2 is that a
+    // rejection still writes the claim -- so freeing it was inconsistent with
+    // our own ruling, not merely a miss.
+    bad(
+      "Broadened to all Ohio 1870, 28 results. No Albert Raney + Mary wife household anywhere in Ohio. " +
+        "The only Seneca County hit is the Sabra Raney widowed household (Albert b.1850, wrong person). " +
+        "Albert S. Ranny in Hardin Co (b.1846) was noted but wife is listed as Mary A. Ranny (b.1827) " +
+        "— older by 19 years, inconsistent with our Mary L. Ruse (b.ca.1845). " +
+        "1870 census exhausted for subject.",
+    );
+    // ...and an 1841 England schedule carries no relationship column either.
+    bad(
+      "Found the Thomas Young family at Stanhope Cottages, Walcot, Somerset. Household confirmed as " +
+        "correct family: Thomas Young (Male, b. 1807-1811), Elizabeth Young (Female, b. 1807-1811), " +
+        "and children Thomas (b.1829), Mary (b.1830), Elizabeth (b.1832). The 1841 census confirms " +
+        "Thomas and Elizabeth Young as a married couple residing in Walcot.",
+    );
+  });
+
+  it("keeps `children` plural and `child` out of the kinship list", () => {
+    // The singular refused a marriage-record note reasoning from the wedding
+    // date, which asserts nothing about a census household. It is bound to an
+    // 1870 census by a different sentence, so nothing else saves it.
+    ok(
+      "Georgia County Marriages 1785-1950 search for Joseph Wood marrying Mary, 1850-1862. Timing is " +
+        "consistent: marriage Nov 1859, first child Martha J. born ~1860 (nine months later). " +
+        "DISCREPANCY: the 1870 census shows wife as 'Mary E. Wood'.",
+    );
+  });
+
+  it("reads a role reported through a copula, but not an index attribution", () => {
+    bad("1870 census: wife is listed as Mary A. Ranny.", [1850]);
+    bad("1870 census: father was recorded as Thomas Flynn.", [1850]);
+    // `indexed` stays a hedge, and only beside head/relationship/co-resident/
+    // role -- INDEXED_ROLE_HEDGES excludes bare kinship on purpose, which is
+    // why the Ranny note above is a claim rather than a hedged one.
+    ok("1850 US Census, Schuylkill: role indexed as 'Head' for a person born 1845.", [1850]);
+  });
+
+  it.each([
+    // Raised in review alongside the above and NOT fixed here: each passes on
+    // main and on this head, so none is a regression, and widening the gate's
+    // vocabulary needs its own corpus re-measure. Tracked on issue #3125.
+    "1850 census: Amos Whitfield, son of Nancy Doss",
+    "1850 census: Head: Nancy Doss. Amos, son.",
+    "1850 census: Nancy Doss [head], Amos [son]",
+    "1850 census: Amos (grandson) with Nancy Doss.",
+  ])("records a vocabulary gap this gate still has (%#)", (n) => ok(n, [1850]));
+
   it("needs the noun-compound arm, which no relation reaches", () => {
     // Eleven corpus notes take this shape. Without hasHouseholdCompound each
     // is freed: there is no of, no in, no possessive and no kinship word.
