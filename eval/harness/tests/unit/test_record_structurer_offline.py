@@ -53,7 +53,7 @@ def _run(name: str, document: dict, tmp_path: Path):
 
 
 def _check(fn, test, before, after, reply):
-    kwargs = {"before_state": before, "after_state": after, "text_response": reply, "test": {**test["test"], "expected_classifications": test.get("expected_classifications", [])}}
+    kwargs = {"before_state": before, "after_state": after, "text_response": reply, "agent_returns": [{"subagent_type": "record-structurer", "text": reply}], "test": {**test["test"], "expected_classifications": test.get("expected_classifications", [])}}
     import inspect
 
     fn(**{k: v for k, v in kwargs.items() if k in inspect.signature(fn).parameters})
@@ -136,3 +136,27 @@ def test_the_failure_each_test_guards_against_is_caught(name, tmp_path):
         reply = reply_edit(reply)
     with pytest.raises(AssertionError):
         _check(validator, test, before, after, reply)
+
+
+@pytest.mark.requires_engine_build
+def test_grace_may_carry_either_name_first(tmp_path):
+    """Genealogist ruling 2026-10-04, option C: her maiden name first is as
+    correct as her married name first."""
+    doc = copy.deepcopy(DOCS["obituary-inlaw-vs-child-and-neighbor"])
+    for p in doc["document"]["persons"]:
+        if p["names"][0]["given"] == "Grace":
+            p["names"].reverse()
+    test, before, after, reply = _run("obituary-inlaw-vs-child-and-neighbor", doc, tmp_path)
+    _check(V.test_obituary_parentheticals_are_read_as_their_convention, test, before, after, reply)
+
+
+@pytest.mark.requires_engine_build
+def test_grace_written_as_two_people_is_caught(tmp_path):
+    doc = copy.deepcopy(DOCS["obituary-inlaw-vs-child-and-neighbor"])
+    persons = doc["document"]["persons"]
+    grace = next(p for p in persons if p["names"][0]["given"] == "Grace")
+    persons.append({"id": "p11", "gender": "female", "statedRelation": "sister",
+                    "names": [grace["names"][1]], "facts": []})
+    test, before, after, reply = _run("obituary-inlaw-vs-child-and-neighbor", doc, tmp_path)
+    with pytest.raises(AssertionError):
+        _check(V.test_obituary_parentheticals_are_read_as_their_convention, test, before, after, reply)

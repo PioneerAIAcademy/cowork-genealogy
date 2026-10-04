@@ -545,6 +545,13 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
     if (d?.transcriptionRef !== undefined && (typeof d.transcriptionRef !== "string" || !d.transcriptionRef.startsWith("results/"))) {
       errors.push(`documents[${i}].transcriptionRef: must be a results/ ref`);
     }
+    // A person the text gives no facts for may omit `facts`: absent means none.
+    // Only a missing list is filled in; anything else still goes to the validator.
+    for (const p of Array.isArray(d?.document?.persons) ? d.document.persons : []) {
+      if (p && typeof p === "object" && (p as { facts?: unknown }).facts === undefined) {
+        (p as { facts: unknown[] }).facts = [];
+      }
+    }
     errors.push(...validateStructuredDocument(d?.document, `documents[${i}].document`));
   });
   if (errors.length > 0) return { ok: false, records: [], errors };

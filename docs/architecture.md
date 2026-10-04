@@ -542,7 +542,7 @@ agents.**
 
 | Surface | Honored where | Today |
 |---|---|---|
-| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `record-extractor`, `image-reader`, `proof-conclusion`, `research-exhaustiveness` + `person-evidence` → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `image-reader`, `proof-conclusion`, `research-exhaustiveness` + `person-evidence` → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
 | **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | no agent pins one |
 | **Session effort** | `.claude/settings.json` `effortLevel`; never set by `real_agent.build_options` | both harnesses pin `high` to match Cowork; hosted inherits |

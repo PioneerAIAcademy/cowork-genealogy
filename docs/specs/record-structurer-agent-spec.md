@@ -58,6 +58,13 @@ every test passes ships. The PR that builds the agent records each setting tried
 and its results. No host-side model call is involved on this path, so text
 never needs an OpenRouter key.
 
+**Chosen (2026-10-04): `claude-sonnet-5`, at the session's effort; no `effort:`
+pin.** On the six-test suite, Sonnet 4.6 dropped the directive-shaped passage
+of the data-boundary test outright in two of four runs, rather than capturing
+and flagging it; Sonnet 5 read all six correctly. No cheaper setting was tried
+further, since a cheaper one cannot read better than the setting that already
+failed. Cost: about $0.36 per six-document run against $0.11.
+
 ## 3. What the agent does
 
 Aim for three turns per batch: read all, write all, return.

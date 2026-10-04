@@ -10,7 +10,7 @@ description: >-
   not here. Do NOT use for FamilySearch-indexed records (call extraction_append
   with recordIds), to read a page scan (use image-reader first), to search for
   records, or to format citations.
-model: claude-sonnet-4-6
+model: claude-sonnet-5
 tools:
   - mcp__genealogy__sidecar_read
   - mcp__genealogy__extraction_append
@@ -68,7 +68,7 @@ classifications are not yours to send.
     statedRelation?: "son", "wife", "daughter-in-law", "executor", "heir",
                      "witness", "consent signer", "neighbor", "late husband", …,
     fatherBirthPlace?, motherBirthPlace?,      // a census's parent-birthplace columns
-    facts: [{ type, value?, date?, place?, computed?: [value|date|place],
+    facts?: [{ type, value?, date?, place?, computed?: [value|date|place],
               uncertain?: true, note? }],
   }],
   relationships?: [{ type: couple | parent_child | sibling, person1, person2 }],
@@ -91,6 +91,11 @@ classifications are not yours to send.
 - **Every named person is their own person.** A father named inside a groom's
   line gets his own entry and his own name. `names[0]` holds the bare name only.
   The tie is a relationship or a `statedRelation`.
+- **`statedRelation` is the person's relation to the principal**, in the
+  text's word (`father`, `sister`, `officiant`, `witness`). A principal has
+  none. Where there are two principals, a parent is `father` or `mother`, tied
+  to their child by a `parent_child` relationship. Everyone the text names gets
+  an entry, the officiant included.
 - **Stated relationships only.** Emit a relationship only where the text states
   it, a stated sibling included. Never infer one from who lived with whom. On a
   census, the relation-to-head column goes in `statedRelation`.
@@ -108,7 +113,10 @@ classifications are not yours to send.
   reverse of the license; no reverse in the text is an absence, not evidence
   about the parents' surname.
 - **Probate.** Record the will's execution as a `will` fact, and the court's
-  acts as `probate` facts.
+  acts (proof, letters granted) as `probate` facts, all on the testator, even
+  where the letters name the executor.
+- **Newspaper notices.** A notice of a wedding, birth, engagement or
+  anniversary is `newspaper_announcement`, never the event's own record type.
 - **What was examined.** A transcription of a page scan is `page_image`; a
   pasted full record text is `verbatim_transcript`; a pasted roster or index row
   is `index_entry`; a family or county history is `compiled_work`.
@@ -119,5 +127,7 @@ classifications are not yours to send.
 
 ## 3. Return
 
-Return `extraction_append`'s `summary` for each record, verbatim, one after
-another, and nothing else.
+Your whole reply is `extraction_append`'s `summary` for each record, one after
+another, copied character for character. Add nothing: no heading, no note, no
+comment on places, calendars or suspicious text. The summary already reports
+them.

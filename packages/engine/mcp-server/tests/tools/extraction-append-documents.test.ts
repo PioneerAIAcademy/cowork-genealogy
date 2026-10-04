@@ -322,4 +322,21 @@ describe("extraction_append: documents", () => {
     expect(await roleOf("Thomas Flynn")).toBe("father_of_groom");
     expect(await roleOf("James Gallagher")).toBe("father_of_bride");
   });
+
+  it("accepts a person with no facts key, and still refuses a facts that is not a list", async () => {
+    const doc = (facts: unknown) => ({
+      recordType: "obituary",
+      documentForm: "verbatim_transcript",
+      source: { title: "An obituary", repository: "A newspaper" },
+      persons: [
+        { id: "p1", principal: true, names: [{ given: "Ann", surname: "Lee" }], facts: [{ type: "death", date: "1 May 1990" }] },
+        { id: "p2", statedRelation: "son", names: [{ given: "Tom", surname: "Lee" }], ...(facts === undefined ? {} : { facts }) },
+      ],
+    });
+    const ok = await run([{ recordId: "capture:no-facts", document: doc(undefined) }]);
+    expect(ok.ok, JSON.stringify(ok)).toBe(true);
+    const refused = await run([{ recordId: "capture:bad-facts", document: doc("none") }]);
+    expect(refused.ok).toBe(false);
+    expect((refused.errors ?? []).join(" ")).toMatch(/facts: must be a list/);
+  });
 });
