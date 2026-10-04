@@ -28,7 +28,7 @@
     "person-quality-driscoll-detail"
   ],
   "judge_context": [
-    "Should call person_read with sourceDescriptions to enumerate what is attached, then record_read each source that carries a record ARK",
+    "Should call person_read to enumerate what is attached, then record_read each source that carries a record ARK",
     "The profile records Birth '1814' / 'Ireland'. The baptism record (SD-DRIS-A) carries a CHRISTENING fact, 12 March 1814 at Skibbereen, Cork, Ireland; the profile records no christening. The PLACE is a narrower version of the profile's country and falls inside it. The DATE is not a narrower version of the birth year -- a christening is a different event, and 12 March 1814 bounds the birth to on or shortly before that date rather than fixing it; a delayed baptism can cross a year boundary. Nothing here contradicts the profile and none of it is a finding. Offering the parish and the christening date as detail the researcher can add is correct; restating 12 March 1814 as his BIRTH date is an over-claim and a Correctness deduction, not a precision refinement.",
     "Presenting that pair among the things wrong with the profile's sources is over-reporting of the kind this skill's own body warns about -- 'a list padded with non-findings is the same failure as a list padded with backend metadata'. Offering the fuller date and parish as an improvement the researcher could adopt is not a finding and should not be penalised as one.",
     "The record also names a father Timothy and a mother Mary who are on no tool response for the profile. That is a completeness gap in the tree, not a defect in the source, and is outside what this skill audits.",

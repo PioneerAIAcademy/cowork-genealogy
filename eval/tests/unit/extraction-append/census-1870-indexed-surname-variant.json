@@ -21,8 +21,8 @@
     "record-read-baker-1870-m62f-bst"
   ],
   "judge_context": [
-    "The skill makes one extraction_append call with the record id and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you.",
-    "The test hands the skill this record; whether it bears on the project's research objective or names the project's people is not graded."
+    "Override for Correctness and Completeness: this suite reuses one project scenario for every record, so the record is usually about people other than the project's objective (e.g. a Becker or Ferber record in a Patrick Flynn project). That mismatch is intended and is not an error by the skill. Do not lower any score because the record concerns someone else.",
+    "The skill makes one extraction_append call with the record id and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you."
   ],
   "execution": {
     "max_turns": 10,

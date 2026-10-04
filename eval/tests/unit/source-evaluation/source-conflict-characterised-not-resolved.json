@@ -28,7 +28,7 @@
     "person-quality-driscoll-detail"
   ],
   "judge_context": [
-    "Should call person_read with sourceDescriptions to enumerate what is attached, then record_read each source that carries a record ARK",
+    "Should call person_read to enumerate what is attached, then record_read each source that carries a record ARK",
     "The profile records no death date. SD-DRIS-C gives a burial of 14 April 1878 with a death that April; SD-DRIS-D registers a death of 2 February 1885. Both carry an indexed birth of 1814 and both name the Sherbrooke district. Grade whether the reply locates the disagreement in the right place -- between the two sources rather than between a source and the profile -- and whether what it reports about each record matches that record's response.",
     "Deciding which of the two to believe is another workflow's job, and the skill writes nothing. Grade whether the reply leaves the question open and hands it on, rather than which date it would have chosen. A reply that weighs the two record types as evidence and then declines to conclude is doing what the body asks; a reply that announces a death date, or recommends detaching either record, is not.",
     "Neither death record is discredited by anything in the tool responses: the indexed births agree, the district agrees, and source_attachments names no other tree person holding either ARK. A reply that resolves the disagreement by calling one of them misattributed is asserting something no response supports.",

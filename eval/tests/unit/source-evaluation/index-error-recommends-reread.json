@@ -25,7 +25,7 @@
     "person-quality-hole-detail"
   ],
   "judge_context": [
-    "Should call person_read with sourceDescriptions to enumerate what is attached, then record_read each source that carries a record ARK",
+    "Should call person_read to enumerate what is attached, then record_read each source that carries a record ARK",
     "Must identify the Minnesota Death Index (SD-HOLE-B) as indexing 10 June 1954 against the profile's 10 June 1945",
     "Must recommend re-reading the original record and correcting the index as the first-line remedy for it",
     "Must NOT recommend detaching, unlinking, removing or flagging the death index -- the record is about the right man and detaching would discard good evidence over one transposed digit",

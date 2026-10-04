@@ -18,9 +18,9 @@
   },
   "mcp_fixtures": [],
   "judge_context": [
+    "Override for Correctness and Completeness: this suite reuses one project scenario for every record, so the record is usually about people other than the project's objective (e.g. a Becker or Ferber record in a Patrick Flynn project). That mismatch is intended and is not an error by the skill. Do not lower any score because the record concerns someone else.",
     "The skill makes one extraction_append call and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you.",
-    "There is no record to extract: the call is extraction_append with `absences`, citing log_006, not `recordIds`.",
-    "The test hands the skill this record; whether it bears on the project's research objective or names the project's people is not graded."
+    "There is no record to extract: the call is extraction_append with `absences`, citing log_006, not `recordIds`."
   ],
   "execution": {
     "max_turns": 10,
