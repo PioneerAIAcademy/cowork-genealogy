@@ -1338,6 +1338,8 @@ class SilentPostgres:
     """A local listener that accepts and never answers: a blackholed Postgres, no
     network. ``accepted`` counts the connections the probes opened."""
 
+    hang_up = False
+
     def __init__(self) -> None:
         self.sock = socket.socket()
         self.sock.bind(("127.0.0.1", 0))
@@ -1356,7 +1358,10 @@ class SilentPostgres:
                 continue
             except OSError:
                 return
-            self.accepted.append(conn)
+            if self.hang_up:
+                conn.close()
+            else:
+                self.accepted.append(conn)
 
     @property
     def dsn(self) -> str:
@@ -1372,6 +1377,21 @@ class SilentPostgres:
 @pytest.fixture
 def silent_pg():
     pg = SilentPostgres()
+    yield pg
+    pg.close()
+
+
+class RefusingPostgres(SilentPostgres):
+    """A local listener that hangs up on every connection at once: a Postgres that is down
+    and says so fast on every OS. Port 1 is not that on Windows, which retries a refused
+    loopback connect for about two seconds, past ``READY_TIMEOUT_S``."""
+
+    hang_up = True
+
+
+@pytest.fixture
+def refused_pg():
+    pg = RefusingPostgres()
     yield pg
     pg.close()
 
@@ -1438,8 +1458,8 @@ def test_the_tier_logs_its_info_lines_under_a_bare_interpreter():
     assert "ev=health check=postgres ok=true" in out.stderr, out.stderr
 
 
-async def test_pgstore_check_ready_fails_fast_on_refused_and_silent_postgres(silent_pg):
-    refused = await app.PgStore(REFUSED_DSN).check_ready()
+async def test_pgstore_check_ready_fails_fast_on_refused_and_silent_postgres(refused_pg, silent_pg):
+    refused = await app.PgStore(refused_pg.dsn).check_ready()
     assert refused == {"ok": False, "checks": {"postgres": {"ok": False, "error": "OperationalError"}}}
     started = time.monotonic()
     silent = await app.PgStore(silent_pg.dsn).check_ready(timeout_s=0.3)

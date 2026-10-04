@@ -1,14 +1,25 @@
 {
   "test": {
-    "id": "ut_question_selection_002",
+    "id": "ut_question_selection_d02",
     "skill": "question-selection",
-    "name": "Derive first question from project objective when question list is empty",
+    "name": "Derive the first question from the objective (direct-agent arm)",
     "type": "positive",
     "description": "An empty project has no prior questions to pick from — the skill must derive a first research question from the project objective. This scenario's objective ('Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA') is ALREADY a single fact, so the correct first question restates it at the objective's own scope rather than narrowing to one record. Tests the from-scratch path plus the scope rule in SKILL.md Step 1c.",
-    "tags": ["question-selection", "from-objective", "empty-project", "first-question", "selection-basis-objective-decomposition", "first-question-depends-on-empty", "new-question-exhaustive-declaration-unstarted", "objective-scope-match", "single-fact-objective"]
+    "tags": [
+      "question-selection",
+      "from-objective",
+      "empty-project",
+      "first-question",
+      "selection-basis-objective-decomposition",
+      "first-question-depends-on-empty",
+      "new-question-exhaustive-declaration-unstarted",
+      "objective-scope-match",
+      "single-fact-objective",
+      "direct-arm"
+    ]
   },
   "input": {
-    "user_message": "Pick the first research question to investigate for this project.",
+    "delegation": "Select and record the next research question for this project.\n\nprojectPath: <workspace>",
     "scenario": "empty-project-just-created"
   },
   "judge_context": [
@@ -17,6 +28,6 @@
     "SCOPE — must not widen. No question about a person the objective does not cover. If a question targets someone other than Patrick (or his parents, who are the objective's subject matter), it is out of scope.",
     "`selection_basis` should be `objective_decomposition` — that remains the correct closed-enum value for a first question derived from the objective, even though a single-fact objective yields one question at the objective's own scope rather than several narrower ones.",
     "`depends_on` and `unblocks` should both be explicitly `[]` for a first question, and `exhaustive_declaration` must be unstarted (`declared: false`, empty `log_entry_ids`, null `stop_criteria`).",
-    "PRESENTATION: should state the question text in full, not merely report the assigned `q_` id — 'q_001 written.' alone is a fail. The id should be glossed on first use, the objective-vs-question distinction explained once, and the next step offered in plain language rather than by naming the research-plan skill."
+    "PRESENTATION: the reply has two parts, split by a final line containing only `---`. Above it are terse caller-facing lines, which may carry the `q_` id and a routing hint such as `research-plan`; do not penalize either there. Everything after the final `---` is what the researcher reads, and is graded: it must state the chosen question in plain words, never as a `q_` id alone ('q_001 written.' is a fail); explain the objective-vs-question distinction once; and give the next step in plain language, without naming a skill, tool or field."
   ]
 }

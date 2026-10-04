@@ -576,6 +576,17 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // Read-only by contract: it reports project state and never writes. It calls
+  // no MCP tool at all — `eval/harness/validators/test_project_status.py`
+  // enforces that — so `Read` is the whole grant (issue #2793). `translation.md`
+  // was the first agent to hold only built-in tools and holds the same shape, so
+  // both are skipped by `noMcpByDesign` below; neither can be covered by the
+  // "parses at least one MCP entry" arm, because there is no MCP entry to parse.
+  "project-status.md": {
+    tools: ["Read"],
+    denies: [],
+  },
+
   // convert-dates (issue #2790) holds the one tool the skill it replaced
   // declared, `convert_calendar`, plus `Read` for the Narration line's read of
   // research.json. It persists nothing, so it holds no writer tool and no hook
@@ -676,6 +687,20 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "research_log_append",
       "volume_search",
     ],
+    denies: [],
+  },
+  // Cost- and context-motivated conversion (issue #2115), not a hook route.
+  // The grant is derived from what the folded body actually CALLS, not from the
+  // former skill's `allowed-tools`, which listed `research_append` alone: that
+  // field is a grant and never constrained the skill, since production and the
+  // unit harness both hand a skill every registered MCP tool. An agent's
+  // `tools:` is exact-match restrictive, so copying that one-entry list would
+  // have spawned an agent that cannot read project state — and, because one
+  // entry resolves, the runtime's zero-tools refusal would NOT have fired.
+  // `Read` is required by the narration line, which reads
+  // researcher_profile.narration_guidance out of research.json directly.
+  "question-selection.md": {
+    tools: ["Read", "project_context", "research_append", "research_query"],
     denies: [],
   },
 

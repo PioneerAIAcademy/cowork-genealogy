@@ -25,8 +25,8 @@ The real turn: the SDK session id is CHOSEN by the worker at claim time --
 first transcript append can never land under an id no row names -- and passed as
 ``session_id=`` on a fresh session or ``resume=`` when the session store already holds
 entries for it (a mid-turn kill on either path resumes on redelivery); the options from
-``options.py``; ``get_server_info()`` checked for the eighteen bare agent names
-(``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 14
+``options.py``; ``get_server_info()`` checked for the twenty bare agent names
+(``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 12
 ``genealogy-research:<skill>`` commands (``EXPECTED_SKILLS``, a literal -- never a count
 of the directory the SDK loads from) BEFORE the query bills a token (D15) -- a miss
 is a 500; the CLI's ``system/init`` must arrive and declare the chosen id, or the
@@ -218,7 +218,9 @@ EXPECTED_AGENTS = frozenset({
     "image-reader",
     "locality-guide",
     "person-evidence",
+    "project-status",
     "proof-conclusion",
+    "question-selection",
     "record-extractor",
     "research-exhaustiveness",
     "search-familysearch-wiki",
@@ -229,9 +231,9 @@ EXPECTED_AGENTS = frozenset({
     "validate-schema",
 })
 # The other half of the same precondition, a literal for the same reason: a count of
-# the directory the SDK loads the plugin from shrinks with it -- an image shipping 14
-# skills registers 14 and passes. test_proto_worker pins this against the repo.
-EXPECTED_SKILLS = 14
+# the directory the SDK loads the plugin from shrinks with it -- an image shipping 12
+# skills registers 12 and passes. test_proto_worker pins this against the repo.
+EXPECTED_SKILLS = 12
 
 _stdout_lock = threading.Lock()
 
