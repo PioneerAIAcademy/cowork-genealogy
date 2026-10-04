@@ -18,6 +18,12 @@ Used by:
 | `ut_check_warnings_007` | `detect-early-marriage.json` | `hasEarlyMarriage14` |
 | `ut_check_warnings_019` | `cluster-no-shared-cause.json` | `hasChristeningBeforeBirth` + `hasBurialBeforeDeath` |
 
+Each test's mocked `person_warnings` response carries only the warnings in its
+row. The project holds every contradiction listed below so that each mocked fact
+exists in the tree, not so that one reply reports them all. A reply that
+reports exactly its own row's warnings is correct: the skill reports what the
+tool returns and adds none of its own.
+
 ## Why this scenario exists rather than reusing `mid-research-flynn`
 
 **The project's own files must contain the facts the mocked `person_warnings`
