@@ -14,8 +14,8 @@ import {
 } from "./repo-paths.js";
 
 /**
- * Staleness lint for the process doc and the Claude Code tooling under
- * `.claude/`.
+ * Staleness lint for the process docs, the Claude Code tooling under
+ * `.claude/`, and the specs and ADRs under `docs/specs/` and `docs/adrs/`.
  *
  * `adr-links.test.ts` does this for ADRs; this is the same check pointed at the
  * surfaces that had nothing linting them. The reason is on the record: three
@@ -24,10 +24,13 @@ import {
  * and nothing noticed. `.claude/skills/` is in scope for the same reason — its
  * six skills cite eval paths heavily, and eval paths move. Both it and
  * `docs/task-lifecycle.md` are read *while someone is working*, so a wrong
- * pointer is a wrong answer someone acts on.
+ * pointer is a wrong answer someone acts on. Specs and ADRs are the source of
+ * truth an implementation is checked against, so the same holds for them.
  *
  * The extraction rule, and everything deliberately left unchecked, is
- * documented at the top of `./repo-paths.ts`. Three things resolve here:
+ * documented at the top of `./repo-paths.ts`. Three things resolve here, over
+ * every linted file (`.claude/` slash commands are a fourth, over the
+ * process docs and `.claude/` only — see `PROSE_DIRS`):
  *
  *  1. backticked repo-root-anchored paths (placeholders globbed),
  *  2. markdown link destinations, relative to the citing file, plus same-file
@@ -50,10 +53,10 @@ const engineRoot = join(here, "..", "..", ".."); // packages/engine/
 const projectRoot = join(engineRoot, "..", ".."); // repo root
 
 /**
- * Process docs that are linted. Deliberately a list and not all of `docs/`: the
- * rest of the directory has never been swept, and widening it is its own task
- * with its own backlog of real breaks to fix. `CLAUDE.md` is here because it is
- * the always-loaded tier — a path that rots there rots for every session.
+ * Process docs that get all four checks. A list rather than a directory walk:
+ * these are the docs read while someone is working. `CLAUDE.md` is here because
+ * it is the always-loaded tier — a path that rots there rots for every session.
+ * The specs and ADRs are walked separately, in `PROSE_DIRS`.
  */
 const LINTED_DOCS = [
   "docs/task-lifecycle.md",
@@ -71,6 +74,22 @@ const LINTED_DOCS = [
  * (`<skill>/SKILL.md`), so the walk recurses.
  */
 const LINTED_DIRS = [".claude/agents", ".claude/commands", ".claude/skills"];
+
+/**
+ * Directories of `docs/` that get the path, link and `make` checks but NOT the
+ * slash-command check. Run over `docs/specs/`, every slash-command hit was an
+ * HTTP route (`/search`, `/callback`, `/v1`, `/api`) or a product built-in
+ * (`/clear`), never a repo command. Listing those in `BUILT_INS` was rejected:
+ * that list means "ships with Claude Code", and stuffing routes into it would
+ * make it the blanket exemption its own staleness test exists to prevent.
+ *
+ * Named tiers, not a walk of `docs/`, so two directories stay out: `docs/plan/`
+ * (a plan is deleted when its work ships, so its cites cannot outlive their
+ * subject) and `docs/deep-dives/` (dated findings — each cite was true on the
+ * day it was written, and rewriting it to match today's file falsifies the
+ * record). The rest of `docs/` is a later tier.
+ */
+const PROSE_DIRS = ["docs/specs", "docs/adrs"];
 
 /**
  * A cited path the lint cannot resolve *and should not*: either it is named
@@ -119,6 +138,75 @@ const KNOWN_ABSENT: { file: string; path: string; why: string }[] = [
     file: "CLAUDE.md",
     path: "eval/.env",
     why: "per-developer secrets file; gitignored, so it is absent at rest",
+  },  {
+    file: "docs/specs/hosted-web-workbench-spec.md",
+    path: "packages/engine/mcp-server/build/",
+    why: "compiler output; gitignored, so it is absent at rest",
+  },
+  {
+    file: "docs/specs/eval-crud-ui-spec.md",
+    path: "eval/app/.local/identity.json",
+    why: "annotator identity file; gitignored (eval/app/.gitignore), so it is absent at rest",
+  },
+  {
+    file: "docs/specs/feedback-case-spec.md",
+    path: "packages/engine/plugin/CLAUDE.md",
+    why: "named because Cowork does not load a plugin-level CLAUDE.md; none exists",
+  },
+  {
+    file: "docs/specs/guardrail-enforcement-spec.md",
+    path: "docs/plan/research-guardrail-bypass-plan.md",
+    why: "named as the retired plan this spec replaced",
+  },
+  {
+    file: "docs/specs/image-search-tool-spec.md",
+    path: "docs/specs/metadata-search-tool-spec.md",
+    why: "named as the retired spec this one replaces",
+  },
+  {
+    file: "docs/specs/image-transcribe-tool-spec.md",
+    path: "packages/engine/plugin/agents/image-reader-opus.md",
+    why: "named because it was deleted",
+  },
+  {
+    file: "docs/specs/record-search-tool-spec-v2.md",
+    path: "docs/specs/search-tool-spec.md",
+    why: "named as the retired v1 spec this one is compared against",
+  },
+  {
+    file: "docs/specs/tree-forget-tool-spec.md",
+    path: "scripts/forget.py",
+    why: "the skill's bundled script, named because it was deleted when the tool replaced it",
+  },
+  {
+    file: "docs/specs/tree-forget-tool-spec.md",
+    path: "packages/engine/plugin/skills/forget-and-rederive/scripts/forget.py",
+    why: "named because it was deleted when the tool replaced it",
+  },
+  {
+    file: "docs/specs/tree-materialization-spec.md",
+    path: "packages/engine/mcp-server/src/tools/merge-record-into-tree.ts",
+    why: "named in the removal list of the retired merge_record_into_tree tool",
+  },
+  {
+    file: "docs/adrs/ADR-0009-refuted-agent-design-claims.md",
+    path: "docs/agentic-system-critique.md",
+    why: "named because it was retired",
+  },
+  {
+    file: "docs/adrs/README.md",
+    path: "docs/agentic-system-critique.md",
+    why: "named because it was retired",
+  },
+  {
+    file: "docs/adrs/ADR-0010-record-structural-bets-in-a-ledger.md",
+    path: "docs/ideas/",
+    why: "named as the rejected alternative; it must not exist",
+  },
+  {
+    file: "docs/adrs/ADR-0010-record-structural-bets-in-a-ledger.md",
+    path: "docs/TODOs.md",
+    why: "named because it was retired on 2026-08-02 and must not come back",
   },
 ];
 
@@ -181,12 +269,21 @@ function lintedFiles(): string[] {
   return files;
 }
 
+function proseFiles(): string[] {
+  const files: string[] = [];
+  for (const dir of PROSE_DIRS) walkMarkdown(dir, files);
+  return files;
+}
+
 function isExempt(file: string, path: string): boolean {
   return KNOWN_ABSENT.some((e) => e.file === file && e.path === path);
 }
 
 describe("doc and .claude/ tooling links", () => {
   const files = lintedFiles();
+  const prose = proseFiles();
+  // Path, link and make checks run over both; slash commands over `files` only.
+  const allFiles = [...files, ...prose];
   // Parsed once for the suite — the Makefile is identical across every linted
   // file, so re-reading it inside the per-file it.each below was redundant work
   // that grew linearly with LINTED_DIRS.
@@ -212,9 +309,15 @@ describe("doc and .claude/ tooling links", () => {
         `${dir}/ has no .md files, so this lint is covering nothing there`,
       ).toBeGreaterThan(0);
     }
+    for (const dir of PROSE_DIRS) {
+      expect(
+        prose.filter((f) => f.startsWith(`${dir}/`)).length,
+        `${dir}/ has no .md files, so this lint is covering nothing there`,
+      ).toBeGreaterThan(0);
+    }
   });
 
-  it.each(files)("%s cites only paths that still exist", (file) => {
+  it.each(allFiles)("%s cites only paths that still exist", (file) => {
     const body = readFileSync(join(projectRoot, file), "utf8");
     const missing = citedPaths(body).filter(
       (p) => !pathResolves(projectRoot, p) && !isExempt(file, p),
@@ -228,7 +331,7 @@ describe("doc and .claude/ tooling links", () => {
     ).toEqual([]);
   });
 
-  it.each(files)("%s links only to files that still exist", (file) => {
+  it.each(allFiles)("%s links only to files that still exist", (file) => {
     const abs = join(projectRoot, file);
     const body = readFileSync(abs, "utf8");
     const anchors = headingAnchors(body);
@@ -255,7 +358,7 @@ describe("doc and .claude/ tooling links", () => {
     ).toEqual([]);
   });
 
-  it.each(files)("%s names only make targets that still exist", (file) => {
+  it.each(allFiles)("%s names only make targets that still exist", (file) => {
     const body = readFileSync(join(projectRoot, file), "utf8");
     const missing = citedMakeTargets(body).filter((t) => !makeTargets.has(t));
 
@@ -327,7 +430,11 @@ describe("doc and .claude/ tooling links", () => {
  */
 const GRANDFATHERED_LINE_CITES: Record<string, string[]> = {};
 
-/** Every `.md` under `docs/`, except `docs/plan/` (see the note above). */
+/**
+ * Every `.md` under `docs/`, except `docs/plan/` (see the note above). Also feeds
+ * the `--is-ancestor` ban and the issue-ref ratchet, so `docs/deep-dives/` is
+ * skipped inside the line-cite check only, not here.
+ */
 function docsMarkdown(root: string): string[] {
   const out: string[] = [];
   const walk = (dir: string) => {
@@ -348,7 +455,9 @@ function docsMarkdown(root: string): string[] {
 describe("docs/ cite symbols, not line numbers", () => {
   it("bans new source-line citations under docs/", () => {
     const offenders: string[] = [];
-    for (const rel of docsMarkdown(projectRoot)) {
+    // `docs/deep-dives/` holds dated findings: each line cite was true the day it
+    // was written, and rewriting it to today's file falsifies the record.
+    for (const rel of docsMarkdown(projectRoot).filter((f) => !f.startsWith("docs/deep-dives/"))) {
       const allowed = new Set(GRANDFATHERED_LINE_CITES[rel] ?? []);
       for (const cite of citedLineNumbers(readFileSync(join(projectRoot, rel), "utf8"))) {
         if (!allowed.has(cite)) offenders.push(`${rel} cites \`${cite}\``);
@@ -358,8 +467,8 @@ describe("docs/ cite symbols, not line numbers", () => {
       offenders,
       "A line number is a copy of state the file owns, and nothing keeps the copy " +
         "honest — 3 of 3 sampled cites in this repo already pointed at the wrong " +
-        "code. Cite the symbol (`validateExhaustiveDeclaration`), not the line; " +
-        "`citedPaths` already proves the file exists.",
+        "code. Cite the symbol (`validateGedcomx`) or the section heading, not the " +
+        "line; `citedPaths` already proves the file exists.",
     ).toEqual([]);
   });
 

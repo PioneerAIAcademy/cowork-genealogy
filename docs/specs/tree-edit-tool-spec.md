@@ -24,24 +24,24 @@ and the atomic write.
 
 ## 1. Why this exists
 
-`tree-edit/SKILL.md` §"Ad-hoc edits" (lines 52–124) is hand-done JSON surgery on
+`tree-edit/SKILL.md` §"Ad-hoc edits" at `d0915210` was hand-done JSON surgery on
 `tree.gedcomx.json`, and the skill itself warns the cost of getting it wrong:
 *"Get this right on the first write — validation failures cost turns"* and *"Ad-hoc
 edits should be rare."* The mechanical hazards are exactly the ones the merge tools
 already removed for the collapse case:
 
 - **Id allocation by hand** — "Generate the next available `F` prefix ID"
-  (`SKILL.md:67`), "Use synthetic IDs (`I` prefix + next number)" (`SKILL.md:85`).
+  (`tree-edit/SKILL.md` §"Adding a fact to a person" at `d0915210`), "Use synthetic IDs (`I` prefix + next number)" (`tree-edit/SKILL.md` §"Adding a person" at `d0915210`).
   A reused or skipped id corrupts the tree.
 - **The primary-flag swap** — "add `primary: true` (and remove `primary` from any
-  existing fact of the same type)" (`SKILL.md:70–72`). Forgetting the second half
+  existing fact of the same type)" (`tree-edit/SKILL.md` §"Adding a fact to a person" at `d0915210`). Forgetting the second half
   leaves two primaries of one type.
 - **`standard_place` re-resolution** — "Whenever you set a fact's `place`, also set
   `standard_place`: call `place_search` … use the first result's `standardPlace`"
-  (`SKILL.md:68–70`), repeated for corrections (`SKILL.md:79–81`). Easy to forget on
+  (`tree-edit/SKILL.md` §"Adding a fact to a person" at `d0915210`), repeated for corrections (`tree-edit/SKILL.md` §"Correcting a value" at `d0915210`). Easy to forget on
   a place edit, leaving a stale standardized place.
 - **Re-serialize-and-revalidate** — every edit ends at "call
-  `validate_research_schema` … fix errors" (`SKILL.md:243–248`), the whole-file
+  `validate_research_schema` … fix errors" (`tree-edit/SKILL.md` §"Validation" at `d0915210`), the whole-file
   rewrite loop this whole tool direction exists to kill.
 
 The merge work already built the machinery (atomic write, `validateParsed`);
@@ -51,7 +51,7 @@ a single-entity edit is a strict subset of it.
 
 ## 2. Scope
 
-In scope — the `tree-edit` ad-hoc operations (`SKILL.md:52–124`):
+In scope — the `tree-edit` ad-hoc operations (`packages/engine/plugin/agents/tree-edit.md` §"Ad-hoc edits"):
 
 | Operation | Tool | Replaces (SKILL.md) |
 |-----------|------|---------------------|
@@ -126,9 +126,9 @@ spawned after — see §8).
 
 | Fact | Source |
 |------|--------|
-| Ad-hoc fact/name/person/relationship payload shapes + id rules + primary swap + standard_place resolution | `packages/engine/plugin/skills/tree-edit/SKILL.md:52–124` |
-| Deletion is permitted ONLY for facts/relationships on a tier downgrade | `tree-edit/SKILL.md:118–124` |
-| Simplified ids are `I/N/F/R/S`, "unique within their array, immutable once created" | `docs/specs/simplified-gedcomx-spec.md:61–69` |
+| Ad-hoc fact/name/person/relationship payload shapes + id rules + primary swap + standard_place resolution | `tree-edit/SKILL.md` §"Ad-hoc edits" at `d0915210` |
+| Deletion is permitted ONLY for facts/relationships on a tier downgrade | `packages/engine/plugin/agents/tree-edit.md` §"Ad-hoc edits" |
+| Simplified ids are `I/N/F/R/S`, "unique within their array, immutable once created" | [`simplified-gedcomx-spec.md` §3](simplified-gedcomx-spec.md#3-id-conventions) |
 | `SimplifiedFact.primary?`, `SimplifiedName.preferred?`, relationship `parent/child` vs `person1/person2` | the `SimplifiedGedcomX` interface family (`SimplifiedFact`, `SimplifiedName`, `SimplifiedRelationship`) in `src/types/gedcomx.ts` |
 | Shared write layer: `atomicWriteJson`, `assertInsideProject`, `validateParsed`, exported `validateGedcomx` | `src/utils/project-io.ts`, `src/validation/validator.ts` (shipped) |
 | compact-return + validate-before-persist pattern | `src/tools/merge-tree-persons.ts` + `src/utils/project-io.ts` (`atomicWriteJson`) |
@@ -488,11 +488,11 @@ Sequence (validate-before-persist, tree-only):
   can grant additive writes without granting identity rewrites/removals.
 - **`standard_place` resolution is internal and on by default.** Removes the
   "call `place_search`, copy the first result's `standardPlace`" hand-step
-  (`SKILL.md:68–70`) and makes `place`/`standard_place` atomic. Overridable:
+  (`tree-edit/SKILL.md` §"Adding a fact to a person" at `d0915210`) and makes `place`/`standard_place` atomic. Overridable:
   pass `standard_place` explicitly, or `resolveStandardPlace: false`, to skip the
   network call.
-- **`remove` is fact/relationship-only.** The skill permits deletion only on a
-  tier downgrade (`SKILL.md:118–124`); person removal is structurally reserved to
+- **`remove` is fact/relationship-only.** The agent permits deletion only on a
+  tier downgrade (`packages/engine/plugin/agents/tree-edit.md` §"Ad-hoc edits"); person removal is structurally reserved to
   the merge tools, so `tree_edit` cannot delete a person.
 
 ---
