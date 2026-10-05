@@ -434,18 +434,19 @@ def spawn_stub_denial(
     return stub_denial(name, stub_agents[name])
 
 
-def is_handoff_block(block: Any, skill_under_test: str) -> bool:
-    """Whether a streamed ToolUseBlock is a hand-off by the skill under test.
+def is_stubbed_handoff(block: Any, stubbed: dict[str, str | None]) -> bool:
+    """Whether a streamed ToolUseBlock hands off to a name in `stub_skills`.
 
-    A `Skill` call to any other skill, or an agent spawn. The skill's own
-    `Skill` call is how the run enters it, not a hand-off, and a `Skill` call
-    whose name cannot be read is not counted either: it could be that entry,
-    and `unread_skill_calls` already warns about it.
+    A `Skill` call or an agent spawn naming a stubbed callee. A `Skill` call
+    whose name cannot be read is not counted: `unread_skill_calls` already
+    warns about it.
     """
     if block.name == "Skill":
         name = read_skill_tool_input(dict(block.input or {}))[0]
-        return bool(name) and name != skill_under_test
-    return block.name in SPAWN_TOOL_NAMES
+        return bool(name) and name in stubbed
+    if block.name in SPAWN_TOOL_NAMES:
+        return (dict(block.input or {})).get("subagent_type") in stubbed
+    return False
 
 
 def spawn_prompts(
@@ -773,8 +774,7 @@ class SkillRunResult:
     agent_returns: list[dict[str, Any]] = field(default_factory=list)
     # True when the run ended before a ResultMessage ever arrived even though
     # it is NOT an abort — the negative-test routing short-circuit (issue
-    # #2189) and a no-shortcut test's first-hand-off stop, which shares its
-    # exit (#3119). On that path num_turns is real (turns_seen
+    # #2189) and a `stop_at_stub` stop, which shares its exit (#3119). On that path num_turns is real (turns_seen
     # survives regardless of exit path), but output_tokens has no real answer:
     # no partial token count exists before a ResultMessage. This says so
     # instead of leaving 0 indistinguishable from "the skill used no tokens."
@@ -807,7 +807,7 @@ async def run_skill(
     routing_short_circuit_skills: set[str] | None = None,
     stub_skills: dict[str, str | None] | None = None,
     stub_agents: dict[str, str | None] | None = None,
-    first_handoff_stop: str | None = None,
+    stop_at_stub: bool = False,
     declared_tools: set[str] | None = None,
 ) -> SkillRunResult:
     """Invoke the SDK against a per-test workspace and collect outputs.
@@ -853,10 +853,10 @@ async def run_skill(
     # the verdict is sealed the moment that skill is invoked (orchestrator
     # `_compute_outcome` grades negatives on routing, not on downstream
     # execution), so we deny the sub-skill launch and stop the run instead
-    # of paying for the routed-to skill's full workload. A no-shortcut test's
-    # first hand-off sets it too (`first_handoff_denial` below, #3119). The
-    # loop reads this after consuming to force a clean (non-aborted)
-    # termination.
+    # of paying for the routed-to skill's full workload. A `stop_at_stub`
+    # test's first stubbed hand-off sets it too (`stop_at_stub_denial` below,
+    # #3119). The loop reads this after consuming to force a clean
+    # (non-aborted) termination.
     routing_resolved: dict[str, Any] = {"v": False, "tool_use_id": None}
     _short_circuit = routing_short_circuit_skills or set()
     # Positive-test sub-skill stubbing (`execution.stub_skills`). Distinct from
@@ -865,8 +865,8 @@ async def run_skill(
     # test still has work to do after the hand-off (its closing log entry and
     # summary), so this one DENIES AND CONTINUES — the delegation is recorded in
     # skills_invoked, the callee never executes, and the caller finishes normally.
-    # The exception is a no-shortcut test, whose verdict is its first hand-off:
-    # there the stub denies and stops (`first_handoff_stop`, #3119).
+    # The exception is a test that sets `execution.stop_at_stub`, whose verdict
+    # is its first stubbed hand-off: there the stub denies and stops (#3119).
     # Maps skill name -> canned response (None = bare deny); see skill_stubs.py
     # for which form a given hand-off needs.
     _stub_skills = stub_skills or {}
@@ -874,35 +874,33 @@ async def run_skill(
     # one of these names is denied and continued the same way (issue #2825).
     # The orchestrator passes only stub entries with no skill directory.
     _stub_agents = stub_agents or {}
-    # No-shortcut tests (#3119): `first_handoff_stop` names the skill under
-    # test, and the run ends at the first hand-off it makes, through the stop
-    # path of the negative-test short-circuit above. Its verdict is that first
-    # routing decision; its own doctrine tells the router to walk on after it,
-    # and a stub cannot stop the walk. None leaves every other test as it was.
+    # `execution.stop_at_stub` (#3119): the first main-thread hand-off to a
+    # stubbed name, by `Skill` call or agent spawn, ends the run through the
+    # stop path of the negative-test short-circuit above. For a test whose
+    # verdict is that hand-off, such as a router told to walk on down its table
+    # after it, a walk no stub can stop. False leaves every other test as it was.
 
-    def first_handoff_denial(
-        name: str, stubs: dict[str, str | None], tool_use_id: str | None
-    ) -> dict[str, Any]:
-        # Every hand-off is denied once the stop is armed: a second one in the
-        # same turn is a shortcut the validators must still see, and it must
-        # not run. The stop point itself is found by name in the message scan,
-        # so which hand-off's id is kept here does not move it.
+    def stop_at_stub_denial(name: str, tool_use_id: str | None) -> dict[str, Any]:
+        # Once armed, every later main-thread hand-off is denied too, stubbed or
+        # not: a second one in the same turn is a shortcut the validators must
+        # still see, and it must not run. The stop point is found by name in the
+        # message scan, so which hand-off's id is kept here does not move it.
         routing_resolved["v"] = True
         routing_resolved["tool_use_id"] = tool_use_id
-        if name in stubs:
-            denial = stub_denial(name, stubs[name])
+        if name in _stub_skills:
+            denial = stub_denial(name, _stub_skills[name])
         else:
             denial = {
                 "hookSpecificOutput": {
                     "hookEventName": "PreToolUse",
                     "permissionDecision": "deny",
                     "permissionDecisionReason": (
-                        f"hand-off to {name!r} observed; this test ends at the "
-                        "first hand-off"
+                        f"hand-off to {name!r} observed; this test ends at its "
+                        "first stubbed hand-off"
                     ),
                 }
             }
-        return {**denial, "continue_": False, "stopReason": "first_handoff"}
+        return {**denial, "continue_": False, "stopReason": "stop_at_stub"}
 
     # Main-thread calls to subagent-only tools, denied by the hook below.
     blocked_context_calls: list[dict[str, Any]] = []
@@ -957,23 +955,27 @@ async def run_skill(
                         "stopReason": "routing_resolved",
                     }
                 if (
-                    first_handoff_stop
-                    and skill_name != first_handoff_stop
+                    stop_at_stub
                     and not input_data.get("agent_id")
+                    and (skill_name in _stub_skills or routing_resolved["v"])
                 ):
-                    return first_handoff_denial(skill_name, _stub_skills, tool_use_id)
+                    return stop_at_stub_denial(skill_name, tool_use_id)
                 # Positive-test stub: record the hand-off, skip the callee's
                 # execution, but let this run finish its own remaining work —
                 # handing back the canned response when the caller reads one.
                 if skill_name in _stub_skills:
                     return stub_denial(skill_name, _stub_skills[skill_name])
         elif (
-            first_handoff_stop
+            stop_at_stub
             and tool_name in SPAWN_TOOL_NAMES
             and not input_data.get("agent_id")
+            and (
+                (input_data.get("tool_input") or {}).get("subagent_type") in _stub_skills
+                or routing_resolved["v"]
+            )
         ):
             agent = (input_data.get("tool_input") or {}).get("subagent_type") or ""
-            return first_handoff_denial(agent, _stub_agents, tool_use_id)
+            return stop_at_stub_denial(agent, tool_use_id)
         elif (denial := spawn_stub_denial(tool_name, input_data, _stub_agents)):
             return denial
         # Per-context tool policy: deny a subagent-only tool (see
@@ -1262,9 +1264,9 @@ async def run_skill(
                             # not run yet; only until the first hand-off is
                             # seen, or a later spawn in the model's reaction
                             # would be recorded as the hand-off.
-                            first_handoff_stop
+                            stop_at_stub
                             and not handoff_seen["v"]
-                            and is_handoff_block(block, first_handoff_stop)
+                            and is_stubbed_handoff(block, _stub_skills)
                         ):
                             routed_call_seen = True
                         if block.name in SPAWN_TOOL_NAMES:

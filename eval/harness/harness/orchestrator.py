@@ -355,31 +355,30 @@ def _routing_short_circuit_skills(spec: TestSpec) -> set[str] | None:
     return set(correct) or None
 
 
-def _first_handoff_stop(spec: TestSpec) -> str | None:
-    """The skill whose first hand-off ends a `no-shortcut` test's run (#3119).
+def _stop_at_stub(spec: TestSpec) -> bool:
+    """Whether a positive test ends at its first stubbed hand-off (#3119).
 
-    Such a test's verdict is the router's first routing decision. The router
-    is then told to walk on down its table, which no stub can stop: the stub's
-    text reaches the model as a tool result, and stubs write nothing, so the
-    walk can loop until a cap. So run_skill stops at the first hand-off, the
-    way a negative test stops at its routing. Returns None for every other
-    test, including negatives, which have their own stop.
+    `execution.stop_at_stub`: for a test whose verdict is that hand-off, such
+    as a `no-shortcut` router test. The router is then told to walk on down
+    its table, which no stub can stop: a stub's text reaches the model as a
+    tool result, and stubs write nothing. So run_skill stops at the hand-off,
+    the way a negative test stops at its routing. The runnability gate refuses
+    it on a negative test and with nothing stubbed.
     """
-    if spec.type != "positive" or "no-shortcut" not in spec.tags:
-        return None
-    return spec.skill
+    return spec.type == "positive" and bool((spec.execution or {}).get("stop_at_stub"))
 
 
 def _stopped_at_a_handoff(spec: TestSpec, result: SkillRunResult) -> bool:
-    """Whether the first-hand-off stop ended this run on a hand-off the skill made.
+    """Whether the `stop_at_stub` stop ended this run on a stubbed hand-off.
 
     Such a run never reaches the skill's own summary, so the hand-off is its
     activation evidence (`derive_activated`, unit-test-spec.md §6).
     """
-    if _first_handoff_stop(spec) is None:
+    if not _stop_at_stub(spec):
         return False
+    stubbed = parse_stub_skills(spec.execution)
     handed = handoffs(result.skills_invoked, result.builtin_tool_calls)
-    return any(name != spec.skill for name in handed)
+    return any(name in stubbed for name in handed)
 
 
 def _stub_skills(spec: TestSpec) -> dict[str, str | None] | None:
@@ -402,7 +401,7 @@ def _stub_agents(spec: TestSpec, skills_dir: Path) -> dict[str, str | None] | No
     to an agent (issue #2825), which the router now spawns rather than loads. A
     name that is still a skill keeps its `Skill`-call stub only, so its agent
     half can still be spawned for real. (`route-shortcut-guard.json`, which
-    motivated this, now ends at its first hand-off instead: `first_handoff_stop`.)
+    motivated this, now ends at its first stubbed hand-off instead: `stop_at_stub`.)
     """
     stubbed = parse_stub_skills(spec.execution)
     return {n: r for n, r in stubbed.items() if not (skills_dir / n).is_dir()} or None
@@ -542,7 +541,7 @@ async def _execute_single_run(
         routing_short_circuit_skills=routing_short_circuit,
         stub_skills=_stub_skills(spec),
         stub_agents=_stub_agents(spec, paths.skills_dir),
-        first_handoff_stop=_first_handoff_stop(spec),
+        stop_at_stub=_stop_at_stub(spec),
     )
 
     # --- Uncovered tool-call gate (Phase 2) -----------------------------
@@ -957,7 +956,7 @@ async def _execute_skill_with_retry(
     routing_short_circuit_skills: set[str] | None = None,
     stub_skills: dict[str, str | None] | None = None,
     stub_agents: dict[str, str | None] | None = None,
-    first_handoff_stop: str | None = None,
+    stop_at_stub: bool = False,
     attempts: int = DEFAULT_SKILL_RUN_ATTEMPTS,
     base_delay: float = 1.0,
 ) -> tuple[SkillRunResult, dict[str, Any], dict[str, Any]]:
@@ -1047,7 +1046,7 @@ async def _execute_skill_with_retry(
                         routing_short_circuit_skills=routing_short_circuit_skills,
                         stub_skills=stub_skills,
                         stub_agents=stub_agents,
-                        first_handoff_stop=first_handoff_stop,
+                        stop_at_stub=stop_at_stub,
                         # The skill's OWN declaration, not skill_baseline (which
                         # unions in its subagents' tools). The gap between the two
                         # is what the per-context policy guards.

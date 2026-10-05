@@ -53,7 +53,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Freeform tags for filtering and grouping. May be empty. One reserved tag changes grading: `grade:trigger` (positive tests only) grades on activation ALONE — the test passes once the skill under test fired and its validators passed, and the judge dimensions are recorded but diagnostic-only (grading_mode `trigger`, dimensions_gate_outcome false), unlike the default `dimensions` grading where a 1 or 2 forces a partial/fail. Use it for a routing/handoff test whose delegated sub-skills are stubbed, so an outcome score would measure the stub not the skill. It REQUIRES a non-empty execution.stub_skills (the runnability gate refuses a grade:trigger test that stubs nothing — otherwise the callees run for real and the tag silences the judge over a real execution, a vacuous pass, the same failure mode grade_on_invariant guards on the negative side); a skipped/errored judge does NOT fail a trigger test; and it does NOT relax the activation requirement. A second reserved tag, `no-shortcut` (positive tests only), changes how the run ENDS, not how it is graded: the harness stops it at the first hand-off the skill under test makes (a Skill call to another skill, or a main-thread agent spawn) and denies that hand-off. Use it for a router test whose verdict is that first routing decision. See docs/specs/unit-test-spec.md."
+          "description": "Freeform tags for filtering and grouping. May be empty. One reserved tag changes grading: `grade:trigger` (positive tests only) grades on activation ALONE — the test passes once the skill under test fired and its validators passed, and the judge dimensions are recorded but diagnostic-only (grading_mode `trigger`, dimensions_gate_outcome false), unlike the default `dimensions` grading where a 1 or 2 forces a partial/fail. Use it for a routing/handoff test whose delegated sub-skills are stubbed, so an outcome score would measure the stub not the skill. It REQUIRES a non-empty execution.stub_skills (the runnability gate refuses a grade:trigger test that stubs nothing — otherwise the callees run for real and the tag silences the judge over a real execution, a vacuous pass, the same failure mode grade_on_invariant guards on the negative side); a skipped/errored judge does NOT fail a trigger test; and it does NOT relax the activation requirement. See docs/specs/unit-test-spec.md."
         },
         "holdout": {
           "type": "boolean",
@@ -343,6 +343,11 @@
           },
           "description": "Positive tests only. Sub-skills this test expects to EXECUTE for real (opt-in). Their allowed-tools join the session allowlist, and the test must stock a fixture for each of those tools. Omit to leave a Skill() callee un-unioned, which is the default for every test. Mutually exclusive with stub_skills for the same skill.",
           "uniqueItems": true
+        },
+        "stop_at_stub": {
+          "type": "boolean",
+          "default": false,
+          "description": "Positive tests only. When true, the first hand-off to a name in stub_skills, by a Skill call or an agent spawn, ENDS the run (denied and stopped, as a negative test's routing hand-off is) instead of denying and continuing. Use when the hand-off itself is the deliverable under test, so what the callee or an orchestrator above it does afterwards is not measured. Requires a non-empty stub_skills; a test tagged no-shortcut requires it."
         },
         "stub_skills": {
           "type": "array",

@@ -74,19 +74,20 @@ validator reads `handoffs`.
 `no-shortcut`, so it is the one test `test_no_paired_skill_shortcut` runs on.
 The user names a downstream destination ("through to a proof conclusion") on a
 project that has only an objective, so the first hand-off must be row 1,
-question-selection. The `no-shortcut` tag makes the harness end the run at that
-first hand-off (`first_handoff_stop` in `harness/skill_runner.py`). Without the
-stop the test cannot pass reliably: `research/SKILL.md` tells the router to
-drive the table forward to the named destination, so after question-selection it
-walks on down the table. The stubs write nothing, so nothing it hands to ever
-lands: one measured walk ran on until the turn cap, and another came back to the
-first row. The test's committed failures on main were mostly the activation
-defect above, then that walk. One committed run (`v1_2026-08-25_20-14-29.json`)
-did hand off to proof-conclusion first. In every committed run, person-evidence,
-research-exhaustiveness and proof-conclusion were reached by `Skill` calls,
-which is why a count of agent spawns alone finds none. The test keeps the paired
-agents in `stub_skills`: a denied spawn is still recorded, so a shortcut fails
-the validator rather than running.
+question-selection. Its `execution.stop_at_stub: true` makes the harness end the
+run at that first hand-off, and the runnability gate requires it on a
+`no-shortcut` test. Without the stop the test cannot pass reliably:
+`research/SKILL.md` tells the router to drive the table forward to the named
+destination, so after question-selection it walks on down the table. The stubs
+write nothing, so nothing it hands to ever lands: one measured walk ran on until
+the turn cap, and another came back to the first row. The test's committed
+failures on main were mostly the activation defect above, then that walk. One
+committed run (`v1_2026-08-25_20-14-29.json`) did hand off to proof-conclusion
+first. In every committed run, person-evidence, research-exhaustiveness and
+proof-conclusion were reached by `Skill` calls, which is why a count of agent
+spawns alone finds none. The test keeps the paired agents in `stub_skills`: a
+denied spawn is still recorded, so a shortcut fails the validator rather than
+running.
 
 That validator is not redundant with `test_routes_to_expected_skill`, which
 asserts only the first hand-off. A router that spawns question-selection and

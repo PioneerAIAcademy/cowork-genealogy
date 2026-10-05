@@ -12,7 +12,7 @@ from harness.orchestrator import (
     _compute_outcome,
     _COMMISSION_VALIDATORS,
     _negative_judge_context,
-    _first_handoff_stop,
+    _stop_at_stub,
     _stopped_at_a_handoff,
     _routing_short_circuit_skills,
     apply_deterministic_deference,
@@ -2109,25 +2109,30 @@ def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monk
     assert seen.get("stub_skills") == {"gps-mentor": None, "search-records": None}
 
 
-# --- first-hand-off stop (no-shortcut tests, #3119) ------------------------
+# --- stop_at_stub: a test that ends at its first stubbed hand-off (#3119) -----
 
 
-def _tagged_positive_spec(tags, skill="research"):
+def _positive_spec_with(execution, skill="research"):
     return load_test_from_dict({
         "test": {"id": "ut_o_003", "skill": skill, "name": "n", "type": "positive",
-                  "description": "x", "tags": tags},
+                  "description": "x", "tags": []},
         "input": {"user_message": "m", "scenario": None},
+        "execution": execution,
         "judge_context": [],
     })
 
 
-def test_first_handoff_stop_names_the_skill_on_a_no_shortcut_test():
-    spec = _tagged_positive_spec(["routing", "routes-to:question-selection", "no-shortcut"])
-    assert _first_handoff_stop(spec) == "research"
+_STOPPING = {"stop_at_stub": True, "stub_skills": ["question-selection"]}
 
 
-def test_first_handoff_stop_is_off_without_the_tag():
-    assert _first_handoff_stop(_tagged_positive_spec(["routing"])) is None
+def test_stop_at_stub_is_on_only_when_a_positive_test_sets_it():
+    assert _stop_at_stub(_positive_spec_with(_STOPPING)) is True
+    assert _stop_at_stub(_positive_spec_with({"stub_skills": ["question-selection"]})) is False
+
+
+def test_stop_at_stub_is_off_on_a_negative_test():
+    """A negative test already stops on its own routing short-circuit."""
+    assert _stop_at_stub(_negative_spec()) is False
 
 
 def _run_with(*builtin_calls):
@@ -2143,19 +2148,14 @@ _ENTRY = {"tool": "Skill", "args": {"skill": "research"}}
 _SPAWN = {"tool": "Agent", "args": {"subagent_type": "question-selection"}}
 
 
-def test_stopped_at_a_handoff_needs_the_tag_and_a_real_hand_off():
-    tagged = _tagged_positive_spec(["routing", "no-shortcut"])
-    assert _stopped_at_a_handoff(tagged, _run_with(_ENTRY, _SPAWN)) is True
-    assert _stopped_at_a_handoff(tagged, _run_with(_ENTRY)) is False, (
-        "the skill's own entry is not a hand-off"
+def test_stopped_at_a_handoff_needs_the_opt_in_and_a_stubbed_hand_off():
+    stopping = _positive_spec_with(_STOPPING)
+    assert _stopped_at_a_handoff(stopping, _run_with(_ENTRY, _SPAWN)) is True
+    assert _stopped_at_a_handoff(stopping, _run_with(_ENTRY)) is False, (
+        "the skill's own entry is not a stubbed hand-off"
     )
-    untagged = _tagged_positive_spec(["routing"])
-    assert _stopped_at_a_handoff(untagged, _run_with(_ENTRY, _SPAWN)) is False
-
-
-def test_first_handoff_stop_is_off_on_a_negative_test():
-    """A negative test already stops on its own routing short-circuit."""
-    assert _first_handoff_stop(_negative_spec()) is None
+    plain = _positive_spec_with({"stub_skills": ["question-selection"]})
+    assert _stopped_at_a_handoff(plain, _run_with(_ENTRY, _SPAWN)) is False
 
 
 def test_a_run_stopped_at_its_first_hand_off_counts_as_activated(tmp_path, monkeypatch):
@@ -2204,17 +2204,16 @@ def test_a_run_stopped_at_its_first_hand_off_counts_as_activated(tmp_path, monke
     assert entry["outcome"] == "pass"
 
 
-def test_a_no_shortcut_test_reaches_run_skill_with_its_first_handoff_stop(
-    tmp_path, monkeypatch
-):
-    """The orchestrator hop of the first-hand-off stop (#3119): only the
+def test_a_stop_at_stub_test_reaches_run_skill_with_the_stop(tmp_path, monkeypatch):
+    """The orchestrator hop of `stop_at_stub` (#3119): only the
     `_execute_single_run` call site and the retry wrapper carry it to the hook,
-    and dropping either would leave `_first_handoff_stop`'s own tests green."""
+    and dropping either would leave `_stop_at_stub`'s own tests green."""
     import asyncio
     import json
 
     raw = json.loads(WIKI_TEST_PATH.read_text(encoding="utf-8"))
-    raw["test"]["tags"] = [*raw["test"].get("tags", []), "no-shortcut"]
+    raw["execution"] = {**raw.get("execution", {}), "stop_at_stub": True,
+                        "stub_skills": ["search-records"]}
     spec = load_test_from_dict(raw)
     paths = OrchestratorPaths(runlogs_root=tmp_path)
     auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
@@ -2235,7 +2234,7 @@ def test_a_no_shortcut_test_reaches_run_skill_with_its_first_handoff_stop(
         model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
         timestamp="2026-10-05_10-00-00",
     ))
-    assert seen.get("first_handoff_stop") == spec.skill
+    assert seen.get("stop_at_stub") is True
 
 
 # --- #2057: a failing validator no longer skips the judge --------------------

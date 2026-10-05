@@ -1660,13 +1660,13 @@ def test_a_quota_in_the_suppressed_reaction_turn_still_aborts(tmp_path, monkeypa
     )
 
 
-# --- first-hand-off stop: a no-shortcut test ends at the router's first hand-off (#3119) ---
+# --- stop_at_stub: a test that ends at its first stubbed hand-off (#3119) -----
 #
-# On a `no-shortcut` test the verdict is the router's FIRST routing decision. The
-# router's own doctrine then tells it to walk on down the table, and a stub cannot
-# stop that walk: the stub's text comes back as a tool result, and stubs write
-# nothing, so the walk can loop until a cap. So the run ends at the first hand-off,
-# reusing the negative-test stop path above.
+# A `no-shortcut` router test's verdict is the router's FIRST routing decision. Its
+# own doctrine then tells it to walk on down the table, and a stub cannot stop that
+# walk: the stub's text comes back as a tool result, and stubs write nothing. So
+# `execution.stop_at_stub` ends the run at the first hand-off to a stubbed name, by
+# `Skill` call or agent spawn, reusing the negative-test stop path above.
 
 
 def _skill_block(skill, block_id):
@@ -1703,9 +1703,12 @@ _SPAWN_QS = {
     "tool_name": "Agent",
     "tool_input": {"subagent_type": "question-selection", "prompt": "go"},
 }
+# The orchestrator passes every stubbed name as `stub_skills` and the agent-only
+# ones as `stub_agents` too.
+_ROWS = {"question-selection": None, "locality-guide": None}
 
 
-async def _run_first_handoff(
+async def _run_stop_at_stub(
     monkeypatch, tmp_path, hook_inputs, messages, *, message_first=False,
     returns=None, **run_kwargs
 ):
@@ -1738,40 +1741,39 @@ def _router_messages(handoff_block):
     ]
 
 
-def test_first_handoff_stop_ends_the_run_at_an_agent_spawn(tmp_path, monkeypatch):
+def test_stop_at_stub_ends_the_run_at_a_stubbed_spawn(tmp_path, monkeypatch):
     import asyncio
 
     returns = []
-    result = asyncio.run(_run_first_handoff(
+    result = asyncio.run(_run_stop_at_stub(
         monkeypatch, tmp_path, [_ACTIVATE, _SPAWN_QS],
         _router_messages(_spawn_block("question-selection", "tool-use-id")),
         returns=returns,
-        first_handoff_stop="research",
-        stub_agents={"question-selection": None, "locality-guide": None},
+        stop_at_stub=True, stub_skills=_ROWS, stub_agents=_ROWS,
     ))
 
     assert "routing to the first row" in result.text_response, (
         "the hand-off turn itself was dropped"
     )
     assert "locality survey" not in result.text_response, (
-        "the run read on past the first hand-off"
+        "the run read on past the first stubbed hand-off"
     )
-    assert result.aborted_reason is None, "a first-hand-off stop is a clean end"
+    assert result.aborted_reason is None, "a stop_at_stub stop is a clean end"
     assert "hookSpecificOutput" not in returns[0] and "continue_" not in returns[0], (
-        "the router's own activation was denied or stopped"
+        "the router's own entry was denied or stopped"
     )
     assert returns[1]["hookSpecificOutput"]["permissionDecision"] == "deny"
     assert returns[1]["continue_"] is False
 
 
-def test_first_handoff_stop_ends_the_run_at_a_skill_call(tmp_path, monkeypatch):
+def test_stop_at_stub_ends_the_run_at_a_stubbed_skill_call(tmp_path, monkeypatch):
     import asyncio
 
-    result = asyncio.run(_run_first_handoff(
+    result = asyncio.run(_run_stop_at_stub(
         monkeypatch, tmp_path,
         [_ACTIVATE, {"tool_name": "Skill", "tool_input": {"skill": "research-plan"}}],
         _router_messages(_skill_block("research-plan", "tool-use-id")),
-        first_handoff_stop="research",
+        stop_at_stub=True, stub_skills={"research-plan": None},
     ))
 
     assert result.skills_invoked == ["research", "research-plan"]
@@ -1779,33 +1781,34 @@ def test_first_handoff_stop_ends_the_run_at_a_skill_call(tmp_path, monkeypatch):
     assert result.aborted_reason is None
 
 
-def test_first_handoff_stop_ignores_the_routers_own_activation(tmp_path, monkeypatch):
-    """The skill under test is entered by a `Skill` call. That is not a hand-off."""
+def test_stop_at_stub_lets_an_unstubbed_call_through(tmp_path, monkeypatch):
+    """Only a stubbed name stops the run. The skill's own entry is never stubbed,
+    and a call to an unstubbed skill runs as it would in any test."""
     import asyncio
 
-    result = asyncio.run(_run_first_handoff(
-        monkeypatch, tmp_path, [_ACTIVATE],
+    result = asyncio.run(_run_stop_at_stub(
+        monkeypatch, tmp_path,
+        [_ACTIVATE, {"tool_name": "Skill", "tool_input": {"skill": "search-external-sites"}}],
         [
             _turn("Reading the project.", _skill_block("research", "tool-use-id")),
+            _turn("Checking outside sites.", _skill_block("search-external-sites", "x-id")),
             _turn("Here is what the project needs next."),
             _done(),
         ],
-        first_handoff_stop="research",
+        stop_at_stub=True, stub_skills=_ROWS,
     ))
 
     assert "Here is what the project needs next." in result.text_response, (
-        "the run stopped at the router's own activation"
+        "the run stopped at a hand-off to an unstubbed name"
     )
 
 
-def test_first_handoff_stop_holds_when_the_hook_fires_after_its_message(
-    tmp_path, monkeypatch
-):
+def test_stop_at_stub_holds_when_the_hook_fires_after_its_message(tmp_path, monkeypatch):
     """Under the message-first ordering the flag is not up while the hand-off
     message is scanned, so the stop needs a match by name, not by id alone."""
     import asyncio
 
-    result = asyncio.run(_run_first_handoff(
+    result = asyncio.run(_run_stop_at_stub(
         monkeypatch, tmp_path, [_SPAWN_QS],
         [
             _turn("No questions yet, routing to the first row.",
@@ -1815,15 +1818,38 @@ def test_first_handoff_stop_holds_when_the_hook_fires_after_its_message(
             _done(),
         ],
         message_first=True,
-        first_handoff_stop="research",
-        stub_agents={"question-selection": None, "locality-guide": None},
+        stop_at_stub=True, stub_skills=_ROWS, stub_agents=_ROWS,
     ))
 
     assert "routing to the first row" in result.text_response
     assert "locality survey" not in result.text_response, (
-        "the late-hook ordering read on past the first hand-off"
+        "the late-hook ordering read on past the first stubbed hand-off"
     )
     assert result.no_result_message is True, "the stop path never fired"
+
+
+def test_stop_at_stub_holds_for_a_skill_call_when_the_hook_fires_after_it(
+    tmp_path, monkeypatch
+):
+    """The message-first ordering again, for a `Skill` hand-off: the match by
+    name has to cover a `Skill` block as well as a spawn."""
+    import asyncio
+
+    result = asyncio.run(_run_stop_at_stub(
+        monkeypatch, tmp_path,
+        [{"tool_name": "Skill", "tool_input": {"skill": "research-plan"}}],
+        [
+            _turn("Routing to the plan.", _skill_block("research-plan", "tool-use-id")),
+            _turn("Next, the searches.", _skill_block("search-records", "walk-id")),
+            _done(),
+        ],
+        message_first=True,
+        stop_at_stub=True, stub_skills={"research-plan": None, "search-records": None},
+    ))
+
+    assert "Routing to the plan." in result.text_response
+    assert "Next, the searches." not in result.text_response
+    assert result.no_result_message is True
 
 
 def test_a_second_hand_off_in_the_same_turn_is_denied_and_recorded(tmp_path, monkeypatch):
@@ -1837,7 +1863,7 @@ def test_a_second_hand_off_in_the_same_turn_is_denied_and_recorded(tmp_path, mon
         "tool_name": "Agent",
         "tool_input": {"subagent_type": "person-evidence", "prompt": "go"},
     }
-    result = asyncio.run(_run_first_handoff(
+    result = asyncio.run(_run_stop_at_stub(
         monkeypatch, tmp_path, [_ACTIVATE, _SPAWN_QS, downstream],
         [
             _turn("Reading the project.", _skill_block("research", "activation-id")),
@@ -1846,7 +1872,8 @@ def test_a_second_hand_off_in_the_same_turn_is_denied_and_recorded(tmp_path, mon
             _done(),
         ],
         returns=returns,
-        first_handoff_stop="research",
+        stop_at_stub=True,
+        stub_skills={"question-selection": None},
         stub_agents={"question-selection": None},
     ))
 
@@ -1860,58 +1887,81 @@ def test_a_second_hand_off_in_the_same_turn_is_denied_and_recorded(tmp_path, mon
     assert spawned == ["question-selection", "person-evidence"]
 
 
-def test_first_handoff_stop_holds_for_a_skill_call_when_the_hook_fires_after_it(
-    tmp_path, monkeypatch
-):
-    """The message-first ordering again, for a `Skill` hand-off: the match by
-    name has to cover a `Skill` block as well as a spawn."""
-    import asyncio
-
-    result = asyncio.run(_run_first_handoff(
-        monkeypatch, tmp_path,
-        [{"tool_name": "Skill", "tool_input": {"skill": "research-plan"}}],
-        [
-            _turn("Routing to the plan.", _skill_block("research-plan", "tool-use-id")),
-            _turn("Next, the searches.", _skill_block("search-records", "walk-id")),
-            _done(),
-        ],
-        message_first=True,
-        first_handoff_stop="research",
-    ))
-
-    assert "Routing to the plan." in result.text_response
-    assert "Next, the searches." not in result.text_response
-    assert result.no_result_message is True
-
-
-def test_a_skill_call_inside_a_subagent_is_not_the_first_handoff(tmp_path, monkeypatch):
+def test_a_skill_call_after_the_stop_is_armed_is_denied_too(tmp_path, monkeypatch):
+    """The same-turn rule for a `Skill` call: once a stubbed spawn arms the stop,
+    a call to an unstubbed skill in that turn is denied and recorded, not run."""
     import asyncio
 
     returns = []
-    asyncio.run(_run_first_handoff(
+    plan = {"tool_name": "Skill", "tool_input": {"skill": "research-plan"}}
+    result = asyncio.run(_run_stop_at_stub(
+        monkeypatch, tmp_path, [_ACTIVATE, _SPAWN_QS, plan],
+        [
+            _turn("Reading the project.", _skill_block("research", "activation-id")),
+            _turn("Routing.", _spawn_block("question-selection", "tool-use-id"),
+                  _skill_block("research-plan", "second-id")),
+            _done(),
+        ],
+        returns=returns,
+        stop_at_stub=True,
+        stub_skills={"question-selection": None},
+        stub_agents={"question-selection": None},
+    ))
+
+    assert returns[2]["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert returns[2]["continue_"] is False
+    assert result.skills_invoked == ["research", "research-plan"]
+
+
+def test_a_spawn_of_an_unstubbed_agent_does_not_stop_the_run(tmp_path, monkeypatch):
+    import asyncio
+
+    returns = []
+    mentor = {"tool_name": "Agent", "tool_input": {"subagent_type": "gps-mentor", "prompt": "go"}}
+    result = asyncio.run(_run_stop_at_stub(
+        monkeypatch, tmp_path, [_ACTIVATE, mentor],
+        [
+            _turn("Reading the project.", _skill_block("research", "activation-id")),
+            _turn("Asking the mentor.", _spawn_block("gps-mentor", "x-id")),
+            _turn("Here is what the project needs next."),
+            _done(),
+        ],
+        returns=returns,
+        stop_at_stub=True, stub_skills=_ROWS, stub_agents=_ROWS,
+    ))
+
+    assert "continue_" not in returns[1], "an unstubbed spawn armed the stop"
+    assert "Here is what the project needs next." in result.text_response
+
+
+def test_a_skill_call_inside_a_subagent_does_not_stop_the_run(tmp_path, monkeypatch):
+    import asyncio
+
+    returns = []
+    asyncio.run(_run_stop_at_stub(
         monkeypatch, tmp_path,
         [{"tool_name": "Skill", "tool_input": {"skill": "research-plan"},
           "agent_id": "agent-sub-1"}],
         [_turn("Working."), _done()],
         returns=returns,
-        first_handoff_stop="research",
+        stop_at_stub=True, stub_skills={"research-plan": None},
     ))
 
     assert len(returns) == 1
     assert "continue_" not in returns[0], "a subagent's Skill call stopped the run"
 
 
-def test_a_spawn_inside_a_subagent_is_not_the_first_handoff(tmp_path, monkeypatch):
+def test_a_spawn_inside_a_subagent_does_not_stop_the_run(tmp_path, monkeypatch):
     """Hand-offs are the main thread's, the rule `spawned_agents` uses."""
     import asyncio
 
     returns = []
-    asyncio.run(_run_first_handoff(
+    asyncio.run(_run_stop_at_stub(
         monkeypatch, tmp_path,
         [{**_SPAWN_QS, "agent_id": "agent-sub-1"}],
         [_turn("Working."), _done()],
         returns=returns,
-        first_handoff_stop="research",
+        stop_at_stub=True, stub_skills=_ROWS, stub_agents=_ROWS,
     ))
 
     assert len(returns) == 1
@@ -1920,14 +1970,14 @@ def test_a_spawn_inside_a_subagent_is_not_the_first_handoff(tmp_path, monkeypatc
     )
 
 
-def test_without_the_stop_a_stubbed_spawn_still_continues(tmp_path, monkeypatch):
+def test_without_stop_at_stub_a_stubbed_spawn_still_continues(tmp_path, monkeypatch):
     """The default is unchanged: a positive test's stub denies and continues."""
     import asyncio
 
-    result = asyncio.run(_run_first_handoff(
+    result = asyncio.run(_run_stop_at_stub(
         monkeypatch, tmp_path, [_ACTIVATE, _SPAWN_QS],
         _router_messages(_spawn_block("question-selection", "tool-use-id")),
-        stub_agents={"question-selection": None, "locality-guide": None},
+        stub_skills=_ROWS, stub_agents=_ROWS,
     ))
 
     assert "locality survey" in result.text_response

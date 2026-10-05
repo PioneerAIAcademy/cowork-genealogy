@@ -486,10 +486,10 @@ def test_activated_negative_skill_in_skills_invoked_but_pure_routing_text():
     ) is False
 
 
-def test_activated_counts_the_hand_off_a_first_handoff_stop_ended_on():
-    """A no-shortcut run ends at the router's first hand-off, before it can write
-    or summarize, so its short narration naming the next row is routing, not
-    activation, unless the recorded hand-off counts (#3119)."""
+def test_activated_counts_the_hand_off_a_stop_at_stub_run_ended_on():
+    """A `stop_at_stub` run ends at the router's first stubbed hand-off, before it
+    can write or summarize, so its short narration naming the next row is routing,
+    not activation, unless the recorded hand-off counts (#3119)."""
     text = "No questions yet. Routing to question-selection first, then research-plan."
     kwargs = dict(
         skill="research",

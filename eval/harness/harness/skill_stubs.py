@@ -2,9 +2,9 @@
 
 A test declares a sub-skill it does not want executed. The PreToolUse hook
 records the delegation in `skills_invoked`, denies the launch, and lets the run
-continue — so the caller still finishes its own logging and summary. On a
-`no-shortcut` test the run instead stops at the first hand-off, stubbed or not
-(`first_handoff_stop` in `skill_runner.py`, #3119). Use when
+continue — so the caller still finishes its own logging and summary. A test
+that sets `execution.stop_at_stub` stops at its first stubbed hand-off instead
+(`skill_runner.py`, #3119). Use when
 the callee is separately covered by its own unit suite, so running it inside
 the caller's test spends wall-clock and tokens on coverage that already exists.
 
@@ -110,9 +110,9 @@ def stub_denial(skill_name: str, response: str | None) -> dict[str, Any]:
     Denies the launch WITHOUT `continue_: False` — that is the whole difference
     from the negative-test routing short-circuit, which stops the run because a
     negative verdict is sealed the moment routing happens. A positive test still
-    has work left, so this one denies and continues. The exception is a
-    `no-shortcut` test, whose verdict is its first hand-off: `run_skill` adds the
-    stop to that hand-off, stubbed or not (`first_handoff_stop`).
+    has work left, so this one denies and continues. The exception is a test
+    that sets `execution.stop_at_stub`, whose verdict is its first stubbed
+    hand-off: `run_skill` adds the stop to that hand-off.
     """
     reason = _STUB_PREAMBLE.format(name=skill_name)
     reason += (
