@@ -1,0 +1,15 @@
+{
+  "subagents": [
+    {
+      "agent_type": "gps-mentor",
+      "turns": [
+        {
+          "blocks": [
+            "tool_use:research_query"
+          ]
+        }
+      ]
+    }
+  ],
+  "tool_calls": []
+}
