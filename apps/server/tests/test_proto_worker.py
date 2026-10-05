@@ -1118,9 +1118,10 @@ def test_worker_dockerfile_shape():
     assert "packages/engine/mcp-server" not in body, "the worker image carries no engine"
     assert re.search(r"^COPY packages/engine/plugin\s", body, re.M)
     assert re.search(r"^COPY apps/server/app\s", body, re.M) and re.search(r"^COPY apps/server/proto/sql\s", body, re.M)
-    # Every proto module the worker imports (enqueue.py, grants.py) must be COPYed: the
-    # image copies proto/ selectively. test_proto_config's
-    # test_images_carry_every_proto_module_they_import is that guard, for both images.
+    # Every proto module the worker imports (enqueue.py, grants.py, migrate.py) must be
+    # COPYed: the image copies proto/ selectively. test_proto_config's
+    # test_images_and_bundles_carry_every_proto_module_they_import is that guard, for both
+    # images and both bundles.
     # U7: enqueue.py imports botocore at module scope to sign. Without it in the requirements
     # the worker exits at start with QUEUE_URL set; the venv has it, so nothing else sees.
     assert re.search(r"^botocore==[0-9.]+ ", requirements, re.M), \
@@ -1764,8 +1765,8 @@ def test_the_stop_and_queue_schema_is_additive_and_applied():
     assert statements == [
         "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS stop_requested_at timestamptz;",
         "CREATE INDEX IF NOT EXISTS turns_queued_idx ON turns (session_id) WHERE outcome = 'queued';",
-    ], "006 must stay additive and idempotent: the worker and the web tier both apply it at start"
-    # Both appliers glob the directory, so the file only works if it sorts after the
+    ], "006 must stay additive and idempotent: an unledgered database re-runs every file once"
+    # migrate.py runs the files in name order, so the file only works if it sorts after the
     # tables it alters.
     names = sorted(p.name for p in (PROTO / "sql").glob("*.sql"))
     assert names.index("006_stop_and_queue.sql") > names.index("001_schema.sql")
@@ -1787,10 +1788,10 @@ def test_the_live_spend_cap_has_an_index_it_can_actually_use():
     assert [x for x in statements if x] == [
         "CREATE INDEX IF NOT EXISTS session_entries_session_seq_idx "
         "ON session_entries (session_id, seq);"
-    ], "007 must stay one additive, idempotent index: both tiers apply it at start"
+    ], "007 must stay one additive, idempotent index: an unledgered database re-runs every file once"
     names = sorted(p.name for p in (PROTO / "sql").glob("*.sql"))
     assert names.index("007_session_usage_index.sql") > names.index("001_schema.sql"), \
-        "both appliers glob the directory, so it must sort after the table it indexes"
+        "migrate.py runs the files in name order, so it must sort after the table it indexes"
 
     # And it has to match how the queries actually filter. All three scan by session_id
     # and order by seq; the leading column is the one Postgres needs.
@@ -1805,8 +1806,8 @@ def test_the_live_spend_cap_has_an_index_it_can_actually_use():
 def test_the_cap_is_a_turns_column_and_not_receive_count():
     """receive_count counts a healthy ceiling crossing and a deterministic failure with the
     same number, and per 0b a healthy run crosses it two to three times -- so the cap needs
-    its own column. 005 is additive and idempotent like 004, because the worker applies it
-    at start against a volume that predates it."""
+    its own column. 005 is additive and idempotent like 004, because migrate.py re-runs
+    every file once against an unledgered volume that predates it."""
     body = SQL_RESUME_GUARD.read_text(encoding="utf-8")
     statements = [line.split("--", 1)[0].strip() for line in body.splitlines()]
     statements = [x for x in statements if x]
@@ -2183,7 +2184,7 @@ def test_queue_startup_fields_exits_2_and_ignores_stray_keys_without_a_queue(mon
         worker.main()
     assert worker.queue_startup_fields({"GENEALOGY_SQS_ACCESS_KEY": "AKIASTRAY"}) == {}
 
-    # And the check runs before prepare() -- which applies the schema and parses agents.
+    # And the check runs before prepare() -- which parses agents.
     tree = ast.parse(inspect.getsource(worker.main))
     calls = [n.func.id for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)]
     assert "queue_startup_fields" in calls and "prepare" in calls
@@ -3951,10 +3952,11 @@ def _break_agents(monkeypatch, tmp_path):
     ("agents", _break_agents, "mismatch"),
     ("cwd", lambda mp, tp: mp.setattr(worker, "WORKER_CWD", str(tp / "missing")), "ENOENT"),
     ("schema", lambda mp, tp: mp.setattr(worker, "_SCHEMA_ERROR", "pending"), "pending"),
-    ("schema", lambda mp, tp: mp.setattr(worker, "_SCHEMA_ERROR", "42501"), "42501"),
+    ("schema", lambda mp, tp: mp.setattr(worker, "_SCHEMA_ERROR", "schema: behind 009_grant_session.sql"),
+     "schema: behind 009_grant_session.sql"),
     ("tmpdir", lambda mp, tp: mp.setenv("TMPDIR", str(tp / "missing")), "ENOENT"),
     ("transcript", lambda mp, tp: mp.setattr(worker, "_TRANSCRIPT_ERROR", "no_entries"), "no_entries"),
-], ids=["agents-none", "cwd-missing", "schema-pending", "schema-42501", "tmpdir-missing", "transcript-lost"])
+], ids=["agents-none", "cwd-missing", "schema-pending", "schema-behind", "tmpdir-missing", "transcript-lost"])
 def test_healthz_is_503_when_prepare_failed(monkeypatch, tmp_path, name, apply, label):
     _ready(monkeypatch, tmp_path)
     apply(monkeypatch, tmp_path)
@@ -3968,12 +3970,7 @@ def test_healthz_is_503_when_prepare_failed(monkeypatch, tmp_path, name, apply, 
 
 @pytest.mark.parametrize("transient", [
     lambda: worker.psycopg.OperationalError("connection refused"),
-    # An apply racing the web tier's (or a second worker's) at boot.
-    lambda: worker.psycopg.errors.UniqueViolation('duplicate key value violates "pg_type_typname_nsp_index"'),
-    lambda: worker.psycopg.errors.InternalError_("tuple concurrently updated"),
-    lambda: worker.psycopg.errors.DuplicateTable('relation "projects" already exists'),
-    lambda: worker.psycopg.errors.DuplicateObject('type "projects" already exists'),
-], ids=["refused", "23505", "XX000", "42P07", "42710"])
+], ids=["refused"])
 def test_schema_thread_retries_until_postgres_answers(monkeypatch, tmp_path, transient):
     _ready(monkeypatch, tmp_path)
     monkeypatch.setattr(worker, "_SCHEMA_ERROR", "pending")
@@ -3989,33 +3986,43 @@ def test_schema_thread_retries_until_postgres_answers(monkeypatch, tmp_path, tra
             raise transient()
         return ["001_schema.sql"]
 
-    monkeypatch.setattr(worker, "_apply_schema_once", flaky)
+    monkeypatch.setattr(worker, "_verify_schema_once", flaky)
     worker.schema_loop("postgresql://x@127.0.0.1:1/p")
     assert seen == ["pending", "pending", "pending"] and worker._SCHEMA_ERROR is None
     assert [f.get("retrying") for f in logged] == [True, None], "one line per change"
     status, body, _ = _healthz()
     assert status == 200 and body["checks"]["schema"] == {"ok": True}
 
-    calls: list[int] = []
+    # A role that cannot read the ledger (or a database not migrated yet) is reported and
+    # checked again: the check is a read, so it heals once someone grants or migrates.
+    monkeypatch.setattr(worker, "_SCHEMA_ERROR", "pending")
+    logged.clear()
+    calls: list[str | None] = []
+    during: list[tuple[int, dict]] = []
 
     def denied(dsn, **kw):
-        calls.append(1)
-        if len(calls) > 1:
-            worker.SHUTDOWN.set()  # a retry would spin at backoff 0; end it so the assert fails
-        raise worker.psycopg.errors.InsufficientPrivilege("permission denied for schema public")
+        calls.append(worker._SCHEMA_ERROR)
+        if len(calls) > 5:
+            worker.SHUTDOWN.set()  # a loop that never succeeds ends here, so the assert fails
+        if len(calls) < 3:
+            raise worker.psycopg.errors.InsufficientPrivilege("permission denied for table schema_migrations")
+        status, body, _ = _healthz()
+        during.append((status, body["checks"]["schema"]))
+        return ["001_schema.sql"]
 
-    monkeypatch.setattr(worker, "_apply_schema_once", denied)
+    monkeypatch.setattr(worker, "_verify_schema_once", denied)
     worker.schema_loop("postgresql://x@127.0.0.1:1/p")
-    assert calls == [1], "a DML-only role is a misconfiguration, not a refusal to retry"
-    assert worker._SCHEMA_ERROR == "42501"
-    status, body, _ = _healthz()
-    assert status == 503 and body["checks"]["schema"] == {"ok": False, "error": "42501"}
+    assert calls == ["pending", "42501", "42501"], "a failing check keeps checking"
+    assert during == [(503, {"ok": False, "error": "42501"})], "the label is visible while it retries"
+    assert worker._SCHEMA_ERROR is None
+    assert [f.get("retrying") for f in logged if f.get("step") == "schema"] == [True, None], \
+        "one line per change"
 
 
 def test_the_schema_thread_stops_backing_off_on_shutdown(monkeypatch):
     monkeypatch.setattr(worker, "log", lambda **f: None)
     monkeypatch.setattr(worker, "SCHEMA_BACKOFF_FIRST_S", 30.0)
-    monkeypatch.setattr(worker, "_apply_schema_once",
+    monkeypatch.setattr(worker, "_verify_schema_once",
                         lambda dsn, **kw: (_ for _ in ()).throw(worker.psycopg.OperationalError("refused")))
     thread = worker.start_schema_thread()
     worker.SHUTDOWN.set()
@@ -4242,6 +4249,179 @@ def test_session_spend_usd_prices_decimal_sums(turn_env, monkeypatch):
     assert halt["reason"] == options.SPEND_CAP_REASON.format(cap=spent / 2)
     assert not [f for f in logged if f.get("ev") == "spend_estimate_failed"]
 
+
+# ── the `delivered` exit ──────────────────────────────────────────────────────────
+#
+# A bounded request -- "create a plan but leave it at that", a single lookup, "where are
+# we?" -- must stop at its deliverable rather than running on to the proof, the nudge cap
+# or the spend bound. `delivered` is how a turn says it did the thing that was asked and
+# stopped on purpose. It is a NEW value, not `ok`: `ok` means "ended with no terminal
+# reason" and chatEvents renders it as nothing, while a delivery has something to report.
+
+
+
+
+def test_the_delivered_tool_name_is_pinned():
+    assert options.DELIVERED_TOOL == "mcp__genealogy__research_delivered"
+
+
+def test_the_delivery_instruction_rides_the_same_turn_prompt(tmp_path):
+    """The ONLY check that the guidance reaches the model at all. Every other test here
+    drives `make_pretool_hook` directly and never touches `build_worker_options`, so
+    without this the wiring could be dropped and the tool would ship advertised but
+    inert, with nothing instructing the model to call it."""
+    opts = _options(config_dir=str(tmp_path))
+    assert options.DELIVERY_GUIDANCE in opts.system_prompt["append"]
+
+
+def test_the_instruction_names_the_tool_it_is_about():
+    """A rule that does not name its tool cannot be followed. The bare name is what
+    appears in the prompt; the hook matches the qualified one."""
+    assert "research_delivered" in options.DELIVERY_GUIDANCE
+    assert options.DELIVERED_TOOL.endswith("research_delivered")
+
+
+def test_the_instruction_draws_both_boundaries():
+    """Two ways this misfires, and both must be excluded in the text itself: calling it
+    when the whole objective is finished (that is `completed`, and the run ends on its
+    own), and calling it instead of asking a question (an ask waits for an answer; a
+    delivery waits for nothing)."""
+    lowered = options.DELIVERY_GUIDANCE.lower()
+    assert "objective" in lowered, "must exclude the project-complete case"
+    # NOT `"question" in lowered or "ask" in lowered`: "ask" lives inside "asked" and
+    # "question" inside "status question", BOTH in the guidance's positive half, so that
+    # assertion cannot fail. Same collision shape as the "search"/"re-SEARCH" one above.
+    assert "in place of asking" in lowered, "must exclude the ask case"
+
+
+def test_a_turn_that_delivers_is_recorded_as_delivered(turn_env):
+    """End to end through the REAL hook: the hook-level tests cannot see the worker's
+    closure, and a break test that sets the closure to the wrong outcome leaves them all
+    green."""
+    summary = _run(turn_env, [
+        _init(), ToolCall("mcp__genealogy__research_query"),
+        ToolCall(options.DELIVERED_TOOL),
+        _result(num_turns=2),
+    ])
+    assert summary["outcome"] == "delivered", (
+        f"a turn that delivered recorded {summary['outcome']!r}"
+    )
+    _, params = next((sql, p) for sql, p in turn_env["conn"].executed
+                     if sql.startswith("UPDATE turns SET completed_at"))
+    assert params[0] == "delivered", "and the row says so too"
+
+
+def test_a_turn_that_never_delivers_is_untouched_by_the_exit(turn_env):
+    """The arm that is easy to skip. Adding an exit must not re-route the ordinary run
+    through it."""
+    summary = _run(turn_env, [
+        _init(), ToolCall("mcp__genealogy__research_query"),
+        ToolCall("mcp__genealogy__record_read"),
+        _result(num_turns=2),
+    ])
+    assert summary["outcome"] != "delivered"
+
+
+def test_a_stop_outranks_a_delivery():
+    """The researcher's own stop wins: the halt check runs before the delivered arm."""
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda row: None, halt=lambda: "stopped",
+    )
+    out = asyncio.run(hook({"tool_name": options.DELIVERED_TOOL, "tool_input": {}}, "u1", None))
+    assert out.get("stopReason") == "stopped", "a halt must outrank the delivery arm"
+
+
+def test_a_subagent_cannot_end_the_main_turn_with_a_delivery():
+    """The arm matches on tool NAME, and a subagent holds the session's tool set -- so
+    without a caller check a record-extractor saying "delivered" ends the researcher's
+    whole turn.
+
+    `agent_id` is tested for MEMBERSHIP, not truthiness: it is absent as a KEY on the
+    main thread, and `agent_type` alone is not sufficient because it is present on the
+    main thread of a session started with `--agent`. Same discriminator the shipped
+    plugin hook uses (`owner_denied`, hooks/guard_project_files.py)."""
+    halted: list[str] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda row: None, on_delivered=lambda: halted.append("x"),
+    )
+    out = asyncio.run(hook(
+        {"tool_name": options.DELIVERED_TOOL, "tool_input": {"summary": "s"},
+         "agent_id": "ag_1", "agent_type": "record-extractor"},
+        "u1", None,
+    ))
+    assert out.get("continue_") is not False, "a subagent's delivery must not halt the turn"
+    assert halted == [], "and must not fire the delivered exit"
+
+
+def test_the_main_thread_still_delivers_with_agent_type_present():
+    """The other direction, and the reason `agent_type` alone cannot be the test: a
+    session started with `--agent` carries agent_type on its MAIN thread. Keying on it
+    would silently stop the feature working for those sessions."""
+    halted: list[str] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda row: None, on_delivered=lambda: halted.append("x"),
+    )
+    out = asyncio.run(hook(
+        {"tool_name": options.DELIVERED_TOOL, "tool_input": {"summary": "s"},
+         "agent_type": "research"},
+        "u1", None,
+    ))
+    assert out.get("continue_") is False, "the main thread must still deliver"
+    assert halted == ["x"]
+
+
+def test_the_guidance_says_to_search_for_the_deferred_schema():
+    """ENABLE_TOOL_SEARCH is on and `research_delivered` is not in ALWAYS_LOAD, so its
+    schema is deferred. The one tool the system prompt names has to be findable, and
+    the short bounded turns this feature exists for are the ones holding the fewest
+    schemas."""
+    # NOT `"search" in lowered`: "re-SEARCH" contains it, and the guidance says
+    # "researcher" and "research_delivered", so that assertion can never fail. This is
+    # the field-name-collision shape CLAUDE.md names as a silent pass; it was caught by
+    # break-testing this very test, which stayed green with the clause deleted.
+    lowered = options.DELIVERY_GUIDANCE.lower()
+    assert "deferred" in lowered, "the guidance must say the schema is deferred"
+    assert "search for it" in lowered, "and must tell the model to search for it"
+
+
+def test_the_delivery_summary_reaches_a_human():
+    """The one field the researcher-facing contract is built on, and the hook halts
+    BEFORE the tool body runs -- so if it is not captured here it reaches nobody:
+    `input_path` is None for this tool, the tool_calls row has no column for it, and the
+    browser renders a fixed string from chatEvents. It must survive in the stop reason
+    and in the log event."""
+    events: list[dict] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda row: None,
+        log=lambda **kw: events.append(kw),
+    )
+    out = asyncio.run(hook(
+        {"tool_name": options.DELIVERED_TOOL,
+         "tool_input": {"summary": "the Mogan marriage record, 1874"}},
+        "u1", None,
+    ))
+    assert "the Mogan marriage record, 1874" in out["stopReason"], (
+        "the summary must survive into the text the model is handed"
+    )
+    delivered = [e for e in events if e.get("ev") == "delivered"]
+    assert delivered and delivered[0]["summary"] == "the Mogan marriage record, 1874"
+
+
+def test_an_empty_summary_does_not_corrupt_the_stop_reason():
+    """`summary` is declared required but NOTHING enforces it: the hook halts before the
+    body, and the server does not validate inputSchema. An argument-free call must still
+    produce a clean reason rather than a dangling 'Delivered: '."""
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda row: None,
+    )
+    out = asyncio.run(hook({"tool_name": options.DELIVERED_TOOL}, "u1", None))
+    assert out["stopReason"] == options.DELIVERED_REASON
+    assert "Delivered:" not in out["stopReason"]
 
 # ── U3: the attempt bears its owner's current grant ──────────────────────────────
 
@@ -4536,3 +4716,45 @@ def test_worker_tables_include_the_grant_tables():
     """acquire_grant reads projects.owner_id and familysearch_tokens; /healthz must fail on a
     database missing either rather than every turn failing at its first attempt."""
     assert {"projects", "familysearch_tokens"} <= set(worker.WORKER_TABLES)
+
+
+def test_a_stop_dispatched_after_a_delivery_does_not_relabel_the_turn(turn_env, monkeypatch):
+    """`terminal["halted"] = True` in on_delivered is what lets the Stop hook ALLOW the
+    stop after a delivery instead of vetoing it. Deleting that line leaves every other
+    worker test green, so it needs its own.
+
+    Same trap as the spend-cap version above: if `on_allow` overwrote the reason, a turn
+    that delivered would be recorded and rendered as "you pressed Stop"."""
+    monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
+    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
+    summary = _run(turn_env, [
+        _init(), ToolCall(options.DELIVERED_TOOL), StopDispatch(), _text("x"),
+        _result(num_turns=2),
+    ])
+    assert turn_env["client"].stops == [{}], "the Stop hook vetoed instead of allowing the stop"
+    assert summary["outcome"] == "delivered"
+    row = next(p for sql, p in turn_env["conn"].executed
+               if sql.startswith("UPDATE turns SET completed_at"))
+    assert row[0] == "delivered", "the row keeps the delivery's own reason"
+
+
+def test_the_main_thread_gate_is_membership_not_truthiness():
+    """The comment on that gate calls the membership test load-bearing, and it is: a
+    subagent whose `agent_id` is falsy (None, "") is still a subagent. A truthiness test
+    (`not data.get("agent_id")`) passes the whole existing suite, so this pins the rule
+    with the one shape that separates them."""
+    halted: list[str] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda row: None, on_delivered=lambda: halted.append("x"),
+    )
+    out = asyncio.run(hook(
+        {"tool_name": options.DELIVERED_TOOL, "tool_input": {"summary": "s"},
+         "agent_id": None, "agent_type": "record-extractor"},
+        "u1", None,
+    ))
+    assert out.get("continue_") is not False, (
+        "agent_id present but falsy is STILL a subagent -- a truthiness test lets it "
+        "end the researcher's turn"
+    )
+    assert halted == []

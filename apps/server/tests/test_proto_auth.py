@@ -304,13 +304,13 @@ async def test_signed_in_routes_are_503_until_the_allowlist_syncs(fs_on):
 
 
 class FlakyStore(FakeStore):
-    """The schema apply and the allowlist sync each fail their first call."""
+    """The schema check and the allowlist sync each fail their first call."""
 
     def __init__(self) -> None:
         super().__init__()
         self.calls = {"schema": 0, "allowlist": 0}
 
-    async def apply_schema(self) -> list[str]:
+    async def verify_schema(self) -> list[str]:
         self.calls["schema"] += 1
         if self.calls["schema"] == 1:
             raise OSError("connection refused")

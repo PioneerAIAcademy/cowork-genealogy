@@ -11,7 +11,7 @@ Two things stand in for the worker until D9-10 lands. In the default ``--seed`` 
 thread inserts the rows the worker will write -- ~40 ``session_events`` through
 ``next_session_seq``, a few ``session_activity`` updates, one ``documents`` upsert, a
 ``turn_done`` -- pausing past the ping interval once so a ``: ping`` is observable.
-``--embedded-pg`` starts a pip-installed PostgreSQL (pgserver), applies ``sql/*.sql`` and
+``--embedded-pg`` starts a pip-installed PostgreSQL (pgserver), migrates it (``migrate.py``) and
 runs the web tier in-process with no queue, so the acceptance runs on a machine with
 neither Docker nor Postgres. ``--worker`` runs no seeder and stops on the worker's
 ``turn_done`` for our ``turn_id``.
@@ -76,6 +76,7 @@ def _load_worker_complete():
 
     spec = importlib.util.spec_from_file_location("proto_worker", HERE / "worker" / "worker.py")
     module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module  # the dataclass decorator looks its module up (U3's HeldGrant)
     spec.loader.exec_module(module)
     return module.complete
 
@@ -242,9 +243,13 @@ class Embedded:
         # FamilySearch sign-in would turn off.
         os.environ.pop("PUBLIC_URL", None)
         os.environ.pop("FAMILYSEARCH_WEB_ENABLED", None)
+        import migrate  # proto/ is on sys.path (HERE, above)
         import uvicorn
 
         from web.app import create_app
+
+        # U9: the web tier only verifies the schema; the runner is what applies it.
+        migrate.migrate(self.dsn)
 
         port = free_port()
         self.base = f"http://127.0.0.1:{port}"
