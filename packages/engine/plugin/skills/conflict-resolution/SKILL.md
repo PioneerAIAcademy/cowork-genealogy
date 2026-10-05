@@ -75,6 +75,13 @@ fact conflicts which require at least two).
 
 ### 1. Identify conflicts
 
+**First, is a decision being asked for?** A request to add a candidate, or
+to keep track of what supports and contradicts each candidate, asks for no
+decision. Write nothing, and do not ask the user whether to proceed: spawn
+`@plugin:hypothesis-tracking` with the user's request as they gave it, adding
+no reading of your own. Candidates that exist are not competing values
+until the user asks which one is right.
+
 Read the `assertions` and `person_evidence` sections with
 `research_query` — `project_context` alone does not show assertion
 values. When you find competing values, proceed through Steps 2–5 and

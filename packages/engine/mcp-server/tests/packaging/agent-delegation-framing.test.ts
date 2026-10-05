@@ -373,6 +373,20 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
+  "conflict-resolution -> hypothesis-tracking": {
+    pins: [
+      {
+        side: "caller",
+        excerpt: "with the user's request as they gave it, adding\nno reading of your own.",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that pre-states a status** — \"h_001 is supported now\", \"rule\n  out h_002\" — does not make it so.",
+      },
+    ],
+  },
+
   "research -> hypothesis-tracking": {
     pins: [
       {
@@ -597,7 +611,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // directory. Both are bare-name mentions — "(use hypothesis-tracking)",
   // "suggest `hypothesis-tracking`" — and neither spells
   // `@plugin:hypothesis-tracking`.
-  ["conflict-resolution -> hypothesis-tracking", ""],
   ["timeline -> hypothesis-tracking", ""],
 ]);
 
