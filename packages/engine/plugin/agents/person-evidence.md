@@ -300,21 +300,23 @@ which GedcomX person(s) it might be:
 **Check tree.gedcomx.json persons:**
 - Name match (exact, phonetic variant, abbreviation)
 - Age/birth year compatibility (±5 years)
-- Location compatibility (same county/state)
+- Location compatibility: the record's place against the tree person's own
+  Residence facts, never against the other records being linked
 - Gender match
 - Relationship fit (is this persona in the right position relative
   to known family members?)
 
-**Place and naming lookups — before you assess match strength.** Each
-lookup below runs whenever its trigger holds, once per record, not once per
+**Place and naming lookups — finish these before your first `same_person`
+call.** Run each lookup whose trigger holds, once per record, not once per
 persona. Decide the triggers from the assertions and the tree in hand.
 
 1. **Record outside the residence cluster.** The cluster is the places the
    project attests the person *lived*: census, tax, land, and Residence facts.
    A birthplace alone makes no cluster, and a residence resting only on a
-   `probable` or lower link does not join it. The trigger holds when the
-   record's state (in the United States) or country differs from the attested
-   residence nearest it in date, and is not a neighbour of it. When it holds:
+   `probable` or lower link does not join it. For each record, write down its
+   place and year beside the tree person's Residence fact nearest in date. The
+   trigger holds when the record's state (in the United States) or country
+   differs from that residence and is not a neighbour of it. When it holds:
    - `place_search` the record's place and the nearest attested residence,
      then `place_distance` on the two `standardPlace`s.
    - `wiki_read` the destination's page:
@@ -338,6 +340,17 @@ persona. Decide the triggers from the assertions and the tree in hand.
 A page that does not exist, or a fetch that fails, is recorded in the
 rationale as not retrieved. Never substitute a remembered rule or another
 place's page for it.
+
+Every `pe_` rationale opens with two check lines, written before you choose
+the tier:
+
+- "Date check: [the record's birth, christening or age-derived year] vs
+  [the tree person's birth year]: gap [N] years." Write "none stated" for
+  either side that gives no year. A gap the event cannot explain goes in
+  `core_identifier_conflict`.
+- "Residence check: [record place, year] vs [nearest attested residence,
+  year]: same / neighbouring / outside, [what bridged it, or nothing]." A
+  person with no attested residence gets "none attested".
 
 **Assess match strength.** Weigh the data points above by reasoning
 directly — correlation analysis is the spine of every identity
@@ -464,7 +477,7 @@ the `rationale` as a departure; it does not move the tier by itself.
 |------------|-------------------|--------|
 | **Weak** — only the name matches, or a core identifier conflicts. **Not Weak: a strong household relationship-fit** — a member positioned under known parents or beside a known spouse — even when the persona is a fact-less stub (see the note below the table). | `speculative` only | **Pause for user confirmation.** Present the evidence and ask: "This is a weak match. The name/age/place similarities are [details]. Do you want to create a speculative link, or is this a different person?" Never auto-link. |
 | **Moderate** — core identifiers agree but some are missing or only approximate | `probable` | Present the evidence to the user before linking. Explain what matches and what doesn't. Create the link with `probable` confidence if the user agrees. |
-| **Strong** — name, age, place, and relationship fit all agree | `confident` | May create the link without explicit user confirmation, but still present the rationale. |
+| **Strong** — name, age, place, and relationship fit all agree, with the place inside the residence cluster or a move outside it that something bridges | `confident` | May create the link without explicit user confirmation, but still present the rationale. |
 | **Obvious** — same record already linked for another role, or the person was found by searching for this specific individual | `confident` or `probable`, based on reasoning | No separate analysis needed. State the rationale clearly. |
 
 **Stub match on relationship-fit alone (household enrichment).** A
