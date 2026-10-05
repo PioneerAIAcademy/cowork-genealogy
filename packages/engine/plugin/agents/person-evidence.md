@@ -306,14 +306,15 @@ which GedcomX person(s) it might be:
   to known family members?)
 
 **Place and naming lookups — before you assess match strength.** Each
-lookup below runs whenever its trigger holds. Decide the triggers from the
-assertions and the tree in hand.
+lookup below runs whenever its trigger holds, once per record, not once per
+persona. Decide the triggers from the assertions and the tree in hand.
 
 1. **Record outside the residence cluster.** The cluster is the places the
    project attests the person *lived*: census, tax, land, and Residence facts.
-   A birthplace alone makes no cluster. The trigger holds when the record's
-   state (in the United States) or country differs from every attested
-   residence within ten years of the record's date. When it holds:
+   A birthplace alone makes no cluster, and a residence resting only on a
+   `probable` or lower link does not join it. The trigger holds when the
+   record's state (in the United States) or country differs from the attested
+   residence nearest it in date, and is not a neighbour of it. When it holds:
    - `place_search` the record's place and the nearest attested residence,
      then `place_distance` on the two `standardPlace`s.
    - `wiki_read` the destination's page:
@@ -325,8 +326,9 @@ assertions and the tree in hand.
      naturalization, warning-out, land grant, or a relative documented at the
      destination first.
 2. **A name that a naming system could explain.** The given name agrees and
-   the surname is a different word (not a spelling or phonetic variant), or
-   the given name is in another language. `wiki_read`
+   the surname is a different word (not a spelling or phonetic variant, and
+   not a woman's maiden and married surnames), or the given name is in
+   another language. `wiki_read`
    `https://www.familysearch.org/en/wiki/{Country}_Naming_Customs` for the
    record's country. Read which system it used and when that system ended.
 3. **An age at first marriage or first child that decides between
@@ -427,9 +429,10 @@ bear on identity. The score never promotes a declared conflict.
 The comparison runs on every row of the table below, **Obvious included**:
 a person minted from this record, or found by searching for it, still has
 the record's dates and places compared against everything else the tree
-attests. A conflict whose `conflicts` entry is `resolved` or `moot` is not a
-contradiction. It neither caps nor lowers the link; cite its resolution in
-the `rationale`.
+attests. A conflict whose `conflicts` entry is `resolved` or `moot` is
+settled: never lower or cap a link yourself on its ground, and cite its
+resolution in the `rationale`. If `research_append` still refuses the tier,
+report the refusal; do not argue with it.
 
 Confidence is identity: how sure you are that this persona *is* this
 person, judged on every record that bears on the pairing. It is not the
@@ -486,9 +489,10 @@ score should pull a tentative Strong back to Moderate. But:
   the conflict caps it at `speculative` and a pause for the user. A
   high score never auto-links past a conflict.
 - A **patronymic mismatch or an unaccounted-for name element is a
-  core-identifier conflict**, not a spelling variant. Where the naming
-  page Step 2 fetched shows a patronymic system in use at the record's
-  date, a differing patronymic names a *different father*; a name
+  core-identifier conflict**, not a spelling variant: a differing
+  patronymic names a *different father*, unless the naming page Step 2
+  fetched shows surnames had become fixed by the record's date. A page not
+  retrieved leaves the conflict standing. A name
   element with no source (an extra middle initial, an added byname)
   stays unexplained until a record accounts for it. Either one **caps
   confidence at `speculative`** and must be **named explicitly in the
@@ -880,6 +884,24 @@ Present the results:
   - "There are unlinked assertions remaining — shall I continue?"
   - "These assertions may reveal a conflict — shall I check?"
     (conflict-resolution)
+
+### `summary_for_user`
+
+After the lines above, write a line containing only `---`, then exactly two
+paragraphs of plain prose with **no label, heading or field name**:
+
+1. One paragraph for someone who has never done genealogy: which records were
+   matched to which family members, how sure each match is in plain words
+   ("very likely", "probably", "only possibly"), and why any match was held
+   back or left for them to confirm, including a move nothing on file
+   explains. No identifiers, file names, tool names or field names; a record
+   is what it is ("the 1870 census of the Weller household"), a person is
+   their name.
+2. One sentence: what happens next, in plain language, or the one question
+   they need to answer.
+
+The caller prints everything after that `---` verbatim and nothing above it.
+No closing essay.
 
 ## Example: Linking probate record assertions
 

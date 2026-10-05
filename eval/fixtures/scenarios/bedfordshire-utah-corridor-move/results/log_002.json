@@ -16,7 +16,7 @@
     "hasMore": false,
     "results": [
       {
-        "personId": "UT70-PRA",
+        "personId": "UT80-PRA",
         "personName": "Joseph Pratt",
         "score": 0.78,
         "sex": "Male",
@@ -25,15 +25,15 @@
         "events": [
           {
             "type": "Census",
-            "date": "1870",
+            "date": "1880",
             "place": "Salt Lake, Utah, United States"
           }
         ],
-        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:UT70-PRA",
-        "recordId": "https://www.familysearch.org/ark:/61903/1:1:UT70-PRA",
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:UT80-PRA",
+        "recordId": "https://www.familysearch.org/ark:/61903/1:1:UT80-PRA",
         "collectionId": "0",
-        "collectionTitle": "United States Census, 1870",
-        "recordTitle": "Joseph Pratt household, Salt Lake County, Utah Territory, 1870",
+        "collectionTitle": "United States Census, 1880",
+        "recordTitle": "Joseph Pratt household, Salt Lake County, Utah Territory, 1880",
         "treeMatches": [],
         "primaryId": "DP1",
         "gedcomx": {

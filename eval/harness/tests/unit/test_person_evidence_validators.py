@@ -1409,10 +1409,27 @@ def test_corridor_fires_when_the_page_came_through_search_not_read():
         check_corridor(calls, _GEO)
 
 
-def test_corridor_passes_on_a_full_url_or_a_bare_slug():
+def test_corridor_passes_on_a_full_url_with_or_without_an_anchor():
     for url in ("https://www.familysearch.org/en/wiki/Utah_Emigration_and_Immigration",
-                "Kentucky_Emigration_and_Immigration"):
+                "https://www.familysearch.org/en/wiki/Kentucky_Emigration_and_Immigration#Background"):
         check_corridor([_call("mcp__Genealogy_Research__wiki_read", url=url)], _GEO)
+
+
+def test_corridor_fires_on_a_bare_slug_production_cannot_fetch():
+    calls = [_call("mcp__genealogy__wiki_read", url="Kentucky_Emigration_and_Immigration")]
+    with pytest.raises(AssertionError):
+        check_corridor(calls, _GEO)
+
+
+def test_corridor_reads_stringified_args():
+    calls = [{"tool": "mcp__genealogy__wiki_read",
+              "args": json.dumps({"url": "https://www.familysearch.org/en/wiki/Utah_Emigration_and_Immigration"})}]
+    check_corridor(calls, _GEO)
+
+
+def test_distance_ignores_a_tool_that_only_contains_the_name():
+    with pytest.raises(AssertionError):
+        check_distance([_call("mcp__genealogy__place_distance_matrix")], _GEO)
 
 
 def test_corridor_tolerates_a_wiki_read_with_null_args():
@@ -1429,6 +1446,11 @@ def test_naming_fires_without_a_naming_customs_read():
 def test_naming_passes_on_any_country():
     for c in ("Norway", "Spain", "Iceland"):
         check_naming([_call("mcp__genealogy__wiki_read", url=f"https://www.familysearch.org/en/wiki/{c}_Naming_Customs")], _NAMING)
+
+
+def test_naming_fires_on_a_bare_slug():
+    with pytest.raises(AssertionError):
+        check_naming([_call("mcp__genealogy__wiki_read", url="Norway_Naming_Customs")], _NAMING)
 
 
 def test_naming_stands_down_without_the_tag():

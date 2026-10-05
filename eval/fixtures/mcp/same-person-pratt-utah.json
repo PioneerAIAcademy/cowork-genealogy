@@ -1,6 +1,6 @@
 {
   "tool": "same_person",
-  "description": "same_person for Joseph Pratt (1860/1870 Salt Lake County, Utah) vs subject I1 Joseph Pratt of Cranfield. Name, birth year and birthplace country agree, so the tool returns a strong score; the score says nothing about whether the move between the two places is explained (issue #2537). Matched on any pairing.",
+  "description": "same_person for Joseph Pratt (1860/1880 Salt Lake County, Utah) vs subject I1 Joseph Pratt of Cranfield. Name, birth year and birthplace country agree, so the tool returns a strong score; the score says nothing about whether the move between the two places is explained (issue #2537). Matched on any pairing.",
   "args": {
     "assertionId": "~",
     "treePersonId": "~"

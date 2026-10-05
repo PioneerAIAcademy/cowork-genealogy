@@ -24,7 +24,9 @@ import pytest
 
 from harness.record_basis import record_basis_of
 from validators_lib import (
+    as_mapping,
     assert_foreign_keys_valid,
+    bare_tool_name,
     assert_no_section_deletions,
     extract_year,
 )
@@ -1435,14 +1437,19 @@ def report_chronological_contradiction_not_speculative(
 
 
 def _calls_to(tool_calls, name: str) -> list[dict]:
-    return [tc for tc in (tool_calls or []) if name in (tc.get("tool") or "")]
+    return [tc for tc in (tool_calls or []) if bare_tool_name(tc.get("tool") or "") == name]
 
 
-def _wiki_read_urls(tool_calls) -> list[str]:
-    return [
-        str((tc.get("args") or {}).get("url") or "")
-        for tc in _calls_to(tool_calls, "wiki_read")
-    ]
+def _wiki_read_slugs(tool_calls) -> list[str]:
+    """Page slugs the run's wiki_read calls could actually fetch. wiki_read
+    throws on a url without `/wiki/` (`urlToSlug`), so a bare slug the mock
+    would serve is a lookup production never performs and does not count."""
+    slugs = []
+    for tc in _calls_to(tool_calls, "wiki_read"):
+        url = str(as_mapping(tc.get("args")).get("url") or "")
+        if "/wiki/" in url:
+            slugs.append(url.split("/wiki/", 1)[1].split("#")[0].split("?")[0])
+    return slugs
 
 
 def test_geography_measured_with_place_distance(tool_calls, test):
@@ -1465,11 +1472,12 @@ def test_corridor_read_from_wiki(tool_calls, test):
     covers any destination."""
     if "geography-from-tools" not in (test.get("tags") or []):
         pytest.skip("not a geography-from-tools test")
-    urls = _wiki_read_urls(tool_calls)
-    assert any("_Emigration_and_Immigration" in u for u in urls), (
+    slugs = _wiki_read_slugs(tool_calls)
+    assert any(s.endswith("_Emigration_and_Immigration") for s in slugs), (
         "geography-from-tools test must read the destination's "
-        "{Jurisdiction}_Emigration_and_Immigration page with wiki_read before "
-        f"deciding whether a corridor explains the move; wiki_read urls seen: {urls}"
+        "{Jurisdiction}_Emigration_and_Immigration page with wiki_read (a full "
+        "/wiki/ url) before deciding whether a corridor explains the move; "
+        f"wiki pages read: {slugs}"
     )
 
 
@@ -1480,10 +1488,10 @@ def test_naming_system_read_from_wiki(tool_calls, test):
     conflict-resolution carries for #2254)."""
     if "naming-from-wiki" not in (test.get("tags") or []):
         pytest.skip("not a naming-from-wiki test")
-    urls = _wiki_read_urls(tool_calls)
-    assert any("_Naming_Customs" in u for u in urls), (
+    slugs = _wiki_read_slugs(tool_calls)
+    assert any(s.endswith("_Naming_Customs") for s in slugs), (
         "naming-from-wiki test must call wiki_read for a {Country}_Naming_Customs "
-        f"page before ruling on the name; wiki_read urls seen: {urls}"
+        f"page (a full /wiki/ url) before ruling on the name; wiki pages read: {slugs}"
     )
 
 

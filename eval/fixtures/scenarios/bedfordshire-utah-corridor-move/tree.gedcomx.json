@@ -115,6 +115,19 @@
           "primary": true,
           "date": "~1847",
           "place": "Cranfield, Bedfordshire, England"
+        },
+        {
+          "id": "F3R1851",
+          "type": "Residence",
+          "date": "1851",
+          "place": "Cranfield, Bedfordshire, England",
+          "sources": [
+            {
+              "ref": "S2",
+              "page": "1851 England census, Cranfield",
+              "quality": 3
+            }
+          ]
         }
       ]
     },
@@ -137,6 +150,19 @@
           "primary": true,
           "date": "~1850",
           "place": "Cranfield, Bedfordshire, England"
+        },
+        {
+          "id": "F4R1851",
+          "type": "Residence",
+          "date": "1851",
+          "place": "Cranfield, Bedfordshire, England",
+          "sources": [
+            {
+              "ref": "S2",
+              "page": "1851 England census, Cranfield",
+              "quality": 3
+            }
+          ]
         }
       ]
     }
@@ -226,7 +252,7 @@
     },
     {
       "id": "S11",
-      "title": "United States Census, 1870",
+      "title": "United States Census, 1880",
       "author": "U.S. Census Office"
     }
   ]

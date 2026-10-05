@@ -115,6 +115,19 @@
           "primary": true,
           "date": "~1852",
           "place": "Horsham, Sussex, England"
+        },
+        {
+          "id": "F3R1861",
+          "type": "Residence",
+          "date": "1861",
+          "place": "Horsham, Sussex, England",
+          "sources": [
+            {
+              "ref": "S2",
+              "page": "1861 England census, Horsham",
+              "quality": 3
+            }
+          ]
         }
       ]
     },
@@ -137,6 +150,19 @@
           "primary": true,
           "date": "~1855",
           "place": "Horsham, Sussex, England"
+        },
+        {
+          "id": "F4R1861",
+          "type": "Residence",
+          "date": "1861",
+          "place": "Horsham, Sussex, England",
+          "sources": [
+            {
+              "ref": "S2",
+              "page": "1861 England census, Horsham",
+              "quality": 3
+            }
+          ]
         }
       ]
     },
@@ -159,6 +185,19 @@
           "primary": true,
           "date": "~1859",
           "place": "Horsham, Sussex, England"
+        },
+        {
+          "id": "F5R1861",
+          "type": "Residence",
+          "date": "1861",
+          "place": "Horsham, Sussex, England",
+          "sources": [
+            {
+              "ref": "S2",
+              "page": "1861 England census, Horsham",
+              "quality": 3
+            }
+          ]
         }
       ]
     }

@@ -9,13 +9,13 @@ corridor named on the destination's wiki page explains the move. Mirror of
 
 - **Subject:** Joseph Pratt (`I1`), b. ~1822 Cranfield, Bedfordshire, England; wife Ann
   (`I2`, b. ~1825); children Sarah (`I3`, ~1847) and Joseph (`I4`, ~1850), both born
-  Cranfield. The tree attests the couple's residence at Cranfield in the 1841 and 1851
-  England censuses (Residence facts F1R1841/F1R1851, F2R1841/F2R1851).
-- **Candidate records:** the 1860 U.S. census (`src_001`, personas `CP1`-`CP4`) and the 1870
+  Cranfield. The tree attests the household's residence at Cranfield in the 1841 and 1851
+  England censuses: Residence facts on the couple for both years and on each child for 1851.
+- **Candidate records:** the 1860 U.S. census (`src_001`, personas `CP1`-`CP4`) and the 1880
   U.S. census (`src_002`, personas `DP1`-`DP3`), Salt Lake County, Utah Territory. Both
   households are headed by Joseph Pratt, born England, with a wife Ann and children whose
   names and ages agree with the tree (1860: Joseph 38, Ann 35, Sarah 13, Joseph 10;
-  1870: Joseph 48, wife Ann 45, son Joseph 20).
+  1880: Joseph 58, wife Ann 55, son Joseph 30).
 - **No documentary bridge in the project** (no passenger list or emigration record). No
   `person_evidence` links yet.
 

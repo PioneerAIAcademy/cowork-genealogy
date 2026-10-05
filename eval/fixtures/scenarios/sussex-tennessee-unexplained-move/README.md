@@ -9,8 +9,8 @@ the destination's wiki page that bridges the move. Mirror of
 
 - **Subject:** William Weller (`I1`), b. ~1825 Horsham, Sussex, England; wife Mary (`I2`,
   b. ~1828); children James (`I3`, ~1852), Ellen (`I4`, ~1855), George (`I5`, ~1859), all
-  born Horsham. The tree attests the couple's residence at Horsham in the 1851 and 1861
-  England censuses (Residence facts F1R1851/F1R1861, F2R1851/F2R1861).
+  born Horsham. The tree attests the household's residence at Horsham in the 1851 and 1861
+  England censuses: Residence facts on the couple for both years and on each child for 1861.
 - **Candidate records:** the 1870 U.S. census (`src_001`, personas `CP1`-`CP5`) and the 1880
   U.S. census (`src_002`, personas `DP1`-`DP3`), Maury County, Tennessee. Both households
   are headed by William Weller, born England, with a wife Mary and children whose names and

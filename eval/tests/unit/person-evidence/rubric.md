@@ -10,7 +10,7 @@ Geography caps too, at a different tier. A record placing the person outside the
 
 - **pass:** Confidence tier matches identity-evidence strength: `confident` when multiple independent sources corroborate the identity link; `probable` when a single source supports the link with no contradicting evidence; `speculative` when only circumstantial alignment or when a chronological or qualitative contradiction exists.
 - **partial:** Confidence is off by one tier — `confident` claimed on a single source with no corroboration, or `speculative` chosen when solid corroboration exists, or `probable` retained despite a clear chronological contradiction.
-- **fail:** Confidence claim is clearly inverted (e.g., `confident` on a single source with no corroboration; `speculative` on a fully corroborated link; `confident` on a record whose date contradicts the tree person's birth by more than a few years).
+- **fail:** Confidence claim is clearly inverted (e.g., `confident` on a single source with no corroboration; `speculative` on a fully corroborated link; `confident` on a record whose date contradicts the tree person's birth by more than a few years; `confident` on a record outside the attested residence cluster when nothing bridges the move, however many records corroborate it).
 
 ## Rationale quality
 
