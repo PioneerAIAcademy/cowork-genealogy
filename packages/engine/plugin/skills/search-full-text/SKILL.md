@@ -137,11 +137,9 @@ Read `references/query-syntax.md` for operator details and wildcards.
 - **Always use `+` to require terms in `keywords`.** Default is OR,
   which returns millions of irrelevant results. Do NOT use `+` in the
   `name` field — `m.queryRequireDefault` requires at least one term to match.
-- **Scope by place and date with caution.** `yearFrom`/`yearTo` and record
-  type filters are allowed but collection metadata dates can be off. **Do not
-  use `recordPlace*` parameters** — both plain-text values and filterParam forms
-  return zero results in production; only `collectionId` (from `includeFacets`
-  facets) is safe for place-scoping. **If a filtered
+- **Scope by place when the plan or the user names the jurisdiction.**
+  `yearFrom`/`yearTo` and record-type filters are allowed too, but collection
+  metadata dates can be off, so treat them more cautiously. **If a filtered
   search returns zero results, re-run it without that filter before
   logging anything as not found** — a nil under a filter may reflect a
   metadata mismatch rather than a true absence. **This applies to every
