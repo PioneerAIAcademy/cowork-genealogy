@@ -8,8 +8,8 @@ decay.
 ## Test naming
 
 - `ut_research_001` – `ut_research_010`: trigger tests (phase 1a). Positive
-  and negative tests for whether the router skill activates at all. 001, 004,
-  005 and 008 remain.
+  and negative tests for whether the router skill activates at all. 001, 005
+  and 008 remain.
 - `ut_research_011`+: routing tests (phase 2). Positive tests that assert
   which callee the router hands off to first, given a specific research.json
   state. Each uses `execution.stub_skills` so the callee is denied at the
@@ -18,17 +18,25 @@ decay.
 
 ## Restored activation tests (issue #3119)
 
-`ut_research_001`, `004`, `012`, `013`, `014` and `015` were deleted on
-2026-10-01 (issue #2984) and are restored without their `xfail` markers. They
-were `xfail` for one defect: `research` and `project-status` both matched a
-"drive the workflow forward" request, so the orchestrator was skipped about half
-the time (issue #2927). `project-status`'s description now tells it not to drive
-the research workflow forward (#3092), and each restored test was measured on
-main before it came back (#3119). None carries an `xfail` marker.
+`ut_research_001`, `012`, `013`, `014` and `015` were deleted on 2026-10-01
+(issue #2984) and are restored without their `xfail` markers. They were `xfail`
+for one defect: `research` and `project-status` both matched a "drive the
+workflow forward" request, so the orchestrator was skipped about half the time
+(issue #2927). `project-status`'s description now tells it not to drive the
+research workflow forward (#3092). Each restored test passed three runs of three
+on main before it came back (#3119). `015` needed one more change; see "Paired
+rows".
 
-Not restored: `ut_research_002` (`slash-research-question.json`), which issue
-#3116 owns, and `ut_research_003` (`find-relative.json`), which is not part of
-#2927's removal condition.
+Not restored:
+
+- `ut_research_004` (`investigate-person.json`) activated `research` on two of
+  its three runs. On the third, the main thread asked the user two
+  `AskUserQuestion` questions and no skill ran. Its committed history shows the
+  same miss in other forms: `project-status` or a sub-skill taking the request.
+  The per-run data is on #3119.
+- `ut_research_002` (`slash-research-question.json`), which issue #3116 owns.
+- `ut_research_003` (`find-relative.json`), which is not part of #2927's removal
+  condition.
 
 ## Routing tests — tag convention
 
@@ -64,17 +72,24 @@ validator reads `handoffs`.
 
 `ut_research_015` (`route-shortcut-guard.json`) is the only test tagged
 `no-shortcut`, so it is the one test `test_no_paired_skill_shortcut` runs on.
-It was deleted on 2026-10-01 and is restored (#3119). No committed run shows a
-main-thread spawn of `person-evidence`, `research-exhaustiveness` or
-`proof-conclusion` on this test. The validator's one committed failure
-(`v1.json`, run 2026-09-26_17-29-05) began with `project-status`: `research`
-never activated (#2927). The test keeps the paired agents in `stub_skills`: a
-denied spawn is still recorded, so a shortcut fails the validator rather than
-running.
+The user names a downstream destination ("through to a proof conclusion") on a
+project that has only an objective, so the first hand-off must be row 1,
+question-selection. The `no-shortcut` tag makes the harness end the run at that
+first hand-off (`first_handoff_stop` in `harness/skill_runner.py`). Without the
+stop the test cannot pass reliably: `research/SKILL.md` tells the router to drive
+the table forward to the named destination, so after question-selection it walks
+on, and because the stubs write nothing, the walk can loop back to row 1 until
+the turn cap. The test's committed failures on main were mostly the activation
+defect above, then that walk. One committed run (`v1_2026-08-25_20-14-29.json`)
+did hand off to proof-conclusion first. In every committed run, person-evidence,
+research-exhaustiveness and proof-conclusion were reached by `Skill` calls, which
+is why a count of agent spawns alone finds none. The test keeps the paired agents in `stub_skills`: a denied spawn is still
+recorded, so a shortcut fails the validator rather than running.
 
 That validator is not redundant with `test_routes_to_expected_skill`, which
 asserts only the first hand-off. A router that calls `Skill(question-selection)`
-first and *then* spawns `@plugin:proof-conclusion` passes it green.
+and spawns `@plugin:proof-conclusion` in the same turn passes the routing check.
+The stop denies and records both, and this validator fails the run.
 
 ## Moved negatives (issue #2268)
 

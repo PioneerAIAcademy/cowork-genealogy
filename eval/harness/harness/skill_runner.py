@@ -434,6 +434,18 @@ def spawn_stub_denial(
     return stub_denial(name, stub_agents[name])
 
 
+def is_handoff_block(block: Any, skill_under_test: str) -> bool:
+    """Whether a streamed ToolUseBlock is a hand-off by the skill under test.
+
+    A `Skill` call to any other skill, or an agent spawn. The skill's own
+    `Skill` call is how the run enters it, not a hand-off.
+    """
+    if block.name == "Skill":
+        name = read_skill_tool_input(dict(block.input or {}))[0]
+        return bool(name) and name != skill_under_test
+    return block.name in SPAWN_TOOL_NAMES
+
+
 def spawn_prompts(
     builtin_tool_calls: list[dict[str, Any]], agent: str | None = None
 ) -> list[str]:
@@ -792,6 +804,7 @@ async def run_skill(
     routing_short_circuit_skills: set[str] | None = None,
     stub_skills: dict[str, str | None] | None = None,
     stub_agents: dict[str, str | None] | None = None,
+    first_handoff_stop: str | None = None,
     declared_tools: set[str] | None = None,
 ) -> SkillRunResult:
     """Invoke the SDK against a per-test workspace and collect outputs.
@@ -854,6 +867,36 @@ async def run_skill(
     # one of these names is denied and continued the same way (issue #2825).
     # The orchestrator passes only stub entries with no skill directory.
     _stub_agents = stub_agents or {}
+    # No-shortcut tests (#3119): `first_handoff_stop` names the skill under
+    # test, and the run ends at the first hand-off it makes, through the stop
+    # path of the negative-test short-circuit above. Its verdict is that first
+    # routing decision; its own doctrine tells the router to walk on after it,
+    # and a stub cannot stop the walk. None leaves every other test as it was.
+
+    def first_handoff_denial(
+        name: str, stubs: dict[str, str | None], tool_use_id: str | None
+    ) -> dict[str, Any]:
+        # Every hand-off is denied once the stop is armed, but only the first
+        # sets the stop point: a second one in the same turn is a shortcut the
+        # validators must still see, and it must not run.
+        if not routing_resolved["v"]:
+            routing_resolved["v"] = True
+            routing_resolved["tool_use_id"] = tool_use_id
+        if name in stubs:
+            denial = stub_denial(name, stubs[name])
+        else:
+            denial = {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "deny",
+                    "permissionDecisionReason": (
+                        f"hand-off to {name!r} observed; this test ends at the "
+                        "first hand-off"
+                    ),
+                }
+            }
+        return {**denial, "continue_": False, "stopReason": "first_handoff"}
+
     # Main-thread calls to subagent-only tools, denied by the hook below.
     blocked_context_calls: list[dict[str, Any]] = []
     # Raw writes to a protected project file, denied by the hook below.
@@ -906,11 +949,24 @@ async def run_skill(
                         "continue_": False,
                         "stopReason": "routing_resolved",
                     }
+                if (
+                    first_handoff_stop
+                    and skill_name != first_handoff_stop
+                    and not input_data.get("agent_id")
+                ):
+                    return first_handoff_denial(skill_name, _stub_skills, tool_use_id)
                 # Positive-test stub: record the hand-off, skip the callee's
                 # execution, but let this run finish its own remaining work —
                 # handing back the canned response when the caller reads one.
                 if skill_name in _stub_skills:
                     return stub_denial(skill_name, _stub_skills[skill_name])
+        elif (
+            first_handoff_stop
+            and tool_name in SPAWN_TOOL_NAMES
+            and not input_data.get("agent_id")
+        ):
+            agent = (input_data.get("tool_input") or {}).get("subagent_type") or ""
+            return first_handoff_denial(agent, _stub_agents, tool_use_id)
         elif (denial := spawn_stub_denial(tool_name, input_data, _stub_agents)):
             return denial
         # Per-context tool policy: deny a subagent-only tool (see
@@ -1194,6 +1250,14 @@ async def run_skill(
                         ) or (
                             routing_resolved["tool_use_id"] is not None
                             and block.id == routing_resolved["tool_use_id"]
+                        ) or (
+                            # By name too, for the ordering where the hook has
+                            # not run yet; only until the first hand-off is
+                            # seen, or a later spawn in the model's reaction
+                            # would be recorded as the hand-off.
+                            first_handoff_stop
+                            and not handoff_seen["v"]
+                            and is_handoff_block(block, first_handoff_stop)
                         ):
                             routed_call_seen = True
                         if block.name in SPAWN_TOOL_NAMES:

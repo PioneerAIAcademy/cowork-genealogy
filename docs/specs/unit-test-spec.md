@@ -579,8 +579,8 @@ that carry it). If the gate's holdout comparison is ever revived, it must select
 **automatically** from run-log history (stability across committed runs, shape spread) — a
 human picking 2-3 by hand does not give real regression coverage.
 
-**Reserved tag: `grade:trigger`.** Tags are freeform except this one,
-which changes how a **positive** test is graded. A positive test tagged
+**Reserved tag: `grade:trigger`.** Tags are freeform except this one and
+`no-shortcut` (below). This one changes how a **positive** test is graded. A positive test tagged
 `grade:trigger` is graded on **activation alone** — it passes once the skill under
 test fired (present in `skills_invoked`) and its validators passed; the judge
 dimensions still run and are recorded but are **diagnostic only** and do not gate
@@ -599,6 +599,17 @@ on the negative side). And because the judge call is diagnostic, a skipped/error
 judge does **not** fail a trigger test — unlike an ordinary positive, which fails on
 an empty judge. It does **not** relax the activation requirement: a trigger test whose
 skill never fired still fails.
+
+**Reserved tag: `no-shortcut`.** On a **positive** test this one changes how the run
+ends, not how it is graded. The harness stops the run at the first hand-off the skill
+under test makes: a `Skill` call to another skill, or a main-thread agent spawn. It
+denies that hand-off, and any other made in the same turn, and records them all. Use it
+for a router test whose verdict is that first routing decision, when the user names a
+downstream destination: the router is then told to walk on down its table, and no stub
+can stop the walk, because a stub's text reaches the model as a tool result and stubs
+write nothing. The stop reuses the negative-test routing short-circuit's stop path, so
+the run ends clean, not aborted (`first_handoff_stop` in `harness/skill_runner.py`).
+`test_no_paired_skill_shortcut` (`validators/test_research.py`) runs only on this tag.
 
 ### 5.2 `input`
 

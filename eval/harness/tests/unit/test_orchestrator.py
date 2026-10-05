@@ -12,6 +12,7 @@ from harness.orchestrator import (
     _compute_outcome,
     _COMMISSION_VALIDATORS,
     _negative_judge_context,
+    _first_handoff_stop,
     _routing_short_circuit_skills,
     apply_deterministic_deference,
     flag_routing_negative_judge_fail,
@@ -667,6 +668,32 @@ def test_routing_short_circuit_none_for_out_of_scope_negative():
     # correct_skill == [] (out-of-scope): must run normally to be graded.
     assert _routing_short_circuit_skills(_negative_spec(correct=[])) is None
 
+
+
+# --- first-hand-off stop (no-shortcut tests, #3119) ------------------------
+
+
+def _tagged_positive_spec(tags, skill="research"):
+    return load_test_from_dict({
+        "test": {"id": "ut_o_003", "skill": skill, "name": "n", "type": "positive",
+                  "description": "x", "tags": tags},
+        "input": {"user_message": "m", "scenario": None},
+        "judge_context": [],
+    })
+
+
+def test_first_handoff_stop_names_the_skill_on_a_no_shortcut_test():
+    spec = _tagged_positive_spec(["routing", "routes-to:question-selection", "no-shortcut"])
+    assert _first_handoff_stop(spec) == "research"
+
+
+def test_first_handoff_stop_is_off_without_the_tag():
+    assert _first_handoff_stop(_tagged_positive_spec(["routing"])) is None
+
+
+def test_first_handoff_stop_is_off_on_a_negative_test():
+    """A negative test already stops on its own routing short-circuit."""
+    assert _first_handoff_stop(_negative_spec()) is None
 
 # --- positive tests ------------------------------------------------------
 
@@ -2105,6 +2132,40 @@ def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monk
     ))
     assert seen.get("stub_agents") == {"gps-mentor": None}
     assert seen.get("stub_skills") == {"gps-mentor": None, "search-records": None}
+
+
+def test_a_no_shortcut_test_reaches_run_skill_with_its_first_handoff_stop(
+    tmp_path, monkeypatch
+):
+    """The orchestrator hop of the first-hand-off stop (#3119): only the
+    `_execute_single_run` call site and the retry wrapper carry it to the hook,
+    and dropping either would leave `_first_handoff_stop`'s own tests green."""
+    import asyncio
+    import json
+
+    raw = json.loads(WIKI_TEST_PATH.read_text(encoding="utf-8"))
+    raw["test"]["tags"] = [*raw["test"].get("tags", []), "no-shortcut"]
+    spec = load_test_from_dict(raw)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    seen = {}
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+
+        seen.update(kwargs)
+        return SkillRunResult(
+            text_response="", skills_invoked=[], tool_calls=[], duration_ms=1.0,
+            usage={}, aborted_reason="quota_exhausted", error="stop",
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-10-05_10-00-00",
+    ))
+    assert seen.get("first_handoff_stop") == spec.skill
 
 
 # --- #2057: a failing validator no longer skips the judge --------------------

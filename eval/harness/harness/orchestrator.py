@@ -354,6 +354,21 @@ def _routing_short_circuit_skills(spec: TestSpec) -> set[str] | None:
     return set(correct) or None
 
 
+def _first_handoff_stop(spec: TestSpec) -> str | None:
+    """The skill whose first hand-off ends a `no-shortcut` test's run (#3119).
+
+    Such a test's verdict is the router's first routing decision. The router
+    is then told to walk on down its table, which no stub can stop: the stub's
+    text reaches the model as a tool result, and stubs write nothing, so the
+    walk can loop until a cap. So run_skill stops at the first hand-off, the
+    way a negative test stops at its routing. Returns None for every other
+    test, including negatives, which have their own stop.
+    """
+    if spec.type != "positive" or "no-shortcut" not in spec.tags:
+        return None
+    return spec.skill
+
+
 def _stub_skills(spec: TestSpec) -> dict[str, str | None] | None:
     """Sub-skills a POSITIVE test declares it doesn't want executed.
 
@@ -513,6 +528,7 @@ async def _execute_single_run(
         routing_short_circuit_skills=routing_short_circuit,
         stub_skills=_stub_skills(spec),
         stub_agents=_stub_agents(spec, paths.skills_dir),
+        first_handoff_stop=_first_handoff_stop(spec),
     )
 
     # --- Uncovered tool-call gate (Phase 2) -----------------------------
@@ -926,6 +942,7 @@ async def _execute_skill_with_retry(
     routing_short_circuit_skills: set[str] | None = None,
     stub_skills: dict[str, str | None] | None = None,
     stub_agents: dict[str, str | None] | None = None,
+    first_handoff_stop: str | None = None,
     attempts: int = DEFAULT_SKILL_RUN_ATTEMPTS,
     base_delay: float = 1.0,
 ) -> tuple[SkillRunResult, dict[str, Any], dict[str, Any]]:
@@ -1015,6 +1032,7 @@ async def _execute_skill_with_retry(
                         routing_short_circuit_skills=routing_short_circuit_skills,
                         stub_skills=stub_skills,
                         stub_agents=stub_agents,
+                        first_handoff_stop=first_handoff_stop,
                         # The skill's OWN declaration, not skill_baseline (which
                         # unions in its subagents' tools). The gap between the two
                         # is what the per-context policy guards.

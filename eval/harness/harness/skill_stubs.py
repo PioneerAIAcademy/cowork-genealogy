@@ -108,7 +108,9 @@ def stub_denial(skill_name: str, response: str | None) -> dict[str, Any]:
     Denies the launch WITHOUT `continue_: False` — that is the whole difference
     from the negative-test routing short-circuit, which stops the run because a
     negative verdict is sealed the moment routing happens. A positive test still
-    has work left, so this one denies and continues.
+    has work left, so this one denies and continues. The exception is a
+    `no-shortcut` test, whose verdict is its first hand-off: `run_skill` adds the
+    stop to that hand-off, stubbed or not (`first_handoff_stop`).
     """
     reason = _STUB_PREAMBLE.format(name=skill_name)
     reason += (

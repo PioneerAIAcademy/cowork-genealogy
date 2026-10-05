@@ -1776,3 +1776,201 @@ def test_the_suppressed_reaction_calls_are_recorded_not_dropped(tmp_path, monkey
         "a post-deny call must still stay OUT of attempted_mcp_calls, or the "
         "uncovered_tool_call advisory fires on a deliberately stopped run"
     )
+
+
+# --- first-hand-off stop: a no-shortcut test ends at the router's first hand-off (#3119) ---
+#
+# On a `no-shortcut` test the verdict is the router's FIRST routing decision. The
+# router's own doctrine then tells it to walk on down the table, and a stub cannot
+# stop that walk: the stub's text comes back as a tool result, and stubs write
+# nothing, so the walk can loop until a cap. So the run ends at the first hand-off,
+# reusing the negative-test stop path above.
+
+
+def _skill_block(skill, block_id):
+    from claude_agent_sdk import ToolUseBlock
+
+    return ToolUseBlock(id=block_id, name="Skill", input={"skill": skill})
+
+
+def _spawn_block(agent, block_id):
+    from claude_agent_sdk import ToolUseBlock
+
+    return ToolUseBlock(
+        id=block_id, name="Agent", input={"subagent_type": agent, "prompt": "go"}
+    )
+
+
+def _turn(text, *blocks):
+    from claude_agent_sdk import AssistantMessage, TextBlock
+
+    return AssistantMessage(content=[TextBlock(text=text), *blocks], model="stub")
+
+
+def _done():
+    from claude_agent_sdk import ResultMessage
+
+    return ResultMessage(
+        subtype="result", duration_ms=1, duration_api_ms=1,
+        is_error=False, num_turns=3, session_id="S1",
+    )
+
+
+_ACTIVATE = {"tool_name": "Skill", "tool_input": {"skill": "research"}}
+_SPAWN_QS = {
+    "tool_name": "Agent",
+    "tool_input": {"subagent_type": "question-selection", "prompt": "go"},
+}
+
+
+async def _run_first_handoff(
+    monkeypatch, tmp_path, hook_inputs, messages, *, message_first=False,
+    returns=None, **run_kwargs
+):
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        if message_first:
+            return _MessageFirstHookStream(hook, hook_inputs, messages)
+        return _HookDrivingStream(hook, hook_inputs, messages, returns=returns)
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    return await sr.run_skill(
+        user_message="go",
+        workspace=tmp_path,
+        fixture_names=[],
+        fixtures_dir=tmp_path,
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        **run_kwargs,
+    )
+
+
+def _router_messages(handoff_block):
+    return [
+        _turn("Reading the project.", _skill_block("research", "activation-id")),
+        _turn("No questions yet, routing to the first row.", handoff_block),
+        _turn("Next, the locality survey.", _spawn_block("locality-guide", "walk-id")),
+        _done(),
+    ]
+
+
+def test_first_handoff_stop_ends_the_run_at_an_agent_spawn(tmp_path, monkeypatch):
+    import asyncio
+
+    returns = []
+    result = asyncio.run(_run_first_handoff(
+        monkeypatch, tmp_path, [_ACTIVATE, _SPAWN_QS],
+        _router_messages(_spawn_block("question-selection", "tool-use-id")),
+        returns=returns,
+        first_handoff_stop="research",
+        stub_agents={"question-selection": None, "locality-guide": None},
+    ))
+
+    assert "routing to the first row" in result.text_response, (
+        "the hand-off turn itself was dropped"
+    )
+    assert "locality survey" not in result.text_response, (
+        "the run read on past the first hand-off"
+    )
+    assert result.aborted_reason is None, "a first-hand-off stop is a clean end"
+    assert "hookSpecificOutput" not in returns[0] and "continue_" not in returns[0], (
+        "the router's own activation was denied or stopped"
+    )
+    assert returns[1]["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert returns[1]["continue_"] is False
+
+
+def test_first_handoff_stop_ends_the_run_at_a_skill_call(tmp_path, monkeypatch):
+    import asyncio
+
+    result = asyncio.run(_run_first_handoff(
+        monkeypatch, tmp_path,
+        [_ACTIVATE, {"tool_name": "Skill", "tool_input": {"skill": "research-plan"}}],
+        _router_messages(_skill_block("research-plan", "tool-use-id")),
+        first_handoff_stop="research",
+    ))
+
+    assert result.skills_invoked == ["research", "research-plan"]
+    assert "locality survey" not in result.text_response
+    assert result.aborted_reason is None
+
+
+def test_first_handoff_stop_ignores_the_routers_own_activation(tmp_path, monkeypatch):
+    """The skill under test is entered by a `Skill` call. That is not a hand-off."""
+    import asyncio
+
+    result = asyncio.run(_run_first_handoff(
+        monkeypatch, tmp_path, [_ACTIVATE],
+        [
+            _turn("Reading the project.", _skill_block("research", "tool-use-id")),
+            _turn("Here is what the project needs next."),
+            _done(),
+        ],
+        first_handoff_stop="research",
+    ))
+
+    assert "Here is what the project needs next." in result.text_response, (
+        "the run stopped at the router's own activation"
+    )
+
+
+def test_first_handoff_stop_holds_when_the_hook_fires_after_its_message(
+    tmp_path, monkeypatch
+):
+    """Under the message-first ordering the flag is not up while the hand-off
+    message is scanned, so the stop needs a match by name, not by id alone."""
+    import asyncio
+
+    result = asyncio.run(_run_first_handoff(
+        monkeypatch, tmp_path, [_SPAWN_QS],
+        [
+            _turn("No questions yet, routing to the first row.",
+                  _spawn_block("question-selection", "tool-use-id")),
+            _turn("Next, the locality survey.",
+                  _spawn_block("locality-guide", "walk-id")),
+            _done(),
+        ],
+        message_first=True,
+        first_handoff_stop="research",
+        stub_agents={"question-selection": None, "locality-guide": None},
+    ))
+
+    assert "routing to the first row" in result.text_response
+    assert "locality survey" not in result.text_response, (
+        "the late-hook ordering read on past the first hand-off"
+    )
+    assert result.no_result_message is True, "the stop path never fired"
+
+
+def test_a_spawn_inside_a_subagent_is_not_the_first_handoff(tmp_path, monkeypatch):
+    """Hand-offs are the main thread's, the rule `spawned_agents` uses."""
+    import asyncio
+
+    returns = []
+    asyncio.run(_run_first_handoff(
+        monkeypatch, tmp_path,
+        [{**_SPAWN_QS, "agent_id": "agent-sub-1"}],
+        [_turn("Working."), _done()],
+        returns=returns,
+        first_handoff_stop="research",
+    ))
+
+    assert len(returns) == 1
+    assert "hookSpecificOutput" not in returns[0] and "continue_" not in returns[0], (
+        "a subagent's spawn was treated as the router's hand-off"
+    )
+
+
+def test_without_the_stop_a_stubbed_spawn_still_continues(tmp_path, monkeypatch):
+    """The default is unchanged: a positive test's stub denies and continues."""
+    import asyncio
+
+    result = asyncio.run(_run_first_handoff(
+        monkeypatch, tmp_path, [_ACTIVATE, _SPAWN_QS],
+        _router_messages(_spawn_block("question-selection", "tool-use-id")),
+        stub_agents={"question-selection": None, "locality-guide": None},
+    ))
+
+    assert "locality survey" in result.text_response
