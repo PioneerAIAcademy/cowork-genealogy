@@ -9,11 +9,10 @@
       "norway",
       "naming-conventions",
       "patronymic",
-      "scandinavia"
-    ]
+      "scandinavia", "direct-arm"]
   },
   "input": {
-    "user_message": "I found my Norwegian ancestor listed as Lars Eriksen in one record and Lars Pedersen in another. Are these the same person or two different people?",
+    "delegation": "I found my Norwegian ancestor listed as Lars Eriksen in one record and Lars Pedersen in another. Are these the same person or two different people?",
     "scenario": null
   },
   "mcp_fixtures": [
