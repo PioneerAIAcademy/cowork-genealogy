@@ -4,7 +4,7 @@
     "skill": "research",
     "name": "Routes a hint-review request to the search-hints agent",
     "type": "positive",
-    "description": "The user asks /research to check the FamilySearch hints on Patrick Flynn (LZNY-BRF). A hint review is an entry point, not a downstream destination (research/SKILL.md, \"Hint review\"): the router spawns @plugin:search-hints with personId and projectPath, relays its triage, and stops for the researcher's verdicts. search-hints is stubbed with a realistic triage that ends in \"Awaiting verdicts\", so the test also pins that the router relays it and stops — one spawn, no log write — rather than spawning again with verdicts the researcher never stated (test_hint_review_stops_for_the_researchers_verdicts). e2e can never reach this route (person_record_matches is in BLOCKED_TREE_TOOLS), so this test is its only check (issue #2029).",
+    "description": "The user asks /research to check the FamilySearch hints on Patrick Flynn (LZNY-BRF). A hint review is an entry point, not a downstream destination (research/SKILL.md, \"Hint review\"): the router spawns @plugin:search-hints with personId and projectPath, relays its triage, and stops for the researcher's verdicts. search-hints is stubbed with a realistic triage that ends in \"Awaiting verdicts\", so the test also pins that the router relays it and stops — one spawn, no log write — rather than spawning again with verdicts the researcher never stated (test_hint_review_stops_for_the_researchers_verdicts). e2e can never reach this route (person_record_matches is in BLOCKED_TREE_TOOLS), so this test is its only check (issue #2029). The message enters /research (\"keep researching … parentage\") and asks for the hint check inside it; a bare \"check the hints\" is matched by search-hints' own description and never reaches the router, which made the first paid run fail on activation (2026-10-05).",
     "tags": [
       "routing",
       "routes-to:search-hints",
@@ -12,7 +12,7 @@
     ]
   },
   "input": {
-    "user_message": "Check the FamilySearch hints on Patrick Flynn (FamilySearch ID LZNY-BRF) — are any of them valid?",
+    "user_message": "Keep researching Patrick Flynn's parentage — and start by checking the FamilySearch hints on him (FamilySearch ID LZNY-BRF): are any of them valid?",
     "scenario": "mid-research-flynn"
   },
   "execution": {
