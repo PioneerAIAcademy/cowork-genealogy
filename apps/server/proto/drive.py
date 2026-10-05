@@ -445,6 +445,15 @@ def main(argv: list[str] | None = None) -> int:
             print(f"the tier at {base} has a live queue ({queue}); a worker will race the seeder. "
                   "Use --worker on a stack with a worker, or --allow-live-queue to seed anyway.", file=sys.stderr)
             return 2
+        if mode == "worker":
+            # U3: a real worker bears the patron's grant; without one the turn only closes
+            # signin_required, which reads here as a stream that ended early.
+            from turn import require_grant
+
+            problem = require_grant(dsn, args.email) if dsn else "--worker needs --pg-dsn to check the patron's grant"
+            if problem:
+                print(problem, file=sys.stderr)
+                return 2
         print(f"== drive {mode} against {base} (queue: {queue})", flush=True)
         checks = run(base, dsn, mode, args.text, deadline_s=args.deadline_s, email=args.email)
     finally:

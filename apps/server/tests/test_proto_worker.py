@@ -1,4 +1,4 @@
-﻿"""Offline tests for the prototype worker (apps/server/proto/worker/), D9-10 + D15.
+"""Offline tests for the prototype worker (apps/server/proto/worker/), D9-10 + D15.
 
 No Postgres, no SDK process, no model: the row writers run against a fake connection
 that records SQL; event routing runs on canned ``map_message`` outputs; the deny
@@ -28,7 +28,7 @@ Dockerfile and 004_worker.sql are read as text. What these pin:
 - the option set: cwd, setting_sources=[], agents=, the http tool server entry in a
   0600 mcp.json (never argv), session_id/resume exactly one, the eager store flush, the
   model pin per provider (an unknown provider refused); the entry's two per-turn headers
-  (project id always, bearer only when there is a token);
+  (project id and the grant's bearer; an empty bearer refused, never shipped);
 - the container: tmpfs for TMPDIR, the key passed through (never a literal, never baked
   into the image), /project present, no tokens.json, no Node, no engine and no store
   credentials, the SDK pinned, 004 additive only;
@@ -50,6 +50,11 @@ Dockerfile and 004_worker.sql are read as text. What these pin:
   appended nothing closes ``transcript_lost`` and answers 500, its redelivery 200; the
   ``halt()`` clause that stops it early; the ``Decimal`` spend sum. The real start
   order and exit code are test_proto_worker_start.py's.
+- U3: the bearer is the turn's project owner's grant, read per attempt and never the
+  message's; no usable grant closes the turn ``signin_required`` with no CLI; a grant wait
+  that times out is a 500; the lock outlives the CLI; ``acquire_grant`` locks before it
+  reads and holds nothing while it waits; a lost lock halts the next tool call and answers
+  500; no token reaches a log line or a row. The locks themselves: test_proto_grants_pg.py.
 """
 
 from __future__ import annotations
@@ -492,6 +497,96 @@ def test_the_tool_results_spill_under_the_config_root_is_allowed(tmp_path):
     assert deny.project_read_denied("Read", {"file_path": str(cfg / "projects" / "-project" / "sess.jsonl")}, **kw) is None, "outside the anchor anyway"
 
 
+# U3: each turn's CLI runs as its own slot user, so the kernel keeps it out of other turns'
+# files and the worker's /proc/<pid>. It cannot keep a process from itself: /proc/self holds
+# the model key the CLI needs, and /dev/fd leads back to any open file -- the hook's job.
+
+
+def _host_kw(tmp_path):
+    root = tmp_path / "project"
+    root.mkdir()
+    return dict(cwd=str(root), project_root=str(root))
+
+
+@pytest.mark.parametrize("tool_name,tool_input", [
+    ("Read", {"file_path": "/proc/self/environ"}),
+    ("Read", {"file_path": "/proc/self/task/1/environ"}),
+    ("Read", {"file_path": "/proc/1/environ"}),
+    ("Read", {"file_path": "/dev/fd/3"}),
+    ("Read", {"file_path": "/dev/stdin"}),
+    ("Read", {"file_path": "{up}proc/self/environ"}),
+    ("Grep", {"pattern": "ANTHROPIC", "path": "/proc/self"}),
+    ("Grep", {"pattern": "x", "path": "/"}),
+    ("Glob", {"pattern": "/proc/*/environ"}),
+    ("Glob", {"pattern": "**/environ", "path": "/"}),
+    ("Glob", {"pattern": "*/../../proc/x"}),
+    ("Write", {"file_path": "/proc/self/oom_score_adj", "content": "1000"}),
+    ("Edit", {"file_path": "/dev/fd/1", "old_string": "a", "new_string": "b"}),
+], ids=lambda v: v if isinstance(v, str) else None)
+def test_the_turns_own_proc_and_dev_are_denied(tmp_path, tool_name, tool_input):
+    kw = _host_kw(tmp_path)
+    up = "../" * len(Path(kw["cwd"]).parts)  # a relative climb from cwd to /
+    tool_input = {k: v.format(up=up) for k, v in tool_input.items()}
+    reason = deny.host_path_denied(tool_name, tool_input, **kw)
+    assert reason and "disabled in this run" in reason, (tool_name, tool_input)
+
+
+@pytest.mark.parametrize("tool_name,tool_input", [
+    # Another turn's files are the kernel's to refuse (a different slot user), not the hook's.
+    ("Read", {"file_path": "/tmp/worker-cfg-other/mcp.json"}),
+    ("Grep", {"pattern": "Bearer", "path": "/tmp"}),
+    ("Read", {"file_path": "/tmp/worker-cfg-mine/projects/-project/sess/tool-results/r1.txt"}),
+    ("Read", {"file_path": "/etc/hosts"}),
+    ("Grep", {"pattern": "x", "path": "/etc"}),
+    ("Glob", {"pattern": "/opt/plugin/skills/*/SKILL.md"}),
+    ("Write", {"file_path": "/srv/notes.md", "content": "x"}),
+    ("Read", {"file_path": "{project}/.claude/agents/x.md"}),
+    ("mcp__genealogy__research_query", {"projectPath": "/proc"}),
+], ids=lambda v: v if isinstance(v, str) else None)
+def test_paths_outside_proc_and_dev_are_left_to_the_kernel(tmp_path, tool_name, tool_input):
+    kw = _host_kw(tmp_path)
+    tool_input = {k: v.format(project=kw["project_root"]) for k, v in tool_input.items()}
+    assert deny.host_path_denied(tool_name, tool_input, **kw) is None, (tool_name, tool_input)
+
+
+def test_a_symlink_is_judged_by_both_its_spelling_and_its_target(tmp_path, monkeypatch):
+    """/dev/fd/3 resolves to whatever descriptor 3 is, so the spelling is judged; a link
+    into /proc is judged by where it resolves. The roots are faked so the test can make
+    links on both sides of them."""
+    fake_proc = tmp_path / "proc"
+    (fake_proc / "self").mkdir(parents=True)
+    (fake_proc / "self" / "environ").write_text("K=v", encoding="utf-8")
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "notes.md").write_text("x", encoding="utf-8")
+    monkeypatch.setattr(deny, "SYSTEM_ROOTS", (str(fake_proc),))
+    kw = _host_kw(tmp_path)
+    into = tmp_path / "link-into-proc"
+    into.symlink_to(fake_proc / "self", target_is_directory=True)
+    assert deny.host_path_denied("Read", {"file_path": str(into / "environ")}, **kw), "only the resolved pass sees it"
+    out = fake_proc / "fd"
+    out.symlink_to(outside, target_is_directory=True)
+    assert deny.host_path_denied("Read", {"file_path": str(out / "notes.md")}, **kw), "only the spelled pass sees it"
+    plain = tmp_path / "link-to-outside"
+    plain.symlink_to(outside, target_is_directory=True)
+    assert deny.host_path_denied("Read", {"file_path": str(plain / "notes.md")}, **kw) is None
+
+
+def test_the_hook_denies_the_turns_own_proc_and_logs_it(tmp_path):
+    root = tmp_path / "project"
+    root.mkdir()
+    own = tmp_path / "cfg"
+    rows: list[dict] = []
+    hook = options.make_pretool_hook(turn_id="t", session_id="s", cwd=str(root), config_root=str(own),
+                                     record=rows.append)
+    for tool_input in ({"file_path": "/proc/self/environ"}, {"file_path": "/proc/1/task/1/environ"}):
+        out = _call(hook, {"tool_name": "Read", "tool_input": tool_input})
+        assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+        assert rows[-1]["decision"] == "deny"
+    spill = own / "projects" / "-project" / "sess" / "tool-results" / "r1.txt"
+    assert _call(hook, {"tool_name": "Read", "tool_input": {"file_path": str(spill)}}) == {}
+
+
 def test_read_route_chooser():
     assert deny.read_route("/project/results/x.json", "/project") == "record_read({recordId, resultsRef})"
     assert deny.read_route("/project/evaluations/x.json", "/project") == "sidecar_read({projectPath, ref})"
@@ -592,7 +687,7 @@ def test_raw_writes_on_the_project_files_are_denied_and_logged(tmp_path):
     assert rows[-1]["decision"] == "deny" and rows[-1]["input_path"] == "/anywhere/research.json"
     out = _call(hook, {"tool_name": "Edit", "tool_input": {"file_path": "tree.gedcomx.json", "old_string": "a", "new_string": "b"}})
     assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
-    out = _call(hook, {"tool_name": "Write", "tool_input": {"file_path": "/tmp/notes.md", "content": "x"}})
+    out = _call(hook, {"tool_name": "Write", "tool_input": {"file_path": "/srv/notes.md", "content": "x"}})
     assert out == {} and rows[-1]["decision"] == "allow"
 
 
@@ -780,7 +875,6 @@ def test_registration_problems_compares_against_the_constants_not_the_loaded_set
 
 WORKER_ENV = {
     "ANTHROPIC_API_KEY": "sk-test",
-    "FS_ACCESS_TOKEN": "env-token",
     "TMPDIR": "/tmp",
 }
 
@@ -791,7 +885,7 @@ def _options(**overrides):
         plugin_dir="/opt/genealogy/plugin", agents={"gps-mentor": object()}, store=object(),
         config_dir=tempfile.mkdtemp(prefix="worker-cfg-test-"), pretool_hook=lambda *a: {},
         posttool_hook=lambda *a: {},
-        worker_env=WORKER_ENV,
+        worker_env=WORKER_ENV, bearer="grant-token",
     )
     kwargs.update(overrides)
     return options.build_worker_options(**kwargs)
@@ -824,7 +918,7 @@ def test_options_pin_the_prototype_set(tmp_path):
 
 
 def test_the_tool_server_entry_is_in_a_0600_file_not_argv(tmp_path):
-    opts = _options(config_dir=str(tmp_path), fs_access_token="turn-token")
+    opts = _options(config_dir=str(tmp_path), bearer="turn-token")
     # A str is handed to the CLI as `--mcp-config <path>`; a dict would be json.dumps'd
     # onto argv, where the bearer is visible in `ps`.
     assert isinstance(opts.mcp_servers, str) and opts.mcp_servers == str(tmp_path / "mcp.json")
@@ -832,7 +926,7 @@ def test_the_tool_server_entry_is_in_a_0600_file_not_argv(tmp_path):
         assert stat.S_IMODE(Path(opts.mcp_servers).stat().st_mode) == 0o600
     server = _server(opts)
     assert server["type"] == "http"
-    assert server["headers"]["Authorization"] == "Bearer turn-token", "the message's token beats the worker env's"
+    assert server["headers"]["Authorization"] == "Bearer turn-token", "the grant's token"
 
 
 def test_the_mcp_config_is_rewritten_0600_even_over_a_wider_file(tmp_path):
@@ -845,25 +939,30 @@ def test_the_mcp_config_is_rewritten_0600_even_over_a_wider_file(tmp_path):
     assert json.loads(path.read_text(encoding="utf-8")) == {"mcpServers": {"genealogy": {"type": "http"}}}
 
 
-def test_the_token_file_is_read_per_turn_and_beats_the_env(tmp_path):
-    token_file = tmp_path / "fs-token"
-    token_file.write_text("file-token\n", encoding="utf-8")
-    env = {**WORKER_ENV, "FS_ACCESS_TOKEN_FILE": str(token_file)}
-    assert options.bearer_token(env, None) == "file-token"
-    token_file.write_text("refreshed", encoding="utf-8")  # rewritten under a running worker
-    assert options.bearer_token(env, None) == "refreshed"
-    assert options.bearer_token(env, "message-token") == "message-token", "the message's token wins"
-    assert options.bearer_token(env, "") == "", "an explicit empty token is empty, not the file"
-    assert options.bearer_token({**env, "FS_ACCESS_TOKEN_FILE": str(tmp_path / "missing")}, None) == "env-token"
-    token_file.write_text("", encoding="utf-8")
-    assert options.bearer_token(env, None) == "", "an empty file is no token, not the env's"
+def test_an_empty_bearer_is_refused():
+    """U3: the bearer is the grant's, required, and never empty. An empty one used to ship
+    as a project-only header, which the tool server reads as an empty principal and answers
+    with HOSTED_REAUTH_INSTRUCTION -- an expired-session message for a token that never
+    existed. There is no worker-env fallback to fall to."""
+    with pytest.raises(ValueError, match="empty bearer"):
+        _options(bearer="")
+    with pytest.raises(TypeError):
+        options.build_worker_options(**{k: v for k, v in dict(
+            project_id="p", cwd="/project", plugin_dir="/p", agents={}, store=object(),
+            config_dir=tempfile.mkdtemp(prefix="worker-cfg-test-"), pretool_hook=lambda *a: {},
+            posttool_hook=lambda *a: {}, worker_env=WORKER_ENV).items()})
+    env = {**WORKER_ENV, "FS_ACCESS_TOKEN": "env-token", "FS_ACCESS_TOKEN_FILE": "/run/fs-token"}
+    assert _server(_options(worker_env=env))["headers"]["Authorization"] == "Bearer grant-token", \
+        "the old fallbacks are inert"
+    assert not hasattr(options, "bearer_token")
 
 
-def test_the_token_falls_back_to_the_worker_env_then_empty():
-    assert _server(_options())["headers"]["Authorization"] == "Bearer env-token", \
-        "the worker env's token when the message has none"
-    env = {k: v for k, v in WORKER_ENV.items() if k != "FS_ACCESS_TOKEN"}
-    assert "Authorization" not in _server(_options(worker_env=env))["headers"]
+def test_the_cli_does_not_inherit_the_grant_key():
+    """The CLI inherits the worker's environment; with FS_TOKEN_ENC_KEY and PG_DSN it could
+    decrypt every patron's grant. Blank, not absent, like the static SQS keys."""
+    opts = _options(worker_env={**WORKER_ENV, "FS_TOKEN_ENC_KEY": "k" * 32})
+    assert opts.env["FS_TOKEN_ENC_KEY"] == ""
+    assert "FS_TOKEN_ENC_KEY" not in _options().env, "nothing to blank when the worker has none"
 
 
 def test_resume_is_set_only_when_given():
@@ -974,39 +1073,34 @@ def test_worker_tmpfs_holds_tmpdir_and_the_key_is_passed_through_not_literal():
     assert env["MODEL_PROVIDER"].startswith("${MODEL_PROVIDER")
     for key in ("GATEWAY_BASE_URL", "GATEWAY_API_KEY", "GATEWAY_TOOL_SEARCH"):
         assert env[key].startswith("${" + key), f"{key} is passed through, never a literal"
-    # The FS token is a file read per turn, never a literal or a build arg. The FILE stays
-    # primary -- `bearer_token` tries it first, and it is what `make proto-token` refreshes
-    # under a running worker.
-    assert env["FS_ACCESS_TOKEN_FILE"] == "/run/fs-token"
-    # `FS_ACCESS_TOKEN` is permitted, but ONLY as a passthrough. It is the fallback
-    # `bearer_token` documents and compose did not supply, and without it the token reaches
-    # the engine on exactly one condition: that the invoking user's uid equals the
-    # container's 1001. It does not under rootless docker, where the container uid is
-    # mapped through the caller's subuid range, and the mount is mode 600 -- so the read
-    # fails with EPERM, bearer_token returns "", and getValidToken reports a LIVE token as
-    # an expired session. Three billed demo runs were lost to exactly that.
-    #
-    # The original assertion was `"FS_ACCESS_TOKEN" not in env`, which forbade the variable
-    # outright rather than forbidding a LITERAL -- banning the one thing that makes the
-    # token arrive when the uids differ.
-    if "FS_ACCESS_TOKEN" in env:
-        assert env["FS_ACCESS_TOKEN"].startswith("${FS_ACCESS_TOKEN"), (
-            f"a passthrough, never a literal secret in the compose file: "
-            f"{env['FS_ACCESS_TOKEN']!r}"
-        )
     assert env["BLOCKED_TOOLS"].startswith("${BLOCKED_TOOLS"), "the tree-read block is the caller's, empty by default"
     # The worker's own cap governs only a message without max_nudges; the web tier stamps
     # its own on every message it enqueues, so this 0 does not turn the hook off there.
     assert env["AUTONOMOUS_MAX_NUDGES"].startswith("${AUTONOMOUS_MAX_NUDGES"), "the fallback cap is the caller's"
     assert env["AUTONOMOUS_MAX_NUDGES"].endswith(":-0}"), "unset means no hook for an unstamped message, not the arm's default"
-    assert "./.fs-token:/run/fs-token:ro" in (svc.get("volumes") or [])
-    assert "apps/server/proto/.fs-token" in (SERVER.parents[1] / ".gitignore").read_text(encoding="utf-8").splitlines()
     assert env["WORKER_CWD"] == "/project"
     # The tools are the `tools` service's: the store credentials and image_transcribe's
     # key stay out of the process that runs the agent loop.
     assert not [k for k in env if k.startswith("GENEALOGY_")], "the worker holds no store credentials"
     assert "OPENROUTER_API_KEY" not in env and "TOOL_SERVER" not in env
     assert "minio" not in svc["depends_on"]
+
+
+def test_worker_service_has_no_token_fallbacks_and_passes_the_grant_key():
+    """U3: the bearer is the patron's grant, read from Postgres each attempt, so the worker
+    has no other source: no FS_ACCESS_TOKEN or FS_ACCESS_TOKEN_FILE (any spelling), no
+    operator token file mounted. It decrypts the grant, so it gets the web tier's key --
+    passed through, never a literal. The stale file stays out of every build context."""
+    svc = _compose()["services"]["worker"]
+    env = _env(svc)
+    assert not [k for k in env if k.startswith("FS_ACCESS_TOKEN")], f"a token fallback: {sorted(env)}"
+    assert not any("fs-token" in str(v) for v in (svc.get("volumes") or [])), svc.get("volumes")
+    assert "/run/fs-token" not in COMPOSE.read_text(encoding="utf-8")
+    assert re.fullmatch(r"\$\{FS_TOKEN_ENC_KEY:?-\}", env["FS_TOKEN_ENC_KEY"]), env["FS_TOKEN_ENC_KEY"]
+    assert env["FS_TOKEN_ENC_KEY"] == _env(_compose()["services"]["web"])["FS_TOKEN_ENC_KEY"], \
+        "one key: what the web tier encrypts with is what the worker decrypts with"
+    ignore = (SERVER.parents[1] / ".dockerignore").read_text(encoding="utf-8").splitlines()
+    assert "apps/server/proto/.fs-token" in ignore, "a stale operator token must not ride the build context"
 
 
 def test_worker_dockerfile_shape():
@@ -1024,15 +1118,9 @@ def test_worker_dockerfile_shape():
     assert "packages/engine/mcp-server" not in body, "the worker image carries no engine"
     assert re.search(r"^COPY packages/engine/plugin\s", body, re.M)
     assert re.search(r"^COPY apps/server/app\s", body, re.M) and re.search(r"^COPY apps/server/proto/sql\s", body, re.M)
-    # 1b's handover imports `proto.enqueue` inside the image. The Dockerfile copies
-    # proto/ SELECTIVELY, so a module not named here simply is not there -- and
-    # release_queued_turn swallows the ImportError, so the only symptom is a held
-    # message that is never released, in production only. Reverting this COPY broke no
-    # test until this line existed.
-    assert re.search(r"^COPY apps/server/proto/enqueue\.py\s", body, re.M), \
-        "the worker releases held messages through proto/enqueue.py; the image must carry it"
-    source = (PROTO / "worker" / "worker.py").read_text(encoding="utf-8")
-    assert "from proto import enqueue" in source, "and that is the module it imports"
+    # Every proto module the worker imports (enqueue.py, grants.py) must be COPYed: the
+    # image copies proto/ selectively. test_proto_config's
+    # test_images_carry_every_proto_module_they_import is that guard, for both images.
     # U7: enqueue.py imports botocore at module scope to sign. Without it in the requirements
     # the worker exits at start with QUEUE_URL set; the venv has it, so nothing else sees.
     assert re.search(r"^botocore==[0-9.]+ ", requirements, re.M), \
@@ -1046,10 +1134,15 @@ def test_worker_dockerfile_shape():
     assert re.search(r"^ENV PYTHONPATH=/opt/genealogy/server", body, re.M)
     assert "--break-system-packages" in body
     # The CLI refuses bypassPermissions as root ("--dangerously-skip-permissions cannot
-    # be used with root/sudo privileges"): the first image ran as root and every turn
-    # died on spawn.
+    # be used with root/sudo privileges"): the first image ran it as root and every turn
+    # died on spawn. U3: the worker is root so each CLI runs as a slot user instead, which
+    # needs the pool in the image and named in its environment.
     user = re.search(r"^USER (\S+)", body, re.M)
-    assert user and user.group(1) != "root", "the worker must run unprivileged"
+    assert user is None or user.group(1) == "root", "the worker launches each CLI as its slot user"
+    pool = re.search(r"^ENV WORKER_TURN_USERS=(\S+)", body, re.M)
+    assert pool, "the image names its slot users, or every turn would run the CLI as root"
+    for name in pool.group(1).split(","):
+        assert re.search(rf"useradd [^\n]*--gid genealogy-turn {re.escape(name)}\b", body), f"{name} is never created"
 
 
 def test_004_worker_only_adds_nullable_columns():
@@ -1074,7 +1167,7 @@ def test_tool_server_http_sends_the_bearer_and_the_project_id_as_headers(tmp_pat
     # <patron token>` -> principal, `X-Genealogy-Project-Id` -> the request's store. The
     # project header is always sent; the default URL is the compose `tools` service.
     env = WORKER_ENV
-    server = _server(_options(config_dir=str(tmp_path), fs_access_token="turn-token", worker_env=env))
+    server = _server(_options(config_dir=str(tmp_path), bearer="turn-token", worker_env=env))
     assert server == {
         "type": "http",
         "url": "http://tools:8787/mcp",
@@ -1083,12 +1176,12 @@ def test_tool_server_http_sends_the_bearer_and_the_project_id_as_headers(tmp_pat
     }
     # CLI 2.1.220 cuts an http MCP call at 60 s without a per-server timeout.
     custom = _server(_options(
-        config_dir=str(tmp_path), fs_access_token="", worker_env={**env, "TOOL_SERVER_URL": "http://127.0.0.1:8787/mcp"}
+        config_dir=str(tmp_path), bearer="t", worker_env={**env, "TOOL_SERVER_URL": "http://127.0.0.1:8787/mcp"}
     ))
     assert custom["url"] == "http://127.0.0.1:8787/mcp"
-    assert custom["headers"] == {"X-Genealogy-Project-Id": "proj-1"}, \
-        "an empty bearer sends only the project header, not a malformed `Bearer `"
-    other = _server(_options(config_dir=str(tmp_path), project_id="proj-2", fs_access_token="t", worker_env=env))
+    with pytest.raises(ValueError):  # an empty bearer is refused, never a project-only header
+        _options(config_dir=str(tmp_path), bearer="", worker_env=env)
+    other = _server(_options(config_dir=str(tmp_path), project_id="proj-2", bearer="t", worker_env=env))
     assert other["headers"]["X-Genealogy-Project-Id"] == "proj-2", "the header is the turn's id, not a constant"
     assert "GENEALOGY_PROJECT_ID" not in json.dumps(server), "over http the id travels as a header, never as env"
 
@@ -1097,8 +1190,11 @@ def test_tool_server_headers_require_a_project_id():
     # The keyword is required so no caller can build the http entry without the id and
     # ship a request the server binds to no store.
     with pytest.raises(TypeError):
-        options.tool_server_headers(WORKER_ENV, fs_access_token="t")  # type: ignore[call-arg]
-    assert options.tool_server_headers({}, fs_access_token=None, project_id="p") == {"X-Genealogy-Project-Id": "p"}
+        options.tool_server_headers(bearer="t")  # type: ignore[call-arg]
+    with pytest.raises(ValueError):
+        options.tool_server_headers(project_id="p", bearer="")
+    assert options.tool_server_headers(project_id="p", bearer="t") == {
+        "X-Genealogy-Project-Id": "p", "Authorization": "Bearer t"}
 
 
 # ── run_turn: every guard seen firing, on a fake client ──────────────────────────
@@ -1167,6 +1263,8 @@ class FakeClient:
 
     async def disconnect(self) -> None:
         self.disconnected = True
+        if self.env is not None:
+            self.env.setdefault("events", []).append("disconnect")
 
     async def get_server_info(self) -> dict | None:
         return self.info
@@ -1211,14 +1309,41 @@ def _good() -> list[Any]:
     return [_init(), _text("4 April 1751"), _result()]
 
 
+class FakeHeld(worker.HeldGrant):
+    """A HeldGrant without Postgres: ``held_on`` reads ``state["lock_held"]`` (a bool, or a
+    callable of how many times it has been asked) and ``close`` records itself."""
+
+    def __init__(self, state: dict, token: str = "grant-token", user_id: str = "usr_owner") -> None:
+        super().__init__(conn=None, user_id=user_id, token=token, pid=4242)
+        self.state = state
+        self.asked = 0
+
+    def held_on(self, other: Any) -> bool:
+        self.asked += 1
+        held = self.state["lock_held"]
+        return held(self.asked) if callable(held) else bool(held)
+
+    def close(self) -> None:
+        self.state["events"].append("held.close")
+
+
 @pytest.fixture
 def turn_env(monkeypatch, tmp_path):
     """run_turn offline: a fake connection, session store, client and option builder; the
-    anchor under tmp. ``state`` is what the test reads back."""
+    anchor under tmp. ``state`` is what the test reads back. The grant is a FakeHeld
+    (``state["grant"]``: a HeldGrant, a NoGrant, or a callable returning one or raising)."""
     import claude_agent_sdk
 
     state: dict[str, Any] = {"conn": FakeConn(usage=(10, 0, 0, 5)), "client": None, "options": None, "entries": False,
-                             "appended": 1}
+                             "appended": 1, "lock_held": True, "events": [], "acquired": []}
+    state["grant"] = lambda: FakeHeld(state)
+
+    async def acquire(project_id, **kw):
+        state["acquired"].append(project_id)
+        grant = state["grant"]
+        return grant() if callable(grant) else grant
+
+    monkeypatch.setattr(worker, "acquire_grant", acquire)
     monkeypatch.setattr(worker.psycopg, "connect", lambda *a, **k: state["conn"])
     monkeypatch.setattr(worker, "PgSessionStore",
                         lambda dsn, project_id: FakeSessionStore(state["entries"], state["appended"]))
@@ -1820,18 +1945,22 @@ def test_terminal_reason_and_should_continue_run_walk_in_lockstep():
                                 and research is None and nudges < cap), (kw, research, nudges, cap, cont, reason)
 
 
-def test_the_halt_returns_the_sdks_stop_fields_not_a_permission_deny(tmp_path):
-    """1c. `_deny` returns permissionDecision: "deny" -- a tool RESULT the model reads
-    and argues with, then routes around. The SDK's halt fields are separate, and only
-    they end the turn."""
+def test_the_halt_returns_the_sdks_stop_fields_and_denies_the_call(tmp_path):
+    """1c. `_deny` alone is a tool RESULT the model reads and routes around; only the
+    SDK's halt fields end the turn. But they end it after the call runs (U3's live
+    lost-lock run, 2026-10-03: the halted record_search executed on a revoked token), so
+    the halt carries both: the deny keeps this call from running."""
     rows: list[dict] = []
     hook = options.make_pretool_hook(
         turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
         record=rows.append, halt=lambda: "Stopped by the researcher.",
     )
     out = _call(hook, {"tool_name": "mcp__genealogy__record_search", "tool_input": {}})
-    assert out == {"continue_": False, "stopReason": "Stopped by the researcher."}
-    assert "hookSpecificOutput" not in out and "permissionDecision" not in json.dumps(out)
+    assert out["continue_"] is False and out["stopReason"] == "Stopped by the researcher."
+    assert out["hookSpecificOutput"] == {
+        "hookEventName": "PreToolUse", "permissionDecision": "deny",
+        "permissionDecisionReason": "Stopped by the researcher.",
+    }
     assert [r["decision"] for r in rows] == ["halt"], "the audit trail shows where the turn was cut"
 
 
@@ -2031,6 +2160,8 @@ class _PrepareRan(Exception):
 
 
 def _stop_at_prepare(monkeypatch):
+    monkeypatch.setenv("WORKER_TURN_USERS", "none")
+
     def prepare():
         raise _PrepareRan("ran past the check")
     monkeypatch.setattr(worker, "prepare", prepare)
@@ -2064,6 +2195,7 @@ def test_queue_startup_fields_exits_2_and_ignores_stray_keys_without_a_queue(mon
 
 def _start_only(monkeypatch):
     """main() up to ev=start, with nothing real started."""
+    monkeypatch.setenv("WORKER_TURN_USERS", "none")
     monkeypatch.setattr(worker, "prepare", lambda: None)
 
     class Server:
@@ -4109,3 +4241,298 @@ def test_session_spend_usd_prices_decimal_sums(turn_env, monkeypatch):
     [halt] = [f for f in logged if f.get("ev") == "halt"]
     assert halt["reason"] == options.SPEND_CAP_REASON.format(cap=spent / 2)
     assert not [f for f in logged if f.get("ev") == "spend_estimate_failed"]
+
+
+# ── U3: the attempt bears its owner's current grant ──────────────────────────────
+
+
+def _serve(turn_env, monkeypatch, receive_count: int = 1, turn: dict | None = None) -> tuple[int, dict]:
+    """serve_real_turn through the real run_turn, on the fixture's fakes."""
+    monkeypatch.setattr(worker, "_AGENTS", {"gps-mentor": object()})
+    conn = turn_env["conn"]
+    conn.sdk_session_id = SID  # the id the fake CLI declares
+    return worker.serve_real_turn(turn or TURN, receive_count, connect=lambda dsn: conn)
+
+
+def test_run_turn_bears_the_grant_not_the_message(turn_env):
+    """The queue body persists in turns.message and the DLQ and anyone who can enqueue writes
+    it, so a token in it is both a leak and an impersonation. The bearer is the grant's."""
+    turn = {**TURN, "message": {**TURN["message"], "fs_access_token": "attacker"}}
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
+    assert turn_env["options"]["bearer"] == "grant-token"
+    assert "fs_access_token" not in turn_env["options"]
+    assert turn_env["acquired"] == ["proj-1"], "the grant of the turn's project's owner"
+
+
+def test_an_attempt_runs_its_cli_as_a_slot_user_and_leaves_the_slot_clean(turn_env, monkeypatch):
+    """U3: with a pool, the attempt takes a slot, owns its home and config dir to it (after
+    mcp.json is written), runs the CLI as it, and before the slot goes back kills whatever
+    the slot left running -- all before the grant lock is released."""
+    from proto.worker import turn_users
+
+    slot = turn_users.Slot("genealogy-turn-0", 901, 900)
+    pool = turn_users.Pool([slot])
+    owned: list[str] = []
+    monkeypatch.setattr(worker, "TURN_POOL", pool)
+    monkeypatch.setattr(worker.turn_users, "chown_tree", lambda path, s: owned.append(path) or (s == slot) or 1 / 0)
+    monkeypatch.setattr(worker.turn_users, "kill_uid", lambda uid: turn_env["events"].append(f"kill {uid}") or [])
+    monkeypatch.setattr(worker.turn_users, "purge_uid_files",
+                        lambda uid, roots: turn_env["events"].append(f"purge {uid}") or [])
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    opts = turn_env["options"]
+    assert opts["turn_user"] == "genealogy-turn-0"
+    home = opts["turn_home"]
+    assert Path(home).name.startswith("turn-home-") and not Path(home).exists(), "made, then removed"
+    assert owned == [home, opts["config_dir"]], "home first; the config dir once mcp.json is in it"
+    events = turn_env["events"]
+    assert events.index("kill 901") < events.index("purge 901") < events.index("held.close"), \
+        "nothing of the slot -- process or file -- outlives the lock"
+    assert pool.acquire() == slot, "the slot is back"
+
+
+def test_no_free_slot_answers_500_and_still_releases_the_grant(turn_env, monkeypatch):
+    from proto.worker import turn_users
+
+    monkeypatch.setattr(worker, "TURN_POOL", turn_users.Pool([]))
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    with pytest.raises(turn_users.NoTurnUser):
+        asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    assert "held.close" in turn_env["events"]
+    assert turn_env["options"] is None, "no CLI was configured"
+
+
+def test_a_redelivered_attempt_bears_the_grant_refreshed_between_attempts(turn_env):
+    """A refresh between attempts revokes the first attempt's token, so the redelivery must
+    read the grant again -- not reuse the body, which is identical across receives."""
+    bodies, bearers = [], []
+    turn_env["grant"] = lambda: FakeHeld(turn_env, token="token-A")
+    turn_env["client"] = FakeClient([_init(), _text("x")], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)  # killed: no result
+    with pytest.raises(RuntimeError, match="without a ResultMessage"):
+        asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    bodies.append(json.dumps(TURN["message"], sort_keys=True))
+    bearers.append(turn_env["options"]["bearer"])
+    turn_env["grant"] = lambda: FakeHeld(turn_env, token="token-A-prime")  # the web tier refreshed
+    turn_env["entries"] = True
+    turn_env["client"] = FakeClient([_init(), ToolCall(), _text("x"), _result(num_turns=2)], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    asyncio.run(worker.run_turn(TURN, 2, SID, agents={"gps-mentor": object()}))
+    bodies.append(json.dumps(TURN["message"], sort_keys=True))
+    bearers.append(turn_env["options"]["bearer"])
+    assert bearers == ["token-A", "token-A-prime"] and bodies[0] == bodies[1]
+    assert turn_env["acquired"] == ["proj-1", "proj-1"], "read per attempt"
+
+
+@pytest.mark.parametrize("cause, reason", [
+    ("no_owner", None), ("no_grant", None), ("refused", "invalid_grant"),
+    ("no_refresh_token", None), ("undecryptable", None),
+])
+def test_no_usable_grant_closes_the_turn_signin_required_without_spawning_the_cli(
+    turn_env, monkeypatch, cause, reason,
+):
+    """Fails loudly and bills nothing: the turn closes with a named outcome the SPA shows,
+    the message is deleted (200, so it is not redelivered into the same refusal), and the
+    session's next held message is released."""
+    import claude_agent_sdk
+
+    monkeypatch.setattr(claude_agent_sdk, "ClaudeSDKClient",
+                        lambda options: (_ for _ in ()).throw(AssertionError("a CLI was spawned")))
+    released = _released(monkeypatch)
+    turn_env["grant"] = worker.NoGrant(cause, reason)
+    status, body = _serve(turn_env, monkeypatch)
+    assert status == 200 and body["outcome"] == worker.SIGNIN_REQUIRED_OUTCOME == "signin_required"
+    assert body["cause"] == cause and body["resumed"] is False
+    [payload] = _turn_done_payloads(turn_env["conn"])
+    assert payload["outcome"] == "signin_required" and payload["cause"] == cause
+    assert payload.get("reason") == reason
+    assert turn_env["options"] is None, "no options built, so no bearer anywhere"
+    assert released == ["sess-1"] and body["released_turn"] == "msg-held"
+    assert turn_env["conn"].completed_at is not None
+
+
+def test_grant_wait_timeout_answers_500_and_closes_on_the_last_receive(turn_env, monkeypatch):
+    def timed_out():
+        raise worker.GrantWaitTimeout("the grant of usr_owner was not usable within 300s (session_age)")
+
+    turn_env["grant"] = timed_out
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 3)
+    released = _released(monkeypatch)
+    status, body = _serve(turn_env, monkeypatch, receive_count=2)
+    assert status == 500 and "GrantWaitTimeout" in body["error"]
+    assert not _turn_done_payloads(turn_env["conn"]) and released == []
+    status, body = _serve(turn_env, monkeypatch, receive_count=3)
+    assert status == 200 and body["outcome"] == "retries_exhausted" and body["cause"] == "error"
+    assert released == ["sess-1"]
+
+
+@pytest.mark.parametrize("messages", [_good(), [_init(), _text("x")]], ids=["completed", "failed"])
+def test_the_grant_lock_outlives_the_cli(turn_env, messages):
+    """The lock is released only once client.disconnect() has killed the CLI bearing the
+    token: released earlier, a refresh could revoke it under a CLI still running."""
+    turn_env["client"] = FakeClient(messages, _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    with contextlib.suppress(RuntimeError):
+        asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    assert turn_env["events"] == ["disconnect", "held.close"]
+
+
+class ScriptedSyncConn:
+    """A sync psycopg connection: records statements, answers fetchone from ``answer``."""
+
+    def __init__(self, answer) -> None:
+        self.answer = answer
+        self.executed: list[tuple[str, tuple]] = []
+        self.closed = False
+        self.kwargs: dict[str, Any] = {}
+
+    def cursor(self):
+        return self
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def execute(self, sql, params=()):
+        self.executed.append((sql, params))
+
+    def fetchone(self):
+        return self.answer(self.executed[-1][0])
+
+    def close(self):
+        self.closed = True
+
+
+def _grant_row(age_s: float, *, pending: bool = False, refused: bool = False, reason=None,
+               refresh: str | None = "enc-refresh", token: str = "tok-1") -> tuple:
+    from proto import grants
+
+    return ("usr_a", grants.encrypt(token, grants.enc_key({})), refresh, age_s, pending, refused, reason)
+
+
+def _acquire_conn(rows: list[tuple], owner: str | None = "usr_a") -> ScriptedSyncConn:
+    from proto import grants
+
+    def answer(sql):
+        if sql == grants.OWNER_SQL:
+            return (owner,) if owner else None
+        if sql == "SELECT pg_backend_pid()":
+            return (77,)
+        if sql == grants.GRANT_SQL:
+            return rows.pop(0) if len(rows) > 1 else rows[0]
+        return None
+    return ScriptedSyncConn(answer)
+
+
+def _acquire(conn: ScriptedSyncConn, **kw):
+    def connect(dsn, **kwargs):
+        conn.kwargs = kwargs
+        return conn
+    kw.setdefault("max_start_age_s", 26400)
+    kw.setdefault("wait_s", 300)
+    return asyncio.run(worker.acquire_grant("proj-1", connect=connect, **kw))
+
+
+def test_acquire_takes_the_lock_before_reading_the_grant(monkeypatch):
+    """Lock, then read: a refresh between a read and a later lock would revoke the token the
+    attempt is about to bear (interleaving I3). The lock stays held on the returned grant."""
+    from proto import grants
+
+    monkeypatch.delenv("FS_TOKEN_ENC_KEY", raising=False)
+    conn = _acquire_conn([_grant_row(10)])
+    held = _acquire(conn)
+    assert isinstance(held, worker.HeldGrant) and held.token == "tok-1" and held.pid == 77
+    assert held.user_id == "usr_a" and held.conn is conn and not conn.closed
+    sql = [s for s, _ in conn.executed]
+    assert sql == [grants.OWNER_SQL, "SELECT pg_backend_pid()", grants.ATTEMPT_LOCK_SQL, grants.GRANT_SQL]
+    assert conn.executed[2][1] == (grants.ATTEMPT_LOCK_NS, "usr_a"), "the owner's attempt key, shared"
+    assert "pg_advisory_lock_shared(%s::int4" in grants.ATTEMPT_LOCK_SQL
+
+
+def test_acquire_releases_the_lock_while_it_waits(monkeypatch):
+    from proto import grants
+
+    monkeypatch.delenv("FS_TOKEN_ENC_KEY", raising=False)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    sleeps: list[float] = []
+
+    async def sleep(s):
+        sleeps.append(s)
+        conn.executed.append(("sleep", ()))
+
+    conn = _acquire_conn([_grant_row(30000), _grant_row(5, pending=True), _grant_row(5)])
+    held = _acquire(conn, sleep=sleep, poll_s=5)
+    assert isinstance(held, worker.HeldGrant)
+    sql = [s for s, _ in conn.executed][2:]
+    lock, grant, unlock = grants.ATTEMPT_LOCK_SQL, grants.GRANT_SQL, grants.ATTEMPT_UNLOCK_SQL
+    assert sql == [lock, grant, unlock, "sleep", lock, grant, unlock, "sleep", lock, grant], \
+        "no lock is held across a sleep, so the refresher gets its window"
+    assert sleeps == [5, 5]
+    assert [f["reason"] for f in logged if f.get("ev") == "grant_wait"] == ["session_age"], "logged once"
+
+    conn = _acquire_conn([_grant_row(30000)])
+    with pytest.raises(worker.GrantWaitTimeout, match="session_age"):
+        _acquire(conn, wait_s=0, sleep=sleep)
+    assert conn.closed and conn.executed[-1][0] == unlock
+
+    conn = _acquire_conn([_grant_row(10, refused=True, reason="invalid_grant")])
+    got = _acquire(conn)
+    assert got == worker.NoGrant("refused", "invalid_grant") and conn.closed
+    assert [s for s, _ in conn.executed][-1] == unlock
+    conn = _acquire_conn([_grant_row(10)], owner=None)
+    assert _acquire(conn) == worker.NoGrant("no_owner") and conn.closed
+    assert grants.ATTEMPT_LOCK_SQL not in [s for s, _ in conn.executed], "no owner, no lock"
+
+
+def test_grant_connection_sets_lock_timeout_and_keepalives(monkeypatch):
+    """The lock connection is idle for the whole attempt. lock_timeout bounds the wait behind
+    a refresher; idle_session_timeout=0 stops a server default from ending it (and so
+    releasing the lock) mid-attempt; the keepalives end a vanished host's backend."""
+    from proto import grants
+
+    options_text = worker.GRANT_CONN_KWARGS["options"]
+    for setting in (f"lock_timeout={grants.ATTEMPT_LOCK_TIMEOUT_S}s", "idle_session_timeout=0",
+                    "tcp_keepalives_idle=60", "tcp_keepalives_interval=10", "tcp_keepalives_count=6",
+                    "tcp_user_timeout=30000"):
+        assert f"-c {setting}" in options_text, setting
+    assert worker.GRANT_CONN_KWARGS["autocommit"] is True and worker.GRANT_CONN_KWARGS["keepalives"] == 1
+    monkeypatch.delenv("FS_TOKEN_ENC_KEY", raising=False)
+    conn = _acquire_conn([_grant_row(10)])
+    _acquire(conn)
+    assert conn.kwargs == worker.GRANT_CONN_KWARGS, "acquire_grant connects with them"
+
+
+def test_a_lost_lock_halts_before_the_next_tool_call_and_the_attempt_answers_500(turn_env, monkeypatch):
+    """A lock connection that died released the lock while the CLI still bears the token.
+    halt() checks first, on the attempt's main connection, before every call: the call after
+    the loss is halted, nothing completes the turn, and the attempt answers 500 so the
+    redelivery takes the lock again."""
+    turn_env["lock_held"] = lambda asked: asked < 2
+    turn_env["client"] = FakeClient([_init(), ToolCall(), ToolCall(), _text("x"), _result(num_turns=2)],
+                                    _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 0)
+    status, body = _serve(turn_env, monkeypatch)
+    assert status == 500 and "GrantLockLost" in body["error"]
+    assert _tool_call_decisions(turn_env["conn"]) == ["allow", "halt"]
+    assert not _turn_done_payloads(turn_env["conn"]), "the turn stays open for the redelivery"
+    assert turn_env["events"] == ["disconnect", "held.close"]
+
+
+def test_no_token_reaches_the_logs_or_the_rows(turn_env, monkeypatch, capsys):
+    secret = "grant-secret-token-u3"
+    turn_env["grant"] = lambda: FakeHeld(turn_env, token=secret)
+    turn_env["client"] = FakeClient([_init(), ToolCall(), _text("x"), _result(num_turns=2)],
+                                    _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    status, body = _serve(turn_env, monkeypatch)
+    assert status == 200 and turn_env["options"]["bearer"] == secret
+    assert secret not in capsys.readouterr().out and secret not in json.dumps(body, default=str)
+    for sql, params in turn_env["conn"].executed:
+        flat = json.dumps([getattr(p, "obj", p) for p in params], default=str)
+        assert secret not in sql and secret not in flat, sql
+
+
+def test_worker_tables_include_the_grant_tables():
+    """acquire_grant reads projects.owner_id and familysearch_tokens; /healthz must fail on a
+    database missing either rather than every turn failing at its first attempt."""
+    assert {"projects", "familysearch_tokens"} <= set(worker.WORKER_TABLES)

@@ -61,10 +61,12 @@ deterministic. It belongs in tested code.
 convert_calendar({
   // The recorded date, as structured fields (the caller has already read it off
   // the record). `month` is the calendar month 1–12, EXCEPT when a quakerMonth
-  // correction is requested, where `month` is the Quaker ordinal 1–12.
+  // correction is requested, where `month` is the Quaker ordinal 1–12, or when
+  // frenchRepublican is requested, where `year` and `month` may be strings
+  // (Roman numeral years, French month names).
   date: {
-    year: number,
-    month?: number,       // 1–12; required for day-offset and quaker conversions
+    year: number | string,  // string only under frenchRepublican (Roman numerals, "an VII")
+    month?: number | string, // string only under frenchRepublican (month names, comp-day aliases)
     day?: number,         // 1–31; required for the day-offset conversion
     doubleYear?: number,  // the "/N" of a double-dated year, e.g. 1 for "1750/1"
   },
@@ -83,6 +85,7 @@ convert_calendar({
     osNsYear?: boolean,                 // if month/day ∈ [Jan 1, Mar 24], year += 1
     quakerMonth?: { era: "pre_1752" | "post_1752" }, // interpret `month` as a Quaker ordinal
     julianToGregorianDay?: boolean,     // add the era-appropriate Julian→Gregorian offset
+    frenchRepublican?: boolean,         // interpret date as French Republican and convert to Gregorian
   },
 })
 ```
@@ -99,7 +102,7 @@ applied — the tool never "helpfully" bundles one the caller didn't ask for.
   original: { year, month?, day?, doubleYear? },   // echoed input date
   converted: { year, month?, day? },               // after the requested corrections
   applied: Array<{                                  // one per correction actually applied
-    correction: "doubleDatedYear" | "osNsYear" | "quakerMonth" | "julianToGregorianDay",
+    correction: "doubleDatedYear" | "osNsYear" | "quakerMonth" | "julianToGregorianDay" | "frenchRepublican",
     rule: string,                                   // human-readable rule, for narration
     offsetDays?: number,                            // julianToGregorianDay only (10/11/12/13)
     monthShift?: number,                            // quakerMonth only
@@ -209,6 +212,46 @@ is in `OK_FALSE_IS_FAILURE`, so the error surfaces to the model as something to
 fix, whereas a silent fallback would apply a correction under the wrong regime
 and read as success.
 
+### 4.6 `frenchRepublican`
+
+Convert a French Republican calendar date to Gregorian. The French Republic used
+a new calendar from 22 September 1792 (1 Vendémiaire I) through 31 December
+1805 (10 Nivôse XIV). Every French civil record in that span is dated in this
+system.
+
+**Input format.** `date.year` may be a number 1–14, a Roman numeral `I`–`XIV`
+(case-insensitive), or a string with an `an ` or `l'an ` prefix (e.g. `"an VIII"`,
+`"l'an VII"`). `date.month` may be a number 1–13, or a French month name
+(accent- and case-insensitive: Vendémiaire through Fructidor for 1–12, plus
+`"jours complémentaires"`, `"complémentaires"`, `"sansculottides"`, or
+`"sans-culottides"` for month 13 — the 5–6 intercalary days). `date.day` is
+required (1–30 for months 1–12; 1–5 or 1–6 for month 13).
+
+**Epoch.** 1 Vendémiaire I = 22 September 1792 (Gregorian). The JDN of the
+epoch is `gregorianToJDN(1792, 9, 22)`.
+
+**Sextile years.** Years III, VII, and XI had 6 complementary days (366 total).
+These are the historically observed sextile years — the Romme rule (extending
+the Gregorian leap-year algorithm) was enacted but never took effect, and the
+calendar was abolished before it would have mattered. The tool uses the
+historical set, not Romme.
+
+**End of the calendar.** 10 Nivôse XIV = 31 December 1805. A date after that
+is an input error — the calendar was abolished by Napoleonic decree effective
+1 January 1806.
+
+**Exclusivity.** `frenchRepublican` cannot be combined with any other
+correction — it is a whole-calendar conversion, not a single-axis adjustment.
+If any other correction key is also set, the tool returns an input error.
+
+**Jurisdiction.** When `jurisdiction` is supplied alongside `frenchRepublican`,
+the conversion proceeds normally and a note is added that the jurisdiction was
+not consulted (the Republican calendar is date-only, not regime-dependent).
+
+**Conversion algorithm.** Count the days from the epoch:
+`daysSinceEpoch = Σ daysInYear(y) for y in 1..year−1 + (month−1)×30 + (day−1)`.
+Then `gregorianFromJDN(FR_EPOCH_JDN + daysSinceEpoch)`.
+
 ---
 
 ## 5. What the tool owns vs. what the caller decides
@@ -285,6 +328,15 @@ to illustrate that they agree.
 | `doubleYear` given but inconsistent with `year + 1` | input error (a real double date always spans consecutive years) |
 | `jurisdiction` supplied but not a known key | **input error** listing the accepted keys, noting that matching ignores case and punctuation and that a town is not a jurisdiction. Never a silent fallback — §4.5 |
 | `jurisdiction` supplied as an empty or whitespace-only string | input error (an empty string is a caller bug, not "no jurisdiction"; omit the field instead) |
+| `frenchRepublican` combined with any other correction | input error (exclusivity — FR is a whole-calendar conversion) |
+| `frenchRepublican` but `month` absent | input error (month is required for FR conversion) |
+| `frenchRepublican` but `day` absent | input error (day is required for FR conversion) |
+| `frenchRepublican` with unparseable year (not 1–14, not Roman I–XIV) | input error |
+| `frenchRepublican` with unparseable month (not 1–13, not a recognized month name or comp-day alias) | input error |
+| `frenchRepublican` with year 0 or > 14 | input error |
+| `frenchRepublican` with day > 30 for months 1–12, or day > 5/6 for month 13 | input error (6th comp day only valid in sextile years III/VII/XI) |
+| `frenchRepublican` date past 10 Nivôse XIV (31 Dec 1805) | input error — calendar was abolished |
+| String `year` or `month` without `frenchRepublican` | input error ("string year/month only valid under frenchRepublican") |
 | `julianToGregorianDay` requested where the regime says the date is already Gregorian | **not an error**: the correction is declined, `applied` omits it, `converted` equals the input, and `notes` says why |
 | `osNsYear` requested where the regime's civil year already began 1 January | **not an error**: declined the same way, with the year that place moved named in `notes` |
 | `osNsYear` requested where the jurisdiction's PRIOR year start was not the Annunciation (25 March) | **input error** naming what that place actually used, and what the right correction is. The `+1` inside 1 Jan – 24 Mar is the Annunciation rule and nothing else: a **Christmas** (25 Dec) start needs −1 for 25–31 December, the opposite sign; an **Easter** start has a movable boundary that no fixed window expresses; **Venice** turned its year on 1 March, so the window is 1 Jan – 28/29 Feb; **pre-1700 Russia** needs an Anno Mundi era conversion. Refusing beats guessing here because the failure mode is a year that is off by one and reads as entirely ordinary |
@@ -306,6 +358,7 @@ to illustrate that they agree.
 - **Combined** — OS/NS year then day offset on one call, applied in order, both reflected in `applied`.
 - **Missing day** — `julianToGregorianDay` with no `day` skips the offset and notes it; other requested corrections still apply.
 - **Purity / idempotence** — same input → same output; input object not mutated.
+- **French Republican** — 1 Vendémiaire I → 22 Sep 1792; 9 Thermidor II → 27 Jul 1794; 6th comp day III → 22 Sep 1795; 1 Vendémiaire IV → 23 Sep 1795; 18 Brumaire VIII → 9 Nov 1799; 10 Nivôse XIV → 31 Dec 1805. String parsing: Roman numerals, "an"/"l'an" prefix, month names (accent/case insensitive), comp-day aliases. Rejections: 6th comp day non-sextile, date past abolition, combined with other correction, missing day/month, string without flag, year 0/15, day 31.
 - **Jurisdiction, row per adoption (§4.5)** — for each row, the last Old Style
   date still converts and the first New Style date is declined with a note.
   `Catholic Europe` is tested separately: its last Old Style date is 4 Oct 1582,
@@ -345,6 +398,6 @@ to illustrate that they agree.
 ## 10. Wiring
 
 Standard MCP tool: implementation in `src/tools/convert-calendar.ts`, schema added
-to `allToolSchemas` in `src/tool-schemas.ts`, dispatch in `src/index.ts`, name in
+to `allToolSchemas` in `src/tool-schemas.ts`, dispatch in `src/server.ts`, name in
 `manifest.json`'s `tools` array (the packaging drift test enforces parity).
 camelCase at the boundary; no persisted output so no snake_case rename applies.

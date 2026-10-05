@@ -205,6 +205,68 @@ def test_wait_turn_done_gives_up_at_the_deadline(monkeypatch):
         demo.wait_turn_done(None, "http://x", "s", "t", 3.0)
 
 
+# ── the grant (U3) ──────────────────────────────────────────────────────────────────
+
+
+def _no_grant_db(dsn, sql, params):
+    if sql == turn.GRANT_SQL:
+        return []
+    return [(1,)]
+
+
+def test_scripts_refuse_to_run_without_a_grant(monkeypatch, capsys):
+    """Without a grant every real turn would only end signin_required. Both scripts check
+    up front, exit 2 and say what to run -- before anything is posted."""
+    monkeypatch.setattr(turn.httpx, "get", lambda *a, **k: httpx.Response(200, json={"queue": "SqsQueue"},
+                                                                         request=httpx.Request("GET", "http://x")))
+    monkeypatch.setattr(turn, "db", _no_grant_db)
+    monkeypatch.setattr(turn, "run", lambda *a, **k: (_ for _ in ()).throw(AssertionError("posted")))
+    monkeypatch.setattr(turn, "run_kill", lambda *a, **k: (_ for _ in ()).throw(AssertionError("posted")))
+    assert turn.main([]) == 2
+    assert "make proto-grant EMAIL=dev@localhost" in capsys.readouterr().err
+    assert turn.main(["--kill", "--email", "b@example.org"]) == 2
+    assert "make proto-grant EMAIL=b@example.org" in capsys.readouterr().err
+    monkeypatch.setattr(demo, "run", lambda args: (_ for _ in ()).throw(AssertionError("seeded")))
+    assert demo.main([]) == 2
+    assert "make proto-grant" in capsys.readouterr().err
+    # With a grant the check is silent; a refused one is not a grant.
+    assert turn.require_grant("dsn", "dev@localhost") is not None
+    monkeypatch.setattr(turn, "db", lambda dsn, sql, params: [(1,)])
+    assert turn.require_grant("dsn", "Dev@Localhost") is None
+    assert "refresh_refused_at IS NULL" in turn.GRANT_SQL
+
+
+def test_reauth_entry_hits_reads_full_tool_results(monkeypatch):
+    """The summaries reauth_hits reads are cut at 160 chars, so an instruction deep in a long
+    result is invisible there; this reads the whole tool_result. Only the engine's two
+    anchors: record text has page and film numbers \\b401\\b would flag."""
+    pad = "x" * 300
+    entries = [
+        ({"type": "user", "message": {"content": [{"type": "tool_result", "content": pad + " Call the login tool to authenticate."}]}},),
+        ({"type": "user", "message": {"content": [{"type": "tool_result", "content": [
+            {"type": "text", "text": "census page 401, film 1234401"}]}]}},),
+        ({"type": "assistant", "message": {"content": [{"type": "text", "text": "Reconnect FamilySearch?"}]}},),
+        ({"type": "user", "message": {"content": [{"type": "tool_result", "content": [
+            {"type": "text", "text": pad}, {"type": "text", "text": 'Click "Reconnect FamilySearch" at the top'}]}]}},),
+    ]
+    seen = []
+
+    def fake_db(dsn, sql, params):
+        seen.append((sql, params))
+        return entries
+
+    monkeypatch.setattr(turn, "db", fake_db)
+    hits = turn.reauth_entry_hits("dsn", "sdk-1", "turn-1")
+    assert len(hits) == 2, hits
+    assert "Call the login tool" in hits[0] and "Reconnect FamilySearch" in hits[1]
+    [(sql, params)] = seen
+    assert params == ("sdk-1", "turn-1") and "entries_seq_before" in sql and "subpath" not in sql, \
+        "every subpath (delegated agents' too), above the turn's high-water mark"
+    assert turn.reauth_entry_hits("dsn", None, "turn-1") == []
+    assert not turn.REAUTH_ENTRY.search("page 401") and turn.REAUTH_HITS.search("HTTP 401")
+    assert demo.REAUTH is turn.REAUTH_HITS and demo.reauth_hits is turn.reauth_hits
+
+
 # ── the make targets ────────────────────────────────────────────────────────────────
 
 
