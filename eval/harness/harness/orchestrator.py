@@ -52,6 +52,7 @@ from harness.skill_runner import (
     SkillRunResult,
     agent_return_text,
     direct_dispatch_prompt,
+    handoffs,
     judge_skills_slot,
     run_skill,
     spawn_prompts,
@@ -369,6 +370,18 @@ def _first_handoff_stop(spec: TestSpec) -> str | None:
     return spec.skill
 
 
+def _stopped_at_a_handoff(spec: TestSpec, result: SkillRunResult) -> bool:
+    """Whether the first-hand-off stop ended this run on a hand-off the skill made.
+
+    Such a run never reaches the skill's own summary, so the hand-off is its
+    activation evidence (`derive_activated`, unit-test-spec.md §6).
+    """
+    if _first_handoff_stop(spec) is None:
+        return False
+    handed = handoffs(result.skills_invoked, result.builtin_tool_calls)
+    return any(name != spec.skill for name in handed)
+
+
 def _stub_skills(spec: TestSpec) -> dict[str, str | None] | None:
     """Sub-skills a POSITIVE test declares it doesn't want executed.
 
@@ -387,8 +400,9 @@ def _stub_agents(spec: TestSpec, skills_dir: Path) -> dict[str, str | None] | No
 
     Exactly the entries with no skill directory: a callee converted from a skill
     to an agent (issue #2825), which the router now spawns rather than loads. A
-    name that is still a skill keeps its `Skill`-call stub only — the paired
-    agents in `route-shortcut-guard.json` rely on their spawn running.
+    name that is still a skill keeps its `Skill`-call stub only, so its agent
+    half can still be spawned for real. (`route-shortcut-guard.json`, which
+    motivated this, now ends at its first hand-off instead: `first_handoff_stop`.)
     """
     stubbed = parse_stub_skills(spec.execution)
     return {n: r for n, r in stubbed.items() if not (skills_dir / n).is_dir()} or None
@@ -587,6 +601,7 @@ async def _execute_single_run(
         text_response=result.text_response,
         other_skill_names=other_skill_names,
         agents_spawned=agents_spawned if spec.is_direct else None,
+        handed_off=_stopped_at_a_handoff(spec, result),
     )
 
     # --- Extract usage early — validators may need num_turns / output_tokens

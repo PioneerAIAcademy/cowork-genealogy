@@ -438,7 +438,9 @@ def is_handoff_block(block: Any, skill_under_test: str) -> bool:
     """Whether a streamed ToolUseBlock is a hand-off by the skill under test.
 
     A `Skill` call to any other skill, or an agent spawn. The skill's own
-    `Skill` call is how the run enters it, not a hand-off.
+    `Skill` call is how the run enters it, not a hand-off, and a `Skill` call
+    whose name cannot be read is not counted either: it could be that entry,
+    and `unread_skill_calls` already warns about it.
     """
     if block.name == "Skill":
         name = read_skill_tool_input(dict(block.input or {}))[0]
@@ -770,8 +772,9 @@ class SkillRunResult:
     # structurally cannot carry a result.
     agent_returns: list[dict[str, Any]] = field(default_factory=list)
     # True when the run ended before a ResultMessage ever arrived even though
-    # it is NOT an abort — currently only the negative-test routing
-    # short-circuit (issue #2189). On that path num_turns is real (turns_seen
+    # it is NOT an abort — the negative-test routing short-circuit (issue
+    # #2189) and a no-shortcut test's first-hand-off stop, which shares its
+    # exit (#3119). On that path num_turns is real (turns_seen
     # survives regardless of exit path), but output_tokens has no real answer:
     # no partial token count exists before a ResultMessage. This says so
     # instead of leaving 0 indistinguishable from "the skill used no tokens."
@@ -850,8 +853,10 @@ async def run_skill(
     # the verdict is sealed the moment that skill is invoked (orchestrator
     # `_compute_outcome` grades negatives on routing, not on downstream
     # execution), so we deny the sub-skill launch and stop the run instead
-    # of paying for the routed-to skill's full workload. The loop reads
-    # this after consuming to force a clean (non-aborted) termination.
+    # of paying for the routed-to skill's full workload. A no-shortcut test's
+    # first hand-off sets it too (`first_handoff_denial` below, #3119). The
+    # loop reads this after consuming to force a clean (non-aborted)
+    # termination.
     routing_resolved: dict[str, Any] = {"v": False, "tool_use_id": None}
     _short_circuit = routing_short_circuit_skills or set()
     # Positive-test sub-skill stubbing (`execution.stub_skills`). Distinct from
@@ -860,6 +865,8 @@ async def run_skill(
     # test still has work to do after the hand-off (its closing log entry and
     # summary), so this one DENIES AND CONTINUES — the delegation is recorded in
     # skills_invoked, the callee never executes, and the caller finishes normally.
+    # The exception is a no-shortcut test, whose verdict is its first hand-off:
+    # there the stub denies and stops (`first_handoff_stop`, #3119).
     # Maps skill name -> canned response (None = bare deny); see skill_stubs.py
     # for which form a given hand-off needs.
     _stub_skills = stub_skills or {}
@@ -876,12 +883,12 @@ async def run_skill(
     def first_handoff_denial(
         name: str, stubs: dict[str, str | None], tool_use_id: str | None
     ) -> dict[str, Any]:
-        # Every hand-off is denied once the stop is armed, but only the first
-        # sets the stop point: a second one in the same turn is a shortcut the
-        # validators must still see, and it must not run.
-        if not routing_resolved["v"]:
-            routing_resolved["v"] = True
-            routing_resolved["tool_use_id"] = tool_use_id
+        # Every hand-off is denied once the stop is armed: a second one in the
+        # same turn is a shortcut the validators must still see, and it must
+        # not run. The stop point itself is found by name in the message scan,
+        # so which hand-off's id is kept here does not move it.
+        routing_resolved["v"] = True
+        routing_resolved["tool_use_id"] = tool_use_id
         if name in stubs:
             denial = stub_denial(name, stubs[name])
         else:

@@ -13,6 +13,7 @@ from harness.orchestrator import (
     _COMMISSION_VALIDATORS,
     _negative_judge_context,
     _first_handoff_stop,
+    _stopped_at_a_handoff,
     _routing_short_circuit_skills,
     apply_deterministic_deference,
     flag_routing_negative_judge_fail,
@@ -668,32 +669,6 @@ def test_routing_short_circuit_none_for_out_of_scope_negative():
     # correct_skill == [] (out-of-scope): must run normally to be graded.
     assert _routing_short_circuit_skills(_negative_spec(correct=[])) is None
 
-
-
-# --- first-hand-off stop (no-shortcut tests, #3119) ------------------------
-
-
-def _tagged_positive_spec(tags, skill="research"):
-    return load_test_from_dict({
-        "test": {"id": "ut_o_003", "skill": skill, "name": "n", "type": "positive",
-                  "description": "x", "tags": tags},
-        "input": {"user_message": "m", "scenario": None},
-        "judge_context": [],
-    })
-
-
-def test_first_handoff_stop_names_the_skill_on_a_no_shortcut_test():
-    spec = _tagged_positive_spec(["routing", "routes-to:question-selection", "no-shortcut"])
-    assert _first_handoff_stop(spec) == "research"
-
-
-def test_first_handoff_stop_is_off_without_the_tag():
-    assert _first_handoff_stop(_tagged_positive_spec(["routing"])) is None
-
-
-def test_first_handoff_stop_is_off_on_a_negative_test():
-    """A negative test already stops on its own routing short-circuit."""
-    assert _first_handoff_stop(_negative_spec()) is None
 
 # --- positive tests ------------------------------------------------------
 
@@ -2132,6 +2107,101 @@ def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monk
     ))
     assert seen.get("stub_agents") == {"gps-mentor": None}
     assert seen.get("stub_skills") == {"gps-mentor": None, "search-records": None}
+
+
+# --- first-hand-off stop (no-shortcut tests, #3119) ------------------------
+
+
+def _tagged_positive_spec(tags, skill="research"):
+    return load_test_from_dict({
+        "test": {"id": "ut_o_003", "skill": skill, "name": "n", "type": "positive",
+                  "description": "x", "tags": tags},
+        "input": {"user_message": "m", "scenario": None},
+        "judge_context": [],
+    })
+
+
+def test_first_handoff_stop_names_the_skill_on_a_no_shortcut_test():
+    spec = _tagged_positive_spec(["routing", "routes-to:question-selection", "no-shortcut"])
+    assert _first_handoff_stop(spec) == "research"
+
+
+def test_first_handoff_stop_is_off_without_the_tag():
+    assert _first_handoff_stop(_tagged_positive_spec(["routing"])) is None
+
+
+def _run_with(*builtin_calls):
+    from harness.skill_runner import SkillRunResult
+
+    return SkillRunResult(
+        text_response="", skills_invoked=["research"], tool_calls=[], duration_ms=1.0,
+        usage={}, builtin_tool_calls=list(builtin_calls),
+    )
+
+
+_ENTRY = {"tool": "Skill", "args": {"skill": "research"}}
+_SPAWN = {"tool": "Agent", "args": {"subagent_type": "question-selection"}}
+
+
+def test_stopped_at_a_handoff_needs_the_tag_and_a_real_hand_off():
+    tagged = _tagged_positive_spec(["routing", "no-shortcut"])
+    assert _stopped_at_a_handoff(tagged, _run_with(_ENTRY, _SPAWN)) is True
+    assert _stopped_at_a_handoff(tagged, _run_with(_ENTRY)) is False, (
+        "the skill's own entry is not a hand-off"
+    )
+    untagged = _tagged_positive_spec(["routing"])
+    assert _stopped_at_a_handoff(untagged, _run_with(_ENTRY, _SPAWN)) is False
+
+
+def test_first_handoff_stop_is_off_on_a_negative_test():
+    """A negative test already stops on its own routing short-circuit."""
+    assert _first_handoff_stop(_negative_spec()) is None
+
+
+def test_a_run_stopped_at_its_first_hand_off_counts_as_activated(tmp_path, monkeypatch):
+    """The stop leaves only the narration before the hand-off, which can be short
+    and name the next row. That run still activated: the hand-off is its work."""
+    import asyncio
+    from harness.judge import JudgeOutput
+    from harness.skill_runner import SkillRunResult
+
+    spec = load_test(REPO_ROOT / "eval/tests/unit/research/route-shortcut-guard.json")
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        return SkillRunResult(
+            text_response="No questions yet. Routing to question-selection, then research-plan.",
+            skills_invoked=["research"],
+            tool_calls=[],
+            duration_ms=10.0,
+            usage={"num_turns": 3},
+            builtin_tool_calls=[
+                {"tool": "Skill", "args": {"skill": "research"}},
+                {"tool": "Agent", "args": {"subagent_type": "question-selection"}},
+            ],
+        )
+
+    def fake_run_judge(**kwargs):
+        return JudgeOutput(
+            dimensions=[
+                {"source": "base", "name": name, "score": 3, "rationale": "fine"}
+                for name in ("Correctness", "Completeness", "Tool Arguments")
+            ],
+            cost_usd=0.0, input_tokens=0, cached_input_tokens=0, output_tokens=0,
+            prompt_hash="stub-hash",
+        )
+
+    monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: [])
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "_run_judge", fake_run_judge)
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-10-05_10-00-00",
+    ))
+    assert entry["runs"][0]["output"]["activated"] is True
+    assert entry["outcome"] == "pass"
 
 
 def test_a_no_shortcut_test_reaches_run_skill_with_its_first_handoff_stop(

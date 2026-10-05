@@ -278,8 +278,9 @@ def derive_activated(
     text_response: str,
     other_skill_names: set[str] | None = None,
     agents_spawned: list[str] | None = None,
+    handed_off: bool = False,
 ) -> bool:
-    """Per unit-test-spec.md §6 three-rule definition.
+    """Per unit-test-spec.md §6's rules.
 
     Attribution of file changes / files created / substantive responses
     to the skill under test requires that the skill actually ran — it
@@ -305,11 +306,19 @@ def derive_activated(
     (`validators/test_universal.py`) opens `if activated is not True:
     pytest.skip(...)`, so a direct run stuck at False would silently lose that
     gate rather than fail it.
+
+    **First-hand-off stop (#3119).** A `no-shortcut` run ends at the skill's
+    first hand-off, before it can write or summarize, so its narration can be a
+    short line naming the next row, which reads as routing away. The caller
+    passes `handed_off=True` only for a run that stop ended, and then the
+    recorded hand-off is the skill's work.
     """
     attributed = skill in skills_invoked
     if agents_spawned is not None:
         attributed = skill in agents_spawned
     if attributed:
+        if handed_off:
+            return True
         if file_changes:
             for f_diff in file_changes.values():
                 if f_diff and f_diff.get("sections_modified"):

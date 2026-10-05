@@ -19,13 +19,13 @@ decay.
 ## Restored activation tests (issue #3119)
 
 `ut_research_001`, `012`, `013`, `014` and `015` were deleted on 2026-10-01
-(issue #2984) and are restored without their `xfail` markers. They were `xfail`
-for one defect: `research` and `project-status` both matched a "drive the
-workflow forward" request, so the orchestrator was skipped about half the time
-(issue #2927). `project-status`'s description now tells it not to drive the
-research workflow forward (#3092). Each restored test passed three runs of three
-on main before it came back (#3119). `015` needed one more change; see "Paired
-rows".
+(issue #2984) and are restored without their `xfail` markers. The first four
+were `xfail` for one defect: `research` and `project-status` both matched a
+"drive the workflow forward" request, so the orchestrator was skipped about half
+the time (issue #2927). `project-status`'s description now tells it not to drive
+the research workflow forward (#3092). `015`'s marker named a router shortcut
+instead; see "Paired rows". Each restored test was measured three times on main
+before it came back (#3119), and `015` needed one more change to pass.
 
 Not restored:
 
@@ -76,20 +76,22 @@ The user names a downstream destination ("through to a proof conclusion") on a
 project that has only an objective, so the first hand-off must be row 1,
 question-selection. The `no-shortcut` tag makes the harness end the run at that
 first hand-off (`first_handoff_stop` in `harness/skill_runner.py`). Without the
-stop the test cannot pass reliably: `research/SKILL.md` tells the router to drive
-the table forward to the named destination, so after question-selection it walks
-on, and because the stubs write nothing, the walk can loop back to row 1 until
-the turn cap. The test's committed failures on main were mostly the activation
+stop the test cannot pass reliably: `research/SKILL.md` tells the router to
+drive the table forward to the named destination, so after question-selection it
+walks on down the table. The stubs write nothing, so nothing it hands to ever
+lands: one measured walk ran on until the turn cap, and another came back to the
+first row. The test's committed failures on main were mostly the activation
 defect above, then that walk. One committed run (`v1_2026-08-25_20-14-29.json`)
 did hand off to proof-conclusion first. In every committed run, person-evidence,
-research-exhaustiveness and proof-conclusion were reached by `Skill` calls, which
-is why a count of agent spawns alone finds none. The test keeps the paired agents in `stub_skills`: a denied spawn is still
-recorded, so a shortcut fails the validator rather than running.
+research-exhaustiveness and proof-conclusion were reached by `Skill` calls,
+which is why a count of agent spawns alone finds none. The test keeps the paired
+agents in `stub_skills`: a denied spawn is still recorded, so a shortcut fails
+the validator rather than running.
 
 That validator is not redundant with `test_routes_to_expected_skill`, which
-asserts only the first hand-off. A router that calls `Skill(question-selection)`
-and spawns `@plugin:proof-conclusion` in the same turn passes the routing check.
-The stop denies and records both, and this validator fails the run.
+asserts only the first hand-off. A router that spawns question-selection and
+`@plugin:proof-conclusion` in the same turn passes the routing check. The stop
+denies and records both, and this validator fails the run.
 
 ## Moved negatives (issue #2268)
 

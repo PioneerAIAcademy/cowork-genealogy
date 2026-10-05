@@ -486,6 +486,34 @@ def test_activated_negative_skill_in_skills_invoked_but_pure_routing_text():
     ) is False
 
 
+def test_activated_counts_the_hand_off_a_first_handoff_stop_ended_on():
+    """A no-shortcut run ends at the router's first hand-off, before it can write
+    or summarize, so its short narration naming the next row is routing, not
+    activation, unless the recorded hand-off counts (#3119)."""
+    text = "No questions yet. Routing to question-selection first, then research-plan."
+    kwargs = dict(
+        skill="research",
+        skills_invoked=["research"],
+        file_changes=_NO_FILE_CHANGES,
+        files_created=[],
+        text_response=text,
+        other_skill_names={"research-plan"},
+    )
+    assert derive_activated(**kwargs) is False
+    assert derive_activated(**kwargs, handed_off=True) is True
+
+
+def test_a_hand_off_does_not_activate_a_skill_that_never_ran():
+    assert derive_activated(
+        skill="research",
+        skills_invoked=[],
+        file_changes=_NO_FILE_CHANGES,
+        files_created=[],
+        text_response="",
+        handed_off=True,
+    ) is False
+
+
 def test_activated_files_created_attributed_only_when_skill_invoked():
     """A sibling skill wrote a markdown file; the skill under test was
     never invoked. Should not be attributed."""

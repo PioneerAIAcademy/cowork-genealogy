@@ -2,7 +2,9 @@
 
 A test declares a sub-skill it does not want executed. The PreToolUse hook
 records the delegation in `skills_invoked`, denies the launch, and lets the run
-continue — so the caller still finishes its own logging and summary. Use when
+continue — so the caller still finishes its own logging and summary. On a
+`no-shortcut` test the run instead stops at the first hand-off, stubbed or not
+(`first_handoff_stop` in `skill_runner.py`, #3119). Use when
 the callee is separately covered by its own unit suite, so running it inside
 the caller's test spends wall-clock and tokens on coverage that already exists.
 
