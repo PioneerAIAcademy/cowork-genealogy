@@ -54,7 +54,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 51 tools.
+The MCP server exposes 52 tools.
 
 ### FamilySearch records and places
 
@@ -68,7 +68,7 @@ The MCP server exposes 51 tools.
 | `record_read` | Fetch a FamilySearch historical record by its record-persona ARK (`1:1:`, i.e. `record_search`'s `recordId`) or bare entity ID — returns full simplified GEDCOMX; with `projectPath` the record is also staged (`staged.resultsRef`) so `research_log_append` retains it as a sidecar | OAuth |
 | `person_search` | FamilySearch Family Tree search for a person — ranked candidate tree persons to pick and research (chains into `person_read`) | OAuth |
 | `fulltext_search` | Full-text search of FS AI-transcribed document images — finds non-principal mentions (witnesses, neighbors, heirs) | OAuth |
-| `image_search` | Lists the image IDs inside a single image group (digitized volume) given its image group number — feeds `image_read`. (Place + year-range volume discovery lives in `volume_search`.) | OAuth |
+| `image_search` | Lists the image IDs inside a single image group (digitized volume) given its image group number — feeds `image_read`. With `item` / `itemImage` on a bare film number, resolves a "DGS 004528134, Item 5, Image 10" citation to its image ID. (Place + year-range volume discovery lives in `volume_search`.) | OAuth |
 | `same_person` | Asks FamilySearch whether two people are the same — match confidence + score. Takes either two GedcomX documents, or project references (`projectPath`, `assertionId`, `treePersonId`) and assembles both sides itself, recording the score it computed | OAuth |
 | `person_record_matches` | Historical-record matches for a tree person (accepted/pending/rejected) | OAuth |
 | `record_person_matches` | Tree-person matches for a historical record persona | OAuth |
@@ -104,6 +104,7 @@ way project state changes.
 | `research_query` | Paged, filtered read of a `research.json` section without loading the whole document | None |
 | `sidecar_read` | Paged read of a project sidecar text file — a gps-mentor verdict body under `evaluations/` or a text upload under `uploads/`. Refuses `results/`, images, `research.json` and the tree with a pointer to the tool that serves each | None |
 | `research_log_append` | Append a research-log entry, including a search's result sidecar | None |
+| `research_delivered` | Signal that a bounded request has been delivered and the turn is stopping on purpose. A pure signal: writes nothing. On the PROTOTYPE worker a `PreToolUse` hook ends the turn on this tool's name; everywhere else (Cowork, e2e, and the hosted alpha, whose Stop hook keeps phase-1 behaviour until it is retired) it returns a harmless acknowledgement and the run carries on | None |
 | `extraction_append` | Record-level assertion extraction — held by the `record-extractor` agent, not the main thread | None |
 | `materialize_facts` | Project extracted assertions onto tree persons | None |
 | `tree_edit` | Add or amend persons, facts, names and relationships on the local tree | None |
@@ -461,7 +462,7 @@ then narrows the search.
 
 What's shipped:
 
-- **51 MCP tools.** See the tables above for the full catalog, by category:
+- **52 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
 - **12 shipped skills.** Full GPS research cycle from `init-project`

@@ -864,7 +864,8 @@ async def test_post_message_rejects_empty_or_blank_text_and_unknown_session():
     store, queue = FakeStore(), FakeQueue()
     row = store.seed_session()
     async with make_client(store, queue) as c:
-        for blank in ("", " ", "\n", "  \t "):
+        # "\x1c": str.strip() empties it but a regex \S matches it; the worker's predicate is strip().
+        for blank in ("", " ", "\n", "  \t ", "\x1c", " \x1f\x1e "):
             r = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": blank})
             assert r.status_code == 422, repr(blank)
         assert (await c.post("/api/sessions/nope/messages", json={"text": "x"})).status_code == 404
@@ -1019,7 +1020,7 @@ def _env(service: dict) -> dict[str, str]:
     return dict(str(item).partition("=")[::2] for item in raw)
 
 
-def test_web_service_is_published_and_depends_on_postgres_and_the_queue_only():
+def test_web_service_is_published_and_depends_on_postgres_the_migration_and_the_queue_only():
     services = _compose()["services"]
     web = services["web"]
     assert web["container_name"] == "proto-web"
@@ -1027,6 +1028,8 @@ def test_web_service_is_published_and_depends_on_postgres_and_the_queue_only():
     assert all(str(p).startswith("127.0.0.1:") for p in web["ports"]), "dev-login signs anyone in: publish on loopback only"
     deps = web["depends_on"]
     assert deps["postgres"] == {"condition": "service_healthy"}
+    assert deps["migrate"] == {"condition": "service_completed_successfully"}, \
+        "U9: the tier runs no DDL, so it starts once the one-shot has migrated"
     assert deps["elasticmq"] == {"condition": "service_healthy"}
     assert "worker" not in deps, "the tier is driven against rows a script inserts until the worker exists"
     assert "shim" not in deps
@@ -1066,8 +1069,30 @@ async def test_lifespan_refuses_a_half_sqs_pair_only_with_a_queue(monkeypatch):
 
     monkeypatch.delenv("QUEUE_URL")
     application = create_app(store=FakeStore())
+    with pytest.raises(RuntimeError, match="QUEUE_URL") as exc:
+        async with application.router.lifespan_context(application):
+            pass
+    assert "GENEALOGY_SQS" not in str(exc.value)
+
+
+@pytest.mark.parametrize("queue_url", [None, "", "  "])
+async def test_lifespan_refuses_to_start_without_a_queue_url(monkeypatch, queue_url):
+    """U11: a tier with no queue records a turn and nothing ever runs it."""
+    if queue_url is None:
+        monkeypatch.delenv("QUEUE_URL", raising=False)
+    else:
+        monkeypatch.setenv("QUEUE_URL", queue_url)
+    application = create_app(store=FakeStore())
+    entered = False
+    with pytest.raises(RuntimeError, match="QUEUE_URL"):
+        async with application.router.lifespan_context(application):
+            entered = True
+    assert not entered and application.state.queue is None
+    assert not hasattr(app, "NullQueue"), "NullQueue is drive.py's embedded tier's, not the web tier's"
+
+    application = create_app(store=FakeStore(), queue=FakeQueue())  # a queue passed in needs no URL
     async with application.router.lifespan_context(application):
-        assert isinstance(application.state.queue, app.NullQueue)
+        assert isinstance(application.state.queue, FakeQueue)
 
 
 async def test_lifespan_start_line_names_mode_and_region(monkeypatch, caplog):
@@ -1563,7 +1588,7 @@ async def test_lifespan_starts_and_cancels_the_grant_refresh_loop(monkeypatch):
     monkeypatch.setenv("FS_GRANT_REFRESH_INTERVAL_S", "0.01")
     monkeypatch.setenv("FS_GRANT_REFRESH_AGE_S", "0")
     store = RefreshingStore()
-    application = create_app(store=store)
+    application = create_app(store=store, queue=FakeQueue())
     async with application.router.lifespan_context(application):
         for _ in range(200):
             if store.due_calls >= 2:
@@ -1575,7 +1600,7 @@ async def test_lifespan_starts_and_cancels_the_grant_refresh_loop(monkeypatch):
     assert store.due_calls == calls, "cancelled at lifespan exit"
 
     plain = FakeStore()  # no refresh_grant: the route tests' store never gets a loop
-    application = create_app(store=plain)
+    application = create_app(store=plain, queue=FakeQueue())
     async with application.router.lifespan_context(application):
         await asyncio.sleep(0.03)
 

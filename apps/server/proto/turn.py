@@ -855,13 +855,10 @@ def main(argv: list[str] | None = None) -> int:
             return 2
 
     try:
-        health = httpx.get(f"{args.base}/api/health", timeout=5.0).json()
+        httpx.get(f"{args.base}/api/health", timeout=5.0).json()
         db(args.pg_dsn, "SELECT 1", ())
     except Exception as exc:  # noqa: BLE001
         print(f"stack not up ({type(exc).__name__}: {exc}); run `make proto-up` first", file=sys.stderr)
-        return 2
-    if health.get("queue") == "NullQueue":
-        print("the tier has no queue (NullQueue): nothing would run the turn", file=sys.stderr)
         return 2
     problem = require_grant(args.pg_dsn, args.email)
     if problem:
