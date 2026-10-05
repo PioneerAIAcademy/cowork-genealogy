@@ -29,6 +29,7 @@
     "tree.gedcomx.json should contain exactly one person (the subject) and no relationships"
   ],
   "execution": {
+    "max_wall_clock_seconds": 480,
     "stub_skills": [
       {
         "skill": "question-selection",

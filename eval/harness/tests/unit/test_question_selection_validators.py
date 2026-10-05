@@ -258,12 +258,13 @@ def test_premise_requires_a_new_question():
     "Was it a married name, and what was her maiden surname?",
     # An intervening parenthetical between the birth/maiden word and the
     # name/surname word is tolerated (#1394 review): "birth (maiden) surname" is
-    # a spelling of the same fact as "birth surname", so it escapes — and,
-    # because the escape is a global exemption, so does the same question carrying
-    # a marriage clause. Drop the parenthetical tolerance and the second flips to
-    # reject (the marriage signal fires on a fact-naming question).
+    # a spelling of the same fact as "birth surname", so it escapes. (Its
+    # trailing-marriage-clause twin moved to the reject list on 2026-09-30.)
     "What was the birth (maiden) surname of Rosalind?",
-    "What was the birth (maiden) surname of Rosalind, or was it acquired through marriage?",
+    # Real ut_016 questions (2026-09-30/10-01) that end at the value. Descriptive
+    # clauses identifying the person are not a classification.
+    "What was the birth surname of Rosalind Hartwell (b. ca. 1855, Ohio), who is recorded in a compiled source under the surname 'Hartwell' and is known to have been married to Thomas Hartwell?",
+    "What was the birth (maiden) surname of Rosalind Hartwell, born circa 1855 in Ohio, who married Thomas Hartwell?",
     "Do independent records confirm or refute that Johann and Maria Vogt are the parents of Anton Vogt?",
     "Who were Caroline's parents?",  # objective restatement — the judge's call, not this guard's
 ])
@@ -283,6 +284,12 @@ def test_premise_accepts_fact_naming_and_1471(question):
     "Did she take Hartwell by marriage?",
     "Was 'Hartwell' her maiden or married name, and what surname does the census list?",
     "Was Hartwell her maiden or married name, and what surname did she use after marriage?",
+    # A value question that then re-asks the recorded name as a choice fails
+    # (genealogist ruling, 2026-09-30). The last three are real ut_016 questions.
+    "What was the birth (maiden) surname of Rosalind, or was it acquired through marriage?",
+    "What was Rosalind Hartwell's birth surname — was 'Hartwell' her maiden name or the married name she acquired from her husband Thomas Hartwell?",
+    "What was the birth surname of Rosalind Hartwell (b. ca. 1855, Ohio), the wife of Thomas Hartwell — was 'Hartwell' her maiden name or her married name?",
+    "What was the birth surname of Rosalind Hartwell (b. ca. 1855, Ohio), whose recorded surname 'Hartwell' may be her maiden name or the married name of her husband Thomas Hartwell?",
 ])
 def test_premise_rejects_bare_property_test(question):
     with pytest.raises(AssertionError, match="property test of a name"):
