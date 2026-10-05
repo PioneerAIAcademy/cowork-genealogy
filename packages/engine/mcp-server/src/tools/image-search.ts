@@ -520,7 +520,9 @@ export const imageSearchSchema = {
         description:
           "Bare film only: the film's Nth item, counted as FamilySearch's image " +
           "groups in film order (1 = the first). This is not always the " +
-          "Catalog's item number; check the returned place against the citation.",
+          "Catalog's item number; check the returned place against the citation. " +
+          "When place is null the item could not be checked: tell the user it was " +
+          "counted by image group and may not be the Catalog's item.",
       },
       itemImage: {
         type: "integer",

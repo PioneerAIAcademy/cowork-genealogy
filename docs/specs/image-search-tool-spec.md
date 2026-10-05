@@ -118,7 +118,9 @@ diverge where the group service holds more than one group per filmed item:
 Position is the only numbering an ordinary account can resolve without a
 place: the metadata that would map Catalog items is refused (403). So the
 result carries the item's `place` when its metadata is readable, and the
-caller checks it against the place in the citation.
+caller checks it against the place in the citation. When place is null the
+item could not be checked: tell the user it was counted by image group and may
+not be the Catalog's item.
 
 **Misspelled parameters are errors, never ignored.** Nothing validates tool
 input against the advertised schema (`server.ts` passes arguments straight
