@@ -456,13 +456,12 @@ probe-gateway-path: $(ENGINE_BUILD) ## P3b probe: the CLI behind a non-anthropic
 # exits 0 (Compose v5.1.4) and abandons the wait before the worker is healthy.
 PROTO_COMPOSE := docker compose -f apps/server/proto/docker-compose.yml
 
-# apps/server/proto/env.sh, sourced first, exports ANTHROPIC_API_KEY (the caller's, else
-# eval/.env) for the worker's environment and writes the FamilySearch token -- refreshed
-# from the desktop login through dev/fs-token.ts -- to apps/server/proto/.fs-token, which
-# the worker reads per turn. Neither value is ever echoed. A changed key recreates the
-# worker; a changed token does not.
+# apps/server/proto/env.sh, sourced first, exports the model keys only (ANTHROPIC_API_KEY
+# and OPENROUTER_API_KEY: the caller's, else eval/.env), never echoed; a changed key
+# recreates the worker. The FamilySearch grant is the dev-login patron's: `make
+# proto-grant` once per stack (U3), after which the web tier keeps it fresh.
 .PHONY: proto-up
-proto-up: $(ENGINE_DEPS) ## Prototype stack: build + start postgres/minio/elasticmq/worker/shim/web/tools with the model key and the FS token, and wait for health
+proto-up: $(ENGINE_DEPS) ## Prototype stack: build + start postgres/minio/elasticmq/worker/shim/web/tools with the model keys, and wait for health (then `make proto-grant` once per stack)
 	. apps/server/proto/env.sh && $(PROTO_COMPOSE) up -d --build && \
 	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools
 
@@ -470,7 +469,6 @@ proto-up: $(ENGINE_DEPS) ## Prototype stack: build + start postgres/minio/elasti
 # on the web image building (a network pip install) or its healthcheck.
 .PHONY: proto-up-core
 proto-up-core: ## Prototype stack without the web tier: postgres/minio/elasticmq/worker/shim
-	@[ -f apps/server/proto/.fs-token ] || { rmdir apps/server/proto/.fs-token 2>/dev/null; : > apps/server/proto/.fs-token; }
 	$(PROTO_COMPOSE) up -d --build postgres minio minio-init elasticmq worker shim
 	$(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim
 
@@ -496,7 +494,24 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py
+
+# U3: the grant-lock tests against real Postgres -- the lock semantics are the point, and no
+# fake can prove pg_try_advisory_lock. A fresh database per module, dropped at teardown.
+# CI runs the same file against a postgres:16 container (server-tests.yml).
+.PHONY: proto-grants-test
+proto-grants-test: ## U3: the grant-lock interleavings against the compose postgres (real advisory locks)
+	$(PROTO_COMPOSE) up -d --wait postgres
+	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py
+
+# U3: store an encrypted FamilySearch grant for the dev-login patron (EMAIL, default
+# dev@localhost, who owns every seeded project): a PKCE sign-in on the dev key through a
+# loopback listener on 127.0.0.1:1837, the dev key's only registered redirect. A second
+# sign-in, so it does not revoke the desktop login. Prints no token. After `make proto-up`
+# (the web tier's start applies 009), and again after a `proto-down -v`.
+.PHONY: proto-grant
+proto-grant: ## U3: sign in on the dev key and store the dev-login patron's grant (EMAIL=…); once per stack, after proto-up
+	cd apps/server && uv run python proto/grant.py $(if $(EMAIL),--email '$(EMAIL)',) --pg-dsn $(PROTO_PG_DSN)
 
 # D9–10 acceptance, billed (two short Sonnet turns). Same `up` as proto-up (env.sh);
 # refuses to run without a model key. The Stop hook is off (AUTONOMOUS_MAX_NUDGES=0,
@@ -511,17 +526,6 @@ proto-turn: $(ENGINE_DEPS) ## D9–10 acceptance: two real turns through web tie
 	  $(PROTO_COMPOSE) up -d --build && \
 	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools && \
 	  cd apps/server && uv run python proto/turn.py $(ARGS)
-
-# The worker reads the FamilySearch token per turn from apps/server/proto/.fs-token;
-# run this between turns of a long run, never during one -- a FamilySearch refresh
-# revokes the previous access token, so the in-flight attempt's calls would 401. It FORCES a refresh when under 35 minutes are left (PROTO_TOKEN_MIN_LIFE, default
-# 30 -- the READ_TIMEOUT_S step ceiling in minutes, so the token outlives a full-length
-# turn -- plus the auth module's 5-minute expiry buffer); getValidToken hands back a token
-# that has not yet expired, so the same call at minute 52 was a no-op. Start the session
-# with `make e2e-login`: nothing here can renew a dead refresh token.
-.PHONY: proto-token
-proto-token: $(ENGINE_DEPS) ## Refresh the FamilySearch token the running worker reads per turn (forced when under 35 min of life is left)
-	@. apps/server/proto/env.sh
 
 # D14 kill-resume on a real turn: the worker container is killed as the turn's first
 # place_search call starts, started again, and the shim's redelivery resumes the SDK

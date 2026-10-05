@@ -121,6 +121,7 @@ RULES: dict[str, tuple[Rule, ...]] = {
     "web": (
         Rule(PROTO + "web/", "web/", top_py=True),
         Rule(PROTO + "enqueue.py", "enqueue.py"),
+        Rule(PROTO + "grants.py", "grants.py"),
         Rule(PROTO + "sql/", "sql/"),
         Rule(f"{layout.ENGINE_DIR}/config/familysearch.json", "config/familysearch.json"),
     ),
@@ -129,6 +130,7 @@ RULES: dict[str, tuple[Rule, ...]] = {
         Rule("apps/server/app/__init__.py", "app/__init__.py"),
         Rule("apps/server/app/agent/", "app/agent/", top_py=True),
         Rule(PROTO + "enqueue.py", "proto/enqueue.py"),
+        Rule(PROTO + "grants.py", "proto/grants.py"),
         Rule(PROTO + "sql/", "proto/sql/"),
         Rule(PROTO + "worker/", "proto/worker/", top_py=True),
         Rule(layout.PLUGIN_DIR + "/", layout.PLUGIN_IN_BUNDLE + "/"),
