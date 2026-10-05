@@ -35,6 +35,7 @@ def _start(tmp_path: Path, tmpdir: str | None) -> tuple[subprocess.Popen, "queue
     cwd = tmp_path / "project"
     cwd.mkdir(exist_ok=True)
     env = {**os.environ, "PORT": "0", "PG_DSN": REFUSED_DSN, "WORKER_CWD": str(cwd), "QUEUE_URL": "",
+           "WORKER_TURN_USERS": "none",
            "SWEEP_INTERVAL_S": "0", "SHUTDOWN_GRACE_S": str(GRACE_S), "PYTHONUNBUFFERED": "1"}
     env.pop("SQSD_MAX_RETRIES", None)
     env.pop("SQSD_RETENTION_PERIOD_S", None)

@@ -497,106 +497,89 @@ def test_the_tool_results_spill_under_the_config_root_is_allowed(tmp_path):
     assert deny.project_read_denied("Read", {"file_path": str(cfg / "projects" / "-project" / "sess.jsonl")}, **kw) is None, "outside the anchor anyway"
 
 
-# U3: one container runs two turns as one uid, so another turn's config dir (its patron's
-# bearer in mcp.json) and /proc (the worker's FS_TOKEN_ENC_KEY and PG_DSN) are reachable by
-# any file tool unless the hook denies them.
+# U3: each turn's CLI runs as its own slot user, so the kernel keeps it out of other turns'
+# files and the worker's /proc/<pid>. It cannot keep a process from itself: /proc/self holds
+# the model key the CLI needs, and /dev/fd leads back to any open file -- the hook's job.
 
 
 def _host_kw(tmp_path):
-    temp = tmp_path / "tmp"
-    own = temp / "worker-cfg-mine"
-    other = temp / "worker-cfg-other"
-    (own / "projects" / "-project" / "sess" / "tool-results").mkdir(parents=True)
-    other.mkdir(parents=True)
-    (other / "mcp.json").write_text('{"mcpServers": {}}', encoding="utf-8")
     root = tmp_path / "project"
     root.mkdir()
-    kw = dict(cwd=str(root), project_root=str(root), config_root=str(own), temp_root=str(temp))
-    return kw, temp, own, other
+    return dict(cwd=str(root), project_root=str(root))
 
 
 @pytest.mark.parametrize("tool_name,tool_input", [
-    ("Read", {"file_path": "{other}/mcp.json"}),
-    ("Read", {"file_path": "{own}/mcp.json"}),
-    ("Read", {"file_path": "/proc/1/environ"}),
-    ("Read", {"file_path": "/proc/1/task/1/environ"}),
     ("Read", {"file_path": "/proc/self/environ"}),
+    ("Read", {"file_path": "/proc/self/task/1/environ"}),
+    ("Read", {"file_path": "/proc/1/environ"}),
     ("Read", {"file_path": "/dev/fd/3"}),
-    ("Read", {"file_path": "{up}proc/1/environ"}),
-    ("Grep", {"pattern": "Bearer", "path": "{temp}"}),
-    ("Grep", {"pattern": "FS_TOKEN_ENC_KEY", "path": "/proc/1"}),
-    ("Grep", {"pattern": "Bearer", "path": "/"}),
-    ("Glob", {"pattern": "*/mcp.json", "path": "{temp}"}),
-    ("Glob", {"pattern": "{temp}/*/mcp.json"}),
-    ("Glob", {"pattern": "/**/mcp.json", "path": "/etc"}),
-    ("Glob", {"pattern": "**/mcp.json", "path": "/"}),
-    ("Glob", {"pattern": "../tmp/*/mcp.json"}),
-    ("Glob", {"pattern": "*/../../tmp/x"}),
-    ("Write", {"file_path": "{other}/mcp.json", "content": "{{}}"}),
-    ("Edit", {"file_path": "{other}/projects/k/tool-results/r.txt", "old_string": "a", "new_string": "b"}),
+    ("Read", {"file_path": "/dev/stdin"}),
+    ("Read", {"file_path": "{up}proc/self/environ"}),
+    ("Grep", {"pattern": "ANTHROPIC", "path": "/proc/self"}),
+    ("Grep", {"pattern": "x", "path": "/"}),
+    ("Glob", {"pattern": "/proc/*/environ"}),
+    ("Glob", {"pattern": "**/environ", "path": "/"}),
+    ("Glob", {"pattern": "*/../../proc/x"}),
+    ("Write", {"file_path": "/proc/self/oom_score_adj", "content": "1000"}),
+    ("Edit", {"file_path": "/dev/fd/1", "old_string": "a", "new_string": "b"}),
 ], ids=lambda v: v if isinstance(v, str) else None)
-def test_another_turns_temp_files_and_proc_are_denied(tmp_path, tool_name, tool_input):
-    kw, temp, own, other = _host_kw(tmp_path)
+def test_the_turns_own_proc_and_dev_are_denied(tmp_path, tool_name, tool_input):
+    kw = _host_kw(tmp_path)
     up = "../" * len(Path(kw["cwd"]).parts)  # a relative climb from cwd to /
-    fill = {"temp": str(temp), "own": str(own), "other": str(other), "up": up}
-    tool_input = {k: v.format(**fill) for k, v in tool_input.items()}
+    tool_input = {k: v.format(up=up) for k, v in tool_input.items()}
     reason = deny.host_path_denied(tool_name, tool_input, **kw)
     assert reason and "disabled in this run" in reason, (tool_name, tool_input)
 
 
 @pytest.mark.parametrize("tool_name,tool_input", [
-    ("Read", {"file_path": "{own}/projects/-project/sess/tool-results/r1.txt"}),
+    # Another turn's files are the kernel's to refuse (a different slot user), not the hook's.
+    ("Read", {"file_path": "/tmp/worker-cfg-other/mcp.json"}),
+    ("Grep", {"pattern": "Bearer", "path": "/tmp"}),
+    ("Read", {"file_path": "/tmp/worker-cfg-mine/projects/-project/sess/tool-results/r1.txt"}),
     ("Read", {"file_path": "/etc/hosts"}),
-    ("Read", {"file_path": "/app/proto/worker/deny.py"}),
     ("Grep", {"pattern": "x", "path": "/etc"}),
-    ("Glob", {"pattern": "**/*.md", "path": "/opt/plugin"}),
     ("Glob", {"pattern": "/opt/plugin/skills/*/SKILL.md"}),
     ("Write", {"file_path": "/srv/notes.md", "content": "x"}),
     ("Read", {"file_path": "{project}/.claude/agents/x.md"}),
     ("mcp__genealogy__research_query", {"projectPath": "/proc"}),
 ], ids=lambda v: v if isinstance(v, str) else None)
-def test_paths_outside_the_co_tenants_reach_stay_allowed(tmp_path, tool_name, tool_input):
-    kw, temp, own, other = _host_kw(tmp_path)
-    fill = {"temp": str(temp), "own": str(own), "other": str(other), "project": kw["project_root"]}
-    tool_input = {k: v.format(**fill) for k, v in tool_input.items()}
+def test_paths_outside_proc_and_dev_are_left_to_the_kernel(tmp_path, tool_name, tool_input):
+    kw = _host_kw(tmp_path)
+    tool_input = {k: v.format(project=kw["project_root"]) for k, v in tool_input.items()}
     assert deny.host_path_denied(tool_name, tool_input, **kw) is None, (tool_name, tool_input)
 
 
-def test_a_symlink_is_judged_by_both_its_spelling_and_its_target(tmp_path):
-    kw, temp, own, other = _host_kw(tmp_path)
+def test_a_symlink_is_judged_by_both_its_spelling_and_its_target(tmp_path, monkeypatch):
+    """/dev/fd/3 resolves to whatever descriptor 3 is, so the spelling is judged; a link
+    into /proc is judged by where it resolves. The roots are faked so the test can make
+    links on both sides of them."""
+    fake_proc = tmp_path / "proc"
+    (fake_proc / "self").mkdir(parents=True)
+    (fake_proc / "self" / "environ").write_text("K=v", encoding="utf-8")
     outside = tmp_path / "outside"
     outside.mkdir()
     (outside / "notes.md").write_text("x", encoding="utf-8")
-    # Spelled outside the temp root, resolving into another turn's config dir: only the
-    # symlink-resolved pass catches it.
-    into_other = tmp_path / "link-to-other"
-    into_other.symlink_to(other, target_is_directory=True)
-    assert deny.host_path_denied("Read", {"file_path": str(into_other / "mcp.json")}, **kw)
-    # Spelled inside another turn's dir, resolving outside the temp root: only the spelled
-    # pass catches it.
-    from_other = other / "link-out"
-    from_other.symlink_to(outside, target_is_directory=True)
-    assert deny.host_path_denied("Read", {"file_path": str(from_other / "notes.md")}, **kw)
-    # A symlink outside both, resolving outside both, stays allowed.
+    monkeypatch.setattr(deny, "SYSTEM_ROOTS", (str(fake_proc),))
+    kw = _host_kw(tmp_path)
+    into = tmp_path / "link-into-proc"
+    into.symlink_to(fake_proc / "self", target_is_directory=True)
+    assert deny.host_path_denied("Read", {"file_path": str(into / "environ")}, **kw), "only the resolved pass sees it"
+    out = fake_proc / "fd"
+    out.symlink_to(outside, target_is_directory=True)
+    assert deny.host_path_denied("Read", {"file_path": str(out / "notes.md")}, **kw), "only the spelled pass sees it"
     plain = tmp_path / "link-to-outside"
     plain.symlink_to(outside, target_is_directory=True)
     assert deny.host_path_denied("Read", {"file_path": str(plain / "notes.md")}, **kw) is None
 
 
-def test_the_temp_root_defaults_to_the_workers_tempdir(tmp_path, monkeypatch):
-    other = tmp_path / "worker-cfg-other"
-    other.mkdir()
-    monkeypatch.setattr(deny.tempfile, "gettempdir", lambda: str(tmp_path))
-    kw = dict(cwd="/project", project_root="/project", config_root=str(tmp_path / "worker-cfg-mine"))
-    assert deny.host_path_denied("Read", {"file_path": str(other / "mcp.json")}, **kw)
-
-
-def test_the_hook_denies_another_turns_bearer_and_proc_and_logs_it(tmp_path):
-    kw, temp, own, other = _host_kw(tmp_path)
+def test_the_hook_denies_the_turns_own_proc_and_logs_it(tmp_path):
+    root = tmp_path / "project"
+    root.mkdir()
+    own = tmp_path / "cfg"
     rows: list[dict] = []
-    hook = options.make_pretool_hook(turn_id="t", session_id="s", cwd=kw["cwd"], config_root=str(own),
-                                     record=rows.append, temp_root=str(temp))
-    for tool_input in ({"file_path": str(other / "mcp.json")}, {"file_path": "/proc/1/task/1/environ"}):
+    hook = options.make_pretool_hook(turn_id="t", session_id="s", cwd=str(root), config_root=str(own),
+                                     record=rows.append)
+    for tool_input in ({"file_path": "/proc/self/environ"}, {"file_path": "/proc/1/task/1/environ"}):
         out = _call(hook, {"tool_name": "Read", "tool_input": tool_input})
         assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
         assert rows[-1]["decision"] == "deny"
@@ -1151,10 +1134,15 @@ def test_worker_dockerfile_shape():
     assert re.search(r"^ENV PYTHONPATH=/opt/genealogy/server", body, re.M)
     assert "--break-system-packages" in body
     # The CLI refuses bypassPermissions as root ("--dangerously-skip-permissions cannot
-    # be used with root/sudo privileges"): the first image ran as root and every turn
-    # died on spawn.
+    # be used with root/sudo privileges"): the first image ran it as root and every turn
+    # died on spawn. U3: the worker is root so each CLI runs as a slot user instead, which
+    # needs the pool in the image and named in its environment.
     user = re.search(r"^USER (\S+)", body, re.M)
-    assert user and user.group(1) != "root", "the worker must run unprivileged"
+    assert user is None or user.group(1) == "root", "the worker launches each CLI as its slot user"
+    pool = re.search(r"^ENV WORKER_TURN_USERS=(\S+)", body, re.M)
+    assert pool, "the image names its slot users, or every turn would run the CLI as root"
+    for name in pool.group(1).split(","):
+        assert re.search(rf"useradd [^\n]*--gid genealogy-turn {re.escape(name)}\b", body), f"{name} is never created"
 
 
 def test_004_worker_only_adds_nullable_columns():
@@ -2172,6 +2160,8 @@ class _PrepareRan(Exception):
 
 
 def _stop_at_prepare(monkeypatch):
+    monkeypatch.setenv("WORKER_TURN_USERS", "none")
+
     def prepare():
         raise _PrepareRan("ran past the check")
     monkeypatch.setattr(worker, "prepare", prepare)
@@ -2205,6 +2195,7 @@ def test_queue_startup_fields_exits_2_and_ignores_stray_keys_without_a_queue(mon
 
 def _start_only(monkeypatch):
     """main() up to ev=start, with nothing real started."""
+    monkeypatch.setenv("WORKER_TURN_USERS", "none")
     monkeypatch.setattr(worker, "prepare", lambda: None)
 
     class Server:
@@ -4272,6 +4263,41 @@ def test_run_turn_bears_the_grant_not_the_message(turn_env):
     assert turn_env["options"]["bearer"] == "grant-token"
     assert "fs_access_token" not in turn_env["options"]
     assert turn_env["acquired"] == ["proj-1"], "the grant of the turn's project's owner"
+
+
+def test_an_attempt_runs_its_cli_as_a_slot_user_and_leaves_the_slot_clean(turn_env, monkeypatch):
+    """U3: with a pool, the attempt takes a slot, owns its home and config dir to it (after
+    mcp.json is written), runs the CLI as it, and before the slot goes back kills whatever
+    the slot left running -- all before the grant lock is released."""
+    from proto.worker import turn_users
+
+    slot = turn_users.Slot("genealogy-turn-0", 901, 900)
+    pool = turn_users.Pool([slot])
+    owned: list[str] = []
+    monkeypatch.setattr(worker, "TURN_POOL", pool)
+    monkeypatch.setattr(worker.turn_users, "chown_tree", lambda path, s: owned.append(path) or (s == slot) or 1 / 0)
+    monkeypatch.setattr(worker.turn_users, "kill_uid", lambda uid: turn_env["events"].append(f"kill {uid}") or [])
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    opts = turn_env["options"]
+    assert opts["turn_user"] == "genealogy-turn-0"
+    home = opts["turn_home"]
+    assert Path(home).name.startswith("turn-home-") and not Path(home).exists(), "made, then removed"
+    assert owned == [home, opts["config_dir"]], "home first; the config dir once mcp.json is in it"
+    events = turn_env["events"]
+    assert events.index("kill 901") < events.index("held.close"), "nothing of the slot outlives the lock"
+    assert pool.acquire() == slot, "the slot is back"
+
+
+def test_no_free_slot_answers_500_and_still_releases_the_grant(turn_env, monkeypatch):
+    from proto.worker import turn_users
+
+    monkeypatch.setattr(worker, "TURN_POOL", turn_users.Pool([]))
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    with pytest.raises(turn_users.NoTurnUser):
+        asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    assert "held.close" in turn_env["events"]
+    assert turn_env["options"] is None, "no CLI was configured"
 
 
 def test_a_redelivered_attempt_bears_the_grant_refreshed_between_attempts(turn_env):

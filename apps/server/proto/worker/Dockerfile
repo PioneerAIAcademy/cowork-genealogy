@@ -52,18 +52,21 @@ ENV ENGINE_PLUGIN_DIR=/opt/genealogy/plugin
 ENV WORKER_CWD=/project
 ENV TMPDIR=/tmp
 
-# The worker runs unprivileged: the CLI refuses bypassPermissions as root
-# ("--dangerously-skip-permissions cannot be used with root/sudo privileges"), and the
-# E2B sandbox runs its agent as `user` for the same reason. Everything under
-# /opt/genealogy stays root-owned and read-only to it.
-RUN useradd --create-home --shell /usr/sbin/nologin worker
-ENV HOME=/home/worker
+# U3: the worker runs as root so it can launch each turn's CLI as its own slot user
+# (WORKER_TURN_USERS, proto/worker/turn_users.py): the kernel then keeps one patron's turn
+# out of another's files and out of the worker's /proc. The CLI itself never runs as root
+# (it refuses bypassPermissions as root). One user per sqsd HttpConnections slot, sharing
+# one primary group the worker takes at start. Everything under /opt/genealogy stays
+# root-owned and read-only to them.
+RUN groupadd --system genealogy-turn \
+    && useradd --system --no-create-home --shell /usr/sbin/nologin --gid genealogy-turn genealogy-turn-0 \
+    && useradd --system --no-create-home --shell /usr/sbin/nologin --gid genealogy-turn genealogy-turn-1
+ENV WORKER_TURN_USERS=genealogy-turn-0,genealogy-turn-1
 
 # The cwd anchor: must exist or the CLI will not spawn; root-owned and read-only to the
-# worker, so nothing can be written into it.
+# slot users, so nothing can be written into it.
 RUN mkdir -p /project && chmod 555 /project
 
-USER worker
 WORKDIR /opt/genealogy/server
 EXPOSE 8080
 

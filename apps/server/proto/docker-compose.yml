@@ -127,8 +127,10 @@ services:
       # (familysearch_tokens) at the start of EVERY attempt and held under that patron's
       # attempt lock; the web tier is its only refresher. No token reaches this service any
       # other way. The key is the web tier's (one value for both), passed through and never
-      # a literal; the CLI never inherits it, and its hook denies it /proc and every other
-      # turn's temp dir (deny.host_path_denied). `make proto-grant` stores the dev patron's grant.
+      # a literal; the CLI inherits no worker variable (options.CLI_ENV_KEEP), and each turn's
+      # CLI runs as its own slot user (the image's WORKER_TURN_USERS), so the kernel keeps it
+      # out of the worker's /proc and every other turn's dirs. `make proto-grant` stores the
+      # dev patron's grant.
       FS_TOKEN_ENC_KEY: ${FS_TOKEN_ENC_KEY:-}
       # An attempt starts only on a session at most this old (8 h less one 1,800 s attempt
       # less 600 s, so a shim-killed attempt cannot outlive its session), else waits up to

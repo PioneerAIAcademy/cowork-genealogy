@@ -92,8 +92,10 @@ Env: PG_DSN, PORT (8080), WORKER_CWD (/project -- created empty if missing, neve
 written), ENGINE_PLUGIN_DIR, TMPDIR (per-turn CLAUDE_CONFIG_DIRs go under it),
 MODEL_PROVIDER + ANTHROPIC_API_KEY / GATEWAY_BASE_URL, GATEWAY_API_KEY and
 GATEWAY_TOOL_SEARCH and TOOL_SERVER_URL (see options.py); FS_TOKEN_ENC_KEY (the web tier's
-grant key: the worker decrypts the patron's grant; the CLI never inherits it, and the hook
-denies it /proc and other turns' temp dirs, deny.host_path_denied),
+grant key: the worker decrypts the patron's grant; the CLI inherits no worker variable),
+WORKER_TURN_USERS (U3: one slot user per sqsd connection, each turn's CLI runs as one, so the
+kernel keeps it out of other turns' dirs and the worker's /proc; ``none`` only when not
+root; proto/worker/turn_users.py),
 FS_GRANT_MAX_START_AGE_S (26400) and FS_GRANT_WAIT_S (300) (U3, below);
 SQSD_MAX_RETRIES (0 = no last-receive close), SQSD_VISIBILITY_TIMEOUT_S,
 SQSD_RETENTION_PERIOD_S (unset = no backstop), SWEEP_INTERVAL_S (300; 0 = off) and
@@ -186,6 +188,7 @@ from proto.worker.options import (  # noqa: E402
     TERMINAL_STOPPED,
     build_worker_options,
     check_registration,
+    cli_env_blanks,
     hook_path,
     make_posttool_hook,
     make_pretool_hook,
@@ -195,6 +198,7 @@ from proto.worker.options import (  # noqa: E402
 from proto import grants  # noqa: E402
 from proto.worker.plugin_agents import load_agent_definitions  # noqa: E402
 from proto.worker.session_store import PgSessionStore  # noqa: E402
+from proto.worker import turn_users  # noqa: E402
 
 PG_DSN = os.environ.get("PG_DSN", "postgresql://postgres:proto@postgres:5432/proto")
 # 1b: where a held message goes when the turn that held it ends. The worker is the only
@@ -1823,6 +1827,8 @@ async def _run_turn(
     conn = psycopg.connect(PG_DSN, autocommit=True)
     result = None
     held: HeldGrant | NoGrant | None = None
+    slot: turn_users.Slot | None = None
+    turn_home: str | None = None
     try:
         # U3: the owner's CURRENT grant, locked for the whole attempt, before anything else
         # -- no CLI exists yet, so a turn with no usable grant closes here and bills nothing.
@@ -1975,6 +1981,12 @@ async def _run_turn(
                 # normal path -- median two attempts, longest six.
                 nudges_used=nudges_so_far(conn, turn_id) if receive_count > 1 else 0,
             )
+        # U3: this attempt's CLI runs as a slot user that owns its config dir and home and
+        # nothing of any other turn's.
+        if TURN_POOL is not None:
+            slot = TURN_POOL.acquire()
+            turn_home = tempfile.mkdtemp(prefix="turn-home-")
+            turn_users.chown_tree(turn_home, slot)
         options = build_worker_options(
             project_id=project_id,
             cwd=WORKER_CWD,
@@ -1989,7 +2001,11 @@ async def _run_turn(
             bearer=held.token,
             stderr=lambda line: log(ev="cli_stderr", turn_id=turn_id, line=line[:500]),
             stop_hook=stop_hook,
+            turn_user=slot.name if slot else None,
+            turn_home=turn_home,
         )
+        if slot is not None:
+            turn_users.chown_tree(config_dir, slot)  # after mcp.json is written into it
         client = ClaudeSDKClient(options=options)
         await client.connect()
         try:
@@ -2137,11 +2153,19 @@ async def _run_turn(
         finally:
             await client.disconnect()
     finally:
+        # Nothing of this attempt outlives it on the slot: a hook or a search child can
+        # outlive the CLI, and the next patron on the slot must inherit no process.
+        if slot is not None:
+            turn_users.kill_uid(slot.uid)
         # The lock outlives the CLI: released only once client.disconnect() has killed it.
         if isinstance(held, HeldGrant):
             held.close()
         conn.close()
         shutil.rmtree(config_dir, ignore_errors=True)
+        if turn_home is not None:
+            shutil.rmtree(turn_home, ignore_errors=True)
+        if slot is not None and TURN_POOL is not None:
+            TURN_POOL.release(slot)
 
     # 1b: the turn is closed, so a message held while it ran goes on the queue now --
     # whatever the outcome, because a held message is the patron's words and is never
@@ -2604,6 +2628,49 @@ def queue_startup_fields(env: Mapping[str, str]) -> dict[str, str]:
     return {"sqs_credentials": auth.mode, "sqs_region": enqueue.region_for(QUEUE_URL, auth.region)}
 
 
+# U3: the slot pool (proto/worker/turn_users.py); None when WORKER_TURN_USERS=none.
+TURN_POOL: turn_users.Pool | None = None
+TURN_SLOTS: dict[str, turn_users.Slot] = {}
+
+
+def bundled_cli() -> str:
+    import claude_agent_sdk
+
+    return os.path.join(os.path.dirname(claude_agent_sdk.__file__), "_bundled", "claude")
+
+
+def setup_turn_users(hook_python_exe: str) -> list[str] | str:
+    """Static instance configuration, like TMPDIR: a pool that cannot isolate turns, or a
+    slot user that cannot reach the CLI, the hook interpreter, the cwd or TMPDIR, refuses
+    start (``ev=prepare step=turn_users``, exit 2). Returns the slot names, or "none"."""
+    global TURN_POOL
+    try:
+        slots = turn_users.parse(os.environ.get(turn_users.ENV_VAR), euid=os.geteuid())
+        if slots is None:
+            return turn_users.DISABLED
+        from claude_agent_sdk import ClaudeSDKClient
+        import importlib
+
+        seam = turn_users.check_seam(ClaudeSDKClient.connect)
+        if seam is not None:
+            raise turn_users.TurnUsersError(seam)
+        turn_users.apply_process_creds(slots[0].gid)
+        for slot in slots:
+            problem = turn_users.probe(
+                slot, ([bundled_cli(), "-v"], [hook_python_exe, "-c", "import sys"]),
+                cwd=WORKER_CWD, tmpdir=tempfile.gettempdir(),
+            )
+            if problem is not None:
+                raise turn_users.TurnUsersError(problem)
+        TURN_SLOTS.update({s.name: s for s in slots})
+        turn_users.own_materialized_resumes(importlib.import_module(turn_users.SEAM_MODULE), TURN_SLOTS.get)
+        TURN_POOL = turn_users.Pool(slots)
+        return [s.name for s in slots]
+    except (turn_users.TurnUsersError, OSError) as exc:
+        log(ev="prepare", step="turn_users", error=f"{type(exc).__name__}: {exc}")
+        raise SystemExit(2) from None
+
+
 def main() -> None:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -2615,6 +2682,7 @@ def main() -> None:
         log(ev="prepare", step="tmpdir", error=bad_tmpdir, tmpdir=os.environ.get("TMPDIR"))
         sys.exit(2)
     hook_python = require_hook_python()
+    pool_names = setup_turn_users(hook_python.split(" ", 1)[0])
     sqs = queue_startup_fields(os.environ)
     if sqs:
         from proto import enqueue
@@ -2634,7 +2702,8 @@ def main() -> None:
         sweep=sweeper is not None, shutdown_grace_s=SHUTDOWN_GRACE_S,
         tmpdir=tempfile.gettempdir(), tmpdir_free_mb=tmpdir_free_mb(), hook_python=hook_python,
         fs_token_key=grants.key_mode(os.environ), grant_max_start_age_s=FS_GRANT_MAX_START_AGE_S,
-        grant_wait_s=FS_GRANT_WAIT_S, **sqs)
+        grant_wait_s=FS_GRANT_WAIT_S, turn_users=pool_names,
+        cli_env_blanked=len(cli_env_blanks(os.environ)), **sqs)
     server.serve_forever()
     if _SHUTDOWN_THREAD is not None:
         # A daemon: its second wait, the releases and ev=shutdown run after
