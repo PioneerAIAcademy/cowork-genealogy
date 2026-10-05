@@ -20,6 +20,7 @@
     "explanation": "The user has a record in hand (the deed) and wants assertions extracted from it. search-full-text is for FINDING records that mention a person or term; once found, the record goes to extraction (`extraction_append` for a FamilySearch record, the record-structurer agent for any other source). Since extraction became a tool call and an agent rather than a skill, no skill is the correct route, so this is an out-of-scope negative (`correct_skill: []`): the skill under test must stay out of extraction, and any correct extraction path passes (genealogist ruling 2026-09-30, option B)."
   },
   "judge_context": [
-    "Should route to extraction rather than re-querying the full-text tool with the deed content"
+    "Should route to extraction rather than re-querying the full-text tool with the deed content",
+    "The message gives no deed text, file or record id, so nothing can be extracted yet. Asking for one, without searching, extracting or writing, is a correct response: do not lower Completeness because no assertions were extracted."
   ]
 }
