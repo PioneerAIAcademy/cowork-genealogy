@@ -13,7 +13,8 @@ against seeded rows until the worker exists); the store half of D6–8 built 202
 #2652; `PgS3ProjectStore`, `createServer(principal)`, `hosted-stdio.js`); D9–10 and D15
 built 2026-09-18 (PR #2656; the worker — one SDK turn per queue message, the transcript in
 Postgres, the six agents via `agents=`); D14 scripted and the D17 prep built 2026-09-18
-(PR #2668; `make proto-kill`, `proto-seed`, `proto-audit`, `proto-token`, and
+(PR #2668; `make proto-kill`, `proto-seed`, `proto-audit`, the operator-token recipe
+(superseded by U3: `make proto-grant`; the web tier refreshes between attempts), and
 `tool_calls.duration_ms` filled); D16 built 2026-09-18 (PR #2659; the
 Streamable HTTP entrypoint wrapping `createServer(principal)`, the transport smoke over
 every tool but the four auth exclusions, the compose `tools` service); per-request store
@@ -1870,24 +1871,11 @@ without whichever Bedrock refuses.
   resumed turn must show `list_subkeys` called and returning ≥ 1 key. Criterion 6 is a finding
   recorded under P1, not something this run proves. This is FamilySearch question 1. Iterate.
   **Prep done 2026-09-18 (PR #2668); the run is four commands and a browser.**
-  1. **Never source `proto/env.sh` or run `make proto-token` while a turn is in flight**
-     (2026-09-23): a FamilySearch refresh revokes the previous access token, so the
-     in-flight attempt's calls answer 401 — the Auth section's measurement. Between turns
-     it is safe. `BLOCKED_TOOLS=person_read,person_search,person_ancestors,person_record_matches,person_person_matches
+  1. `BLOCKED_TOOLS=person_read,person_search,person_ancestors,person_record_matches,person_person_matches
      make proto-up` — the harness's tree-read block (the fixture's answer sits in the live
-     tree; `proto-demo` sets the same list), then the engine and the stack. `proto/env.sh` exports the model
-     key and writes the FamilySearch token, refreshed from the desktop login through
-     `dev/fs-token.ts`, to `apps/server/proto/.fs-token`, which the worker reads **per
-     turn**; its status line must say both are set. **The token protocol: `make e2e-login`
-     FIRST** — a fresh login, refresh token ~24 h — and then `make proto-token` between
-     turns, which since 2026-09-21 forces a refresh when the stored token has under
-     **thirty-five** minutes of life left (`dev/fs-token.ts --min-life`, default 30 —
-     `READ_TIMEOUT_S` in minutes, so the token outlives a full-length turn — plus the auth
-     module's own five-minute expiry buffer; widen it with `PROTO_TOKEN_MIN_LIFE`). The
-     line this replaces — run `make proto-token` before the fifty-minute mark — was a no-op by
-     construction: `getValidToken` returns the stored access token unchanged unless it has
-     **already** expired, so a refresh at minute 52 handed the stack the same eight
-     minutes, which is how the 2026-09-21 run below died mid-delegation.
+     tree; `proto-demo` sets the same list), then the engine and the stack; then `make
+     proto-grant` once per stack. The operator-token protocol that stood here is
+     superseded by U3: `make proto-grant`; the web tier refreshes between attempts.
   2. `make proto-seed FIXTURE=bagley-father-1884` — the fixture's `starting-research.json`
      and tree into the Postgres/S3 store through `PgS3ProjectStore`, and a session on
      that project; prints the session id and the research question (any e2e fixture or
@@ -1912,8 +1900,8 @@ without whichever Bedrock refuses.
   surfaced nowhere until 2026-09-21: `PgSessionStore.counters()` had no caller, so the
   2026-09-21 run could not have asserted this criterion whatever else it did. **What voids the run:** the kill
   landing before `task_started` (a plain turn kill, D14 again — post the next prompt and
-  retry); a FamilySearch tool answering with the reconnect instruction (the token
-  expired — `make e2e-login`, then `make proto-token`, new session); `receive_count` 3 (the worker did not come
+  retry); a FamilySearch tool answering with the reconnect instruction (the grant was
+  refused or is missing — `make proto-grant`, new session); `receive_count` 3 (the worker did not come
   back before the second redelivery — `docker start` it); more than one worker kill.
   **Run live 2026-09-21** (`sess_25297de9b15b4ef5`, turn
   `6f22712a-1c91-4272-8f7f-24dabc6cd9a7`) on `bagley-father-1884`, driven from the

@@ -123,22 +123,26 @@ services:
       GATEWAY_BASE_URL: ${GATEWAY_BASE_URL:-}
       GATEWAY_API_KEY: ${GATEWAY_API_KEY:-}
       GATEWAY_TOOL_SEARCH: ${GATEWAY_TOOL_SEARCH:-false}
-      # The patron's FamilySearch bearer on this one-patron stack, read PER TURN from
-      # this file (proto/env.sh writes it; `make proto-token` rewrites it between turns --
-      # never during one, since a FamilySearch refresh revokes the previous access token).
-      # Empty, and every FamilySearch tool answers with the reconnect instruction.
-      FS_ACCESS_TOKEN_FILE: /run/fs-token
-      # The fallback `bearer_token()` documents ("else the worker env's
-      # FS_ACCESS_TOKEN") -- which was never actually supplied, so it was always "".
-      # It matters because the FILE path is not reliable: the mount is a host file owned
-      # by the invoking user at mode 600, and this container runs as uid 1001, so the
-      # read fails with EPERM whenever those uids differ -- always under rootless docker,
-      # where the container uid is mapped through the caller's subuid range. bearer_token
-      # swallows that OSError, returns "", and the engine then answers
-      # HOSTED_REAUTH_INSTRUCTION -- "Your FamilySearch session has expired" -- for a
-      # token that is perfectly valid. Three billed demo runs were lost to that message
-      # before anyone checked the tokens, which were all still live afterwards.
-      FS_ACCESS_TOKEN: ${FS_ACCESS_TOKEN:-}
+      # U3: the FamilySearch bearer is the turn's project owner's grant, read from Postgres
+      # (familysearch_tokens) at the start of EVERY attempt and held under that patron's
+      # attempt lock; the web tier is its only refresher. No token reaches this service any
+      # other way. The key is the web tier's (one value for both), passed through and never
+      # a literal; the CLI inherits no worker variable (options.CLI_ENV_KEEP), and each turn's
+      # CLI runs as its own slot user (the image's WORKER_TURN_USERS), so the kernel keeps it
+      # out of the worker's /proc and every other turn's dirs. `make proto-grant` stores the
+      # dev patron's grant.
+      FS_TOKEN_ENC_KEY: ${FS_TOKEN_ENC_KEY:-}
+      # An attempt starts only on a session at most this old (8 h less one 1,800 s attempt
+      # less 600 s, so a shim-killed attempt cannot outlive its session), else waits up to
+      # FS_GRANT_WAIT_S -- below the shim's 1,800 s kill -- for the refresher.
+      FS_GRANT_MAX_START_AGE_S: ${FS_GRANT_MAX_START_AGE_S:-26400}
+      FS_GRANT_WAIT_S: ${FS_GRANT_WAIT_S:-300}
+      # cryptography >= 47's linux/aarch64 wheel dies with SIGILL at import inside a colima
+      # (Virtualization.Framework) VM on Apple silicon: OpenSSL's CPU-capability probe runs an
+      # instruction the VM advertises but traps (measured 2026-10-02, 46.0.3 imports, 47.0.0
+      # and 48.0.1 do not; OPENSSL_armcap=0 fixes it). 0 masks OpenSSL's ARM acceleration, which
+      # a dev stack does not need; x86 ignores it. Compose only: never in an image.
+      OPENSSL_armcap: ${OPENSSL_armcap:-0}
       # The e2e harness's tree-read block for fixture runs (bare MCP tool names, comma-
       # separated; proto-demo exports the harness's five). Empty: no block.
       BLOCKED_TOOLS: ${BLOCKED_TOOLS:-}
@@ -171,8 +175,6 @@ services:
     # writable-not-durable: a tmpfs, discarded with the container.
     tmpfs:
       - /tmp:size=1g,mode=1777
-    volumes:
-      - ./.fs-token:/run/fs-token:ro
     expose:
       - "8080"
     depends_on:
@@ -218,6 +220,12 @@ services:
       FS_TOKEN_ENC_KEY: ${FS_TOKEN_ENC_KEY:-}
       ALLOWED_EMAILS: ${ALLOWED_EMAILS:-}
       FAMILYSEARCH_WEB_ENABLED: ${FAMILYSEARCH_WEB_ENABLED:-false}
+      # U3: this tier refreshes each patron's grant, between attempts, once its session is
+      # this old and the patron has an open turn; the loop runs every interval.
+      FS_GRANT_REFRESH_AGE_S: ${FS_GRANT_REFRESH_AGE_S:-3600}
+      FS_GRANT_REFRESH_INTERVAL_S: ${FS_GRANT_REFRESH_INTERVAL_S:-30}
+      # The worker's note on OPENSSL_armcap: the same cryptography wheel, the same SIGILL.
+      OPENSSL_armcap: ${OPENSSL_armcap:-0}
       # PR #2870 item 1a: the Stop hook's veto cap, stamped on every queue message
       # this tier enqueues (begin_turn -> body.max_nudges) and preferred by run_turn over
       # the worker's own AUTONOMOUS_MAX_NUDGES. It lives HERE, not on MessageBody: the

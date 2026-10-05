@@ -25,14 +25,20 @@ Beanstalk's character set with no secret or dev-only variable, no option is set 
 files, and the hook carries `set -euo pipefail` and the git exec bit.
 
 - **Not in the bundle:** `PG_DSN`, `QUEUE_URL`, `MODEL_PROVIDER` and every key, all
-  API-level settings, and `PYTHONPATH` and `HOME`, which the worker does not need (it puts
+  API-level settings (among the keys `FS_TOKEN_ENC_KEY`, the web tier's grant key, the same
+  value: the worker decrypts each patron's grant with it, U3), and `PYTHONPATH` and `HOME`, which the worker does not need (it puts
   its own root on `sys.path`).
 - **The plugin hook's interpreter.** The worker puts its own interpreter's directory first
   on the CLI child's `PATH`, and at start refuses (exit 2, `ev=prepare step=hook_python`)
   a first `python3` there that is missing or below 3.10; `ev=start` logs `hook_python`.
-- **Why the hook chowns staging** (R-b in the U12 plan): the agent runs as `webapp`, and a
-  webapp-owned `/var/app/current` would let one patron's turn rewrite the code another's
-  loads. Whether Beanstalk re-chowns it after predeploy is a U13 measurement.
+- **Why the hook chowns staging** (R-b in the U12 plan): a `/var/app/current` the agent
+  could write would let one patron's turn rewrite the code another's loads.
+- **One user per turn** (U3): the hook creates `genealogy-turn-0` and `-1` (group
+  `genealogy-turn`; `WORKER_TURN_USERS` in `02-worker.config` names the same two) and a
+  `web.service` drop-in that runs the worker as root, so it can launch each turn's CLI as
+  its own slot user. The kernel then keeps one patron's turn out of another's files and the
+  worker's `/proc`. Whether the drop-in survives the platform's own unit rewrite, and that
+  a slot user cannot read `/opt/elasticbeanstalk/deployment/env`, are U13 measurements. Whether Beanstalk re-chowns it after predeploy is a U13 measurement.
 
 `../eb-worker-probe/` is the 2026-09-11 measurement and stays as it was; its
 `deploy.sh` overrides its own `.ebextensions` with experiment values.
