@@ -15,6 +15,8 @@ description: >-
 allowed-tools:
   - validate_research_schema
   - research_query
+  - person_read
+  - source_attachments
 ---
 
 # /research — Full GPS Research Workflow
@@ -32,9 +34,10 @@ moving.
 
 ## Continuous work
 
-**You work continuously, in one turn, until a stop condition in
-§"When to stop" is met.** This is how every run behaves; it is not a
-mode and no flag turns it on. Proceed without pausing for clarifying
+**Once a request is a job, you work continuously, in one turn, until a
+stop condition in §"When to stop" is met.** That is how every job
+behaves; it is not a mode and no flag turns it on. A *bounded* request
+is decided before this applies — see §"Bounded request or job". Proceed without pausing for clarifying
 questions: use your best judgment for any decision that would normally
 prompt the user (which records to prioritize when several are plausible,
 how to weight conflicting evidence, when to declare exhaustiveness), and
@@ -56,7 +59,9 @@ briefly, but always follow the narration with the actual tool call or
 sub-skill invocation in the same turn.
 
 The user can type at any time and can halt you at any time. Neither is
-something you stop and wait for.
+something you stop and wait for. A bounded request's closing offer is
+not an exception: you end the turn there rather than waiting, and their
+reply arrives as the next message.
 
 ## Direct user requests name a destination, not a shortcut
 
@@ -73,6 +78,40 @@ precondition row for it is actually satisfied — by whichever call that row
 names. If the user explicitly overrides after being told what is missing,
 that is their call — but the gap must be surfaced first, every time,
 regardless of how directly the request named the destination.
+
+## Bounded request or job
+
+**Decide this first, before any `research_query`.** A bounded request should
+not pay for a routing survey it will not use.
+
+**Bounded** — the message asks for ONE deliverable:
+finding a record; reviewing the sources already attached to a person; whether
+two people are the same, or should be merged; a verdict on a hint; a
+transcription; where the records are for a place and period; a research plan;
+a records-request letter.
+
+**A job** — everything else. Route it exactly as the rest of this file says.
+
+A bounded request and a *named destination* are different things, and a message
+can be both. "Create a research plan for Mary Hales, but leave it at that" names
+a destination AND is bounded. They answer different questions: naming a
+destination says **where** to end up, and §"Direct user requests" still governs
+how you get there — walk the routing table, surface what is missing. Bounded says
+**whether to continue past it**. So: reach the named outcome the ordinary way,
+deliver it, and stop. Do not carry on into the next question.
+
+**Start from what is already attached.** Before routing a bounded request
+to any search, read what the person already has: `person_read` for the
+attached sources and relatives, `source_attachments` for where a source
+is already attached. Never search for a record that is already attached,
+and never offer to add a person who is already in the tree. The answer
+is often already there, and a search that re-finds it costs the
+researcher money and tells them nothing.
+
+When a bounded request is met, **end your turn**. Say what you produced first:
+the turn ends where you stop, so anything you were going to add afterwards never
+reaches the researcher. Then offer to take it further, and end. The offer is not
+something you wait for — their answer arrives as the next message.
 
 ## What to do
 
@@ -415,11 +454,32 @@ rationale, and continue; the audit trail captures the choice for later
 review. "Only the user can supply it" means the research cannot proceed
 without them — not that the call is difficult, contested, or slow.
 
-**These four are the *only* stop conditions.** Finishing a
+**On a JOB, these four are the *only* stop conditions.** Finishing a
 sub-skill is not one of them — having selected a question, written a
 plan, or run one search, you are mid-loop, not done. Do not end your
 turn to report progress or to say what you'll do next; return to step 2
 of "What to do" and invoke the next sub-skill. (See "Continuous work".)
+
+**A bounded request has a fifth: its deliverable.** When the one thing
+the message asked for is produced, end the turn — see §"Bounded request
+or job". That is the whole difference between the two: a job stops on
+one of the four above, a bounded request stops at what it was asked for.
+
+### Candidates, not verdicts
+
+For an identity or completeness ask — "find this record", "is this the
+same person", "find the missing children" — report **candidates**, never
+a verdict:
+
+- give each candidate with how strong the match is and what was searched
+  to find it;
+- **never declare the question answered on a name match.** A name is not
+  an identification;
+- end with an offer to research it properly.
+
+A single plausible candidate is still a candidate. The researcher decides
+whether it is their person; your job is to show them what you found and
+what it rests on.
 
 ## What this skill does not do
 

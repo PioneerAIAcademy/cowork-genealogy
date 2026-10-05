@@ -1,0 +1,65 @@
+{
+  "test": {
+    "id": "ut_research_018",
+    "skill": "research",
+    "name": "An open ask still routes as a job, not a bounded deliverable",
+    "type": "positive",
+    "description": "Issue #2813's own 'Open asks still run as jobs' acceptance, and the risk the bounded/job section introduces: prose that over-classifies. 'Find the parents of X' names no single deliverable -- it is the whole research question -- so it must route down the ordinary table, not be treated as bounded. Uses the same scenario as ut_research_011 (objective, zero questions), where the correct first call is question-selection. If the new section wrongly reads this as bounded, the router stops instead and no Skill call is made, which the deterministic validator catches. NOTE on scope: the live risk -- a job ending itself `delivered` -- cannot manifest here. DELIVERY_GUIDANCE is appended only in the prototype worker (apps/server/proto/worker/options.py) and the unit harness never sees it; research_delivered is not in the harness's LIVE_TOOLS either. What this test guards is narrower and still worth having: the classification itself.",
+    "tags": [
+      "routing",
+      "routes-to:question-selection"
+    ]
+  },
+  "input": {
+    "user_message": "Find the parents of GJ72-9WD.",
+    "scenario": "empty-project-just-created"
+  },
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-extraction",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test. The only assertion that matters is whether Skill('question-selection') is the first Skill call. A deterministic validator (test_routes_to_expected_skill) owns that check -- do not grade the routing decision yourself.",
+    "'Find the parents of X' is an OPEN ask, not a bounded one: it names a research question, not one deliverable. The router must walk the routing table as it would for any job.",
+    "Do not penalise the reply for not naming a deliverable, and do not reward it for stopping early. Stopping early is the failure this test exists to catch."
+  ],
+  "judge_reads_files": true
+}

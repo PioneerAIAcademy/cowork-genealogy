@@ -1,0 +1,65 @@
+{
+  "test": {
+    "id": "ut_research_019",
+    "skill": "research",
+    "name": "A bounded ask is not routed into the question/plan chain",
+    "type": "positive",
+    "description": "The other direction of the same rule. 'Transcribe this record for me' asks for ONE deliverable, so the new 'Bounded request or job' section must stop it entering the question-selection / research-plan chain that a job walks. The project has an objective and zero questions, so a router that ignored the new section would call question-selection first -- exactly what ut_research_011 asserts for an open ask. Here that call is the FAILURE. Paired with ut_research_018 so the two directions are pinned together: neither passes a body that classifies everything one way.",
+    "tags": [
+      "routing",
+      "bounded-request"
+    ]
+  },
+  "input": {
+    "user_message": "Transcribe the 1881 census page I'm looking at, and leave it at that.",
+    "scenario": "empty-project-just-created"
+  },
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-extraction",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "This is a BOUNDED-REQUEST test. The reply must show the router treating this as one deliverable: it must NOT invoke question-selection or research-plan, and must not start deriving research questions from the objective.",
+    "A transcription is named in the skill's own bounded list. Routing to a transcription-capable step, or doing the transcription, is correct. Walking the routing table from the top is the failure.",
+    "Do not grade transcription quality -- no record is attached in this scenario. Grade only whether the request was treated as bounded."
+  ],
+  "judge_reads_files": true
+}

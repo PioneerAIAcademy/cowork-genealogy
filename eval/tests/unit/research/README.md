@@ -70,6 +70,23 @@ That validator is not redundant with `test_routes_to_expected_skill`, which
 asserts only the first hand-off. A router that calls `Skill(question-selection)`
 first and *then* spawns `@plugin:proof-conclusion` passes it green.
 
+## Bounded requests (issue #2813)
+
+`ut_research_018` (`open-ask-still-a-job.json`) and `ut_research_019`
+(`bounded-ask-not-a-job.json`) pin the two directions of the "Bounded request or
+job" section: an open ask must still walk the routing table, and a bounded ask
+must not enter the question/plan chain. They are paired deliberately — neither
+passes a body that classifies everything one way.
+
+Both are deterministic routing assertions (`routes-to:` + `test_routes_to_expected_skill`
+for 018; absence of a question-selection call for 019), not judge-graded, per this
+suite's own rule that routing is not the judge's to grade.
+
+**What they do NOT cover, and cannot:** that a bounded turn ends with the
+`delivered` outcome. `DELIVERY_GUIDANCE` is appended only in the prototype worker
+and `research_delivered` is not in this harness's `LIVE_TOOLS`, so the outcome is
+unobservable here. That half is prototype-only acceptance.
+
 ## Moved negatives (issue #2268)
 
 `ut_research_016` (negative-research-plan.json) and `ut_research_017`
