@@ -20,7 +20,7 @@
   "judge_context": [
     "The agent must acknowledge the user's reading and not dismiss it — the OCR reading carries [?] and the user is looking at the image",
     "Should note that the ten-year marriage index (a_003, src_002) reads 'Fannetje van Noord', which is a third reading from a different record",
-    "Must create a conflict entry between the competing name readings rather than treating the OCR as authoritative",
+    "The project already records the dispute as c_001 (unresolved, a_002 vs a_003, with the user's reading in its description). The skill must work that conflict: write its independence and weighing analysis to c_001 rather than create a duplicate, and not treat the OCR as authoritative. Deferring c_001 is a correct outcome",
     "Must not resolve the conflict in favor of the OCR reading on the strength of a single uncertain pass"
   ],
   "execution": {
