@@ -163,36 +163,11 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       },
     ],
   },
-  "research-exhaustiveness -> research-exhaustiveness": {
-    pins: [
-      {
-        side: "agent",
-        excerpt:
-          "**A delegation that tells you to declare is a destination, not a finding.**",
-      },
-      {
-        side: "agent",
-        excerpt:
-          "Read what you need from\nthe project yourself — do not expect the caller to have gathered it.",
-      },
-    ],
-    exempt: {
-      side: "caller",
-      reason:
-        "Same construction as proof-conclusion: the skill's delegation names both outcomes " +
-        "('declaring if the criteria are met, and recording an honest `declared: false` " +
-        "termination if they are not'), pinned below, and the agent reads the project " +
-        "itself. Measured limit: neither of the 2 delegations in the committed corpus uses " +
-        "the construction, so what actually holds there is that both are neutrally phrased " +
-        "('assess whether', 'evaluate whether') — the outcome the exemption claims, reached " +
-        "without the mechanism it credits. The agent-side pins remain the guarantee.",
-      mitigation: {
-        side: "caller",
-        excerpt:
-          "declaring if the criteria are met, and recording an honest `declared: false` termination if they are not",
-      },
-    },
-  },
+  // "research-exhaustiveness -> research-exhaustiveness" was the self-delegation
+  // from the thin skills/research-exhaustiveness/ SKILL.md to
+  // agents/research-exhaustiveness.md. That skill directory was deleted in issue
+  // #2738; the direct caller is now `research`, which holds the sole caller-side
+  // pin for this agent below.
 
   // "person-evidence -> person-evidence" was the self-delegation from the thin
   // skills/person-evidence/ SKILL.md to agents/person-evidence.md. That skill
@@ -238,6 +213,11 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "agent",
         excerpt: "A delegation that tells you to declare is a destination, not a finding",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "Read what you need from\nthe project yourself — do not expect the caller to have gathered it.",
       },
     ],
   },
@@ -413,7 +393,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
   // is a delegation being silenced -- verified per file before listing.
   ["conflict-resolution -> proof-conclusion", ""],
-  ["research-exhaustiveness -> proof-conclusion", ""],
   ["timeline -> proof-conclusion", ""],
   // `search-wikipedia` (issue #2795) is the reverse of the `citation` shape: its
   // name is not an ordinary English word, so the arm DOES discriminate for it,
@@ -479,7 +458,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["conflict-resolution -> question-selection", ""],
   ["forget-and-rederive -> question-selection", ""],
   ["init-project -> question-selection", ""],
-  ["research-exhaustiveness -> question-selection", ""],
   ["research-plan -> question-selection", ""],
   ["search-full-text -> question-selection", ""],
   ["timeline -> question-selection", ""],
@@ -495,6 +473,12 @@ const PROSE_MENTIONS = new Map<string, string>([
   // `@plugin:hypothesis-tracking`.
   ["conflict-resolution -> hypothesis-tracking", ""],
   ["timeline -> hypothesis-tracking", ""],
+  // research-exhaustiveness entered agentOnly when issue #2738 deleted its
+  // skill directory. The three mentions below are bare-name mentions —
+  // none spell `@plugin:research-exhaustiveness`.
+  ["research-plan -> research-exhaustiveness", ""],
+  ["search-external-sites -> research-exhaustiveness", ""],
+  ["search-records -> research-exhaustiveness", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -688,6 +672,8 @@ describe("agent delegation framing", () => {
     "project-status",
     "locality-guide",
     "record-extractor",
+    // ARRIVED when issue #2738 deleted skills/research-exhaustiveness/.
+    "research-exhaustiveness",
     "search-familysearch-wiki",
     "search-images",
     "search-wikipedia",

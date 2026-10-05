@@ -11,7 +11,7 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 12 skills and 20 agents. Besides the `research` orchestrator itself, its routing
+There are 11 skills and 20 agents. Besides the `research` orchestrator itself, its routing
 table names 13 of them, and 5 more are reached by delegation from a skill the table does
 name. The remaining 7 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
@@ -23,13 +23,15 @@ likely to surprise you.
 
 **Thin router + agent.** The skill resolves the request to one id, delegates, and relays
 the result. It reads almost nothing and writes nothing; the agent holds the judgment and
-the writer tool. Four pairs today: `record-extraction` → `record-extractor`,
-`research-exhaustiveness` → `research-exhaustiveness`, `proof-conclusion` →
-`proof-conclusion`, `person-evidence` → `person-evidence` (paired 2026-09-09).
-All four split because only an agent carries an `agent_id`, which is what lets the
-`PreToolUse` hook route a section's writes to exactly one caller. `search-images`
-was formerly the fifth pair (paired 2026-09-21, deleted 2026-09-29 in issue #2268);
-the agent remains and is now reached directly by delegation from the orchestrator.
+the writer tool. One pair today: `record-extraction` → `record-extractor`.
+It split because only an agent carries an `agent_id`, which is what lets the
+`PreToolUse` hook route a section's writes to exactly one caller.
+Former pairs: `person-evidence` (paired 2026-09-09, skill deleted — issue #2821),
+`proof-conclusion` (paired, skill deleted — issue #2822),
+`research-exhaustiveness` (paired, skill deleted 2026-10-02 — issue #2738),
+`search-images` (paired 2026-09-21, skill deleted 2026-09-29 — issue #2268).
+In each case the agent remains and is now reached directly by delegation from
+the orchestrator.
 
 **Monolithic skill.** Reads state, does the work, writes its own section. Most skills.
 
@@ -87,18 +89,16 @@ flowchart TD
     RX --> PE["person-evidence<br/>person_evidence[] · tree persons + edges"]
     PE --> CR["conflict-resolution<br/>conflicts[]"]
     PE --> HT["hypothesis-tracking · agent<br/>hypotheses[]"]
-    PE --> EX
-    CR --> EX
-    HT --> EX
+    PE --> EXA
+    CR --> EXA
+    HT --> EXA
 
-    EX["research-exhaustiveness<br/>thin router"]
-    EX ==> EXA["research-exhaustiveness · agent<br/>questions[].exhaustive_declaration"]
+    EXA["research-exhaustiveness · agent<br/>questions[].exhaustive_declaration"]
     EXA -- "gap remains" --> RP
     EXA -- "FAN pivot" --> QS
-    EXA -- "declared" --> PC
+    EXA -- "declared" --> PCA
 
-    PC["proof-conclusion<br/>thin router"]
-    PC ==> PCA["proof-conclusion · agent<br/>proof_summaries[] · resolves the question<br/>encodes the conclusion in the tree"]
+    PCA["proof-conclusion · agent<br/>proof_summaries[] · resolves the question<br/>encodes the conclusion in the tree"]
     PCA --> GM["gps-mentor · agent<br/>evaluations[]"]
     GM --> GATE{"all questions resolved,<br/>tree encoded,<br/>critique on record?"}
     GATE -- no --> QS
@@ -354,14 +354,11 @@ from this list as evidence either way.
 reached by auto-delegation from its own `description`, and whether it fires in an
 autonomous run is unmeasured.
 
-
-The two **thin skill halves** of the paired rows join this list. Rows 10
-and 11 route to `@plugin:<agent>`, so `skills/research-exhaustiveness/` and
-`skills/proof-conclusion/` are no longer on the in-loop route — they stay on
-disk as the direct-user entry point and as the unit-eval entry point, and an
-autonomous run never enters them. (Row 7 was the third thin half; its
-`skills/person-evidence/` directory has been deleted — the agent is now the
-direct entry point and the unit-eval entry point.)
+All three **thin skill halves** of the former paired rows have been deleted:
+`skills/person-evidence/` (issue #2821), `skills/proof-conclusion/` (issue #2822),
+and `skills/research-exhaustiveness/` (issue #2738, 2026-10-06). In each case the
+agent is now the direct entry point and the unit-eval entry point. Only
+`record-extraction` (row 6) remains as a thin router.
 
 For most of them that is the intent — they are utilities the researcher asks for. Four
 are not obviously intentional:

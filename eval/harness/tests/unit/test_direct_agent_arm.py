@@ -144,7 +144,6 @@ def test_routed_workspace_still_stages_both(tmp_path):
         skills_dir=REPO_ROOT / "packages" / "engine" / "plugin" / "skills",
         target_dir=tmp_path,
     )
-    assert (tmp_path / ".claude" / "skills" / "research-exhaustiveness").is_dir()
     assert (tmp_path / ".claude" / "agents" / "research-exhaustiveness.md").is_file()
 
 

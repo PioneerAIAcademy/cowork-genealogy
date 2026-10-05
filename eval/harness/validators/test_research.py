@@ -17,6 +17,7 @@ from __future__ import annotations
 import pytest
 
 from validators_lib import new_log_entries as _new_log_entries
+from validators_lib import check_no_exhaustive_declaration
 
 _ROUTES_TO_PREFIX = "routes-to:"
 
@@ -310,3 +311,16 @@ def test_no_browse_executed_on_indexed_search(
         "an indexed search must not append a browse log entry; got "
         f"{[(e.get('id'), e.get('tool')) for e in claimed]}"
     )
+
+
+# ── Moved from test_research_exhaustiveness.py (issue #2738) ───────────
+
+
+def test_no_exhaustive_declaration(before_state, after_state, test):
+    """Tag-gated: when the test expects the router to decline an
+    exhaustiveness request (near-miss negative), no question should
+    transition to `exhaustive_declared` or flip `declared` to true."""
+    if "no-exhaustive-declaration" not in test.get("tags", []):
+        pytest.skip("not a no-exhaustive-declaration scenario")
+    bad = check_no_exhaustive_declaration(before_state, after_state)
+    assert not bad, "Unexpected declaration:\n  - " + "\n  - ".join(bad)

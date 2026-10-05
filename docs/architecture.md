@@ -352,7 +352,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-8 of the 12 skills carry a `references/` folder, loaded on demand, in-session,
+8 of the 11 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -1485,8 +1485,8 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-All 12 skills carry a `**Narration:**` line (`init-project` spells it
-`**Narration**`, without the colon) — 12 of them as the first line of the body,
+All 11 skills carry a `**Narration:**` line (`init-project` spells it
+`**Narration**`, without the colon) — 10 of them as the first line of the body,
 the other one further down — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. `init-project` writes the profile from two

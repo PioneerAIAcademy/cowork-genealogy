@@ -14,8 +14,8 @@
     ]
   },
   "input": {
-    "user_message": "The whole plan for the parentage question is complete and we even found the parents' marriage — go ahead and declare q_001 reasonably exhaustive.",
-    "scenario": "flynn-marriage-only-no-child-link"
+    "scenario": "flynn-marriage-only-no-child-link",
+    "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if the criteria are met, and recording an honest `declared: false` termination if they are not.\n\nquestionId: q_001\nprojectPath: <workspace>"
   },
   "judge_context": [
     "Should NOT set `q_001.exhaustive_declaration.declared` to true and should NOT set the question status to `exhaustive_declared`, despite every plan item being `completed` and despite the user pointing to the marriage record. Completed plan items and a couple's marriage do not by themselves satisfy reasonably exhaustive research for a parentage question.",

@@ -14,8 +14,8 @@
     ]
   },
   "input": {
-    "user_message": "The census and marriage searches for q_001 are done and the parents are established. Assess whether the research on q_001 is reasonably exhaustive.",
-    "scenario": "recent-birth-sealed"
+    "scenario": "recent-birth-sealed",
+    "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if the criteria are met, and recording an honest `declared: false` termination if they are not.\n\nquestionId: q_001\nprojectPath: <workspace>"
   },
   "judge_context": [
     "The one undone plan item (pli_004) — Alan's own 1936 Utah birth certificate — is privacy-sealed: Utah seals birth records for ~100 years (public ~2036), released before then only to the registrant or a direct heir on request. This is documented in pli_004's rationale and in log_004. The skill must treat it as a record that is NOT reasonably available, not as an outstanding search gap.",

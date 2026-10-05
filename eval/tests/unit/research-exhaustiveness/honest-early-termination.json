@@ -13,8 +13,8 @@
     ]
   },
   "input": {
-    "user_message": "Have we searched enough for q_001? I've run out of budget — we haven't done probate records or the post-1860 censuses, but I can't search any more. Can you evaluate whether the research is exhaustive and write the declaration? I want an honest assessment with the stop criteria filled in so I can see exactly what gaps remain.",
-    "scenario": "flynn-census-exhausted"
+    "scenario": "flynn-census-exhausted",
+    "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if the criteria are met, and recording an honest `declared: false` termination if they are not.\n\nquestionId: q_001\nprojectPath: <workspace>"
   },
   "mcp_fixtures": [
     "wiki-read-pennsylvania-vital-records"

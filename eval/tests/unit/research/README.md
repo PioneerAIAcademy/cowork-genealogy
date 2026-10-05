@@ -80,4 +80,11 @@ deterministic validators now in `validators/test_research.py`. They test
 that the research router does not trigger a browse when the request belongs
 to research-plan or search-records.
 
+### Moved from research-exhaustiveness (issue #2738)
+
+- **ut_research_018** (`negative-next-question.json`): near-miss negative — user asks "what should I research next?" (→ question-selection). Tag: `no-exhaustive-declaration`, `grade_on_invariant`. Moved from research-exhaustiveness suite when the routing skill was deleted.
+- **ut_research_019** (`negative-research-plan-exhaustiveness.json`): near-miss negative — user asks to plan more searches (→ research-plan). Tag: `no-exhaustive-declaration`, `grade_on_invariant`. Moved from research-exhaustiveness suite when the routing skill was deleted.
+
+**Future hazard:** ut_research_018 names `correct_skill: ["question-selection"]` and ut_research_019 names `correct_skill: ["research-plan"]`. When issue #2115 or #2116 deletes those skill directories, these tests will abort at `runnability.py`'s `correct_skill` check.
+
 A live `make e2e-run` remains the only end-to-end instrument.

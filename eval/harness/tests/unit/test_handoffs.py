@@ -248,26 +248,28 @@ def test_stub_agents_are_only_the_entries_with_no_skill_directory(tmp_path):
     assert _stub_agents(spec, tmp_path) == {"locality-guide": "r"}
 
 
-def test_a_stub_that_is_still_a_skill_is_not_stubbed_at_its_spawn():
-    """`route-shortcut-guard.json` stubs one paired name that ships as both a
-    skill and an agent; its compliant spawn must keep running.
+def test_a_stub_that_is_still_a_skill_is_not_stubbed_at_its_spawn(tmp_path):
+    """A paired name that ships as both a skill and an agent is not stubbed at
+    its spawn — the skill directory makes `_stub_agents` return None.
 
-    `proof-conclusion` (issue #2822) and `person-evidence` (issue #2821) were
-    paired too until each lost its skill half, so both now take the
-    converted-callee path below with `gps-mentor`.
+    After issue #2738 deleted `research-exhaustiveness`'s skill directory, no
+    paired names remain in the shipped plugin.  This test uses `tmp_path` to
+    create a synthetic skill directory instead.
     """
-    spec = _stub_spec(["research-exhaustiveness"])
-    assert _stub_agents(spec, REPO_ROOT / "packages" / "engine" / "plugin" / "skills") is None
+    (tmp_path / "fake-paired-skill").mkdir()
+    spec = _stub_spec(["fake-paired-skill"])
+    assert _stub_agents(spec, tmp_path) is None
 
 
 def test_a_stub_with_no_skill_directory_is_stubbed_at_its_spawn():
     """The other direction, on the real plugin tree: an agent-only callee in the
     same fixture IS denied at its spawn, which is what issue #2825 buys."""
-    spec = _stub_spec(["proof-conclusion", "gps-mentor", "person-evidence"])
+    spec = _stub_spec(["proof-conclusion", "gps-mentor", "person-evidence", "research-exhaustiveness"])
     assert _stub_agents(spec, REPO_ROOT / "packages" / "engine" / "plugin" / "skills") == {
         "proof-conclusion": None,
         "gps-mentor": None,
         "person-evidence": None,
+        "research-exhaustiveness": None,
     }
 
 
