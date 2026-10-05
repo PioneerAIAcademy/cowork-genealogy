@@ -1118,9 +1118,10 @@ def test_worker_dockerfile_shape():
     assert "packages/engine/mcp-server" not in body, "the worker image carries no engine"
     assert re.search(r"^COPY packages/engine/plugin\s", body, re.M)
     assert re.search(r"^COPY apps/server/app\s", body, re.M) and re.search(r"^COPY apps/server/proto/sql\s", body, re.M)
-    # Every proto module the worker imports (enqueue.py, grants.py) must be COPYed: the
-    # image copies proto/ selectively. test_proto_config's
-    # test_images_carry_every_proto_module_they_import is that guard, for both images.
+    # Every proto module the worker imports (enqueue.py, grants.py, migrate.py) must be
+    # COPYed: the image copies proto/ selectively. test_proto_config's
+    # test_images_and_bundles_carry_every_proto_module_they_import is that guard, for both
+    # images and both bundles.
     # U7: enqueue.py imports botocore at module scope to sign. Without it in the requirements
     # the worker exits at start with QUEUE_URL set; the venv has it, so nothing else sees.
     assert re.search(r"^botocore==[0-9.]+ ", requirements, re.M), \
@@ -1764,8 +1765,8 @@ def test_the_stop_and_queue_schema_is_additive_and_applied():
     assert statements == [
         "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS stop_requested_at timestamptz;",
         "CREATE INDEX IF NOT EXISTS turns_queued_idx ON turns (session_id) WHERE outcome = 'queued';",
-    ], "006 must stay additive and idempotent: the worker and the web tier both apply it at start"
-    # Both appliers glob the directory, so the file only works if it sorts after the
+    ], "006 must stay additive and idempotent: an unledgered database re-runs every file once"
+    # migrate.py runs the files in name order, so the file only works if it sorts after the
     # tables it alters.
     names = sorted(p.name for p in (PROTO / "sql").glob("*.sql"))
     assert names.index("006_stop_and_queue.sql") > names.index("001_schema.sql")
@@ -1787,10 +1788,10 @@ def test_the_live_spend_cap_has_an_index_it_can_actually_use():
     assert [x for x in statements if x] == [
         "CREATE INDEX IF NOT EXISTS session_entries_session_seq_idx "
         "ON session_entries (session_id, seq);"
-    ], "007 must stay one additive, idempotent index: both tiers apply it at start"
+    ], "007 must stay one additive, idempotent index: an unledgered database re-runs every file once"
     names = sorted(p.name for p in (PROTO / "sql").glob("*.sql"))
     assert names.index("007_session_usage_index.sql") > names.index("001_schema.sql"), \
-        "both appliers glob the directory, so it must sort after the table it indexes"
+        "migrate.py runs the files in name order, so it must sort after the table it indexes"
 
     # And it has to match how the queries actually filter. All three scan by session_id
     # and order by seq; the leading column is the one Postgres needs.
@@ -1805,8 +1806,8 @@ def test_the_live_spend_cap_has_an_index_it_can_actually_use():
 def test_the_cap_is_a_turns_column_and_not_receive_count():
     """receive_count counts a healthy ceiling crossing and a deterministic failure with the
     same number, and per 0b a healthy run crosses it two to three times -- so the cap needs
-    its own column. 005 is additive and idempotent like 004, because the worker applies it
-    at start against a volume that predates it."""
+    its own column. 005 is additive and idempotent like 004, because migrate.py re-runs
+    every file once against an unledgered volume that predates it."""
     body = SQL_RESUME_GUARD.read_text(encoding="utf-8")
     statements = [line.split("--", 1)[0].strip() for line in body.splitlines()]
     statements = [x for x in statements if x]
@@ -2183,7 +2184,7 @@ def test_queue_startup_fields_exits_2_and_ignores_stray_keys_without_a_queue(mon
         worker.main()
     assert worker.queue_startup_fields({"GENEALOGY_SQS_ACCESS_KEY": "AKIASTRAY"}) == {}
 
-    # And the check runs before prepare() -- which applies the schema and parses agents.
+    # And the check runs before prepare() -- which parses agents.
     tree = ast.parse(inspect.getsource(worker.main))
     calls = [n.func.id for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)]
     assert "queue_startup_fields" in calls and "prepare" in calls
@@ -3951,10 +3952,11 @@ def _break_agents(monkeypatch, tmp_path):
     ("agents", _break_agents, "mismatch"),
     ("cwd", lambda mp, tp: mp.setattr(worker, "WORKER_CWD", str(tp / "missing")), "ENOENT"),
     ("schema", lambda mp, tp: mp.setattr(worker, "_SCHEMA_ERROR", "pending"), "pending"),
-    ("schema", lambda mp, tp: mp.setattr(worker, "_SCHEMA_ERROR", "42501"), "42501"),
+    ("schema", lambda mp, tp: mp.setattr(worker, "_SCHEMA_ERROR", "schema: behind 009_grant_session.sql"),
+     "schema: behind 009_grant_session.sql"),
     ("tmpdir", lambda mp, tp: mp.setenv("TMPDIR", str(tp / "missing")), "ENOENT"),
     ("transcript", lambda mp, tp: mp.setattr(worker, "_TRANSCRIPT_ERROR", "no_entries"), "no_entries"),
-], ids=["agents-none", "cwd-missing", "schema-pending", "schema-42501", "tmpdir-missing", "transcript-lost"])
+], ids=["agents-none", "cwd-missing", "schema-pending", "schema-behind", "tmpdir-missing", "transcript-lost"])
 def test_healthz_is_503_when_prepare_failed(monkeypatch, tmp_path, name, apply, label):
     _ready(monkeypatch, tmp_path)
     apply(monkeypatch, tmp_path)
@@ -3968,12 +3970,7 @@ def test_healthz_is_503_when_prepare_failed(monkeypatch, tmp_path, name, apply, 
 
 @pytest.mark.parametrize("transient", [
     lambda: worker.psycopg.OperationalError("connection refused"),
-    # An apply racing the web tier's (or a second worker's) at boot.
-    lambda: worker.psycopg.errors.UniqueViolation('duplicate key value violates "pg_type_typname_nsp_index"'),
-    lambda: worker.psycopg.errors.InternalError_("tuple concurrently updated"),
-    lambda: worker.psycopg.errors.DuplicateTable('relation "projects" already exists'),
-    lambda: worker.psycopg.errors.DuplicateObject('type "projects" already exists'),
-], ids=["refused", "23505", "XX000", "42P07", "42710"])
+], ids=["refused"])
 def test_schema_thread_retries_until_postgres_answers(monkeypatch, tmp_path, transient):
     _ready(monkeypatch, tmp_path)
     monkeypatch.setattr(worker, "_SCHEMA_ERROR", "pending")
@@ -3989,33 +3986,43 @@ def test_schema_thread_retries_until_postgres_answers(monkeypatch, tmp_path, tra
             raise transient()
         return ["001_schema.sql"]
 
-    monkeypatch.setattr(worker, "_apply_schema_once", flaky)
+    monkeypatch.setattr(worker, "_verify_schema_once", flaky)
     worker.schema_loop("postgresql://x@127.0.0.1:1/p")
     assert seen == ["pending", "pending", "pending"] and worker._SCHEMA_ERROR is None
     assert [f.get("retrying") for f in logged] == [True, None], "one line per change"
     status, body, _ = _healthz()
     assert status == 200 and body["checks"]["schema"] == {"ok": True}
 
-    calls: list[int] = []
+    # A role that cannot read the ledger (or a database not migrated yet) is reported and
+    # checked again: the check is a read, so it heals once someone grants or migrates.
+    monkeypatch.setattr(worker, "_SCHEMA_ERROR", "pending")
+    logged.clear()
+    calls: list[str | None] = []
+    during: list[tuple[int, dict]] = []
 
     def denied(dsn, **kw):
-        calls.append(1)
-        if len(calls) > 1:
-            worker.SHUTDOWN.set()  # a retry would spin at backoff 0; end it so the assert fails
-        raise worker.psycopg.errors.InsufficientPrivilege("permission denied for schema public")
+        calls.append(worker._SCHEMA_ERROR)
+        if len(calls) > 5:
+            worker.SHUTDOWN.set()  # a loop that never succeeds ends here, so the assert fails
+        if len(calls) < 3:
+            raise worker.psycopg.errors.InsufficientPrivilege("permission denied for table schema_migrations")
+        status, body, _ = _healthz()
+        during.append((status, body["checks"]["schema"]))
+        return ["001_schema.sql"]
 
-    monkeypatch.setattr(worker, "_apply_schema_once", denied)
+    monkeypatch.setattr(worker, "_verify_schema_once", denied)
     worker.schema_loop("postgresql://x@127.0.0.1:1/p")
-    assert calls == [1], "a DML-only role is a misconfiguration, not a refusal to retry"
-    assert worker._SCHEMA_ERROR == "42501"
-    status, body, _ = _healthz()
-    assert status == 503 and body["checks"]["schema"] == {"ok": False, "error": "42501"}
+    assert calls == ["pending", "42501", "42501"], "a failing check keeps checking"
+    assert during == [(503, {"ok": False, "error": "42501"})], "the label is visible while it retries"
+    assert worker._SCHEMA_ERROR is None
+    assert [f.get("retrying") for f in logged if f.get("step") == "schema"] == [True, None], \
+        "one line per change"
 
 
 def test_the_schema_thread_stops_backing_off_on_shutdown(monkeypatch):
     monkeypatch.setattr(worker, "log", lambda **f: None)
     monkeypatch.setattr(worker, "SCHEMA_BACKOFF_FIRST_S", 30.0)
-    monkeypatch.setattr(worker, "_apply_schema_once",
+    monkeypatch.setattr(worker, "_verify_schema_once",
                         lambda dsn, **kw: (_ for _ in ()).throw(worker.psycopg.OperationalError("refused")))
     thread = worker.start_schema_thread()
     worker.SHUTDOWN.set()
