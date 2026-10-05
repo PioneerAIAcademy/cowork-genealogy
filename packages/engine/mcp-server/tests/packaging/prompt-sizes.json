@@ -50,7 +50,7 @@
     "tool:fulltext_search": 3414,
     "tool:get_name_variants": 375,
     "tool:image_read": 1854,
-    "tool:image_search": 716,
+    "tool:image_search": 1517,
     "tool:image_transcribe": 3488,
     "tool:login": 246,
     "tool:logout": 136,
