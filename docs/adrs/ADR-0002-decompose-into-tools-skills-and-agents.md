@@ -50,7 +50,7 @@ extractor outside its stated lane and it fabricated a match score.
 | **Skill** | VM, session context | judgment that depends on what the session already knows |
 | **Plugin agent** | VM, **fresh context** | isolation from session state, a narrowed capability set, or a different model |
 
-Today that is 50 tools, 28 skills, and 7 agents.
+Today that is 50 tools, 14 skills, and 18 agents.
 
 The dividing line between a skill and an agent is **not** size — it is whether
 inheriting the conversation helps or hurts. `record-extractor` runs one agent per
@@ -110,7 +110,7 @@ not bind, measured at 37% bypass (ADR-0009, the 2026-09-11 rows).
 | **Put the invariants in prose** — trust the skill bodies | Measured to decay. See ADR-0003 | 77% → 3% compliance after compaction |
 | **Give one existing skill every image** — `search-images` already browses volumes and delegates page reads | Its own routing block redirects "I already have the image" *away*, so widening it inverts its front door; and a pasted ARK or an uploaded file is not a browse. Deciding which page to open is a different job from acquiring one | Issues #2450, #2121 |
 | **A new acquisition *skill*** carrying the fetch and triage logic in its body | Not an alternative to an agent once the front-door rule above holds — a pair is both, and the load-bearing half is the agent either way. What is left to choose is scope, not shape | Issue #2490 |
-| **No agent — let any caller call `image_transcribe` directly** | Deletes the only named destination for "read this image". An agent `description` is resident in context, while the genealogy tool schemas are deferred behind ToolSearch in Cowork, on the hosted path and in both harnesses, so a bare tool is a strictly weaker front door | `CLAUDE.md` § "Never hardcode a qualified name in a ToolSearch query" |
+| **No agent — let any caller call `image_transcribe` directly** | Deletes the only named destination for "read this image". An agent `description` is resident in context, while the genealogy tool schemas (all but the `ALWAYS_LOAD` set, which `image_transcribe` is not in) are deferred behind ToolSearch in Cowork, on the hosted path and in both harnesses, so a bare tool is a strictly weaker front door | `CLAUDE.md` § "Never hardcode a qualified name in a ToolSearch query" |
 | **Split agents further**, one per record type (a probate agent, a census agent) | Every agent body is a full prompt; N agents is N prompts to keep consistent. The per-type material is a table inside one body instead — and the attempt to externalise those tables failed measurably | Issue #702; `CLAUDE.md` § "No playbook/reference files for agents" and `docs/architecture.md` §3.4 (no ADR yet) |
 
 ## Consequences

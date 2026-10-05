@@ -5,10 +5,10 @@
     "name": "Wiki/Wikipedia return no coverage for an obscure place",
     "type": "positive",
     "description": "Tests SKILL.md's 'when a tool call returns no results or an error, do not continue elaborating that topic as if the search succeeded' rule. Both wiki_search (empty results) and wikipedia_search (404 error) return nothing for a fictional, sparsely-documented hamlet. Guards against the skill inventing specific-sounding place history when its tools found nothing. Deep-dive finding, issue #1663 — no existing test in this suite exercised the empty/error path before this one.",
-    "tags": ["no-results", "error-handling", "citation", "issue-1663"]
+    "tags": ["no-results", "error-handling", "citation", "issue-1663", "direct-arm"]
   },
   "input": {
-    "user_message": "My ancestor supposedly lived in a place called Hollow Creek Settlement. I can't find anything about its history anywhere. What historical context might explain why records are so sparse there?",
+    "delegation": "My ancestor supposedly lived in a place called Hollow Creek Settlement. I can't find anything about its history anywhere. What historical context might explain why records are so sparse there?",
     "scenario": null
   },
   "mcp_fixtures": [

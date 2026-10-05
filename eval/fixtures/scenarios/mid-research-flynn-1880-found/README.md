@@ -7,15 +7,16 @@ difference: the **1880 census has just been located and logged (plan item `pli_0
 log entry `log_006`) but NOT yet extracted** — there are no 1880 assertions, sources,
 or tree facts. It encodes the "found, awaiting extraction" state.
 
-Used by `ut_tree_edit_003` (negative test): the user says *"I just found the 1880
-census… add the facts to the tree,"* and tree-edit should **decline** and route to
-record-extraction (facts flow extraction → proof-conclusion → tree, never directly
+Used by `ut_tree_edit_016` (direct-arm negative; `ut_tree_edit_003`, which this was
+written for, was deleted by PR #2812 and never used it): the delegation says *"I just
+found the 1880 census… add the facts to the tree,"* and tree-edit should **decline** and
+hand back to record-extraction (facts flow extraction → proof-conclusion → tree, never directly
 from a raw record).
 
 > ⚠️ **Placeholder.** The 1880 household in `log_006`'s notes (Patrick as head of
 > household, ~35, Schuylkill County) is invented scaffolding. A genealogist should
 > set the real household composition, ages, and 1880 relationship-column detail —
-> then re-run `--skill tree-edit` and re-annotate — before this is released.
+> then re-run `make eval-skill SKILL=tree-edit` and re-annotate — before this is released.
 
 - **Objective:** Identify the parents of Patrick Flynn (b. ~1845, d. 1908)
 - **Questions:** q_001 (parentage, in_progress), q_002 (1850 census placement, resolved)

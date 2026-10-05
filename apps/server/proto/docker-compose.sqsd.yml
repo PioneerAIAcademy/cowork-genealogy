@@ -1,0 +1,37 @@
+# U5 overlay: the shim behaves like measured sqsd at the interim production values
+# (eb-worker/.ebextensions/01-sqsd.config), and the worker is told the same values.
+# Apply on top of the base file, and restore with the base file alone:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.sqsd.yml up -d worker shim
+#
+# - READ_TIMEOUT_S is InactivityTimeout; at it the shim abandons the POST (no kill, no
+#   requeue) and the message returns when VisibilityTimeout lapses.
+# - A non-2xx, or a refused or reset connection (any error but the read timeout), waits
+#   ERROR_VISIBILITY_S instead of the doubling backoff or the base profile's requeue at 0.
+# - A receive past SQSD_MAX_RETRIES goes to turns-dlq and is deleted from turns. The shim
+#   exits 2 at start when turns-dlq is missing (an elasticmq older than its conf entry:
+#   `up -d --force-recreate elasticmq`).
+#
+# WARNING: with SWEEP_INTERVAL_S above 0 the worker's dead-letter sweep acts on the WHOLE
+# database, not just this run's session: it closes every open turn past its last receive
+# or its retention, including old smoke leftovers on the persistent proto-pgdata volume,
+# and releases their held messages into turns. SWEEP_INTERVAL_S therefore defaults to 0
+# here; a run that turns it on should also set WORKER_QUEUE_URL empty, so nothing it
+# releases can enqueue a paid turn. Every value reads the shell, so smoke.py can override it.
+services:
+  worker:
+    environment:
+      SQSD_MAX_RETRIES: "${SQSD_MAX_RETRIES:-5}"
+      SQSD_VISIBILITY_TIMEOUT_S: "${SQSD_VISIBILITY_TIMEOUT_S:-36300}"
+      SQSD_RETENTION_PERIOD_S: "${SQSD_RETENTION_PERIOD_S:-345600}"
+      SWEEP_INTERVAL_S: "${SWEEP_INTERVAL_S:-0}"
+      # `-`, not `:-`: an empty WORKER_QUEUE_URL is kept empty (no held-message release).
+      QUEUE_URL: "${WORKER_QUEUE_URL-http://elasticmq:9324/000000000000/turns}"
+  shim:
+    environment:
+      KILL_ON_READ_TIMEOUT: "false"
+      READ_TIMEOUT_S: "${READ_TIMEOUT_S:-36000}"
+      VISIBILITY_TIMEOUT_S: "${SQSD_VISIBILITY_TIMEOUT_S:-36300}"
+      ERROR_VISIBILITY_S: "${ERROR_VISIBILITY_S:-300}"
+      SQSD_MAX_RETRIES: "${SQSD_MAX_RETRIES:-5}"
+      DLQ_URL: http://elasticmq:9324/000000000000/turns-dlq

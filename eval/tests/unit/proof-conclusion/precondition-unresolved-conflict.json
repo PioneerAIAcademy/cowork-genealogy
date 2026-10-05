@@ -10,11 +10,12 @@
       "parentage",
       "precondition",
       "conflict-blocks-proved",
-      "no-new-proof-expected"
+      "no-new-proof-expected",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I think Patrick's parentage is settled now — finalize it as a proved conclusion.",
+    "delegation": "Run your preconditions gate, then conclude the question at whatever tier the evidence supports, including `possible` or `not_proved`. Decline only if the gate itself fails.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "flynn-with-birthplace-conflict"
   },
   "judge_context": [

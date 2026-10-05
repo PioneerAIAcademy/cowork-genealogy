@@ -2,13 +2,11 @@
 
 The genealogy engine (`packages/engine/mcp-server`) on **Streamable HTTP** for the
 search-agent prototype (`docs/plan/search-agent-prototype.md`, Week 4, D16). It is a
-third entrypoint over the one `createServer(principal)` in `src/server.ts`, never a
-replacement: `build/index.js` keeps stdio and the `.mcpb` is unchanged,
-`build/hosted-stdio.js` is the per-turn stdio fork on Postgres/S3 (D9–10), and
+second entrypoint over the one `createServer(principal)` in `src/server.ts`, never a
+replacement: `build/index.js` keeps stdio and the `.mcpb` is unchanged, and
 `build/http.js` runs the same tools over `node:http`. One process serves every patron's
 turns, so the store is bound **per request**: a `PgS3ProjectStore` on the compose
-Postgres/S3 — the same store `hosted-stdio.js` opens per turn — selected by the
-`X-Genealogy-Project-Id` header.
+Postgres/S3, selected by the `X-Genealogy-Project-Id` header.
 
 ## The contract
 
@@ -16,7 +14,7 @@ Postgres/S3 — the same store `hosted-stdio.js` opens per turn — selected by 
 |---|---|
 | `POST /mcp` | Stateless Streamable HTTP, JSON responses (`sessionIdGenerator: undefined`, `enableJsonResponse: true`). One `Server` + transport per request, closed after the response. |
 | `GET` / `DELETE` / anything else on `/mcp` | `405`, `Allow: POST`, `{"jsonrpc":"2.0","error":{"code":-32000,"message":"Method not allowed."},"id":null}` — answered by the entrypoint before any transport exists, so a client's post-initialize `GET` never gets a held-open SSE stream. The SDK client and the Claude Code CLI treat that 405 as "no server-push stream" and continue. |
-| `GET /healthz` | `200 {"ok":true,"tools":<allToolSchemas.length>}` — the compose healthcheck and `make engine-smoke-http`'s readiness wait. |
+| `GET /healthz` | Readiness: a fresh Postgres connection that sees the store tables (`documents`, `blobs`, `staging`, `projects`) and `HeadBucket` on the bucket, under one 1.5 s deadline. `200` when both pass, `503` when either fails, same body either way: `{"ok":<bool>,"tools":<allToolSchemas.length>,"checks":{"postgres":{"ok":<bool>,"error"?:<label>},"s3":{…}}}`. `error` is a label only (an error code such as `ECONNREFUSED`, a name such as `TimeoutError`, or `schema: missing <tables>`), never a message; the message goes to stderr once per state change. A probe that rejects or outlives 2 s is `503` with no `checks`. A failing store never exits the process. The compose healthcheck and `make engine-smoke-http`'s readiness wait. |
 | `X-Genealogy-Project-Id` (request header) | The project the request's tools run against, matched against `PROJECT_ID_RE` (`src/store/project-id.ts`). Exactly one value; malformed or duplicated → `400 {"jsonrpc":"2.0","error":{"code":-32600,"message":"Invalid X-Genealogy-Project-Id header."},"id":null}` before any transport exists. |
 | any other path | `404` JSON. |
 
@@ -31,9 +29,17 @@ refreshes and never touches `~/.familysearch-mcp/tokens.json`.
 `new PgS3ProjectStore(backend, { projectId: id, anchorPath })` for the duration of that
 request, bound with `runWithProjectStore` so every `getProjectStore()` call in the tool
 body, the utils and the validator resolves to it (`src/store/project-store.ts`). One
-`createPgS3Backend` per process, from the five `GENEALOGY_*` store variables plus
-`GENEALOGY_ANCHOR_PATH` (`readPgS3Env`, the same reader `hosted-stdio.js` uses; a missing
-variable is one stderr line and exit 2 before `listen`). The projectPath every call passes
+`createPgS3Backend` per process, from the `GENEALOGY_*` store variables plus
+`GENEALOGY_ANCHOR_PATH` (`readPgS3Env`): `GENEALOGY_PG_DSN` and `GENEALOGY_S3_BUCKET`
+required; `GENEALOGY_S3_ACCESS_KEY` + `GENEALOGY_S3_SECRET_KEY` an optional pair — both set
+signs with them, neither set leaves the S3 client to the AWS SDK default chain (environment,
+`~/.aws` shared config/SSO, web identity, then ECS/EC2 instance metadata — so a host-process
+run on a laptop with `~/.aws` signs with the developer's profile); `GENEALOGY_S3_REGION` (default `us-east-1`);
+`GENEALOGY_S3_ENDPOINT` (unset on AWS: the regional endpoint); `GENEALOGY_S3_FORCE_PATH_STYLE`
+(`true`/`false`, default `true` when an endpoint is set and `false` otherwise). A missing
+required variable, exactly one of the two keys, or a path-style value other than
+`true`/`false` is one stderr line and exit 2 before `listen`; otherwise one stderr line names
+the credential mode (`static keys` or `SDK default chain`), the region and the endpoint. The projectPath every call passes
 is the anchor (`/project`). With the header **missing**, the request is bound to an
 `unboundProjectStore` whose every method rejects with an instruction naming the header:
 tools that take no `projectPath` (`convert_calendar`, the FamilySearch searches, …) still
@@ -44,15 +50,13 @@ above.
 
 `baseConfig` is `~/.familysearch-mcp/config.json`, read once at startup with
 `loadConfig(LOCAL)`, and then `WIKI_API_URL`, `POP_STATS_URL`, `OPENROUTER_API_KEY` and
-`OPENROUTER_MODEL` from the environment over it — the same four `hosted-stdio.js` reads,
-and only where set, so an absent one leaves the file's value and then the compiled
-default. In compose the file is `./config.json` (`{"hosted": true}`) mounted read-only
-and the four come from the `tools` service's environment: a container receives a secret
-as environment, not as a file in an image, and since 2026-09-20 the worker's default is
-this service, so `image_transcribe`'s key has to arrive here rather than in the per-turn
-fork that used to carry it. One shared process, so these are per-stack rather than per
-patron — which is what a one-patron prototype wants; per-patron config would have to
-ride the request, as the bearer and the project id do.
+`OPENROUTER_MODEL` from the environment over it (`src/hosted-config-env.ts`), and only
+where set, so an absent one leaves the file's value and then the compiled default. In
+compose the file is `./config.json` (`{"hosted": true}`) mounted read-only and the four
+come from the `tools` service's environment: a container receives a secret as
+environment, not as a file in an image. One shared process, so these are per-stack rather
+than per patron — which is what a one-patron prototype wants; per-patron config would have
+to ride the request, as the bearer and the project id do.
 
 **There is no auth on this service** beyond header → principal, and no check that the
 bearer may reach the project id it names: identity is the web tier's problem and out of the
@@ -70,14 +74,29 @@ smoke names all three.
 
 - **Compose** (`make proto-up`, or `docker-compose -f apps/server/proto/docker-compose.yml up -d --build tools`
   on a machine without the compose plugin): service `tools`, container `proto-tools`,
-  `read_only: true` with `/tmp` the only tmpfs, the worker's `GENEALOGY_*` block verbatim,
+  `read_only: true` with `/tmp` the only tmpfs, the `GENEALOGY_*` store block,
   `depends_on` `postgres` and `minio` `service_healthy`. The image is built from the
   **repo root** (`Dockerfile` here): the root `.dockerignore` already drops
   `node_modules`/`.claude`/`eval`/`releases`, and `src/` is compiled inside the image — the
   host's `build/` is never copied. `proto-up-core` and `proto-smoke` do not include it.
-- **Host process**: `cd packages/engine/mcp-server && GENEALOGY_PG_DSN=… GENEALOGY_S3_ENDPOINT=… GENEALOGY_S3_BUCKET=… GENEALOGY_S3_ACCESS_KEY=… GENEALOGY_S3_SECRET_KEY=… node build/http.js [--host 127.0.0.1] [--port 8787]`
+- **Host process**: `cd packages/engine/mcp-server && GENEALOGY_PG_DSN=… GENEALOGY_S3_ENDPOINT=… GENEALOGY_S3_BUCKET=… [GENEALOGY_S3_ACCESS_KEY=… GENEALOGY_S3_SECRET_KEY=…] node build/http.js [--host 127.0.0.1] [--port 8787]`
+  (the keys are an optional pair: omit both to sign through the AWS SDK default chain)
   — `make engine-smoke-http` does this against the compose store (`proto-up-store`,
   localhost:5434 / :9000).
+- **Bundle** (`make eb-bundles` → `releases/eb-tools.zip`, U12). The Beanstalk source
+  bundle for the Node.js AL2023 platform (24, or 22: npm never runs there because
+  `node_modules/` ships). At its root: `build/` from `npm run build` (so
+  `build/build-info.json` stamps the real sha), `config/`, a production `node_modules/`
+  with the optional `pg` and AWS SDK packages kept, `package.json` (for
+  `"type": "module"`), the compiled smoke under `smoke/`
+  (`packages/engine/mcp-server/tsconfig.smoke.json`), the RDS CA bundle at
+  `certs/rds-global-bundle.pem`, and `../eb-tools/`'s `Procfile`, `.ebextensions/` and
+  `.platform/` copied verbatim. The Procfile runs `node build/http.js --host 127.0.0.1
+  --port 8080`, equal to the template's `PORT`; the template sets
+  `PGSSLMODE=verify-full` and `NODE_EXTRA_CA_CERTS` at the CA's absolute path, so TLS is
+  configured without a query string in `GENEALOGY_PG_DSN`. The store variables and the
+  four config overrides above stay API-level settings. The image (`Dockerfile`) and the
+  bundle both run Node 24.
 - **The transport smoke** — every advertised tool but the three exclusions, in
   `no-bearer` mode by default (`--bearer <token>`, or an unexpired
   `~/.familysearch-mcp/tokens.json`, switches to `bearer`):
@@ -85,7 +104,7 @@ smoke names all three.
   ```
   make engine-smoke-http                                  # builds, starts build/http.js on the compose store on a free port, kills it after
   BASE=http://127.0.0.1:8787 make engine-smoke-http       # against the compose service
-  cd packages/engine/mcp-server && npx tsx dev/smoke-http.ts --base URL [--project-id ID] [--project-path /project] [--host-config] [--bearer TOKEN]
+  node smoke/dev/smoke-http.js --base URL [--project-id ID] [--project-path /project] [--host-config] [--bearer TOKEN]   # from an unzipped eb-tools.zip: Node >= 22, no checkout, npm or registry
   ```
 
   Every request carries `X-Genealogy-Project-Id: <--project-id>` — a fresh `smoke-<uuid>`
@@ -109,18 +128,22 @@ mcp_servers={"genealogy": {"type": "http", "url": "http://tools:8787/mcp",
 ```
 
 Both headers are per turn (`proto/worker/options.py`, `tool_server_headers`): the bearer
-from the patron's row, the project id from the turn — the same id the stdio fork gets as
-`GENEALOGY_PROJECT_ID`. The project header is always sent; the bearer only when there is a
-token. Nothing on this service caches either.
+from the patron's row, the project id from the turn. The project header is always sent; the
+bearer only when there is a token. Nothing on this service caches either. This is the
+worker's only tool server; the worker itself carries no Node, no engine and no S3
+credentials.
 
 ## Tests
 
 `apps/server/tests/test_proto_config.py` (`make proto-test`): the service is read-only with
 `/tmp` the only tmpfs (no `/projects`), publishes on loopback only, depends on `postgres`
-and `minio` `service_healthy`, carries the worker's `GENEALOGY_*` values byte for byte (one
-store, two readers), and `proto-up` waits on it while `proto-up-core` does not.
+and `minio` `service_healthy`, reads the Postgres the worker reads (`GENEALOGY_PG_DSN` is
+the worker's `PG_DSN`) under the worker's anchor (`GENEALOGY_ANCHOR_PATH` is its
+`WORKER_CWD`), and `proto-up` waits on it while `proto-up-core` does not.
 `apps/server/tests/test_proto_worker.py` pins the consumer's two headers.
-`packages/engine/mcp-server/tests/http/` covers the server itself (405 guard, `/healthz`,
+`packages/engine/mcp-server/tests/http/` covers the server itself (405 guard, `/healthz` 200/503 from the readiness report and the spawned server's 503 with both stores unreachable,
 no-`LOCAL`, per-request bearers, per-request stores that cannot read each other, the
 missing-header instruction, the malformed-header 400); `http-server-pg.test.ts` runs the
-isolation case on the real Pg store under `make proto-store-test`.
+isolation case and a healthy `/healthz` on the real Pg store under `make proto-store-test`.
+`tests/store/pg-s3-project-store.test.ts` covers the probe itself (deadline, single flight,
+no S3 retry, label-only errors, the missing-schema and saturated-pool cases).

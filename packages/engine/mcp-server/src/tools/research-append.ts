@@ -401,6 +401,91 @@ function conflictInvariants(entry: any): string[] {
   return errs;
 }
 
+/** A [?] assertion cannot win a conflict on its own evidence — it needs
+ *  corroboration from a different record with the same fact_type, same value
+ *  (once [?] is stripped, whitespace collapsed and case folded), no [?] of its
+ *  own, and tied to the same person. Reads live `research`. */
+function uncertainPreferenceInvariants(entry: any, research: any): string[] {
+  if (entry.preferred_assertion_id == null) return [];
+  const assertions: any[] = research.assertions ?? [];
+  const byId = new Map<string, any>(assertions.map((a: any) => [a.id, a]));
+  const preferred = byId.get(entry.preferred_assertion_id);
+  if (!preferred || !hasUncertainReading(preferred)) return [];
+
+  const competing: string[] = Array.isArray(entry.competing_assertion_ids)
+    ? entry.competing_assertion_ids
+    : [];
+  const preferredRecord = preferred.record_id ?? preferred.source_id ?? null;
+  const normalizedPreferredValue = normalizeUncertainValue(preferred.value);
+
+  // Build set of person_ids the preferred assertion is linked to via live
+  // person_evidence rows.
+  const preferredPersonIds = new Set<string>();
+  for (const pe of research.person_evidence ?? []) {
+    if (pe && pe.assertion_id === entry.preferred_assertion_id && pe.superseded_by == null) {
+      if (pe.person_id != null) preferredPersonIds.add(pe.person_id);
+    }
+  }
+
+  // Build a map from assertion_id → set of person_ids for fast lookup.
+  const assertionToPersonIds = new Map<string, Set<string>>();
+  for (const pe of research.person_evidence ?? []) {
+    if (pe && pe.superseded_by == null && pe.person_id != null) {
+      let s = assertionToPersonIds.get(pe.assertion_id);
+      if (!s) {
+        s = new Set<string>();
+        assertionToPersonIds.set(pe.assertion_id, s);
+      }
+      s.add(pe.person_id);
+    }
+  }
+
+  for (const a of assertions) {
+    if (!a || a.id === entry.preferred_assertion_id) continue;
+    // Condition 1: no [?] on the corroborator.
+    if (hasUncertainReading(a)) continue;
+    // Condition 2: different record.
+    const aRecord = a.record_id ?? a.source_id ?? null;
+    if (aRecord == null || aRecord === preferredRecord) continue;
+    // Condition 3: same fact_type, equal value once [?] removed + normalized.
+    if (a.fact_type !== preferred.fact_type) continue;
+    if (typeof a.value !== "string") continue;
+    if (normalizeUncertainValue(a.value) !== normalizedPreferredValue) continue;
+    // Condition 4: same person — in competing_assertion_ids, or linked to
+    // the same person via live person_evidence.
+    const inCompeting = competing.includes(a.id);
+    if (!inCompeting) {
+      const aPersonIds = assertionToPersonIds.get(a.id);
+      if (!aPersonIds || !setsOverlap(aPersonIds, preferredPersonIds)) continue;
+    }
+    // All four conditions met — corroborated.
+    return [];
+  }
+
+  return [
+    `preferred_assertion_id '${entry.preferred_assertion_id}' carries an uncertain reading ` +
+      `([?]) and no assertion from a different record corroborates it. To settle the conflict: ` +
+      `find a second record whose reading agrees, or update the assertion (op: "update", ` +
+      `entryId: "${entry.preferred_assertion_id}", fields: {value: "<confirmed reading>"}) to ` +
+      `remove the [?] once the user confirms the reading. Leaving preferred_assertion_id null ` +
+      `— a deferral is a finding, not an omission — stays legal.`,
+  ];
+}
+
+/** Strip [?], collapse whitespace, fold case — for value comparison. */
+function normalizeUncertainValue(v: string): string {
+  return v.replace(/\[\?\]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+/** True when two sets share at least one element. */
+function setsOverlap(a: Set<string>, b: Set<string>): boolean {
+  const [smaller, larger] = a.size <= b.size ? [a, b] : [b, a];
+  for (const x of smaller) {
+    if (larger.has(x)) return true;
+  }
+  return false;
+}
+
 function planActiveInvariants(entry: any, research: any): string[] {
   if (entry.status !== "active") return [];
   // `p &&`: a legacy `plans: [null]` made this throw
@@ -440,7 +525,7 @@ function planActiveInvariants(entry: any, research: any): string[] {
  *  Reads the **pre-call snapshot**, both halves, per ADR-0011's rule: "Snapshot
  *  when the precondition must be satisfied by someone else. Read live when it is
  *  the same author's own prior step." Neither half is this author's own step —
- *  `ownership.json` gives `hypotheses.callers` as `["skill:hypothesis-tracking"]`
+ *  `ownership.json` gives `hypotheses.callers` as `["agent:hypothesis-tracking"]`
  *  while `conflicts` belongs to `skill:conflict-resolution` and `assertions` to
  *  `skill:record-extraction`. Both of those sections are `enforceableAt:
  *  ["unit"]` only (no hook arm, no tool arm), so under a live read nothing would
@@ -683,14 +768,102 @@ function contradictionIsCredible(assertion: any): boolean {
   );
 }
 
-function coreIdentifierContradictionInvariants(
+/** A person_evidence link as the contradiction gate needs it: which assertion,
+ *  to which person. */
+export interface PersonLink {
+  assertion_id: string;
+  person_id: string;
+}
+
+/** The record party an assertion describes: `record_persona_id` when the
+ *  sidecar kept one, `record_role` otherwise (required on every assertion). The
+ *  same key `record-persona.ts` groups by; the contradiction gate and its
+ *  two-party arm both read it from here so the two cannot drift apart. */
+function partyKey(a: any): string | null {
+  return a?.record_persona_id ?? a?.record_role ?? null;
+}
+
+/** Links the gate can see for this call: the project's live person_evidence
+ *  with this batch's person_evidence ops replayed over it, whatever order the
+ *  ops arrive in. An update that supersedes a link removes it, and one that
+ *  re-points `person_id` or `assertion_id` moves it, so a link retired in the
+ *  same call cannot pair and a link moved onto a person does. */
+function batchPersonLinks(research: any, ops: ResearchAppendOp[]): PersonLink[] {
+  const byId = new Map<string, { assertion_id: unknown; person_id: unknown; superseded: boolean }>();
+  const appended: { assertion_id: unknown; person_id: unknown; superseded: boolean }[] = [];
+  const live: any[] = Array.isArray(research?.person_evidence) ? research.person_evidence : [];
+  for (const e of live) {
+    if (e && typeof e.id === "string") {
+      byId.set(e.id, { assertion_id: e.assertion_id, person_id: e.person_id, superseded: !!e.superseded_by });
+    }
+  }
+  for (const op of ops) {
+    if (op.section !== "person_evidence") continue;
+    if (op.op === "append") {
+      const e = (op as any).entry;
+      if (e) appended.push({ assertion_id: e.assertion_id, person_id: e.person_id, superseded: !!e.superseded_by });
+    } else if (op.op === "update" && typeof op.entryId === "string") {
+      const cur = byId.get(op.entryId);
+      const f = (op as any).fields ?? {};
+      if (!cur) continue;
+      if (Object.prototype.hasOwnProperty.call(f, "superseded_by")) cur.superseded = !!f.superseded_by;
+      if (typeof f.person_id === "string") cur.person_id = f.person_id;
+      if (typeof f.assertion_id === "string") cur.assertion_id = f.assertion_id;
+    }
+  }
+  const out: PersonLink[] = [];
+  for (const l of [...byId.values(), ...appended]) {
+    if (!l.superseded && typeof l.assertion_id === "string" && typeof l.person_id === "string") {
+      out.push({ assertion_id: l.assertion_id, person_id: l.person_id });
+    }
+  }
+  return out;
+}
+
+/** Whether `linked`, a two-party assertion, is about its OWN party when linked
+ *  to `entry.person_id`: true when some other link ties a one-party assertion of
+ *  the same record and the same party to that same person. The party key is the
+ *  one the gate below uses (`record_persona_id`, else `record_role`). */
+function ownPartyLinkedTo(
+  linked: any,
+  entry: any,
+  recordId: string,
+  assertionById: ReadonlyMap<string, any>,
+  personLinks?: ReadonlyArray<PersonLink>,
+): boolean {
+  if (!personLinks || personLinks.length === 0) return false;
+  const party = partyKey(linked);
+  if (party === null) return false;
+  return personLinks.some((l) => {
+    if (l.person_id !== entry.person_id || l.assertion_id === entry.assertion_id) return false;
+    const other = assertionById.get(l.assertion_id);
+    if (!other) return false;
+    if (RELATIONAL_FACT_TYPES.has(String(other.fact_type ?? "").toLowerCase())) return false;
+    return (other.record_id ?? other.source_id ?? null) === recordId && partyKey(other) === party;
+  });
+}
+
+export function coreIdentifierContradictionInvariants(
   entry: any,
   research: any,
   tree: any,
+  // Optional so every existing caller compiles unchanged; absent, a two-party
+  // assertion stays out of scope exactly as before.
+  personLinks?: ReadonlyArray<PersonLink>,
+  batchAssertions?: Map<string, any>,
 ): string[] {
   if (entry.confidence !== "confident" && entry.confidence !== "probable") return [];
-  const assertions: any[] = research.assertions ?? [];
-  const linked = assertions.find((a: any) => a?.id === entry.assertion_id);
+  // Every assertion this call can resolve: the document's, plus this batch's
+  // predicted appends. Reading only `research.assertions` let a batch that puts
+  // its assertion appends AFTER the person_evidence ops silence this gate, the
+  // ordering bypass the score gate already closed.
+  const assertionById = new Map<string, any>();
+  for (const a of (research.assertions ?? []) as any[]) {
+    if (a && typeof a.id === "string") assertionById.set(a.id, a);
+  }
+  if (batchAssertions) for (const [id, a] of batchAssertions) assertionById.set(id, { ...a, id });
+  const assertions: any[] = [...assertionById.values()];
+  const linked = assertionById.get(entry.assertion_id);
   if (!linked) return [];
   const recordId = linked.record_id ?? linked.source_id ?? null;
   if (recordId == null) return [];
@@ -700,9 +873,31 @@ function coreIdentifierContradictionInvariants(
   // position consistent with son") carries the CHILD's role while the link may
   // be to the father. Comparing the child's stated birth of 1845 against a
   // father the tree puts at 1818 produced 14 refusals that are one household,
-  // not one contradiction. We cannot tell from the assertion which side a link
-  // is about, so two-party assertions are out of scope for this gate.
-  if (RELATIONAL_FACT_TYPES.has(String(linked.fact_type ?? "").toLowerCase())) return [];
+  // not one contradiction. The assertion alone cannot say which side a link is
+  // about, so a two-party assertion is out of scope -- UNLESS another link ties
+  // the same record party to the same person through a one-party assertion.
+  // Then the link is about the assertion's own party, and skipping it let a
+  // baptism's relationship assertion carry `confident` onto the very person
+  // its christening date had just been refused on (ut_person_evidence_024,
+  // 2026-09-29: a_003 capped, a_001 from the same child persona persisted).
+  //
+  // The widened reach checks the DATE arm only. Measured 2026-09-29 over 302
+  // committed fixture and e2e documents (9,736 confident/probable links), running
+  // the place arm too would add 247 refusals, and every one read was a
+  // less-specific place ("Ohio" against "Ohio, United States"), which
+  // `compatiblePlace`'s country-first prefix test calls a contradiction. That is
+  // a comparator defect, not a contradiction, and this arm must not export it.
+  // Date only, the same corpus gains 11 refusals, all read: 9 are a census
+  // persona whose OWN birth assertion is more than 5 years from the tree birth,
+  // which the one-party arm already refuses for that persona; 2 (one Spriggs run)
+  // inherit an extraction that gave father and child one record_persona_id, which
+  // already refuses every one-party link of that persona. No new class.
+  const twoParty = RELATIONAL_FACT_TYPES.has(String(linked.fact_type ?? "").toLowerCase());
+  if (twoParty) {
+    if (!ownPartyLinkedTo(linked, entry, recordId, assertionById, personLinks)) {
+      return [];
+    }
+  }
 
   const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === entry.person_id);
   if (!person) return [];
@@ -719,7 +914,6 @@ function coreIdentifierContradictionInvariants(
   // are all one household, not one contradiction. The party key is the same one
   // `record-persona.ts` groups by -- `record_persona_id` when the sidecar kept
   // one, `record_role` otherwise, which is required on every assertion.
-  const partyKey = (a: any) => a?.record_persona_id ?? a?.record_role ?? null;
   const linkedParty = partyKey(linked);
   const sameRecord = assertions.filter(
     (a: any) =>
@@ -732,7 +926,7 @@ function coreIdentifierContradictionInvariants(
   const findings: string[] = [];
 
   // ── place ────────────────────────────────────────────────────────────────
-  if (typeof birth.place === "string" && placeSegments(birth.place).length > 0) {
+  if (!twoParty && typeof birth.place === "string" && placeSegments(birth.place).length > 0) {
     for (const a of sameRecord) {
       // Like for like. An ANY-place comparison refuses 274 of 323 committed
       // confident/probable entries (85%) because a marriage or census place is
@@ -1009,12 +1203,12 @@ export function personaReachable(entry: any, research: any): boolean {
 /** Whether this tree person exists only because of the record now being linked.
  *
  *  The lead's step-3 wording is "a tree person whose only source ref is this
- *  record", and it is NOT decidable from the tree alone: `TREE_PERSON_FIELDS`
- *  has no `sources`, refs hang off `names[]`/`facts[]`, and a tree source
+ *  record", and it is NOT decidable from the tree alone: refs hang off the
+ *  person itself, its `names[]` and its `facts[]`, and a tree source
  *  description carries `id/title/citation/author/url` and no record id. So the
  *  walk is six hops and ends in `research.json`:
  *
- *    tree names[]/facts[].sources[].ref -> tree sources[].id
+ *    tree person/names[]/facts[].sources[].ref -> tree sources[].id
  *      -> research sources[].gedcomx_source_description_id
  *      -> research sources[].id -> assertions[].source_id
  *      -> assertions[].record_id
@@ -1058,6 +1252,11 @@ export function mintedFromThisRecord(
   const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
   if (!person) return false;
   const refs = new Set<string>();
+  // Person-level refs count too (#2696): "only source ref" means every ref the
+  // person carries, and person_read attaches FamilySearch's at this level.
+  for (const src of (person.sources ?? []) as any[]) {
+    if (typeof src?.ref === "string" && src.ref !== "") refs.add(src.ref);
+  }
   for (const n of (person.names ?? []) as any[]) {
     for (const src of (n?.sources ?? []) as any[]) {
       if (typeof src?.ref === "string" && src.ref !== "") refs.add(src.ref);
@@ -1464,6 +1663,59 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
       "the search finish; declaring is available on the next call once the plan reflects it. " +
       "Items still at `planned` do not block — consulting the stop criteria before draining " +
       "the plan is the sanctioned path.",
+  ];
+}
+
+/** A new question may not be created while any unresolved question has an
+ *  active-plan item `in_progress`, with one exception (chesworthrm,
+ *  2026-09-29): the new question may target an unresolved conflict that blocks
+ *  the in-flight question. That exception is checked against `conflicts[]` —
+ *  an `unresolved` conflict must list the in-flight question in
+ *  `blocks_question_ids`, AND the new question's `unblocks` must name it. A
+ *  filled-in `unblocks` alone proves nothing.
+ *
+ *  There is deliberately no "add a question anyway" override: the tool cannot
+ *  tell a real user override from a delegation that claims one, and the
+ *  override's shape (`depends_on` naming the in-flight question) is exactly how
+ *  `ut_question_selection_d01` fails. A user who wants to move on marks the
+ *  in-flight item done or skipped first.
+ *
+ *  Same pre-call snapshot and active-plan discipline as
+ *  `planCompleteInvariants`: a superseded plan's items are frozen and a resolved
+ *  question's plan is settled, so neither blocks. */
+function newQuestionWhileSearchInFlightInvariants(entry: any, preCallResearch: any): string[] {
+  const unresolvedQuestions = new Set<string>(
+    (Array.isArray(preCallResearch?.questions) ? preCallResearch.questions : [])
+      .filter((q: any) => typeof q?.id === "string" && q.status !== "resolved")
+      .map((q: any) => q.id),
+  );
+  const unblocks = new Set<string>(
+    Array.isArray(entry?.unblocks) ? entry.unblocks.filter((u: unknown) => typeof u === "string") : [],
+  );
+  const conflictBlocked = new Set<string>();
+  for (const c of Array.isArray(preCallResearch?.conflicts) ? preCallResearch.conflicts : []) {
+    if (c?.status !== "unresolved" || !Array.isArray(c.blocks_question_ids)) continue;
+    for (const q of c.blocks_question_ids) if (typeof q === "string") conflictBlocked.add(q);
+  }
+  const refused: string[] = [];
+  for (const plan of Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []) {
+    if (!plan || plan.status !== "active" || !unresolvedQuestions.has(plan.question_id)) continue;
+    const excepted = conflictBlocked.has(plan.question_id) && unblocks.has(plan.question_id);
+    if (excepted) continue;
+    for (const item of Array.isArray(plan.items) ? plan.items : []) {
+      if (item?.status === "in_progress" && typeof item?.id === "string") {
+        refused.push(`${item.id} (on ${plan.question_id})`);
+      }
+    }
+  }
+  if (refused.length === 0) return [];
+  const ids = refused.sort().join(", ");
+  return [
+    `a new question cannot be opened while research is still running: ${ids} ` +
+      `${refused.length === 1 ? "is" : "are"} still 'in_progress'. The plan says that search ` +
+      "has not finished, whatever the request that reached you says. Write no question now: " +
+      "report the in-flight item as the reason. The one exception is a question that resolves " +
+      "an unresolved conflict blocking that question — set its `unblocks` to name it.",
   ];
 }
 
@@ -2704,6 +2956,7 @@ function applyOne(
   // this research and cannot have been minted from the record being linked.
   startingPersonIds?: ReadonlySet<string>,
   createdAssertions?: ReadonlySet<string>,
+  personLinks?: ReadonlyArray<PersonLink>,
 ): AppliedOp {
   const section = op.section;
   // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
@@ -3113,6 +3366,9 @@ function applyOne(
     if (declarationTouchedThisOp) {
       invariantErrors.push(...planCompleteInvariants(resultEntry, preCallResearch));
     }
+    if (op.op === "append") {
+      invariantErrors.push(...newQuestionWhileSearchInFlightInvariants(resultEntry, preCallResearch));
+    }
     const statusTouchedThisOp =
       op.op === "append" || Object.prototype.hasOwnProperty.call(fields, "status");
     // EITHER side, because the invariant couples two fields and an op that
@@ -3142,6 +3398,16 @@ function applyOne(
       // the two dates cannot be ordered. See unorderableDateWarnings for why
       // this is a warning rather than a precondition.
       opWarnings.push(...unorderableDateWarnings(resultEntry, research));
+    }
+    // Uncertain-preference guard: on append, or an update that (re)sets
+    // preferred_assertion_id or status. Scoped so an unrelated edit to a
+    // conflict written before this rule is not refused.
+    if (
+      op.op === "append" ||
+      Object.prototype.hasOwnProperty.call(conflictFields, "preferred_assertion_id") ||
+      Object.prototype.hasOwnProperty.call(conflictFields, "status")
+    ) {
+      invariantErrors.push(...uncertainPreferenceInvariants(resultEntry, research));
     }
   }
   // One active plan per question — enforced on append OR an update that
@@ -3244,7 +3510,7 @@ function applyOne(
     // found and closed, and it is not hypothetical here either: the skill's own
     // documented re-invocation path writes `fields: {contradicting_assertion_ids:
     // [...]}` and is told to "leave the status unchanged"
-    // (`hypothesis-tracking/SKILL.md`). Gating on `status` alone left three
+    // (`agents/hypothesis-tracking.md`). Gating on `status` alone left three
     // measured calls landing `ok: true` on exactly the state this refuses.
     //
     // Measured at 587d3c98d: 11 corpus update ops touch one of these lists
@@ -3281,8 +3547,20 @@ function applyOne(
     // `secondary`/`family_not_present`, 3 christening PLACES against a birth
     // place. Both classes are now excluded on genealogical grounds, and the
     // arm refuses 0 of 323 committed confident/probable entries.
+    //
+    // An UPDATE that sets `superseded_by` is retiring a link, not asserting
+    // one. Refusing it would make a confident link on a contradicted persona
+    // permanently unretractable through the section 6 supersede pattern
+    // (append the corrected link, then set `superseded_by` on the old one) --
+    // the trap the score gate avoids too. Keyed on the op, not the field: an
+    // APPEND that arrives already carrying `superseded_by` is a new link, and
+    // exempting it let any confident link on a contradicted persona through
+    // with an invented supersede pointer (the validator does not check that
+    // a person_evidence `superseded_by` names an existing entry).
     invariantErrors.push(
-      ...coreIdentifierContradictionInvariants(resultEntry, research, tree),
+      ...(op.op === "update" && resultEntry.superseded_by
+        ? []
+        : coreIdentifierContradictionInvariants(resultEntry, research, tree, personLinks, batchAssertions)),
     );
     // #1731 step 3. The two halves have different scope, and collapsing them
     // into "append only" left the CIRCULAR arm reachable in two calls: append
@@ -3423,6 +3701,9 @@ interface PreparedOps {
   startingPersonIds: ReadonlySet<string>;
   /** Assertion ids this call creates; they cannot already carry a score. */
   createdAssertions: ReadonlySet<string>;
+  /** Live person_evidence plus this batch's appends, for the contradiction
+   *  gate's two-party arm. */
+  personLinks: PersonLink[];
   sourceDescriptionId?: string;
   sourceReuse?: SourceReuseEcho;
   resolvedPlaces: ResolvedPlaceEcho[];
@@ -3703,6 +3984,7 @@ async function prepareOps(
   const matchScores = new Map<string, MatchScoreFile>();
   const batchAssertions = batchAssertionsById(research, ops);
   const createdAssertions = createdAssertionIds(research, ops);
+  const personLinks = batchPersonLinks(research, ops);
   // Read once here: `applyOne` is synchronous. Fail-open (an absent baseline
   // yields an empty set) matches `readStartingTree`'s own contract.
   const baseline = await readStartingTree(projectPath);
@@ -4306,7 +4588,7 @@ async function prepareOps(
   if (errors.length > 0) throw new ResearchAppendError(errors);
   const verdictFile = prepareVerdict(input, ops, fmt, errors);
   if (errors.length > 0) throw new ResearchAppendError(errors);
-  return { treeMutated, matchScores, batchAssertions, startingPersonIds, createdAssertions, sourceDescriptionId, sourceReuse, resolvedPlaces, warnings, verdictFile };
+  return { treeMutated, matchScores, batchAssertions, startingPersonIds, createdAssertions, personLinks, sourceDescriptionId, sourceReuse, resolvedPlaces, warnings, verdictFile };
 }
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
@@ -4481,6 +4763,7 @@ export async function researchAppend(
             prep.batchAssertions,
             prep.startingPersonIds,
             prep.createdAssertions,
+            prep.personLinks,
           ),
         );
       } catch (e) {

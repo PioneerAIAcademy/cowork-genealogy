@@ -4,18 +4,19 @@
     "skill": "check-warnings",
     "name": "Detect a marriage before age 14 (Valid violation, not Fundamental)",
     "type": "positive",
-    "description": "User asks to check Patrick. The tool returns hasEarlyMarriage14 -- Patrick has a marriage event dated less than 14 years after his birth (i.e., he appears to have married before turning 14). This is a Valid violation: improbable but not impossible (a 13-year-old marriage in a 19th-century rural community is unusual but historically attested), NOT a Fundamental violation. Tests that the skill correctly classifies the severity as Note (severity: 'implausible'), NOT Critical, and recommends verifying both the marriage date and birth date against their original sources rather than escalating to identity-split. (Distinct from a marriage dated BEFORE Patrick's birth year, which would be a Fundamental violation triggering hasEventBeforeBirth365_2, not hasEarlyMarriage14.)",
+    "description": "User asks to check Patrick. The tool returns hasEarlyMarriage14 -- Patrick has a marriage event dated less than 14 years after his birth (i.e., he appears to have married before turning 14). This is a Valid violation: improbable but not impossible (a 13-year-old marriage in a 19th-century rural community is unusual but historically attested), NOT a Fundamental violation. Tests that the skill correctly classifies the severity as Implausible (severity: 'implausible'), NOT Contradiction, and recommends verifying both the marriage date and birth date against their original sources rather than escalating to identity-split. (Distinct from a marriage dated BEFORE Patrick's birth year, which would be a Fundamental violation triggering hasEventBeforeBirth365_2, not hasEarlyMarriage14.)",
     "tags": [
       "positive",
       "detection",
       "valid",
       "early-marriage",
       "note",
-      "severity-classification"
+      "severity-classification",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Check Cornelius for warnings.",
+    "delegation": "Check Cornelius for warnings.\n\npersonId: I1\n\nprojectPath: <workspace>",
     "scenario": "brady-multiple-warnings"
   },
   "mcp_fixtures": [
@@ -23,9 +24,9 @@
   ],
   "judge_context": [
     "Should call person_warnings on Cornelius (I1)",
-    "Should report the hasEarlyMarriage14 warning with Note severity, NOT Critical -- this is a Valid-assumption violation, not a Fundamental one (the tool emits severity: 'implausible')",
+    "Should report the hasEarlyMarriage14 warning at the severity the tool returned (severity: 'implausible', shown as `[!] Implausible`), NOT as a contradiction -- this is a Valid-assumption violation, not a Fundamental one. The `[!]` marker is the agent body's icon for both severities and is not an escalation",
     "Should suggest verifying the marriage record's birth/marriage dates against the original source -- historical child marriages occurred but are rare",
-    "Should NOT auto-escalate to 'two persons merged' -- a single Valid violation on an otherwise clean profile is not enough to suggest identity confusion (see references/warnings-as-identity-signals.md cluster rules)",
+    "Should NOT auto-escalate to 'two persons merged' -- a single Valid violation on an otherwise clean profile is not enough to suggest identity confusion (see Appendix B of the agent body cluster rules)",
     "Should note that a documented exception is possible: if the original record genuinely shows a 13-year-old marriage, that needs documenting, not warning"
   ]
 }

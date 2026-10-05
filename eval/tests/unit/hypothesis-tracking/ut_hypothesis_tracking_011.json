@@ -10,11 +10,12 @@
       "status-transition",
       "guardrail",
       "refuse-promotion",
-      "insufficient-evidence"
+      "insufficient-evidence",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Can you mark h_002, the Thomas Flynn of Luzerne County hypothesis, as supported? I think we have enough to go on.",
+    "delegation": "Can you mark h_002, the Thomas Flynn of Luzerne County hypothesis, as supported? I think we have enough to go on.\n\nprojectPath: <workspace>",
     "scenario": "flynn-competing-fathers",
     "scenario_notes": null
   },

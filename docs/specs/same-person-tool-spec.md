@@ -452,7 +452,7 @@ do next), thrown as `Error` objects.
 | `gedcomx1` or `gedcomx2` is missing entirely | MCP schema validation rejects the call before the function runs (the four params are `required`). |
 | `gedcomx1.persons` or `gedcomx2.persons` is missing or empty | **Runtime check** inside `validateInput()` — the JSON schema for `type: "object"` won't catch a missing nested array. Throws: `"same_person: <side> has no persons[] array."` |
 | API returns 200 but `entries[]` is empty | Defensive sentinel — should never happen (the API always returns ≥1 entry; see Evidence Trail). Throws: `"matchTwoExamples API returned no entries[]; this is unexpected per FS behavior."` |
-| `fetch()` itself fails (network) | `"Could not reach FamilySearch matchTwoExamples API: ${error.message}."` |
+| `fetch()` itself fails (network) | `"Could not reach FamilySearch matchTwoExamples API: ${describeFetchError(error)}."` |
 
 ---
 

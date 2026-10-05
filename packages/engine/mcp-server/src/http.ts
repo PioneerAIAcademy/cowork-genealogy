@@ -8,10 +8,15 @@
 //                                     for the request through runWithProjectStore
 // The process store is an `unboundProjectStore`, so a code path that runs
 // outside a request binding fails instead of reaching the file backend. The
-// Pg/S3 configuration is the one process-wide thing, read from the same
-// GENEALOGY_* environment hosted-stdio.ts reads (minus GENEALOGY_PROJECT_ID,
-// which is the header here); a missing variable is one stderr line and exit 2
-// before listen.
+// Pg/S3 configuration is the one process-wide thing, read from the
+// GENEALOGY_* environment (store/pg-s3-env.ts; the project id is the header,
+// never a variable); a missing variable, a half-set S3 key pair or an invalid
+// GENEALOGY_S3_FORCE_PATH_STYLE is one stderr line and exit 2 before listen.
+// With neither S3 key set the AWS SDK default chain supplies credentials
+// (environment, ~/.aws shared config/SSO, web identity, then instance
+// metadata); one stderr line names the mode, never a key. Nothing connects
+// before listen: `GET /healthz` probes Postgres (schema included) and S3 per
+// request and answers 503 while either is unreachable, never exiting.
 import { parseArgs } from "node:util";
 import { LOCAL } from "./auth/principal.js";
 import { loadConfig } from "./auth/config.js";
@@ -39,6 +44,17 @@ if (storeEnv.missing.length > 0) {
   process.stderr.write(`http: required environment not set: ${storeEnv.missing.join(", ")}\n`);
   process.exit(2);
 }
+if (storeEnv.invalid.length > 0) {
+  process.stderr.write(
+    `http: environment set to an invalid value (expected true or false): ${storeEnv.invalid.join(", ")}\n`,
+  );
+  process.exit(2);
+}
+const s3Options = storeEnv.backendOptions.s3;
+process.stderr.write(
+  `s3 credentials: ${s3Options.accessKeyId ? "static keys" : "SDK default chain"}; ` +
+    `region ${s3Options.region}; endpoint ${s3Options.endpoint ?? "AWS default"}\n`,
+);
 
 // One pool and one S3 client for the process; a store per request over them.
 const backend = createPgS3Backend(storeEnv.backendOptions);
@@ -50,10 +66,9 @@ setProjectStore(
 // (~/.familysearch-mcp/config.json — sidecar URLs, OpenRouter key, hosted
 // flag). Every tool call binds a per-request bearer instead (http-server.ts).
 //
-// The environment overlays it (hosted-config-env.ts, shared with hosted-stdio.js):
-// without that, `image_transcribe` has no OpenRouter key here while the per-turn stdio
-// fork has one, so the tool would start failing the moment the worker's default moved
-// to http (2026-09-20).
+// The environment overlays it (hosted-config-env.ts): a container receives the
+// OpenRouter key as environment, so without the overlay `image_transcribe` has no key
+// here.
 const baseConfig = configFromEnv(process.env, await loadConfig(LOCAL));
 const server = await startHttpServer({
   host: values.host as string,
@@ -61,6 +76,7 @@ const server = await startHttpServer({
   baseConfig,
   bindStore: (projectId, signal) =>
     new PgS3ProjectStore(backend, { projectId, anchorPath: storeEnv.anchorPath, signal }),
+  checkReady: () => backend.checkReady(),
 });
 
 const address = server.address();

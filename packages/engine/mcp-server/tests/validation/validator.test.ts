@@ -1802,14 +1802,14 @@ describe("Project Validator", () => {
       ).toBe(true);
     });
 
-    it("rejects person-level sources and an unknown top-level section", async () => {
+    it("accepts person-level sources but rejects an unknown top-level section", async () => {
       const tree = {
         persons: [
           {
             id: "P1",
             gender: "Male",
             names: [{ id: "N1", given: "John", surname: "Doe" }],
-            sources: [{ ref: "S1" }],
+            sources: [{ ref: "S1", page: "p. 4", quality: 2 }],
           },
         ],
         relationships: [],
@@ -1821,10 +1821,43 @@ describe("Project Validator", () => {
       expect(result.valid).toBe(false);
       expect(
         result.errors.some((e) => e.message.includes("unexpected property 'sources'"))
-      ).toBe(true);
+      ).toBe(false);
       expect(
         result.errors.some((e) => e.message.includes("unexpected property 'places'"))
       ).toBe(true);
+    });
+
+    it("rejects a dangling, malformed or non-array person-level source ref", async () => {
+      const person = (sources: unknown) => ({
+        id: "P1",
+        gender: "Male",
+        names: [{ id: "N1", given: "John", surname: "Doe" }],
+        sources,
+      });
+      const cases: Array<[unknown, string]> = [
+        [[{ ref: "S9" }], "references source 'S9' which does not exist"],
+        [[{ ref: "S1", tags: ["Name"] }], "unexpected property 'tags'"],
+        ["S1", "'sources' must be an array"],
+      ];
+      for (const [sources, message] of cases) {
+        await writeProject(minimalResearch, {
+          persons: [person(sources)],
+          relationships: [],
+          sources: [{ id: "S1", title: "Census" }],
+        });
+        const result = await validateProject(testDir);
+        expect(result.errors.map((e) => e.message).join(" | ")).toContain(message);
+      }
+    });
+
+    it("rejects a non-array `sources` on a name too (one check, every holder)", async () => {
+      await writeProject(minimalResearch, {
+        persons: [{ id: "P1", gender: "Male", names: [{ id: "N1", given: "J", surname: "D", sources: "S1" }] }],
+        relationships: [],
+        sources: [{ id: "S1", title: "Census" }],
+      });
+      const result = await validateProject(testDir);
+      expect(result.errors.some((e) => e.message.includes("'sources' must be an array"))).toBe(true);
     });
 
     it("rejects record-only fields on tree persons and sources", async () => {
@@ -2732,6 +2765,21 @@ describe("Research closed shapes", () => {
     expect(result.valid).toBe(true);
   });
 
+  // #2802 — the two church-book browse sites. A capture from either could not
+  // be logged before: `external_site.site` is a closed enum.
+  it("accepts the archion and matricula browse sites on external_site.site", async () => {
+    for (const site of ["archion", "matricula"]) {
+      const research = maximalResearch();
+      research.log[1].external_site.site = site;
+      const result = await validateParsed(research, maximalTree);
+      expect(result.errors, site).toEqual([]);
+    }
+    const research = maximalResearch();
+    research.log[1].external_site.site = "archion_de";
+    const result = await validateParsed(research, maximalTree);
+    expect(JSON.stringify(result.errors)).toMatch(/'archion_de' is not a valid site/);
+  });
+
   // #1270 — pages_read[].section is the `locality_page_section` closed enum.
   // validateLocalities never descended into pages_read before, so a misspelled
   // section reached disk with valid: true. The maximal document above carries
@@ -3130,6 +3178,7 @@ describe("Research closed shapes", () => {
       proof_claim_relationship: schema.$defs.proof_claim_relationship,
       evaluation_entry: schema.$defs.evaluation_entry,
       locality: schema.$defs.locality,
+      warning_justification: schema.$defs.warning_justification,
     };
 
     expect(Object.keys(defFor).sort()).toEqual(Object.keys(RESEARCH_SHAPES).sort());

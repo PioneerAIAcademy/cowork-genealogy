@@ -7,6 +7,8 @@ import { fileURLToPath } from "url";
 import { tmpdir } from "os";
 import { researchLogAppend } from "../../src/tools/research-log-append.js";
 import { stageSearchResults, STAGING_SUBDIR } from "../../src/utils/results-staging.js";
+import { FsProjectStore } from "../../src/store/fs-project-store.js";
+import { setProjectStore, type ProjectStore } from "../../src/store/project-store.js";
 import { validateProject } from "../../src/validation/validator.js";
 
 function baseResearch(log: any[] = []) {
@@ -79,6 +81,86 @@ describe("research_log_append", () => {
     expect(result.ok).toBe(true);
     const research = await readJson("research.json");
     expect(research.log[0].query).toEqual(echoed);
+  });
+
+  describe("an omitted `tool` (feedback issue #3069)", () => {
+    async function stage() {
+      return stageSearchResults({
+        projectPath: dir,
+        tool: "record_search",
+        response: { query: { surname: "Byrne" }, results: [{ recordId: "A" }, { recordId: "B" }] },
+      });
+    }
+
+    it("is filled from the staged envelope, and the results are kept", async () => {
+      await writeProject(baseResearch());
+      const handle = await stage();
+      const result = await researchLogAppend({
+        projectPath: dir,
+        outcome: "partial",
+        resultsExamined: 2,
+        planItemId: "pli_001",
+        stagedResultsRef: handle!.resultsRef,
+      } as any);
+
+      expect(result.ok).toBe(true);
+      const research = await readJson("research.json");
+      expect(research.log[0].tool).toBe("record_search");
+      expect(research.log[0].results_ref).toBe("results/log_001.json");
+      expect((await validateProject(dir)).valid).toBe(true);
+    });
+
+    it("is filled per op in a batch", async () => {
+      await writeProject(baseResearch());
+      const handle = await stage();
+      const result = await researchLogAppend({
+        projectPath: dir,
+        ops: [{ outcome: "partial", resultsExamined: 2, planItemId: null, stagedResultsRef: handle!.resultsRef }],
+      } as any);
+
+      expect(result.ok).toBe(true);
+      expect((await readJson("research.json")).log[0].tool).toBe("record_search");
+    });
+
+    it("is refused with every missing field named at once when nothing records it", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({ projectPath: dir, outcome: "partial", planItemId: "pli_001" } as any);
+
+      expect(result.ok).toBe(false);
+      const [message] = (result as { errors: string[] }).errors;
+      expect(message).toContain("missing required fields `tool`, `resultsExamined`, `query`");
+      expect((await readJson("research.json")).log).toEqual([]);
+    });
+
+    it("leaves an unreadable staged ref to the staged-ref check", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        outcome: "partial",
+        resultsExamined: 0,
+        stagedResultsRef: `${STAGING_SUBDIR}/missing.json`,
+      } as any);
+
+      expect(result.ok).toBe(false);
+      expect((result as { errors: string[] }).errors[0]).toContain("is not in results/.staging/");
+    });
+
+    it("leaves an explicit wrong `tool` refused as a mismatch", async () => {
+      await writeProject(baseResearch());
+      const handle = await stage();
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "fulltext_search",
+        outcome: "partial",
+        resultsExamined: 2,
+        stagedResultsRef: handle!.resultsRef,
+      } as any);
+
+      expect(result.ok).toBe(false);
+      expect((result as { errors: string[] }).errors[0]).toContain(
+        "staged file tool 'record_search' does not match log entry tool 'fulltext_search'",
+      );
+    });
   });
 
   it("finalizes a staged image_transcribe transcription — a one-element results[] — into the sidecar (#2048)", async () => {
@@ -456,27 +538,74 @@ describe("research_log_append", () => {
     expect(research.log).toHaveLength(0);
   });
 
-  it("rejects an external_links_search entry logged negative despite returning results", async () => {
-    // This entry grades the curated-links FETCH, not the search: a model
-    // that recognizes none of the returned links fit the target site/record
-    // type has been observed logging outcome "negative" anyway — collapsing
-    // "FamilySearch curates nothing here" and "curates plenty, none
-    // relevant" into the same value, which loses the distinction permanently
-    // in the audit trail. Enforced here rather than left to the model, since
-    // it was a repeat, measured miss in practice.
+  it.each(["negative", "partial", "error"])(
+    "corrects an external_links_search entry logged %s despite returning results, and says so",
+    async (sent) => {
+      // This entry grades the curated-links FETCH, not the search: a model
+      // that recognizes none of the returned links fit the target site/record
+      // type has been observed logging outcome "negative" anyway — collapsing
+      // "FamilySearch curates nothing here" and "curates plenty, none
+      // relevant" into the same value. The right value is decidable from the
+      // call, so the tool writes it instead of refusing — never silently.
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "external_links_search",
+        query: { standardPlace: "Pennsylvania, United States", host: "findagrave.com" },
+        outcome: sent,
+        resultsExamined: 2,
+      });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.validation.warnings.join(" ")).toMatch(
+        new RegExp(`outcome set to 'positive' \\(was '${sent}'\\).*grades the fetch, not the search`),
+      );
+      const research = await readJson("research.json");
+      expect(research.log).toHaveLength(1);
+      expect(research.log[0].outcome).toBe("positive");
+    },
+  );
+
+  it("corrects the outcome inside a batch too", async () => {
     await writeProject(baseResearch());
     const result = await researchLogAppend({
       projectPath: dir,
-      tool: "external_links_search",
-      query: { standardPlace: "Pennsylvania, United States", host: "findagrave.com" },
+      ops: [
+        {
+          tool: "external_links_search",
+          query: { standardPlace: "Pennsylvania, United States", host: "findagrave.com" },
+          outcome: "negative",
+          resultsExamined: 3,
+        },
+        {
+          tool: "external_links_search",
+          query: { standardPlace: "Ohio, United States", host: "findagrave.com" },
+          outcome: "negative",
+          resultsExamined: 0,
+        },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const research = await readJson("research.json");
+    expect(research.log.map((e: any) => e.outcome)).toEqual(["positive", "negative"]);
+    expect(result.validation.warnings.filter((w) => w.startsWith("outcome set to 'positive'"))).toHaveLength(1);
+  });
+
+  it("leaves every other tool's outcome as sent", async () => {
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Flynn" },
       outcome: "negative",
       resultsExamined: 2,
     });
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.errors.join(" ")).toMatch(/outcome must be 'positive'/);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.validation.warnings.join(" ")).not.toMatch(/outcome set to/);
     const research = await readJson("research.json");
-    expect(research.log).toHaveLength(0);
+    expect(research.log[0].outcome).toBe("negative");
   });
 
   it("accepts an external_links_search entry logged positive when it returned results", async () => {
@@ -501,6 +630,11 @@ describe("research_log_append", () => {
       resultsExamined: 0,
     });
     expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // Zero links keep the caller's outcome, with no correction note.
+    expect(result.validation.warnings.join(" ")).not.toMatch(/outcome set to/);
+    const research = await readJson("research.json");
+    expect(research.log[0].outcome).toBe("negative");
   });
 
   it.each([NaN, -3, 1.5])(
@@ -781,6 +915,246 @@ describe("research_log_append", () => {
     // ...and op 0's sidecar (already written to disk before op 1 ran) is cleaned up too —
     // not just "the failing op's own" sidecar.
     expect(await exists("results/log_001.json")).toBe(false);
+    // op 0's STAGED file survives the refusal: it is removed only after a commit.
+    expect(await exists(handle!.resultsRef)).toBe(true);
+
+    // So the corrected re-send succeeds and only then consumes it.
+    const retry = await researchLogAppend({
+      projectPath: dir,
+      ops: [
+        { tool: "record_search", query: {}, outcome: "positive", resultsExamined: 1, stagedResultsRef: handle!.resultsRef },
+        { tool: "record_search", query: {}, outcome: "negative", resultsExamined: 0 },
+      ],
+    });
+    expect(retry.ok).toBe(true);
+    expect(await exists("results/log_001.json")).toBe(true);
+    expect(await exists(handle!.resultsRef)).toBe(false);
+  });
+
+  // ─── #2913: a refused call never destroys a staged search ─────────────────
+
+  /** The file store, recording every writeJson ref; optionally failing the
+   *  research.json write, which stands in for a commit that throws. */
+  function recordingStore(opts: { failResearchWrite?: boolean } = {}) {
+    const inner = new FsProjectStore();
+    const writes: string[] = [];
+    const store = new Proxy(inner, {
+      get(target, prop, receiver) {
+        if (prop === "writeJson") {
+          return async (projectPath: string, ref: string, obj: unknown) => {
+            writes.push(ref);
+            if (opts.failResearchWrite && ref === "research.json") throw new Error("disk full");
+            return target.writeJson(projectPath, ref, obj);
+          };
+        }
+        const v = Reflect.get(target, prop, receiver);
+        return typeof v === "function" ? v.bind(target) : v;
+      },
+    }) as unknown as ProjectStore;
+    return { store, writes };
+  }
+
+  it("(batch) a consumed ref in op[1] is refused BEFORE op[0] finalizes, and op[0]'s staged file survives", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { results: [{ recordId: "A" }] } });
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const { store, writes } = recordingStore();
+    setProjectStore(store);
+    let result;
+    try {
+      result = await researchLogAppend({
+        projectPath: dir,
+        ops: [
+          { tool: "record_search", query: {}, outcome: "positive", resultsExamined: 1, stagedResultsRef: handle!.resultsRef },
+          { tool: "record_search", query: {}, outcome: "positive", resultsExamined: 1, stagedResultsRef: `${STAGING_SUBDIR}/already-logged.json` },
+        ],
+      });
+    } finally {
+      setProjectStore(null);
+    }
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors[0]).toMatch(/^ops\[1\]: stagedResultsRef '.*already-logged\.json' is not in results\/\.staging\//);
+    // The pre-pass refused it: op[0] never wrote a sidecar at all.
+    expect(writes.filter((w) => w.startsWith("results/log_"))).toEqual([]);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    expect(await exists(handle!.resultsRef)).toBe(true);
+
+    const retry = await researchLogAppend({
+      projectPath: dir,
+      ops: [{ tool: "record_search", query: {}, outcome: "positive", resultsExamined: 1, stagedResultsRef: handle!.resultsRef }],
+    });
+    expect(retry.ok).toBe(true);
+  });
+
+  it("(single) query omitted with no payload echo is refused after finalize, and the staged file survives", async () => {
+    await writeProject(baseResearch());
+    // No `query` in the staged payload, so finalize has nothing to default from
+    // and the query-required check throws AFTER the sidecar is written.
+    const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { results: [{ recordId: "A" }] } });
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      outcome: "positive",
+      resultsExamined: 1,
+      stagedResultsRef: handle!.resultsRef,
+    } as any);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(" ")).toMatch(/`query` is required/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    expect(await exists("results/log_001.json")).toBe(false);
+    expect(await exists(handle!.resultsRef)).toBe(true);
+
+    const retry = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Flynn" },
+      outcome: "positive",
+      resultsExamined: 1,
+      stagedResultsRef: handle!.resultsRef,
+    });
+    expect(retry.ok).toBe(true);
+    expect(await exists(handle!.resultsRef)).toBe(false);
+  });
+
+  it("(batch) naming one staged ref twice is refused up front and writes nothing", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { results: [{ recordId: "A" }] } });
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const op = { tool: "record_search", query: {}, outcome: "positive", resultsExamined: 1 };
+
+    const result = await researchLogAppend({
+      projectPath: dir,
+      // Two spellings of one path: compared resolved, the way finalize resolves.
+      ops: [
+        { ...op, stagedResultsRef: handle!.resultsRef },
+        { ...op, stagedResultsRef: `./${handle!.resultsRef}` },
+      ],
+    } as any);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors).toEqual([`ops[1]: stagedResultsRef './${handle!.resultsRef}' is also ops[0]'s`]);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    expect(await exists("results/log_001.json")).toBe(false);
+    expect(await exists(handle!.resultsRef)).toBe(true);
+
+    // The corrected re-send, naming it once, succeeds and consumes it.
+    const retry = await researchLogAppend({
+      projectPath: dir,
+      ops: [{ ...op, stagedResultsRef: handle!.resultsRef }],
+    } as any);
+    expect(retry.ok).toBe(true);
+    expect(await exists(handle!.resultsRef)).toBe(false);
+  });
+
+  it("a staged file that exists but cannot be read is not told it was already logged", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { results: [{ recordId: "A" }] } });
+    const inner = new FsProjectStore();
+    const store = new Proxy(inner, {
+      get(target, prop, receiver) {
+        if (prop === "readText") {
+          return async (projectPath: string, ref: string) => {
+            if (ref === handle!.resultsRef) throw new Error("EIO: read failed");
+            return target.readText(projectPath, ref);
+          };
+        }
+        const v = Reflect.get(target, prop, receiver);
+        return typeof v === "function" ? v.bind(target) : v;
+      },
+    }) as unknown as ProjectStore;
+    setProjectStore(store);
+    let result;
+    try {
+      result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_search",
+        query: {},
+        outcome: "positive",
+        resultsExamined: 1,
+        stagedResultsRef: handle!.resultsRef,
+      });
+    } finally {
+      setProjectStore(null);
+    }
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    const msg = result.errors.join(" ");
+    expect(msg).toMatch(/could not be read: EIO: read failed/);
+    expect(msg).not.toMatch(/each staged ref can be logged once/);
+    expect(await exists(handle!.resultsRef)).toBe(true);
+  });
+
+  it("(batch) two ops with no staged ref, or a \"null\" one, are not duplicates", async () => {
+    await writeProject(baseResearch());
+    const op = { tool: "record_search", query: {}, outcome: "negative", resultsExamined: 0 };
+    const result = await researchLogAppend({
+      projectPath: dir,
+      ops: [{ ...op, stagedResultsRef: "null" }, { ...op, stagedResultsRef: "null" }, { ...op }, { ...op, stagedResultsRef: null }],
+    } as any);
+    expect(result.ok).toBe(true);
+  });
+
+  it("a commit that throws leaves the staged file, since it is removed only after the commit", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { results: [{ recordId: "A" }] } });
+    const { store } = recordingStore({ failResearchWrite: true });
+    setProjectStore(store);
+    try {
+      await expect(
+        researchLogAppend({
+          projectPath: dir,
+          tool: "record_search",
+          query: {},
+          outcome: "positive",
+          resultsExamined: 1,
+          stagedResultsRef: handle!.resultsRef,
+        }),
+      ).rejects.toThrow(/disk full/);
+    } finally {
+      setProjectStore(null);
+    }
+    expect(await exists(handle!.resultsRef)).toBe(true);
+  });
+
+  it("(batch) a commit that throws leaves every op's staged file", async () => {
+    await writeProject(baseResearch());
+    const h1 = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { results: [{ recordId: "A" }] } });
+    const h2 = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { results: [{ recordId: "B" }] } });
+    const op = { tool: "record_search", query: {}, outcome: "positive", resultsExamined: 1 };
+    const { store } = recordingStore({ failResearchWrite: true });
+    setProjectStore(store);
+    try {
+      await expect(
+        researchLogAppend({
+          projectPath: dir,
+          ops: [{ ...op, stagedResultsRef: h1!.resultsRef }, { ...op, stagedResultsRef: h2!.resultsRef }],
+        } as any),
+      ).rejects.toThrow(/disk full/);
+    } finally {
+      setProjectStore(null);
+    }
+    expect(await exists(h1!.resultsRef)).toBe(true);
+    expect(await exists(h2!.resultsRef)).toBe(true);
+  });
+
+  it("a successful call consumes the staged file it finalized", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { results: [{ recordId: "A" }] } });
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: {},
+      outcome: "positive",
+      resultsExamined: 1,
+      stagedResultsRef: handle!.resultsRef,
+    });
+    expect(result.ok).toBe(true);
+    expect(await exists("results/log_001.json")).toBe(true);
+    expect(await exists(handle!.resultsRef)).toBe(false);
   });
 
   it("(batch) id-allocator continuity: three entries in one call get sequential ids", async () => {
@@ -1169,7 +1543,7 @@ describe("research_log_append — census check on the staged payload (#2735)", (
   it("reports finalize's own error for a missing staged file, not the census refusal", async () => {
     const r = await append(H4K, `${STAGING_SUBDIR}/does-not-exist.json`);
     expect(r.ok).toBe(false);
-    expect(errorsOf(r)).toMatch(/does not exist or is invalid JSON/);
+    expect(errorsOf(r)).toMatch(/is not in results\/\.staging\/ — each staged ref can be logged once/);
     expect(errorsOf(r)).not.toMatch(CENSUS_REFUSAL);
   });
 

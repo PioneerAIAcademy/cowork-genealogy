@@ -23,6 +23,7 @@ import sys
 import tempfile
 import time
 from dataclasses import dataclass, replace
+from datetime import datetime, timezone
 from pathlib import Path
 from collections.abc import Callable
 from typing import Any
@@ -54,6 +55,7 @@ from harness.context_policy import (
     SUBAGENT_ONLY_TOOLS,
 )
 from harness.judge import _summarize_response
+from harness.redact import redact_secrets
 import harness.workspace as _workspace
 from harness.skill_invocation import (
     check_guardrail_compliance,  # re-exported (#1484): moved to skill_invocation, kept a module global here
@@ -169,8 +171,7 @@ BASELINE_ALLOWED_TOOLS = [
 # records itself); record_person_matches / record_record_matches (keyed
 # off a RECORD the agent already found, not the subject); source_attachments
 # (confirms a found record's attachment — real GPS work); person_warnings
-# WITHOUT `live` (it then reads the local stripped tree, not the live one —
-# a `live: true` call is blocked below, see LIVE_TREE_ARG_TOOLS).
+# (reads the local stripped tree, not the live one).
 #
 # See e2e-test-spec.md §6.1. Matched on the bare tool name (after the
 # `mcp__<server>__` prefix).
@@ -207,12 +208,8 @@ def is_turn_cap_error(detail: str | None) -> bool:
 
 
 # Tools that read the live tree only in one MODE, so the bare name cannot decide
-# it. `person_warnings` is local by default and fetches the subject plus their
-# parents, spouses and children from the live tree when called with `live: true`
-# — and each warning carries `personId`, `personName` and `relatedPersonId`, so
-# on a parents fixture the live mode hands back a stripped relative's name and
-# PID. That is the read `person_read` heads BLOCKED_TREE_TOOLS for.
-LIVE_TREE_ARG_TOOLS = {"person_warnings": "live"}
+# it. Currently empty — kept for the next tool whose block depends on an argument.
+LIVE_TREE_ARG_TOOLS = {}
 
 
 def is_blocked_tree_tool(
@@ -1202,6 +1199,9 @@ _RUNLOG_MAX_CHARS = 4000
 # Shape follows the unit tier's `{(tool, response_key)}` convention (issue #2561).
 _RUNLOG_EXEMPT_KEYS: set[tuple[str, str]] = {
     ("image_transcribe", "transcription"),
+    # The hand-off URL replay rebuilds the log entry from; a curated link can
+    # run past the cut, and a cut URL would replay as a different hand-off.
+    ("build_external_search_url", "url"),
 }
 
 
@@ -1378,7 +1378,10 @@ def apply_tool_result(entry: dict[str, Any], block: ToolResultBlock, summary: st
     `bool | None`, `None` when the call succeeded) into a clean bool the gates
     and the acceptance test can rely on.
     """
-    entry["response_summary"] = summary
+    # Scrub any credential the agent's Read of a host secret file (e.g.
+    # ~/.familysearch-mcp/config.json or tokens.json) captured verbatim into the
+    # summary, before it is persisted to the run log. Best-effort; never raises.
+    entry["response_summary"] = redact_secrets(summary)
     entry["is_error"] = block.is_error is True
     # The untruncated length, which `response_summary` cannot carry past
     # `_RUNLOG_MAX_CHARS`. See `_raw_result_chars`.
@@ -1512,6 +1515,99 @@ def _thread_usage(
     }
 
 
+def wall_ts(run_started_wall: float, run_started: float, now: float) -> str:
+    """Wall-clock time of a timeline row, as ISO-8601 UTC with milliseconds.
+
+    Derived rather than read: the loop already holds a monotonic `now`, and
+    monotonic is the right clock for the elapsed column because it cannot jump
+    backwards over an NTP correction mid-run. Anchoring that offset to the wall
+    clock captured once at run start gives a timestamp without giving up that
+    property.
+
+    The format is not cosmetic. It is byte-for-byte what the two join targets
+    write — a subagent transcript record carries
+    `"timestamp": "2026-09-18T06:52:42.431Z"` and so does the copied
+    `.session.jsonl` — so lining a timeline row up against a transcript record is
+    a match rather than a conversion, and a conversion is somewhere to be wrong.
+    `datetime.isoformat()` is not used: it emits `+00:00`, not `Z`, and drops the
+    fractional part entirely when microseconds happen to be 0.
+    """
+    moment = datetime.fromtimestamp(run_started_wall + (now - run_started), tz=timezone.utc)
+    return f"{moment.strftime('%Y-%m-%dT%H:%M:%S')}.{moment.microsecond // 1000:03d}Z"
+
+
+def merge_whole_run_usage(
+    usage: dict[str, Any] | None,
+    subagents: list[dict[str, Any]] | None,
+) -> tuple[dict[str, int] | None, float | None]:
+    """`(whole_run_usage, whole_run_cost_usd_estimated)` — main thread + subagents.
+
+    Module-level and pure so it can be tested: the only call site is inside
+    `run_e2e_test`, which no unit test can reach.
+
+    `usage["usage"]` counts the **main thread only** — subagent turns run in
+    their own SDK sub-session and never enter it. That is the defect (#2582), and
+    it is why every cost figure in `docs/plan/cost-latency-10x.md` is priced off a
+    residual (total minus main) rather than a measurement. Appendix A3 item 4 of
+    that plan is a published claim that was nothing but this gap restated.
+
+    Four rules, each returning `None` rather than a plausible-but-wrong number,
+    because a wrong figure here gets compared against real costs from clean runs:
+
+    1. **No main-thread token block** -> `(None, None)`. Nothing to add to.
+    2. **`usage_source == "streamed_fallback"`** -> `(None, None)`. That path's
+       `output_tokens` is a start-of-message snapshot, and since commit 76bc0655b
+       its accumulator *already holds* subagent messages that surfaced on the main
+       stream. Adding subagent totals to it would double-count them on top of a
+       field that is wrong to begin with. Null follows the precedent
+       `docs/specs/e2e-test-spec.md` §8.1.2 sets.
+    3. **A subagent summary with no dict `usage`** -> `(None, None)`. Every run
+       committed before this field existed is that shape. Do **not** fall back to
+       summing `subagents[].turns[]`: those are one entry per content *block*, each
+       repeating its message's totals, so the sum overstates cache reads by ~2x.
+       Unknown is unknown.
+    4. **No subagents at all** -> main's four fields, copied. A run with no
+       delegation, and a run whose capture failed (`subagent_capture_status`
+       non-ok, which yields an empty list), both land here and both are correct:
+       the merged figure equals the main-thread one and nothing errors.
+
+    The returned dict is always a fresh object carrying exactly
+    `pricing.PRICED_FIELDS`, never the caller's inner block and never its extra
+    keys (`server_tool_use`, `service_tier`, `cache_creation`, `iterations`),
+    which are not summable.
+    """
+    if not isinstance(usage, dict):
+        return None, None
+    if usage.get("usage_source") == "streamed_fallback":
+        return None, None
+    inner = usage.get("usage")
+    if not isinstance(inner, dict):
+        return None, None
+
+    merged = {field: _as_token_int(inner.get(field)) for field in _USAGE_FIELDS}
+    for summary in subagents or []:
+        if not isinstance(summary, dict):
+            return None, None
+        sub_usage = summary.get("usage")
+        if not isinstance(sub_usage, dict):
+            return None, None
+        for field in _USAGE_FIELDS:
+            merged[field] += _as_token_int(sub_usage.get(field))
+
+    return merged, pricing.estimate_cost_usd(merged)
+
+
+def _as_token_int(value: Any) -> int:
+    """A token count, or 0. Mirrors `subagent_capture._as_int`; see it for why."""
+    if isinstance(value, bool):
+        return 0
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    return 0
+
+
 def _fallback_usage(acc: dict[str, dict[str, int]], elapsed_ms: int) -> dict[str, Any]:
     """Usage block reconstructed from the stream when no ResultMessage came.
 
@@ -1552,6 +1648,129 @@ def _fallback_usage(acc: dict[str, dict[str, int]], elapsed_ms: int) -> dict[str
         "total_cost_usd_estimated": pricing.estimate_cost_usd(usage_tokens),
         "usage": usage_tokens,
     }
+
+
+class SleepDetector:
+    """Counts host sleep that `time.monotonic()` did NOT leave out (issue #2983).
+
+    On macOS/Linux monotonic pauses while the machine sleeps, so `real - active`
+    already measures the sleep. On Windows it keeps advancing through Modern
+    Standby, so that difference reads ~0. A heartbeat that should tick every
+    `tick_seconds` sees such a sleep as one monotonic gap far above the interval;
+    `gap - tick_seconds` of it is counted. A sleep monotonic left out shows no
+    monotonic gap and adds nothing, so the two cases never double-count.
+
+    A blocked event loop produces the same gap and is counted as sleep too.
+    Nothing distinguishes the two: the guarantee is structural, via
+    `run_with_heartbeat`, which observes only a window that never blocks.
+    """
+
+    def __init__(
+        self,
+        *,
+        tick_seconds: float = 5.0,
+        gap_threshold_seconds: float = 60.0,
+        monotonic: Callable[[], float] = time.monotonic,
+    ) -> None:
+        self.tick_seconds = tick_seconds
+        self.gap_threshold_seconds = gap_threshold_seconds
+        self._monotonic = monotonic
+        self._last = monotonic()
+        self.counted_sleep_seconds = 0.0
+
+    def tick(self) -> None:
+        now = self._monotonic()
+        gap = now - self._last
+        self._last = now
+        if gap > self.gap_threshold_seconds:
+            self.counted_sleep_seconds += gap - self.tick_seconds
+
+
+async def run_with_heartbeat(coro, detector: SleepDetector):
+    """Await `coro` with `detector` ticking alongside it, and only alongside it.
+
+    The heartbeat starts here and is cancelled and awaited before this returns,
+    so a gap before or after `coro` (workspace build, the judge) is never
+    observed. The last `tick()` in `finally` counts a sleep that ends as a cap
+    fires, rather than leaving it to timer-heap order.
+    """
+
+    async def _beat() -> None:
+        while True:
+            await asyncio.sleep(detector.tick_seconds)
+            detector.tick()
+
+    beat = asyncio.create_task(_beat())
+    try:
+        return await coro
+    finally:
+        detector.tick()
+        beat.cancel()
+        try:
+            await beat
+        except asyncio.CancelledError:
+            # The heartbeat's own cancel is expected; an outer cancel that
+            # landed during this `finally` must still propagate.
+            current = asyncio.current_task()
+            if current is not None and current.cancelling():
+                raise
+
+
+def sleep_usage_fields(
+    active_seconds: float, real_seconds: float, counted_sleep_seconds: float
+) -> dict[str, float]:
+    """The run log's clock fields (spec §6 "Clocks").
+
+    `active_seconds` is monotonic, `real_seconds` is `time.time()`. Sleep is the
+    part monotonic left out (`real - active`, macOS/Linux) plus the part the
+    heartbeat counted (Windows), and `wall_clock_seconds` is active time with the
+    counted part removed, so it means the same thing on all three platforms.
+    """
+    return {
+        "wall_clock_seconds": active_seconds - counted_sleep_seconds,
+        "real_clock_seconds": real_seconds,
+        "slept_seconds": max(0.0, real_seconds - active_seconds)
+        + counted_sleep_seconds,
+        "counted_sleep_seconds": counted_sleep_seconds,
+    }
+
+
+# Abort reasons a detected host sleep can override. On Windows `time.monotonic()`
+# advances through Modern Standby, so these three caps/watchdogs count the sleep
+# as run time and cut the run (issue #2974); when the heartbeat proves the cut
+# was a sleep, the run is relabeled `host_slept` and left ungraded rather than
+# scored as a capability timeout/stall.
+_SLEEP_RELABELABLE = (
+    "max_wall_clock_seconds",
+    "sdk_stream_silence",
+    "no_progress_stall",
+)
+
+
+def sleep_relabel(
+    aborted_reason: str | None,
+    counted_sleep_seconds: float,
+    inactivity_seconds: float,
+) -> str | None:
+    """Relabel a cap/watchdog abort as `host_slept` when host sleep caused it.
+
+    Returns `"host_slept"` when `aborted_reason` is one a sleep can consume
+    (`_SLEEP_RELABELABLE`) and the heartbeat counted at least `inactivity_seconds`
+    of sleep; otherwise returns `aborted_reason` unchanged. Pure and
+    side-effect-free on purpose: it is the whole stop decision the lead ruling
+    picks, so it is unit-testable without spinning the SDK query loop (issue
+    #2974). The threshold is CUMULATIVE counted sleep — the ruling's
+    ">= caps.inactivity_seconds" reading — so several shorter sleeps summing past
+    the cap relabel too, which is correct: on Windows every counted second was
+    billed against the wall-clock budget, so the grade is untrustworthy however
+    the sleep was distributed.
+    """
+    if (
+        aborted_reason in _SLEEP_RELABELABLE
+        and counted_sleep_seconds >= inactivity_seconds
+    ):
+        return "host_slept"
+    return aborted_reason
 
 
 async def _run_agent(
@@ -1684,7 +1903,10 @@ async def _run_agent(
     # check started" log-file filter needs its own real-clock timestamp.
     run_started_wall = time.time()
 
-    # Per-message timeline for forensics: [elapsed_seconds, kind, tool_names].
+    # Per-message timeline for forensics:
+            # [elapsed_seconds, kind, tool_names, wall_ts, message_id].
+            # `wall_ts` joins a row to a subagent transcript record or the copied
+            # .session.jsonl, neither of which is committed (#2582).
     # Lets a later analysis split a run into structural vs stall time, pinpoint
     # a no-progress gap, AND segment a run by Skill-phase boundaries — all
     # WITHOUT a session.jsonl (which isn't reliably copied, and is gitignored
@@ -2264,12 +2486,13 @@ async def _run_agent(
         # CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS.)
         #
         # So "true" below means e2e runs WITH tool search: the ~38-tool
-        # genealogy server's schemas are deferred and re-discovered via
-        # ToolSearch mid-session (the 17x in the spriggs run, ~11% of all tool
-        # calls across recent runs). Idea 3a of the speedup plan wanted the
-        # opposite; flipping to "false" is a separate, tracked decision that
-        # requires re-measuring the tool mix, so the value is left as it has been
-        # running. `env` MERGES onto the inherited environment (claude_agent_sdk
+        # genealogy server's schemas are deferred (except ALWAYS_LOAD in
+        # tool-schemas.ts) and re-discovered via ToolSearch mid-session (the
+        # 17x in the spriggs run, ~11% of all tool calls across recent runs).
+        # Idea 3a of the speedup plan wanted the opposite; flipping to "false"
+        # is a separate, tracked decision that requires re-measuring the tool
+        # mix, so the value is left as it has been running. `env` MERGES onto
+        # the inherited environment (claude_agent_sdk
         # subprocess_cli merges os.environ, then options.env), so this adds the
         # var without dropping PATH.
         #
@@ -2423,7 +2646,27 @@ async def _run_agent(
                 except StopAsyncIteration:
                     return
                 except asyncio.TimeoutError:
-                    # No SDK message at all within the window (true silence).
+                    # No SDK message at all within the window. On Windows this
+                    # can be a Modern Standby, not a genuine silence — force a
+                    # heartbeat tick so `counted_sleep_seconds` is current
+                    # regardless of `_beat`/timeout wake order (issue #2974),
+                    # then relabel before resuming: a slept run must NOT consume
+                    # a resume as if it had stalled.
+                    sleep_detector.tick()
+                    if (
+                        sleep_relabel(
+                            "sdk_stream_silence",
+                            sleep_detector.counted_sleep_seconds,
+                            fixture.caps.inactivity_seconds,
+                        )
+                        == "host_slept"
+                    ):
+                        aborted_reason = "host_slept"
+                        error = (
+                            f"host slept {sleep_detector.counted_sleep_seconds:.0f}s "
+                            f">= inactivity cap {fixture.caps.inactivity_seconds}s"
+                        )
+                        return
                     if _should_resume():
                         restart = True
                         break
@@ -2484,7 +2727,13 @@ async def _run_agent(
                         else "sub"
                     )
                     timeline.append(
-                        [round(now - run_started, 1), "assistant", assistant_tool_names]
+                        [
+                            round(now - run_started, 1),
+                            "assistant",
+                            assistant_tool_names,
+                            wall_ts(run_started_wall, run_started, now),
+                            getattr(message, "message_id", None),
+                        ]
                     )
                 elif isinstance(message, UserMessage):
                     # Tool results return as UserMessages with ToolResultBlock content.
@@ -2522,8 +2771,9 @@ async def _run_agent(
                                     # AFTER init, when there is no init message
                                     # left to read. Absence surfaces only as
                                     # ToolSearch finding nothing (the genealogy
-                                    # schemas are deferred under
-                                    # ENABLE_TOOL_SEARCH), so count consecutive
+                                    # schemas outside ALWAYS_LOAD are
+                                    # deferred under ENABLE_TOOL_SEARCH),
+                                    # so count consecutive
                                     # no-match lookups while not one `mcp__`
                                     # call has ever succeeded. Threshold and
                                     # reset rule are calibrated against the
@@ -2557,7 +2807,13 @@ async def _run_agent(
                                         return
                                 progressed = True
                     timeline.append(
-                        [round(now - run_started, 1), "tool_result", tool_result_names]
+                        [
+                            round(now - run_started, 1),
+                            "tool_result",
+                            tool_result_names,
+                            wall_ts(run_started_wall, run_started, now),
+                            None,
+                        ]
                     )
                 elif isinstance(message, SystemMessage):
                     # Init / config / hint messages. Capture the session id (for
@@ -2571,7 +2827,13 @@ async def _run_agent(
                     if ver:
                         cli_version["v"] = ver
                     timeline.append(
-                        [round(now - run_started, 1), f"system:{message.subtype}", []]
+                        [
+                            round(now - run_started, 1),
+                            f"system:{message.subtype}",
+                            [],
+                            wall_ts(run_started_wall, run_started, now),
+                            None,
+                        ]
                     )
                     # #941 — the decisive check, and it costs nothing: the CLI's
                     # init message lists every MCP server it tried to connect
@@ -2654,7 +2916,15 @@ async def _run_agent(
                             await _shutdown(iterator)
                             return
                 elif isinstance(message, ResultMessage):
-                    timeline.append([round(now - run_started, 1), "result", []])
+                    timeline.append(
+                        [
+                            round(now - run_started, 1),
+                            "result",
+                            [],
+                            wall_ts(run_started_wall, run_started, now),
+                            None,
+                        ]
+                    )
                     usage = {
                         "duration_ms": message.duration_ms,
                         "duration_api_ms": message.duration_api_ms,
@@ -2693,6 +2963,27 @@ async def _run_agent(
                 if progressed:
                     last_progress["t"] = now
                 elif now - last_progress["t"] > fixture.caps.progress_stall_seconds:
+                    # Same Windows-sleep guard as the inactivity timer above: a
+                    # Modern Standby looks like a no-progress stall on the
+                    # monotonic clock, so force a tick and relabel before the
+                    # resume decision — otherwise a slept run is resumed as if it
+                    # had stalled (issue #2974), the exact case spec §6 "Clocks"
+                    # says cannot happen.
+                    sleep_detector.tick()
+                    if (
+                        sleep_relabel(
+                            "no_progress_stall",
+                            sleep_detector.counted_sleep_seconds,
+                            fixture.caps.inactivity_seconds,
+                        )
+                        == "host_slept"
+                    ):
+                        aborted_reason = "host_slept"
+                        error = (
+                            f"host slept {sleep_detector.counted_sleep_seconds:.0f}s "
+                            f">= inactivity cap {fixture.caps.inactivity_seconds}s"
+                        )
+                        return
                     if _should_resume():
                         restart = True
                         break
@@ -2719,8 +3010,14 @@ async def _run_agent(
             )
             last_progress["t"] = time.monotonic()
 
+    # Spans exactly `_consume()`: the judge and workspace build stay outside it,
+    # because a blocked loop there would read as a Windows sleep (issue #2983).
+    sleep_detector = SleepDetector()
     try:
-        await asyncio.wait_for(_consume(), timeout=fixture.caps.wall_clock_seconds)
+        await asyncio.wait_for(
+            run_with_heartbeat(_consume(), sleep_detector),
+            timeout=fixture.caps.wall_clock_seconds,
+        )
     except asyncio.TimeoutError:
         aborted_reason = "max_wall_clock_seconds"
         error = f"wall-clock timeout after {fixture.caps.wall_clock_seconds}s"
@@ -2735,6 +3032,26 @@ async def _run_agent(
     if aborted_reason is None and tool_call_count["n"] > fixture.caps.tool_calls:
         aborted_reason = "max_tool_calls"
         error = f"tool_calls cap ({fixture.caps.tool_calls}) exceeded"
+
+    # The wall-clock cap runs on `time.monotonic()`, which advances through
+    # Windows Modern Standby, so a slept run trips it recorded as
+    # `max_wall_clock_seconds` (issue #2974). The cap's TimeoutError cancelled
+    # `run_with_heartbeat`, whose `finally` already ticked, so
+    # `counted_sleep_seconds` is current here. Relabel to `host_slept` when the
+    # heartbeat proves the cut was a sleep. (The resume-site guards above catch
+    # `sdk_stream_silence`/`no_progress_stall`; this is idempotent for them —
+    # below threshold it returns the reason unchanged.)
+    aborted_reason = sleep_relabel(
+        aborted_reason,
+        sleep_detector.counted_sleep_seconds,
+        fixture.caps.inactivity_seconds,
+    )
+    if aborted_reason == "host_slept" and error and "host slept" not in error:
+        error = (
+            f"host slept {sleep_detector.counted_sleep_seconds:.0f}s "
+            f">= inactivity cap {fixture.caps.inactivity_seconds}s"
+            f" (was: {error})"
+        )
 
     # A ResultMessage populates `usage` with the SDK's authoritative numbers.
     # Every abort path (wall-clock timeout, inactivity silence, no-progress
@@ -2760,6 +3077,8 @@ async def _run_agent(
         "message_usage": _message_usage,
         "thread_windows": _thread_windows,
         "continue_nudges": continue_nudges["n"],
+        # Read by run_e2e_test's clock fields (sleep_usage_fields).
+        "counted_sleep_seconds": sleep_detector.counted_sleep_seconds,
         # Per-class hand-back tallies (#2328). Counts hand-backs INCLUDING the
         # terminal one, so a hook-terminated run carries one more than
         # continue_nudges — but NOT universally: a run killed by the wall clock, the
@@ -2767,7 +3086,8 @@ async def _run_agent(
         # terminal class. Additive: branch on key presence, no schema bump.
         "hand_back_classes": hand_back_classes,
         # Stall-resume + forensics (added with the progress watchdog). `timeline`
-        # is [elapsed_seconds, kind] per SDK message — split structural vs stall
+        # is [elapsed_seconds, kind, tool_names, wall_ts, message_id] per SDK
+        # message — split structural vs stall
         # time and locate a no-progress gap without a session.jsonl. `caps` makes
         # the runlog self-describing so a `timeout` is never ambiguous again.
         "session_id": session_id["id"],
@@ -2991,7 +3311,9 @@ async def run_e2e_test(
         )
 
     started_at = time.time()  # real clock (counts system sleep)
-    started_mono = time.monotonic()  # active clock (pauses during macOS sleep)
+    # Pauses during macOS/Linux sleep but NOT Windows Modern Standby; the
+    # heartbeat in _run_agent counts that part (sleep_usage_fields).
+    started_mono = time.monotonic()
     # Provenance (#1091), captured at run start from the repo files this run
     # stages — the prompt identity, so a committed run ties back to what produced
     # it. `agents_dir` MUST match the one `build_workspace` uses below (it takes
@@ -3081,9 +3403,14 @@ async def run_e2e_test(
             raise McpUnavailableError(fallback_message)
 
         judge_seconds = 0.0
-        if skip_judge or final_tree is None:
-            # Both cases produce no verdict: --skip-judge by request, or no
-            # tree for the judge to grade (agent crashed before writing one).
+        if skip_judge or final_tree is None or stop_reason == "host_slept":
+            # No verdict is produced: --skip-judge by request, no tree for the
+            # judge to grade (agent crashed before writing one), or the host
+            # slept past the inactivity cap (issue #2974) — the run's budget was
+            # spent on standby, so grading it would score the power settings, not
+            # the agent. Unlike mcp_unavailable above, host_slept does NOT raise:
+            # the run log IS committed (see runlog_prefix) so the operator can
+            # see why, but it carries no verdict and is excluded from rates.
             judge_output: dict[str, Any] = {}
             verdict = "skipped"
         else:
@@ -3182,19 +3509,21 @@ async def run_e2e_test(
                 guardrail_shadow_violations + tree_encoding_shadow
             )
 
-        # `wall_clock_seconds` is the ACTIVE wall-clock (time.monotonic), so it
-        # matches the wall-clock cap and the stall watchdog (also monotonic) and
-        # is NOT inflated by laptop sleep. `real_clock_seconds` is the literal
-        # elapsed (time.time); `slept_seconds` (their gap) is ≈ time the machine
-        # slept, so a long idle never masquerades as a stall again. `judge_seconds`
-        # is the post-agent judge call, kept separate from the agent run.
-        active_seconds = time.monotonic() - started_mono
-        real_seconds = time.time() - started_at
+        # Clocks: spec §6 "Clocks". `wall_clock_seconds` is active time: monotonic
+        # minus the sleep the heartbeat counted, which matters on Windows, where
+        # monotonic advances through Modern Standby. `slept_seconds` adds the
+        # part monotonic left out (macOS/Linux) to that counted part. The caps
+        # and watchdogs still run on raw monotonic, so on Windows a standby still
+        # consumes them (what a slept run becomes: issue #2974). Sleep during the
+        # workspace build or the judge falls outside the heartbeat and is not
+        # counted. `judge_seconds` is the post-agent judge call.
         usage = {
             **usage,
-            "wall_clock_seconds": active_seconds,
-            "real_clock_seconds": real_seconds,
-            "slept_seconds": max(0.0, real_seconds - active_seconds),
+            **sleep_usage_fields(
+                time.monotonic() - started_mono,
+                time.time() - started_at,
+                usage.get("counted_sleep_seconds") or 0.0,
+            ),
             "judge_seconds": judge_seconds,
             # Reasoning config, so a run is self-describing when A/B'ing effort ×
             # output-budget × model vs subagents[] behavior. `agent_model` is the
@@ -3232,6 +3561,17 @@ async def run_e2e_test(
         # surfaces a runaway-thinking subagent freeze directly in the committed
         # runlog, which tool_calls alone can't show. See subagent_capture.py.
         subagents, subagent_capture_status = collect_subagents(workspace)
+
+        # The whole-run figure (#2582). `usage["usage"]` is main-thread only, so
+        # until this merge every cost figure over this corpus was main plus a
+        # subtraction. Written as two siblings rather than by correcting
+        # `usage["usage"]` in place: that field is what `corpus_report`'s spend
+        # tally and the 0.90x cost calibration read, and silently widening it
+        # would move every historical comparison under them.
+        whole_run_usage, whole_run_cost = merge_whole_run_usage(usage, subagents)
+        if isinstance(usage, dict):
+            usage["whole_run_usage"] = whole_run_usage
+            usage["whole_run_cost_usd_estimated"] = whole_run_cost
 
         result = E2eResult(
             test_id=fixture.id,

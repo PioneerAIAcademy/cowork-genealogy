@@ -833,7 +833,7 @@ def find_person_evidence_missing_same_person(
     receives a **scoreable** `person_evidence` link must have been the subject
     of at least one `same_person` call somewhere in the run.
 
-    The authority is `person-evidence/SKILL.md`, the skill that owns the
+    The authority is `agents/person-evidence.md`, the agent that owns the
     identity decision — not `research/SKILL.md`'s one-line orchestrator
     paraphrase ("scores every cross-record link with `same_person` before it
     links"), which this docstring used to cite. The narrower owning contract
@@ -1061,6 +1061,80 @@ DEDICATED_AGENT_NAMES = frozenset(
         # `agent:citation` on that row -- rather than an unnamed-delegate
         # bypass. Do not read its presence here as evidence of a hook route.
         "citation",
+        # Same shape as search-images and citation, and NOT a hook route
+        # (issue #2115). This conversion is cost- and context-motivated: the
+        # folded body stops occupying the orchestrator's context on every run
+        # that touches question selection, and a cheaper model can be pinned per
+        # agent. No hook routes anything to this agent. It writes `questions`,
+        # which does carry a routed claim -- `exhaustive_declaration.declared:
+        # true` belongs to research-exhaustiveness -- but creating a question
+        # writes `declared: false`, which the guard explicitly permits, so no
+        # route was added and none is needed. It is listed because the set is
+        # asserted equal to the shipped agent files, and so a legitimate
+        # `research_append` of a new question from this agent does not read as
+        # an unnamed-delegate bypass. Do not read its presence here as evidence
+        # of a hook route.
+        "question-selection",
+        # Same shape as citation (issue #2793): a converted skill, not a
+        # hook-routed pair. No hook routes anything to it, and it writes
+        # NOTHING at all -- it is read-only by contract, so it cannot produce a
+        # protected write to attribute in the first place. It is listed only
+        # because the set is asserted equal to the shipped agent files. Do not
+        # read its presence here as evidence of a hook route.
+        "project-status",
+        # A converted skill that writes nothing at all (issue #2118): its only
+        # MCP tool is the read-only `person_warnings`. Listed solely because the
+        # set is asserted equal to the shipped agent files.
+        "check-warnings",
+        # Same shape as `search-images` and `citation` (issue #2795): a
+        # cost-motivated conversion, no hook route, and it writes no project
+        # state at all -- one standalone markdown file in the working folder. It
+        # is listed because the set is asserted equal to the shipped agent
+        # files. Do not read its presence here as evidence of a hook route.
+        "search-wikipedia",
+        # Same shape as search-images, and for the same reason (issue #2790):
+        # a converted skill, not a hook-routed pair. It writes nothing at all,
+        # so no hook routes anything to it and `ownership.json` names it on no
+        # row. Listed because the set is asserted equal to the shipped agent
+        # files.
+        "convert-dates",
+        # Same shape again (issue #2794): a converted skill with no hook route
+        # that writes no project state -- one markdown file in the working
+        # folder. Listed because the set is asserted equal to the shipped agent
+        # files.
+        "search-familysearch-wiki",
+        # Same shape as `citation` (issue #2792): a converted skill, no hook
+        # route. It is listed because the set is asserted equal to the shipped
+        # agent files, and because a `hypotheses` write arriving from it is
+        # legitimate -- `ownership.json` names `agent:hypothesis-tracking` on
+        # that row. Do not read its presence here as evidence of a hook route.
+        "hypothesis-tracking",
+        # Same shape as `search-images`, `citation`, and `search-wikipedia`
+        # (issue #2804): a cost-motivated conversion, no hook route, and it
+        # writes no project state. Listed because the set is asserted equal to
+        # the shipped agent files. Do not read its presence here as evidence of
+        # a hook route.
+        "translation",
+        # Same shape as citation (issue #2805): a converted skill, not a
+        # hook-routed pair. It writes tree persons, relationships and sources,
+        # and `ownership.json` names `agent:tree-edit` on those rows as the
+        # subject of its own unit suite. No hook routes anything to it. Listed
+        # because the set is asserted equal to the shipped agent files.
+        "tree-edit",
+        # Same shape as convert-dates (issue #2798): a converted skill with no
+        # hook route. It writes nothing at all, so `ownership.json` names it on
+        # no row. Listed because the set is asserted equal to the shipped agent
+        # files.
+        "validate-schema",
+        # Same shape as citation (issue #2117): a converted skill. The hook lanes
+        # it to `localities` and routes nothing to it; `ownership.json` names
+        # `agent:locality-guide` on that row.
+        "locality-guide",
+        # Same shape as convert-dates (issue #2800): a converted skill with no
+        # hook route. It writes no project state at all -- its output is a
+        # narrative to the user -- so `ownership.json` names it on no row. Listed
+        # because the set is asserted equal to the shipped agent files.
+        "historical-context",
     }
 )
 
@@ -1784,9 +1858,9 @@ def find_relationship_writes_without_warnings_check(
     starting tree is given, treat everything as new (best-effort), matching
     ``find_effects_without_invocation``.
 
-    KEYED ON THE TOOL, not the ``check-warnings`` skill. The #1193 signal is
+    KEYED ON THE TOOL, not the ``check-warnings`` agent. The #1193 signal is
     literally "the guardrail tool never ran", so it must catch a direct/ToolSearch
-    ``person_warnings`` call and a ``check-warnings`` skill that launches but fails
+    ``person_warnings`` call and a ``check-warnings`` agent that launches but fails
     before reaching the tool alike. Sub-agent / inside-skill MCP calls surface in
     the flat e2e ``tool_calls`` stream, so a tool-name scan sees ``person_warnings``
     even when it fired inside ``check-warnings``. A call counts as consulting the

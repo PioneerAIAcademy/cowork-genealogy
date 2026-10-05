@@ -121,6 +121,39 @@ describe("resolveFsImageInput — ark URL query-param forwarding", () => {
   });
 });
 
+describe("resolveFsImageInput — unprefixed image-ARK id", () => {
+  it("treats an XXXX-XXXX-XXXX-X id as 3:1:", () => {
+    const result = resolveFsImageInput({ ark: "3QS7-89Q6-89S6-Y" }, "test");
+    expect(result.url).toBe("https://www.familysearch.org/ark:/61903/3:1:3QS7-89Q6-89S6-Y");
+    expect(result.fallbackUrl).toBeUndefined();
+  });
+
+  it("trims whitespace around the id", () => {
+    const result = resolveFsImageInput({ ark: "  3QS7-89Q6-89S6-Y\n" }, "test");
+    expect(result.url).toBe("https://www.familysearch.org/ark:/61903/3:1:3QS7-89Q6-89S6-Y");
+  });
+
+  it("still resolves an already-prefixed 3:2: id as 3:2:", () => {
+    const result = resolveFsImageInput({ ark: "3:2:3Q9M-CSNL-S98H-M" }, "test");
+    expect(result.url).toBe("https://www.familysearch.org/ark:/61903/3:2:3Q9M-CSNL-S98H-M");
+  });
+
+  it.each([
+    ["a persona-shaped XXXX-XXXX id", "QPRC-WPBZ"],
+    ["a tree-shaped XXXX-XXX id", "KGS8-LY1"],
+    ["a 4-3-3 id", "KGS8-LY1-XYZ"],
+    ["a 4-4-3 image-shaped id", "33SQ-GYYR-9ZL"],
+    ["an id under a non-image type prefix", "1:1:3QS7-89Q6-89S6-Y"],
+    ["an id with a character before it", "X3QS7-89Q6-89S6-Y"],
+    ["a 4:1: resolver URL", "https://www.familysearch.org/ark:/61903/4:1:3QS7-89Q6-89S6-Y"],
+    ["a lowercase id", "3qs7-89q6-89s6-y"],
+    ["a 2-character last group", "3QS7-89Q6-89S6-YY"],
+  ])("rejects %s and says to pass the link as given", (_label, ark) => {
+    expect(() => resolveFsImageInput({ ark }, "test")).toThrow(/Unrecognized ark/);
+    expect(() => resolveFsImageInput({ ark }, "test")).toThrow(/exactly as the user gave it/);
+  });
+});
+
 describe("fetchFsImageBytes — fallback retry", () => {
   // Regression coverage for the review finding on #1203: forwarding i=/cc=/
   // groupId= unconditionally broke single-image documents where i= is out of
@@ -229,9 +262,23 @@ describe("fs-image-fetch — memory artifacts", () => {
   it("sends NO Authorization header for a memory artifact", async () => {
     mockTypedResponse("image/jpeg");
     await fetchFsImageBytes(ARTIFACT, undefined, LOCAL, true);
-    const headers = mockFetch.mock.calls[0][1].headers;
-    expect(headers.Authorization).toBeUndefined();
+    const headers = new Headers(mockFetch.mock.calls[0][1].headers as HeadersInit);
+    expect(headers.get("Authorization")).toBeNull();
     // and it never even asks for a token, so an unauthenticated caller works
+    expect(mockedGetValidToken).not.toHaveBeenCalled();
+  });
+
+  it("sends NO Authorization header for a url the Memories RESOLVER produced", async () => {
+    // The shape dev/probe-memory-page.ts saw live on all 5 artifacts, which is
+    // not the shape ARTIFACT above invents. A page url reaches the fetcher only
+    // after resolveMemoryPageUrl, and the bearer used for THAT lookup must not
+    // follow the url it returned — that url arrived inside a response body.
+    const RESOLVED =
+      "https://sg30p0.familysearch.org/service/records/storage/dascloud/patron/v2/TH-7768-103723-9979-62/dist.jpg?ctx=ArtCtxPublic";
+    mockTypedResponse("image/jpeg");
+    await fetchFsImageBytes(RESOLVED, undefined, LOCAL, true);
+    const headers = new Headers(mockFetch.mock.calls[0][1].headers as HeadersInit);
+    expect(headers.get("Authorization")).toBeNull();
     expect(mockedGetValidToken).not.toHaveBeenCalled();
   });
 
@@ -239,7 +286,8 @@ describe("fs-image-fetch — memory artifacts", () => {
     mockedGetValidToken.mockResolvedValue("tok");
     mockTypedResponse("image/jpeg");
     await fetchFsImageBytes("https://example.org/x", undefined, LOCAL);
-    expect(mockFetch.mock.calls[0][1].headers.Authorization).toBe("Bearer tok");
+    const headers = new Headers(mockFetch.mock.calls[0][1].headers as HeadersInit);
+    expect(headers.get("Authorization")).toBe("Bearer tok");
   });
 
   it("accepts application/pdf for a memory artifact", async () => {

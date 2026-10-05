@@ -33,6 +33,8 @@ import {
   assertInsideProject,
 } from "../utils/project-io.js";
 import {
+  checkStagedResults,
+  consumeStagedResults,
   finalizeStagedResults,
   readStagedEnvelopeQuery,
   readStagedResults,
@@ -281,12 +283,13 @@ class LogAppendError extends Error {}
  * Nothing in that corpus was newly refused by the binding. Those figures are the
  * record of what the binding moved and can no longer be reproduced: 414ee3c68
  * was a branch commit a squash merge discarded. The current figures come from
- * `dev/measure-census-hedge-refusals.ts`: measured at dc9766b15, 216 of 3,882
- * distinct notes are refused on note text alone, and the staged-search trigger
- * newly refuses 4 of the 662 staged `record_search` entries it can pair to their
- * search response (the `h4k` note twice, and two more flat household claims with
- * no census word) while freeing none. The "indexed" hedge frees 4 notes and
- * refuses none. RE-DERIVE RATHER THAN QUOTE these: the corpus moves in both
+ * `dev/measure-census-hedge-refusals.ts`: measured at c70e0214d, 177 of 4,062
+ * distinct notes are refused on note text alone (4.4%), and the staged-search
+ * trigger refuses 4 of the 738 paired `record_search` entries (the `h4k` note
+ * twice, and two more flat household claims with no census word). Against the
+ * fallback-present baseline, 46 notes are newly freed (note-only) and 12
+ * payload ops are newly freed; 0 newly refused in either.
+ * RE-DERIVE RATHER THAN QUOTE these: the corpus moves in both
  * directions as run logs land, because a re-run REPLACES a skill's run log
  * rather than adding one. Four earlier passes of this docstring read
  * 3,275/332/136, 3,392/338/142, 3,490/355/154 and 3,489/355/153 -- it shrank by
@@ -448,21 +451,21 @@ export function requirePre1880CensusHedge(
   if (!saysCensus && payloadYears.length === 0) return;
 
   // Tie the year to the census it qualifies. When no year binds to a census
-  // mention at all the note is undecidable on that axis, so fall back to the
-  // old whole-note test rather than letting an unhedged 1870 household through
-  // on a phrasing the patterns above do not cover. A note that reaches THIS
-  // branch gets its pre-change verdict, because the fallback below is the old
-  // gate verbatim and the `\bcensus\b` test above it is unchanged. That is a
-  // claim about this path and nothing wider: the rule as a whole does NOT only
-  // narrow -- a census named before 1800 is newly refused, and it is refused on
-  // the bound branch, never reaching this one. See the docstring's 1600-1799
-  // boundary, pinned by "refuses a census named before 1800, which the old
-  // whole-note test allowed".
+  // mention at all the note is undecidable on that axis, so the note-only gate
+  // SKIPS rather than guessing — the same behaviour as an undocumented
+  // jurisdiction. What this gives up: an unhedged pre-1880 US census note whose
+  // phrasing the adjacency patterns above do not cover (e.g. "The federal
+  // census shows Daniel in one dwelling with Margaret and sons Thomas and
+  // Stephen; marriage 1871, Adams County"). The staged-payload trigger still
+  // fires for `record_search` entries whose staged rows name a pre-1880 US
+  // census, provided the payload year appears in the note text.
+  // Decided (lead, 2026-09-29), issue #2945: the whole-note fallback
+  // (`saysCensus && /\b18[0-7]\d\b/`) made 46 of 223 note-only refusals over
+  // ~4,000 distinct corpus notes, about 38 of them wrong on reading.
   const bound = censusMentions(notes);
   const namesColumnlessCensus = bound.length > 0
     ? bound.some((m) => m.year < m.columnFrom)
-    : payloadYears.some((y) => new RegExp(String.raw`\b${y}\b`).test(notes)) ||
-      (saysCensus && /\b18[0-7]\d\b/.test(text));
+    : payloadYears.some((y) => new RegExp(String.raw`\b${y}\b`).test(notes));
   if (!namesColumnlessCensus) return;
 
   const describesHousehold =
@@ -539,12 +542,9 @@ export function stagedPre1880UsCensusYears(rows: readonly unknown[]): number[] {
 }
 
 /**
- * Run the census check for one op BEFORE any op is applied. A batch finalizes
- * each op's sidecar as it goes and unlinks the staged file, so a refusal of op 1
- * raised inside the loop would already have consumed op 0's staged response,
- * and a corrected re-send would then fail on op 0. Reading every op up front
- * keeps "a refusal writes nothing" true for the whole call. `notes` is read raw,
- * as it always was; only `stagedResultsRef` gets the "null"-string mapping.
+ * Run the census check for one op BEFORE any op is applied, so a refusal is
+ * reported before any op writes a sidecar. `notes` is read raw, as it always
+ * was; only `stagedResultsRef` gets the "null"-string mapping.
  */
 async function preflightCensusHedge(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
   if (op.notes === undefined || op.notes === null) return;
@@ -628,9 +628,8 @@ export function neverSentFilterClaims(
 
 /**
  * Refuse an op whose explicit `query` claims a filter its staged search never
- * sent. Runs for every op before any op is applied, because finalizing a staged
- * handle deletes it: a refusal after that would consume the handle the
- * corrected re-send needs.
+ * sent. Runs for every op before any op is applied, so a refusal is reported
+ * before any op writes a sidecar.
  */
 async function preflightQueryFilterClaims(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
   const ref = asNull(op.stagedResultsRef);
@@ -648,6 +647,90 @@ async function preflightQueryFilterClaims(op: ResearchLogAppendOp, projectPath: 
       `from the staged search. If the filter was meant, re-run the search with it and log that ` +
       `response's \`staged.resultsRef\`.`,
   );
+}
+
+const QUERY_REQUIRED_MESSAGE =
+  "`query` is required. Supply it as an object — search parameters for a " +
+  'search entry, or a keyed identifier for a read-style entry (e.g. ' +
+  '`{"recordId": "ark:/61903/1:1:XXXX-XXX"}` for record_read, ' +
+  '`{"imageArk": "..."}` for image_transcribe). It may be omitted only ' +
+  "when `stagedResultsRef` points at a staged payload that already " +
+  "carries the query.";
+
+/**
+ * Fill an omitted `tool` from the staged envelope, then refuse once naming every
+ * required field still missing. Runs first, so every later preflight sees the
+ * filled `tool`. Without it an omitted `tool` reached the staging check as
+ * `'undefined'` and read as a mismatch, and a caller that dropped the staged ref
+ * to get past it lost the search's results (feedback issue #3069).
+ */
+async function preflightRequiredFields(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
+  const ref = asNull(op.stagedResultsRef);
+  if ((op.tool === undefined || op.tool === null || op.tool === "") && typeof ref === "string") {
+    const staged = await readStagedEnvelopeQuery(projectPath, ref);
+    if (!staged) return; // an unreadable ref is preflightStagedRef's error to report
+    op.tool = staged.tool;
+  }
+  const toolMissing = op.tool === undefined || op.tool === null || op.tool === "";
+  const queryMissing = typeof ref !== "string" && (op.query === undefined || op.query === null);
+  const missing: string[] = [];
+  if (toolMissing) missing.push("`tool`");
+  if (op.outcome === undefined || op.outcome === null) missing.push("`outcome`");
+  if (op.resultsExamined === undefined || op.resultsExamined === null) missing.push("`resultsExamined`");
+  if (queryMissing) missing.push("`query`");
+  if (missing.length === 0) return;
+  throw new LogAppendError(
+    `missing required ${missing.length === 1 ? "field" : "fields"} ${missing.join(", ")}.` +
+      (toolMissing
+        ? " `tool` names the tool that produced the entry (e.g. 'record_search'); it may be " +
+          "omitted only alongside a `stagedResultsRef`, which records it."
+        : "") +
+      (queryMissing ? ` ${QUERY_REQUIRED_MESSAGE}` : "") +
+      (typeof ref === "string"
+        ? " Keep the `stagedResultsRef` when re-sending: it is what keeps the search's results " +
+          "with the log entry."
+        : ""),
+  );
+}
+
+/**
+ * Check one op's staged ref BEFORE any op is applied — it exists under
+ * results/.staging/ and its tool matches — so a bad ref in op[1] is refused
+ * before op[0] writes anything. Finalize re-checks under the same lock.
+ */
+async function preflightStagedRef(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
+  const ref = asNull(op.stagedResultsRef);
+  if (typeof ref !== "string") return;
+  try {
+    await checkStagedResults({ projectPath, stagedResultsRef: ref, expectedTool: op.tool });
+  } catch (e) {
+    throw new LogAppendError(e instanceof Error ? e.message : String(e));
+  }
+}
+
+/**
+ * Refuse a batch naming one staged ref in two ops. Finalize no longer removes
+ * the staged file, so both ops would finalize it — one search, two log entries,
+ * two sidecars. Compared on the resolved path, the same test finalize applies,
+ * so `./results/.staging/x.json` and `results/.staging/x.json` collide; a ref
+ * that does not resolve is compared raw and left to the staged-ref check.
+ */
+function duplicateStagedRefError(ops: readonly ResearchLogAppendOp[], projectPath: string): string | null {
+  const seen = new Map<string, number>();
+  for (let j = 0; j < ops.length; j++) {
+    const ref = asNull(ops[j]?.stagedResultsRef);
+    if (typeof ref !== "string") continue;
+    let key = ref;
+    try {
+      key = assertInsideProject(projectPath, ref);
+    } catch {
+      // compared raw
+    }
+    const i = seen.get(key);
+    if (i !== undefined) return `ops[${j}]: stagedResultsRef '${ref}' is also ops[${i}]'s`;
+    seen.set(key, j);
+  }
+  return null;
 }
 
 /**
@@ -723,6 +806,7 @@ async function applyLogAppendOp(
   projectPath: string,
   sidecarsCreated: string[],
   warnings: string[],
+  stagedConsumed: string[],
 ): Promise<ResearchLogAppendOpResult> {
   // 0. Coerce object-typed args a model may have stringified. Some models
   //    emit `externalSite` / `query` as a JSON string instead of a nested
@@ -818,24 +902,25 @@ async function applyLogAppendOp(
   }
   // This entry grades the curated-links FETCH, not the search: any links
   // returned is a positive fetch, even when none fit the plan item's record
-  // type (that goes in notes instead). Enforced mechanically — rather than
-  // left to the model's own judgment call — because it was measured to be
-  // wrong often enough in practice to need a hard gate, not another
-  // reminder in prose. Measured 2026-09-10 against the five run logs this
-  // branch commits: 4 of 66 `external_links_search` entries, across three
-  // tests (ut_search_external_sites_002, _005, _006) and three of the five
-  // logs. (Issue #1950's census said 9 of 48; the corpus has turned over, so
-  // that figure is stale rather than wrong — re-derive rather than reword.)
-  // This gate replaced the eval validator that used to grade the same shape
-  // after the fact; refusing the write is what made that grader unfireable. Scoped to `external_links_search` only: no other
-  // tool value shares this fetch-vs-search distinction, and it is the only
-  // one search-external-sites (its sole caller) uses this way.
-  if (op.tool === "external_links_search" && resultsExamined > 0 && op.outcome !== "positive") {
-    throw new LogAppendError(
-      `tool 'external_links_search' returned ${resultsExamined} result(s), so outcome must be ` +
-        `'positive' (this entry grades the fetch, not the search); got '${op.outcome}'. Note which ` +
-        `results didn't fit the plan item's record type in 'notes' instead.`,
+  // type (that goes in notes instead). Measured 2026-09-10 against the five run
+  // logs then committed, a model got this wrong in 4 of 66
+  // `external_links_search` entries, so prose alone did not hold it.
+  //
+  // Corrected rather than refused: the right value is decidable from the call
+  // itself, so a refusal only bought a retry and, on 2026-10-01, the Tool
+  // Arguments point in every partial of a re-measured suite. The correction is
+  // never silent — a warning names it, so the agent and the transcript both
+  // see it. Scoped to `external_links_search` with links returned: a
+  // zero-link entry keeps the outcome the caller sent, and no other tool value
+  // shares this fetch-vs-search distinction.
+  let outcome: string = op.outcome;
+  if (op.tool === "external_links_search" && resultsExamined > 0 && outcome !== "positive") {
+    warnings.push(
+      `outcome set to 'positive' (was '${outcome}'): tool 'external_links_search' returned ` +
+        `${resultsExamined} result(s), and this entry grades the fetch, not the search — put the ` +
+        `record-type mismatch in 'notes'.`,
     );
+    outcome = "positive";
   }
 
   if (!Array.isArray(research.log)) {
@@ -852,7 +937,7 @@ async function applyLogAppendOp(
     performed,
     tool: op.tool,
     query,
-    outcome: op.outcome,
+    outcome,
     results_examined: resultsExamined,
     external_site: externalSite
       ? {
@@ -921,6 +1006,7 @@ async function applyLogAppendOp(
     returnedCount = fin.returnedCount;
     entry.results_ref = resultsRef;
     sidecarsCreated.push(resultsRef);
+    stagedConsumed.push(stagedResultsRef);
 
     // Default `query` from the producing tool's own echo in the staged payload.
     // The search tool already recorded the exact parameters host-side, so making
@@ -969,14 +1055,7 @@ async function applyLogAppendOp(
   // error — fail loudly here rather than writing an entry the validator will
   // reject on the next append.
   if (entry.query === undefined) {
-    throw new LogAppendError(
-      "`query` is required. Supply it as an object — search parameters for a " +
-        'search entry, or a keyed identifier for a read-style entry (e.g. ' +
-        '`{"recordId": "ark:/61903/1:1:XXXX-XXX"}` for record_read, ' +
-        '`{"imageArk": "..."}` for image_transcribe). It may be omitted only ' +
-        "when `stagedResultsRef` points at a staged payload that already " +
-        "carries the query.",
-    );
+    throw new LogAppendError(QUERY_REQUIRED_MESSAGE);
   }
 
   // 4. Append (append-only — existing entries are never touched).
@@ -1020,6 +1099,9 @@ export async function researchLogAppend(
       }
     };
     const sidecarsCreated: string[] = [];
+    // Staged files this call finalized. Removed only after research.json commits,
+    // so every refusal leaves them for a corrected re-send.
+    const stagedConsumed: string[] = [];
     // Tool-level warnings (retention gaps), merged with the validator's on success.
     const opWarnings: string[] = [];
 
@@ -1028,8 +1110,12 @@ export async function researchLogAppend(
       if (!Array.isArray(input.ops) || input.ops.length === 0) {
         return { ok: false, errors: ["`ops` must be a non-empty array"] };
       }
+      const duplicate = duplicateStagedRefError(input.ops, projectPath);
+      if (duplicate) return { ok: false, errors: [duplicate] };
       for (let i = 0; i < input.ops.length; i++) {
         try {
+          await preflightRequiredFields(input.ops[i], projectPath);
+          await preflightStagedRef(input.ops[i], projectPath);
           await preflightCensusHedge(input.ops[i], projectPath);
           await preflightQueryFilterClaims(input.ops[i], projectPath);
         } catch (e) {
@@ -1041,7 +1127,7 @@ export async function researchLogAppend(
       for (let i = 0; i < input.ops.length; i++) {
         try {
           results.push(
-            await applyLogAppendOp(research, input.ops[i], projectPath, sidecarsCreated, opWarnings),
+            await applyLogAppendOp(research, input.ops[i], projectPath, sidecarsCreated, opWarnings, stagedConsumed),
           );
         } catch (e) {
           await cleanupSidecars(projectPath, sidecarsCreated);
@@ -1056,6 +1142,7 @@ export async function researchLogAppend(
         return { ok: false, errors: formatIssues(validation.errors) };
       }
       await atomicWriteJson(projectPath, "research.json", research);
+      await consumeStagedResults(projectPath, stagedConsumed);
       const persistWarn = logWithoutPersistenceWarning(research);
       return {
         ok: true,
@@ -1074,9 +1161,10 @@ export async function researchLogAppend(
     // throw AFTER it has finalized a sidecar (the `query`-missing check does
     // exactly that), and a sidecar written with no `research.json` entry to
     // reference it is an orphan the next validate_research_schema hard-fails
-    // on — with no recovery, since the staged file it came from is already
-    // unlinked. The outer catch below returns the error but cannot know a
-    // sidecar was written, so the unwind has to happen here.
+    // on. The staged file it came from is still there — it is removed only
+    // after the commit — so the corrected re-send can finalize it again. The
+    // outer catch below returns the error but cannot know a sidecar was
+    // written, so the unwind has to happen here.
     const singleOp: ResearchLogAppendOp = {
       tool: input.tool!,
       query: input.query,
@@ -1088,11 +1176,13 @@ export async function researchLogAppend(
       externalSite: input.externalSite,
       stagedResultsRef: input.stagedResultsRef,
     };
+    await preflightRequiredFields(singleOp, projectPath);
+    await preflightStagedRef(singleOp, projectPath);
     await preflightCensusHedge(singleOp, projectPath);
     await preflightQueryFilterClaims(singleOp, projectPath);
     let result;
     try {
-      result = await applyLogAppendOp(research, singleOp, projectPath, sidecarsCreated, opWarnings);
+      result = await applyLogAppendOp(research, singleOp, projectPath, sidecarsCreated, opWarnings, stagedConsumed);
     } catch (e) {
       await cleanupSidecars(projectPath, sidecarsCreated);
       throw e;
@@ -1104,6 +1194,7 @@ export async function researchLogAppend(
       return { ok: false, errors: formatIssues(validation.errors) };
     }
     await atomicWriteJson(projectPath, "research.json", research);
+    await consumeStagedResults(projectPath, stagedConsumed);
 
     const persistWarn = logWithoutPersistenceWarning(research);
     return {
@@ -1167,7 +1258,8 @@ export const researchLogAppendSchema = {
         description:
           "The tool/source that produced this entry, e.g. 'record_search', " +
           "'fulltext_search', 'external_links_search', 'image_search', 'person_read', or " +
-          "'external_site'. Must match the staged file's tool when stagedResultsRef is given.",
+          "'external_site'. Must match the staged file's tool when stagedResultsRef is given; " +
+          "may be omitted alongside stagedResultsRef, which records it.",
       },
       query: {
         type: "object",
@@ -1250,11 +1342,11 @@ export const researchLogAppendSchema = {
             externalSite: { type: ["object", "null"] },
             stagedResultsRef: { type: ["string", "null"] },
           },
-          // `query` is deliberately absent: it may be omitted when
+          // `query` and `tool` are deliberately absent: both may be omitted when
           // `stagedResultsRef` carries a payload the producing tool already
-          // stamped with its own query. Enforced in code (applyLogAppendOp),
-          // which fails loudly when neither source supplies one.
-          required: ["tool", "outcome", "resultsExamined"],
+          // stamped with its own name and query. Enforced in code
+          // (preflightRequiredFields), which names every field still missing.
+          required: ["outcome", "resultsExamined"],
         },
       },
     },

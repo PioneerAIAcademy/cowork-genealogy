@@ -39,6 +39,11 @@ Lead's ordering, 2026-09-25/27. Everything in this plan hangs off it.
 5. **Record extraction** — not this plan's work. **Issue #2937, John.** Named here
    only so the waves below are read as the rest of the programme, not all of it.
 
+**Also outside the levers: issue #2951 takes `gps-mentor` off the default path**
+(lead, 2026-09-29). That removes the mentor spawn and the `proof-conclusion`
+re-invocation it forces, about 6–8% of wall clock per run. `proof-conclusion` and
+`research-exhaustiveness` stay. Wave 4 measures after issue #2951 lands.
+
 **The framing that makes the order make sense:** input is **72%** of the bill
 (cache reads 42%, cache writes 30%; output is 27%), and **every token that enters
 context costs ~$7.20/MTok carried** — $3.75 to write plus ~11.5 re-reads at $0.30.
@@ -129,6 +134,11 @@ identified block of avoidable turns in the system.
    entries *with* their assertions kills the class. Today the tool **explicitly
    rejects** a plural `sections`, and its own comment says *"`sections` is the mistake
    the model actually makes"* — the demand is already measured in the error path.
+   The same join should return **a question's conclusion evidence in one call**: its
+   assertions with their classifications, the `person_evidence` links on them, their
+   sources, the conflicts that touch it, and its stop record. That is what
+   `research-exhaustiveness` and `proof-conclusion` re-read on every spawn — 87% and
+   75% of their tool budgets.
 2. **Plural args — collapses N same-tool calls into one.** 52.8/run of measured
    headroom. Build in the order of the table above.
 3. **Parallel tool calls — collapses N different-tool calls into one turn.** Unlocked
@@ -230,7 +240,9 @@ direction, **issue #2475** owns the precondition join, **issue #2256** the censu
 > **BLOCKED until Waves 1, 2 and 3 are all complete.** Lead ruling: tool-output
 > reduction *and* skill→agent conversion both finish before the floor search begins.
 > Measuring a model floor against unreduced payloads or a partly-converted skill set
-> gives a number that expires the moment the other work lands.
+> gives a number that expires the moment the other work lands. The same holds for issue
+> #2951: a floor taken while the mentor still spawns prices an agent that is leaving the
+> default path.
 
 **Set everything to Haiku with no reasoning effort, see what fails loudly, and raise
 carefully.** *Everything* includes **the research orchestrator itself**, not just the
@@ -475,9 +487,11 @@ a future reviewer, spends that again.
 - The harness's `DENY_PROJECT_READS=1` **strands `search-images`** — it grants `Read`
   but no `research_query`, `project_context` or `sidecar_read` — and breaks the 14
   fixtures shipping `provided-documents/`. Zero committed runs exercise the flag.
-- Deleting the gps-mentor gate requires moving **four sites together** in
-  `skills/research/SKILL.md`; leaving the completion precondition makes
-  `project.status = "completed"` unreachable and the run walls at the cap.
+- Deleting the gps-mentor gate means removing, **in one change**, the `research_append`
+  completion precondition, the harness's `find_missing_mentor_verdicts` detector and
+  the gate rows in `skills/research/SKILL.md`. Leaving the precondition makes
+  `project.status = "completed"` unreachable, and the run walls at the cap. Issue
+  #2951 carries the site list.
 - Granting `search-images` an MCP read route needs **all three server spellings** plus
   the `AGENT_PERMISSIONS` snapshot in the same commit.
 - Experiment runs write into `eval/runlogs/e2e` by default — corpus pollution.
@@ -490,8 +504,7 @@ recall drop; 3 runs × 3 fixtures detects **0.355**; detecting 0.20 needs **28
 runs/arm**, 0.10 needs **113**. So a three-run arm is a **collapse detector, not a
 measurement**, and the repo's "3 runs, all pass" convention false-fails a genuinely
 0.90-quality config **27%** of the time. Score on `judge_output.recall_required`, never
-`outcome` or `verdict` — both are four-value categoricals, not scores, and since the §8 demotion on 2026-09-25 `outcome` IS `verdict`, so neither adds anything the other lacks
-regardless of research quality.
+`outcome` or `verdict` — both are four-value categoricals, not scores, and since the §8 demotion on 2026-09-25 `outcome` IS `verdict`, so neither adds anything the other lacks.
 
 Fixture selection: `cruz-corona-ancestry` scores `[0.6, 0.833, 1.0, 1.0, 1.0, 1.0]`
 over 6 graded runs, so it moves in both directions and is a good candidate.
