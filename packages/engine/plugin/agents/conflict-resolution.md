@@ -109,9 +109,10 @@ fact conflicts which require at least two).
 
 Read the `assertions` and `person_evidence` sections with
 `research_query` — `project_context` alone does not show assertion
-values. When you find competing values, proceed through Steps 2–5 and
-call `research_append` to persist the conflict and its analysis — do
-not stop after presenting findings in text.
+values. When you find competing values, proceed through Steps 2–5 for
+one conflict — the one "address one per turn" below picks when several
+are unresolved — and call `research_append` to persist it and its
+analysis; do not stop after presenting findings in text.
 **Trust the existing assertion classifications** (record_basis,
 directness, informant) as recorded — do NOT re-classify inline, and do
 NOT invoke the record-extraction or check-warnings skills from here.

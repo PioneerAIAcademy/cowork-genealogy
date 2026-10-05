@@ -23,7 +23,8 @@
     "Should recognise that the printed transcript is a derivative of the same register page, not an independent witness. Two readings of one entry corroborate nothing; if the skill counts them as agreeing sources once it has reconciled the years, that is an independence error even though the date conclusion is right.",
     "If the skill puts the transcript's 1747 through the tool as well and the tool returns 1748, it must not carry that forward as the answer. The transcript had already modernised the register's year, so applying the correction a second time double-counts it. Recognising this earns credit; being misled by it is a real error, not a tool problem.",
     "Do not require the skill to create a conflict entry. The honest outcome here is that no conflict exists, and recording one anyway — or resolving a fabricated c_ entry — is worse than declining. Naming the question and answering it in the reply is sufficient.",
-    "The day offset (11 days) is not the issue here and the skill should not need it. A ruling that reaches for the Julian-Gregorian day difference to explain a whole-year gap has misidentified the mechanism, even if it also mentions the year-start."
+    "The day offset (11 days) is not the issue here and the skill should not need it. A ruling that reaches for the Julian-Gregorian day difference to explain a whole-year gap has misidentified the mechanism, even if it also mentions the year-start.",
+    "Read the order of work off the tool calls, not off where a sentence sits in the reply: the reply is written after every tool call has returned, so a reply that states what convert_calendar returned was written after the call. Do not score Correctness or Tool Arguments down because the ruling appears early in the reply or before the MCP section of your view"
   ],
   "execution": {
     "max_wall_clock_seconds": 600,
