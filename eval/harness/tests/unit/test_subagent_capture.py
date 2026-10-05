@@ -629,3 +629,165 @@ def test_subagent_usage_is_all_zeros_not_absent_when_nothing_carried_usage():
         "cache_read_input_tokens": 0,
         "cache_creation_input_tokens": 0,
     }
+
+
+# ---------------------------------------------------------------------------
+# Per-helper peak window, compactions and model (T1.3,
+# docs/plan/cost-latency-10x.md §7: "verify before assuming Haiku is safe inside
+# an agent"). `usage` above is a SUM — what the helper spent. The peak is a MAX —
+# the tallest single pile it read, i.e. how close it came to the compaction line.
+# Two helpers can spend the same and differ completely on that.
+# ---------------------------------------------------------------------------
+
+
+def _window_record(message_id, *, window, model="claude-sonnet-4-6", block="text"):
+    """One block-record of a message whose read window totals `window` tokens."""
+    return {
+        "type": "assistant",
+        "message": {
+            "role": "assistant",
+            "id": message_id,
+            "model": model,
+            "stop_reason": "end_turn",
+            "content": [{"type": block}],
+            "usage": {
+                "input_tokens": 3,
+                "output_tokens": 50,
+                "cache_read_input_tokens": window - 3 - 100,
+                "cache_creation_input_tokens": 100,
+            },
+        },
+    }
+
+
+def _boundary(meta):
+    return {"type": "system", "subtype": "compact_boundary", "compactMetadata": meta}
+
+
+def test_peak_window_is_the_max_message_not_the_sum():
+    """20k, 35k, 52k read across three messages → the peak is 52,000, not 107,000.
+
+    Each message is repeated across three block records, the shape Claude Code
+    writes; a max is unmoved by the repeats, and the test pins that it stays so.
+    """
+    records = []
+    for mid, window in (("m1", 20_000), ("m2", 35_000), ("m3", 52_000)):
+        for block in ("thinking", "text", "tool_use"):
+            records.append(_window_record(mid, window=window, block=block))
+    summary = summarize_transcript(records)
+    assert summary["peak_window_tokens"] == 52_000
+    assert summary["peak_window_tokens"] != 107_000
+
+
+def test_peak_window_excludes_output_tokens():
+    summary = summarize_transcript([_window_record("m1", window=40_000)])
+    assert summary["peak_window_tokens"] == 40_000  # not 40,050
+
+
+def test_peak_window_is_zero_when_no_message_carries_usage():
+    summary = summarize_transcript([{"message": {"role": "assistant", "content": []}}])
+    assert summary["peak_window_tokens"] == 0
+
+
+def test_a_helper_that_never_compacted_has_an_empty_list():
+    summary = summarize_transcript([_window_record("m1", window=40_000)])
+    assert summary["compactions"] == []
+
+
+def test_a_compaction_is_recorded_with_its_real_figures():
+    records = [
+        _window_record("m1", window=160_000),
+        _boundary({"trigger": "auto", "preTokens": 167_201, "postTokens": 14_299}),
+        _window_record("m2", window=20_000),
+    ]
+    summary = summarize_transcript(records)
+    assert summary["compactions"] == [
+        {"trigger": "auto", "pre_tokens": 167_201, "post_tokens": 14_299}
+    ]
+    # The peak saturates before the squeeze; the count is the signal.
+    assert summary["peak_window_tokens"] == 160_000
+
+
+def test_a_missing_post_tokens_is_unknown_not_zero():
+    """`postTokens` is optional in the CLI; 0 would read as "squeezed to nothing"."""
+    summary = summarize_transcript([_boundary({"trigger": "auto", "preTokens": 167_000})])
+    assert summary["compactions"] == [
+        {"trigger": "auto", "pre_tokens": 167_000, "post_tokens": None}
+    ]
+
+
+@pytest.mark.parametrize(
+    "meta",
+    [None, "a string", [1, 2], {"trigger": 7, "preTokens": "x", "postTokens": True}],
+)
+def test_a_malformed_compaction_still_counts_and_never_raises(meta):
+    """The squeeze happened, so it is an entry — with unknowns, never a raise."""
+    record = {"type": "system", "subtype": "compact_boundary"}
+    if meta is not None:
+        record["compactMetadata"] = meta
+    summary = summarize_transcript([record])
+    assert summary["compactions"] == [
+        {"trigger": None, "pre_tokens": None, "post_tokens": None}
+    ]
+
+
+def test_the_word_compact_boundary_inside_a_message_is_not_a_compaction():
+    """A helper that reads code mentioning the marker has not been squeezed."""
+    records = [
+        {
+            "type": "assistant",
+            "message": {
+                "role": "assistant",
+                "content": [{"type": "text", "text": '"subtype": "compact_boundary"'}],
+            },
+        },
+        {"type": "user", "subtype": "compact_boundary"},
+    ]
+    assert summarize_transcript(records)["compactions"] == []
+
+
+def test_models_are_the_distinct_ids_in_first_seen_order():
+    records = [
+        _window_record("m1", window=1_000, model="claude-sonnet-4-6"),
+        _window_record("m2", window=1_000, model="claude-haiku-4-5-20251001"),
+        _window_record("m3", window=1_000, model="claude-sonnet-4-6"),
+    ]
+    assert summarize_transcript(records)["models"] == [
+        "claude-sonnet-4-6",
+        "claude-haiku-4-5-20251001",
+    ]
+
+
+@pytest.mark.parametrize("model", ["<synthetic>", None, 7, ""])
+def test_models_skip_placeholders_and_non_strings(model):
+    records = [
+        _window_record("m1", window=1_000, model="claude-sonnet-4-6"),
+        _window_record("m2", window=1_000, model=model),
+    ]
+    assert summarize_transcript(records)["models"] == ["claude-sonnet-4-6"]
+
+
+def test_collect_subagents_carries_the_new_fields_into_the_runlog_shape(
+    shortspace: Path, monkeypatch
+):
+    """The last step before `E2eResult.subagents`: what the run log will hold."""
+    home = shortspace / "home"
+    workspace = shortspace / "e2e-frederick-abc123"
+    subagents = home / ".claude" / "projects" / _key(workspace) / "session-uuid" / "subagents"
+    subagents.mkdir(parents=True)
+    records = [
+        _window_record("m1", window=90_000),
+        _boundary({"trigger": "auto", "preTokens": 167_000, "postTokens": 12_000}),
+        _window_record("m2", window=30_000),
+    ]
+    (subagents / "agent-1.jsonl").write_text(
+        "\n".join(json.dumps(r) for r in records), encoding="utf-8"
+    )
+    monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+
+    summaries, status = collect_subagents(workspace)
+    assert status == "captured"
+    assert summaries[0]["peak_window_tokens"] == 90_000
+    assert len(summaries[0]["compactions"]) == 1
+    assert summaries[0]["models"] == ["claude-sonnet-4-6"]

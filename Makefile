@@ -1206,9 +1206,11 @@ e2e-cache-window: ## Corpus cost of a 5-minute prompt-cache TTL over committed e
 .PHONY: e2e-compaction
 e2e-agent-spend: ## What each subagent costs, from subagents[].usage (#2582): make e2e-agent-spend | TEST=<slug>
 	# Pure analysis, no API: reads committed run JSONs' subagents[].usage.
-	# Two columns per agent -- what it spends and whether it is in trouble --
+	# Per agent: what it spends, the models it ran on, whether it is in
+	# trouble, and its busiest moment (peak window) and compaction count --
 	# which is what Wave 4 of docs/plan/cost-latency-10x.md needs to decide
-	# which agent gets which model rung.
+	# which agent gets which model rung. A spawn from before a field existed
+	# is counted as not measured for that column, never as zero.
 	#
 	# Runs committed before #2582 carry no subagents[].usage. They are counted
 	# as UNCOVERED, never as zero: a $0.00 row would read as "this agent is

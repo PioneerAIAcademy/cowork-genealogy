@@ -264,7 +264,8 @@ class E2eResult:
     narration: list[dict[str, Any]] = field(default_factory=list)
 
     # Compact per-subagent transcript summaries (agent_type, per-turn
-    # stop_reason / output_tokens / block shape, and a `runaway_thinking` flag).
+    # stop_reason / output_tokens / block shape, a `runaway_thinking` flag, the
+    # four-field `usage`, `peak_window_tokens`, `compactions` and `models`).
     # Captured from the SDK's ephemeral subagent cache — which the runlog
     # otherwise does not store — so a subagent that burned its whole output
     # budget on thinking (stop_reason=max_tokens, no tool call), invisible from

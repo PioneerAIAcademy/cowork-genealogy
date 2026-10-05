@@ -7,6 +7,14 @@ whether it is doing well — and until #2582 the first column did not exist: the
 run log counted the main thread's tokens and nothing else, so an agent's cost was
 total-minus-main, a residual rather than a measurement.
 
+It also needs to know whether a cheaper model is even safe inside the agent, so
+the report shows (T1.3) the models each agent ran on, its busiest moment —
+`peak_window_tokens`, the tallest single read, a max not a sum — and how many of
+its spawns were compacted. Spend and peak answer different questions: ten 30k
+reads and two 150k reads cost the same and sit at opposite distances from the
+compaction line. The price column still uses one flat Sonnet rate whatever the
+model column says; per-model pricing is separate work.
+
 The four-box rule this serves, in the owner's own words:
 
     spending much and doing badly  -> revisit first
@@ -15,7 +23,8 @@ The four-box rule this serves, in the owner's own words:
     spending little and doing well  -> leave it alone
 
 **What is a real join and what is only a name match.** `subagents[].usage`,
-`num_assistant_turns`, `runaway_thinking` and `hit_output_cap` are recorded
+`num_assistant_turns`, `runaway_thinking`, `hit_output_cap`, `models`,
+`peak_window_tokens` and `compactions` are recorded
 against `agent_type` on the same object, so the spend and the per-agent failure
 flags are a genuine join. Guardrail *violations* are not: `corpus_report` tallies
 them by **rule**, not by agent, and only some rule names happen to coincide with
@@ -62,10 +71,12 @@ def collect(paths: list[Path]) -> tuple[dict[str, dict[str, Any]], dict[str, int
     """`(per_agent, counters)` over every run log that can be read."""
     per_agent: dict[str, dict[str, Any]] = defaultdict(
         lambda: {"spawns": 0, "costs": [], "turns": [], "runaway": 0, "capped": 0,
-                 "tokens": dict.fromkeys(USAGE_FIELDS, 0), "runs": set()}
+                 "tokens": dict.fromkeys(USAGE_FIELDS, 0), "runs": set(),
+                 "models": {}, "no_model": 0, "peaks": [], "squeezed": 0}
     )
     counters = {"runs": 0, "unreadable": 0, "runs_with_subagents": 0,
-                "subagents_seen": 0, "subagents_with_usage": 0}
+                "subagents_seen": 0, "subagents_with_usage": 0,
+                "subagents_with_peak": 0}
 
     for path in paths:
         doc = _load(path)
@@ -92,6 +103,23 @@ def collect(paths: list[Path]) -> tuple[dict[str, dict[str, Any]], dict[str, int
             turns = sub.get("num_assistant_turns")
             if isinstance(turns, int):
                 bucket["turns"].append(turns)
+            models = sub.get("models")
+            if isinstance(models, list) and any(isinstance(m, str) for m in models):
+                for m in models:
+                    if isinstance(m, str):
+                        bucket["models"][m] = bucket["models"].get(m, 0) + 1
+            else:
+                bucket["no_model"] += 1
+            # The busiest moment and the squeezes (T1.3) are measured only when
+            # the peak is present. A spawn without it predates the field and is
+            # "not measured" — never a 0 peak, which would read as "tiny".
+            peak = sub.get("peak_window_tokens")
+            if isinstance(peak, int) and not isinstance(peak, bool):
+                counters["subagents_with_peak"] += 1
+                bucket["peaks"].append(peak)
+                compactions = sub.get("compactions")
+                if isinstance(compactions, list) and compactions:
+                    bucket["squeezed"] += 1
             usage = sub.get("usage")
             if not isinstance(usage, dict):
                 continue
@@ -103,6 +131,14 @@ def collect(paths: list[Path]) -> tuple[dict[str, dict[str, Any]], dict[str, int
             if cost is not None:
                 bucket["costs"].append(cost)
     return per_agent, counters
+
+
+def _models_cell(bucket: dict[str, Any]) -> str:
+    names = ", ".join(bucket["models"]) if bucket["models"] else ""
+    if bucket["no_model"]:
+        missing = "(not recorded)" if not names else f"(+{bucket['no_model']} not recorded)"
+        names = f"{names} {missing}".strip()
+    return names
 
 
 def format_report(per_agent: dict[str, dict[str, Any]], counters: dict[str, int]) -> str:
@@ -139,20 +175,47 @@ def format_report(per_agent: dict[str, dict[str, Any]], counters: dict[str, int]
     out.append("Spend per agent (corpus basis — flat sonnet table, 1h cache write):")
     out.append("")
     head = f"  {'agent':<26} {'spawns':>6} {'$/spawn':>9} {'$ total':>9} {'share':>6} {'turns':>6}"
-    out.append(head)
+    out.append(head + "   models")
     out.append("  " + "-" * (len(head) - 2))
     for name, b in rows:
         if not b["costs"]:
             out.append(f"  {name:<26} {b['spawns']:>6} {'--':>9} {'--':>9} {'--':>6}"
-                       f" {'--':>6}   (no priced spawn)")
+                       f" {'--':>6}   (no priced spawn)  {_models_cell(b)}")
             continue
         med = statistics.median(b["costs"])
         tot = sum(b["costs"])
         turns = statistics.median(b["turns"]) if b["turns"] else 0
         out.append(
             f"  {name:<26} {b['spawns']:>6} {med:>9.3f} {tot:>9.2f}"
-            f" {100 * tot / total:>5.0f}% {turns:>6.0f}"
+            f" {100 * tot / total:>5.0f}% {turns:>6.0f}   {_models_cell(b)}"
         )
+    out.append("")
+    out.append("  The price column uses ONE flat Sonnet rate whatever the model column")
+    out.append("  says, so a helper moved to a cheaper model shows no saving here yet.")
+
+    out.append("")
+    measured = counters["subagents_with_peak"]
+    if measured == 0:
+        out.append("No spawn records its busiest moment or its squeezes — every priced")
+        out.append("run predates those fields (T1.3). Commit a newer run.")
+    else:
+        out.append("Busiest moment and squeezes per agent (tokens read at once; the main")
+        out.append("thread compacts at ~167k on a 200k window). A squeezed spawn's peak")
+        out.append("stops at the line, so read the squeezed column first:")
+        if measured < covered:
+            out.append(f"  MEASURED: {measured}/{covered} priced spawns carry it; the rest"
+                       " predate T1.3 and are left out, never counted as 0.")
+        out.append("")
+        head2 = f"  {'agent':<26} {'busiest (max)':>14} {'busiest (typical)':>18} {'squeezed':>12}"
+        out.append(head2)
+        out.append("  " + "-" * (len(head2) - 2))
+        for name, b in rows:
+            if not b["peaks"]:
+                continue
+            out.append(
+                f"  {name:<26} {max(b['peaks']):>14,} {int(statistics.median(b['peaks'])):>18,}"
+                f" {str(b['squeezed']) + ' of ' + str(len(b['peaks'])):>12}"
+            )
 
     out.append("")
     out.append("Per-agent trouble flags (a genuine join — same object as the spend):")

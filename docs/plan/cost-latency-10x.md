@@ -268,7 +268,8 @@ change. Whether agent frontmatter can express a thinking budget at all is
 
 **Context is not the constraint.** Haiku's 200k window gives the same 167,000
 compaction trigger as today, and main peaks at 159–174k across all 18 instrumented
-runs. Per-agent windows are **not recorded** (`thread_windows` carries main only), so
+runs. Per-agent windows are now recorded — `subagents[].peak_window_tokens` and
+`subagents[].compactions` (T1.3) — but no committed e2e run carries them yet, so
 verify before assuming Haiku is safe inside an agent.
 
 **Nothing in this product has ever run below effort `high`** — `effort_level` is
@@ -298,7 +299,8 @@ the first time it is pulled.
   first task. **Fold in** per-message wall timestamps and a message id on the
   assistant timeline row: `_usage_key` is already in hand at the write site, both
   halves edit the same instrumentation, and under merge doctrine they are one PR.
-- **Per-thread windows for subagents**, so Wave 4's Haiku arms can be verified.
+- ~~**Per-thread windows for subagents**~~ — built (T1.3): `subagents[].peak_window_tokens`
+  and `compactions`, shown per agent by `make e2e-agent-spend`. Awaits its first run.
 
 **The replay harness — Promise's first build after issue #2582.** Re-issue a committed
 runlog's tool calls against a candidate tool implementation and diff the payload
