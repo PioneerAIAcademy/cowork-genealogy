@@ -74,7 +74,8 @@
     { "name": "research_query" },
     { "name": "project_create" },
     { "name": "sidecar_read" },
-    { "name": "get_name_variants" }
+    { "name": "get_name_variants" },
+    { "name": "catalog_search" }
   ],
   "compatibility": {
     "platforms": ["darwin", "win32", "linux"],

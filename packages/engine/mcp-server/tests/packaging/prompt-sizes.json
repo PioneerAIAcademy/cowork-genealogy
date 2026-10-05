@@ -42,6 +42,7 @@
   "tools": {
     "tool:auth_status": 274,
     "tool:build_external_search_url": 4140,
+    "tool:catalog_search": 1965,
     "tool:collections_search": 1344,
     "tool:convert_calendar": 3213,
     "tool:external_links_search": 2332,
