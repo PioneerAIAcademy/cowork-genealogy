@@ -57,6 +57,18 @@ Full spec: `docs/specs/simplified-gedcomx-spec.md`.
   you enter by hand is resolved with `place_search`
 - `sources` on persons, facts, names: optional array of source references
 
+## Additions (with `personReadRef`)
+
+The ids in the examples here are the objective-only build's. With
+`personReadRef`, an addition's `id` is a label (`A1`, `A2`…), a relationship
+names a person from the read by FamilySearch ID and an addition by its label,
+and a source ref names one of the read's FamilySearch source ids or an addition
+source's label. `I`/`S` ids are assigned by `project_create`; never write them.
+
+```json
+{ "type": "ParentChild", "parent": "A1", "child": "LZNY-K2M" }
+```
+
 ## Stub persons (minimal valid person)
 
 ```json

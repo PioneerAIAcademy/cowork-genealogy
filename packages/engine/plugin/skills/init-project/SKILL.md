@@ -126,7 +126,7 @@ Call `person_read({ personId: "<id>", projectPath })`. It returns simplified Ged
 
 **Pass `projectPath` too.** For a non-living subject the `sources` array also carries that person's **memories** — scanned wills, certificates, obituaries, family stories — each with `text` when the read transcribed it, `image_ref` when a scan was retained, and a `notes` entry when it was not. `projectPath` is what retains those scans; without it they are transcribed but not kept.
 
-The response carries `staged.resultsRef`: the read, kept on the host. Step 4 passes it to `project_create`. If `staged` is absent or `null`, call `person_read` once more; if it is still missing, tell the user the project could not be created (the extension may need updating) and stop. Never type the tree out yourself.
+The response carries `staged.resultsRef`: the read, kept on the host. Step 4 passes it to `project_create`. If `staged` is absent or `null`, call `person_read` once more; if it is still missing, tell the user the project could not be created, quoting `stagingError` when present, and stop. Never type the tree out yourself.
 
 **User-stated facts vs. FamilySearch conflicts:**
 - **tree.gedcomx.json:** use FamilySearch data (the source being surveyed)

@@ -28,7 +28,7 @@
     "packages/engine/plugin/agents/validate-schema.md": 4382,
     "packages/engine/plugin/skills/conflict-resolution/SKILL.md": 27656,
     "packages/engine/plugin/skills/forget-and-rederive/SKILL.md": 13208,
-    "packages/engine/plugin/skills/init-project/SKILL.md": 27772,
+    "packages/engine/plugin/skills/init-project/SKILL.md": 27776,
     "packages/engine/plugin/skills/record-extraction/SKILL.md": 15878,
     "packages/engine/plugin/skills/research-exhaustiveness/SKILL.md": 5064,
     "packages/engine/plugin/skills/research-plan/SKILL.md": 32666,

@@ -10,9 +10,12 @@ contract for tool results.
 
 ## Live tools
 
-Some MCP tools are deterministic functions of local workspace state — they
-require no network and their return value depends on what the skill just
-wrote. Canning their response as a fixture would be dishonest: a fixture
+Some MCP tools are deterministic functions of local workspace state — their
+return value depends on what the skill just wrote. One exception reaches the
+network: `project_create` with `personReadRef` retries, through the anonymous
+Places API, any place the staged read left without a `standard_place`. No
+committed `person-read-*` fixture has such a fact, so unit runs make no call;
+a fixture that adds one makes the run network-dependent. Canning their response as a fixture would be dishonest: a fixture
 can't reflect the actual file content the skill produced.
 
 LIVE_TOOLS lists these by bare tool name. Each entry in LIVE_TOOLS is
