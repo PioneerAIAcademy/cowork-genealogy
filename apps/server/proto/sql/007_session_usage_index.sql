@@ -1,7 +1,6 @@
 -- PR #2870 item 1e: the index the live spend cap needs.
--- Additive and idempotent like 001-006 -- applied by initdb on an empty volume AND by the
--- worker and the web tier at start, so a volume that predates this file gets the index
--- without a `make proto-down`.
+-- Additive and idempotent like 001-006 -- applied once by `migrate.py`, so a volume that
+-- predates this file gets the index without a `make proto-down`.
 --
 -- SESSION_USAGE_SQL prices the session by scanning every assistant entry for one
 -- sdk_session_id, and it runs inside the PreToolUse hook -- so once per tool call, a

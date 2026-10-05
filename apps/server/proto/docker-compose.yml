@@ -29,10 +29,8 @@ services:
       POSTGRES_PASSWORD: proto
     ports:
       - "5434:5432"
+    # No initdb mount (U9): the `migrate` one-shot below is the schema's one applier.
     volumes:
-      # initdb runs ./sql/*.sql in name order on an EMPTY data dir only, which is why
-      # proto-down drops the volume (`down -v`) - the next up re-applies the schema.
-      - ./sql:/docker-entrypoint-initdb.d:ro
       - proto-pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d proto"]
@@ -90,6 +88,34 @@ services:
       interval: 2s
       timeout: 3s
       retries: 30
+
+  # U9 one-shot: applies the pending sql/*.sql through proto/migrate.py (one transaction per
+  # file, recorded in schema_migrations), then exits 0. worker, web and tools wait for that
+  # exit and only read the ledger; none of them runs DDL. The worker's image, which carries
+  # migrate.py, sql/ and psycopg (WORKDIR /opt/genealogy/server); its HEALTHCHECK polls the
+  # worker's /healthz, so it is off here. The worker's `build:`, under compose's own image
+  # name: `image:` alone makes an `up` that names tools without the worker PULL it
+  # (measured with --dry-run, "pull access denied"), and one `image:` shared by both builds
+  # fails `proto-up`'s parallel build ("image ... already exists", measured 2026-10-05).
+  # The second build is all cache.
+  # MIGRATE_PG_DSN is the schema owner's, set on this service alone: migrate.py reads no
+  # other variable.
+  migrate:
+    build:
+      context: ../../..
+      dockerfile: apps/server/proto/worker/Dockerfile
+    container_name: proto-migrate
+    command: ["python3", "proto/migrate.py"]
+    environment:
+      MIGRATE_PG_DSN: postgresql://postgres:proto@postgres:5432/proto
+      # The worker's note on OPENSSL_armcap: the same image, the same SIGILL.
+      OPENSSL_armcap: ${OPENSSL_armcap:-0}
+    restart: "no"
+    healthcheck:
+      disable: true
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   # D9-10 worker: one patron turn per message through the Agent SDK. Context is the
   # repo root (the image carries packages/engine/plugin and apps/server); the root
@@ -180,14 +206,17 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       elasticmq:
         condition: service_healthy
 
   # D11-12 web tier: POST /messages -> turns row + user_msg event + SendMessage; GET
   # /events and the SSE stream read session_events / session_activity / documents.
-  # Depends on postgres and the queue only -- never on the worker: until D9-10 lands it
-  # is driven against rows proto/drive.py inserts. Context is the repo root (like the
-  # tools image) so the image carries enqueue.py, sql/ and the engine's familysearch.json.
+  # Depends on postgres, the migration and the queue only -- never on the worker: until
+  # D9-10 lands it is driven against rows proto/drive.py inserts. Context is the repo root
+  # (like the tools image) so the image carries enqueue.py, migrate.py, sql/ and the
+  # engine's familysearch.json.
   web:
     build:
       context: ../../..
@@ -244,6 +273,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       elasticmq:
         condition: service_healthy
 
@@ -291,6 +322,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       minio:
         condition: service_healthy
 
