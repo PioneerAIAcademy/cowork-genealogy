@@ -35,6 +35,7 @@ def _start(tmp_path: Path, tmpdir: str | None) -> tuple[subprocess.Popen, "queue
     cwd = tmp_path / "project"
     cwd.mkdir(exist_ok=True)
     env = {**os.environ, "PORT": "0", "PG_DSN": REFUSED_DSN, "WORKER_CWD": str(cwd), "QUEUE_URL": "",
+           "WORKER_TURN_USERS": "none",
            "SWEEP_INTERVAL_S": "0", "SHUTDOWN_GRACE_S": str(GRACE_S), "PYTHONUNBUFFERED": "1"}
     env.pop("SQSD_MAX_RETRIES", None)
     env.pop("SQSD_RETENTION_PERIOD_S", None)
@@ -213,7 +214,7 @@ def test_hook_python_child_path_starts_with_the_interpreter_dir(tmp_path, path, 
     opts = options.build_worker_options(
         project_id="proj-1", cwd="/project", plugin_dir="/opt/genealogy/plugin", agents={},
         store=object(), config_dir=str(tmp_path), pretool_hook=lambda *a: {},
-        posttool_hook=lambda *a: {}, worker_env=worker_env,
+        posttool_hook=lambda *a: {}, worker_env=worker_env, bearer="grant-token",
     )
     exe_dir = os.path.dirname(sys.executable)
     assert opts.env["PATH"] == (exe_dir if tail is None else f"{exe_dir}{os.pathsep}{tail}")

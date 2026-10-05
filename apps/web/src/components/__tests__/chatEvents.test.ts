@@ -292,7 +292,8 @@ describe('clearQueued', () => {
 describe('turnOutcomeLabel', () => {
   it('names each terminal outcome the worker can write', () => {
     for (const outcome of ['completed', 'stopped', 'queued', 'budget', 'no_progress',
-                           'decision', 'mcp_unavailable', 'retries_exhausted', 'transcript_lost']) {
+                           'decision', 'mcp_unavailable', 'retries_exhausted', 'transcript_lost',
+                           'signin_required']) {
       expect(turnOutcomeLabel(outcome)).toBeTruthy()
     }
   })
@@ -309,7 +310,7 @@ describe('turnOutcomeLabel', () => {
   it('tells the reader how to carry on wherever carrying on is possible', () => {
     // The failure this exists to prevent: a capped or stalled run that reads as
     // "nothing more was found". Each of those three must say what to do next.
-    for (const outcome of ['stopped', 'budget', 'no_progress', 'retries_exhausted']) {
+    for (const outcome of ['stopped', 'budget', 'no_progress', 'retries_exhausted', 'signin_required']) {
       expect(turnOutcomeLabel(outcome)).toMatch(/carry on/i)
     }
     expect(turnOutcomeLabel('completed')).not.toMatch(/carry on/i)
@@ -318,6 +319,13 @@ describe('turnOutcomeLabel', () => {
   it('names a turn closed for running out of receives (U5)', () => {
     expect(turnOutcomeLabel('retries_exhausted')).toBe(
       'This run was interrupted too many times and has stopped. Send a message to carry on.')
+  })
+
+  it('tells the patron to sign in when FamilySearch refused the session (U3)', () => {
+    // The worker closes the turn `signin_required` before any model runs: no grant, or
+    // FamilySearch refused the refresh. Only signing in again fixes it.
+    expect(turnOutcomeLabel('signin_required')).toMatch(/sign in/i)
+    expect(turnOutcomeLabel('signin_required')).toMatch(/FamilySearch/)
   })
 
   it('separates the two budgets, because only one of them ends the sitting', () => {
@@ -334,7 +342,7 @@ describe('turnOutcomeLabel', () => {
 
   it('distinguishes a finished run from every paused one', () => {
     const labels = ['completed', 'stopped', 'budget', 'no_progress', 'mcp_unavailable', 'retries_exhausted',
-                    'transcript_lost']
+                    'transcript_lost', 'signin_required']
       .map((o) => turnOutcomeLabel(o))
     expect(new Set(labels).size).toBe(labels.length)
   })
