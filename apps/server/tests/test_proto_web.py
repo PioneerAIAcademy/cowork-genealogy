@@ -153,6 +153,16 @@ class FakeStore:
     async def documents(self, project_id: str) -> dict[str, tuple[int, Any]]:
         return dict(self.docs.get(project_id, {}))
 
+    async def admit_message(self, session: SessionRow, text: str) -> tuple[Turn, bool, dict | None]:
+        """PgStore.admit_message's sequence over the fake's own steps (U23 D7: an older held
+        message holds this one too), so a test can still patch a step to open a window.
+        The lock it holds is test_proto_queue_pg.py's to prove."""
+        sid = session.session_id
+        held = await self.turn_active(sid) or await self.has_queued(sid)
+        turn = await self.begin_turn(session, text, queued=held)
+        rescued = None if not held or await self.turn_active(sid) else await self.claim_queued_turn(sid)
+        return turn, held, rescued
+
     async def begin_turn(self, session: SessionRow, text: str, *, queued: bool = False) -> Turn:
         turn_id = str(uuid.uuid4())
         seq = self.add_event(session.session_id, "user_msg", {"text": text, "turn_id": turn_id})
@@ -432,7 +442,7 @@ async def test_a_message_typed_while_a_turn_runs_is_held_not_enqueued():
 async def test_a_held_turn_does_not_itself_count_as_an_active_turn():
     """The latch bug this design has to avoid: a held row has completed_at NULL too, so a
     turn_active that did not exclude it would hold every later message behind a turn that
-    is not running."""
+    is not running. U23 D7: "three" now waits behind "two" -- but "two" goes out."""
     store, queue = FakeStore(), FakeQueue()
     row = store.seed_session()
     async with make_client(store, queue) as c:
@@ -440,8 +450,23 @@ async def test_a_held_turn_does_not_itself_count_as_an_active_turn():
         await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "two"})
         store.active.discard(row.session_id)  # the worker finished the running turn
         third = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "three"})
-    assert third.json()["queued"] is False, "with no turn running the next message goes straight out"
-    assert len(queue.sent) == 2
+    assert [b["text"] for b in queue.sent] == ["one", "two"], \
+        "with no turn running the held message goes out, not behind a turn that does not exist"
+    assert third.json()["queued"] is True and [t.body["text"] for t in store.queued] == ["three"]
+
+
+async def test_a_message_posted_while_an_older_one_waits_is_held_behind_it():
+    """U23 D7. The hold read only "is a turn running?", so a message posted while an older
+    one sat held with no turn running went straight out and overtook it, and the older one
+    then waited for a release that only the NEXT turn's end would bring."""
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session()
+    older = await store.begin_turn(row, "the 1881 census", queued=True)  # stranded: no turn runs
+    async with make_client(store, queue) as c:
+        r = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "and his will"})
+    assert r.json()["queued"] is True and r.json()["turn_id"] != older.turn_id
+    assert [b["text"] for b in queue.sent] == ["the 1881 census"], "oldest first"
+    assert [t.body["text"] for t in store.queued] == ["and his will"]
 
 
 async def test_the_stream_says_a_message_is_waiting_so_a_reload_still_shows_it():
@@ -623,30 +648,19 @@ async def test_the_rescue_claim_clears_the_stop_flag_too():
     flag for a held row. Without this the rescued turn halts at its first tool call with
     "Stopped by the researcher." -- the patron's words swallowed by a Stop they pressed
     before they typed them."""
-    conn = RecordingConn()
-    store = app.PgStore("postgresql://unused")
-
-    async def fake_connect():
-        return conn
-
-    store._connect = fake_connect  # type: ignore[method-assign]
-    assert await store.claim_queued_turn("sess_1") == {"turn_id": "t2"}  # RecordingConn answers
-    cleared = [sql for sql in conn.sql if "stop_requested_at = NULL" in sql]
-    assert cleared == [" ".join(app.CLEAR_STOP_SQL.split())], \
+    conn = await _admit(active=False, queued=True)
+    assert conn.result[2] == {"turn_id": "t2"}  # RecordingConn answers the claim
+    cleared = [i for i, sql in enumerate(conn.sql) if "stop_requested_at = NULL" in sql]
+    [claim] = [i for i, sql in enumerate(conn.sql) if "RETURNING message" in sql]
+    assert len(cleared) == 1 and cleared[0] > claim, \
         "a claimed message must resume a stopped session, exactly as the worker's does"
 
 
 async def test_a_rescue_that_finds_nothing_leaves_a_stop_alone():
     """The other direction: with nothing held there is nothing to enqueue, so a Stop the
     patron just pressed must stay exactly where it is."""
-    conn = RecordingConn(message=None)
-    store = app.PgStore("postgresql://unused")
-
-    async def fake_connect():
-        return conn
-
-    store._connect = fake_connect  # type: ignore[method-assign]
-    assert await store.claim_queued_turn("sess_1") is None
+    conn = await _admit(active=False, queued=True, message=None)
+    assert conn.result[2] is None and any("RETURNING message" in sql for sql in conn.sql)
     assert not [sql for sql in conn.sql if "stop_requested_at = NULL" in sql]
 
 
@@ -657,7 +671,7 @@ def test_the_rescue_claim_is_the_workers_own_statement():
     message can be enqueued twice and nothing else would notice."""
     import inspect
 
-    web = " ".join(inspect.getsource(app.PgStore.claim_queued_turn).split())
+    web = " ".join(inspect.getsource(app.PgStore._claim_held).split())
     worker_src = (
         pathlib.Path(__file__).resolve().parents[1] / "proto" / "worker" / "worker.py"
     ).read_text(encoding="utf-8")
@@ -699,10 +713,13 @@ class RecordingConn:
     — so the SQL the real store runs was only ever string-matched, and a fake that
     happened to mirror the wrong rule kept every test green. This runs the real method."""
 
-    def __init__(self, message: dict | None = {"turn_id": "t2"}) -> None:
+    def __init__(self, message: dict | None = {"turn_id": "t2"}, *, active: bool = True,
+                 queued: bool = True) -> None:
         self.sql: list[str] = []
         self.params: list[tuple] = []
         self.message = message  # what the 1b claim's RETURNING hands back
+        self.active, self.queued = active, queued  # TURN_ACTIVE_SQL's and HAS_QUEUED_SQL's answers
+        self.result: Any = None  # what the method under test returned (_admit)
 
     async def execute(self, sql, params=()):
         self.sql.append(" ".join(sql.split()))
@@ -714,22 +731,24 @@ class RecordingConn:
         # `queued`, turn_active reads `active`, request_stop only checks for a row.
         if "RETURNING message" in self.sql[-1]:  # the 1b claim
             return {"message": self.message} if self.message is not None else None
-        return {"seq": 1, "queued": True, "active": True, "stop_requested_at": "now"}
+        return {"seq": 1, "queued": self.queued, "active": self.active, "stop_requested_at": "now"}
 
     def transaction(self):
         conn = self
 
-        class _Tx:
-            async def __aenter__(self): return None
-            async def __aexit__(self, *exc): return False
+        class _Tx:  # the markers let a test see which statements ran inside it
+            async def __aenter__(self): conn.sql.append("<tx>"); conn.params.append(())
+            async def __aexit__(self, *exc): conn.sql.append("</tx>"); conn.params.append(()); return False
         return _Tx()
 
     async def __aenter__(self): return self
     async def __aexit__(self, *exc): return False
 
 
-async def _begin(queued: bool) -> RecordingConn:
-    conn = RecordingConn()
+async def _admit(*, active: bool, queued: bool, message: dict | None = {"turn_id": "t2"}) -> RecordingConn:
+    """The real ``PgStore.admit_message`` against a RecordingConn answering ``active`` and
+    ``queued``; its return value lands on ``conn.result``."""
+    conn = RecordingConn(message, active=active, queued=queued)
     store = app.PgStore("postgresql://unused")
 
     async def fake_connect():
@@ -738,8 +757,44 @@ async def _begin(queued: bool) -> RecordingConn:
     store._connect = fake_connect  # type: ignore[method-assign]
     row = SessionRow(session_id="sess_1", project_id="proj_1", title="t", model="m",
                      created_at=T0, updated_at=T0)
-    await store.begin_turn(row, "hello", queued=queued)
+    conn.result = await store.admit_message(row, "hello")
     return conn
+
+
+async def _begin(queued: bool) -> RecordingConn:
+    """An admitted message that goes out (``queued=False``: nothing running or held) or is
+    held behind a running turn."""
+    return await _admit(active=queued, queued=False)
+
+
+async def test_admit_message_decides_under_the_queue_lock():
+    """U23 D8, offline: the session's queue lock is the transaction's first lock, after
+    the statement bounding its wait, so both reads and every write after it run while the
+    worker's release waits. test_proto_queue_pg.py proves the lock serializes and the
+    bound fires; this pins where each is taken."""
+    conn = await _admit(active=False, queued=False)
+    assert conn.sql[0] == "<tx>" and conn.sql[-1] == "</tx>", "one transaction, nothing outside it"
+    assert (conn.sql[1], tuple(conn.params[1])) == (app.grants.QUEUE_LOCK_TIMEOUT_SQL, ("5000ms",))
+    assert conn.sql[2] == " ".join(app.grants.QUEUE_LOCK_SQL.split())
+    assert tuple(conn.params[2]) == (app.grants.QUEUE_LOCK_NS, "sess_1"), "the session's key, in the queue namespace"
+    assert conn.sql.count("<tx>") == 1
+
+
+@pytest.mark.parametrize("active, queued, held, claims", [
+    (False, False, False, False),  # idle: straight out
+    (True, False, True, False),    # a turn runs: held, nothing claimed
+    (True, True, True, False),
+    (False, True, True, True),     # D7: an older message waits with nothing running
+])
+async def test_admit_message_holds_behind_a_turn_or_an_older_held_message(active, queued, held, claims):
+    """U23 D7 on the real method: held when a turn runs OR an older message is held, and
+    the rescue claim runs only when nothing is running."""
+    conn = await _admit(active=active, queued=queued)
+    [insert] = [p for sql, p in zip(conn.sql, conn.params) if sql.startswith("INSERT INTO turns")]
+    assert insert[-1] == (app.QUEUED_OUTCOME if held else None)
+    assert conn.result[1] is held
+    assert any("RETURNING message" in sql for sql in conn.sql) is claims
+    assert (conn.result[2] is not None) is claims
 
 
 async def test_the_real_has_queued_and_request_stop_run_the_sql_they_claim():
@@ -818,8 +873,8 @@ def test_the_real_begin_turn_clears_the_stop_flag():
     outlives its turn halts the NEXT turn at its first tool call."""
     assert "stop_requested_at = NULL" in app.CLEAR_STOP_SQL
     import inspect
-    source = inspect.getsource(app.PgStore.begin_turn)
-    assert "CLEAR_STOP_SQL" in source, "begin_turn must clear the flag, or a stopped session never resumes"
+    source = inspect.getsource(app.PgStore._insert_turn)
+    assert "CLEAR_STOP_SQL" in source, "_insert_turn must clear the flag, or a stopped session never resumes"
 
 
 async def test_post_message_on_queue_failure_marks_the_turn_and_returns_502(caplog):

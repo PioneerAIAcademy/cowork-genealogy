@@ -38,8 +38,9 @@ The hook (``make_pretool_hook``) is the plan's deny-and-log: it denies a raw
 denies a ``Read``/``Grep``/``Glob`` under the anchor and any read or write under ``/proc``
 or ``/dev``, the turn's own process (``deny.py``), and records EVERY
 call as a ``tool_calls`` row with its decision -- so criterion 3 is a query, not a claim.
-It never raises: any exception allows the call. The turn's identifiers reach it through
-a closure, never a global.
+It never raises. An exception in the deny rules allows the call; one in ``halt()`` halts it
+(U23: an unreadable Stop or spend cap must not let the run carry on). The turn's
+identifiers reach it through a closure, never a global.
 """
 
 from __future__ import annotations
@@ -331,6 +332,14 @@ def _deny(reason: str) -> dict[str, Any]:
 # executed on a just-revoked token), so the halt also denies the call it fires on.
 STOP_REASON = "Stopped by the researcher."
 
+# U23: halt() could not read the store, so Stop, the handover and the spend cap cannot be
+# checked; the attempt raises StoreUnavailable (500) and the redelivery reads them fresh.
+STORE_UNAVAILABLE_REASON = (
+    "A server problem is keeping this run from checking for a Stop or its spend limit, so "
+    "it is stopping here and will pick up again shortly. Findings already written to the "
+    "project are kept."
+)
+
 # 1b. The turn ends so the patron's message becomes the next one. Text the MODEL reads as
 # the turn closes, so the transcript says why it stopped rather than ending mid-thought.
 HANDOVER_REASON = (
@@ -342,7 +351,7 @@ HANDOVER_REASON = (
 # MODEL reads as the turn ends -- so the transcript says what happened rather than
 # stopping mid-thought.
 SPEND_CAP_REASON = (
-    "This session has reached its ${cap:.0f} spend limit and is stopping here. "
+    "This session has reached its ${cap:g} spend limit and is stopping here. "
     "Everything found so far is saved. Start a new session on the same project to carry on."
 )
 
@@ -412,6 +421,7 @@ def make_pretool_hook(
     blocked: frozenset[str] = frozenset(),
     halt: Callable[[], str | None] | None = None,
     on_delivered: Callable[[], None] | None = None,
+    on_halt_failed: Callable[[], None] | None = None,
 ):
     """The worker's ``PreToolUse`` callback. ``config_root`` may be a callable because
     the directory the CLI actually runs in is known only after ``connect()`` on a
@@ -424,7 +434,12 @@ def make_pretool_hook(
     button wired to the Stop hook would take 53 minutes to answer.
 
     A halted call is recorded as a ``tool_calls`` row like any other, with decision
-    ``halt``, so the audit trail shows where the turn was cut."""
+    ``halt``, so the audit trail shows where the turn was cut.
+
+    A ``halt()`` that raises HALTS with ``STORE_UNAVAILABLE_REASON``, logs
+    ``ev=halt_failed`` and calls ``on_halt_failed()`` (U23). The worker's halt classifies
+    each clause's error itself; this is the last resort, and allowing here is what let Stop
+    and the spend cap fail open during an outage."""
 
     async def _pretool(input_data: Any, tool_use_id: str | None, _context: Any) -> dict[str, Any]:
         decision, reason = "allow", None
@@ -436,8 +451,18 @@ def make_pretool_hook(
         try:
             if halt is not None:
                 stop_now = halt()
-        except Exception:  # noqa: BLE001 - a hook that raises fails a call the user was entitled to make
-            stop_now = None
+        except Exception as exc:  # noqa: BLE001 - halts: the call may be one Stop or the cap forbids
+            stop_now = STORE_UNAVAILABLE_REASON
+            if log is not None:
+                log(ev="halt_failed", turn_id=turn_id, tool_name=tool_name,
+                    error=f"{type(exc).__name__}: {exc}")
+            if on_halt_failed is not None:
+                try:
+                    on_halt_failed()
+                except Exception as cb_exc:  # noqa: BLE001 - the halt stands either way
+                    if log is not None:
+                        log(ev="halt_failed_report_failed", turn_id=turn_id,
+                            error=f"{type(cb_exc).__name__}: {cb_exc}")
         if stop_now is not None:
             try:
                 record({
@@ -462,11 +487,13 @@ def make_pretool_hook(
         #
         # MAIN THREAD ONLY. The arm matches on tool NAME, and a subagent holds the
         # session's tool set, so without this a record-extractor saying "delivered" would
-        # end the researcher's whole turn. `agent_id` is tested for MEMBERSHIP, not
-        # truthiness: it is absent as a KEY on the main thread, and `agent_type` alone is
-        # not sufficient because it is present on the main thread of a session started
-        # with `--agent`. That is the discriminator the shipped plugin hook already uses
-        # (`owner_denied`, hooks/guard_project_files.py), reused rather than re-derived.
+        # halt -- the extraction at least, and the researcher's whole turn if a subagent's
+        # halt stops the parent, which is unmeasured (U23's Q2). `agent_id` is tested for
+        # MEMBERSHIP, not truthiness: it is absent as a KEY on the main thread, and
+        # `agent_type` alone is not sufficient because it is present on the main thread of
+        # a session started with `--agent`. That is the discriminator the shipped plugin
+        # hook already uses (`owner_denied`, hooks/guard_project_files.py), reused rather
+        # than re-derived.
         # A subagent's call falls through to ordinary handling, where the tool returns its
         # harmless acknowledgement and the run carries on.
         if tool_name == DELIVERED_TOOL and "agent_id" not in data:
@@ -646,12 +673,19 @@ def make_stop_hook(
 
     async def _stop(_input_data: Any, _tool_use_id: str | None, _context: Any) -> dict[str, Any]:
         try:
+            # `stopped` is should_continue_run's first clause, so it is asked first: a
+            # halted turn (U23: one whose store is down among them) allows the stop
+            # without the two reads below.
+            if ask(stopped):
+                if on_allow is not None:
+                    on_allow(TERMINAL_STOPPED)
+                return {}
             count = int(tool_count())
             verdict = dict(
                 research=research(),
                 nudges_used=state["nudges_used"],
                 max_nudges=max_nudges,
-                stopped=ask(stopped),
+                stopped=False,
                 pending_user_message=ask(pending_user_message),
                 pending_decision=ask(pending_decision),
             )
