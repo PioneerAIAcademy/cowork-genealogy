@@ -258,7 +258,9 @@ def test_outage_checks_pass_either_store_loss_path():
     by_hook = [ev("halt_check_failed", clause="stop", error="OperationalError", store_down=True),
                ev("turn", status=500, error="StoreUnavailable: the store is unreachable")]
     by_loop = [ev("turn", status=500, error="OperationalError: terminating connection")]
-    for events in (by_hook, by_loop):
+    # What a pg_terminate_backend actually raised on compose (2026-10-05): a subclass.
+    by_admin = [ev("turn", status=500, error="AdminShutdown: terminating connection due to administrator command")]
+    for events in (by_hook, by_loop, by_admin):
         assert all(oks(bounds.outage_checks("x", events, "t1", terminated=1, ran=[])))
 
 
@@ -267,6 +269,9 @@ def test_outage_checks_fail_no_backend_another_error_or_a_call_that_ran():
     assert oks(bounds.outage_checks("x", events, "t1", terminated=0, ran=[]))[0] is False, "application_name not set"
     other = [ev("turn", status=500, error="RuntimeError: ResultMessage is_error")]
     assert oks(bounds.outage_checks("x", other, "t1", terminated=1, ran=[]))[1:3] == [False, False]
+    # A psycopg error that is not a store loss (a SQL bug) does not pass for one.
+    bug = [ev("turn", status=500, error="UndefinedColumn: column \"x\" does not exist")]
+    assert oks(bounds.outage_checks("x", bug, "t1", terminated=1, ran=[]))[1:3] == [False, False]
     assert oks(bounds.outage_checks("x", events, "t1", terminated=1, ran=[("", "Read", "u1")]))[3] is False
     assert oks(bounds.outage_checks("x", [ev("turn", "t2", status=500, error="StoreUnavailable")], "t1",
                                     terminated=1, ran=[]))[2] is False

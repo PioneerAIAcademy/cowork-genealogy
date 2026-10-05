@@ -120,6 +120,17 @@ HALT_MARKERS = tuple(r.split("{", 1)[0][:48] for r in (STOP_REASON, HANDOVER_REA
 STORE_ERRORS = ("StoreUnavailable", "OperationalError")
 
 
+def is_store_error(error: str) -> bool:
+    """The worker's 500 ``error`` is ``"<Type>: <message>"``. A store loss is StoreUnavailable or
+    any psycopg OperationalError/InterfaceError subclass -- a terminated backend raises
+    AdminShutdown, which no substring of STORE_ERRORS names."""
+    name = str(error or "").split(":", 1)[0].strip()
+    if name == "StoreUnavailable":
+        return True
+    cls = getattr(psycopg.errors, name, None) or getattr(psycopg, name, None)
+    return isinstance(cls, type) and issubclass(cls, (psycopg.OperationalError, psycopg.InterfaceError))
+
+
 @dataclass
 class TurnSnap:
     """One turn's rows, read after its turn_done, for the pure checks."""
@@ -397,7 +408,7 @@ def outage_checks(label: str, events: list[dict], turn_id: str, *, terminated: i
     mine = events_for(events, turn_id)
     failed = [e for e in mine if e.get("ev") in ("halt_check_failed", "halt_failed")]
     five = [e for e in mine if e.get("ev") == "turn" and e.get("status") == 500]
-    store_500 = [e for e in five if any(k in str(e.get("error") or "") for k in STORE_ERRORS)]
+    store_500 = [e for e in five if is_store_error(e.get("error"))]
     return [
         (f"{label}: terminated the turn's backend (application_name turn:{turn_id})", terminated >= 1,
          f"terminated={terminated}"),
