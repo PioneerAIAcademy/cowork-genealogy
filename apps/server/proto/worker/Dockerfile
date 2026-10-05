@@ -32,7 +32,8 @@ RUN python3 -m pip install --break-system-packages --require-hashes \
         -r /tmp/worker-requirements.txt \
     && rm /tmp/worker-requirements.txt
 
-# Plugin: 12 skills + 21 agents + the shipped PreToolUse hook (python3 runs it).
+# Plugin: the skills and agents worker.py pins (EXPECTED_SKILLS, EXPECTED_AGENTS) + the
+# shipped PreToolUse hook (python3 runs it).
 COPY packages/engine/plugin /opt/genealogy/plugin
 
 # The worker and what it imports: app.agent.real_agent (map_message) and proto/sql, whose

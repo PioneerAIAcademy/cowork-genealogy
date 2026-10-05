@@ -42,9 +42,9 @@ and the transient frames are never replayed -- the same split as TRANSIENT_KINDS
 hosted runner.
 
 Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto), QUEUE_URL (a full SQS
-queue URL, the shim's shape; unset -> NullQueue, turns are recorded but not enqueued),
-POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (60 -- see ``max_nudges``). With
-QUEUE_URL set (and only then): GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
+queue URL, the shim's shape; required -- unset or empty refuses to start),
+POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (60 -- see ``max_nudges``),
+GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
 or neither; neither signs SendMessage with the default AWS chain, the instance profile on
 AWS; one alone refuses to start) and GENEALOGY_SQS_REGION (else the QUEUE_URL host's
 region). Startup verifies the schema -- reads the ledger ``migrate.py`` keeps and compares
@@ -93,7 +93,7 @@ from urllib.parse import urlparse
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 HERE = Path(__file__).resolve().parent
 PROTO_DIR = HERE.parent
@@ -1000,16 +1000,6 @@ class SqsQueue:
         return enqueue.xml_text(doc, "MessageId")
 
 
-class NullQueue:
-    """No queue configured: the turn is recorded (turns row + user_msg event) and never
-    enqueued. This is the 'rows a script inserts' mode; the compose service never uses it."""
-
-    async def send(self, body: dict[str, Any]) -> str:
-        message_id = "null-" + uuid.uuid4().hex[:12]
-        log.info("NullQueue: turn %s recorded, not enqueued", body.get("turn_id"))
-        return message_id
-
-
 # ── app ──────────────────────────────────────────────────────────────────────────
 
 
@@ -1028,9 +1018,16 @@ class PatchSessionBody(BaseModel):
 
 
 class MessageBody(BaseModel):
-    # Not blank: the worker would take a whitespace-only text for a stub message and
-    # complete the turn with no reply, and a 400 there would requeue it forever.
-    text: str = Field(min_length=1, pattern=r"\S")
+    # Not blank by the worker's own predicate (is_real_turn: text.strip()): a text it
+    # strips to nothing ("\x1c" passes a regex \S) is a stub message there, which it 400s.
+    text: str = Field(min_length=1)
+
+    @field_validator("text")
+    @classmethod
+    def _not_blank(cls, text: str) -> str:
+        if not text.strip():
+            raise ValueError("text is blank")
+        return text
 
 
 class DevLoginBody(BaseModel):
@@ -1189,7 +1186,7 @@ def create_app(
     stream_max_polls: int | None = None,
 ) -> FastAPI:
     """Factory. With no arguments the lifespan builds PgStore(PG_DSN) + SqsQueue(QUEUE_URL)
-    (or NullQueue) from env; tests pass fakes and shrink the timings."""
+    from env, refusing to start without a QUEUE_URL; tests pass fakes and shrink the timings."""
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -1197,20 +1194,19 @@ def create_app(
         # U7: a half SQS pair refuses here, before a startup step or its background retry
         # exists, so the refusal leaves nothing running.
         if app.state.queue is None:
-            queue_url = os.environ.get("QUEUE_URL")
-            if queue_url:
-                try:
-                    sqs_auth = await asyncio.to_thread(enqueue.configure, os.environ, queue_url)
-                except enqueue.SqsConfigError as exc:
-                    raise RuntimeError(str(exc)) from exc
-                app.state.queue = SqsQueue(queue_url)
-                log.info("queue: %s; %s", queue_url, enqueue.describe(sqs_auth))
-                if sqs_auth.method is None:
-                    log.warning("no AWS credentials found yet: SendMessage retries the chain "
-                                "and fails until it resolves")
-            else:
-                app.state.queue = NullQueue()
-                log.warning("QUEUE_URL unset: turns are recorded but NOT enqueued (NullQueue)")
+            # U11: no queue means a turn is recorded and nothing ever runs it.
+            queue_url = (os.environ.get("QUEUE_URL") or "").strip()
+            if not queue_url:
+                raise RuntimeError("QUEUE_URL is unset or empty: the web tier needs the turns queue")
+            try:
+                sqs_auth = await asyncio.to_thread(enqueue.configure, os.environ, queue_url)
+            except enqueue.SqsConfigError as exc:
+                raise RuntimeError(str(exc)) from exc
+            app.state.queue = SqsQueue(queue_url)
+            log.info("queue: %s; %s", queue_url, enqueue.describe(sqs_auth))
+            if sqs_auth.method is None:
+                log.warning("no AWS credentials found yet: SendMessage retries the chain "
+                            "and fails until it resolves")
         # U10 D8: the store goes on app.state before either step, so every route and
         # /api/health see it while Postgres is down; neither step can stop the tier listening.
         steps: dict[str, Callable[[], Awaitable[Any]]] = {}

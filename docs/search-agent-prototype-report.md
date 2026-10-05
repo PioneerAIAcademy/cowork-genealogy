@@ -164,7 +164,7 @@ time in 3; the worker never does.
 - **Missing against the current stack:** uploads, images, logs, stored search results, two wiki skills, `evaluations/` gates, continuing a capped project. U20.
 - **Silent transcript loss:** a config-dir mismatch persists nothing; the turn now closes `transcript_lost`, answers 500, and `/healthz` answers 503 (U10). A partial loss (one dropped frame) is still silent.
 - **Stop, held messages, the $35 cap:** offline tests only; while Postgres is down all three fail open, silently (the hooks swallow its errors). U23.
-- **Dev-only paths ship:** an unauthenticated crash stub, fixture tree-read block, token fallbacks (one persists in `turns.message`, SQS and the DLQ), debug holds. U11.
+- **Dev-only paths ship:** an unauthenticated crash stub, fixture tree-read block, debug holds. U11 (built, PR #3162: the stub arms and the tree-read block need `DEV_PATHS=true`, and a packaging test refuses dev variables in the Beanstalk templates).
 
 ## What the prototype deliberately did not test
 

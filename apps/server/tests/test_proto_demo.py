@@ -4,6 +4,7 @@ rendering, the verdict, and the make target that runs it. No Postgres, no stack,
 from __future__ import annotations
 
 import argparse
+import ast
 import contextlib
 import os
 import pathlib
@@ -281,9 +282,14 @@ def test_proto_demo_target_brings_the_stack_up_and_runs_the_script():
     assert re.search(r"\$\(if \$\(FIXTURE\),\s*--fixture '\$\(FIXTURE\)',\s*\)", body), body
     assert "bagley-father-1884" not in body and demo.DEFAULT_FIXTURE == "bagley-father-1884"
     # The harness's tree-read block reaches the worker, and an explicit empty value lifts it.
-    assert re.search(r'export BLOCKED_TOOLS="\$\$\{BLOCKED_TOOLS-', body), body  # raw make text: $$ is the shell's $
-    for tool in ("person_read", "person_search", "person_ancestors", "person_record_matches", "person_person_matches", "person_quality"):
-        assert tool in body, tool
+    blocked = re.search(r'export BLOCKED_TOOLS="\$\$\{BLOCKED_TOOLS-([^}]*)\}"', body)  # raw make text: $$ is the shell's $
+    assert blocked, body
+    assert {p.strip() for p in blocked.group(1).split(",") if p.strip()} == _harness_constant("BLOCKED_TREE_TOOLS"), \
+        "proto-demo's BLOCKED_TOOLS default is the harness's BLOCKED_TREE_TOOLS (orchestrator.py): re-sync the Makefile"
+    # The worker blocks by bare name only; it has no copy of the harness's argument-decided map.
+    assert _harness_constant("LIVE_TREE_ARG_TOOLS") == {}, \
+        "orchestrator.py's LIVE_TREE_ARG_TOOLS is no longer empty: the worker blocks by bare name " \
+        "only (BLOCKED_TOOLS), so an argument-decided block needs a worker port before proto-demo compares"
 
 
 def test_proto_test_runs_the_d17_and_demo_suites():
@@ -293,6 +299,18 @@ def test_proto_test_runs_the_d17_and_demo_suites():
 
 
 ORCHESTRATOR = Path(__file__).resolve().parents[3] / "eval" / "harness" / "e2e" / "orchestrator.py"
+
+
+def _harness_constant(name: str):
+    """A module-level literal in orchestrator.py, read by AST (the harness is not importable
+    here); a ``frozenset({...})`` call reads as its set."""
+    for node in ast.parse(ORCHESTRATOR.read_text(encoding="utf-8")).body:
+        if isinstance(node, ast.Assign) and [getattr(t, "id", None) for t in node.targets] == [name]:
+            value = node.value
+            if isinstance(value, ast.Call) and getattr(value.func, "id", None) == "frozenset" and len(value.args) == 1:
+                value = value.args[0]
+            return ast.literal_eval(value)
+    raise AssertionError(f"orchestrator.py has no module-level {name}")
 
 
 def test_proto_demo_auto_exports_the_harness_cap_and_delegates_to_proto_demo():
