@@ -93,7 +93,6 @@ def should_continue_run(
     stopped: bool = False,
     pending_user_message: bool = False,
     pending_decision: bool = False,
-    delivered: bool = False,
 ) -> bool:
     """Whether to veto an agent's *voluntary* stop and nudge it onward.
 
@@ -121,10 +120,6 @@ def should_continue_run(
         return False
     if pending_decision:
         return False
-    # After decision, before completion: a bounded request is delivered while the
-    # project is NOT complete, which is the whole case this exists for.
-    if delivered:
-        return False
     if project_completed(research):
         return False
     if nudges_used >= max_nudges:
@@ -143,7 +138,6 @@ def terminal_reason(
     stopped: bool = False,
     pending_user_message: bool = False,
     pending_decision: bool = False,
-    delivered: bool = False,
 ) -> str:
     """WHY ``should_continue_run`` is about to return False.
 
@@ -158,8 +152,6 @@ def terminal_reason(
         return TERMINAL_QUEUED
     if pending_decision:
         return TERMINAL_DECISION
-    if delivered:
-        return TERMINAL_DELIVERED
     if project_completed(research):
         return TERMINAL_COMPLETED
     if nudges_used >= max_nudges:

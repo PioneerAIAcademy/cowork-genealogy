@@ -51,7 +51,7 @@ export function researchDelivered(
 export const researchDeliveredSchema = {
   name: "research_delivered",
   description:
-    "Signal that you have delivered what the current message asked for and are stopping on purpose. Use this for a request bounded to one deliverable — a plan the user asked you to stop after, a single record lookup, or a status question — so the run does not continue past what was asked. Do NOT use it when the project's research objective is complete (the run ends on its own), and do NOT use it to ask the researcher something (use the question tool, which waits for an answer).",
+    "Signal that you have delivered what the current message asked for and are stopping on purpose. Use this for a request bounded to one deliverable — a plan the user asked you to stop after, a single record lookup, or a status question — so a managed run can end here instead of continuing past what was asked. Do NOT use it when the project's research objective is complete (the run ends on its own), and do NOT use it to ask the researcher something (use the question tool, which waits for an answer).",
   inputSchema: {
     type: "object" as const,
     properties: {

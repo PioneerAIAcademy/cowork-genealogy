@@ -1902,7 +1902,6 @@ _STOP_KW = dict(research=None, nudges_used=0, max_nudges=5, tool_count=0, tool_c
     ("mcp_unavailable", "mcp_unavailable"),
     ("pending_user_message", "queued"),
     ("pending_decision", "decision"),
-    ("delivered", "delivered"),
 ])
 def test_each_new_clause_allows_the_stop_and_names_itself(flag, reason):
     assert options.should_continue_run(**{**_STOP_KW, flag: True}) is False
@@ -1918,8 +1917,7 @@ def test_stopped_is_the_first_clause_ahead_of_every_other():
     Stop must therefore win against a project that looks complete, a spent budget, and
     every other flag at once."""
     every = dict(research={"project": {"status": "completed"}}, nudges_used=99, max_nudges=1,
-                 mcp_unavailable=True, pending_user_message=True, pending_decision=True,
-                 delivered=True)
+                 mcp_unavailable=True, pending_user_message=True, pending_decision=True)
     assert options.terminal_reason(stopped=True, **every) == "stopped"
     assert options.should_continue_run(tool_count=0, tool_count_at_last_nudge=-1,
                                        stopped=True, **every) is False
@@ -1931,8 +1929,7 @@ def test_terminal_reason_and_should_continue_run_walk_in_lockstep():
     bug the terminal-state work exists to fix. So every combination is walked."""
     import itertools
 
-    flags = ("stopped", "mcp_unavailable", "pending_user_message", "pending_decision",
-             "delivered")
+    flags = ("stopped", "mcp_unavailable", "pending_user_message", "pending_decision")
     for bits in itertools.product((False, True), repeat=len(flags)):
         for research in (None, {"project": {"status": "completed"}}):
             for nudges, cap in ((0, 5), (5, 5)):
@@ -4255,33 +4252,6 @@ def test_session_spend_usd_prices_decimal_sums(turn_env, monkeypatch):
 # reason" and chatEvents renders it as nothing, while a delivery has something to report.
 
 
-def test_a_delivered_turn_does_not_continue():
-    assert options.should_continue_run(
-        research={"project": {"status": "active"}}, nudges_used=0, max_nudges=60,
-        tool_count=1, tool_count_at_last_nudge=0, delivered=True,
-    ) is False
-
-
-def test_delivered_is_the_reason_and_sits_after_decision_before_completed():
-    """Clause position is semantics, not detail, and the generic lockstep test CANNOT
-    see it -- that test asserts only the bool, never the reason string in a terminal
-    case, so it passes under either clause order. This is the test that pins it.
-
-    A delivery arriving with a patron message already QUEUED reads `queued` -- the
-    researcher moved on -- and a delivery on a COMPLETED project still reads delivered,
-    because the request was met before the project finished."""
-    done = {"project": {"status": "completed"}}
-    active = {"project": {"status": "active"}}
-    assert options.terminal_reason(research=active, nudges_used=0, max_nudges=60,
-                                   delivered=True) == "delivered"
-    # queued and decision both outrank it
-    assert options.terminal_reason(research=active, nudges_used=0, max_nudges=60,
-                                   delivered=True, pending_user_message=True) == "queued"
-    assert options.terminal_reason(research=active, nudges_used=0, max_nudges=60,
-                                   delivered=True, pending_decision=True) == "decision"
-    # ...and it outranks completion
-    assert options.terminal_reason(research=done, nudges_used=0, max_nudges=60,
-                                   delivered=True) == "delivered"
 
 
 def test_the_delivered_tool_name_is_pinned():

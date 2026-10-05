@@ -150,7 +150,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "research_delivered") {
       // A pure signal: no network, no auth, no project write. On the hosted path a
       // PreToolUse hook ends the turn on this tool's NAME before it executes, so this
-      // arm runs only where no such hook binds (Cowork, the unit harness).
+      // arm runs only where no such hook binds (Cowork, the e2e harness).
       //
       // The try/catch is not decoration: the server does NOT validate `inputSchema`, so
       // a non-string `summary` reaches the body and `.trim()` throws. Every other arm

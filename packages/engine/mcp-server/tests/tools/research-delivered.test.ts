@@ -10,8 +10,9 @@ describe("research_delivered", () => {
 
   it("writes nothing and says so truthfully for BOTH environments", () => {
     // Where the hosted PreToolUse hook binds, the turn has already ended and nobody
-    // reads this. Where it does not (Cowork, the unit harness), the run genuinely
-    // carries on -- so the note must not claim the turn stopped.
+    // reads this. Where it does not (Cowork, the e2e harness), the run genuinely
+    // carries on -- so the note must not claim the turn stopped. The UNIT harness is
+    // neither: it does not advertise this tool at all.
     const r = researchDelivered({ summary: "x" });
     expect(r.note).toMatch(/otherwise it carries on/);
     expect(r.note).not.toMatch(/the turn has ended\b/);

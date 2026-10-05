@@ -80,14 +80,22 @@ terminal reason" and the browser deliberately renders it as nothing; a delivery 
 opposite, it has something to report. Reusing `ok` would either silence the delivery or
 give every unremarkable turn a label.
 
-`delivered` sits **after** `pending_decision` and **before** `project_completed` in both
-`should_continue_run` and `terminal_reason`
-(`apps/server/app/agent/continue_policy.py`). So:
+**The worker records `delivered` from its `PreToolUse` hook**, not from the shared
+continue-policy. `on_delivered()` writes `terminal["reason"]` directly
+(`apps/server/proto/worker/worker.py`), and that happens *after* `halt()` has run. So the
+precedence is the hook's ordering, not a clause list:
 
-- a delivery arriving with a patron message already queued reads `queued` — the researcher
-  moved on;
-- a delivery arriving with a pending decision reads `decision`;
-- a delivery on a project that happens to be complete still reads `delivered`, because the
-  bounded ask was met first;
-- the researcher's own Stop outranks everything, including a delivery — the hook's halt
-  check runs before the delivered arm.
+- **A Stop wins.** The researcher's own stop is checked first and returns before the
+  delivered arm is reached.
+- **A spend cap wins**, for the same reason: it is part of `halt()`.
+- **A queued patron message wins once the turn has made at least one tool call.** The
+  queued check is gated on `counters["tool_calls"] >= 1`, so a delivery made as the
+  turn's *first* tool call records `delivered` even with a message waiting.
+- **`decision` cannot fire at all yet.** The worker passes `pending_decision=lambda: False`
+  (phase 3 is unbuilt), so no path produces it.
+- **A subagent cannot deliver.** The arm requires main-thread identity
+  (`"agent_id" not in data`); a subagent's call falls through to the inert tool body.
+
+The shared `continue_policy` carries `TERMINAL_DELIVERED` as the value's definition and
+nothing more: it has no `delivered` parameter and no clause, because no caller would pass
+one. An earlier revision added both; they were removed on review as dead code.

@@ -127,18 +127,17 @@ def test_terminal_reason_agrees_wherever_the_harness_has_an_opinion(copies):
 
 def test_the_shared_copy_is_the_one_with_the_new_clauses(copies):
     """Directional, so a lazy "fix" that deletes the new clauses to make the sweep pass
-    reds instead. These flags are 1b's and 1c's whole mechanism, plus `delivered`.
+    reds instead. The three flags are 1b's and 1c's whole mechanism.
 
     The sweep above only exercises the harness's 5-parameter signature, so a clause
     that exists ONLY in the shared copy is invisible to it by construction -- this
-    test is the sole compensator, and a new clause has to be added here by hand or it
-    is unguarded. `delivered` was added for exactly that reason: with it missing,
-    deleting both `if delivered:` clauses left this file 8-passed."""
+    test is the sole compensator, and any new shared-only clause has to be added here
+    by hand or it is unguarded."""
     shared, _ = copies
     base = dict(research=None, nudges_used=0, max_nudges=5, tool_count=0,
                 tool_count_at_last_nudge=-1)
     for flag, reason in (("stopped", "stopped"), ("pending_user_message", "queued"),
-                         ("pending_decision", "decision"), ("delivered", "delivered")):
+                         ("pending_decision", "decision")):
         assert shared["should_continue_run"](**{**base, flag: True}) is False, flag
         assert shared["terminal_reason"](
             research=None, nudges_used=0, max_nudges=5, **{flag: True}) == reason
