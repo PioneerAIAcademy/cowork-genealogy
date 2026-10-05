@@ -1095,11 +1095,12 @@ def format_tree_citation_nulling(violations: list[dict[str, Any]]) -> str:
 
 def format_conflict_unpersisted(violations: list[dict[str, Any]]) -> str:
     """One flat count, like the other post-hoc checks: a fact about the final
-    research.json, not a windowed recency scan. This is the number the
-    graduation decision (shadow → hard gate) is gated on for issue #1317."""
+    research.json, not a windowed recency scan. The check graduated to a
+    research_append precondition; this count is now the document-plane reading
+    of what the writer tool refuses."""
     affected = len({v["file"] for v in violations})
     return (
-        "\n§7.5 conflict-unpersisted check (issue #1317, shadow): "
+        "\n§7.5 conflict-unpersisted check (issue #1317; enforced at research_append, reported here): "
         f"{len(violations)} concluded question(s) relying on an unpersisted "
         f"conflict resolution, across {affected} run(s)."
     )

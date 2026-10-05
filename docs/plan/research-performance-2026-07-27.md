@@ -1,8 +1,13 @@
 # Research-session performance — measured plan
 
-**Status:** PARTIALLY SHIPPED — **C1–C7 have landed** (their rationale now lives in
-the tool specs); **C0, the reasoning-effort A/B and the largest remaining lever, has
-not.** · **Date:** 2026-07-27
+**Status:** PARTIALLY SHIPPED · **Date:** 2026-07-27
+
+- **C1–C7 have landed.** Their rationale now lives in the tool specs.
+- **The unshipped part — C0 and the reasoning-effort A/B — is SUPERSEDED
+  2026-10-01 by [`cost-latency-10x.md`](./cost-latency-10x.md)**, where it is Wave 4: drop model and
+  reasoning effort as low as they go, orchestrator included, blocked until Waves
+  1–3 complete. Plan that work from the successor, not from here.
+- **The file stays** for the three findings named below, which live nowhere else.
 
 **Why this file is kept, against the "delete a plan once the work ships" rule:**
 three findings here belong in neither a spec nor a commit message — §1 (the session

@@ -101,7 +101,10 @@ const AGENT_SURFACES = [
   "packages/engine/mcp-server/src/tools/fulltext-search.ts",
   "packages/engine/plugin/skills/search-records/SKILL.md",
   "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md",
-  "packages/engine/plugin/skills/search-records/references/place-date-mechanics.md",
+  // `place-date-mechanics.md` was here until issue #2123 deleted it: its place,
+  // date and relative-qualifier findings now live in `record_search`'s own
+  // parameter descriptions, and `record-search.ts` is already an EVIDENCE surface
+  // above, so the wording scan still covers every sentence that moved.
   "packages/engine/plugin/skills/search-records/references/search-strategy-levers.md",
   "packages/engine/plugin/skills/search-records/references/collection-quirks.md",
 ];
@@ -241,16 +244,16 @@ const EXEMPT = new Map<number, { reason: string; scope?: readonly string[] }>([
     },
   ],
   [
-    4062,
+    4322,
     {
-      reason: "the research_log_append notes corpus, derived from eval/runlogs by dev/measure-census-hedge-refusals.ts rather than the qualifier probe, and stamped `measured at <sha>` in the spec. Keyed by EXACT value, so this entry must be re-keyed whenever the corpus is re-derived — which is the intended friction: the figure cannot move in the spec without someone touching this line",
+      reason: "the research_log_append notes corpus, derived from eval/runlogs by dev/measure-census-hedge-refusals.ts rather than the qualifier probe, and date-stamped in the spec. Keyed by EXACT value, so this entry must be re-keyed whenever the corpus is re-derived — which is the intended friction: the figure cannot move in the spec without someone touching this line. Re-derived 2026-10-04 (was 4062, then 4320)",
       scope: ["docs/specs/research-log-editor-spec.md"],
     },
   ],
   [
-    1867,
+    1998,
     {
-      reason: "the staged record_search log entries carrying a note, from the same dev/measure-census-hedge-refusals.ts run and stamp as the 4062 notes corpus above; re-key both together",
+      reason: "the staged record_search log entries carrying a note, from the same dev/measure-census-hedge-refusals.ts run and stamp as the 4322 notes corpus above; re-key both together. Re-derived 2026-10-03 (was 1867)",
       scope: ["docs/specs/research-log-editor-spec.md"],
     },
   ],

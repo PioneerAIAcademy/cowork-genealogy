@@ -50,6 +50,17 @@ from pathlib import Path
 from typing import Any
 
 
+#: The four token fields rolled up per subagent. Deliberately the same set
+#: `pricing._PER_MTOK` prices and `orchestrator._USAGE_FIELDS` accumulates, so a
+#: subagent total and a main-thread total are summable without a field map.
+USAGE_FIELDS = (
+    "input_tokens",
+    "output_tokens",
+    "cache_read_input_tokens",
+    "cache_creation_input_tokens",
+)
+
+
 def _bare_tool_name(name: str) -> str:
     """`mcp__genealogy__project_context` -> `project_context`; leave others as-is."""
     return name.split("__")[-1] if name.startswith("mcp__") else name
@@ -94,7 +105,13 @@ def summarize_turn(message: dict[str, Any]) -> dict[str, Any]:
     content = message.get("content")
     blocks = content if isinstance(content, list) else []
     labels = [_block_label(b) for b in blocks if isinstance(b, dict)]
-    usage = message.get("usage") or {}
+    # `isinstance`, not `or {}`: that idiom catches a `None` or an empty dict but
+    # passes a TRUTHY non-dict straight through, and `"n/a"` then raises on
+    # `.get`. `parse_jsonl` admits arbitrary JSON objects, and `collect_subagents`
+    # calls this from a loop whose exception would cost a completed, paid run its
+    # entire log — the one thing this module's docstring promises cannot happen.
+    raw_usage = message.get("usage")
+    usage = raw_usage if isinstance(raw_usage, dict) else {}
     turn: dict[str, Any] = {
         "stop_reason": message.get("stop_reason"),
         "output_tokens": usage.get("output_tokens"),
@@ -223,6 +240,93 @@ def pair_tool_calls(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return ordered
 
 
+def _as_int(value: Any) -> int:
+    """A token count, or 0. Never raises, never returns a bool or a float.
+
+    `True` is an `int` in Python and would add 1 to a token total, so bools are
+    excluded explicitly rather than by `isinstance(value, int)` alone.
+    """
+    if isinstance(value, bool):
+        return 0
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    return 0
+
+
+def subagent_usage(records: list[dict[str, Any]]) -> dict[str, int]:
+    """This subagent's four token totals, counted once per *message*.
+
+    **Why this is not a sum over records.** Claude Code writes one record per
+    content *block*, and every one of those records repeats the whole
+    *message's* usage. A message that emitted thinking, then text, then a tool
+    call appears three times, each time claiming the full cost. Summing records
+    naively overstates `cache_read_input_tokens` by ~2x and
+    `cache_creation_input_tokens` by ~2.4x (measured 2026-10-02 over 52 local
+    subagent transcripts, 1,660 distinct message ids: input 2.081x, output
+    1.018x, cache_read 2.000x, cache_creation 2.390x). Cache reads are the
+    largest input line in the bill, so a naive sum is not a rough number — it is
+    a wrong one that looks authoritative.
+
+    Output tokens barely move (1.018x) for a reason worth keeping: a message's
+    first record carries a *start-of-message snapshot* of `output_tokens`
+    (median 3 across those transcripts), not the final count, so summing adds
+    almost nothing. Do not simplify this to "the first record is always 1" —
+    only 0.8% of them are, and the max observed is 6,121.
+
+    So: key on `message["id"]`, last write wins. "Last" is safe because the
+    final record of a message carries the final totals; measured over those same
+    1,660 ids, the last record's value equals the maximum on all four fields for
+    every id, with no exceptions. Last-write-wins applies only **among records
+    carrying a dict `usage`**, so a trailing record without one cannot zero a
+    real figure.
+
+    Shape rules, all of which occur in real transcripts:
+
+    - **Non-assistant records are skipped.** They carry no usage today (2,008
+      user records across those 52 transcripts, none with a usage dict), but
+      without the filter each would consume an `__anon_` slot and the key would
+      stop meaning what this docstring says.
+    - **A `usage` that is not a dict** — a string, a list, a number — is
+      skipped, not read. This is the only shape that can raise, and `parse_jsonl`
+      admits arbitrary JSON objects by design. `collect_subagents` does not guard
+      this call, so an exception here would cost a completed, paid run its entire
+      log.
+    - **A record with no `message["id"]`** is counted once under a synthetic
+      `__anon_<n>` key rather than dropped: its tokens were really spent.
+    - **A missing or non-numeric field** counts 0.
+
+    Always returns all four fields. An empty dict of zeros means "captured, and
+    it used nothing visible"; the run-level `subagent_capture_status` is what
+    distinguishes that from "capture failed". A subagent summary written before
+    this field existed has **no** `usage` key at all, which the merge treats as
+    unknown — never back-derive it from `turns[]`, which is the ~2x error above.
+    """
+    per_message: dict[str, dict[str, int]] = {}
+    anon = 0
+    for rec in records:
+        if not isinstance(rec, dict):
+            continue
+        message = rec.get("message")
+        if not isinstance(message, dict) or message.get("role") != "assistant":
+            continue
+        usage = message.get("usage")
+        if not isinstance(usage, dict):
+            continue
+        key = message.get("id")
+        if not isinstance(key, str) or not key:
+            key = f"__anon_{anon}"
+            anon += 1
+        per_message[key] = {field: _as_int(usage.get(field)) for field in USAGE_FIELDS}
+
+    totals = dict.fromkeys(USAGE_FIELDS, 0)
+    for counted in per_message.values():
+        for field in USAGE_FIELDS:
+            totals[field] += counted[field]
+    return totals
+
+
 def summarize_transcript(
     records: list[dict[str, Any]],
     *,
@@ -249,6 +353,10 @@ def summarize_transcript(
         # The narrow, high-signal flag: at least one turn burned the budget on
         # thinking alone. This is what makes the freeze grep-able in the runlog.
         "runaway_thinking": any(is_runaway_turn(t) for t in turns),
+        # Counted once per message id, NOT summed over `turns[]` — see
+        # `subagent_usage`. `turns[]` stays one entry per record because the
+        # runaway readers and `max_output_tokens` need per-record shape.
+        "usage": subagent_usage(records),
         "turns": turns,
     }
     if transcript_name:
@@ -385,22 +493,32 @@ def collect_subagents(workspace: Path) -> tuple[list[dict[str, Any]], str]:
         pairs = find_subagent_transcripts(workspace, cache_dir=cache)
     except Exception:  # noqa: BLE001 — a capture miss must never fail the run
         return [], "error"
+    # The summarize loop is inside the guard too: it used to sit outside, where a
+    # single malformed record (a `message.usage` that is a string rather than an
+    # object) raised an AttributeError straight out of this function and cost a
+    # completed, paid run its entire log — the one thing this module's docstring
+    # promises can never happen. `subagent_usage` now type-checks that field, so
+    # this is belt and braces; keep both, because the next field added here will
+    # not have been thought about as carefully.
     summaries: list[dict[str, Any]] = []
-    for jsonl, meta_path in pairs:
-        records = parse_jsonl(jsonl, errors="replace")
-        if not records:
-            continue
-        meta: dict[str, Any] | None = None
-        if meta_path is not None:
-            try:
-                meta = json.loads(meta_path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError, UnicodeDecodeError):
-                meta = None
-            if not isinstance(meta, dict):
-                # A non-empty non-dict (`[1, 2]`) survives the falsy check the
-                # summarizer does and then raises on `.get`.
-                meta = None
-        summaries.append(
-            summarize_transcript(records, meta=meta, transcript_name=jsonl.name)
-        )
+    try:
+        for jsonl, meta_path in pairs:
+            records = parse_jsonl(jsonl, errors="replace")
+            if not records:
+                continue
+            meta: dict[str, Any] | None = None
+            if meta_path is not None:
+                try:
+                    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+                    meta = None
+                if not isinstance(meta, dict):
+                    # A non-empty non-dict (`[1, 2]`) survives the falsy check the
+                    # summarizer does and then raises on `.get`.
+                    meta = None
+            summaries.append(
+                summarize_transcript(records, meta=meta, transcript_name=jsonl.name)
+            )
+    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
+        return summaries, "error"
     return summaries, ("captured" if summaries else "matched_no_transcripts")

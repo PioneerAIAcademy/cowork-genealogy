@@ -7,7 +7,9 @@ The stateless tier between the browser and the queue for the search-agent protot
 also stand in for the worker with seeded rows (`make proto-drive`).
 
 It serves the paths `apps/web` already calls, so the SPA is reused verbatim with
-`VITE_SESSION_TRANSPORT=sse` (`make web-proto`).
+`VITE_SESSION_TRANSPORT=sse` (`make web-proto`). With `WEB_DIST_DIR` set, the tier also
+serves that SSE build itself at `/` (`web/spa.py`, below); the image and the Beanstalk
+bundle both set it.
 
 | Route | What |
 |---|---|
@@ -17,6 +19,7 @@ It serves the paths `apps/web` already calls, so the SPA is reused verbatim with
 | `GET/POST /api/sessions`, `GET/PATCH/DELETE /api/sessions/{id}`, `POST …/resume`, `GET …/state` | Session CRUD in the SPA's `SessionSummary` shape; `/state` reads `documents` (`research.json`, `tree.gedcomx.json`). |
 | `GET /auth/config`, `GET /auth/me`, `POST /auth/dev-login`, `POST /auth/logout`, `GET /auth/familysearch/login`, `GET /callback` | Patron sign-in (U2, below). Every `/api/sessions` route needs the session cookie and answers 404 for a session on a project the caller does not own. |
 | `GET …/sidecar/{log_id}` → 404; `GET …/image`, `GET …/logs`, `POST …/files` → 501 | Not in the prototype; each says why. |
+| `GET /`, each top-level file of the dist, `GET /assets/…` | The SPA, when `WEB_DIST_DIR` is set (below). `/docs`, `/redoc` and `/openapi.json` are off. |
 | `POST …/interrupt` → 202 | Stop (PR #2870 item 1c). The worker owns the turn and no control channel reaches it, so this raises a flag on a control-plane row that the worker's `PreToolUse` hook reads before every tool call. |
 
 ## Sign-in and ownership (U2)
@@ -38,20 +41,26 @@ U2 in `docs/plan/familysearch-handoff.md`.
   publishes the tier on `127.0.0.1:1837`, the dev key's only registered redirect, and
   turns dev-login off. Put your FamilySearch email in `ALLOWED_EMAILS` first. Open the
   SPA at `http://127.0.0.1:5173` rather than `localhost`, because cookies are per host.
-  `make e2e-login` needs the same port, so mint the operator token before bringing the
-  override up.
+  `make e2e-login` and `make proto-grant` need the same port, so stop the override while
+  either runs.
 - **Environment**: `PUBLIC_URL`, `WEB_ORIGIN`, `SESSION_SECRET`, `FS_TOKEN_ENC_KEY`,
   `ALLOWED_EMAILS`, `FAMILYSEARCH_WEB_ENABLED`, `FAMILYSEARCH_CONFIG` (see the
-  `web/auth.py` docstring). On an https `PUBLIC_URL` the tier refuses to start with a
+  `web/auth.py` docstring). `ALLOWED_EMAILS` is comma- or space-separated; write it
+  space-separated on Beanstalk, whose environment values cannot carry a comma. On an https `PUBLIC_URL` the tier refuses to start with a
   default or empty secret.
 
-**Interim constraint, until U3 merges.** The grant stored at sign-in is written and never
-read. Every turn's FamilySearch calls still run on the operator's token
-(`worker/options.py`). Project data is scoped to its owner, but FamilySearch identity is
-not. The engine only reads from FamilySearch, but those reads run as the operator, so
-allowlist only staff entitled to the operator's FamilySearch access. There is no code
-guard for this, by decision (2026-09-29). Signing in with the operator's own FamilySearch account does not revoke the
-operator token (measured 2026-09-29), so sign-in is safe while a turn runs.
+**Grants (U3).** Every turn's FamilySearch calls run on its project owner's grant, which
+the worker reads from `familysearch_tokens` at the start of each attempt while it holds that
+patron's attempt lock (`proto/grants.py`). This tier is the grant's only refresher:
+`grant_refresh_loop` runs every `FS_GRANT_REFRESH_INTERVAL_S` (30) and refreshes the grant of
+each patron with an open turn once its session is `FS_GRANT_REFRESH_AGE_S` (3600) old, only
+when it can take the patron's attempt lock exclusively, so never under a live attempt (a
+refresh revokes the previous access token at once). The worker's start gate holds an
+attempt off a session older than `FS_GRANT_MAX_START_AGE_S` (26400) until that refresh
+lands. A refusal from FamilySearch ends the patron's next turn `signin_required`, and a new
+sign-in clears it. Sign-in is safe while a turn runs: the callback takes only the grant's
+write lock, and a second sign-in does not revoke the first token (measured 2026-09-29). On
+compose, `make proto-grant` stores the dev-login patron's grant once per stack.
 
 ## The row → wire contract (what the worker writes, what the SPA reads)
 
@@ -84,21 +93,25 @@ and drops the one the 202's `seq` names; everything else relays.
 - **Self-contained** (`make proto-drive`) — **the mode the 17/17 acceptance ran in.**
   `drive.py --embedded-pg` starts a pip-installed PostgreSQL 16 (`pgserver`, in the
   `proto` dependency group — never installed by `uv sync` or CI; wheels exist for macOS
-  arm64/x86_64, Linux x86_64 and Windows x86_64, **not** Linux aarch64), applies the
-  schema and runs the tier in-process with **no queue**.
+  arm64/x86_64, Linux x86_64 and Windows x86_64, **not** Linux aarch64), migrates it
+  (`migrate.migrate`, the runner step 6 uses) and runs the tier in-process on the
+  driver's own **`NullQueue`** (nothing is enqueued).
 - **Compose** (`make proto-up`): the `web` service on `127.0.0.1:8085`, `QUEUE_URL` pointed
-  at the queue the shim reads, `PG_DSN` at the compose postgres. Startup applies
-  `../sql/*.sql` (all idempotent), so a volume that predates `003_web.sql` gets its
-  columns without a `make proto-down`. **Verified on a Docker machine 2026-09-14** (in
-  review; no CI job runs any proto compose target, so this stays a hand check): the image
-  builds and the service comes up healthy, `make proto-smoke` passes 14/14 through the new
-  `proto-up-core`, dropping the three columns from a live volume and restarting `proto-web`
-  puts them back, and a turn round-trips POST → `SendMessage` → shim → worker →
-  `turn_done` → SSE frame. `make proto-drive BASE=http://localhost:8085` drives that stack
+  at the queue the shim reads, `PG_DSN` at the compose postgres. Startup applies no
+  schema (U9): the one-shot `migrate` service runs `../migrate.py` first and the tier
+  waits for it, so a volume that predates a file gets it without a `make proto-down`;
+  the tier only compares the ledger with `../sql/` and reports `schema` on
+  `/api/health`. **Verified on a Docker machine 2026-09-14** (in review; no CI job runs
+  any proto compose target, so this stays a hand check): the image builds and the service
+  comes up healthy, `make proto-smoke` passes 14/14 through the new `proto-up-core`,
+  dropping the three columns from a live volume and restarting `proto-web` put them back
+  (the start-time apply that did it is gone since U9), and a turn round-trips POST →
+  `SendMessage` → shim → worker → `turn_done` → SSE frame. `make proto-drive BASE=http://localhost:8085` drives that stack
   in worker mode — it proves the tier, not the resume, since the D3 stub's turn ends inside
   stream A (the driver says so in its own table).
 - **From the venv** (`make proto-web`): the same tier via `python proto/web/app.py`
-  against the compose postgres (`:5434`) and elasticmq (`:9324`). Compose and the venv
+  against the compose postgres (`:5434`), migrated first (`make proto-migrate`; until then
+  `schema` reads `schema: unmigrated`), and elasticmq (`:9324`). Compose and the venv
   both sign SendMessage (U7) with dummies elasticmq ignores: compose through the default
   chain's `AWS_*` env, the venv recipe with a static `GENEALOGY_SQS_*` pair, so neither
   reads `~/.aws` or probes IMDS.
@@ -112,13 +125,32 @@ and drops the one the 202's `seq` names; everything else relays.
   SSE frames. Still to come: a real worker's turn driving the SPA (D17), which is also the
   run where the driver's strong "B resumed at A's last seq + 1" check returns.
 
-`QUEUE_URL` unset → `NullQueue`: the turn is recorded (a `turns` row, a `user_msg` event)
-and never enqueued, logged loudly at start. Under `NullQueue` nothing completes a turn, so
-a posted turn stays `turn_active` until a script closes it (the driver's seeder does, through
-`worker.complete()` itself).
+- **The SPA from the tier** (`WEB_DIST_DIR`). `web/spa.py` serves the SSE build of
+  `apps/web` at `/`, and the compose image carries it (a `node:24-slim` stage runs
+  `VITE_SESSION_TRANSPORT=sse vite build`). It mounts no catch-all: `/` serves
+  `index.html`, each top-level file of the dist gets its own route and each top-level
+  directory a static mount, so every API status (405, the trailing-slash 307, a POST
+  404) is what it was without the SPA. `index.html` and the root files are `no-cache`;
+  the content-hashed `/assets/*` are `immutable`. A relative value resolves against the
+  tier root (`web/`'s parent). Unset or empty serves no SPA, which is what the tests and
+  `make proto-web` run. Set to a missing directory, one without `index.html`, or a dist
+  with a top-level `api`, `auth` or `callback`, the tier refuses to start. `make web-proto`
+  still serves the SPA from Vite's dev server.
+- **Bundle** (`make eb-bundles` → `releases/eb-web.zip`). The same `/app` layout as the
+  image (`web/`, `enqueue.py`, `grants.py`, `migrate.py`, `sql/`, `config/familysearch.json`,
+  `web-dist/`) plus vendored wheels, the RDS CA bundle at `certs/`, and `../eb-web/`'s Procfile and
+  `.ebextensions` at the root. Beanstalk runs
+  `python -m uvicorn web.app:app --host 127.0.0.1 --port 8000` with `WEB_DIST_DIR=web-dist`;
+  why each setting: `../eb-web/README.md`.
 
-Env: `PG_DSN`, `QUEUE_URL` (a full queue URL, the shim's shape), `POLL_S` (1),
-`SSE_PING_S` (15). With `QUEUE_URL` set (and only then), `GENEALOGY_SQS_ACCESS_KEY` +
+`QUEUE_URL` unset or empty refuses to start (a `RuntimeError` from the lifespan, U11): a
+tier with no queue records a turn and nothing ever runs it. The driver's embedded tier is
+the one queue-less mode, and it passes `drive.py`'s own `NullQueue` to `create_app`: the
+turn is recorded (a `turns` row, a `user_msg` event) and never enqueued, and stays
+`turn_active` until the seeder closes it through `worker.complete()` itself.
+
+Env: `PG_DSN`, `QUEUE_URL` (a full queue URL, the shim's shape; required), `POLL_S` (1),
+`SSE_PING_S` (15), `WEB_DIST_DIR` (unset: no SPA), `GENEALOGY_SQS_ACCESS_KEY` +
 `GENEALOGY_SQS_SECRET_KEY` (both or neither; neither signs with the default AWS chain, the
 instance profile on AWS; one alone refuses to start) and `GENEALOGY_SQS_REGION` (else the
 `QUEUE_URL` host's region). The start line names the mode, never a key:
@@ -159,4 +191,8 @@ frames without ids, `turn_active` after the catch-up rows and false at the end.
 `tests/test_proto_web.py` (`make proto-test`, and `make server-test` runs it): pure
 helpers, the routes over `httpx.ASGITransport` with a fake store and queue, the stream
 generator pulled directly (httpx runs an ASGI app to completion, so an endless stream
-cannot be tested through the route), and the compose/schema shape.
+cannot be tested through the route), and the compose/schema shape. The grant custody
+(U3): `tests/test_proto_grants.py` (the pure decisions and the numbers the locks rest on,
+offline) and `tests/test_proto_grants_pg.py` (the lock interleavings against real Postgres;
+it skips in `make proto-test` without `PROTO_TEST_PG_DSN`, and `make proto-grants-test` and CI
+run it for real).

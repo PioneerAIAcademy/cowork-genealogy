@@ -75,14 +75,30 @@ smoke names all three.
 - **Compose** (`make proto-up`, or `docker-compose -f apps/server/proto/docker-compose.yml up -d --build tools`
   on a machine without the compose plugin): service `tools`, container `proto-tools`,
   `read_only: true` with `/tmp` the only tmpfs, the `GENEALOGY_*` store block,
-  `depends_on` `postgres` and `minio` `service_healthy`. The image is built from the
-  **repo root** (`Dockerfile` here): the root `.dockerignore` already drops
+  `depends_on` `postgres` and `minio` `service_healthy` and `migrate`
+  `service_completed_successfully`, so `up -d --build tools` also runs the one-shot
+  `migrate` service (U9) first; the tools tier itself runs no DDL. The image is built
+  from the **repo root** (`Dockerfile` here): the root `.dockerignore` already drops
   `node_modules`/`.claude`/`eval`/`releases`, and `src/` is compiled inside the image — the
   host's `build/` is never copied. `proto-up-core` and `proto-smoke` do not include it.
 - **Host process**: `cd packages/engine/mcp-server && GENEALOGY_PG_DSN=… GENEALOGY_S3_ENDPOINT=… GENEALOGY_S3_BUCKET=… [GENEALOGY_S3_ACCESS_KEY=… GENEALOGY_S3_SECRET_KEY=…] node build/http.js [--host 127.0.0.1] [--port 8787]`
   (the keys are an optional pair: omit both to sign through the AWS SDK default chain)
   — `make engine-smoke-http` does this against the compose store (`proto-up-store`,
   localhost:5434 / :9000).
+- **Bundle** (`make eb-bundles` → `releases/eb-tools.zip`, U12). The Beanstalk source
+  bundle for the Node.js AL2023 platform (24, or 22: npm never runs there because
+  `node_modules/` ships). At its root: `build/` from `npm run build` (so
+  `build/build-info.json` stamps the real sha), `config/`, a production `node_modules/`
+  with the optional `pg` and AWS SDK packages kept, `package.json` (for
+  `"type": "module"`), the compiled smoke under `smoke/`
+  (`packages/engine/mcp-server/tsconfig.smoke.json`), the RDS CA bundle at
+  `certs/rds-global-bundle.pem`, and `../eb-tools/`'s `Procfile`, `.ebextensions/` and
+  `.platform/` copied verbatim. The Procfile runs `node build/http.js --host 127.0.0.1
+  --port 8080`, equal to the template's `PORT`; the template sets
+  `PGSSLMODE=verify-full` and `NODE_EXTRA_CA_CERTS` at the CA's absolute path, so TLS is
+  configured without a query string in `GENEALOGY_PG_DSN`. The store variables and the
+  four config overrides above stay API-level settings. The image (`Dockerfile`) and the
+  bundle both run Node 24.
 - **The transport smoke** — every advertised tool but the three exclusions, in
   `no-bearer` mode by default (`--bearer <token>`, or an unexpired
   `~/.familysearch-mcp/tokens.json`, switches to `bearer`):
@@ -90,7 +106,7 @@ smoke names all three.
   ```
   make engine-smoke-http                                  # builds, starts build/http.js on the compose store on a free port, kills it after
   BASE=http://127.0.0.1:8787 make engine-smoke-http       # against the compose service
-  cd packages/engine/mcp-server && npx tsx dev/smoke-http.ts --base URL [--project-id ID] [--project-path /project] [--host-config] [--bearer TOKEN]
+  node smoke/dev/smoke-http.js --base URL [--project-id ID] [--project-path /project] [--host-config] [--bearer TOKEN]   # from an unzipped eb-tools.zip: Node >= 22, no checkout, npm or registry
   ```
 
   Every request carries `X-Genealogy-Project-Id: <--project-id>` — a fresh `smoke-<uuid>`
@@ -113,7 +129,8 @@ mcp_servers={"genealogy": {"type": "http", "url": "http://tools:8787/mcp",
                                        "X-Genealogy-Project-Id": "<project id>"}}}
 ```
 
-Both headers are per turn (`proto/worker/options.py`, `tool_server_headers`): the bearer
+The URL is the worker's `TOOL_SERVER_URL`, required with no default (U11); compose sets
+the value above. Both headers are per turn (`proto/worker/options.py`, `tool_server_headers`): the bearer
 from the patron's row, the project id from the turn. The project header is always sent; the
 bearer only when there is a token. Nothing on this service caches either. This is the
 worker's only tool server; the worker itself carries no Node, no engine and no S3
@@ -123,9 +140,11 @@ credentials.
 
 `apps/server/tests/test_proto_config.py` (`make proto-test`): the service is read-only with
 `/tmp` the only tmpfs (no `/projects`), publishes on loopback only, depends on `postgres`
-and `minio` `service_healthy`, reads the Postgres the worker reads (`GENEALOGY_PG_DSN` is
-the worker's `PG_DSN`) under the worker's anchor (`GENEALOGY_ANCHOR_PATH` is its
-`WORKER_CWD`), and `proto-up` waits on it while `proto-up-core` does not.
+and `minio` `service_healthy` and on `migrate` completing
+(`test_migrate_is_the_only_schema_applier`), reads the Postgres the worker reads
+(`GENEALOGY_PG_DSN` is the worker's `PG_DSN`) under the worker's anchor
+(`GENEALOGY_ANCHOR_PATH` is its `WORKER_CWD`), and `proto-up` waits on it while
+`proto-up-core` does not.
 `apps/server/tests/test_proto_worker.py` pins the consumer's two headers.
 `packages/engine/mcp-server/tests/http/` covers the server itself (405 guard, `/healthz` 200/503 from the readiness report and the spawned server's 503 with both stores unreachable,
 no-`LOCAL`, per-request bearers, per-request stores that cannot read each other, the
