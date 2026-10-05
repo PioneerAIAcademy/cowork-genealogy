@@ -18,6 +18,12 @@ description: >-
 model: claude-sonnet-4-6
 tools:
   - Read
+  - mcp__genealogy__project_context
+  - mcp__remote-devices__Genealogy_Research__project_context
+  - mcp__Genealogy_Research__project_context
+  - mcp__genealogy__research_query
+  - mcp__remote-devices__Genealogy_Research__research_query
+  - mcp__Genealogy_Research__research_query
   - mcp__genealogy__place_search
   - mcp__remote-devices__Genealogy_Research__place_search
   - mcp__Genealogy_Research__place_search
@@ -291,6 +297,13 @@ precise, than the events they come from.
   list. Exclude any year the page marks destroyed, lost, or not surviving (for
   example the US 1890 federal census, the Irish 1821–1891 censuses, and the
   English 1931 census); never put a non-surviving year in `expected_events`.
+  **A caveat does not rescue it.** `census 1890 (destroyed)`,
+  `census_1890 — not surviving`, and `1890 census fragments` are all the 1890
+  census sitting in `expected_events`, and all fail. `expected_events` is what
+  the researcher can go and look for; a year whose returns are gone is not that.
+  When the destruction is worth recording, it goes in the gap's `notes` —
+  "the 1890 federal census would have covered this span but did not survive" —
+  which is where a reader needs it and where nothing is claimed as searchable.
 - Marriage: If children exist, a marriage event is expected before the first
   child's birth.
 - Death/burial: If the person is known to have died, both death and burial events
@@ -399,6 +412,11 @@ Pass **only the timeline object** — never read and re-serialize the whole
 `impossibilities` field — impossibility detection has moved to check-warnings. On
 `{ ok: false, errors }` it writes nothing — surface those errors and fix the
 input rather than retrying blindly.
+
+**Before the call, re-read every `gaps[].expected_events` entry you are about to
+send and delete any that names a non-surviving year** (step 4) — including one
+that names it with a caveat attached. This is the last point at which that is
+still cheap to fix.
 
 **New timeline** — `op: "append"`. The tool assigns the `t_` id and stamps
 `generated`, so omit both from the entry:
