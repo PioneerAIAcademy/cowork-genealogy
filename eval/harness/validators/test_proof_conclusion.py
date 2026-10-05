@@ -751,21 +751,30 @@ def _summary_for_user(text: str) -> str | None:
     return "\n".join(lines[marks[-1] + 1 :]).strip()
 
 
-def test_completion_summary_offers_second_opinion(after_state, agent_returns, text_response, test):
-    """When the call completes the project, the user-facing summary offers a
-    second opinion — gps-mentor is off the default path, so this sentence is the
-    user's only route to it — and never says "proof", "GPS" or "exhaustive".
-    Reads the agent's own return, not the main thread's relay of it, falling
-    back to `text_response` when the agent returned nothing. Tag-gated on
-    `summary-for-user-completion`."""
-    if "summary-for-user-completion" not in test.get("tags", []):
-        pytest.skip("not a completion-summary test")
-    research = after_state.get("research_json") or {}
-    status = (research.get("project") or {}).get("status")
-    assert status == "completed", (
-        f"concluding the project's only question should set project.status to "
-        f"'completed'; got {status!r}"
-    )
+def _project_status(state) -> str | None:
+    return ((state.get("research_json") or {}).get("project") or {}).get("status")
+
+
+def test_completion_summary_offers_second_opinion(
+    before_state, after_state, agent_returns, text_response, test
+):
+    """Every call that moves `project.status` to `completed` ends its
+    user-facing summary with a second-opinion offer — gps-mentor is off the
+    default path, so this sentence is the user's only route to it — and never
+    says "proof", "GPS" or "exhaustive". Read from the documents, not from a
+    tag, so it binds on every test whose run completes the project. A test
+    tagged `summary-for-user-completion` must also complete it. Reads the
+    agent's own return, not the main thread's relay of it, falling back to
+    `text_response` when the agent returned nothing."""
+    tagged = "summary-for-user-completion" in test.get("tags", [])
+    before, after = _project_status(before_state), _project_status(after_state)
+    if tagged:
+        assert after == "completed", (
+            f"concluding the project's only question should set project.status to "
+            f"'completed'; got {after!r}"
+        )
+    elif not (after == "completed" and before != "completed"):
+        pytest.skip("this call did not complete the project")
     reply = agent_return_text(agent_returns, "proof-conclusion") or (text_response or "")
     summary = _summary_for_user(reply)
     assert summary, "no summary_for_user: the reply has no line that is exactly `---`"

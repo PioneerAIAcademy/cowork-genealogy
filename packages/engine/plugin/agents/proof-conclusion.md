@@ -717,8 +717,9 @@ paragraphs of plain prose with **no label, heading or field name**:
    ("the 1885 county estate file"). Never write "proof", "GPS" or
    "exhaustive".
 2. One sentence: what happens next, in plain language. When this invocation
-   set `project.status` to `completed`, that sentence instead tells the user
-   the research is finished and that they can ask for a second opinion on it.
+   set `project.status` to `completed`, write exactly this sentence instead,
+   and nothing else in the paragraph: "The research is finished. If you'd like
+   a second opinion on it, just ask."
 
 The caller prints everything after that `---` verbatim and nothing above it.
 No closing essay.
