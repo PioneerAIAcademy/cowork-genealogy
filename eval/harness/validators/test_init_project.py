@@ -43,6 +43,51 @@ def test_both_project_files_created(before_state, after_state, test):
         assert False, "init-project did not create tree.gedcomx.json"
 
 
+
+# --- Refuse-if-exists, graded on the invariant (tag-gated) --------------
+
+
+def test_refuse_if_exists_leaves_the_project_untouched(before_state, after_state, test):
+    """Tag-gated on `grade-on-invariant`: init-project must not re-initialize
+    over a project that already exists. Nothing it could write here is
+    recoverable — a second `project_create` over a live research.json would
+    overwrite the researcher's work — so the invariant is that BOTH files come
+    out byte-identical.
+
+    This carries the whole verdict (`negative.grade_on_invariant`), replacing a
+    routing assertion that stopped being stable. `project-status` became an
+    agent on 2026-10-03 (#3092); since then the main thread sometimes spawns it
+    and sometimes answers the status question itself off a `Glob` of
+    research.json. Both are non-routings, and neither re-initialized — the
+    thing actually worth guarding held in both, while the routing assertion
+    failed in both.
+
+    A `grade_on_invariant` test with no validator that runs passes VACUOUSLY,
+    which `runnability.py` blocks at load time by matching the test's tags
+    against this file's gate tags — so this function's tag and the test's must
+    stay in step.
+    """
+    if "grade-on-invariant" not in test.get("tags", []):
+        pytest.skip("not a grade-on-invariant test")
+
+    before_research = before_state.get("research_json")
+    after_research = after_state.get("research_json")
+    before_tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
+    after_tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
+
+    assert before_research is not None, (
+        "the refuse-if-exists premise needs a research.json on the BEFORE side; "
+        "this scenario shipped without one, so the test would pass vacuously"
+    )
+    assert after_research == before_research, (
+        "research.json changed — init-project re-initialized over an existing "
+        "project instead of declining"
+    )
+    assert after_tree == before_tree, (
+        "tree.gedcomx.json changed — init-project re-initialized over an "
+        "existing project instead of declining"
+    )
+
 # --- Opening-turn defaults, checked exactly (tag-gated) -----------------
 
 # Issue #1510: the objective's default is defined as a fixed, verbatim
