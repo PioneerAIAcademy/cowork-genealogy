@@ -7,6 +7,7 @@ path is covered by an e2e suite run, not these unit tests.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -19,6 +20,8 @@ from e2e.orchestrator import (
     PROVIDED_DOCS_DIRNAME,
     FixtureCaps,
     _accumulate_usage,
+    merge_whole_run_usage,
+    wall_ts,
     _fallback_usage,
     _raw_result_chars,
     _thread_usage,
@@ -1350,3 +1353,115 @@ def test_apply_tool_result_records_the_untruncated_length():
 
     assert entry["result_chars"] == 9_000
     assert entry["result_chars"] > len(entry["response_summary"])
+
+
+# ---------------------------------------------------------------------------
+# Whole-run usage merge (#2582).
+#
+# `usage["usage"]` counts the main thread only; subagent turns run in their own
+# SDK sub-session and never enter it. Every cost figure over this corpus was
+# therefore main-plus-a-subtraction, and one published claim was nothing but
+# that gap restated (`docs/plan/cost-latency-10x.md` A3 item 4).
+# ---------------------------------------------------------------------------
+
+_MAIN = {
+    "input_tokens": 100,
+    "output_tokens": 200,
+    "cache_read_input_tokens": 300,
+    "cache_creation_input_tokens": 400,
+}
+
+
+def _sub(**fields):
+    base = dict.fromkeys(_MAIN, 0)
+    base.update(fields)
+    return {"agent_type": "record-extractor", "usage": base}
+
+
+def test_merge_adds_every_subagent_to_the_main_thread():
+    """The issue's first acceptance criterion; ImportErrors before the fix."""
+    merged, cost = merge_whole_run_usage(
+        {"usage_source": "result_message", "usage": dict(_MAIN)},
+        [_sub(output_tokens=50, cache_read_input_tokens=7), _sub(output_tokens=5)],
+    )
+    assert merged == {
+        "input_tokens": 100,
+        "output_tokens": 255,
+        "cache_read_input_tokens": 307,
+        "cache_creation_input_tokens": 400,
+    }
+    assert cost is not None and cost > 0
+
+
+def test_merge_equals_main_exactly_when_no_subagent_was_captured():
+    """Subagents present but zero captured must not error and must not guess."""
+    inner = dict(_MAIN)
+    merged, _cost = merge_whole_run_usage(
+        {"usage_source": "result_message", "usage": inner}, []
+    )
+    assert merged == inner
+    # A fresh object: mutating the merged figure must never reach back into the
+    # block that `corpus_report`'s spend tally and the 0.90x calibration read.
+    assert merged is not inner
+
+
+def test_merge_is_null_on_the_streamed_fallback_path():
+    """That path's `output_tokens` is a start-of-message snapshot, and since
+    commit 76bc0655b its accumulator already holds subagent messages that
+    surfaced on the main stream — so adding subagent totals would double-count
+    them on top of a field that is already wrong."""
+    merged, cost = merge_whole_run_usage(
+        {"usage_source": "streamed_fallback", "usage": dict(_MAIN)},
+        [_sub(output_tokens=50)],
+    )
+    assert merged is None and cost is None
+
+
+def test_merge_is_null_when_a_subagent_predates_the_usage_field():
+    """Every run committed before this change is that shape. Falling back to
+    summing `subagents[].turns[]` is the ~2x error: one entry per content block,
+    each repeating its message's totals. Unknown is unknown."""
+    merged, cost = merge_whole_run_usage(
+        {"usage_source": "result_message", "usage": dict(_MAIN)},
+        [_sub(output_tokens=50), {"agent_type": "image-reader", "turns": [{}, {}]}],
+    )
+    assert merged is None and cost is None
+
+
+@pytest.mark.parametrize(
+    "usage", [None, {}, {"usage": "n/a"}, {"usage_source": "result_message"}]
+)
+def test_merge_is_null_without_a_main_thread_token_block(usage):
+    assert merge_whole_run_usage(usage, []) == (None, None)
+
+
+def test_merge_drops_unsummable_siblings_of_the_token_fields():
+    """`server_tool_use`, `iterations` and friends are not token counts."""
+    inner = dict(_MAIN)
+    inner["server_tool_use"] = {"web_search_requests": 0}
+    inner["iterations"] = [{"input_tokens": 1}]
+    merged, _cost = merge_whole_run_usage(
+        {"usage_source": "result_message", "usage": inner}, []
+    )
+    assert set(merged) == set(_MAIN)
+
+
+def test_merge_counts_a_missing_subagent_field_as_zero_not_as_unknown():
+    """A missing FIELD is 0; a missing `usage` OBJECT is unknown."""
+    merged, _cost = merge_whole_run_usage(
+        {"usage_source": "result_message", "usage": dict(_MAIN)},
+        [{"agent_type": "image-reader", "usage": {"output_tokens": 9}}],
+    )
+    assert merged["output_tokens"] == 209
+    assert merged["input_tokens"] == 100
+
+
+def test_wall_ts_matches_the_transcript_format_byte_for_byte():
+    """Real subagent records carry `"2026-09-18T06:52:42.431Z"`. A `+00:00`, or a
+    fractional part dropped when microseconds are 0, would make the join a
+    conversion rather than a match."""
+    stamp = wall_ts(1_758_178_362.431, 100.0, 100.0)
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z", stamp), stamp
+    assert wall_ts(1_758_178_362.0, 0.0, 0.0).endswith(".000Z")
+    # The monotonic offset is applied: 2.5s elapsed is 2.5s of wall clock.
+    assert wall_ts(1_758_178_362.0, 10.0, 12.5).endswith(".500Z")

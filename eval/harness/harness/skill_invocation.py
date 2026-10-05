@@ -1603,6 +1603,7 @@ _NO_CONFLICT_SUBSTRINGS = (
     "no unresolved conflict",
     "no discrepanc",  # "no discrepancy" / "no discrepancies"
     "without conflict",
+    "no resolution",  # "no resolution was required" — nothing was resolved
 )
 # Whole-field values (stripped, lowercased) that mean the same thing. Matched
 # exactly rather than as substrings so a bare "none"/"n/a" can't false-negative
@@ -1618,28 +1619,40 @@ _NO_CONFLICT_EXACT = {"", "none", "n/a", "na", "not applicable"}
 # language: an opener that negates a resolution is skipped, and a field with no
 # resolution marker at all is skipped. The `\b` on the marker is what stops
 # `resolved` matching inside `unresolved`.
+#
+# ASCII semantics and an explicit whitespace set, on purpose: the research_append
+# port (`unpersistedConflictResolutionInvariants`) runs in JavaScript, whose `\b`
+# and `\d` are ASCII-only, and the two must agree on every input — Python's
+# Unicode-aware defaults made "Naïve … resolved" fire here and not there.
+_ASCII_WHITESPACE = " \t\n\r\f\v"
 _RESOLUTION_MARKER_RE = re.compile(
     r"\b(resolv(?:ed|es|ing)|resolution|reconcil(?:ed|es|ing)|outweigh(?:s|ed|ing)?"
     r"|adjudicated|preferred assertion)\b",
-    re.I,
+    re.I | re.ASCII,
 )
 _NON_RESOLUTION_OPENER_RE = re.compile(
-    r"^\s*(unresolved|not met|partial|partially met|n/?a\b|not applicable|none)", re.I
+    r"^[ \t\n\r\f\v]*(unresolved|not met|partial|partially met|n/?a\b|not applicable|none)",
+    re.I | re.ASCII,
 )
 # `c_NNN` ids named in a stop-criterion's prose, e.g. "resolved (c_001, preferred
 # a_019 …)". Used to tell a conclusion that names the conflict it relied on from
 # one that names none — a resolved conflicts[] entry the conclusion *names* backs
 # it even when it is not cited on resolved_conflict_ids (senior review, PR #1438).
-_CONFLICT_ID_RE = re.compile(r"\bc_\d+\b", re.I)
+_CONFLICT_ID_RE = re.compile(r"\bc_\d+\b", re.I | re.ASCII)
+
+
+# A conflict at either status is settled for every gate that reads status, and
+# the validator accepts either on a proof_summary's resolved_conflict_ids.
+_SETTLED_CONFLICT_STATUSES = frozenset({"resolved", "moot"})
 
 
 def find_unpersisted_conflict_resolutions(
     research: dict[str, Any] | None,
 ) -> list[dict[str, Any]]:
-    """Shadow-mode post-hoc detector (issue #1317): a WRITTEN CONCLUSION relies on
-    a conflict it says was resolved, but no structured ``conflicts[]`` entry backs
-    it — the resolution lives only in prose, so the viewer's Conflicts section is
-    blank. This is the "concluded-in-prose-but-not-persisted-structurally" class,
+    """Post-hoc detector (issue #1317): a WRITTEN CONCLUSION relies on a conflict
+    it says was resolved, but ``conflicts[]`` holds no entry that could be the
+    record of it — the resolution lives only in prose, so the viewer's Conflicts
+    section is blank. This is the "concluded-in-prose-but-not-persisted-structurally" class,
     the conflict-side sibling of ``find_citation_nulling_in_conclusions``.
 
     THE EVIDENCED FAILURE (issue #1317, john-applegarth-family): a research.json
@@ -1660,24 +1673,38 @@ def find_unpersisted_conflict_resolutions(
     parsed reliably). A ``conflict_resolution`` that says there was no conflict
     (``_NO_CONFLICT_SUBSTRINGS`` / ``_NO_CONFLICT_EXACT``) is skipped.
 
-    The reliance is BACKED, and no violation fires, when a ``status == "resolved"``
-    ``conflicts[]`` entry is linked to the conclusion any of four ways: cited on the
-    proof_summary's ``resolved_conflict_ids``; naming this question in its own
-    ``blocks_question_ids``; NAMED (its ``c_`` id) in the stop-criterion prose; or —
-    when the prose names no ``c_`` id at all — simply existing. Each means the
-    conflict was written to ``conflicts[]``, so the viewer's Conflicts section is
-    populated and this is not the #1317 miss. A fire therefore means **no resolved
-    conflict backs this conclusion**: either ``conflicts[]`` holds no resolved entry
-    at all, or the stop-criterion names a ``c_`` id that is not resolved. The fourth
-    way is what keeps that true — ``blocks_question_ids`` is schema-required but
-    legitimately empty, so without it a resolved conflict could exist, populate the
-    viewer, and still be reported as unpersisted.
+    The question is PERSISTENCE, not resolution. The reliance is BACKED, and no
+    violation fires, when: a SETTLED (``resolved`` or ``moot``) conflict is cited on
+    the proof_summary's ``resolved_conflict_ids`` or names this question in its own
+    ``blocks_question_ids``; or a ``c_`` id the stop-criterion prose NAMES exists in
+    ``conflicts[]`` at any status; or the prose names no ``c_`` id and ``conflicts[]``
+    holds any entry at all — an open one, or one about another question, included,
+    which is wider than the pre-graduation rule (a resolved entry). Each means
+    something was written to ``conflicts[]``,
+    so the viewer's Conflicts section is populated and this is not the #1317 miss. A
+    fire therefore means **nothing in ``conflicts[]`` can be the record of the
+    resolution the conclusion relies on**: ``conflicts[]`` is empty, or the prose
+    names only ``c_`` ids it does not hold. Ids compare case-insensitively.
 
-    SHADOW MODE ONLY: returns records shaped to share ``guardrail_shadow_violations``
-    (int ``index``, string ``tool``, ``kind == CONFLICT_UNPERSISTED_KIND``). Never
-    fails a run. Because the reliance signal is a text heuristic on one structured
-    field, this ships shadow-first to measure the fire rate before any promotion to
-    a hard gate — exactly how the citation-nulling detector (#1358) is staged.
+    A RECORDED BUT OPEN conflict does not fire, deliberately. ``proof-conclusion``
+    is told to write a ``not_proved`` summary while a conflict is recorded and
+    still open, and a stop-criterion such as "resolution not possible (c_001)"
+    matches the positive marker, so reading "resolved" instead of "persisted" would
+    refuse that prescribed write at the writer tool. An open conflict under a tier
+    it forbids is ``conflictedSourceInvariants``' and the completion gate's job.
+
+    TWO PLANES. ``research_append`` refuses the ``proof_summaries`` write this
+    detects (``unpersistedConflictResolutionInvariants`` in
+    ``packages/engine/mcp-server/src/tools/research-append.ts``), scoped to the
+    summary being written; this function stays as the document-plane check, which
+    also sees documents the writer tool never did (a hand edit, a hosted import, a
+    replayed fixture). Both replay one labelled case file,
+    ``packages/engine/mcp-server/tests/guard-cases/unpersisted-conflict-resolution.json``,
+    and must agree on every case in it (``eval/harness/tests/unit/test_guard_case_files.py``).
+    Returns records shaped to share ``guardrail_shadow_violations`` (int ``index``,
+    string ``tool``, ``kind == CONFLICT_UNPERSISTED_KIND``, plus the
+    ``proof_summary_id`` the case replay joins on); in the e2e harness it reports
+    and never fails a run.
     """
     research = research or {}
     proof_summaries = (
@@ -1690,11 +1717,24 @@ def find_unpersisted_conflict_resolutions(
 
     questions = research.get("questions") if isinstance(research.get("questions"), list) else []
     conflicts = research.get("conflicts") if isinstance(research.get("conflicts"), list) else []
-    questions_by_id = {q.get("id"): q for q in questions if isinstance(q, dict) and q.get("id")}
-    resolved_conflict_ids = {
-        c.get("id")
+    # First question with an id wins, as the port's `Array.find` does.
+    questions_by_id: dict[Any, dict[str, Any]] = {}
+    for q in questions:
+        if isinstance(q, dict) and q.get("id"):
+            questions_by_id.setdefault(q.get("id"), q)
+
+    def _cid(value: Any) -> str | None:
+        return value.lower() if isinstance(value, str) and value else None
+
+    recorded_conflict_ids = {
+        _cid(c.get("id")) for c in conflicts if isinstance(c, dict) and _cid(c.get("id"))
+    }
+    settled_conflict_ids = {
+        _cid(c.get("id"))
         for c in conflicts
-        if isinstance(c, dict) and c.get("status") == "resolved" and c.get("id")
+        if isinstance(c, dict)
+        and c.get("status") in _SETTLED_CONFLICT_STATUSES
+        and _cid(c.get("id"))
     }
     # A resolved conflict can back a question WITHOUT being cited on the
     # proof_summary's resolved_conflict_ids — via its own schema field
@@ -1703,11 +1743,13 @@ def find_unpersisted_conflict_resolutions(
     # conflict[] entry — the viewer's Conflicts section populated, exactly what
     # #1317 asks for — and then emitted a factually false "no resolved entry backs
     # it". So a question blocked by a resolved conflict counts as backed too.
-    resolved_blocked_qids = {
+    settled_blocked_qids = {
         q
         for c in conflicts
-        if isinstance(c, dict) and c.get("status") == "resolved"
-        for q in (c.get("blocks_question_ids") or [])
+        if isinstance(c, dict)
+        and c.get("status") in _SETTLED_CONFLICT_STATUSES
+        and isinstance(c.get("blocks_question_ids"), list)
+        for q in c["blocks_question_ids"]
     }
 
     def _resolution_claimed(question: dict[str, Any]) -> str | None:
@@ -1721,7 +1763,7 @@ def find_unpersisted_conflict_resolutions(
         cr = crit.get("conflict_resolution")
         if not isinstance(cr, str):
             return None
-        crl = cr.strip().lower()
+        crl = cr.strip(_ASCII_WHITESPACE).lower()
         if crl in _NO_CONFLICT_EXACT:
             return None
         if any(s in crl for s in _NO_CONFLICT_SUBSTRINGS):
@@ -1750,24 +1792,21 @@ def find_unpersisted_conflict_resolutions(
         claimed = _resolution_claimed(question)
         if claimed is None:
             continue  # no conflict claimed (or explicitly "no conflicts") — nothing owed
-        # A resolved conflicts[] entry backs this conclusion when it is cited on the
-        # proof_summary, blocks this question, is NAMED in the conclusion's prose (a
-        # resolved c_ id in the stop-criterion text), or — when the prose names no
-        # conflict id at all — simply exists. Any of these means the conflict was
-        # written to conflicts[] and the viewer's Conflicts section is populated, so
-        # the #1317 miss this detector catches (nothing persisted) does not apply.
+        # Backed (see the docstring): a settled conflict cited on the proof_summary
+        # or blocking this question; a named c_ id that conflicts[] holds at any
+        # status; or, when the prose names no id, any conflicts[] entry at all.
         # blocks_question_ids alone is too weak: it is schema-required but
         # legitimately empty, so most resolved conflicts do not carry it (senior
         # review, PR #1438 — mary-dwyer-father / jimmie-jewel-neal wrote a resolved
         # c_001 with blocks_question_ids: [] and were wrongly reported as unpersisted).
-        named_ids = set(_CONFLICT_ID_RE.findall(claimed))
+        named_ids = {m.lower() for m in _CONFLICT_ID_RE.findall(claimed)}
         if (
-            any(rc in resolved_conflict_ids for rc in rcids)
-            or qid in resolved_blocked_qids
-            or bool(named_ids & resolved_conflict_ids)
-            or (not named_ids and bool(resolved_conflict_ids))
+            any(_cid(rc) in settled_conflict_ids for rc in rcids)
+            or qid in settled_blocked_qids
+            or bool(named_ids & recorded_conflict_ids)
+            or (not named_ids and bool(recorded_conflict_ids))
         ):
-            continue  # a resolved conflicts[] entry backs it — persisted, not the #1317 miss
+            continue  # conflicts[] holds its record — persisted, not the #1317 miss
         key = (ps_id, qid)
         if key in seen:
             continue
@@ -1778,13 +1817,13 @@ def find_unpersisted_conflict_resolutions(
                 "tool": "research.json",
                 "required_skill": "conflict-resolution",
                 "question_id": qid,
+                "proof_summary_id": ps_id,
                 "kind": CONFLICT_UNPERSISTED_KIND,
                 "detail": (
                     f"proof_summary {ps_id} (question {qid}) relies on a resolved "
                     "conflict per its exhaustive_declaration.stop_criteria."
-                    "conflict_resolution, but no resolved conflicts[] entry is linked "
-                    "to it (not cited on resolved_conflict_ids, not named in the "
-                    "stop-criterion, and no resolved conflict blocks this question)"
+                    "conflict_resolution, but conflicts[] holds no record of it "
+                    "(empty, or not holding the c_ id the stop-criterion names)"
                 ),
             }
         )
