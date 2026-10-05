@@ -138,10 +138,10 @@ Read `references/query-syntax.md` for operator details and wildcards.
   which returns millions of irrelevant results. Do NOT use `+` in the
   `name` field — `m.queryRequireDefault` requires at least one term to match.
 - **Scope by place and date with caution.** `yearFrom`/`yearTo` and record
-  type filters are allowed but collection metadata dates can be off. For
-  `recordPlace*`, only pass the filterParam form returned by `includeFacets`
-  — plain-text values (e.g. `recordPlace1: "Pennsylvania"`) return zero
-  results in production. **If a filtered
+  type filters are allowed but collection metadata dates can be off. **Do not
+  use `recordPlace*` parameters** — both plain-text values and filterParam forms
+  return zero results in production; only `collectionId` (from `includeFacets`
+  facets) is safe for place-scoping. **If a filtered
   search returns zero results, re-run it without that filter before
   logging anything as not found** — a nil under a filter may reflect a
   metadata mismatch rather than a true absence. **This applies to every
