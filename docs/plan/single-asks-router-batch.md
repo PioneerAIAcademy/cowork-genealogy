@@ -24,6 +24,9 @@ a generic figure for any `make eval-skill`. Measured instead from all twelve com
 A counter-figure of "$1-2" circulated in review; it came from `v6`/`v7`, which ran **5**
 tests each. For a 10-13 test suite the honest expectation is **~$3-4 and ~15-30 minutes**.
 
+**The saving from batching is ~$6.50** (two avoided runs at ~$3.24), not $10 — $10 is the
+gross cost of three runs. Plus the break-test runs below, ~$1-2 more via `--only`.
+
 ## Why batch, on the corrected number
 
 Three items edit `packages/engine/plugin/skills/research/SKILL.md`, inside the `research`
@@ -46,9 +49,10 @@ The other three #2813 items are deliberately NOT here:
   `DELIVERY_GUIDANCE` are on `main`.
 - **Item 5** (save what the turn finds) is **dropped: already built elsewhere.**
   `search-records` already owns this: it **holds `research_log_append`** in its own
-  frontmatter (`:21`), calls it once per search (`:586`), and defines what counts as a nil
-  result and what the sidecar must contain (`:604`). (Review cited `:575/:626/:643` for
-  this; those line numbers are wrong — verified against the file.) And "a found record goes
+  frontmatter (`:21`), calls it once per search (`:586`), defines the required log-entry
+  fields (`:600`), **logs the nil result with `outcome: "negative"` (`:651`)** and carries
+  the browse-only pivot rule (`:667`). (Review first cited `:575/:626/:643`; PR #3099
+  rewrote this file and moved them. Both sets above were re-verified on this branch.) And "a found record goes
   in as a source through
   `record-extraction`" is already routing-table row `research/SKILL.md:142`. The router also
   **holds no writer tool** (`research/SKILL.md:15-17` grants only `validate_research_schema`
@@ -79,8 +83,22 @@ The other three #2813 items are deliberately NOT here:
    in that chain invokes `research`.
 
 **Consequence for acceptance:** on the web path a bounded FIRST message never reaches this
-file. Every acceptance bullet is therefore scoped to a turn that provably enters the router
-— a `/research` entry, or a second message on an existing project.
+file. Only a **`/research` entry** (and the e2e orchestrator) provably enters the router — a
+second message on an existing project does NOT, because the router's contracts "hold only if
+the model happens to choose it", and issue #2927 measured it skipped about half the time.
+Acceptance is scoped to `/research` entry alone.
+
+**Cowork is out of scope, and that is consistent.** The router's own `description` says not
+to use it when the user targets one step only, so in Cowork a bounded ask routes straight to
+`search-records` and never reads these sections. That matches the delivered exit being
+prototype-only. Pricing a description change is a separate decision, not taken here.
+
+**The fifth stop condition has to be worded carefully.** PR #3147 deliberately kept
+`research_delivered` out of skill bodies, so the new stop condition can only say "end your
+turn" — it must NOT name the tool. On the hosted path a toolless voluntary stop is vetoed
+and nudged with `CONTINUE_REASON` ("invoke the next GPS sub-skill now"), which contradicts
+the rule being added mid-run. The pairing works only because the per-turn `DELIVERY_GUIDANCE`
+names the tool; the prototype-worker acceptance bullet is what catches it if the two drift.
 
 ## The one design question to settle BEFORE writing prose
 
@@ -94,15 +112,21 @@ Apply that question to each item honestly:
   reviewer; that was ducking, because ADR-0011 is a decision *procedure*, and the draft ran
   it, reached an answer, then handed the answer over. The decision:
   - **Item 4 ships as prose here**, labelled guidance per ADR-0011's layer map.
-  - **A refusal on the search tools is REJECTED**, under ADR-0011 limit 1: a semantic gate
+  - **A refusal on the search tools is REJECTED**, under ADR-0011 limit 1 (`:311`): a semantic gate
     must prefer a false allow to a false deny, and refusing a search because a same-type
     source is already attached false-denies a second record, a re-search after a correction,
     and a verification pass. `record_search` also writes nothing, so there is no state
     transition for a writer-tool precondition to own.
-  - **What IS a genuine step-1 fit** is ADR-0011's bridge: the duplicate lands as a
+  - **What IS a genuine step-1 fit** is ADR-0011's bridge (`:129`): the duplicate lands as a
     `research_append` source op, and "this source is already attached to this person" is
-    decidable from `research.json` alone. That is a **separate card**, with limit 2's corpus
-    replay as its own acceptance. Not folded in here.
+    decidable from `research.json` alone. **But that lands in open issue #2475's territory**
+    (the parent card for `research_append` preconditions), so per CLAUDE.md's ladder this is
+    a **step 3 — comment on the issue that already covers it**, not a fresh card. The
+    implementing PR must actually post it; "names a separate card" discharges nothing.
+  - **Scope limit, stated:** that precondition can only see *project-local* duplicates.
+    Item 4's evidence case is a source attached **on FamilySearch**, readable only through
+    `person_read`/`source_attachments` over the network, which no writer-tool precondition
+    can reach. The card complements item 4; it does not enforce it.
 - **Item 1** (is this request bounded?) is a routing judgment about the user's *message*,
   not about project state. No tool can read it. Prose is correct here.
 - **Item 6** (candidates not verdicts) is judgment about how to report. Prose is correct.
@@ -181,9 +205,17 @@ Also: `research_delivered` is **not advertised in the unit harness at all**
 
 **Keep in `eval/tests/unit/research/` — two tests:**
 1. a bounded ask routes to its deliverable, not into the plan/question chain;
-2. an open ask ("find the parents of `<PID>`") still routes as a job. **The one most at
-   risk** — `DELIVERY_GUIDANCE` rides every turn, so only the model's judgment stops a job
-   ending itself `delivered`.
+2. an open ask ("find the parents of `<PID>`") still routes as a job.
+
+   **Careful about why this matters.** The real risk — `DELIVERY_GUIDANCE` riding every
+   turn so only the model's judgment stops a job ending itself `delivered` — can only
+   manifest on the **prototype worker**; the guidance is appended in
+   `proto/worker/options.py` and the unit harness never sees it. What this unit test
+   actually guards is narrower and still worth having: that the new prose does not
+   over-classify an open ask as bounded.
+
+**Item 4 gets no in-batch test.** Both its candidates moved to e2e, so its prose rides the
+paid run graded only by the base dimensions. Stated rather than left to be discovered.
 
 Both are routing assertions needing a `routes-to:` tag and `test_routes_to_expected_skill`,
 **not a judge line**: `route-no-questions.json`'s own `judge_context` says "ROUTING IS NOT
@@ -197,9 +229,12 @@ new tests make wrong.
 
 ## Verification
 
-- `make harness-test` (from `eval/harness`, never the repo root — from the root
-  `test_calibrate_judge_does_not_import_agent_sdk` fails with "No module named 'e2e'",
-  an invocation artifact that reads exactly like a regression).
+- `make harness-test` **from the REPO ROOT**. The target exists only in the root
+  `Makefile` (:778) and does the `cd eval/harness` itself; there is no Makefile under
+  `eval/harness/`. The rule that needs the cd is **bare pytest**: run from the root it
+  fails `test_calibrate_judge_does_not_import_agent_sdk` with "No module named 'e2e'"
+  (its subprocess inherits the cwd), an artifact that reads exactly like a regression.
+  An earlier draft stated this backwards.
 - `npx vitest run tests/packaging` in `packages/engine/mcp-server` — `prompt-budget` will
   red until `prompt-sizes.json` is regenerated, because SKILL.md's byte count changes.
   **Regenerate with `UPDATE_PROMPT_SIZES=1`, never by hand.**
@@ -213,21 +248,38 @@ new tests make wrong.
 
 ## Done when
 
-Each bullet names the environment that checks it, because none holds everywhere:
+Each bullet names the environment that checks it, because none holds everywhere.
 
+**Provable today:**
 - **(unit)** a bounded ask entering via `/research` routes to its deliverable and does not
   enter the question/plan chain.
 - **(unit)** "find the parents of `<PID>`" still routes as a job.
-- **(e2e)** a lookup whose answer is already attached is answered from that source.
-- **(e2e)** an identity ask returns candidates with match strength and what was searched,
-  and does not declare the question answered on a name match.
-- **(prototype worker only)** a bounded turn ends `delivered`. Not observable in Cowork, in
-  e2e, or in the unit harness.
+- **(prototype worker)** a bounded turn ends `delivered`. Not observable in Cowork, in e2e,
+  or in the unit harness.
+- **(feedback-bundle replay)** `make feedback-case ZIP=feedback-2026-09-22T15-47-39…zip`
+  then `/compare-state`: each of its four single asks leaves a source or a scoped negative
+  in `research.json`. **This is #2813's own Done-when bullet** and it uses an artifact that
+  already exists — unlike the two below.
+
+**Needs a fixture that does not exist yet, and is therefore NOT acceptance for this batch:**
+- a lookup whose answer is already attached answered from that source;
+- an identity ask returning candidates with match strength.
+
+No fixture in `eval/tests/e2e/` covers either — the corpus genre is the opposite (stripped
+trees). Writing them is genealogist work (`author-e2e-fixture`). **Naming them here without
+budgeting them would be CLAUDE.md step 4 in disguise**, so they are called out as a
+prerequisite card rather than parked as a limitation: item 4 and item 6 ship with their
+prose graded only by the paid run and the bundle replay, and their dedicated e2e coverage
+is filed separately.
+
+**What item 5's drop loses, recorded so it is not silently gone:** item 5 also carried a
+reply contract — "the reply names what was saved and where", and "an interrupted extraction
+is either finished or named in the reply as unsaved". That exists nowhere in
+`search-records` and is not covered by this batch.
 
 Dropped from the first draft: *"a bounded first message creates a project with no questions
-and no plans"* — that is **item 3's** acceptance, not this batch's, because the web path's
-first message never reaches this file. And *"one run bought, not four"*, which is a property
-of the PR's shape, true by construction, and therefore not a criterion.
+and no plans"* — that is **item 3's** acceptance, because the web path's first message never
+reaches this file.
 
 ## What changed from the first draft
 
