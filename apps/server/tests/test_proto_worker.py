@@ -860,13 +860,13 @@ def test_registration_problems_compares_against_the_constants_not_the_loaded_set
 
     assert list(inspect.signature(worker.registration_problems).parameters) == ["info"]
     # The mutation the first build let through: a plugin copy short one skill folder
-    # registers 11, and a count of that same copy would have expected 11.
+    # registers 10, and a count of that same copy would have expected 10.
     copy = tmp_path / "plugin"
     shutil.copytree(PLUGIN_DIR / "skills", copy / "skills")
     shutil.rmtree(next(d for d in sorted((copy / "skills").iterdir()) if (d / "SKILL.md").is_file()))
-    assert worker.count_skills(str(copy)) == 11
+    assert worker.count_skills(str(copy)) == 10
     assert worker.registration_problems(_info(AGENTS, worker.count_skills(str(copy)))) == [
-        "11 genealogy-research:* commands registered, expected 12"
+        "10 genealogy-research:* commands registered, expected 11"
     ]
 
 
