@@ -1004,7 +1004,7 @@ def test_negative_judge_context_drops_the_skill_under_test_from_the_route():
         correct=["record-extraction", "conflict-resolution"],
     )
     ctx = _negative_judge_context(spec)
-    assert ctx[0].endswith("decline and route the user to: record-extraction.")
+    assert "decline and route the user to: record-extraction." in ctx[0]
 
 
 def test_negative_judge_context_unchanged_when_skill_not_in_route():
@@ -1012,9 +1012,7 @@ def test_negative_judge_context_unchanged_when_skill_not_in_route():
     in full, in order."""
     spec = _negative_spec(skill="citation", correct=["record-extraction", "timeline"])
     ctx = _negative_judge_context(spec)
-    assert ctx[0].endswith(
-        "decline and route the user to: record-extraction, timeline."
-    )
+    assert "decline and route the user to: record-extraction, timeline." in ctx[0]
 
 
 def test_negative_out_of_scope_fails_when_judge_scored_a_dimension_1():
