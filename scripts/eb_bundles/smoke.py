@@ -8,7 +8,8 @@ Web and worker run in an amazonlinux:2023 helper image (python3.12, unzip, util-
 shadow-utils, user webapp) with --network none and a tmpfs /tmp: unzip to
 /var/app/staging, build the venv and pip install requirements.txt from the bundle's own
 wheels (Beanstalk's build step), run .platform/hooks/predeploy/* as root, move staging to
-/var/app/current, then run the Procfile's web: command with the template's environment, as
+/var/app/current, run its migrate.py --status with no DSN (U9: it must import and count the
+bundle's sql/), then run the Procfile's web: command with the template's environment, as
 webapp (web) or as root (worker: the hook's drop-in, so it can launch each turn's CLI as its
 slot user, U3). Tools runs in node:24-slim with --network none from a root-owned
 /var/app/current, as user node. Each tier is then probed over loopback.
@@ -20,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import posixpath
 import re
 import shlex
 import stat
@@ -42,6 +44,8 @@ ENV_NAMESPACE = "aws:elasticbeanstalk:application:environment"
 VENV = "/var/app/venv/staging"
 STAGING = "/var/app/staging"
 NODE_IMAGE = "node:24-slim"
+# U9's schema applier in each Python bundle; its SQL_DIR is the sql/ beside it.
+MIGRATE = {"web": "migrate.py", "worker": "proto/migrate.py"}
 AL2023_DOCKERFILE = b"""FROM amazonlinux:2023
 RUN dnf install -y -q python3.12 python3.12-pip unzip util-linux shadow-utils findutils procps-ng \\
     && dnf clean all \\
@@ -174,6 +178,23 @@ def ca_check(c: Checks, container: str, env: dict[str, str]) -> None:
             f"{var}={path} exists in the deployed tree")
 
 
+def migrate_check(c: Checks, container: str, zip_path: Path, extra: dict[str, str]) -> None:
+    """`migrate.py --status` from the deployed tree, with the bundle's venv and no DSN: exit 2
+    naming MIGRATE_PG_DSN and the bundle's own sql/*.sql count under the deployed sql/ --
+    the module imports with the vendored psycopg and finds SQL_DIR in this tier's layout."""
+    script = MIGRATE[c.tier]
+    sql_dir = posixpath.join(posixpath.dirname(script), "sql")
+    with zipfile.ZipFile(zip_path) as zf:
+        files = sum(1 for n in zf.namelist() if re.fullmatch(rf"{re.escape(sql_dir)}/[^/]+\.sql", n))
+    assigns = " ".join(f"{k}={shlex.quote(v)}" for k, v in sorted(extra.items()))
+    proc = sh(container, f"cd {layout.APP_DIR} && env -u MIGRATE_PG_DSN {assigns} {VENV}/bin/python {script} --status",
+              user="root" if c.tier == "worker" else "webapp", timeout=120)
+    err = proc.stderr.decode("utf-8", "replace").strip()
+    want = f"no MIGRATE_PG_DSN; {files} files under {layout.APP_DIR}/{sql_dir}"
+    c.check(files > 0 and proc.returncode == 2 and want in err,
+            f"{script} --status with no DSN exits 2: {want}", (proc.returncode, err[-500:]))
+
+
 def python_tier(tier: str, zip_path: Path, platform: str, keep: bool, extra: dict[str, str]) -> int:
     c = Checks(tier)
     env, command = template(zip_path)
@@ -197,6 +218,7 @@ def python_tier(tier: str, zip_path: Path, platform: str, keep: bool, extra: dic
         if not c.check(proc.returncode == 0, "offline deploy (unzip, venv, pip install, predeploy hooks)",
                        (proc.stdout + proc.stderr).decode("utf-8", "replace").strip()[-2000:]):
             return c.failed
+        migrate_check(c, name, zip_path, extra)
         put(name, "/run-app.sh", launcher(env, command, f"{VENV}/bin:/usr/local/bin:/usr/bin:/bin", "/home/webapp"))
         # U3: on Beanstalk the hook's drop-in runs the worker's web.service as root, so it
         # can launch each turn's CLI as its slot user; the web tier stays webapp.

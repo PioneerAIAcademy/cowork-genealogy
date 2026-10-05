@@ -93,21 +93,25 @@ and drops the one the 202's `seq` names; everything else relays.
 - **Self-contained** (`make proto-drive`) — **the mode the 17/17 acceptance ran in.**
   `drive.py --embedded-pg` starts a pip-installed PostgreSQL 16 (`pgserver`, in the
   `proto` dependency group — never installed by `uv sync` or CI; wheels exist for macOS
-  arm64/x86_64, Linux x86_64 and Windows x86_64, **not** Linux aarch64), applies the
-  schema and runs the tier in-process with **no queue**.
+  arm64/x86_64, Linux x86_64 and Windows x86_64, **not** Linux aarch64), migrates it
+  (`migrate.migrate`, the runner step 6 uses) and runs the tier in-process with **no
+  queue**.
 - **Compose** (`make proto-up`): the `web` service on `127.0.0.1:8085`, `QUEUE_URL` pointed
-  at the queue the shim reads, `PG_DSN` at the compose postgres. Startup applies
-  `../sql/*.sql` (all idempotent), so a volume that predates `003_web.sql` gets its
-  columns without a `make proto-down`. **Verified on a Docker machine 2026-09-14** (in
-  review; no CI job runs any proto compose target, so this stays a hand check): the image
-  builds and the service comes up healthy, `make proto-smoke` passes 14/14 through the new
-  `proto-up-core`, dropping the three columns from a live volume and restarting `proto-web`
-  puts them back, and a turn round-trips POST → `SendMessage` → shim → worker →
-  `turn_done` → SSE frame. `make proto-drive BASE=http://localhost:8085` drives that stack
+  at the queue the shim reads, `PG_DSN` at the compose postgres. Startup applies no
+  schema (U9): the one-shot `migrate` service runs `../migrate.py` first and the tier
+  waits for it, so a volume that predates a file gets it without a `make proto-down`;
+  the tier only compares the ledger with `../sql/` and reports `schema` on
+  `/api/health`. **Verified on a Docker machine 2026-09-14** (in review; no CI job runs
+  any proto compose target, so this stays a hand check): the image builds and the service
+  comes up healthy, `make proto-smoke` passes 14/14 through the new `proto-up-core`,
+  dropping the three columns from a live volume and restarting `proto-web` put them back
+  (the start-time apply that did it is gone since U9), and a turn round-trips POST →
+  `SendMessage` → shim → worker → `turn_done` → SSE frame. `make proto-drive BASE=http://localhost:8085` drives that stack
   in worker mode — it proves the tier, not the resume, since the D3 stub's turn ends inside
   stream A (the driver says so in its own table).
 - **From the venv** (`make proto-web`): the same tier via `python proto/web/app.py`
-  against the compose postgres (`:5434`) and elasticmq (`:9324`). Compose and the venv
+  against the compose postgres (`:5434`), migrated first (`make proto-migrate`; until then
+  `schema` reads `schema: unmigrated`), and elasticmq (`:9324`). Compose and the venv
   both sign SendMessage (U7) with dummies elasticmq ignores: compose through the default
   chain's `AWS_*` env, the venv recipe with a static `GENEALOGY_SQS_*` pair, so neither
   reads `~/.aws` or probes IMDS.
@@ -133,8 +137,8 @@ and drops the one the 202's `seq` names; everything else relays.
   with a top-level `api`, `auth` or `callback`, the tier refuses to start. `make web-proto`
   still serves the SPA from Vite's dev server.
 - **Bundle** (`make eb-bundles` → `releases/eb-web.zip`). The same `/app` layout as the
-  image (`web/`, `enqueue.py`, `sql/`, `config/familysearch.json`, `web-dist/`) plus
-  vendored wheels, the RDS CA bundle at `certs/`, and `../eb-web/`'s Procfile and
+  image (`web/`, `enqueue.py`, `grants.py`, `migrate.py`, `sql/`, `config/familysearch.json`,
+  `web-dist/`) plus vendored wheels, the RDS CA bundle at `certs/`, and `../eb-web/`'s Procfile and
   `.ebextensions` at the root. Beanstalk runs
   `python -m uvicorn web.app:app --host 127.0.0.1 --port 8000` with `WEB_DIST_DIR=web-dist`;
   why each setting: `../eb-web/README.md`.
