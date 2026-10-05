@@ -36,7 +36,9 @@ run's: on paerai-teupooihi-spouse's 2026-09-21 log it equals the `main` rows of
 over main-thread calls only and a sub-thread gap is counted but not priced; its
 `iterations` array is a single entry in every run that carries it (138 of 163,
 measured 2026-09-11), not a per-call ledger; `subagents[].turns[]` carries
-`output_tokens` only. The orchestrator reads per-message usage off the stream
+`output_tokens` only; the full four-field total per subagent is
+`subagents[].usage` since 2026-10-02 (#2582), counted once per message id.
+The orchestrator reads per-message usage off the stream
 (`_accumulate_usage`) but, on runs written before `usage.message_usage`
 shipped, persisted only the sums. Runs carrying `message_usage` have real
 per-message window figures a future reader could use directly — **this module
@@ -47,7 +49,9 @@ calls that timeline yields.
 
 ## Model calls from the timeline
 
-`usage.timeline` is `[[elapsed_s, kind, tool_names?], ...]`, one row per SDK
+`usage.timeline` is `[[elapsed_s, kind, tool_names, wall_ts, message_id], ...]`
+since 2026-10-02 (#2582); rows written before that are 3- or 2-wide, so index
+rather than unpack, one row per SDK
 message. The SDK re-emits an assistant message once per content block, so one
 model call is a BURST of consecutive `assistant` rows on one thread, ended by
 that thread's `tool_result`. Subagent messages are interleaved into the same

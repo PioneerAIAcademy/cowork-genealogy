@@ -8,9 +8,8 @@
 # which turns dev-login OFF -- the scripts (seed/demo/turn/drive) sign in through
 # dev-login, so run them against the default stack, not this one.
 #
-# Port conflict: `make e2e-login` (and so env.sh's .fs-token minting) runs the desktop
-# login's loopback server on the same 127.0.0.1:1837. Mint the operator token first, or
-# stop this override while it runs.
+# Port conflict: `make e2e-login` and `make proto-grant` bind the same 127.0.0.1:1837;
+# stop this override while either runs.
 #
 # Cookies are per host, not per port: the session cookie set by the callback on
 # 127.0.0.1 reaches the SPA only if the SPA is also on 127.0.0.1, so open the web client

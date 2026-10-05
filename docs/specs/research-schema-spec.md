@@ -811,6 +811,8 @@ Array of conflict objects. Conflicts are both fact-level (three different birthp
 
 `resolution_kind` exists because a resolved conflict's winner is not always one of the competing assertions. A genealogist's reading of the eleven committed conflicts resolved without a winner found two where the tree's pre-existing value stood, five where the winning value was built from several records, three where a competitor did win but was not named, and one that was not resolved at all. Before the field, the schema could record only the first shape, so a resolve naming no winner said nothing about which of the others it was. Both new fields are optional in the schema and nullable, so a conflict resolved before they existed stays valid; the writer tool requires the kind on each new resolve.
 
+**Uncertain-preference invariant.** `preferred_assertion_id` may not name an assertion whose `value` contains `[?]` (the structural doubt marker) unless a corroborating assertion exists. Corroboration requires all four conditions: (1) the corroborator's own `value` carries no `[?]`; (2) it is on a different record, compared as `record_id ?? source_id`; (3) it has the same `fact_type` and its `value` equals the preferred value once `[?]` is removed, whitespace is collapsed and case is folded; (4) it is tied to the same person — it is in the conflict's `competing_assertion_ids`, or a live `person_evidence` row (no `superseded_by`) links it to a `person_id` that a live row also links the preferred assertion to. A null `preferred_assertion_id` (deferral) is always legal.
+
 ### 5.9 `hypotheses`
 
 Array of hypothesis objects.

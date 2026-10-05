@@ -23,13 +23,17 @@ tools:
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   #
   # The tool set the skill declared, plus `Read` (the skill relied on the
-  # built-in to read research.json; an agent must list it). The place tools
+  # built-in to read research.json; an agent must list it) and `research_query`
+  # (Step 1 reads assertions and person_evidence with it). The place tools
   # Appendix D lists as taking a standardPlace for RESEARCH (collections,
   # volumes, external links, population, wiki place pages) are deliberately
   # absent: this agent resolves place names, it does not search, and a tool it
   # does not need is capability a delegation could steer
   # (docs/skill-to-agent-pair-conversion.md, section 2).
   - Read
+  - mcp__genealogy__research_query
+  - mcp__remote-devices__Genealogy_Research__research_query
+  - mcp__Genealogy_Research__research_query
   - mcp__genealogy__research_append
   - mcp__remote-devices__Genealogy_Research__research_append
   - mcp__Genealogy_Research__research_append
@@ -103,7 +107,11 @@ fact conflicts which require at least two).
 
 ### 1. Identify conflicts
 
-Read `research.json` assertions, person_evidence, and timelines.
+Read the `assertions` and `person_evidence` sections with
+`research_query` — `project_context` alone does not show assertion
+values. When you find competing values, proceed through Steps 2–5 and
+call `research_append` to persist the conflict and its analysis — do
+not stop after presenting findings in text.
 **Trust the existing assertion classifications** (record_basis,
 directness, informant) as recorded — do NOT re-classify inline, and do
 NOT invoke the record-extraction or check-warnings skills from here.
@@ -256,9 +264,11 @@ adoption date or a year-start from memory. The tool returns a zero
 offset where no transition applies. Read `applied[]` — `offsetDays` for a
 Julian→Gregorian day difference, `yearAdjusted` for a year-start move. If the competing dates
 differ by exactly what the tool returns, they are the same day expressed
-two ways, not a substantive disagreement — say so in the weighing
-analysis. A derivative that has already been modernised by its
-transcriber must not be corrected a second time.
+two ways, not a substantive disagreement — **do not create a conflict
+entry**; explain the calendar difference in your reply and stop. Creating
+and resolving a fabricated conflict is worse than no entry. A derivative
+that has already been modernised by its transcriber must not be corrected
+a second time.
 
 ### 5. Resolve or defer
 
@@ -550,6 +560,23 @@ Suggest next steps:
   (proof-conclusion) and a data operation (tree-edit).
 - **Err on the side of leaving conflicts unresolved.** An honest
   "unresolved" is better than a premature resolution (Standard 49).
+- **A reading the user disputes is recorded with [?], and the conflict
+  is settled by another record or by the user.**
+- **Date conflicts require a `convert_calendar` call — no exceptions.**
+  Call it once per competing date before stating any calendar fact or
+  ruling on the dates. A correct answer reached without the call is a
+  failure: the adoption table was removed from this skill and lives in
+  the tool. If the tool shows the dates are the same day, there is no
+  conflict — do not create a conflict entry.
+- **Work with the assertions already in `research.json`.** When the
+  user reports a disagreement, read the existing assertions and
+  person_evidence first. Do not ask the user for an image or for data
+  that the project already contains. Do not ask for permission to
+  proceed and do not stop after presenting findings — call
+  `research_append` to create the conflict entry, then call it again
+  to fill `independence_analysis`, `weighing_analysis`, and either
+  resolve or defer. A response that describes the conflict without
+  persisting it is incomplete.
 
 ## Re-invocation behavior
 

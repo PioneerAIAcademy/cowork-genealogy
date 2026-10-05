@@ -577,7 +577,8 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   },
 
   // conflict-resolution (issue #1852) holds the six tools the skill it replaced
-  // declared, plus `Read` for research.json. `research_append` is the conflict
+  // declared, plus `Read` for research.json and `research_query`, which Step 1
+  // reads assertions and person_evidence with. `research_append` is the conflict
   // write, and the plugin hook routes a conflict's analytical product (a
   // resolve, or any analysis field) to this agent alone. The research-side place
   // tools its folded places guidance lists (collections, volumes, external
@@ -591,6 +592,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "place_search",
       "place_search_all",
       "research_append",
+      "research_query",
       "wiki_read",
     ],
     denies: [],

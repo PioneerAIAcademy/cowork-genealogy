@@ -156,7 +156,7 @@ time in 3; the worker never does.
 - **Deployed gateway:** no research run; the worker ran two short turns on a local copy (P3k). Local copies add +0.35 s first byte per call, ~7–14 s a turn (P3g, 2026-09-25). TAP's auth, guardrails, capacity and deployed latency unmeasured. U14.
 - **Unmapped model id:** silently becomes a general-purpose stand-in that ignores the agent's `tools:`, and the turn reports success (P3h). U14.
 - **No prototype image on AWS:** SQS signing proven against real SQS and as an EC2 instance profile but not on Beanstalk, keyless S3 untried on AWS, schema applied at start, bundles built (U12) but not deployed. U7–U9, U13.
-- **One patron, no sign-in:** any bearer reaches any project; a refresh revokes the prior token at once, so two turns on one grant break each other; token custody (R7) assumed minute-long turns. U2–U4.
+- **One patron, no sign-in:** any bearer reaches any project; a refresh revokes the prior token at once, so two turns on one grant break each other; token custody (R7) assumed minute-long turns. U2–U4 (U2, U3 built; U4 open).
 - **No time limit or fencing:** nothing ends a run by time; a cut attempt would keep running beside its redelivery; a dead-lettered turn holds the session; the cross-instance tool-server write lock is untested. U5, U6, U26.
 - **Postgres backend (R14):** 4 of 41 store cases run in CI (2026-09-29); tool suites and evals use files. U15.
 - **Throughput:** ~166k tokens/min a session (2026-09-09 estimate); 50 sessions ≈ 0.5M–8.1M TPM, up to 4× the 2M default, depending on burndown and cache-read counting. The gateway is one 0.25 vCPU task, no autoscaling (2026-09-11). U18.
