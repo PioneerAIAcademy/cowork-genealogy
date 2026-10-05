@@ -8,7 +8,11 @@
 #       agent (webapp) can never write the skills or hooks another patron's turn loads;
 #   (b) /project, the CLI's cwd anchor: root-owned 0555, and empty;
 #   (c) /tmp must be a tmpfs (TMPDIR, "writable, never persistent");
-#   (d) the staging app directory root-owned and not group/other-writable.
+#   (d) the staging app directory root-owned and not group/other-writable;
+#   (e) U3: the slot users each turn's CLI runs as (WORKER_TURN_USERS in
+#       02-worker.config), sharing one primary group;
+#   (f) U3: web.service runs as root, so the worker can launch each CLI as its slot user
+#       (the platform runs it as webapp); [untested on Beanstalk: U13]
 set -euo pipefail
 
 PLUGIN_DEST=/opt/genealogy/plugin
@@ -59,6 +63,22 @@ install -d -m 0555 -o root -g root "$PROJECT_DIR"
 tmp_fstype="$(findmnt -n -o FSTYPE /tmp || true)"
 [ "$tmp_fstype" = "tmpfs" ] || fail "/tmp is not a tmpfs (${tmp_fstype:-not a mount point})"
 
-# (d) a+rX keeps every file readable to webapp once root owns it.
+# (d) a+rX keeps every file readable to the slot users once root owns it.
 chown -R root:root "$staging"
 chmod -R go-w,a+rX "$staging"
+
+# (e)
+TURN_GROUP=genealogy-turn
+TURN_USERS="genealogy-turn-0 genealogy-turn-1"
+getent group "$TURN_GROUP" >/dev/null || groupadd --system "$TURN_GROUP"
+for user in $TURN_USERS; do
+  id -u "$user" >/dev/null 2>&1 \
+    || useradd --system --no-create-home --shell /sbin/nologin --gid "$TURN_GROUP" "$user"
+done
+
+# (f) The reload only where systemd runs: the offline smoke's container has none.
+install -d -m 0755 -o root -g root /etc/systemd/system/web.service.d
+printf '[Service]\nUser=root\nGroup=root\n' > /etc/systemd/system/web.service.d/10-genealogy-root.conf
+if [ -d /run/systemd/system ]; then
+  systemctl daemon-reload
+fi
