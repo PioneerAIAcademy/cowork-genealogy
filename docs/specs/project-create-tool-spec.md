@@ -99,9 +99,14 @@ and in this build's place retry.
 - **Persons** get `I` ids, the subject first (so it is `I1`), then the read's
   order; each keeps `living` and carries `ark: "ark:/61903/4:1:<PID>"`. Names
   and facts get fresh `N`/`F` ids (FamilySearch's own UUIDs are not kept).
-- **Sources:** `S1` is one FamilySearch-tree source, deterministic — title
-  `FamilySearch Family Tree: <Given Surname> (<PID>)`, an Evidence Explained
-  citation with the access date, and the person's tree URL. The read's own
+- **Sources:** `S1` is one FamilySearch-tree source, deterministic: title
+  `FamilySearch Family Tree (read from <Given Surname>, <PID>)`, citation
+  `FamilySearch Family Tree (https://www.familysearch.org/tree : accessed <date>),
+  read from the page of <Given Surname> (<PID>).`, and `url` the Tree itself.
+  It is cited on every person's facts, relatives included, so it names the Tree
+  and the page the read came from, never one person as the subject of a fact: a
+  relative's fact citing the subject's page would send a reader to the wrong
+  person. The read's own
   sources follow as `S2…`, keeping only `id/title/citation/author/url`: `notes`,
   `text`, `image_ref` and `artifact_url` are response-only and dropped. The
   read's top-level `notes` is dropped too.
@@ -153,7 +158,10 @@ researcher's statement as above. A `tree` that is not an object is refused.
 
 **The result** carries `idMap`: `persons` (FamilySearch PID → `I` id),
 `sources` (FamilySearch source id → `S` id), `additions` (label → `I` id),
-`familySearchTreeSource`, and `statementSource` when one was created.
+`familySearchTreeSource`, and `statementSource` when one was created. It also
+carries `placesFilled`, `[{place, standardPlace}]`, for each place the retry
+resolved that the read had not (absent when none), so the caller can tell the
+researcher which places it standardized without being asked.
 `personReadRef` is trimmed before it is resolved. In ref mode a refusal raised
 after the build (a forged `assertion_id`, a validation error) names which minted
 id and `persons[i]` index each addition label became, since no `idMap` comes

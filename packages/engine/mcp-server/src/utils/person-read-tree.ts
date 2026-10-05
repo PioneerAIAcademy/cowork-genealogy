@@ -8,11 +8,12 @@
 // the call (alpha #3033). The read is already on the host, so the host builds
 // the tree from it and the model passes a reference.
 //
-// What the build does is exactly what init-project's Step 3 told the model to
-// do, so a tree built here matches one the model built by the documented rules:
-// local `I`/`N`/`F`/`R`/`S` ids, the canonical `ark`, the response-only source
-// fields dropped, one FamilySearch-tree source as `S1` with a `quality: 1` ref on
-// every fact and relationship, and the person-level refs re-pointed.
+// The build follows the rules init-project's Step 3 gave the model: local
+// `I`/`N`/`F`/`R`/`S` ids, the canonical `ark`, the response-only source fields
+// dropped, one FamilySearch-tree source as `S1` with a `quality: 1` ref on every
+// fact and relationship, and the person-level refs re-pointed. Step 3 never fixed
+// that source's wording; it names the Family Tree and the page the read came
+// from, not one person, since it is cited on every relative's facts too.
 //
 // Stubs the researcher's own statements imply (a maiden name's parent) arrive as
 // ADDITIONS. The model cannot see the ids minted here, so in ref mode every id
@@ -58,7 +59,7 @@ export interface BuiltTree {
   /** The place retry for the read's facts. Not run by the build: the caller
    *  runs it once every refusal of its own has passed, so a refused call never
    *  waits on the network. */
-  fillPlaces: () => Promise<void>;
+  fillPlaces: () => Promise<FilledPlace[]>;
 }
 
 /** How long the place retry may run. `project_create` is one MCP call, and the
@@ -231,12 +232,13 @@ export async function buildFromStagedRead(args: {
   const sources: Obj[] = [
     {
       id: fsTree,
-      title: `FamilySearch Family Tree: ${subjectName} (${subjectPid})`,
+      // Cited on every person's facts, so it names no one person as the
+      // subject of a fact: the Tree, and the page the read was made from.
+      title: `FamilySearch Family Tree (read from ${subjectName}, ${subjectPid})`,
       citation:
-        `"${subjectName}," FamilySearch Family Tree ` +
-        `(https://www.familysearch.org/tree/person/details/${subjectPid} : ` +
-        `accessed ${accessDate(now)}).`,
-      url: `https://www.familysearch.org/tree/person/details/${subjectPid}`,
+        `FamilySearch Family Tree (https://www.familysearch.org/tree : ` +
+        `accessed ${accessDate(now)}), read from the page of ${subjectName} (${subjectPid}).`,
+      url: "https://www.familysearch.org/tree",
     },
   ];
   for (const s of arr(read.sources)) {
@@ -320,6 +322,12 @@ export async function buildFromStagedRead(args: {
   return { tree, idMap, subjectPersonIds, fillPlaces: () => retryUnresolvedPlaces(readFacts) };
 }
 
+/** A place the retry resolved: the fact's raw `place` and what it now carries. */
+export interface FilledPlace {
+  place: string;
+  standardPlace: string;
+}
+
 /**
  * Places the read could not standardize (a transient failure, or past the
  * converter's soft cap on a large pedigree): one more try, through the same
@@ -331,7 +339,7 @@ export async function buildFromStagedRead(args: {
  * already been validated and written (it would reach one of the two files and
  * not the other).
  */
-async function retryUnresolvedPlaces(facts: SimplifiedFact[]): Promise<void> {
+async function retryUnresolvedPlaces(facts: SimplifiedFact[]): Promise<FilledPlace[]> {
   const copies = facts.map((f) => ({ ...f }));
   await Promise.race([
     standardizePlaces(copies),
@@ -340,9 +348,21 @@ async function retryUnresolvedPlaces(facts: SimplifiedFact[]): Promise<void> {
       t.unref?.();
     }),
   ]);
+  const filled = new Map<string, FilledPlace>();
   facts.forEach((f, i) => {
-    if (!f.standard_place && copies[i].standard_place) f.standard_place = copies[i].standard_place;
+    const value = copies[i].standard_place;
+    if (!f.standard_place && value) {
+      f.standard_place = value;
+      if (typeof f.place === "string") {
+        // Keyed as `standardizePlaces` groups places (trimmed, case-folded,
+        // spaces collapsed): one resolution is reported once, in the spelling
+        // first met, however else the raw text was written.
+        const key = `${f.place.trim().toLowerCase().replace(/\s+/g, " ")}\u0000${value}`;
+        if (!filled.has(key)) filled.set(key, { place: f.place, standardPlace: value });
+      }
+    }
   });
+  return [...filled.values()];
 }
 
 /**

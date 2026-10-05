@@ -507,9 +507,9 @@ describe("project_create — personReadRef (#2944 Stage B)", () => {
       sources: [
         {
           id: "S1",
-          title: "FamilySearch Family Tree: Patrick Flynn (LZNY-BRF)",
-          citation: '"Patrick Flynn," FamilySearch Family Tree (https://www.familysearch.org/tree/person/details/LZNY-BRF : accessed 1 October 2026).',
-          url: "https://www.familysearch.org/tree/person/details/LZNY-BRF",
+          title: "FamilySearch Family Tree (read from Patrick Flynn, LZNY-BRF)",
+          citation: "FamilySearch Family Tree (https://www.familysearch.org/tree : accessed 1 October 2026), read from the page of Patrick Flynn (LZNY-BRF).",
+          url: "https://www.familysearch.org/tree",
         },
         { id: "S2", title: src("MMM9-1QF").title, citation: src("MMM9-1QF").citation, url: src("MMM9-1QF").url },
         // notes, text, image_ref and artifact_url are response-only: dropped.
@@ -532,6 +532,19 @@ describe("project_create — personReadRef (#2944 Stage B)", () => {
       additions: {},
       familySearchTreeSource: "S1",
     });
+  });
+
+  it("cites every relative's facts to a FamilySearch-tree source that names no one person's page", async () => {
+    const ref = await stageFamily();
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", personReadRef: ref });
+    expect(result.ok).toBe(true);
+    expect(result.placesFilled).toBeUndefined();
+    const tree = await readJson("tree.gedcomx.json");
+    const s1 = tree.sources.find((s: any) => s.id === "S1");
+    expect(s1.url).toBe("https://www.familysearch.org/tree");
+    expect(s1.citation).not.toMatch(/tree\/person\/details/);
+    const relative = tree.persons.find((p: any) => p.ark === "ark:/61903/4:1:LZNY-K2M");
+    expect(relative.facts.every((f: any) => f.sources.some((r: any) => r.ref === "S1"))).toBe(true);
   });
 
   it("maps a subjectPersonIds PID, including the merged-away requested id", async () => {
@@ -758,6 +771,7 @@ describe("project_create — personReadRef (#2944 Stage B)", () => {
       expect(resolver).toHaveBeenCalled();
       const written = (await readJson("tree.gedcomx.json")).persons[0].facts.find((f: any) => f.type === fact.type && f.place === fact.place);
       expect(written.standard_place).toBe("Filled, Place");
+      expect(ok.placesFilled).toEqual([{ place: fact.place, standardPlace: "Filled, Place" }]);
     } finally {
       resolver.mockImplementation(async () => null);
     }
@@ -784,7 +798,7 @@ describe("project_create — personReadRef (#2944 Stage B)", () => {
     expect(ok.ok).toBe(true);
     const tree = await readJson("tree.gedcomx.json");
     expect(tree.persons[0]).toMatchObject({ id: "I1", ark: "ark:/61903/4:1:LZNY-BRF" });
-    expect(tree.sources[0].title).toBe("FamilySearch Family Tree: Patrick Flynn (LZNY-BRF)");
+    expect(tree.sources[0].title).toBe("FamilySearch Family Tree (read from Patrick Flynn, LZNY-BRF)");
     expect((await readJson("research.json")).project.subject_person_ids).toEqual(["I1"]);
 
     const other = await mkdtemp(join(tmpdir(), "project-create-nosubj-"));

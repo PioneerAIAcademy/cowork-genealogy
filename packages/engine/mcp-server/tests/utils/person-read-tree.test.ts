@@ -45,6 +45,16 @@ describe("buildFromStagedRead — places the read could not standardize", () => 
     expect(resolver).toHaveBeenCalledTimes(1);
   });
 
+  it("reports each resolution once, however the place was spelled", async () => {
+    resolver.mockResolvedValue("Ireland");
+    const built = await buildFromStagedRead({
+      staged: read([{ type: "Birth", place: "Ireland" }, { type: "Residence", place: "  ireland " }]),
+      now: NOW,
+    });
+    expect(await built.fillPlaces()).toEqual([{ place: "Ireland", standardPlace: "Ireland" }]);
+    expect(built.tree.persons[0].facts.map((f: any) => f.standard_place)).toEqual(["Ireland", "Ireland"]);
+  });
+
   it("makes no resolver call when every fact already carries standard_place", async () => {
     await buildAndFill({
       staged: read([{ type: "Birth", place: "Ireland", standard_place: "Ireland" }]),

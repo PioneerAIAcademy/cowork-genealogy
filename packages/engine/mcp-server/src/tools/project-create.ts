@@ -54,6 +54,7 @@ import {
   buildFromStagedRead,
   normalizeHandBuilt,
   type IdMap,
+  type FilledPlace,
 } from "../utils/person-read-tree.js";
 
 /** The sections a new project starts with, all empty. `researcher_profile` and
@@ -101,6 +102,9 @@ export type ProjectCreateResult =
       /** Which tree ids the create assigned: FamilySearch PIDs and source ids
        *  to `I`/`S` ids, and addition labels to their `I` ids. */
       idMap: IdMap;
+      /** Places the read left without a `standard_place` that this create
+       *  resolved; absent when there were none. */
+      placesFilled?: FilledPlace[];
       validation: { valid: true; warnings: string[] };
     }
   | { ok: false; errors: string[] };
@@ -213,7 +217,7 @@ export async function projectCreate(
     let tree: { persons: unknown[]; relationships: unknown[]; sources: unknown[] };
     let idMap: IdMap;
     let subjectPersonIds: unknown = input.subjectPersonIds;
-    let fillPlaces: () => Promise<void> = async () => {};
+    let fillPlaces: () => Promise<FilledPlace[]> = async () => [];
     try {
       if (input.personReadRef !== undefined) {
         const staged = await loadStagedRead(projectPath, input.personReadRef);
@@ -313,7 +317,7 @@ export async function projectCreate(
     // Last, so no refusal above ever waits on it. It only adds a
     // `standard_place` string to a fact that had none, which validation
     // already admits.
-    await fillPlaces();
+    const placesFilled = await fillPlaces();
     // The fill can take seconds, so check again that no other create landed
     // while it ran: create never overwrites.
     for (const ref of ["research.json", "tree.gedcomx.json"]) {
@@ -342,6 +346,7 @@ export async function projectCreate(
         sources: tree.sources.length,
       },
       idMap,
+      ...(placesFilled.length ? { placesFilled } : {}),
       validation: { valid: true, warnings: formatIssues(validation.warnings) },
     };
   } catch (e) {
@@ -416,7 +421,8 @@ export const projectCreateSchema = {
     "statements imply (e.g. a maiden name's parent), whose ids are labels; a relationship " +
     "names a person from the read by FamilySearch ID. `subjectPersonIds` takes FamilySearch " +
     "IDs too, and defaults to the person read. The result's `idMap` gives the tree ids " +
-    "assigned.\n" +
+    "assigned, and `placesFilled` any place this create standardized that the read had not; " +
+    "tell the researcher about those.\n" +
     "\n" +
     "With no FamilySearch person, pass the whole starting tree in the SIMPLIFIED GedcomX " +
     "shape (local `I` ids for persons); missing name/fact/relationship ids are assigned, and " +
