@@ -91,7 +91,12 @@ SHUTDOWN answers 503, except on its last receive, which closes.
 Env: PG_DSN, PORT (8080), WORKER_CWD (/project -- created empty if missing, never
 written), ENGINE_PLUGIN_DIR, TMPDIR (per-turn CLAUDE_CONFIG_DIRs go under it),
 MODEL_PROVIDER + ANTHROPIC_API_KEY / GATEWAY_BASE_URL, GATEWAY_API_KEY and
-GATEWAY_TOOL_SEARCH, TOOL_SERVER_URL and FS_ACCESS_TOKEN (see options.py);
+GATEWAY_TOOL_SEARCH and TOOL_SERVER_URL (see options.py); FS_TOKEN_ENC_KEY (the web tier's
+grant key: the worker decrypts the patron's grant; the CLI inherits no worker variable),
+WORKER_TURN_USERS (U3: one slot user per sqsd connection, each turn's CLI runs as one, so the
+kernel keeps it out of other turns' dirs and the worker's /proc; ``none`` only when not
+root; proto/worker/turn_users.py),
+FS_GRANT_MAX_START_AGE_S (26400) and FS_GRANT_WAIT_S (300) (U3, below);
 SQSD_MAX_RETRIES (0 = no last-receive close), SQSD_VISIBILITY_TIMEOUT_S,
 SQSD_RETENTION_PERIOD_S (unset = no backstop), SWEEP_INTERVAL_S (300; 0 = off) and
 SHUTDOWN_GRACE_S (20). With QUEUE_URL set (and only then): GENEALOGY_SQS_ACCESS_KEY +
@@ -116,12 +121,28 @@ ThreadingHTTPServer, so a second POST is served while a turn is running.
 
 A model turn that appended no transcript entries (D6) closes ``transcript_lost`` and
 answers 500; its redelivery finds the row closed and answers 200 without running.
+
+Grants (U3; list 3 step 19): the FamilySearch bearer is the turn's project owner's grant,
+read at the start of EVERY attempt (``acquire_grant``: project -> ``projects.owner_id`` ->
+``familysearch_tokens``), never the queue body, which persists in ``turns.message`` and the
+DLQ. The attempt holds that patron's attempt lock SHARED on a connection of its own until
+its CLI is dead, and the web tier refreshes only when it can take the lock exclusively --
+so no refresh, which revokes the previous access token at once, lands mid-attempt. An
+attempt starts only on a session at most ``FS_GRANT_MAX_START_AGE_S`` old and not marked
+by an ambiguous refresh; otherwise it waits, holding no lock, up to ``FS_GRANT_WAIT_S``
+for the refresher, then raises ``GrantWaitTimeout`` (500). No usable grant -- none, a
+refused refresh, no refresh token on an old session, ciphertext under another key, a
+project with no owner -- closes the turn ``signin_required`` (``detail.cause``) before any
+CLI exists and answers 200. A lock connection that dies mid-attempt halts it at the next
+tool call (``grant_lock_lost``) and the attempt raises ``GrantLockLost`` (500): the
+redelivery takes the lock again and reads the current grant.
 """
 
 from __future__ import annotations
 
 import asyncio
 import contextlib
+import dataclasses
 import errno
 import json
 import os
@@ -167,14 +188,17 @@ from proto.worker.options import (  # noqa: E402
     TERMINAL_STOPPED,
     build_worker_options,
     check_registration,
+    cli_env_blanks,
     hook_path,
     make_posttool_hook,
     make_pretool_hook,
     make_stop_hook,
     parse_blocked_tools,
 )
+from proto import grants  # noqa: E402
 from proto.worker.plugin_agents import load_agent_definitions  # noqa: E402
 from proto.worker.session_store import PgSessionStore  # noqa: E402
+from proto.worker import turn_users  # noqa: E402
 
 PG_DSN = os.environ.get("PG_DSN", "postgresql://postgres:proto@postgres:5432/proto")
 # 1b: where a held message goes when the turn that held it ends. The worker is the only
@@ -200,7 +224,7 @@ READY_TCP_OPTIONS = {"tcp_user_timeout": 3000, "keepalives": 1, "keepalives_idle
                      "keepalives_interval": 1, "keepalives_count": 2}
 # Every table and function the worker queries; a missing one fails `postgres`.
 WORKER_TABLES = ("sessions", "turns", "session_events", "session_seq", "session_activity",
-                 "session_entries", "tool_calls", "documents")
+                 "session_entries", "tool_calls", "documents", "projects", "familysearch_tokens")
 WORKER_FUNCTIONS = ("next_session_seq(text)",)
 # The start schema apply's thread: one attempt's connect bound, and its backoff.
 SCHEMA_CONNECT_TIMEOUT_S = 5
@@ -272,6 +296,18 @@ TRANSCRIPT_LOST_REASON = (
     "stopping here. Findings already written to the project are kept."
 )
 
+# U3: the turn could not run on its owner's grant -- none, refused by FamilySearch, an old
+# session with no refresh token, ciphertext under another key -- so the patron must sign in
+# again. Closed before any CLI exists; detail.cause says which.
+SIGNIN_REQUIRED_OUTCOME = "signin_required"
+# U3: a halt reason, never a turn outcome -- the attempt raises GrantLockLost before
+# complete(), and the redelivery reads the current grant under a fresh lock.
+GRANT_LOCK_LOST = "grant_lock_lost"
+GRANT_LOCK_LOST_REASON = (
+    "This run's FamilySearch sign-in could not be confirmed, so it is stopping here and will "
+    "pick up again shortly. Findings already written to the project are kept."
+)
+
 # PR #2870 item 1e: what one SITTING may spend before the worker stops it.
 #
 # Per SESSION, not per run and not per project: a sessions row carries a project_id, so a
@@ -338,6 +374,18 @@ class ResumeFailure(RuntimeError):
     bounded: at ZERO_PROGRESS_CAP the worker closes the turn 200 instead."""
 
 
+class GrantWaitTimeout(RuntimeError):
+    """U3: the owner's session stayed too old to start on (or its last refresh stayed
+    ambiguous) for FS_GRANT_WAIT_S. serve_real_turn answers 500, so the message comes back
+    after the refresher has had more time; on the last receive it is retries_exhausted."""
+
+
+class GrantLockLost(RuntimeError):
+    """U3: the attempt's grant lock connection ended mid-attempt, so the web tier may have
+    refreshed (and revoked) the token it bears. Raised after the halt, before complete():
+    500, and the redelivery takes the lock again."""
+
+
 class TranscriptLost(RuntimeError):
     """A model turn appended no transcript entries (U10 D6). Raised only AFTER the turn
     is closed ``transcript_lost``, so serve_real_turn answers 500 and the redelivery finds
@@ -379,6 +427,23 @@ RELEASE_SQS_TIMEOUT_S = 3.0
 # certainly given up on the message before the worker closes its turn.
 SWEEP_VISIBILITY_MARGIN_S = 60
 SWEEP_BATCH = 100
+# U3: an attempt starts only on a session at most this old, else waits up to FS_GRANT_WAIT_S
+# for the web tier's refresher (grants.py holds the defaults the web tier shares). Empty or
+# garbage gives the default; 0 is allowed.
+FS_GRANT_MAX_START_AGE_S = grants.env_seconds(os.environ, "FS_GRANT_MAX_START_AGE_S", grants.DEFAULT_MAX_START_AGE_S)
+FS_GRANT_WAIT_S = grants.env_seconds(os.environ, "FS_GRANT_WAIT_S", grants.DEFAULT_WAIT_S)
+# The grant lock's connection. lock_timeout bounds the wait behind a refresher (which holds
+# the lock exclusively for at most REFRESH_HTTP_TIMEOUT_S plus two short transactions).
+# idle_session_timeout=0 overrides a server or parameter-group default that would end
+# this idle connection -- and so release the lock -- while the CLI still bears the token.
+# The server-side keepalives end the backend of a host that vanished without a RST in
+# about two minutes; the client-side ones notice a dead server.
+GRANT_CONN_KWARGS: dict[str, Any] = {
+    "autocommit": True,
+    "options": f"-c lock_timeout={grants.ATTEMPT_LOCK_TIMEOUT_S}s -c idle_session_timeout=0 "
+               + grants.GRANT_KEEPALIVE_OPTIONS,
+    "keepalives": 1, "keepalives_idle": 60, "keepalives_interval": 10, "keepalives_count": 6,
+}
 
 
 # -- rows ----------------------------------------------------------------------
@@ -845,18 +910,21 @@ def close_turn(
     cause: str,
     sdk_session_id: str | None,
     release: bool = True,
+    reason: str | None = None,
 ) -> int | None:
     """Close a turn the worker is giving up on (U5 D3): ``complete(only_if_open=True)``
-    with ``detail.cause``, then -- only if THIS call closed the row -- the session's next
-    held message. ``release=False`` leaves the release to the caller, which SIGTERM's
-    close needs: the held turn must not start while the old attempt's CLI is still
-    alive. Returns the turn_done seq, or None when the row was already closed."""
-    seq = complete(conn, turn, receive_count, outcome=outcome, detail={"cause": cause},
+    with ``detail.cause`` (and ``detail.reason`` when given: U3's refusal code), then --
+    only if THIS call closed the row -- the session's next held message. ``release=False``
+    leaves the release to the caller, which SIGTERM's close needs: the held turn must not
+    start while the old attempt's CLI is still alive. Returns the turn_done seq, or None
+    when the row was already closed."""
+    detail = {"cause": cause, **({"reason": reason} if reason is not None else {})}
+    seq = complete(conn, turn, receive_count, outcome=outcome, detail=detail,
                    sdk_session_id=sdk_session_id, only_if_open=True)
     if seq is None:
         return None
     log(ev="close", turn_id=turn["turn_id"], session_id=turn["session_id"], outcome=outcome,
-        cause=cause, receive_count=receive_count)
+        cause=cause, receive_count=receive_count, **({"reason": reason} if reason is not None else {}))
     if release:
         release_next_held(conn, turn["session_id"])
     return seq
@@ -1612,6 +1680,111 @@ def attempt_did_work(result: Any, tool_calls: int) -> bool:
     return int(getattr(result, "num_turns", 0) or 0) > 0 and tool_calls > 0
 
 
+# -- the grant (U3) --------------------------------------------------------------
+
+
+@dataclasses.dataclass
+class HeldGrant:
+    """The owner's current grant, its attempt lock held SHARED on ``conn`` -- a connection
+    of its own, idle for the whole attempt -- whose backend is ``pid``. Closing ``conn``
+    releases the lock, so ``close()`` runs only once the CLI bearing ``token`` is dead."""
+
+    conn: Any
+    user_id: str
+    token: str
+    pid: int
+
+    def held_on(self, other: Any) -> bool:
+        """Whether the lock connection's backend still holds the lock, asked on ``other``
+        (the attempt's main connection): a dead lock connection cannot answer for itself."""
+        with other.cursor() as cur:
+            cur.execute(grants.ATTEMPT_LOCK_HELD_SQL, (self.pid, grants.ATTEMPT_LOCK_NS))
+            return cur.fetchone() is not None
+
+    def close(self) -> None:
+        """Release the lock. Never raises: a terminated lock connection must not mask the
+        attempt's own exception."""
+        try:
+            self.conn.close()
+        except Exception as exc:  # noqa: BLE001 - the backend is gone either way
+            log(ev="grant_lock_close_failed", user_id=self.user_id, error=type(exc).__name__)
+
+
+@dataclasses.dataclass
+class NoGrant:
+    """No usable grant: the turn closes ``signin_required`` with ``detail.cause``
+    (``no_owner``, ``no_grant``, ``refused``, ``no_refresh_token``, ``undecryptable``) and,
+    for a refusal, FamilySearch's ``reason``."""
+
+    cause: str
+    reason: str | None = None
+
+
+async def acquire_grant(
+    project_id: str,
+    *,
+    connect: Callable[..., Any] = pg_connect,
+    max_start_age_s: float | None = None,
+    wait_s: float | None = None,
+    poll_s: float = grants.WAIT_POLL_S,
+    sleep: Callable[[float], Any] = asyncio.sleep,
+) -> HeldGrant | NoGrant:
+    """The turn's project owner's grant, LOCKED before it is read, on a dedicated
+    autocommit connection: the owner, then -- per try -- the shared attempt lock (blocking,
+    bounded by ``lock_timeout``), the grant row, and ``grants.attempt_verdict``. Locking
+    first is what makes a refresh between the read and the lock impossible.
+
+    Ready keeps the lock and returns a HeldGrant. Closed releases it and returns NoGrant.
+    Wait (a session past ``max_start_age_s``, or an ambiguous refresh) releases it -- so
+    the patron's other attempts can drain and the refresher get its window -- logs
+    ``ev=grant_wait`` once and polls every ``poll_s``, holding no lock, for up to
+    ``wait_s``; then raises GrantWaitTimeout. The token never reaches a log line."""
+    max_start_age_s = FS_GRANT_MAX_START_AGE_S if max_start_age_s is None else max_start_age_s
+    wait_s = FS_GRANT_WAIT_S if wait_s is None else wait_s
+    conn = connect(PG_DSN, **GRANT_CONN_KWARGS)
+    held: HeldGrant | None = None
+    try:
+        with conn.cursor() as cur:
+            cur.execute(grants.OWNER_SQL, (project_id,))
+            row = cur.fetchone()
+            owner = row[0] if row else None
+            if not owner:
+                return NoGrant("no_owner")
+            cur.execute("SELECT pg_backend_pid()")
+            pid = int(cur.fetchone()[0])
+            key = (grants.ATTEMPT_LOCK_NS, owner)
+            deadline = time.monotonic() + wait_s
+            waited = False
+            while True:
+                cur.execute(grants.ATTEMPT_LOCK_SQL, key)
+                cur.execute(grants.GRANT_SQL, (owner,))
+                verdict = grants.attempt_verdict(
+                    grants.GrantRow.from_row(cur.fetchone()), max_start_age_s=max_start_age_s,
+                    decrypt=lambda value: grants.decrypt(value, grants.enc_key(os.environ)),
+                )
+                if isinstance(verdict, grants.Ready):
+                    held = HeldGrant(conn, str(owner), verdict.token, pid)
+                    return held
+                cur.execute(grants.ATTEMPT_UNLOCK_SQL, key)
+                if isinstance(verdict, grants.Closed):
+                    return NoGrant(verdict.cause, verdict.reason)
+                if not waited:
+                    waited = True
+                    log(ev="grant_wait", project_id=project_id, user_id=owner, reason=verdict.reason,
+                        wait_s=wait_s, max_start_age_s=max_start_age_s)
+                if time.monotonic() >= deadline:
+                    raise GrantWaitTimeout(
+                        f"the grant of {owner} was not usable within {wait_s:.0f}s ({verdict.reason})"
+                    )
+                await sleep(poll_s)
+    finally:
+        if held is None:
+            try:
+                conn.close()
+            except Exception as exc:  # noqa: BLE001 - nothing is held on it
+                log(ev="grant_conn_close_failed", project_id=project_id, error=type(exc).__name__)
+
+
 async def run_turn(
     turn: dict,
     receive_count: int,
@@ -1653,7 +1826,20 @@ async def _run_turn(
     config_root = {"path": config_dir}
     conn = psycopg.connect(PG_DSN, autocommit=True)
     result = None
+    held: HeldGrant | NoGrant | None = None
+    slot: turn_users.Slot | None = None
+    turn_home: str | None = None
     try:
+        # U3: the owner's CURRENT grant, locked for the whole attempt, before anything else
+        # -- no CLI exists yet, so a turn with no usable grant closes here and bills nothing.
+        held = await acquire_grant(project_id)
+        if isinstance(held, NoGrant):
+            seq = close_turn(conn, turn, receive_count, outcome=SIGNIN_REQUIRED_OUTCOME, cause=held.cause,
+                             reason=held.reason, sdk_session_id=sdk_session_id, release=False)
+            released = release_next_held(conn, session_id) if seq is not None else None
+            return {"seq": seq, "outcome": SIGNIN_REQUIRED_OUTCOME, "cause": held.cause,
+                    "released_turn": released, "resumed": False}
+
         # The id was chosen at claim time (serve_real_turn); the store decides which of
         # the two mutually exclusive CLI flags carries it.
         resume = sdk_session_id if await store.has_entries(sdk_session_id) else None
@@ -1673,6 +1859,15 @@ async def _run_turn(
         # a voluntary yield -- a median of once per run -- so a Stop wired to it would
         # answer after 53 minutes. This one answers in a median of 2.6 s.
         def halt() -> str | None:
+            # U3: first, because a clause that raises lets the call through and skips every
+            # later one. A lock connection that died (a server idle cut, an admin
+            # terminate, a proxy) released the lock while the CLI still bears the token,
+            # so the next refresh would revoke it mid-attempt: stop now and redeliver.
+            if not held.held_on(conn):
+                terminal["reason"] = GRANT_LOCK_LOST
+                terminal["halted"] = True
+                log(ev="grant_lock_lost", turn_id=turn_id, session_id=session_id, user_id=held.user_id)
+                return GRANT_LOCK_LOST_REASON
             if stop_requested(conn, session_id):
                 terminal["reason"] = TERMINAL_STOPPED
                 terminal["halted"] = True
@@ -1786,6 +1981,17 @@ async def _run_turn(
                 # normal path -- median two attempts, longest six.
                 nudges_used=nudges_so_far(conn, turn_id) if receive_count > 1 else 0,
             )
+        # U3: this attempt's CLI runs as a slot user that owns its config dir and home and
+        # nothing of any other turn's.
+        if TURN_POOL is not None:
+            try:
+                slot = TURN_POOL.acquire()
+            except turn_users.NoTurnUser:
+                # sqsd sent more turns than HttpConnections, or a slot leaked: the 500 retries.
+                log(ev="no_turn_user", turn_id=turn_id, session_id=session_id)
+                raise
+            turn_home = tempfile.mkdtemp(prefix="turn-home-")
+            turn_users.chown_tree(turn_home, slot)
         options = build_worker_options(
             project_id=project_id,
             cwd=WORKER_CWD,
@@ -1797,10 +2003,14 @@ async def _run_turn(
             posttool_hook=posttool,
             resume=resume,
             session_id=None if resume else sdk_session_id,
-            fs_access_token=message.get("fs_access_token"),
+            bearer=held.token,
             stderr=lambda line: log(ev="cli_stderr", turn_id=turn_id, line=line[:500]),
             stop_hook=stop_hook,
+            turn_user=slot.name if slot else None,
+            turn_home=turn_home,
         )
+        if slot is not None:
+            turn_users.chown_tree(config_dir, slot)  # after mcp.json is written into it
         client = ClaudeSDKClient(options=options)
         await client.connect()
         try:
@@ -1858,6 +2068,11 @@ async def _run_turn(
                 log(ev="resume_synthetic_result", turn_id=turn_id, session_id=session_id,
                     receive_count=receive_count, query=index + 1,
                     result=str(result.result or "")[:200])
+
+            # U3: halted because the grant lock was lost. Not a completion -- raise, so the
+            # turn stays open and the redelivery bears the current grant under a new lock.
+            if terminal["reason"] == GRANT_LOCK_LOST:
+                raise GrantLockLost(f"the grant lock of {held.user_id} was lost mid-attempt")
 
             # U10 D6: a model turn that appended nothing. The SDK flushes every pending
             # frame before it yields each ResultMessage, so the count is final here. The
@@ -1943,8 +2158,20 @@ async def _run_turn(
         finally:
             await client.disconnect()
     finally:
+        # Nothing of this attempt outlives it on the slot: a hook or a search child can
+        # outlive the CLI, and the next patron on the slot must inherit no process.
+        if slot is not None:
+            turn_users.kill_uid(slot.uid)
+            turn_users.purge_uid_files(slot.uid, turn_users.purge_roots())
+        # The lock outlives the CLI: released only once client.disconnect() has killed it.
+        if isinstance(held, HeldGrant):
+            held.close()
         conn.close()
         shutil.rmtree(config_dir, ignore_errors=True)
+        if turn_home is not None:
+            shutil.rmtree(turn_home, ignore_errors=True)
+        if slot is not None and TURN_POOL is not None:
+            TURN_POOL.release(slot)
 
     # 1b: the turn is closed, so a message held while it ran goes on the queue now --
     # whatever the outcome, because a held message is the patron's words and is never
@@ -2407,6 +2634,56 @@ def queue_startup_fields(env: Mapping[str, str]) -> dict[str, str]:
     return {"sqs_credentials": auth.mode, "sqs_region": enqueue.region_for(QUEUE_URL, auth.region)}
 
 
+# U3: the slot pool (proto/worker/turn_users.py); None when WORKER_TURN_USERS=none.
+TURN_POOL: turn_users.Pool | None = None
+TURN_SLOTS: dict[str, turn_users.Slot] = {}
+
+
+def bundled_cli() -> str:
+    import claude_agent_sdk
+
+    return os.path.join(os.path.dirname(claude_agent_sdk.__file__), "_bundled", "claude")
+
+
+def setup_turn_users(hook_python_exe: str) -> list[str] | str:
+    """Static instance configuration, like TMPDIR: a pool that cannot isolate turns, or a
+    slot user that cannot reach the CLI, the hook interpreter, the cwd or TMPDIR, refuses
+    start (``ev=prepare step=turn_users``, exit 2). Returns the slot names, or "none"."""
+    global TURN_POOL
+    try:
+        slots = turn_users.parse(os.environ.get(turn_users.ENV_VAR), euid=os.geteuid())
+        if slots is None:
+            return turn_users.DISABLED
+        from claude_agent_sdk import ClaudeSDKClient
+        import importlib
+
+        seam = turn_users.check_seam(ClaudeSDKClient.connect)
+        if seam is not None:
+            raise turn_users.TurnUsersError(seam)
+        turn_users.apply_process_creds(slots[0].gid)
+        # A slot's processes can outlive a worker that crashed or was restarted (outside a
+        # container nothing reaps them); the next patron on that uid must inherit none.
+        survivors = {s.name: turn_users.kill_uid(s.uid) for s in slots}
+        # ...and its files: an unclean exit leaves each attempt's dirs, mcp.json included.
+        leftovers = {s.name: len(turn_users.purge_uid_files(s.uid, turn_users.purge_roots())) for s in slots}
+        if any(survivors.values()) or any(leftovers.values()):
+            log(ev="prepare", step="turn_users", killed=survivors, purged=leftovers)
+        for slot in slots:
+            problem = turn_users.probe(
+                slot, ([bundled_cli(), "-v"], [hook_python_exe, "-c", "import sys"]),
+                cwd=WORKER_CWD, tmpdir=tempfile.gettempdir(),
+            )
+            if problem is not None:
+                raise turn_users.TurnUsersError(problem)
+        TURN_SLOTS.update({s.name: s for s in slots})
+        turn_users.own_materialized_resumes(importlib.import_module(turn_users.SEAM_MODULE), TURN_SLOTS.get)
+        TURN_POOL = turn_users.Pool(slots)
+        return [s.name for s in slots]
+    except (turn_users.TurnUsersError, OSError) as exc:
+        log(ev="prepare", step="turn_users", error=f"{type(exc).__name__}: {exc}")
+        raise SystemExit(2) from None
+
+
 def main() -> None:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -2418,6 +2695,7 @@ def main() -> None:
         log(ev="prepare", step="tmpdir", error=bad_tmpdir, tmpdir=os.environ.get("TMPDIR"))
         sys.exit(2)
     hook_python = require_hook_python()
+    pool_names = setup_turn_users(hook_python.split(" ", 1)[0])
     sqs = queue_startup_fields(os.environ)
     if sqs:
         from proto import enqueue
@@ -2435,7 +2713,10 @@ def main() -> None:
         sqsd_max_retries=SQSD_MAX_RETRIES, sqsd_visibility_timeout_s=SQSD_VISIBILITY_TIMEOUT_S,
         sqsd_retention_period_s=SQSD_RETENTION_PERIOD_S, sweep_interval_s=SWEEP_INTERVAL_S,
         sweep=sweeper is not None, shutdown_grace_s=SHUTDOWN_GRACE_S,
-        tmpdir=tempfile.gettempdir(), tmpdir_free_mb=tmpdir_free_mb(), hook_python=hook_python, **sqs)
+        tmpdir=tempfile.gettempdir(), tmpdir_free_mb=tmpdir_free_mb(), hook_python=hook_python,
+        fs_token_key=grants.key_mode(os.environ), grant_max_start_age_s=FS_GRANT_MAX_START_AGE_S,
+        grant_wait_s=FS_GRANT_WAIT_S, turn_users=pool_names,
+        cli_env_blanked=len(cli_env_blanks(os.environ)), **sqs)
     server.serve_forever()
     if _SHUTDOWN_THREAD is not None:
         # A daemon: its second wait, the releases and ev=shutdown run after
