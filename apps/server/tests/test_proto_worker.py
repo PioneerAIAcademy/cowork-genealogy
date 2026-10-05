@@ -1777,6 +1777,7 @@ _STOP_KW = dict(research=None, nudges_used=0, max_nudges=5, tool_count=0, tool_c
     ("mcp_unavailable", "mcp_unavailable"),
     ("pending_user_message", "queued"),
     ("pending_decision", "decision"),
+    ("delivered", "delivered"),
 ])
 def test_each_new_clause_allows_the_stop_and_names_itself(flag, reason):
     assert options.should_continue_run(**{**_STOP_KW, flag: True}) is False
@@ -1792,7 +1793,8 @@ def test_stopped_is_the_first_clause_ahead_of_every_other():
     Stop must therefore win against a project that looks complete, a spent budget, and
     every other flag at once."""
     every = dict(research={"project": {"status": "completed"}}, nudges_used=99, max_nudges=1,
-                 mcp_unavailable=True, pending_user_message=True, pending_decision=True)
+                 mcp_unavailable=True, pending_user_message=True, pending_decision=True,
+                 delivered=True)
     assert options.terminal_reason(stopped=True, **every) == "stopped"
     assert options.should_continue_run(tool_count=0, tool_count_at_last_nudge=-1,
                                        stopped=True, **every) is False
@@ -1804,7 +1806,8 @@ def test_terminal_reason_and_should_continue_run_walk_in_lockstep():
     bug the terminal-state work exists to fix. So every combination is walked."""
     import itertools
 
-    flags = ("stopped", "mcp_unavailable", "pending_user_message", "pending_decision")
+    flags = ("stopped", "mcp_unavailable", "pending_user_message", "pending_decision",
+             "delivered")
     for bits in itertools.product((False, True), repeat=len(flags)):
         for research in (None, {"project": {"status": "completed"}}):
             for nudges, cap in ((0, 5), (5, 5)):
@@ -4109,3 +4112,109 @@ def test_session_spend_usd_prices_decimal_sums(turn_env, monkeypatch):
     [halt] = [f for f in logged if f.get("ev") == "halt"]
     assert halt["reason"] == options.SPEND_CAP_REASON.format(cap=spent / 2)
     assert not [f for f in logged if f.get("ev") == "spend_estimate_failed"]
+
+
+# ── the `delivered` exit ──────────────────────────────────────────────────────────
+#
+# A bounded request -- "create a plan but leave it at that", a single lookup, "where are
+# we?" -- must stop at its deliverable rather than running on to the proof, the nudge cap
+# or the spend bound. `delivered` is how a turn says it did the thing that was asked and
+# stopped on purpose. It is a NEW value, not `ok`: `ok` means "ended with no terminal
+# reason" and chatEvents renders it as nothing, while a delivery has something to report.
+
+
+def test_a_delivered_turn_does_not_continue():
+    assert options.should_continue_run(
+        research={"project": {"status": "active"}}, nudges_used=0, max_nudges=60,
+        tool_count=1, tool_count_at_last_nudge=0, delivered=True,
+    ) is False
+
+
+def test_delivered_is_the_reason_and_sits_after_decision_before_completed():
+    """Clause position is semantics, not detail, and the generic lockstep test CANNOT
+    see it -- that test asserts only the bool, never the reason string in a terminal
+    case, so it passes under either clause order. This is the test that pins it.
+
+    A delivery arriving with a patron message already QUEUED reads `queued` -- the
+    researcher moved on -- and a delivery on a COMPLETED project still reads delivered,
+    because the request was met before the project finished."""
+    done = {"project": {"status": "completed"}}
+    active = {"project": {"status": "active"}}
+    assert options.terminal_reason(research=active, nudges_used=0, max_nudges=60,
+                                   delivered=True) == "delivered"
+    # queued and decision both outrank it
+    assert options.terminal_reason(research=active, nudges_used=0, max_nudges=60,
+                                   delivered=True, pending_user_message=True) == "queued"
+    assert options.terminal_reason(research=active, nudges_used=0, max_nudges=60,
+                                   delivered=True, pending_decision=True) == "decision"
+    # ...and it outranks completion
+    assert options.terminal_reason(research=done, nudges_used=0, max_nudges=60,
+                                   delivered=True) == "delivered"
+
+
+def test_the_delivered_tool_name_is_pinned():
+    assert options.DELIVERED_TOOL == "mcp__genealogy__research_delivered"
+
+
+def test_the_delivery_instruction_rides_the_same_turn_prompt(tmp_path):
+    """The ONLY check that the guidance reaches the model at all. Every other test here
+    drives `make_pretool_hook` directly and never touches `build_worker_options`, so
+    without this the wiring could be dropped and the tool would ship advertised but
+    inert, with nothing instructing the model to call it."""
+    opts = _options(config_dir=str(tmp_path))
+    assert options.DELIVERY_GUIDANCE in opts.system_prompt["append"]
+
+
+def test_the_instruction_names_the_tool_it_is_about():
+    """A rule that does not name its tool cannot be followed. The bare name is what
+    appears in the prompt; the hook matches the qualified one."""
+    assert "research_delivered" in options.DELIVERY_GUIDANCE
+    assert options.DELIVERED_TOOL.endswith("research_delivered")
+
+
+def test_the_instruction_draws_both_boundaries():
+    """Two ways this misfires, and both must be excluded in the text itself: calling it
+    when the whole objective is finished (that is `completed`, and the run ends on its
+    own), and calling it instead of asking a question (an ask waits for an answer; a
+    delivery waits for nothing)."""
+    lowered = options.DELIVERY_GUIDANCE.lower()
+    assert "objective" in lowered, "must exclude the project-complete case"
+    assert "question" in lowered or "ask" in lowered, "must exclude the ask case"
+
+
+def test_a_turn_that_delivers_is_recorded_as_delivered(turn_env):
+    """End to end through the REAL hook: the hook-level tests cannot see the worker's
+    closure, and a break test that sets the closure to the wrong outcome leaves them all
+    green."""
+    summary = _run(turn_env, [
+        _init(), ToolCall("mcp__genealogy__research_query"),
+        ToolCall(options.DELIVERED_TOOL),
+        _result(num_turns=2),
+    ])
+    assert summary["outcome"] == "delivered", (
+        f"a turn that delivered recorded {summary['outcome']!r}"
+    )
+    _, params = next((sql, p) for sql, p in turn_env["conn"].executed
+                     if sql.startswith("UPDATE turns SET completed_at"))
+    assert params[0] == "delivered", "and the row says so too"
+
+
+def test_a_turn_that_never_delivers_is_untouched_by_the_exit(turn_env):
+    """The arm that is easy to skip. Adding an exit must not re-route the ordinary run
+    through it."""
+    summary = _run(turn_env, [
+        _init(), ToolCall("mcp__genealogy__research_query"),
+        ToolCall("mcp__genealogy__record_read"),
+        _result(num_turns=2),
+    ])
+    assert summary["outcome"] != "delivered"
+
+
+def test_a_stop_outranks_a_delivery():
+    """The researcher's own stop wins: the halt check runs before the delivered arm."""
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda row: None, halt=lambda: "stopped",
+    )
+    out = asyncio.run(hook({"tool_name": options.DELIVERED_TOOL, "tool_input": {}}, "u1", None))
+    assert out.get("stopReason") == "stopped", "a halt must outrank the delivery arm"

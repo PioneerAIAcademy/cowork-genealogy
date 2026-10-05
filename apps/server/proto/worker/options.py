@@ -52,6 +52,7 @@ from app.agent.continue_policy import (
     TERMINAL_BUDGET,
     TERMINAL_COMPLETED,
     TERMINAL_DECISION,
+    TERMINAL_DELIVERED,
     TERMINAL_MCP_UNAVAILABLE,
     TERMINAL_NO_PROGRESS,
     TERMINAL_QUEUED,
@@ -311,6 +312,33 @@ SPEND_CAP_REASON = (
 )
 
 
+# The carrier for "I delivered what you asked". Deliberately NOT AskUserQuestion -- an ask
+# has `questions` and waits for an answer, a delivery waits for nothing, and one tool
+# carrying both leaves this hook with no discriminator.
+DELIVERED_TOOL = "mcp__genealogy__research_delivered"
+
+# When to reach for it. This rides the per-turn system prompt, NOT the skill bodies: the
+# hook that makes this tool end a turn exists only here, so a skill-body rule would teach
+# every skill to call a tool that is inert in Cowork and in the harness that grades them.
+#
+# Both exclusions are load-bearing. Calling it when the OBJECTIVE is finished would report
+# `delivered` where `completed` is true and the run ends on its own. Calling it instead of
+# asking would swallow a question nobody answers -- an ask waits, a delivery does not.
+DELIVERY_GUIDANCE = (
+    "When this message asked for one bounded thing and you have produced it, call "
+    "`research_delivered` with a one-sentence summary and stop: a plan the researcher "
+    "asked you to stop after, a single record or lookup, or a status question such as "
+    "\"where are we?\". Do not call it when the project's research objective itself is "
+    "finished -- that run ends on its own -- and do not call it in place of asking the "
+    "researcher a question, which waits for their answer."
+)
+
+DELIVERED_REASON = (
+    "You have delivered what this message asked for. Stopping here rather than carrying on: "
+    "the work is saved, and the researcher's next message picks up from it."
+)
+
+
 def _halt(reason: str = STOP_REASON) -> dict[str, Any]:
     return {"continue_": False, "stopReason": reason}
 
@@ -345,6 +373,7 @@ def make_pretool_hook(
     log: Callable[..., None] | None = None,
     blocked: frozenset[str] = frozenset(),
     halt: Callable[[], str | None] | None = None,
+    on_delivered: Callable[[], None] | None = None,
 ):
     """The worker's ``PreToolUse`` callback. ``config_root`` may be a callable because
     the directory the CLI actually runs in is known only after ``connect()`` on a
@@ -388,6 +417,35 @@ def make_pretool_hook(
                 log(ev="halt", turn_id=turn_id, tool_name=tool_name, tool_use_id=tool_use_id,
                     reason=stop_now)
             return _halt(stop_now)
+
+        # A bounded request that is met must not run on to the proof, the nudge cap or the
+        # spend bound. It sits AFTER the halt check, so the researcher's own stop still
+        # outranks it.
+        if tool_name == DELIVERED_TOOL:
+            try:
+                record({
+                    "turn_id": turn_id, "session_id": session_id,
+                    "agent_id": data.get("agent_id"), "agent_type": data.get("agent_type"),
+                    "tool_name": tool_name,
+                    "input_path": input_path(tool_name, tool_input, cwd=cwd),
+                    "decision": "delivered",
+                    "tool_use_id": tool_use_id or data.get("tool_use_id"),
+                })
+            except Exception as exc:  # noqa: BLE001 - the log must not change the decision
+                if log is not None:
+                    log(ev="tool_call_log_failed", turn_id=turn_id, tool_name=tool_name,
+                        error=f"{type(exc).__name__}: {exc}")
+            if on_delivered is not None:
+                try:
+                    on_delivered()
+                except Exception as exc:  # noqa: BLE001 - reporting must not fail the call
+                    if log is not None:
+                        log(ev="delivered_report_failed", turn_id=turn_id,
+                            error=f"{type(exc).__name__}: {exc}")
+            if log is not None:
+                log(ev="delivered", turn_id=turn_id, tool_name=tool_name,
+                    tool_use_id=tool_use_id)
+            return _halt(DELIVERED_REASON)
         try:
             protected = direct_project_file_write(tool_name, tool_input)
             if protected:
@@ -624,6 +682,10 @@ def build_worker_options(
         "apply researcher_profile.narration_guidance from research.json as your "
         "narration style."
     )
+    # Unconditional, on the opening turn too: "start a project on X and just give me a
+    # plan" is a legitimate turn-1 bounded request, so gating this on `resume` would
+    # exempt the very case it exists for.
+    project_note = f"{project_note}\n\n{DELIVERY_GUIDANCE}"
     env: dict[str, str] = {
         "ENABLE_TOOL_SEARCH": "true",
         "CLAUDE_CONFIG_DIR": config_dir,
