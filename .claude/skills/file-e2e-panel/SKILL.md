@@ -90,13 +90,65 @@ gone". Four more, every time.
 gh issue create --repo PioneerAIAcademy/cowork-genealogy \
   --label genealogist --label e2e-panel \
   --title "e2e panel run <YYYY-MM-DD>: <slug>" \
-  --body "..."
+  --body-file - <<'EOF'
+...
+EOF
 ```
+
+The body goes in on stdin from a quoted heredoc, so the dollar amounts and
+backticks in it arrive as written. Inside `--body "..."` bash would expand
+`$2.50` to `.50` and run every backticked span.
 
 The date is **today**, the same for all four in the batch, so batches are
 distinguishable in a list and the label query stays exact. Two batches on one day is
 fine — the issue numbers differ, and that is a deliberate ask for eight, not a
 mistake to guard against.
+
+Each body carries its own fixture's time and cost, measured when you file. Read them
+from a checkout whose `main` is current. Do not `git pull` into a working branch, and
+note that a plain `git pull` reads `origin`, which can be a fork. The command reads the
+run logs in the checkout, so the body gives the checkout's short sha
+(`git rev-parse --short HEAD`).
+
+It runs in the harness venv. The fixture's real wall-clock cap comes from `load_fixture`
+in `eval/harness/e2e/orchestrator.py`, the one place a fixture's `caps` override is
+merged over the default. `result_jsons_for` in `eval/harness/e2e/runlog_selection.py`
+already skips `.ann.json` and `.final-*` files:
+
+```sh
+cd eval/harness && uv run python - <slug> <<'PY'
+import json, sys
+from pathlib import Path
+from e2e.orchestrator import load_fixture
+from e2e.runlog_selection import result_jsons_for
+slug = sys.argv[1]
+cap = load_fixture(Path("../tests/e2e") / slug).caps.wall_clock_seconds
+print(f"wall-clock cap: {cap / 60:.0f} min")
+for p in result_jsons_for(slug)[-5:]:
+    d = json.loads(p.read_text(encoding="utf-8"))
+    u = d.get("usage") or {}
+    secs, cost = u.get("wall_clock_seconds"), u.get("total_cost_usd")
+    print(p.stem, "no time" if secs is None else f"{secs / 60:.0f} min",
+          "no cost" if cost is None else f"${cost:.2f}", d.get("stop_reason"))
+PY
+```
+
+Fill the template's placeholders from its output:
+
+- `<per-run minutes>` is the five times, oldest first. `<time range>` is their lowest
+  to highest, rounded outward to 5 min. If any of the five stopped on `timeout`,
+  `inactivity` or `cost_cap`, add one sentence after the list saying which, and when.
+- `<cap>` is the printed wall-clock cap.
+- `<recorded costs>` are the costs that exist. `<k>` is how many of the five recorded
+  none. A run that ends before the SDK's final message (a `timeout` or an `inactivity`
+  stop) records no cost, so the figure is a floor. When `<k>` is 0, drop the sentence
+  that carries it. `<budget>` is the highest recorded cost, rounded up to the next
+  dollar.
+- `<date>` is today. `<sha>` is the checkout's short HEAD.
+
+Leave `<ts>`, `<run date>` and `#N` as written. The runner fills them in. The issue
+number is not known until `gh issue create` has run, and a create-then-edit would be a
+second write on every issue.
 
 Body, short — the guide holds the detail:
 
@@ -104,37 +156,86 @@ Body, short — the guide holds the detail:
 **Touches:** eval/runlogs/e2e/<slug>/
 
 Run the `<slug>` e2e fixture, grade it, and land the run log. Half a day, most of
-it waiting.
+it waiting. Assign yourself when you start.
 
 The fixture is already authored, so this is the short route through
 `docs/e2e-testing-guide.md`: steps **0, 5–9**. Skip 1a/1b/2/3 (authoring) and 4
-(live debugging) — a debug pass only delays the measurement.
+(live debugging); a debug pass only delays the measurement. Run from a freshly
+pulled `main` (step 0). The run log records its own `git_sha`.
 
     make e2e-preflight            # Windows: eval\CheckSetup.bat
     make e2e-login                # Windows: eval\Login.bat   (~24h token)
-    make e2e-run TEST=<slug>      # Windows: eval\RunE2E.bat   20–60 min
+    make e2e-run TEST=<slug>      # Windows: eval\RunE2E.bat
 
-Then in Claude Code, in this checkout:
+**Expect <time range> minutes, and do not kill it.** The last five runs of this
+fixture took <per-run minutes> min, oldest first. Measured <date> at <sha> from
+`usage.wall_clock_seconds` in `eval/runlogs/e2e/<slug>/run-*.json`, read with
+`result_jsons_for` (`eval/harness/e2e/runlog_selection.py`). The harness stops a
+run at its wall-clock cap, <cap> min for this fixture (`caps` in its
+`fixture.json`, default in `FixtureCaps`, `eval/harness/e2e/orchestrator.py`), and
+can run a few minutes past it. It still writes the run log. Cost has no stop:
+`max_cost_usd` only labels a finished run `cost_cap`, and runs have cost well past
+it. A run you abort writes nothing.
 
-    /interpret-e2e-result         # what happened, in plain language
-    /grade-e2e-run                # blind grading -> run-<ts>.ann.json
+Then, in Claude Code in this checkout, **grade first, then interpret** (guide
+step 6). Skip both for a run that stopped on `host_slept` (the landing rule
+below). The interpreter reports which expected findings were recovered, so
+reading it first anchors your grade. CI checks only that the `.ann.json`
+exists, not how it was made, so nothing will catch the wrong order.
 
-If it fails, read `narration[]` alongside `tool_calls[]` before blaming a skill —
-guide step 7. Then one PR carrying `run-<ts>.json`, `run-<ts>.ann.json` and both
-`.final-*` siblings. `check_e2e_fixtures.py` blocks a run log that ships without
-its annotation, so the grading is same-PR by construction. It also blocks a run
-made with the 1M context window (`usage.betas` non-empty), which is not
-comparable to the corpus.
+    /grade-e2e-run                # FIRST, blind -> run-<ts>.ann.json
+    /interpret-e2e-result         # only after the .ann.json is written
 
-Close this issue yourself once that PR merges. Nothing closes it for you — the
-sweep below skips assigned issues, and a run-log PR carries no closing keyword.
+The labels in the `.ann.json` are your judgment as a genealogist. Do not let
+Claude Code propose them or fill them in.
 
-Cost: $5–12 of API spend. `make e2e-latency TEST=<slug>` shows this fixture's own
-last recorded figure.
+**Land the run at whatever verdict it earned: pass, partial, fail, or a cap or
+timeout stop.** A failed panel run is the data point (guide, "The standing
+panel"). This overrides guide step 8's "fix it in Step 4 and re-run" and step 9's
+"commit a passing run", which are for authoring a fixture. Re-run only after an
+environment failure: no `run-<ts>.json` written at all (`mcp_unavailable`, or an
+abort before any file), or a run that stopped on `host_slept` because the
+machine slept. Commit a slept run's three files without grading it, as the
+harness prints, keep the machine awake for the re-run (`eval/README.md`, "Keep
+the machine awake during a run"), and land both runs in one PR, titled for the
+graded one, with a line in its body naming the run that slept. In this PR:
+- No SKILL.md, agent, harness or fixture edits. `fixture.json` and
+  `expected-findings.json` are inside the blind-grading bundle
+  (`eval/harness/e2e/blind_bundle.py`, `bundle_paths`), so editing either one
+  breaks the digest of every earlier `.ann.json` for this fixture.
+- No `/mine-unit-test`. A new unit test makes that skill's run log inactive, and
+  `check_runlogs.py` then blocks the PR until a paid `make eval-skill` run lands.
+  If a failure looks worth mining, say so in a comment on this issue.
+
+If it fails, read `narration[]` alongside `tool_calls[]` before blaming a skill
+(guide step 8). Put what you find in the PR body.
+
+Then open one PR carrying `run-<ts>.json`, `run-<ts>.ann.json` and both `.final-*`
+siblings, titled "<slug>: e2e panel run <run date>, graded (#N)", with
+`Closes #N` in its body, where N is this issue's number. If this issue is still
+open after the PR merges, close it with a link to the PR. After you commit and
+before you push, run the gate the way CI does. With no SHAs set it prints
+`skipped`, which is not a pass. Run before the commit, it checks 0 run logs,
+which is not a pass either. Expect `1 added-or-renamed run log(s) checked`
+(2 with a slept run):
+
+    BASE_SHA="$(git merge-base origin/main HEAD)" HEAD_SHA="$(git rev-parse HEAD)" \
+      python3 eval/harness/scripts/check_e2e_fixtures.py
+
+That gate blocks a run log shipped without its annotation, one made with the 1M
+context window (`usage.betas` non-empty), and one containing a FamilySearch or
+OpenRouter credential.
+
+**Cost:** budget about $<budget> of API spend: the highest cost recorded in this
+fixture's last five runs, rounded up (<recorded costs>). <k> of the five recorded
+no cost, so this is a floor. Measured <date> at <sha> from `usage.total_cost_usd`
+in the same run logs; every new run moves these figures. After you have graded,
+`make e2e-latency TEST=<slug>` shows the latest run, verdict included (Git Bash or
+WSL on Windows; it prints `cost: $None` when none was recorded).
 ```
 
 **Do not paste a run's expected findings into the body.** The grading pass in step
-8 is blind by design, and a body that names the answer corrupts the calibration
+6 is blind by design, and a body that names the answer corrupts the calibration
 number this whole tier rests on.
 
 ## 4. Sweep the panel issues nobody took
@@ -170,8 +271,9 @@ gh issue view <N> --repo PioneerAIAcademy/cowork-genealogy --json closedByPullRe
 
 Neither alone is enough, and both failure modes propose closing work that is in
 flight. `closedByPullRequestsReferences` sees only PRs carrying a **closing
-keyword**, which a panel-run PR has no reason to use. And `in:body` alone misses
-this repo's own convention of naming the issue in the **PR title** — measured:
+keyword**. The template asks for one, but an operator can still leave it out. And
+`in:body` alone misses this repo's own convention of naming the issue in the
+**PR title** — measured:
 PR #2151 is titled "person-evidence becomes a skill-agent pair (#1853)" and
 `--search "1853 in:body"` returns nothing for it, while `in:title,body` finds it.
 
@@ -187,9 +289,12 @@ a sweep.
 ## 5. Verify before you repeat anything
 
 Every number you report comes from a command you ran this session — the coverage
-from `make e2e-panel`, the open issues from `gh`. Do not carry a figure over from
-last week's report, and do not quote a per-run cost median: nothing in this repo
-computes one, so a dollar figure in prose is a hand-maintained copy that rots.
+from `make e2e-panel`, the open issues from `gh`, each fixture's time and cost from
+its own run logs (§3). Do not carry a figure over from last week's report, and do
+not quote a corpus-wide or per-run cost median: nothing in this repo computes one,
+so a dollar figure in prose is a hand-maintained copy that rots. The exception is a
+per-fixture range read from that fixture's own run logs when you file, with the date,
+the checkout's sha and the command in the issue body.
 
 ## Output shape
 

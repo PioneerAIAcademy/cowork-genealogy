@@ -113,14 +113,31 @@ def test_a_judge_crash_outranks_skip_judge():
     assert "judge itself failed" in out
 
 
-def test_the_three_causes_are_mutually_distinguishable():
+def test_a_slept_run_is_not_reported_as_treeless():
+    """A `host_slept` run has a tree; the judge was skipped on purpose (#2974)."""
+    slept = E2eResult(
+        test_id="t", captured_at="2026-08-05_00-00-00", verdict="skipped",
+        stop_reason="host_slept", usage={}, judge_output={},
+    )
+    out = ungradeable_reason(slept)
+    assert "host slept" in out
+    assert "no final tree" not in out
+
+
+def test_the_four_causes_are_mutually_distinguishable():
     """The whole point: #1245 could not be diagnosed because they were not."""
     reasons = {
         ungradeable_reason(_skipped(judge_output={"error": "x"})),
         ungradeable_reason(_skipped(judge_output={})),
         ungradeable_reason(_skipped(judge_output={}), skip_judge=True),
+        ungradeable_reason(
+            E2eResult(
+                test_id="t", captured_at="2026-08-05_00-00-00", verdict="skipped",
+                stop_reason="host_slept", usage={}, judge_output={},
+            )
+        ),
     }
-    assert len(reasons) == 3
+    assert len(reasons) == 4
 
 
 def test_no_grade_is_ever_disclosed():

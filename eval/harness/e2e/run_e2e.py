@@ -9,8 +9,9 @@ Or from the repo root with PYTHONPATH set:
   PYTHONPATH=eval/harness python -m e2e.run_e2e --test <fixture-id>
 
 **One fixture per invocation, by design.** There is deliberately no
-full-suite flag and no tag sweep: a run costs 20-60 minutes and $3-10, so a
-10-fixture sweep is 4-10 hours and $30-100. Anyone who genuinely needs a
+full-suite flag and no tag sweep: a run takes about an hour and single-digit
+dollars, with a long tail (the guide's overview table, row 5, has the measured
+median), so a 10-fixture sweep is ten times that. Anyone who genuinely needs a
 batch drives it with a shell loop and budgets for it explicitly, rather than
 having a one-word flag make that spend easy to trigger by accident.
 """
@@ -125,7 +126,7 @@ def ungradeable_reason(result: E2eResult, *, skip_judge: bool = False) -> str:
     job is explaining what the agent recovered; it is not a blanket ban.
 
     Pure and free of I/O so every arm is testable — `_run_one` cannot be, since
-    it drives a live 20-to-60-minute run.
+    it drives a live run that takes about an hour.
     """
     judge_error = (result.judge_output or {}).get("error")
     if judge_error:
@@ -133,6 +134,12 @@ def ungradeable_reason(result: E2eResult, *, skip_judge: bool = False) -> str:
             f"the judge itself failed ({judge_error}) — the agent's work and its "
             "tree are intact, so this can be re-graded without re-running the "
             "research"
+        )
+    if result.stop_reason == "host_slept":
+        return (
+            "the host slept past the inactivity cap, so the judge was skipped on "
+            "purpose; the tree is intact, but grading it would measure the power "
+            "settings, not the agent"
         )
     if skip_judge:
         return "--skip-judge was passed, so no grade was requested"
@@ -184,12 +191,14 @@ async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
         print(
             "  host slept past the inactivity cap — run excluded from rates, "
             "not graded.\n"
-            "  Commit the run log so the drop is visible; there is no .ann.json."
+            "  Commit its three files so the drop is visible; there is no .ann.json.\n"
+            "  Keep the machine awake (eval/README.md, \"Keep the machine awake "
+            "during a run\") and re-run."
         )
     elif is_committable_run(result.verdict, result.stop_reason):
         print(
-            "  Next: /interpret-e2e-result to see what it recovered, then "
-            "/grade-e2e-run to grade it.\n"
+            "  Next: /grade-e2e-run to grade it blind, then /interpret-e2e-result "
+            "to see what it recovered.\n"
             "  Commit the run log + its .ann.json together before landing."
         )
     else:
