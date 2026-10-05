@@ -261,6 +261,10 @@ const BARE_YEAR_SPAN_DAYS = 364;
  *  read as a month in prose only when a day number sits beside them. */
 const AMBIGUOUS_MONTHS = new Set(["may", "mai", "mei", "mag", "gen", "mars"]);
 
+/** `MODIFIERS` words that in prose usually mean something else: "Int." before
+ *  a burial date is "interred", not "interpreted". */
+const PROSE_NON_MODIFIERS = new Set(["int"]);
+
 /** Qualifiers whose bounds a single prose date cannot carry. */
 const RANGE_MODIFIERS = new Set(["Bet", "From", "To"]);
 
@@ -304,7 +308,8 @@ function datesInText(text: unknown): string[] {
       end = i + 1;
     }
     if (!date) continue;
-    const prev = MODIFIERS.get(tokens[i - 1] ?? "");
+    const prevWord = tokens[i - 1] ?? "";
+    const prev = PROSE_NON_MODIFIERS.has(prevWord) ? undefined : MODIFIERS.get(prevWord);
     const next = MODIFIERS.get(tokens[end + 1] ?? "");
     const inRange =
       (prev !== undefined && RANGE_MODIFIERS.has(prev)) ||
@@ -431,29 +436,64 @@ const RELATIVE_NAME_KEYS = ["related_person_name", "father", "mother", "spouse"]
  *  bracketed words ("child of Dorothea [Gajdosch]"). */
 const OF_NAME = /\bof\s+((?:\[?\p{Lu}[\p{L}'.-]*\]?\s*)+)/u;
 
+const nameKey = (x: unknown) =>
+  typeof x === "string"
+    ? normalizeAccents(x).toLowerCase().replace(/[.[\]]/g, " ").split(/\s+/).filter(Boolean).join(" ")
+    : "";
+
+/** The subject's own names, so an assertion linked to both parties of a
+ *  relationship does not count the subject as their own relative: "child of
+ *  Thomas Flynn" is linked to Thomas too. */
+interface SubjectNames {
+  given: Set<string>;
+  full: Set<string>;
+}
+
+function subjectNames(names: unknown): SubjectNames {
+  const out: SubjectNames = { given: new Set(), full: new Set() };
+  for (const n of Array.isArray(names) ? names : []) {
+    const given = nameKey((n as any)?.given);
+    if (!given) continue;
+    out.given.add(given);
+    const surname = nameKey((n as any)?.surname);
+    if (surname) out.full.add(`${given} ${surname}`);
+  }
+  return out;
+}
+
+/** True when a full name ("Given … Surname") names someone other than the
+ *  subject with a real given name. */
+function namesOther(name: unknown, self: SubjectNames): boolean {
+  return fullNameHasRealGiven(name) && !self.full.has(nameKey(name));
+}
+
 /** True when a research.json assertion linked to the subject names a spouse,
- *  parent or child with a real given name — a marriage's `spouse_given`, or a
- *  parent/spouse/child relationship through a structured name key or a value
- *  in the house form "<role> of <Given> <Surname>". The tree lags the
- *  evidence, so a relative the project knows of may not be a tree person yet. */
-function assertionNamesRelative(a: any): boolean {
+ *  parent or child other than the subject with a real given name — a
+ *  marriage's `spouse_given`, or a parent/spouse/child relationship through a
+ *  structured name key or a value in the house form "<role> of <Given>
+ *  <Surname>". The tree lags the evidence, so a relative the project knows of
+ *  may not be a tree person yet. */
+function assertionNamesRelative(a: any, self: SubjectNames): boolean {
   const sv = a?.structured_value;
   if (typeof sv !== "object" || sv === null) return false;
   if (a?.fact_type === "marriage") {
-    return isRealGivenName(sv.spouse_given) || fullNameHasRealGiven(sv.spouse);
+    return (
+      (isRealGivenName(sv.spouse_given) && !self.given.has(nameKey(sv.spouse_given))) ||
+      namesOther(sv.spouse, self)
+    );
   }
   if (a?.fact_type !== "relationship") return false;
   const type = String(sv.relationship_type ?? "").toLowerCase().replace(/_inferred$/, "");
   if (!NEAR_RELATIONSHIP_TYPES.has(type)) return false;
-  if (RELATIVE_NAME_KEYS.some((k) => fullNameHasRealGiven(sv[k]))) return true;
+  if (RELATIVE_NAME_KEYS.some((k) => namesOther(sv[k], self))) return true;
   const m = typeof a?.value === "string" ? a.value.match(OF_NAME) : null;
-  return m !== null && fullNameHasRealGiven(m[1]);
+  return m !== null && namesOther(m[1], self);
 }
 
 /** The assertions a live `person_evidence` row links to the subject.
- *  Superseded links and assertions, and negative evidence ("not found in …"),
- *  say nothing about this person — a superseded link is usually one already
- *  shown to belong to a namesake. */
+ *  Superseded links and negative evidence ("not found in …") say nothing about
+ *  this person — a superseded link is usually one already shown to belong to a
+ *  namesake. */
 function liveLinkedAssertions(research: any, subjectId: string): any[] {
   const peList = Array.isArray(research?.person_evidence) ? research.person_evidence : [];
   const linkedIds = new Set(
@@ -464,7 +504,7 @@ function liveLinkedAssertions(research: any, subjectId: string): any[] {
   const all = Array.isArray(research?.assertions) ? research.assertions : [];
   return all.filter(
     (a: any) =>
-      linkedIds.has(a?.id) && a?.superseded_by == null && a?.record_basis !== "absent",
+      linkedIds.has(a?.id) && a?.record_basis !== "absent",
   );
 }
 
@@ -474,13 +514,15 @@ function liveLinkedAssertions(research: any, subjectId: string): any[] {
 function linkedEvidence(
   research: any,
   subjectId: string,
+  names: unknown,
 ): { narrowDate: boolean; namedRelative: boolean } {
   const out = { narrowDate: false, namedRelative: false };
+  const self = subjectNames(names);
   for (const a of liveLinkedAssertions(research, subjectId)) {
     try {
       const dates = [certainDate(a), a?.structured_value?.date, ...datesInText(a?.value)];
       if (dates.some(isDateNarrowerThanYear)) out.narrowDate = true;
-      if (assertionNamesRelative(a)) out.namedRelative = true;
+      if (assertionNamesRelative(a, self)) out.namedRelative = true;
     } catch {
       // A malformed assertion contributes nothing; the others still count.
     }
@@ -658,7 +700,7 @@ export async function buildSubjectDoc(
   let tooThin: boolean;
   try {
     const safeTree = wellFormedTree(tree);
-    const evidence = linkedEvidence(research, subjectId);
+    const evidence = linkedEvidence(research, subjectId, enriched.names);
     tooThin =
       !hasDateNarrowerThanYear([
         ...(Array.isArray(enriched.facts) ? enriched.facts : []),

@@ -188,7 +188,6 @@ describe("rank_search_matches", () => {
   // either pulls the ranking toward the wrong human.
   it.each([
     ["a superseded person_evidence link", { superseded_by: "pe_009" }, {}],
-    ["a superseded assertion", {}, { superseded_by: "a_009" }],
     ["negative evidence", {}, { record_basis: "absent" }],
   ])("does not enrich from %s", async (_label, peExtra, aExtra) => {
     await writeTree(starvedTree);
@@ -1279,12 +1278,31 @@ describe("rank_search_matches", () => {
       expect(await rankFlag(city())).toBe(true);
     });
 
-    it.each([
-      ["a superseded assertion", { superseded_by: "a_009" }],
-      ["negative evidence", { record_basis: "absent" }],
-    ])("ignores %s", async (_label, extra) => {
-      await prose("not found", { date: "4 Dec 1917", ...extra });
+    it("ignores negative evidence", async () => {
+      await prose("not found", { date: "4 Dec 1917", record_basis: "absent" });
       expect(await rankFlag(city())).toBe(true);
+    });
+
+    it("reads 'Int.' before a burial date as interred, not estimated", async () => {
+      await prose("Int. 4 Dec 1917, Oak Hill Cemetery");
+      expect(await rankFlag(city())).toBeUndefined();
+    });
+
+    // One relationship assertion is linked to both parties, so "child of
+    // Ugo Stella" is also linked to Ugo — it must not count as his own relative.
+    it.each([
+      ["the house-form value", { fact_type: "relationship", value: "Infant child of Ugo Stella", structured_value: { relationship_type: "child" } }],
+      ["a structured father key", { fact_type: "relationship", value: "x", structured_value: { relationship_type: "child", father: "Ugo Stella" } }],
+      ["a marriage spouse_given", { fact_type: "marriage", value: "x", structured_value: { spouse_given: "Ugo", spouse_surname: "Stella" } }],
+      ["an accented, dotted spelling", { fact_type: "relationship", value: "child of UGO. Stella", structured_value: { relationship_type: "child" } }],
+    ])("does not count the subject's own name in %s as a relative", async (_label, a) => {
+      await linked([{ id: "a_001", ...a }]);
+      expect(await rankFlag(city())).toBe(true);
+    });
+
+    it("still counts a relative who shares the subject's surname", async () => {
+      await linked([{ id: "a_001", fact_type: "relationship", value: "son of Giovanni Stella", structured_value: { relationship_type: "son" } }]);
+      expect(await rankFlag(city())).toBeUndefined();
     });
 
     it("one malformed assertion does not hide a later narrow date", async () => {

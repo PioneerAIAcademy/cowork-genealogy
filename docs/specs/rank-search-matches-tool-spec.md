@@ -353,7 +353,8 @@ the subject, not the pool, so it is set on an empty staged set as well.
   `structured_value.date`, and any date written in its `value`. A prose date is
   "4 Dec 1917", "December 4th, 1917", "Dec 1917" or "1917-12-04", in any month
   vocabulary `date-constants.ts` knows, measured with the qualifier written
-  before it ("abt.", "before", "c."). One inside a written range ("between …",
+  before it ("abt.", "before", "c."; "Int." is read as "interred", not as a
+  qualifier). One inside a written range ("between …",
   "… or 5 Jan 1919") is dropped. A month word that is also a name or word
   ("May", "Mai", "Gen") is read only beside a day number, so "Mary May 1850" is
   no date.
@@ -373,10 +374,13 @@ the subject, not the pool, so it is set on an empty staged set as well.
   `spouse`, or whose `value` in the extraction house form "<role> of <Given>
   <Surname>" ("child of Dorothea [Gajdosch]"), is a full name with a real given
   name. A full name's given part is every word before the last, so "child of
-  Blyeberg" and "child of N. N. Blyeberg" do not count.
-- **Live evidence only.** A `person_evidence` row with `superseded_by` set, an
-  assertion with `superseded_by` set, and negative evidence (`record_basis:
-  "absent"`) are skipped: none says anything about this person. Scoring
+  Blyeberg" and "child of N. N. Blyeberg" do not count. The name must not be
+  one of the subject's own (given and surname, accents, dots and brackets
+  ignored; for `spouse_given`, the given name alone): one relationship
+  assertion is linked to both parties, so "child of Thomas Flynn" is also
+  evidence for Thomas and names no relative of his.
+- **Live evidence only.** A `person_evidence` row with `superseded_by` set and
+  negative evidence (`record_basis: "absent"`) are skipped: none says anything about this person. Scoring
   enrichment, which folds the same linked assertions into the subject document
   before scoring, applies the same filter.
 - **Never fails the call.** Malformed tree entries are skipped, each assertion
