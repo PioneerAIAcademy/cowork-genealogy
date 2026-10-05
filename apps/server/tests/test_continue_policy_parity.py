@@ -130,9 +130,9 @@ def test_the_shared_copy_is_the_one_with_the_new_clauses(copies):
     reds instead. The three flags are 1b's and 1c's whole mechanism.
 
     The sweep above only exercises the harness's 5-parameter signature, so a clause
-    that exists ONLY in the shared copy is invisible to it by construction -- this
-    test is the sole compensator, and any new shared-only clause has to be added here
-    by hand or it is unguarded."""
+    that exists ONLY in the shared copy would be invisible to it by construction, and
+    this test is the sole compensator: any such clause has to be added here by hand or
+    it is unguarded."""
     shared, _ = copies
     base = dict(research=None, nudges_used=0, max_nudges=5, tool_count=0,
                 tool_count_at_last_nudge=-1)

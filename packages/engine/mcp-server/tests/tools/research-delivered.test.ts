@@ -37,6 +37,8 @@ describe("research_delivered", () => {
     // calling it instead of asking a question (an ask waits, a delivery does not).
     const d = researchDeliveredSchema.description.toLowerCase();
     expect(d).toContain("objective");
-    expect(d).toMatch(/ask|question/);
+    // NOT /ask|question/: both match elsewhere in the description, so that assertion
+    // cannot fail. Pin the clause itself.
+    expect(d).toContain("do not use it to ask");
   });
 });

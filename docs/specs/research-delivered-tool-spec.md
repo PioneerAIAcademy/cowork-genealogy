@@ -1,6 +1,8 @@
 # `research_delivered` tool spec
 
-**Status:** LIVE. Carrier ruled by the lead, 2026-09-29.
+**Status:** LIVE. Carrier ruled by the **user**, 2026-09-29 (recorded in commit
+`c7b63b350`: "Ruled (user, 2026-09-29): a second dedicated tool, not AskUserQuestion").
+Not a lead ruling: CLAUDE.md reserves `(lead, …)` for a call Dallan answered himself.
 
 ## What it is
 
@@ -47,6 +49,11 @@ tools on purpose.
   (`mcp__genealogy__research_delivered`) and ends the turn **before the tool body runs**.
   The turn's `outcome` is `delivered` and the browser renders "Done — that's what you asked
   for. Send a message to carry on." Nothing reads the tool's return value.
+- **The hosted ALPHA (`real_agent.py`).** It registers the same MCP server, so the tool is
+  advertised and callable there, but it has neither `DELIVERY_GUIDANCE` nor a hook arm: its
+  Stop hook vetoes the exit like any other yield, and alpha testers keep phase-1 behaviour
+  until the alpha is retired (ruled: `docs/plan/research-as-a-job-later.md`, "Before phase 2").
+  A call there is the inert acknowledgement below, not a stop.
 - **Cowork and the e2e harness.** No such hook binds, and the tool IS advertised (the
   e2e orchestrator binds the real engine server and grants `mcp__genealogy` as a
   server-prefix wildcard). So it must not error and must not claim an effect it did not

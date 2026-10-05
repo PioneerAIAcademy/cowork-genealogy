@@ -4281,7 +4281,10 @@ def test_the_instruction_draws_both_boundaries():
     delivery waits for nothing)."""
     lowered = options.DELIVERY_GUIDANCE.lower()
     assert "objective" in lowered, "must exclude the project-complete case"
-    assert "question" in lowered or "ask" in lowered, "must exclude the ask case"
+    # NOT `"question" in lowered or "ask" in lowered`: "ask" lives inside "asked" and
+    # "question" inside "status question", BOTH in the guidance's positive half, so that
+    # assertion cannot fail. Same collision shape as the "search"/"re-SEARCH" one above.
+    assert "in place of asking" in lowered, "must exclude the ask case"
 
 
 def test_a_turn_that_delivers_is_recorded_as_delivered(turn_env):
@@ -4706,3 +4709,45 @@ def test_worker_tables_include_the_grant_tables():
     """acquire_grant reads projects.owner_id and familysearch_tokens; /healthz must fail on a
     database missing either rather than every turn failing at its first attempt."""
     assert {"projects", "familysearch_tokens"} <= set(worker.WORKER_TABLES)
+
+
+def test_a_stop_dispatched_after_a_delivery_does_not_relabel_the_turn(turn_env, monkeypatch):
+    """`terminal["halted"] = True` in on_delivered is what lets the Stop hook ALLOW the
+    stop after a delivery instead of vetoing it. Deleting that line leaves every other
+    worker test green, so it needs its own.
+
+    Same trap as the spend-cap version above: if `on_allow` overwrote the reason, a turn
+    that delivered would be recorded and rendered as "you pressed Stop"."""
+    monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
+    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
+    summary = _run(turn_env, [
+        _init(), ToolCall(options.DELIVERED_TOOL), StopDispatch(), _text("x"),
+        _result(num_turns=2),
+    ])
+    assert turn_env["client"].stops == [{}], "the Stop hook vetoed instead of allowing the stop"
+    assert summary["outcome"] == "delivered"
+    row = next(p for sql, p in turn_env["conn"].executed
+               if sql.startswith("UPDATE turns SET completed_at"))
+    assert row[0] == "delivered", "the row keeps the delivery's own reason"
+
+
+def test_the_main_thread_gate_is_membership_not_truthiness():
+    """The comment on that gate calls the membership test load-bearing, and it is: a
+    subagent whose `agent_id` is falsy (None, "") is still a subagent. A truthiness test
+    (`not data.get("agent_id")`) passes the whole existing suite, so this pins the rule
+    with the one shape that separates them."""
+    halted: list[str] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda row: None, on_delivered=lambda: halted.append("x"),
+    )
+    out = asyncio.run(hook(
+        {"tool_name": options.DELIVERED_TOOL, "tool_input": {"summary": "s"},
+         "agent_id": None, "agent_type": "record-extractor"},
+        "u1", None,
+    ))
+    assert out.get("continue_") is not False, (
+        "agent_id present but falsy is STILL a subagent -- a truthiness test lets it "
+        "end the researcher's turn"
+    )
+    assert halted == []

@@ -334,7 +334,9 @@ DELIVERED_TOOL = "mcp__genealogy__research_delivered"
 # `delivered` where `completed` is true and the run ends on its own. Calling it instead of
 # asking would swallow a question nobody answers -- an ask waits, a delivery does not.
 DELIVERY_GUIDANCE = (
-    "When this message asked for one bounded thing and you have produced it, call "
+    "When this message asked for one bounded thing and you have produced it, WRITE YOUR "
+    "REPLY FIRST -- this call ends the turn, so nothing you say after it reaches the "
+    "researcher -- then call "
     "`research_delivered` with a one-sentence summary and stop: a plan the researcher "
     "asked you to stop after, a single record or lookup, or a status question such as "
     "\"where are we?\". Do not call it when the project's research objective itself is "
@@ -344,8 +346,8 @@ DELIVERY_GUIDANCE = (
 )
 
 DELIVERED_REASON = (
-    "You have delivered what this message asked for. Stopping here rather than carrying on: "
-    "the work is saved, and the researcher's next message picks up from it."
+    "You have delivered what this message asked for. Stopping here rather than carrying "
+    "on; your next message picks up from here."
 )
 
 
@@ -472,7 +474,10 @@ def make_pretool_hook(
             if log is not None:
                 log(ev="delivered", turn_id=turn_id, tool_name=tool_name,
                     tool_use_id=tool_use_id, summary=summary)
-            return _halt(f"{DELIVERED_REASON} Delivered: {summary}" if summary
+            # Summary FIRST: the browser replaces the chip with the result text cut at
+            # 160 chars, and DELIVERED_REASON alone is 157 -- appended, the summary is
+            # lost. What the researcher most needs to see leads.
+            return _halt(f"Delivered: {summary} {DELIVERED_REASON}" if summary
                          else DELIVERED_REASON)
         try:
             protected = direct_project_file_write(tool_name, tool_input)
