@@ -293,9 +293,9 @@ it every audit re-derives the same groups from prose, which is the single most
 expensive part of this pass, and nothing between runs can see a cluster at all.
 
 ```sh
-gh label create "cluster:guardrail" --repo PioneerAIAcademy/cowork-genealogy \
-  --color C5DEF5 --description "Guardrail compliance detectors — sequenced together" || true
-gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --add-label "cluster:guardrail"
+gh label create "cluster:<name>" --repo PioneerAIAcademy/cowork-genealogy \
+  --color C5DEF5 --description "<what binds the cluster>" || true
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --add-label "cluster:<name>"
 ```
 
 Keep the set small — four or five live clusters, named for what binds them. A
