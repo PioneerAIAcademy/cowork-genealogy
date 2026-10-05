@@ -13,7 +13,7 @@ committed result JSON (see e2e/result.py):
   - ``usage.duration_api_ms``  — cumulative time awaiting the model API
   - ``usage.num_turns``        — assistant turns
   - ``usage.usage.output_tokens`` (and input / cache counters)
-  - ``usage.timeline``         — ``[[elapsed_s, kind, tool_names], ...]`` per SDK
+  - ``usage.timeline``         — ``[[elapsed_s, kind, tool_names, wall_ts, message_id], ...]`` per SDK
                                  message, kind ∈ {assistant, tool_result, system:*,
                                  result}. ``tool_names`` (added 2026-07-26) is the
                                  list of ``_timeline_tool_label``-formatted names
