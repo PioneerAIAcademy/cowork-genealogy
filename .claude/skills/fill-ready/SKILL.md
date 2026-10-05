@@ -151,7 +151,7 @@ normally.
 
 **Exclude `label:contributor` from the Backlog and Ready when ranking and when
 counting the pools.** Those cards are reserved for the Contributors
-(`docs/contributor-program.md`), who take them in their own order.
+(`docs/contributor-program.md`); their mentors hand them out.
 
 **Exclude `label:needs-decision` from the Backlog when ranking**, senior or not.
 The lead answers them in `/make-decisions`; the label coming off is what makes

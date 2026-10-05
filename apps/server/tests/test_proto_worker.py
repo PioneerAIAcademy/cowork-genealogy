@@ -104,7 +104,7 @@ PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
-AGENTS = {"check-warnings", "citation", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "locality-guide", "person-evidence", "proof-conclusion", "record-extractor", "research-exhaustiveness", "search-familysearch-wiki", "search-images", "search-wikipedia", "translation", "tree-edit", "validate-schema"}
+AGENTS = {"check-warnings", "citation", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "locality-guide", "person-evidence", "project-status", "proof-conclusion", "question-selection", "record-extractor", "research-exhaustiveness", "search-familysearch-wiki", "search-images", "search-wikipedia", "translation", "tree-edit", "validate-schema"}
 
 
 # ── fakes ─────────────────────────────────────────────────────────────────────────
@@ -811,27 +811,27 @@ def _info(agents: set[str], skills: int, extra_agents: tuple[str, ...] = ()) -> 
 
 
 def test_registration_passes_with_every_bare_agent_and_every_skill():
-    assert options.check_registration(_info(AGENTS, 14, ("general-purpose", "genealogy-research:gps-mentor")),
-                                      expected_agents=AGENTS, expected_skills=14) == []
+    assert options.check_registration(_info(AGENTS, 12, ("general-purpose", "genealogy-research:gps-mentor")),
+                                      expected_agents=AGENTS, expected_skills=12) == []
 
 
 def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
-    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 14, ("genealogy-research:gps-mentor",)),
-                                          expected_agents=AGENTS, expected_skills=14)
+    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 12, ("genealogy-research:gps-mentor",)),
+                                          expected_agents=AGENTS, expected_skills=12)
     assert problems and "gps-mentor" in problems[0] and "bare" in problems[0]
-    problems = options.check_registration(_info(AGENTS, 13), expected_agents=AGENTS, expected_skills=14)
-    assert problems == ["13 genealogy-research:* commands registered, expected 14"]
-    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=14)
+    problems = options.check_registration(_info(AGENTS, 11), expected_agents=AGENTS, expected_skills=12)
+    assert problems == ["11 genealogy-research:* commands registered, expected 12"]
+    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=12)
 
 
-def test_the_plugin_ships_eighteen_agents_and_fourteen_skills():
+def test_the_plugin_ships_twenty_agents_and_twelve_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
-    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 14
+    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 12
     # A literal in the source, not an expression over the plugin dir (the mutation the
     # review named: both sides of the check shrinking together).
-    assert "\nEXPECTED_SKILLS = 14\n" in Path(worker.__file__).read_text(encoding="utf-8")
+    assert "\nEXPECTED_SKILLS = 12\n" in Path(worker.__file__).read_text(encoding="utf-8")
 
 
 def test_expected_agents_is_the_shipped_set():
@@ -854,7 +854,7 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
     loaded = set(load_agent_definitions(copy))
     assert loaded == AGENTS - {"gps-mentor"} and loaded != worker.EXPECTED_AGENTS
     agents, error = worker.load_plugin_agents(str(copy))
-    assert agents is None, "seventeen agents must not become the expectation"
+    assert agents is None, "nineteen agents must not become the expectation"
     assert error == f"plugin agents ['gps-mentor'] missing under {copy}/agents"
     # An agent the plugin does not ship is named too (the name is the frontmatter's,
     # not the file's), so a mis-typed `name:` shows both halves.
@@ -866,24 +866,24 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
 
 
 def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
-    # Eighteen agents and 14 skills registered: clean. Seventeen, or 13: the miss, whatever loaded --
+    # Twenty agents and 12 skills registered: clean. Nineteen, or 11: the miss, whatever loaded --
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
-    assert worker.registration_problems(_info(AGENTS, 14)) == []
-    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 14, ("genealogy-research:gps-mentor",)))
+    assert worker.registration_problems(_info(AGENTS, 12)) == []
+    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 12, ("genealogy-research:gps-mentor",)))
     assert problems == ["agents not registered under their bare names: ['gps-mentor']"]
-    assert worker.registration_problems(_info(AGENTS, 13)) == ["13 genealogy-research:* commands registered, expected 14"]
+    assert worker.registration_problems(_info(AGENTS, 11)) == ["11 genealogy-research:* commands registered, expected 12"]
     import inspect
 
     assert list(inspect.signature(worker.registration_problems).parameters) == ["info"]
     # The mutation the first build let through: a plugin copy short one skill folder
-    # registers 13, and a count of that same copy would have expected 13.
+    # registers 11, and a count of that same copy would have expected 11.
     copy = tmp_path / "plugin"
     shutil.copytree(PLUGIN_DIR / "skills", copy / "skills")
     shutil.rmtree(next(d for d in sorted((copy / "skills").iterdir()) if (d / "SKILL.md").is_file()))
-    assert worker.count_skills(str(copy)) == 13
+    assert worker.count_skills(str(copy)) == 11
     assert worker.registration_problems(_info(AGENTS, worker.count_skills(str(copy)))) == [
-        "13 genealogy-research:* commands registered, expected 14"
+        "11 genealogy-research:* commands registered, expected 12"
     ]
 
 
@@ -1124,7 +1124,12 @@ def test_worker_dockerfile_shape():
     text = DOCKERFILE.read_text(encoding="utf-8")
     body = "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#"))
     assert re.search(r"^FROM ubuntu:24\.04", body, re.M)
-    assert "claude-agent-sdk==0.2.128" in body and "psycopg[binary]" in body
+    # U12: the pins are the proto-worker group's export from uv.lock, installed in hash
+    # mode (test_proto_config checks the export is current and the install shape).
+    assert re.search(r"^COPY apps/server/proto/worker/requirements\.txt\s", body, re.M)
+    requirements = (PROTO / "worker" / "requirements.txt").read_text(encoding="utf-8")
+    assert re.search(r"^claude-agent-sdk==0\.2\.128 ", requirements, re.M)
+    assert re.search(r"^psycopg==", requirements, re.M) and re.search(r"^psycopg-binary==", requirements, re.M)
     # The tools are the `tools` service; the SDK wheel's CLI is a native binary.
     assert not re.search(r"\b(node|nodejs|npm)\b", body), "the worker image carries no Node"
     assert "packages/engine/mcp-server" not in body, "the worker image carries no engine"
@@ -1133,9 +1138,10 @@ def test_worker_dockerfile_shape():
     # Every proto module the worker imports (enqueue.py, grants.py) must be COPYed: the
     # image copies proto/ selectively. test_proto_config's
     # test_images_carry_every_proto_module_they_import is that guard, for both images.
-    # U7: enqueue.py imports botocore at module scope to sign. Without it on the pip line
+    # U7: enqueue.py imports botocore at module scope to sign. Without it in the requirements
     # the worker exits at start with QUEUE_URL set; the venv has it, so nothing else sees.
-    assert re.search(r'"botocore==[0-9.]+"', body), "the worker image must install botocore (enqueue.py signs with it)"
+    assert re.search(r"^botocore==[0-9.]+ ", requirements, re.M), \
+        "the worker image must install botocore (enqueue.py signs with it)"
     assert re.search(r"mkdir -p /project", body)
     assert "tokens.json" not in body
     # The one place a key becomes an image layer: compose interpolates it at run time,
@@ -1365,7 +1371,7 @@ def turn_env(monkeypatch, tmp_path):
 
 
 def _run(state: dict, messages: list[Any], info: dict | None = None, *, receive_count: int = 1) -> dict:
-    state["client"] = FakeClient(messages, _info(AGENTS, 14) if info is None else info, state)
+    state["client"] = FakeClient(messages, _info(AGENTS, 12) if info is None else info, state)
     return asyncio.run(worker.run_turn(TURN, receive_count, SID, agents={"gps-mentor": object()}))
 
 
@@ -1465,7 +1471,7 @@ def _run_passes(
     ``receive_count`` > 1 (the shim redelivered this message); the default is the D17
     shape, a second delivery of a resumed turn."""
     state["entries"] = entries
-    state["client"] = TwoPassClient(streams, _info(AGENTS, 14), state)
+    state["client"] = TwoPassClient(streams, _info(AGENTS, 12), state)
     return asyncio.run(worker.run_turn(TURN, receive_count, SID, agents={"gps-mentor": object()}))
 
 
@@ -2997,7 +3003,7 @@ def test_turn_max_nudges_prefers_the_body_and_falls_back_on_anything_unusable(me
 def test_run_turn_takes_the_caps_from_the_message_over_the_module_global(turn_env, monkeypatch):
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 0)
     turn = {**TURN, "message": {**TURN["message"], "max_nudges": 60}}
-    turn_env["client"] = FakeClient(_good(), _info(AGENTS, 14), turn_env)
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, 12), turn_env)
     summary = asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
     assert callable(turn_env["options"]["stop_hook"]), \
         "the browser's turn arms the Stop hook even though the worker's own cap is 0"
@@ -3008,7 +3014,7 @@ def test_run_turn_takes_the_caps_from_the_message_over_the_module_global(turn_en
     # container and the value rides the message.
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
     turn = {**TURN, "message": {**TURN["message"], "max_nudges": 0}}
-    turn_env["client"] = FakeClient(_good(), _info(AGENTS, 14), turn_env)
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, 12), turn_env)
     summary = asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
     assert turn_env["options"]["stop_hook"] is None and summary["max_nudges"] == 0
 
@@ -3085,7 +3091,7 @@ class NudgingClient(FakeClient):
 
 def test_two_vetoes_land_on_the_turns_row_and_in_the_summary(turn_env, monkeypatch):
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 5)
-    turn_env["client"] = NudgingClient(_info(AGENTS, 14), turn_env)
+    turn_env["client"] = NudgingClient(_info(AGENTS, 12), turn_env)
     summary = asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
     assert summary["nudges"] == 2
     sql, params = next((s, p) for s, p in turn_env["conn"].executed if s.startswith("UPDATE turns SET completed_at"))
@@ -3755,6 +3761,8 @@ class SilentPostgres:
     """A local listener that accepts and never answers: a blackholed Postgres, no
     network. ``accepted`` counts the connections the probes opened."""
 
+    hang_up = False
+
     def __init__(self) -> None:
         self.sock = socket.socket()
         self.sock.bind(("127.0.0.1", 0))
@@ -3773,7 +3781,10 @@ class SilentPostgres:
                 continue
             except OSError:
                 return
-            self.accepted.append(conn)
+            if self.hang_up:
+                conn.close()
+            else:
+                self.accepted.append(conn)
 
     @property
     def dsn(self) -> str:
@@ -3793,7 +3804,20 @@ def silent_pg():
     pg.close()
 
 
-REFUSED_DSN = "postgresql://probeuser:secretpw@127.0.0.1:1/proto"
+class RefusingPostgres(SilentPostgres):
+    """A local listener that hangs up on every connection at once: a Postgres that is down
+    and says so fast on every OS. Port 1 is not that on Windows, which retries a refused
+    loopback connect for about two seconds, past ``READY_TIMEOUT_S``."""
+
+    hang_up = True
+
+
+@pytest.fixture
+def refused_pg():
+    pg = RefusingPostgres()
+    yield pg
+    pg.close()
+
 
 
 @contextlib.contextmanager
@@ -3841,9 +3865,9 @@ def _ready(monkeypatch, tmp_path, *, postgres_ok: bool = True) -> None:
         monkeypatch.setattr(worker, "probe_postgres", lambda dsn, timeout_s=None: {"ok": True})
 
 
-def test_healthz_is_503_when_postgres_refuses(monkeypatch, tmp_path):
+def test_healthz_is_503_when_postgres_refuses(monkeypatch, tmp_path, refused_pg):
     _ready(monkeypatch, tmp_path, postgres_ok=False)
-    monkeypatch.setattr(worker, "PG_DSN", REFUSED_DSN)
+    monkeypatch.setattr(worker, "PG_DSN", refused_pg.dsn)
     logged: list[dict] = []
     monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
     status, body, raw = _healthz()
@@ -4243,7 +4267,7 @@ def test_run_turn_bears_the_grant_not_the_message(turn_env):
     """The queue body persists in turns.message and the DLQ and anyone who can enqueue writes
     it, so a token in it is both a leak and an impersonation. The bearer is the grant's."""
     turn = {**TURN, "message": {**TURN["message"], "fs_access_token": "attacker"}}
-    turn_env["client"] = FakeClient(_good(), _info(AGENTS, 14), turn_env)
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
     asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
     assert turn_env["options"]["bearer"] == "grant-token"
     assert "fs_access_token" not in turn_env["options"]
@@ -4255,14 +4279,14 @@ def test_a_redelivered_attempt_bears_the_grant_refreshed_between_attempts(turn_e
     read the grant again -- not reuse the body, which is identical across receives."""
     bodies, bearers = [], []
     turn_env["grant"] = lambda: FakeHeld(turn_env, token="token-A")
-    turn_env["client"] = FakeClient([_init(), _text("x")], _info(AGENTS, 14), turn_env)  # killed: no result
+    turn_env["client"] = FakeClient([_init(), _text("x")], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)  # killed: no result
     with pytest.raises(RuntimeError, match="without a ResultMessage"):
         asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
     bodies.append(json.dumps(TURN["message"], sort_keys=True))
     bearers.append(turn_env["options"]["bearer"])
     turn_env["grant"] = lambda: FakeHeld(turn_env, token="token-A-prime")  # the web tier refreshed
     turn_env["entries"] = True
-    turn_env["client"] = FakeClient([_init(), ToolCall(), _text("x"), _result(num_turns=2)], _info(AGENTS, 14), turn_env)
+    turn_env["client"] = FakeClient([_init(), ToolCall(), _text("x"), _result(num_turns=2)], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
     asyncio.run(worker.run_turn(TURN, 2, SID, agents={"gps-mentor": object()}))
     bodies.append(json.dumps(TURN["message"], sort_keys=True))
     bearers.append(turn_env["options"]["bearer"])
@@ -4316,7 +4340,7 @@ def test_grant_wait_timeout_answers_500_and_closes_on_the_last_receive(turn_env,
 def test_the_grant_lock_outlives_the_cli(turn_env, messages):
     """The lock is released only once client.disconnect() has killed the CLI bearing the
     token: released earlier, a refresh could revoke it under a CLI still running."""
-    turn_env["client"] = FakeClient(messages, _info(AGENTS, 14), turn_env)
+    turn_env["client"] = FakeClient(messages, _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
     with contextlib.suppress(RuntimeError):
         asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
     assert turn_env["events"] == ["disconnect", "held.close"]

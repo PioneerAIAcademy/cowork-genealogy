@@ -148,3 +148,87 @@ def test_worker_listens_and_answers_503_with_postgres_down(tmp_path):
         assert code == 0, "the schema thread backing off must not hold the process open"
     finally:
         _stop(proc)
+
+
+# U12 D27: the plugin hook's interpreter. check_hook_python takes the interpreter's
+# directory as an argument, so these run on temporary directories rather than by
+# shadowing PATH -- a venv's bin/ always carries a python3, so only exe_dir can fail.
+
+def _fake_python3(directory: Path, version: str) -> Path:
+    directory.mkdir(parents=True, exist_ok=True)
+    exe = directory / "python3"
+    exe.write_text(f"#!/bin/sh\necho {version}\n", encoding="utf-8")
+    exe.chmod(0o755)
+    return exe
+
+
+def _refused_exit(monkeypatch, exe_dir: str, path: str) -> tuple[int, list[dict]]:
+    from proto.worker import worker
+
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    with pytest.raises(SystemExit) as exc:
+        worker.require_hook_python(exe_dir, path)
+    return exc.value.code, logged
+
+
+def test_hook_python_refuses_a_3_9_interpreter_dir(tmp_path, monkeypatch):
+    from proto.worker import worker
+
+    exe = _fake_python3(tmp_path / "bin", "3.9.18")
+    assert worker.check_hook_python(str(tmp_path / "bin"), "") == (str(exe), "3.9.18", "too_old")
+    code, logged = _refused_exit(monkeypatch, str(tmp_path / "bin"), "")
+    assert code == 2
+    assert [(f["ev"], f["step"], f["error"]) for f in logged] == [("prepare", "hook_python", "too_old")]
+
+
+def test_hook_python_refuses_when_no_python3_is_found(tmp_path, monkeypatch):
+    from proto.worker import worker
+
+    (tmp_path / "bin").mkdir()
+    (tmp_path / "elsewhere").mkdir()
+    assert worker.check_hook_python(str(tmp_path / "bin"), str(tmp_path / "elsewhere")) == (None, None, "missing")
+    code, logged = _refused_exit(monkeypatch, str(tmp_path / "bin"), str(tmp_path / "elsewhere"))
+    assert code == 2
+    assert [(f["ev"], f["step"], f["error"]) for f in logged] == [("prepare", "hook_python", "missing")]
+
+
+def test_hook_python_prefers_the_interpreter_dir_over_an_older_path_entry(tmp_path):
+    from proto.worker import worker
+
+    exe = _fake_python3(tmp_path / "venv-bin", "3.12.4")
+    _fake_python3(tmp_path / "usr-bin", "3.9.18")
+    assert worker.check_hook_python(str(tmp_path / "venv-bin"), str(tmp_path / "usr-bin")) == (
+        str(exe), "3.12.4", None)
+    assert worker.require_hook_python(str(tmp_path / "venv-bin"), str(tmp_path / "usr-bin")) == f"{exe} 3.12.4"
+
+
+@pytest.mark.parametrize("path, tail", [("/usr/local/bin:/usr/bin", "/usr/local/bin:/usr/bin"), (None, None), ("", None)])
+def test_hook_python_child_path_starts_with_the_interpreter_dir(tmp_path, path, tail):
+    from proto.worker import options
+
+    worker_env = {"ANTHROPIC_API_KEY": "sk-test", "TMPDIR": "/tmp"}
+    if path is not None:
+        worker_env["PATH"] = path
+    opts = options.build_worker_options(
+        project_id="proj-1", cwd="/project", plugin_dir="/opt/genealogy/plugin", agents={},
+        store=object(), config_dir=str(tmp_path), pretool_hook=lambda *a: {},
+        posttool_hook=lambda *a: {}, worker_env=worker_env, bearer="grant-token",
+    )
+    exe_dir = os.path.dirname(sys.executable)
+    assert opts.env["PATH"] == (exe_dir if tail is None else f"{exe_dir}{os.pathsep}{tail}")
+
+
+def test_hook_python_start_reports_the_real_interpreter(tmp_path):
+    tmpdir = tmp_path / "tmp"
+    tmpdir.mkdir()
+    proc, lines = _start(tmp_path, str(tmpdir))
+    try:
+        start, seen = _wait_for(lines, "start", timeout=10)
+        assert start is not None, seen
+        assert not any(line.get("step") == "hook_python" for line in seen), seen
+        exe, _, version = start["hook_python"].rpartition(" ")
+        assert Path(exe).parent == Path(sys.executable).parent, start["hook_python"]
+        assert tuple(int(part) for part in version.split("."))[:2] >= (3, 10), start["hook_python"]
+    finally:
+        _stop(proc)

@@ -56,6 +56,10 @@ table an earlier boot left. ``GET /api/health`` is readiness: 200 or 503, the sa
 either way, plus ``checks`` (``postgres``, ``schema``, ``allowlist``) whose ``error`` is a
 label, never a message.
 
+WEB_DIST_DIR (unset: no SPA) names the ``apps/web`` SSE build to serve at ``/``; a
+relative value resolves against the tier root, and a missing dist refuses to start
+(``web/spa.py``).
+
 Grants (U3): this tier is every FamilySearch grant's only refresher. ``grant_refresh_loop``
 runs every ``FS_GRANT_REFRESH_INTERVAL_S`` (30) and refreshes, between attempts, the grant
 of each patron with an open turn whose session is ``FS_GRANT_REFRESH_AGE_S`` (3600) old,
@@ -101,6 +105,7 @@ if str(PROTO_DIR) not in sys.path:
 import enqueue  # noqa: E402  (the SQS query-API client; signs SigV4)
 import grants  # noqa: E402  (U3: grant custody, shared with the worker)
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
+from web import spa  # noqa: E402  (the SPA build, mounted last; U12)
 
 log = logging.getLogger("proto.web")
 # What the patron sees when SendMessage fails. Never the exception: an AWS refusal names the
@@ -1234,7 +1239,10 @@ def create_app(
                     with contextlib.suppress(asyncio.CancelledError):
                         await task
 
-    app = FastAPI(title="Genealogy search-agent prototype - web tier", lifespan=lifespan)
+    # U12: no /docs, /redoc or /openapi.json -- FastAPI serves them unauthenticated on a
+    # public host, and nothing in the repo reads them.
+    app = FastAPI(title="Genealogy search-agent prototype - web tier", lifespan=lifespan,
+                  docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store = store
     app.state.queue = queue
     # U10: what the lifespan's startup steps reached (`ok`, `pending` or a label). None
@@ -1613,6 +1621,8 @@ def create_app(
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
 
+    # Last, so it sees every API route it must not shadow (web/spa.py).
+    spa.mount_spa(app, tier_root=PROTO_DIR)
     return app
 
 

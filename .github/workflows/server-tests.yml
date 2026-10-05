@@ -81,7 +81,14 @@ jobs:
           # a test reading a file outside apps/server/ -- and without it a diff
           # that removes only that .gitignore line reports success having run
           # nothing.
-          PATTERNS: '^apps/server/|^packages/engine/plugin/agents/|^docs/specs/schemas/|^\.gitignore$|^\.github/workflows/server-tests\.yml$'
+          #
+          # `^scripts/eb_bundles/`, `^scripts/build-stamp\.mjs$` and `^Makefile$`
+          # (U12): tests/test_eb_bundles.py loads the Beanstalk builder and
+          # verifier from scripts/eb_bundles/, compares the verifier's build-stamp
+          # regex with scripts/build-stamp.mjs's, and checks the Makefile's
+          # EB_PYYAML pin against uv.lock. A diff to any of them alone would
+          # otherwise report success having run nothing.
+          PATTERNS: '^apps/server/|^packages/engine/plugin/agents/|^docs/specs/schemas/|^\.gitignore$|^scripts/eb_bundles/|^scripts/build-stamp\.mjs$|^Makefile$|^\.github/workflows/server-tests\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \

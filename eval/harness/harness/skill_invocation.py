@@ -1061,6 +1061,27 @@ DEDICATED_AGENT_NAMES = frozenset(
         # `agent:citation` on that row -- rather than an unnamed-delegate
         # bypass. Do not read its presence here as evidence of a hook route.
         "citation",
+        # Same shape as search-images and citation, and NOT a hook route
+        # (issue #2115). This conversion is cost- and context-motivated: the
+        # folded body stops occupying the orchestrator's context on every run
+        # that touches question selection, and a cheaper model can be pinned per
+        # agent. No hook routes anything to this agent. It writes `questions`,
+        # which does carry a routed claim -- `exhaustive_declaration.declared:
+        # true` belongs to research-exhaustiveness -- but creating a question
+        # writes `declared: false`, which the guard explicitly permits, so no
+        # route was added and none is needed. It is listed because the set is
+        # asserted equal to the shipped agent files, and so a legitimate
+        # `research_append` of a new question from this agent does not read as
+        # an unnamed-delegate bypass. Do not read its presence here as evidence
+        # of a hook route.
+        "question-selection",
+        # Same shape as citation (issue #2793): a converted skill, not a
+        # hook-routed pair. No hook routes anything to it, and it writes
+        # NOTHING at all -- it is read-only by contract, so it cannot produce a
+        # protected write to attribute in the first place. It is listed only
+        # because the set is asserted equal to the shipped agent files. Do not
+        # read its presence here as evidence of a hook route.
+        "project-status",
         # A converted skill that writes nothing at all (issue #2118): its only
         # MCP tool is the read-only `person_warnings`. Listed solely because the
         # set is asserted equal to the shipped agent files.
