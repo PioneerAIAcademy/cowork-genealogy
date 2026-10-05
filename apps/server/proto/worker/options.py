@@ -330,7 +330,8 @@ DELIVERY_GUIDANCE = (
     "asked you to stop after, a single record or lookup, or a status question such as "
     "\"where are we?\". Do not call it when the project's research objective itself is "
     "finished -- that run ends on its own -- and do not call it in place of asking the "
-    "researcher a question, which waits for their answer."
+    "researcher a question, which waits for their answer. Its schema is deferred, so "
+    "search for it by name if you do not already hold it."
 )
 
 DELIVERED_REASON = (
@@ -421,7 +422,17 @@ def make_pretool_hook(
         # A bounded request that is met must not run on to the proof, the nudge cap or the
         # spend bound. It sits AFTER the halt check, so the researcher's own stop still
         # outranks it.
-        if tool_name == DELIVERED_TOOL:
+        #
+        # MAIN THREAD ONLY. The arm matches on tool NAME, and a subagent holds the
+        # session's tool set, so without this a record-extractor saying "delivered" would
+        # end the researcher's whole turn. `agent_id` is tested for MEMBERSHIP, not
+        # truthiness: it is absent as a KEY on the main thread, and `agent_type` alone is
+        # not sufficient because it is present on the main thread of a session started
+        # with `--agent`. That is the discriminator the shipped plugin hook already uses
+        # (`owner_denied`, hooks/guard_project_files.py), reused rather than re-derived.
+        # A subagent's call falls through to ordinary handling, where the tool returns its
+        # harmless acknowledgement and the run carries on.
+        if tool_name == DELIVERED_TOOL and "agent_id" not in data:
             try:
                 record({
                     "turn_id": turn_id, "session_id": session_id,
