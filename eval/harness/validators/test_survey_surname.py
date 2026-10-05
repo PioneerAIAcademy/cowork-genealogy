@@ -180,3 +180,36 @@ def test_household_grouping_and_slave_schedule(after_state, test):
     assert len(mary) == 1 and "edmund" in mary[0], (
         f"Edmund and Mary share a recordArk and must be one household row; got {mary}"
     )
+
+
+# --- Table columns --------------------------------------------------
+
+_REQUIRED_COLUMNS = ("year", "county", "head", "other", "ark", "ruled")
+
+
+def _is_rule(line):
+    body = line.replace("|", "").replace(":", "").replace(" ", "")
+    return line.startswith("|") and bool(body) and set(body) == {"-"}
+
+
+def test_table_has_rubric_columns(after_state, test):
+    """Positive tests: every household table in the written file carries the six
+    columns the agent body and the rubric's Table structure bar name.
+    Non-population schedule tables are exempt."""
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests")
+    text = _survey_file(after_state)
+    assert text, "no surname-survey-*.md in the workspace"
+    lines = [line.strip().lower() for line in text.splitlines()]
+    heading, headers = "", []
+    for s, nxt in zip(lines, lines[1:] + [""]):
+        if s.startswith("#"):
+            heading = s
+        elif s.startswith("|") and _is_rule(nxt):
+            if "schedule" in heading and "population" not in heading:
+                continue
+            headers.append(s)
+    assert headers, "no household table in the survey file"
+    for h in headers:
+        missing = [c for c in _REQUIRED_COLUMNS if c not in h]
+        assert not missing, f"table header {h!r} lacks {missing}"
