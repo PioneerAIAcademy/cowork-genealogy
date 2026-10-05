@@ -28,6 +28,8 @@
 releases
 .workbench-data
 eval
+# deploy/Dockerfile stage 1 COPYs every pnpm workspace member's manifest.
+!eval/app/package.json
 *.log
 .DS_Store
 
