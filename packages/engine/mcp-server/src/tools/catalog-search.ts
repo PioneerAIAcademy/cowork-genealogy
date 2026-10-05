@@ -214,12 +214,26 @@ function buildQuery(
     ["subject", "q.subject"],
     ["filmNumber", "q.filmNumber"],
     ["callNumber", "q.callNumber"],
-    ["availability", "q.availability"],
   ];
   for (const [field, param] of simple) {
     const v = searchableValue(input[field]);
     if (v) q.set(param, v);
   }
+  // `q.availability` is matched EXACTLY upstream: measured live against Maine
+  // with exactPlace, `Online` gives 473 hits while `online` and `ONLINE` both
+  // give 0 — a clean zero with no error, which an agent records as "the
+  // Catalog holds nothing". That is the false-negative this tool guards
+  // against everywhere else, so any capitalisation of the one value we have
+  // measured is normalised. An unmeasured value is passed through unchanged
+  // rather than guessed at.
+  const availability = searchableValue(input.availability);
+  if (availability) {
+    q.set(
+      "q.availability",
+      availability.toLowerCase() === "online" ? "Online" : availability,
+    );
+  }
+
   if (typeof input.year === "number") q.set("q.year", String(input.year));
   q.set("count", String(input.count ?? DEFAULT_COUNT));
   // `offset` is deliberately never sent: under load a deep offset stops
@@ -776,7 +790,7 @@ export const catalogSearchSchema = {
       availability: {
         type: "string",
         description:
-          "Case-sensitive, e.g. 'Online'. Lowercase returns nothing.",
+          "e.g. 'Online' (any capitalisation of 'online' is accepted).",
       },
       count: {
         type: "integer",

@@ -197,7 +197,7 @@ present** — the service will answer an empty query with millions of hits.
 | `filmNumber` | string | `q.filmNumber` | matches **both** the legacy microfilm number and the DGS |
 | `callNumber` | string | `q.callNumber` | |
 | `year` | number | `q.year` | an **exact year**, not a decade: `q.year=1800` → 22 hits, against the year facet's 1800 bucket of 185 |
-| `availability` | string | `q.availability` | **case-sensitive**: `Online` → 472, `online` → 0 |
+| `availability` | string | `q.availability` | The service matches **exactly**: `Online` → 472 (473 re-measured in review), `online` and `ONLINE` → 0, with no error. A clean zero reads to the agent as "the Catalog holds nothing", so the tool **normalises any capitalisation of `online` to `Online`**. Only that one value is normalised — it is the only one measured live; anything else passes through unchanged rather than being guessed at |
 | `count` | integer, 1–200 | `count` | the tool sends 25 when omitted; max 200 (201 → 400). The *service's* default was never measured — every probe query passes `count` |
 | `hydrate` | integer, 0–25 | — | item calls to make, default 10; `0` skips hydration |
 
@@ -445,7 +445,8 @@ readers and every access uses one of them:
 | a note that collapsed to a bare string survives | text content with no attributes collapses to a string, the ordinary free-text `<note>` |
 | `available_online` is read as `true`/`false`/`"Y"`/`"N"` | a boolean fell through the string-only reader |
 | the **first** RSLINK url is surfaced and its markup stays out of `notes` | one URL field, and raw `<a href>` was being handed to the LLM as prose |
-| `exactPlace`, `year`, `availability` and `count` reach the query, and `q.place.exact` is omitted with no place | six inputs the suite never asserted on; `.exact` alone 400s, and `q.availability` is case-sensitive (`Online` 472, `online` 0) |
+| `exactPlace`, `year`, `availability` and `count` reach the query | six inputs the suite never asserted on; `.exact` alone 400s |
+| `online` / `ONLINE` / `oNlInE` all reach the query as `Online`, and an unmeasured value passes through unchanged | exact matching upstream turns a wrong case into a false "nothing held"; the second half keeps the normalisation to the one value measured |
 | the search leg spending the budget sets `hydrationTimedOut` | the task guard makes `work` win the race deterministically, so this does not fall out of the race |
 | a one-hit answer whose `searchHits` collapsed to an object | `.map` on it threw the whole search away; it is the last repeated field that was not read through `asArray` |
 | the item url is found when it is **not** the first `identifier`, and an off-host one among several is still refused | a catalogue entry carries external ids beside its item URL; the widening must not weaken the host check |

@@ -1289,6 +1289,28 @@ describe("catalog_search — the query parameters nothing else covers", () => {
     expect(p.get("count")).toBe("7");
   });
 
+  it.each([
+    ["online", "Online"],
+    ["ONLINE", "Online"],
+    ["Online", "Online"],
+    ["oNlInE", "Online"],
+  ])("normalises availability %s to %s", async (given, sent) => {
+    // Matched EXACTLY upstream: measured live against Maine with exactPlace,
+    // `Online` gives 473 and both `online` and `ONLINE` give 0 — a clean zero
+    // with no error, which an agent records as "the Catalog holds nothing".
+    respond({ totalHits: 0, searchHits: [] });
+    await catalogSearchTool({ keywords: "x", availability: given }, LOCAL);
+    expect(new URL(searchUrl()).searchParams.get("q.availability")).toBe(sent);
+  });
+
+  it("passes an unmeasured availability value through unchanged", async () => {
+    // The other direction: only the one value measured live is normalised.
+    // Guessing at others would invent a mapping nothing has verified.
+    respond({ totalHits: 0, searchHits: [] });
+    await catalogSearchTool({ keywords: "x", availability: "Microfilm" }, LOCAL);
+    expect(new URL(searchUrl()).searchParams.get("q.availability")).toBe("Microfilm");
+  });
+
   it("refuses exactPlace given without a place", async () => {
     // `.exact` alone 400s. Dropping it silently returned the WIDER set with
     // nothing saying so, and the agent read the hit count as an answer to
