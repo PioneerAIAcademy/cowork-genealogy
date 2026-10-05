@@ -25,7 +25,7 @@
     "Two stubs (Edmund Dixon XJQV-1850-A and Mary Dixon XJQV-1850-B) share recordArk 'ark:/61903/1:2:XJQV-HH1850-A' — they are the same household. The agent should group them into ONE household row with Edmund as head (role: Principal) and Mary as another surname member.",
     "William Dixon (XJQV-1850-C) and James Dixon (XJQV-1850-D) each have unique recordArks — they are separate households.",
     "Edmund Dixon (XJQV-1850-SL) is from 'United States Census (Slave Schedule), 1850' (collectionId 1420440), a non-population schedule. The agent MUST put this in its own sub-section, never merged with the population households.",
-    "To verify Table structure: check the Write call's content for (a) two sections — one for the population census and one for the slave schedule, (b) Edmund+Mary grouped as one household, (c) the required columns (census year, county, head of household, other surname members, record ARK, ruled out). Score Table structure 3 if all three hold.",
+    "The table should have two sections — one for the population census and one for the slave schedule — with Edmund+Mary grouped as one household in the population section.",
     "Should log the search with research_log_append and write the table with Write.",
     "The agent's return should end with the summary_for_user block."
   ]
