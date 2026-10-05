@@ -511,11 +511,23 @@ Scope, and why it is this narrow:
   **Every clause and guard goes red when it alone is removed**, which is
   checked by `dev/mutate-census-hedge.ts` rather than asserted. Run it rather
   than trusting this sentence: it takes each of the eighteen out in turn and
-  reports any that the suite does not notice. Two rounds of this card shipped a
-  mechanism no test exercised, each time because a note written for one clause
-  incidentally satisfied a neighbour, so reading the tests does not substitute.
-  A green row means the clause needs a test **or** is inert — one was deleted on
-  that finding rather than given a test it could not fail.
+  exits non-zero on any the suite does not notice. Two rounds of this card
+  shipped a mechanism no test exercised, each time because a note written for
+  one clause incidentally satisfied a neighbour, so reading the tests does not
+  substitute. A green row means the clause needs a test **or** is inert — one
+  was deleted on that finding rather than given a test it could not fail.
+
+  **The sweep proves it ran before it reports.** Its first version launched
+  vitest through `npx` and read any unparsable output as a red, so on Windows —
+  where `execFileSync("npx", …)` throws `ENOENT` — it printed "18 of 18 pinned"
+  and exited 0 having run no tests, in the script this paragraph tells you to
+  trust over the prose. It now runs the unmutated suite first and stops if that
+  cannot run or is already red, counts a mutation as red only on a parsed
+  failure count, treats anything else as an error, and launches vitest as plain
+  `node node_modules/vitest/vitest.mjs` so there is no `.cmd` to resolve. Those
+  guards are themselves broken five ways and each exit non-zero: an unrunnable
+  runner, a missing vitest, a baseline already red, an unpinned clause, and a
+  stale sweep entry whose substring no longer matches the source.
 
   **Negation and intent are not read.** A note that names a household in one of
   these relations is refused however it frames it: with a staged pre-1880
