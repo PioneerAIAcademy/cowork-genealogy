@@ -13,6 +13,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import httpx
 import pytest
 
 from proto import demo, turn
@@ -243,8 +244,79 @@ def test_the_kill_check_fails_only_on_a_resume_that_did_nothing():
     for worked in ("ok", "completed", "queued", "stopped", "budget", "decision", "mcp_unavailable"):
         assert outcome_check(worked) is True, worked
     assert outcome_check("no_progress") is False, "a dead resume is the one thing this probe catches"
+    assert outcome_check("retries_exhausted") is False, "U5: a turn closed for running out of receives never resumed"
+    assert outcome_check("transcript_lost") is False, "U10: a turn whose transcript was lost did not resume"
     assert outcome_check(None) is False, "no outcome at all is not a completed turn"
-    assert turn.RESUMED_FAILED_OUTCOMES == frozenset({"no_progress"})
+    assert turn.RESUMED_FAILED_OUTCOMES == frozenset({"no_progress", "retries_exhausted", "transcript_lost"})
+
+
+# ── the two-turn run (proto-turn): its outcome checks ───────────────────────────────
+
+
+def test_outcome_check_is_the_kill_arms_deny_set():
+    for worked in ("ok", "completed", "budget", "decision", "a-value-added-later"):
+        assert turn.outcome_check("turn 1", worked)[1] is True, worked
+    for failed in sorted(turn.RESUMED_FAILED_OUTCOMES) + [None]:
+        assert turn.outcome_check("turn 1", failed)[1] is False, failed
+    name, _, detail = turn.outcome_check("turn 2", "no_progress")
+    assert name.startswith("turn 2: ") and "no_progress" in name and detail == "outcome=no_progress"
+
+
+def _fake_run(monkeypatch, outcomes: dict[str, str | None]):
+    """``turn.run`` against canned rows: turn_1 and turn_2 complete with cost, tokens,
+    growing entries and a 1751 reply, so only ``outcomes`` decides the outcome checks."""
+    entries = iter([7, 12])
+
+    def db(dsn, sql, params):
+        if "count(*) FROM session_entries" in sql:
+            return [(next(entries),)]
+        if "count(*)" in sql:
+            return [(1,)]
+        if "sdk_session_id FROM sessions" in sql:
+            return [("sdk-1",)]
+        if "completed_at, outcome, cost_usd" in sql:
+            return [("2026-10-01T10:00:00+00:00", outcomes[params[0]], 0.05, 2, 900)]
+        if "entries_seq_before" in sql:
+            return [({"turn_1": 0, "turn_2": 7}[params[0]],)]
+        if sql.startswith(f"SELECT {', '.join(turn.TOKEN_COLUMNS)}"):
+            return [(10, 0, 0, 5)]
+        if sql == turn.SESSION_OUTPUT_SQL:
+            return [(100,)]
+        if "max(seq)" in sql:
+            return [(4,)]
+        if "payload->>'text'" in sql:
+            return [("15 April 1751",)]
+        raise AssertionError(f"unexpected query: {sql}")
+
+    class _Client:
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def post(self, *a, **k):
+            return httpx.Response(200, json={"id": "sess-1"}, request=httpx.Request("POST", "http://x"))
+
+    texts = {turn.TEXT_1: "turn_1", turn.TEXT_2: "turn_2"}
+    monkeypatch.setattr(turn, "db", db)
+    monkeypatch.setattr(turn, "signed_in_client", lambda base, email, **kw: _Client())
+    monkeypatch.setattr(turn, "post_and_wait", lambda client, base, sid, text, dl: (texts[text], 1, 1.0))
+    checks, figures = turn.run("http://x", "dsn", 1.0)
+    return [name for name, ok, _ in checks if not ok], [name for name, _, _ in checks], figures
+
+
+def test_run_checks_both_turns_outcomes(monkeypatch):
+    """A turn the worker closed itself (no_progress, a project-less lookup the Stop hook
+    vetoed) reaches turn_done with completed_at set, so only these two checks see it."""
+    failed, names, figures = _fake_run(monkeypatch, {"turn_1": "ok", "turn_2": "ok"})
+    assert failed == [], failed
+    assert [n for n in names if "turns.outcome" in n] == [
+        turn.outcome_check("turn 1", "ok")[0], turn.outcome_check("turn 2", "ok")[0]]
+    assert figures["turn1"]["outcome"] == figures["turn2"]["outcome"] == "ok"
+
+    failed, _, _ = _fake_run(monkeypatch, {"turn_1": "no_progress", "turn_2": "ok"})
+    assert failed == [turn.outcome_check("turn 1", "x")[0]], failed
+    failed, _, _ = _fake_run(monkeypatch, {"turn_1": "ok", "turn_2": "no_progress"})
+    assert failed == [turn.outcome_check("turn 2", "x")[0]], failed
+    failed, _, _ = _fake_run(monkeypatch, {"turn_1": "ok", "turn_2": "budget"})
+    assert failed == [], "a deny-set: an outcome outside it passes"
 
 
 # ── 0a: the input selector (--kill-on-input) ────────────────────────────────────────
@@ -507,6 +579,33 @@ def test_run_kill_sleeps_kill_after_s_then_takes_its_marks_before_the_kill(monke
     assert [ok for _, ok, _ in checks] == [True, False]
     assert figures["kill_after_s"] == kill_after_s and figures["entries_at_kill"] == 7
     assert "-- evidence: the turns row" in capsys.readouterr().out, "the evidence block prints even without turn_done"
+
+
+def test_the_kill_signal_defaults_to_kill_and_term_reaches_the_spec():
+    assert _args().kill_signal == "kill" and turn.kill_spec(_args()).kill_signal == "kill"
+    assert turn.kill_spec(_args("--kill-signal", "term")).kill_signal == "term"
+    with pytest.raises(SystemExit):
+        _args("--kill-signal", "hup")
+
+
+def test_kill_signal_term_runs_docker_restart_with_a_30s_grace(monkeypatch, capsys):
+    order: list[str] = []
+    _fake_stack(monkeypatch, order)
+    spec = turn.kill_spec(_args("--kill-on", "Agent", "--session", "sess_1", "--worker-container", "w",
+                                "--kill-signal", "term", "--text", "x"))
+    checks, figures = turn.run_kill("http://x", "dsn", 100.0, spec)
+    assert order == ["wait_for_tool_call Agent deadline=100.0", "take_marks", "docker restart -t 30 w",
+                     "wait_turn_done", "gather_evidence"]
+    assert figures["kill_signal"] == "term"
+
+
+def test_the_default_kill_signal_still_kills_and_starts(monkeypatch, capsys):
+    order: list[str] = []
+    _fake_stack(monkeypatch, order)
+    spec = turn.kill_spec(_args("--kill-on", "Agent", "--session", "sess_1", "--worker-container", "w", "--text", "x"))
+    turn.run_kill("http://x", "dsn", 100.0, spec)
+    assert "docker kill w" in order and "docker start w" in order
+    assert not any(o.startswith("docker restart") for o in order)
 
 
 # ── the script runs standalone ──────────────────────────────────────────────────────

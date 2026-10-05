@@ -5,8 +5,10 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import os
 import pathlib
 import re
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -233,8 +235,9 @@ ORCHESTRATOR = Path(__file__).resolve().parents[3] / "eval" / "harness" / "e2e" 
 
 def test_proto_demo_auto_exports_the_harness_cap_and_delegates_to_proto_demo():
     body = "\n".join(_recipe("proto-demo-auto"))
-    # raw make text: $$ is the shell's $; `-20` (not `:-20`) so an explicit empty value is honoured as given
-    cap = re.search(r'export AUTONOMOUS_MAX_NUDGES="\$\$\{AUTONOMOUS_MAX_NUDGES-(\d+)\}"', body)
+    # raw make text: $$ is the shell's $. `:-`, not `-`: proto-demo now resolves an empty
+    # value to 0, so a `-40` here would hand it "" and the auto arm would run with the hook off.
+    cap = re.search(r'export AUTONOMOUS_MAX_NUDGES="\$\$\{AUTONOMOUS_MAX_NUDGES:-(\d+)\}"', body)
     assert cap, body
     harness = re.search(r"^\s*max_continue_nudges: int = (\d+)", ORCHESTRATOR.read_text(encoding="utf-8"), re.M)
     # The literal is the tripwire, not the invariant: the arm's default IS the harness's
@@ -251,16 +254,122 @@ def test_proto_demo_auto_exports_the_harness_cap_and_delegates_to_proto_demo():
     assert re.search(r'\$\(MAKE\) proto-demo FIXTURE="\$\(FIXTURE\)" ARGS="[^"]*\$\(ARGS\)"', body), body
     # 1a moved the DEFAULT: the web service now carries AUTONOMOUS_MAX_NUDGES with a
     # non-zero interpolation default, so silence no longer means 0 and proto-demo has to
-    # pin its own. `-0` and not `:-0`, so proto-demo-auto's outer export still wins when
-    # it delegates here.
-    demo = "\n".join(_recipe("proto-demo"))
-    assert re.search(r'export AUTONOMOUS_MAX_NUDGES="\$\$\{AUTONOMOUS_MAX_NUDGES-0\}"', demo), \
+    # pin its own -- `:-0`, which keeps proto-demo-auto's non-empty export exactly as `-0`
+    # did; the two differ only on an empty value, which `-0` handed to compose's `:-60`.
+    assert _pins_nudges_before_compose_up(_recipe("proto-demo")), \
         "proto-demo must pin 0 itself to stay a one-turn run, now that the compose default is not 0"
     web_default = _env(_service(_load(COMPOSE), "web")).get("AUTONOMOUS_MAX_NUDGES", "")
     assert web_default.startswith("${AUTONOMOUS_MAX_NUDGES:-"), \
         "the web tier carries the cap (1a); proto-demo's pin is only meaningful against it"
     assert web_default != "${AUTONOMOUS_MAX_NUDGES:-0}", \
         "a 0 default here would ship the stop-every-step behaviour the plan exists to remove"
+
+
+def test_proto_kill_pins_a_one_turn_run_unless_the_caller_sets_nudges():
+    """The web tier stamps its own cap on every message (1a, default 60), so a kill turn
+    left on that default is nudged as an autonomous run on its redelivery and, with no
+    project, ends no_progress -- the kill check then FAILs on a resume that worked
+    (2026-09-30, the U5 SIGTERM run). proto-probe-resume still passes its own 40."""
+    kill = "\n".join(_recipe("proto-kill"))
+    assert re.search(r'AUTONOMOUS_MAX_NUDGES="\$\$\{AUTONOMOUS_MAX_NUDGES:?-0\}" \$\(MAKE\) proto-turn', kill), kill
+    probe = "\n".join(_recipe("proto-probe-resume"))
+    assert re.search(r'AUTONOMOUS_MAX_NUDGES="\$\$\{AUTONOMOUS_MAX_NUDGES:-40\}" \$\(MAKE\) proto-kill', probe), probe
+
+
+_PIN = re.compile(r"""^export AUTONOMOUS_MAX_NUDGES=(["']?)\$\$\{AUTONOMOUS_MAX_NUDGES:?-0\}\1$""")
+_COMPOSE_UP = re.compile(r"^\$\(PROTO_COMPOSE\)\s+up\b")
+
+
+def _recipe_commands(body: list[str]) -> list[str]:
+    return [c.strip() for line in body for c in re.split(r"&&|;|\|\|", line) if c.strip()]
+
+
+def _pins_nudges_before_compose_up(body: list[str]) -> bool:
+    """Whether a recipe exports AUTONOMOUS_MAX_NUDGES with a 0 default (an outer setting
+    wins) as its own shell command before its first `$(PROTO_COMPOSE) up`, which is where
+    the web and worker containers take their environment -- read command by command, so a
+    reflowed or re-indented recipe still reads the same. env.sh never touches the name, so
+    where the pin sits relative to it does not matter."""
+    commands = _recipe_commands(body)
+    pin = next((i for i, c in enumerate(commands) if _PIN.match(c)), None)
+    up = next((i for i, c in enumerate(commands) if _COMPOSE_UP.match(c)), None)
+    return pin is not None and up is not None and pin < up
+
+
+def test_proto_turn_pins_the_stop_hook_off_before_compose_up():
+    """The web tier stamps its own cap (default 60) on every message and the worker prefers
+    it, so a proto-turn left on that default ran with the Stop hook on: a lookup on a
+    project-less session is never "completed", every stop is vetoed, and the turn ends
+    no_progress. proto-kill's own pin covers only the --kill arm."""
+    assert _pins_nudges_before_compose_up(_recipe("proto-turn")), "\n".join(_recipe("proto-turn"))
+    assert "AUTONOMOUS_MAX_NUDGES" not in (PROTO / "env.sh").read_text(encoding="utf-8"), \
+        "env.sh now touches AUTONOMOUS_MAX_NUDGES: the pin's place relative to it matters again"
+
+
+_CAP_DEFAULT = re.compile(r"""AUTONOMOUS_MAX_NUDGES=(["']?)\$\$\{AUTONOMOUS_MAX_NUDGES:?-\d+\}\1""")
+_DELEGATES = re.compile(r"\$\(MAKE\) (proto-[\w-]+)")
+
+
+def _sh_resolve(assignment: str, caller: str | None) -> str:
+    """What sh makes of a recipe's ``AUTONOMOUS_MAX_NUDGES=…`` given the caller's value
+    (None: unset)."""
+    env = {k: v for k, v in os.environ.items() if k != "AUTONOMOUS_MAX_NUDGES"}
+    if caller is not None:
+        env["AUTONOMOUS_MAX_NUDGES"] = caller
+    script = "export " + assignment.replace("$$", "$") + '; printf %s "$AUTONOMOUS_MAX_NUDGES"'
+    out = subprocess.run(["sh", "-c", script], env=env, capture_output=True, text=True,
+                         encoding="utf-8", check=True)
+    return out.stdout
+
+
+def _cap_reaching_compose(target: str, caller: str | None) -> str:
+    """The AUTONOMOUS_MAX_NUDGES a `make <target>` hands compose: each recipe's own
+    default evaluated by sh, then the target its `$(MAKE)` delegates to, until one that
+    runs compose itself."""
+    value = caller
+    for _ in range(5):
+        body = "\n".join(_recipe(target))
+        cap = _CAP_DEFAULT.search(body)
+        assert cap, f"{target} sets no AUTONOMOUS_MAX_NUDGES default"
+        value = _sh_resolve(cap.group(0), value)
+        delegate = _DELEGATES.search(body)
+        if delegate is None:
+            return value
+        target = delegate.group(1)
+    raise AssertionError("delegation deeper than five targets")
+
+
+@pytest.mark.parametrize("target, default", [
+    ("proto-turn", "0"), ("proto-kill", "0"), ("proto-demo", "0"),
+    ("proto-demo-auto", "40"), ("proto-probe-resume", "40"),
+])
+@pytest.mark.parametrize("caller", [None, "", "7"])
+def test_every_proto_target_resolves_unset_and_empty_to_its_default_and_keeps_a_callers_value(
+    target, default, caller,
+):
+    """An empty value is the hole `-0` leaves: it survives the pin, compose's `:-60` turns
+    it into 60 on the web tier, and a one-turn run ends no_progress. Followed through the
+    delegation, because proto-kill's `-0` hands "" on to proto-turn (whose `:-0` makes it
+    0), and a `-40` on an arm that needs the hook ON would hand "" to a `:-0` and run it
+    off -- an hour of billed proto-probe-resume that cannot fire."""
+    assert _cap_reaching_compose(target, caller) == (caller or default)
+
+
+@pytest.mark.parametrize("body, expected", [
+    (['\texport AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; . apps/server/proto/env.sh && \\',
+      "\t  $(PROTO_COMPOSE) up -d --build"], True),
+    (["\texport AUTONOMOUS_MAX_NUDGES=$${AUTONOMOUS_MAX_NUDGES-0} && \\", "\t$(PROTO_COMPOSE)  up -d"], True),
+    (["\t. apps/server/proto/env.sh && \\", '\t  export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; \\',
+      "\t  $(PROTO_COMPOSE) up -d --build"], True),
+    (["\t$(PROTO_COMPOSE) up -d --build && \\", '\texport AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"'], False),
+    (['\texport AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-60}"; $(PROTO_COMPOSE) up -d'], False),
+    (['\texport AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-60}"; $(PROTO_COMPOSE) up -d'], False),
+    (['\t# export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"', "\t$(PROTO_COMPOSE) up -d"], False),
+    (['\texport AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; . apps/server/proto/env.sh'], False),
+    (["\t$(PROTO_COMPOSE) up -d --build"], False),
+])
+def test_the_nudge_pin_reader_accepts_a_reflow_and_rejects_a_misplaced_or_wrong_pin(body, expected):
+    assert _pins_nudges_before_compose_up(body) is expected
 
 
 def test_proto_demo_auto_pins_the_step_ceiling_and_waits_out_six_attempts():
@@ -305,8 +414,10 @@ def test_the_resume_probe_target_wires_all_three_missing_pieces():
     probe = PROTO / pathlib.PurePosixPath(named.group(1)).relative_to("proto")
     assert probe.is_file(), f"--text-file names {named.group(1)}, which is not in the repo"
     assert probe.read_text(encoding="utf-8").strip(), f"{named.group(1)} is empty"
-    # 3. the nudge cap: at 0 the run ends before it ever reaches a delegation.
-    assert re.search(r'AUTONOMOUS_MAX_NUDGES="\$\$\{AUTONOMOUS_MAX_NUDGES-\d+\}"', body), body
+    # 3. the nudge cap: at 0 the run ends before it ever reaches a delegation -- including
+    #    when the caller left it set but empty.
+    for caller in (None, ""):
+        assert _cap_reaching_compose("proto-probe-resume", caller) not in ("", "0"), body
     assert re.search(r'test -n "\$\(SESSION\)"', body), "refuse without SESSION rather than probe a fresh project"
     rule = re.search(r"^proto-probe-resume:.*?##(.*)$", MAKEFILE.read_text(encoding="utf-8"), re.M)
     assert rule and "billed" in rule.group(1), "`make help` must say this one costs money"

@@ -43,19 +43,36 @@ hosted runner.
 
 Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto), QUEUE_URL (a full SQS
 queue URL, the shim's shape; unset -> NullQueue, turns are recorded but not enqueued),
-POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (60 -- see ``max_nudges``). Startup
-applies proto/sql/*.sql (all idempotent).
+POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (60 -- see ``max_nudges``). With
+QUEUE_URL set (and only then): GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
+or neither; neither signs SendMessage with the default AWS chain, the instance profile on
+AWS; one alone refuses to start) and GENEALOGY_SQS_REGION (else the QUEUE_URL host's
+region). Startup applies proto/sql/*.sql (all idempotent) and syncs the allowlist, one
+inline attempt each under one ``STARTUP_BUDGET_S``; a failure is retried in the
+background and never stops the tier listening (U10). It logs
+``queue: <url>; sqs credentials: <mode>; region <r>``. Until the allowlist has synced, a
+FamilySearch-configured tier answers 503 at both allowlist checks rather than read a
+table an earlier boot left. ``GET /api/health`` is readiness: 200 or 503, the same keys
+either way, plus ``checks`` (``postgres``, ``schema``, ``allowlist``) whose ``error`` is a
+label, never a message.
 
-Run: from apps/server, ``uv run python proto/web/app.py``.
+WEB_DIST_DIR (unset: no SPA) names the ``apps/web`` SSE build to serve at ``/``; a
+relative value resolves against the tier root, and a missing dist refuses to start
+(``web/spa.py``).
+
+Run: ``make proto-web`` (from the venv, with the dummy GENEALOGY_SQS_* pair elasticmq
+ignores).
 """
 
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import html
 import json
 import logging
 import os
+import re
 import secrets
 import sys
 import time
@@ -69,7 +86,7 @@ from typing import Any, Protocol
 from urllib.parse import urlparse
 
 from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse, Response, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
 HERE = Path(__file__).resolve().parent
@@ -80,12 +97,44 @@ SQL_DIR = PROTO_DIR / "sql"
 if str(PROTO_DIR) not in sys.path:
     sys.path.insert(0, str(PROTO_DIR))
 
-import enqueue  # noqa: E402  (the D3 SQS query-API client; reused, not edited)
+import enqueue  # noqa: E402  (the SQS query-API client; signs SigV4)
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
+from web import spa  # noqa: E402  (the SPA build, mounted last; U12)
 
 log = logging.getLogger("proto.web")
+# What the patron sees when SendMessage fails. Never the exception: an AWS refusal names the
+# account id and the instance role's ARN. The log line beside the 502 carries the detail.
+ENQUEUE_FAILED_MESSAGE = "queue send failed; please try again"
+# uvicorn configures only its own loggers, so without a handler of its own every INFO line
+# here -- the schema, the ``queue: ...; sqs credentials: ...`` start line and an ok health
+# transition -- is dropped.
+if not log.handlers:
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter("%(levelname)s:     %(name)s: %(message)s"))
+    log.addHandler(_handler)
+    log.setLevel(logging.INFO)
 
 DEFAULT_PG_DSN = "postgresql://postgres:proto@localhost:5434/proto"
+# U10: readiness. The probe's whole deadline sits under the image HEALTHCHECK's
+# urlopen(timeout=2); psycopg's connect_timeout floor is 2 s, so it is a race.
+READY_TIMEOUT_S = 1.5
+READY_CONNECT_TIMEOUT_S = 2
+READY_STATEMENT_TIMEOUT_MS = 1500
+# Every table and function this tier queries; a missing one fails `postgres`.
+WEB_TABLES = ("sessions", "projects", "turns", "session_events", "session_seq", "session_activity",
+              "session_entries", "tool_calls", "documents", "users", "allowed_emails",
+              "familysearch_tokens")
+WEB_FUNCTIONS = ("next_session_seq(text)",)
+READY_SQL = (
+    "SELECT t FROM unnest(%s::text[]) t WHERE to_regclass(t) IS NULL "
+    "UNION ALL SELECT f FROM unnest(%s::text[]) f WHERE to_regprocedure(f) IS NULL"
+)
+# The lifespan's inline schema apply and allowlist sync share this, so a blackholed
+# Postgres holds uvicorn at most this long before it listens; each background retry is
+# bounded by it too, and backs off STARTUP_BACKOFF_FIRST_S doubling to _MAX_S.
+STARTUP_BUDGET_S = 5.0
+STARTUP_BACKOFF_FIRST_S = 1.0
+STARTUP_BACKOFF_MAX_S = 30.0
 DEFAULT_TITLE = "New research session"
 DEFAULT_MODEL = "claude-sonnet-4-6"
 EVENTS_PAGE = 500
@@ -364,6 +413,40 @@ async def stream_frames(
         await asyncio.sleep(poll_s)
 
 
+# ── readiness labels (U10) ───────────────────────────────────────────────────────
+
+_DSN_CREDENTIALS = re.compile(r"\b[\w.+-]+://[^\s@/]*@")
+
+
+class ReadyCheckError(Exception):
+    """A readiness failure whose label is not an error code or type name."""
+
+    def __init__(self, label: str, message: str) -> None:
+        super().__init__(message)
+        self.label = label
+
+
+def ready_label(exc: BaseException) -> str:
+    """What a failed check reports: the SQLSTATE when there is one, else the type name.
+    Never ``str(exc)``: /api/health is unauthenticated, and psycopg's message carries the
+    host, the port and the user. The worker has the same rule (``worker.ready_label``);
+    the web image does not ship the worker, so it is not imported."""
+    if isinstance(exc, ReadyCheckError):
+        return exc.label
+    sqlstate = getattr(exc, "sqlstate", None)
+    return str(sqlstate) if sqlstate else type(exc).__name__
+
+
+def redact(text: str) -> str:
+    """A message for the log, with any ``scheme://user:password@`` taken out."""
+    return _DSN_CREDENTIALS.sub("", text)
+
+
+def check_out(state: str) -> dict[str, Any]:
+    """One ``app.state.startup`` value (``ok``, ``pending`` or a label) as a check."""
+    return {"ok": True} if state == "ok" else {"ok": False, "error": state}
+
+
 # ── Postgres store ───────────────────────────────────────────────────────────────
 
 
@@ -376,6 +459,58 @@ class PgStore:
 
     def __init__(self, dsn: str) -> None:
         self.dsn = dsn
+        # U10: the one readiness probe in flight, shared by concurrent /api/health calls,
+        # and the postgres check's last outcome for the transition log.
+        self._ready_task: asyncio.Task | None = None
+        self._ready_last: bool | None = None
+
+    async def check_ready(self, timeout_s: float | None = None) -> dict[str, Any]:
+        """``{ok, checks: {postgres}}`` from a connection of its own that must see every
+        table this tier queries, raced against ``timeout_s`` (``READY_TIMEOUT_S``, read per
+        call). The race runs INSIDE one shared task, so its report is the raced one and no
+        caller's cancellation reaches it: each caller waits through ``asyncio.shield``, and
+        the slot clears when the task finishes. Never raises."""
+        task = self._ready_task
+        if task is None:
+            task = self._ready_task = asyncio.create_task(
+                self._probe_ready(READY_TIMEOUT_S if timeout_s is None else timeout_s)
+            )
+            task.add_done_callback(self._ready_done)
+        return await asyncio.shield(task)
+
+    def _ready_done(self, task: asyncio.Task) -> None:
+        if self._ready_task is task:
+            self._ready_task = None
+
+    async def _probe_ready(self, timeout_s: float) -> dict[str, Any]:
+        try:
+            await asyncio.wait_for(self._probe_postgres(), timeout_s)
+            check, detail = {"ok": True}, ""
+        except Exception as exc:  # noqa: BLE001 - TimeoutError included; every failure is a label
+            check, detail = {"ok": False, "error": ready_label(exc)}, redact(f"{type(exc).__name__}: {exc}")
+        if self._ready_last is not check["ok"]:
+            self._ready_last = check["ok"]
+            if check["ok"]:
+                log.info("ev=health check=postgres ok=true")
+            else:
+                log.warning("ev=health check=postgres ok=false error=%s", detail or check["error"])
+        return {"ok": check["ok"], "checks": {"postgres": check}}
+
+    async def _probe_postgres(self) -> None:
+        import psycopg
+
+        conn = await psycopg.AsyncConnection.connect(
+            self.dsn, autocommit=True, connect_timeout=READY_CONNECT_TIMEOUT_S,
+            options=f"-c statement_timeout={READY_STATEMENT_TIMEOUT_MS}",
+        )
+        try:
+            cur = await conn.execute(READY_SQL, (list(WEB_TABLES), list(WEB_FUNCTIONS)))
+            missing = [str(row[0]) for row in await cur.fetchall()]
+        finally:
+            await conn.close()
+        if missing:
+            names = ",".join(missing)
+            raise ReadyCheckError(f"schema: missing {names}", f"web tables or functions missing: {names}")
 
     async def _connect(self):
         import psycopg
@@ -604,7 +739,7 @@ class PgStore:
         That is the whole reason this is not a SELECT followed by an UPDATE."""
         async with await self._connect() as conn:
             cur = await conn.execute(
-                "UPDATE turns SET outcome = NULL WHERE turn_id = ("
+                "UPDATE turns SET outcome = NULL, claimed_at = now() WHERE turn_id = ("
                 "  SELECT turn_id FROM turns WHERE session_id = %s AND outcome = %s "
                 "  AND completed_at IS NULL ORDER BY enqueued_at LIMIT 1 FOR UPDATE SKIP LOCKED"
                 ") RETURNING message",
@@ -694,7 +829,7 @@ class PgStore:
         self, user_id: str, access_token_enc: str, refresh_token_enc: str | None, expires_at: datetime
     ) -> None:
         """One statement, ciphertext only. granted_at restarts on every sign-in and never
-        on refresh (U3's 24 h clock); a response without a refresh token keeps the one
+        on refresh (it records the sign-in); a response without a refresh token keeps the one
         already stored."""
         async with await self._connect() as conn:
             await conn.execute(
@@ -712,9 +847,10 @@ class PgStore:
 
 
 class SqsQueue:
-    """SendMessage over the SQS query API via enqueue.sqs_call. QUEUE_URL is a full queue
-    URL (the shim's shape); the endpoint is its scheme+host, and the URL itself goes down
-    as QueueUrl -- elasticmq keys on the path, so the in-network host is fine."""
+    """SendMessage over the SQS query API via enqueue.sqs_call, SigV4-signed. QUEUE_URL is
+    a full queue URL (the shim's shape); the endpoint is its scheme+host, which is also the
+    Host the request is signed for, and the URL itself goes down as QueueUrl -- elasticmq
+    keys on the path, so the in-network host is fine."""
 
     def __init__(self, queue_url: str) -> None:
         parsed = urlparse(queue_url)
@@ -828,6 +964,46 @@ def max_nudges(env: Mapping[str, str] | None = None) -> int:
     return n
 
 
+# ── startup (U10) ────────────────────────────────────────────────────────────────
+
+
+async def startup_attempt(
+    startup: dict[str, str], name: str, step: Callable[[], Awaitable[Any]], *, timeout_s: float | None = None,
+) -> bool:
+    """One attempt at a startup step; ``startup[name]`` becomes ``ok`` or the error's
+    label, logged once per change. Never raises."""
+    try:
+        result = await (step() if timeout_s is None else asyncio.wait_for(step(), timeout_s))
+    except Exception as exc:  # noqa: BLE001 - recorded, retried, reported by /api/health
+        label = ready_label(exc)
+        if startup.get(name) != label:
+            log.warning("startup %s failing (%s): %s", name, label, redact(f"{type(exc).__name__}: {exc}"))
+        startup[name] = label
+        return False
+    if name == "schema" and isinstance(result, list):
+        log.info("schema applied: %s", ", ".join(result))
+    else:
+        log.info("startup %s ok", name)
+    startup[name] = "ok"
+    return True
+
+
+async def retry_startup(startup: dict[str, str], steps: dict[str, Callable[[], Awaitable[Any]]]) -> None:
+    """Retry each failed startup step independently, backing off STARTUP_BACKOFF_FIRST_S
+    doubling to STARTUP_BACKOFF_MAX_S, until it lands -- so a DML-only role, whose schema
+    apply never will, still syncs the allowlist. Cancelled at lifespan exit."""
+
+    async def one(name: str, step: Callable[[], Awaitable[Any]]) -> None:
+        delay = STARTUP_BACKOFF_FIRST_S
+        while True:
+            await asyncio.sleep(delay)
+            if await startup_attempt(startup, name, step, timeout_s=STARTUP_BUDGET_S):
+                return
+            delay = min(delay * 2, STARTUP_BACKOFF_MAX_S)
+
+    await asyncio.gather(*(one(name, step) for name, step in steps.items()))
+
+
 def create_app(
     store: Store | None = None,
     queue: Queue | None = None,
@@ -842,32 +1018,77 @@ def create_app(
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         auth.preflight()  # before anything binds: a misconfigured tier must not come up
-        if app.state.store is None:
-            pg = PgStore(os.environ.get("PG_DSN") or DEFAULT_PG_DSN)
-            applied = await pg.apply_schema()
-            log.info("schema applied: %s", ", ".join(applied))
-            app.state.store = pg
-        if hasattr(app.state.store, "sync_allowlist"):
-            await app.state.store.sync_allowlist(auth.allowed_emails())
+        # U7: a half SQS pair refuses here, before a startup step or its background retry
+        # exists, so the refusal leaves nothing running.
         if app.state.queue is None:
             queue_url = os.environ.get("QUEUE_URL")
             if queue_url:
+                try:
+                    sqs_auth = await asyncio.to_thread(enqueue.configure, os.environ, queue_url)
+                except enqueue.SqsConfigError as exc:
+                    raise RuntimeError(str(exc)) from exc
                 app.state.queue = SqsQueue(queue_url)
-                log.info("queue: %s", queue_url)
+                log.info("queue: %s; %s", queue_url, enqueue.describe(sqs_auth))
+                if sqs_auth.method is None:
+                    log.warning("no AWS credentials found yet: SendMessage retries the chain "
+                                "and fails until it resolves")
             else:
                 app.state.queue = NullQueue()
                 log.warning("QUEUE_URL unset: turns are recorded but NOT enqueued (NullQueue)")
-        yield
+        # U10 D8: the store goes on app.state before either step, so every route and
+        # /api/health see it while Postgres is down; neither step can stop the tier listening.
+        steps: dict[str, Callable[[], Awaitable[Any]]] = {}
+        if app.state.store is None:
+            app.state.store = PgStore(os.environ.get("PG_DSN") or DEFAULT_PG_DSN)
+            steps["schema"] = app.state.store.apply_schema
+        store = app.state.store
+        if hasattr(store, "sync_allowlist"):
+            emails = auth.allowed_emails()
+            steps["allowlist"] = lambda: store.sync_allowlist(emails)
+        startup: dict[str, str] = {name: "pending" for name in steps}
+        app.state.startup = startup
 
-    app = FastAPI(title="Genealogy search-agent prototype - web tier", lifespan=lifespan)
+        async def inline() -> None:
+            for name, step in steps.items():
+                await startup_attempt(startup, name, step)
+
+        # One shared budget, not one per step: a blackholed Postgres holds uvicorn at most
+        # STARTUP_BUDGET_S before it listens.
+        try:
+            await asyncio.wait_for(inline(), STARTUP_BUDGET_S)
+        except TimeoutError:
+            log.warning("startup: Postgres did not answer within %ss; retrying in the background", STARTUP_BUDGET_S)
+        failing = {name: step for name, step in steps.items() if startup[name] != "ok"}
+        retry = asyncio.create_task(retry_startup(startup, failing)) if failing else None
+        try:
+            yield
+        finally:
+            if retry is not None:
+                retry.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await retry
+
+    # U12: no /docs, /redoc or /openapi.json -- FastAPI serves them unauthenticated on a
+    # public host, and nothing in the repo reads them.
+    app = FastAPI(title="Genealogy search-agent prototype - web tier", lifespan=lifespan,
+                  docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store = store
     app.state.queue = queue
+    # U10: what the lifespan's startup steps reached (`ok`, `pending` or a label). None
+    # when no lifespan ran (a test's ASGITransport), which leaves the allowlist ungated.
+    app.state.startup = None
     app.state.poll_s = poll_s if poll_s is not None else _env_float("POLL_S", 1.0)
     app.state.ping_s = ping_s if ping_s is not None else _env_float("SSE_PING_S", 15.0)
     app.state.stream_max_polls = stream_max_polls
 
     def _store(request: Request) -> Store:
         return request.app.state.store
+
+    def _allowlist_ready(request: Request) -> bool:
+        """Fail-closed (U10 D8): until this boot's sync has replaced ``allowed_emails``, a
+        table an earlier boot left could still admit a removed patron."""
+        startup = request.app.state.startup
+        return startup is None or startup.get("allowlist", "ok") == "ok"
 
     async def current_user(request: Request) -> User:
         """The signed-in patron, or 401/403. On every /api/sessions route."""
@@ -880,8 +1101,11 @@ def create_app(
             raise HTTPException(status_code=401, detail="Unknown user")
         if auth.revoked(data.get("iat"), user.sessions_revoked_at):
             raise HTTPException(status_code=401, detail="Session revoked")
-        if auth.familysearch_configured() and not await store.is_allowed(user.email):
-            raise HTTPException(status_code=403, detail="Account removed from allowlist")
+        if auth.familysearch_configured():
+            if not _allowlist_ready(request):
+                raise HTTPException(status_code=503, detail="Not ready")
+            if not await store.is_allowed(user.email):
+                raise HTTPException(status_code=403, detail="Account removed from allowlist")
         return user
 
     async def _session(request: Request, session_id: str, user: User) -> SessionRow:
@@ -896,14 +1120,32 @@ def create_app(
     # -- health ---------------------------------------------------------------------
 
     @app.get("/api/health")
-    async def health(request: Request) -> dict:
-        return {
+    async def health(request: Request) -> JSONResponse:
+        """Readiness (U10): 200 or 503, the same keys either way so every script reading
+        ``queue`` or ``ping_s`` keeps working, plus ``checks`` -- the store's probe when it
+        has one, and the lifespan's startup steps when it ran. A report that raises is a
+        503 without ``checks``, never a 500."""
+        state = request.app.state
+        body: dict[str, Any] = {
             "ok": True,
             "tier": "proto-web",
-            "queue": type(request.app.state.queue).__name__,
-            "poll_s": request.app.state.poll_s,
-            "ping_s": request.app.state.ping_s,
+            "queue": type(state.queue).__name__,
+            "poll_s": state.poll_s,
+            "ping_s": state.ping_s,
         }
+        checks: dict[str, Any] = {}
+        try:
+            if hasattr(state.store, "check_ready"):
+                checks.update((await state.store.check_ready())["checks"])
+            for name, value in (state.startup or {}).items():
+                checks[name] = check_out(value)
+        except Exception as exc:  # noqa: BLE001 - the load balancer reads the status
+            log.warning("health: %s", redact(f"{type(exc).__name__}: {exc}"))
+            return JSONResponse({**body, "ok": False}, status_code=503)
+        if checks:
+            body["ok"] = all(c["ok"] for c in checks.values())
+            body["checks"] = checks
+        return JSONResponse(body, status_code=200 if body["ok"] else 503)
 
     # -- sign-in (web/auth.py) ------------------------------------------------------
 
@@ -982,6 +1224,8 @@ def create_app(
                 status_code=403,
             )
         store = _store(request)
+        if not _allowlist_ready(request):
+            return HTMLResponse(f"Not ready: the allowlist has not loaded yet. {fail}", status_code=503)
         if not await store.is_allowed(email):
             return HTMLResponse(
                 f"The FamilySearch account <strong>{html.escape(email)}</strong> is not on the allowlist. "
@@ -1157,7 +1401,7 @@ def create_app(
             # the 502 names its seq: the SPA still has an echo to drop.
             raise HTTPException(
                 status_code=502,
-                detail={"message": f"queue send failed: {exc}", "turn_id": failed_id, "seq": turn.seq},
+                detail={"message": ENQUEUE_FAILED_MESSAGE, "turn_id": failed_id, "seq": turn.seq},
             ) from exc
         return {"turn_id": turn.turn_id, "seq": turn.seq, "message_id": message_id, "queued": held}
 
@@ -1200,6 +1444,8 @@ def create_app(
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
 
+    # Last, so it sees every API route it must not shadow (web/spa.py).
+    spa.mount_spa(app, tier_root=PROTO_DIR)
     return app
 
 

@@ -17,7 +17,7 @@ These two concepts are distinct and must not be conflated:
   and birthplace of Sarah Thompson, daughter of James and Mary?"
 
 At project initialization, the user provides the **objective**. Research
-questions are formulated later (by the question-selection skill) as
+questions are formulated later (by the question-selection agent) as
 discrete, answerable sub-problems.
 
 ### Two Fundamental Categories

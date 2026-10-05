@@ -30,6 +30,7 @@
     "Should not pretend to have FamilySearch tree data — there is no person_read in this scenario"
   ],
   "execution": {
+    "max_wall_clock_seconds": 480,
     "stub_skills": [
       {
         "skill": "question-selection",

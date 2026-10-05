@@ -177,6 +177,21 @@ AGENT_WRITABLE_SECTIONS = {
     # citation refines `citation` / `citation_detail` on source entries that
     # already exist, and writes nothing else in research.json.
     "citation": frozenset({"sources"}),
+    # question-selection appends new `q_` entries and writes nothing else. A
+    # lane is required by tests/packaging/plugin-hooks.test.ts for every agent
+    # granted research_append, so this row exists even though NO hook route
+    # points at this agent -- do not read it as one. It is deliberately narrow:
+    # `questions` carries a routed claim, `exhaustive_declaration.declared:
+    # true`, which belongs to research-exhaustiveness. Creating a question
+    # writes `declared: false`, which the guard already permits, so this lane
+    # widens nothing (issue #2115).
+    "question-selection": frozenset({"questions"}),
+    # locality-guide writes one `localities` entry per surveyed place, and
+    # nothing else in research.json.
+    "locality-guide": frozenset({"localities"}),
+    # hypothesis-tracking states, links and rules out hypotheses, and writes
+    # nothing else in research.json.
+    "hypothesis-tracking": frozenset({"hypotheses"}),
 }
 
 # The deny NAMES THE ROUTE OUT, and that is load-bearing rather than polite.

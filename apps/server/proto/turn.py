@@ -14,10 +14,11 @@ the tier is unreachable):
   turn 1   >= 1 agent_event row; a tool_use and a tool_result naming convert_calendar;
            session_entries > 0 for sessions.sdk_session_id; tool_calls >= 1 with the
            convert_calendar row decision allow; turns.completed_at set; cost_usd > 0;
-           the token columns summed from session_entries (output_tokens > 0, and the
-           input side non-empty)
+           turns.outcome not one of RESUMED_FAILED_OUTCOMES; the token columns summed
+           from session_entries (output_tokens > 0, and the input side non-empty)
   turn 2   session_entries grew; the reply text mentions 1751; completed; cost_usd > 0;
-           token columns filled for this turn alone (output_tokens > 0)
+           turns.outcome not one of RESUMED_FAILED_OUTCOMES; token columns filled for
+           this turn alone (output_tokens > 0)
 
 ``--kill`` (D14, ``make proto-kill``) runs one turn instead: a ``place_search`` question,
 the worker container killed the moment the call's ``tool_calls`` row appears (its
@@ -31,7 +32,13 @@ reply names Nauvoo. ``--session <id>`` runs it on a seeded session (proto/seed.p
 The kill is generalised for the resume probes (D18): ``--kill-on <bare tool name>``
 (default ``place_search``; ``Agent`` lands it during a delegation), ``--kill-after-s
 <n>`` (default 0, the moment the row appears; ~15 s puts a subagent mid-work) and
-``--text ...`` / ``--text-file <path>`` for the message.
+``--text ...`` / ``--text-file <path>`` for the message. ``--kill-signal term`` (U5) stops
+the worker with ``docker restart -t 30`` instead of ``kill`` plus ``start``: a SIGTERM, which
+the worker answers with a 500. Under docker-compose.sqsd.yml (passed in ``PROTO_COMPOSE``,
+with ``ERROR_VISIBILITY_S`` above SHUTDOWN_GRACE_S plus the restart, e.g. 45) the
+redelivery comes after the shim's error visibility, once the old process is gone. Under
+the base profile the shim's 5 s doubling backoff can redeliver into the old process's
+shutdown grace, which answers 503 unclaimed and spends a receive.
 
 ``--kill-on-input KEY=VALUE`` narrows ``--kill-on`` to a call whose INPUT matches, which
 is what PR #2870 item 0a needs: the case that produced the synthetic result was a
@@ -173,12 +180,13 @@ def run(base: str, dsn: str, deadline_s: float, email: str = DEV_LOGIN_EMAIL) ->
         allowed = one(dsn, "SELECT count(*) FROM tool_calls WHERE turn_id = %s AND tool_name LIKE %s AND decision = 'allow'", (turn1, f"%{TOOL}"))
         checks.append((f"turn 1: tool_calls >= 1, the {TOOL} row decision allow", calls >= 1 and allowed >= 1, f"tool_calls={calls} allowed={allowed}"))
         row = db(dsn, "SELECT completed_at, outcome, cost_usd, num_turns, duration_ms FROM turns WHERE turn_id = %s", (turn1,))
-        completed1, _, cost1, num1, dur1 = row[0] if row else (None, None, None, None, None)
+        completed1, outcome1, cost1, num1, dur1 = row[0] if row else (None, None, None, None, None)
         checks.append(("turn 1: turns.completed_at set", completed1 is not None, f"row={row}"))
         checks.append(("turn 1: turns.cost_usd > 0", cost1 is not None and float(cost1) > 0, f"cost_usd={cost1}"))
+        checks.append(outcome_check("turn 1", outcome1))
         tokens1 = tokens(dsn, turn1)
         checks.append(("turn 1: token columns summed from session_entries", tokens_filled(tokens1), f"tokens={tokens1}"))
-        figures["turn1"].update({"cost_usd": float(cost1) if cost1 is not None else None, "num_turns": num1,
+        figures["turn1"].update({"cost_usd": float(cost1) if cost1 is not None else None, "outcome": outcome1, "num_turns": num1,
                                  "duration_ms": dur1, "events": agent_rows, "entries": entries1, "tool_calls": calls,
                                  "tokens": tokens1})
 
@@ -197,9 +205,10 @@ def run(base: str, dsn: str, deadline_s: float, email: str = DEV_LOGIN_EMAIL) ->
         texts = db(dsn, "SELECT payload->>'text' FROM session_events WHERE session_id = %s AND kind = 'text' AND seq > %s ORDER BY seq", (session_id, user_seq or 0))
         reply = " ".join(t[0] or "" for t in texts)
         checks.append(("turn 2: the reply mentions 1751", "1751" in reply, f"reply={reply[:200]!r}"))
-        row2 = db(dsn, "SELECT completed_at, cost_usd, num_turns, duration_ms FROM turns WHERE turn_id = %s", (turn2,))
-        completed2, cost2, num2, dur2 = row2[0] if row2 else (None, None, None, None)
+        row2 = db(dsn, "SELECT completed_at, outcome, cost_usd, num_turns, duration_ms FROM turns WHERE turn_id = %s", (turn2,))
+        completed2, outcome2, cost2, num2, dur2 = row2[0] if row2 else (None, None, None, None, None)
         checks.append(("turn 2: completed with cost_usd > 0", completed2 is not None and cost2 is not None and float(cost2) > 0, f"row={row2}"))
+        checks.append(outcome_check("turn 2", outcome2))
         tokens2 = tokens(dsn, turn2)
         # The two turns' output columns must fit inside the session's whole output: a turn 2
         # summed from seq 0 would carry turn 1's tokens again and overshoot it.
@@ -211,7 +220,7 @@ def run(base: str, dsn: str, deadline_s: float, email: str = DEV_LOGIN_EMAIL) ->
                        tokens_filled(tokens2) and own and before1 is not None and before2 is not None and before2 > before1,
                        f"output {tokens1.get('output_tokens')} + {tokens2.get('output_tokens')} vs session {session_output}; "
                        f"entries_seq_before {before1} -> {before2}"))
-        figures["turn2"].update({"cost_usd": float(cost2) if cost2 is not None else None, "num_turns": num2,
+        figures["turn2"].update({"cost_usd": float(cost2) if cost2 is not None else None, "outcome": outcome2, "num_turns": num2,
                                  "duration_ms": dur2, "entries": entries2, "reply": reply[:200], "tokens": tokens2})
     return checks, figures
 
@@ -233,6 +242,8 @@ class KillSpec:
     container: str = "proto-worker"
     # 0a: the jsonb fragment the call's input must CONTAIN, or None for name-only.
     kill_on_input: dict[str, Any] | None = None
+    # U5: "kill" is docker kill + start (SIGKILL); "term" is docker restart -t 30 (SIGTERM).
+    kill_signal: str = "kill"
 
     @property
     def target(self) -> str:
@@ -258,8 +269,19 @@ class KillSpec:
 # added later is then a resume that WORKED unless someone says otherwise, which is the
 # safe default for a check whose job is to catch one specific defect. `no_progress` is
 # 0a's terminal failure -- the resume did nothing, twice -- which is exactly what a resume
-# probe exists to catch.
-RESUMED_FAILED_OUTCOMES = frozenset({"no_progress"})
+# probe exists to catch. `retries_exhausted` (U5) is the worker closing the turn because its
+# message ran out of receives: no resume finished it. `transcript_lost` (U10) is a turn
+# whose transcript never reached the store, closed by the worker: a resume that did not work.
+RESUMED_FAILED_OUTCOMES = frozenset({"no_progress", "retries_exhausted", "transcript_lost"})
+
+
+def outcome_check(label: str, outcome: Any) -> Check:
+    """``<label>: turns.outcome is not <RESUMED_FAILED_OUTCOMES>`` -- the two-turn run's
+    check, the same deny-set as the kill arm's. A turn the worker closed ITSELF (the Stop
+    hook's ``no_progress`` on a project-less lookup) still reaches turn_done with
+    completed_at set, so only the outcome says it failed. No outcome at all fails too."""
+    return (f"{label}: turns.outcome is not {'/'.join(sorted(RESUMED_FAILED_OUTCOMES))}",
+            outcome is not None and outcome not in RESUMED_FAILED_OUTCOMES, f"outcome={outcome}")
 
 
 def bare_name(tool_name: str) -> str:
@@ -555,10 +577,13 @@ def run_kill(
         entries_at_kill = one(dsn, "SELECT count(*) FROM session_entries WHERE session_id = %s", (sdk_before or "",))
         marks = take_marks(dsn, session_id, turn_id, sdk_before, project_id)
         t_kill = time.monotonic()
-        docker("kill", spec.container)  # counts as a manual stop: unless-stopped will not restart it
-        docker("start", spec.container)
+        if spec.kill_signal == "term":
+            docker("restart", "-t", "30", spec.container)  # SIGTERM, then SIGKILL after 30 s (the compose stop grace)
+        else:
+            docker("kill", spec.container)  # counts as a manual stop: unless-stopped will not restart it
+            docker("start", spec.container)
         figures.update({"sdk_session_id": sdk_before, "entries_at_kill": entries_at_kill, "kill_on": spec.target,
-                        "kill_after_s": spec.kill_after_s})
+                        "kill_after_s": spec.kill_after_s, "kill_signal": spec.kill_signal})
         try:
             _seq, _wall = wait_turn_done(client, base, session_id, turn_id, deadline_s)
         except Exception as exc:  # noqa: BLE001
@@ -635,6 +660,9 @@ def build_parser() -> argparse.ArgumentParser:
                         "--kill-on Agent --kill-on-input run_in_background=true")
     p.add_argument("--kill-after-s", type=float, default=0.0,
                    help="with --kill: seconds to wait after that row before the kill (default 0: at once)")
+    p.add_argument("--kill-signal", choices=("term", "kill"), default="kill",
+                   help="with --kill: kill = docker kill + start (SIGKILL, the default); "
+                        "term = docker restart -t 30 (SIGTERM, U5's shutdown path)")
     text = p.add_mutually_exclusive_group()
     text.add_argument("--text", default=None, help="with --kill: the message to post (default: the place_search question)")
     text.add_argument("--text-file", default=None, help="with --kill: read the message from this UTF-8 file")
@@ -656,7 +684,7 @@ def kill_spec(args: argparse.Namespace) -> KillSpec:
         raise ValueError(f"--kill-after-s must be >= 0, not {args.kill_after_s}")
     return KillSpec(kill_on=args.kill_on, kill_after_s=args.kill_after_s, text=text,
                     kill_on_input=parse_input_selector(args.kill_on_input),
-                    session_id=args.session, container=args.worker_container)
+                    session_id=args.session, container=args.worker_container, kill_signal=args.kill_signal)
 
 
 def main(argv: list[str] | None = None) -> int:

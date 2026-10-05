@@ -13,9 +13,14 @@ imports ``enqueue`` as a top-level module because that is how the container lays
 
 from __future__ import annotations
 
+import asyncio
+import json
 import re
+import socket
 import sys
 import pathlib
+import threading
+import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -658,7 +663,10 @@ def test_the_rescue_claim_is_the_workers_own_statement():
     ).read_text(encoding="utf-8")
     claim = " ".join(worker_src.split("def take_queued_turn", 1)[1].split("def ", 1)[0].split())
     for fragment in (
-        "UPDATE turns SET outcome = NULL WHERE turn_id = (",
+        # claimed_at dates the row from its release: the worker's retention backstop
+        # reads COALESCE(claimed_at, enqueued_at), so a long-held message released without
+        # it looks expired and is closed before it ever runs.
+        "UPDATE turns SET outcome = NULL, claimed_at = now() WHERE turn_id = (",
         # The predicate IS the claim. Widened to anything non-null it would match a turn
         # that already RAN and re-enqueue it; this was unpinned until a break test
         # swapped it for `outcome IS NOT NULL` and every test stayed green.
@@ -814,18 +822,42 @@ def test_the_real_begin_turn_clears_the_stop_flag():
     assert "CLEAR_STOP_SQL" in source, "begin_turn must clear the flag, or a stopped session never resumes"
 
 
-async def test_post_message_on_queue_failure_marks_the_turn_and_returns_502():
+async def test_post_message_on_queue_failure_marks_the_turn_and_returns_502(caplog):
     store, queue = FakeStore(), FakeQueue(fail=True)
     row = store.seed_session()
-    async with make_client(store, queue) as c:
-        r = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "hello"})
+    with caplog.at_level("ERROR", logger="proto.web"):
+        async with make_client(store, queue) as c:
+            r = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "hello"})
     assert r.status_code == 502
     detail = r.json()["detail"]
-    assert "elasticmq is down" in detail["message"]
+    assert detail["message"] == app.ENQUEUE_FAILED_MESSAGE
+    assert "elasticmq is down" in caplog.text, "the operator keeps the queue's own error"
     # The user_msg row stays; the 502 names its seq so the SPA can still drop the echo.
     assert detail == {"message": detail["message"], "turn_id": store.turns[0].turn_id, "seq": 1}
     assert store.failed == [(store.turns[0].turn_id, "enqueue_failed")]
     assert queue.sent == []
+
+
+async def test_a_queue_refusal_never_reaches_the_patron(caplog):
+    """A real SQS AccessDenied (measured on AWS, 2026-10-01) names the account id and the
+    caller's role ARN. The 502 body is shown to the patron; the log line is the operator's."""
+    refusal = ("SQS SendMessage failed: HTTP 403 AccessDenied: User: arn:aws:sts::123456789012:"
+               "assumed-role/aws-elasticbeanstalk-ec2-role/i-0abc is not authorized to perform: sqs:sendmessage")
+
+    class RefusingQueue(FakeQueue):
+        async def send(self, body: dict[str, Any]) -> str:
+            raise app.enqueue.SqsError(refusal)
+
+    store, queue = FakeStore(), RefusingQueue()
+    row = store.seed_session()
+    with caplog.at_level("ERROR", logger="proto.web"):
+        async with make_client(store, queue) as c:
+            r = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "hello"})
+    assert r.status_code == 502
+    body = r.text
+    for secret in ("123456789012", "arn:aws", "AccessDenied", "elasticbeanstalk"):
+        assert secret not in body, secret
+    assert refusal in caplog.text
 
 
 async def test_post_message_rejects_empty_or_blank_text_and_unknown_session():
@@ -1005,6 +1037,91 @@ def test_web_service_sends_to_the_queue_the_shim_reads():
     assert _env(services["web"])["QUEUE_URL"] == _env(services["shim"])["QUEUE_URL"]
 
 
+def test_compose_web_and_worker_carry_dummy_sqs_chain_env():
+    """U7: both tiers sign SendMessage. In compose they sign with dummies elasticmq ignores,
+    through the default chain's env provider, and IMDS stays off so a laptop never waits
+    on 169.254.169.254. Not GENEALOGY_*: the worker holds no store credentials."""
+    services = _compose()["services"]
+    web, worker_env = _env(services["web"]), _env(services["worker"])
+    for name in ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"):
+        assert web[name] and web[name] == worker_env[name], name
+    assert web["AWS_EC2_METADATA_DISABLED"] == "true"
+    assert worker_env["AWS_EC2_METADATA_DISABLED"] == "true"
+    assert not [k for k in worker_env if k.startswith("GENEALOGY_")]
+
+
+# ── U7: the signed queue ─────────────────────────────────────────────────────────
+
+QUEUE = "http://elasticmq:9324/000000000000/turns"
+
+
+async def test_lifespan_refuses_a_half_sqs_pair_only_with_a_queue(monkeypatch):
+    monkeypatch.setenv("GENEALOGY_SQS_ACCESS_KEY", "AKIAHALFPAIR")
+    monkeypatch.setenv("QUEUE_URL", QUEUE)
+    application = create_app(store=FakeStore())
+    with pytest.raises(RuntimeError, match="GENEALOGY_SQS_SECRET_KEY") as exc:
+        async with application.router.lifespan_context(application):
+            pass
+    assert "AKIAHALFPAIR" not in str(exc.value)
+
+    monkeypatch.delenv("QUEUE_URL")
+    application = create_app(store=FakeStore())
+    async with application.router.lifespan_context(application):
+        assert isinstance(application.state.queue, app.NullQueue)
+
+
+async def test_lifespan_start_line_names_mode_and_region(monkeypatch, caplog):
+    monkeypatch.setenv("GENEALOGY_SQS_ACCESS_KEY", "AKIASTARTLINE")
+    monkeypatch.setenv("GENEALOGY_SQS_SECRET_KEY", "start-line-secret")
+    monkeypatch.setenv("QUEUE_URL", QUEUE)
+    application = create_app(store=FakeStore())
+    with caplog.at_level("INFO", logger="proto.web"):
+        async with application.router.lifespan_context(application):
+            assert isinstance(application.state.queue, app.SqsQueue)
+    lines = [r.getMessage() for r in caplog.records if r.getMessage().startswith("queue: ")]
+    assert lines == [f"queue: {QUEUE}; sqs credentials: static keys; region us-east-1"]
+    assert not any("start-line-secret" in r.getMessage() or "AKIASTARTLINE" in r.getMessage()
+                   for r in caplog.records)
+
+
+def test_the_start_line_reaches_the_container_log():
+    """uvicorn configures only its own loggers: without a handler of its own, proto.web's
+    INFO start line is dropped in the container while caplog still sees it here."""
+    import logging
+
+    assert app.log.handlers, "proto.web has no handler: its INFO lines never reach the log"
+    assert app.log.getEffectiveLevel() <= logging.INFO
+
+
+async def test_lifespan_warns_when_the_chain_finds_nothing(monkeypatch, caplog):
+    monkeypatch.setenv("QUEUE_URL", QUEUE)
+    application = create_app(store=FakeStore())
+    with caplog.at_level("INFO", logger="proto.web"):
+        async with application.router.lifespan_context(application):
+            pass
+    assert f"queue: {QUEUE}; sqs credentials: default chain (none found); region us-east-1" in caplog.messages
+    assert any(r.levelname == "WARNING" and "no AWS credentials" in r.getMessage() for r in caplog.records)
+
+
+async def test_sqs_queue_send_signs_over_the_wire():
+    from _sigv4 import Capture, verify_sigv4
+
+    app.enqueue.configure({"GENEALOGY_SQS_ACCESS_KEY": "AKIAWEB", "GENEALOGY_SQS_SECRET_KEY": "web-secret"}, None)
+    server = Capture()
+    try:
+        queue = app.SqsQueue(server.url + "/000000000000/turns")
+        assert await queue.send({"turn_id": "t"}) == "m1"
+    finally:
+        server.close()
+    [req] = server.requests
+    assert verify_sigv4(req["method"], req["path"], req["headers"], req["body"], "web-secret", "us-east-1", "sqs")
+    form = dict(pair.split("=", 1) for pair in req["body"].decode("utf-8").split("&"))
+    from urllib.parse import unquote_plus
+
+    assert unquote_plus(form["MessageBody"]) == json.dumps({"turn_id": "t"})
+    assert unquote_plus(form["QueueUrl"]) == server.url + "/000000000000/turns"
+
+
 def test_web_build_context_carries_enqueue_sql_and_the_client_config():
     """U2 moved the context to the repo root (like the tools image) so the image can carry
     the engine's familysearch.json, the client id's sole source. The paths are checked
@@ -1013,16 +1130,66 @@ def test_web_build_context_carries_enqueue_sql_and_the_client_config():
     assert web["build"] == {"context": "../../..", "dockerfile": "apps/server/proto/web/Dockerfile"}
     repo = PROTO.parents[2]
     assert (repo / web["build"]["dockerfile"]).is_file()
-    dockerfile = (PROTO / "web" / "Dockerfile").read_text(encoding="utf-8")
-    copies = dict(ln.split()[1:3] for ln in dockerfile.splitlines() if ln.startswith("COPY "))
+    stages = _dockerfile_stages(PROTO / "web" / "Dockerfile")
+    assert list(stages) == ["spa", ""], "a node stage that builds the SPA, then the tier"
+    copies, _ = _copies(stages[""])
     assert copies["apps/server/proto/enqueue.py"] == "./"
     assert copies["apps/server/proto/sql"] == "./sql"
     assert copies["apps/server/proto/web"] == "./web"
     assert copies["packages/engine/mcp-server/config/familysearch.json"] == "./config/familysearch.json"
-    for src in copies:
+    spa_copies, _ = _copies(stages["spa"])
+    for src in copies.keys() | spa_copies.keys():
         assert (repo / src).exists(), f"the web Dockerfile copies {src}, which is not in the repo"
     # ./config/familysearch.json under WORKDIR /app is the path web/auth.py looks at first.
     assert auth.CLIENT_CONFIG_CANDIDATES[0].relative_to(auth.PROTO_DIR).as_posix() == "config/familysearch.json"
+
+
+def test_web_image_carries_the_sse_spa_where_web_dist_dir_points():
+    """U12 D18: the image serves the SPA too, so an image deploy cannot ship a tier where
+    `/` serves nothing. The build is the SSE variant, its output is what the tier stage
+    copies, and the relative WEB_DIST_DIR resolves (against /app, web/'s parent, which
+    is what spa.py takes as the tier root) to where it lands."""
+    stages = _dockerfile_stages(PROTO / "web" / "Dockerfile")
+    assert stages["spa"][0].startswith("FROM node:24-slim AS spa"), stages["spa"][0]
+    [build] = [ln for ln in stages["spa"] if "vite build" in ln]
+    assert "VITE_SESSION_TRANSPORT=sse" in build.split(), build
+    out = re.search(r"--outDir (\S+)", build).group(1)
+    copies, from_stage = _copies(stages[""])
+    assert from_stage == {out: "./web-dist"}, from_stage
+    assert "WORKDIR /app" in stages[""] and copies["apps/server/proto/web"] == "./web"
+    env = dict(ln.split()[1].split("=", 1) for ln in stages[""] if ln.startswith("ENV ") and "=" in ln.split()[1])
+    assert Path("/app", env["WEB_DIST_DIR"]) == Path("/app/web-dist")
+
+
+def _dockerfile_stages(path: Path) -> dict[str, list[str]]:
+    """Logical lines (comments dropped, continuations joined) per stage, keyed by the
+    stage's AS name ('' for an unnamed one)."""
+    text = "\n".join(ln for ln in path.read_text(encoding="utf-8").splitlines() if not ln.lstrip().startswith("#"))
+    stages: dict[str, list[str]] = {}
+    current: list[str] = []
+    for line in (" ".join(ln.split()) for ln in text.replace("\\\n", " ").splitlines()):
+        if not line:
+            continue
+        if line.startswith("FROM "):
+            m = re.search(r" AS (\S+)$", line, re.I)
+            current = stages.setdefault(m.group(1) if m else "", [])
+        current.append(line)
+    return stages
+
+
+def _copies(lines: list[str]) -> tuple[dict[str, str], dict[str, str]]:
+    """(source -> dest for the build context, source -> dest for COPY --from=<stage>)."""
+    context: dict[str, str] = {}
+    staged: dict[str, str] = {}
+    for line in lines:
+        if not line.startswith("COPY "):
+            continue
+        words = line.split()[1:]
+        flags = [w for w in words if w.startswith("--")]
+        *srcs, dest = [w for w in words if not w.startswith("--")]
+        target = staged if any(f.startswith("--from=") for f in flags) else context
+        target.update(dict.fromkeys(srcs, dest))
+    return context, staged
 
 
 def test_003_web_only_adds_not_null_default_columns_to_sessions():
@@ -1212,3 +1379,301 @@ def test_queue_body_carries_no_token_or_user_field():
     would persist in turns.message, SQS and the DLQ."""
     body = app.queue_body("t", SessionRow("s", "p", "t", "m", T0, T0, USER_A.id), "hi", T0.isoformat(), 1)
     assert set(body) == {"turn_id", "session_id", "project_id", "text", "enqueued_at", "max_nudges"}
+
+
+# ── U10: /api/health as readiness ────────────────────────────────────────────────
+
+
+class SilentPostgres:
+    """A local listener that accepts and never answers: a blackholed Postgres, no
+    network. ``accepted`` counts the connections the probes opened."""
+
+    hang_up = False
+
+    def __init__(self) -> None:
+        self.sock = socket.socket()
+        self.sock.bind(("127.0.0.1", 0))
+        self.sock.listen(16)
+        self.sock.settimeout(0.05)
+        self.port = self.sock.getsockname()[1]
+        self.accepted: list[socket.socket] = []
+        self.stopped = threading.Event()
+        threading.Thread(target=self._accept, daemon=True).start()
+
+    def _accept(self) -> None:
+        while not self.stopped.is_set():
+            try:
+                conn, _ = self.sock.accept()
+            except (TimeoutError, socket.timeout):
+                continue
+            except OSError:
+                return
+            if self.hang_up:
+                conn.close()
+            else:
+                self.accepted.append(conn)
+
+    @property
+    def dsn(self) -> str:
+        return f"postgresql://probeuser:secretpw@127.0.0.1:{self.port}/proto"
+
+    def close(self) -> None:
+        self.stopped.set()
+        self.sock.close()
+        for conn in self.accepted:
+            conn.close()
+
+
+@pytest.fixture
+def silent_pg():
+    pg = SilentPostgres()
+    yield pg
+    pg.close()
+
+
+class RefusingPostgres(SilentPostgres):
+    """A local listener that hangs up on every connection at once: a Postgres that is down
+    and says so fast on every OS. Port 1 is not that on Windows, which retries a refused
+    loopback connect for about two seconds, past ``READY_TIMEOUT_S``."""
+
+    hang_up = True
+
+
+@pytest.fixture
+def refused_pg():
+    pg = RefusingPostgres()
+    yield pg
+    pg.close()
+
+
+REFUSED_DSN = "postgresql://probeuser:secretpw@127.0.0.1:1/proto"
+HEALTH_KEYS = {"ok", "tier", "queue", "poll_s", "ping_s"}
+
+
+class ReadyStore(FakeStore):
+    """A FakeStore with the optional probe, answering ``check``."""
+
+    def __init__(self, check: dict[str, Any]) -> None:
+        super().__init__()
+        self.check = check
+
+    async def check_ready(self, timeout_s: float | None = None) -> dict[str, Any]:
+        return {"ok": self.check["ok"], "checks": {"postgres": self.check}}
+
+
+async def test_health_is_503_when_the_store_is_not_ready():
+    store = ReadyStore({"ok": False, "error": "OperationalError"})
+    async with make_client(store, FakeQueue(), user=None) as c:
+        r = await c.get("/api/health")
+    body = r.json()
+    assert r.status_code == 503 and HEALTH_KEYS <= set(body) and body["ok"] is False
+    assert body["queue"] == "FakeQueue", "the keys the drivers read survive a 503"
+    assert body["checks"] == {"postgres": {"ok": False, "error": "OperationalError"}}
+
+
+async def test_health_is_200_with_checks_when_ready():
+    async with make_client(ReadyStore({"ok": True}), FakeQueue(), user=None) as c:
+        r = await c.get("/api/health")
+    assert r.status_code == 200 and r.json()["checks"] == {"postgres": {"ok": True}}
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        r = await c.get("/api/health")
+    assert r.status_code == 200 and "checks" not in r.json(), "a store with no probe keeps today's body"
+
+
+async def test_health_that_raises_is_503_not_500():
+    class Broken(FakeStore):
+        async def check_ready(self, timeout_s=None):
+            raise RuntimeError("probe exploded")
+
+    async with make_client(Broken(), FakeQueue(), user=None) as c:
+        r = await c.get("/api/health")
+    assert r.status_code == 503 and "checks" not in r.json() and HEALTH_KEYS <= set(r.json())
+
+
+def test_the_tier_logs_its_info_lines_under_a_bare_interpreter():
+    """uvicorn configures only its own loggers; an ok health transition is an info line,
+    and the live stack showed none until proto.web had its own handler."""
+    import subprocess
+
+    code = (
+        "import asyncio, sys; sys.path.insert(0, sys.argv[1]); from web import app\n"
+        "store = app.PgStore(sys.argv[2])\n"
+        "async def fake(): return None\n"
+        "store._probe_postgres = fake\n"
+        "asyncio.run(store.check_ready())\n"
+    )
+    out = subprocess.run([sys.executable, "-c", code, str(PROTO), REFUSED_DSN], capture_output=True,
+                         text=True, encoding="utf-8", timeout=60)
+    assert out.returncode == 0, out.stderr
+    assert "ev=health check=postgres ok=true" in out.stderr, out.stderr
+
+
+async def test_pgstore_check_ready_fails_fast_on_refused_and_silent_postgres(refused_pg, silent_pg):
+    refused = await app.PgStore(refused_pg.dsn).check_ready()
+    assert refused == {"ok": False, "checks": {"postgres": {"ok": False, "error": "OperationalError"}}}
+    started = time.monotonic()
+    silent = await app.PgStore(silent_pg.dsn).check_ready(timeout_s=0.3)
+    elapsed = time.monotonic() - started
+    assert silent["checks"]["postgres"] == {"ok": False, "error": "TimeoutError"}
+    assert elapsed < 0.8, f"{elapsed:.2f}s: psycopg's own connect_timeout decided, not the race"
+    for report in (refused, silent):
+        raw = json.dumps(report)
+        assert "probeuser" not in raw and "127.0.0.1" not in raw and "secretpw" not in raw
+
+
+async def test_concurrent_health_share_one_probe(monkeypatch, silent_pg):
+    monkeypatch.setattr(app, "READY_TIMEOUT_S", 0.3)
+    async with make_client(app.PgStore(silent_pg.dsn), FakeQueue(), user=None) as c:
+        replies = await asyncio.gather(*(c.get("/api/health") for _ in range(3)))
+    accepted = len(silent_pg.accepted)
+    assert [r.status_code for r in replies] == [503, 503, 503]
+    assert all(r.json()["checks"]["postgres"] == {"ok": False, "error": "TimeoutError"} for r in replies)
+    assert accepted == 1, f"{accepted} connections: a stalled host must cost one, not one per probe"
+
+
+# ── U12: the SPA (web/spa.py) ────────────────────────────────────────────────────
+
+from starlette.routing import Mount, Route  # noqa: E402
+
+from web import spa  # noqa: E402
+
+INDEX = "<!doctype html><title>workbench</title><script src=\"/assets/x-abc.js\"></script>"
+
+
+@pytest.fixture(autouse=True)
+def _no_spa_env(monkeypatch):
+    """The alpha reads WEB_DIST_DIR too, so a developer's shell can carry one; every other
+    test here means the tier with no SPA."""
+    monkeypatch.delenv(spa.ENV_VAR, raising=False)
+
+
+@pytest.fixture
+def dist(tmp_path, monkeypatch) -> Path:
+    """A vite-shaped dist (index.html, a root file, a hashed asset), named by WEB_DIST_DIR."""
+    root = tmp_path / "web-dist"
+    (root / "assets").mkdir(parents=True)
+    (root / "index.html").write_text(INDEX, encoding="utf-8")
+    (root / "favicon.svg").write_text("<svg/>", encoding="utf-8")
+    (root / "assets" / "x-abc.js").write_text("new EventSource('/x')", encoding="utf-8")
+    monkeypatch.setenv(spa.ENV_VAR, str(root))
+    return root
+
+
+async def test_spa_root_and_index_html_are_served_no_cache(dist):
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        for method, path in (("GET", "/"), ("HEAD", "/"), ("GET", "/index.html")):
+            r = await c.request(method, path)
+            assert r.status_code == 200, (method, path, r.status_code)
+            assert r.headers["content-type"].startswith("text/html"), (method, path)
+            assert r.headers["cache-control"] == "no-cache", (method, path)
+            assert r.content == (b"" if method == "HEAD" else INDEX.encode()), (method, path)
+
+
+async def test_spa_hashed_assets_are_immutable_and_root_files_are_served(dist):
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        asset = await c.get("/assets/x-abc.js")
+        assert asset.status_code == 200 and asset.text == "new EventSource('/x')"
+        assert asset.headers["cache-control"] == spa.IMMUTABLE
+        assert "immutable" in asset.headers["cache-control"]
+        assert (await c.head("/assets/x-abc.js")).status_code == 200
+        icon = await c.get("/favicon.svg")
+        assert icon.status_code == 200 and icon.headers["cache-control"] == "no-cache"
+        missing = await c.get("/assets/nope.js")
+        assert missing.status_code == 404 and "immutable" not in missing.headers.get("cache-control", "")
+
+
+# What each answers WITHOUT the SPA; a Mount("/") turns the first three into 404/404/405.
+PRE_MOUNT_STATUS = [
+    ("GET", "/api/sessions/x/messages", 405),
+    ("GET", "/api/sessions/", 307),
+    ("POST", "/api/feedback", 404),
+    ("GET", "/api/nope", 404),
+    ("GET", "/api/health", 200),
+]
+
+
+@pytest.mark.parametrize(("method", "path", "status"), PRE_MOUNT_STATUS)
+async def test_spa_mount_leaves_every_api_status_unchanged(dist, monkeypatch, method, path, status):
+    replies = {}
+    for mounted in (True, False):
+        if not mounted:
+            monkeypatch.delenv(spa.ENV_VAR)
+        async with make_client(FakeStore(), FakeQueue()) as c:
+            r = await c.request(method, path, json={} if method == "POST" else None)
+        replies[mounted] = r.status_code
+    assert replies == {True: status, False: status}, (method, path, replies)
+
+
+def test_spa_mount_leaves_the_per_session_route_sweep_unchanged(dist):
+    mounted = _per_session_routes()
+    assert len(mounted) == 13 and any(isinstance(r, Mount) for r in create_app(FakeStore(), FakeQueue()).routes)
+    with pytest.MonkeyPatch.context() as mp:
+        mp.delenv(spa.ENV_VAR)
+        assert _per_session_routes() == mounted
+
+
+@pytest.mark.parametrize("value", [None, "", "   "])
+async def test_spa_unset_or_empty_serves_nothing_at_root(monkeypatch, value):
+    if value is not None:
+        monkeypatch.setenv(spa.ENV_VAR, value)
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        assert (await c.get("/")).status_code == 404
+        assert (await c.get("/api/health")).status_code == 200
+
+
+@pytest.mark.parametrize("breakage", ["missing", "no_index", "api_dir", "auth_file", "callback_dir"])
+def test_spa_refuses_to_start_on_a_dist_it_cannot_serve_safely(dist, monkeypatch, breakage):
+    """A set WEB_DIST_DIR that serves nothing, or whose top level would shadow the API, is a
+    refusal at create_app -- uvicorn never starts -- not the alpha's silent skip."""
+    if breakage == "missing":
+        monkeypatch.setenv(spa.ENV_VAR, str(dist.parent / "nope"))
+    elif breakage == "no_index":
+        (dist / "index.html").unlink()
+    elif breakage == "api_dir":
+        (dist / "api").mkdir()
+    elif breakage == "auth_file":
+        (dist / "auth").write_text("x", encoding="utf-8")
+    else:
+        (dist / "callback").mkdir()
+    with pytest.raises(RuntimeError, match=spa.ENV_VAR):
+        create_app(FakeStore(), FakeQueue())
+
+
+def test_spa_refuses_a_top_level_name_a_route_already_uses(dist, monkeypatch):
+    """Not on the reserved list, but routed: the check reads the app's routes as well."""
+    monkeypatch.delenv(spa.ENV_VAR)
+    application = create_app(FakeStore(), FakeQueue())
+    application.router.routes.append(Route("/extra/x", lambda request: None))
+    (dist / "extra").mkdir()
+    with pytest.raises(RuntimeError, match=r"\['extra'\] collide"):
+        spa.mount_spa(application, tier_root=PROTO, env={spa.ENV_VAR: str(dist)})
+
+
+def test_spa_a_relative_dist_resolves_against_the_tier_root_not_cwd(tmp_path, monkeypatch):
+    (tmp_path / "tier" / "web-dist").mkdir(parents=True)
+    (tmp_path / "tier" / "web-dist" / "index.html").write_text(INDEX, encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    application = create_app(FakeStore(), FakeQueue())
+    assert spa.mount_spa(application, tier_root=tmp_path / "tier", env={spa.ENV_VAR: "web-dist"}) == (
+        tmp_path / "tier" / "web-dist"
+    )
+    # The tier itself resolves against web/'s parent: the bundle's and the image's root.
+    assert spa.dist_dir(app.PROTO_DIR, {spa.ENV_VAR: "web-dist"}) == PROTO / "web-dist"
+
+
+async def test_spa_serves_an_extra_root_file_like_robots_txt(dist):
+    (dist / "robots.txt").write_text("User-agent: *\nDisallow: /\n", encoding="utf-8")
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        r = await c.get("/robots.txt")
+        assert r.status_code == 200 and r.text.startswith("User-agent")
+        assert r.headers["cache-control"] == "no-cache"
+        assert (await c.get("/")).status_code == 200
+
+
+@pytest.mark.parametrize("with_spa", [True, False])
+async def test_docs_and_openapi_are_off_with_and_without_the_spa(dist, monkeypatch, with_spa):
+    if not with_spa:
+        monkeypatch.delenv(spa.ENV_VAR)
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        for path in ("/docs", "/redoc", "/openapi.json", "/docs/oauth2-redirect"):
+            assert (await c.get(path)).status_code == 404, path

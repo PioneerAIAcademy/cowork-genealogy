@@ -1798,6 +1798,31 @@ def test_hand_edit_detector_passes_when_writer_tool_called():
     assert result.passed is True, f"unexpected failure: {result.error}"
 
 
+def test_hand_edit_detector_counts_the_url_builder_only_with_projectpath():
+    """`build_external_search_url` writes its hand-off log entry only when it
+    carries a projectPath, so only then may it account for a research.json change."""
+    with_path = _run_hand_edit_detector(
+        research_changed=True,
+        tool_calls=[
+            {
+                "tool": "mcp__genealogy__build_external_search_url",
+                "args": {"site": "findagrave", "attributes": {"surname": "Flynn"}, "projectPath": "/p"},
+            }
+        ],
+    )
+    assert with_path.passed is True, f"unexpected failure: {with_path.error}"
+    without_path = _run_hand_edit_detector(
+        research_changed=True,
+        tool_calls=[
+            {
+                "tool": "mcp__genealogy__build_external_search_url",
+                "args": {"site": "findagrave", "attributes": {"surname": "Flynn"}},
+            }
+        ],
+    )
+    assert without_path.passed is False
+
+
 def test_hand_edit_detector_fails_on_change_with_zero_writer_calls():
     """(b) research.json changed + ZERO writer-tool calls → fail, naming
     the file and pointing at the writer tools (the ut_012 incident: empty

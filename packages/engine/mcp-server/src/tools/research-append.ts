@@ -525,7 +525,7 @@ function planActiveInvariants(entry: any, research: any): string[] {
  *  Reads the **pre-call snapshot**, both halves, per ADR-0011's rule: "Snapshot
  *  when the precondition must be satisfied by someone else. Read live when it is
  *  the same author's own prior step." Neither half is this author's own step —
- *  `ownership.json` gives `hypotheses.callers` as `["skill:hypothesis-tracking"]`
+ *  `ownership.json` gives `hypotheses.callers` as `["agent:hypothesis-tracking"]`
  *  while `conflicts` belongs to `skill:conflict-resolution` and `assertions` to
  *  `skill:record-extraction`. Both of those sections are `enforceableAt:
  *  ["unit"]` only (no hook arm, no tool arm), so under a live read nothing would
@@ -1663,6 +1663,59 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
       "the search finish; declaring is available on the next call once the plan reflects it. " +
       "Items still at `planned` do not block — consulting the stop criteria before draining " +
       "the plan is the sanctioned path.",
+  ];
+}
+
+/** A new question may not be created while any unresolved question has an
+ *  active-plan item `in_progress`, with one exception (chesworthrm,
+ *  2026-09-29): the new question may target an unresolved conflict that blocks
+ *  the in-flight question. That exception is checked against `conflicts[]` —
+ *  an `unresolved` conflict must list the in-flight question in
+ *  `blocks_question_ids`, AND the new question's `unblocks` must name it. A
+ *  filled-in `unblocks` alone proves nothing.
+ *
+ *  There is deliberately no "add a question anyway" override: the tool cannot
+ *  tell a real user override from a delegation that claims one, and the
+ *  override's shape (`depends_on` naming the in-flight question) is exactly how
+ *  `ut_question_selection_d01` fails. A user who wants to move on marks the
+ *  in-flight item done or skipped first.
+ *
+ *  Same pre-call snapshot and active-plan discipline as
+ *  `planCompleteInvariants`: a superseded plan's items are frozen and a resolved
+ *  question's plan is settled, so neither blocks. */
+function newQuestionWhileSearchInFlightInvariants(entry: any, preCallResearch: any): string[] {
+  const unresolvedQuestions = new Set<string>(
+    (Array.isArray(preCallResearch?.questions) ? preCallResearch.questions : [])
+      .filter((q: any) => typeof q?.id === "string" && q.status !== "resolved")
+      .map((q: any) => q.id),
+  );
+  const unblocks = new Set<string>(
+    Array.isArray(entry?.unblocks) ? entry.unblocks.filter((u: unknown) => typeof u === "string") : [],
+  );
+  const conflictBlocked = new Set<string>();
+  for (const c of Array.isArray(preCallResearch?.conflicts) ? preCallResearch.conflicts : []) {
+    if (c?.status !== "unresolved" || !Array.isArray(c.blocks_question_ids)) continue;
+    for (const q of c.blocks_question_ids) if (typeof q === "string") conflictBlocked.add(q);
+  }
+  const refused: string[] = [];
+  for (const plan of Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []) {
+    if (!plan || plan.status !== "active" || !unresolvedQuestions.has(plan.question_id)) continue;
+    const excepted = conflictBlocked.has(plan.question_id) && unblocks.has(plan.question_id);
+    if (excepted) continue;
+    for (const item of Array.isArray(plan.items) ? plan.items : []) {
+      if (item?.status === "in_progress" && typeof item?.id === "string") {
+        refused.push(`${item.id} (on ${plan.question_id})`);
+      }
+    }
+  }
+  if (refused.length === 0) return [];
+  const ids = refused.sort().join(", ");
+  return [
+    `a new question cannot be opened while research is still running: ${ids} ` +
+      `${refused.length === 1 ? "is" : "are"} still 'in_progress'. The plan says that search ` +
+      "has not finished, whatever the request that reached you says. Write no question now: " +
+      "report the in-flight item as the reason. The one exception is a question that resolves " +
+      "an unresolved conflict blocking that question — set its `unblocks` to name it.",
   ];
 }
 
@@ -3313,6 +3366,9 @@ function applyOne(
     if (declarationTouchedThisOp) {
       invariantErrors.push(...planCompleteInvariants(resultEntry, preCallResearch));
     }
+    if (op.op === "append") {
+      invariantErrors.push(...newQuestionWhileSearchInFlightInvariants(resultEntry, preCallResearch));
+    }
     const statusTouchedThisOp =
       op.op === "append" || Object.prototype.hasOwnProperty.call(fields, "status");
     // EITHER side, because the invariant couples two fields and an op that
@@ -3454,7 +3510,7 @@ function applyOne(
     // found and closed, and it is not hypothetical here either: the skill's own
     // documented re-invocation path writes `fields: {contradicting_assertion_ids:
     // [...]}` and is told to "leave the status unchanged"
-    // (`hypothesis-tracking/SKILL.md`). Gating on `status` alone left three
+    // (`agents/hypothesis-tracking.md`). Gating on `status` alone left three
     // measured calls landing `ok: true` on exactly the state this refuses.
     //
     // Measured at 587d3c98d: 11 corpus update ops touch one of these lists

@@ -10,11 +10,12 @@
       "from-objective",
       "first-question",
       "regression",
-      "disputed-parents-missing-info"
+      "disputed-parents-missing-info",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "The parents currently attached to Anton Vogt (I1) look wrong to me. What should I research next?",
+    "delegation": "Select and record the next research question for this project.\n\nThe user said: \"The parents currently attached to Anton Vogt (I1) look wrong to me. What should I research next?\"\n\nprojectPath: <workspace>",
     "scenario": "disputed-parents-unsourced"
   },
   "judge_context": [

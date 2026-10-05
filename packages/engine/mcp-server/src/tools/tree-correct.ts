@@ -29,7 +29,7 @@ export type TreeCorrectInput = TreeEditInput;
 export type TreeCorrectResult = TreeEditResult;
 
 export async function treeCorrect(input: TreeCorrectInput): Promise<TreeCorrectResult> {
-  return executeTreeOps(input, CORRECT_GATE);
+  return executeTreeOps(input, CORRECT_GATE, "tree_correct");
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
@@ -148,6 +148,22 @@ export const treeCorrectSchema = {
             resolveStandardPlace: { type: "boolean" },
           },
           required: ["operation"],
+        },
+      },
+      warningJustifications: {
+        type: "array",
+        description:
+          "Justifications for genealogical warnings this write introduces. " +
+          "If the write introduces warnings and this is absent or incomplete, the tool " +
+          "refuses with { ok: false, reason: 'unjustified_warnings', warnings: [...] }. " +
+          "Re-call with each warningId and a justification string.",
+        items: {
+          type: "object",
+          properties: {
+            warningId: { type: "string", description: "The warning id from the refusal." },
+            justification: { type: "string", description: "Why this warning is acceptable." },
+          },
+          required: ["warningId", "justification"],
         },
       },
     },

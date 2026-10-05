@@ -95,15 +95,21 @@
     {
       "artifact": "research.json",
       "section": "questions",
-      "owner": "skill:question-selection",
+      "owner": "agent:question-selection",
       "callers": [
-        "skill:question-selection",
+        "agent:question-selection",
         "skill:research-exhaustiveness",
         "agent:proof-conclusion"
       ],
       "agentCallers": [
         {
           "agent": "agent:proof-conclusion",
+          "tools": [
+            "research_append"
+          ]
+        },
+        {
+          "agent": "agent:question-selection",
           "tools": [
             "research_append"
           ]
@@ -120,7 +126,7 @@
       "hookCallers": [
         "agent:research-exhaustiveness"
       ],
-      "notes": "Enforced at the hook plane since 2026-08-23, but FIELD-scoped rather than section-scoped — the only row of that shape. `exhaustive_declaration` is a REQUIRED property of every question, so question-selection writes it on every creation from the main thread; 197 of the 392 corpus ops carrying the field are exactly those, and a section route or a presence-keyed field route denies all of them. The hook therefore keys on the CLAIM — an op setting `exhaustive_declaration.declared` to true — and lives in the guard's `OWNED_DECLARATIONS`, not `OWNED_SECTIONS`. A `declared: false` write claims nothing and is not routed: that is both question creation and the owning skill's own honest early-termination path. 47 of the 131 corpus runs that declared a question exhaustive never invoked the skill that owns it. `callers` stays skill-only and the agent lives in `hookCallers`, per the proof_summaries row: `callers` is validated against test_ownership_table, which keys on the calling skill's frontmatter name. Since 2026-09-02 test_no_out_of_lane_section_writes records the hook's agent-keyed verdict on this plane, so the declaration arm binds here too.",
+      "notes": "Enforced at the hook plane since 2026-08-23, but FIELD-scoped rather than section-scoped — the only row of that shape. `exhaustive_declaration` is a REQUIRED property of every question, so question-selection writes it on every creation from the main thread; 197 of the 392 corpus ops carrying the field are exactly those, and a section route or a presence-keyed field route denies all of them. The hook therefore keys on the CLAIM — an op setting `exhaustive_declaration.declared` to true — and lives in the guard's `OWNED_DECLARATIONS`, not `OWNED_SECTIONS`. A `declared: false` write claims nothing and is not routed: that is both question creation and the owning skill's own honest early-termination path. 47 of the 131 corpus runs that declared a question exhaustive never invoked the skill that owns it. `callers` stays skill-only and the agent lives in `hookCallers`, per the proof_summaries row: `callers` is validated against test_ownership_table, which keys on the calling skill's frontmatter name. Since 2026-09-02 test_no_out_of_lane_section_writes records the hook's agent-keyed verdict on this plane, so the declaration arm binds here too. Issue #2115 folded question-selection into an agent and deleted the skill, so owner and caller are now agent:question-selection -- `writer_sets` resolves an `agent:` caller only when it is the suite's own subject, so this authorizes the agent's own writes in its own suite and nothing else. It is also in agentCallers above. Its hook lane in AGENT_WRITABLE_SECTIONS is `questions` and exists because plugin-hooks.test.ts requires a lane for every agent granted research_append -- NOT because a route points at it. The `declared: true` route still belongs to research-exhaustiveness and is unchanged; question creation writes `declared: false`, which claims nothing and is not routed.",
       "requires": "question-selection mints questions and owns their structure; research-exhaustiveness advances `status` to `exhaustive_declared` and writes `exhaustive_declaration`; proof-conclusion advances `status` to `resolved` and writes `resolved` and `resolution_assertion_ids` for the question it concluded. A `resolved` write additionally requires a proof summary referencing the question — a writer-tool precondition, not an ownership rule. Two further preconditions on the same plane, also not ownership rules: `status: \"exhaustive_declared\"` requires `exhaustive_declaration.declared === true` (read live — the same author's own step), and `declared: true` is refused while a plan item for that question is `in_progress` (read from the pre-call snapshot — plan-item completion is the search work's step, and this skill is not a permitted writer of `plan_items`). Items still `planned` do NOT block: the orchestrator routes here before the plan is drained.",
       "failure": "`status: \"resolved\"` is the orchestrator's stop condition. A skill that flips it without concluding the question ends the project on an unanswered question.",
       "remedy": "Conclude the question through proof-conclusion, which writes the proof summary carrying `question_id` and then resolves it.",
@@ -135,7 +141,7 @@
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
-        "skill:search-images",
+        "agent:search-images",
         "skill:record-extraction"
       ],
       "writerTools": [
@@ -144,7 +150,7 @@
       "enforceableAt": [
         "unit"
       ],
-      "requires": "research-plan owns plan and item structure. The search skills and record-extraction may update only `items[].status` after executing or extracting from an item.",
+      "requires": "research-plan owns plan and item structure. The search skills, the search-images agent, and record-extraction may update only `items[].status` after executing or extracting from an item.",
       "failure": "A search skill rewrites the plan it was handed, and the plan stops being a record of what was intended versus what was done.",
       "remedy": "Update the item's status; route a change to the plan itself through research-plan.",
       "override": "none"
@@ -158,7 +164,7 @@
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
-        "skill:search-images",
+        "agent:search-images",
         "skill:record-extraction"
       ],
       "agentCallers": [
@@ -183,12 +189,12 @@
       "artifact": "research.json",
       "section": "log",
       "owner": null,
-      "reason": "Append-only and multi-writer by design. Every search and extraction skill appends its own entries through `research_log_append`, which owns entry structure and id allocation and takes no `section` argument at all. No single skill owns the section; the permitted writers are listed in `callers`.",
+      "reason": "Append-only and multi-writer by design. Every search and extraction skill appends its own entries through `research_log_append`, which owns entry structure and id allocation and takes no `section` argument at all; `build_external_search_url` appends its in-flight `external_site` hand-off entry by calling the same function when given a `projectPath`. No single skill owns the section; the permitted writers are listed in `callers`.",
       "callers": [
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
-        "skill:search-images",
+        "agent:search-images",
         "skill:record-extraction"
       ],
       "agentCallers": [
@@ -206,7 +212,8 @@
         }
       ],
       "writerTools": [
-        "research_log_append"
+        "research_log_append",
+        "build_external_search_url"
       ],
       "enforceableAt": [
         "unit",
@@ -327,9 +334,9 @@
     {
       "artifact": "research.json",
       "section": "hypotheses",
-      "owner": "skill:hypothesis-tracking",
+      "owner": "agent:hypothesis-tracking",
       "callers": [
-        "skill:hypothesis-tracking"
+        "agent:hypothesis-tracking"
       ],
       "writerTools": [
         "research_append"
@@ -338,10 +345,10 @@
         "unit",
         "tool"
       ],
-      "notes": "hypothesis-tracking is invoked zero times across the committed e2e corpus, so on that plane the row is paper — it was the third-largest source of false denials when the table was replayed as a tool-boundary deny. It stays enforced because the unit corpus does exercise the skill. The `tool` plane is claimed for the `supported` evidence floor only, not for caller routing: `hypothesisSupportedInvariants` in `packages/engine/mcp-server/src/tools/research-append.ts` refuses a promotion that fails §5.9's two mechanical halves, whoever calls it (issue #2086, lead ruling 2026-09-07).",
+      "notes": "`owner` and `callers` name the AGENT since the skill was deleted (issue #2792, ruling A on issue #2799): `writer_sets` resolves `agent:hypothesis-tracking` when it is the subject of its own unit suite, `eval/tests/unit/hypothesis-tracking/`. Its hook lane is `hypotheses` alone. hypothesis-tracking is invoked zero times across the committed e2e corpus, so on that plane the row is paper — it was the third-largest source of false denials when the table was replayed as a tool-boundary deny. It stays enforced because the unit corpus does exercise the agent. The `tool` plane is claimed for the `supported` evidence floor only, not for caller routing: `hypothesisSupportedInvariants` in `packages/engine/mcp-server/src/tools/research-append.ts` refuses a promotion that fails §5.9's two mechanical halves, whoever calls it (issue #2086, lead ruling 2026-09-07).",
       "requires": "Only hypothesis-tracking states a hypothesis or rules one out.",
       "failure": "A ruled-out hypothesis rewritten by another skill loses the reasoning that ruled it out, and the same line gets re-researched.",
-      "remedy": "Route through hypothesis-tracking.",
+      "remedy": "Delegate to `@plugin:hypothesis-tracking`.",
       "override": "none"
     },
     {
@@ -414,9 +421,9 @@
     {
       "artifact": "research.json",
       "section": "localities",
-      "owner": "skill:locality-guide",
+      "owner": "agent:locality-guide",
       "callers": [
-        "skill:locality-guide"
+        "agent:locality-guide"
       ],
       "writerTools": [
         "research_append"
@@ -424,10 +431,34 @@
       "enforceableAt": [
         "unit"
       ],
-      "notes": "Declared an owner since the section shipped and never once evaluated — the section was missing from the list the unit check iterates. This promotion is what first enforces it.",
+      "notes": "Declared an owner since the section shipped and never once evaluated — the section was missing from the list the unit check iterates. This promotion is what first enforces it. locality-guide is an agent (issue #2117); `writer_sets` resolves an `agent:` caller only when it matches that subject, so this row authorizes locality-guide's own suite and nothing else.",
       "requires": "Only locality-guide surveys a place. A re-survey refreshes the existing `loc_` entry in place; there is no status field to supersede.",
       "failure": "research-plan plans from these facts. A locality entry written by a skill that did not survey the place produces plan items for record sets that do not exist for that jurisdiction or era.",
       "remedy": "Survey through locality-guide.",
+      "override": "none"
+    },
+    {
+      "artifact": "research.json",
+      "section": "warning_justifications",
+      "owner": null,
+      "reason": "Writer-tool only: the tree-writer gate (tree_edit, tree_correct, merge_tree_persons, materialize_facts) appends justifications when a write introduces a genealogical warning. No skill or agent owns this section — the tool writes it as a side-effect of a justified write.",
+      "callers": [],
+      "writerTools": [
+        "tree_edit",
+        "tree_correct",
+        "merge_tree_persons",
+        "materialize_facts"
+      ],
+      "toolAuthorized": [
+        "tree_edit",
+        "tree_correct",
+        "merge_tree_persons",
+        "materialize_facts"
+      ],
+      "enforceableAt": [],
+      "requires": "Append-only; a justification entry is persisted by the warning gate as a side-effect of a justified tree write. Each entry carries warning_id, justification, person_ids, tool, and recorded_at.",
+      "failure": "A warning justification lost from the audit trail leaves gps-mentor unable to evaluate whether the researcher acknowledged and addressed each introduced warning.",
+      "remedy": "The tree-writer tools persist justifications automatically through checkWarningGate. No manual write is needed.",
       "override": "none"
     },
     {
