@@ -33,6 +33,10 @@ eval
 *.log
 .DS_Store
 
+# A stale operator FamilySearch token from before U3 (the worker now reads the patron's
+# grant from Postgres): never part of any image, so never part of the context.
+apps/server/proto/.fs-token
+
 # NB: do NOT add **/build — the E2B sandbox image (apps/server/sandbox/
 # e2b.Dockerfile) shares this context and COPYs packages/engine/mcp-server/build.
 # Excluding it would bake a broken template. The deploy image copies no build/.

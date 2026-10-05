@@ -343,6 +343,7 @@ proto-worker = [
     { name = "anyio" },
     { name = "botocore" },
     { name = "claude-agent-sdk" },
+    { name = "cryptography" },
     { name = "psycopg", extra = ["binary"] },
 ]
 
@@ -385,6 +386,7 @@ proto-worker = [
     { name = "anyio", specifier = ">=4.14.2" },
     { name = "botocore", specifier = ">=1.40" },
     { name = "claude-agent-sdk", specifier = "==0.2.128" },
+    { name = "cryptography", specifier = ">=48.0.1" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.4" },
 ]
 
