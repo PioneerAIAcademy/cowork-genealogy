@@ -21,7 +21,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   };
 });
 
-import { researchAppend, countryConsistency, mintedFromThisRecord } from "../../src/tools/research-append.js";
+import { researchAppend, countryConsistency, mintedFromThisRecord, personaReachable } from "../../src/tools/research-append.js";
 import { validateProject } from "../../src/validation/validator.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
 import {
@@ -10495,5 +10495,24 @@ describe("mintedFromThisRecord counts person-level refs (#2696)", () => {
 
   it("a person-level ref to another record means it was not minted from this one", () => {
     expect(mintedFromThisRecord("I9", "REC-A", research, tree([{ ref: "S1" }, { ref: "S2" }]))).toBe(false);
+  });
+});
+
+describe("personaReachable — an accepted FamilySearch hint is a re-openable record (#2029)", () => {
+  // search-hints' record mode logs an accepted hint as tool `person_record_matches`
+  // with no sidecar, and record-extraction reuses that log entry. The hint's ark
+  // is a 1:1: record persona record_read opens, so the same_person score gate
+  // must still bind on a link made from it.
+  const research = (tool: string) => ({
+    assertions: [{ id: "a_001", record_id: "ark:/61903/1:1:MABC", record_persona_id: null, log_entry_id: "log_6" }],
+    log: [{ id: "log_6", tool, results_ref: null }],
+  });
+
+  it("is reachable when the assertion came from an accepted hint", () => {
+    expect(personaReachable({ assertion_id: "a_001" }, research("person_record_matches"))).toBe(true);
+  });
+
+  it("still treats an image-sourced assertion as unreachable", () => {
+    expect(personaReachable({ assertion_id: "a_001" }, research("image_transcribe"))).toBe(false);
   });
 });

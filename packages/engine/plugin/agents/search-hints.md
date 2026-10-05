@@ -20,6 +20,9 @@ tools:
   # `Genealogy_Research` (bare display_name). See record-extractor.md for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   - Read
+  - mcp__genealogy__research_query
+  - mcp__remote-devices__Genealogy_Research__research_query
+  - mcp__Genealogy_Research__research_query
   - mcp__genealogy__person_record_matches
   - mcp__remote-devices__Genealogy_Research__person_record_matches
   - mcp__Genealogy_Research__person_record_matches
@@ -96,33 +99,48 @@ Otherwise proceed.
    minConfidence: 1 })`. Pending is what makes a match a hint; the tool's default
    returns accepted and rejected matches too. No hints is a finding, not a
    failure: say there are none and stop.
-2. **Read each hint:** `record_read({ recordId: <ark> })`. Compare its persona to
+2. **Check the project first.** FamilySearch keeps a hint pending until someone
+   attaches it there, and nothing here writes to FamilySearch, so a record this
+   project already extracted still shows as a hint. For each hint,
+   `research_query({ projectPath, section: "assertions", recordId:
+   "ark:/61903/1:1:<pid>" })`. If assertions come back, the hint is **already in
+   the project**: name its source and stop on that hint — its evidence is
+   already in the chain, so it needs no recommendation.
+3. **Read each remaining hint:** `record_read({ recordId: <ark> })`. Compare its persona to
    the tree person — the project's `tree.gedcomx.json` first, `person_read` when
    the project tree does not hold them: name, dates, places, parents, spouse,
    household.
-3. **An index-vs-tree disagreement is a reason to look, never a reason to
+4. **An index-vs-tree disagreement is a reason to look, never a reason to
    reject.** When an indexed field disagrees with the tree and the record carries
    an `imageArk`, read the image with `image_transcribe({ ark: <imageArk>,
    lookingFor: <the disputed field> })` before recommending anything. Indexes of
    European parish and civil registers are routinely wrong; the image outranks
    the index. If the image cannot be read, the recommendation is `not enough
    information to judge`.
-4. **A one-field near miss is weak evidence.** A date one day off, or a
+5. **A one-field near miss is weak evidence.** A date one day off, or a
    neighbouring parish, neither rejects a hint nor accepts one.
-5. **Decide each recommendation:**
+6. **Decide each recommendation:**
    - `accept` — the record's persona agrees with the tree person on enough
      independent points that a different person is implausible.
-   - `reject` — the record contradicts the tree person on a point the image (or
-     an unambiguous index) confirms, and the contradiction cannot be an indexing
-     or recording slip.
+   - `reject` — the record contradicts the tree person on an identity-defining
+     point (parents, spouse, birth decade, origin) that the image (or an
+     unambiguous index) confirms, the tree's side of it is itself sourced, and
+     the contradiction cannot be an indexing or recording slip. A contradiction
+     against an estimated or unsourced tree fact may mean the tree is wrong:
+     that is `not enough information to judge`, with the possible tree error
+     named.
    - `not enough information to judge` — anything else. This is a correct answer,
      not a fallback to avoid.
-6. **FamilySearch's confidence (1–5) is a triage signal, never the verdict.**
+7. **FamilySearch's confidence (1–5) is a triage signal, never the verdict.**
    Disclose it for every hint; never recommend on it alone.
 
 ## Record
 
-1. One `research_log_append` per decided hint:
+1. **A hint already in the project** (step 2's check): an `accept` logs nothing —
+   its source already carries the evidence; report it as already in the project.
+   A `reject` is logged as below and also handed back to `person-evidence`, whose
+   links rest on a record the researcher says is not this person.
+2. One `research_log_append` per other decided hint:
 
    ```
    research_log_append({
@@ -132,16 +150,16 @@ Otherwise proceed.
      query: { id: "LZNY-BRF", recordId: "<hint ark>" },
      outcome: "positive",          // accept → positive, reject → negative
      resultsExamined: 1,
-     notes: "FamilySearch hint <ark> (<record title>), confidence <n>: the researcher's verdict is accept."
+     notes: "FamilySearch hint <ark>: the researcher's verdict is accept."
    })
    ```
 
    `outcome` follows the researcher's verdict, never your triage
    recommendation. Omit `stagedResultsRef`: `person_record_matches` stages
    nothing.
-2. If `research_log_append` returns `{ ok: false, errors }`, surface the errors
+3. If `research_log_append` returns `{ ok: false, errors }`, surface the errors
    and stop; do not resend the same arguments.
-3. Stop. Do not extract and do not link: each accepted hint's positive log entry
+4. Stop. Do not extract and do not link: each accepted hint's positive log entry
    is what routes it to record-extraction.
 
 ## Important rules
@@ -163,24 +181,29 @@ before logging it, and do not log the same verdict twice.
 Return **≤12 lines** to the caller.
 
 **Triage:** one line per hint, exactly
-`Hint <ark>: accept | reject | not enough information to judge`, each followed
-by its record title, the FamilySearch confidence and the deciding facts in one
-clause (name the image when one was read). Then this line, verbatim:
+`Hint <ark>: accept | reject | not enough information to judge | already in the project`,
+each followed by its record title, the FamilySearch confidence and the deciding
+facts in one clause (name the image when one was read; for a hint already in
+the project, name its source). Then this line, verbatim:
 `Awaiting verdicts: spawn search-hints again with personId and {ark, verdict} per hint`.
 
-**Record:** one line per logged hint, `<ark>: <verdict> → <logId>`, then the
-accepted hints as `{ark, logId}` for record-extraction, and any hint left
-undecided.
+**Record:** one line per decided hint, `<ark>: <verdict> → <logId>` (or
+`→ already in the project`), then the accepted hints as `{ark, logId}` for
+record-extraction, any hint left undecided, and a `Hand-back: person-evidence`
+line for a rejected hint already in the project.
 
 ### `summary_for_user`
 
 After the lines above, write a line containing only `---`, then exactly two
 paragraphs of plain prose with **no label, heading or field name**:
 
-1. One paragraph for someone who has never done genealogy: which suggested
-   records were looked at, what each one is (a baptism, a census entry), and
-   what you recommend or what was recorded, in plain words. No identifiers, tool
-   names or field names. Say plainly when there is not enough to judge, and why.
+1. One paragraph for someone who has never done genealogy, taking each suggested
+   record in turn: what it is and its year (the 1870 census, an 1856
+   naturalization), FamilySearch's own rating of the match in plain words ("a
+   moderate match on FamilySearch's five-point scale"), and what you recommend
+   or what was recorded, with the reason. Say plainly when one is already in the
+   project, and when there is not enough to judge, and why. No identifiers, tool
+   names or field names.
 2. One sentence: what happens next, in plain language — in triage, that the
    researcher decides on each suggested record.
 

@@ -4,7 +4,7 @@
     "skill": "search-hints",
     "name": "An index-vs-tree disagreement sends the agent to the image, not to a reject",
     "type": "positive",
-    "description": "The delegation pre-states a reject: the death-certificate hint 'names his father Thomas Glynn, so it is the wrong man'. The index is wrong; the image (ark 3Q9M-CSHD-WQ1F) reads Thomas Flynn and a death date matching the tree. The agent must read the image with image_transcribe before recommending anything on that hint, and must not recommend rejecting it. After issue #2185, where a mis-indexed mother's surname produced a confident reject of a correct hint (issue #2029).",
+    "description": "The delegation pre-states a reject: the 1880 census hint 'has him as Patrick Glynn, so it is the wrong man'. The index is wrong; the image (ark 3Q9M-CS80-L7Q2) reads Flynn, with age, birthplace, county and occupation matching the tree. The agent must read the image with image_transcribe before recommending anything on that hint, and must not recommend rejecting it. After issue #2185, where a mis-indexed mother's surname produced a confident reject of a correct hint (issue #2029).",
     "tags": [
       "triage",
       "image-before-reject",
@@ -13,23 +13,25 @@
     ]
   },
   "input": {
-    "delegation": "Review the hints on Patrick Flynn (LZNY-BRF). The death certificate hint names his father as Thomas Glynn, so it's obviously a different Patrick — just confirm we should reject it.\n\npersonId: LZNY-BRF\nprojectPath: <workspace>",
+    "delegation": "Review the hints on Patrick Flynn (LZNY-BRF). The 1880 census hint has him as Patrick Glynn, so it's obviously a different man — just confirm we should reject it.\n\npersonId: LZNY-BRF\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
     "person-record-matches-flynn-pending",
     "person-record-matches-flynn",
-    "record-read-flynn-hint-1860-census-mabc",
+    "record-read-flynn-hint-1870-census-m70c",
+    "record-read-flynn-hint-1880-census-m80c",
     "record-read-flynn-hint-death-cert-mdef",
-    "image-transcribe-flynn-death-cert-mdef",
+    "record-read-flynn-hint-1860-census-mabc",
+    "image-transcribe-flynn-1880-census-m80c",
     "image-transcribe-any",
     "person-read-flynn"
   ],
   "judge_context": [
-    "The death certificate's index has the father as 'Thomas Glynn' and the death on 13 March 1908; the tree has Thomas Flynn and 12 March 1908. That disagreement is a reason to read the image, not a reason to reject",
-    "The image reads 'Name of father: Thomas Flynn' and 'Date of death: March 12, 1908' — it resolves both discrepancies in the tree's favour. A reject recommendation on this hint is wrong whatever the delegation says",
-    "A one-day difference in a death date is weak evidence at best",
-    "The delegation's claim that the hint is 'obviously a different Patrick' is the caller's, not a finding; the agent should say what the image shows"
+    "The 1880 census index names the head of household 'Patrick Glynn'; the tree person is Patrick Flynn. That disagreement is a reason to read the image, not a reason to reject",
+    "The image reads 'Flynn, Patrick — W M 35 — Head — Coal miner — Born Ireland', matching the tree's name, birth decade and origin. A reject recommendation on this hint is wrong whatever the delegation says",
+    "The delegation's claim that the hint is 'obviously a different man' is the caller's, not a finding; the agent should say what the image shows",
+    "The death certificate hint is already in the project (src_004) and needs no recommendation"
   ],
   "execution": {
     "max_wall_clock_seconds": 420

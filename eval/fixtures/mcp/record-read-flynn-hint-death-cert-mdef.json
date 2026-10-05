@@ -1,6 +1,6 @@
 {
   "tool": "record_read",
-  "description": "record_read for hint MDEF, Patrick Flynn's 1908 Pennsylvania death certificate as INDEXED: the index has the death a day late (13 March) and the father as 'Thomas Glynn' — a mis-index, as the image (image-transcribe-flynn-death-cert-mdef) shows. The record carries an imageArk, so the agent must read the image before recommending against the hint (issue #2029, after issue #2185's mis-indexed surname).",
+  "description": "record_read for hint MDEF, Patrick Flynn's 1908 Pennsylvania death certificate. The project already extracted this record as src_004 (log_005, assertions a_011–a_013, record_id ark:/61903/1:1:MDEF), and the persona here matches those assertions. Triage should find it already in the project before reading it at all (issue #2029).",
   "args": {
     "recordId": "~MDEF"
   },
@@ -22,13 +22,13 @@
         "facts": [
           {
             "type": "Death",
-            "date": "13 March 1908",
+            "date": "12 March 1908",
             "place": "Schuylkill, Pennsylvania, United States"
           },
           {
             "type": "Birth",
             "date": "1845",
-            "place": "Ireland"
+            "place": "Pennsylvania"
           }
         ],
         "sources": [
@@ -47,15 +47,10 @@
             "id": "N2",
             "type": "BirthName",
             "given": "Thomas",
-            "surname": "Glynn"
+            "surname": "Flynn"
           }
         ],
-        "facts": [
-          {
-            "type": "Birth",
-            "place": "Ireland"
-          }
-        ],
+        "facts": [],
         "sources": [
           {
             "id": "S1",
@@ -78,7 +73,6 @@
         "title": "Pennsylvania Death Certificates, 1906-1967",
         "citation": "\"Pennsylvania Death Certificates, 1906-1967,\" database with images, FamilySearch, certificate no. 4521, Patrick Flynn, 1908."
       }
-    ],
-    "imageArk": "ark:/61903/3:1:3Q9M-CSHD-WQ1F"
+    ]
   }
 }

@@ -27,11 +27,12 @@ _AGENT = "search-hints"
 # Markdown the model adds around the ark or the verdict (`code`, **bold**,
 # _emphasis_) is tolerated: the line's meaning is the ark and the verdict word.
 _HINT_LINE = re.compile(
-    r"Hint\s+`?([^\s`]+?)`?\s*:\s*[*_`]*\s*(accept|reject|not enough information to judge)(?![A-Za-z])",
+    r"Hint\s+`?([^\s`]+?)`?\s*:\s*[*_`]*\s*"
+    r"(accept|reject|not enough information to judge|already in the project)(?![A-Za-z])",
     re.IGNORECASE,
 )
-# The death certificate's image (fixture image-transcribe-flynn-death-cert-mdef).
-_MDEF_IMAGE = "3Q9M-CSHD-WQ1F"
+# The 1880 census page's image (fixture image-transcribe-flynn-1880-census-m80c).
+_M80C_IMAGE = "3Q9M-CS80-L7Q2"
 
 
 def _calls(tool_calls, name: str) -> list[dict]:
@@ -98,8 +99,8 @@ def test_triage_writes_nothing(before_state, after_state, tool_calls, test):
 
 def test_image_read_before_reject(tool_calls, agent_returns, text_response, test):
     """An index-vs-tree disagreement sends the agent to the image, and the
-    image decides: the death certificate's image resolves both discrepancies in
-    the tree's favour, so its hint may not be recommended for rejection.
+    image decides: the 1880 census image reads Flynn where the index has Glynn,
+    so that hint may not be recommended for rejection.
 
     Both halves, because #2185 was reasoning past the evidence, not only never
     reading it: an agent that transcribes the image and rejects anyway fails.
@@ -108,17 +109,31 @@ def test_image_read_before_reject(tool_calls, agent_returns, text_response, test
         pytest.skip("not an image-before-reject test")
     read = [
         c for c in _calls(tool_calls, "image_transcribe")
-        if _MDEF_IMAGE in str((c.get("args") or {}).get("ark", ""))
+        if _M80C_IMAGE in str((c.get("args") or {}).get("ark", ""))
     ]
     assert read, (
-        f"the death-certificate hint's index disagrees with the tree and its record carries "
-        f"an imageArk ({_MDEF_IMAGE}), but image_transcribe was never called on it"
+        f"the 1880 census hint's index disagrees with the tree and its record carries "
+        f"an imageArk ({_M80C_IMAGE}), but image_transcribe was never called on it"
     )
-    verdict = _verdict_for(_reply(agent_returns, text_response, test), "MDEF")
-    assert verdict is not None, "the return carries no `Hint <ark>: <verdict>` line for the MDEF hint"
+    verdict = _verdict_for(_reply(agent_returns, text_response, test), "M80C")
+    assert verdict is not None, "the return carries no `Hint <ark>: <verdict>` line for the M80C hint"
     assert verdict != "reject", (
-        "the MDEF hint was recommended for rejection although its image reads Thomas Flynn "
-        "and 12 March 1908, agreeing with the tree"
+        "the M80C hint was recommended for rejection although its image reads Flynn, "
+        "agreeing with the tree"
+    )
+
+
+def test_hint_already_in_the_project_is_named(agent_returns, text_response, test):
+    """FamilySearch keeps a hint pending until someone attaches it there, and
+    nothing here writes back, so a record the project already extracted still
+    shows as a hint. Triage reports it as already in the project; recommending
+    it as a fresh accept sends it to a second extraction."""
+    if "already-in-project" not in test.get("tags", []):
+        pytest.skip("not an already-in-project test")
+    verdict = _verdict_for(_reply(agent_returns, text_response, test), "MDEF")
+    assert verdict == "already in the project", (
+        f"the MDEF death certificate is already extracted as src_004; expected its line to read "
+        f"'already in the project', got {verdict!r}"
     )
 
 
@@ -147,10 +162,15 @@ def test_record_mode_logs_each_verdict(before_state, after_state, agent_returns,
     assert len(entries) == 2, f"expected 2 new log entries (one per verdict), got {len(entries)}"
 
     def _for(pid: str) -> dict | None:
+        # The query's recordId names the hint; notes are only a fallback, since a
+        # reject note may well mention the accepted hint too.
+        by_query = [e for e in entries if pid in str((e.get("query") or {}).get("recordId", ""))]
+        if by_query:
+            return by_query[0] if len(by_query) == 1 else None
         hits = [e for e in entries if pid in json.dumps(e.get("query")) or pid in str(e.get("notes", ""))]
         return hits[0] if len(hits) == 1 else None
 
-    expected = {"MABC": "positive", "MDEF": "negative"}
+    expected = {"M70C": "positive", "M80C": "negative"}
     for pid, outcome in expected.items():
         entry = _for(pid)
         assert entry is not None, f"no single log entry names hint {pid}"
@@ -161,7 +181,13 @@ def test_record_mode_logs_each_verdict(before_state, after_state, agent_returns,
         assert entry.get("outcome") == outcome, (
             f"{pid}: outcome {entry.get('outcome')!r} does not follow the researcher's verdict ({outcome})"
         )
-    accepted_id = _for("MABC")["id"]
+    if "already-in-project-accept" in test.get("tags", []):
+        assert _for("MDEF") is None, (
+            "an accepted hint already in the project (MDEF, src_004) was logged; its source "
+            "already carries the evidence, and a positive entry with no new assertion sends "
+            "/research back to record-extraction for a record the project holds"
+        )
+    accepted_id = _for("M70C")["id"]
     reply = _reply(agent_returns, text_response, test)
     assert accepted_id in reply, (
         f"the return does not give the accepted hint's log id ({accepted_id}), so "

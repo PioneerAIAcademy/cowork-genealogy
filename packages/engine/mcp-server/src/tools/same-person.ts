@@ -325,6 +325,7 @@ export function buildRecordedScore(
   const fetchable =
     Boolean(assertion.record_persona_id) ||
     logEntry?.tool === "record_read" ||
+    logEntry?.tool === "person_record_matches" ||
     (logEntry !== undefined &&
       PERSONA_BEARING_PRODUCERS.has(logEntry.tool) &&
       Boolean(logEntry.results_ref));

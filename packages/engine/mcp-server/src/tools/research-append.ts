@@ -1175,6 +1175,10 @@ function personEvidenceScoreInvariants(
  *     `gedcomx.persons[]` at write time (§3.5), so the persona exists;
  *   - `record_read` — returns a SimplifiedGedcomX with a persons array, so the
  *     record can be re-opened from its `record_id`;
+ *   - `person_record_matches` — a FamilySearch hint the researcher accepted
+ *     (search-hints' record mode). Its ark is a `1:1:` record persona, which is
+ *     how record-extraction fetches it (`record_read`), so it re-opens the same
+ *     way;
  *   - `record_search` with a retained `results_ref` — the sidecar result carries
  *     the record's `gedcomx`.
  *
@@ -1195,7 +1199,7 @@ export function personaReachable(entry: any, research: any): boolean {
   const log: any[] = research.log ?? [];
   const logEntry = log.find((l: any) => l?.id === assertion.log_entry_id);
   if (!logEntry) return true; // no log entry — provenance unknown
-  if (logEntry.tool === "record_read") return true;
+  if (logEntry.tool === "record_read" || logEntry.tool === "person_record_matches") return true;
   if (logEntry.tool === "record_search" && logEntry.results_ref) return true;
   return false;
 }

@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 from harness.skill_invocation import (
+    _persona_reachable,
     find_tree_facts_disagreeing_with_assertions,
     CITATION_NULLING_KIND,
     CONFLICT_ANALYSIS_FIELDS,
@@ -2167,3 +2168,16 @@ def test_an_empty_assertion_id_names_nothing_and_is_skipped():
     research["assertions"][0]["id"] = "a_011"
     tree["persons"][0]["facts"][0]["assertion_id"] = "a_011"
     assert find_tree_facts_disagreeing_with_assertions(research, tree)
+
+
+# --- _persona_reachable: an accepted hint (issue #2029) ----------------------
+
+
+def test_an_accepted_hint_is_a_reachable_persona():
+    """search-hints logs an accepted hint as `person_record_matches` with no
+    sidecar and record-extraction reuses that entry. Its ark is a 1:1: record
+    persona record_read opens, so a link from it still owes a same_person score
+    -- the TS twin `personaReachable` says the same."""
+    assertion = {"id": "a_001", "record_id": "ark:/61903/1:1:MABC", "record_persona_id": None, "log_entry_id": "log_6"}
+    assert _persona_reachable(assertion, {"log_6": {"id": "log_6", "tool": "person_record_matches"}}) is True
+    assert _persona_reachable(assertion, {"log_6": {"id": "log_6", "tool": "image_transcribe"}}) is False

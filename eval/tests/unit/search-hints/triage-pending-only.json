@@ -4,11 +4,12 @@
     "skill": "search-hints",
     "name": "Triage surfaces only pending hints, each with FamilySearch's confidence",
     "type": "positive",
-    "description": "Patrick Flynn (FamilySearch LZNY-BRF) has one accepted record match (the 1850 census) and two pending ones (the 1860 census, confidence 3; the 1908 death certificate, confidence 2). A hint is a pending match, so triage must ask for status [\"pending\"] and surface only the two hints, each with its confidence disclosed and a recommendation. The pending-only fixture is listed first and the mixed one second, so a call without status gets the accepted match mixed in. Triage writes nothing (issue #2029).",
+    "description": "Patrick Flynn (FamilySearch LZNY-BRF) has one accepted record match (the 1850 census) and three pending ones: the 1870 census (confidence 3) and the 1880 census (confidence 2), both new to the project, and the 1908 death certificate (confidence 2), which the project already extracted as src_004 — FamilySearch keeps it pending because nothing here writes back. Triage must ask for status [\"pending\"], surface only the three hints with their confidences, and report the death certificate as already in the project rather than recommending it for extraction again. The pending-only fixture is listed first and the mixed one second, so a call without status gets the accepted match mixed in. Triage writes nothing (issue #2029).",
     "tags": [
       "triage",
       "pending-only",
       "confidence-disclosed",
+      "already-in-project",
       "writes-nothing",
       "direct-arm"
     ]
@@ -20,18 +21,20 @@
   "mcp_fixtures": [
     "person-record-matches-flynn-pending",
     "person-record-matches-flynn",
-    "record-read-flynn-hint-1860-census-mabc",
+    "record-read-flynn-hint-1870-census-m70c",
+    "record-read-flynn-hint-1880-census-m80c",
     "record-read-flynn-hint-death-cert-mdef",
-    "image-transcribe-flynn-death-cert-mdef",
+    "record-read-flynn-hint-1860-census-mabc",
+    "image-transcribe-flynn-1880-census-m80c",
     "image-transcribe-any",
     "person-read-flynn"
   ],
   "judge_context": [
-    "Only the two pending hints are hints: the 1860 census (confidence 3) and the 1908 death certificate (confidence 2). The 1850 census is an ACCEPTED match, already attached — presenting it as a hint to review is wrong",
+    "Only the three pending hints are hints: the 1870 census (confidence 3), the 1880 census (confidence 2) and the 1908 death certificate (confidence 2). The 1850 census is an ACCEPTED match, already attached — presenting it as a hint to review is wrong",
     "Each hint's FamilySearch confidence (1-5) must be stated, and must not be the sole reason for its recommendation",
-    "Each hint gets one recommendation: accept, reject, or not enough information to judge. The 1860 census agrees with the tree on name, age, birthplace, county and father",
-    "The death certificate's index disagrees with the tree (father indexed 'Thomas Glynn', death a day late). Reading the image is the right move before recommending against it; the image shows Thomas Flynn and 12 March 1908",
-    "Triage writes nothing — no log entry, no tree edit — and ends by saying the researcher decides"
+    "The death certificate is already in the project (src_004, extracted from log_005). It should be reported as already in the project, not recommended for a fresh accept and extraction",
+    "The 1870 census agrees with the tree on name, age, birthplace, county and father. The 1880 census index has the surname as 'Glynn'; reading its image before recommending against it is the right move, and the image reads Flynn",
+    "Triage writes nothing — no log entry, no tree edit — and ends by saying the researcher decides. The researcher-facing paragraph names each record by type and year and gives FamilySearch's rating in plain words"
   ],
   "execution": {
     "max_wall_clock_seconds": 420

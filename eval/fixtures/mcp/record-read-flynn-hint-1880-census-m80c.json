@@ -1,0 +1,56 @@
+{
+  "tool": "record_read",
+  "description": "record_read for hint M80C, the 1880 U.S. Census, Schuylkill County, as INDEXED: head of household 'Patrick Glynn', 35, coal miner, born Ireland. The surname is a mis-index — the image (image-transcribe-flynn-1880-census-m80c) reads Flynn. The record carries an imageArk, so the agent must read the image before recommending against the hint (issue #2029, after issue #2185's mis-indexed surname).",
+  "args": {
+    "recordId": "~M80C"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "M80C",
+        "ark": "ark:/61903/1:1:M80C",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "type": "BirthName",
+            "given": "Patrick",
+            "surname": "Glynn"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Residence",
+            "date": "1880",
+            "place": "Schuylkill, Pennsylvania, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1845",
+            "place": "Ireland"
+          },
+          {
+            "type": "Occupation",
+            "value": "Coal miner"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "1880 United States Federal Census"
+          }
+        ]
+      }
+    ],
+    "relationships": [],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "1880 United States Federal Census",
+        "citation": "\"United States Census, 1880,\" database with images, FamilySearch, Schuylkill County, Pennsylvania, Patrick Glynn household."
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:3Q9M-CS80-L7Q2"
+  }
+}

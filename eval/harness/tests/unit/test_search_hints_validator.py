@@ -17,6 +17,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 
 # Aliased away from the `test_` prefix so pytest does not collect them here.
 from test_search_hints import (  # noqa: E402
+    test_hint_already_in_the_project_is_named as check_in_project,
     test_hint_list_asks_for_pending_only as check_pending,
     test_image_read_before_reject as check_image,
     test_record_mode_logs_each_verdict as check_record,
@@ -27,7 +28,9 @@ from test_search_hints import (  # noqa: E402
 TRIAGE = {"type": "positive", "tags": ["triage", "pending-only", "writes-nothing"], "delegation": "x"}
 IMAGE = {"type": "positive", "tags": ["triage", "image-before-reject"], "delegation": "x"}
 THIN = {"type": "positive", "tags": ["triage", "not-enough-information"], "delegation": "x"}
-RECORD = {"type": "positive", "tags": ["record-mode"], "delegation": "x"}
+RECORD = {"type": "positive", "tags": ["record-mode", "already-in-project-accept"], "delegation": "x"}
+IN_PROJECT = {"type": "positive", "tags": ["triage", "already-in-project"], "delegation": "x"}
+M80C_ARK = "https://familysearch.org/ark:/61903/1:1:M80C"
 MDEF_ARK = "https://familysearch.org/ark:/61903/1:1:MDEF"
 
 
@@ -90,31 +93,31 @@ def test_writes_fails_a_new_log_entry():
 
 # --- image before reject ------------------------------------------------
 
-_READ = _call("image_transcribe", ark="ark:/61903/3:1:3Q9M-CSHD-WQ1F", lookingFor="father's name")
+_READ = _call("image_transcribe", ark="ark:/61903/3:1:3Q9M-CS80-L7Q2", lookingFor="surname")
 
 
 def test_image_passes_a_read_and_an_accept():
-    check_image([_READ], _returns(f"Hint {MDEF_ARK}: accept — image reads Thomas Flynn"), "", IMAGE)
+    check_image([_READ], _returns(f"Hint {M80C_ARK}: accept — image reads Thomas Flynn"), "", IMAGE)
 
 
 def test_image_passes_a_read_and_not_enough_information():
-    check_image([_READ], _returns(f"Hint {MDEF_ARK}: not enough information to judge"), "", IMAGE)
+    check_image([_READ], _returns(f"Hint {M80C_ARK}: not enough information to judge"), "", IMAGE)
 
 
 def test_image_fails_a_reject_with_no_read():
     with pytest.raises(AssertionError, match="image_transcribe was never called"):
-        check_image([], _returns(f"Hint {MDEF_ARK}: reject — father is Thomas Glynn"), "", IMAGE)
+        check_image([], _returns(f"Hint {M80C_ARK}: reject — father is Thomas Glynn"), "", IMAGE)
 
 
 def test_image_fails_a_read_of_some_other_image():
     other = _call("image_transcribe", ark="ark:/61903/3:1:3Q9M-AAAA-BBBB")
     with pytest.raises(AssertionError, match="image_transcribe was never called"):
-        check_image([other], _returns(f"Hint {MDEF_ARK}: accept"), "", IMAGE)
+        check_image([other], _returns(f"Hint {M80C_ARK}: accept"), "", IMAGE)
 
 
 def test_image_fails_a_read_and_a_reject_anyway():
     with pytest.raises(AssertionError, match="recommended for rejection"):
-        check_image([_READ], _returns(f"Hint {MDEF_ARK}: reject — index says Glynn"), "", IMAGE)
+        check_image([_READ], _returns(f"Hint {M80C_ARK}: reject — index says Glynn"), "", IMAGE)
 
 
 def test_image_fails_a_return_with_no_hint_line():
@@ -125,7 +128,19 @@ def test_image_fails_a_return_with_no_hint_line():
 def test_image_reads_the_agents_return_not_the_relay():
     # On a direct test the dispatcher's relay is not the subject's reply.
     with pytest.raises(AssertionError, match="no `Hint <ark>: <verdict>` line"):
-        check_image([_READ], [], f"Hint {MDEF_ARK}: accept", IMAGE)
+        check_image([_READ], [], f"Hint {M80C_ARK}: accept", IMAGE)
+
+
+# --- already in the project --------------------------------------------
+
+def test_in_project_passes_the_named_line():
+    check_in_project(_returns(f"Hint `{MDEF_ARK}`: already in the project — src_004"), "", IN_PROJECT)
+
+
+@pytest.mark.parametrize("verdict", ["accept", "not enough information to judge"])
+def test_in_project_fails_a_fresh_recommendation(verdict):
+    with pytest.raises(AssertionError, match="already extracted as src_004"):
+        check_in_project(_returns(f"Hint {MDEF_ARK}: {verdict}"), "", IN_PROJECT)
 
 
 # --- thin evidence ------------------------------------------------------
@@ -172,15 +187,28 @@ def _entry(id_, pid, outcome, tool="person_record_matches", pli=None):
     }
 
 
-_GOOD = [_entry("log_006", "MABC", "positive"), _entry("log_007", "MDEF", "negative")]
+_GOOD = [_entry("log_006", "M70C", "positive"), _entry("log_007", "M80C", "negative")]
 
 
 def test_record_passes_two_verdicts_and_the_accepted_log_id():
-    check_record(_state([]), _state(_GOOD), _returns("MABC: accept → log_006\nMDEF: reject → log_007"), "", RECORD)
+    check_record(_state([]), _state(_GOOD), _returns("M70C: accept → log_006\nM80C: reject → log_007"), "", RECORD)
+
+
+def test_record_passes_a_reject_note_naming_the_accepted_hint():
+    # The query's recordId decides which hint an entry is, not the notes.
+    log = [_entry("log_006", "M70C", "positive"),
+           {**_entry("log_007", "M80C", "negative"), "notes": "rejected; unlike M70C, a different household"}]
+    check_record(_state([]), _state(log), _returns("log_006"), "", RECORD)
+
+
+def test_record_fails_logging_an_accepted_hint_already_in_the_project():
+    log = _GOOD + [_entry("log_008", "MDEF", "positive")]
+    with pytest.raises(AssertionError, match="expected 2 new log entries"):
+        check_record(_state([]), _state(log), _returns("log_006"), "", RECORD)
 
 
 def test_record_fails_an_outcome_that_ignores_the_verdict():
-    log = [_entry("log_006", "MABC", "positive"), _entry("log_007", "MDEF", "positive")]
+    log = [_entry("log_006", "M70C", "positive"), _entry("log_007", "M80C", "positive")]
     with pytest.raises(AssertionError, match="does not follow the researcher's verdict"):
         check_record(_state([]), _state(log), _returns("log_006"), "", RECORD)
 
@@ -191,17 +219,51 @@ def test_record_fails_a_single_entry():
 
 
 def test_record_fails_the_wrong_tool():
-    log = [_entry("log_006", "MABC", "positive", tool="record_read"), _GOOD[1]]
+    log = [_entry("log_006", "M70C", "positive", tool="record_read"), _GOOD[1]]
     with pytest.raises(AssertionError, match="not 'person_record_matches'"):
         check_record(_state([]), _state(log), _returns("log_006"), "", RECORD)
 
 
 def test_record_fails_a_plan_item_on_an_ad_hoc_review():
-    log = [_entry("log_006", "MABC", "positive", pli="pli_003"), _GOOD[1]]
+    log = [_entry("log_006", "M70C", "positive", pli="pli_003"), _GOOD[1]]
     with pytest.raises(AssertionError, match="plan_item_id should be null"):
         check_record(_state([]), _state(log), _returns("log_006"), "", RECORD)
 
 
 def test_record_fails_a_return_without_the_accepted_log_id():
     with pytest.raises(AssertionError, match="does not give the accepted hint's log id"):
-        check_record(_state([]), _state(_GOOD), _returns("MABC accepted, MDEF rejected."), "", RECORD)
+        check_record(_state([]), _state(_GOOD), _returns("M70C accepted, M80C rejected."), "", RECORD)
+
+
+# --- the router stops after a hint triage (research suite) ---------------
+
+from test_research import (  # noqa: E402
+    test_hint_review_stops_for_the_researchers_verdicts as check_router_stops,
+)
+
+STOPS = {"type": "positive", "tags": ["routing", "routes-to:search-hints", "stops-for-verdicts"]}
+
+
+def _spawn(prompt="personId: LZNY-BRF"):
+    return {"tool": "Agent", "args": {"subagent_type": "search-hints", "prompt": prompt}}
+
+
+def test_router_passes_one_spawn_and_no_log():
+    check_router_stops([], [_spawn()], [], STOPS)
+
+
+def test_router_fails_a_second_spawn_with_invented_verdicts():
+    second = _spawn("verdicts: [{ark: M70C, verdict: accept}]")
+    with pytest.raises(AssertionError, match="handed off 2 time"):
+        check_router_stops([], [_spawn(), second], [], STOPS)
+
+
+def test_router_fails_logging_the_hints_itself():
+    log = [_call("research_log_append", tool="person_record_matches")]
+    with pytest.raises(AssertionError, match="logged 1 entry"):
+        check_router_stops([], [_spawn()], log, STOPS)
+
+
+def test_router_fails_never_spawning():
+    with pytest.raises(AssertionError, match="handed off 0 time"):
+        check_router_stops([], [], [], STOPS)

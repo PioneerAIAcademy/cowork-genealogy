@@ -1,6 +1,6 @@
 {
   "tool": "person_record_matches",
-  "description": "Patrick Flynn's FamilySearch hints (LZNY-BRF), pending matches only: the 1860 census (confidence 3) and the 1908 death certificate (confidence 2). Keyed on status [\"pending\"] so only a hints-list call matches it; list it BEFORE person-record-matches-flynn, whose args {id} also match a pending call and whose response mixes in the ACCEPTED 1850 census. A call with no status therefore gets the mixed list, and a hint review that surfaces the accepted match fails (issue #2029).",
+  "description": "Patrick Flynn's FamilySearch hints (LZNY-BRF), pending matches only: the 1870 census (confidence 3) and the 1880 census (confidence 2), both new to the project, and the 1908 death certificate (confidence 2), which the project already extracted as src_004 (record_id ark:/61903/1:1:MDEF) — FamilySearch keeps it pending because nothing here writes back. Keyed on status [\"pending\"]; list it BEFORE person-record-matches-flynn, whose args {id} also match and whose response mixes in the ACCEPTED 1850 census, so a call with no status surfaces an accepted match (issue #2029).",
   "args": {
     "id": "LZNY-BRF",
     "status": [
@@ -9,18 +9,29 @@
   },
   "response": {
     "queryArk": "ark:/61903/4:1:LZNY-BRF",
-    "resultCount": 2,
-    "returned": 2,
+    "resultCount": 3,
+    "returned": 3,
     "title": "Matches for ark:/61903/4:1:LZNY-BRF",
     "updated": "2026-05-01T10:00:00.000Z",
     "matches": [
       {
-        "ark": "https://familysearch.org/ark:/61903/1:1:MABC",
-        "pid": "MABC",
+        "ark": "https://familysearch.org/ark:/61903/1:1:M70C",
+        "pid": "M70C",
         "arkType": "1:1:",
         "confidence": 3,
-        "score": 0.72,
-        "title": "1860 United States Federal Census",
+        "score": 0.74,
+        "title": "1870 United States Federal Census",
+        "status": "pending",
+        "collection": "https://familysearch.org/platform/collections/records",
+        "published": "2024-03-15T12:00:00.000Z"
+      },
+      {
+        "ark": "https://familysearch.org/ark:/61903/1:1:M80C",
+        "pid": "M80C",
+        "arkType": "1:1:",
+        "confidence": 2,
+        "score": 0.55,
+        "title": "1880 United States Federal Census",
         "status": "pending",
         "collection": "https://familysearch.org/platform/collections/records",
         "published": "2024-03-15T12:00:00.000Z"
