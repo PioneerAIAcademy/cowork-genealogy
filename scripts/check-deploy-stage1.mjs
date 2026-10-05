@@ -184,12 +184,12 @@ function main() {
   }
 
   const instructions = stage('web')
-  const ignored = dockerignore()
   const root = mkdtempSync(join(tmpdir(), 'deploy-stage1-'))
   // The image's WORKDIR is absolute; the replay rebases it onto the temp root.
   const IMAGE_ROOT = '/repo'
   let workdir = root
   try {
+    const ignored = dockerignore()
     for (const line of instructions) {
       const [, verb, rest] = line.match(/^(\w+)\s+(.*)$/) ?? []
       if (verb === 'WORKDIR') {
