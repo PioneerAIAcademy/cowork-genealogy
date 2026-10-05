@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_search_hints_003",
+    "skill": "search-hints",
+    "name": "A hint too thin to judge gets 'not enough information to judge'",
+    "type": "positive",
+    "description": "Thomas Flynn (FamilySearch LZNY-TF1, the tree's I2, b. ~1818 Ireland, in Schuylkill County 1850-1860) has one pending hint: a naturalization index entry for 'Thos. Flinn', 1856, Pennsylvania, with no county, age, birthplace, relatives or image. Nothing in it confirms or contradicts the tree person, so the right recommendation is 'not enough information to judge' — the answer the #2185 tester named as correct (issue #2029).",
+    "tags": [
+      "triage",
+      "not-enough-information",
+      "writes-nothing",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Look at the FamilySearch hints for Thomas Flynn, FamilySearch ID LZNY-TF1. Should they be attached?\n\npersonId: LZNY-TF1\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "person-record-matches-flynn-thomas-thin-pending",
+    "record-read-flynn-hint-naturalization-mthn",
+    "image-transcribe-any",
+    "person-read-flynn"
+  ],
+  "judge_context": [
+    "The one hint is a naturalization index entry for 'Thos. Flinn', 1856, Pennsylvania — no county, no age or birthplace, no relatives, no image",
+    "It neither confirms nor contradicts the tree's Thomas Flynn. The correct recommendation is 'not enough information to judge'; accept and reject are both wrong",
+    "A good answer names what would decide it (the naturalization papers themselves, a county, an age or birthplace)"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  }
+}

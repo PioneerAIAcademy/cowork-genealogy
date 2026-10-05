@@ -1103,6 +1103,11 @@ DEDICATED_AGENT_NAMES = frozenset(
         # folder. Listed because the set is asserted equal to the shipped agent
         # files.
         "search-familysearch-wiki",
+        # A new agent, not a conversion (issue #2029), and no hook route: it
+        # writes only `log` entries, one per researcher verdict on a hint. Listed
+        # because the set is asserted equal to the shipped agent files, and so a
+        # log entry arriving from it is not read as an unnamed-delegate bypass.
+        "search-hints",
         # Same shape as `citation` (issue #2792): a converted skill, no hook
         # route. It is listed because the set is asserted equal to the shipped
         # agent files, and because a `hypotheses` write arriving from it is

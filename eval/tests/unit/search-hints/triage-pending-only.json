@@ -1,0 +1,39 @@
+{
+  "test": {
+    "id": "ut_search_hints_001",
+    "skill": "search-hints",
+    "name": "Triage surfaces only pending hints, each with FamilySearch's confidence",
+    "type": "positive",
+    "description": "Patrick Flynn (FamilySearch LZNY-BRF) has one accepted record match (the 1850 census) and two pending ones (the 1860 census, confidence 3; the 1908 death certificate, confidence 2). A hint is a pending match, so triage must ask for status [\"pending\"] and surface only the two hints, each with its confidence disclosed and a recommendation. The pending-only fixture is listed first and the mixed one second, so a call without status gets the accepted match mixed in. Triage writes nothing (issue #2029).",
+    "tags": [
+      "triage",
+      "pending-only",
+      "confidence-disclosed",
+      "writes-nothing",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Check the FamilySearch hints on Patrick Flynn, FamilySearch ID LZNY-BRF, and tell me which look valid.\n\npersonId: LZNY-BRF\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "person-record-matches-flynn-pending",
+    "person-record-matches-flynn",
+    "record-read-flynn-hint-1860-census-mabc",
+    "record-read-flynn-hint-death-cert-mdef",
+    "image-transcribe-flynn-death-cert-mdef",
+    "image-transcribe-any",
+    "person-read-flynn"
+  ],
+  "judge_context": [
+    "Only the two pending hints are hints: the 1860 census (confidence 3) and the 1908 death certificate (confidence 2). The 1850 census is an ACCEPTED match, already attached — presenting it as a hint to review is wrong",
+    "Each hint's FamilySearch confidence (1-5) must be stated, and must not be the sole reason for its recommendation",
+    "Each hint gets one recommendation: accept, reject, or not enough information to judge. The 1860 census agrees with the tree on name, age, birthplace, county and father",
+    "The death certificate's index disagrees with the tree (father indexed 'Thomas Glynn', death a day late). Reading the image is the right move before recommending against it; the image shows Thomas Flynn and 12 March 1908",
+    "Triage writes nothing — no log entry, no tree edit — and ends by saying the researcher decides"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 420
+  }
+}

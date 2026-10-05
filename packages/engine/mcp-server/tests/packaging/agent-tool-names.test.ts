@@ -678,6 +678,24 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // search-hints (issue #2029) reviews FamilySearch hints. Triage reads:
+  // `person_record_matches` for the pending matches, `record_read` per hint,
+  // `image_transcribe` to read the image before recommending against a hint (it
+  // calls the tool itself; an agent cannot spawn image-reader), `person_read`
+  // and `Read` for the tree person. Record mode writes one log entry per decided
+  // hint through `research_log_append`. No `research_append`, so no hook lane.
+  "search-hints.md": {
+    tools: [
+      "Read",
+      "image_transcribe",
+      "person_read",
+      "person_record_matches",
+      "record_read",
+      "research_log_append",
+    ],
+    denies: [],
+  },
+
   "search-images.md": {
     tools: [
       "Read",

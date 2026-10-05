@@ -1,0 +1,36 @@
+{
+  "test": {
+    "id": "ut_search_hints_005",
+    "skill": "search-hints",
+    "name": "A request for records already attached is handed back to tree-edit",
+    "type": "negative",
+    "description": "The delegation asks which records are already attached to Patrick Flynn — accepted matches, not hints. That is tree-edit's, so the agent calls no tool and hands back, naming tree-edit. The reverse of tree-edit's hint hand-back (ut_tree_edit_017), so the routing pair is covered both ways. grade_on_invariant: true hands the verdict to test_hand_back_names_its_owner (issue #2029).",
+    "tags": [
+      "negative",
+      "boundary",
+      "tree-edit",
+      "hand-back",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Which records are already attached to Patrick Flynn, FamilySearch ID LZNY-BRF?\n\npersonId: LZNY-BRF\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "person-record-matches-flynn"
+  ],
+  "negative": {
+    "correct_skill": [
+      "tree-edit"
+    ],
+    "grade_on_invariant": true,
+    "explanation": "Records already attached are accepted matches, which tree-edit lists. search-hints reviews pending matches only. The agent body requires a hand-back: no tool call, and one caller-facing `Hand-back: tree-edit` line."
+  },
+  "judge_context": [
+    "Should call no tool and hand the request back, naming tree-edit in a caller-facing line before the final `---`"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 180
+  }
+}

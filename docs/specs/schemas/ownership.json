@@ -195,6 +195,7 @@
         "skill:search-external-sites",
         "skill:search-full-text",
         "agent:search-images",
+        "agent:search-hints",
         "skill:record-extraction"
       ],
       "agentCallers": [
@@ -206,6 +207,12 @@
         },
         {
           "agent": "agent:search-images",
+          "tools": [
+            "research_log_append"
+          ]
+        },
+        {
+          "agent": "agent:search-hints",
           "tools": [
             "research_log_append"
           ]

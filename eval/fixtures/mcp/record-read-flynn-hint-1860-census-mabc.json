@@ -1,0 +1,89 @@
+{
+  "tool": "record_read",
+  "description": "record_read for hint MABC, the 1860 U.S. Census, Schuylkill County: Patrick Flynn, 15, born Ireland, in Thomas Flynn's household. Agrees with the tree person on name, age, birthplace, county and father (search-hints suite, issue #2029).",
+  "args": {
+    "recordId": "~MABC"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "MABC",
+        "ark": "ark:/61903/1:1:MABC",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "type": "BirthName",
+            "given": "Patrick",
+            "surname": "Flynn"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Residence",
+            "date": "1860",
+            "place": "Schuylkill, Pennsylvania, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1845",
+            "place": "Ireland"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "1860 United States Federal Census"
+          }
+        ]
+      },
+      {
+        "id": "MABT",
+        "ark": "ark:/61903/1:1:MABT",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N2",
+            "type": "BirthName",
+            "given": "Thomas",
+            "surname": "Flynn"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Residence",
+            "date": "1860",
+            "place": "Schuylkill, Pennsylvania, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1818",
+            "place": "Ireland"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "1860 United States Federal Census"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "R1",
+        "type": "ParentChild",
+        "parent": "MABT",
+        "child": "MABC"
+      }
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "1860 United States Federal Census",
+        "citation": "\"United States Census, 1860,\" database, FamilySearch, Schuylkill County, Pennsylvania, dwelling 112, family 119, Thomas Flynn household."
+      }
+    ]
+  }
+}

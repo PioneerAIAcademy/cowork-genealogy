@@ -1,0 +1,36 @@
+{
+  "test": {
+    "id": "ut_search_hints_004",
+    "skill": "search-hints",
+    "name": "Record mode logs one entry per researcher verdict and returns the accepted logId",
+    "type": "positive",
+    "description": "Second spawn: the researcher accepted the 1860 census hint (MABC) and rejected the death-certificate hint (MDEF). The agent logs exactly two entries — tool person_record_matches, plan_item_id null, positive for the accept and negative for the reject — and returns the accepted hint as {ark, logId} for record-extraction. It extracts nothing and links nothing (issue #2029).",
+    "tags": [
+      "record-mode",
+      "two-verdicts",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "The researcher has decided on Patrick Flynn's hints. Record their verdicts.\n\npersonId: LZNY-BRF\nverdicts: [{\"ark\": \"https://familysearch.org/ark:/61903/1:1:MABC\", \"verdict\": \"accept\"}, {\"ark\": \"https://familysearch.org/ark:/61903/1:1:MDEF\", \"verdict\": \"reject\"}]\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "person-record-matches-flynn-pending",
+    "person-record-matches-flynn",
+    "record-read-flynn-hint-1860-census-mabc",
+    "record-read-flynn-hint-death-cert-mdef",
+    "image-transcribe-flynn-death-cert-mdef",
+    "image-transcribe-any",
+    "person-read-flynn"
+  ],
+  "judge_context": [
+    "Exactly two new log entries: one for MABC with outcome positive, one for MDEF with outcome negative. Both have tool person_record_matches and plan_item_id null",
+    "The outcomes follow the researcher's verdicts as given — not the agent's own view of the hints",
+    "The return names the accepted hint's ark and its log id, so record-extraction can reuse that log entry",
+    "No extraction, no person_evidence link, no tree edit"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  }
+}

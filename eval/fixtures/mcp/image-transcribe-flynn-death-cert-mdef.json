@@ -1,0 +1,14 @@
+{
+  "tool": "image_transcribe",
+  "description": "The image behind hint MDEF, Patrick Flynn's 1908 death certificate. It settles both index discrepancies in the tree's favour: death 12 March 1908, father Thomas Flynn. Keyed on `ark` (search-hints passes the record's imageArk as `ark`, not `imageId`), so image-transcribe-any, keyed on imageId, never shadows it (issue #2029).",
+  "args": {
+    "ark": "~3Q9M-CSHD-WQ1F"
+  },
+  "response": {
+    "transcription": "COMMONWEALTH OF PENNSYLVANIA. DEPARTMENT OF HEALTH. CERTIFICATE OF DEATH. File No. 4521.\nPlace of death: County of Schuylkill, Borough of Pottsville.\nFull name: Patrick Flynn.\nSex: Male. Color: White. Single, married, widowed: Married.\nDate of birth: about 1845. Age: 63 yrs.\nBirthplace: Ireland.\nName of father: Thomas Flynn.\nBirthplace of father: Ireland.\nMaiden name of mother: [illegible].\nInformant: James Brown, Pottsville.\nDate of death: March 12, 1908.\nCause of death: Miner's asthma.\nPlace of burial: St. Patrick's Cemetery. Date of burial: March 15, 1908.",
+    "metadata": {
+      "model": "google/gemini-3.7-flash",
+      "sizeBytes": 1588002
+    }
+  }
+}

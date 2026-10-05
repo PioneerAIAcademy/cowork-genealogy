@@ -1,0 +1,41 @@
+{
+  "tool": "person_record_matches",
+  "description": "Patrick Flynn's FamilySearch hints (LZNY-BRF), pending matches only: the 1860 census (confidence 3) and the 1908 death certificate (confidence 2). Keyed on status [\"pending\"] so only a hints-list call matches it; list it BEFORE person-record-matches-flynn, whose args {id} also match a pending call and whose response mixes in the ACCEPTED 1850 census. A call with no status therefore gets the mixed list, and a hint review that surfaces the accepted match fails (issue #2029).",
+  "args": {
+    "id": "LZNY-BRF",
+    "status": [
+      "pending"
+    ]
+  },
+  "response": {
+    "queryArk": "ark:/61903/4:1:LZNY-BRF",
+    "resultCount": 2,
+    "returned": 2,
+    "title": "Matches for ark:/61903/4:1:LZNY-BRF",
+    "updated": "2026-05-01T10:00:00.000Z",
+    "matches": [
+      {
+        "ark": "https://familysearch.org/ark:/61903/1:1:MABC",
+        "pid": "MABC",
+        "arkType": "1:1:",
+        "confidence": 3,
+        "score": 0.72,
+        "title": "1860 United States Federal Census",
+        "status": "pending",
+        "collection": "https://familysearch.org/platform/collections/records",
+        "published": "2024-03-15T12:00:00.000Z"
+      },
+      {
+        "ark": "https://familysearch.org/ark:/61903/1:1:MDEF",
+        "pid": "MDEF",
+        "arkType": "1:1:",
+        "confidence": 2,
+        "score": 0.58,
+        "title": "Pennsylvania Death Certificates, 1906-1967",
+        "status": "pending",
+        "collection": "https://familysearch.org/platform/collections/records",
+        "published": "2024-03-15T12:00:00.000Z"
+      }
+    ]
+  }
+}

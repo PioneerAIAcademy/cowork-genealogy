@@ -350,6 +350,23 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
+  // Added with the agent (issue #2029). Two spawns, because an agent returns
+  // once: triage, then the researcher's verdicts. The caller pin is the one
+  // that keeps a triage recommendation from being passed back as a verdict.
+  "research -> search-hints": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Never pass a verdict the\nresearcher did not state — a triage recommendation is not one.",
+      },
+      {
+        side: "agent",
+        excerpt: "**Verdicts are the researcher's.**",
+      },
+    ],
+  },
+
 };
 
 // A SKILL.md that names an agent WITHOUT delegating to it, mapped to the
@@ -402,6 +419,9 @@ const DELEGATION_EDGES: Record<string, Edge> = {
 const PROSE_MENTIONS = new Map<string, string>([
   ["research -> record-extractor", ""],
   ["record-extraction -> search-images", ""],
+  // The producer list in "Log entry — router-side" (issue #2029): an accepted
+  // hint's logId is reused, not re-logged. Names the agent; spawns nothing.
+  ["record-extraction -> search-hints", ""],
   ["research -> search-images", ""],
   ["init-project -> citation", ""],
   ["record-extraction -> citation", ""],
@@ -689,6 +709,8 @@ describe("agent delegation framing", () => {
     "locality-guide",
     "record-extractor",
     "search-familysearch-wiki",
+    // ARRIVED with issue #2029, a new agent that never had a skill.
+    "search-hints",
     "search-images",
     "search-wikipedia",
     "translation",

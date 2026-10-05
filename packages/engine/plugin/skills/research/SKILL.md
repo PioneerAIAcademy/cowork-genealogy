@@ -74,6 +74,9 @@ names. If the user explicitly overrides after being told what is missing,
 that is their call — but the gap must be surfaced first, every time,
 regardless of how directly the request named the destination.
 
+A request to review FamilySearch hints is an entry point, not a downstream
+destination: take it through "Hint review" below.
+
 ## What to do
 
 1. **Query `research.json` — don't `Read` the whole file.** Use
@@ -200,7 +203,8 @@ regardless of how directly the request named the destination.
    `@plugin:proof-conclusion`, the assertion ids for
    `@plugin:person-evidence`, the `h_`/`c_`/assertion ids at issue for
    `@plugin:hypothesis-tracking`, the place and period for
-   `@plugin:locality-guide`. The agent runs in fresh context and reads the
+   `@plugin:locality-guide`, the `personId` (and, on the second spawn, the
+   researcher's verdicts) for `@plugin:search-hints`. The agent runs in fresh context and reads the
    project itself; a delegation missing `projectPath` fails on its first tool
    call.
 
@@ -390,6 +394,17 @@ would a senior genealogist say?", "mentor", "second opinion", or
 any equivalent, invoke `@plugin:gps-mentor` with `focus: on-demand`
 and `target_id` set to the most recent question, proof summary, or
 the literal string `"project"` if no specific target is implied.
+
+## Hint review
+
+When the user asks to check, review or validate the FamilySearch hints on a
+person, spawn `@plugin:search-hints` with `personId` and `projectPath`, relay its
+return as-is, and stop: whether to accept a hint is the researcher's decision,
+which only the user can supply (§"When to stop"). When the researcher answers,
+spawn `@plugin:search-hints` again with `personId`, `projectPath` and their
+verdicts as `{ark, verdict}` per hint, verbatim. Never pass a verdict the
+researcher did not state — a triage recommendation is not one. The accepted
+hints' positive log entries then route to `record-extraction` through the table.
 
 ## When to stop
 

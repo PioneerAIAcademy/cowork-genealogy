@@ -67,7 +67,7 @@ FROZEN_OWNERSHIP_TABLE: dict[str, set[str]] = {
 }
 
 
-# ── The four deltas, and why each was made ─────────────────────────────────
+# ── The five deltas, and why each was made ─────────────────────────────────
 
 #: `localities` had a declared owner from the day the section shipped and was
 #: never once evaluated: the check iterated `REQUIRED_SECTIONS`, which the
@@ -86,7 +86,13 @@ NEWLY_ENFORCED = {"localities"}
 #: text, and the batches that write a summary and its resolve together all name
 #: `proof-conclusion`. A widening cannot newly fail a test; the matching skill
 #: body edit is a separate, eval-gated change.
-WIDENED: dict[str, set[str]] = {"questions": {"proof-conclusion"}}
+#:
+#: `log` gains `search-hints` (issue #2029), a new agent. A hint the researcher
+#: decided is a search result: its record-mode entry is what routes an accepted
+#: hint to record-extraction, and before it a hint review persisted nothing. The
+#: agent writes only through `research_log_append`, which takes no `section`, so
+#: the widening adds a writer to an append-only, multi-writer section.
+WIDENED: dict[str, set[str]] = {"questions": {"proof-conclusion"}, "log": {"search-hints"}}
 
 #: `assertions` loses `convert-dates`. The grant was dead on arrival: the skill's
 #: only tool is `convert_calendar`, it holds no writer tool, and its own body
