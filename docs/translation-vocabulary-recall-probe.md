@@ -152,7 +152,7 @@ Fixed before the run:
 confirmation. Abbreviation sections — LLM first-pass (Claude Sonnet 4.6, 2026-10-03); all 27 rows
 genealogist-adjudicated (mercyokum, 2026-10-03). All rows final.
 
-### Common genealogy vocabulary (22 rows) — developer-graded
+### Common genealogy vocabulary (22 rows) — LLM first-pass (no human confirmation)
 
 | Term | Language | T1 | T2 | T3 | Verdict |
 |------|----------|----|----|----|---------|
@@ -181,7 +181,7 @@ genealogist-adjudicated (mercyokum, 2026-10-03). All rows final.
 
 **Section tally: 22/22 carried.**
 
-### Latin abbreviations (16 rows) — graded (SS. genealogist-adjudicated)
+### Latin abbreviations (16 rows) — graded (all rows genealogist-adjudicated)
 
 | Abbreviation | Full form | T1 | T2 | T3 | Verdict | Notes |
 |--------------|-----------|----|----|----|---------| ------|
@@ -204,7 +204,7 @@ genealogist-adjudicated (mercyokum, 2026-10-03). All rows final.
 
 **Section tally: 12/16 carried, 4 kept (d.d., SS., sep./s., a.d.).**
 
-### German abbreviations (11 rows; 10 in tally — d./des excluded) — graded (Ehem. genealogist-adjudicated)
+### German abbreviations (11 rows; 10 in tally — d./des excluded) — graded (all rows genealogist-adjudicated)
 
 | Abbreviation | Full form | T1 | T2 | T3 | Verdict | Notes |
 |--------------|-----------|----|----|----|---------| ------|
@@ -432,7 +432,7 @@ Three observations bear on ADR-0012's wiki-migration program:
 
 **Recommendation:** before #2259 spends the eval slot, the same probe is most useful pointed at
 skills whose abbreviation tables resemble the Latin carried set (unambiguous single-meaning terms
-like bapt., ob., fil., leg.) rather than the German section, where the probe confirmed the rows
+like bapt., ob., fil.) rather than the German section, where the probe confirmed the rows
 are working as intended. Vocabulary tables (record-type names, kinship, civil status) remain
 high-probability deletion candidates.
 
