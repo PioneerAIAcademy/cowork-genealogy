@@ -833,7 +833,15 @@ use it to **skip** a call (`find_unguarded_protected_writes`, and
 `guardrail_shadow_report.py`'s person-evidence scan). The third —
 `find_relationship_writes_without_warnings_check` — retargeted (2026-10-02):
 it now checks for unresolved `unjustified_warnings` refusals from tree writers
-rather than checking whether `person_warnings` was called.
+rather than checking whether `person_warnings` was called. **The polarity trap
+survived the retarget**: the success arm still withholds *credit* rather than
+skipping a call, so a success matched in the wrong place is a missed violation
+and therefore silent. It is matched by ORDER — the last refusal, then a
+successful writer call after it. Scanning the whole call list for "any success"
+credits a write that landed *before* the refusal, so a run that wrote one op,
+was refused on the next, and gave up reads as clean; that is how the retarget
+first shipped, and `test_warnings_unchecked_fires_when_the_success_predates_the_refusal`
+is what holds it.
 
 ### Set-once project fields
 
