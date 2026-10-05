@@ -133,6 +133,20 @@ def test_image_reads_the_agents_return_not_the_relay():
 _MTHN = "https://familysearch.org/ark:/61903/1:1:MTHN"
 
 
+@pytest.mark.parametrize(
+    "line",
+    [
+        f"Hint `{_MTHN}`: **not enough information to judge** — no county",
+        f"Hint {_MTHN}: _not enough information to judge_",
+        f"- Hint `ark:/61903/1:1:MTHN`: `not enough information to judge`",
+    ],
+)
+def test_thin_reads_through_markdown(line):
+    # Measured on the first paid run (2026-10-05): the agent wrote the right
+    # verdict in backticks and bold, and a plain-text pattern read it as missing.
+    check_thin(_returns(line), "", THIN)
+
+
 def test_thin_passes_not_enough_information():
     check_thin(_returns(f"Hint {_MTHN}: Not enough information to judge — no county or age"), "", THIN)
 

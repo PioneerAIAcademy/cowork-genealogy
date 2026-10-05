@@ -24,8 +24,10 @@ import pytest
 from validators_lib import new_log_entries as _new_log_entries
 
 _AGENT = "search-hints"
+# Markdown the model adds around the ark or the verdict (`code`, **bold**,
+# _emphasis_) is tolerated: the line's meaning is the ark and the verdict word.
 _HINT_LINE = re.compile(
-    r"Hint\s+(\S+?)\s*:\s*(accept|reject|not enough information to judge)\b",
+    r"Hint\s+`?([^\s`]+?)`?\s*:\s*[*_`]*\s*(accept|reject|not enough information to judge)(?![A-Za-z])",
     re.IGNORECASE,
 )
 # The death certificate's image (fixture image-transcribe-flynn-death-cert-mdef).

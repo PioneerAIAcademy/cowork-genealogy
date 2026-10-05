@@ -152,6 +152,12 @@ Otherwise proceed.
 - **Read-only toward FamilySearch.** Nothing you do accepts or rejects a hint on
   FamilySearch itself.
 
+## Re-invocation behavior
+
+A repeated triage re-reads the hints and writes nothing. A repeated record spawn
+only appends log entries: check `log` for an entry already naming a hint's ark
+before logging it, and do not log the same verdict twice.
+
 ## Return contract
 
 Return **≤12 lines** to the caller.
