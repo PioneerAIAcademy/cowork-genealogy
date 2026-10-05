@@ -2129,7 +2129,9 @@ an agent failure). Then `make e2e-view TEST=<slug>` loads the run into the viewe
 and per-fixture concentration, across the last 14 days of committed runs —
 most run-log readers window that way, `SINCE=all` to opt out — `make
 e2e-agent-tools` reports, per plugin agent, which declared tools it never
-actually called across those runs, `make e2e-writer-attribution` reports which
+actually called across those runs, `make e2e-rule-adherence` reports, per
+registered rule, how many episodes obeyed the instruction over those runs
+(counts, not rates), `make e2e-writer-attribution` reports which
 subagent wrote a project document and whether an ownership row says it may
 (the one reader that defaults to the whole corpus, because a manifest gap is not
 a freshness question), and the

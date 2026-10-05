@@ -1,0 +1,21 @@
+{
+  "subagents": [
+    {
+      "agent_type": "gps-mentor",
+      "turns": [
+        {
+          "blocks": [
+            "tool_use:research_query"
+          ]
+        }
+      ]
+    }
+  ],
+  "tool_calls": [
+    {
+      "tool": "mcp__genealogy__project_context",
+      "agent_type": "gps-mentor",
+      "args": {"projectPath": "/tmp/project"}
+    }
+  ]
+}

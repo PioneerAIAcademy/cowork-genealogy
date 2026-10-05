@@ -64,6 +64,8 @@ proto-worker = [
     "claude-agent-sdk==0.2.128",
     "psycopg[binary]>=3.3.4",
     "botocore>=1.40",
+    # grants.py decrypts the patron's grant (U3); declared, not left to the SDK's closure.
+    "cryptography>=48.0.1",
     "anyio>=4.14.2",
 ]
 
