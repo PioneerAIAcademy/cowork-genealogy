@@ -547,11 +547,12 @@ function uncertainPreferenceInvariants(entry: any, research: any): string[] {
   return [
     `preferred_assertion_id '${entry.preferred_assertion_id}' carries an uncertain reading ` +
       `([?]) and no assertion from a different record corroborates it. To settle the conflict: ` +
-      `find a second record whose reading agrees, or update the assertion (op: "update", ` +
-      `entryId: "${entry.preferred_assertion_id}", fields: {value: "<confirmed reading>"}) to ` +
-      `remove the [?] once the user confirms the reading. Leaving preferred_assertion_id null ` +
-      `— a deferral is a finding, not an omission — stays legal: leave the conflict unresolved, ` +
-      `or resolve it with resolution_kind 'tree' when the tree's existing conclusion stands.`,
+      `find a second record whose reading agrees, or — once the user confirms the reading — hand ` +
+      `the correction of assertion '${entry.preferred_assertion_id}' back to record-extraction, ` +
+      `which owns \`assertions\`; a conflict write cannot change an assertion. Leaving ` +
+      `preferred_assertion_id null — a deferral is a finding, not an omission — stays legal: leave ` +
+      `the conflict unresolved, or resolve it with resolution_kind 'tree' when the tree's existing ` +
+      `conclusion stands.`,
   ];
 }
 

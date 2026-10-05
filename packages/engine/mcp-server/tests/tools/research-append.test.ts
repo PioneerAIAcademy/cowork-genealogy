@@ -1788,6 +1788,13 @@ describe("research_append (Phase 2)", () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors.join(" ")).toMatch(/uncertain reading/);
+    // The only caller that can write a conflict's winner is the conflict-resolution
+    // agent, and the hook holds it off `assertions`. A refusal telling it to update
+    // the assertion sends it into a denied write (ut_conflict_resolution_016,
+    // 2026-10-05); the confirmed reading goes back to the section's owner.
+    const uncertain = r.errors.find((e) => e.includes("uncertain reading")) ?? "";
+    expect(uncertain).toMatch(/back to record-extraction, which owns `assertions`/);
+    expect(uncertain).not.toMatch(/op: "update"/);
   });
 
   it("accepts a [?] preference corroborated by another record", async () => {
