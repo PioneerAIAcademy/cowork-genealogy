@@ -1,0 +1,14 @@
+{
+  "tool": "place_distance",
+  "description": "Straight-line distance Utah <-> England (~7,767 km / 4,826 mi), bedfordshire-utah-corridor-move: Cranfield, Bedfordshire to Salt Lake County, Utah — the longer move, so distance alone cannot decide it (issue #2537). Matched on any standardPlace naming the two jurisdictions.",
+  "args": {
+    "standardPlace1": "~Utah",
+    "standardPlace2": "~England"
+  },
+  "response": {
+    "standardPlace1": "Utah",
+    "standardPlace2": "England",
+    "miles": 4826,
+    "kilometers": 7767
+  }
+}

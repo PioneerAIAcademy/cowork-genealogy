@@ -1,0 +1,18 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Cranfield, Bedfordshire, England, United Kingdom, used by person-evidence's geographic-plausibility lookup (issue #2537) to resolve a residence or record place to a standardPlace before place_distance.",
+  "args": {
+    "placeName": "~Cranfield"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Cranfield, Bedfordshire, England, United Kingdom",
+        "type": "Parish",
+        "latitude": 52.067,
+        "longitude": -0.612,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Cranfield"
+      }
+    ]
+  }
+}

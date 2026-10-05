@@ -1,0 +1,18 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Horsham, Sussex, England, United Kingdom, used by person-evidence's geographic-plausibility lookup (issue #2537) to resolve a residence or record place to a standardPlace before place_distance.",
+  "args": {
+    "placeName": "~Horsham"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Horsham, Sussex, England, United Kingdom",
+        "type": "City",
+        "latitude": 51.063,
+        "longitude": -0.327,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Horsham"
+      }
+    ]
+  }
+}

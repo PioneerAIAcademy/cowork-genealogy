@@ -1,0 +1,109 @@
+{
+  "log_id": "log_002",
+  "tool": "record_search",
+  "retrieved": "2026-10-03T12:00:00Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "givenName": "William",
+      "surname": "Weller",
+      "birthLikeDate": "1825"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "TN80-WEL",
+        "personName": "William Weller",
+        "score": 0.78,
+        "sex": "Male",
+        "birthDate": "1825",
+        "birthPlace": "England",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Maury, Tennessee, United States"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:TN80-WEL",
+        "recordId": "https://www.familysearch.org/ark:/61903/1:1:TN80-WEL",
+        "collectionId": "0",
+        "collectionTitle": "United States Census, 1880",
+        "recordTitle": "William Weller household, Maury County, Tennessee, 1880",
+        "treeMatches": [],
+        "primaryId": "DP1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "DP1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "NDP1",
+                  "preferred": true,
+                  "given": "William",
+                  "surname": "Weller",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "FDP1",
+                  "type": "Birth",
+                  "date": "1825",
+                  "place": "England"
+                }
+              ]
+            },
+            {
+              "id": "DP2",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "NDP2",
+                  "preferred": true,
+                  "given": "Mary",
+                  "surname": "Weller",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "FDP2",
+                  "type": "Birth",
+                  "date": "1828",
+                  "place": "England"
+                }
+              ]
+            },
+            {
+              "id": "DP3",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "NDP3",
+                  "preferred": true,
+                  "given": "George",
+                  "surname": "Weller",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "FDP3",
+                  "type": "Birth",
+                  "date": "1859",
+                  "place": "England"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

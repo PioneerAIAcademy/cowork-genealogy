@@ -1,0 +1,17 @@
+{
+  "tool": "same_person",
+  "description": "same_person for Joseph Pratt (1860/1870 Salt Lake County, Utah) vs subject I1 Joseph Pratt of Cranfield. Name, birth year and birthplace country agree, so the tool returns a strong score; the score says nothing about whether the move between the two places is explained (issue #2537). Matched on any pairing.",
+  "args": {
+    "assertionId": "~",
+    "treePersonId": "~"
+  },
+  "response": {
+    "matched": true,
+    "confidence": 4,
+    "score": 0.78,
+    "queryArk": "https://www.familysearch.org/ark:/61903/1:1:UT60-PRA",
+    "candidateArk": "https://www.familysearch.org/ark:/61903/4:1:PRA-I1",
+    "apiTitle": "Matches for ark:/61903/1:1:UT60-PRA",
+    "updated": "2026-10-03T00:00:00Z"
+  }
+}

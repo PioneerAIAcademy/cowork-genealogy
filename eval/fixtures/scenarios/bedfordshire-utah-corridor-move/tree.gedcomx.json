@@ -1,0 +1,233 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Joseph",
+          "surname": "Pratt",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1822",
+          "place": "Cranfield, Bedfordshire, England"
+        },
+        {
+          "id": "F1R1841",
+          "type": "Residence",
+          "date": "1841",
+          "place": "Cranfield, Bedfordshire, England",
+          "sources": [
+            {
+              "ref": "S1",
+              "page": "1841 England census, Cranfield",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F1R1851",
+          "type": "Residence",
+          "date": "1851",
+          "place": "Cranfield, Bedfordshire, England",
+          "sources": [
+            {
+              "ref": "S2",
+              "page": "1851 England census, Cranfield",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Ann",
+          "surname": "Pratt",
+          "type": "MarriedName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F2",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1825",
+          "place": "Cranfield, Bedfordshire, England"
+        },
+        {
+          "id": "F2R1841",
+          "type": "Residence",
+          "date": "1841",
+          "place": "Cranfield, Bedfordshire, England",
+          "sources": [
+            {
+              "ref": "S1",
+              "page": "1841 England census, Cranfield",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F2R1851",
+          "type": "Residence",
+          "date": "1851",
+          "place": "Cranfield, Bedfordshire, England",
+          "sources": [
+            {
+              "ref": "S2",
+              "page": "1851 England census, Cranfield",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "Sarah",
+          "surname": "Pratt",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F3",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1847",
+          "place": "Cranfield, Bedfordshire, England"
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N4",
+          "preferred": true,
+          "given": "Joseph",
+          "surname": "Pratt",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F4",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1850",
+          "place": "Cranfield, Bedfordshire, England"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "sources": [
+        {
+          "ref": "S1",
+          "page": "1841 England census",
+          "quality": 2
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S2",
+          "page": "1851 England census",
+          "quality": 2
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S2",
+          "page": "1851 England census",
+          "quality": 2
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I4",
+      "sources": [
+        {
+          "ref": "S2",
+          "page": "1851 England census",
+          "quality": 2
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I4",
+      "sources": [
+        {
+          "ref": "S2",
+          "page": "1851 England census",
+          "quality": 2
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "England and Wales Census, 1841 — Cranfield, Pratt household",
+      "author": "General Register Office"
+    },
+    {
+      "id": "S2",
+      "title": "England and Wales Census, 1851 — Cranfield, Pratt household",
+      "author": "General Register Office"
+    },
+    {
+      "id": "S10",
+      "title": "United States Census, 1860",
+      "author": "U.S. Census Office"
+    },
+    {
+      "id": "S11",
+      "title": "United States Census, 1870",
+      "author": "U.S. Census Office"
+    }
+  ]
+}

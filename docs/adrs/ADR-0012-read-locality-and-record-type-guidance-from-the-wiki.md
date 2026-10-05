@@ -14,7 +14,7 @@
 - **Status:** Accepted
 - **Decided:** 2026-08-27 (issue #1967: no record-type × country tables) and
   2026-08-31 (issue #1923: the wiki is the source of truth)
-- **Last updated:** 2026-09-07 (created; the two rulings had lived only in issue comments)
+- **Last updated:** 2026-10-05 (per-agent ruling for person-evidence's corridor fetch, issue #2537)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -226,6 +226,31 @@ call (#2054) and outage-as-no-page (#2130) already recorded above, the failure
 behaviour is a **common** path rather than a defensive edge case. Read the
 ruling as load-bearing: it is what the agent does whenever the sidecar is
 unwell, which is often enough to matter.
+
+### Per-agent ruling: what a failed corridor fetch means (issue #2537)
+
+`person-evidence` caps a link at `probable` when a candidate record sits outside
+the subject's attested residence cluster and nothing bridges the move (lead,
+2026-09-18). Whether a migration corridor bridges it is read from the
+destination's `{Jurisdiction}_Emigration_and_Immigration` page, so the cap
+depends on a fetch, and the failure needed its own ruling.
+
+**Ruled (genealogist, 2026-10-05): on a failed fetch, look for a documentary
+bridge in the project (passenger list, naturalization, warning-out, land grant,
+a relative documented at the destination first); with none, cap at `probable`
+and record that the corridor page could not be retrieved.**
+
+The two rejected alternatives, and why:
+
+- **Apply the ordinary tiers on a failed fetch.** Never penalizes an outage, but
+  a Sussex-to-Tennessee match, the hint-system failure the rule exists for,
+  passes as `confident` whenever the sidecar is unwell, which is often.
+- **Pause and ask the user.** Adds an interactive branch that `--autonomous`
+  would have to resolve anyway, and resolves to the same cap there.
+
+It fails safe because of what the cap is: it removes only `confident`. The link
+survives at `probable` with the gap named, so an outage leaves a weaker link
+and a stated reason, never a lost one.
 
 ## Enforcement
 

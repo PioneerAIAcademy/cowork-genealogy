@@ -1,0 +1,18 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Utah, United States, used by person-evidence's geographic-plausibility lookup (issue #2537) to resolve a residence or record place to a standardPlace before place_distance.",
+  "args": {
+    "placeName": "~Utah"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Utah, United States",
+        "type": "State",
+        "latitude": 39.32,
+        "longitude": -111.09,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Utah"
+      }
+    ]
+  }
+}

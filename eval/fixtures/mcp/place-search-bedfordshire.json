@@ -1,0 +1,18 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Bedfordshire, England, United Kingdom, used by person-evidence's geographic-plausibility lookup (issue #2537) to resolve a residence or record place to a standardPlace before place_distance.",
+  "args": {
+    "placeName": "~Bedfordshire"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Bedfordshire, England, United Kingdom",
+        "type": "County",
+        "latitude": 52.08,
+        "longitude": -0.45,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Bedfordshire"
+      }
+    ]
+  }
+}

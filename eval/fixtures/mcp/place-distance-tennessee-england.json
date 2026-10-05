@@ -1,0 +1,14 @@
+{
+  "tool": "place_distance",
+  "description": "Straight-line distance Tennessee <-> England (~6,804 km / 4,228 mi), sussex-tennessee-unexplained-move: Horsham, Sussex to Maury County, Tennessee (issue #2537). Matched on any standardPlace naming the two jurisdictions.",
+  "args": {
+    "standardPlace1": "~Tennessee",
+    "standardPlace2": "~England"
+  },
+  "response": {
+    "standardPlace1": "Tennessee",
+    "standardPlace2": "England",
+    "miles": 4228,
+    "kilometers": 6804
+  }
+}

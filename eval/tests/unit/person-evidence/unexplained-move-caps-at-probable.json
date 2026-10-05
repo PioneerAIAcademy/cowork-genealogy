@@ -1,0 +1,43 @@
+{
+  "test": {
+    "id": "ut_person_evidence_g7m",
+    "skill": "person-evidence",
+    "name": "A record outside the attested residence cluster with nothing bridging the move is capped at probable, and the gap is named",
+    "type": "positive",
+    "description": "Link the William Weller household in the 1870 and 1880 Maury County, Tennessee censuses to the tree. The subject's family is attested at Horsham, Sussex, England in 1851 and 1861; names, ages, spouse and children agree across both U.S. censuses, so ordinary correlation is Strong. No passenger list, naturalization or other record bridges the transatlantic move, and the Tennessee wiki page names no corridor from England in the period. Guards the geographic-plausibility cap (issue #2537): probable at most, never confident, with the gap named.",
+    "tags": [
+      "person-evidence",
+      "geography-from-tools",
+      "unexplained-move-cap",
+      "confidence-calibration"
+    ]
+  },
+  "input": {
+    "delegation": "Link the William Weller household in the 1870 and 1880 Maury County, Tennessee census records (src_001 and src_002) to the right people in the tree.\n\nprojectPath: <workspace>",
+    "scenario": "sussex-tennessee-unexplained-move"
+  },
+  "mcp_fixtures": [
+    "same-person-weller-tennessee",
+    "place-search-horsham",
+    "place-search-sussex",
+    "place-search-maury",
+    "place-search-tennessee",
+    "place-search-any",
+    "place-distance-england-tennessee",
+    "place-distance-tennessee-england",
+    "wiki-read-tennessee-emigration-and-immigration",
+    "wiki-read-any"
+  ],
+  "judge_context": [
+    "The subject William Weller (I1) and his wife Mary (I2) are attested at Horsham, Sussex, England in the 1851 and 1861 censuses. The 1870 and 1880 U.S. censuses place a William Weller, born England, with wife Mary and children whose names and ages agree, in Maury County, Tennessee. On name, age and household correlation alone this is a Strong match across two independent sources.",
+    "The record place is outside the subject's attested residence cluster (a different country). Nothing in the project bridges the move: no passenger list, naturalization, emigration record, letter, or relative already documented in the United States. Tennessee_Emigration_and_Immigration describes pre-statehood settlers of English descent who came overland from Virginia and the Carolinas; that is not a corridor from Sussex in the 1860s and does not explain this move.",
+    "Decided rule (lead, 2026-09-18): an unexplained move outside the residence cluster caps the link at `probable`, never `confident`, and the rationale must name the geographic gap explicitly (the two places, the distance, and that no documentary bridge or corridor accounts for it). It is not a core_identifier_conflict and does not take `speculative`.",
+    "A `confident` link from any of these census personas to I1 is a FAIL on Confidence calibration. A `probable` link whose rationale names the gap is a pass; so is presenting the evidence and asking the user before linking, provided the gap is named. A `speculative` link, or treating the move as a contradiction, over-applies the rule and is a partial.",
+    "The agent should measure the move with place_search then place_distance, and read the destination's {Jurisdiction}_Emigration_and_Immigration page with wiki_read, rather than assert the distance or the absence of a corridor from its own knowledge.",
+    "Tool Arguments: same_person is available for both census personas (record_persona_id is non-null). place_search and place_distance measure the move; judge their arguments on the same terms as any other call - this note fixes no score."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
