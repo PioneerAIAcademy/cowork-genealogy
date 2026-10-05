@@ -450,15 +450,11 @@ function assertionNamesRelative(a: any): boolean {
   return m !== null && fullNameHasRealGiven(m[1]);
 }
 
-/** The narrow-date and named-relative evidence the project's live links to the
- *  subject carry. Superseded links and negative evidence ("not found in …")
- *  say nothing about this person. Each assertion is read on its own, so one
- *  malformed entry cannot hide the rest. */
-function linkedEvidence(
-  research: any,
-  subjectId: string,
-): { narrowDate: boolean; namedRelative: boolean } {
-  const out = { narrowDate: false, namedRelative: false };
+/** The assertions a live `person_evidence` row links to the subject.
+ *  Superseded links and assertions, and negative evidence ("not found in …"),
+ *  say nothing about this person — a superseded link is usually one already
+ *  shown to belong to a namesake. */
+function liveLinkedAssertions(research: any, subjectId: string): any[] {
   const peList = Array.isArray(research?.person_evidence) ? research.person_evidence : [];
   const linkedIds = new Set(
     peList
@@ -466,11 +462,22 @@ function linkedEvidence(
       .map((pe: any) => pe.assertion_id),
   );
   const all = Array.isArray(research?.assertions) ? research.assertions : [];
-  for (const a of all) {
+  return all.filter(
+    (a: any) =>
+      linkedIds.has(a?.id) && a?.superseded_by == null && a?.record_basis !== "absent",
+  );
+}
+
+/** The narrow-date and named-relative evidence the subject's live linked
+ *  assertions carry. Each assertion is read on its own, so one malformed entry
+ *  cannot hide the rest. */
+function linkedEvidence(
+  research: any,
+  subjectId: string,
+): { narrowDate: boolean; namedRelative: boolean } {
+  const out = { narrowDate: false, namedRelative: false };
+  for (const a of liveLinkedAssertions(research, subjectId)) {
     try {
-      if (!linkedIds.has(a?.id) || a?.superseded_by != null || a?.record_basis === "absent") {
-        continue;
-      }
       const dates = [certainDate(a), a?.structured_value?.date, ...datesInText(a?.value)];
       if (dates.some(isDateNarrowerThanYear)) out.narrowDate = true;
       if (assertionNamesRelative(a)) out.namedRelative = true;
@@ -580,14 +587,7 @@ export async function buildSubjectDoc(
   }
 
   try {
-    const linkedIds = new Set(
-      (research.person_evidence ?? [])
-        .filter((pe: any) => pe?.person_id === subjectId)
-        .map((pe: any) => pe.assertion_id),
-    );
-    const assertions = (research.assertions ?? []).filter((a: any) =>
-      linkedIds.has(a?.id),
-    );
+    const assertions = liveLinkedAssertions(research, subjectId);
 
     // Dedupe against what the tree already says, so enrichment never restates
     // a fact the subject carries (which would weight it twice).

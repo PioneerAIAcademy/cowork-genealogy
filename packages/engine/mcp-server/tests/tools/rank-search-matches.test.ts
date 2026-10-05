@@ -183,6 +183,35 @@ describe("rank_search_matches", () => {
     expect(JSON.stringify(facts)).not.toContain("1799");
   });
 
+  // A superseded link is usually one already shown to belong to a namesake, and
+  // negative evidence places the person where they were NOT; enriching from
+  // either pulls the ranking toward the wrong human.
+  it.each([
+    ["a superseded person_evidence link", { superseded_by: "pe_009" }, {}],
+    ["a superseded assertion", {}, { superseded_by: "a_009" }],
+    ["negative evidence", {}, { record_basis: "absent" }],
+  ])("does not enrich from %s", async (_label, peExtra, aExtra) => {
+    await writeTree(starvedTree);
+    await writeResearch({
+      person_evidence: [
+        { id: "pe_001", person_id: "I1", assertion_id: "a_001", ...peExtra },
+        { id: "pe_002", person_id: "I1", assertion_id: "a_002" },
+      ],
+      assertions: [
+        { id: "a_001", fact_type: "residence", structured_value: { place: "Wrong Town" }, ...aExtra },
+        { id: "a_002", fact_type: "residence", structured_value: { place: "Acme, New Mexico" } },
+      ],
+    });
+    scorePairMock.mockResolvedValue(scoreResult(0.9, 4));
+    const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
+
+    const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
+
+    expect(out.subjectEnrichedFacts).toBe(1);
+    const facts = (scorePairMock.mock.calls[0][2] as any).persons[0].facts;
+    expect(facts).toEqual([{ type: "Residence", place: "Acme, New Mexico" }]);
+  });
+
   // `fact_type` is an OPEN enum, so an assertion carrying "constructor" is
   // schema-valid. `ASSERTION_FACT_TYPE_TO_TREE[fact_type]` then indexed out the
   // `Object` function, which is truthy — so the `!treeType` drop-the-unmapped

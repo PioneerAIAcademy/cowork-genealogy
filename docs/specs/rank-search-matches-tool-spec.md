@@ -377,7 +377,8 @@ the subject, not the pool, so it is set on an empty staged set as well.
 - **Live evidence only.** A `person_evidence` row with `superseded_by` set, an
   assertion with `superseded_by` set, and negative evidence (`record_basis:
   "absent"`) are skipped: none says anything about this person. Scoring
-  enrichment does not apply this filter; only the flag does.
+  enrichment, which folds the same linked assertions into the subject document
+  before scoring, applies the same filter.
 - **Never fails the call.** Malformed tree entries are skipped, each assertion
   is read on its own so one malformed entry cannot hide the rest, and if the
   test itself throws, the flag is omitted.
