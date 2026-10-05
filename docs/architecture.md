@@ -404,6 +404,13 @@ so a skipped `Read` does leave a trace:
 | a bare noun phrase, not an instruction | `check-warnings/warning-checks.md` | **0/16** |
 | point-of-use, gated on "for that year" | `search-records/census-field-availability.md` | **0/25** |
 
+The last row is a historical measurement: that file has since been **deleted**,
+which is what the 0/25 argued for. Its census-schedule content is now
+fetched from the wiki by an unconditional member of a labelled Step 2 pre-work
+block (ADR-0012), and the craft the wiki does not carry was folded into the body.
+The row stays because it is the sharpest measurement of the effect this section
+documents — a bolded, unconditional, point-of-use imperative that still read zero.
+
 Positive unit fixtures only — a negative fixture is a skill correctly declining,
 which loads nothing, and including them understates every row.
 
@@ -468,22 +475,28 @@ Code's relative-path resolution from one SKILL.md into another skill's folder is
 unreliable (claude-code#17741). So guidance several skills must follow
 identically is **physically duplicated** into each one rather than linked.
 
-Three families are duplicated today, and only one is lint-guarded:
+**One family is duplicated today, and it is the lint-guarded one:**
 
 | File | Copies | Distinct contents | Lint |
 |---|---|---|---|
 | `places-guidance.md` | 9 | 2 | `tests/packaging/skill-guidance.test.ts` |
-| `validation-protocol.md` | 2 | **2** | **none** |
-| `research-log-protocol.md` | 1 | 1 | **none** |
 
-The last two were 11 and 3 until the unnamed copies were deleted. Nine
+The other two families are **gone**. `validation-protocol.md` ran 11 → 2 → 1
+(the `citation` copy went) → **0**, and `research-log-protocol.md` 3 → 1 → **0**,
+both retiring when the last `search-records` copies were deleted. The
+long-standing note here that "the two surviving `validation-protocol.md` copies
+contradict each other" described a two-file disagreement that no longer has two
+files: what each copy said is now either enforced by the writer tool's own error
+contract or stated once in the body that used to point at it.
+
+The history is worth keeping because it is the argument for the lint: nine
 `validation-protocol.md` copies and two `research-log-protocol.md` copies were
-named by no `SKILL.md`, so nothing loaded them deliberately; three of the nine also
-carried the retired "run `validate_research_schema` after writing" doctrine, and
-four named a `check-warnings` trigger their skill cannot reach — it writes
-`questions` or `plans`, never `assertions` or `person_evidence`. The two
-surviving `validation-protocol.md` copies still **contradict each other**, and
-that is now a two-file disagreement rather than a nine-way one.
+named by no `SKILL.md`, so nothing loaded them deliberately; three of the nine
+also carried the retired "run `validate_research_schema` after writing"
+doctrine, and four named a `check-warnings` trigger their skill cannot reach —
+it writes `questions` or `plans`, never `assertions` or `person_evidence`. A
+duplicated family with no lint decayed in exactly the way the guarded one did
+not.
 
 The `places-guidance` lint holds 8 copies byte-identical to a canonical at
 `packages/engine/plugin/references/places-guidance.md` — a path deliberately
@@ -498,17 +511,17 @@ a fourth family gets a lint: every skill must land in exactly one of the two
 lists, and the test asserts that too.
 
 > **Today:** editing a duplicated reference means editing every copy by hand and
-> knowing which divergences are deliberate. For `validation-protocol.md`,
-> **nothing records which is which** — its two survivors disagree on whether a
-> post-write `validate_research_schema` pass is required.
+> knowing which divergences are deliberate — now only for `places-guidance.md`,
+> which is the family that has the lint.
 > **Direction:** either lint a shared core plus a
 > per-skill "who calls what" section, or derive each copy at build time from the
-> skill's `allowed-tools`. The cheaper move is to *shrink* them —
-> `validation-protocol.md` largely restates rules `research_append`'s error
-> contract already enforces at write time, and a rule the tool rejects can be one
-> sentence. **Before adding a copy, say why in the PR — and name it in the
-> `SKILL.md`, or you are shipping a file nothing loads on purpose — and that a
-> globbing model can still read, unreviewed.**
+> skill's `allowed-tools`. **The cheapest move is the one actually taken: delete
+> them.** `validation-protocol.md` largely restated rules `research_append`'s
+> error contract already enforces at write time, and a rule the tool rejects
+> needs no prose copy at all — so the two unguarded families were removed rather
+> than shrunk or linted. **Before adding a copy, say why in the PR — and name it
+> in the `SKILL.md`, or you are shipping a file nothing loads on purpose — and
+> that a globbing model can still read, unreviewed.**
 
 ### 3.4 Agent bodies are self-contained — do not split them
 
