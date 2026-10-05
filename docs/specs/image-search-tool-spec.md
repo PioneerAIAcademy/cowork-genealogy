@@ -105,9 +105,12 @@ in one function, and the `imageId` it returns goes straight to
 `image_transcribe` / `image_read`.
 
 **What "Item N" counts.** `item` is the position among the film's image
-groups (the RMS numbering), not the Catalog's item number. The probe
-(`dev/probe-dgs-items.ts`, measured 2026-09-29) found the two agree on most films and
-diverge where the group service holds more than one group per filmed item:
+groups (the RMS numbering), not the Catalog's item number. A Catalog item
+often names a section of the film as it was before the film was split, while
+image groups reflect the film after the split, so image groups are the more
+current numbering. The probe (`dev/probe-dgs-items.ts`, measured 2026-09-29)
+found the two agree on one of the three films probed, and diverge where the
+group service holds more than one group per filmed item:
 
 | Film | Image groups vs Catalog items |
 |---|---|
