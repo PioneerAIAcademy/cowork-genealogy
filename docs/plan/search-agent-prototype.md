@@ -2171,7 +2171,10 @@ without whichever Bedrock refuses.
   comparison needs `make e2e-run TEST=<fixture>` first, which is the lead's call and a
   billed research run. Nothing here writes under `eval/runlogs/`: a prototype run is not an
   e2e run, and the comparison's own output goes to stdout and, with `OUT`, to the
-  gitignored export directory. Offline tests (no judge call, no stack, no model):
+  gitignored export directory. A committed run with more than one query (a stall-resume,
+  or a background subagent's `task_notification`) is tagged on its line: its duration, SDK
+  turns and main-thread tokens cover its last query only, and its cost its last CLI process
+  (#3128). Offline tests (no judge call, no stack, no model):
   `eval/harness/tests/unit/test_e2e_grade_files.py` in `make harness-test`, and
   `apps/server/tests/test_proto_d18.py` plus the two recipes' shape in
   `tests/test_proto_config.py`, both in `make proto-test`. Forty guards were each shown red

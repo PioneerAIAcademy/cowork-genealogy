@@ -907,6 +907,23 @@ def test_format_calibration_prints_the_exclusion_count():
     assert "excluded" not in format_calibration([0.9, 0.8], 0)
 
 
+def test_format_calibration_says_so_when_every_calibrating_run_was_excluded():
+    """With every candidate flagged, "no run carries both" is false: they did."""
+    out = format_calibration([], 2)
+    assert "2 multi-query run(s) excluded" in out
+    assert "no run carries both" not in out
+    assert format_calibration([], 0) == (
+        "  calibrate-cost: no run carries both a recorded cost and token counts."
+    )
+
+
+def test_the_spend_line_names_the_runs_its_accuracy_note_left_out(tmp_path: Path):
+    clean = _write(tmp_path, "run-1.json", _costed_run(_ONE_QUERY))
+    spend = spend_tally([clean])
+    assert "3 multi-query run(s) excluded" in format_spend(spend, [0.9], 3)
+    assert "excluded" not in format_spend(spend, [0.9])
+
+
 def test_spend_calls_recorded_a_floor_when_a_resumed_run_is_in_it(tmp_path: Path):
     resumed = _write(tmp_path, "run-1.json", _costed_run(_TWO_QUERIES, resumes=1))
     clean = _write(tmp_path, "run-2.json", _costed_run(_ONE_QUERY))

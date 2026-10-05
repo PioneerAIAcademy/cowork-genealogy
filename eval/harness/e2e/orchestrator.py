@@ -1944,8 +1944,9 @@ async def _run_agent(
     MAX_RESUME = 2
 
     # Streamed usage accumulator. The SDK's ResultMessage carries the
-    # authoritative duration/turns/cost (for the last query only on a run with
-    # more than one, see `result_message_covers_last_query_only`), but it only
+    # authoritative duration/turns/cost (on a run with more than one query its
+    # duration and turns cover the last query and its cost the last CLI
+    # process, see `result_message_covers_last_query_only`), but it only
     # arrives on a CLEAN end — a wall-clock timeout, an inactivity abort or a
     # no-progress stall cuts the stream before it, so `usage` stayed {} and the
     # run landed in the runlog with no turns, no duration and no tokens at all.
@@ -3070,8 +3071,9 @@ async def _run_agent(
         )
 
     # A ResultMessage populates `usage` with the SDK's authoritative numbers,
-    # except on a run with more than one query, where they cover the last one
-    # (`result_message_covers_last_query_only`). Every abort path (wall-clock
+    # except on a run with more than one query, where its tokens, turns and
+    # duration cover the last query and its cost and API time the last CLI
+    # process (`result_message_covers_last_query_only`). Every abort path (wall-clock
     # timeout, inactivity silence, no-progress stall) cuts the stream before it,
     # leaving `usage` empty — so fall back to what the stream already told us.
     # `usage_source` marks which one you're reading: a fallback block has exact

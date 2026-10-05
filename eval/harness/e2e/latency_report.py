@@ -10,6 +10,7 @@ The raw material is already captured by the orchestrator and persisted into the
 committed result JSON (see e2e/result.py):
 
   - ``usage.duration_ms``      — the SDK's own total wall-clock for the agent loop
+    (the last query's only, on a multi-query run: ``exclusion_reason``)
   - ``usage.duration_api_ms``  — cumulative time awaiting the model API
   - ``usage.num_turns``        — assistant turns
   - ``usage.usage.output_tokens`` (and input / cache counters)
@@ -37,7 +38,8 @@ CLI (from eval/harness/):
   uv run python -m e2e.latency_report path/to/run-<ts>.json [more.json ...]
 
 Two independent decompositions are reported so they corroborate:
-  1. usage-based  — duration_api_ms / duration_ms  (SDK-internal, always present)
+  1. usage-based  — duration_api_ms / duration_ms  (SDK-internal; left out for a
+     multi-query run, whose two figures cover different spans)
   2. timeline-based — inter-message gaps split two ways by the *later* message's
      kind: gaps ending at ``tool_result`` are tool-execution; everything else
      (``assistant`` + ``system:*``) is non-tool (model generation, plus any
@@ -449,10 +451,12 @@ def exclusion_reason(result: dict[str, Any]) -> str | None:
     """`"multi-query"` when this run's figures cover only its last query, else None.
 
     The whole-run summary and the Markdown table print `duration_ms`, API time,
-    turns, tokens and cost, all of which the ResultMessage reports for the last
-    query only on such a run (`result_message_covers_last_query_only`). The
-    per-skill phase breakdown reads the timeline and `wall_clock_seconds`, which
-    are whole-run, so `--by-skill` does not consult this.
+    turns, tokens and cost. On such a run the ResultMessage's `duration_ms`,
+    turns and tokens cover the last query only and its API time and cost the
+    last CLI process (`result_message_covers_last_query_only`), so the row mixes
+    scopes. The per-skill phase breakdown reads the timeline and
+    `wall_clock_seconds`, which are whole-run, so `--by-skill` does not consult
+    this.
     """
     if result_message_covers_last_query_only(result.get("usage")):
         return "multi-query"

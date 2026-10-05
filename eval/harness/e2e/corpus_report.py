@@ -738,15 +738,17 @@ def format_report(
     return "\n".join(lines)
 
 
-def format_spend(spend: Spend, ratios: list[float]) -> str:
+def format_spend(spend: Spend, ratios: list[float], n_multi_query: int = 0) -> str:
     """The three-number spend line (issue #1484 step 4), with the estimate's
     measured accuracy beside it (3a). Recorded, estimated and unrecoverable are
     never blended into one total: abort-path cost is estimated, and folding it
     into recorded would launder an approximation into the authoritative figure.
+    The accuracy note names the multi-query runs it left out (#3128).
     """
     median = _median(ratios)
+    excluded = f"; {n_multi_query} multi-query run(s) excluded" if n_multi_query else ""
     acc = (
-        f" (~{median:.2f}x recorded, median over {len(ratios)} calibrating run(s))"
+        f" (~{median:.2f}x recorded, median over {len(ratios)} calibrating run(s){excluded})"
         if median is not None
         else ""
     )
@@ -821,10 +823,16 @@ def format_recompute(stored_arms: Counter, rt: RecomputeTally) -> str:
 
 def format_calibration(ratios: list[float], n_multi_query: int = 0) -> str:
     """`--calibrate-cost`: median + range of estimated/recorded, offline and free
-    over the runs carrying both (issue #1484 3a). Anything materially worse than
-    ~0.90x median means the price table is wrong, not the corpus — re-measure,
-    do not reword.
+    over the runs carrying both, less the multi-query runs, whose tokens cover
+    their last query only (issue #1484 3a, #3128). Anything materially worse
+    than ~0.90x median means the price table is wrong, not the corpus —
+    re-measure, do not reword.
     """
+    if not ratios and n_multi_query:
+        return (
+            "  calibrate-cost: every run carrying both a recorded cost and token "
+            f"counts was left out; {n_multi_query} multi-query run(s) excluded."
+        )
     if not ratios:
         return "  calibrate-cost: no run carries both a recorded cost and token counts."
     return "\n".join(
@@ -862,7 +870,8 @@ def main(argv: list[str] | None = None) -> int:
         "--calibrate-cost",
         action="store_true",
         help="report median + range of estimated/recorded cost over runs carrying "
-        "both — the offline accuracy check for the flat price table.",
+        "both, less multi-query runs — the offline accuracy check for the flat "
+        "price table.",
     )
     # `--since` is the shared one (`harness/since_window.py`), not a second
     # spelling of it: `type=parse_since` rejects a malformed value at parse
@@ -918,7 +927,7 @@ def main(argv: list[str] | None = None) -> int:
     # would print (3a).
     calibration = _calibration_ratios(paths)
     ratios = calibration.ratios
-    print(format_spend(spend_tally(paths), ratios))
+    print(format_spend(spend_tally(paths), ratios, calibration.n_multi_query))
     if args.recompute:
         print(format_recompute(counts.arms, recompute_tally(paths)))
     if args.calibrate_cost:
