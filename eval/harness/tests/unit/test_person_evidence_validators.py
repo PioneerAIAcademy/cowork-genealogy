@@ -41,6 +41,11 @@ from test_person_evidence import (  # noqa: E402
     test_stub_person_created_and_linked as check_stub,
     report_informant_fields_not_in_pe_confidence_reason as check_informant,
     report_chronological_contradiction_not_speculative as check_chrono,
+    test_geography_measured_with_place_distance as check_distance,
+    test_corridor_read_from_wiki as check_corridor,
+    test_naming_system_read_from_wiki as check_naming,
+    test_unexplained_move_not_confident as check_unexplained,
+    test_corridor_move_links_confident as check_corridor_link,
 )
 
 
@@ -1354,3 +1359,151 @@ def test_stub_catches_add_person_inside_a_STRINGIFIED_batch():
     stringified = [{"tool": "mcp__genealogy__tree_edit",
                     "args": {"ops": '[{"operation": "add_person", "person": {"gender": "Female"}}]'}}]
     assert _stub_verdict(_SOURCED, _MF_NAMED + stringified) is False
+
+
+# --- Geography and naming read from tools (#2537) -------------------------
+
+_GEO = {"tags": ["person-evidence", "geography-from-tools"]}
+_NAMING = {"tags": ["person-evidence", "naming-from-wiki"]}
+
+
+def _call(tool, **args):
+    return {"tool": tool, "args": args}
+
+
+def test_distance_fires_when_no_place_distance_call():
+    calls = [_call("mcp__genealogy__place_search", placeName="Horsham")]
+    with pytest.raises(AssertionError, match="no place_distance call"):
+        check_distance(calls, _GEO)
+
+
+def test_distance_fires_on_an_empty_call_list():
+    with pytest.raises(AssertionError):
+        check_distance([], _GEO)
+
+
+def test_distance_passes_under_every_server_spelling():
+    for prefix in ("mcp__genealogy__", "mcp__remote-devices__Genealogy_Research__", "mcp__Genealogy_Research__"):
+        check_distance([_call(prefix + "place_distance", standardPlace1="a", standardPlace2="b")], _GEO)
+
+
+def test_distance_stands_down_without_the_tag():
+    with pytest.raises(pytest.skip.Exception):
+        check_distance([], {"tags": ["person-evidence"]})
+
+
+def test_corridor_fires_when_no_wiki_read():
+    with pytest.raises(AssertionError, match="Emigration_and_Immigration"):
+        check_corridor([_call("mcp__genealogy__place_distance")], _GEO)
+
+
+def test_corridor_fires_on_the_wrong_page():
+    calls = [_call("mcp__genealogy__wiki_read", url="https://www.familysearch.org/en/wiki/Tennessee_Genealogy")]
+    with pytest.raises(AssertionError):
+        check_corridor(calls, _GEO)
+
+
+def test_corridor_fires_when_the_page_came_through_search_not_read():
+    calls = [_call("mcp__genealogy__wiki_search", query="Tennessee_Emigration_and_Immigration")]
+    with pytest.raises(AssertionError):
+        check_corridor(calls, _GEO)
+
+
+def test_corridor_passes_on_a_full_url_or_a_bare_slug():
+    for url in ("https://www.familysearch.org/en/wiki/Utah_Emigration_and_Immigration",
+                "Kentucky_Emigration_and_Immigration"):
+        check_corridor([_call("mcp__Genealogy_Research__wiki_read", url=url)], _GEO)
+
+
+def test_corridor_tolerates_a_wiki_read_with_null_args():
+    with pytest.raises(AssertionError):
+        check_corridor([{"tool": "mcp__genealogy__wiki_read", "args": None}], _GEO)
+
+
+def test_naming_fires_without_a_naming_customs_read():
+    calls = [_call("mcp__genealogy__wiki_read", url="Norway_Census")]
+    with pytest.raises(AssertionError, match="_Naming_Customs"):
+        check_naming(calls, _NAMING)
+
+
+def test_naming_passes_on_any_country():
+    for c in ("Norway", "Spain", "Iceland"):
+        check_naming([_call("mcp__genealogy__wiki_read", url=f"https://www.familysearch.org/en/wiki/{c}_Naming_Customs")], _NAMING)
+
+
+def test_naming_stands_down_without_the_tag():
+    with pytest.raises(pytest.skip.Exception):
+        check_naming([], _GEO)
+
+
+def _geo_states(new_pe, subjects=("I1",), tree_ids=("I1", "I2")):
+    before = {"project": {"subject_person_ids": list(subjects)}, "person_evidence": []}
+    after = {"project": before["project"], "person_evidence": new_pe}
+    return _state(before, _tree(*tree_ids)), _state(after, _tree(*tree_ids))
+
+
+def _pe(i, person, conf):
+    return {"id": f"pe_00{i}", "assertion_id": f"a_00{i}", "person_id": person, "confidence": conf}
+
+
+_CAP = {"tags": ["person-evidence", "unexplained-move-cap"]}
+_LINK = {"tags": ["person-evidence", "corridor-move-link"]}
+
+
+def test_unexplained_fires_on_a_confident_link_to_the_subject():
+    b, a = _geo_states([_pe(1, "I1", "confident")])
+    with pytest.raises(AssertionError, match="probable"):
+        check_unexplained(b, a, _CAP)
+
+
+def test_unexplained_fires_on_a_confident_link_to_a_moved_relative():
+    b, a = _geo_states([_pe(1, "I1", "probable"), _pe(2, "I2", "confident")])
+    with pytest.raises(AssertionError):
+        check_unexplained(b, a, _CAP)
+
+
+def test_unexplained_passes_at_probable_or_with_no_link():
+    for pe in ([_pe(1, "I1", "probable")], []):
+        b, a = _geo_states(pe)
+        check_unexplained(b, a, _CAP)
+
+
+def test_unexplained_ignores_a_person_the_run_minted():
+    b, a = _geo_states([_pe(1, "I9", "confident")])
+    check_unexplained(b, a, _CAP)
+
+
+def test_unexplained_ignores_a_pre_existing_confident_link():
+    before = {"project": {"subject_person_ids": ["I1"]}, "person_evidence": [_pe(1, "I1", "confident")]}
+    check_unexplained(_state(before, _tree("I1")), _state(before, _tree("I1")), _CAP)
+
+
+def test_corridor_link_fires_when_capped_at_probable():
+    b, a = _geo_states([_pe(1, "I1", "probable")])
+    with pytest.raises(AssertionError, match="ordinary tiers"):
+        check_corridor_link(b, a, _LINK)
+
+
+def test_corridor_link_fires_when_nothing_is_linked():
+    b, a = _geo_states([])
+    with pytest.raises(AssertionError, match="none"):
+        check_corridor_link(b, a, _LINK)
+
+
+def test_corridor_link_fires_when_only_a_relative_is_confident():
+    b, a = _geo_states([_pe(1, "I2", "confident")])
+    with pytest.raises(AssertionError):
+        check_corridor_link(b, a, _LINK)
+
+
+def test_corridor_link_passes_on_one_confident_subject_link_among_others():
+    b, a = _geo_states([_pe(1, "I1", "probable"), _pe(2, "I1", "confident"), _pe(3, "I2", "probable")])
+    check_corridor_link(b, a, _LINK)
+
+
+def test_outcome_checks_stand_down_without_their_tags():
+    b, a = _geo_states([_pe(1, "I1", "confident")])
+    with pytest.raises(pytest.skip.Exception):
+        check_unexplained(b, a, _LINK)
+    with pytest.raises(pytest.skip.Exception):
+        check_corridor_link(b, a, _CAP)

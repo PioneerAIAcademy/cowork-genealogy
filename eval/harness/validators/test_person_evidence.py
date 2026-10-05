@@ -1421,3 +1421,116 @@ def report_chronological_contradiction_not_speculative(
             "adult baptism) the link must be `speculative` at most:\n"
             + "\n".join(offenders)
         )
+
+
+# --- Geography and naming read from tools, not from memory (#2537) -----
+#
+# The geographic-plausibility cap rests on two lookups the agent body names
+# unconditionally: place_search -> place_distance for the move, and wiki_read of
+# the destination's {Jurisdiction}_Emigration_and_Immigration page for the
+# corridor. A run that reaches the right tier WITHOUT the calls is reasoning
+# from the model's own knowledge, which is what ADR-0012 moved off the prompt;
+# ADR-0012 requires the fetch be observed, not merely instructed. Substring
+# matches on the tool name, so they hold under any server-prefix spelling.
+
+
+def _calls_to(tool_calls, name: str) -> list[dict]:
+    return [tc for tc in (tool_calls or []) if name in (tc.get("tool") or "")]
+
+
+def _wiki_read_urls(tool_calls) -> list[str]:
+    return [
+        str((tc.get("args") or {}).get("url") or "")
+        for tc in _calls_to(tool_calls, "wiki_read")
+    ]
+
+
+def test_geography_measured_with_place_distance(tool_calls, test):
+    """Tag-gated (`geography-from-tools`): a record outside the attested
+    residence cluster must be measured with place_distance, not asserted."""
+    if "geography-from-tools" not in (test.get("tags") or []):
+        pytest.skip("not a geography-from-tools test")
+    assert _calls_to(tool_calls, "place_distance"), (
+        "geography-from-tools test made no place_distance call: a record outside "
+        "the attested residence cluster must be measured (place_search, then "
+        "place_distance on the two standardPlaces), not judged from memory. "
+        f"Tools called: {sorted({tc.get('tool') for tc in (tool_calls or [])})}"
+    )
+
+
+def test_corridor_read_from_wiki(tool_calls, test):
+    """Tag-gated (`geography-from-tools`): whether a corridor explains the move
+    is read from the destination's {Jurisdiction}_Emigration_and_Immigration
+    page. Deliberately does not assert WHICH jurisdiction, so the same check
+    covers any destination."""
+    if "geography-from-tools" not in (test.get("tags") or []):
+        pytest.skip("not a geography-from-tools test")
+    urls = _wiki_read_urls(tool_calls)
+    assert any("_Emigration_and_Immigration" in u for u in urls), (
+        "geography-from-tools test must read the destination's "
+        "{Jurisdiction}_Emigration_and_Immigration page with wiki_read before "
+        f"deciding whether a corridor explains the move; wiki_read urls seen: {urls}"
+    )
+
+
+def test_naming_system_read_from_wiki(tool_calls, test):
+    """Tag-gated (`naming-from-wiki`): a patronymic or cross-language name
+    mismatch must fetch the jurisdiction's `{Country}_Naming_Customs` page
+    rather than apply a remembered rule (ADR-0012, issue #2537; the same check
+    conflict-resolution carries for #2254)."""
+    if "naming-from-wiki" not in (test.get("tags") or []):
+        pytest.skip("not a naming-from-wiki test")
+    urls = _wiki_read_urls(tool_calls)
+    assert any("_Naming_Customs" in u for u in urls), (
+        "naming-from-wiki test must call wiki_read for a {Country}_Naming_Customs "
+        f"page before ruling on the name; wiki_read urls seen: {urls}"
+    )
+
+
+def _subject_ids(research: dict) -> set:
+    return set((research.get("project") or {}).get("subject_person_ids") or [])
+
+
+def test_unexplained_move_not_confident(before_state, after_state, test):
+    """Tag-gated (`unexplained-move-cap`): with nothing bridging a move outside
+    the attested residence cluster, no link to a person already in the tree may
+    be `confident` (lead ruling 2026-09-18: `probable` at most). Persons the
+    run minted are excluded: they did not move. Writing no link, and asking
+    first, also passes; that is the judge's to grade."""
+    if "unexplained-move-cap" not in (test.get("tags") or []):
+        pytest.skip("not an unexplained-move-cap test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+    existing = _tree_person_ids(before_state.get("tree_gedcomx_json"))
+    confident = [
+        e for e in _new_person_evidence(before, after)
+        if e.get("confidence") == "confident" and e.get("person_id") in existing
+    ]
+    assert not confident, (
+        "an unexplained move outside the attested residence cluster caps the "
+        "link at `probable`; these new links to persons already in the tree are "
+        f"`confident`: {[(e.get('id'), e.get('assertion_id'), e.get('person_id')) for e in confident]}"
+    )
+
+
+def test_corridor_move_links_confident(before_state, after_state, test):
+    """Tag-gated (`corridor-move-link`): the negative arm. When a corridor on
+    the destination's page explains the move and correlation is Strong, the
+    subject gets an ordinary `confident` link. A cap here, or no link at all,
+    is the geographic rule over-firing."""
+    if "corridor-move-link" not in (test.get("tags") or []):
+        pytest.skip("not a corridor-move-link test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+    subjects = _subject_ids(before)
+    to_subject = [e for e in _new_person_evidence(before, after) if e.get("person_id") in subjects]
+    assert any(e.get("confidence") == "confident" for e in to_subject), (
+        "a move a corridor explains takes the ordinary tiers, and Strong "
+        "correlation across two independent records is `confident`; links "
+        f"written to the subject {sorted(subjects)}: "
+        f"{[(e.get('id'), e.get('assertion_id'), e.get('confidence')) for e in to_subject] or 'none'}"
+    )
