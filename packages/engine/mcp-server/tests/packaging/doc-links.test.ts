@@ -138,7 +138,8 @@ const KNOWN_ABSENT: { file: string; path: string; why: string }[] = [
     file: "CLAUDE.md",
     path: "eval/.env",
     why: "per-developer secrets file; gitignored, so it is absent at rest",
-  },  {
+  },
+  {
     file: "docs/specs/hosted-web-workbench-spec.md",
     path: "packages/engine/mcp-server/build/",
     why: "compiler output; gitignored, so it is absent at rest",
