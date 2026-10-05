@@ -375,6 +375,55 @@ def handoffs(
     return out
 
 
+def slash_skill_from_entry(
+    user_message: str,
+    slash_commands: list[str] | None,
+    staged_skills_root: Path | None,
+) -> str | None:
+    """The skill a `/<name> …` entry loaded, or None.
+
+    `skills_invoked` is filled by the PreToolUse hook on a `Skill` call. A slash
+    command is expanded by the CLI, not called as a tool, so the hook never
+    fires and the entry point production uses (`/research --autonomous`) was
+    ungradable: `derive_activated` and `_compute_outcome` both test membership
+    (issue #3116).
+
+    **Registered and staged, not expanded.** Step 0 measured what reaches the
+    SDK stream and the answer was nothing: no `<command-name>`, no `Base
+    directory for this skill`, and `UserMessage` carries neither `isMeta` nor
+    `sourceToolUseID` — those are CLI-transcript fields that do not survive into
+    the stream. So this cannot witness the expansion and does not claim to. It
+    reports that the CLI **registered** the command and that the skill was
+    **staged**, which is what the init message and the workspace can show.
+    Ruling: chesworthrm on #3116, 2026-10-05.
+
+    Three conditions, all required — the `slash_commands` check is what keeps
+    this from being a prefix rule that passes every slash test by default:
+
+    1. the message begins `/<name>`;
+    2. `<name>` is in the init `SystemMessage`'s `slash_commands`;
+    3. `.claude/skills/<name>/` was staged into the workspace.
+
+    A namespaced spelling (`/genealogy-research:research`) resolves to neither 2
+    nor 3 and records nothing — staging is by bare name
+    (`workspace.py` stages to `.claude/skills/<name>/`).
+    """
+    if not user_message.startswith("/"):
+        return None
+    rest = user_message[1:]
+    # The name must follow the slash immediately. `split()` skips leading
+    # whitespace, so without this `"/ research"` -- which the CLI does not
+    # expand -- resolved to `research`.
+    if not rest or rest[0].isspace():
+        return None
+    head = rest.split(None, 1)[0]
+    if not slash_commands or head not in slash_commands:
+        return None
+    if staged_skills_root is None or not (staged_skills_root / head).is_dir():
+        return None
+    return head
+
+
 def judge_skills_slot(
     skills_invoked: list[str], builtin_tool_calls: list[dict[str, Any]]
 ) -> list[str]:
@@ -403,6 +452,13 @@ def judge_skills_slot(
         return list(skills_invoked or []) + [f"{name} (agent)" for name in spawns]
     remaining = list(skills_invoked or [])
     out: list[str] = []
+    # A slash entry sits in `skills_invoked` with no `Skill` call of its own, so
+    # the positional walk below would never match it, stall on it permanently,
+    # and dump the whole list after the spawns — destroying the call order this
+    # function exists to preserve, and only on slash-entry tests. Emit it first.
+    # (issue #3116; fix per chesworthrm 2026-10-05.)
+    if len(remaining) == sum(1 for c in calls if c.get("tool") == "Skill") + 1:
+        out.append(remaining.pop(0))
     for call in calls:
         tool = call.get("tool")
         if tool == "Skill":
@@ -829,6 +885,8 @@ async def run_skill(
     disallowed_tools = list(DISALLOWED_BACKSTOP)
 
     skills_invoked: list[str] = []
+    # Filled from the init SystemMessage; read once the stream ends.
+    slash_commands_seen: list[str] = []
     # Mutable counter shared between hook and loop so the hook can flag
     # over-limit calls without raising (the SDK swallows hook exceptions
     # in some paths).
@@ -1117,6 +1175,17 @@ async def run_skill(
                 return
             except asyncio.TimeoutError:
                 raise _LimitExceeded("sdk_stream_silence")
+            if type(message).__name__ == "SystemMessage":
+                # The init message is the only carrier of `slash_commands`, and
+                # nothing else in the stream shows a command was registered
+                # (#3116 Step 0). Read by name rather than isinstance so this
+                # does not add an import the module does not otherwise need.
+                data = getattr(message, "data", None) or {}
+                cmds = data.get("slash_commands")
+                if isinstance(cmds, list):
+                    slash_commands_seen.extend(
+                        c for c in cmds if isinstance(c, str)
+                    )
             if isinstance(message, RateLimitEvent):
                 # The CLI emits this whenever rate-limit state transitions. It
                 # is in the SDK's Message union and streamed straight past this
@@ -1482,6 +1551,16 @@ async def run_skill(
         error = None
 
     duration_ms = (time.perf_counter() - start) * 1000.0
+
+    # Index 0: `derive_activated` and `_compute_outcome` test membership, and
+    # the judge's slot and the routing validators both read position. Inserted
+    # after the stream because `slash_commands` only arrives with the init
+    # message — never appended, which would put the entry point last.
+    slash_entry = slash_skill_from_entry(
+        user_message, slash_commands_seen, workspace / ".claude" / "skills"
+    )
+    if slash_entry and slash_entry not in skills_invoked:
+        skills_invoked.insert(0, slash_entry)
 
     return SkillRunResult(
         # Turn-separated, not "".join: two AssistantMessages' text must not

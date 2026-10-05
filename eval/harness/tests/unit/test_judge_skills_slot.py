@@ -157,3 +157,36 @@ def test_direct_arm_slot_is_still_the_spawned_agent_alone(monkeypatch):
     assert _judged_slot(monkeypatch, _spec(direct=True), result) == [
         "search-wikipedia (agent, spawned directly — no skill was invoked)",
     ]
+
+
+def test_slash_entry_keeps_call_order():
+    """A slash entry has no `Skill` call of its own (issue #3116).
+
+    `skills_invoked` is walked positionally against the `Skill` calls, so an
+    entry with no matching call would never match, stall the walk, and dump the
+    whole list after the spawns -- destroying the call order this function
+    exists to preserve, and only on slash-entry tests, which are exactly the
+    ones #3116 makes gradable. Fix per chesworthrm, 2026-10-05.
+    """
+    calls = [
+        {"tool": "Skill", "args": {"skill": "question-selection"}},
+        {"tool": "Task", "args": {"subagent_type": "gps-mentor"}},
+        {"tool": "Skill", "args": {"skill": "research-plan"}},
+    ]
+    assert judge_skills_slot(
+        ["research", "question-selection", "research-plan"], calls
+    ) == ["research", "question-selection", "gps-mentor (agent)", "research-plan"]
+
+
+def test_without_a_slash_entry_the_walk_is_unchanged():
+    """The other direction: the fix must not reorder an ordinary run."""
+    calls = [
+        {"tool": "Skill", "args": {"skill": "question-selection"}},
+        {"tool": "Task", "args": {"subagent_type": "gps-mentor"}},
+        {"tool": "Skill", "args": {"skill": "research-plan"}},
+    ]
+    assert judge_skills_slot(["question-selection", "research-plan"], calls) == [
+        "question-selection",
+        "gps-mentor (agent)",
+        "research-plan",
+    ]

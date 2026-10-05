@@ -1776,3 +1776,82 @@ def test_the_suppressed_reaction_calls_are_recorded_not_dropped(tmp_path, monkey
         "a post-deny call must still stay OUT of attempted_mcp_calls, or the "
         "uncovered_tool_call advisory fires on a deliberately stopped run"
     )
+
+
+# --- #3116: a slash-command entry records the skill it loaded -----------------
+#
+# `skills_invoked` is filled by the PreToolUse hook on a `Skill` call. A slash
+# command is expanded by the CLI, so the hook never fires and `/research …` --
+# the entry point production uses -- was ungradable.
+#
+# Step 0 measured what reaches the SDK stream: no `<command-name>`, no `Base
+# directory for this skill`, no `isMeta`, no `sourceToolUseID`. So the rule is
+# "registered and staged", not "expanded" (ruling: chesworthrm, 2026-10-05).
+
+
+def _staged(tmp_path, *names):
+    root = tmp_path / ".claude" / "skills"
+    for n in names:
+        (root / n).mkdir(parents=True)
+    return root
+
+
+def test_slash_entry_records_a_registered_and_staged_skill(tmp_path):
+    from harness.skill_runner import slash_skill_from_entry
+
+    root = _staged(tmp_path, "research")
+    assert slash_skill_from_entry("/research --autonomous Who…", ["research"], root) == "research"
+
+
+def test_slash_entry_to_an_unknown_skill_records_nothing(tmp_path):
+    from harness.skill_runner import slash_skill_from_entry
+
+    root = _staged(tmp_path, "research")
+    assert slash_skill_from_entry("/no-such-skill go", ["research"], root) is None
+
+
+def test_slash_prefix_without_registration_records_nothing(tmp_path):
+    """The prefix-only guard.
+
+    A rule keyed on the leading `/` alone would let every slash test pass
+    activation by default. `slash_commands` comes from the init SystemMessage
+    and is what distinguishes a command the CLI registered from a message that
+    merely starts with a slash.
+    """
+    from harness.skill_runner import slash_skill_from_entry
+
+    root = _staged(tmp_path, "research")
+    assert slash_skill_from_entry("/research go", [], root) is None
+
+
+def test_registered_but_unstaged_skill_records_nothing(tmp_path):
+    from harness.skill_runner import slash_skill_from_entry
+
+    root = _staged(tmp_path, "research")
+    assert slash_skill_from_entry("/other go", ["other"], root) is None
+
+
+def test_a_namespaced_spelling_records_nothing(tmp_path):
+    """Staging is by bare name, so a namespaced command resolves to no dir."""
+    from harness.skill_runner import slash_skill_from_entry
+
+    root = _staged(tmp_path, "research")
+    assert (
+        slash_skill_from_entry("/genealogy-research:research go", ["research"], root)
+        is None
+    )
+
+
+def test_an_ordinary_message_records_nothing(tmp_path):
+    from harness.skill_runner import slash_skill_from_entry
+
+    root = _staged(tmp_path, "research")
+    assert slash_skill_from_entry("Research the parents of X", ["research"], root) is None
+
+
+def test_a_bare_slash_records_nothing(tmp_path):
+    from harness.skill_runner import slash_skill_from_entry
+
+    root = _staged(tmp_path, "research")
+    assert slash_skill_from_entry("/", ["research"], root) is None
+    assert slash_skill_from_entry("/ research", ["research"], root) is None
