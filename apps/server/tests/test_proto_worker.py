@@ -745,14 +745,6 @@ def test_person_warnings_is_allowed_while_block_is_on(tmp_path):
                         "tool_input": {"projectPath": "/w", "personId": "97XW-7VN"}}) == {}, \
         "person_warnings reads the local tree: always allowed"
     assert rows[-1]["decision"] == "allow"
-    # Held equal to the harness's table, read off its source.
-    tree = ast.parse(ORCHESTRATOR.read_text(encoding="utf-8"))
-    harness = [
-        ast.literal_eval(node.value) for node in ast.walk(tree)
-        if isinstance(node, ast.Assign)
-        and any(isinstance(t, ast.Name) and t.id == "LIVE_TREE_ARG_TOOLS" for t in node.targets)
-    ]
-    assert harness == [options.LIVE_TREE_ARG_TOOLS], "re-sync with orchestrator.py's LIVE_TREE_ARG_TOOLS"
 
 
 def test_the_hook_never_raises(tmp_path):
@@ -874,8 +866,10 @@ def test_registration_problems_compares_against_the_constants_not_the_loaded_set
 
 
 WORKER_ENV = {
+    "MODEL_PROVIDER": "anthropic",
     "ANTHROPIC_API_KEY": "sk-test",
     "TMPDIR": "/tmp",
+    "TOOL_SERVER_URL": "http://tools:8787/mcp",
 }
 
 
@@ -1082,7 +1076,9 @@ def test_worker_tmpfs_holds_tmpdir_and_the_key_is_passed_through_not_literal():
     # The tools are the `tools` service's: the store credentials and image_transcribe's
     # key stay out of the process that runs the agent loop.
     assert not [k for k in env if k.startswith("GENEALOGY_")], "the worker holds no store credentials"
-    assert "OPENROUTER_API_KEY" not in env and "TOOL_SERVER" not in env
+    assert "OPENROUTER_API_KEY" not in env
+    assert env["TOOL_SERVER_URL"] == "http://tools:8787/mcp", "required: the worker has no default"
+    assert env["DEV_PATHS"] == "true", "compose is the dev deployment; no image or template sets it"
     assert "minio" not in svc["depends_on"]
 
 
@@ -1166,7 +1162,7 @@ def test_004_worker_only_adds_nullable_columns():
 def test_tool_server_http_sends_the_bearer_and_the_project_id_as_headers(tmp_path):
     # The shared server's contract is two per-request headers: `Authorization: Bearer
     # <patron token>` -> principal, `X-Genealogy-Project-Id` -> the request's store. The
-    # project header is always sent; the default URL is the compose `tools` service.
+    # project header is always sent; the URL is TOOL_SERVER_URL's, with no default.
     env = WORKER_ENV
     server = _server(_options(config_dir=str(tmp_path), bearer="turn-token", worker_env=env))
     assert server == {
@@ -1180,6 +1176,10 @@ def test_tool_server_http_sends_the_bearer_and_the_project_id_as_headers(tmp_pat
         config_dir=str(tmp_path), bearer="t", worker_env={**env, "TOOL_SERVER_URL": "http://127.0.0.1:8787/mcp"}
     ))
     assert custom["url"] == "http://127.0.0.1:8787/mcp"
+    for unset in ({k: v for k, v in env.items() if k != "TOOL_SERVER_URL"}, {**env, "TOOL_SERVER_URL": " "}):
+        with pytest.raises(ValueError, match="TOOL_SERVER_URL"):
+            _options(config_dir=str(tmp_path), bearer="t", worker_env=unset)
+    assert not hasattr(options, "TOOL_SERVER_DEFAULT_URL"), "a guessed host would get the bearer"
     with pytest.raises(ValueError):  # an empty bearer is refused, never a project-only header
         _options(config_dir=str(tmp_path), bearer="", worker_env=env)
     other = _server(_options(config_dir=str(tmp_path), project_id="proj-2", bearer="t", worker_env=env))
@@ -2160,8 +2160,15 @@ class _PrepareRan(Exception):
     pass
 
 
-def _stop_at_prepare(monkeypatch):
+def _start_env(monkeypatch):
+    """What every start needs (U11), with DEV_PATHS left as conftest sets it."""
     monkeypatch.setenv("WORKER_TURN_USERS", "none")
+    monkeypatch.setenv("MODEL_PROVIDER", "anthropic")
+    monkeypatch.setenv("TOOL_SERVER_URL", "http://tools:8787/mcp")
+
+
+def _stop_at_prepare(monkeypatch):
+    _start_env(monkeypatch)
 
     def prepare():
         raise _PrepareRan("ran past the check")
@@ -2196,7 +2203,7 @@ def test_queue_startup_fields_exits_2_and_ignores_stray_keys_without_a_queue(mon
 
 def _start_only(monkeypatch):
     """main() up to ev=start, with nothing real started."""
-    monkeypatch.setenv("WORKER_TURN_USERS", "none")
+    _start_env(monkeypatch)
     monkeypatch.setattr(worker, "prepare", lambda: None)
 
     class Server:
@@ -3816,7 +3823,8 @@ def refused_pg():
 def _serving():
     """The worker's real Handler on a ThreadingHTTPServer, port 0."""
     server = ThreadingHTTPServer(("127.0.0.1", 0), worker.Handler)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    # serve_forever's default 0.5 s poll is what shutdown() waits out on every exit.
+    thread = threading.Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01}, daemon=True)
     thread.start()
     try:
         yield server.server_address[1]
@@ -4250,6 +4258,179 @@ def test_session_spend_usd_prices_decimal_sums(turn_env, monkeypatch):
     assert not [f for f in logged if f.get("ev") == "spend_estimate_failed"]
 
 
+# ── the `delivered` exit ──────────────────────────────────────────────────────────
+#
+# A bounded request -- "create a plan but leave it at that", a single lookup, "where are
+# we?" -- must stop at its deliverable rather than running on to the proof, the nudge cap
+# or the spend bound. `delivered` is how a turn says it did the thing that was asked and
+# stopped on purpose. It is a NEW value, not `ok`: `ok` means "ended with no terminal
+# reason" and chatEvents renders it as nothing, while a delivery has something to report.
+
+
+
+
+def test_the_delivered_tool_name_is_pinned():
+    assert options.DELIVERED_TOOL == "mcp__genealogy__research_delivered"
+
+
+def test_the_delivery_instruction_rides_the_same_turn_prompt(tmp_path):
+    """The ONLY check that the guidance reaches the model at all. Every other test here
+    drives `make_pretool_hook` directly and never touches `build_worker_options`, so
+    without this the wiring could be dropped and the tool would ship advertised but
+    inert, with nothing instructing the model to call it."""
+    opts = _options(config_dir=str(tmp_path))
+    assert options.DELIVERY_GUIDANCE in opts.system_prompt["append"]
+
+
+def test_the_instruction_names_the_tool_it_is_about():
+    """A rule that does not name its tool cannot be followed. The bare name is what
+    appears in the prompt; the hook matches the qualified one."""
+    assert "research_delivered" in options.DELIVERY_GUIDANCE
+    assert options.DELIVERED_TOOL.endswith("research_delivered")
+
+
+def test_the_instruction_draws_both_boundaries():
+    """Two ways this misfires, and both must be excluded in the text itself: calling it
+    when the whole objective is finished (that is `completed`, and the run ends on its
+    own), and calling it instead of asking a question (an ask waits for an answer; a
+    delivery waits for nothing)."""
+    lowered = options.DELIVERY_GUIDANCE.lower()
+    assert "objective" in lowered, "must exclude the project-complete case"
+    # NOT `"question" in lowered or "ask" in lowered`: "ask" lives inside "asked" and
+    # "question" inside "status question", BOTH in the guidance's positive half, so that
+    # assertion cannot fail. Same collision shape as the "search"/"re-SEARCH" one above.
+    assert "in place of asking" in lowered, "must exclude the ask case"
+
+
+def test_a_turn_that_delivers_is_recorded_as_delivered(turn_env):
+    """End to end through the REAL hook: the hook-level tests cannot see the worker's
+    closure, and a break test that sets the closure to the wrong outcome leaves them all
+    green."""
+    summary = _run(turn_env, [
+        _init(), ToolCall("mcp__genealogy__research_query"),
+        ToolCall(options.DELIVERED_TOOL),
+        _result(num_turns=2),
+    ])
+    assert summary["outcome"] == "delivered", (
+        f"a turn that delivered recorded {summary['outcome']!r}"
+    )
+    _, params = next((sql, p) for sql, p in turn_env["conn"].executed
+                     if sql.startswith("UPDATE turns SET completed_at"))
+    assert params[0] == "delivered", "and the row says so too"
+
+
+def test_a_turn_that_never_delivers_is_untouched_by_the_exit(turn_env):
+    """The arm that is easy to skip. Adding an exit must not re-route the ordinary run
+    through it."""
+    summary = _run(turn_env, [
+        _init(), ToolCall("mcp__genealogy__research_query"),
+        ToolCall("mcp__genealogy__record_read"),
+        _result(num_turns=2),
+    ])
+    assert summary["outcome"] != "delivered"
+
+
+def test_a_stop_outranks_a_delivery():
+    """The researcher's own stop wins: the halt check runs before the delivered arm."""
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda row: None, halt=lambda: "stopped",
+    )
+    out = asyncio.run(hook({"tool_name": options.DELIVERED_TOOL, "tool_input": {}}, "u1", None))
+    assert out.get("stopReason") == "stopped", "a halt must outrank the delivery arm"
+
+
+def test_a_subagent_cannot_end_the_main_turn_with_a_delivery():
+    """The arm matches on tool NAME, and a subagent holds the session's tool set -- so
+    without a caller check a record-extractor saying "delivered" ends the researcher's
+    whole turn.
+
+    `agent_id` is tested for MEMBERSHIP, not truthiness: it is absent as a KEY on the
+    main thread, and `agent_type` alone is not sufficient because it is present on the
+    main thread of a session started with `--agent`. Same discriminator the shipped
+    plugin hook uses (`owner_denied`, hooks/guard_project_files.py)."""
+    halted: list[str] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda row: None, on_delivered=lambda: halted.append("x"),
+    )
+    out = asyncio.run(hook(
+        {"tool_name": options.DELIVERED_TOOL, "tool_input": {"summary": "s"},
+         "agent_id": "ag_1", "agent_type": "record-extractor"},
+        "u1", None,
+    ))
+    assert out.get("continue_") is not False, "a subagent's delivery must not halt the turn"
+    assert halted == [], "and must not fire the delivered exit"
+
+
+def test_the_main_thread_still_delivers_with_agent_type_present():
+    """The other direction, and the reason `agent_type` alone cannot be the test: a
+    session started with `--agent` carries agent_type on its MAIN thread. Keying on it
+    would silently stop the feature working for those sessions."""
+    halted: list[str] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda row: None, on_delivered=lambda: halted.append("x"),
+    )
+    out = asyncio.run(hook(
+        {"tool_name": options.DELIVERED_TOOL, "tool_input": {"summary": "s"},
+         "agent_type": "research"},
+        "u1", None,
+    ))
+    assert out.get("continue_") is False, "the main thread must still deliver"
+    assert halted == ["x"]
+
+
+def test_the_guidance_says_to_search_for_the_deferred_schema():
+    """ENABLE_TOOL_SEARCH is on and `research_delivered` is not in ALWAYS_LOAD, so its
+    schema is deferred. The one tool the system prompt names has to be findable, and
+    the short bounded turns this feature exists for are the ones holding the fewest
+    schemas."""
+    # NOT `"search" in lowered`: "re-SEARCH" contains it, and the guidance says
+    # "researcher" and "research_delivered", so that assertion can never fail. This is
+    # the field-name-collision shape CLAUDE.md names as a silent pass; it was caught by
+    # break-testing this very test, which stayed green with the clause deleted.
+    lowered = options.DELIVERY_GUIDANCE.lower()
+    assert "deferred" in lowered, "the guidance must say the schema is deferred"
+    assert "search for it" in lowered, "and must tell the model to search for it"
+
+
+def test_the_delivery_summary_reaches_a_human():
+    """The one field the researcher-facing contract is built on, and the hook halts
+    BEFORE the tool body runs -- so if it is not captured here it reaches nobody:
+    `input_path` is None for this tool, the tool_calls row has no column for it, and the
+    browser renders a fixed string from chatEvents. It must survive in the stop reason
+    and in the log event."""
+    events: list[dict] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda row: None,
+        log=lambda **kw: events.append(kw),
+    )
+    out = asyncio.run(hook(
+        {"tool_name": options.DELIVERED_TOOL,
+         "tool_input": {"summary": "the Mogan marriage record, 1874"}},
+        "u1", None,
+    ))
+    assert "the Mogan marriage record, 1874" in out["stopReason"], (
+        "the summary must survive into the text the model is handed"
+    )
+    delivered = [e for e in events if e.get("ev") == "delivered"]
+    assert delivered and delivered[0]["summary"] == "the Mogan marriage record, 1874"
+
+
+def test_an_empty_summary_does_not_corrupt_the_stop_reason():
+    """`summary` is declared required but NOTHING enforces it: the hook halts before the
+    body, and the server does not validate inputSchema. An argument-free call must still
+    produce a clean reason rather than a dangling 'Delivered: '."""
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda row: None,
+    )
+    out = asyncio.run(hook({"tool_name": options.DELIVERED_TOOL}, "u1", None))
+    assert out["stopReason"] == options.DELIVERED_REASON
+    assert "Delivered:" not in out["stopReason"]
+
 # ── U3: the attempt bears its owner's current grant ──────────────────────────────
 
 
@@ -4543,3 +4724,310 @@ def test_worker_tables_include_the_grant_tables():
     """acquire_grant reads projects.owner_id and familysearch_tokens; /healthz must fail on a
     database missing either rather than every turn failing at its first attempt."""
     assert {"projects", "familysearch_tokens"} <= set(worker.WORKER_TABLES)
+
+
+def test_a_stop_dispatched_after_a_delivery_does_not_relabel_the_turn(turn_env, monkeypatch):
+    """`terminal["halted"] = True` in on_delivered is what lets the Stop hook ALLOW the
+    stop after a delivery instead of vetoing it. Deleting that line leaves every other
+    worker test green, so it needs its own.
+
+    Same trap as the spend-cap version above: if `on_allow` overwrote the reason, a turn
+    that delivered would be recorded and rendered as "you pressed Stop"."""
+    monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
+    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
+    summary = _run(turn_env, [
+        _init(), ToolCall(options.DELIVERED_TOOL), StopDispatch(), _text("x"),
+        _result(num_turns=2),
+    ])
+    assert turn_env["client"].stops == [{}], "the Stop hook vetoed instead of allowing the stop"
+    assert summary["outcome"] == "delivered"
+    row = next(p for sql, p in turn_env["conn"].executed
+               if sql.startswith("UPDATE turns SET completed_at"))
+    assert row[0] == "delivered", "the row keeps the delivery's own reason"
+
+
+def test_the_main_thread_gate_is_membership_not_truthiness():
+    """The comment on that gate calls the membership test load-bearing, and it is: a
+    subagent whose `agent_id` is falsy (None, "") is still a subagent. A truthiness test
+    (`not data.get("agent_id")`) passes the whole existing suite, so this pins the rule
+    with the one shape that separates them."""
+    halted: list[str] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda row: None, on_delivered=lambda: halted.append("x"),
+    )
+    out = asyncio.run(hook(
+        {"tool_name": options.DELIVERED_TOOL, "tool_input": {"summary": "s"},
+         "agent_id": None, "agent_type": "record-extractor"},
+        "u1", None,
+    ))
+    assert out.get("continue_") is not False, (
+        "agent_id present but falsy is STILL a subagent -- a truthiness test lets it "
+        "end the researcher's turn"
+    )
+    assert halted == []
+
+
+# ── U11: the dev-only paths ──────────────────────────────────────────────────────
+
+IDS = {"turn_id": "turn-u11", "session_id": "sess-u11", "project_id": "proj-u11"}
+
+
+class _ExitCalled(Exception):
+    pass
+
+
+def _post_turn(port: int, body: dict) -> tuple[int, dict] | None:
+    """POST /turn; None when the handler died without replying (a patched ``_exit``)."""
+    conn = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
+    try:
+        conn.request("POST", "/turn", body=json.dumps(body),
+                     headers={"Content-Type": "application/json", "X-Aws-Sqsd-Receive-Count": "1"})
+        response = conn.getresponse()
+        return response.status, json.loads(response.read().decode("utf-8"))
+    except (http.client.RemoteDisconnected, ConnectionResetError):
+        return None
+    finally:
+        conn.close()
+
+
+@pytest.fixture
+def post_env(monkeypatch):
+    """The real Handler with every road past the gate recorded: ``claim`` and ``_exit``
+    (which raises, so no process dies), and the two serve functions when replaced."""
+    calls: dict[str, list] = {"claim": [], "exit": [], "real": [], "stub": []}
+    monkeypatch.setattr(worker, "claim", lambda conn, turn, rc, **kw: calls["claim"].append(turn["turn_id"]))
+    monkeypatch.setattr(worker.psycopg, "connect", lambda *a, **k: FakeConn())
+
+    def _exit(code):
+        calls["exit"].append(code)
+        raise _ExitCalled(code)
+    monkeypatch.setattr(worker.os, "_exit", _exit)
+    monkeypatch.setattr(worker, "log", lambda **f: calls.setdefault("log", []).append(f))
+    return calls
+
+
+def _record_serves(monkeypatch, calls) -> None:
+    monkeypatch.setattr(worker, "serve_real_turn", lambda turn, rc, **kw: calls["real"].append(turn) or (200, {"ok": True}))
+    monkeypatch.setattr(worker, "serve_stub_turn",
+                        lambda turn, rc, behaviour, seconds, **kw: calls["stub"].append((behaviour, seconds)) or (200, {"ok": True}))
+
+
+@pytest.mark.parametrize("body", [
+    {"behaviour": "crash"}, {"behaviour": "ok"}, {"behaviour": "sleep", "seconds": "x"}, {}, {"text": "\x1c"},
+], ids=["crash", "ok", "bad-seconds", "empty", "unstrippable-text"])
+def test_a_stub_turn_without_dev_paths_is_400_before_any_claim(monkeypatch, post_env, body):
+    monkeypatch.delenv("DEV_PATHS")
+    with _serving() as port:
+        reply = _post_turn(port, {**IDS, **body})
+    assert reply == (400, {"ok": False, "turn_id": "turn-u11", "error": "stub turns are disabled"})
+    assert post_env["claim"] == [] and post_env["exit"] == [], "os._exit must be unreachable"
+    [line] = [f for f in post_env["log"] if f.get("ev") == "turn"]
+    assert line["status"] == 400 and line["error"] == "stub turns are disabled"
+
+
+@pytest.mark.parametrize("value", ["false", "1", "yes", "", "truthy"])
+def test_dev_paths_is_on_only_for_true(monkeypatch, post_env, value):
+    assert options.dev_paths({"DEV_PATHS": value}) is False
+    monkeypatch.setenv("DEV_PATHS", value)
+    with _serving() as port:
+        assert _post_turn(port, {**IDS, "behaviour": "crash"})[0] == 400
+    assert post_env["exit"] == []
+
+
+@pytest.mark.parametrize("value", ["true", "TRUE", " True "])
+def test_dev_paths_reaches_the_crash_arm(monkeypatch, post_env, value):
+    assert options.dev_paths({"DEV_PATHS": value}) is True
+    monkeypatch.setenv("DEV_PATHS", value)
+    with _serving() as port:
+        assert _post_turn(port, {**IDS, "behaviour": "crash"}) is None, "the crash arm never replies"
+    assert post_env["claim"] == ["turn-u11"] and post_env["exit"] == [1], "smoke's crash needs a real death"
+    assert options.dev_paths({}) is False
+
+
+def test_a_real_turn_runs_without_dev_paths(monkeypatch, post_env):
+    monkeypatch.delenv("DEV_PATHS")
+    _record_serves(monkeypatch, post_env)
+    with _serving() as port:
+        assert _post_turn(port, {**IDS, "text": "hello"}) == (200, {"ok": True})
+    assert [t["turn_id"] for t in post_env["real"]] == ["turn-u11"] and post_env["stub"] == []
+
+
+@pytest.mark.parametrize("body, error", [
+    ({}, "unknown behaviour None"),
+    ({"behaviour": "OK"}, "unknown behaviour 'OK'"),
+    ({"behaviour": "sleep", "seconds": "x"}, "seconds must be a number >= 0, not 'x'"),
+    ({"behaviour": "sleep", "seconds": -1}, "seconds must be a number >= 0, not -1"),
+    ({"behaviour": "sleep", "seconds": "nan"}, "seconds must be a number >= 0, not 'nan'"),
+    ({"behaviour": "sleep", "seconds": "inf"}, "seconds must be a number >= 0, not 'inf'"),
+    ({"behaviour": "sleep", "seconds": [1]}, "seconds must be a number >= 0, not [1]"),
+    ({"behaviour": "sleep", "seconds": True}, "seconds must be a number >= 0, not True"),
+], ids=["no-behaviour", "unknown", "non-numeric", "negative", "nan", "inf", "list", "bool"])
+def test_a_malformed_stub_turn_is_400_even_with_dev_paths(monkeypatch, post_env, body, error):
+    _record_serves(monkeypatch, post_env)
+    with _serving() as port:
+        reply = _post_turn(port, {**IDS, **body})
+    assert reply == (400, {"ok": False, "turn_id": "turn-u11", "error": error})
+    assert post_env["claim"] == [] and post_env["stub"] == [], "no claim, no stub arm"
+
+
+@pytest.mark.parametrize("body, ran", [
+    ({"behaviour": "ok"}, ("ok", 0.0)),
+    ({"behaviour": "sleep", "seconds": "1.5"}, ("sleep", 1.5)),
+    ({"behaviour": "sleep", "seconds": 2}, ("sleep", 2.0)),
+    ({"behaviour": "sleep", "seconds": 0}, ("sleep", 0.0)),
+    ({"behaviour": "fail", "seconds": None}, ("fail", 0.0)),
+])
+def test_a_well_formed_stub_turn_still_runs_with_dev_paths(monkeypatch, post_env, body, ran):
+    _record_serves(monkeypatch, post_env)
+    with _serving() as port:
+        assert _post_turn(port, {**IDS, **body}) == (200, {"ok": True})
+    assert post_env["stub"] == [ran]
+
+
+@pytest.mark.parametrize("field", ["turn_id", "session_id", "project_id"])
+@pytest.mark.parametrize("value", [None, "", "   ", 7, ["turn"]], ids=["missing", "empty", "blank", "int", "list"])
+@pytest.mark.parametrize("kind", [{"behaviour": "ok"}, {"text": "hello"}], ids=["stub", "real"])
+def test_a_turn_without_its_ids_is_400_naming_the_field(monkeypatch, post_env, field, value, kind):
+    _record_serves(monkeypatch, post_env)
+    body = {**IDS, **kind}
+    if value is None:
+        del body[field]
+    else:
+        body[field] = value
+    with _serving() as port:
+        reply = _post_turn(port, body)
+    assert reply == (400, {"ok": False, "error": f"{field} must be a non-empty string"})
+    assert post_env["claim"] == [] and post_env["real"] == [] and post_env["stub"] == [], "no stand-in id is claimed"
+
+
+def test_the_ids_are_the_message_s_own(monkeypatch, post_env):
+    _record_serves(monkeypatch, post_env)
+    with _serving() as port:
+        conn = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
+        conn.request("POST", "/turn", body=json.dumps({**IDS, "text": "hello"}),
+                     headers={"X-Aws-Sqsd-Msgid": "msg-1", "Content-Type": "application/json"})
+        assert conn.getresponse().status == 200
+        conn.close()
+    [turn] = post_env["real"]
+    assert {k: turn[k] for k in IDS} == IDS, "msgid is a log field, never the turn id"
+
+
+# U11 start refusals: one ev=prepare line, exit 2, before the hook interpreter (and so
+# before setup_turn_users and queue_startup_fields).
+
+PROD_START_ENV = {
+    "MODEL_PROVIDER": "anthropic", "TOOL_SERVER_URL": "http://tools.internal:8787/mcp",
+    "FS_TOKEN_ENC_KEY": "k" * 40,
+}
+
+
+def _refusal_env(monkeypatch, env: dict) -> list[dict]:
+    """``env`` as the whole start configuration, DEV_PATHS off unless it says so; the
+    hook interpreter check raises _PrepareRan, so a start that passes them all says so."""
+    for name in (*PROD_START_ENV, "DEV_PATHS", "BLOCKED_TOOLS", "GATEWAY_BASE_URL"):
+        monkeypatch.delenv(name, raising=False)
+    for name, value in env.items():
+        if value is not None:
+            monkeypatch.setenv(name, value)
+    monkeypatch.setattr(worker, "QUEUE_URL", env.get("QUEUE_URL", "https://sqs.us-east-1.amazonaws.com/000000000000/turns"))
+
+    def past(*a, **k):
+        raise _PrepareRan("past the start configuration")
+    monkeypatch.setattr(worker, "require_hook_python", past)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    return logged
+
+
+@pytest.mark.parametrize("change, step, error", [
+    ({"MODEL_PROVIDER": None}, "model_provider", "unset"),
+    ({"MODEL_PROVIDER": ""}, "model_provider", "unset"),
+    ({"MODEL_PROVIDER": " Bedrock "}, "model_provider", "unknown:bedrock"),
+    ({"MODEL_PROVIDER": "gateway"}, "model_provider", "gateway_needs_base_url"),
+    ({"MODEL_PROVIDER": "gateway", "GATEWAY_BASE_URL": " "}, "model_provider", "gateway_needs_base_url"),
+    ({"TOOL_SERVER_URL": None}, "tool_server_url", "unset"),
+    ({"TOOL_SERVER_URL": "  "}, "tool_server_url", "unset"),
+    ({"BLOCKED_TOOLS": "person_read"}, "blocked_tools", "needs_dev_paths"),
+    ({"QUEUE_URL": ""}, "queue_url", "unset"),
+    ({"QUEUE_URL": "  "}, "queue_url", "unset"),
+    ({"FS_TOKEN_ENC_KEY": None}, "fs_token_enc_key", "default"),
+    ({"FS_TOKEN_ENC_KEY": " "}, "fs_token_enc_key", "default"),
+    ({"FS_TOKEN_ENC_KEY": "dev-insecure-fs-token-key-change-me"}, "fs_token_enc_key", "default"),
+    ({"QUEUE_URL": "", "DEV_PATHS": "1"}, "queue_url", "unset"),
+])
+def test_start_refuses_a_dev_path_or_a_missing_setting(monkeypatch, change, step, error):
+    logged = _refusal_env(monkeypatch, {**PROD_START_ENV, **change})
+    with pytest.raises(SystemExit) as exc:
+        worker.main()
+    assert exc.value.code == 2
+    assert [(f["ev"], f["step"], f["error"]) for f in logged] == [("prepare", step, error)]
+
+
+@pytest.mark.parametrize("change, dev", [
+    ({}, False),
+    ({"MODEL_PROVIDER": " Anthropic "}, False),
+    ({"MODEL_PROVIDER": "GATEWAY", "GATEWAY_BASE_URL": "http://gateway.invalid/bedrock"}, False),
+    ({"BLOCKED_TOOLS": " , "}, False),
+    ({"BLOCKED_TOOLS": "person_read"}, True),
+    ({"QUEUE_URL": ""}, True),
+    ({"FS_TOKEN_ENC_KEY": None}, True),
+    ({"BLOCKED_TOOLS": "person_read", "QUEUE_URL": "", "FS_TOKEN_ENC_KEY": None}, True),
+])
+def test_start_passes_with_the_setting_or_dev_paths(monkeypatch, change, dev):
+    env = {**PROD_START_ENV, **change, **({"DEV_PATHS": " TRUE "} if dev else {})}
+    logged = _refusal_env(monkeypatch, env)
+    with pytest.raises(_PrepareRan):
+        worker.main()
+    assert not [f for f in logged if f.get("ev") == "prepare"], logged
+
+
+@pytest.mark.parametrize("change", [{"MODEL_PROVIDER": None}, {"TOOL_SERVER_URL": None}])
+def test_dev_paths_never_excuses_the_provider_or_the_tool_server(monkeypatch, change):
+    logged = _refusal_env(monkeypatch, {**PROD_START_ENV, **change, "DEV_PATHS": "true"})
+    with pytest.raises(SystemExit):
+        worker.main()
+    assert len(logged) == 1 and logged[0]["step"] in ("model_provider", "tool_server_url")
+
+
+def test_ev_start_logs_dev_paths_and_the_validated_provider(monkeypatch, capsys):
+    import proto.enqueue as enq
+
+    _start_only(monkeypatch)
+    monkeypatch.setenv("MODEL_PROVIDER", " Gateway ")
+    monkeypatch.setenv("GATEWAY_BASE_URL", "http://gateway.invalid/bedrock")
+    worker.main()
+    ev = _start_event(capsys.readouterr().out)
+    assert ev["provider"] == "gateway" and ev["dev_paths"] is True
+
+    monkeypatch.delenv("DEV_PATHS")
+    monkeypatch.setenv("FS_TOKEN_ENC_KEY", "k" * 40)
+    monkeypatch.setenv("GENEALOGY_SQS_ACCESS_KEY", "AKIASTART")
+    monkeypatch.setenv("GENEALOGY_SQS_SECRET_KEY", "start-secret")
+    monkeypatch.setattr(worker, "QUEUE_URL", "https://sqs.us-east-1.amazonaws.com/000000000000/turns")
+    monkeypatch.setattr(enq, "prewarm", lambda: None)
+    worker.main()
+    ev = _start_event(capsys.readouterr().out)
+    assert ev["provider"] == "gateway" and ev["dev_paths"] is False
+
+
+def test_model_provider_labels_and_its_two_callers():
+    assert options.model_provider({"MODEL_PROVIDER": " Anthropic "}) == "anthropic"
+    for env, label in (({}, "unset"), ({"MODEL_PROVIDER": "vertex"}, "unknown:vertex"),
+                       ({"MODEL_PROVIDER": "gateway"}, "gateway_needs_base_url")):
+        with pytest.raises(options.ProviderError, match="anthropic or gateway|GATEWAY_BASE_URL") as exc:
+            options.model_provider(env)
+        assert exc.value.label == label
+        with pytest.raises(ValueError):
+            options.provider_env(env)
+    with pytest.raises(options.ProviderError):
+        _options(worker_env={k: v for k, v in WORKER_ENV.items() if k != "MODEL_PROVIDER"})
+    assert not hasattr(options, "LIVE_TREE_ARG_TOOLS"), "an empty table with a dead branch"
+
+
+def test_the_agent_count_literals_are_the_pinned_set():
+    from dev.p1 import plugin_agents as p1_agents
+    from proto.worker import plugin_agents
+
+    assert plugin_agents.EXPECTED_AGENT_COUNT == len(worker.EXPECTED_AGENTS)
+    assert p1_agents.EXPECTED_AGENT_COUNT == len(worker.EXPECTED_AGENTS)

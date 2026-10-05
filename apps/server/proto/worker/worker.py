@@ -1,15 +1,19 @@
 """The prototype worker: the HTTP handler the sqsd shim POSTs turns to, running one
 patron turn per message through the Claude Agent SDK (plan: D9-10, D11-12, D15).
 
-``POST /turn`` claims the turn in Postgres (upserts ``sessions``/``turns``; a
-redelivered ``turn_id`` is granted immediately -- that IS the resume path) and then:
+``POST /turn`` answers 400 before anything is claimed unless ``turn_id``, ``session_id``
+and ``project_id`` are each a non-empty string; otherwise it claims the turn in Postgres
+(upserts ``sessions``/``turns``; a redelivered ``turn_id`` is granted immediately -- that
+IS the resume path) and then:
 
 - a message carrying ``text`` -- the web tier's ``{turn_id, session_id, project_id,
   text, enqueued_at}`` -- runs the real turn (``run_turn``). A turn whose
   ``turns.completed_at`` is already set answers 200 without running anything: the shim's
   error-path requeue can redeliver a completed turn.
 - otherwise the D3 stub arms, kept so ``make proto-smoke`` still drives every shim
-  outcome with no model:
+  outcome with no model. They answer 400 unless ``DEV_PATHS=true`` (``options.dev_paths``;
+  compose sets it, no image or Beanstalk template does), and with it on a body with no
+  ``behaviour``, or a ``seconds`` that is not a number >= 0, is 400 too:
 
     {"behaviour": "ok"}                   -> session_events row (kind turn_done),
                                              turns.completed_at/outcome, 200 (a
@@ -90,9 +94,12 @@ SHUTDOWN answers 503, except on its last receive, which closes.
 
 Env: PG_DSN, PORT (8080), WORKER_CWD (/project -- created empty if missing, never
 written), ENGINE_PLUGIN_DIR, TMPDIR (per-turn CLAUDE_CONFIG_DIRs go under it),
-MODEL_PROVIDER + ANTHROPIC_API_KEY / GATEWAY_BASE_URL, GATEWAY_API_KEY and
-GATEWAY_TOOL_SEARCH and TOOL_SERVER_URL (see options.py); FS_TOKEN_ENC_KEY (the web tier's
-grant key: the worker decrypts the patron's grant; the CLI inherits no worker variable),
+MODEL_PROVIDER (required: anthropic or gateway) + ANTHROPIC_API_KEY / GATEWAY_BASE_URL,
+GATEWAY_API_KEY and GATEWAY_TOOL_SEARCH, and TOOL_SERVER_URL (required; see options.py);
+FS_TOKEN_ENC_KEY (the web tier's grant key: the worker decrypts the patron's grant; the CLI
+inherits no worker variable; the development default needs DEV_PATHS), DEV_PATHS (U11:
+``true`` honours the compose-only paths -- the stub arms, BLOCKED_TOOLS, an unset QUEUE_URL,
+the default grant key; any other value refuses start on each),
 WORKER_TURN_USERS (U3: one slot user per sqsd connection, each turn's CLI runs as one, so the
 kernel keeps it out of other turns' dirs and the worker's /proc; ``none`` only when not
 root; proto/worker/turn_users.py),
@@ -104,17 +111,19 @@ GENEALOGY_SQS_SECRET_KEY (both or neither; neither signs with the default AWS ch
 instance profile on AWS; one alone exits 2) and GENEALOGY_SQS_REGION (else the QUEUE_URL
 host's region).
 
-Startup (U10): a ``TMPDIR`` that is not absolute, missing, not a directory or not
-writable exits 2 before anything else (``check_tmpdir``); so does a plugin-hook
-``python3`` below 3.10 or missing -- the first on the CLI child's ``PATH``, which puts this
-interpreter's directory first (U12, ``check_hook_python``); then the SQS credentials and
-region are settled (U7: a half pair exits 2; the default chain may ask IMDS); then the
-plugin's agents are parsed once, the server binds, and a daemon thread checks the schema
-(``schema_loop``): it reads the ledger ``proto/migrate.py`` keeps and compares it with the
-../sql/*.sql this worker ships, running no DDL (U9), and keeps checking with backoff until
-it is at this build's level -- so Postgres is never waited on before listen, a database
-migrated later turns ``schema`` green with no restart, and no failed store ever exits
-the process.
+Startup (U10): a ``TMPDIR`` that is not absolute, missing, not a directory or not writable
+exits 2 before anything else (``check_tmpdir``); then the start configuration (U11,
+``require_start_config``): MODEL_PROVIDER, TOOL_SERVER_URL and, without DEV_PATHS,
+BLOCKED_TOOLS, QUEUE_URL and FS_TOKEN_ENC_KEY, each exiting 2 with one ``ev=prepare`` line
+naming it; so does a plugin-hook ``python3`` below 3.10 or missing -- the first on the CLI
+child's ``PATH``, which puts this interpreter's directory first (U12,
+``check_hook_python``); then the SQS credentials and region are settled (U7: a half pair
+exits 2; the default chain may ask IMDS); then the plugin's agents are parsed once, the
+server binds, and a daemon thread checks the schema (``schema_loop``): it reads the ledger
+``proto/migrate.py`` keeps and compares it with the ../sql/*.sql this worker ships,
+running no DDL (U9), and keeps checking with backoff until it is at this build's level --
+so Postgres is never waited on before listen, a database migrated later turns ``schema``
+green with no restart, and no failed store ever exits the process.
 ``GET /healthz`` is readiness: 200 or 503 with ``{ok, checks}`` over ``postgres`` (a
 fresh connection that sees every table, under one ``READY_TIMEOUT_S`` deadline),
 ``schema`` (the ledger check), ``agents``, ``cwd``, ``tmpdir`` and ``transcript`` (the
@@ -147,6 +156,7 @@ import contextlib
 import dataclasses
 import errno
 import json
+import math
 import os
 import re
 import shutil
@@ -185,6 +195,7 @@ from proto.worker.options import (  # noqa: E402
     SPEND_CAP_REASON,
     STOP_REASON,
     TERMINAL_BUDGET,
+    TERMINAL_DELIVERED,
     TERMINAL_QUEUED,
     TERMINAL_STOPPED,
     build_worker_options,
@@ -194,7 +205,11 @@ from proto.worker.options import (  # noqa: E402
     make_posttool_hook,
     make_pretool_hook,
     make_stop_hook,
+    dev_paths,
+    model_provider,
     parse_blocked_tools,
+    ProviderError,
+    tool_server_url,
 )
 from proto import grants  # noqa: E402
 from proto import migrate  # noqa: E402
@@ -206,8 +221,8 @@ PG_DSN = os.environ.get("PG_DSN", "postgresql://postgres:proto@postgres:5432/pro
 # 1b: where a held message goes when the turn that held it ends. The worker is the only
 # component that knows a turn finished -- the web tier is stateless and the browser may
 # be closed -- so the release lives here. Unset means no release, which the D3 stub arms
-# and the offline tests run with.
-QUEUE_URL = os.environ.get("QUEUE_URL", "")
+# and the offline tests run with -- and refuses start unless DEV_PATHS=true (U11).
+QUEUE_URL = os.environ.get("QUEUE_URL", "").strip()
 PORT = env_int("PORT", 8080)
 WORKER_CWD = os.environ.get("WORKER_CWD", "/project")
 _REPO = HERE.parents[3]  # apps/server/proto/worker -> the repo root (venv runs only)
@@ -1104,6 +1119,36 @@ def require_hook_python(exe_dir: str | None = None, path: str | None = None) -> 
     return f"{exe} {version}"
 
 
+def require_start_config(env: Mapping[str, str]) -> str:
+    """The validated ``MODEL_PROVIDER`` for ``ev=start`` (U11). Static instance
+    configuration, like ``TMPDIR``: each refusal logs one ``ev=prepare step=<x>`` line and
+    exits 2. The dev-only paths -- a tree-read block, no release queue, the development
+    grant key -- start only with ``DEV_PATHS=true``."""
+    try:
+        provider = model_provider(env)
+    except ProviderError as exc:
+        log(ev="prepare", step="model_provider", error=exc.label)
+        raise SystemExit(2) from None
+    try:
+        tool_server_url(env)
+    except ValueError:
+        log(ev="prepare", step="tool_server_url", error="unset")
+        raise SystemExit(2) from None
+    if dev_paths(env):
+        return provider
+    blocked = parse_blocked_tools(env.get("BLOCKED_TOOLS"))
+    if blocked:
+        log(ev="prepare", step="blocked_tools", error="needs_dev_paths", blocked_tools=sorted(blocked))
+        raise SystemExit(2)
+    if not QUEUE_URL.strip():
+        log(ev="prepare", step="queue_url", error="unset")
+        raise SystemExit(2)
+    if grants.key_mode(env) == "default":
+        log(ev="prepare", step="fs_token_enc_key", error="default")
+        raise SystemExit(2)
+    return provider
+
+
 def tmpdir_free_mb() -> int | None:
     """Free MB under the temp dir, for the start line; no threshold until U13 measures it."""
     try:
@@ -1924,10 +1969,18 @@ async def _run_turn(
                     return SPEND_CAP_REASON.format(cap=SPEND_CAP_USD)
             return None
 
+        def on_delivered() -> None:
+            """The agent delivered what a bounded request asked for. The turn ends
+            `delivered`, not `completed`: the ask was met while the PROJECT is still
+            open, and calling it complete would read as a finished project."""
+            terminal["reason"] = TERMINAL_DELIVERED
+            terminal["halted"] = True
+            log(ev="delivered_exit", turn_id=turn_id, session_id=session_id)
+
         hook = make_pretool_hook(
             turn_id=turn_id, session_id=session_id, cwd=WORKER_CWD,
             config_root=lambda: config_root["path"], record=record, log=log, blocked=_BLOCKED,
-            halt=halt,
+            halt=halt, on_delivered=on_delivered,
         )
 
         def finish(tool_use_id: str) -> None:
@@ -2388,6 +2441,27 @@ def serve_real_turn(
 
 
 STUB_BEHAVIOURS = ("ok", "sleep", "fail", "crash")
+# U11: what every message must carry; there is no stand-in for a missing one.
+TURN_ID_FIELDS = ("turn_id", "session_id", "project_id")
+STUB_DISABLED_ERROR = "stub turns are disabled"
+
+
+def stub_refusal(message: dict) -> str | None:
+    """Why a message that is not a real turn gets a 400, or None to run its stub arm:
+    the arms need ``DEV_PATHS=true``, a named ``behaviour`` and a ``seconds`` >= 0."""
+    if not dev_paths(os.environ):
+        return STUB_DISABLED_ERROR
+    behaviour = message.get("behaviour")
+    if behaviour not in STUB_BEHAVIOURS:
+        return f"unknown behaviour {behaviour!r}"
+    seconds = message.get("seconds")
+    try:
+        value = 0.0 if seconds is None else float(seconds)
+    except (TypeError, ValueError):
+        value = float("nan")
+    if isinstance(seconds, bool) or not math.isfinite(value) or value < 0:
+        return f"seconds must be a number >= 0, not {seconds!r}"
+    return None
 
 
 def serve_stub_turn(
@@ -2596,24 +2670,29 @@ class Handler(BaseHTTPRequestHandler):
             log(ev="turn", status=400, error=f"bad receive count: {exc}")
             self._reply(400, {"ok": False, "error": f"bad X-Aws-Sqsd-Receive-Count: {exc}"})
             return
-        turn = {
-            "turn_id": message.get("turn_id") or msgid or "turn-unknown",
-            "session_id": message.get("session_id") or "sess-unknown",
-            "project_id": message.get("project_id") or "proj-unknown",
-            "message": message,
-        }
+        for field in TURN_ID_FIELDS:
+            value = message.get(field)
+            if not isinstance(value, str) or not value.strip():
+                log(ev="turn", msgid=msgid, receive_count=receive_count, status=400, error=f"no {field}")
+                self._reply(400, {"ok": False, "error": f"{field} must be a non-empty string"})
+                return
+        turn = {field: message[field] for field in TURN_ID_FIELDS}
+        turn["message"] = message
 
+        real = is_real_turn(message)
+        if not real:
+            refusal = stub_refusal(message)
+            if refusal is not None:
+                log(ev="turn", turn_id=turn["turn_id"], msgid=msgid, behaviour=message.get("behaviour"),
+                    receive_count=receive_count, status=400, error=refusal)
+                self._reply(400, {"ok": False, "turn_id": turn["turn_id"], "error": refusal})
+                return
         with track(turn["turn_id"]) as entry:
-            if is_real_turn(message):
+            if real:
                 status, payload = serve_real_turn(turn, receive_count, entry=entry)
             else:
-                behaviour = message.get("behaviour", "ok")
-                seconds = float(message.get("seconds") or 0)
-                if behaviour in STUB_BEHAVIOURS:
-                    status, payload = serve_stub_turn(turn, receive_count, behaviour, seconds, entry=entry)
-                else:
-                    log(ev="turn", turn_id=turn["turn_id"], behaviour=behaviour, receive_count=receive_count, status=400)
-                    status, payload = 400, {"ok": False, "error": f"unknown behaviour {behaviour!r}"}
+                status, payload = serve_stub_turn(turn, receive_count, message["behaviour"],
+                                                  float(message.get("seconds") or 0), entry=entry)
             # Inside the block: the shutdown thread waits for `replied`, which is set
             # only once this reply is written, so a 500 is never lost to the exit.
             self._reply(status, payload)
@@ -2696,6 +2775,7 @@ def main() -> None:
     if bad_tmpdir is not None:
         log(ev="prepare", step="tmpdir", error=bad_tmpdir, tmpdir=os.environ.get("TMPDIR"))
         sys.exit(2)
+    provider = require_start_config(os.environ)
     hook_python = require_hook_python()
     pool_names = setup_turn_users(hook_python.split(" ", 1)[0])
     sqs = queue_startup_fields(os.environ)
@@ -2711,7 +2791,7 @@ def main() -> None:
     start_schema_thread()
     sweeper = start_sweep()
     log(ev="start", port=server.server_address[1], pg_dsn=PG_DSN.split("@")[-1], cwd=WORKER_CWD,
-        provider=os.environ.get("MODEL_PROVIDER") or "anthropic",
+        provider=provider, dev_paths=dev_paths(os.environ),
         sqsd_max_retries=SQSD_MAX_RETRIES, sqsd_visibility_timeout_s=SQSD_VISIBILITY_TIMEOUT_S,
         sqsd_retention_period_s=SQSD_RETENTION_PERIOD_S, sweep_interval_s=SWEEP_INTERVAL_S,
         sweep=sweeper is not None, shutdown_grace_s=SHUTDOWN_GRACE_S,

@@ -197,14 +197,15 @@ WORKER_ENV = {
     "LC_ALL": "C.UTF-8", "CLAUDE_CODE_DEBUG_LOG_LEVEL": "debug", "NODE_EXTRA_CA_CERTS": "/ca.pem",
     "PG_DSN": "postgresql://u:pg-password@db/proto", "FS_TOKEN_ENC_KEY": "grant-key", "QUEUE_URL": "https://q",
     "GENEALOGY_SQS_SECRET_KEY": "sqs-secret", "AWS_SECRET_ACCESS_KEY": "aws-secret", "SOME_NEW_SECRET": "x",
-    "WORKER_TURN_USERS": "genealogy-turn-0",
+    "WORKER_TURN_USERS": "genealogy-turn-0", "MODEL_PROVIDER": "anthropic",
+    "TOOL_SERVER_URL": "http://tools:8787/mcp", "DEV_PATHS": "true",
 }
 
 
 def test_the_cli_inherits_no_worker_secret(tmp_path):
     env = _opts(tmp_path, WORKER_ENV).env
     for name in ("PG_DSN", "FS_TOKEN_ENC_KEY", "QUEUE_URL", "GENEALOGY_SQS_SECRET_KEY", "AWS_SECRET_ACCESS_KEY",
-                 "SOME_NEW_SECRET", "WORKER_TURN_USERS"):
+                 "SOME_NEW_SECRET", "WORKER_TURN_USERS", "TOOL_SERVER_URL", "DEV_PATHS"):
         assert env.get(name) == "", f"{name} must be blanked: the SDK hands the CLI the worker's environment"
     for name in ("LANG", "LC_ALL", "CLAUDE_CODE_DEBUG_LOG_LEVEL", "NODE_EXTRA_CA_CERTS"):
         assert name not in env, f"{name} is kept as inherited"
