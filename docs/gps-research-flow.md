@@ -153,11 +153,12 @@ no Soundex, no abbreviation expansion in `keywords`/`place` — *Wm* and
 *William* are separate `keywords` searches (the `name` field
 does not auto-expand given names — use `get_name_variants` first). Three rules come from repeated failures:
 
-- Search by **name only** on the first call, then narrow by collection using the
-  `collectionId` filterParam from `includeFacets` results — do NOT use plain-text
-  `recordPlace*` values (they return zero results in production) and do NOT use
-  the `place` query field (it matches collection metadata, not document text,
-  causing false positives).
+- Search by **name**, and narrow only with filters the full-text corpus
+  accepts: a collection through the `collectionId` filterParam from
+  `includeFacets` results, and — when the plan or the user names the
+  jurisdiction — a place through the `place` field (plain text, matching
+  collection metadata) or a place filterParam in `recordPlace*`. Never a
+  plain-text `recordPlace*` value: it returns zero results in production.
 - **Don't borrow a collection ID from indexed record search.** The full-text corpus is
   partitioned into collections of its own, so an id borrowed from indexed
   record search can name a partition that does not hold the document: a

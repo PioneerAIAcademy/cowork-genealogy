@@ -15,6 +15,7 @@ signature contract. The `test` argument is the parsed test JSON dict
 from __future__ import annotations
 
 import json
+import re
 
 import pytest
 
@@ -317,6 +318,39 @@ def test_log_query_traces_to_fulltext_search_call(before_state, after_state, too
 
 
 # --- Filtered nil must be followed by an unfiltered retry --------------
+
+_RECORD_PLACE_KEYS = ("recordPlace0", "recordPlace1", "recordPlace2", "recordPlace3")
+# A place filterParam from an includeFacets response: a level id, a comma, the
+# name (e.g. "10,Pennsylvania"). Anything else is plain text.
+_FACET_PLACE_FORM = re.compile(r"^\d+,")
+
+
+def test_record_place_filters_use_facet_form(tool_calls):
+    """`recordPlace*` (`f.recordPlace*`) accepts only a place filterParam from an
+    includeFacets response; a plain-text value silently returns zero
+    (fulltext-search-tool-spec.md, place parameter behaviour, measured
+    2026-09-10). A named jurisdiction in plain text belongs in `place`.
+
+    Deterministic because the unit eval cannot see it any other way: the
+    fixtures match on keywords alone, so a plain-text `recordPlace1` is served
+    results the live index would never return (issue #1828 review).
+    """
+    calls = _fts_tool_calls(tool_calls)
+    if not calls:
+        pytest.skip("no fulltext_search calls this turn")
+    plain = [
+        (k, c["args"][k])
+        for c in calls
+        for k in _RECORD_PLACE_KEYS
+        if c.get("args", {}).get(k) not in (None, "")
+        and not _FACET_PLACE_FORM.match(str(c["args"][k]))
+    ]
+    assert not plain, (
+        "plain-text recordPlace* values silently return zero on the live index; "
+        "use the `place` field for a named jurisdiction, or a place filterParam "
+        f"from includeFacets (e.g. '10,Pennsylvania'). Got: {plain}"
+    )
+
 
 def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
     """SKILL.md step 4 / query-syntax.md: when a fulltext_search call carries

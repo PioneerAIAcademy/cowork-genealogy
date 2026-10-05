@@ -31,6 +31,7 @@ from test_search_full_text import (  # noqa: E402
     test_filtered_nil_is_followed_by_unfiltered_retry as check_filtered_nil_retry,
     test_fulltext_search_never_scopes_to_collection_id as check_never_scopes_to_collection_id,
     test_plan_item_completion_matches_its_own_record_type as check_plan_item_completion,
+    test_record_place_filters_use_facet_form as check_record_place_form,
 )
 
 
@@ -621,3 +622,38 @@ def test_topical_fixture_fires_rather_than_raising_on_none_and_unfixtured_calls(
     for calls in (None, [], [{"tool": "mcp__genealogy__wiki_read", "args": {}}]):
         with pytest.raises(AssertionError):
             check_topical_fixture(calls, TOPICAL_TAGS)
+
+
+# --- test_record_place_filters_use_facet_form (issue #1828 review) ---------
+# The committed run v1_2026-10-05_14-51-42 sent plain-text recordPlace1/2 in six
+# of nineteen tests and passed them all, because the fixtures ignore the value.
+
+
+def test_record_place_passes_a_facet_filter_param():
+    check_record_place_form([call("fulltext_search", keywords="+Flynn", recordPlace1="10,Pennsylvania")])
+
+
+def test_record_place_passes_plain_text_in_the_place_field():
+    check_record_place_form([call("fulltext_search", keywords="+Flynn", place="Schuylkill County, Pennsylvania")])
+
+
+def test_record_place_passes_a_call_with_no_place_filter():
+    check_record_place_form([call("fulltext_search", keywords="+Flynn", collectionId="2220359")])
+
+
+@pytest.mark.parametrize(
+    "key,value",
+    [("recordPlace1", "Pennsylvania"), ("recordPlace2", "Schuylkill"), ("recordPlace0", "United States")],
+)
+def test_record_place_fails_a_plain_text_value(key, value):
+    with pytest.raises(AssertionError, match="plain-text recordPlace"):
+        check_record_place_form([call("fulltext_search", keywords="+Flynn", **{key: value})])
+
+
+def test_record_place_fails_plain_text_on_a_later_call_only():
+    calls = [
+        call("fulltext_search", keywords="+Flynn", includeFacets=True),
+        call("fulltext_search", keywords="+Flynn", recordPlace1="10,Pennsylvania", recordPlace2="Schuylkill"),
+    ]
+    with pytest.raises(AssertionError, match="recordPlace2"):
+        check_record_place_form(calls)

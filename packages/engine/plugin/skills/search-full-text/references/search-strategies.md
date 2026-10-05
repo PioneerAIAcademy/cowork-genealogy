@@ -23,11 +23,12 @@ persons' given names, marginalia, tax-list and store-account entries.
 ## Core tactic: name only → filter
 
 Search a name (or surname + contextual keyword), then filter by
-Place → Year → Record Type. Do NOT use the `place` query field — it
-searches collection metadata, not document text, and causes false positives.
-For place filtering, use `collectionId` with the filterParam value from the
-facets returned by `includeFacets: true` — plain-text `recordPlace*` values
-return zero results in production. Year (`yearFrom`/`yearTo`) and record-type
+Place → Year → Record Type. The `place` field narrows by collection
+metadata (plain text) — use it when the plan or the user names the
+jurisdiction. `recordPlace*` takes only a place `filterParam` from an
+`includeFacets` response (e.g. `10,Pennsylvania`); plain-text `recordPlace*`
+values return zero results in production. For a collection, use `collectionId`
+with a `filterParam` from the Collection group of those facets. Year (`yearFrom`/`yearTo`) and record-type
 filters are also allowed but apply cautiously since collection metadata dates
 can be off.
 

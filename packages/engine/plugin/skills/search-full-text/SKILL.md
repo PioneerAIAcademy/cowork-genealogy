@@ -137,8 +137,11 @@ Read `references/query-syntax.md` for operator details and wildcards.
 - **Always use `+` to require terms in `keywords`.** Default is OR,
   which returns millions of irrelevant results. Do NOT use `+` in the
   `name` field — `m.queryRequireDefault` requires at least one term to match.
-- **Scope by place when the plan or the user names the jurisdiction.**
-  `yearFrom`/`yearTo` and record-type filters are allowed too, but collection
+- **Scope by place when the plan or the user names the jurisdiction** — in
+  the `place` field (plain text; it matches collection metadata), or in
+  `recordPlace*` with a place `filterParam` from an `includeFacets` response
+  (e.g. `10,Pennsylvania`). A plain-text `recordPlace*` value silently returns
+  zero. `yearFrom`/`yearTo` and record-type filters are allowed too, but collection
   metadata dates can be off, so treat them more cautiously. **If a
   post-search-filtered keywords search returns zero results, re-run it with
   ALL post-search filters removed (place, year range, and record type).**
