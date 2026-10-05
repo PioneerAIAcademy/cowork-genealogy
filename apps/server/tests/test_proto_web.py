@@ -1019,7 +1019,7 @@ def _env(service: dict) -> dict[str, str]:
     return dict(str(item).partition("=")[::2] for item in raw)
 
 
-def test_web_service_is_published_and_depends_on_postgres_and_the_queue_only():
+def test_web_service_is_published_and_depends_on_postgres_the_migration_and_the_queue_only():
     services = _compose()["services"]
     web = services["web"]
     assert web["container_name"] == "proto-web"
@@ -1027,6 +1027,8 @@ def test_web_service_is_published_and_depends_on_postgres_and_the_queue_only():
     assert all(str(p).startswith("127.0.0.1:") for p in web["ports"]), "dev-login signs anyone in: publish on loopback only"
     deps = web["depends_on"]
     assert deps["postgres"] == {"condition": "service_healthy"}
+    assert deps["migrate"] == {"condition": "service_completed_successfully"}, \
+        "U9: the tier runs no DDL, so it starts once the one-shot has migrated"
     assert deps["elasticmq"] == {"condition": "service_healthy"}
     assert "worker" not in deps, "the tier is driven against rows a script inserts until the worker exists"
     assert "shim" not in deps
