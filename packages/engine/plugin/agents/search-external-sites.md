@@ -208,9 +208,8 @@ Instead, for each capture-required external-site plan item:
    hold — UK/Scottish civil registration, censuses, parish registers — are
    also indexed on FamilySearch. If `search-records` can reach the record,
    hand back to search-records rather than deferring.
-2. Otherwise, still resolve the place and build the search URL (steps 2–3),
-   calling `build_external_search_url` **without `projectPath`** — it is a
-   genuine lead worth recording, and step 3 below is its only log entry.
+2. Otherwise, still resolve the place and build the search URL (steps 2–3)
+   — it is a genuine lead worth recording.
 3. **Log it as deferred** in one `research_log_append` call: `outcome:
    "negative"`, `resultsExamined: 0`, `externalSite.captureReceived: false`,
    and `notes` stating the search was **deferred — requires a user capture,
