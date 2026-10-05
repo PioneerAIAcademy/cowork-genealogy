@@ -1492,8 +1492,9 @@ Four integrity rules make the agreement number trustworthy:
 
   It distinguishes a judge that raised (quoting the judge's own error
   text)
-  from an agent that produced no final tree, from `--skip-judge`; none of those
-  is a genealogical conclusion, and the presence of an error says nothing about
+  from an agent that produced no final tree, from a host that slept past the
+  inactivity cap (`host_slept`, whose tree is intact), from `--skip-judge`; none
+  of those is a genealogical conclusion, and the presence of an error says nothing about
   what the agent recovered. It exists because the previous single fixed string
   printed the same words for all three, directly beneath
   `stop_reason: completed`, so a judge crash read as "this run succeeded and

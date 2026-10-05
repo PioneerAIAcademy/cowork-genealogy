@@ -61,7 +61,7 @@ rem CI rejects such a run if it is committed under eval/runlogs/e2e/.
 call uv run python -m e2e.run_e2e --test %SLUG%%E2E_FLAGS%
 
 echo.
-echo Done. Three result files were written under eval\runlogs\e2e\%SLUG%\.
+echo Done. If the run finished, it wrote three result files under eval\runlogs\e2e\%SLUG%\.
 echo Next, in Claude Code: /grade-e2e-run first, then /interpret-e2e-result.
 echo Then commit the run log, its .ann.json and both .final-* files (plus the fixture, if you authored it) via GitHub Desktop.
 echo If it says the host slept, do not grade it: commit its three files, keep the machine awake (eval\README.md) and re-run.

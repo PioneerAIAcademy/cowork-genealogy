@@ -136,8 +136,9 @@ PY
 Fill the template's placeholders from its output:
 
 - `<per-run minutes>` is the five times, oldest first. `<time range>` is their lowest
-  to highest, rounded outward to 5 min. If any of the five stopped on `timeout`,
-  `inactivity` or `cost_cap`, add one sentence after the list saying which, and when.
+  to highest, rounded outward to 5 min. If any of the five has a `stop_reason` other
+  than `completed` or `natural_end`, add one sentence after the list saying which,
+  and when.
 - `<cap>` is the printed wall-clock cap.
 - `<recorded costs>` are the costs that exist. `<k>` is how many of the five recorded
   none. A run that ends before the SDK's final message (a `timeout` or an `inactivity`
@@ -221,6 +222,9 @@ which is not a pass either. Expect `1 added-or-renamed run log(s) checked`
 
     BASE_SHA="$(git merge-base origin/main HEAD)" HEAD_SHA="$(git rev-parse HEAD)" \
       python3 eval/harness/scripts/check_e2e_fixtures.py
+
+Run it in Git Bash or WSL on Windows. `origin/main` must be the `main` you
+branched from: if `origin` is your fork, use `upstream/main`.
 
 That gate blocks a run log shipped without its annotation, one made with the 1M
 context window (`usage.betas` non-empty), and one containing a FamilySearch or

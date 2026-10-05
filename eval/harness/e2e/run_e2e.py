@@ -119,11 +119,12 @@ def ungradeable_reason(result: E2eResult, *, skip_judge: bool = False) -> str:
     that genuinely failed — which is what issue #1245 was reported as.
 
     **Blindness-safe** (spec §7.4, and the same line `_run_one` walks above):
-    this reads only whether `judge_output` carries an `error` key, never a
-    grade field. A judge crash is a harness fact, like `stop_reason` and
-    `compliance`, not a genealogical conclusion. The prohibition in
-    `result.py` on reading `judge_output` binds `interpret-e2e-result`, whose
-    job is explaining what the agent recovered; it is not a blanket ban.
+    this reads only `stop_reason` and whether `judge_output` carries an `error`
+    key, never a grade field. A judge crash is a harness fact, like
+    `stop_reason` and `compliance`, not a genealogical conclusion. The
+    prohibition in `result.py` on reading `judge_output` binds
+    `interpret-e2e-result`, whose job is explaining what the agent recovered;
+    it is not a blanket ban.
 
     Pure and free of I/O so every arm is testable — `_run_one` cannot be, since
     it drives a live run that takes about an hour.

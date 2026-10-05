@@ -461,6 +461,9 @@ BASE_SHA="$(git merge-base origin/main HEAD)" HEAD_SHA="$(git rev-parse HEAD)" \
   python3 eval/harness/scripts/check_e2e_fixtures.py
 ```
 
+Run it in Git Bash or WSL on Windows. `origin/main` must be the `main` you branched
+from: if `origin` is your fork, use `upstream/main`.
+
 With `BASE_SHA`/`HEAD_SHA` unset it prints `skipped` and exits 0 — **a run with
 no env set is not a pass.** If it cannot diff the two shas at all (an unfetched
 commit, or a directory that is not a repo) it refuses with an `::error::` rather

@@ -98,8 +98,9 @@ than from a commit, so a run that is not committed yet still owes its grade.
 Otherwise interpret as below, and also when the user says they will not grade
 this run or is mining a unit test from it.
 
-**A slept run.** When the top-level `stop_reason` is `host_slept`, the whole
-interpretation is Step 3's `host_slept` entry. Skip Steps 2 to 5.
+**A slept run.** When the top-level `stop_reason` is `host_slept`, go straight to
+Step 3's `host_slept` entry. It is the whole interpretation, so skip every other
+step.
 
 The fixture's `expected-findings.json` lives in `eval/tests/e2e/<id>/`.
 Read it alongside the run so you can compare expected vs found yourself.
