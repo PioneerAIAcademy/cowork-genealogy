@@ -8,22 +8,27 @@ decay.
 ## Test naming
 
 - `ut_research_001` – `ut_research_010`: trigger tests (phase 1a). Positive
-  and negative tests for whether the router skill activates at all. Only 005
-  and 008 remain.
+  and negative tests for whether the router skill activates at all. 001, 004,
+  005 and 008 remain.
 - `ut_research_011`+: routing tests (phase 2). Positive tests that assert
   which callee the router hands off to first, given a specific research.json
   state. Each uses `execution.stub_skills` so the callee is denied at the
   `PreToolUse` hook, whether the router reaches it by a `Skill` call or, for a
   callee converted to an agent, by a spawn.
 
-## Deleted activation tests (issue #2984)
+## Restored activation tests (issue #3119)
 
-`ut_research_001`, `002`, `003`, `004`, `012`, `013` and `014` were deleted on
-2026-10-01 (`015` too; see "Paired rows"). All seven were `xfail` for one defect: `research` and
-`project-status` both match a "drive the workflow forward" request, so the
-orchestrator is skipped about half the time (issue #2927). Under single-run
-grading that made each one a coin flip on every `research` run. Issue #2927
-needs new acceptance tests when it lands; git history has the old files.
+`ut_research_001`, `004`, `012`, `013`, `014` and `015` were deleted on
+2026-10-01 (issue #2984) and are restored without their `xfail` markers. They
+were `xfail` for one defect: `research` and `project-status` both matched a
+"drive the workflow forward" request, so the orchestrator was skipped about half
+the time (issue #2927). `project-status`'s description now tells it not to drive
+the research workflow forward (#3092), and each restored test was measured on
+main before it came back (#3119). None carries an `xfail` marker.
+
+Not restored: `ut_research_002` (`slash-research-question.json`), which issue
+#3116 owns, and `ut_research_003` (`find-relative.json`), which is not part of
+#2927's removal condition.
 
 ## Routing tests — tag convention
 
@@ -51,20 +56,21 @@ Two routing-table rows are blocked on #1492 (research/SKILL.md reconciliation):
 
 ## Paired rows
 
-`research-exhaustiveness`, `proof-conclusion` and `person-evidence` are routed
-by an `Agent` spawn of `@plugin:<name>`, not by a `Skill` call (#2075). A
-`routes-to:` tag now observes a spawned row, because the validator reads
-`handoffs`.
+The router's `@plugin:` callees are its paired rows: each is routed by an
+`Agent` spawn of `@plugin:<name>`, not by a `Skill` call (#2075), and
+`_paired_names()` in `validators/test_research.py` derives the set from
+`research/SKILL.md`. A `routes-to:` tag observes a spawned row, because the
+validator reads `handoffs`.
 
-`ut_research_015` (`route-shortcut-guard.json`) was the only test tagged
-`no-shortcut`, and it was deleted on 2026-10-01 (issue #2984): it failed 9 of 19
-committed runs on a real router defect, spawning `person-evidence` and
-`research-exhaustiveness` directly instead of walking the table from the top
-(recorded on issue #2927; the test's old note cited #2272, a closed
-person-evidence card). `test_no_paired_skill_shortcut`
-(`validators/test_research.py`) is still correct and still runs, but **no test
-exercises it now**. A replacement test is needed before anyone can claim the
-shortcut is fixed; git history has the old file, including why it kept the paired agents in `stub_skills`.
+`ut_research_015` (`route-shortcut-guard.json`) is the only test tagged
+`no-shortcut`, so it is the one test `test_no_paired_skill_shortcut` runs on.
+It was deleted on 2026-10-01 and is restored (#3119). No committed run shows a
+main-thread spawn of `person-evidence`, `research-exhaustiveness` or
+`proof-conclusion` on this test. The validator's one committed failure
+(`v1.json`, run 2026-09-26_17-29-05) began with `project-status`: `research`
+never activated (#2927). The test keeps the paired agents in `stub_skills`: a
+denied spawn is still recorded, so a shortcut fails the validator rather than
+running.
 
 That validator is not redundant with `test_routes_to_expected_skill`, which
 asserts only the first hand-off. A router that calls `Skill(question-selection)`
