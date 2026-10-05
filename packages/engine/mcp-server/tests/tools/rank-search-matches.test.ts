@@ -1197,6 +1197,123 @@ describe("rank_search_matches", () => {
       },
     );
 
+    const city = () => solo([{ type: "Residence", place: "Milan" }]);
+    const prose = (value: string, extra: Record<string, unknown> = {}) =>
+      linked([{ id: "a_001", fact_type: "birth", value, ...extra }]);
+
+    it.each([
+      ["born abt. Dec 1917"],
+      ["born before 4 Dec 1917"],
+      ["born between 4 Dec 1917 and 1918"],
+      ["died about March 1850"],
+      ["born c. 4 Dec 1917"],
+      ["born 4 Dec 1917 or 5 Jan 1919"],
+      ["Mary May 1850"],
+    ])("still flags a qualified, ranged or ambiguous prose date %j", async (value) => {
+      await prose(value);
+      expect(await rankFlag(city())).toBe(true);
+    });
+
+    it.each([
+      ["born December 4th, 1917"],
+      ["born 1917-12-04"],
+      ["born 4 May 1850"],
+      ["born 4 août 1850"],
+      ["born 4 Dec 1917 and baptized in Milan"],
+      ["calc. 4 Dec 1917"],
+    ])("omits the flag for an unqualified or calculated prose date %j", async (value) => {
+      await prose(value);
+      expect(await rankFlag(city())).toBeUndefined();
+    });
+
+    it.each([["approximate"], ["estimated"], ["before"], ["after"]])(
+      "reads date_certainty %j as widening the assertion's date",
+      async (date_certainty) => {
+        await prose("x", { date: "4 Dec 1917", date_certainty });
+        expect(await rankFlag(city())).toBe(true);
+      },
+    );
+
+    it.each([["exact"], ["calculated"], [null]])(
+      "keeps a date_certainty %j date day-precise",
+      async (date_certainty) => {
+        await prose("x", { date: "4 Dec 1917", date_certainty });
+        expect(await rankFlag(city())).toBeUndefined();
+      },
+    );
+
+    it("ignores a superseded person_evidence link", async () => {
+      await writeResearch({
+        person_evidence: [{ id: "pe_0", person_id: "I1", assertion_id: "a_001", superseded_by: "pe_9" }],
+        assertions: [{ id: "a_001", fact_type: "birth", value: "x", date: "4 Dec 1917" }],
+      });
+      expect(await rankFlag(city())).toBe(true);
+    });
+
+    it.each([
+      ["a superseded assertion", { superseded_by: "a_009" }],
+      ["negative evidence", { record_basis: "absent" }],
+    ])("ignores %s", async (_label, extra) => {
+      await prose("not found", { date: "4 Dec 1917", ...extra });
+      expect(await rankFlag(city())).toBe(true);
+    });
+
+    it("one malformed assertion does not hide a later narrow date", async () => {
+      await writeResearch({
+        person_evidence: [
+          null,
+          { id: "pe_0", person_id: "I1", assertion_id: "a_000" },
+          { id: "pe_1", person_id: "I1", assertion_id: "a_001" },
+        ],
+        assertions: [
+          null,
+          42,
+          { id: "a_000", fact_type: "relationship", value: 7, date: {}, structured_value: "x" },
+          { id: "a_001", fact_type: "birth", value: "x", date: "4 Dec 1917" },
+        ],
+      });
+      expect(await rankFlag(city())).toBeUndefined();
+    });
+
+    it.each([
+      ["'N. N.' before a surname", { value: "child of N. N. Blyeberg", structured_value: { relationship_type: "child" } }],
+      ["a surname-only value", { value: "child of Blyeberg", structured_value: { relationship_type: "child" } }],
+      ["a surname-only father key", { value: "x", structured_value: { relationship_type: "child", father: "Blyeberg" } }],
+      ["a sibling with a related_person_name", { value: "x", structured_value: { relationship_type: "sibling", related_person_name: "Anna Smith" } }],
+      ["a placeholder multi-word given", { value: "son of Infant Son Smith", structured_value: { relationship_type: "son" } }],
+    ])("still flags evidence that names %s", async (_label, a) => {
+      await linked([{ id: "a_001", fact_type: "relationship", ...a }]);
+      expect(await rankFlag(city())).toBe(true);
+    });
+
+    it("counts a bracketed surname in the house form", async () => {
+      await linked([{ id: "a_001", fact_type: "relationship", value: "child of Dorothea [Gajdosch]", structured_value: { relationship_type: "child" } }]);
+      expect(await rankFlag(city())).toBeUndefined();
+    });
+
+    it.each([["Infant Son"], ["Baby Girl"], ["Unknown Male"], ["Stillborn Daughter"]])(
+      "treats the multi-word placeholder %j as no given name",
+      async (given) => {
+        const tree = {
+          persons: [{ id: "I1", names: [UGO] }, { id: "I2", names: [{ given, surname: "Stella" }] }],
+          relationships: [{ type: "ParentChild", parent: "I1", child: "I2" }],
+          sources: [],
+        };
+        expect(await rankFlag(tree)).toBe(true);
+      },
+    );
+
+    it.each([["+1917-12-04/+1917-12-10"], ["Dec 1917 or Jan 1918"]])(
+      "omits the flag for the closed narrow range %j",
+      async (date) => {
+        expect(await rankFlag(solo([{ type: "Birth", date }]))).toBeUndefined();
+      },
+    );
+
+    it.each([["+1917/+1919"], ["1917 or 1918"]])("still flags the wide range %j", async (date) => {
+      expect(await rankFlag(solo([{ type: "Birth", date }]))).toBe(true);
+    });
+
     it("still ranks a tree with malformed relative names and relationships", async () => {
       const tree = {
         persons: [

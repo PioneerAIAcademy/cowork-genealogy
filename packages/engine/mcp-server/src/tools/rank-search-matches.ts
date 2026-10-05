@@ -7,6 +7,7 @@ import { readStagedResults } from "../utils/results-staging.js";
 import { sourceAttachmentsTool } from "./source-attachments.js";
 import { getDayRange } from "../utils/date-helpers.js";
 import { stdDate } from "../utils/date-standardize.js";
+import { MODIFIERS, MONTHS, normalizeAccents } from "../utils/date-constants.js";
 import { gatherRelatives } from "../utils/relatives.js";
 import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
 import type { RecordSearchResult } from "../types/record-search.js";
@@ -256,26 +257,89 @@ function discriminatingFactCount(person: { facts?: any[] }): number {
  *  whose span is shorter carries a month, quarter or day. */
 const BARE_YEAR_SPAN_DAYS = 364;
 
-const MONTH =
-  "(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t|tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\\.?";
-const DATE_IN_TEXT = new RegExp(`\\b(?:\\d{1,2}\\s+)?${MONTH}\\s+\\d{4}\\b|\\b${MONTH}\\s+\\d{1,2},?\\s+\\d{4}\\b`, "gi");
+/** Month words that are also common names or words ("May", "Gen", "Mars"):
+ *  read as a month in prose only when a day number sits beside them. */
+const AMBIGUOUS_MONTHS = new Set(["may", "mai", "mei", "mag", "gen", "mars"]);
+
+/** Qualifiers whose bounds a single prose date cannot carry. */
+const RANGE_MODIFIERS = new Set(["Bet", "From", "To"]);
+
+const dayToken = (t: string | undefined) => {
+  const m = t?.match(/^(\d{1,2})(?:st|nd|rd|th)?$/);
+  return m && Number(m[1]) >= 1 && Number(m[1]) <= 31 ? m[1] : undefined;
+};
+const yearToken = (t: string | undefined) =>
+  t !== undefined && /^\d{4}$/.test(t) ? t : undefined;
+const monthToken = (t: string | undefined) =>
+  t !== undefined ? MONTHS.get(t) : undefined;
 
 /** Day- or month-precise dates written in an assertion's prose value
- *  ("born 4 Dec 1917", "baptized March 3, 1850"). */
+ *  ("born 4 Dec 1917", "baptized March 3rd, 1850", "1917-12-04"), each with
+ *  the qualifier written before it ("abt.", "before") so it is measured the
+ *  way a structured date is. A date inside a written range ("between …",
+ *  "4 Dec or 5 Dec 1917") is dropped, since its bounds are not recoverable. */
 function datesInText(text: unknown): string[] {
-  return typeof text === "string" ? (text.match(DATE_IN_TEXT) ?? []) : [];
+  if (typeof text !== "string") return [];
+  const tokens = normalizeAccents(text).toLowerCase().match(/[\p{L}\p{N}~<>&]+/gu) ?? [];
+  const out: string[] = [];
+  const isDatePart = (t: string | undefined) =>
+    t !== undefined && (/^\d/.test(t) || MONTHS.has(t));
+  for (let i = 0; i < tokens.length; i++) {
+    let date: string | undefined;
+    let end = i;
+    const [t0, t1, t2] = [tokens[i], tokens[i + 1], tokens[i + 2]];
+    if (dayToken(t0) && monthToken(t1) && yearToken(t2)) {
+      date = `${dayToken(t0)} ${monthToken(t1)} ${t2}`;
+      end = i + 2;
+    } else if (monthToken(t0) && dayToken(t1) && yearToken(t2)) {
+      date = `${dayToken(t1)} ${monthToken(t0)} ${t2}`;
+      end = i + 2;
+    } else if (yearToken(t0) && /^\d{1,2}$/.test(t1 ?? "") && /^\d{1,2}$/.test(t2 ?? "")
+        && Number(t1) >= 1 && Number(t1) <= 12) {
+      date = `+${t0}-${t1!.padStart(2, "0")}-${t2!.padStart(2, "0")}`;
+      end = i + 2;
+    } else if (monthToken(t0) && !AMBIGUOUS_MONTHS.has(t0) && yearToken(t1)
+        && !dayToken(tokens[i - 1])) {
+      date = `${monthToken(t0)} ${t1}`;
+      end = i + 1;
+    }
+    if (!date) continue;
+    const prev = MODIFIERS.get(tokens[i - 1] ?? "");
+    const next = MODIFIERS.get(tokens[end + 1] ?? "");
+    const inRange =
+      (prev !== undefined && RANGE_MODIFIERS.has(prev)) ||
+      ((prev === "and" || prev === "or" || prev === "To") && isDatePart(tokens[i - 2])) ||
+      ((next === "and" || next === "or" || next === "To") && isDatePart(tokens[end + 2]));
+    if (!inRange) out.push(prev && prev !== "and" && prev !== "or" ? `${prev} ${date}` : date);
+    i = end;
+  }
+  return out;
 }
 
-/** A GedcomX formal date open on one side ("/+1917-12-04" before,
- *  "+1917-12-04/" after) is unbounded, but `stdDate` drops the slash and reads
- *  it as the exact day; restate it as the qualified form `getDayRange` widens. */
-function openRangeAsQualified(raw: string): string {
+/** GedcomX formal forms `stdDate` reads too generously or not at all:
+ *  an open range ("/+1917-12-04", "+1917-12-04/") is unbounded on one side, so
+ *  it becomes Bef/Aft; a closed range ("+A/+B") becomes "Bet A and B". */
+function formalRangeAsQualified(raw: string): string {
   const t = raw.trim();
-  if (/^\/[+-]\d/.test(t)) return `Bef ${t.slice(1)}`;
-  if (/^[+-]\d.*\/$/.test(t) && !t.slice(0, -1).includes("/")) {
-    return `Aft ${t.slice(0, -1)}`;
-  }
-  return t;
+  const parts = t.split("/");
+  if (parts.length !== 2 || !/^[+-]\d/.test(parts[0] || parts[1])) return t;
+  const [a, b] = parts;
+  if (!a) return `Bef ${b}`;
+  if (!b) return `Aft ${a}`;
+  const [sa, sb] = [stdDate(a), stdDate(b)];
+  return sa && sb ? `Bet ${sa} and ${sb}` : t;
+}
+
+/** Day span of a date string, or null when it does not parse. An alternative
+ *  ("Dec 1917 or Jan 1918") spans both sides. */
+function dateSpanDays(raw: string): number | null {
+  const range = getDayRange(stdDate(formalRangeAsQualified(raw)));
+  if (range) return range.max - range.min;
+  const sides = raw.split(/\s+or\s+/i);
+  if (sides.length < 2) return null;
+  const ranges = sides.map((x) => getDayRange(stdDate(x)));
+  if (ranges.some((r) => r === null)) return null;
+  return Math.max(...ranges.map((r) => r!.max)) - Math.min(...ranges.map((r) => r!.min));
 }
 
 /** True when `raw` is a date more specific than a year. Precision is the
@@ -284,8 +348,8 @@ function openRangeAsQualified(raw: string): string {
  *  counts as no date. */
 function isDateNarrowerThanYear(raw: unknown): boolean {
   if (typeof raw !== "string" || !raw.trim()) return false;
-  const range = getDayRange(stdDate(openRangeAsQualified(raw)));
-  return range !== null && range.max - range.min < BARE_YEAR_SPAN_DAYS;
+  const span = dateSpanDays(raw);
+  return span !== null && span < BARE_YEAR_SPAN_DAYS;
 }
 
 /** True when at least one fact carries a date more specific than a year, in
@@ -296,18 +360,44 @@ function hasDateNarrowerThanYear(facts: any[]): boolean {
   );
 }
 
-/** Given names that record a missing name rather than a name, compared after
- *  lower-casing and dropping dots and spaces ("N. N." → "nn"). */
+/** An assertion's `date_certainty` as the qualifier `stdDate` reads. */
+const CERTAINTY_MODIFIER: Record<string, string> = {
+  approximate: "Abt", estimated: "Est", calculated: "Cal",
+  before: "Bef", after: "Aft", between: "Bet",
+};
+
+/** An assertion's top-level `date`, qualified by its `date_certainty`. */
+function certainDate(a: any): unknown {
+  const date = a?.date;
+  if (typeof date !== "string") return date;
+  const mod = Object.hasOwn(CERTAINTY_MODIFIER, a?.date_certainty)
+    ? CERTAINTY_MODIFIER[a.date_certainty]
+    : undefined;
+  return mod ? `${mod} ${date}` : date;
+}
+
+/** Given-name words that record a missing name rather than a name, compared
+ *  after lower-casing and dropping dots ("N. N." → "nn"). */
 const PLACEHOLDER_GIVEN = new Set([
   "unknown", "unk", "unkn", "nn", "fnu", "lnu", "living", "private",
   "mr", "mrs", "miss", "ms", "infant", "baby", "child", "stillborn",
   "son", "daughter", "wife", "husband", "boy", "girl", "male", "female",
 ]);
 
+/** A given name is real when, with dots dropped, neither the whole name
+ *  ("N. N.") nor every word of it ("Infant Son") is a placeholder. */
 function isRealGivenName(given: unknown): boolean {
   if (typeof given !== "string") return false;
-  const key = given.toLowerCase().replace(/[.\s]/g, "");
-  return /\p{L}/u.test(key) && !PLACEHOLDER_GIVEN.has(key);
+  const words = given.toLowerCase().replace(/\./g, " ").split(/\s+/).filter(Boolean);
+  if (PLACEHOLDER_GIVEN.has(words.join(""))) return false;
+  return words.some((w) => /\p{L}/u.test(w) && !PLACEHOLDER_GIVEN.has(w));
+}
+
+/** A full name's given part is every word before the last, so "Blyeberg"
+ *  alone is a surname-only stub with no given name. */
+function fullNameHasRealGiven(name: unknown): boolean {
+  if (typeof name !== "string") return false;
+  return isRealGivenName(name.trim().split(/\s+/).slice(0, -1).join(" "));
 }
 
 /** A relative separates namesakes only through a real given name: a
@@ -334,31 +424,61 @@ const NEAR_RELATIONSHIP_TYPES = new Set([
   "spouse", "wife", "husband",
 ]);
 
-/** Structured-value keys that carry a relative's name on a linked assertion. */
-const RELATIVE_NAME_KEYS = [
-  "spouse_given", "related_person_name", "father", "mother", "spouse",
-];
+/** Structured-value keys that carry a relative's full name. */
+const RELATIVE_NAME_KEYS = ["related_person_name", "father", "mother", "spouse"];
+
+/** The name after "<role> of" in the extraction house form, as capitalized or
+ *  bracketed words ("child of Dorothea [Gajdosch]"). */
+const OF_NAME = /\bof\s+((?:\[?\p{Lu}[\p{L}'.-]*\]?\s*)+)/u;
 
 /** True when a research.json assertion linked to the subject names a spouse,
- *  parent or child — through a structured name key, or a relationship value
+ *  parent or child with a real given name — a marriage's `spouse_given`, or a
+ *  parent/spouse/child relationship through a structured name key or a value
  *  in the house form "<role> of <Given> <Surname>". The tree lags the
  *  evidence, so a relative the project knows of may not be a tree person yet. */
 function assertionNamesRelative(a: any): boolean {
-  const sv = a?.structured_value ?? {};
-  if (typeof sv !== "object") return false;
-  if (a?.fact_type === "marriage" || a?.fact_type === "relationship") {
-    for (const k of RELATIVE_NAME_KEYS) {
-      const v = sv[k];
-      if (typeof v === "string" && isRealGivenName(v.trim().split(/\s+/)[0])) {
-        return true;
-      }
-    }
+  const sv = a?.structured_value;
+  if (typeof sv !== "object" || sv === null) return false;
+  if (a?.fact_type === "marriage") {
+    return isRealGivenName(sv.spouse_given) || fullNameHasRealGiven(sv.spouse);
   }
   if (a?.fact_type !== "relationship") return false;
   const type = String(sv.relationship_type ?? "").toLowerCase().replace(/_inferred$/, "");
   if (!NEAR_RELATIONSHIP_TYPES.has(type)) return false;
-  const m = typeof a?.value === "string" ? a.value.match(/\bof\s+(\p{Lu}[\p{L}'.-]*)/u) : null;
-  return m !== null && isRealGivenName(m[1]);
+  if (RELATIVE_NAME_KEYS.some((k) => fullNameHasRealGiven(sv[k]))) return true;
+  const m = typeof a?.value === "string" ? a.value.match(OF_NAME) : null;
+  return m !== null && fullNameHasRealGiven(m[1]);
+}
+
+/** The narrow-date and named-relative evidence the project's live links to the
+ *  subject carry. Superseded links and negative evidence ("not found in …")
+ *  say nothing about this person. Each assertion is read on its own, so one
+ *  malformed entry cannot hide the rest. */
+function linkedEvidence(
+  research: any,
+  subjectId: string,
+): { narrowDate: boolean; namedRelative: boolean } {
+  const out = { narrowDate: false, namedRelative: false };
+  const peList = Array.isArray(research?.person_evidence) ? research.person_evidence : [];
+  const linkedIds = new Set(
+    peList
+      .filter((pe: any) => pe?.person_id === subjectId && pe?.superseded_by == null)
+      .map((pe: any) => pe.assertion_id),
+  );
+  const all = Array.isArray(research?.assertions) ? research.assertions : [];
+  for (const a of all) {
+    try {
+      if (!linkedIds.has(a?.id) || a?.superseded_by != null || a?.record_basis === "absent") {
+        continue;
+      }
+      const dates = [certainDate(a), a?.structured_value?.date, ...datesInText(a?.value)];
+      if (dates.some(isDateNarrowerThanYear)) out.narrowDate = true;
+      if (assertionNamesRelative(a)) out.namedRelative = true;
+    } catch {
+      // A malformed assertion contributes nothing; the others still count.
+    }
+  }
+  return out;
 }
 
 /** Facts on the subject's own Couple and ParentChild relationships — a
@@ -452,15 +572,14 @@ export async function buildSubjectDoc(
   const before = (enriched.facts ?? []).length;
   const namesBefore = (enriched.names ?? []).length;
   const hadGender = Boolean(enriched.gender);
-  // #2811 reads every linked assertion, not just the ones enrichment folds in:
-  // enrichment skips unmapped fact_types and keeps only a year from prose.
-  const evidenceDates: unknown[] = [];
-  let evidenceNamesRelative = false;
+  let research: any = null;
+  try {
+    research = JSON.parse(await getProjectStore().readText(projectPath, "research.json"));
+  } catch {
+    // No research.json or unreadable — the bare tree person stands alone.
+  }
 
   try {
-    const research = JSON.parse(
-      await getProjectStore().readText(projectPath, "research.json"),
-    );
     const linkedIds = new Set(
       (research.person_evidence ?? [])
         .filter((pe: any) => pe?.person_id === subjectId)
@@ -485,8 +604,6 @@ export async function buildSubjectDoc(
 
     for (const a of assertions) {
       const sv = a?.structured_value ?? {};
-      evidenceDates.push(a?.date, sv?.date, ...datesInText(a?.value));
-      if (assertionNamesRelative(a)) evidenceNamesRelative = true;
 
       if (a?.fact_type === "name") {
         const given = sv.given ?? undefined;
@@ -541,13 +658,14 @@ export async function buildSubjectDoc(
   let tooThin: boolean;
   try {
     const safeTree = wellFormedTree(tree);
+    const evidence = linkedEvidence(research, subjectId);
     tooThin =
       !hasDateNarrowerThanYear([
         ...(Array.isArray(enriched.facts) ? enriched.facts : []),
         ...subjectRelationshipFacts(safeTree, subjectId),
       ]) &&
-      !evidenceDates.some(isDateNarrowerThanYear) &&
-      !evidenceNamesRelative &&
+      !evidence.narrowDate &&
+      !evidence.namedRelative &&
       !hasNamedRelative(safeTree, subjectId);
   } catch {
     // An advisory flag never fails the ranking; unflagged is the prior behavior.
