@@ -669,7 +669,7 @@ the `max_cost_usd` note in §6 step 5.
    | Wall-clock cap | `timeout` | **Active** (monotonic) elapsed time > `caps.wall_clock_seconds` |
    | Tool-call cap | `tool_cap` | Total tool calls > `caps.tool_calls` |
    | Turn cap | `max_turns` | SDK turn count > `caps.max_turns` |
-   | Cost cap | `cost_cap` | Final cost > `caps.max_cost_usd`. **Label only — this does not stop a run.** See note below. |
+   | Cost cap | `cost_cap` | Final cost (the last CLI process's, on a resumed run) > `caps.max_cost_usd`. **Label only — this does not stop a run.** See note below. |
    | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"` after the continue-nudge budget is exhausted (or a nudge made no progress). The terminal hand-back is classified and counted in `usage.hand_back_classes` — these are the two gate-False reasons that ARE agent defects — see note below |
    | Harness error | `error` | Unhandled exception in the harness or SDK |
    | **Genealogy MCP surface absent** | `mcp_unavailable` | The CLI's `system`/`init` message reports the `genealogy` server `failed` / `needs-auth` / `disabled`, or does not list it at all; **or** the mid-run backstop sees `CONSECUTIVE_TOOL_SEARCH_MISSES` no-match `ToolSearch` results with no `mcp__` call dispatched in between. A *matched* lookup does **not** clear that count — tool search defers the built-ins too, so matching one of those is no evidence about the genealogy surface, and treating it as such let a dead server starve the counter indefinitely. **This run writes no files — see the retention rule below.** |
@@ -2002,7 +2002,7 @@ Both fields are `null`, never a plausible substitute, in four cases:
   `system:init` (compaction emits `system:compact_boundary`, so a long run is still
   one query). On such a run `usage.usage`, `num_turns` and `duration_ms` describe
   the last query only. `total_cost_usd` and `duration_api_ms` are per CLI process:
-  they span the run when `resumes` is 0, and cover only the resumed process when it
+  they span the run when `resumes` is 0, and cover only the last process when it
   is not, because a stall-resume starts a new one. The test is
   `result_message_covers_last_query_only` in `e2e/result.py`. `make e2e-latency`
   (its whole-run summary and Markdown table), `make e2e-cache-window` and the cost
@@ -2166,7 +2166,9 @@ omitted to preserve blind grading (§7.4):
 ```
 
 The compliance line is always printed — a silent compliance line puts us back
-to one number meaning two things (§7.2.1). Verdict-bearing totals (recall,
+to one number meaning two things (§7.2.1). When a run resumed after a stall, a
+note under the cost line says the figures are a floor: its cost covers the last
+CLI process only (§8.1.5). Verdict-bearing totals (recall,
 gate, by-tag) are available via `make e2e-corpus` (below), which reads
 committed run logs and is not part of the grading path.
 
@@ -2218,7 +2220,8 @@ prevent.
 **Spend, and recomputed violations.** The report always prints a `spend:` line —
 recorded cost, estimated cost, and the count of runs with neither — as three
 numbers, never one blend: abort-path cost is estimated (§8.1.2) and must not be
-folded into the authoritative recorded total. Beside the estimate is its
+folded into the recorded total. When a recorded run resumed after a stall, one
+more line says `recorded` is a floor (§8.1.5). Beside the estimate is its
 measured accuracy (median estimated/recorded); `CALIBRATE=1`
 (`--calibrate-cost`) adds the full median + range. `RECOMPUTE=1` (`--recompute`)
 additionally re-derives violations from each run's committed `tool_calls` +

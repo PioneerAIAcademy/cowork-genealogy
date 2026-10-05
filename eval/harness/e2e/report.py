@@ -62,8 +62,8 @@ def print_rollup(results: Iterable[E2eResult]) -> None:
         avg_cost = sum(costs) / len(costs)
         total_cost = sum(costs)
         print(f"  avg cost: ${avg_cost:.2f} / run     total cost: ${total_cost:.2f}")
-        # A stall-resume starts a new CLI process and `total_cost_usd` covers that
-        # process only (#3128), so a resumed run makes both figures a floor.
+        # A stall-resume starts a new CLI process and `total_cost_usd` covers the
+        # last process only (#3128), so a resumed run makes both figures a floor.
         resumed = sum(
             1
             for r in results
@@ -71,7 +71,7 @@ def print_rollup(results: Iterable[E2eResult]) -> None:
         )
         if resumed:
             print(
-                f"  ({resumed} resumed after a stall: their cost covers the resumed "
+                f"  ({resumed} resumed after a stall: their cost covers the last "
                 "process only, so these figures are a floor)"
             )
     if durations:

@@ -65,6 +65,9 @@ def test_print_rollup_calls_cost_a_floor_when_a_run_resumed():
     out = _capture([resumed, _make_result("b", "pass", cost=4.10, duration=1200)])
     assert "1 resumed after a stall" in out
     assert "resumed" not in _capture([_make_result("b", "pass", cost=4.10, duration=1200)])
+    costless = _make_result("c", "pass", duration=600)
+    costless.usage["resumes"] = 1
+    assert "resumed" not in _capture([costless, _make_result("b", "pass", cost=4.10, duration=1200)])
 
 
 def test_print_rollup_handles_missing_usage_fields():

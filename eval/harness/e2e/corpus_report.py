@@ -414,13 +414,14 @@ def recompute_tally(paths: list[Path], *, fixtures_root: Path = E2E_FIXTURES) ->
 class Spend(NamedTuple):
     """Abort-path cost, never blended into one total (issue #1484 b).
 
-    `recorded` sums the authoritative `total_cost_usd`; `estimated` sums the
+    `recorded` sums the authoritative `total_cost_usd` (a floor where a run
+    resumed, see `resumed_n`); `estimated` sums the
     flat-rate `pricing.estimate_cost_usd` over runs that carry a token block but
     no recorded cost; `neither` counts runs with neither (the pre-fallback runs
     with no token counts, unrecoverable).
 
     `resumed_n` counts the recorded runs that resumed after a stall. A resume
-    starts a new CLI process and `total_cost_usd` covers that process only, so
+    starts a new CLI process and `total_cost_usd` covers the last process only, so
     when it is not zero `recorded` is a floor (#3128). The total is not moved:
     the shortfall is unknown, since a stalled process reports no cost.
     """
@@ -495,7 +496,10 @@ def _calibration_ratios(paths: list[Path]) -> Calibration:
     block is the last query's; its cost is the whole run's when it never resumed
     and the last process's when it did. Rather than pair the two scopes case by
     case, every such run is dropped: on the unresumed ones the ratio measures the
-    split, not the price table.
+    split, not the price table. The resumed ones are dropped too, though both of
+    their sides are the last process, because the blanket rule needs no `resumes`
+    logic and stays right on a run that both resumed and restarted on a
+    `task_notification` (none is committed yet).
     """
     ratios: list[float] = []
     n_multi_query = 0
@@ -753,7 +757,7 @@ def format_spend(spend: Spend, ratios: list[float]) -> str:
     if spend.resumed_n:
         lines.append(
             f"                {spend.resumed_n} of them resumed after a stall: their recorded "
-            "cost covers the resumed process only, so recorded is a floor"
+            "cost covers the last process only, so recorded is a floor"
         )
     lines += [
         f"    estimated   ${spend.estimated:,.2f}  over {spend.estimated_n} null-cost run(s) with token counts{acc}",

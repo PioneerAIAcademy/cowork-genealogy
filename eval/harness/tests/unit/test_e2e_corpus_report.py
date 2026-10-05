@@ -915,3 +915,10 @@ def test_spend_calls_recorded_a_floor_when_a_resumed_run_is_in_it(tmp_path: Path
     assert spend.recorded == 8.0
     assert "1 of them resumed after a stall" in format_spend(spend, [])
     assert "resumed" not in format_spend(spend_tally([clean]), [])
+
+
+def test_a_resumed_run_with_no_recorded_cost_is_not_counted_as_a_floor(tmp_path: Path):
+    """The floor is about `recorded`, so only runs that put a cost into it count:
+    a resumed run whose cost is null is not in that total at all."""
+    costless = _write(tmp_path, "run-1.json", _costed_run(_TWO_QUERIES, resumes=1, cost=None))
+    assert spend_tally([costless]).resumed_n == 0

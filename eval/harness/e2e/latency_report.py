@@ -439,8 +439,9 @@ def _load(path: Path) -> LatencyBreakdown:
 
 #: Why an excluded run prints no figures (issue #3128).
 MULTI_QUERY_NOTE = (
-    "its usage, num_turns, duration_ms and duration_api_ms describe the last "
-    "query only, and on a resumed run so does its cost"
+    "its usage, num_turns and duration_ms describe the last query only; its "
+    "duration_api_ms and cost describe the last CLI process, which is the whole "
+    "run unless it resumed after a stall"
 )
 
 
@@ -527,6 +528,8 @@ def main(argv: list[str] | None = None) -> int:
     bds = [_load(p) for p in kept]
     if args.markdown:
         print(format_markdown_table(bds))
+        if excluded:
+            print()  # a line right after a GFM table would read as another row
     else:
         for bd in bds:
             print(format_breakdown(bd))

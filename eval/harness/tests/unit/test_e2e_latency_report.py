@@ -355,6 +355,20 @@ def test_summary_and_table_name_a_multi_query_run_instead_of_printing_it(
     assert "anders-monsen-ancestry" not in out.replace(str(flagged), "")
 
 
+def test_markdown_separates_the_exclusion_from_the_table(tmp_path, capsys):
+    """A line straight after a GFM table reads as another row, so `MD=1 > table.md`
+    would carry the exclusion inside the table."""
+    from e2e import latency_report
+
+    flagged = _write(tmp_path, "run-2026-09-24_07-23-44.json", _multi_query_result())
+    clean = _write(tmp_path, "run-2026-09-25_00-00-00.json", _result())
+    assert latency_report.main(["--markdown", str(clean), str(flagged)]) == 0
+    lines = capsys.readouterr().out.splitlines()
+    at = next(i for i, line in enumerate(lines) if "excluded (multi-query)" in line)
+    assert lines[at - 1] == ""
+    assert lines[at - 2].startswith("| kenneth-quass-death |")
+
+
 def test_a_clean_run_still_prints_beside_an_excluded_one(tmp_path, capsys):
     from e2e import latency_report
 

@@ -540,7 +540,7 @@ def result_message_covers_last_query_only(usage: Any) -> bool:
 
     On a flagged run `usage.usage`, `num_turns` and `duration_ms` describe the last
     query only. `total_cost_usd` and `duration_api_ms` are per CLI process: they span
-    the run when `resumes` is 0, and cover only the resumed process when it is not,
+    the run when `resumes` is 0, and cover only the last process when it is not,
     because a stall-resume starts a new one.
 
     `num_turns` is the orchestrator's own test for "a ResultMessage arrived". A
