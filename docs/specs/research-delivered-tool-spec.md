@@ -70,6 +70,11 @@ It carries two exclusions, both load-bearing:
 
 ## Outcome precedence
 
+It is a **new** enum value, never a label on `ok`. `ok` means "a turn ended with no
+terminal reason" and the browser deliberately renders it as nothing; a delivery is the
+opposite, it has something to report. Reusing `ok` would either silence the delivery or
+give every unremarkable turn a label.
+
 `delivered` sits **after** `pending_decision` and **before** `project_completed` in both
 `should_continue_run` and `terminal_reason`
 (`apps/server/app/agent/continue_policy.py`). So:

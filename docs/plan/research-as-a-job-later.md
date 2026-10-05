@@ -31,7 +31,7 @@ Facts the later passes build on, kept here because the plan for phases 0 and 1 i
   only `project.status` and its own counters — never which skill is running or what the
   researcher asked for.
 - **`turns.outcome` says how a run ended**: `completed`, `stopped`, `queued`, `budget` (the
-  nudge cap, or the prototype's $35 spend bound), `no_progress`, `decision`,
+  nudge cap, or the prototype's $35 spend bound), `no_progress`, `decision`, `delivered`,
   `mcp_unavailable`. Each renders today as one line under the chat. `no_progress` covers
   three causes that should read differently: an agent that stalled, a resume that failed
   twice, and a tool surface that went away.
