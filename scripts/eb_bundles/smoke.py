@@ -8,8 +8,9 @@ Web and worker run in an amazonlinux:2023 helper image (python3.12, unzip, util-
 shadow-utils, user webapp) with --network none and a tmpfs /tmp: unzip to
 /var/app/staging, build the venv and pip install requirements.txt from the bundle's own
 wheels (Beanstalk's build step), run .platform/hooks/predeploy/* as root, move staging to
-/var/app/current, then run the Procfile's web: command as webapp with the template's
-environment. Tools runs in node:24-slim with --network none from a root-owned
+/var/app/current, then run the Procfile's web: command with the template's environment, as
+webapp (web) or as root (worker: the hook's drop-in, so it can launch each turn's CLI as its
+slot user, U3). Tools runs in node:24-slim with --network none from a root-owned
 /var/app/current, as user node. Each tier is then probed over loopback.
 
 The bundle reaches the container by `docker cp`, never a bind mount (colima cannot mount
@@ -197,7 +198,9 @@ def python_tier(tier: str, zip_path: Path, platform: str, keep: bool, extra: dic
                        (proc.stdout + proc.stderr).decode("utf-8", "replace").strip()[-2000:]):
             return c.failed
         put(name, "/run-app.sh", launcher(env, command, f"{VENV}/bin:/usr/local/bin:/usr/bin:/bin", "/home/webapp"))
-        docker("exec", "-d", "-u", "webapp", name, "/run-app.sh")
+        # U3: on Beanstalk the hook's drop-in runs the worker's web.service as root, so it
+        # can launch each turn's CLI as its slot user; the web tier stays webapp.
+        docker("exec", "-d", "-u", "root" if tier == "worker" else "webapp", name, "/run-app.sh")
         ca_check(c, name, env)
         port = int(env.get("PORT", "0"))
         py = [f"{VENV}/bin/python", "-c"]
@@ -240,14 +243,20 @@ def python_tier(tier: str, zip_path: Path, platform: str, keep: bool, extra: dic
             dest = shlex.quote(layout.PLUGIN_DEST)
             c.check(out(sh(name, f"stat -c %U:%G {dest}")) == "root:root", f"{layout.PLUGIN_DEST} is root-owned",
                     out(sh(name, f"stat -c %U:%G {dest}")))
-            c.check(sh(name, f"touch {dest}/x || test -w {dest}", user="webapp").returncode != 0,
-                    f"webapp cannot write {layout.PLUGIN_DEST}")
+            pool = (start or {}).get("turn_users")
+            c.check(isinstance(pool, list) and len(pool) >= 2 and "root" not in pool,
+                    "ev=start names the slot users each CLI runs as", pool or app_log(name))
+            slot = pool[0] if isinstance(pool, list) and pool else "genealogy-turn-0"
+            dropin = out(sh(name, "cat /etc/systemd/system/web.service.d/10-genealogy-root.conf"))
+            c.check("User=root" in dropin, "the hook's drop-in runs web.service as root", dropin)
+            c.check(sh(name, f"touch {dest}/x || test -w {dest}", user=slot).returncode != 0,
+                    f"{slot} cannot write {layout.PLUGIN_DEST}")
             c.check(out(sh(name, f"stat -c %a {layout.WORKER_CWD}")) == "555", f"{layout.WORKER_CWD} is mode 555",
                     out(sh(name, f"stat -c %a {layout.WORKER_CWD}")))
             cli = out(sh(name, f"{VENV}/bin/python -c 'import claude_agent_sdk, pathlib; "
                                "print(pathlib.Path(claude_agent_sdk.__file__).parent / \"_bundled\" / \"claude\")'"))
-            ver = sh(name, f"HOME=/home/webapp {shlex.quote(cli)} --version", user="webapp", timeout=120)
-            c.check(ver.returncode == 0, "the SDK's bundled claude --version runs",
+            ver = sh(name, f"HOME=/tmp {shlex.quote(cli)} --version", user=slot, timeout=120)
+            c.check(ver.returncode == 0, f"the SDK's bundled claude --version runs as {slot}",
                     out(ver) or ver.stderr.decode("utf-8", "replace")[-300:])
         return c.failed
     finally:

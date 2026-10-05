@@ -1,9 +1,8 @@
 """Offline tests for the D14/D17 prep: proto/audit.py's classification of tool_calls rows
 (acceptance criteria 3 and 4), proto/seed.py's fixture resolution and file plan, and
 proto/export.py's pure seams (D18: the manifest, the out-dir layout, the exit codes), and
-proto/env.sh's token handling (the file's mode, what a failed refresh leaves behind and
-says, and the `--min-life` window it asks dev/fs-token.ts for). No Postgres, no stack, no
-model, and no FamilySearch: the refresh is a stand-in on PATH."""
+proto/env.sh's model keys (exported, never echoed) and that, since U3, it mints no
+FamilySearch token. No Postgres, no stack, no model, and no FamilySearch."""
 
 from __future__ import annotations
 
@@ -140,16 +139,23 @@ POSIX_MODES = sys.platform != "win32"
 
 
 @pytest.mark.skipif(shutil.which("sh") is None, reason="env.sh needs a POSIX shell")
-def test_env_sh_keeps_the_token_file_0600_and_a_failed_refresh_keeps_the_previous_token(tmp_path):
-    token_file = tmp_path / "fs-token"
-    token_file.write_text("", encoding="utf-8")
-    token_file.chmod(0o644)  # what proto-up-core's empty-file arm leaves under the default umask
-    # PATH without npx: the engine refresh fails the way a missing login or a blip would.
+def test_env_sh_exports_the_model_keys_and_mints_no_token(tmp_path):
+    """U3: the worker bears the patron's grant, so env.sh exports the two model keys and
+    nothing else -- no token file, no refresh. The stand-in npx records any call: the old
+    script ran `npx tsx dev/fs-token.ts`, which reached FamilySearch and rotated the
+    operator's refresh token."""
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    calls = tmp_path / "npx.log"
+    npx = bin_dir / "npx"
+    npx.write_text(f'#!/bin/sh\necho "$*" >> {shlex.quote(str(calls))}\nprintf stub-token\n', encoding="utf-8")
+    npx.chmod(0o755)
     # A stand-in for eval/.env, so the test never reads the real one.
     dotenv = tmp_path / "dotenv"
     dotenv.write_text("ANTHROPIC_API_KEY=k-from-dotenv\nOPENROUTER_API_KEY=or-from-dotenv\n", encoding="utf-8")
-    base_env = {"PATH": "/usr/bin:/bin", "HOME": str(tmp_path), "PROTO_TOKEN_FILE": str(token_file),
-                "PROTO_ENV_FILE": str(dotenv)}
+    token_file = tmp_path / "fs-token"
+    base_env = {"PATH": f"{bin_dir}:/usr/bin:/bin", "HOME": str(tmp_path), "PROTO_ENV_FILE": str(dotenv),
+                "PROTO_TOKEN_FILE": str(token_file)}
 
     def source(**shell_vars: str) -> subprocess.CompletedProcess:
         # The caller's values are UNEXPORTED shell variables, so only the script's own
@@ -161,76 +167,19 @@ def test_env_sh_keeps_the_token_file_0600_and_a_failed_refresh_keeps_the_previou
         return subprocess.run(["sh", "-c", cmd], cwd=ROOT, env=base_env, capture_output=True, text=True,
                               encoding="utf-8")
 
-    r = source(FS_ACCESS_TOKEN="tok-1", ANTHROPIC_API_KEY="k", OPENROUTER_API_KEY="or-key-1")
-    assert r.returncode == 0 and "FS token written" in r.stderr, r.stderr
+    r = source(ANTHROPIC_API_KEY="k", OPENROUTER_API_KEY="or-key-1", FS_ACCESS_TOKEN="tok-1")
+    assert r.returncode == 0, r.stderr
     assert r.stdout.split() == ["k", "or-key-1"], "the caller's keys, exported for the worker's up"
-    assert "OPENROUTER_API_KEY set" in r.stderr and "or-key-1" not in r.stderr and "k\n" not in r.stderr, "never echoed"
-    assert token_file.read_text(encoding="utf-8") == "tok-1"
-    if POSIX_MODES:
-        assert stat.S_IMODE(token_file.stat().st_mode) == 0o600, "the mode is set on every run, not only at creation"
-    assert "tok-1" not in r.stderr, "never echoed"
-    # No caller values: the keys come from the dotenv file and are exported; no refresh:
-    # the previous token survives, and the status says so.
+    assert "ANTHROPIC_API_KEY set" in r.stderr and "OPENROUTER_API_KEY set" in r.stderr, r.stderr
+    assert "or-key-1" not in r.stderr and "k\n" not in r.stderr and "tok-1" not in r.stderr, "never echoed"
     r = source()
-    assert r.returncode == 0 and "refresh FAILED" in r.stderr and "kept" in r.stderr, r.stderr
     assert r.stdout.split() == ["k-from-dotenv", "or-from-dotenv"], "both keys read from the dotenv and exported"
     assert "from-dotenv" not in r.stderr, "never echoed"
-    assert token_file.read_text(encoding="utf-8") == "tok-1"
-    # WHY it failed reaches the operator: fs-token.ts reports every failure on stderr and
-    # exits 2 with nothing on stdout, so a 2>/dev/null here would swallow the one line that
-    # says what to do ("log in again with make e2e-login" when the refresh token is dead).
-    # Here the failure is the missing npx, and the shell's own reason is on the line.
-    assert "not found" in r.stderr, f"the refresh's own reason must join the status line: {r.stderr}"
-    # The empty directory an early compose `up` leaves in the file's place is replaced.
-    token_file.unlink()
-    token_file.mkdir()
-    r = source(FS_ACCESS_TOKEN="tok-2", ANTHROPIC_API_KEY="k")
-    assert token_file.is_file() and token_file.read_text(encoding="utf-8") == "tok-2", r.stderr
-    if POSIX_MODES:
-        assert stat.S_IMODE(token_file.stat().st_mode) == 0o600
-    # Nothing to refresh and nothing kept: UNSET.
-    token_file.write_text("", encoding="utf-8")
-    assert "UNSET" in source(ANTHROPIC_API_KEY="k").stderr
-
-
-@pytest.mark.skipif(shutil.which("sh") is None, reason="env.sh needs a POSIX shell")
-def test_env_sh_asks_fs_token_for_a_window_that_outlives_a_full_length_turn(tmp_path):
-    """`make proto-token` sources env.sh and passes no arguments of its own, so whatever
-    window the refresh uses is the one env.sh asks for. It must be at least the step
-    ceiling (READ_TIMEOUT_S, 1800 s) in minutes -- a narrower one still hands over a token
-    a turn can outlive, which is how the D17 run died -- and an operator must be able to
-    widen it without editing the script."""
-    bin_dir = tmp_path / "bin"
-    bin_dir.mkdir()
-    argv_log = tmp_path / "argv.log"
-    # A stand-in npx: records the argv and prints a stand-in token. The real script is
-    # never run here -- it would reach FamilySearch and rotate the operator's refresh token.
-    npx = bin_dir / "npx"
-    npx.write_text(
-        f'#!/bin/sh\necho "$*" >> {shlex.quote(str(argv_log))}\nprintf stub-token\n',
-        encoding="utf-8",
-    )
-    npx.chmod(0o755)
-    token_file = tmp_path / "fs-token"
-    token_file.write_text("", encoding="utf-8")
-    dotenv = tmp_path / "dotenv"
-    dotenv.write_text("ANTHROPIC_API_KEY=k\n", encoding="utf-8")
-    env = {"PATH": f"{bin_dir}:/usr/bin:/bin", "HOME": str(tmp_path),
-           "PROTO_TOKEN_FILE": str(token_file), "PROTO_ENV_FILE": str(dotenv)}
-
-    def source(**extra: str) -> str:
-        subprocess.run(["sh", "-c", ". apps/server/proto/env.sh"], cwd=ROOT, env={**env, **extra},
-                       capture_output=True, text=True, encoding="utf-8", check=True)
-        return argv_log.read_text(encoding="utf-8").splitlines()[-1]
-
-    ceiling_s = int(re.search(r"READ_TIMEOUT_S:-(\d+)", (ROOT / "apps" / "server" / "proto" /
-                                                         "docker-compose.yml").read_text(encoding="utf-8")).group(1))
-    default = source()
-    assert default.startswith("tsx dev/fs-token.ts "), default
-    minutes = int(default.split("--min-life")[1].split()[0])
-    assert minutes >= ceiling_s / 60, f"env.sh asks for {minutes} min against a {ceiling_s} s step ceiling"
-    assert source(PROTO_TOKEN_MIN_LIFE="55").endswith("--min-life 55"), "an operator can widen it"
-    assert token_file.read_text(encoding="utf-8") == "stub-token"
+    assert "FS token" not in r.stderr and "fs-token" not in r.stderr, r.stderr
+    assert not calls.exists(), f"env.sh ran npx: {calls.read_text(encoding='utf-8') if calls.exists() else ''}"
+    assert not token_file.exists(), "no operator token file is written"
+    text = (ROOT / "apps" / "server" / "proto" / "env.sh").read_text(encoding="utf-8")
+    assert "fs-token" not in text and "FS_ACCESS_TOKEN" not in text and "PROTO_TOKEN" not in text
 
 
 # ── export (D18): the mirror image of seed ────────────────────────────────────────
