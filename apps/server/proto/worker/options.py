@@ -7,8 +7,9 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
 
 - ``cwd`` is the empty anchor (``/project``); ``setting_sources=[]`` explicitly, so no
   ``CLAUDE.md`` or ``.claude/`` in any parent of cwd is loaded; no ``add_dirs``.
-- the plugin loads from disk for its skills; the sixteen agents travel as ``agents=`` (bare
-  names, parsed once at worker start by ``plugin_agents.py``) -- never staged into cwd.
+- the plugin loads from disk for its skills; its agents (``worker.EXPECTED_AGENTS``) travel
+  as ``agents=`` (bare names, parsed once at worker start by ``plugin_agents.py``) -- never
+  staged into cwd.
 - the shell is removed with ``disallowed_tools`` -- the only lever that reaches the
   main thread; ``Write``/``Edit`` stay granted (denying them is whole-tool).
 - the tool server is the shared Streamable HTTP ``tools`` service at ``TOOL_SERVER_URL``;
@@ -27,9 +28,9 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
 - the SDK session id is the worker's choice: ``session_id=`` on a fresh session,
   ``resume=`` when the store holds entries -- exactly one, never both (the SDK's own
   rule without ``fork_session``).
-- the model is pinned per ``MODEL_PROVIDER``: ``anthropic`` (default) is
-  ``claude-sonnet-4-6`` on ``ANTHROPIC_API_KEY``; ``gateway`` points the CLI at an
-  Anthropic-Messages gateway (``GATEWAY_BASE_URL``, ``GATEWAY_API_KEY``) and sends Bedrock ids for the main thread, the small model and
+- the model is pinned per ``MODEL_PROVIDER``, which has no default (``model_provider``):
+  ``anthropic`` is ``claude-sonnet-4-6`` on ``ANTHROPIC_API_KEY``; ``gateway`` points the
+  CLI at an Anthropic-Messages gateway (``GATEWAY_BASE_URL``, ``GATEWAY_API_KEY``) and sends Bedrock ids for the main thread, the small model and
   every agent (``gateway_agent_models``), since a gateway passes unmapped ids through.
 
 The hook (``make_pretool_hook``) is the plan's deny-and-log: it denies a raw
@@ -57,6 +58,7 @@ from app.agent.continue_policy import (
     TERMINAL_BUDGET,
     TERMINAL_COMPLETED,
     TERMINAL_DECISION,
+    TERMINAL_DELIVERED,
     TERMINAL_MCP_UNAVAILABLE,
     TERMINAL_NO_PROGRESS,
     TERMINAL_QUEUED,
@@ -97,30 +99,17 @@ MCP_CONFIG_NAME = "mcp.json"
 # The e2e harness's tree-read block (eval/harness/e2e/orchestrator.py BLOCKED_TREE_TOOLS):
 # every e2e fixture's answer still sits in the live FamilySearch tree, so a fixture run
 # that may read the tree is a lookup, not the research workflow. The worker takes the
-# list from BLOCKED_TOOLS (bare MCP tool names, comma-separated); empty means no block.
+# list from BLOCKED_TOOLS (bare MCP tool names, comma-separated); empty means no block. A
+# non-empty one refuses start unless DEV_PATHS=true (worker.require_start_config, U11).
 BLOCKED_DENY_REASON = (
     "{tool} is denied on this run: the fixture's answer sits in the live FamilySearch tree "
     "and this run must find it in records (the e2e harness's tree-read block, BLOCKED_TOOLS)."
 )
 
 
-# The harness's LIVE_TREE_ARG_TOOLS, held equal to it by an AST read in
-# tests/test_proto_worker.py: tools that read the live tree only when a named argument
-# is truthy, so the bare name cannot decide them. Denied whenever BLOCKED_TOOLS is on.
-# Currently empty — kept for the next tool whose block depends on an argument.
-LIVE_TREE_ARG_TOOLS = {}
-
-
-def is_blocked_call(tool_name: str, tool_input: Mapping[str, Any], blocked: frozenset[str]) -> bool:
-    """Whether the tree-read block denies this call: an MCP tool named in ``blocked``,
-    or, while the block is on, a LIVE_TREE_ARG_TOOLS call with its argument truthy."""
-    if not blocked or not tool_name.startswith("mcp__"):
-        return False
-    bare = bare_tool_name(tool_name)
-    if bare in blocked:
-        return True
-    arg = LIVE_TREE_ARG_TOOLS.get(bare)
-    return arg is not None and bool(tool_input.get(arg))
+def is_blocked_call(tool_name: str, blocked: frozenset[str]) -> bool:
+    """Whether the tree-read block denies this call: an MCP tool named in ``blocked``."""
+    return tool_name.startswith("mcp__") and bare_tool_name(tool_name) in blocked
 
 
 def bare_tool_name(tool_name: str) -> str:
@@ -179,30 +168,60 @@ def hook_path(exe_dir: str, path: str | None) -> str:
     return os.pathsep.join(parts)
 
 
+# U11: the compose-only paths -- the D3 stub arms, BLOCKED_TOOLS, no QUEUE_URL, the
+# default grant key -- are honoured only when this is ``true``. No image or Beanstalk
+# template sets it.
+DEV_PATHS_VAR = "DEV_PATHS"
+
+
+def dev_paths(env: Mapping[str, str]) -> bool:
+    """``DEV_PATHS`` is ``true``, case-insensitive after strip; anything else is off."""
+    return (env.get(DEV_PATHS_VAR) or "").strip().lower() == "true"
+
+
+MODEL_PROVIDERS = ("anthropic", "gateway")
+
+
+class ProviderError(ValueError):
+    """``MODEL_PROVIDER`` refused; ``label`` (``unset``, ``unknown:<v>``,
+    ``gateway_needs_base_url``) is what ``ev=prepare step=model_provider`` logs."""
+
+    def __init__(self, label: str, message: str) -> None:
+        super().__init__(message)
+        self.label = label
+
+
+def model_provider(worker_env: Mapping[str, str]) -> str:
+    """``MODEL_PROVIDER`` after strip/lower: ``anthropic`` or ``gateway`` (which needs
+    ``GATEWAY_BASE_URL``). There is no default; anything else raises ``ProviderError``."""
+    provider = (worker_env.get("MODEL_PROVIDER") or "").strip().lower()
+    if not provider:
+        raise ProviderError("unset", "MODEL_PROVIDER is unset: it must be anthropic or gateway")
+    if provider not in MODEL_PROVIDERS:
+        raise ProviderError(f"unknown:{provider}", f"MODEL_PROVIDER must be anthropic or gateway, not {provider!r}")
+    if provider == "gateway" and not (worker_env.get("GATEWAY_BASE_URL") or "").strip():
+        raise ProviderError("gateway_needs_base_url", "MODEL_PROVIDER=gateway needs GATEWAY_BASE_URL")
+    return provider
+
+
 def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, str]]:
     """``(model, env)`` for ``MODEL_PROVIDER``: the CLI ``--model`` and the variables
     that pin the provider. The gateway's model travels as ``ANTHROPIC_MODEL`` (the ``[1m]``
     suffix is read off that string), so ``model`` is None there."""
-    provider = (worker_env.get("MODEL_PROVIDER") or "anthropic").strip().lower()
-    if provider == "anthropic":
+    if model_provider(worker_env) == "anthropic":
         return ANTHROPIC_MODEL, {"ANTHROPIC_API_KEY": worker_env.get("ANTHROPIC_API_KEY", "")}
-    if provider == "gateway":
-        base_url = (worker_env.get("GATEWAY_BASE_URL") or "").strip()
-        if not base_url:
-            raise ValueError("MODEL_PROVIDER=gateway needs GATEWAY_BASE_URL")
-        return None, {
-            "ANTHROPIC_BASE_URL": base_url,
-            "ANTHROPIC_AUTH_TOKEN": worker_env.get("GATEWAY_API_KEY", ""),
-            # Blank, not absent: the CLI inherits the worker's environment, and an
-            # inherited Anthropic key rides to the gateway as x-api-key beside the bearer.
-            "ANTHROPIC_API_KEY": "",
-            "ANTHROPIC_MODEL": GATEWAY_MODEL,
-            "ANTHROPIC_DEFAULT_HAIKU_MODEL": GATEWAY_SMALL_MODEL,
-            # agentgateway < 1.6 cannot parse tool_reference, so tool search fails on
-            # its second turn (plan P3f); tap-agentgateway pins 1.5.0.
-            "ENABLE_TOOL_SEARCH": (worker_env.get("GATEWAY_TOOL_SEARCH") or "false").strip().lower(),
-        }
-    raise ValueError(f"MODEL_PROVIDER must be anthropic or gateway, not {provider!r}")
+    return None, {
+        "ANTHROPIC_BASE_URL": worker_env["GATEWAY_BASE_URL"].strip(),
+        "ANTHROPIC_AUTH_TOKEN": worker_env.get("GATEWAY_API_KEY", ""),
+        # Blank, not absent: the CLI inherits the worker's environment, and an
+        # inherited Anthropic key rides to the gateway as x-api-key beside the bearer.
+        "ANTHROPIC_API_KEY": "",
+        "ANTHROPIC_MODEL": GATEWAY_MODEL,
+        "ANTHROPIC_DEFAULT_HAIKU_MODEL": GATEWAY_SMALL_MODEL,
+        # agentgateway < 1.6 cannot parse tool_reference, so tool search fails on
+        # its second turn (plan P3f); tap-agentgateway pins 1.5.0.
+        "ENABLE_TOOL_SEARCH": (worker_env.get("GATEWAY_TOOL_SEARCH") or "false").strip().lower(),
+    }
 
 
 def gateway_agent_models(agents: Mapping[str, Any]) -> dict[str, Any]:
@@ -222,8 +241,8 @@ def gateway_agent_models(agents: Mapping[str, Any]) -> dict[str, Any]:
 # state: `Authorization: Bearer <patron token>` becomes the request's principal, and
 # `X-Genealogy-Project-Id` becomes the request's PgS3ProjectStore. Missing, the project
 # tools answer an instruction naming the header; malformed, the request is a 400. No turn
-# header. The CLI opens the MCP session once per process, once per turn.
-TOOL_SERVER_DEFAULT_URL = "http://tools:8787/mcp"
+# header. The CLI opens the MCP session once per process, once per turn. TOOL_SERVER_URL
+# has no default (U11): a guessed host would be handed the patron's bearer.
 PROJECT_ID_HEADER = "X-Genealogy-Project-Id"
 # The http entry's per-server `timeout` (ms). Without it CLI 2.1.220 aborts every
 # non-GET HTTP MCP request at 60 s, where the harness's stdio server is cut only by its
@@ -232,6 +251,14 @@ PROJECT_ID_HEADER = "X-Genealogy-Project-Id"
 # gives the prototype the harness's ceiling: 121 harness calls ran past 60 s, the
 # longest 844 s (`image_transcribe`), six of them `research_append`.
 MCP_HTTP_TIMEOUT_MS = 1_800_000
+
+
+def tool_server_url(worker_env: Mapping[str, str]) -> str:
+    """``TOOL_SERVER_URL``, stripped; unset or blank raises ValueError."""
+    url = (worker_env.get("TOOL_SERVER_URL") or "").strip()
+    if not url:
+        raise ValueError("TOOL_SERVER_URL is unset: the worker has no tool server to send the bearer to")
+    return url
 
 
 def tool_server_headers(*, project_id: str, bearer: str) -> dict[str, str]:
@@ -256,7 +283,7 @@ def tool_server_entry(
     ``tools`` service's own environment, not the request's."""
     return {
         "type": "http",
-        "url": worker_env.get("TOOL_SERVER_URL") or TOOL_SERVER_DEFAULT_URL,
+        "url": tool_server_url(worker_env),
         "headers": tool_server_headers(project_id=project_id, bearer=bearer),
         "timeout": MCP_HTTP_TIMEOUT_MS,
     }
@@ -320,6 +347,36 @@ SPEND_CAP_REASON = (
 )
 
 
+# The carrier for "I delivered what you asked". Deliberately NOT AskUserQuestion -- an ask
+# has `questions` and waits for an answer, a delivery waits for nothing, and one tool
+# carrying both leaves this hook with no discriminator.
+DELIVERED_TOOL = "mcp__genealogy__research_delivered"
+
+# When to reach for it. This rides the per-turn system prompt, NOT the skill bodies: the
+# hook that makes this tool end a turn exists only here, so a skill-body rule would teach
+# every skill to call a tool that is inert in Cowork and in the harness that grades them.
+#
+# Both exclusions are load-bearing. Calling it when the OBJECTIVE is finished would report
+# `delivered` where `completed` is true and the run ends on its own. Calling it instead of
+# asking would swallow a question nobody answers -- an ask waits, a delivery does not.
+DELIVERY_GUIDANCE = (
+    "When this message asked for one bounded thing and you have produced it, WRITE YOUR "
+    "REPLY FIRST -- this call ends the turn, so nothing you say after it reaches the "
+    "researcher -- then call "
+    "`research_delivered` with a one-sentence summary and stop: a plan the researcher "
+    "asked you to stop after, a single record or lookup, or a status question such as "
+    "\"where are we?\". Do not call it when the project's research objective itself is "
+    "finished -- that run ends on its own -- and do not call it in place of asking the "
+    "researcher a question, which waits for their answer. Its schema is deferred, so "
+    "search for it by name if you do not already hold it."
+)
+
+DELIVERED_REASON = (
+    "You have delivered what this message asked for. Stopping here rather than carrying "
+    "on; your next message picks up from here."
+)
+
+
 def _halt(reason: str = STOP_REASON) -> dict[str, Any]:
     return {"continue_": False, "stopReason": reason, **_deny(reason)}
 
@@ -354,6 +411,7 @@ def make_pretool_hook(
     log: Callable[..., None] | None = None,
     blocked: frozenset[str] = frozenset(),
     halt: Callable[[], str | None] | None = None,
+    on_delivered: Callable[[], None] | None = None,
 ):
     """The worker's ``PreToolUse`` callback. ``config_root`` may be a callable because
     the directory the CLI actually runs in is known only after ``connect()`` on a
@@ -397,11 +455,61 @@ def make_pretool_hook(
                 log(ev="halt", turn_id=turn_id, tool_name=tool_name, tool_use_id=tool_use_id,
                     reason=stop_now)
             return _halt(stop_now)
+
+        # A bounded request that is met must not run on to the proof, the nudge cap or the
+        # spend bound. It sits AFTER the halt check, so the researcher's own stop still
+        # outranks it.
+        #
+        # MAIN THREAD ONLY. The arm matches on tool NAME, and a subagent holds the
+        # session's tool set, so without this a record-extractor saying "delivered" would
+        # end the researcher's whole turn. `agent_id` is tested for MEMBERSHIP, not
+        # truthiness: it is absent as a KEY on the main thread, and `agent_type` alone is
+        # not sufficient because it is present on the main thread of a session started
+        # with `--agent`. That is the discriminator the shipped plugin hook already uses
+        # (`owner_denied`, hooks/guard_project_files.py), reused rather than re-derived.
+        # A subagent's call falls through to ordinary handling, where the tool returns its
+        # harmless acknowledgement and the run carries on.
+        if tool_name == DELIVERED_TOOL and "agent_id" not in data:
+            try:
+                record({
+                    "turn_id": turn_id, "session_id": session_id,
+                    "agent_id": data.get("agent_id"), "agent_type": data.get("agent_type"),
+                    "tool_name": tool_name,
+                    "input_path": input_path(tool_name, tool_input, cwd=cwd),
+                    "decision": "delivered",
+                    "tool_use_id": tool_use_id or data.get("tool_use_id"),
+                })
+            except Exception as exc:  # noqa: BLE001 - the log must not change the decision
+                if log is not None:
+                    log(ev="tool_call_log_failed", turn_id=turn_id, tool_name=tool_name,
+                        error=f"{type(exc).__name__}: {exc}")
+            if on_delivered is not None:
+                try:
+                    on_delivered()
+                except Exception as exc:  # noqa: BLE001 - reporting must not fail the call
+                    if log is not None:
+                        log(ev="delivered_report_failed", turn_id=turn_id,
+                            error=f"{type(exc).__name__}: {exc}")
+            # The summary is the one field the researcher-facing contract is built on,
+            # and the hook halts BEFORE the tool body runs -- so if it is not captured
+            # here it reaches nobody: `input_path` is None for this tool, the tool_calls
+            # row has no column for it, and the browser renders a fixed string. Logged,
+            # and appended to the stop reason so the text the model is handed names what
+            # it said it delivered.
+            summary = str((tool_input or {}).get("summary") or "").strip()
+            if log is not None:
+                log(ev="delivered", turn_id=turn_id, tool_name=tool_name,
+                    tool_use_id=tool_use_id, summary=summary)
+            # Summary FIRST: the browser replaces the chip with the result text cut at
+            # 160 chars, and DELIVERED_REASON alone is 157 -- appended, the summary is
+            # lost. What the researcher most needs to see leads.
+            return _halt(f"Delivered: {summary} {DELIVERED_REASON}" if summary
+                         else DELIVERED_REASON)
         try:
             protected = direct_project_file_write(tool_name, tool_input)
             if protected:
                 decision, reason = "deny", WRITE_DENY_REASON.format(tool=tool_name, name=protected)
-            elif is_blocked_call(tool_name, tool_input, blocked):
+            elif is_blocked_call(tool_name, blocked):
                 decision, reason = "deny", BLOCKED_DENY_REASON.format(tool=bare_tool_name(tool_name))
             else:
                 root = config_root() if callable(config_root) else config_root
@@ -627,7 +735,7 @@ def build_worker_options(
         raise ValueError("resume and session_id are mutually exclusive: pass exactly one")
     env_in = os.environ if worker_env is None else worker_env
     model, model_env = provider_env(env_in)
-    if (env_in.get("MODEL_PROVIDER") or "").strip().lower() == "gateway":
+    if model_provider(env_in) == "gateway":
         agents = gateway_agent_models(agents)
     project_note = (
         "You are the hosted genealogy research agent. The active research project is "
@@ -639,6 +747,10 @@ def build_worker_options(
         "apply researcher_profile.narration_guidance from research.json as your "
         "narration style."
     )
+    # Unconditional, on the opening turn too: "start a project on X and just give me a
+    # plan" is a legitimate turn-1 bounded request, so gating this on `resume` would
+    # exempt the very case it exists for.
+    project_note = f"{project_note}\n\n{DELIVERY_GUIDANCE}"
     env: dict[str, str] = {
         "ENABLE_TOOL_SEARCH": "true",
         "CLAUDE_CONFIG_DIR": config_dir,
