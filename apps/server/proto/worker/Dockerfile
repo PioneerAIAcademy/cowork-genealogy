@@ -7,8 +7,9 @@
 #
 # Layout (the plan's "Container layout"): /project is the empty cwd anchor;
 # /opt/genealogy/plugin the skills; /opt/genealogy/server the import root holding app/
-# (map_message) and proto/{worker,sql}. No tokens.json is ever baked -- the patron's
-# FamilySearch bearer travels per turn as the tool server's Authorization header.
+# (map_message) and proto/{worker,sql,enqueue.py,grants.py,migrate.py}. No tokens.json is ever baked
+# -- the bearer is the patron's grant, read from Postgres at the start of each attempt
+# (proto/grants.py) and sent as the tool server's Authorization header.
 # CLAUDE_CONFIG_DIR and TMPDIR live on a tmpfs that compose mounts.
 FROM ubuntu:24.04
 
@@ -24,7 +25,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # The proto-worker group's closure, exported from apps/server/uv.lock with hashes
 # (`make proto-requirements`): the SDK pin (flush mode, and the CLI its wheel bundles),
-# psycopg[binary] (bundles libpq) and botocore (signs enqueue.py's SQS calls).
+# psycopg[binary] (bundles libpq), botocore (signs enqueue.py's SQS calls) and
+# cryptography (decrypts the patron's grant, grants.py, U3).
 COPY apps/server/proto/worker/requirements.txt /tmp/worker-requirements.txt
 RUN python3 -m pip install --break-system-packages --require-hashes \
         -r /tmp/worker-requirements.txt \
@@ -33,14 +35,19 @@ RUN python3 -m pip install --break-system-packages --require-hashes \
 # Plugin: 14 skills + 18 agents + the shipped PreToolUse hook (python3 runs it).
 COPY packages/engine/plugin /opt/genealogy/plugin
 
-# The worker and what it imports: app.agent.real_agent (map_message) and proto/sql,
-# which the worker applies at start.
+# The worker and what it imports: app.agent.real_agent (map_message) and proto/sql, whose
+# file names the worker checks the migration ledger against at start (U9: it runs no DDL).
 COPY apps/server/app               /opt/genealogy/server/app
 COPY apps/server/proto/sql         /opt/genealogy/server/proto/sql
 # 1b: the worker releases a held message when the turn holding it ends, and it is the
 # only component that knows a turn finished. enqueue.py is the repo's one SQS client
 # (urllib transport, botocore SigV4), so the handover reuses it rather than growing a second.
 COPY apps/server/proto/enqueue.py  /opt/genealogy/server/proto/enqueue.py
+# U3: the grant custody the web tier shares -- the lock keys, the grant SQL, the decryption.
+COPY apps/server/proto/grants.py   /opt/genealogy/server/proto/grants.py
+# U9: the one schema applier. compose's one-shot `migrate` service runs it from this image
+# (`python3 proto/migrate.py` in WORKDIR); the worker imports it read-only for the ledger.
+COPY apps/server/proto/migrate.py  /opt/genealogy/server/proto/migrate.py
 COPY apps/server/proto/worker      /opt/genealogy/server/proto/worker
 
 ENV PYTHONPATH=/opt/genealogy/server
@@ -48,18 +55,21 @@ ENV ENGINE_PLUGIN_DIR=/opt/genealogy/plugin
 ENV WORKER_CWD=/project
 ENV TMPDIR=/tmp
 
-# The worker runs unprivileged: the CLI refuses bypassPermissions as root
-# ("--dangerously-skip-permissions cannot be used with root/sudo privileges"), and the
-# E2B sandbox runs its agent as `user` for the same reason. Everything under
-# /opt/genealogy stays root-owned and read-only to it.
-RUN useradd --create-home --shell /usr/sbin/nologin worker
-ENV HOME=/home/worker
+# U3: the worker runs as root so it can launch each turn's CLI as its own slot user
+# (WORKER_TURN_USERS, proto/worker/turn_users.py): the kernel then keeps one patron's turn
+# out of another's files and out of the worker's /proc. The CLI itself never runs as root
+# (it refuses bypassPermissions as root). One user per sqsd HttpConnections slot, sharing
+# one primary group the worker takes at start. Everything under /opt/genealogy stays
+# root-owned and read-only to them.
+RUN groupadd --system genealogy-turn \
+    && useradd --system --no-create-home --shell /usr/sbin/nologin --gid genealogy-turn genealogy-turn-0 \
+    && useradd --system --no-create-home --shell /usr/sbin/nologin --gid genealogy-turn genealogy-turn-1
+ENV WORKER_TURN_USERS=genealogy-turn-0,genealogy-turn-1
 
 # The cwd anchor: must exist or the CLI will not spawn; root-owned and read-only to the
-# worker, so nothing can be written into it.
+# slot users, so nothing can be written into it.
 RUN mkdir -p /project && chmod 555 /project
 
-USER worker
 WORKDIR /opt/genealogy/server
 EXPOSE 8080
 
