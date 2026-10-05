@@ -110,8 +110,8 @@ fact conflicts which require at least two).
 Read the `assertions` and `person_evidence` sections with
 `research_query` — `project_context` alone does not show assertion
 values. When you find competing values, proceed through Steps 2–5 for
-one conflict — the one "address one per turn" below picks when several
-are unresolved — and call `research_append` to persist it and its
+one conflict — the one "resolve exactly one per invocation" below picks
+when several are unresolved — and call `research_append` to persist it and its
 analysis; do not stop after presenting findings in text.
 **Trust the existing assertion classifications** (record_basis,
 directness, informant) as recorded — do NOT re-classify inline, and do
@@ -266,7 +266,9 @@ offset where no transition applies. Read `applied[]` — `offsetDays` for a
 Julian→Gregorian day difference, `yearAdjusted` for a year-start move. If the competing dates
 differ by exactly what the tool returns, they are the same day expressed
 two ways, not a substantive disagreement — **do not create a conflict
-entry**; explain the calendar difference in your reply and stop. Creating
+entry**; explain the calendar difference in your reply — and when one
+record transcribes the other, say so: two readings of one entry
+corroborate nothing — then stop. Creating
 and resolving a fabricated conflict is worse than no entry. A derivative
 that has already been modernised by its transcriber must not be corrected
 a second time.
@@ -501,15 +503,15 @@ Suggest next steps:
 - **Never ignore a conflict.** GPS Element 4 requires ALL conflicts
   to be addressed. An unresolved conflict is acceptable (with
   explanation); an unacknowledged conflict is a GPS violation.
-- **When several conflicts are unresolved at once, address one per
-  turn.** If the user asks what to work on first, briefly enumerate
+- **When several conflicts are unresolved at once, resolve exactly one
+  per invocation, whatever the delegation asks.** Briefly enumerate
   the open conflicts, then state which one you will resolve and
   *why* — prefer the most foundational (e.g., an identity question
   that determines whose records the others even compare), the one
   that blocks the most downstream questions, or the one with
   evidence actually available to resolve. Then do the full
   independence/weighing/resolution work on **that one conflict
-  only**, leaving the others' fields untouched this turn. Resolving
+  only**, leaving the others' fields untouched this invocation. Resolving
   several in a single pass produces tangled rationale and skips the
   prioritization judgment the user asked for; note the others as
   next steps instead.
@@ -576,7 +578,7 @@ Suggest next steps:
   proceed and do not stop after presenting findings — call
   `research_append` to create the conflict entry, then call it again
   to fill `independence_analysis`, `weighing_analysis`, and either
-  resolve or defer. A response that describes the conflict without
+  resolve or defer — for the one conflict you are resolving. A response that describes the conflict without
   persisting it is incomplete.
 
 ## Re-invocation behavior
