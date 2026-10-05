@@ -246,3 +246,19 @@ def test_ca_variable_names_the_bundled_ca(tier):
     env = _env(tier)
     assert env.get(layout.CA_ENV_VAR[tier]) == f"{layout.APP_DIR}/{layout.CA_PATH_IN_BUNDLE}", (tier, env)
     assert env.get("PGSSLMODE") == "verify-full", (tier, env)
+
+
+def test_the_hook_creates_exactly_the_slot_users_the_worker_is_told():
+    """U3: the hook's users and 02-worker.config's WORKER_TURN_USERS are two copies of one
+    list. A name only in the config refuses start (no such user); one only in the hook is a
+    slot no turn uses."""
+    text = WORKER_HOOK.read_text(encoding="utf-8")
+    match = re.search(r'^TURN_USERS="([^"]+)"$', text, re.MULTILINE)
+    assert match, f"{WORKER_HOOK.name} sets no TURN_USERS=\"…\""
+    assert match.group(1).split() == _env("worker")["WORKER_TURN_USERS"].split()
+    assert re.search(r"useradd [^\n]*--gid \"\$TURN_GROUP\"", text), "the users share the hook's group"
+    # The offline smoke runs the hook with no systemd; an unguarded reload fails the deploy.
+    reload_lines = [ln for ln in text.splitlines() if "systemctl daemon-reload" in ln and not ln.lstrip().startswith("#")]
+    assert reload_lines, "the drop-in is never loaded"
+    assert re.search(r"if \[ -d /run/systemd/system \]; then\n\s+systemctl daemon-reload", text), \
+        "the reload runs only where systemd does"
