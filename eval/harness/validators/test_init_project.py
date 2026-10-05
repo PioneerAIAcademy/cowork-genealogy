@@ -44,6 +44,28 @@ def test_both_project_files_created(before_state, after_state, test):
         assert False, "init-project did not create tree.gedcomx.json"
 
 
+_INIT_TOOLS = ("person_read", "person_search", "project_create")
+
+
+def test_existing_project_is_not_reinitialized(before_state, after_state, tool_calls, test):
+    """Tag-gated on `refuse-if-exists`: with a project already in the folder,
+    init-project's work must not run, whichever skill or agent the request
+    routes to. The negative test grades on this invariant because the right
+    destination may be an agent, and agents are not in `skills_invoked`."""
+    if "refuse-if-exists" not in test.get("tags", []):
+        pytest.skip("not a refuse-if-exists scenario")
+    called = sorted({_tool(c) for c in tool_calls or []} & set(_INIT_TOOLS))
+    assert not called, f"an existing project was re-initialized: called {called}"
+    before = (before_state.get("research_json") or {}).get("project") or {}
+    after = (after_state.get("research_json") or {}).get("project") or {}
+    assert before, "refuse-if-exists needs a scenario with an existing research.json"
+    for key in ("id", "created", "objective"):
+        assert after.get(key) == before.get(key), (
+            f"project.{key} changed from {before.get(key)!r} to {after.get(key)!r}: "
+            "the existing project was replaced"
+        )
+
+
 # --- Opening-turn defaults, checked exactly (tag-gated) -----------------
 
 # Issue #1510: the objective's default is defined as a fixed, verbatim

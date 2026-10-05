@@ -26,6 +26,7 @@ from test_init_project import (  # noqa: E402
     _DEFAULT_LEVEL,
     _HOUSE_STYLE,
     test_every_fact_and_relationship_is_sourced as check_sourced,
+    test_existing_project_is_not_reinitialized as check_not_reinit,
     test_narration_guidance_is_the_house_style as check_narration,
     test_person_level_sources_carried as check_person_sources,
     test_init_empty_sections as check_empty,
@@ -1009,3 +1010,46 @@ def test_host_built_tree_carries_person_level_sources(tmp_path):
     check_person_sources(calls, after)
     check_ark(after, calls)
     assert any(p.get("sources") for p in tree["persons"]), "V1 checked nothing"
+
+
+# --- refuse-if-exists invariant --------------------------------------------
+
+_REFUSE = {"type": "negative", "tags": ["refuse-if-exists"]}
+_PROJECT = {"id": "rp_001", "created": "2026-01-01", "objective": "Find Patrick's parents"}
+
+
+def _states(after_project=None):
+    before = {"research_json": {"project": dict(_PROJECT)}}
+    after = {"research_json": {"project": dict(after_project or _PROJECT)}}
+    return before, after
+
+
+def test_not_reinit_passes_when_the_request_is_routed_without_init_work():
+    before, after = _states()
+    calls = [{"tool": "mcp__genealogy__research_query", "args": {}},
+             {"tool": "mcp__genealogy__project_context", "args": {}}]
+    check_not_reinit(before, after, calls, _REFUSE)
+
+
+@pytest.mark.parametrize("tool", ["person_read", "person_search", "project_create"])
+def test_not_reinit_fails_on_any_init_tool_call(tool):
+    before, after = _states()
+    with pytest.raises(AssertionError, match=f"called \\['{tool}'\\]"):
+        check_not_reinit(before, after, [{"tool": f"mcp__genealogy__{tool}", "args": {}}], _REFUSE)
+
+
+@pytest.mark.parametrize("key,value", [("id", "rp_002"), ("created", "2026-10-05"), ("objective", "General research")])
+def test_not_reinit_fails_when_the_existing_project_was_replaced(key, value):
+    before, after = _states({**_PROJECT, key: value})
+    with pytest.raises(AssertionError, match=f"project.{key} changed"):
+        check_not_reinit(before, after, [], _REFUSE)
+
+
+def test_not_reinit_refuses_a_scenario_with_no_existing_project():
+    with pytest.raises(AssertionError, match="needs a scenario"):
+        check_not_reinit({"research_json": None}, {"research_json": None}, [], _REFUSE)
+
+
+def test_not_reinit_skips_untagged_tests():
+    with pytest.raises(pytest.skip.Exception):
+        check_not_reinit({}, {}, [{"tool": "mcp__genealogy__person_read"}], POSITIVE)
