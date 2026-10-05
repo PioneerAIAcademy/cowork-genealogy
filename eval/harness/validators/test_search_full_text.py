@@ -142,6 +142,30 @@ POST_SEARCH_FILTER_KEYS = (
 )
 
 
+def test_no_fulltext_search_on_planning_request(tool_calls, test):
+    """A test tagged `no-fulltext-search` is a planning request with no plan
+    item to anchor a search, so no fulltext_search call may be issued.
+
+    This is the gate `grade_on_invariant` hands the verdict to on
+    ut_search_full_text_006. Routing cannot be the gate there: on an empty
+    project the right destination is the question-selection agent, and a
+    routed negative counts `Skill` calls only, so a correct spawn would fail a
+    routing check.
+    """
+    if "no-fulltext-search" not in (test.get("tags") or []):
+        pytest.skip("not a no-fulltext-search test")
+
+    searches = [
+        tc for tc in (tool_calls or [])
+        if (tc.get("tool") or "").endswith("fulltext_search")
+    ]
+    assert not searches, (
+        f"{len(searches)} fulltext_search call(s) issued on a planning request "
+        "with no plan item to anchor them; search-full-text executes plan items "
+        "and must not search before a question and plan exist."
+    )
+
+
 def test_wiki_prework_fetch_runs_when_required(tool_calls, test):
     """A test tagged `wiki-prework` must actually issue the wiki_read calls
     SKILL.md step 3 declares REQUIRED for it (ADR-0012, "Name the fetch so

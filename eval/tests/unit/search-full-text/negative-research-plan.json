@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_search_full_text_006",
+    "skill": "search-full-text",
+    "name": "Planning request must not run a full-text search",
+    "type": "negative",
+    "description": "User asks what to research next — a planning request, not an execution request. search-full-text executes plan items; it does not generate plans or questions. On an empty project the right destination is the question-selection agent; once a question is active it is research-plan. Graded on the no-harm invariant (no fulltext_search call) rather than on routing: a routed negative counts Skill calls only, so the correct agent spawn could never satisfy a routing check (issue #2115).",
+    "tags": ["near-miss", "planning-vs-execution", "planning-skill-boundary", "no-fulltext-search"]
+  },
+  "input": {
+    "user_message": "I'm just starting a project on Patrick Flynn (b. ca. 1845, PA; d. 1908, Schuylkill Co.). Help me figure out the right opening research questions to scope this — I haven't written any plans or questions yet. Don't run any searches.",
+    "scenario": "empty-project-just-created"
+  },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "negative": {
+    "correct_skill": ["research-plan"],
+    "grade_on_invariant": true,
+    "explanation": "The user is asking for planning advice, not asking for a specific search to be executed. The gate is the deterministic validator test_no_fulltext_search_on_planning_request (eval/harness/validators/test_search_full_text.py), which runs via the `no-fulltext-search` tag and fails the run on any fulltext_search call. research-plan stays listed as an acceptable Skill route; spawning the question-selection agent, the right opener on an empty project, is equally acceptable and is why routing does not decide this test."
+  },
+  "judge_context": [
+    "This test is graded on the no-harm invariant, NOT on routing (`grade_on_invariant: true`): no fulltext_search call may be issued without a plan item to anchor it.",
+    "Routing to research-plan, or delegating to the question-selection agent to derive the opening question, are both acceptable — the user is asking what to ask and search next, which is planning territory.",
+    "May briefly explain the difference between planning and executing a search if it helps the genealogist understand the routing."
+  ]
+}
