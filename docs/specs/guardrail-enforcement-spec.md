@@ -483,7 +483,10 @@ an unjustified genealogical warning. The shadow detector is retargeted: instead
 of checking whether `person_warnings` was called after a write, it checks
 whether any writer returned `unjustified_warnings` and the agent never re-called
 with justifications. The prose "run check-warnings after writes" steps have been
-removed from the agent/skill bodies.
+removed from the three bodies that call a gated writer (`tree-edit`,
+`proof-conclusion`, `person-evidence`). `init-project` keeps its step: it writes
+only through `project_create` and `research_append`, and both are deliberately
+ungated (above), so nothing else would surface a warning on an imported tree.
 
 **What the replay claims, and what it does not.** It is a **behaviour-presence**
 measurement: did this shape occur in the corpus at all. It is **not** a per-run
