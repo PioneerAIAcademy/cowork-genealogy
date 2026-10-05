@@ -2655,6 +2655,11 @@ def setup_turn_users(hook_python_exe: str) -> list[str] | str:
         if seam is not None:
             raise turn_users.TurnUsersError(seam)
         turn_users.apply_process_creds(slots[0].gid)
+        # A slot's processes can outlive a worker that crashed or was restarted (outside a
+        # container nothing reaps them); the next patron on that uid must inherit none.
+        survivors = {s.name: turn_users.kill_uid(s.uid) for s in slots}
+        if any(survivors.values()):
+            log(ev="prepare", step="turn_users", killed=survivors)
         for slot in slots:
             problem = turn_users.probe(
                 slot, ([bundled_cli(), "-v"], [hook_python_exe, "-c", "import sys"]),

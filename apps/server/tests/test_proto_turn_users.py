@@ -213,3 +213,26 @@ def test_a_slot_turn_runs_as_its_user_in_its_own_home(tmp_path):
     assert opts.env["HOME"] == opts.env["TMPDIR"] == opts.env["CLAUDE_CODE_TMPDIR"] == "/tmp/turn-home-x"
     plain = _opts(tmp_path, WORKER_ENV)
     assert plain.user is None and plain.env["TMPDIR"] == "/tmp" and "CLAUDE_CODE_TMPDIR" not in plain.env
+
+
+def test_start_kills_what_a_previous_worker_left_on_each_slot_before_probing(monkeypatch):
+    """Outside a container a crashed worker's CLI children survive it; the new pool would
+    hand their uid to the next patron, who shares it with them."""
+    from proto.worker import worker
+
+    slots = [turn_users.Slot("genealogy-turn-0", 901, 900), turn_users.Slot("genealogy-turn-1", 902, 900)]
+    order: list[str] = []
+    monkeypatch.setattr(worker.os, "geteuid", lambda: 0)
+    monkeypatch.setattr(worker.turn_users, "parse", lambda raw, euid: slots)
+    monkeypatch.setattr(worker.turn_users, "check_seam", lambda connect: None)
+    monkeypatch.setattr(worker.turn_users, "apply_process_creds", lambda gid: order.append(f"creds {gid}"))
+    monkeypatch.setattr(worker.turn_users, "kill_uid", lambda uid: order.append(f"kill {uid}") or ([77] if uid == 902 else []))
+    monkeypatch.setattr(worker.turn_users, "probe", lambda slot, argvs, **kw: order.append(f"probe {slot.uid}"))
+    monkeypatch.setattr(worker.turn_users, "own_materialized_resumes", lambda module, slot_for: None)
+    monkeypatch.setattr(worker, "TURN_POOL", None)
+    monkeypatch.setattr(worker, "TURN_SLOTS", {})
+    logged = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    assert worker.setup_turn_users("/usr/bin/python3") == ["genealogy-turn-0", "genealogy-turn-1"]
+    assert order == ["creds 900", "kill 901", "kill 902", "probe 901", "probe 902"]
+    assert {"ev": "prepare", "step": "turn_users", "killed": {"genealogy-turn-0": [], "genealogy-turn-1": [77]}} in logged
