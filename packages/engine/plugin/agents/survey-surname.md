@@ -75,20 +75,12 @@ Read `totalMatches` on the first page. **If `totalMatches` exceeds 600: STOP for
 
 Page with `offset` += 100 until `hasMore` is false. When `hasMore` is false the page is the last one.
 
-Log every page, including the first, with `research_log_append`:
+Log every page, including the first, with `research_log_append`. Omit `query`: the staged search supplies it, page offset included.
 
 ```
 research_log_append({
   projectPath,
   tool: "record_search",
-  query: {
-    surname: "<surname>",
-    recordType: "census",
-    residenceYearFrom: <year>,
-    residenceYearTo: <year>,
-    recordCountry: "United States",
-    recordSubdivision: "<State>"
-  },
   outcome: "positive",
   resultsExamined: <returned>,
   resultsAvailable: <totalMatches>,
