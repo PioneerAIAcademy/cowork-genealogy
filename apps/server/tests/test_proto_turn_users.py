@@ -75,13 +75,18 @@ def test_probe_runs_each_command_as_the_slot_with_no_extra_groups(tmp_path):
     slot = turn_users.Slot("genealogy-turn-0", 901, 900)
     seen = []
 
+    run_args = []
+
     def run(argv, **kw):
         seen.append((argv[0], kw["user"], kw["group"], kw["extra_groups"], kw["cwd"]))
+        run_args.append(argv)
         return SimpleNamespace(returncode=0)
 
     assert turn_users.probe(slot, (["/cli", "-v"], ["/py", "-c", "x"]), cwd="/project", tmpdir=str(tmp_path), run=run) is None
     assert seen[:2] == [("/cli", 901, 900, [], "/project"), ("/py", 901, 900, [], "/project")]
     assert seen[2][0] == "/bin/sh", "and a directory made and removed under TMPDIR as that user"
+    script = " ".join(run_args[-1])
+    assert "mktemp -d" in script and str(slot.uid) not in script, "a random name: a fixed one could be planted"
 
     def failing(argv, **kw):
         return SimpleNamespace(returncode=126 if argv[0] == "/py" else 0)
@@ -227,6 +232,8 @@ def test_start_kills_what_a_previous_worker_left_on_each_slot_before_probing(mon
     monkeypatch.setattr(worker.turn_users, "check_seam", lambda connect: None)
     monkeypatch.setattr(worker.turn_users, "apply_process_creds", lambda gid: order.append(f"creds {gid}"))
     monkeypatch.setattr(worker.turn_users, "kill_uid", lambda uid: order.append(f"kill {uid}") or ([77] if uid == 902 else []))
+    monkeypatch.setattr(worker.turn_users, "purge_uid_files",
+                        lambda uid, roots: order.append(f"purge {uid}") or (["/tmp/worker-cfg-x"] if uid == 901 else []))
     monkeypatch.setattr(worker.turn_users, "probe", lambda slot, argvs, **kw: order.append(f"probe {slot.uid}"))
     monkeypatch.setattr(worker.turn_users, "own_materialized_resumes", lambda module, slot_for: None)
     monkeypatch.setattr(worker, "TURN_POOL", None)
@@ -234,5 +241,36 @@ def test_start_kills_what_a_previous_worker_left_on_each_slot_before_probing(mon
     logged = []
     monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
     assert worker.setup_turn_users("/usr/bin/python3") == ["genealogy-turn-0", "genealogy-turn-1"]
-    assert order == ["creds 900", "kill 901", "kill 902", "probe 901", "probe 902"]
-    assert {"ev": "prepare", "step": "turn_users", "killed": {"genealogy-turn-0": [], "genealogy-turn-1": [77]}} in logged
+    assert order == ["creds 900", "kill 901", "kill 902", "purge 901", "purge 902", "probe 901", "probe 902"]
+    assert {"ev": "prepare", "step": "turn_users", "killed": {"genealogy-turn-0": [], "genealogy-turn-1": [77]},
+            "purged": {"genealogy-turn-0": 1, "genealogy-turn-1": 0}} in logged
+
+
+def test_purge_removes_only_the_uids_entries_and_never_follows_a_link(tmp_path):
+    """An unclean exit leaves a turn's whole dir (mcp.json, a patron's bearer) behind, and an
+    agent can write anywhere world-writable; the next patron on the uid must find neither."""
+    root = tmp_path / "tmp"
+    root.mkdir()
+    (root / "worker-cfg-left").mkdir()
+    (root / "worker-cfg-left" / "mcp.json").write_text("{}", encoding="utf-8")
+    (root / "notes.md").write_text("from the last patron", encoding="utf-8")
+    keep = tmp_path / "outside.txt"
+    keep.write_text("not the slot's", encoding="utf-8")
+    (root / "link").symlink_to(keep)
+    keep_dir = tmp_path / "outside-dir"
+    keep_dir.mkdir()
+    (keep_dir / "x").write_text("not the slot's", encoding="utf-8")
+    (root / "dirlink").symlink_to(keep_dir, target_is_directory=True)
+    me = os.getuid()
+    assert turn_users.purge_uid_files(me + 1, [str(root)]) == [], "another uid's entries are untouched"
+    assert len(list(root.iterdir())) == 4
+    removed = turn_users.purge_uid_files(me, [str(root), str(tmp_path / "missing")])
+    assert sorted(Path(p).name for p in removed) == ["dirlink", "link", "notes.md", "worker-cfg-left"]
+    assert list(root.iterdir()) == [] and keep.read_text(encoding="utf-8") == "not the slot's"
+    assert (keep_dir / "x").exists(), "a link to a directory is unlinked, its target untouched"
+
+
+def test_purge_roots_cover_the_world_writable_dirs_once():
+    roots = turn_users.purge_roots("/tmp")
+    assert roots == ("/tmp", "/var/tmp", "/dev/shm")
+    assert turn_users.purge_roots("/scratch")[0] == "/scratch"

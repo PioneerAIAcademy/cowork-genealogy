@@ -1984,7 +1984,12 @@ async def _run_turn(
         # U3: this attempt's CLI runs as a slot user that owns its config dir and home and
         # nothing of any other turn's.
         if TURN_POOL is not None:
-            slot = TURN_POOL.acquire()
+            try:
+                slot = TURN_POOL.acquire()
+            except turn_users.NoTurnUser:
+                # sqsd sent more turns than HttpConnections, or a slot leaked: the 500 retries.
+                log(ev="no_turn_user", turn_id=turn_id, session_id=session_id)
+                raise
             turn_home = tempfile.mkdtemp(prefix="turn-home-")
             turn_users.chown_tree(turn_home, slot)
         options = build_worker_options(
@@ -2157,6 +2162,7 @@ async def _run_turn(
         # outlive the CLI, and the next patron on the slot must inherit no process.
         if slot is not None:
             turn_users.kill_uid(slot.uid)
+            turn_users.purge_uid_files(slot.uid, turn_users.purge_roots())
         # The lock outlives the CLI: released only once client.disconnect() has killed it.
         if isinstance(held, HeldGrant):
             held.close()
@@ -2658,8 +2664,10 @@ def setup_turn_users(hook_python_exe: str) -> list[str] | str:
         # A slot's processes can outlive a worker that crashed or was restarted (outside a
         # container nothing reaps them); the next patron on that uid must inherit none.
         survivors = {s.name: turn_users.kill_uid(s.uid) for s in slots}
-        if any(survivors.values()):
-            log(ev="prepare", step="turn_users", killed=survivors)
+        # ...and its files: an unclean exit leaves each attempt's dirs, mcp.json included.
+        leftovers = {s.name: len(turn_users.purge_uid_files(s.uid, turn_users.purge_roots())) for s in slots}
+        if any(survivors.values()) or any(leftovers.values()):
+            log(ev="prepare", step="turn_users", killed=survivors, purged=leftovers)
         for slot in slots:
             problem = turn_users.probe(
                 slot, ([bundled_cli(), "-v"], [hook_python_exe, "-c", "import sys"]),

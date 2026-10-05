@@ -21,8 +21,10 @@ import inspect
 import os
 import pwd
 import re
+import shutil
 import signal
 import subprocess
+import tempfile
 import threading
 from dataclasses import dataclass
 from typing import Any, Callable, Iterable
@@ -95,9 +97,9 @@ def probe(slot: Slot, argvs: Iterable[list[str]], *, cwd: str, tmpdir: str, run=
             return f"{slot.name}: {argv[0]}: {type(exc).__name__}: {exc}"
         if done.returncode != 0:
             return f"{slot.name}: {argv[0]} exited {done.returncode}"
-    probe_dir = os.path.join(tmpdir, f".turn-user-probe-{slot.uid}")
-    done = run(["/bin/sh", "-c", 'mkdir "$1" && rmdir "$1"', "probe", probe_dir], cwd=cwd, user=slot.uid,
-               group=slot.gid, extra_groups=[], capture_output=True, timeout=30, check=False)
+    # A random name: a fixed one is a file any turn could plant to stop every later start.
+    done = run(["/bin/sh", "-c", 'd=$(mktemp -d -p "$1" .turn-user-probe-XXXXXXXX) && rmdir "$d"', "probe", tmpdir],
+               cwd=cwd, user=slot.uid, group=slot.gid, extra_groups=[], capture_output=True, timeout=30, check=False)
     if done.returncode != 0:
         return f"{slot.name}: cannot make a directory under {tmpdir}"
     return None
@@ -150,6 +152,36 @@ def kill_uid(uid: int, *, pids: Callable[[int], list[int]] = uid_pids, kill=os.k
         except ProcessLookupError:
             pass
     return killed
+
+
+def purge_roots(tmpdir: str | None = None) -> tuple[str, ...]:
+    """The world-writable directories a slot user can leave files in: everywhere else it can
+    write is the turn's own config dir and home, which the attempt removes."""
+    return tuple(dict.fromkeys((tmpdir or tempfile.gettempdir(), "/tmp", "/var/tmp", "/dev/shm")))
+
+
+def purge_uid_files(uid: int, roots: Iterable[str]) -> list[str]:
+    """Delete every entry directly under ``roots`` owned by ``uid`` -- a file the agent wrote,
+    or a whole turn dir (``mcp.json`` with its patron's bearer) an unclean exit left -- so the
+    next patron on the uid inherits nothing. Symlinks are removed, never followed."""
+    removed = []
+    for root in roots:
+        try:
+            entries = list(os.scandir(root))
+        except OSError:
+            continue
+        for entry in entries:
+            try:
+                if entry.stat(follow_symlinks=False).st_uid != uid:
+                    continue
+                if entry.is_dir(follow_symlinks=False):
+                    shutil.rmtree(entry.path)
+                else:
+                    os.unlink(entry.path)
+                removed.append(entry.path)
+            except OSError:
+                continue
+    return removed
 
 
 class Pool:

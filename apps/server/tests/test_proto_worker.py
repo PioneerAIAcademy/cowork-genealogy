@@ -4277,6 +4277,8 @@ def test_an_attempt_runs_its_cli_as_a_slot_user_and_leaves_the_slot_clean(turn_e
     monkeypatch.setattr(worker, "TURN_POOL", pool)
     monkeypatch.setattr(worker.turn_users, "chown_tree", lambda path, s: owned.append(path) or (s == slot) or 1 / 0)
     monkeypatch.setattr(worker.turn_users, "kill_uid", lambda uid: turn_env["events"].append(f"kill {uid}") or [])
+    monkeypatch.setattr(worker.turn_users, "purge_uid_files",
+                        lambda uid, roots: turn_env["events"].append(f"purge {uid}") or [])
     turn_env["client"] = FakeClient(_good(), _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
     asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
     opts = turn_env["options"]
@@ -4285,7 +4287,8 @@ def test_an_attempt_runs_its_cli_as_a_slot_user_and_leaves_the_slot_clean(turn_e
     assert Path(home).name.startswith("turn-home-") and not Path(home).exists(), "made, then removed"
     assert owned == [home, opts["config_dir"]], "home first; the config dir once mcp.json is in it"
     events = turn_env["events"]
-    assert events.index("kill 901") < events.index("held.close"), "nothing of the slot outlives the lock"
+    assert events.index("kill 901") < events.index("purge 901") < events.index("held.close"), \
+        "nothing of the slot -- process or file -- outlives the lock"
     assert pool.acquire() == slot, "the slot is back"
 
 
