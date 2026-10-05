@@ -1,9 +1,10 @@
 # Contributor program
 
-Up to seven very junior developers, called Contributors, start together, each
+Seven very junior developers, called Contributors, start together, each
 working about 10 hours a week for three months, with a Claude Code subscription
-and FamilySearch and OpenRouter credentials. Each has one mentor, a developer on
-this project who also works at another company. The program is for the
+and FamilySearch and OpenRouter credentials. Each has their own mentor, one of
+seven developers on this project who also work at another company; no mentor
+has more than one Contributor. The program is for the
 Contributor: real production experience, and a mentor who can recommend them to
 that company from first-hand experience. It is not a hiring pipeline.
 
@@ -25,9 +26,8 @@ that company from first-hand experience. It is not a hiring pipeline.
 - **Review:** the Contributor runs `/review` on their own PR first; the mentor
   does the required review. Every PR carries a screenshot and a "how I verified
   this" section.
-- **Twice a week, post three lines in the cohort channel:** done, next, stuck
-  on. Stuck for an hour after asking Claude? Post what you tried there. Any
-  Contributor may answer.
+- **Check in with your mentor every day you work:** done, next, stuck on.
+  Stuck for an hour after asking Claude? Send your mentor what you tried.
 - **A 30-minute call with the mentor every week**, on what is next and where they
   are stuck.
 - **Week 3:** a Contributor with no merged PR, or a week without a check-in and
@@ -42,12 +42,7 @@ Never hand a Contributor anything on a Beta critical path, anything labelled
 `cluster:` or `needs-decision`, or a SKILL.md or agent-body edit (draft V19 has
 the one exception).
 
-## Mentors
-
-Mentoring takes about two hours a week: the call, reading check-ins, carving
-off pieces, and reviewing PRs. Say yes only if you can give that for twelve
-weeks. Each mentor names another mentor as backup; after two missed calls in a
-row the Contributor tells the lead, and the backup covers.
+## The recommendation
 
 The recommendation is the mentor's to write to their own company. What counts:
 sensibly sized PRs, checking the change in a browser and not just in tests,
@@ -57,6 +52,5 @@ demo.
 
 ## Before week 1 (lead)
 
-Pair each Contributor with a mentor who has agreed to the two hours, file V0,
-create the `contributor` label and the cohort channel, and schedule the
-kickoff.
+Pair each Contributor with a mentor, file V0, create the `contributor` label,
+and schedule the kickoff.
