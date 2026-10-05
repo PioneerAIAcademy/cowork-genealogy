@@ -75,12 +75,13 @@ fact conflicts which require at least two).
 
 ### 1. Identify conflicts
 
-**First, is a decision being asked for?** A request to add a candidate, or
-to keep track of what supports and contradicts each candidate, asks for no
-decision. Write nothing, and do not ask the user whether to proceed: spawn
+**First, is this candidate bookkeeping?** A request to add a candidate
+person (a possible father, say), or to keep track of what supports and
+contradicts each candidate person, asks for no decision. Write nothing, and do not ask the user whether to proceed: spawn
 `@plugin:hypothesis-tracking` with the user's request as they gave it, adding
-no reading of your own. Candidates that exist are not competing values
-until the user asks which one is right.
+no reading of your own. Candidate persons are not competing values until
+the user asks which one is right. Competing readings or values of one fact,
+a disputed name reading included, are a conflict: go on with the steps.
 
 Read the `assertions` and `person_evidence` sections with
 `research_query` — `project_context` alone does not show assertion
@@ -546,7 +547,9 @@ Suggest next steps:
 - **Work with the assertions already in `research.json`.** When the
   user reports a disagreement, read the existing assertions and
   person_evidence first. Do not ask the user for an image or for data
-  that the project already contains. Do not ask for permission to
+  that the project already contains. A reading the user offers ("it looks
+  like Tannetje to me") is one more reading to weigh in the conflict, never
+  a correction: do not update the assertion's value. Do not ask for permission to
   proceed and do not stop after presenting findings — call
   `research_append` to create the conflict entry, then call it again
   to fill `independence_analysis`, `weighing_analysis`, and either
