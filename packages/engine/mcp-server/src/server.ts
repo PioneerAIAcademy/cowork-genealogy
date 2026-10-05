@@ -151,10 +151,23 @@ export function createServer(principal: Principal): Server {
       // A pure signal: no network, no auth, no project write. On the hosted path a
       // PreToolUse hook ends the turn on this tool's NAME before it executes, so this
       // arm runs only where no such hook binds (Cowork, the unit harness).
-      const args = request.params.arguments as unknown as ResearchDeliveredInput;
-      return {
-        content: [{ type: "text", text: JSON.stringify(researchDelivered(args)) }]
-      };
+      //
+      // The try/catch is not decoration: the server does NOT validate `inputSchema`, so
+      // a non-string `summary` reaches the body and `.trim()` throws. Every other arm
+      // here returns `isError` with a readable message; without this one, that throw
+      // escapes as a protocol-level MCP error instead.
+      try {
+        const args = request.params.arguments as unknown as ResearchDeliveredInput;
+        return {
+          content: [{ type: "text", text: JSON.stringify(researchDelivered(args)) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
     }
 
     if (request.params.name === "wikipedia_search") {

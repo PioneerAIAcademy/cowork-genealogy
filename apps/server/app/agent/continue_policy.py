@@ -34,6 +34,7 @@ from typing import Any
 #   budget           a budget is spent -- the nudge cap, or 1e's per-session spend bound
 #   no_progress      a nudge produced no tool call, mid-research
 #   decision         the agent asked something only the patron can answer (phase 3)
+#   delivered        a BOUNDED request was met and the turn stopped on purpose
 #   mcp_unavailable  the genealogy tool surface went away
 #
 # The point of having more than one: ``complete()`` used to hardcode 'ok', so EVERY way a

@@ -78,8 +78,8 @@ in issue #2932 "leave it at that" was the second message on an existing project,
 void on the next message. The agent says it has delivered what was asked by calling
 `research_delivered` — a tool SEPARATE from the *I need you* carrier below, because an ask
 waits for an answer and a delivery waits for nothing (ruled 2026-09-29; the carriers were
-split, see `docs/specs/research-delivered-tool-spec.md`). **LANDED on `main`** — the exit,
-the tool and the browser label all shipped independently of this plan. The turn ends with an
+split, see `docs/specs/research-delivered-tool-spec.md`). **Being landed on `main` separately** (branch `delivered-exit-on-main`): the exit,
+the tool and the browser label ship independently of this plan. The turn ends with an
 outcome of its own — `completed`
 means the project is done and reads "Research complete.". "Where are we?" is a bounded request
 whose deliverable is the answer. Whatever re-enters the router must respect this, or every
@@ -121,7 +121,7 @@ ends `decision` and the answer arrives as the next message. That narrows phase 3
 carried questions to one: which call means *I need you*. The worker's `PreToolUse` hook
 already reads control-plane rows on every call, so the choice is the model's own
 `AskUserQuestion`, intercepted, or one dedicated tool shaped like PR #2702's `hand_back`.
-Pick one. It does **not** also carry *delivered what was asked*: the 2026-09-29 ruling split the carriers, and `research_delivered` shipped as its own tool (LANDED on `main`). On Cowork nothing intercepts it, so it must
+Pick one. It does **not** also carry *delivered what was asked*: the 2026-09-29 ruling split the carriers, and `research_delivered` is shipping as its own tool, separately from this plan. On Cowork nothing intercepts it, so it must
 read sensibly there. `AskUserQuestion` is granted on the prototype, handled
 nowhere in `apps/`, and appears unprompted in 13 committed unit run logs, so first record what
 it does on a continuous hosted turn today. The card is phase 3; the exit is not.

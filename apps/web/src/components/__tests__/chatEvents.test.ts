@@ -292,7 +292,8 @@ describe('clearQueued', () => {
 describe('turnOutcomeLabel', () => {
   it('names each terminal outcome the worker can write', () => {
     for (const outcome of ['completed', 'stopped', 'queued', 'budget', 'no_progress',
-                           'decision', 'mcp_unavailable', 'retries_exhausted', 'transcript_lost']) {
+                           'decision', 'delivered', 'mcp_unavailable', 'retries_exhausted',
+                           'transcript_lost']) {
       expect(turnOutcomeLabel(outcome)).toBeTruthy()
     }
   })
@@ -333,8 +334,8 @@ describe('turnOutcomeLabel', () => {
   })
 
   it('distinguishes a finished run from every paused one', () => {
-    const labels = ['completed', 'stopped', 'budget', 'no_progress', 'mcp_unavailable', 'retries_exhausted',
-                    'transcript_lost']
+    const labels = ['completed', 'stopped', 'budget', 'no_progress', 'delivered', 'mcp_unavailable',
+                    'retries_exhausted', 'transcript_lost']
       .map((o) => turnOutcomeLabel(o))
     expect(new Set(labels).size).toBe(labels.length)
   })
