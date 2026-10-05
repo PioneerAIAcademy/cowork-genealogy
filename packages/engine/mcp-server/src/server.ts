@@ -95,7 +95,7 @@ import { treeEdit, type TreeEditInput } from "./tools/tree-edit.js";
 import { treeCorrect, type TreeCorrectInput } from "./tools/tree-correct.js";
 import { treeForget, type TreeForgetInput } from "./tools/tree-forget.js";
 import {
-  researchAppend,
+  researchAppendFromCaller,
   type ResearchAppendInput,
 } from "./tools/research-append.js";
 import { rankSearchMatches } from "./tools/rank-search-matches.js";
@@ -728,7 +728,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "research_append") {
       try {
         const args = request.params.arguments as unknown as ResearchAppendInput;
-        const result = await researchAppend(args);
+        const result = await researchAppendFromCaller(args);
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

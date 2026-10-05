@@ -1394,7 +1394,7 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
             input_obj["projectPath"] = str(_ws).replace("\\", "/")
 
             script = (
-                f"import {{ researchAppend }} from '{append_url}';"
+                f"import {{ researchAppendFromCaller as researchAppend }} from '{append_url}';"
                 " import { readFileSync } from 'node:fs';"
                 " const input = JSON.parse(readFileSync(0, 'utf-8'));"
                 " const r = await researchAppend(input);"
