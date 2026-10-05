@@ -120,7 +120,7 @@ services:
   # D9-10 worker: one patron turn per message through the Agent SDK. Context is the
   # repo root (the image carries packages/engine/plugin and apps/server); the root
   # .dockerignore drops node_modules, .git, .venv and eval. Its tools are the D16 `tools`
-  # service below (options.py's TOOL_SERVER_URL default, http://tools:8787/mcp), ONE
+  # service below (TOOL_SERVER_URL, which the worker requires), ONE
   # process for every turn and every patron -- bearer as Authorization, the turn's
   # project id as X-Genealogy-Project-Id, the store bound per request. Only the recipes
   # that wait for `tools` can run a real turn -- proto-up, proto-turn, proto-kill,
@@ -139,6 +139,12 @@ services:
     # the 500 is lost.
     stop_grace_period: 30s
     environment:
+      # U11: the worker honours its dev-only paths -- the D3 smoke's stub turns,
+      # BLOCKED_TOOLS, an unset QUEUE_URL, the default FS_TOKEN_ENC_KEY -- only when this is
+      # true. Compose only, worker only: never in an image or a Beanstalk template
+      # (test_proto_bundles.py), and the web tier never reads it.
+      DEV_PATHS: "true"
+      TOOL_SERVER_URL: http://tools:8787/mcp
       PG_DSN: postgresql://postgres:proto@postgres:5432/proto
       # The model. Passed through from the host environment at `up` time, never a
       # literal here; the stub arms run with it empty.
@@ -180,7 +186,7 @@ services:
       # 1b: where a message held during a turn is released to when that turn ends. The
       # SAME queue the web tier and the shim use. The worker is the only component that
       # knows a turn finished -- the web tier is stateless and the browser may be closed
-      # -- so the handover is its job. Unset means no release.
+      # -- so the handover is its job. Empty means no release, which needs DEV_PATHS.
       QUEUE_URL: http://elasticmq:9324/000000000000/turns
       # U7: the release is SigV4-signed (proto/enqueue.py). elasticmq ignores signatures;
       # these dummies exercise the default-chain (env) path and keep it off IMDS. Not
