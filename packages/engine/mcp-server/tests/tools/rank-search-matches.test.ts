@@ -966,6 +966,95 @@ describe("rank_search_matches", () => {
   });
 
 
+  // ── #2811: subjectTooThin — the namesake gate flag ─────────────────────────
+
+  describe("subjectTooThin (#2811)", () => {
+    it("returns subjectTooThin: true for {name + city} — no narrow date, no relatives", async () => {
+      const tree = {
+        persons: [{ id: "I1", names: [{ given: "Ugo", surname: "Stella" }], facts: [{ type: "Residence", place: "Milan" }] }],
+        relationships: [],
+        sources: [],
+      };
+      await writeTree(tree);
+      scorePairMock.mockResolvedValue(scoreResult(0.5, 3));
+      const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
+
+      const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
+
+      expect(out.subjectTooThin).toBe(true);
+    });
+
+    it("returns subjectTooThin: true for {name + year + country} — year-only does not count as narrower", async () => {
+      const tree = {
+        persons: [{ id: "I1", names: [{ given: "Ugo", surname: "Stella" }], facts: [{ type: "Birth", date: "1910", place: "Italy" }] }],
+        relationships: [],
+        sources: [],
+      };
+      await writeTree(tree);
+      scorePairMock.mockResolvedValue(scoreResult(0.5, 3));
+      const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
+
+      const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
+
+      expect(out.subjectTooThin).toBe(true);
+    });
+
+    it("returns subjectTooThin: false for {name + spouse} — a named relative separates namesakes", async () => {
+      const tree = {
+        persons: [
+          { id: "I1", names: [{ given: "Ugo", surname: "Stella" }] },
+          { id: "I2", names: [{ given: "Anna", surname: "Rossi" }] },
+        ],
+        relationships: [{ type: "Couple", person1: "I1", person2: "I2" }],
+        sources: [],
+      };
+      await writeTree(tree);
+      scorePairMock.mockResolvedValue(scoreResult(0.5, 3));
+      const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
+
+      const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
+
+      expect(out.subjectTooThin).toBeUndefined();
+    });
+
+    it("returns subjectTooThin: false for {name + full date + place} — a narrow date separates namesakes", async () => {
+      const tree = {
+        persons: [{ id: "I1", names: [{ given: "Kenneth", surname: "Quass" }], facts: [{ type: "Birth", date: "4 Dec 1917", place: "Sumner, Bremer, Iowa" }] }],
+        relationships: [],
+        sources: [],
+      };
+      await writeTree(tree);
+      scorePairMock.mockResolvedValue(scoreResult(0.5, 3));
+      const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
+
+      const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
+
+      expect(out.subjectTooThin).toBeUndefined();
+    });
+
+    it("the withholding branch still fires only on zero dated/placed facts, not on subjectTooThin", async () => {
+      // A subject with a city residence (one placed fact) but no narrow date
+      // and no relative is subjectTooThin but NOT noDatedOrPlacedFact, so
+      // withholding must NOT fire even when every score is degenerate.
+      const tree = {
+        persons: [{ id: "I1", names: [{ given: "Ugo", surname: "Stella" }], facts: [{ type: "Residence", place: "Milan" }] }],
+        relationships: [],
+        sources: [],
+      };
+      await writeTree(tree);
+      scorePairMock.mockResolvedValue(scoreResult(0.001));
+      const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
+
+      const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
+
+      expect(out.subjectTooThin).toBe(true);
+      // Withholding did NOT fire — matches are still returned (real negative path)
+      expect(out.matches.length).toBe(1);
+      expect(out.subjectResolvable).toBe(false);
+      expect(out.diagnostic).toMatch(/real negative/);
+    });
+  });
+
   // Carried over from the #1212 ruling: the standalone tool is advertised in the
   // manifest and dispatched with an unchecked cast, so it must range-check `top`
   // itself. Since #2657 removed `top` from record_search there is nowhere else

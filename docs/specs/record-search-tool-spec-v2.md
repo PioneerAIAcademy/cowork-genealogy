@@ -385,8 +385,10 @@ reads the record.
 When a search ranks, `results` comes back **annotated in place** — each row
 carries `matchRank`, `searchRank`, `matchScore`, and where available
 `matchConfidence`, `candidateFactCount` and the `attachedTo*` flags — and the
-list is ordered **best first**. `ranked` carries metadata only; it has no row
-list of its own. There is one set of rows, never two.
+list is ordered **best first**. `ranked` carries metadata only (plus
+`subjectTooThin: true` when the subject lacks both a narrow date and a named
+relative — see `rank-search-matches-tool-spec.md` § `subjectTooThin`); it has
+no row list of its own. There is one set of rows, never two.
 
 `searchRank` is what keeps that re-ordering **auditable rather than lossy**.
 Sorting by match score discards FamilySearch's own ordering, so without the

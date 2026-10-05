@@ -136,7 +136,7 @@ export async function rankSearchMatches(
   const noSignal = !scored.some(
     (s) => s.matchScore !== null && s.matchScore > DEGENERATE_FLOOR,
   );
-  const subjectTooThin = subject.discriminatingFacts === 0;
+  const noDatedOrPlacedFact = subject.discriminatingFacts === 0;
 
   // ── 6+7. Build the stubs; fold in attachments if requested ────────────────
   // Every scored candidate, not a fixed top-N (#1212). `top` narrows only when
@@ -166,8 +166,9 @@ export async function rankSearchMatches(
   };
   if (subject.enrichedFacts > 0) out.subjectEnrichedFacts = subject.enrichedFacts;
   if (subject.enrichedNames > 0) out.subjectEnrichedNames = subject.enrichedNames;
+  if (subject.subjectTooThin) out.subjectTooThin = true;
 
-  if (noSignal && subjectTooThin) {
+  if (noSignal && noDatedOrPlacedFact) {
     // Withhold the ranking rather than flag it. Returning a ranked-LOOKING
     // top-10 that is really search order is the silent-degradation path: the
     // caller cannot tell noise from signal, and FamilySearch's own search order
@@ -247,6 +248,55 @@ function discriminatingFactCount(person: { facts?: any[] }): number {
   ).length;
 }
 
+/** A bare year: "1829", "+1829". Anything with a month or day is narrower. */
+const BARE_YEAR_RE = /^\+?\d{4}$/;
+
+/** True when at least one fact carries a date more specific than a bare year.
+ *  Used for the #2811 `subjectTooThin` definition: a year-only date does not
+ *  separate namesakes. */
+function hasDateNarrowerThanYear(facts: any[]): boolean {
+  for (const f of facts) {
+    if (!f) continue;
+    for (const d of [f.date, f.standard_date]) {
+      if (typeof d === "string" && d.length > 0 && !BARE_YEAR_RE.test(d)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/** True when the tree records at least one named spouse, parent or child for
+ *  `subjectId`. A "named" person has at least one SimplifiedName with a `given`
+ *  or `surname`. */
+function hasNamedRelative(
+  tree: SimplifiedGedcomX,
+  subjectId: string,
+): boolean {
+  const personHasName = (id: string): boolean => {
+    const p = (tree.persons ?? []).find((per) => per.id === id);
+    return (p?.names ?? []).some(
+      (n) => (n.given && n.given.trim()) || (n.surname && n.surname.trim()),
+    );
+  };
+
+  for (const rel of tree.relationships ?? []) {
+    if (rel.type === "ParentChild") {
+      if (rel.parent === subjectId && rel.child && personHasName(rel.child))
+        return true;
+      if (rel.child === subjectId && rel.parent && personHasName(rel.parent))
+        return true;
+    }
+    if (rel.type === "Couple") {
+      if (rel.person1 === subjectId && rel.person2 && personHasName(rel.person2))
+        return true;
+      if (rel.person2 === subjectId && rel.person1 && personHasName(rel.person1))
+        return true;
+    }
+  }
+  return false;
+}
+
 interface SubjectDoc {
   doc: SimplifiedGedcomX;
   /** Facts carrying a date or place, after enrichment. */
@@ -262,6 +312,11 @@ interface SubjectDoc {
   enrichedNames: number;
   /** True when enrichment supplied a gender the tree person lacked. */
   enrichedGender: boolean;
+  /** #2811: true when the subject has no date narrower than a year AND no named
+   *  spouse, parent or child — nothing that separates this person from any
+   *  same-named individual. Independent of `discriminatingFacts` (a city-only
+   *  residence has a place but no narrow date and no relative). */
+  subjectTooThin: boolean;
 }
 
 // Exported for dev/probe-rank-enrichment.ts, which A/Bs the enriched subject
@@ -384,12 +439,19 @@ export async function buildSubjectDoc(
 
   // The mint-hardening in match-engine synthesizes a conforming Persistent id
   // for the ark-less subject, so scoring stays deterministic.
+  // #2811: a subject is "too thin" when it has no date narrower than a year AND
+  // no named relative — nothing that separates it from any same-named person.
+  const tooThin =
+    !hasDateNarrowerThanYear(enriched.facts ?? []) &&
+    !hasNamedRelative(tree, subjectId);
+
   return {
     doc: { persons: [enriched] },
     discriminatingFacts: discriminatingFactCount(enriched),
     enrichedFacts: (enriched.facts ?? []).length - before,
     enrichedNames: (enriched.names ?? []).length - namesBefore,
     enrichedGender: Boolean(enriched.gender) && !hadGender,
+    subjectTooThin: tooThin,
   };
 }
 

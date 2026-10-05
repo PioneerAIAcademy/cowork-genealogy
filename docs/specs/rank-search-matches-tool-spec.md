@@ -221,6 +221,7 @@ Sorted by `matchScore` descending; no gedcomx.
   "returnedCount": 10,        // min(top, scoredCount)
   "scoringErrors": 0,         // pairs whose FS call kept failing (kept, matchScore null)
   "scoreLogError": null,      // present only if the calibration append failed
+  "subjectTooThin": true,     // only when the subject lacks a narrow date AND a named relative
   "matches": [
     {
       "matchRank": 1,
@@ -324,6 +325,23 @@ Absence carries no information: most records trace to no batch, and a collection
 routinely returns hits both with and without one. See
 `record-search-tool-spec-v2.md` § `batchNumber` for where it is read from and why
 it is matched on `labelId`.
+
+### `subjectTooThin` — namesake gate flag
+
+Present and `true` when the subject has **no date narrower than a year** (a bare
+"1829" or standard_date "+1829" does not count) **AND** no named spouse, parent
+or child in the tree — i.e. nothing that separates this person from any
+same-named individual. Omitted when the subject is not too thin.
+
+Independent of the withholding branch (`subjectResolvable: false` +
+`matches: []`), which fires on zero dated/placed facts. A subject with a
+city-only residence has a placed fact (withholding does not fire) but may still
+be `subjectTooThin` (no narrow date, no relative). Both can be true
+simultaneously — the desired semantics for the search-records namesake gate,
+which reads the flag regardless of whether matches were returned.
+
+The **stricter form** — ignore facts the query already filtered on, since every
+result shares those by construction — was deferred. Ship the base rule only.
 
 ## Tool schema
 
