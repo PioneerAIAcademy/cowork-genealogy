@@ -1,22 +1,60 @@
-# Issue #2813 items 1, 4, 5 and 6: one batch, one paid run
+# Issue #2813 items 1, 4 and 6: the router's bounded/job decision
 
-**Status:** PENDING — not yet built. Plan only.
+**Status:** PENDING — not yet built. Plan only. Rewritten after plan-critic returned
+five blocking findings on the first draft; what changed is listed at the end.
 
 **Throughout, `main` means `origin/main`.** The local `main` ref in this checkout is ~281
 commits behind it.
 
 ## Why these four together, and nothing else from #2813
 
-All four edit `packages/engine/plugin/skills/research/SKILL.md`, which is inside the
-`research` eval snapshot (`eval/harness/harness/snapshot.py`: a snapshot covers
-`skills/<skill>/**`, the agents a SKILL.md names via `@plugin:`, `eval/tests/unit/<skill>/**`,
-and the scenarios + MCP fixtures those reference). **Any edit to that file buys a paid run
-(~$8-12, 45-65 min).** Four separate PRs would buy four. Batched, they buy one.
+## What a `research` eval run actually costs
+
+The first draft said "~$8-12, 45-65 min", lifted from `docs/specs/task-review-spec.md:210`,
+a generic figure for any `make eval-skill`. Measured instead from all twelve committed
+`research` run logs (`totals.total_cost_usd`, `totals.wall_clock_ms`):
+
+| | |
+|---|---|
+| median | **$3.24** |
+| range | **$0.58 (5 tests) to $6.09 (15 tests)** |
+| per test | **~$0.28 median** |
+| wall clock | 3.6 to 55.8 min, median ~15 |
+
+A counter-figure of "$1-2" circulated in review; it came from `v6`/`v7`, which ran **5**
+tests each. For a 10-13 test suite the honest expectation is **~$3-4 and ~15-30 minutes**.
+
+## Why batch, on the corrected number
+
+Three items edit `packages/engine/plugin/skills/research/SKILL.md`, inside the `research`
+eval snapshot (`eval/harness/harness/snapshot.py:145-157`). Each separate PR buys its own
+run, so three PRs cost ~$6.50 more than one.
+
+**That is a real saving but no longer the main argument.** The stronger one is coherence:
+items 1, 4 and 6 are three clauses of one behaviour — decide the request is bounded, start
+from what is attached, report candidates rather than a verdict. Split across three PRs, each
+lands a rule whose neighbours do not exist yet, and the file's contradictions (below) have
+to be re-resolved three times.
+
+**If the reviewer prefers three independent review rounds for ~$6.50, that is defensible and
+this plan should be split.** Named here so the call is made on the measured number.
 
 The other three #2813 items are deliberately NOT here:
 
-- **Item 2** (end a bounded turn at its deliverable) is already built and is PR #3147, now
-  in review. This batch depends on it.
+- **Item 2** (end a bounded turn at its deliverable) **SHIPPED** in PR #3147, merged
+  2026-10-05 as `39a1c7ac7`. The `delivered` exit, `research_delivered` and
+  `DELIVERY_GUIDANCE` are on `main`.
+- **Item 5** (save what the turn finds) is **dropped: already built elsewhere.**
+  `search-records` already owns this: it **holds `research_log_append`** in its own
+  frontmatter (`:21`), calls it once per search (`:586`), and defines what counts as a nil
+  result and what the sidecar must contain (`:604`). (Review cited `:575/:626/:643` for
+  this; those line numbers are wrong — verified against the file.) And "a found record goes
+  in as a source through
+  `record-extraction`" is already routing-table row `research/SKILL.md:142`. The router also
+  **holds no writer tool** (`research/SKILL.md:15-17` grants only `validate_research_schema`
+  and `research_query`; `:152` states it), so item 5 as drafted contradicted its own
+  frontmatter. The remaining gap it names, the single-ask path entering neither skill,
+  belongs to item 3 and the router re-entry.
 - **Item 3** (lightweight project: `init-project` stops after its report on a bounded ask)
   is a different snapshot AND is coordinated with Gennecis on issue #2122, whose conversion
   folds the Step 5 bullet into the agent body so only one line needs making conditional.
@@ -30,13 +68,19 @@ The other three #2813 items are deliberately NOT here:
 
 ## Blocking dependency
 
-**This batch cannot land before PR #3147.** Item 1's whole purpose is to decide *which*
-turns are bounded; item 2's exit is what a bounded turn then uses to stop. The exit
-(`research_delivered`, `DELIVERY_GUIDANCE`, the `PreToolUse` arm) exists only on #3147's
-branch. Writing item 1 against a `main` without it would describe a stop that cannot happen.
+1. ~~PR #3147~~ **MERGED 2026-10-05.** The exit is on `main`.
+2. **The router re-entry, still unbuilt.** #2813 item 1 says to put the decision in "the
+   router every hosted turn re-enters **under your Before phase 2 section**". That re-entry
+   does not exist: `apps/server/app/agent/continue_policy.py:175-181` still carries
+   `CONTINUE_REASON`, whose text is "invoke the next GPS sub-skill now" with no router
+   re-entry, and the default web path
+   never enters the router at all — `apps/web/src/components/chatEvents.ts:114` prefixes
+   every new session's first message with `OPENING_TURN`, so `init-project` runs and nothing
+   in that chain invokes `research`.
 
-**Do not start the eval run until #3147 has merged.** Same reasoning as the #3077 hold: a
-run bought against a tree that is about to change is bought twice.
+**Consequence for acceptance:** on the web path a bounded FIRST message never reaches this
+file. Every acceptance bullet is therefore scoped to a turn that provably enters the router
+— a `/research` entry, or a second message on an existing project.
 
 ## The one design question to settle BEFORE writing prose
 
@@ -46,21 +90,21 @@ is a writer-tool precondition, where it binds everywhere and cannot be argued wi
 
 Apply that question to each item honestly:
 
-- **Item 4** ("before any search, read the person's attached sources and relatives; never
-  search for a record already attached; never offer to add a person already in the tree").
-  The "already attached" and "already in the tree" halves ARE decidable from the project
-  documents alone. **This is the one item with a real claim to being a tool precondition
-  rather than prose.** The plan's position: raise it explicitly in the PR body and in review
-  rather than silently choosing. A precondition on the search tools would bind in Cowork and
-  the harness too, where prose does not; but it is also a larger change touching tools this
-  issue does not list under **Touches:**, so it may be a separate card. **Decide with the
-  reviewer; do not expand scope unilaterally.**
+- **Item 4 — DECIDED, not deferred.** The first draft floated this and left it to the
+  reviewer; that was ducking, because ADR-0011 is a decision *procedure*, and the draft ran
+  it, reached an answer, then handed the answer over. The decision:
+  - **Item 4 ships as prose here**, labelled guidance per ADR-0011's layer map.
+  - **A refusal on the search tools is REJECTED**, under ADR-0011 limit 1: a semantic gate
+    must prefer a false allow to a false deny, and refusing a search because a same-type
+    source is already attached false-denies a second record, a re-search after a correction,
+    and a verification pass. `record_search` also writes nothing, so there is no state
+    transition for a writer-tool precondition to own.
+  - **What IS a genuine step-1 fit** is ADR-0011's bridge: the duplicate lands as a
+    `research_append` source op, and "this source is already attached to this person" is
+    decidable from `research.json` alone. That is a **separate card**, with limit 2's corpus
+    replay as its own acceptance. Not folded in here.
 - **Item 1** (is this request bounded?) is a routing judgment about the user's *message*,
   not about project state. No tool can read it. Prose is correct here.
-- **Item 5** (save what the turn finds) is partly mechanical — "a record that is found goes
-  in as a source through `record-extraction`" names an existing skill — and partly judgment
-  ("a search that finds nothing goes in as a negative log entry that names its scope").
-  Prose for the routing half; the scope fields are a `research_log_append` shape question.
 - **Item 6** (candidates not verdicts) is judgment about how to report. Prose is correct.
 
 ## Where each edit goes, read from the current file (457 lines)
@@ -79,10 +123,20 @@ Content, from the issue verbatim:
   period, a research plan, or a records-request letter.
 - **A job:** everything else, routed exactly as today.
 
-The existing `## Direct user requests` section is the nearest neighbour and must not be
-contradicted: it says naming a downstream skill is "drive the routing table forward to that
-outcome", NOT permission to invoke it immediately. A bounded ask is a different thing from
-naming a destination, and the new section has to say so explicitly or the two rules collide.
+**Four sections of this file contradict the new rules outright.** The first draft named
+only `## Direct user requests`, the weakest of them:
+
+| line | current text | collision |
+|---|---|---|
+| 35 | "This is how every run behaves; **it is not a mode and no flag turns it on**." | a bounded/job split is exactly a mode |
+| 58 | "The user can type at any time... **Neither is something you stop and wait for**." | item 6 requires an offer the run waits for |
+| 418 | "**These four are the *only* stop conditions.**" | item 1's bounded exit is a fifth |
+| 61-66 | naming a destination means "drive the routing table forward to that outcome" | a bounded ask also names a destination |
+
+The last is real but understated in the draft: *"Create a research plan for Mary Hales but
+leave it at that"* both names a destination and is bounded. That is PR #3147's own
+acceptance case. Resolve it by name: naming a destination says *where* to end; bounded says
+*whether to continue past it*.
 
 ### Item 4 — start from what is attached
 
@@ -112,15 +166,34 @@ a name match, and end with an offer to research it fully.
 extra once the run is already being bought — but it does mean the tests must be written
 BEFORE the run, not after, or the run grades a tree the tests are not in.
 
-At least one new test per item, each with a judge line that can fail:
-- item 1: a bounded first message does not produce questions or plans.
-- item 1 negative: an open ask ("find the parents of <PID>") still routes as a job. **This
-  is #2813's own "Open asks still run as jobs" acceptance and the thing most at risk** —
-  `DELIVERY_GUIDANCE` rides every turn, so only the model's judgment stops a job ending
-  itself `delivered`.
-- item 4: the answer already attached is answered from that source with no `record_search`.
-- item 5: a nothing-found search leaves a negative log entry naming its scope.
-- item 6: an identity ask returns candidates with match strength, not a verdict.
+`eval/tests/unit/research/README.md` opens: *"This suite grades **a single routing decision
+in fresh context**."* Every callee is stubbed — `route-no-questions.json` carries nine
+`stub_skills` entries. That rules out three of the first draft's five tests:
+
+- item 4's "no `record_search` call" — `search-records` is stubbed, so the assertion passes
+  whether or not the rule exists. **Non-falsifiable here.**
+- item 6's "candidates with match strength" — the reporting happens downstream of a stub.
+- item 5's test goes with item 5.
+
+Also: `research_delivered` is **not advertised in the unit harness at all**
+(`eval/harness/harness/mock_mcp.py`, absent from `LIVE_TOOLS`), so "the turn ends
+`delivered`" is unobservable here and must not appear in a unit-test description.
+
+**Keep in `eval/tests/unit/research/` — two tests:**
+1. a bounded ask routes to its deliverable, not into the plan/question chain;
+2. an open ask ("find the parents of `<PID>`") still routes as a job. **The one most at
+   risk** — `DELIVERY_GUIDANCE` rides every turn, so only the model's judgment stops a job
+   ending itself `delivered`.
+
+Both are routing assertions needing a `routes-to:` tag and `test_routes_to_expected_skill`,
+**not a judge line**: `route-no-questions.json`'s own `judge_context` says "ROUTING IS NOT
+YOURS TO GRADE".
+
+**Move to the e2e corpus:** item 4's already-attached case and item 6's candidate reporting.
+
+`eval/tests/unit/research/README.md` is itself in the snapshot and must be updated — it
+tracks test IDs, the `routes-to:` convention and a "what is NOT covered" register that two
+new tests make wrong.
 
 ## Verification
 
@@ -130,24 +203,45 @@ At least one new test per item, each with a judge line that can fail:
 - `npx vitest run tests/packaging` in `packages/engine/mcp-server` — `prompt-budget` will
   red until `prompt-sizes.json` is regenerated, because SKILL.md's byte count changes.
   **Regenerate with `UPDATE_PROMPT_SIZES=1`, never by hand.**
-- `mutation-check.sh` with the suite that GUARDS these files, i.e. the harness suite, not
-  the engine one.
-- **The paid run is the acceptance.** `make eval-skill SKILL=research`, once, after #3147
-  has merged.
+- `~/.claude/projects/-home-praise-cowork-genealogy/mutation-check.sh` with the suite that
+  GUARDS these files (the harness suite, not the engine one). **It lives outside the repo**,
+  so a `git grep` for it returns nothing — review flagged it as non-existent on exactly that
+  basis. It is real and was used earlier in this workstream.
+- **Break each new rule in BOTH directions** (CLAUDE.md: a guard fails two ways). Revert each
+  rule, confirm its paired test reds; then confirm a legitimate variant still passes.
+- **The paid run is the acceptance.** `make eval-skill SKILL=research`, once. ~$3-4.
 
 ## Done when
 
-- A bounded first message with a PID creates a project with no questions and no plans, and
-  the turn ends `delivered`.
-- "find the parents of <PID>" still invokes `research` and runs as a job, and does **not**
-  end `delivered`.
-- A lookup whose answer is already attached answers from that source and makes no
-  `record_search` call.
-- A nothing-found search leaves a negative log entry naming collection, place, years and
-  names.
-- An identity ask returns candidates with match strength and what was searched, and does not
-  declare the question answered on a name match.
-- One `research` run bought, not four.
+Each bullet names the environment that checks it, because none holds everywhere:
+
+- **(unit)** a bounded ask entering via `/research` routes to its deliverable and does not
+  enter the question/plan chain.
+- **(unit)** "find the parents of `<PID>`" still routes as a job.
+- **(e2e)** a lookup whose answer is already attached is answered from that source.
+- **(e2e)** an identity ask returns candidates with match strength and what was searched,
+  and does not declare the question answered on a name match.
+- **(prototype worker only)** a bounded turn ends `delivered`. Not observable in Cowork, in
+  e2e, or in the unit harness.
+
+Dropped from the first draft: *"a bounded first message creates a project with no questions
+and no plans"* — that is **item 3's** acceptance, not this batch's, because the web path's
+first message never reaches this file. And *"one run bought, not four"*, which is a property
+of the PR's shape, true by construction, and therefore not a criterion.
+
+## What changed from the first draft
+
+1. **Cost corrected** from an inflated generic figure to the measured median ($3.24), and
+   the batch re-argued on coherence rather than money.
+2. **Item 5 dropped** — already implemented in `search-records/SKILL.md`, and the router
+   holds no writer tool.
+3. **Three of five tests moved** to e2e; non-falsifiable in a suite that stubs every callee.
+4. **Four colliding sections named**, where the draft named one.
+5. **Item 4 decided** rather than deferred, with the search-tool refusal rejected under
+   ADR-0011 limit 1 and a `research_append` precondition named as a separate card.
+6. **The router re-entry added** as the live blocking dependency; #3147 has merged.
+7. **`mutation-check.sh` kept, with its real path** — review called it non-existent on a
+   `git grep` that could not see outside the repo.
 
 ## Explicitly not in this plan
 
