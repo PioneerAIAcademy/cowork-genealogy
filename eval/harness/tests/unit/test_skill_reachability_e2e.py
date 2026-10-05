@@ -41,9 +41,6 @@ SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 #
 # Two of these are expected and would not be fixed by routing. Both checked rather
 # than assumed:
-#   - `project-status` reports state to a human. Every e2e run is launched as
-#     `/research --autonomous` (`eval/harness/e2e/orchestrator.py:876`), so there is
-#     no human mid-run to report to.
 #   - `forget-and-rederive` is operator-driven. No fixture requests it: the only
 #     match across `eval/tests/e2e/*/fixture.json` is in `cook-spouse-children`'s
 #     `notes`, describing that fixture's provenance — its starting tree was
@@ -59,6 +56,13 @@ SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 #     fixture can reach it. Its coverage is the unit suite
 #     (`eval/tests/unit/source-evaluation/`), which is where the ruling put it.
 # They are listed rather than exempted so the count stays honest.
+#   - `project-status` was on this list until 2026-09-30 and is NOT re-listed:
+#     issue #2793 deleted the skill, so it is no longer a skill that could be
+#     dark. The dark reading held for the same reason it always did -- it reports
+#     state to a human, and every e2e run is launched as `/research --autonomous`
+#     (`eval/harness/e2e/orchestrator.py:876`), so there is no human mid-run to
+#     report to. Its successor `agents/project-status.md` is reachable by
+#     auto-delegation from its own description, which this set does not measure.
 #   - `citation` was on this list until 2026-09-23 and is NOT re-listed: issue
 #     #2799 deleted the skill, so it is no longer a skill that could be dark.
 #     The dark reading was never disproved -- nothing in the corpus reached it
@@ -86,7 +90,6 @@ SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 DARK_SKILLS_2026_09_01 = frozenset(
     {
         "forget-and-rederive",
-        "project-status",
         "source-evaluation",
     }
 )

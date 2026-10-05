@@ -85,6 +85,29 @@ def test_passes_on_wiki_derived_non_us_years():
     check_census_from_wiki(BEFORE, _after(ENGLAND_GAPS), [_wiki_call()], TAGGED)
 
 
+def test_passes_when_the_census_year_lives_only_inside_the_parenthetical():
+    """Regression for the paid run of #2797: the agent named the gaps
+    `census (1841, England & Wales)` — putting the year, and the jurisdiction
+    this validator checks it against, both inside the parenthetical.
+
+    The #2261 fix blanked parenthesised asides before scanning for years, so an
+    entry whose ONLY year sits inside them read as naming no census year at all,
+    and a correct timeline failed the gate with "produced no census gap naming a
+    year". Parenthesised years are now deprioritised rather than erased: an
+    outside year still wins — `test_fires_on_a_us_year_hidden_behind_a_short_parenthetical`
+    pins that direction — and an inside year is still found when it is the only
+    one. Must NOT raise."""
+    gaps = [
+        {"start": "~1838", "end": "1841", "severity": "medium",
+         "expected_events": ["census (1841, England & Wales)"]},
+        {"start": "1851", "end": "1861", "severity": "high",
+         "expected_events": ["census (1861, England & Wales)"]},
+        {"start": "1859", "end": "1874", "severity": "high",
+         "expected_events": ["census (1871, England & Wales)", "burial"]},
+    ]
+    check_census_from_wiki(BEFORE, _after(gaps), [_wiki_call()], TAGGED)
+
+
 def test_passes_on_underscore_joined_census_year_tokens():
     """Regression for the second paid run of #2261: the skill named the gaps
     `census_1841` / `census_1861` / `census_1871` (year joined to the record type

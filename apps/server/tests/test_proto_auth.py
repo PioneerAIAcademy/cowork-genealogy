@@ -21,8 +21,8 @@ from urllib.parse import parse_qs, urlparse
 import httpx
 import pytest
 
-from tests.test_proto_web import (  # noqa: F401  (silent_pg is a fixture)
-    AUTH_ENV, PROTO, REFUSED_DSN, USER_A, FakeQueue, FakeStore, make_client, silent_pg,
+from tests.test_proto_web import (  # noqa: F401  (refused_pg and silent_pg are fixtures)
+    AUTH_ENV, PROTO, USER_A, FakeQueue, FakeStore, make_client, refused_pg, silent_pg,
 )
 from web import app, auth
 from web.app import IdentityMismatch, ProjectNotOwned, create_app
@@ -249,12 +249,26 @@ async def test_the_lifespan_syncs_the_allowlist_from_the_environment(monkeypatch
     assert store.allowed == {"a@example.org", "b@example.org"}
 
 
+@pytest.mark.parametrize("raw", ["a@x.org b@x.org", "a@x.org,b@x.org", " A@x.org ,\n b@x.org ", "a@x.org\tb@x.org,,"])
+def test_allowed_emails_split_on_commas_and_whitespace(monkeypatch, raw):
+    """U12 D32: a comma is outside Beanstalk's environment-value character set, so a list
+    of two must be writable space-separated; compose's commas keep working."""
+    monkeypatch.setenv("ALLOWED_EMAILS", raw)
+    assert auth.allowed_emails() == {"a@x.org", "b@x.org"}
+
+
+@pytest.mark.parametrize("raw", ["", "  ", " , \n"])
+def test_allowed_emails_blank_is_empty(monkeypatch, raw):
+    monkeypatch.setenv("ALLOWED_EMAILS", raw)
+    assert auth.allowed_emails() == set()
+
+
 # ── U10: the lifespan listens with Postgres down; the allowlist stays fail-closed ─
 
 
 @pytest.mark.parametrize("postgres", ["refused", "silent"])
-async def test_the_lifespan_listens_with_postgres_down(monkeypatch, silent_pg, postgres):
-    monkeypatch.setenv("PG_DSN", REFUSED_DSN if postgres == "refused" else silent_pg.dsn)
+async def test_the_lifespan_listens_with_postgres_down(monkeypatch, refused_pg, silent_pg, postgres):
+    monkeypatch.setenv("PG_DSN", (refused_pg if postgres == "refused" else silent_pg).dsn)
     monkeypatch.setattr(app, "READY_TIMEOUT_S", 0.3)
     application = create_app(queue=FakeQueue())
     started = time.monotonic()
@@ -401,7 +415,7 @@ def _imports_app_package(source: str) -> list[str]:
     return hits
 
 
-@pytest.mark.parametrize("name", ["auth.py", "app.py"])
+@pytest.mark.parametrize("name", ["auth.py", "app.py", "spa.py"])
 def test_web_tier_does_not_import_app_package(name):
     """The web image does not carry apps/server/app, so an import passes every test (the
     suite has the whole tree on the path) and fails only in the container."""
