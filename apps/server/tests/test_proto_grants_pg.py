@@ -5,8 +5,8 @@ The lock semantics are the whole point -- a shared attempt lock that a refresher
 win exclusively by a try, a write lock the sign-in callback waits on -- and no fake proves
 anything about ``pg_try_advisory_lock`` (issue #2887's lesson, with SQLite). So these run
 the real ``PgStore.refresh_grant`` / ``store_grant`` / ``due_grant_users`` and the real
-``worker.acquire_grant`` on a database of their own, created per module from
-``PROTO_TEST_PG_DSN`` and dropped ``WITH (FORCE)`` at teardown. The FamilySearch call is a
+``worker.acquire_grant`` on a database of their own (``_proto_pg.database``), created per
+module from ``PROTO_TEST_PG_DSN``, migrated, and dropped ``WITH (FORCE)`` at teardown. The FamilySearch call is a
 fake that records its calls and can be held mid-flight on an ``asyncio.Event``; a worker
 attempt runs on a thread of its own (its psycopg calls are synchronous). A wait is seen as
 an ungranted advisory row in ``pg_locks``, never inferred from a sleep.
@@ -18,52 +18,28 @@ pass by skipping. ``make proto-grants-test`` runs it against the compose Postgre
 from __future__ import annotations
 
 import asyncio
-import contextlib
-import os
 import sys
 import uuid
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 
 import psycopg
 import pytest
-from psycopg.conninfo import make_conninfo
 
-from proto import grants
+from proto import grants, migrate
 from proto.worker import worker
+from tests._proto_pg import PROTO, database, sql, ungranted_advisory
 
-PROTO = Path(__file__).resolve().parents[1] / "proto"
 sys.path.insert(0, str(PROTO))
 
 from web import auth  # noqa: E402
 from web.app import PgStore  # noqa: E402
 
-BASE_DSN = os.environ.get("PROTO_TEST_PG_DSN", "")
 KEY = "u3-test-grant-key"
-
-
-@contextlib.contextmanager
-def _database(apply: bool = True):
-    name = "u3_" + uuid.uuid4().hex[:12]
-    with psycopg.connect(BASE_DSN, autocommit=True) as admin:
-        admin.execute(f'CREATE DATABASE "{name}"')
-    dsn = make_conninfo(BASE_DSN, dbname=name)
-    try:
-        if apply:
-            asyncio.run(PgStore(dsn).apply_schema())
-        yield dsn
-    finally:
-        with psycopg.connect(BASE_DSN, autocommit=True) as admin:
-            admin.execute(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)')
 
 
 @pytest.fixture(scope="module")
 def pg_dsn():
-    if not BASE_DSN:
-        if os.environ.get("CI"):
-            pytest.fail("CI is set but PROTO_TEST_PG_DSN is not: the grant-lock tests must run, not skip")
-        pytest.skip("PROTO_TEST_PG_DSN unset; `make proto-grants-test` runs these against the compose Postgres")
-    with _database() as dsn:
+    with database(prefix="u3_") as dsn:
         yield dsn
 
 
@@ -81,12 +57,6 @@ def helds():
     yield taken
     for held in taken:
         held.close()
-
-
-def sql(dsn: str, statement: str, params: tuple = ()) -> list[tuple]:
-    with psycopg.connect(dsn, autocommit=True) as conn:
-        cur = conn.execute(statement, params)
-        return cur.fetchall() if cur.description else []
 
 
 def patron(dsn: str, *, age_s: float = 4000, refresh: str | None = "refresh-0", access: str = "access-0",
@@ -148,40 +118,28 @@ async def attempt(project_id: str, **kw):
     return await asyncio.to_thread(asyncio.run, worker.acquire_grant(project_id, **kw))
 
 
-async def ungranted_advisory(dsn: str, timeout_s: float = 10.0) -> None:
-    """Return once some backend is WAITING on an advisory lock; fail at the deadline."""
-    loop = asyncio.get_running_loop()
-    deadline = loop.time() + timeout_s
-    while loop.time() < deadline:
-        found = await asyncio.to_thread(sql, dsn, "SELECT count(*) FROM pg_locks WHERE locktype = 'advisory' "
-                                                  "AND NOT granted AND database = (SELECT oid FROM pg_database "
-                                                  "WHERE datname = current_database())")
-        if found[0][0]:
-            return
-        await asyncio.sleep(0.05)
-    raise AssertionError("nothing waited on an advisory lock")
-
-
 # ── the schema ───────────────────────────────────────────────────────────────────
 
 
-def test_schema_applies_twice_and_backfills_session_start_from_granted_at():
-    """A U2-era row (008, no session column) gets its session start from granted_at -- exact,
-    since before 009 only a sign-in wrote a row -- and a second apply changes nothing."""
-    with _database(apply=False) as dsn:
-        files = sorted((PROTO / "sql").glob("*.sql"))
-        assert files[-1].name == "009_grant_session.sql"
+def test_a_baseline_run_backfills_session_start_from_granted_at():
+    """A U2-era row (008, no session column, no ledger: what every pre-U9 start left) gets
+    its session start from granted_at -- exact, since before 009 only a sign-in wrote a row.
+    An unledgered database re-runs every file once, so the run applies all nine, and a
+    second run changes nothing."""
+    with database(apply=False, prefix="u3_") as dsn:
+        files = migrate.load()
+        names = [m.name for m in files]
+        assert names[-1] == "009_grant_session.sql"
         with psycopg.connect(dsn, autocommit=True) as conn:
-            for path in files[:-1]:
-                conn.execute(path.read_text(encoding="utf-8"))
+            for m in files[:-1]:
+                conn.execute(m.text)
             granted = datetime(2026, 9, 29, 12, 0, tzinfo=timezone.utc)
             conn.execute("INSERT INTO users (id, email) VALUES ('usr_u2', 'u2@example.org')")
             conn.execute("INSERT INTO familysearch_tokens (user_id, access_token_enc, refresh_token_enc, expires_at, "
                          "granted_at) VALUES ('usr_u2', 'gAAAAA-a', 'gAAAAA-r', %s, %s)",
                          (granted + timedelta(hours=8), granted))
-        store = PgStore(dsn)
-        assert asyncio.run(store.apply_schema())[-1] == "009_grant_session.sql"
-        asyncio.run(store.apply_schema())
+        assert migrate.migrate(dsn) == names
+        assert migrate.migrate(dsn) == []
         [(started, marker, refused)] = sql(dsn, "SELECT session_started_at, refresh_started_at, refresh_refused_at "
                                                 "FROM familysearch_tokens WHERE user_id = 'usr_u2'")
         assert started == granted and marker is None and refused is None
