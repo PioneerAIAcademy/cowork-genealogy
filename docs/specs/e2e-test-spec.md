@@ -1906,7 +1906,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `blocked_context_calls[]` | Calls the per-context policy refused: a `SUBAGENT_ONLY_TOOLS` tool (`extraction_append`, `image_read` — §6.1.1), **or** an owned-section `research_append` write (§6.1.2). `blocked_by` is `"context"` for both, so only `tool` discriminates which guard fired; every entry in the committed corpus is the latter. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1, §6.1.2. |
 | `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }`, `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
 | `usage` | Tokens, cost, duration. See 8.1.2 for the fallback shape. |
-| `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative) or `streamed_fallback` (it did not). |
+| `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative, except on a run with more than one query, §8.1.5) or `streamed_fallback` (it did not). |
 | `usage.message_usage` | Per-assistant-message context window, split by thread: `[thread, input, cache_read, cache_creation]`. See 8.1.4. |
 | `usage.thread_windows` | Per-thread summary — `main: {peak_window_tokens, message_count}`, `sub: {message_count}`. See 8.1.4. |
 | `usage.continue_nudges` | How many times the Stop hook vetoed a voluntary yield and told the agent to resume — every class, including a well-formed `step` answered "Yes.". The weak-signal reading belongs to `silent` plus `false_completion` in `hand_back_classes`, not to this total. |
@@ -1983,7 +1983,7 @@ Two sibling fields now carry the whole-run figure:
 tally and the cost calibration read, so widening it in place would have moved every
 historical comparison underneath them.
 
-Both fields are `null`, never a plausible substitute, in three cases:
+Both fields are `null`, never a plausible substitute, in four cases:
 
 - **`usage_source` is `streamed_fallback`.** That path's `output_tokens` is a
   start-of-message snapshot, and since commit `76bc0655b` its accumulator already
@@ -1995,9 +1995,23 @@ Both fields are `null`, never a plausible substitute, in three cases:
   those are one entry per content *block*, each repeating its message's totals, so
   the sum roughly doubles cache reads. Unknown is unknown.
 - **No main-thread token block at all.**
+- **The run had more than one query.** The SDK's `ResultMessage` reports `usage`,
+  `num_turns` and `duration_ms` for the last query of a session, and a query starts
+  at each `system:init` row in `usage.timeline`: a stall-resume starts one, and so
+  does a background subagent's `task_notification` followed by a fresh
+  `system:init` (compaction emits `system:compact_boundary`, so a long run is still
+  one query). On such a run `usage.usage`, `num_turns` and `duration_ms` describe
+  the last query only. `total_cost_usd` and `duration_api_ms` are per CLI process:
+  they span the run when `resumes` is 0, and cover only the resumed process when it
+  is not, because a stall-resume starts a new one. The test is
+  `result_message_covers_last_query_only` in `e2e/result.py`. `make e2e-latency`
+  (its whole-run summary and Markdown table), `make e2e-cache-window` and the cost
+  calibration exclude these runs by name (`multi-query`), and `make e2e-corpus`
+  says its `recorded` spend is a floor when a resumed run is in it.
 
-A run with no subagents, and a run whose capture failed (`subagent_capture_status`
-non-ok, which yields an empty list), both merge to exactly `usage.usage`.
+A single-query run with no subagents, and one whose capture failed
+(`subagent_capture_status` non-ok, which yields an empty list), both merge to
+exactly `usage.usage`.
 
 **Why `subagents[].usage` is counted per message, not per record.** Claude Code
 writes one record per content block and every one repeats its message's usage, so
