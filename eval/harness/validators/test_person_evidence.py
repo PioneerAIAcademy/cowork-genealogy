@@ -1047,8 +1047,6 @@ def test_no_unjustified_warning_write(
     The engine gate makes that step redundant: the writer tools themselves
     enforce it.
     """
-    _WRITER_TOOLS = {"tree_edit", "tree_correct", "merge_tree_persons", "materialize_facts"}
-
     before = before_state.get("research_json")
     after = after_state.get("research_json")
     wrote_links = bool(_new_person_evidence(before, after)) if before and after else False
@@ -1059,27 +1057,12 @@ def test_no_unjustified_warning_write(
     if not wrote_links and not minted:
         pytest.skip("no new pe_ entries and no new persons — nothing to check")
 
-    from harness.context_policy import bare_tool_name
+    from harness.skill_invocation import unresolved_warning_refusal
 
-    unresolved = []
-    for call in (tool_calls or []):
-        tool = bare_tool_name(call.get("tool") or "")
-        if tool not in _WRITER_TOOLS:
-            continue
-        summary = str(call.get("response_summary") or "")
-        if "unjustified_warnings" in summary:
-            unresolved.append(tool)
-
-    if not unresolved:
-        return
-
-    any_succeeded = any(
-        bare_tool_name(c.get("tool") or "") in _WRITER_TOOLS
-        and "unjustified_warnings" not in str(c.get("response_summary") or "")
-        and not c.get("is_error")
-        for c in (tool_calls or [])
-    )
-    if any_succeeded:
+    # One shared predicate (issue #2840): it keys on the LAST refusal and
+    # treats a no-project answer as a write that did not land. Both were got
+    # wrong in each hand-rolled copy of this check.
+    if not unresolved_warning_refusal(tool_calls):
         return
 
     assert False, (

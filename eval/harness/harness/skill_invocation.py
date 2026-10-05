@@ -1834,6 +1834,51 @@ def find_unpersisted_conflict_resolutions(
     return violations
 
 
+TREE_WRITER_TOOLS = frozenset(
+    {"tree_edit", "tree_correct", "merge_tree_persons", "materialize_facts"}
+)
+
+
+def unresolved_warning_refusal(tool_calls: list[dict[str, Any]] | None) -> bool:
+    """True when a tree writer returned `unjustified_warnings` (issue #2840's
+    engine gate) and nothing resolved it — the write was blocked and the agent
+    gave up.
+
+    One predicate, three callers: this module's shadow detector and the
+    `tree-edit` / `person-evidence` validators. It was written three times and
+    carried the same two defects in each copy, which is why it is shared now.
+
+    ORDER IS LOAD-BEARING. Asking whether *any* writer call succeeded credits
+    one that landed BEFORE the refusal, so a run that wrote op A, was refused
+    on op B and abandoned it reads as clean. Take the LAST refusal and require
+    a success after it.
+
+    SUCCESS IS `did_not_land`, never a bare `is_error`. The no-project answer
+    returns `reason: "no_project"` deliberately WITHOUT `is_error` (issue
+    #1695), so an `is_error` test counts a write that never happened as the
+    success that resolves the refusal — and this arm CREDITS a call rather than
+    skipping it, so a wrong credit is a MISSED violation, and a missed
+    violation here reports nothing at all.
+    """
+    calls = tool_calls or []
+    refusals = [
+        i
+        for i, call in enumerate(calls)
+        if isinstance(call, dict)
+        and bare_tool_name(call.get("tool") or "") in TREE_WRITER_TOOLS
+        and "unjustified_warnings" in str(call.get("response_summary") or "")
+    ]
+    if not refusals:
+        return False
+    return not any(
+        isinstance(call, dict)
+        and bare_tool_name(call.get("tool") or "") in TREE_WRITER_TOOLS
+        and "unjustified_warnings" not in str(call.get("response_summary") or "")
+        and not did_not_land(call)
+        for call in calls[refusals[-1] + 1 :]
+    )
+
+
 def find_relationship_writes_without_warnings_check(
     tool_calls: list[dict[str, Any]] | None,
     tree: dict[str, Any] | None,
@@ -1857,8 +1902,6 @@ def find_relationship_writes_without_warnings_check(
     Still SHADOW MODE ONLY: returns violation records shaped for
     ``guardrail_shadow_violations``.
     """
-    _WRITER_TOOLS = {"tree_edit", "tree_correct", "merge_tree_persons", "materialize_facts"}
-
     tree = tree or {}
     relationships = tree.get("relationships") if isinstance(tree.get("relationships"), list) else []
 
@@ -1876,36 +1919,8 @@ def find_relationship_writes_without_warnings_check(
     if not new_relationship:
         return []  # no new relationship written this run
 
-    # Check for unresolved unjustified_warnings refusals from writer tools.
-    # ORDER IS LOAD-BEARING, and the polarity note on the retired predicate
-    # applies here too: this arm CREDITS a call rather than skipping it, so a
-    # success matched in the wrong place is a MISSED violation, and a missed
-    # violation in a shadow detector reports nothing at all (issue #1695).
-    # Scanning the whole call list for "any success" credits a write that
-    # landed BEFORE the refusal — an agent that wrote op A, was refused on op
-    # B, and gave up reads as clean. Take the LAST refusal and require a
-    # successful writer call after it.
-    refusals = [
-        i
-        for i, call in enumerate(tool_calls or [])
-        if isinstance(call, dict)
-        and bare_tool_name(call.get("tool") or "") in _WRITER_TOOLS
-        and "unjustified_warnings" in str(call.get("response_summary") or "")
-    ]
-    if not refusals:
-        return []  # no unjustified_warnings refusal — the gate was satisfied
-
-    # A refusal exists. Did a writer call succeed AFTER the last one?
-    last_refusal = refusals[-1]
-    any_succeeded = any(
-        isinstance(call, dict)
-        and bare_tool_name(call.get("tool") or "") in _WRITER_TOOLS
-        and "unjustified_warnings" not in str(call.get("response_summary") or "")
-        and not did_not_land(call)
-        for call in (tool_calls or [])[last_refusal + 1 :]
-    )
-    if any_succeeded:
-        return []  # refusal was resolved by a successful re-call
+    if not unresolved_warning_refusal(tool_calls):
+        return []  # no refusal, or one the run went on to resolve
 
     return [
         {

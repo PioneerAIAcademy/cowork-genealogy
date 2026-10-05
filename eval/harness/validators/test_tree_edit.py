@@ -112,9 +112,6 @@ def test_tree_edit_noop(before_state, after_state, test):
 
 # --- No unjustified-warning write landed (issue #2840 PR 2) -----------
 
-_WRITER_TOOLS = {"tree_edit", "tree_correct", "merge_tree_persons", "materialize_facts"}
-
-
 def test_no_unjustified_warning_write(
     before_state, after_state, tool_calls, test,
 ):
@@ -135,32 +132,12 @@ def test_no_unjustified_warning_write(
     if before_tree == after_tree:
         pytest.skip("tree.gedcomx.json unchanged -- no edit to validate")
 
-    from harness.context_policy import bare_tool_name
+    from harness.skill_invocation import unresolved_warning_refusal
 
-    unresolved = []
-    for call in (tool_calls or []):
-        tool = bare_tool_name(call.get("tool") or "")
-        if tool not in _WRITER_TOOLS:
-            continue
-        summary = str(call.get("response_summary") or "")
-        if "unjustified_warnings" in summary:
-            unresolved.append(tool)
-
-    # A refusal followed by a successful re-call is fine — the successful
-    # call also appears in tool_calls.  Only flag when the LAST call to a
-    # writer is an unjustified_warnings refusal AND the tree changed.
-    if not unresolved:
-        return
-
-    # Check if any writer call ultimately succeeded (tree changed, so at
-    # least one must have).
-    any_succeeded = any(
-        bare_tool_name(c.get("tool") or "") in _WRITER_TOOLS
-        and "unjustified_warnings" not in str(c.get("response_summary") or "")
-        and not c.get("is_error")
-        for c in (tool_calls or [])
-    )
-    if any_succeeded:
+    # One shared predicate (issue #2840): it keys on the LAST refusal and
+    # treats a no-project answer as a write that did not land. Both were got
+    # wrong in each hand-rolled copy of this check.
+    if not unresolved_warning_refusal(tool_calls):
         return
 
     assert False, (
