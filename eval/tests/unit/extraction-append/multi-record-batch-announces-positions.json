@@ -15,7 +15,7 @@
   },
   "input": {
     "user_message": "Extract these three FamilySearch records for the Flynn family: ark:/61903/1:1:MXHY-TQ2, ark:/61903/1:1:Q7KD-3LN and ark:/61903/1:1:Q7KD-9WB.",
-    "scenario": "empty-project-just-created"
+    "scenario": "extraction-workbench"
   },
   "mcp_fixtures": [
     "record-read-flynn-1850-thomas-mary-patrick-mxhy-tq2",
@@ -23,7 +23,7 @@
     "record-read-flynn-burial-1861-q7kd-9wb"
   ],
   "judge_context": [
-    "Override for Correctness and Completeness: this suite reuses one project scenario for every record, so the record is usually about people other than the project's objective (e.g. a Becker or Ferber record in a Patrick Flynn project). That mismatch is intended and is not an error by the skill. Do not lower any score because the record concerns someone else.",
+    "Override for Correctness and Completeness: the test chooses which record the skill extracts. Do not lower any score because the record concerns people the project objective does not name.",
     "The skill makes one extraction_append call and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you.",
     "All three records go in the one call, and the reply names each record's summary. A reply that relays one or two of the three is a Completeness failure."
   ],

@@ -14,13 +14,13 @@
   },
   "input": {
     "user_message": "Extract FamilySearch record ark:/61903/1:1:J6W2-KPT.",
-    "scenario": "empty-project-just-created"
+    "scenario": "extraction-workbench"
   },
   "mcp_fixtures": [
     "record-read-flynn-death-1908-j6w2-kpt"
   ],
   "judge_context": [
-    "Override for Correctness and Completeness: this suite reuses one project scenario for every record, so the record is usually about people other than the project's objective (e.g. a Becker or Ferber record in a Patrick Flynn project). That mismatch is intended and is not an error by the skill. Do not lower any score because the record concerns someone else.",
+    "Override for Correctness and Completeness: the test chooses which record the skill extracts. Do not lower any score because the record concerns people the project objective does not name.",
     "The skill makes one extraction_append call with the record id and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you."
   ],
   "execution": {
