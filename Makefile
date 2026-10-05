@@ -496,7 +496,7 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py
 
 # D9–10 acceptance, billed (two short Sonnet turns). Same `up` as proto-up (env.sh);
 # refuses to run without a model key. The Stop hook is off (AUTONOMOUS_MAX_NUDGES=0,
@@ -1058,6 +1058,17 @@ e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over commit
 	# whole corpus. A report, not a gate (see its own "Limits" footer).
 	cd eval/harness && uv run python -m e2e.agent_tool_usage_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
+.PHONY: e2e-rule-adherence
+e2e-rule-adherence: ## Per-instruction adherence over committed e2e runs (issue #2483): make e2e-rule-adherence | RULE=<id> | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis over committed run JSONs — no live run, no API.
+	#
+	# For each registered rule (an instruction in a shipped agent body), how
+	# many episodes obeyed it? Reports counts with denominators, never a rate.
+	# Seeded with two gps-mentor rules (project_context open, no research.json
+	# Read). Windowed to 14 days like every reader; SINCE=all for the whole
+	# corpus. A report, not a gate.
+	cd eval/harness && uv run python -m e2e.rule_adherence_report $(if $(RULE),--rule $(RULE),) $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
+
 .PHONY: e2e-writer-attribution
 e2e-writer-attribution: ## Which subagent wrote a project document, and whether an ownership row says it may (issue #2575): make e2e-writer-attribution | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis over committed run JSONs -- no live run, no API.
@@ -1204,6 +1215,20 @@ e2e-cache-window: ## Corpus cost of a 5-minute prompt-cache TTL over committed e
 	cd eval/harness && uv run python -m e2e.cache_window $(if $(TEST),--test $(TEST),) $(if $(MD),--markdown,) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-compaction
+e2e-agent-spend: ## What each subagent costs, from subagents[].usage (#2582): make e2e-agent-spend | TEST=<slug>
+	# Pure analysis, no API: reads committed run JSONs' subagents[].usage.
+	# Two columns per agent -- what it spends and whether it is in trouble --
+	# which is what Wave 4 of docs/plan/cost-latency-10x.md needs to decide
+	# which agent gets which model rung.
+	#
+	# Runs committed before #2582 carry no subagents[].usage. They are counted
+	# as UNCOVERED, never as zero: a $0.00 row would read as "this agent is
+	# free". A corpus with no priced spawn at all says so and prints no table.
+	#
+	# Guardrail violations are NOT joined in. `make e2e-corpus` tallies those by
+	# rule, not by agent; some rule names merely coincide with an agent name.
+	cd eval/harness && uv run python -m e2e.agent_spend_report $(if $(TEST),--test $(TEST),)
+
 e2e-compaction: ## record_search subjectId supply by compaction segment, over committed e2e runs (issue #1155): make e2e-compaction | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API: reads committed run JSONs' usage.timeline +
 	# tool_calls. A run is segmentable only from a run committed after
@@ -1329,7 +1354,7 @@ feedback-reset: ## Reset a feedback case dir to its imported state between attem
 	@test -n "$(CASE)" || { echo "ERROR: set CASE, e.g. make feedback-reset CASE=~/feedback/feedback-2026-07-21T09-14-22Z" >&2; exit 1; }
 	bash scripts/reset-feedback-case.sh $(CASE)
 
-# ── Artifacts (the existing Cowork/desktop deliverables) ─────────
+# ── Artifacts (desktop/Cowork deliverables and the Beanstalk bundles) ─────────
 # The build scripts are cross-platform Node (no bash / no `zip`, so the Windows
 # BuildMcpb.bat / BuildPlugin.bat call them too) and self-install + self-build
 # the engine, so these stay thin wrappers (no hidden dep to surface here).
@@ -1357,6 +1382,38 @@ cowork-install: mcpb plugin ## Build BOTH artifacts and print the install click-
 	@printf '   (the Cowork tab and the Code tab keep separate plugin lists)\n\n'
 	@printf '3. Fully QUIT and reopen Claude Desktop.\n\n'
 	@ls -l releases/genealogy-mcp.mcpb releases/genealogy-plugin.zip 2>/dev/null || true
+
+# The prototype's three Elastic Beanstalk source bundles (U12, docs/plan/familysearch-handoff.md),
+# every dependency vendored: releases/eb-{web,worker,tools}.zip + releases/eb-bundles.json. The
+# builder stages outside the repo and needs node >= 22 with the engine's npm, the pnpm workspace
+# installed, and the network (PyPI, npm, the RDS truststore). pip is the version the AL2023
+# Python 3.12 platform ships; pyyaml is apps/server/uv.lock's (test_eb_bundles checks it).
+# ARGS passes through to the builder only (make eb-bundles ARGS="--arch x86_64 --rds-ca FILE"); the
+# verifier always dry-runs both arches, so a single-arch build fails it.
+EB_PIP    := 26.2.1
+EB_PYYAML := 6.0.3
+EB_PLATFORM ?= linux/amd64
+EB_ZIPS   := releases/eb-web.zip releases/eb-worker.zip releases/eb-tools.zip
+
+.PHONY: eb-bundles
+eb-bundles: ## Build the three Beanstalk bundles (web, worker, tools) into releases/: make eb-bundles [ARGS="--arch x86_64"]
+	EB_CALLER_PATH="$$PATH" uv run --no-project --python 3.12 --with pip==$(EB_PIP) python scripts/eb_bundles/build.py $(ARGS)
+
+.PHONY: eb-bundles-verify
+eb-bundles-verify: ## Check releases/eb-*.zip: layout, Procfile/PORT, CA path, hook modes, offline pip dry-run per arch
+	uv run --no-project --python 3.12 --with pip==$(EB_PIP) --with pyyaml==$(EB_PYYAML) python scripts/eb_bundles/verify.py $(EB_ZIPS)
+
+.PHONY: eb-bundles-smoke
+eb-bundles-smoke: ## Boot each bundle offline in Docker (AL2023 / node:24-slim): make eb-bundles-smoke [EB_PLATFORM=linux/arm64]
+	uv run --no-project --python 3.12 --with pyyaml==$(EB_PYYAML) python scripts/eb_bundles/smoke.py --platform $(EB_PLATFORM)
+
+# Run from apps/server so the header uv writes matches the committed files. `--locked`, not
+# `--frozen`: a group edited in pyproject.toml without `uv lock` fails here instead of
+# exporting the stale lock.
+.PHONY: proto-requirements
+proto-requirements: ## Export uv.lock's proto-web/proto-worker groups to apps/server/proto/{web,worker}/requirements.txt (hashes; commit both after any uv.lock change)
+	cd apps/server && uv export --quiet --locked --only-group proto-web --no-emit-project --format requirements-txt -o proto/web/requirements.txt
+	cd apps/server && uv export --quiet --locked --only-group proto-worker --no-emit-project --format requirements-txt -o proto/worker/requirements.txt
 
 # Builds and pushes the E2B agent image. `make deploy` runs this too, so the
 # control plane and the sandbox ship together; it stays a standalone target for

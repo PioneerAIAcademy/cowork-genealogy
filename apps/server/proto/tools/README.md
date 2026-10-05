@@ -83,6 +83,20 @@ smoke names all three.
   (the keys are an optional pair: omit both to sign through the AWS SDK default chain)
   — `make engine-smoke-http` does this against the compose store (`proto-up-store`,
   localhost:5434 / :9000).
+- **Bundle** (`make eb-bundles` → `releases/eb-tools.zip`, U12). The Beanstalk source
+  bundle for the Node.js AL2023 platform (24, or 22: npm never runs there because
+  `node_modules/` ships). At its root: `build/` from `npm run build` (so
+  `build/build-info.json` stamps the real sha), `config/`, a production `node_modules/`
+  with the optional `pg` and AWS SDK packages kept, `package.json` (for
+  `"type": "module"`), the compiled smoke under `smoke/`
+  (`packages/engine/mcp-server/tsconfig.smoke.json`), the RDS CA bundle at
+  `certs/rds-global-bundle.pem`, and `../eb-tools/`'s `Procfile`, `.ebextensions/` and
+  `.platform/` copied verbatim. The Procfile runs `node build/http.js --host 127.0.0.1
+  --port 8080`, equal to the template's `PORT`; the template sets
+  `PGSSLMODE=verify-full` and `NODE_EXTRA_CA_CERTS` at the CA's absolute path, so TLS is
+  configured without a query string in `GENEALOGY_PG_DSN`. The store variables and the
+  four config overrides above stay API-level settings. The image (`Dockerfile`) and the
+  bundle both run Node 24.
 - **The transport smoke** — every advertised tool but the three exclusions, in
   `no-bearer` mode by default (`--bearer <token>`, or an unexpired
   `~/.familysearch-mcp/tokens.json`, switches to `bearer`):
@@ -90,7 +104,7 @@ smoke names all three.
   ```
   make engine-smoke-http                                  # builds, starts build/http.js on the compose store on a free port, kills it after
   BASE=http://127.0.0.1:8787 make engine-smoke-http       # against the compose service
-  cd packages/engine/mcp-server && npx tsx dev/smoke-http.ts --base URL [--project-id ID] [--project-path /project] [--host-config] [--bearer TOKEN]
+  node smoke/dev/smoke-http.js --base URL [--project-id ID] [--project-path /project] [--host-config] [--bearer TOKEN]   # from an unzipped eb-tools.zip: Node >= 22, no checkout, npm or registry
   ```
 
   Every request carries `X-Genealogy-Project-Id: <--project-id>` — a fresh `smoke-<uuid>`
