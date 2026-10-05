@@ -62,6 +62,14 @@ def _isolated_sqs_credentials(monkeypatch):
     _reset_sqs_clients()
 
 
+@pytest.fixture(autouse=True)
+def _dev_paths_on(monkeypatch):
+    """U11: the worker honours its compose-only paths (the D3 stub arms, an unset
+    QUEUE_URL, the default grant key) only with DEV_PATHS=true, which every offline test
+    runs with, like compose. A test of a refusal deletes it itself."""
+    monkeypatch.setenv("DEV_PATHS", "true")
+
+
 if sys.platform == "win32":
     import asyncio  # noqa: E402
 

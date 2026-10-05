@@ -7,8 +7,9 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
 
 - ``cwd`` is the empty anchor (``/project``); ``setting_sources=[]`` explicitly, so no
   ``CLAUDE.md`` or ``.claude/`` in any parent of cwd is loaded; no ``add_dirs``.
-- the plugin loads from disk for its skills; the sixteen agents travel as ``agents=`` (bare
-  names, parsed once at worker start by ``plugin_agents.py``) -- never staged into cwd.
+- the plugin loads from disk for its skills; its agents (``worker.EXPECTED_AGENTS``) travel
+  as ``agents=`` (bare names, parsed once at worker start by ``plugin_agents.py``) -- never
+  staged into cwd.
 - the shell is removed with ``disallowed_tools`` -- the only lever that reaches the
   main thread; ``Write``/``Edit`` stay granted (denying them is whole-tool).
 - the tool server is the shared Streamable HTTP ``tools`` service at ``TOOL_SERVER_URL``;
@@ -27,9 +28,9 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
 - the SDK session id is the worker's choice: ``session_id=`` on a fresh session,
   ``resume=`` when the store holds entries -- exactly one, never both (the SDK's own
   rule without ``fork_session``).
-- the model is pinned per ``MODEL_PROVIDER``: ``anthropic`` (default) is
-  ``claude-sonnet-4-6`` on ``ANTHROPIC_API_KEY``; ``gateway`` points the CLI at an
-  Anthropic-Messages gateway (``GATEWAY_BASE_URL``, ``GATEWAY_API_KEY``) and sends Bedrock ids for the main thread, the small model and
+- the model is pinned per ``MODEL_PROVIDER``, which has no default (``model_provider``):
+  ``anthropic`` is ``claude-sonnet-4-6`` on ``ANTHROPIC_API_KEY``; ``gateway`` points the
+  CLI at an Anthropic-Messages gateway (``GATEWAY_BASE_URL``, ``GATEWAY_API_KEY``) and sends Bedrock ids for the main thread, the small model and
   every agent (``gateway_agent_models``), since a gateway passes unmapped ids through.
 
 The hook (``make_pretool_hook``) is the plan's deny-and-log: it denies a raw
@@ -98,30 +99,17 @@ MCP_CONFIG_NAME = "mcp.json"
 # The e2e harness's tree-read block (eval/harness/e2e/orchestrator.py BLOCKED_TREE_TOOLS):
 # every e2e fixture's answer still sits in the live FamilySearch tree, so a fixture run
 # that may read the tree is a lookup, not the research workflow. The worker takes the
-# list from BLOCKED_TOOLS (bare MCP tool names, comma-separated); empty means no block.
+# list from BLOCKED_TOOLS (bare MCP tool names, comma-separated); empty means no block. A
+# non-empty one refuses start unless DEV_PATHS=true (worker.require_start_config, U11).
 BLOCKED_DENY_REASON = (
     "{tool} is denied on this run: the fixture's answer sits in the live FamilySearch tree "
     "and this run must find it in records (the e2e harness's tree-read block, BLOCKED_TOOLS)."
 )
 
 
-# The harness's LIVE_TREE_ARG_TOOLS, held equal to it by an AST read in
-# tests/test_proto_worker.py: tools that read the live tree only when a named argument
-# is truthy, so the bare name cannot decide them. Denied whenever BLOCKED_TOOLS is on.
-# Currently empty — kept for the next tool whose block depends on an argument.
-LIVE_TREE_ARG_TOOLS = {}
-
-
-def is_blocked_call(tool_name: str, tool_input: Mapping[str, Any], blocked: frozenset[str]) -> bool:
-    """Whether the tree-read block denies this call: an MCP tool named in ``blocked``,
-    or, while the block is on, a LIVE_TREE_ARG_TOOLS call with its argument truthy."""
-    if not blocked or not tool_name.startswith("mcp__"):
-        return False
-    bare = bare_tool_name(tool_name)
-    if bare in blocked:
-        return True
-    arg = LIVE_TREE_ARG_TOOLS.get(bare)
-    return arg is not None and bool(tool_input.get(arg))
+def is_blocked_call(tool_name: str, blocked: frozenset[str]) -> bool:
+    """Whether the tree-read block denies this call: an MCP tool named in ``blocked``."""
+    return tool_name.startswith("mcp__") and bare_tool_name(tool_name) in blocked
 
 
 def bare_tool_name(tool_name: str) -> str:
@@ -180,30 +168,60 @@ def hook_path(exe_dir: str, path: str | None) -> str:
     return os.pathsep.join(parts)
 
 
+# U11: the compose-only paths -- the D3 stub arms, BLOCKED_TOOLS, no QUEUE_URL, the
+# default grant key -- are honoured only when this is ``true``. No image or Beanstalk
+# template sets it.
+DEV_PATHS_VAR = "DEV_PATHS"
+
+
+def dev_paths(env: Mapping[str, str]) -> bool:
+    """``DEV_PATHS`` is ``true``, case-insensitive after strip; anything else is off."""
+    return (env.get(DEV_PATHS_VAR) or "").strip().lower() == "true"
+
+
+MODEL_PROVIDERS = ("anthropic", "gateway")
+
+
+class ProviderError(ValueError):
+    """``MODEL_PROVIDER`` refused; ``label`` (``unset``, ``unknown:<v>``,
+    ``gateway_needs_base_url``) is what ``ev=prepare step=model_provider`` logs."""
+
+    def __init__(self, label: str, message: str) -> None:
+        super().__init__(message)
+        self.label = label
+
+
+def model_provider(worker_env: Mapping[str, str]) -> str:
+    """``MODEL_PROVIDER`` after strip/lower: ``anthropic`` or ``gateway`` (which needs
+    ``GATEWAY_BASE_URL``). There is no default; anything else raises ``ProviderError``."""
+    provider = (worker_env.get("MODEL_PROVIDER") or "").strip().lower()
+    if not provider:
+        raise ProviderError("unset", "MODEL_PROVIDER is unset: it must be anthropic or gateway")
+    if provider not in MODEL_PROVIDERS:
+        raise ProviderError(f"unknown:{provider}", f"MODEL_PROVIDER must be anthropic or gateway, not {provider!r}")
+    if provider == "gateway" and not (worker_env.get("GATEWAY_BASE_URL") or "").strip():
+        raise ProviderError("gateway_needs_base_url", "MODEL_PROVIDER=gateway needs GATEWAY_BASE_URL")
+    return provider
+
+
 def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, str]]:
     """``(model, env)`` for ``MODEL_PROVIDER``: the CLI ``--model`` and the variables
     that pin the provider. The gateway's model travels as ``ANTHROPIC_MODEL`` (the ``[1m]``
     suffix is read off that string), so ``model`` is None there."""
-    provider = (worker_env.get("MODEL_PROVIDER") or "anthropic").strip().lower()
-    if provider == "anthropic":
+    if model_provider(worker_env) == "anthropic":
         return ANTHROPIC_MODEL, {"ANTHROPIC_API_KEY": worker_env.get("ANTHROPIC_API_KEY", "")}
-    if provider == "gateway":
-        base_url = (worker_env.get("GATEWAY_BASE_URL") or "").strip()
-        if not base_url:
-            raise ValueError("MODEL_PROVIDER=gateway needs GATEWAY_BASE_URL")
-        return None, {
-            "ANTHROPIC_BASE_URL": base_url,
-            "ANTHROPIC_AUTH_TOKEN": worker_env.get("GATEWAY_API_KEY", ""),
-            # Blank, not absent: the CLI inherits the worker's environment, and an
-            # inherited Anthropic key rides to the gateway as x-api-key beside the bearer.
-            "ANTHROPIC_API_KEY": "",
-            "ANTHROPIC_MODEL": GATEWAY_MODEL,
-            "ANTHROPIC_DEFAULT_HAIKU_MODEL": GATEWAY_SMALL_MODEL,
-            # agentgateway < 1.6 cannot parse tool_reference, so tool search fails on
-            # its second turn (plan P3f); tap-agentgateway pins 1.5.0.
-            "ENABLE_TOOL_SEARCH": (worker_env.get("GATEWAY_TOOL_SEARCH") or "false").strip().lower(),
-        }
-    raise ValueError(f"MODEL_PROVIDER must be anthropic or gateway, not {provider!r}")
+    return None, {
+        "ANTHROPIC_BASE_URL": worker_env["GATEWAY_BASE_URL"].strip(),
+        "ANTHROPIC_AUTH_TOKEN": worker_env.get("GATEWAY_API_KEY", ""),
+        # Blank, not absent: the CLI inherits the worker's environment, and an
+        # inherited Anthropic key rides to the gateway as x-api-key beside the bearer.
+        "ANTHROPIC_API_KEY": "",
+        "ANTHROPIC_MODEL": GATEWAY_MODEL,
+        "ANTHROPIC_DEFAULT_HAIKU_MODEL": GATEWAY_SMALL_MODEL,
+        # agentgateway < 1.6 cannot parse tool_reference, so tool search fails on
+        # its second turn (plan P3f); tap-agentgateway pins 1.5.0.
+        "ENABLE_TOOL_SEARCH": (worker_env.get("GATEWAY_TOOL_SEARCH") or "false").strip().lower(),
+    }
 
 
 def gateway_agent_models(agents: Mapping[str, Any]) -> dict[str, Any]:
@@ -223,8 +241,8 @@ def gateway_agent_models(agents: Mapping[str, Any]) -> dict[str, Any]:
 # state: `Authorization: Bearer <patron token>` becomes the request's principal, and
 # `X-Genealogy-Project-Id` becomes the request's PgS3ProjectStore. Missing, the project
 # tools answer an instruction naming the header; malformed, the request is a 400. No turn
-# header. The CLI opens the MCP session once per process, once per turn.
-TOOL_SERVER_DEFAULT_URL = "http://tools:8787/mcp"
+# header. The CLI opens the MCP session once per process, once per turn. TOOL_SERVER_URL
+# has no default (U11): a guessed host would be handed the patron's bearer.
 PROJECT_ID_HEADER = "X-Genealogy-Project-Id"
 # The http entry's per-server `timeout` (ms). Without it CLI 2.1.220 aborts every
 # non-GET HTTP MCP request at 60 s, where the harness's stdio server is cut only by its
@@ -233,6 +251,14 @@ PROJECT_ID_HEADER = "X-Genealogy-Project-Id"
 # gives the prototype the harness's ceiling: 121 harness calls ran past 60 s, the
 # longest 844 s (`image_transcribe`), six of them `research_append`.
 MCP_HTTP_TIMEOUT_MS = 1_800_000
+
+
+def tool_server_url(worker_env: Mapping[str, str]) -> str:
+    """``TOOL_SERVER_URL``, stripped; unset or blank raises ValueError."""
+    url = (worker_env.get("TOOL_SERVER_URL") or "").strip()
+    if not url:
+        raise ValueError("TOOL_SERVER_URL is unset: the worker has no tool server to send the bearer to")
+    return url
 
 
 def tool_server_headers(*, project_id: str, bearer: str) -> dict[str, str]:
@@ -257,7 +283,7 @@ def tool_server_entry(
     ``tools`` service's own environment, not the request's."""
     return {
         "type": "http",
-        "url": worker_env.get("TOOL_SERVER_URL") or TOOL_SERVER_DEFAULT_URL,
+        "url": tool_server_url(worker_env),
         "headers": tool_server_headers(project_id=project_id, bearer=bearer),
         "timeout": MCP_HTTP_TIMEOUT_MS,
     }
@@ -483,7 +509,7 @@ def make_pretool_hook(
             protected = direct_project_file_write(tool_name, tool_input)
             if protected:
                 decision, reason = "deny", WRITE_DENY_REASON.format(tool=tool_name, name=protected)
-            elif is_blocked_call(tool_name, tool_input, blocked):
+            elif is_blocked_call(tool_name, blocked):
                 decision, reason = "deny", BLOCKED_DENY_REASON.format(tool=bare_tool_name(tool_name))
             else:
                 root = config_root() if callable(config_root) else config_root
@@ -709,7 +735,7 @@ def build_worker_options(
         raise ValueError("resume and session_id are mutually exclusive: pass exactly one")
     env_in = os.environ if worker_env is None else worker_env
     model, model_env = provider_env(env_in)
-    if (env_in.get("MODEL_PROVIDER") or "").strip().lower() == "gateway":
+    if model_provider(env_in) == "gateway":
         agents = gateway_agent_models(agents)
     project_note = (
         "You are the hosted genealogy research agent. The active research project is "
