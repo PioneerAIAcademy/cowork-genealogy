@@ -1130,16 +1130,66 @@ def test_web_build_context_carries_enqueue_sql_and_the_client_config():
     assert web["build"] == {"context": "../../..", "dockerfile": "apps/server/proto/web/Dockerfile"}
     repo = PROTO.parents[2]
     assert (repo / web["build"]["dockerfile"]).is_file()
-    dockerfile = (PROTO / "web" / "Dockerfile").read_text(encoding="utf-8")
-    copies = dict(ln.split()[1:3] for ln in dockerfile.splitlines() if ln.startswith("COPY "))
+    stages = _dockerfile_stages(PROTO / "web" / "Dockerfile")
+    assert list(stages) == ["spa", ""], "a node stage that builds the SPA, then the tier"
+    copies, _ = _copies(stages[""])
     assert copies["apps/server/proto/enqueue.py"] == "./"
     assert copies["apps/server/proto/sql"] == "./sql"
     assert copies["apps/server/proto/web"] == "./web"
     assert copies["packages/engine/mcp-server/config/familysearch.json"] == "./config/familysearch.json"
-    for src in copies:
+    spa_copies, _ = _copies(stages["spa"])
+    for src in copies.keys() | spa_copies.keys():
         assert (repo / src).exists(), f"the web Dockerfile copies {src}, which is not in the repo"
     # ./config/familysearch.json under WORKDIR /app is the path web/auth.py looks at first.
     assert auth.CLIENT_CONFIG_CANDIDATES[0].relative_to(auth.PROTO_DIR).as_posix() == "config/familysearch.json"
+
+
+def test_web_image_carries_the_sse_spa_where_web_dist_dir_points():
+    """U12 D18: the image serves the SPA too, so an image deploy cannot ship a tier where
+    `/` serves nothing. The build is the SSE variant, its output is what the tier stage
+    copies, and the relative WEB_DIST_DIR resolves (against /app, web/'s parent, which
+    is what spa.py takes as the tier root) to where it lands."""
+    stages = _dockerfile_stages(PROTO / "web" / "Dockerfile")
+    assert stages["spa"][0].startswith("FROM node:24-slim AS spa"), stages["spa"][0]
+    [build] = [ln for ln in stages["spa"] if "vite build" in ln]
+    assert "VITE_SESSION_TRANSPORT=sse" in build.split(), build
+    out = re.search(r"--outDir (\S+)", build).group(1)
+    copies, from_stage = _copies(stages[""])
+    assert from_stage == {out: "./web-dist"}, from_stage
+    assert "WORKDIR /app" in stages[""] and copies["apps/server/proto/web"] == "./web"
+    env = dict(ln.split()[1].split("=", 1) for ln in stages[""] if ln.startswith("ENV ") and "=" in ln.split()[1])
+    assert Path("/app", env["WEB_DIST_DIR"]) == Path("/app/web-dist")
+
+
+def _dockerfile_stages(path: Path) -> dict[str, list[str]]:
+    """Logical lines (comments dropped, continuations joined) per stage, keyed by the
+    stage's AS name ('' for an unnamed one)."""
+    text = "\n".join(ln for ln in path.read_text(encoding="utf-8").splitlines() if not ln.lstrip().startswith("#"))
+    stages: dict[str, list[str]] = {}
+    current: list[str] = []
+    for line in (" ".join(ln.split()) for ln in text.replace("\\\n", " ").splitlines()):
+        if not line:
+            continue
+        if line.startswith("FROM "):
+            m = re.search(r" AS (\S+)$", line, re.I)
+            current = stages.setdefault(m.group(1) if m else "", [])
+        current.append(line)
+    return stages
+
+
+def _copies(lines: list[str]) -> tuple[dict[str, str], dict[str, str]]:
+    """(source -> dest for the build context, source -> dest for COPY --from=<stage>)."""
+    context: dict[str, str] = {}
+    staged: dict[str, str] = {}
+    for line in lines:
+        if not line.startswith("COPY "):
+            continue
+        words = line.split()[1:]
+        flags = [w for w in words if w.startswith("--")]
+        *srcs, dest = [w for w in words if not w.startswith("--")]
+        target = staged if any(f.startswith("--from=") for f in flags) else context
+        target.update(dict.fromkeys(srcs, dest))
+    return context, staged
 
 
 def test_003_web_only_adds_not_null_default_columns_to_sessions():
@@ -1479,3 +1529,248 @@ async def test_concurrent_health_share_one_probe(monkeypatch, silent_pg):
     assert [r.status_code for r in replies] == [503, 503, 503]
     assert all(r.json()["checks"]["postgres"] == {"ok": False, "error": "TimeoutError"} for r in replies)
     assert accepted == 1, f"{accepted} connections: a stalled host must cost one, not one per probe"
+
+
+# ── U3: the grant refresh loop ──────────────────────────────────────────────────
+
+
+class RefreshingStore(FakeStore):
+    """A store with PgStore's two refresh methods, answering from scripts."""
+
+    def __init__(self, due=None, results=None) -> None:
+        super().__init__()
+        self.due_script = list(due or [])
+        self.results = dict(results or {})
+        self.due_calls = 0
+        self.refreshed: list[str] = []
+
+    async def due_grant_users(self, refresh_age_s, limit=50):
+        self.due_calls += 1
+        step = self.due_script.pop(0) if self.due_script else []
+        if isinstance(step, Exception):
+            raise step
+        return step
+
+    async def refresh_grant(self, user_id, *, refresh, refresh_age_s):
+        self.refreshed.append(user_id)
+        result = self.results.get(user_id, "refreshed")
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+
+async def test_lifespan_starts_and_cancels_the_grant_refresh_loop(monkeypatch):
+    monkeypatch.setenv("FS_GRANT_REFRESH_INTERVAL_S", "0.01")
+    monkeypatch.setenv("FS_GRANT_REFRESH_AGE_S", "0")
+    store = RefreshingStore()
+    application = create_app(store=store)
+    async with application.router.lifespan_context(application):
+        for _ in range(200):
+            if store.due_calls >= 2:
+                break
+            await asyncio.sleep(0.01)
+        assert store.due_calls >= 2, "the loop ticks while the tier runs"
+    calls = store.due_calls
+    await asyncio.sleep(0.05)
+    assert store.due_calls == calls, "cancelled at lifespan exit"
+
+    plain = FakeStore()  # no refresh_grant: the route tests' store never gets a loop
+    application = create_app(store=plain)
+    async with application.router.lifespan_context(application):
+        await asyncio.sleep(0.03)
+
+
+async def test_the_refresh_loop_survives_a_failing_store_and_logs_no_token(caplog):
+    token = "gAAAAA-secret-access-u3"
+    store = RefreshingStore(
+        due=[RuntimeError(f"db down {token}"), [("usr_a", 4000.0), ("usr_b", 4000.0)],
+             [("usr_a", 4001.0)], [("usr_a", 4002.0)], [("usr_a", 4003.0)]],
+        results={"usr_a": "skipped_live", "usr_b": RuntimeError(token)},
+    )
+    with caplog.at_level("INFO", logger="proto.web"):
+        task = asyncio.create_task(app.grant_refresh_loop(store, interval_s=0.0, refresh_age_s=3600,
+                                                          refresh=lambda r: None))
+        for _ in range(200):
+            if store.due_calls >= 6:
+                break
+            await asyncio.sleep(0.005)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+    assert store.refreshed[:2] == ["usr_a", "usr_b"], "one patron's failure does not stop the next"
+    lines = [r.getMessage() for r in caplog.records if "ev=grant_refresh" in r.getMessage()]
+    assert sum("user_id=usr_a result=skipped_live" in line for line in lines) == 1, \
+        f"skipped_live is logged on change only: {lines}"
+    assert any("ev=grant_refresh_tick" in line for line in lines), "the failed tick is reported"
+    assert any("user_id=usr_b result=error error=RuntimeError" in line for line in lines)
+    assert token not in caplog.text, "no token in any log line"
+
+
+async def test_a_patrons_next_live_period_logs_skipped_live_again(caplog):
+    """The on-change memory is cleared once a patron stops being due (no open turn), so a
+    later run's live attempt is logged rather than hidden behind the previous run's line.
+    Seen live 2026-10-03: a whole second run passed with no grant_refresh line."""
+    store = RefreshingStore(
+        due=[[("usr_a", 10.0)], [("usr_a", 40.0)], [], [("usr_a", 70.0)], [("usr_a", 100.0)]],
+        results={"usr_a": "skipped_live"},
+    )
+    with caplog.at_level("INFO", logger="proto.web"):
+        task = asyncio.create_task(app.grant_refresh_loop(store, interval_s=0.0, refresh_age_s=0,
+                                                          refresh=lambda r: None))
+        for _ in range(200):
+            if store.due_calls >= 6:
+                break
+            await asyncio.sleep(0.005)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+    lines = [r.getMessage() for r in caplog.records if "result=skipped_live" in r.getMessage()]
+    assert len(lines) == 2, f"one line per live period, two periods: {lines}"
+
+
+# ── U12: the SPA (web/spa.py) ────────────────────────────────────────────────────
+
+from starlette.routing import Mount, Route  # noqa: E402
+
+from web import spa  # noqa: E402
+
+INDEX = "<!doctype html><title>workbench</title><script src=\"/assets/x-abc.js\"></script>"
+
+
+@pytest.fixture(autouse=True)
+def _no_spa_env(monkeypatch):
+    """The alpha reads WEB_DIST_DIR too, so a developer's shell can carry one; every other
+    test here means the tier with no SPA."""
+    monkeypatch.delenv(spa.ENV_VAR, raising=False)
+
+
+@pytest.fixture
+def dist(tmp_path, monkeypatch) -> Path:
+    """A vite-shaped dist (index.html, a root file, a hashed asset), named by WEB_DIST_DIR."""
+    root = tmp_path / "web-dist"
+    (root / "assets").mkdir(parents=True)
+    (root / "index.html").write_text(INDEX, encoding="utf-8")
+    (root / "favicon.svg").write_text("<svg/>", encoding="utf-8")
+    (root / "assets" / "x-abc.js").write_text("new EventSource('/x')", encoding="utf-8")
+    monkeypatch.setenv(spa.ENV_VAR, str(root))
+    return root
+
+
+async def test_spa_root_and_index_html_are_served_no_cache(dist):
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        for method, path in (("GET", "/"), ("HEAD", "/"), ("GET", "/index.html")):
+            r = await c.request(method, path)
+            assert r.status_code == 200, (method, path, r.status_code)
+            assert r.headers["content-type"].startswith("text/html"), (method, path)
+            assert r.headers["cache-control"] == "no-cache", (method, path)
+            assert r.content == (b"" if method == "HEAD" else INDEX.encode()), (method, path)
+
+
+async def test_spa_hashed_assets_are_immutable_and_root_files_are_served(dist):
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        asset = await c.get("/assets/x-abc.js")
+        assert asset.status_code == 200 and asset.text == "new EventSource('/x')"
+        assert asset.headers["cache-control"] == spa.IMMUTABLE
+        assert "immutable" in asset.headers["cache-control"]
+        assert (await c.head("/assets/x-abc.js")).status_code == 200
+        icon = await c.get("/favicon.svg")
+        assert icon.status_code == 200 and icon.headers["cache-control"] == "no-cache"
+        missing = await c.get("/assets/nope.js")
+        assert missing.status_code == 404 and "immutable" not in missing.headers.get("cache-control", "")
+
+
+# What each answers WITHOUT the SPA; a Mount("/") turns the first three into 404/404/405.
+PRE_MOUNT_STATUS = [
+    ("GET", "/api/sessions/x/messages", 405),
+    ("GET", "/api/sessions/", 307),
+    ("POST", "/api/feedback", 404),
+    ("GET", "/api/nope", 404),
+    ("GET", "/api/health", 200),
+]
+
+
+@pytest.mark.parametrize(("method", "path", "status"), PRE_MOUNT_STATUS)
+async def test_spa_mount_leaves_every_api_status_unchanged(dist, monkeypatch, method, path, status):
+    replies = {}
+    for mounted in (True, False):
+        if not mounted:
+            monkeypatch.delenv(spa.ENV_VAR)
+        async with make_client(FakeStore(), FakeQueue()) as c:
+            r = await c.request(method, path, json={} if method == "POST" else None)
+        replies[mounted] = r.status_code
+    assert replies == {True: status, False: status}, (method, path, replies)
+
+
+def test_spa_mount_leaves_the_per_session_route_sweep_unchanged(dist):
+    mounted = _per_session_routes()
+    assert len(mounted) == 13 and any(isinstance(r, Mount) for r in create_app(FakeStore(), FakeQueue()).routes)
+    with pytest.MonkeyPatch.context() as mp:
+        mp.delenv(spa.ENV_VAR)
+        assert _per_session_routes() == mounted
+
+
+@pytest.mark.parametrize("value", [None, "", "   "])
+async def test_spa_unset_or_empty_serves_nothing_at_root(monkeypatch, value):
+    if value is not None:
+        monkeypatch.setenv(spa.ENV_VAR, value)
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        assert (await c.get("/")).status_code == 404
+        assert (await c.get("/api/health")).status_code == 200
+
+
+@pytest.mark.parametrize("breakage", ["missing", "no_index", "api_dir", "auth_file", "callback_dir"])
+def test_spa_refuses_to_start_on_a_dist_it_cannot_serve_safely(dist, monkeypatch, breakage):
+    """A set WEB_DIST_DIR that serves nothing, or whose top level would shadow the API, is a
+    refusal at create_app -- uvicorn never starts -- not the alpha's silent skip."""
+    if breakage == "missing":
+        monkeypatch.setenv(spa.ENV_VAR, str(dist.parent / "nope"))
+    elif breakage == "no_index":
+        (dist / "index.html").unlink()
+    elif breakage == "api_dir":
+        (dist / "api").mkdir()
+    elif breakage == "auth_file":
+        (dist / "auth").write_text("x", encoding="utf-8")
+    else:
+        (dist / "callback").mkdir()
+    with pytest.raises(RuntimeError, match=spa.ENV_VAR):
+        create_app(FakeStore(), FakeQueue())
+
+
+def test_spa_refuses_a_top_level_name_a_route_already_uses(dist, monkeypatch):
+    """Not on the reserved list, but routed: the check reads the app's routes as well."""
+    monkeypatch.delenv(spa.ENV_VAR)
+    application = create_app(FakeStore(), FakeQueue())
+    application.router.routes.append(Route("/extra/x", lambda request: None))
+    (dist / "extra").mkdir()
+    with pytest.raises(RuntimeError, match=r"\['extra'\] collide"):
+        spa.mount_spa(application, tier_root=PROTO, env={spa.ENV_VAR: str(dist)})
+
+
+def test_spa_a_relative_dist_resolves_against_the_tier_root_not_cwd(tmp_path, monkeypatch):
+    (tmp_path / "tier" / "web-dist").mkdir(parents=True)
+    (tmp_path / "tier" / "web-dist" / "index.html").write_text(INDEX, encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    application = create_app(FakeStore(), FakeQueue())
+    assert spa.mount_spa(application, tier_root=tmp_path / "tier", env={spa.ENV_VAR: "web-dist"}) == (
+        tmp_path / "tier" / "web-dist"
+    )
+    # The tier itself resolves against web/'s parent: the bundle's and the image's root.
+    assert spa.dist_dir(app.PROTO_DIR, {spa.ENV_VAR: "web-dist"}) == PROTO / "web-dist"
+
+
+async def test_spa_serves_an_extra_root_file_like_robots_txt(dist):
+    (dist / "robots.txt").write_text("User-agent: *\nDisallow: /\n", encoding="utf-8")
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        r = await c.get("/robots.txt")
+        assert r.status_code == 200 and r.text.startswith("User-agent")
+        assert r.headers["cache-control"] == "no-cache"
+        assert (await c.get("/")).status_code == 200
+
+
+@pytest.mark.parametrize("with_spa", [True, False])
+async def test_docs_and_openapi_are_off_with_and_without_the_spa(dist, monkeypatch, with_spa):
+    if not with_spa:
+        monkeypatch.delenv(spa.ENV_VAR)
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        for path in ("/docs", "/redoc", "/openapi.json", "/docs/oauth2-redirect"):
+            assert (await c.get(path)).status_code == 404, path

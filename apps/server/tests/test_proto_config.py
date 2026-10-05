@@ -31,10 +31,13 @@ deadLettersQueue or committed_batches is not an offence.
 
 from __future__ import annotations
 
+import ast
 import contextlib
 import json
 import os
 import re
+import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -734,13 +737,8 @@ def test_008_is_idempotent_and_owner_is_nullable():
     assert re.search(r"\bgranted_at timestamptz NOT NULL\b", tokens), "the sign-in time"
 
 
-def test_web_dockerfile_installs_auth_deps():
-    """web/auth.py imports these at module scope; the suite runs in a venv that has them,
-    so a missing pip line passes every test and fails only when the image starts."""
-    dockerfile = (PROTO / "web" / "Dockerfile").read_text(encoding="utf-8")
-    pip = " ".join(dockerfile.split("RUN pip install", 1)[1].split("\n\n", 1)[0].split())
-    for dep in ("itsdangerous", "cryptography", "httpx", "botocore"):
-        assert f'"{dep}' in pip, f"the web image does not install {dep}"
+REQUIREMENTS = {"web": PROTO / "web" / "requirements.txt", "worker": PROTO / "worker" / "requirements.txt"}
+REGENERATE = "run `make proto-requirements` and commit apps/server/proto/{web,worker}/requirements.txt"
 
 
 def _locked_version(package: str) -> str:
@@ -750,19 +748,125 @@ def _locked_version(package: str) -> str:
     return m.group(1)
 
 
-def _pip_pins(dockerfile: Path, package: str) -> list[str]:
-    """Every ``"<package>==X"`` on a RUN pip line, continuation lines joined first."""
-    text = dockerfile.read_text(encoding="utf-8").replace("\\\n", " ")
-    runs = [line for line in text.splitlines() if re.match(r"\s*RUN\b.*\bpip\b", line)]
-    return [v for line in runs for v in re.findall(rf'"{re.escape(package)}==([^"]+)"', line)]
+def _requirements(text: str) -> tuple[dict[str, tuple[str, str, frozenset[str]]], list[str]]:
+    """A hash-mode requirements file by meaning: ``{name: (version, marker, hashes)}``
+    plus any option lines. Continuations are joined and comments dropped, so uv's header
+    and ``# via`` annotations, quoting and wrapping never count."""
+    reqs: dict[str, tuple[str, str, frozenset[str]]] = {}
+    options: list[str] = []
+    for line in text.replace("\\\n", " ").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("-"):
+            options.append(line)
+            continue
+        spec, *hashes = line.split("--hash=")
+        m = re.fullmatch(r"([A-Za-z0-9][A-Za-z0-9._-]*)(\[[^\]]*\])?==(\S+)\s*(?:;\s*(.+?))?\s*", spec)
+        assert m, f"not an exact pin: {spec!r}"
+        name = re.sub(r"[-_.]+", "-", m.group(1)).lower()
+        marker = " ".join((m.group(4) or "").replace('"', "'").split())
+        assert name not in reqs, f"{name} is listed twice"
+        reqs[name] = (m.group(3), marker, frozenset(h.strip() for h in hashes))
+    return reqs, options
 
 
-def test_proto_images_pin_the_locked_botocore():
-    """U7: proto/enqueue.py signs with botocore, which the tests run at uv.lock's version.
-    Both images pin the same one, so what the vectors proved is what the images sign with."""
-    locked = _locked_version("botocore")
-    for dockerfile in (PROTO / "web" / "Dockerfile", PROTO / "worker" / "Dockerfile"):
-        assert _pip_pins(dockerfile, "botocore") == [locked], f"{dockerfile.relative_to(PROTO)} vs uv.lock {locked}"
+def _uv_export(group: str) -> str:
+    uv = os.environ.get("UV") or shutil.which("uv")
+    if not uv:
+        pytest.fail("uv is not on PATH: the requirements drift check needs it, and a skip would hide drift")
+    proc = subprocess.run(
+        [uv, "export", "--locked", "--only-group", f"proto-{group}", "--no-emit-project",
+         "--format", "requirements-txt", "--no-header"],
+        cwd=PROTO.parent, capture_output=True, text=True, encoding="utf-8",
+    )
+    assert proc.returncode == 0, f"uv export --locked failed (is uv.lock current? run `uv lock`, then {REGENERATE}):\n{proc.stderr}"
+    return proc.stdout
+
+
+def _dockerfile_logical_lines(dockerfile: Path) -> list[str]:
+    text = dockerfile.read_text(encoding="utf-8")
+    body = "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#"))
+    return [" ".join(line.split()) for line in body.replace("\\\n", " ").splitlines() if line.strip()]
+
+
+@pytest.mark.parametrize("tier", sorted(REQUIREMENTS))
+def test_proto_images_install_their_requirements_in_hash_mode(tier):
+    """U12: each image installs the committed export of its uv group, every pip line in
+    hash mode, so the image runs uv.lock's closure (the versions the suite tested) and a
+    wheel that does not match the lock's hash fails the build."""
+    dockerfile = PROTO / tier / "Dockerfile"
+    lines = _dockerfile_logical_lines(dockerfile)
+    source = f"apps/server/proto/{tier}/requirements.txt"
+    dests = [line.split()[-1] for line in lines if re.match(rf"COPY (--\S+ )*{re.escape(source)} ", line)]
+    assert len(dests) == 1, f"{dockerfile.relative_to(PROTO)} must COPY {source} exactly once"
+    [dest] = dests
+    if dest.endswith("/"):
+        dest += "requirements.txt"
+    accepted = {dest, dest.removeprefix("./")}
+    pips = [line for line in lines if re.match(r"RUN\b.*\bpip3? install\b", line)]
+    assert pips, f"{dockerfile.relative_to(PROTO)} has no pip install"
+    for pip in pips:
+        # Every command in the RUN: a second pip chained after the first decides hash mode
+        # on its own.
+        for seg in re.split(r"\s*(?:&&|\|\||;|\|)\s*", pip):
+            if not re.search(r"\bpip3? install\b", seg):
+                continue
+            words = seg.split(" install ", 1)[1].split()
+            assert "--require-hashes" in words, f"not in hash mode: {pip}"
+            targets = [b for a, b in zip(words, words[1:]) if a in ("-r", "--requirement")]
+            targets += [w.split("=", 1)[1] for w in words if w.startswith("--requirement=")]
+            assert targets and set(targets) <= accepted, f"pip must install only {source} (copied to {dest}): {pip}"
+
+
+@pytest.mark.parametrize("tier", sorted(REQUIREMENTS))
+def test_committed_requirements_are_the_uv_export(tier):
+    """The committed file is `uv export` of the tier's group, compared by meaning: the same
+    (name, version, marker) set and the same hashes. A Dependabot bump to uv.lock that moves
+    a package in either closure fails here until the files are regenerated."""
+    committed, options = _requirements(REQUIREMENTS[tier].read_text(encoding="utf-8"))
+    fresh, _ = _requirements(_uv_export(tier))
+    assert not options, f"{REQUIREMENTS[tier].relative_to(PROTO)} carries options {options}; {REGENERATE}"
+    stale = {n: (committed.get(n), fresh.get(n)) for n in committed.keys() | fresh.keys() if committed.get(n) != fresh.get(n)}
+    assert not stale, (
+        f"proto/{tier}/requirements.txt differs from uv.lock's proto-{tier} group; {REGENERATE}. "
+        f"(committed, uv.lock) per package: " + "; ".join(
+            f"{n}: {(c or ('absent',))[:2]} vs {(f or ('absent',))[:2]}" + (" (hashes differ)" if c and f and c[:2] == f[:2] else "")
+            for n, (c, f) in sorted(stale.items())
+        )
+    )
+    for name, (_, _, hashes) in committed.items():
+        assert hashes, f"{name} has no --hash; pip --require-hashes would refuse the file"
+
+
+@pytest.mark.parametrize(
+    ("tier", "package", "pinned"),
+    [
+        ("web", "itsdangerous", None),
+        ("web", "cryptography", None),
+        ("web", "httpx", None),
+        ("web", "botocore", None),
+        ("web", "fastapi", None),
+        ("web", "uvicorn", None),
+        ("web", "psycopg-binary", None),
+        ("worker", "claude-agent-sdk", "0.2.128"),
+        ("worker", "psycopg-binary", None),
+        ("worker", "botocore", None),
+        # U3: grants.py decrypts what web/auth.py encrypts, at the one locked version.
+        ("worker", "cryptography", None),
+    ],
+)
+def test_requirements_carry_what_the_tiers_import_at_the_locked_version(tier, package, pinned):
+    """web/auth.py and enqueue.py import these at module scope, and the worker's SDK pin is
+    the flush-mode and CLI pin; the suite runs in a venv that has them all, so a missing one
+    passes every other test and fails only when the tier starts. botocore at uv.lock's
+    version is what the U7 signing vectors proved."""
+    reqs, _ = _requirements(REQUIREMENTS[tier].read_text(encoding="utf-8"))
+    assert package in reqs, f"proto/{tier}/requirements.txt does not carry {package}"
+    version = reqs[package][0]
+    assert version == _locked_version(package), f"proto/{tier} {package}=={version} vs uv.lock; {REGENERATE}"
+    if pinned:
+        assert version == pinned, f"proto/{tier} {package}=={version}, not the {pinned} pin"
 
 
 def test_host_venv_sqs_recipes_use_static_dummies():
@@ -812,72 +916,187 @@ def test_the_grading_recipes_run_the_harness_module_in_the_harness_venv():
     assert "cwd=HARNESS_DIR" in source
 
 
-def test_proto_test_runs_the_d18_tests():
-    assert any(
-        "tests/test_proto_d18.py" in line for line in _recipe("proto-test")
-    ), "make proto-test must run the D18 tests, or they run nowhere"
+def test_proto_test_runs_every_test_proto_file():
+    """The shared guard: every tests/test_proto_*.py is in make proto-test's list, or it runs
+    nowhere a prototype change is checked (the real-Postgres one skips there without a DSN;
+    proto-grants-test and CI run it for real)."""
+    body = "\n".join(_recipe("proto-test"))
+    files = sorted(p.name for p in (PROTO.parent / "tests").glob("test_proto_*.py"))
+    assert files and "test_proto_grants_pg.py" in files
+    missing = [name for name in files if not re.search(rf"\btests/{re.escape(name)}\b", body)]
+    assert not missing, f"make proto-test does not run {missing}"
 
 
-def test_the_worker_can_actually_reach_a_familysearch_token():
-    """`bearer_token()` has three sources -- the message, FS_ACCESS_TOKEN_FILE, then the
-    worker env's FS_ACCESS_TOKEN -- and compose supplied only the middle one. That one is
-    a host file at mode 600 owned by whoever ran make, bind-mounted into a container that
-    runs as uid 1001, so the read fails with EPERM whenever those uids differ. They ALWAYS
-    differ under rootless docker, where the container uid is mapped through the caller's
-    subuid range.
-
-    `bearer_token` catches the OSError and returns "" -- and an empty token makes
-    `getValidToken` throw HOSTED_REAUTH_INSTRUCTION, whose text is "Your FamilySearch
-    session has expired". So a perfectly valid token is reported as an expired session,
-    and every FamilySearch call in the run fails with a message that sends you to
-    re-authenticate instead of to the mount. Three billed `proto-demo-auto` runs were lost
-    to it; all three tokens were still live when tested afterwards.
-
-    Both paths must be present: the file is what `make proto-token` refreshes under a
-    running worker, and the env var is what works when the uids do not line up."""
-    compose = (PROTO / "docker-compose.yml").read_text(encoding="utf-8")
-    # A real service boundary: `^  <name>:` at exactly two spaces. Splitting on "\n  "
-    # matches every 4-space key inside the block too and yields an empty string, which
-    # makes every assertion below vacuously... fail, but for the wrong reason.
-    blocks = re.split(r"^  (?=\w[\w-]*:)", compose, flags=re.M)
-    worker = next(b for b in blocks if b.startswith("worker:"))
-    assert "FS_ACCESS_TOKEN_FILE:" in worker, "the per-turn refresh path"
-    assert "FS_ACCESS_TOKEN:" in worker, (
-        "the worker service does not pass FS_ACCESS_TOKEN, so bearer_token's documented "
-        "env fallback is always empty and a failed file read has nowhere to fall back to"
-    )
-    # And it must be a passthrough from the caller's environment, not a literal.
-    line = next(ln for ln in worker.splitlines() if ln.strip().startswith("FS_ACCESS_TOKEN:"))
-    assert "${FS_ACCESS_TOKEN" in line, f"must inherit the caller's token, not hardcode one: {line.strip()!r}"
+def test_no_recipe_mints_or_mounts_an_operator_token():
+    """U3: the worker bears the patron's grant, so nothing mints, refreshes or mounts an
+    operator token. `make proto-grant` stores the dev patron's grant instead."""
+    text = MAKEFILE.read_text(encoding="utf-8")
+    assert not re.search(r"^proto-token\s*:", text, re.M), "the operator-token recipe is gone"
+    for target in ("proto-up", "proto-up-core", "proto-turn"):
+        assert not any(".fs-token" in line or "fs-token.ts" in line for line in _recipe(target)), target
+    grant = _recipe("proto-grant")
+    assert any("proto/grant.py" in line and "--pg-dsn" in line for line in grant), grant
+    assert (PROTO / "grant.py").is_file()
+    assert not (REPO / "packages" / "engine" / "mcp-server" / "dev" / "fs-token.ts").exists()
 
 
-def test_bearer_token_falls_back_when_the_file_cannot_be_read(tmp_path):
-    """The behaviour the compose entry above depends on: an unreadable file must fall
-    through to the env var rather than returning empty. A permission error is an OSError,
-    which is what the except clause has to cover -- FileNotFoundError alone would not."""
-    from proto.worker.options import bearer_token
+# ── U3: grants ───────────────────────────────────────────────────────────────────
 
-    # A PERMISSION error, not a missing file. That distinction is the whole test: the
-    # production failure is EPERM on a mode-600 mount the container's uid cannot read,
-    # and `except FileNotFoundError` would sail straight past it while still passing a
-    # test written against a nonexistent path. Verified by break test: narrowing the
-    # except clause to FileNotFoundError leaves a missing-path version of this green.
-    unreadable = tmp_path / "fs-token"
-    unreadable.write_text("p0-in-the-file", encoding="utf-8")
-    unreadable.chmod(0o000)
-    if os.access(unreadable, os.R_OK):  # running as root: the mode is not enforced
-        pytest.skip("root can read a 0000 file, so EPERM cannot be reproduced here")
 
-    env = {"FS_ACCESS_TOKEN_FILE": str(unreadable), "FS_ACCESS_TOKEN": "p0-fallback"}
-    assert bearer_token(env, None) == "p0-fallback", (
-        "an unreadable token file must fall through to the env var; this is exactly the "
-        "path that was returning empty and reporting a live token as an expired session"
-    )
-    # The message still wins over both.
-    assert bearer_token(env, "p0-from-message") == "p0-from-message"
-    # And with neither, empty -- the state that produced the misleading "expired" error.
-    assert bearer_token({"FS_ACCESS_TOKEN_FILE": str(unreadable)}, None) == ""
-    # A missing file behaves the same way, but on its own it does NOT prove the clause is
-    # wide enough -- see the comment above.
-    assert bearer_token({"FS_ACCESS_TOKEN_FILE": str(tmp_path / "gone"),
-                         "FS_ACCESS_TOKEN": "p0-fallback"}, None) == "p0-fallback"
+def test_009_is_idempotent_and_backfills_from_granted_at():
+    """Every start re-applies sql/*.sql, so each statement must be a no-op the second time:
+    an added column, an index, or a backfill guarded on the column still being NULL. The
+    backfill is exact because before 009 only a sign-in wrote a row."""
+    statements = _statements(SQL_DIR / "009_grant_session.sql")
+    assert statements, "009_grant_session.sql has no statements"
+    for stmt in statements:
+        assert re.match(r"(ALTER TABLE familysearch_tokens ADD COLUMN IF NOT EXISTS \w+ \w+$"
+                        r"|CREATE INDEX IF NOT EXISTS \w+ ON \w+ "
+                        r"|UPDATE \w+ SET (\w+) = \w+ WHERE \2 IS NULL$)", stmt), f"not idempotent: {stmt}"
+    added = {re.match(r"ALTER TABLE \w+ ADD COLUMN IF NOT EXISTS (\w+)", s).group(1)
+             for s in statements if s.startswith("ALTER")}
+    assert added == {"session_started_at", "refresh_started_at", "refresh_refused_at", "refresh_refused_reason"}
+    assert "UPDATE familysearch_tokens SET session_started_at = granted_at WHERE session_started_at IS NULL" in statements
+    assert any("ON turns (project_id) WHERE completed_at IS NULL" in s for s in statements), \
+        "the refresher's open-turn EXISTS needs its index"
+
+
+def _proto_imports(source: str, *, packaged: bool) -> set[str]:
+    """The proto/<name>.py modules a source imports. ``packaged`` (the worker's layout):
+    ``from proto import X``, ``from proto.X import ...`` and ``import proto.X``; otherwise
+    (the web image's flat /app): ``import X`` and ``from X import ...``."""
+    names: set[str] = set()
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                parts = alias.name.split(".")
+                if packaged and parts[0] == "proto" and len(parts) > 1:
+                    names.add(parts[1])
+                elif not packaged:
+                    names.add(parts[0])
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            parts = node.module.split(".")
+            if packaged and parts[0] == "proto":
+                names.update(parts[1:2] or [a.name for a in node.names])
+            elif not packaged:
+                names.add(parts[0])
+    return {n for n in names if (PROTO / f"{n}.py").is_file()}
+
+
+def _copied(dockerfile: Path) -> set[str]:
+    """The repo paths a Dockerfile COPYs (continuation lines joined, flags skipped)."""
+    text = dockerfile.read_text(encoding="utf-8").replace("\\\n", " ")
+    sources: set[str] = set()
+    for line in text.splitlines():
+        parts = line.split("#", 1)[0].split()
+        if parts and parts[0] == "COPY":
+            args = [a for a in parts[1:] if not a.startswith("--")]
+            sources.update(a.rstrip("/") for a in args[:-1])
+    return sources
+
+
+def _bundle_sources(tier: str) -> set[str]:
+    """The repo paths the Beanstalk bundle builder ships for ``tier`` (scripts/eb_bundles)."""
+    import importlib.util
+    import sys
+
+    scripts = REPO / "scripts" / "eb_bundles"
+    sys.path.insert(0, str(scripts))  # build.py does `import layout`
+    try:
+        spec = importlib.util.spec_from_file_location("eb_bundles_build_for_proto_config", scripts / "build.py")
+        build = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = build  # the dataclass decorator looks its module up
+        spec.loader.exec_module(build)
+    finally:
+        sys.path.remove(str(scripts))
+    return {rule.src for rule in build.RULES[tier]}
+
+
+def test_images_and_bundles_carry_every_proto_module_they_import():
+    """Both images and both Beanstalk bundles copy proto/ SELECTIVELY, so a module not
+    shipped is simply not there -- and every test passes, because the suite has the whole
+    tree on its path. The worker's held-message release swallowed exactly that ImportError
+    once (enqueue.py), and without grants.py neither tier can read a grant at all."""
+    for image, packaged in (("web", False), ("worker", True)):
+        needed: set[str] = set()
+        for source in sorted((PROTO / image).glob("*.py")):
+            needed |= _proto_imports(source.read_text(encoding="utf-8"), packaged=packaged)
+        assert {"enqueue", "grants"} <= needed, f"{image}: the guard no longer sees the imports ({needed})"
+        for kind, shipped in (("image", _copied(PROTO / image / "Dockerfile")), ("bundle", _bundle_sources(image))):
+            missing = sorted(n for n in needed if f"apps/server/proto/{n}.py" not in shipped)
+            assert not missing, f"the {image} {kind} imports proto/{missing} but never ships it"
+
+
+@pytest.mark.parametrize("source, packaged, expected", [
+    ("import grants", False, {"grants"}),
+    ("def f():\n    import enqueue\n", False, {"enqueue"}),
+    ("from grants import Ready", False, {"grants"}),
+    ("import os, json", False, set()),
+    ("from proto import grants, enqueue", True, {"grants", "enqueue"}),
+    ("from proto.grants import Ready", True, {"grants"}),
+    ("import proto.grants as g", True, {"grants"}),
+    ("from proto.worker.options import x", True, set()),
+    ("import grants", True, set()),
+])
+def test_the_image_import_reader_sees_each_shape(source, packaged, expected):
+    assert _proto_imports(source, packaged=packaged) == expected
+
+
+def test_the_copy_reader_joins_a_reflowed_copy(tmp_path):
+    dockerfile = tmp_path / "Dockerfile"
+    dockerfile.write_text("FROM x\nCOPY --chown=1:1 \\\n    apps/server/proto/grants.py \\\n    /opt/x/\n"
+                          "# COPY apps/server/proto/enqueue.py /opt/\n", encoding="utf-8")
+    assert _copied(dockerfile) == {"apps/server/proto/grants.py"}
+
+
+def _shim_kill_default() -> bool:
+    m = re.search(r'^KILL_ON_READ_TIMEOUT = _env_bool\("KILL_ON_READ_TIMEOUT", (True|False)\)',
+                  (PROTO / "shim" / "shim.py").read_text(encoding="utf-8"), re.M)
+    assert m, "shim.py's KILL_ON_READ_TIMEOUT default moved"
+    return m.group(1) == "True"
+
+
+def _profiles() -> list[tuple[str, dict[str, str], dict[str, str], dict[str, str]]]:
+    """(name, worker env, shim env, the overlay's own worker env) per compose profile."""
+    base = _load(COMPOSE)
+    out = [("base", _env(_service(base, "worker")), _env(_service(base, "shim")), {})]
+    overlay = _load(SQSD_OVERLAY)["services"]
+    over_worker = _env(overlay.get("worker") or {})
+    out.append(("base+sqsd", {**out[0][1], **over_worker}, {**out[0][2], **_env(overlay.get("shim") or {})},
+                over_worker))
+    return out
+
+
+def test_grant_start_age_leaves_an_attempt_of_session_life():
+    """D4: where the shim KILLS an attempt at its read timeout, an attempt that starts at the
+    maximum session age still ends 600 s before the session's guaranteed 8 h. Where it does
+    not (docker-compose.sqsd.yml: sqsd abandons, never kills), nothing bounds an attempt
+    until U26, so no start age is a guarantee there and the profile must not set one."""
+    for name, worker_env, shim_env, own in _profiles():
+        raw_kill = shim_env.get("KILL_ON_READ_TIMEOUT")
+        kills = _shim_kill_default() if raw_kill is None else \
+            _compose_default(raw_kill)[1].strip().lower() in {"1", "true", "yes", "on"}
+        if kills:
+            start_age = float(_compose_default(worker_env["FS_GRANT_MAX_START_AGE_S"])[1])
+            read_timeout = float(_compose_default(shim_env["READ_TIMEOUT_S"])[1])
+            assert start_age + read_timeout + 600 <= 8 * 3600, (
+                f"{name}: an attempt starting at age {start_age} s can run {read_timeout} s, past the "
+                "session's guaranteed 8 h")
+        else:
+            assert "FS_GRANT_MAX_START_AGE_S" not in own, (
+                f"{name}: the shim never kills an attempt here, so a start age would read as a guarantee "
+                "nothing enforces (U26)")
+    from proto import grants
+
+    base = _compose_default(_env(_service(_load(COMPOSE), "worker"))["FS_GRANT_MAX_START_AGE_S"])[1]
+    assert float(base) == grants.DEFAULT_MAX_START_AGE_S, "one value everywhere: compose and the worker's default"
+
+
+def test_grant_wait_is_below_the_shim_ceiling():
+    """The wait for the refresher happens inside the POST, so it must end before the shim's
+    1,800 s kill turns it into a redelivery that waits again."""
+    from proto import grants
+
+    wait = float(_compose_default(_env(_service(_load(COMPOSE), "worker"))["FS_GRANT_WAIT_S"])[1])
+    ceiling = float(_compose_default(_env(_service(_load(COMPOSE), "shim"))["READ_TIMEOUT_S"])[1])
+    assert wait == grants.DEFAULT_WAIT_S < ceiling == STEP_CEILING_S
