@@ -11,7 +11,7 @@ import { getOpenRouterApiKey, getOpenRouterModel } from "../auth/config.js";
 import { imageSearchTool } from "./image-search.js";
 import { resolveFsImageInput, fetchFsImageBytes } from "../utils/fs-image-fetch.js";
 import { runOcr } from "../utils/ocr.js";
-import { recordBrowseAndCheckBudget } from "../utils/browse-budget.js";
+import { checkImageBrowseCap, recordImageBrowse } from "../utils/browse-budget.js";
 import type {
   VolumeBisectInput,
   VolumeBisectReading,
@@ -339,6 +339,14 @@ export async function volumeBisectTool(
 
   const imageId = imageIds[position];
   const resolved = resolveFsImageInput({ imageId }, "volume_bisect");
+  // The hard image cap, shared with image_read and image_transcribe (spec §7).
+  const browse = await checkImageBrowseCap(
+    { imageId },
+    input.projectPath,
+    "volume_bisect",
+    `positions ${bracketBefore.lowPosition}..${bracketBefore.highPosition}, ` +
+      `years ${bracketBefore.lowYear ?? "unknown"}..${bracketBefore.highYear ?? "unknown"}`,
+  );
   const fetched = await fetchFsImageBytes(
     resolved.url,
     resolved.fallbackUrl,
@@ -356,6 +364,7 @@ export async function volumeBisectTool(
     timeoutMs: PROBE_OCR_TIMEOUT_MS,
     maxTokens: PROBE_MAX_TOKENS,
   });
+  await recordImageBrowse(browse);
 
   const reading: VolumeBisectReading = {
     position,
@@ -364,7 +373,6 @@ export async function volumeBisectTool(
   };
   const all = [...readings, reading];
   const bracket = bracketFrom(all, input.targetYear, lastPosition);
-  const browseBudget = recordBrowseAndCheckBudget(imageId, input.projectPath, "bisect");
 
   const after = firstContradiction(all);
   if (after) {
@@ -373,7 +381,6 @@ export async function volumeBisectTool(
       bracket,
       confidence: "non-monotonic",
       reading,
-      ...(browseBudget ? { browseBudget } : {}),
       stopped:
         `Position ${a.position} reads ${a.year} but the later position ${b.position} ` +
         `reads ${b.year}. Year headings are not resolving this sub-volume.`,
@@ -385,7 +392,6 @@ export async function volumeBisectTool(
       bracket,
       confidence: "resolved",
       reading,
-      ...(browseBudget ? { browseBudget } : {}),
       stopped: closedMessage(bracket),
     };
   }
@@ -396,7 +402,6 @@ export async function volumeBisectTool(
     confidence: reading.year === null ? "inconclusive" : "converging",
     reading,
     ...(nextPos !== undefined ? { nextImageId: imageIds[nextPos] } : {}),
-    ...(browseBudget ? { browseBudget } : {}),
   };
 }
 
@@ -432,7 +437,7 @@ export const volumeBisectSchema = {
       },
       projectPath: {
         type: "string",
-        description: "Charges the browse budget to this project.",
+        description: "Counts probes toward this project's image cap.",
       },
     },
     required: ["imageGroupNumber", "targetYear"],

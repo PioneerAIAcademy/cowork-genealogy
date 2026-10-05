@@ -401,6 +401,91 @@ function conflictInvariants(entry: any): string[] {
   return errs;
 }
 
+/** A [?] assertion cannot win a conflict on its own evidence — it needs
+ *  corroboration from a different record with the same fact_type, same value
+ *  (once [?] is stripped, whitespace collapsed and case folded), no [?] of its
+ *  own, and tied to the same person. Reads live `research`. */
+function uncertainPreferenceInvariants(entry: any, research: any): string[] {
+  if (entry.preferred_assertion_id == null) return [];
+  const assertions: any[] = research.assertions ?? [];
+  const byId = new Map<string, any>(assertions.map((a: any) => [a.id, a]));
+  const preferred = byId.get(entry.preferred_assertion_id);
+  if (!preferred || !hasUncertainReading(preferred)) return [];
+
+  const competing: string[] = Array.isArray(entry.competing_assertion_ids)
+    ? entry.competing_assertion_ids
+    : [];
+  const preferredRecord = preferred.record_id ?? preferred.source_id ?? null;
+  const normalizedPreferredValue = normalizeUncertainValue(preferred.value);
+
+  // Build set of person_ids the preferred assertion is linked to via live
+  // person_evidence rows.
+  const preferredPersonIds = new Set<string>();
+  for (const pe of research.person_evidence ?? []) {
+    if (pe && pe.assertion_id === entry.preferred_assertion_id && pe.superseded_by == null) {
+      if (pe.person_id != null) preferredPersonIds.add(pe.person_id);
+    }
+  }
+
+  // Build a map from assertion_id → set of person_ids for fast lookup.
+  const assertionToPersonIds = new Map<string, Set<string>>();
+  for (const pe of research.person_evidence ?? []) {
+    if (pe && pe.superseded_by == null && pe.person_id != null) {
+      let s = assertionToPersonIds.get(pe.assertion_id);
+      if (!s) {
+        s = new Set<string>();
+        assertionToPersonIds.set(pe.assertion_id, s);
+      }
+      s.add(pe.person_id);
+    }
+  }
+
+  for (const a of assertions) {
+    if (!a || a.id === entry.preferred_assertion_id) continue;
+    // Condition 1: no [?] on the corroborator.
+    if (hasUncertainReading(a)) continue;
+    // Condition 2: different record.
+    const aRecord = a.record_id ?? a.source_id ?? null;
+    if (aRecord == null || aRecord === preferredRecord) continue;
+    // Condition 3: same fact_type, equal value once [?] removed + normalized.
+    if (a.fact_type !== preferred.fact_type) continue;
+    if (typeof a.value !== "string") continue;
+    if (normalizeUncertainValue(a.value) !== normalizedPreferredValue) continue;
+    // Condition 4: same person — in competing_assertion_ids, or linked to
+    // the same person via live person_evidence.
+    const inCompeting = competing.includes(a.id);
+    if (!inCompeting) {
+      const aPersonIds = assertionToPersonIds.get(a.id);
+      if (!aPersonIds || !setsOverlap(aPersonIds, preferredPersonIds)) continue;
+    }
+    // All four conditions met — corroborated.
+    return [];
+  }
+
+  return [
+    `preferred_assertion_id '${entry.preferred_assertion_id}' carries an uncertain reading ` +
+      `([?]) and no assertion from a different record corroborates it. To settle the conflict: ` +
+      `find a second record whose reading agrees, or update the assertion (op: "update", ` +
+      `entryId: "${entry.preferred_assertion_id}", fields: {value: "<confirmed reading>"}) to ` +
+      `remove the [?] once the user confirms the reading. Leaving preferred_assertion_id null ` +
+      `— a deferral is a finding, not an omission — stays legal.`,
+  ];
+}
+
+/** Strip [?], collapse whitespace, fold case — for value comparison. */
+function normalizeUncertainValue(v: string): string {
+  return v.replace(/\[\?\]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+/** True when two sets share at least one element. */
+function setsOverlap(a: Set<string>, b: Set<string>): boolean {
+  const [smaller, larger] = a.size <= b.size ? [a, b] : [b, a];
+  for (const x of smaller) {
+    if (larger.has(x)) return true;
+  }
+  return false;
+}
+
 function planActiveInvariants(entry: any, research: any): string[] {
   if (entry.status !== "active") return [];
   // `p &&`: a legacy `plans: [null]` made this throw
@@ -1578,6 +1663,59 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
       "the search finish; declaring is available on the next call once the plan reflects it. " +
       "Items still at `planned` do not block — consulting the stop criteria before draining " +
       "the plan is the sanctioned path.",
+  ];
+}
+
+/** A new question may not be created while any unresolved question has an
+ *  active-plan item `in_progress`, with one exception (chesworthrm,
+ *  2026-09-29): the new question may target an unresolved conflict that blocks
+ *  the in-flight question. That exception is checked against `conflicts[]` —
+ *  an `unresolved` conflict must list the in-flight question in
+ *  `blocks_question_ids`, AND the new question's `unblocks` must name it. A
+ *  filled-in `unblocks` alone proves nothing.
+ *
+ *  There is deliberately no "add a question anyway" override: the tool cannot
+ *  tell a real user override from a delegation that claims one, and the
+ *  override's shape (`depends_on` naming the in-flight question) is exactly how
+ *  `ut_question_selection_d01` fails. A user who wants to move on marks the
+ *  in-flight item done or skipped first.
+ *
+ *  Same pre-call snapshot and active-plan discipline as
+ *  `planCompleteInvariants`: a superseded plan's items are frozen and a resolved
+ *  question's plan is settled, so neither blocks. */
+function newQuestionWhileSearchInFlightInvariants(entry: any, preCallResearch: any): string[] {
+  const unresolvedQuestions = new Set<string>(
+    (Array.isArray(preCallResearch?.questions) ? preCallResearch.questions : [])
+      .filter((q: any) => typeof q?.id === "string" && q.status !== "resolved")
+      .map((q: any) => q.id),
+  );
+  const unblocks = new Set<string>(
+    Array.isArray(entry?.unblocks) ? entry.unblocks.filter((u: unknown) => typeof u === "string") : [],
+  );
+  const conflictBlocked = new Set<string>();
+  for (const c of Array.isArray(preCallResearch?.conflicts) ? preCallResearch.conflicts : []) {
+    if (c?.status !== "unresolved" || !Array.isArray(c.blocks_question_ids)) continue;
+    for (const q of c.blocks_question_ids) if (typeof q === "string") conflictBlocked.add(q);
+  }
+  const refused: string[] = [];
+  for (const plan of Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []) {
+    if (!plan || plan.status !== "active" || !unresolvedQuestions.has(plan.question_id)) continue;
+    const excepted = conflictBlocked.has(plan.question_id) && unblocks.has(plan.question_id);
+    if (excepted) continue;
+    for (const item of Array.isArray(plan.items) ? plan.items : []) {
+      if (item?.status === "in_progress" && typeof item?.id === "string") {
+        refused.push(`${item.id} (on ${plan.question_id})`);
+      }
+    }
+  }
+  if (refused.length === 0) return [];
+  const ids = refused.sort().join(", ");
+  return [
+    `a new question cannot be opened while research is still running: ${ids} ` +
+      `${refused.length === 1 ? "is" : "are"} still 'in_progress'. The plan says that search ` +
+      "has not finished, whatever the request that reached you says. Write no question now: " +
+      "report the in-flight item as the reason. The one exception is a question that resolves " +
+      "an unresolved conflict blocking that question — set its `unblocks` to name it.",
   ];
 }
 
@@ -3303,6 +3441,9 @@ function applyOne(
     if (declarationTouchedThisOp) {
       invariantErrors.push(...planCompleteInvariants(resultEntry, preCallResearch));
     }
+    if (op.op === "append") {
+      invariantErrors.push(...newQuestionWhileSearchInFlightInvariants(resultEntry, preCallResearch));
+    }
     const statusTouchedThisOp =
       op.op === "append" || Object.prototype.hasOwnProperty.call(fields, "status");
     // EITHER side, because the invariant couples two fields and an op that
@@ -3332,6 +3473,16 @@ function applyOne(
       // the two dates cannot be ordered. See unorderableDateWarnings for why
       // this is a warning rather than a precondition.
       opWarnings.push(...unorderableDateWarnings(resultEntry, research));
+    }
+    // Uncertain-preference guard: on append, or an update that (re)sets
+    // preferred_assertion_id or status. Scoped so an unrelated edit to a
+    // conflict written before this rule is not refused.
+    if (
+      op.op === "append" ||
+      Object.prototype.hasOwnProperty.call(conflictFields, "preferred_assertion_id") ||
+      Object.prototype.hasOwnProperty.call(conflictFields, "status")
+    ) {
+      invariantErrors.push(...uncertainPreferenceInvariants(resultEntry, research));
     }
   }
   // One active plan per question — enforced on append OR an update that

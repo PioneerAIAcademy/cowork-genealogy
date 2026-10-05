@@ -330,6 +330,21 @@ dev = [
 proto = [
     { name = "pgserver" },
 ]
+proto-web = [
+    { name = "botocore" },
+    { name = "cryptography" },
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "itsdangerous" },
+    { name = "psycopg", extra = ["binary"] },
+    { name = "uvicorn", extra = ["standard"] },
+]
+proto-worker = [
+    { name = "anyio" },
+    { name = "botocore" },
+    { name = "claude-agent-sdk" },
+    { name = "psycopg", extra = ["binary"] },
+]
 
 [package.metadata]
 requires-dist = [
@@ -357,6 +372,21 @@ dev = [
     { name = "pyyaml", specifier = ">=6.0" },
 ]
 proto = [{ name = "pgserver", specifier = ">=0.1.4" }]
+proto-web = [
+    { name = "botocore", specifier = ">=1.40" },
+    { name = "cryptography", specifier = ">=48.0.1" },
+    { name = "fastapi", specifier = ">=0.140.13" },
+    { name = "httpx", specifier = ">=0.27" },
+    { name = "itsdangerous", specifier = ">=2.2" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.3.4" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.51.0" },
+]
+proto-worker = [
+    { name = "anyio", specifier = ">=4.14.2" },
+    { name = "botocore", specifier = ">=1.40" },
+    { name = "claude-agent-sdk", specifier = "==0.2.128" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.3.4" },
+]
 
 [[package]]
 name = "greenlet"

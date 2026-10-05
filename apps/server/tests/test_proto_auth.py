@@ -10,6 +10,7 @@ all green.
 from __future__ import annotations
 
 import ast
+import asyncio
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -20,7 +21,9 @@ from urllib.parse import parse_qs, urlparse
 import httpx
 import pytest
 
-from tests.test_proto_web import AUTH_ENV, PROTO, USER_A, FakeQueue, FakeStore, make_client
+from tests.test_proto_web import (  # noqa: F401  (refused_pg and silent_pg are fixtures)
+    AUTH_ENV, PROTO, USER_A, FakeQueue, FakeStore, make_client, refused_pg, silent_pg,
+)
 from web import app, auth
 from web.app import IdentityMismatch, ProjectNotOwned, create_app
 
@@ -246,6 +249,101 @@ async def test_the_lifespan_syncs_the_allowlist_from_the_environment(monkeypatch
     assert store.allowed == {"a@example.org", "b@example.org"}
 
 
+@pytest.mark.parametrize("raw", ["a@x.org b@x.org", "a@x.org,b@x.org", " A@x.org ,\n b@x.org ", "a@x.org\tb@x.org,,"])
+def test_allowed_emails_split_on_commas_and_whitespace(monkeypatch, raw):
+    """U12 D32: a comma is outside Beanstalk's environment-value character set, so a list
+    of two must be writable space-separated; compose's commas keep working."""
+    monkeypatch.setenv("ALLOWED_EMAILS", raw)
+    assert auth.allowed_emails() == {"a@x.org", "b@x.org"}
+
+
+@pytest.mark.parametrize("raw", ["", "  ", " , \n"])
+def test_allowed_emails_blank_is_empty(monkeypatch, raw):
+    monkeypatch.setenv("ALLOWED_EMAILS", raw)
+    assert auth.allowed_emails() == set()
+
+
+# ── U10: the lifespan listens with Postgres down; the allowlist stays fail-closed ─
+
+
+@pytest.mark.parametrize("postgres", ["refused", "silent"])
+async def test_the_lifespan_listens_with_postgres_down(monkeypatch, refused_pg, silent_pg, postgres):
+    monkeypatch.setenv("PG_DSN", (refused_pg if postgres == "refused" else silent_pg).dsn)
+    monkeypatch.setattr(app, "READY_TIMEOUT_S", 0.3)
+    application = create_app(queue=FakeQueue())
+    started = time.monotonic()
+    async with application.router.lifespan_context(application):
+        entered = time.monotonic() - started
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=application), base_url="http://t") as c:
+            r = await c.get("/api/health")
+    assert entered < 6, f"{entered:.1f}s: the two inline steps must share one budget"
+    body = r.json()
+    assert r.status_code == 503 and body["queue"] == "FakeQueue"
+    assert set(body["checks"]) == {"postgres", "schema", "allowlist"}, "the store is installed while Postgres is down"
+    assert not any(check["ok"] for check in body["checks"].values()), body
+    assert "probeuser" not in r.text and "127.0.0.1" not in r.text
+
+
+async def test_signed_in_routes_are_503_until_the_allowlist_syncs(fs_on):
+    _fake_fs(fs_on)
+    store = FakeStore()
+    store.allowed = {"a@example.org"}
+    application = create_app(store, FakeQueue())
+    application.state.startup = {"allowlist": "pending"}
+    cookies = {auth.COOKIE_NAME: auth.session_cookie_value(USER_A.id)}
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=application), base_url="http://t",
+                                 cookies=cookies) as c:
+        r = await c.get("/api/sessions")
+        assert r.status_code == 503 and r.json()["detail"] == "Not ready"
+        assert (await c.get("/api/health")).status_code == 503
+    oauth = auth.oauth_state_cookie("verifier-1", "st", None)
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=application), base_url="http://t",
+                                 cookies={auth.FS_OAUTH_COOKIE: oauth}) as c:
+        r = await c.get("/callback", params={"code": "code-1", "state": "st"})
+    assert r.status_code == 503 and store.grants == {}, "no sign-in against a table this boot has not synced"
+
+
+class FlakyStore(FakeStore):
+    """The schema apply and the allowlist sync each fail their first call."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.calls = {"schema": 0, "allowlist": 0}
+
+    async def apply_schema(self) -> list[str]:
+        self.calls["schema"] += 1
+        if self.calls["schema"] == 1:
+            raise OSError("connection refused")
+        return ["001_schema.sql"]
+
+    async def sync_allowlist(self, emails: set[str]) -> None:
+        self.calls["allowlist"] += 1
+        if self.calls["allowlist"] == 1:
+            raise OSError("connection refused")
+        await super().sync_allowlist(emails)
+
+
+async def test_the_allowlist_gate_lifts_when_the_background_sync_succeeds(fs_on):
+    fs_on.setenv("ALLOWED_EMAILS", "a@example.org")
+    fs_on.setattr(app, "STARTUP_BACKOFF_FIRST_S", 0.0)
+    store = FlakyStore()
+    fs_on.setattr(app, "PgStore", lambda dsn: store)
+    application = create_app(queue=FakeQueue())
+    cookies = {auth.COOKIE_NAME: auth.session_cookie_value(USER_A.id)}
+    async with application.router.lifespan_context(application):
+        assert application.state.startup["allowlist"] == "OSError", "the inline attempt failed"
+        for _ in range(200):
+            if application.state.startup == {"schema": "ok", "allowlist": "ok"}:
+                break
+            await asyncio.sleep(0.01)
+        assert application.state.startup == {"schema": "ok", "allowlist": "ok"}, application.state.startup
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=application), base_url="http://t",
+                                     cookies=cookies) as c:
+            assert (await c.get("/api/sessions")).status_code == 200
+            assert (await c.get("/api/health")).status_code == 200
+    assert store.allowed == {"a@example.org"} and store.calls == {"schema": 2, "allowlist": 2}
+
+
 # ── encryption, preflight, the client config ────────────────────────────────────
 
 
@@ -317,7 +415,7 @@ def _imports_app_package(source: str) -> list[str]:
     return hits
 
 
-@pytest.mark.parametrize("name", ["auth.py", "app.py"])
+@pytest.mark.parametrize("name", ["auth.py", "app.py", "spa.py"])
 def test_web_tier_does_not_import_app_package(name):
     """The web image does not carry apps/server/app, so an import passes every test (the
     suite has the whole tree on the path) and fails only in the container."""

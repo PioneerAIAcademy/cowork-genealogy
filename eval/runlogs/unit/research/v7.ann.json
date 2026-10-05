@@ -1,6 +1,6 @@
 {
   "run_log": "v7.json",
-  "annotator": "benteroyiembo@gmail.com",
+  "annotator": "mbadiweikennaya9@gmail.com",
   "corrections": [
     {
       "test_id": "ut_research_005",
@@ -8,7 +8,7 @@
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "**`ut_research_005`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude's analysis of the project state is factually accurate. All claims about the research status, proof summary tier (Probable), tree encoding (R1 ParentChild present), log entries, assertions, and conflicts are supported by the tool responses. The identification of 8 unlinked assertions and the routing decision to person-evidence are correct. No fabricated material or unsupported claims.\n\nJunior: (Pass - The tool response is correct — it faithfully represents the project state, identifies gaps, and routes appropriately without introducing errors or unsupported claims.)"
+      "comment": "Summary matches project state: Thomas Flynn is the probable father on the 1850/1860 censuses and the death certificate (indirect and secondary evidence), and the birthplace conflict is resolved in favour of Ireland. Nothing unsupported."
     },
     {
       "test_id": "ut_research_005",
@@ -16,7 +16,7 @@
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "**`ut_research_005`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed the full scope of the autonomous research request. Performed state audit (questions, evaluations, proof summaries, log, plans, assertions, person_evidence, conflicts), verified the tree-encoding gate for ps_001, identified unlinked assertions, routed to person-evidence as required, and provided a comprehensive summary of project status and remaining work. All required checks were completed.\n\nJunior: (Pass - Tool executed all required checks, routed appropriately, and provided a comprehensive summary of project status and remaining work.)"
+      "comment": "Proceeded autonomously without asking. Ran the proof-critique mentor gate and research-exhaustiveness, found pli_006 (probate) still in progress, and routed to search-records to run it. Correctly didn't route to question-selection and wrote no question with a search in flight."
     },
     {
       "test_id": "ut_research_005",
@@ -24,7 +24,7 @@
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "**`ut_research_005`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All 9 MCP tool calls passed correct arguments. project_context and research_query calls used the correct projectPath and section parameters. No calls landed in fixture_not_found. Arguments matched expected_args semantically. The sequence of queries (questions, evaluations, proof_summaries, log, plans, assertions, person_evidence, conflicts) was logical and appropriate for the state audit.\n\nJunior: (Pass - Tool arguments are accurate, valid, and complete — all calls matched fixture expectations, returned live results, and were semantically appropriate for the workflow.)"
+      "comment": "All research_query and project_context calls valid; no writes needed from the orchestrator."
     },
     {
       "test_id": "ut_research_017",
@@ -32,7 +32,7 @@
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "**`ut_research_017`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly declined to perform its own task and routed the user to search-records, which is the appropriate skill for indexed census queries. No substantive output was produced by the research skill itself, which is the correct behavior for this negative test.\n\nJunior: (Pass — it respected the negative test conditions, avoided invalid tool calls, and produced no unsupported claims.)"
+      "comment": "An indexed census search routed straight to search-records: research wasn't activated, and no volume_search or image_search browse calls were made. That's the browse-vs-indexed boundary this test pins."
     },
     {
       "test_id": "ut_research_017",
@@ -40,7 +40,7 @@
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "**`ut_research_017`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill's correct action was to decline and route to search-records. This routing decision is complete and appropriate. The test does not require the research skill to produce output; the routing itself fulfills the requirement.\n\nJunior: (Pass - The response is complete — the routing decision alone satisfies the negative test requirement, with no further output needed.)"
+      "comment": "Routing is the whole requirement for this negative test, and it was met; the invariant validators that decide the outcome all passed."
     },
     {
       "test_id": "ut_research_017",
@@ -48,7 +48,7 @@
       "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null,
-      "comment": "**`ut_research_017`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made by the research skill itself. The skill correctly declined to invoke tools and instead routed to search-records, so this dimension is N/A.\n\nJunior: (N/A - Tool arguments are valid and compliant — no tool calls were made, as required, and the skill correctly routed the indexed census query without violating the invariant.)"
+      "comment": "No MCP calls in the run, so there's nothing to grade, which is correct for a route-away."
     },
     {
       "test_id": "ut_research_008",
@@ -56,7 +56,7 @@
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "**`ut_research_008`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly recognized that the project folder is empty (no research.json or tree.gedcomx.json exist) and appropriately declined to perform the research task. Instead of attempting to set up a project or begin research, Claude asked for clarifying information (FamilySearch ID or name/birth year/place) that would be needed once a project is initialized. This is the correct behavior for a negative test where the skill should route to init-project.\n\nJunior: (Pass - it respected the negative test conditions, avoided invalid actions, and prepared for proper routing to init project.)"
+      "comment": "The user asked to research 'this person' without naming anyone. Asking for a name, birth details or a FamilySearch ID is correct: init-project's rule is to ask when no named individual is given (the don't-block rule covers a missing objective, not a missing subject). Nothing fabricated."
     },
     {
       "test_id": "ut_research_008",
@@ -64,7 +64,7 @@
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "**`ut_research_008`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude fully addressed the routing requirement by declining to perform research without a project initialized. The response appropriately asked for the necessary information (person identifier) that would be needed after init-project is invoked. No substantive research work was attempted, which is the correct and complete response for this scenario.\n\nJunior: (Pass - it fulfilled the negative test requirement by declining research and requesting the identifiers needed for proper project initialization.)"
+      "comment": "The invariant held: no project created, nothing written inline. Not routing to init-project yet is fine, because it would have had to ask the same thing."
     },
     {
       "test_id": "ut_research_008",
@@ -72,15 +72,31 @@
       "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null,
-      "comment": "**`ut_research_008`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made. Claude did not invoke any tools, which is appropriate given that the skill should have routed to init-project rather than attempting to perform research. N/A applies because zero tool calls were made.\n\nJunior: (N/A - Tool arguments are valid and compliant — no tool calls were made, as required, and the skill correctly prepared for routing to init project.)"
+      "comment": "No MCP calls, which is correct; there's nothing to look up without a person."
     },
     {
       "test_id": "ut_research_016",
       "dimension_source": "base",
       "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Accurate diagnostic. The test's ideal is to route planning to research-plan; skills_invoked is empty, and the strategy (priority queue, parishes, deed books) was written inline. The outcome still passes because the deciding invariant held: no volume_search or image_search calls and no writes."
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The required behaviour, a route to research-plan, never happened, so the decline-and-route is incomplete. Diagnostic only."
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "**`ut_research_016`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> This is a negative test where the correct behavior is for the research skill to decline and route to research-plan. Claude produced no output and made no tool calls, which is the correct behavior per the test specification. The skill correctly did not perform its own task (browsing strategy, tier list, or prioritized plan).\n\nJunior: (Pass - — it respected the negative test conditions, avoided invalid tool calls, and produced no unsupported output.)"
+      "comment": "Three valid read-only calls (project_context, research_query plans and log). No browse tool called, which is the invariant this test pins."
     },
     {
       "test_id": "ut_research_011",
@@ -88,7 +104,7 @@
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "**`ut_research_011`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified the project state (Patrick Flynn stub with no questions), accurately described the routing decision to question-selection, and provided honest narration about what was delegated versus what was done. The explanation of the workflow (question-selection → locality-guide → research plan → searching) is sound. No fabricated claims or unsupported assertions.\n\nJunior: (Pass - it faithfully represents the project state, explains the routing decision, and provides accurate narration without unsupported claims.)"
+      "comment": "Empty project (objective, no questions), so it routed to question-selection, spawned as Agent(question-selection), the @plugin: route this PR introduced, with no Skill call to the deleted skill. The forecast of what question-selection would do next is the orchestrator's own reasoning, not tool output, but harmless."
     },
     {
       "test_id": "ut_research_011",
@@ -96,7 +112,7 @@
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "**`ut_research_011`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed the user's request to 'research the next open question' by correctly routing to question-selection, the appropriate skill for deriving the first research question from a bare objective. The response explained the state, the routing decision, and what comes next. No required work was omitted given the routing-test nature of this scenario.\n\nJunior: (Pass — it fulfilled the routing test requirement by explaining the state, routing to question selection, and outlining what comes next without omitting any necessary information.)"
+      "comment": "Read state, routed and explained why; test_routes_to_expected_skill and test_skill_calls_name_a_shipped_skill both passed."
     },
     {
       "test_id": "ut_research_011",
@@ -104,23 +120,7 @@
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "**`ut_research_011`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> The single MCP call to mcp__genealogy__project_context passed the correct projectPath argument and matched the expected call. The tool returned successfully (ok: true) with the expected project state (active status, empty questions, one stub person I1). No argument errors or fixture_not_found issues.\n\nJunior: (Pass - the single call matched fixture expectations, returned the correct state, and supported the routing workflow.)"
-    },
-    {
-      "test_id": "ut_research_016",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "**`ut_research_016`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill correctly completed the required behavior for this negative test: it declined to perform research's task and routed the planning question to research-plan. No substantive output was produced, which is the correct and complete response to a planning question that should be handled by research-plan.\n\nJunior: (Pass — it fulfilled the negative test requirement by declining research and routing the planning question to the correct skill without producing invalid output.)"
-    },
-    {
-      "test_id": "ut_research_016",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": "**`ut_research_016`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made by the skill, so this dimension is N/A per the base rubric specification that Tool Arguments may be null only when no MCP tool calls happened.\n\nJunior: (No tool calls were made, as required, and the skill correctly prepared for routing to research-plan.)"
+      "comment": "One valid project_context call before routing."
     }
   ]
 }
