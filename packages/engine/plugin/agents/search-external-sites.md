@@ -93,8 +93,8 @@ Each invocation does one of three things, and returns:
 3. **Report** — the researcher reports a result without a capture, a nil
    included. Build the search's URL with `build_external_search_url` (step 3,
    without `projectPath`) — never write a URL yourself — then log the result
-   now (step 6) with that URL, and give the capture steps (step 4) so a
-   capture can later confirm it.
+   now (step 6) with that URL — `captureReceived: false`, `captureFilename:
+   null` — and give the capture steps (step 4) so a capture can later confirm it.
 
 You cannot wait for the researcher inside an invocation. What happens next — a
 capture, a choice of record — arrives as a later invocation.
@@ -208,11 +208,12 @@ Instead, for each capture-required external-site plan item:
    hold — UK/Scottish civil registration, censuses, parish registers — are
    also indexed on FamilySearch. If `search-records` can reach the record,
    hand back to search-records rather than deferring.
-2. Otherwise, still resolve the place and build the search URL (steps 2–3)
-   — it is a genuine lead worth recording.
+2. Otherwise, still resolve the place and build the search URL (steps 2–3),
+   calling the builder **without** `projectPath` — it is a genuine lead worth
+   recording.
 3. **Log it as deferred** in one `research_log_append` call: `outcome:
    "negative"`, `resultsExamined: 0`, `externalSite.captureReceived: false`,
-   and `notes` stating the search was **deferred — requires a user capture,
+   `externalSite.urlGenerated` set to the built URL, and `notes` stating the search was **deferred — requires a user capture,
    which cannot happen while the run is working**, with the generated URL
    recorded so the researcher can capture it later.
 4. **If — and only if — the search came from an existing plan item**, mark
@@ -223,12 +224,6 @@ Instead, for each capture-required external-site plan item:
    item that already exists, and inventing one to close puts a search in the
    plan that was never planned.
 5. **Return to the caller** — do not wait.
-
-This keeps the audit trail honest — the external avenue is logged as a
-deferred lead, not silently dropped, so `research-exhaustiveness` can weigh
-it and proceed on the evidence that *is* obtainable (FamilySearch records,
-provided documents). It does not lower the bar: in an interactive session
-the same search would be captured normally.
 
 ## Before you search
 
@@ -355,7 +350,7 @@ entry itself and returns its `logId`. It returns
 `{ ok: true, url, notes, access, logId }` or `{ ok: false, reason, errors }`; on
 `ok: false`, surface the errors and fix the inputs rather than retrying
 blindly or hand-writing a URL. **One exception:** when the results for that URL
-are already in the delegation and no `awaitingUser` row matches it, the search
+are already in the delegation and no `awaitingUser` row matches it, or `userPresent` is `no`, the search
 is not awaiting anything — call the tool **without** `projectPath`, so no
 in-flight entry is written, and log the search once at step 6.
 
@@ -417,7 +412,7 @@ build_external_search_url({
 | `library_archives_canada` | `givenName`/`surname`, `birthYear` | Census search only — no death data (census records the living) |
 | `american_ancestors` | `givenName`/`surname`/`keywords`, `birthPlace`/`deathPlace`, `birthYear` | Keyword-only — the site's own structured name fields do not bind |
 | `italian_genealogy` | `givenName`/`surname`/`keywords` | A discussion forum, not a records database — keyword search over posts only |
-| `archion` | none — browse site | German Protestant church books; viewing the scans needs an Archion pass. **Pass the parish page as `baseUrl`** — from the delegation, the wiki, or the locality guide; it comes back unchanged, with the path through the site in `notes`. Without one the tool returns the site root and says so |
+| `archion` | none — browse site | German Protestant church books; viewing the scans needs an Archion pass. **Pass the parish page as `baseUrl`** — from the delegation or a `localities` entry, never from memory; it comes back unchanged, with the path through the site in `notes`. Without one the tool returns the site root and says so |
 | `matricula` | none — browse site | Chiefly Catholic church books; free. Same as `archion`: pass the parish page as `baseUrl` |
 
 Every observation the tool makes — an attribute the site doesn't read, a
@@ -521,8 +516,12 @@ as the capture that arrived with no file.
 
 **Search: 1850 Census on Ancestry for Patrick Flynn**
 
-Click this link to search:
-[Ancestry — 1850 Census, Patrick Flynn](https://www.ancestry.com/search/collections/8054/?name=Patrick_Flynn&birth=1845&birthplace=Ireland)
+Open this search:
+<the url from build_external_search_url, unchanged>
+
+It would settle Patrick's household in 1850: who he lived with, and their ages
+and birthplaces. Look for a Patrick Flynn born about 1845 in Ireland.
+I can walk you through capturing the page and uploading it.
 
 After the page loads:
 1. Scroll to the bottom of the page and back to the top (forces
@@ -869,12 +868,6 @@ reproduction. The log entry must capture:
 - The result count and match quality summary
 - For zero-hit searches: what variations were attempted and what
   was learned from the absence
-
-This documentation proves that the researcher (a) searched
-systematically rather than randomly, (b) tried reasonable
-variations before declaring a collection exhausted, and (c)
-understands the difference between "not found here" and "does
-not exist."
 
 ### Exit criteria: when is an external-site search exhaustive?
 

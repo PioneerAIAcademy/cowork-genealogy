@@ -201,7 +201,7 @@ regardless of how directly the request named the destination.
    `@plugin:person-evidence`, the `h_`/`c_`/assertion ids at issue for
    `@plugin:hypothesis-tracking`, the place and period for
    `@plugin:locality-guide`, and the `planItemId` (plus the parish page as
-   `baseUrl` when one is known, `userPresent`, and for a returned capture its
+   `baseUrl` when one is known, `userPresent` (`yes` only when the researcher's current message asked for this search, otherwise `no`), and for a returned capture its
    file path or the results text) for `@plugin:search-external-sites`. The agent
    runs in fresh context and reads the
    project itself; a delegation missing `projectPath` fails on its first tool
