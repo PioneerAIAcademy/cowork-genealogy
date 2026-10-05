@@ -1,7 +1,7 @@
 {
   "tool": "fulltext_search",
-  "description": "Full-text search returning Thomas Flynn as the grantor (principal) in a Schuylkill County, Pennsylvania land deed — a bulk-digitized image never transcribed into the indexed genealogy name database.",
-  "args": { "keywords": "~Flynn" },
+  "description": "Full-text search using the 'Flinn' spelling variant in the NAME field — returns zero results. The nil-ladder retries a zero-keywords result by moving the name to the `name` parameter; even with that retry, no Schuylkill County records index the Flinn spelling.",
+  "args": { "name": "~Flinn" },
   "input_schema": {
     "type": "object",
     "properties": {
@@ -76,39 +76,11 @@
     }
   },
   "response": {
-    "query": { "keywords": "+Flynn" },
-    "totalResults": 1,
-    "returned": 1,
+    "query": { "name": "+Flinn" },
+    "totalResults": 0,
+    "returned": 0,
     "offset": 0,
     "hasMore": false,
-    "results": [
-      {
-        "id": "https://familysearch.org/ark:/61903/1:1:QV9N-KX83",
-        "collectionId": "2220359",
-        "collectionTitle": "Pennsylvania Land Records",
-        "title": "Deed of Conveyance — Thomas Flynn to John McCarthy",
-        "recordDate": "1879",
-        "recordType": "Land",
-        "recordPlace": "Schuylkill, Pennsylvania",
-        "textDocument": "Know all men by these presents that Thomas Flynn of Branch Township Schuylkill County Pennsylvania for and in consideration of the sum of three hundred and fifty dollars to him in hand paid by John McCarthy of the same county the receipt whereof is hereby acknowledged hath granted bargained sold and conveyed unto the said John McCarthy a certain tract or parcel of land situate in Branch Township aforesaid bounded and described as follows To have and to hold the said tract or parcel of land with the appurtenances thereunto belonging to the only proper use benefit and behoof of the said John McCarthy his heirs and assigns forever. In witness whereof the said Thomas Flynn hath hereunto set his hand and seal the eighth day of June in the year of our Lord one thousand eight hundred and seventy nine.",
-        "names": ["Thomas Flynn", "John McCarthy"],
-        "places": ["Branch Township", "Schuylkill County", "Pennsylvania"],
-        "dates": ["1879"],
-        "highlightTerms": ["Flynn", "Thomas Flynn"]
-      }
-    ],
-    "facets": [
-      {
-        "name": "collectionId",
-        "count": 1,
-        "items": [
-          {
-            "name": "Pennsylvania Land Records",
-            "count": 1,
-            "filterParam": "2220359"
-          }
-        ]
-      }
-    ]
+    "results": []
   }
 }

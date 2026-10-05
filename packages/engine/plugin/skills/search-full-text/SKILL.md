@@ -123,7 +123,7 @@ you nothing. Do not drop an instruction that does not depend on the page.
 
 | Research goal | Query approach |
 |---|---|
-| Find person as witness/appraiser/heir | `+Surname` in Keywords first (call `get_name_variants` beforehand to build the explicit variant set); if NLP missed the name, retry with `Surname` in Name field |
+| Find person as witness/appraiser/heir | `+Surname` in Keywords first; if ≥1 result, triage and stop — do not run variants; if nil, call `get_name_variants` and try alternate spellings (filter-free); if NLP missed the name, retry with `Surname` in Name field |
 | Find person in narrative records | `+GivenName +Surname` in Keywords, place filter after |
 | FAN cluster search | `+TargetSurname +AssociateSurname` in Keywords |
 | Compound surname parentage (Iberian `Paterno Materno`) | `+PaternalSurname +MaternalSurname` co-occurrence — **never** as one phrase (see step 4 rules) |
@@ -139,19 +139,12 @@ Read `references/query-syntax.md` for operator details and wildcards.
   `name` field — `m.queryRequireDefault` requires at least one term to match.
 - **Scope by place when the plan or the user names the jurisdiction.**
   `yearFrom`/`yearTo` and record-type filters are allowed too, but collection
-  metadata dates can be off, so treat them more cautiously. **If a filtered
-  search returns zero results, re-run it without that filter before
-  logging anything as not found** — a nil under a filter may reflect a
-  metadata mismatch rather than a true absence. **This applies to every
-  filtered nil, including spelling and abbreviation variant queries.**
-  If `+Flynn +Thos` with place filters returns zero, retry `+Flynn +Thos`
-  without filters before logging it as negative — do not assume the
-  unfiltered retry for the canonical form (`+Flynn +Thomas`) covers it.
-  **When variant searches run in parallel and any variant returns zero
-  with filters, issue an immediate follow-up unfiltered retry for that
-  variant in the same turn before logging any results.** Do not log the
-  nil and move on — the retry must come first, even if the parallel batch
-  already completed.
+  metadata dates can be off, so treat them more cautiously. **If a
+  post-search-filtered keywords search returns zero results, re-run it with
+  ALL post-search filters removed (place, year range, and record type).**
+  Never add post-search filters to spelling-variant or wildcard queries —
+  run those filter-free. If the primary search returns ≥1 result, stop and
+  triage those results; do not continue running variants for the same target.
 - **Never borrow a `collectionId` from `record_search` or a collections
   survey.** The FTS corpus uses its own auto-generated partitions that
   do not map 1:1 onto indexed-record collection IDs; a borrowed ID
@@ -354,7 +347,10 @@ When a search returns no results:
    - **Switch Keywords↔Name field.** If the initial search used the
      Name field, retry with `+Surname` in Keywords (NLP may have missed
      the name). If it used Keywords, retry with `Surname` in the Name
-     field. This counts as one retry against the 5-query cap.
+     field — do not add place or year filters to the name-field search
+     (NLP tagging may have failed for place/date too, so filters would
+     exclude the records you are looking for). This counts as one retry
+     against the 5-query cap.
    Then pick the most promising remaining variants from
    `references/search-strategies.md` and `references/online-search-literacy.md`;
    log each retry separately. After 5 nil queries, declare a coverage gap.
