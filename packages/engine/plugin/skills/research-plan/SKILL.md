@@ -555,7 +555,10 @@ re-issue it first. Then present the plan:
   themselves** (Archion, Matricula, a paid site): give the link — the parish or
   collection page, never just the site name — what the record would settle,
   exactly what to look for (register or volume, folio or page, entry), and an
-  offer to walk them through capturing the page and uploading it.
+  offer to walk them through capturing the page and uploading it. Take the link,
+  any postal or email address, and every register, volume, folio, page or film
+  number only from a tool result; when no tool returned one, tell the researcher
+  to find it on the archive's own site — never supply it from memory.
 
 ## Example
 
