@@ -613,4 +613,257 @@ describe("convert_calendar", () => {
       expect(r.errors[0]).toMatch(/Name the specific territory/i);
     });
   });
+
+  // ── French Republican calendar (issue #1621) ───────────────────────────
+  describe("frenchRepublican", () => {
+    // ── Happy-path conversions (6 pairs from issue) ──
+    it("1 Vendémiaire I → 22 Sep 1792 (epoch)", () => {
+      const r = convertCalendar({
+        date: { year: 1, month: 1, day: 1 },
+        corrections: { frenchRepublican: true },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.converted).toEqual({ year: 1792, month: 9, day: 22 });
+      expect(r.applied[0].correction).toBe("frenchRepublican");
+    });
+
+    it("9 Thermidor II → 27 Jul 1794", () => {
+      const r = convertCalendar({
+        date: { year: 2, month: "Thermidor", day: 9 },
+        corrections: { frenchRepublican: true },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.converted).toEqual({ year: 1794, month: 7, day: 27 });
+    });
+
+    it("6th complementary day of year III (sextile) → 22 Sep 1795", () => {
+      const r = convertCalendar({
+        date: { year: "III", month: "jours complementaires", day: 6 },
+        corrections: { frenchRepublican: true },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.converted).toEqual({ year: 1795, month: 9, day: 22 });
+    });
+
+    it("1 Vendémiaire IV → 23 Sep 1795", () => {
+      const r = convertCalendar({
+        date: { year: "IV", month: "Vendémiaire", day: 1 },
+        corrections: { frenchRepublican: true },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.converted).toEqual({ year: 1795, month: 9, day: 23 });
+    });
+
+    it("18 Brumaire VIII → 9 Nov 1799", () => {
+      const r = convertCalendar({
+        date: { year: "VIII", month: "Brumaire", day: 18 },
+        corrections: { frenchRepublican: true },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.converted).toEqual({ year: 1799, month: 11, day: 9 });
+    });
+
+    it("10 Nivôse XIV → 31 Dec 1805 (calendar end)", () => {
+      const r = convertCalendar({
+        date: { year: "an XIV", month: "Nivôse", day: 10 },
+        corrections: { frenchRepublican: true },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.converted).toEqual({ year: 1805, month: 12, day: 31 });
+    });
+
+    // ── String year parsing ──
+    it("accepts Roman numeral year with l'an prefix", () => {
+      const r = convertCalendar({
+        date: { year: "l'an VII", month: 1, day: 1 },
+        corrections: { frenchRepublican: true },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.converted).toEqual({ year: 1798, month: 9, day: 22 });
+    });
+
+    it("accepts plain numeric string year", () => {
+      const r = convertCalendar({
+        date: { year: "2", month: 11, day: 9 },
+        corrections: { frenchRepublican: true },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.converted).toEqual({ year: 1794, month: 7, day: 27 });
+    });
+
+    // ── Month names are case/accent insensitive ──
+    it("month matching is accent-insensitive", () => {
+      const r = convertCalendar({
+        date: { year: 14, month: "nivose", day: 10 },
+        corrections: { frenchRepublican: true },
+      });
+      expect(r.ok && r.converted).toEqual({ year: 1805, month: 12, day: 31 });
+    });
+
+    it("month matching is case-insensitive", () => {
+      const r = convertCalendar({
+        date: { year: 2, month: "THERMIDOR", day: 9 },
+        corrections: { frenchRepublican: true },
+      });
+      expect(r.ok && r.converted).toEqual({ year: 1794, month: 7, day: 27 });
+    });
+
+    // ── Complementary-day aliases ──
+    it("accepts 'sansculottides' as month 13", () => {
+      const r = convertCalendar({
+        date: { year: 3, month: "sansculottides", day: 1 },
+        corrections: { frenchRepublican: true },
+      });
+      expect(r.ok).toBe(true);
+    });
+
+    it("accepts 'sans-culottides' as month 13", () => {
+      const r = convertCalendar({
+        date: { year: 3, month: "sans-culottides", day: 1 },
+        corrections: { frenchRepublican: true },
+      });
+      expect(r.ok).toBe(true);
+    });
+
+    // ── Rejections ──
+    it("rejects 6th complementary day of a non-sextile year (year II)", () => {
+      const r = convertCalendar({
+        date: { year: 2, month: 13, day: 6 },
+        corrections: { frenchRepublican: true },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/out of range/);
+    });
+
+    it("rejects a date after calendar abolition (11 Nivôse XIV)", () => {
+      const r = convertCalendar({
+        date: { year: "XIV", month: "Nivôse", day: 11 },
+        corrections: { frenchRepublican: true },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/abolished/);
+    });
+
+    it("rejects year 0", () => {
+      const r = convertCalendar({
+        date: { year: 0, month: 1, day: 1 },
+        corrections: { frenchRepublican: true },
+      });
+      expect(r.ok).toBe(false);
+    });
+
+    it("rejects year 15", () => {
+      const r = convertCalendar({
+        date: { year: 15, month: 1, day: 1 },
+        corrections: { frenchRepublican: true },
+      });
+      expect(r.ok).toBe(false);
+    });
+
+    it("rejects day 31 for a regular month", () => {
+      const r = convertCalendar({
+        date: { year: 1, month: 1, day: 31 },
+        corrections: { frenchRepublican: true },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/out of range/);
+    });
+
+    // ── Exclusivity ──
+    it("rejects frenchRepublican combined with julianToGregorianDay", () => {
+      const r = convertCalendar({
+        date: { year: 1, month: 1, day: 1 },
+        corrections: { frenchRepublican: true, julianToGregorianDay: true },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/cannot be combined/);
+    });
+
+    it("rejects frenchRepublican combined with osNsYear", () => {
+      const r = convertCalendar({
+        date: { year: 1, month: 1, day: 1 },
+        corrections: { frenchRepublican: true, osNsYear: true },
+      });
+      expect(r.ok).toBe(false);
+    });
+
+    // ── Missing day/month ──
+    it("rejects when day is missing", () => {
+      const r = convertCalendar({
+        date: { year: 1, month: 1 },
+        corrections: { frenchRepublican: true },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/requires date\.day/);
+    });
+
+    it("rejects when month is missing", () => {
+      const r = convertCalendar({
+        date: { year: 1, day: 1 },
+        corrections: { frenchRepublican: true },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/requires date\.month/);
+    });
+
+    // ── String year/month without frenchRepublican flag ──
+    it("rejects a string year without frenchRepublican", () => {
+      const r = convertCalendar({
+        date: { year: "III", month: 1, day: 1 },
+        corrections: { julianToGregorianDay: true },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/string.*only valid under.*frenchRepublican/);
+    });
+
+    it("rejects a string month without frenchRepublican", () => {
+      const r = convertCalendar({
+        date: { year: 1800, month: "January", day: 1 },
+        corrections: { julianToGregorianDay: true },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/string.*only valid under.*frenchRepublican/);
+    });
+
+    // ── Jurisdiction note ──
+    it("succeeds with a note when jurisdiction is supplied (e.g. Belgium)", () => {
+      const r = convertCalendar({
+        date: { year: 8, month: "Brumaire", day: 18 },
+        corrections: { frenchRepublican: true },
+        jurisdiction: "Belgium",
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.converted).toEqual({ year: 1799, month: 11, day: 9 });
+      expect(r.notes.join(" ")).toMatch(/not used/);
+    });
+
+    // ── Purity / idempotence ──
+    it("does not mutate the input and is idempotent", () => {
+      const input = {
+        date: { year: "VIII" as string | number, month: "Brumaire" as string | number, day: 18 },
+        corrections: { frenchRepublican: true },
+      };
+      const r1 = convertCalendar(input);
+      const r2 = convertCalendar(input);
+      expect(r1).toEqual(r2);
+      expect(input.date.year).toBe("VIII");
+    });
+  });
 });
