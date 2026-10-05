@@ -1,5 +1,3 @@
-import type { BrowseBudgetAdvisory } from "../utils/browse-budget.js";
-
 export interface ImageTranscribeInput {
   imageId?: string;
   ark?: string;
@@ -47,11 +45,6 @@ export interface ImageTranscribeResult {
   /** Project-relative path of the saved scan (images/<key>.jpg), present only
    *  when projectPath was supplied and the save succeeded (§8.5). */
   imageRef?: string;
-  /** Present only from the (N+1)th distinct image in one image group in one
-   *  project onward. Advisory only, and independent of `truncated` — the two can
-   *  co-occur (a browse-budget read can also be output-cap truncated). See spec
-   *  §5.8. */
-  browseBudget?: BrowseBudgetAdvisory;
   /** Present when `lookingFor` contained a recognized given name and
    *  expansion fired. Tells the caller what the VLM was primed with. */
   nameExpansion?: {
@@ -86,6 +79,10 @@ export interface ImageTranscribeResult {
     ark?: string;
     /** The project-relative ref that was read, for a `file` input. */
     file?: string;
+    /** The artifact URL a Memories *page* URL resolved to, so a later read can
+     *  pass it directly and skip the lookup. Absent when a direct artifact URL
+     *  was supplied — there was nothing to resolve. */
+    memoryArtifactUrl?: string;
     /** The content type sent to the OCR model (`image/jpeg`, `application/pdf`, …). */
     contentType: string;
     /** The OpenRouter model slug actually used. */

@@ -921,7 +921,8 @@ on coverage which already exists. Naming it here makes the PreToolUse hook
 deny the launch and let the run **continue** — so the caller still finishes its
 own logging and summary. A `Skill` call is also recorded in `skills_invoked`; a
 stubbed agent's spawn is recorded in `builtin_tool_calls` only, so assert either
-with `handoffs`. (This
+with `handoffs`. The judge's `{skills_invoked}` slot lists the spawn too, as
+`<name> (agent)` (§7, "Judge prompt template"). (This
 is deliberately unlike the negative-test routing short-circuit, which *stops*
 the run: a negative verdict is sealed the moment routing happens, a positive
 test still has work left.)
@@ -1139,7 +1140,7 @@ Every skill's SKILL.md has "Do NOT use when" clauses that name confusable skills
 | search-records | record-extraction | record data in context vs not |
 | question-selection | research-plan | "what question next" vs "how to answer this question" |
 | conflict-resolution | record-extraction | conflicting facts vs classifying evidence type (classification is owned by record-extraction since the assertion-classification merge, 2026-07-11) |
-| proof-conclusion | project-status | "write the proof" vs "where are we" |
+| proof-conclusion | project-status (an agent, not a skill — its side of the pair is reached by auto-delegation from its own `description`, not by a routing row) | "write the proof" vs "where are we" |
 
 For each confusable pair, create tests from both directions: a test in skill A's directory with `correct_skill: ["B"]`, and a corresponding test in skill B's directory with `correct_skill: ["A"]`.
 
@@ -1335,7 +1336,7 @@ The judge prompt template lives at `eval/harness/judge/prompt.md`. The system pr
 {judge_context}                     — bullet list from the test JSON
 {scenario_readme}                   — scenario README.md, or "(stateless test)"
 {user_message}                      — verbatim from the test; on a direct-agent test, the `delegation` under a one-line harness label (§5.2.1)
-{skills_invoked}                    — list of skills Claude actually invoked; on a direct-agent test, the agent that was spawned (no skill runs)
+{skills_invoked}                    — list of skills Claude actually invoked, with each agent the main thread spawned inserted in call order as `<name> (agent)`; on a direct-agent test, the agent that was spawned (no skill runs)
 {text_response}                     — Claude's full output text (or sidecar ref)
 {file_changes_summary}              — pre-rendered diff summary, ~500 tokens max
 {tool_calls}                        — list of MCP calls with args + matched fixture
@@ -1360,7 +1361,7 @@ guard (`_TOOL_CALLS_MAX_CHARS`), which drops whole oldest calls with a stated
 marker; per-string and depth caps still apply inside each result. A larger array
 cap was rejected — it only moves the cliff.
 
-`{skills_invoked}` is provided to the judge as diagnostic context, not as a grading input. The wrong-skill detection for positive and negative tests is already deterministic (Section 7 per-run outcome) — the judge doesn't decide whether the right skill was chosen, only how well it executed. Including `skills_invoked` in the prompt lets the judge write more grounded rationales ("the right skill was invoked but it skipped the citation step") rather than guessing what ran.
+`{skills_invoked}` is provided to the judge as diagnostic context, not as a grading input. The wrong-skill detection for positive and negative tests is already deterministic (Section 7 per-run outcome) — the judge doesn't decide whether the right skill was chosen, only how well it executed. Including `skills_invoked` in the prompt lets the judge write more grounded rationales ("the right skill was invoked but it skipped the citation step") rather than guessing what ran. The slot names each agent the skill spawned as well, because `skills_invoked` holds `Skill` calls only: a test's `judge_context` can ask whether the skill delegated to an agent (`ut_init_project_q7b` does), and without the spawns the judge answered that blind. The slot is filled as a value, not edited in the template, so adding the spawns did not move `judge_prompt_hash`.
 
 The template is versioned with the harness; its SHA-256 hash is recorded in the run log as `judge_prompt_hash`. The skill rubric's content hash is recorded as `rubric_hash`. A change to either invalidates apples-to-apples comparison with prior runs and forces a re-baseline.
 

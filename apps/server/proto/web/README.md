@@ -7,7 +7,9 @@ The stateless tier between the browser and the queue for the search-agent protot
 also stand in for the worker with seeded rows (`make proto-drive`).
 
 It serves the paths `apps/web` already calls, so the SPA is reused verbatim with
-`VITE_SESSION_TRANSPORT=sse` (`make web-proto`).
+`VITE_SESSION_TRANSPORT=sse` (`make web-proto`). With `WEB_DIST_DIR` set, the tier also
+serves that SSE build itself at `/` (`web/spa.py`, below); the image and the Beanstalk
+bundle both set it.
 
 | Route | What |
 |---|---|
@@ -17,6 +19,7 @@ It serves the paths `apps/web` already calls, so the SPA is reused verbatim with
 | `GET/POST /api/sessions`, `GET/PATCH/DELETE /api/sessions/{id}`, `POST …/resume`, `GET …/state` | Session CRUD in the SPA's `SessionSummary` shape; `/state` reads `documents` (`research.json`, `tree.gedcomx.json`). |
 | `GET /auth/config`, `GET /auth/me`, `POST /auth/dev-login`, `POST /auth/logout`, `GET /auth/familysearch/login`, `GET /callback` | Patron sign-in (U2, below). Every `/api/sessions` route needs the session cookie and answers 404 for a session on a project the caller does not own. |
 | `GET …/sidecar/{log_id}` → 404; `GET …/image`, `GET …/logs`, `POST …/files` → 501 | Not in the prototype; each says why. |
+| `GET /`, each top-level file of the dist, `GET /assets/…` | The SPA, when `WEB_DIST_DIR` is set (below). `/docs`, `/redoc` and `/openapi.json` are off. |
 | `POST …/interrupt` → 202 | Stop (PR #2870 item 1c). The worker owns the turn and no control channel reaches it, so this raises a flag on a control-plane row that the worker's `PreToolUse` hook reads before every tool call. |
 
 ## Sign-in and ownership (U2)
@@ -42,7 +45,8 @@ U2 in `docs/plan/familysearch-handoff.md`.
   override up.
 - **Environment**: `PUBLIC_URL`, `WEB_ORIGIN`, `SESSION_SECRET`, `FS_TOKEN_ENC_KEY`,
   `ALLOWED_EMAILS`, `FAMILYSEARCH_WEB_ENABLED`, `FAMILYSEARCH_CONFIG` (see the
-  `web/auth.py` docstring). On an https `PUBLIC_URL` the tier refuses to start with a
+  `web/auth.py` docstring). `ALLOWED_EMAILS` is comma- or space-separated; write it
+  space-separated on Beanstalk, whose environment values cannot carry a comma. On an https `PUBLIC_URL` the tier refuses to start with a
   default or empty secret.
 
 **Interim constraint, until U3 merges.** The grant stored at sign-in is written and never
@@ -98,7 +102,10 @@ and drops the one the 202's `seq` names; everything else relays.
   in worker mode — it proves the tier, not the resume, since the D3 stub's turn ends inside
   stream A (the driver says so in its own table).
 - **From the venv** (`make proto-web`): the same tier via `python proto/web/app.py`
-  against the compose postgres (`:5434`) and elasticmq (`:9324`).
+  against the compose postgres (`:5434`) and elasticmq (`:9324`). Compose and the venv
+  both sign SendMessage (U7) with dummies elasticmq ignores: compose through the default
+  chain's `AWS_*` env, the venv recipe with a static `GENEALOGY_SQS_*` pair, so neither
+  reads `~/.aws` or probes IMDS.
 - **The SPA** (`make web-proto`, Chrome on `127.0.0.1:5173`) — **verified in review on
   the compose stack 2026-09-14**: the auth stubs answer, sessions list and create, two
   messages round-trip POST → queue → shim → worker → `turn_done` → SSE with exactly two
@@ -109,13 +116,35 @@ and drops the one the 202's `seq` names; everything else relays.
   SSE frames. Still to come: a real worker's turn driving the SPA (D17), which is also the
   run where the driver's strong "B resumed at A's last seq + 1" check returns.
 
+- **The SPA from the tier** (`WEB_DIST_DIR`). `web/spa.py` serves the SSE build of
+  `apps/web` at `/`, and the compose image carries it (a `node:24-slim` stage runs
+  `VITE_SESSION_TRANSPORT=sse vite build`). It mounts no catch-all: `/` serves
+  `index.html`, each top-level file of the dist gets its own route and each top-level
+  directory a static mount, so every API status (405, the trailing-slash 307, a POST
+  404) is what it was without the SPA. `index.html` and the root files are `no-cache`;
+  the content-hashed `/assets/*` are `immutable`. A relative value resolves against the
+  tier root (`web/`'s parent). Unset or empty serves no SPA, which is what the tests and
+  `make proto-web` run. Set to a missing directory, one without `index.html`, or a dist
+  with a top-level `api`, `auth` or `callback`, the tier refuses to start. `make web-proto`
+  still serves the SPA from Vite's dev server.
+- **Bundle** (`make eb-bundles` → `releases/eb-web.zip`). The same `/app` layout as the
+  image (`web/`, `enqueue.py`, `sql/`, `config/familysearch.json`, `web-dist/`) plus
+  vendored wheels, the RDS CA bundle at `certs/`, and `../eb-web/`'s Procfile and
+  `.ebextensions` at the root. Beanstalk runs
+  `python -m uvicorn web.app:app --host 127.0.0.1 --port 8000` with `WEB_DIST_DIR=web-dist`;
+  why each setting: `../eb-web/README.md`.
+
 `QUEUE_URL` unset → `NullQueue`: the turn is recorded (a `turns` row, a `user_msg` event)
 and never enqueued, logged loudly at start. Under `NullQueue` nothing completes a turn, so
 a posted turn stays `turn_active` until a script closes it (the driver's seeder does, through
 `worker.complete()` itself).
 
 Env: `PG_DSN`, `QUEUE_URL` (a full queue URL, the shim's shape), `POLL_S` (1),
-`SSE_PING_S` (15).
+`SSE_PING_S` (15), `WEB_DIST_DIR` (unset: no SPA). With `QUEUE_URL` set (and only then), `GENEALOGY_SQS_ACCESS_KEY` +
+`GENEALOGY_SQS_SECRET_KEY` (both or neither; neither signs with the default AWS chain, the
+instance profile on AWS; one alone refuses to start) and `GENEALOGY_SQS_REGION` (else the
+`QUEUE_URL` host's region). The start line names the mode, never a key:
+`queue: <url>; sqs credentials: <mode>; region <r>`.
 
 ## The driver (`../drive.py`)
 

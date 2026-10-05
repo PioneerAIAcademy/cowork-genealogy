@@ -339,6 +339,40 @@ describe("fetchWithRetry", () => {
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
+  it("stops instead of sleeping when the backoff would spend the rest of the budget (network error)", async () => {
+    // A 40ms budget against a 200ms backoff: sleeping the remainder and then
+    // retrying on ~0ms is what made probe-retry-budget.test.ts flaky (a timer
+    // can wake a millisecond before Date.now() reaches the deadline).
+    mockFetch.mockRejectedValue(new TypeError("fetch failed"));
+
+    const start = Date.now();
+    await expect(
+      fetchWithRetry("https://example.com", {}, 1000, {
+        budgetMs: 40,
+        attempts: 3,
+        baseMs: 200,
+      }),
+    ).rejects.toThrow(/fetch failed/);
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(Date.now() - start).toBeLessThan(30);
+  });
+
+  it("stops instead of sleeping when the backoff would spend the rest of the budget (retryable status)", async () => {
+    mockFetch.mockResolvedValue(mockResponse(503));
+
+    const start = Date.now();
+    const res = await fetchWithRetry("https://example.com", {}, 1000, {
+      budgetMs: 40,
+      attempts: 3,
+      baseMs: 200,
+    });
+
+    expect(res.status).toBe(503);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(Date.now() - start).toBeLessThan(30);
+  });
+
   it("throws when Retry-After exceeds remaining budget", async () => {
     mockFetch.mockResolvedValue(mockResponse(429, { retryAfter: "60" }));
 

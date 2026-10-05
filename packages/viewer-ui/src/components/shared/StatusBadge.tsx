@@ -2,7 +2,7 @@ import styles from './StatusBadge.module.css'
 
 type BadgeColor = 'green' | 'amber' | 'red' | 'blue' | 'gray' | 'purple'
 
-const statusColorMap: Record<string, BadgeColor> = {
+export const statusColorMap: Record<string, BadgeColor> = {
   // Question status
   open: 'gray',
   in_progress: 'amber',

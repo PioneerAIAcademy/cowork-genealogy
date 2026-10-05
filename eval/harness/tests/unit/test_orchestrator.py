@@ -876,24 +876,114 @@ def test_negative_passes_when_judge_skipped_but_routing_correct():
     ) == "pass"
 
 
-def test_negative_judge_context_frames_decline_and_keeps_test_context():
-    """_negative_judge_context prepends negative-test framing (so the
-    base-only judge grades the decline, not the skill's craft task) and
-    appends the test's own judge_context unchanged."""
-    spec = load_test_from_dict({
+def _negative_ctx_spec(judge_context):
+    return load_test_from_dict({
         "test": {"id": "ut_o_003", "skill": "citation",
                   "name": "n", "type": "negative", "description": "x",
                   "tags": []},
         "input": {"user_message": "m", "scenario": None},
         "negative": {"correct_skill": ["record-extraction"],
                       "explanation": "x"},
-        "judge_context": ["Should explicitly name record-extraction"],
+        "judge_context": judge_context,
     })
-    ctx = _negative_judge_context(spec)
-    assert "NEGATIVE test" in ctx[0]
-    assert "record-extraction" in ctx[0]
-    assert "citation" in ctx[1]
-    assert ctx[-1] == "Should explicitly name record-extraction"
+
+
+def test_negative_judge_context_frames_decline_and_keeps_test_context():
+    """_negative_judge_context gives the negative-test framing (so the
+    base-only judge grades the decline, not the skill's craft task) and the
+    test's own judge_context unchanged, as two labeled groups."""
+    ctx = _negative_judge_context(_negative_ctx_spec(["Should explicitly name record-extraction"]))
+    assert len(ctx) == 2
+    harness, author = ctx
+    assert harness.startswith("Harness framing (")
+    assert "NEGATIVE test" in harness
+    assert "record-extraction" in harness
+    assert "citation" in harness
+    assert author.startswith("Test author's notes (")
+    assert author.endswith("\n  - Should explicitly name record-extraction")
+
+
+def test_negative_judge_context_keeps_machine_and_author_lines_apart():
+    """The harness's three lines sit only under the harness label, and the
+    author's lines only under the author label."""
+    harness, author = _negative_judge_context(
+        _negative_ctx_spec(["AUTHOR-NOTE-ONE", "AUTHOR-NOTE-TWO"])
+    )
+    assert harness.count("\n  - ") == 3
+    assert "AUTHOR-NOTE" not in harness
+    assert author.count("\n  - ") == 2
+    assert "NEGATIVE test" not in author
+    assert "AUTHOR-NOTE-ONE" in author and "AUTHOR-NOTE-TWO" in author
+
+
+def test_negative_judge_context_keeps_a_multi_line_note_inside_its_group():
+    _, author = _negative_judge_context(_negative_ctx_spec(["first line\nsecond line"]))
+    assert author.endswith("\n  - first line\n    second line")
+
+
+def test_run_judge_hands_a_negative_test_the_labeled_groups(monkeypatch):
+    """The wiring, not just the builder: a negative test's judge receives
+    the two labeled groups, not the test's raw judge_context."""
+    from harness import orchestrator
+    from harness.auth import AuthConfig
+    from harness.rubric import empty_rubric
+
+    seen = {}
+
+    def fake_grade(**kwargs):
+        seen.update(kwargs)
+        return "graded"
+
+    monkeypatch.setattr(orchestrator, "grade", fake_grade)
+    spec = _negative_ctx_spec(["AUTHOR-NOTE"])
+    result = SimpleNamespace(
+        text_response="t", skills_invoked=[], tool_calls=[],
+        builtin_tool_calls=[], agent_returns=[],
+    )
+    assert orchestrator._run_judge(
+        spec=spec, rubric=empty_rubric(spec.skill), scenario_readme="",
+        result=result, file_changes=[],
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        judge_model="stub",
+    ) == "graded"
+    ctx = seen["judge_context"]
+    assert ctx[0].startswith("Harness framing (")
+    assert ctx[1] == "Test author's notes (written for this test):\n  - AUTHOR-NOTE"
+
+
+def test_negative_judge_context_without_author_notes_has_no_author_group():
+    ctx = _negative_judge_context(_negative_ctx_spec([]))
+    assert len(ctx) == 1
+    assert ctx[0].startswith("Harness framing (")
+    assert "Test author's notes" not in ctx[0]
+
+
+def test_negative_judge_context_renders_as_two_nested_lists_in_the_judge_prompt():
+    """Through judge.py's real rendering: each label is one bullet and its
+    lines are nested bullets beneath it."""
+    from harness import judge
+    from harness.rubric import empty_rubric
+
+    prompt = judge.render_prompt(
+        rubric=empty_rubric("citation"),
+        judge_context=_negative_judge_context(_negative_ctx_spec(["AUTHOR-NOTE"])),
+        scenario_readme="r",
+        user_message="m",
+        skills_invoked=[],
+        text_response="t",
+        file_changes_summary="c",
+        tool_calls=[],
+    )
+    lines = prompt.splitlines()
+    lines = lines[lines.index(next(l for l in lines if l.startswith("- Harness framing ("))):]
+    assert lines[0] == (
+        "- Harness framing (written by the eval harness for every negative test, "
+        "not by this test's author):"
+    )
+    assert lines[1].startswith("  - This is a NEGATIVE test.")
+    author_at = lines.index("- Test author's notes (written for this test):")
+    assert lines[author_at + 1] == "  - AUTHOR-NOTE"
+    assert author_at == 4  # label + three harness lines precede it
 
 
 def test_negative_judge_context_self_route_only_renders_the_no_skill_arm():

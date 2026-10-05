@@ -161,6 +161,7 @@ const NON_DOCUMENT_STORE_WRITERS: Readonly<Record<string, string>> = {
   "utils/project-io.ts": "the document writers themselves (atomicWriteJson, atomicWriteBoth)",
   "utils/results-staging.ts": "results/ sidecars and their staging files",
   "utils/image-store.ts": "images/ blobs and their pruning",
+  "utils/browse-budget.ts": "results/image-browse.jsonl, the image cap's distinct-image log",
   "tools/rank-search-matches.ts": "the ranker's score log",
   "tools/research-log-append.ts": "removes the staged result it just logged",
   "utils/match-scores.ts": "results/.scores/ attestation files",
@@ -1130,6 +1131,9 @@ describe("ownership manifest — every name resolves", () => {
     // The walker names the FIELD; `subject_person_ids` lives inside `project`.
     const sectionOf = (f: string) => (f === "subject_person_ids" ? "project" : f);
     const written = new Set(union.map(sectionOf));
+    // warning_justifications is written through checkWarningGate (which
+    // merge_tree_persons calls), not through the person-id-refs walker.
+    written.add("warning_justifications");
 
     const declared = new Set(
       rows

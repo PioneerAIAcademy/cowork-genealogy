@@ -28,6 +28,7 @@
     "`researcher_profile.subscriptions` must be ABSENT. The user said nothing about access and was not asked, so there is nothing to record -- `[\"none\"]` would assert they told us they have nothing, the opposite of what is assumed, and an empty `[]` is the same defect. Absence is the correct output here, not an omission"
   ],
   "execution": {
+    "max_wall_clock_seconds": 480,
     "stub_skills": [
       {
         "skill": "question-selection",

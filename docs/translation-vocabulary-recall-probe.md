@@ -2,7 +2,7 @@
 
 **Issue:** #2543. **Date:** TBD (run not yet complete). **Scope:** cold-recall
 probe of the 49 bundled vocabulary rows in
-`packages/engine/plugin/skills/translation/references/vocabulary-and-record-structures.md`
+`packages/engine/plugin/agents/translation.md` (vocabulary rows folded inline after skill-to-agent conversion)
 against `claude-sonnet-4-6`.
 
 This is a measurement, not a plan. It edits no skill, no test, no fixture,

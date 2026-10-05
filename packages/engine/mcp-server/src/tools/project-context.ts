@@ -51,18 +51,31 @@ export interface ProjectContextLocality {
   pagesRead: string[];
 }
 
+/** An external-site URL handed to the user and not yet answered (spec §2.3). */
+export interface ProjectContextAwaitingUser {
+  logId: string;
+  site: string;
+  urlGenerated: string;
+  planItemId: string | null;
+  performed: string | null;
+}
+
 export type ProjectContextResult =
   | {
       ok: true;
       /** The engine build (`<base>+<date>.<sha>[.dirty]` or `<base>+dev`) — on every branch, #2126. */
       buildId: string;
       projectStatus: string | null;
+      /** research.project.objective verbatim; null when absent. No other tool returns it (#3026). */
+      objective: string | null;
       openQuestions: ProjectContextQuestion[];
       /** Advisory per-question state and next step. Nothing gates on it. */
       questionStatuses: QuestionStatus[];
       persons: ProjectContextPerson[];
       sources: ProjectContextSource[];
       localities: ProjectContextLocality[];
+      /** Open external-site hand-offs: the user was sent a URL and nothing has come back. */
+      awaitingUser: ProjectContextAwaitingUser[];
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
@@ -100,6 +113,49 @@ function collectSourceRefs(person: any): string[] {
   for (const f of Array.isArray(person?.facts) ? person.facts : []) take(f?.sources);
   for (const n of Array.isArray(person?.names) ? person.names : []) take(n?.sources);
   return refs;
+}
+
+function externalSiteOf(entry: any): any | null {
+  if (!entry || typeof entry !== "object" || entry.tool !== "external_site") return null;
+  const ext = entry.external_site;
+  return ext && typeof ext === "object" && typeof ext.url_generated === "string" ? ext : null;
+}
+
+/**
+ * Whether a later log entry ends the hand-off at `url` (spec §2.3): any entry
+ * for the same URL whose outcome is not `partial`, whether or not a capture
+ * came back. "I have no access" is logged as `error` with no capture, and after
+ * it the user is not holding a link from us.
+ */
+function closesHandOff(entry: any, url: string): boolean {
+  const ext = externalSiteOf(entry);
+  return ext !== null && ext.url_generated === url && entry.outcome !== "partial";
+}
+
+/**
+ * Every in-flight hand-off still waiting on the user: an `external_site` entry
+ * with `outcome: "partial"` and `capture_received: false` that no LATER entry
+ * closes. Keyed on `partial`, not on `capture_received` alone: a `positive`
+ * entry logged with `capture_received: false` already had its results in hand
+ * (alpha feedback #2864, `log_012`/`log_013`) and is not waiting on anyone.
+ */
+function awaitingUserHandOffs(log: unknown): ProjectContextAwaitingUser[] {
+  const entries: any[] = Array.isArray(log) ? log : [];
+  const open: ProjectContextAwaitingUser[] = [];
+  entries.forEach((entry, i) => {
+    const ext = externalSiteOf(entry);
+    if (ext === null || entry.outcome !== "partial" || ext.capture_received !== false) return;
+    if (typeof entry.id !== "string") return;
+    if (entries.slice(i + 1).some((later) => closesHandOff(later, ext.url_generated))) return;
+    open.push({
+      logId: entry.id,
+      site: typeof ext.site === "string" ? ext.site : "",
+      urlGenerated: ext.url_generated,
+      planItemId: typeof entry.plan_item_id === "string" ? entry.plan_item_id : null,
+      performed: typeof entry.performed === "string" ? entry.performed : null,
+    });
+  });
+  return open;
 }
 
 export async function projectContext(input: ProjectContextInput): Promise<ProjectContextResult> {
@@ -207,6 +263,10 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
     research?.project && typeof research.project === "object" && typeof research.project.status === "string"
       ? research.project.status
       : null;
+  const objective =
+    research?.project && typeof research.project === "object" && typeof research.project.objective === "string"
+      ? research.project.objective
+      : null;
 
   // Advisory only — nothing gates on this. It tells the router what each
   // question is waiting on, computed from the document rather than from
@@ -214,7 +274,20 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
   // research_append compute their own preconditions independently.
   const questionStatuses = questionStates(research);
 
-  return { ok: true, buildId, projectStatus, openQuestions, questionStatuses, persons, sources, localities };
+  const awaitingUser = awaitingUserHandOffs(research?.log);
+
+  return {
+    ok: true,
+    buildId,
+    projectStatus,
+    objective,
+    openQuestions,
+    questionStatuses,
+    persons,
+    sources,
+    localities,
+    awaitingUser,
+  };
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
@@ -224,6 +297,8 @@ export const projectContextSchema = {
   description:
     "Read-only compact projection of the project state — call this INSTEAD of " +
     "reading research.json or tree.gedcomx.json. Returns projectStatus; " +
+    "objective (research.project.objective verbatim, including any stated doubt " +
+    "about its premise); " +
     "openQuestions [{id, question}] (unresolved only, text truncated); persons " +
     "[{id, name, gender, sourceRefs}] — every tree person with the distinct S ids " +
     "it already cites; and sources [{id, repository, " +
@@ -241,7 +316,12 @@ export const projectContextSchema = {
     "proof summary while its storedStatus is still 'in_progress'; that is not a " +
     "contradiction. questionStatuses is ADVISORY: it reports what the " +
     "documents already show, nothing is gated on it, and a null nextStep means the " +
-    "question needs nothing further. One call gives the context " +
+    "question needs nothing further. awaitingUser [{logId, site, urlGenerated, " +
+    "planItemId, performed}] lists external-site URLs already handed to the user that " +
+    "nothing has answered yet — do not raise them again; when the user brings back a " +
+    "capture, or says they cannot access the site, log that as the row's closing " +
+    "entry with the same urlGenerated. " +
+    "One call gives the context " +
     "for extraction judgment calls (which questions an assertion bears on, " +
     "whether a record persona is already in the tree, which sources cover a " +
     "record); the writer tools handle every mechanical lookup themselves. Also " +

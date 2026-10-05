@@ -15,7 +15,14 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-08-09 (on the fourth independent re-derivation in one week)
-- **Last updated:** 2026-09-10 (the bridge — a rule that appears to require
+- **Last updated:** 2026-10-01 (a read tool's resource budget is a hard refusal
+  at the tool, not an advisory field. Previously 2026-09-28, when a corpus replay
+  became half a graduation argument: a guard now needs a labelled case set —
+  must-fire cases in at least two shapes plus must-not-fire cases — and a guard
+  on two planes keeps one JSON case file both planes replay, held by a registry;
+  `find_unpersisted_conflict_resolutions` graduated under it as the first
+  instance. Previously 2026-09-10, when the bridge — a
+  rule that appears to require
   observing that a step *ran* becomes decidable once the step is made to deposit
   its output — is written into the decision procedure and into "Rulings that
   generalize". Previously 2026-09-05, when a ruling that generalizes began being
@@ -26,7 +33,7 @@
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
-- **Applies to:** `packages/engine/mcp-server/src/tools/research-append.ts`, `packages/engine/mcp-server/src/tools/image-transcribe.ts`, `packages/engine/plugin/hooks`, `packages/engine/plugin/skills`, `scripts/claude-hooks`, `docs/specs/guardrail-enforcement-spec.md` — *linted; keep current*
+- **Applies to:** `packages/engine/mcp-server/src/tools/research-append.ts`, `packages/engine/mcp-server/src/tools/image-transcribe.ts`, `packages/engine/mcp-server/src/utils/browse-budget.ts`, `packages/engine/mcp-server/tests/guard-cases`, `packages/engine/plugin/hooks`, `packages/engine/plugin/skills`, `scripts/claude-hooks`, `docs/specs/guardrail-enforcement-spec.md` — *linted; keep current*
 - **Related:** ADR-0003, ADR-0005, ADR-0006, ADR-0009; PR #1029; issues #1335, #1463, #1490, #1493, #1499, #1509, #1081, #1273, #1399
 
 ## Context
@@ -106,7 +113,7 @@ Concretely, this is a placement question with six answers — **the layer map**:
 | **Schema validator** | document *shape* — types, closed enums, required fields, id patterns, referential integrity | *"Would violating this make the document malformed, rather than merely wrong?"* This is the **integrity tier**: violating it yields a document no writer tool will accept. |
 | **`PreToolUse` hook** | a route no writer tool owns (raw `Write`/`Edit`, the shell, the device bridge), and any rule that turns on **who** is calling | *"Does this depend on the caller?"* Only substrate that can restrain the main thread (ADR-0005). **Fails open** — never the sole guarantee for anything that matters. **First production caller rule: 2026-08-19**, `proof_summaries` to the `proof-conclusion` agent. It is not the sole guarantee there — the writer tool's own content invariants (the mentor gate, `proofSummaryInvariants`) sit underneath it and do not fail open. **A second on 2026-08-23, and of a different KIND:** `exhaustive_declaration.declared: true` is routed to the `research-exhaustiveness` agent by FIELD rather than by section, because the schema makes that field required on every question — so routing the section would deny question creation itself, 197 of 392 corpus ops. Route the claim, not the field. |
 | **Agent frontmatter** | what one delegated agent may touch | tool identity — omit the tool from the agent's `tools:` (ADR-0006). Binds under `bypassPermissions`, measured 2026-08-30. `disallowedTools:` also binds, but every deny we shipped restated an omission, so all five blocks were deleted. |
-| **Tool description** | what the model must know *at the moment of the call* but that no predicate can enforce — paging, argument choice, budget notices | *"Does the model need this to choose correctly, and is it advice rather than a constraint?"* Reloaded after compaction; **strength unmeasured** — two rules already in `record_search`'s schema decay anyway. Includes the advisory-field shape for a read-tool resource budget. |
+| **Tool description** | what the model must know *at the moment of the call* but that no predicate can enforce — paging, argument choice, budget notices | *"Does the model need this to choose correctly, and is it advice rather than a constraint?"* Reloaded after compaction; **strength unmeasured** — two rules already in `record_search`'s schema decay anyway. A read tool's resource budget is not here: it is a refusal at the tool (row "A read tool's resource budget, as an advisory" below). |
 | **Harness validator** | rules judgeable only over a **whole run** — bypass detection, episode analysis, compliance axes | *"Does evaluating this need the whole run?"* **Eval-only; never reaches production** — say so wherever one is added. |
 | **Prose** | judgment exercised inside a single invocation | *"Is this a matter of judgment no predicate can express?"* **Not an enforcement layer.** State the rule; label it guidance. |
 
@@ -329,7 +336,8 @@ measured rather than argued.
    **The bar is inspection, not a rate.** Replay the gate over the committed
    corpus, then *read every refusal it produces* and confirm each is a true
    positive. Ship when they all are; escalate when one is not, naming it. That
-   is the whole test, and a rate never substitutes for it — in both directions:
+   is the whole test *of the false-deny direction*, and a rate never substitutes
+   for it — in both directions:
 
    - **A low rate does not clear a gate.** ADR-0009's disqualification was 3 of
      103 — the *lowest* number on this page. Its problem was that no satisfying
@@ -337,6 +345,38 @@ measured rather than argued.
    - **A high rate needs no inspection to reject.** At #1463's 52% the gate is a
      constant; do not read 1,451 refusals to establish that. Use judgment on the
      order of magnitude, and spend the inspection on gates that might ship.
+
+   **A replay is half the argument; a labelled case set is the other half.**
+   In a replay the check is its own ground truth: a write it does not recognise
+   as a violation looks exactly like a correct one, and nothing in the committed
+   corpus labels violations independently of the detector under test. So a
+   replay shows a candidate does not over-fire on real work and cannot show it
+   catches the class it names. **A guard may therefore neither enforce nor sit
+   in shadow indefinitely without a labelled case set beside it**: must-fire
+   cases in at least two distinct shapes, plus must-not-fire cases, replayed
+   offline and buying no paid run. A guard that lives on one plane keeps them in
+   its own test file. A guard on **two planes** — a harness detector and the
+   writer precondition it graduated to — keeps them in **one JSON case file**
+   that both planes load and replay (pytest under `make harness-test`, vitest
+   under `make engine-test`), and both must agree on every case. A shared file,
+   not a copy per plane with a parity test: the repo's working parity test
+   compares Python copies by `ast`, which cannot parse TypeScript, and the
+   existing Python/TypeScript mirror of test vectors is a comment saying they
+   must match, which nothing enforces. A registry,
+   `packages/engine/mcp-server/tests/guard-cases/registry.json`, accounts for
+   every detector and shadow kind in the harness guard module: registered with
+   its case file, owed one because it predates this rule (a frozen,
+   shrink-only list), or exempt with a reason. The first instance is
+   `find_unpersisted_conflict_resolutions`, graduated to a `research_append`
+   precondition with its cases in `unpersisted-conflict-resolution.json`.
+
+   **What this knowingly accepts.** Two loaders now exist that otherwise would
+   not, one per plane. And the format — a list of `{ research, expect }` records
+   — fits a guard that is a pure function of one project document; the next
+   guard to graduate may read a tree, tool calls or a sidecar, and the format
+   will have to grow. **Reopen** the one-file decision when a two-plane guard's
+   inputs cannot be written as a plain JSON record both planes can feed to
+   their guard.
 
    **Two worked precedents, and a correction.** The shipped
    `planCompleteInvariants` refuses **5 of 170 (2.9%)** — read the pre-call
@@ -400,9 +440,10 @@ issues are already closed, each carrying rulings at that level of decay.
 |---|---|---|---|
 | **A gate PR owes an actionable error.** The refusal must name what it expected and why, so the agent can satisfy it rather than be stuck. | every gate | 2026-09-02 | #2030 |
 | **A gate PR owes a corpus refusal measurement before merge**, inspected per limit 2 above. | every gate | 2026-09-02 | #2030, ADR-0009 c6, #1463 |
-| **A precondition beats an advisory field** in the same position. An advisory was rationalized away in `wilkins-death-kentucky`. | choosing between a refusal and a warning on a *state* write | 2026-09-02 | #2030; the `image_transcribe` read-tool carve-out is the scoped exception |
+| **A precondition beats an advisory field** in the same position. An advisory was rationalized away in `wilkins-death-kentucky`. | choosing between a refusal and a warning on a *state* write | 2026-09-02 | #2030; it holds for read tools too — the image cap is a refusal (alternatives row "A read tool's resource budget, as an advisory") |
 | **Production beats eval-only.** A gate that could bind at the writer tool does not ship as a harness validator instead. | placement | 2026-09-02 | #2030 — "production is where the tester lost 3h18m" |
 | **"No SKILL.md states it" does not settle the writer-tool question.** A rule decidable from the project documents alone goes to the writer tool under step 1 even where an eval reviewer left the analogous check report-only for want of prose. Limit 2's "name the satisfying call shape" is met by a shape the bodies already document, so it does not imply a prose edit or a paid run. | placement, when the only argument against a gate is that no prose states it | 2026-09-22 | #1779, reversing the #2345 review's read; built as #2819 |
+| **A corpus replay is half a graduation argument.** A guard may neither enforce nor sit in shadow indefinitely without a labelled case set: must-fire cases in at least two distinct shapes, plus must-not-fire cases, replayed offline. A guard on two planes keeps one JSON case file both planes replay, and the guard registry accounts for every harness detector. | graduating a shadow check; adding a guard on two planes | 2026-09-21 | #2494 (and #2481 item 1); limit 2 above |
 | **An accepted false-deny cost is a legitimate reason to ship**, when it is stated and the refusals inspect clean. A gate need not be perfect to be correct. | limit 1 balancing | 2026-09-02 | #2030 |
 | **A gate ships with no override mechanism** until a false deny is observed in the field. | every gate | 2026-08-24 | this ADR, "Overridable or not" |
 | **Snapshot when the precondition must be satisfied by someone else; read live when it is the same author's own prior step.** | every gate | — | this ADR, "Snapshot or live" |
@@ -423,7 +464,7 @@ to prevent cost four issues.
 | **Fold this into ADR-0003** rather than write a new ADR | ADR-0003 answers *does this rule need an anchor*, from a compaction-decay audit of one skill. This answers *which boundary, and what the gate must satisfy before it ships* — and its four limits are the payload. Two of them (false-allow preference, satisfiability) are counterweights *against* anchoring, which would read as contradiction inside an ADR whose argument is that prose decays | Argued, not measured. `docs/adrs/README.md` rule 4's test: a reader arriving with "where does my guardrail go" is not served by the decay file |
 | **A per-skill or per-section split writer tool**, so the tool's name carries the doctrine | Rejected before, and it generalises: *"a split tool is exactly as callable by the router as a section branch is."* Splitting names constrains nobody who holds all the names; the constraint comes from the check, or from not holding the broad tool. **This row did work in 2026-08:** Phase 3 was first planned as a narrow `proof_summary_append` and was redirected to a hook caller check by reading it — which removed six tool-wiring sites, kept the batched summary+resolve shape alive, and left every existing fixture valid | `docs/specs/guardrail-enforcement-spec.md`, "Options set aside"; ADR-0006; the Phase 3 plan |
 | **An advisory instead of a refusal** — a warning, or a mentor verdict the agent is told to respect | This is what the completion gate replaced. In the `wilkins-death-kentucky` run the prose-level guardrails fired and were rationalized away, and the project completed over an unresolved identity conflict | The gate's own comment in `research-append.ts`; issue #1490 |
-| **A read tool's resource budget, as an advisory** — `image_transcribe`'s browse notice | **Scopes the row above, does not overturn it.** That row is about a *state* gate: an advisory let `wilkins-death-kentucky` complete over an unresolved identity conflict. A page read persists nothing, so the asymmetry inverts — a wrong refusal hard-blocks a researcher mid-browse with no way around it, and no production telemetry would surface that. The budget therefore ships as a field on a successful result, and knowingly does nothing if the agent ignores it | Issue #1081; 267 `image_transcribe` calls across 145 committed runs, of which two image groups in one run exceed 20 distinct pages — and that run passed, citing no image from either |
+| **A read tool's resource budget, as an advisory** — `image_transcribe`'s browse notice | **Rejected for cost (lead decision 2026-09-29).** The case for it is that a page read persists nothing, so a wrong refusal costs more than an ignored warning. Measured against it: the advisory fired 9 times in one run and changed behaviour 0 times (`elena-asmundsdotter-origin` `run-2026-09-01_22-19-45`, volume-bisect spec §1). It is now a thrown refusal from the 21st distinct image per group per project, shared by `image_read`, `image_transcribe` and `volume_bisect`, persisted in `results/image-browse.jsonl`. The cost the carve-out named is accepted and stated: a legitimate 21st page is refused permanently in that project, with the viewer link as the only release valve (no override until a false deny is observed) | Issue #1081 (the advisory), #3010 (the refusal). Corpus replay 2026-10-01: 501 `imageId` calls over 597 runs, 69 distinct images refused (74 calls) in 6 groups over 5 runs; of the 5 refused images later cited as sources, none backs a correct finding. The 64 uncited refusals were not read individually (limit 2) — the issue scoped the read to cited images |
 | **Post-run detection only** — let it happen, catch it at grading | Catches it after the user has the wrong answer. The detectors also cannot yet yield a rate: no committed run resolves `pass`, and the universal validator's project-file check is coarse by design — one legitimate writer call legitimizes the session's raw edits | ADR-0003's enforcement note; issue #1493's read of `test_universal.py` |
 | **Ship the deny on the violation count alone**, and tune later | The count cannot distinguish an impossible gate from an achievable one the agent was never taught to satisfy. Both cases were measured here, and both look identical from the number | ADR-0009 constraint 6 (3 of 103); issue #1463 (52%, projecting to 132 of 145 runs failing) |
 | **Wait for a per-caller `PreToolUse` policy** to be ported to production before moving anything | Unported and not gated on anything currently moving; the writer-tool check needs none of it and reaches every environment today | ADR-0006's hook row; `eval/harness/harness/context_policy.py` |
@@ -509,6 +550,20 @@ What exists holds the gates that did ship:
 > `eval/harness/e2e/guardrail_shadow_report.py` — replays a shadow check across
 > the committed corpus. This is the instrument that produces a satisfying-shape
 > rate before a graduation, and it costs no API spend.
+
+> `eval/harness/tests/unit/test_guard_case_files.py` — the labelled-case rule
+> for guards the harness can enumerate: every `find_*` detector and `*_KIND`
+> shadow constant in `eval/harness/harness/skill_invocation.py` is accounted for
+> in `packages/engine/mcp-server/tests/guard-cases/registry.json`; each
+> registered guard's case file has two fire shapes and a silent case and
+> replays against its detector. The backlog and the exemptions are frozen in the
+> test, so adding to either is an edit a reviewer sees; nothing *prevents* that
+> edit. A guard that lives only in the writer tool is outside what the registry
+> can enumerate, and is held by review, like placement.
+
+> `packages/engine/mcp-server/tests/tools/research-append-guard-cases.test.ts`
+> — replays every registered two-plane guard's case file through its writer
+> precondition, and fails on a registered writer guard with no replay binding.
 
 None of these catches the thing this ADR is about. And per the new-lint rule in
 `CLAUDE.md`, a new gate's test is not evidence until the gate has been commented

@@ -35,6 +35,8 @@ import contextlib
 import json
 import os
 import re
+import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -731,16 +733,147 @@ def test_008_is_idempotent_and_owner_is_nullable():
     assert "NOT NULL" not in owner.upper(), f"projects.owner_id must be nullable: {owner}"
     [tokens] = [s for s in statements if re.search(r"CREATE TABLE IF NOT EXISTS familysearch_tokens\b", s, re.I)]
     assert re.search(r"\buser_id text PRIMARY KEY\b", tokens), "one grant row per patron: U3 locks it"
-    assert re.search(r"\bgranted_at timestamptz NOT NULL\b", tokens), "U3's 24 h clock"
+    assert re.search(r"\bgranted_at timestamptz NOT NULL\b", tokens), "the sign-in time"
 
 
-def test_web_dockerfile_installs_auth_deps():
-    """web/auth.py imports these at module scope; the suite runs in a venv that has them,
-    so a missing pip line passes every test and fails only when the image starts."""
-    dockerfile = (PROTO / "web" / "Dockerfile").read_text(encoding="utf-8")
-    pip = " ".join(dockerfile.split("RUN pip install", 1)[1].split("\n\n", 1)[0].split())
-    for dep in ("itsdangerous", "cryptography", "httpx"):
-        assert f'"{dep}' in pip, f"the web image does not install {dep}"
+REQUIREMENTS = {"web": PROTO / "web" / "requirements.txt", "worker": PROTO / "worker" / "requirements.txt"}
+REGENERATE = "run `make proto-requirements` and commit apps/server/proto/{web,worker}/requirements.txt"
+
+
+def _locked_version(package: str) -> str:
+    lock = (PROTO.parent / "uv.lock").read_text(encoding="utf-8")
+    m = re.search(rf'^\[\[package\]\]\nname = "{re.escape(package)}"\nversion = "([^"]+)"', lock, re.M)
+    assert m, f"{package} is not in apps/server/uv.lock"
+    return m.group(1)
+
+
+def _requirements(text: str) -> tuple[dict[str, tuple[str, str, frozenset[str]]], list[str]]:
+    """A hash-mode requirements file by meaning: ``{name: (version, marker, hashes)}``
+    plus any option lines. Continuations are joined and comments dropped, so uv's header
+    and ``# via`` annotations, quoting and wrapping never count."""
+    reqs: dict[str, tuple[str, str, frozenset[str]]] = {}
+    options: list[str] = []
+    for line in text.replace("\\\n", " ").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("-"):
+            options.append(line)
+            continue
+        spec, *hashes = line.split("--hash=")
+        m = re.fullmatch(r"([A-Za-z0-9][A-Za-z0-9._-]*)(\[[^\]]*\])?==(\S+)\s*(?:;\s*(.+?))?\s*", spec)
+        assert m, f"not an exact pin: {spec!r}"
+        name = re.sub(r"[-_.]+", "-", m.group(1)).lower()
+        marker = " ".join((m.group(4) or "").replace('"', "'").split())
+        assert name not in reqs, f"{name} is listed twice"
+        reqs[name] = (m.group(3), marker, frozenset(h.strip() for h in hashes))
+    return reqs, options
+
+
+def _uv_export(group: str) -> str:
+    uv = os.environ.get("UV") or shutil.which("uv")
+    if not uv:
+        pytest.fail("uv is not on PATH: the requirements drift check needs it, and a skip would hide drift")
+    proc = subprocess.run(
+        [uv, "export", "--locked", "--only-group", f"proto-{group}", "--no-emit-project",
+         "--format", "requirements-txt", "--no-header"],
+        cwd=PROTO.parent, capture_output=True, text=True, encoding="utf-8",
+    )
+    assert proc.returncode == 0, f"uv export --locked failed (is uv.lock current? run `uv lock`, then {REGENERATE}):\n{proc.stderr}"
+    return proc.stdout
+
+
+def _dockerfile_logical_lines(dockerfile: Path) -> list[str]:
+    text = dockerfile.read_text(encoding="utf-8")
+    body = "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#"))
+    return [" ".join(line.split()) for line in body.replace("\\\n", " ").splitlines() if line.strip()]
+
+
+@pytest.mark.parametrize("tier", sorted(REQUIREMENTS))
+def test_proto_images_install_their_requirements_in_hash_mode(tier):
+    """U12: each image installs the committed export of its uv group, every pip line in
+    hash mode, so the image runs uv.lock's closure (the versions the suite tested) and a
+    wheel that does not match the lock's hash fails the build."""
+    dockerfile = PROTO / tier / "Dockerfile"
+    lines = _dockerfile_logical_lines(dockerfile)
+    source = f"apps/server/proto/{tier}/requirements.txt"
+    dests = [line.split()[-1] for line in lines if re.match(rf"COPY (--\S+ )*{re.escape(source)} ", line)]
+    assert len(dests) == 1, f"{dockerfile.relative_to(PROTO)} must COPY {source} exactly once"
+    [dest] = dests
+    if dest.endswith("/"):
+        dest += "requirements.txt"
+    accepted = {dest, dest.removeprefix("./")}
+    pips = [line for line in lines if re.match(r"RUN\b.*\bpip3? install\b", line)]
+    assert pips, f"{dockerfile.relative_to(PROTO)} has no pip install"
+    for pip in pips:
+        # Every command in the RUN: a second pip chained after the first decides hash mode
+        # on its own.
+        for seg in re.split(r"\s*(?:&&|\|\||;|\|)\s*", pip):
+            if not re.search(r"\bpip3? install\b", seg):
+                continue
+            words = seg.split(" install ", 1)[1].split()
+            assert "--require-hashes" in words, f"not in hash mode: {pip}"
+            targets = [b for a, b in zip(words, words[1:]) if a in ("-r", "--requirement")]
+            targets += [w.split("=", 1)[1] for w in words if w.startswith("--requirement=")]
+            assert targets and set(targets) <= accepted, f"pip must install only {source} (copied to {dest}): {pip}"
+
+
+@pytest.mark.parametrize("tier", sorted(REQUIREMENTS))
+def test_committed_requirements_are_the_uv_export(tier):
+    """The committed file is `uv export` of the tier's group, compared by meaning: the same
+    (name, version, marker) set and the same hashes. A Dependabot bump to uv.lock that moves
+    a package in either closure fails here until the files are regenerated."""
+    committed, options = _requirements(REQUIREMENTS[tier].read_text(encoding="utf-8"))
+    fresh, _ = _requirements(_uv_export(tier))
+    assert not options, f"{REQUIREMENTS[tier].relative_to(PROTO)} carries options {options}; {REGENERATE}"
+    stale = {n: (committed.get(n), fresh.get(n)) for n in committed.keys() | fresh.keys() if committed.get(n) != fresh.get(n)}
+    assert not stale, (
+        f"proto/{tier}/requirements.txt differs from uv.lock's proto-{tier} group; {REGENERATE}. "
+        f"(committed, uv.lock) per package: " + "; ".join(
+            f"{n}: {(c or ('absent',))[:2]} vs {(f or ('absent',))[:2]}" + (" (hashes differ)" if c and f and c[:2] == f[:2] else "")
+            for n, (c, f) in sorted(stale.items())
+        )
+    )
+    for name, (_, _, hashes) in committed.items():
+        assert hashes, f"{name} has no --hash; pip --require-hashes would refuse the file"
+
+
+@pytest.mark.parametrize(
+    ("tier", "package", "pinned"),
+    [
+        ("web", "itsdangerous", None),
+        ("web", "cryptography", None),
+        ("web", "httpx", None),
+        ("web", "botocore", None),
+        ("web", "fastapi", None),
+        ("web", "uvicorn", None),
+        ("web", "psycopg-binary", None),
+        ("worker", "claude-agent-sdk", "0.2.128"),
+        ("worker", "psycopg-binary", None),
+        ("worker", "botocore", None),
+    ],
+)
+def test_requirements_carry_what_the_tiers_import_at_the_locked_version(tier, package, pinned):
+    """web/auth.py and enqueue.py import these at module scope, and the worker's SDK pin is
+    the flush-mode and CLI pin; the suite runs in a venv that has them all, so a missing one
+    passes every other test and fails only when the tier starts. botocore at uv.lock's
+    version is what the U7 signing vectors proved."""
+    reqs, _ = _requirements(REQUIREMENTS[tier].read_text(encoding="utf-8"))
+    assert package in reqs, f"proto/{tier}/requirements.txt does not carry {package}"
+    version = reqs[package][0]
+    assert version == _locked_version(package), f"proto/{tier} {package}=={version} vs uv.lock; {REGENERATE}"
+    if pinned:
+        assert version == pinned, f"proto/{tier} {package}=={version}, not the {pinned} pin"
+
+
+def test_host_venv_sqs_recipes_use_static_dummies():
+    """U7: the recipes that run enqueue.py from the host venv sign with a dummy static
+    pair, so they never read the developer's ~/.aws or probe IMDS."""
+    defined = [line for line in MAKEFILE.read_text(encoding="utf-8").splitlines()
+               if line.startswith("PROTO_SQS_ENV")]
+    assert defined and "GENEALOGY_SQS_ACCESS_KEY=" in defined[0] and "GENEALOGY_SQS_SECRET_KEY=" in defined[0]
+    for target in ("proto-send", "proto-smoke", "proto-web"):
+        assert any(re.search(r"\$\(PROTO_SQS_ENV\)\s+uv run\b", line) for line in _recipe(target)), target
 
 
 # ── D18 grading recipes ─────────────────────────────────────────────────────────
