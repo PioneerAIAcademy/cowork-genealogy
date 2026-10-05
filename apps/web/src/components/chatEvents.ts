@@ -50,7 +50,8 @@ export const TURN_OUTCOME_LABELS: Record<string, string> = {
   delivered: "Done — that's what you asked for. Send a message to carry on.",
   mcp_unavailable: 'Paused: the genealogy tools became unavailable.',
   retries_exhausted: 'This run was interrupted too many times and has stopped. Send a message to carry on.',
-  transcript_lost: "Stopped: a server problem kept this run's conversation from being saved. Findings written to the project are kept."
+  transcript_lost: "Stopped: a server problem kept this run's conversation from being saved. Findings written to the project are kept.",
+  signin_required: 'FamilySearch needs you to sign in again. Sign in, then send a message to carry on.'
 }
 
 // 1e: `budget` covers two different caps, and they need different advice. The nudge cap

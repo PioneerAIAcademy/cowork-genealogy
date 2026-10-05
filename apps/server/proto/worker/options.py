@@ -13,7 +13,11 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
   main thread; ``Write``/``Edit`` stay granted (denying them is whole-tool).
 - the tool server is the shared Streamable HTTP ``tools`` service at ``TOOL_SERVER_URL``;
   the entry carries the patron's bearer as ``Authorization`` and the turn's project id as
-  ``X-Genealogy-Project-Id`` -- per request, never process state. The entry is written
+  ``X-Genealogy-Project-Id`` -- per request, never process state. The bearer is the turn's
+  project owner's grant, which the worker reads (and locks) at the start of every attempt
+  (U3, ``worker.acquire_grant``); there is no other source, and an empty one is refused
+  rather than shipped. The CLI inherits no worker variable (``CLI_ENV_KEEP``) and runs as
+  its turn's slot user, who alone can read the per-turn config dir. The entry is written
   to a 0600 ``mcp.json`` under the per-turn config dir and passed as a PATH
   (``--mcp-config <path>``): a dict is serialised onto the CLI's argv, where the bearer
   is ``ps``-visible to every process in the container.
@@ -30,7 +34,8 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
 
 The hook (``make_pretool_hook``) is the plan's deny-and-log: it denies a raw
 ``Write``/``Edit`` on the project files (the hosted ``direct_project_file_write``),
-denies a ``Read``/``Grep``/``Glob`` under the anchor (``deny.py``), and records EVERY
+denies a ``Read``/``Grep``/``Glob`` under the anchor and any read or write under ``/proc``
+or ``/dev``, the turn's own process (``deny.py``), and records EVERY
 call as a ``tool_calls`` row with its decision -- so criterion 3 is a query, not a claim.
 It never raises: any exception allows the call. The turn's identifiers reach it through
 a closure, never a global.
@@ -65,7 +70,7 @@ from app.agent.spend import PRICE_PER_MTOK, SPEND_CAP_USD
 from app.agent.spend import price_usd as shared_price_usd
 from app.agent.real_agent import direct_project_file_write
 
-from proto.worker.deny import project_read_denied
+from proto.worker.deny import host_path_denied, project_read_denied
 
 # DesignSync/Monitor/PushNotification: the CLI adds them only for a non-Bedrock base URL
 # (plan P3g), ~5k tokens per call with tool search off, and none is reachable here.
@@ -141,6 +146,29 @@ WRITE_DENY_REASON = (
 
 # U7 (proto/enqueue.py): the worker signs its held-message release with these when set.
 SQS_STATIC_KEY_VARS = ("GENEALOGY_SQS_ACCESS_KEY", "GENEALOGY_SQS_SECRET_KEY")
+# U3: the key the worker decrypts the patron's grant with (proto/grants.py).
+GRANT_KEY_VAR = "FS_TOKEN_ENC_KEY"
+
+# The only inherited variables the CLI keeps (U3). The SDK hands the CLI the worker's whole
+# environment overlaid with options.env, and a turn's agent can read its own process's
+# /proc/self/environ, so every other inherited key -- PG_DSN, QUEUE_URL, FS_TOKEN_ENC_KEY,
+# the SQS pair, AWS_*, GENEALOGY_* -- is set to "" there. What the CLI needs is set in
+# options.env, which this never blanks.
+CLI_ENV_KEEP = frozenset({
+    "PATH", "HOME", "TMPDIR", "LANG", "LANGUAGE", "TZ", "TERM",
+    "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "no_proxy",
+    "SSL_CERT_FILE", "SSL_CERT_DIR", "NODE_EXTRA_CA_CERTS",
+})
+CLI_ENV_KEEP_PREFIXES = ("LC_", "CLAUDE_CODE_")
+
+
+def cli_env_blanks(worker_env: Mapping[str, str], set_by_options: Mapping[str, str] = {}) -> dict[str, str]:
+    """``{name: ""}`` for every inherited variable the CLI must not see (``CLI_ENV_KEEP``)."""
+    return {
+        name: "" for name in worker_env
+        if name not in set_by_options and name not in CLI_ENV_KEEP
+        and not name.startswith(CLI_ENV_KEEP_PREFIXES)
+    }
 
 
 def hook_path(exe_dir: str, path: str | None) -> str:
@@ -190,24 +218,6 @@ def gateway_agent_models(agents: Mapping[str, Any]) -> dict[str, Any]:
     return out
 
 
-def bearer_token(worker_env: Mapping[str, str], fs_access_token: str | None) -> str:
-    """The patron's FamilySearch token for this turn: the message's; else the file
-    ``FS_ACCESS_TOKEN_FILE`` names, read now -- per attempt -- so the operator can refresh
-    it between turns (proto/env.sh writes it; never refresh while a turn is in flight,
-    since a FamilySearch refresh revokes the previous access token); else the worker
-    env's ``FS_ACCESS_TOKEN``; else empty."""
-    if fs_access_token is not None:
-        return fs_access_token or ""
-    path = worker_env.get("FS_ACCESS_TOKEN_FILE")
-    if path:
-        try:
-            with open(path, encoding="utf-8") as f:
-                return f.read().strip()
-        except OSError:
-            pass
-    return worker_env.get("FS_ACCESS_TOKEN", "") or ""
-
-
 # D16 (PR #2659): the shared Streamable HTTP tool server, the compose `tools` service. Its
 # contract is the two headers the entrypoint reads, both per request and never process
 # state: `Authorization: Bearer <patron token>` becomes the request's principal, and
@@ -225,24 +235,21 @@ PROJECT_ID_HEADER = "X-Genealogy-Project-Id"
 MCP_HTTP_TIMEOUT_MS = 1_800_000
 
 
-def tool_server_headers(
-    worker_env: Mapping[str, str], *, fs_access_token: str | None, project_id: str
-) -> dict[str, str]:
-    """``X-Genealogy-Project-Id`` always; ``Authorization: Bearer <token>`` only when there
-    is a token (the server reads a missing header as an empty bearer, and a bare
-    ``Bearer `` would be malformed)."""
-    headers = {PROJECT_ID_HEADER: project_id}
-    token = bearer_token(worker_env, fs_access_token)
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
-    return headers
+def tool_server_headers(*, project_id: str, bearer: str) -> dict[str, str]:
+    """``Authorization: Bearer <grant token>`` and ``X-Genealogy-Project-Id``. An empty
+    bearer raises ValueError: the server reads it as an empty principal and answers every
+    FamilySearch call with the reconnect instruction, a sign-in problem the patron cannot
+    fix by signing in."""
+    if not bearer:
+        raise ValueError("refusing to build the tool server entry with an empty bearer")
+    return {"Authorization": f"Bearer {bearer}", PROJECT_ID_HEADER: project_id}
 
 
 def tool_server_entry(
     worker_env: Mapping[str, str],
     *,
     project_id: str,
-    fs_access_token: str | None,
+    bearer: str,
 ) -> dict[str, Any]:
     """The ``genealogy`` MCP server entry: the shared Streamable HTTP tool server, one
     process for every turn, at ``TOOL_SERVER_URL`` with the bearer as ``Authorization``
@@ -251,7 +258,7 @@ def tool_server_entry(
     return {
         "type": "http",
         "url": worker_env.get("TOOL_SERVER_URL") or TOOL_SERVER_DEFAULT_URL,
-        "headers": tool_server_headers(worker_env, fs_access_token=fs_access_token, project_id=project_id),
+        "headers": tool_server_headers(project_id=project_id, bearer=bearer),
         "timeout": MCP_HTTP_TIMEOUT_MS,
     }
 
@@ -291,9 +298,11 @@ def _deny(reason: str) -> dict[str, Any]:
     }
 
 
-# 1c. What Stop returns, and it is NOT `_deny`. A `permissionDecision: "deny"` is a tool
-# RESULT: the model reads it, argues with it, and picks another tool. The SDK's halt
-# fields are separate, and this is the pair that ends the turn.
+# 1c. What Stop returns, and it is NOT `_deny` alone. A `permissionDecision: "deny"` is a
+# tool RESULT: the model reads it, argues with it, and picks another tool. The SDK's halt
+# fields are separate, and this is the pair that ends the turn. But they end it AFTER the
+# call runs (CLI 2.1.220, U3 live lost-lock run 2026-10-03: the halted record_search
+# executed on a just-revoked token), so the halt also denies the call it fires on.
 STOP_REASON = "Stopped by the researcher."
 
 # 1b. The turn ends so the patron's message becomes the next one. Text the MODEL reads as
@@ -341,7 +350,7 @@ DELIVERED_REASON = (
 
 
 def _halt(reason: str = STOP_REASON) -> dict[str, Any]:
-    return {"continue_": False, "stopReason": reason}
+    return {"continue_": False, "stopReason": reason, **_deny(reason)}
 
 # Delegation tools whose `run_in_background` the worker overrides. The worker ends a turn at
 # the main thread's ResultMessage and closes the CLI, so a background agent still running
@@ -475,7 +484,7 @@ def make_pretool_hook(
                 root = config_root() if callable(config_root) else config_root
                 reason = project_read_denied(
                     tool_name, tool_input, cwd=cwd, project_root=cwd, config_root=root
-                )
+                ) or host_path_denied(tool_name, tool_input, cwd=cwd, project_root=cwd)
                 if reason is not None:
                     decision = "deny"
         except Exception:  # noqa: BLE001 - a hook that raises fails a call the user was entitled to make
@@ -674,15 +683,21 @@ def build_worker_options(
     posttool_hook: Callable[..., Any],
     resume: str | None = None,
     session_id: str | None = None,
-    fs_access_token: str | None = None,
+    bearer: str,
     worker_env: Mapping[str, str] | None = None,
     stderr: Callable[[str], None] | None = None,
     stop_hook: Callable[..., Any] | None = None,
+    turn_user: str | None = None,
+    turn_home: str | None = None,
 ):
     """``stop_hook`` (D18, ``make_stop_hook``) binds a ``Stop`` matcher only when given.
     The web tier stamps a nudge cap on every browser message, so when that cap is above
     0 (the default is 60) every browser turn passes one and a yield to ask the user is
-    vetoed like any other."""
+    vetoed like any other.
+
+    ``turn_user`` (U3) is the slot user the CLI runs as; ``turn_home``, a directory that user
+    owns, is the CLI's ``HOME``, ``TMPDIR`` and ``CLAUDE_CODE_TMPDIR`` (the CLI's own temp dir,
+    else a ``/tmp/claude-<uid>`` every later patron on the slot would share)."""
     from claude_agent_sdk import ClaudeAgentOptions, HookMatcher
 
     if resume and session_id:
@@ -710,14 +725,12 @@ def build_worker_options(
         "CLAUDE_CONFIG_DIR": config_dir,
         **model_env,
     }
-    if env_in.get("TMPDIR"):
+    if turn_home:
+        env["HOME"] = env["TMPDIR"] = env["CLAUDE_CODE_TMPDIR"] = turn_home
+    elif env_in.get("TMPDIR"):
         env["TMPDIR"] = env_in["TMPDIR"]
     env["PATH"] = hook_path(os.path.dirname(sys.executable), env_in.get("PATH"))
-    # U7: the worker's static SQS pair is the worker's. Blank, not absent, like
-    # ANTHROPIC_API_KEY: the CLI inherits the worker's environment.
-    for name in SQS_STATIC_KEY_VARS:
-        if env_in.get(name):
-            env[name] = ""
+    env.update(cli_env_blanks(env_in, env))
     hooks: dict[str, Any] = {
         "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook], timeout=PRETOOL_TIMEOUT_S)],
         # Both outcomes stamp the duration: a tool that errored still ran for that long.
@@ -736,9 +749,7 @@ def build_worker_options(
         mcp_servers=write_mcp_config(
             config_dir,
             {
-                "genealogy": tool_server_entry(
-                    env_in, project_id=project_id, fs_access_token=fs_access_token
-                )
+                "genealogy": tool_server_entry(env_in, project_id=project_id, bearer=bearer)
             },
         ),
         disallowed_tools=list(DISALLOWED_TOOLS),
@@ -757,4 +768,6 @@ def build_worker_options(
         kwargs["session_id"] = session_id
     if stderr is not None:
         kwargs["stderr"] = stderr
+    if turn_user:
+        kwargs["user"] = turn_user
     return ClaudeAgentOptions(**kwargs)
