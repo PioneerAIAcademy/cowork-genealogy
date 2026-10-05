@@ -16,6 +16,9 @@ Three guards keep the output from becoming a constant. Each is here because the
 version without it fired on nearly every candidate; see the table in SKILL.md.
 Do not relax one without re-measuring the pair count on a real board.
 
+It also lists Touches paths deleted on origin/main (absent there, with history),
+so a card still naming a converted skill's directory gets its line fixed.
+
 Guard 2 (a bare directory pairs only when it names a unit) and the `**Touches:**`
 parsing itself live in ../lib/touches.py, shared with /merge-issues' slots.py so
 the two passes cannot disagree about which paths an issue names.
@@ -28,6 +31,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
 
 from touches import (  # noqa: E402
+    deleted_on_ref,
     in_snapshot,
     paths_from_touches,
     pairable,
@@ -150,9 +154,22 @@ def main(board_path, open_path, prs_path, statuses):
             desc = ", ".join(f"{p} ({tracked_count(p)} files)" for p in wide)
             print(f"  issue #{n}: {desc}")
 
+    print("\n=== Touches paths deleted on origin/main ===")
+    deleted = deleted_on_ref({e for entries in cand.values() for e in entries})
+    n_del = 0
+    if deleted is None:
+        print("  skipped: origin/main does not resolve")
+    else:
+        for n, entries in sorted(cand.items()):
+            for p in sorted(p for _k, p in entries if p in deleted):
+                n_del += 1
+                print(f"  issue #{n}: {p} (deleted in {deleted[p]})")
+        if not n_del:
+            print("  (none)")
+
     print(
         f"\nsummary: {n_ii} issue-issue, {n_ip} issue-PR, "
-        f"{len(hubs)} hubs, {len(broad)} broad"
+        f"{len(hubs)} hubs, {len(broad)} broad, {n_del} deleted"
     )
 
 

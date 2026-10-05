@@ -623,6 +623,7 @@ simply does not appear.
 
 ```sh
 # /tmp/board.json is the cached snapshot from § 1 "Measure Ready depth" — not refetched
+git fetch origin main --quiet
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 300 \
   --json number,title,body > /tmp/open.json
 gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
@@ -641,6 +642,8 @@ change there moves both passes, so re-run each after editing it.
 | A concrete file never implies its directory | Two files in `src/tools/` are not a collision |
 | A bare directory pairs only if it is a snapshot path or a **unit dir** — never an ordinary container | Naming `src/tools/` means "I add a file here", not "I edit all 47". A skill dir, a scenario, an e2e fixture *is* the unit, so naming it does mean all of it |
 | A file named by more than 3 candidates is a hub, reported once | `docs/architecture.md` is the repo's map; everyone edits it, in different sections |
+
+**"Touches paths deleted on origin/main"** lists paths a card names that `main` deleted; the shortlist run is the one that catches Backlog cards. Fix that card's Touches line to name where the work lives now, unless the card restores the path.
 
 **Do not swap the unit/container test back for a size threshold.** Size is a
 proxy that misses in both directions: `apps/server/app/sandbox` is 5 files and a
@@ -1042,6 +1045,7 @@ gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 
              then "ANSWERED" else "WAITING" end) as $s
       | "\(.updatedAt[0:10])\t\($s)\t#\(.number)\t\(.title)"' | sort
 # /tmp/board.json is the cached snapshot from § 1 "Measure Ready depth" — not refetched
+git fetch origin main --quiet
 jq -r '.items[] | select((.labels|index("senior"))
       and (.status|IN("Backlog","Ready","In Progress","Review")))
     | "\(.status)\t\(if (.assignees|length)==0 then "unassigned" else "assigned" end)\t#\(.content.number)\t\([.labels[]|select(.=="reviewed" or .=="needs-decision" or .=="icebox")]|join(","))"' \

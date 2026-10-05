@@ -199,6 +199,50 @@ def under(path, prefix):
     return path == prefix or path.startswith(prefix + "/")
 
 
+def deleted_on_ref(entries, ref="origin/main", repo=None):
+    """-> {path: short sha of the commit that deleted it} | None when `ref` does not resolve.
+
+    `entries` are `(kind, path)` pairs as `paths_from_touches` returns them. A path is
+    flagged only if it is absent at `ref` AND has history there: absent alone is
+    mostly files a card will create (21 of 24 absent paths on 2026-10-05, issue #3148).
+    A directory counts as present if any tracked file sits under it. A glob reaches
+    here as its pre-`*` head: a live directory head is present, and a head with no
+    history of its own (`skills/zz-new-`, `skills/gone/SKILL`) is judged by its parent
+    directory, so a glob into a deleted directory is flagged and one into a live
+    directory is not. Git missing from PATH is treated like an unresolvable ref.
+    """
+    repo = repo or REPO_ROOT
+
+    def git(*args):
+        return subprocess.run(["git", "-C", repo, *args], capture_output=True,
+                              text=True, encoding="utf-8")
+
+    try:
+        if git("rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}").returncode != 0:
+            return None
+    except OSError:
+        return None
+    tracked = set(git("ls-tree", "-r", "-z", "--name-only", "--full-tree", ref)
+                  .stdout.split("\0")) - {""}
+    tracked_dirs = {f.rsplit("/", i)[0] for f in tracked for i in range(1, f.count("/") + 1)}
+    present = tracked | tracked_dirs
+
+    def deleting_sha(path):
+        return git("log", "-1", "--format=%h", ref, "--", path).stdout.strip()
+
+    out = {}
+    for kind, path in entries:
+        if path in present or path in out:
+            continue
+        sha = deleting_sha(path)
+        if not sha and kind == "prefix" and "/" in path:
+            parent = path.rsplit("/", 1)[0]
+            sha = "" if parent in present else deleting_sha(parent)
+        if sha:
+            out[path] = sha
+    return out
+
+
 def tracked_count(prefix):
     """Number of git-tracked files under `prefix`."""
     if prefix not in _count_cache:
