@@ -133,9 +133,11 @@ FILTER_KEYS = (
 # Place, date, and record-type filters are allowed on any call, but a filtered
 # search that returns zero results must be followed by an unfiltered retry
 # (checked by test_filtered_nil_is_followed_by_unfiltered_retry below).
-# collectionId is excluded: its guard is
+# `place` (q.recordPlace) narrows by collection metadata like recordPlace*, so a
+# nil under it owes the same retry. collectionId is excluded: its guard is
 # test_fulltext_search_never_scopes_to_collection_id, not this one.
 POST_SEARCH_FILTER_KEYS = (
+    "place",
     "recordPlace0", "recordPlace1", "recordPlace2", "recordPlace3",
     "recordType", "yearFrom", "yearTo",
 )

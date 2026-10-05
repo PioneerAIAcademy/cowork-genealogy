@@ -657,3 +657,19 @@ def test_record_place_fails_plain_text_on_a_later_call_only():
     ]
     with pytest.raises(AssertionError, match="recordPlace2"):
         check_record_place_form(calls)
+
+
+# `place` joined POST_SEARCH_FILTER_KEYS when the skill started recommending it
+# for a named jurisdiction (issue #1828 review): a nil under it owes a retry.
+
+
+def test_filtered_nil_retry_fires_on_a_place_nil_with_no_retry():
+    with pytest.raises(AssertionError):
+        check_filtered_nil_retry([_filtered_nil_call("+Flynn +Patrick", place="Schuylkill County, Pennsylvania")])
+
+
+def test_filtered_nil_retry_passes_a_place_nil_followed_by_an_unfiltered_retry():
+    check_filtered_nil_retry([
+        _filtered_nil_call("+Flynn +Patrick", place="Schuylkill County, Pennsylvania"),
+        _unfiltered_call("+Flynn +Patrick"),
+    ])
