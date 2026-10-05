@@ -47,9 +47,14 @@ tools on purpose.
   (`mcp__genealogy__research_delivered`) and ends the turn **before the tool body runs**.
   The turn's `outcome` is `delivered` and the browser renders "Done — that's what you asked
   for. Send a message to carry on." Nothing reads the tool's return value.
-- **Cowork and the unit harness.** No such hook binds. The tool is still advertised to
-  every skill, so it must not error and must not claim an effect it did not have. It
-  returns the acknowledgement above and the run genuinely carries on.
+- **Cowork and the e2e harness.** No such hook binds, and the tool IS advertised (the
+  e2e orchestrator binds the real engine server and grants `mcp__genealogy` as a
+  server-prefix wildcard). So it must not error and must not claim an effect it did not
+  have: it returns the acknowledgement above and the run genuinely carries on. That inert
+  behaviour is the intended one for these environments, not an oversight.
+- **The unit harness.** Not advertised at all: that harness binds a mock server which
+  registers only fixture-backed tools plus `LIVE_TOOLS` (`eval/harness/harness/mock_mcp.py`),
+  and this tool is in neither set.
 
 The `note` is worded to be true in both places, which is why it is hedged rather than
 asserting the turn ended.

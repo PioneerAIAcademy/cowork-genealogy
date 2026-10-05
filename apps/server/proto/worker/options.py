@@ -453,10 +453,18 @@ def make_pretool_hook(
                     if log is not None:
                         log(ev="delivered_report_failed", turn_id=turn_id,
                             error=f"{type(exc).__name__}: {exc}")
+            # The summary is the one field the researcher-facing contract is built on,
+            # and the hook halts BEFORE the tool body runs -- so if it is not captured
+            # here it reaches nobody: `input_path` is None for this tool, the tool_calls
+            # row has no column for it, and the browser renders a fixed string. Logged,
+            # and appended to the stop reason so the text the model is handed names what
+            # it said it delivered.
+            summary = str((tool_input or {}).get("summary") or "").strip()
             if log is not None:
                 log(ev="delivered", turn_id=turn_id, tool_name=tool_name,
-                    tool_use_id=tool_use_id)
-            return _halt(DELIVERED_REASON)
+                    tool_use_id=tool_use_id, summary=summary)
+            return _halt(f"{DELIVERED_REASON} Delivered: {summary}" if summary
+                         else DELIVERED_REASON)
         try:
             protected = direct_project_file_write(tool_name, tool_input)
             if protected:

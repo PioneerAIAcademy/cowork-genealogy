@@ -11,10 +11,16 @@
  * AskUserQuestion: an ask waits for an answer and a delivery waits for nothing, so one
  * tool carrying both would leave the hook with no way to tell them apart.
  *
- * In Cowork and the unit harness there is no such hook, and this tool is advertised to
- * every skill. There it must return something harmless and truthful rather than
- * erroring or claiming an effect it did not have, so the reply says plainly that the
- * signal was recorded and the run continues.
+ * Everywhere else there is no such hook, and the tool must return something harmless
+ * and truthful rather than erroring or claiming an effect it did not have -- so the
+ * reply says plainly that the signal was recorded and the run continues.
+ *
+ * Which environments those are, checked rather than assumed: the e2e harness binds the
+ * REAL engine server and grants `mcp__genealogy` as a server-prefix wildcard, so the
+ * tool is advertised and callable there with nothing intercepting it -- the inert arm
+ * below is what runs. Cowork is the same shape. The UNIT harness is the exception in
+ * the other direction: it binds a mock server registering only fixture-backed tools
+ * plus `LIVE_TOOLS`, and this tool is in neither, so it is not advertised there at all.
  */
 
 export interface ResearchDeliveredInput {
