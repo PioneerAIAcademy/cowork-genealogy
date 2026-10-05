@@ -175,7 +175,12 @@ def test_slash_entry_keeps_call_order():
     ]
     assert judge_skills_slot(
         ["research", "question-selection", "research-plan"], calls, "research"
-    ) == ["research", "question-selection", "gps-mentor (agent)", "research-plan"]
+    ) == [
+        "research (slash command)",
+        "question-selection",
+        "gps-mentor (agent)",
+        "research-plan",
+    ]
 
 
 def test_without_a_slash_entry_the_walk_is_unchanged():
@@ -207,7 +212,16 @@ def test_an_unreadable_skill_call_does_not_defeat_the_slash_entry():
         {"tool": "Skill", "args": {"skill": "research-plan"}},
     ]
     assert judge_skills_slot(["research", "research-plan"], calls, "research") == [
-        "research",
+        "research (slash command)",
         "gps-mentor (agent)",
         "research-plan",
     ]
+
+
+def test_the_slash_entry_is_marked_not_bare():
+    """The judge grounds its rationales in this list, so a bare name would let
+    it write "the right skill was invoked" on a test where registration, not
+    the model, put the name there. `skills_invoked` itself stays plain --
+    membership checks must keep matching the bare name."""
+    out = judge_skills_slot(["research"], [], "research")
+    assert out == ["research (slash command)"]

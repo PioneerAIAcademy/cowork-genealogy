@@ -432,7 +432,8 @@ def judge_skills_slot(
 ) -> list[str]:
     """The judge's "Skills Claude invoked" list on a skill test: `skills_invoked`,
     with each agent the main thread spawned inserted at its place in call order
-    as "<name> (agent)".
+    as "<name> (agent)", and a slash-command entry marked as
+    "<name> (slash command)".
 
     `skills_invoked` holds `Skill` calls only, so without the spawns a
     judge_context asking whether the skill delegated to an agent is graded on a
@@ -449,25 +450,38 @@ def judge_skills_slot(
     """
     calls = builtin_tool_calls or []
     spawns = spawned_agents(calls)
+    rest = list(skills_invoked or [])
+
+    # Lifted above the branching so EVERY return path marks it. The judge is
+    # told to ground its rationales in this list, and a bare name would let it
+    # write "the right skill was invoked" on a slash test — asserting exactly
+    # what this harness deliberately does NOT claim, since the entry comes from
+    # registration and staging rather than from anything the model did. Marked
+    # like a spawn is, for the same reason.
+    #
+    # `skills_invoked` itself stays plain: `derive_activated` and
+    # `_compute_outcome` test membership and must keep matching the bare name.
+    lead: list[str] = []
+    if slash_entry is not None and rest and rest[0] == slash_entry:
+        lead.append(f"{rest.pop(0)} (slash command)")
+
     if not spawns:
-        return list(skills_invoked or [])
+        return lead + rest
     if not any(call.get("tool") == "Skill" for call in calls):
-        return list(skills_invoked or []) + [f"{name} (agent)" for name in spawns]
-    remaining = list(skills_invoked or [])
-    out: list[str] = []
-    # A slash entry sits in `skills_invoked` with no `Skill` call of its own, so
-    # the positional walk below would never match it, stall on it permanently,
-    # and dump the whole list after the spawns — destroying the call order this
-    # function exists to preserve, and only on slash-entry tests (issue #3116).
+        return lead + rest + [f"{name} (agent)" for name in spawns]
+    remaining = rest
+    out: list[str] = list(lead)
+    # Removing the entry above is also what keeps the positional walk below
+    # honest: it has no `Skill` call of its own, so the walk would never match
+    # it, stall permanently, and dump the whole list after the spawns —
+    # destroying call order, and only on slash-entry tests (issue #3116).
     #
     # Passed in, never inferred. An earlier version detected it as
-    # `len(skills_invoked) == n_Skill_calls + 1`, which a single Skill call with
-    # an unreadable input shape defeats: the hook puts that call in
-    # `unread_skill_calls` and NOT in `skills_invoked`, while it still counts as
-    # a `Skill` call here, so the arithmetic silently reverts to the corruption
+    # `len(skills_invoked) == n_Skill_calls + 1`, which one `Skill` call with an
+    # unreadable input shape defeats: the hook puts that call in
+    # `unread_skill_calls` and NOT in `skills_invoked` while it still counts as
+    # a `Skill` call here, so the arithmetic silently reverted to the corruption
     # it was added to prevent. `run_skill` knows the fact outright.
-    if slash_entry is not None and remaining and remaining[0] == slash_entry:
-        out.append(remaining.pop(0))
     for call in calls:
         tool = call.get("tool")
         if tool == "Skill":
