@@ -224,14 +224,6 @@ A memory whose `notes` says it was not transcribed gets **no** `sources` entry �
 
 ### 5. Pedigree analysis and project summary
 
-**First, invoke `@plugin:check-warnings` once, naming the subject and every
-imported relative by their LOCAL tree id from Step 3 (`I1`, `I2`… — never
-the FamilySearch PID or `ark`, even when the tree summary below lists both),
-and asking it to check all of them.** Fold what it returns into the findings
-below exactly as check-warnings frames it — never restate a timeline
-impossibility as one more line on the "Obvious error detection" list below,
-which is a smaller, separate check.
-
 Analyze imported data before presenting results:
 
 **Minimum information check** — per person: full name (given + surname)? Specific date (not just ~year)? Specific place (county/parish, not just country)?
@@ -240,7 +232,7 @@ Analyze imported data before presenting results:
 
 **Census fertility gap:** when a 1900 or 1910 US census gives the mother's children-born and children-living counts, born minus living is the number of her children dead by that census; each one not already in the tree, having died before the census date, is a gap to research — a child born and died before that enumeration. Living minus the children already in the tree alive at that date is the number of living children still missing. Parity between the living count and the children in the tree does not close the deceased-child gap. The dead count is cumulative: a child dead by 1900 is still counted among the dead in 1910, not an additional one. Apply the same de-duplication to the living-missing count — a child missing at both 1900 and 1910 is one missing child, not two — but a pre-census deceased child and a between-census living child are distinct targets, never merged. Count every child she bore, including by an earlier husband.
 
-**Obvious error detection:** birth after death; parent-child age gaps outside 15-50 years; children born in locations inconsistent with parents; dates referencing non-existent jurisdictions; sibling births <9 months apart. **This is the complete list — do not flag anything else as an error**, no matter how odd it looks (a missing relationship subtype, an absent Couple relationship, two people sharing a name, a thin source count, or anything else you notice). Such a pattern belongs in **Gap detection** above if it's a missing-ancestor/event/vague-information gap, or is simply not mentioned — never presented as a defect. A deeper data-integrity pass is check-warnings' (`person_warnings`) job, not this step's. Auditing the sources already attached — whether each belongs, whether it was indexed correctly — is source-evaluation's; name it, never audit them here.
+**Obvious error detection:** birth after death; parent-child age gaps outside 15-50 years; children born in locations inconsistent with parents; dates referencing non-existent jurisdictions; sibling births <9 months apart. **This is the complete list — do not flag anything else as an error**, no matter how odd it looks (a missing relationship subtype, an absent Couple relationship, two people sharing a name, a thin source count, or anything else you notice). Such a pattern belongs in **Gap detection** above if it's a missing-ancestor/event/vague-information gap, or is simply not mentioned — never presented as a defect. A deeper data-integrity pass is `person_warnings`' job, not this step's. Auditing the sources already attached — whether each belongs, whether it was indexed correctly — is source-evaluation's; name it, never audit them here.
 
 **Historical context signals** — per person, what the era and place imply about where the records will be. Were they of military age during a conflict that reached where they lived, so service, draft or pension files exist? Did a famine, emigration wave or internal migration move this population, leaving the records in the origin jurisdiction rather than the residence? Had civil registration begun there by the recorded date — before it, church registers are the only vitals? And did the named jurisdiction exist at that date, or does the record belong to the parent county or parish it was later split from?
 
@@ -289,10 +281,9 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 3. Build the tree in memory — all persons, relationships, sources (quality: 1).
 4. `project_create({ projectPath, objective, title, subjectPersonIds: ["I1"], tree })`. Tell the user where the project was created.
 5. `research_append` for `researcher_profile` (the fixed novice profile) and one per volunteered holding.
-6. `@plugin:check-warnings` for I1, Mary Kelly, James, and Margaret. Pedigree
-   analysis + summary, folding in whatever it returns. Mary Kelly and the
-   children are tree context only — their gaps are noted, not queued. Then name
-   the first research question as the next step and go on to it.
+6. Pedigree analysis + summary. Mary Kelly and the children are tree context
+   only — their gaps are noted, not queued. Then name the first research
+   question as the next step and go on to it.
 
 ## Important rules
 

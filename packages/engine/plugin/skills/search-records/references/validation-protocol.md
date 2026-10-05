@@ -8,13 +8,12 @@ write would invalidate the project. There is no need to invoke
 of retrying blindly. (`validate-schema` remains available as a
 user-invokable audit of the whole project.)
 
-What the tools do **not** check is genealogical plausibility:
-
-1. **Invoke `check-warnings`** if you added assertions or
-   person_evidence entries. This checks for genealogical
-   impossibilities (married before 12, died after 120, child born
-   after parent's death, etc.). It is not auto-triggered — you must
-   invoke it explicitly.
+The tree writer tools (`tree_edit`, `tree_correct`, `merge_tree_persons`,
+`materialize_facts`) also refuse a write that introduces an unjustified
+genealogical warning. When a write would introduce a warning, the tool
+returns `{ ok: false, reason: "unjustified_warnings" }` with each
+warning's id. Re-call with `warningJustifications` for each id, or
+abandon the write.
 
 (search-records writes only log entries and plan-item status, so it does
-not trigger `check-warnings`; the assertion-creating skills do.)
+not trigger the warning gate; the assertion-creating agents do.)

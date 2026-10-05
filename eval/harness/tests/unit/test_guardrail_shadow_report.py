@@ -685,8 +685,11 @@ def _tree_with_parentchild():
     }
 
 
-def _tree_edit_call():
-    return {"tool": "mcp__genealogy__tree_edit", "is_error": None}
+def _tree_edit_call(*, unjustified=False):
+    call = {"tool": "mcp__genealogy__tree_edit", "is_error": None}
+    if unjustified:
+        call["response_summary"] = '{"ok": false, "reason": "unjustified_warnings"}'
+    return call
 
 
 def test_replay_citation_nulling_fires_on_a_synthetic_concluded_source(tmp_path):
@@ -717,12 +720,14 @@ def test_replay_conflict_unpersisted_fires_on_a_synthetic_conclusion(tmp_path):
 
 
 def test_replay_warnings_unchecked_fires_on_a_synthetic_run(tmp_path):
+    """Retargeted by #2840: fires when a writer returned unjustified_warnings
+    and the agent never re-called with justifications."""
     fixtures = _write_fixture(tmp_path, "fx", []).parent
     p = _write_posthoc_run(
         tmp_path,
         "fx",
         "run-1.json",
-        tool_calls=[_tree_edit_call()],
+        tool_calls=[_tree_edit_call(unjustified=True)],
         research={},
         tree=_tree_with_parentchild(),
     )
@@ -903,7 +908,7 @@ def test_replay_post_hoc_lines_appear_in_main_under_replay(tmp_path, capsys, mon
         tmp_path,
         "fx",
         "run-2026-07-01_00-00-00.json",
-        tool_calls=[_tree_edit_call()],
+        tool_calls=[_tree_edit_call(unjustified=True)],
         research=_research_nulled_citation(""),
         tree=_tree_with_parentchild(),
     )

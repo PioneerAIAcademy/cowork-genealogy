@@ -1685,61 +1685,52 @@ def _person_warnings_call(*, is_error=None):
 
 
 def test_warnings_unchecked_fires_on_new_relationship_with_no_call():
-    """The evidenced #1193 shape: a parentage link written, guardrail never run."""
+    """Retargeted by #2840: fires when a writer returned unjustified_warnings
+    and the agent never re-called with justifications."""
     out = find_relationship_writes_without_warnings_check(
-        [{"tool": "mcp__genealogy__tree_edit", "is_error": None}],
+        [{"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": false, "reason": "unjustified_warnings"}'}],
         _tree_with_parentchild(),
         starting_tree={"relationships": []},
     )
     assert len(out) == 1
     v = out[0]
     assert v["kind"] == WARNINGS_UNCHECKED_KIND
-    assert v["required_skill"] == "check-warnings"
     # int index + string tool so guardrail_shadow_report's formatters never hit a
     # None format spec.
     assert isinstance(v["index"], int) and isinstance(v["tool"], str)
 
 
-def test_warnings_unchecked_silent_when_person_warnings_was_called():
-    """Keyed on the tool: a successful person_warnings call means the guardrail
-    was consulted, whatever skill (or none) reached it."""
+def test_warnings_unchecked_silent_when_writer_succeeded():
+    """A writer that succeeded means no unjustified warnings."""
     out = find_relationship_writes_without_warnings_check(
-        [{"tool": "mcp__genealogy__tree_edit", "is_error": None}, _person_warnings_call()],
+        [{"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": true}'}],
         _tree_with_parentchild(),
         starting_tree={"relationships": []},
     )
     assert out == []
 
 
-def test_warnings_unchecked_still_fires_when_the_call_errored():
-    """A failed person_warnings call left the tree unchecked, so it does not
-    count as consulting the guardrail."""
+def test_warnings_unchecked_still_fires_when_only_refusals():
+    """All writer calls returned unjustified_warnings with no successful retry."""
     out = find_relationship_writes_without_warnings_check(
-        [_person_warnings_call(is_error=True)],
+        [{"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": false, "reason": "unjustified_warnings"}'}],
         _tree_with_parentchild(),
         starting_tree={"relationships": []},
     )
     assert len(out) == 1
 
 
-def test_warnings_unchecked_still_fires_on_a_no_project_person_warnings_call():
-    """Issue #1695, and note the INVERTED polarity against the write detectors.
-
-    Everywhere else `did_not_land` makes a detector SKIP a call. Here it must
-    stop a call being CREDITED: a no-project person_warnings checked no tree, so
-    crediting it would mark the guardrail consulted when it never ran — a MISSED
-    violation, which is silent. That is why this test exists rather than being
-    folded into the write-side one.
-    """
-    call = _person_warnings_call()
-    # The MCP-envelope shape, i.e. what production actually emits.
-    call["response_summary"] = _no_project_summary(escaped=True)
+def test_warnings_unchecked_silent_after_refusal_then_success():
+    """A refusal followed by a successful re-call is fine."""
     out = find_relationship_writes_without_warnings_check(
-        [call],
+        [
+            {"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": false, "reason": "unjustified_warnings"}'},
+            {"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": true}'},
+        ],
         _tree_with_parentchild(),
         starting_tree={"relationships": []},
     )
-    assert len(out) == 1
+    assert out == []
 
 
 def test_warnings_unchecked_matches_the_tool_under_any_server_spelling():
@@ -1767,7 +1758,7 @@ def test_warnings_unchecked_gated_on_a_new_relationship():
 
 def test_warnings_unchecked_fires_on_a_new_couple_relationship():
     out = find_relationship_writes_without_warnings_check(
-        [],
+        [{"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": false, "reason": "unjustified_warnings"}'}],
         {"relationships": [{"id": "R2", "type": "Couple", "person1": "I1", "person2": "I2"}]},
         starting_tree={"relationships": []},
     )

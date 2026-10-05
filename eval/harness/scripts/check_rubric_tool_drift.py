@@ -856,17 +856,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "packages/engine/plugin/agents/person-evidence.md",
-        "tool": "validate_research_schema",
-        "quotes": [
-            "The persistence tools validate before writing, so no separate `validate_research_schema` pass is needed",
-        ],
-        "reason": (
-            "not-needed - 'The persistence tools validate before writing, "
-            "so no separate `validate_research_schema` pass is needed'"
-        ),
-    },
-    {
         "file": "packages/engine/plugin/agents/proof-conclusion.md",
         "tool": "collections_search",
         "quotes": [

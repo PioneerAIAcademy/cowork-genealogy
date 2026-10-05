@@ -308,8 +308,6 @@ Batching applies every op to a single in-memory tree, validates once, and writes
 
 **Person merging:** proof-conclusion decides WHETHER to merge; the merge tool repoints all references. Before any merge: (1) check `source_attachments` — if the record is already in the tree, stop; (2) call `merge_warnings` as a dry-run — `severity: "contradiction"` blocks (revisit identity; only override with explicit user confirmation and a logged explanation); `severity: "implausible"` is advisory. Get confirmation, then call `merge_tree_persons`.
 
-After the batched tree write(s) — the `tree_edit` batch plus any `tree_correct` call — or a merge, run `check-warnings` **once** (see `## Validation Protocol` below) — not after each op.
-
 **Verify the conclusion landed.** Before you present or mark the project complete, confirm the relationship(s) you concluded are now in the tree — the persons are *linked* by a `ParentChild`/`Couple` relationship, not merely added as unconnected persons. If a concluded parentage or marriage is not linked, the tree does not yet reflect your conclusion: go back and write the relationship.
 
 ### 7. Resolve the question — in the same batch, never separately
@@ -668,16 +666,12 @@ the project against the published schemas and write nothing on
 errors. (`validate-schema` remains available as a user-invokable audit
 of the whole project.)
 
-What is NOT structural — and so still needs an explicit step:
-
-1. **Invoke `check-warnings`** after any tree edit or merge (added or
-   updated facts/relationships, or a person merge). This checks for
-   genealogical impossibilities the schema validator cannot (married
-   before 12, died after 120, child born after a parent's death, a
-   merge that put the same person on both ends of a relationship, etc.).
-
-This is not auto-triggered — you must invoke it explicitly.
-
+The tree writer tools also refuse a write that introduces an unjustified
+genealogical warning (`tree_edit`, `tree_correct`, `merge_tree_persons`,
+`materialize_facts`). When a write would introduce a warning, the tool
+returns `{ ok: false, reason: "unjustified_warnings" }` with each
+warning's id. Re-call with `warningJustifications` for each id, or
+leave `preferred_assertion_id` null.
 
 ---
 

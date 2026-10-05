@@ -783,18 +783,7 @@ focus persona, immediately write the link for the other party in the same
 
 Present the materialized household plainly.
 
-### 8. Check warnings and present
-
-The persistence tools validate before writing, so no separate
-`validate_research_schema` pass is needed. After creating links and any
-stub persons, **call `person_warnings` on every person you touched** —
-every person you linked to and every stub you minted. It catches
-genealogical impossibilities (married before 12, died after 120, child
-born after a parent's death, etc.) — plausibility the persistence step
-does not check. Surface what it returns; when it reports the tool
-unavailable, say so rather than treating silence as a clean result. Do
-this yourself and do not defer it to the caller: nothing guarantees a
-caller runs after you.
+### 8. Present the results
 
 Present the results:
 - Each link created, with the assertion, the person, and the

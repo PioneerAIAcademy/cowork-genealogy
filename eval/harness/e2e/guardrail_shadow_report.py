@@ -300,10 +300,11 @@ def scan_conflict_unpersisted(paths: list[Path]) -> list[dict[str, Any]]:
 
 
 def scan_warnings_unchecked(paths: list[Path]) -> list[dict[str, Any]]:
-    """The issue-#1193 warnings-unchecked shadow entries STORED in each run's
-    `guardrail_shadow_violations` (a new ParentChild/Couple relationship written
-    with no `person_warnings` call). Identified by
-    `kind == WARNINGS_UNCHECKED_KIND`.
+    """The warnings-unchecked shadow entries STORED in each run's
+    `guardrail_shadow_violations`. Retargeted by issue #2840: now detects runs
+    where a tree writer returned ``unjustified_warnings`` and the agent never
+    re-called with justifications. Identified by
+    ``kind == WARNINGS_UNCHECKED_KIND``.
     """
     return _scan_stored(paths, lambda v: v.get("kind") == WARNINGS_UNCHECKED_KIND)
 
@@ -1107,14 +1108,14 @@ def format_conflict_unpersisted(violations: list[dict[str, Any]]) -> str:
 
 def format_warnings_unchecked(violations: list[dict[str, Any]]) -> str:
     """One flat count — a fact about the final tree + tool_calls, not a windowed
-    scan. This is the number the graduation decision (shadow → mandatory
-    person_warnings call in the orchestrator, issue #1193 question b) is gated
-    on."""
+    scan. Retargeted by issue #2840: now counts runs where a writer returned
+    unjustified_warnings and the agent never re-called with justifications."""
     affected = len({v["file"] for v in violations})
     return (
-        "\n§7 warnings-unchecked check (issue #1193, shadow): "
-        f"{len(violations)} run(s) wrote a new ParentChild/Couple relationship "
-        f"without calling person_warnings, across {affected} run(s)."
+        "\n§7 warnings-unchecked check (issue #2840, shadow): "
+        f"{len(violations)} run(s) where a tree writer returned "
+        f"unjustified_warnings and the agent never re-called with "
+        f"warningJustifications, across {affected} run(s)."
     )
 
 

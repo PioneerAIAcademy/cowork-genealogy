@@ -3328,16 +3328,11 @@ async def run_e2e_test(
             tool_calls, final_research, final_tree, starting_tree=starting_tree
         )
 
-        # SHADOW MODE ONLY (issue #1193) — a new ParentChild/Couple relationship
-        # was written this run but the free, deterministic `person_warnings`
-        # guardrail was never called. Folded into the same already-plumbed
-        # `guardrail_shadow_violations` field, discriminated by its `kind` key so
-        # the shadow report counts it in its own bucket. Logs; never fails the
-        # run — unlike guardrail_bypass_violations above, this does not feed
-        # compliance. (Neither feeds `outcome` any more: the §8 detectors were
-        # demoted from the gate, so the contrast is now only about compliance.) Promotion to a hard gate, or a mandatory call in the
-        # `/research` orchestrator so an inlined write is still gated, is gated on
-        # measuring this fire rate across the corpus (issue #1193, question b).
+        # SHADOW MODE ONLY (issue #2840) — a tree writer returned
+        # unjustified_warnings but the agent never re-called with
+        # warningJustifications. The engine gate (PR 1 of #2840) now prevents
+        # unjustified writes from landing; this detects the case where the agent
+        # gave up after a refusal.
         warnings_unchecked_shadow = find_relationship_writes_without_warnings_check(
             tool_calls, final_tree, starting_tree=starting_tree
         )

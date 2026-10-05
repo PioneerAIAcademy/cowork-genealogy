@@ -309,30 +309,9 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       },
     ],
   },
-  "init-project -> check-warnings": {
-    pins: [
-      {
-        side: "agent",
-        excerpt:
-          "**The tool is the arbiter; don't re-derive.** The tool's output is ground truth.",
-      },
-    ],
-    exempt: {
-      side: "caller",
-      reason:
-        "check-warnings (issue #2118) writes nothing and holds one MCP tool, the read-only " +
-        "`person_warnings`, whose verdict is computed from tree.gedcomx.json and cannot be " +
-        "moved by delegation wording; the agent-side pin makes that output the ground truth " +
-        "the report is built from. The caller's delegation is specified as person ids " +
-        "only, pinned below; what it can still carry is a verdict in prose, which the " +
-        "pinned sentence does not stop and nothing here measures.",
-      mitigation: {
-        side: "caller",
-        excerpt:
-          "naming the subject and every\nimported relative by their LOCAL tree id from Step 3",
-      },
-    },
-  },
+  // init-project -> check-warnings was removed by issue #2840 PR 2: the engine
+  // gate now refuses unjustified warnings at write time, and init-project no
+  // longer invokes check-warnings.
 
   // Converted from a skill (issue #2117). Both callers spawn it directly; the
   // research row shares the caller paragraph the three rows above pin.

@@ -71,7 +71,7 @@ A record counts as already linked only when the tree already carries its `S` ent
 
 Each ad-hoc edit is one tool call: **additions** (`add_*`) go through `tree_edit`; **corrections and removals** (`update_*`, `remove`) go through `tree_correct` — same batched `ops[]`, id rules, validate-on-write, and `.bak` semantics, split only by op authority. Supply content WITHOUT ids — the tool assigns the next `F`/`N`/`I`/`R` id, swaps primary/preferred, resolves `standard_place`, validates the whole project, and writes only `tree.gedcomx.json`. On `{ ok: false, errors }` nothing is written — surface those errors rather than retrying.
 
-**Actually call `tree_edit`/`tree_correct` — do not describe the edit or print a summary of what you "would" write.** The change isn't real until the tool call returns `ok: true`; narrate the result only from that returned summary, never from a fabricated one. **Then end your return with the caller-facing line `Hand-back: check-warnings <every person id the edit touched>` — every ad-hoc edit ends with it, not just merges** (omit it only on a true no-op where nothing was written).
+**Actually call `tree_edit`/`tree_correct` — do not describe the edit or print a summary of what you "would" write.** The change isn't real until the tool call returns `ok: true`; narrate the result only from that returned summary, never from a fabricated one.
 
 ```
 tree_edit({
@@ -104,7 +104,7 @@ When proof-conclusion confirms two persons are the same individual, execute the 
 
 (Folding a record's personas into the tree is **not** a merge here — that is person-evidence's job, per-persona via `materialize_facts`. This agent only collapses two persons already in the tree.)
 
-**Once you've picked the survivor and gotten the user's go-ahead, actually call the merge tool — do not stop at a plan or report a merge you haven't executed.** The merge is real only when the tool returns `ok: true`; narrate the folded counts from that returned summary, never from a description of what you intend to do. **Then end your return with the caller-facing line `Hand-back: check-warnings <surviving person id>`** — skipping it here is not optional.
+**Once you've picked the survivor and gotten the user's go-ahead, actually call the merge tool — do not stop at a plan or report a merge you haven't executed.** The merge is real only when the tool returns `ok: true`; narrate the folded counts from that returned summary, never from a description of what you intend to do.
 
 On `{ ok: false, errors }` the merge writes nothing — surface the errors.
 
@@ -118,7 +118,7 @@ Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I
 
 ## Validation
 
-`tree_edit`, `tree_correct`, and `merge_tree_persons` all validate-before-persist; no separate `validate_research_schema` call is needed. That is structural validity only — the `Hand-back: check-warnings` line (required after every edit and merge, per above) is what gets the caller to catch genealogical impossibilities the structural validator cannot (impossible dates, relationship loops, etc.).
+`tree_edit`, `tree_correct`, and `merge_tree_persons` all validate-before-persist; no separate `validate_research_schema` call is needed. The tree writer tools also refuse a write that introduces an unjustified genealogical warning (`tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts`). When a write would introduce a warning, the tool returns `{ ok: false, reason: "unjustified_warnings" }` with each warning's id. Re-call with `warningJustifications` for each id, or abandon the write.
 
 ## Important rules
 
@@ -151,7 +151,7 @@ Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I
 
 ## Return contract
 
-Write the result first — the edit or merge from the tool's returned summary, the no-op report, the match results, or the single `Hand-back:` line — then any `Hand-back: check-warnings` line. Those lines are for the caller.
+Write the result first — the edit or merge from the tool's returned summary, the no-op report, or the match results. Those lines are for the caller.
 
 ### `summary_for_user`
 
@@ -401,11 +401,7 @@ Do NOT create a relationship entry when:
 The merge tool (`merge_tree_persons`)
 repoints every relationship referencing the collapsed person to the
 survivor and drops the duplicate parent-child pairs that result — you do
-not transfer or de-duplicate relationships by hand. What the tools
-cannot judge is genealogical plausibility: a merge can still leave the
-person as both parent and child of the same individual, give them two
-sets of biological parents, or imply a child born before their parent.
-This is why `check-warnings` must run after every merge.
+not transfer or de-duplicate relationships by hand. The tree writer tools refuse a write that introduces an unjustified genealogical warning — the engine gate catches plausibility issues (a person as both parent and child of the same individual, two sets of biological parents, a child born before their parent) automatically.
 
 ### Biographical context beyond vital statistics
 

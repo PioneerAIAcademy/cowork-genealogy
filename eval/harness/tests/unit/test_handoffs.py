@@ -122,46 +122,11 @@ def test_live_callee_hand_off_passes_on_a_spawn_and_fails_without_one():
         mod.test_live_callee_used_its_own_tools(tools, [], [], live)
 
 
-# --- the four other hand-off readers: Skill route, Agent route, wrong name ------
-
-_TREE_BEFORE = {"tree_gedcomx_json": {"persons": [{"id": "I1"}]}}
-_TREE_AFTER = {"tree_gedcomx_json": {"persons": [{"id": "I1"}, {"id": "I2"}]}}
-ROUTES = {
-    "skill": ([_skill("check-warnings")], True),
-    "agent": ([_spawn("check-warnings")], True),
-    "wrong_name": ([_spawn("conflict-resolution")], False),
-}
-
-
-@pytest.mark.parametrize("route", ROUTES, ids=list(ROUTES))
-def test_tree_edit_check_warnings_after_a_write(route):
-    calls, ok = ROUTES[route]
-    skills = [c["args"]["skill"] for c in calls if c["tool"] == "Skill"]
-    check = lambda: _validators("test_tree_edit").test_check_warnings_runs_after_any_tree_write(  # noqa: E731
-        _TREE_BEFORE, _TREE_AFTER, skills, {"skill": "tree-edit", "tags": []},
-        builtin_tool_calls=calls,
-    )
-    if ok:
-        check()
-    else:
-        with pytest.raises(AssertionError):
-            check()
-
-
-@pytest.mark.parametrize("route", ROUTES, ids=list(ROUTES))
-def test_person_evidence_check_warnings_after_a_write(route):
-    calls, ok = ROUTES[route]
-    skills = [c["args"]["skill"] for c in calls if c["tool"] == "Skill"]
-    before = {"research_json": {"person_evidence": []}, **_TREE_BEFORE}
-    after = {"research_json": {"person_evidence": [{"id": "pe_001"}]}, **_TREE_BEFORE}
-    check = lambda: _validators("test_person_evidence").test_check_warnings_runs_after_a_write(  # noqa: E731
-        before, after, skills, [], {"tags": ["check-warnings-required"]}, calls
-    )
-    if ok:
-        check()
-    else:
-        with pytest.raises(AssertionError):
-            check()
+# --- Warning gate (issue #2840): replaced check-warnings hand-off tests --------
+# The engine gate now refuses unjustified warnings at write time, so the
+# validators no longer check for check-warnings hand-offs. The retargeted
+# validators check tool call responses instead, which is tested in
+# test_tree_edit_validator.py and test_person_evidence_validators.py.
 
 
 @pytest.mark.parametrize(

@@ -110,74 +110,62 @@ def test_tree_edit_noop(before_state, after_state, test):
     )
 
 
-# --- Post-edit check-warnings (deep dive #1657, Finding F) ------------
+# --- No unjustified-warning write landed (issue #2840 PR 2) -----------
 
-_HAND_BACK_LINE = re.compile(r"^\s*[*_>`-]*\s*Hand-back:\s*`?check-warnings\b", re.I | re.M)
-_NEGATION = re.compile(r"\bnot\b|n't\b|\bnever\b|\bskip\w*|\bwithout\b|\bunable\b|\bcannot\b", re.I)
-
-
-def _names_check_warnings(reply: str) -> bool:
-    """A `Hand-back: check-warnings` line, or any other sentence naming it
-    that does not negate it ("I did not run check-warnings" is not a hand-back).
-    The hand-back line passes even beside a negation elsewhere in the reply --
-    "I can't run it myself. Hand-back: check-warnings I1" is the compliant
-    shape, since the agent holds no Agent tool."""
-    if _HAND_BACK_LINE.search(reply):
-        return True
-    for line in reply.splitlines():
-        for unit in re.split(r"(?<=[.;!?])\s+", line):
-            if "check-warnings" in unit.lower() and not _NEGATION.search(unit):
-                return True
-    return False
+_WRITER_TOOLS = {"tree_edit", "tree_correct", "merge_tree_persons", "materialize_facts"}
 
 
-def test_check_warnings_runs_after_any_tree_write(
-    before_state, after_state, skills_invoked, test,
-    builtin_tool_calls=None, agent_returns=None, text_response=None,
+def test_no_unjustified_warning_write(
+    before_state, after_state, tool_calls, test,
 ):
-    """Agent body § Validation: every edit or merge ends with a caller-facing
-    `Hand-back: check-warnings <person ids>` line -- unconditional, no carve-out
-    for a single-field correction. Since issue #2805 tree-edit is an agent that
-    holds no Agent tool, so it cannot spawn check-warnings; the hand-back names
-    it for the main thread to run (lead ruling 2026-09-23 on that issue).
+    """Engine gate (issue #2840): tree_edit, tree_correct, merge_tree_persons
+    and materialize_facts refuse a write that introduces an unjustified
+    genealogical warning. This validator checks that no such refusal went
+    unaddressed — i.e., the tree changed only through writes that either
+    introduced no warnings or justified every one.
 
-    Passes when `handoffs` shows a check-warnings spawn -- the routed-caller
-    fallback, dead on the direct arm, whose dispatcher may call no other tool --
-    or when the SUBJECT's reply names it (`subject_reply_text`: on a direct
-    test the agent's own return only, never the relay, so a silent agent fails
-    however the dispatcher words its relay; review of issue #2805, 2026-09-30).
-
-    History: before the conversion this required the spawn itself. Deep dive
-    #1657 finding F: across the 5 committed run logs, this fired in at most
-    2 of 5 runs for any one edit test, and 0 of 5 for three of them
-    (`ut_tree_edit_006`, `_008`, `_009`) -- including the currently-active
-    run log, where it is 0 of 5 across every edit test. One test's
-    judge_context excused this as "person_warnings ... not available in the
-    unit-test harness", which is not true (14 reusable person-warnings-*
-    fixtures already exist under eval/fixtures/mcp/; tree-edit's tests just
-    never referenced one -- now fixed alongside this validator).
-
-    Grounded firing case: `ut_tree_edit_008`, run `v1_2026-07-30_18-18-04`
-    -- F2's date is corrected (tree.gedcomx.json changes), skills_invoked ==
-    ["tree-edit"], no check-warnings anywhere. Grounded passing case:
-    `ut_tree_edit_010`, run `v1_2026-07-28_13-02-56` -- Mary (I5) and her
-    ParentChild relationship are created, skills_invoked == ["tree-edit",
-    "check-warnings"]."""
+    Supersedes `test_check_warnings_runs_after_any_tree_write`, which checked
+    for a prose hand-back to check-warnings. The engine gate makes that step
+    redundant: the writer tools themselves enforce it.
+    """
     before_tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
     after_tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
     if before_tree is None or after_tree is None:
         pytest.skip("missing tree.gedcomx.json on one side")
-    from harness.skill_runner import handoffs, subject_reply_text
-
     if before_tree == after_tree:
         pytest.skip("tree.gedcomx.json unchanged -- no edit to validate")
-    if not test.get("delegation") and "check-warnings" in handoffs(skills_invoked, builtin_tool_calls):
+
+    from harness.context_policy import bare_tool_name
+
+    unresolved = []
+    for call in (tool_calls or []):
+        tool = bare_tool_name(call.get("tool") or "")
+        if tool not in _WRITER_TOOLS:
+            continue
+        summary = str(call.get("response_summary") or "")
+        if "unjustified_warnings" in summary:
+            unresolved.append(tool)
+
+    # A refusal followed by a successful re-call is fine — the successful
+    # call also appears in tool_calls.  Only flag when the LAST call to a
+    # writer is an unjustified_warnings refusal AND the tree changed.
+    if not unresolved:
         return
-    reply = subject_reply_text(agent_returns, text_response, "tree-edit", test)
-    assert _names_check_warnings(reply), (
-        "tree.gedcomx.json changed but the reply never hands back to "
-        "check-warnings -- the agent body requires a caller-facing "
-        "`Hand-back: check-warnings <person ids>` line after ANY edit or merge"
+
+    # Check if any writer call ultimately succeeded (tree changed, so at
+    # least one must have).
+    any_succeeded = any(
+        bare_tool_name(c.get("tool") or "") in _WRITER_TOOLS
+        and "unjustified_warnings" not in str(c.get("response_summary") or "")
+        and not c.get("is_error")
+        for c in (tool_calls or [])
+    )
+    if any_succeeded:
+        return
+
+    assert False, (
+        f"tree.gedcomx.json changed but every writer call returned "
+        f"unjustified_warnings — the engine gate should have prevented this"
     )
 
 

@@ -1840,42 +1840,25 @@ def find_relationship_writes_without_warnings_check(
     *,
     starting_tree: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
-    """Shadow-mode post-hoc detector (issue #1193): the run wrote a NEW
-    ``ParentChild``/``Couple`` relationship but never called ``person_warnings``,
-    the cheapest guardrail in the system (deterministic, no LLM — it reads
-    ``tree.gedcomx.json`` and evaluates ~75 predicates, so a call costs one tool
-    round-trip). Two runs of the same fixture, same skills, diverged only on
-    whether the parentage write was delegated to ``proof-conclusion`` (which
-    carries the "run check-warnings after tree writes" step) or inlined by the
-    orchestrator (which does not) — and nothing recorded that the guardrail was
-    never consulted. This makes that omission visible.
+    """Shadow-mode post-hoc detector (issue #1193, retargeted by issue #2840).
 
-    GATED ON A NEW RELATIONSHIP THIS RUN. Fires only when a ``ParentChild`` or
-    ``Couple`` relationship in the final tree is absent from the starting tree
-    (diffed on the endpoint tuple, not ``id`` — see ``_relationship_key``). 99 of
-    104 fixtures seed such relationships, so an ungated check would fire on seed
-    state alone; the diff is what limits it to this run's own product. When no
-    starting tree is given, treat everything as new (best-effort), matching
-    ``find_effects_without_invocation``.
+    Since PR 1 of #2840, the four tree writer tools (``tree_edit``,
+    ``tree_correct``, ``merge_tree_persons``, ``materialize_facts``) refuse a
+    write that introduces an unjustified genealogical warning at the engine
+    level. The prose "run check-warnings after writes" step is redundant and
+    has been removed.
 
-    KEYED ON THE TOOL, not the ``check-warnings`` agent. The #1193 signal is
-    literally "the guardrail tool never ran", so it must catch a direct/ToolSearch
-    ``person_warnings`` call and a ``check-warnings`` agent that launches but fails
-    before reaching the tool alike. Sub-agent / inside-skill MCP calls surface in
-    the flat e2e ``tool_calls`` stream, so a tool-name scan sees ``person_warnings``
-    even when it fired inside ``check-warnings``. A call counts as consulting the
-    guardrail only if it succeeded (``is_error`` falsy) — a failed call left the
-    tree unchecked.
+    This detector is now retargeted: instead of checking whether
+    ``person_warnings`` was ever called (the old prose-compliance signal), it
+    checks whether any writer call returned ``unjustified_warnings`` and was
+    never followed by a successful re-call — i.e., the engine gate blocked a
+    write and the agent gave up.
 
-    SHADOW MODE ONLY: returns violation records shaped to share
-    ``guardrail_shadow_violations`` with the other shadow sources (an ``int``
-    ``index`` and string ``tool`` so ``guardrail_shadow_report``'s formatters
-    never hit a ``None`` format spec; ``kind == WARNINGS_UNCHECKED_KIND`` so that
-    report counts this class in its own bucket). Never fails a run. Promotion to a
-    hard gate — or a mandatory pre/post-write call in the ``/research``
-    orchestrator so an inlined write is still gated — is a deliberate follow-up
-    (issue #1193, question b), gated on measuring this fire rate across the corpus.
+    Still SHADOW MODE ONLY: returns violation records shaped for
+    ``guardrail_shadow_violations``.
     """
+    _WRITER_TOOLS = {"tree_edit", "tree_correct", "merge_tree_persons", "materialize_facts"}
+
     tree = tree or {}
     relationships = tree.get("relationships") if isinstance(tree.get("relationships"), list) else []
 
@@ -1891,34 +1874,40 @@ def find_relationship_writes_without_warnings_check(
         for r in relationships
     )
     if not new_relationship:
-        return []  # the gate: nothing was written that a warnings check should have preceded
+        return []  # no new relationship written this run
 
-    # NOTE the polarity: unlike every other `is_error` gate in this module, this
-    # one CREDITS a call rather than skipping it — a successful person_warnings
-    # means the tree was checked. So the no-project answer has to be excluded
-    # from `consulted`, not added to a skip. Get it backwards and a warnings
-    # check that never ran is credited as done, which is a MISSED violation and
-    # therefore silent (issue #1695).
-    consulted = any(
+    # Check for unresolved unjustified_warnings refusals from writer tools.
+    has_refusal = any(
         isinstance(call, dict)
-        and bare_tool_name(call.get("tool") or "") == "person_warnings"
+        and bare_tool_name(call.get("tool") or "") in _WRITER_TOOLS
+        and "unjustified_warnings" in str(call.get("response_summary") or "")
+        for call in (tool_calls or [])
+    )
+    if not has_refusal:
+        return []  # no unjustified_warnings refusal — the gate was satisfied
+
+    # A refusal exists. Check if any writer call succeeded afterwards.
+    any_succeeded = any(
+        isinstance(call, dict)
+        and bare_tool_name(call.get("tool") or "") in _WRITER_TOOLS
+        and "unjustified_warnings" not in str(call.get("response_summary") or "")
         and not did_not_land(call)
         for call in (tool_calls or [])
     )
-    if consulted:
-        return []
+    if any_succeeded:
+        return []  # refusal was resolved by a successful re-call
 
     return [
         {
-            "index": -1,  # post-hoc final-state read; there is no tool-call index
+            "index": -1,
             "tool": "tree.gedcomx.json",
-            "required_skill": "check-warnings",
+            "required_skill": None,
             "question_id": None,
             "kind": WARNINGS_UNCHECKED_KIND,
             "detail": (
-                "a new ParentChild/Couple relationship was written this run but "
-                "person_warnings (the free deterministic guardrail) was never "
-                "successfully called"
+                "a tree writer returned unjustified_warnings but the agent "
+                "never re-called with warningJustifications — the write was "
+                "blocked and the warning gate was not satisfied"
             ),
         }
     ]

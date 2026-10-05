@@ -358,7 +358,7 @@ and getting it wrong is what made three checks look dead for a fortnight:
 | §7.5 citation-nulling (`find_citation_nulling_in_conclusions`) | **0**, 0 runs | **0**, of 159 scanned | never observed either way |
 | §7.5 citation-nulling, TREE side (`find_citation_nulling_in_tree_sources`) | **0**, 0 runs — arm added 2026-08-25, no run has carried it yet | **111 source(s), across 50 runs**, of 159 scanned | shadow, reported; **deliberately not graduated** — see below |
 | §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **0**, 0 runs | **4 runs**, of 159 scanned | behaviour confirmed; live store path never exercised |
-| §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **1**, 1 run | **59 runs**, of 158 scanned | behaviour confirmed; live store path exercised |
+| §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **1**, 1 run | **59 runs**, of 158 scanned | **superseded by engine gate (2026-10-02)**: tree writers now refuse unjustified warnings at write time; retargeted to detect unresolved refusals |
 | §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | **15**, across 1 run (of 20 that carry any attribution, 159 scanned) | **15**, 1 run | shadow, reported, no graduation count — revisit only if a **second** attributed run flags |
 | §11.5 tree-encoding (`find_conclusions_without_tree_encoding`) | **0**, 0 runs | **3**, across 3 runs, of 183 scanned | shadow, reported, and deliberately never a gate: the 2026-08-24 no-override ruling prefers a false allow to a false deny, so this count is calibration for a gate nobody has shipped; 2026-09-23 read: 2/3 fires are false denies (documented negatives), stays WARNING pending a negative-conclusion signal |
 | §7.5 tree-fact/assertion agreement (`find_tree_facts_disagreeing_with_assertions`) | **0**, 0 runs — arm added 2026-09-21, no run has carried it yet | **0**, of 184 scanned | shadow, reported; a MEASURED zero over a young population, not a structural one — why, and what would change it, is in `tree-materialization-spec.md` section 4.4 |
@@ -474,18 +474,16 @@ free. The replay plumbing has its own controls in
 resolution, seed-tree loading and per-check skip discipline rather than against
 the predicates.
 
-**warnings-unchecked was considered for graduation and declined — 2026-08-23.**
-It is the check with by far the largest sample, so it is the one a future reader
-will reach for first; the reasoning is recorded here so it is not re-derived. 59
-runs of 158 is a **corpus behaviour count, not a production signal**, and
-`docs/architecture.md` ("Every measurement in this repo describes the eval
-corpus, not production") says outright not to graduate a gate on a violation
-rate. A hard compliance check at that frequency would fail a large share of a
-suite costing $7–25 a run, over a process omission that corrupts no document —
-ADR-0011's satisfiability limit reads that as a constant rather than a
-guardrail. What the number argues for instead is moving the check to the write
-boundary, where the guardrail runs itself rather than a detector reporting that
-nobody asked; that is a separate piece of work with its own measurements.
+**warnings-unchecked — superseded by the engine gate (2026-10-02).**
+The 2026-08-23 decline reasoned that the right fix was "moving the check to the
+write boundary, where the guardrail runs itself rather than a detector reporting
+that nobody asked." The four tree writers (`tree_edit`, `tree_correct`,
+`merge_tree_persons`, `materialize_facts`) now refuse a write that introduces
+an unjustified genealogical warning. The shadow detector is retargeted: instead
+of checking whether `person_warnings` was called after a write, it checks
+whether any writer returned `unjustified_warnings` and the agent never re-called
+with justifications. The prose "run check-warnings after writes" steps have been
+removed from the agent/skill bodies.
 
 **What the replay claims, and what it does not.** It is a **behaviour-presence**
 measurement: did this shape occur in the corpus at all. It is **not** a per-run
@@ -833,10 +831,9 @@ manufacture violations in paid grading. `did_not_land` in
 `eval/harness/harness/skill_invocation.py` is the shared predicate. Two callers
 use it to **skip** a call (`find_unguarded_protected_writes`, and
 `guardrail_shadow_report.py`'s person-evidence scan). The third —
-`find_relationship_writes_without_warnings_check` — uses it to withhold
-**credit**: there a successful `person_warnings` means the tree was checked, so a
-no-project call must not count as consulting the guardrail. Getting that one
-backwards is a *missed* violation, and therefore silent.
+`find_relationship_writes_without_warnings_check` — retargeted (2026-10-02):
+it now checks for unresolved `unjustified_warnings` refusals from tree writers
+rather than checking whether `person_warnings` was called.
 
 ### Set-once project fields
 
