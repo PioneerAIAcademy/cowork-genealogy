@@ -22,7 +22,9 @@ topology exists to make, so a well-meaning edit cannot quietly undo one:
   state is in Postgres/S3, bound per request from X-Genealogy-Project-Id), publishes on
   loopback only, waits on postgres and minio being healthy, reads the Postgres the worker
   reads under the worker's anchor, and is waited on by proto-up but never by
-  proto-up-core (the D3 smoke must not gate on the engine image).
+  proto-up-core (the D3 smoke must not gate on the engine image);
+- U11: the base worker, and no other service in any compose file, sets DEV_PATHS=true,
+  and it names its tool server as a literal.
 
 No Docker needed: the compose files parse as YAML; the HOCON conf and the SQL are
 read as text with their comments stripped first, so a comment that *mentions*
@@ -39,6 +41,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 import yaml
@@ -275,6 +278,32 @@ def test_tools_and_worker_read_one_store():
         "GENEALOGY_PG_DSN", "GENEALOGY_S3_ENDPOINT", "GENEALOGY_S3_BUCKET",
         "GENEALOGY_S3_ACCESS_KEY", "GENEALOGY_S3_SECRET_KEY", "GENEALOGY_ANCHOR_PATH",
     }, "the five store variables plus the anchor, and no GENEALOGY_PROJECT_ID: the id is per request"
+
+
+def test_compose_runs_the_worker_with_dev_paths_and_names_its_tool_server():
+    """U11: the worker's dev-only paths (the D3 smoke's stub turns among them) answer only
+    with DEV_PATHS=true, and TOOL_SERVER_URL has no default. Literals, so no host variable
+    at `up` time switches either."""
+    compose = _load(COMPOSE)
+    worker = _env(_service(compose, "worker"))
+    assert worker.get("DEV_PATHS") == "true"
+    url = urlparse(worker.get("TOOL_SERVER_URL", ""))
+    assert (url.scheme, url.hostname, url.path) == ("http", "tools", "/mcp"), worker.get("TOOL_SERVER_URL")
+    assert str(url.port) in {p.rsplit(":", 1)[-1] for p in _ports(_service(compose, "tools"))}
+
+
+def test_no_other_compose_service_sets_dev_paths():
+    """The web tier never reads DEV_PATHS, and no overlay changes the worker's."""
+    files = sorted(PROTO.glob("docker-compose*.yml"))
+    assert COMPOSE in files and SQSD_OVERLAY in files and len(files) >= 4
+    for path in files:
+        for name, service in (_load(path).get("services") or {}).items():
+            if (path, name) == (COMPOSE, "worker"):
+                continue
+            env = _env(service or {})
+            assert "DEV_PATHS" not in env, f"{path.name}: {name} sets DEV_PATHS"
+            if name == "worker":
+                assert "TOOL_SERVER_URL" not in env, f"{path.name} overrides the worker's TOOL_SERVER_URL"
 
 
 def _wait_services(line: str) -> list[str]:
@@ -720,8 +749,8 @@ def _statements(path: Path) -> list[str]:
 
 
 def test_008_is_idempotent_and_owner_is_nullable():
-    """Every start re-applies sql/*.sql (web tier, worker, initdb), so 008 must be a no-op
-    the second time. And projects.owner_id must stay NULLABLE: the engine creates projects
+    """An unledgered database re-runs every sql/*.sql once (migrate.py's baseline, U9), so
+    008 must be a no-op the second time. And projects.owner_id must stay NULLABLE: the engine creates projects
     with the id alone (PgS3ProjectStore.touchProject), so NOT NULL fails every engine
     write, and nothing but a real engine write on the compose stack would show it."""
     statements = _statements(SQL_DIR / "008_auth_owner.sql")
@@ -735,6 +764,88 @@ def test_008_is_idempotent_and_owner_is_nullable():
     [tokens] = [s for s in statements if re.search(r"CREATE TABLE IF NOT EXISTS familysearch_tokens\b", s, re.I)]
     assert re.search(r"\buser_id text PRIMARY KEY\b", tokens), "one grant row per patron: U3 locks it"
     assert re.search(r"\bgranted_at timestamptz NOT NULL\b", tokens), "the sign-in time"
+
+
+# U9: a shipped file runs once and is never edited, so a later file may only add. Read off the
+# comment-stripped statements, dollar-quoted bodies included (an EXECUTE string is still DDL).
+_CONTRACTING = (
+    ("DROP", re.compile(r"\bDROP\b", re.I)),
+    ("RENAME", re.compile(r"\bRENAME\b", re.I)),
+    ("SET NOT NULL", re.compile(r"\bSET\s+NOT\s+NULL\b", re.I)),
+    ("ALTER COLUMN ... TYPE", re.compile(r"\bALTER\s+(?:COLUMN\s+)?\"?\w+\"?\s+(?:SET\s+DATA\s+)?TYPE\b", re.I)),
+)
+
+
+def _contracting(statements: list[str]) -> list[tuple[str, str]]:
+    return [(label, stmt) for stmt in statements for label, rx in _CONTRACTING if rx.search(stmt)]
+
+
+def test_migrations_are_expand_only():
+    """migrate.py runs each file once, before the new code ships, while the old code is still
+    serving: a file that drops, renames, sets NOT NULL or retypes a column breaks the build
+    still running. Those four shapes only; other tightenings (a new NOT NULL column with no
+    default, a constraint) are the author's to see. Contraction needs its own design (two
+    deploys), not a 010."""
+    files = sorted(SQL_DIR.glob("*.sql"))
+    assert len(files) >= 9, files
+    offences = [(f.name, label, stmt) for f in files for label, stmt in _contracting(_statements(f))]
+    assert not offences, f"not expand-only: {offences}"
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("ALTER TABLE turns DROP COLUMN nudges;", ["DROP"]),
+    ("DROP INDEX IF EXISTS turns_open_project_idx;", ["DROP"]),
+    ("ALTER TABLE turns RENAME TO turn;", ["RENAME"]),
+    ("ALTER TABLE turns RENAME COLUMN nudges TO n;", ["RENAME"]),
+    ("ALTER TABLE projects ALTER COLUMN owner_id SET NOT NULL;", ["SET NOT NULL"]),
+    ("ALTER TABLE turns ALTER COLUMN nudges TYPE bigint;", ["ALTER COLUMN ... TYPE"]),
+    ("ALTER TABLE turns ALTER nudges SET DATA TYPE bigint;", ["ALTER COLUMN ... TYPE"]),
+    ("DO $$ BEGIN\n  EXECUTE 'ALTER TABLE x DROP COLUMN y';\nEND $$;", ["DROP"]),
+    ("-- DROP the old shape, RENAME it, SET NOT NULL\nALTER TABLE turns ADD COLUMN IF NOT EXISTS u9 int;", []),
+    ("ALTER TABLE turns ADD COLUMN IF NOT EXISTS dropped_at timestamptz NOT NULL DEFAULT now();", []),
+    ("CREATE TYPE mood AS ENUM ('a'); ALTER TYPE mood ADD VALUE IF NOT EXISTS 'b';", []),
+])
+def test_the_expand_only_reader_sees_each_shape(tmp_path, text, expected):
+    sql = tmp_path / "010_x.sql"
+    sql.write_text(text, encoding="utf-8")
+    assert [label for label, _ in _contracting(_statements(sql))] == expected
+
+
+def _depends_on(service: dict) -> dict[str, dict]:
+    """Compose accepts `depends_on` as a list (each `service_started`) or a mapping."""
+    raw = service.get("depends_on") or {}
+    if isinstance(raw, list):
+        return {str(name): {"condition": "service_started"} for name in raw}
+    return {str(k): dict(v or {}) for k, v in raw.items()}
+
+
+def test_migrate_is_the_only_schema_applier():
+    """U9: the `migrate` one-shot is the stack's one schema applier and nothing that runs DDL
+    at start remains. Postgres's initdb would be a second applier with no ledger, and a tier
+    that started before the one-shot exited would report `schema: unmigrated` until it did.
+    MIGRATE_PG_DSN is the owner's DSN: on any other service it is a DDL credential nothing
+    there needs."""
+    files = sorted(PROTO.glob("docker-compose*.yml"))
+    assert COMPOSE in files and SQSD_OVERLAY in files, files
+    for path in files:
+        for name, service in (_load(path).get("services") or {}).items():
+            initdb = [v for v in _volumes(service) if ":/docker-entrypoint-initdb.d" in v]
+            assert not initdb, f"{path.name}: {name} mounts {initdb}; migrate.py is the one applier"
+            if name != "migrate" or path != COMPOSE:
+                assert "MIGRATE_PG_DSN" not in _env(service), f"{path.name}: {name} carries MIGRATE_PG_DSN"
+    compose = _load(COMPOSE)
+    migrate, worker = _service(compose, "migrate"), _service(compose, "worker")
+    assert migrate.get("restart") == "no", "a one-shot: a restart would re-run it on every exit"
+    assert migrate.get("command") == ["python3", "proto/migrate.py"], migrate.get("command")
+    assert migrate.get("build") == worker.get("build") and migrate.get("build"), \
+        "migrate builds the worker's image (migrate.py, sql/ and psycopg at WORKDIR /opt/genealogy/server)"
+    assert "image" not in migrate and "image" not in worker, \
+        "an `image:` on migrate alone is pulled by an `up` naming tools; one shared by both fails the parallel build"
+    assert _env(migrate).get("MIGRATE_PG_DSN", "").startswith("postgresql://"), _env(migrate)
+    assert _depends_on(migrate).get("postgres", {}).get("condition") == "service_healthy"
+    for name in ("worker", "web", "tools"):
+        condition = _depends_on(_service(compose, name)).get("migrate", {}).get("condition")
+        assert condition == "service_completed_successfully", f"{name} must wait for the migration, not {condition}"
 
 
 REQUIREMENTS = {"web": PROTO / "web" / "requirements.txt", "worker": PROTO / "worker" / "requirements.txt"}
@@ -944,7 +1055,8 @@ def test_no_recipe_mints_or_mounts_an_operator_token():
 
 
 def test_009_is_idempotent_and_backfills_from_granted_at():
-    """Every start re-applies sql/*.sql, so each statement must be a no-op the second time:
+    """An unledgered database re-runs every sql/*.sql once (migrate.py's baseline, U9), so
+    each statement must be a no-op the second time:
     an added column, an index, or a backfill guarded on the column still being NULL. The
     backfill is exact because before 009 only a sign-in wrote a row."""
     statements = _statements(SQL_DIR / "009_grant_session.sql")
@@ -1016,12 +1128,13 @@ def test_images_and_bundles_carry_every_proto_module_they_import():
     """Both images and both Beanstalk bundles copy proto/ SELECTIVELY, so a module not
     shipped is simply not there -- and every test passes, because the suite has the whole
     tree on its path. The worker's held-message release swallowed exactly that ImportError
-    once (enqueue.py), and without grants.py neither tier can read a grant at all."""
+    once (enqueue.py), without grants.py neither tier can read a grant at all, and without
+    migrate.py (U9) neither can read the ledger it reports `schema` from."""
     for image, packaged in (("web", False), ("worker", True)):
         needed: set[str] = set()
         for source in sorted((PROTO / image).glob("*.py")):
             needed |= _proto_imports(source.read_text(encoding="utf-8"), packaged=packaged)
-        assert {"enqueue", "grants"} <= needed, f"{image}: the guard no longer sees the imports ({needed})"
+        assert {"enqueue", "grants", "migrate"} <= needed, f"{image}: the guard no longer sees the imports ({needed})"
         for kind, shipped in (("image", _copied(PROTO / image / "Dockerfile")), ("bundle", _bundle_sources(image))):
             missing = sorted(n for n in needed if f"apps/server/proto/{n}.py" not in shipped)
             assert not missing, f"the {image} {kind} imports proto/{missing} but never ships it"

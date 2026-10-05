@@ -473,8 +473,16 @@ proto-up-core: ## Prototype stack without the web tier: postgres/minio/elasticmq
 	$(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim
 
 .PHONY: proto-down
-proto-down: ## D3 prototype: stop the stack and drop its volumes (the schema re-applies on the next up)
+proto-down: ## D3 prototype: stop the stack and drop its volumes (the next up's migrate one-shot re-applies the schema)
 	$(PROTO_COMPOSE) down -v
+
+# U9: proto/migrate.py, the schema's one applier, from the host venv against the compose
+# postgres -- what the stack's `migrate` one-shot runs at every up. ARGS=--status reports
+# the ledger's level and runs no DDL (exit 3 when it is not current).
+.PHONY: proto-migrate
+proto-migrate: ## U9: apply the pending apps/server/proto/sql/*.sql to the compose postgres (ARGS=--status: report only, no DDL)
+	$(PROTO_COMPOSE) up -d --wait postgres
+	cd apps/server && MIGRATE_PG_DSN=$(PROTO_PG_DSN) uv run python proto/migrate.py $(ARGS)
 
 .PHONY: proto-logs
 proto-logs: ## D3 prototype: follow the stack's logs (SERVICE=shim to narrow)
@@ -494,21 +502,22 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py
 
 # U3: the grant-lock tests against real Postgres -- the lock semantics are the point, and no
-# fake can prove pg_try_advisory_lock. A fresh database per module, dropped at teardown.
-# CI runs the same file against a postgres:16 container (server-tests.yml).
+# fake can prove pg_try_advisory_lock. U9's migration runner the same way: its lock, its
+# ledger and its races. A fresh database per test or module, dropped at teardown.
+# CI runs the same files against a postgres:16 container (server-tests.yml).
 .PHONY: proto-grants-test
-proto-grants-test: ## U3: the grant-lock interleavings against the compose postgres (real advisory locks)
+proto-grants-test: ## U3 + U9: the grant-lock interleavings and the migration runner against the compose postgres (real advisory locks)
 	$(PROTO_COMPOSE) up -d --wait postgres
-	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py
+	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_migrate_pg.py
 
 # U3: store an encrypted FamilySearch grant for the dev-login patron (EMAIL, default
 # dev@localhost, who owns every seeded project): a PKCE sign-in on the dev key through a
 # loopback listener on 127.0.0.1:1837, the dev key's only registered redirect. A second
 # sign-in, so it does not revoke the desktop login. Prints no token. After `make proto-up`
-# (the web tier's start applies 009), and again after a `proto-down -v`.
+# (its migrate one-shot applies 009), and again after a `proto-down -v`.
 .PHONY: proto-grant
 proto-grant: ## U3: sign in on the dev key and store the dev-login patron's grant (EMAIL=…); once per stack, after proto-up
 	cd apps/server && uv run python proto/grant.py $(if $(EMAIL),--email '$(EMAIL)',) --pg-dsn $(PROTO_PG_DSN)
@@ -655,7 +664,7 @@ proto-compare: $(ENGINE_DEPS) ## D18: one table — FIXTURE=<slug> SESSION=<id> 
 PROTO_PG_DSN ?= postgresql://postgres:proto@localhost:5434/proto
 
 .PHONY: proto-web
-proto-web: ## D11–12 web tier from the venv on :8085, against the compose postgres + elasticmq
+proto-web: ## D11–12 web tier from the venv on :8085, against the compose postgres + elasticmq (a migrated database: make proto-migrate)
 	cd apps/server && PG_DSN=$(PROTO_PG_DSN) QUEUE_URL=http://localhost:9324/000000000000/turns \
 	  $(PROTO_SQS_ENV) uv run python proto/web/app.py
 
@@ -672,11 +681,13 @@ web-proto: $(JS_DEPS) ## Web client on the SSE transport against the prototype w
 # bucket one-shot — no worker, shim, queue or web tier. Same two-call shape as
 # proto-up-core: `--wait` on the one-shot exits 1 the moment it finishes, so the wait
 # names the two long-running services; the suite creates the bucket itself if the
-# one-shot has not finished by the time it starts.
+# one-shot has not finished by the time it starts. The schema (U9: no initdb) comes from
+# migrate.py run from the host venv, so the worker image is never built for it.
 .PHONY: proto-up-store
-proto-up-store: ## D6–8 store: start postgres + minio (+ the bucket one-shot) and wait for health
+proto-up-store: ## D6–8 store: start postgres + minio (+ the bucket one-shot), wait for health, and migrate the schema
 	$(PROTO_COMPOSE) up -d postgres minio minio-init
 	$(PROTO_COMPOSE) up -d --wait postgres minio
+	cd apps/server && MIGRATE_PG_DSN=$(PROTO_PG_DSN) uv run python proto/migrate.py
 
 # Two arms. Static: the MinIO keys as GENEALOGY_S3_* (via PROTO_S3_*), with any exported
 # AWS_* keys unset so they cannot mask it. Keyless (U8): PROTO_S3_KEYLESS=1, the MinIO keys

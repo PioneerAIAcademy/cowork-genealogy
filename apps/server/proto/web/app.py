@@ -42,14 +42,15 @@ and the transient frames are never replayed -- the same split as TRANSIENT_KINDS
 hosted runner.
 
 Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto), QUEUE_URL (a full SQS
-queue URL, the shim's shape; unset -> NullQueue, turns are recorded but not enqueued),
-POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (60 -- see ``max_nudges``). With
-QUEUE_URL set (and only then): GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
+queue URL, the shim's shape; required -- unset or empty refuses to start),
+POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (60 -- see ``max_nudges``),
+GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
 or neither; neither signs SendMessage with the default AWS chain, the instance profile on
 AWS; one alone refuses to start) and GENEALOGY_SQS_REGION (else the QUEUE_URL host's
-region). Startup applies proto/sql/*.sql (all idempotent) and syncs the allowlist, one
-inline attempt each under one ``STARTUP_BUDGET_S``; a failure is retried in the
-background and never stops the tier listening (U10). It logs
+region). Startup verifies the schema -- reads the ledger ``migrate.py`` keeps and compares
+it with the proto/sql/*.sql this tier ships, running no DDL (U9) -- and syncs the
+allowlist, one inline attempt each under one ``STARTUP_BUDGET_S``; a failure is retried
+in the background and never stops the tier listening (U10). It logs
 ``queue: <url>; sqs credentials: <mode>; region <r>``. Until the allowlist has synced, a
 FamilySearch-configured tier answers 503 at both allowlist checks rather than read a
 table an earlier boot left. ``GET /api/health`` is readiness: 200 or 503, the same keys
@@ -92,18 +93,20 @@ from urllib.parse import urlparse
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 HERE = Path(__file__).resolve().parent
 PROTO_DIR = HERE.parent
 SQL_DIR = PROTO_DIR / "sql"
-# enqueue.py is a sibling of this package in the repo (proto/) and in the container
-# (/app); make it importable from wherever uvicorn, the driver or pytest started.
+# enqueue.py, grants.py and migrate.py are siblings of this package in the repo (proto/)
+# and in the container (/app); make them importable from wherever uvicorn, the driver or
+# pytest started.
 if str(PROTO_DIR) not in sys.path:
     sys.path.insert(0, str(PROTO_DIR))
 
 import enqueue  # noqa: E402  (the SQS query-API client; signs SigV4)
 import grants  # noqa: E402  (U3: grant custody, shared with the worker)
+import migrate  # noqa: E402  (U9: the ledger and the verdict; this tier runs no DDL)
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
 from web import spa  # noqa: E402  (the SPA build, mounted last; U12)
 
@@ -135,7 +138,7 @@ READY_SQL = (
     "SELECT t FROM unnest(%s::text[]) t WHERE to_regclass(t) IS NULL "
     "UNION ALL SELECT f FROM unnest(%s::text[]) f WHERE to_regprocedure(f) IS NULL"
 )
-# The lifespan's inline schema apply and allowlist sync share this, so a blackholed
+# The lifespan's inline schema check and allowlist sync share this, so a blackholed
 # Postgres holds uvicorn at most this long before it listens; each background retry is
 # bounded by it too, and backs off STARTUP_BACKOFF_FIRST_S doubling to _MAX_S.
 STARTUP_BUDGET_S = 5.0
@@ -530,19 +533,30 @@ class PgStore:
 
         return await psycopg.AsyncConnection.connect(self.dsn, row_factory=dict_row, autocommit=True)
 
-    async def apply_schema(self, sql_dir: Path = SQL_DIR) -> list[str]:
-        """Run proto/sql/*.sql in name order. Every statement is IF NOT EXISTS / OR
-        REPLACE, and each file goes down as ONE multi-statement execute (no parameters,
-        so psycopg uses the simple query protocol and 002_seq.sql's $$ body survives)."""
-        files = sorted(sql_dir.glob("*.sql"))
-        if not files:
-            raise RuntimeError(f"no schema files under {sql_dir}; refusing to start without a schema")
-        applied: list[str] = []
-        async with await self._connect() as conn:
-            for path in files:
-                await conn.execute(path.read_text(encoding="utf-8"))
-                applied.append(path.name)
-        return applied
+    async def verify_schema(self, sql_dir: Path = SQL_DIR) -> list[str]:
+        """The ledger ``migrate.py`` keeps against the files under ``sql_dir``: the shipped
+        names when it is at this build's level (or ahead of it), else ``ReadyCheckError``
+        with the verdict's label (``schema: unmigrated``, ``behind``, ``drift``,
+        ``out_of_order``). Runs no DDL, so a DML-only role passes once someone has
+        migrated. A connection of its own with positional rows and a server-side
+        statement_timeout, like ``_probe_postgres``, and awaited rather than run on a
+        thread, so the shared startup budget can cancel it."""
+        import psycopg
+
+        shipped = migrate.load(sql_dir)
+        conn = await psycopg.AsyncConnection.connect(
+            self.dsn, autocommit=True, connect_timeout=READY_CONNECT_TIMEOUT_S,
+            options=f"-c statement_timeout={READY_STATEMENT_TIMEOUT_MS}",
+        )
+        try:
+            exists = bool((await (await conn.execute(migrate.LEDGER_EXISTS_SQL)).fetchone())[0])
+            rows = await (await conn.execute(migrate.LEDGER_SELECT_SQL)).fetchall() if exists else []
+        finally:
+            await conn.close()
+        found = migrate.verdict(shipped, migrate.ledger_from_rows(exists, rows))
+        if found.label is not None:
+            raise ReadyCheckError(found.label, f"{found.label}; run migrate.py with MIGRATE_PG_DSN")
+        return [m.name for m in shipped]
 
     @staticmethod
     def _row(r: dict[str, Any]) -> SessionRow:
@@ -986,16 +1000,6 @@ class SqsQueue:
         return enqueue.xml_text(doc, "MessageId")
 
 
-class NullQueue:
-    """No queue configured: the turn is recorded (turns row + user_msg event) and never
-    enqueued. This is the 'rows a script inserts' mode; the compose service never uses it."""
-
-    async def send(self, body: dict[str, Any]) -> str:
-        message_id = "null-" + uuid.uuid4().hex[:12]
-        log.info("NullQueue: turn %s recorded, not enqueued", body.get("turn_id"))
-        return message_id
-
-
 # ── app ──────────────────────────────────────────────────────────────────────────
 
 
@@ -1014,9 +1018,16 @@ class PatchSessionBody(BaseModel):
 
 
 class MessageBody(BaseModel):
-    # Not blank: the worker would take a whitespace-only text for a stub message and
-    # complete the turn with no reply, and a 400 there would requeue it forever.
-    text: str = Field(min_length=1, pattern=r"\S")
+    # Not blank by the worker's own predicate (is_real_turn: text.strip()): a text it
+    # strips to nothing ("\x1c" passes a regex \S) is a stub message there, which it 400s.
+    text: str = Field(min_length=1)
+
+    @field_validator("text")
+    @classmethod
+    def _not_blank(cls, text: str) -> str:
+        if not text.strip():
+            raise ValueError("text is blank")
+        return text
 
 
 class DevLoginBody(BaseModel):
@@ -1099,8 +1110,8 @@ async def startup_attempt(
             log.warning("startup %s failing (%s): %s", name, label, redact(f"{type(exc).__name__}: {exc}"))
         startup[name] = label
         return False
-    if name == "schema" and isinstance(result, list):
-        log.info("schema applied: %s", ", ".join(result))
+    if name == "schema" and isinstance(result, list) and result:
+        log.info("schema at %s", result[-1])
     else:
         log.info("startup %s ok", name)
     startup[name] = "ok"
@@ -1109,8 +1120,9 @@ async def startup_attempt(
 
 async def retry_startup(startup: dict[str, str], steps: dict[str, Callable[[], Awaitable[Any]]]) -> None:
     """Retry each failed startup step independently, backing off STARTUP_BACKOFF_FIRST_S
-    doubling to STARTUP_BACKOFF_MAX_S, until it lands -- so a DML-only role, whose schema
-    apply never will, still syncs the allowlist. Cancelled at lifespan exit."""
+    doubling to STARTUP_BACKOFF_MAX_S, until it lands -- so a schema check failing until
+    someone migrates never holds up the allowlist sync, and turns green with no restart.
+    Cancelled at lifespan exit."""
 
     async def one(name: str, step: Callable[[], Awaitable[Any]]) -> None:
         delay = STARTUP_BACKOFF_FIRST_S
@@ -1174,7 +1186,7 @@ def create_app(
     stream_max_polls: int | None = None,
 ) -> FastAPI:
     """Factory. With no arguments the lifespan builds PgStore(PG_DSN) + SqsQueue(QUEUE_URL)
-    (or NullQueue) from env; tests pass fakes and shrink the timings."""
+    from env, refusing to start without a QUEUE_URL; tests pass fakes and shrink the timings."""
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -1182,26 +1194,25 @@ def create_app(
         # U7: a half SQS pair refuses here, before a startup step or its background retry
         # exists, so the refusal leaves nothing running.
         if app.state.queue is None:
-            queue_url = os.environ.get("QUEUE_URL")
-            if queue_url:
-                try:
-                    sqs_auth = await asyncio.to_thread(enqueue.configure, os.environ, queue_url)
-                except enqueue.SqsConfigError as exc:
-                    raise RuntimeError(str(exc)) from exc
-                app.state.queue = SqsQueue(queue_url)
-                log.info("queue: %s; %s", queue_url, enqueue.describe(sqs_auth))
-                if sqs_auth.method is None:
-                    log.warning("no AWS credentials found yet: SendMessage retries the chain "
-                                "and fails until it resolves")
-            else:
-                app.state.queue = NullQueue()
-                log.warning("QUEUE_URL unset: turns are recorded but NOT enqueued (NullQueue)")
+            # U11: no queue means a turn is recorded and nothing ever runs it.
+            queue_url = (os.environ.get("QUEUE_URL") or "").strip()
+            if not queue_url:
+                raise RuntimeError("QUEUE_URL is unset or empty: the web tier needs the turns queue")
+            try:
+                sqs_auth = await asyncio.to_thread(enqueue.configure, os.environ, queue_url)
+            except enqueue.SqsConfigError as exc:
+                raise RuntimeError(str(exc)) from exc
+            app.state.queue = SqsQueue(queue_url)
+            log.info("queue: %s; %s", queue_url, enqueue.describe(sqs_auth))
+            if sqs_auth.method is None:
+                log.warning("no AWS credentials found yet: SendMessage retries the chain "
+                            "and fails until it resolves")
         # U10 D8: the store goes on app.state before either step, so every route and
         # /api/health see it while Postgres is down; neither step can stop the tier listening.
         steps: dict[str, Callable[[], Awaitable[Any]]] = {}
         if app.state.store is None:
             app.state.store = PgStore(os.environ.get("PG_DSN") or DEFAULT_PG_DSN)
-            steps["schema"] = app.state.store.apply_schema
+            steps["schema"] = app.state.store.verify_schema
         store = app.state.store
         if hasattr(store, "sync_allowlist"):
             emails = auth.allowed_emails()
