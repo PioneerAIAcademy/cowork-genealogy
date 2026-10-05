@@ -22,7 +22,9 @@ topology exists to make, so a well-meaning edit cannot quietly undo one:
   state is in Postgres/S3, bound per request from X-Genealogy-Project-Id), publishes on
   loopback only, waits on postgres and minio being healthy, reads the Postgres the worker
   reads under the worker's anchor, and is waited on by proto-up but never by
-  proto-up-core (the D3 smoke must not gate on the engine image).
+  proto-up-core (the D3 smoke must not gate on the engine image);
+- U11: the base worker, and no other service in any compose file, sets DEV_PATHS=true,
+  and it names its tool server as a literal.
 
 No Docker needed: the compose files parse as YAML; the HOCON conf and the SQL are
 read as text with their comments stripped first, so a comment that *mentions*
@@ -39,6 +41,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 import yaml
@@ -275,6 +278,32 @@ def test_tools_and_worker_read_one_store():
         "GENEALOGY_PG_DSN", "GENEALOGY_S3_ENDPOINT", "GENEALOGY_S3_BUCKET",
         "GENEALOGY_S3_ACCESS_KEY", "GENEALOGY_S3_SECRET_KEY", "GENEALOGY_ANCHOR_PATH",
     }, "the five store variables plus the anchor, and no GENEALOGY_PROJECT_ID: the id is per request"
+
+
+def test_compose_runs_the_worker_with_dev_paths_and_names_its_tool_server():
+    """U11: the worker's dev-only paths (the D3 smoke's stub turns among them) answer only
+    with DEV_PATHS=true, and TOOL_SERVER_URL has no default. Literals, so no host variable
+    at `up` time switches either."""
+    compose = _load(COMPOSE)
+    worker = _env(_service(compose, "worker"))
+    assert worker.get("DEV_PATHS") == "true"
+    url = urlparse(worker.get("TOOL_SERVER_URL", ""))
+    assert (url.scheme, url.hostname, url.path) == ("http", "tools", "/mcp"), worker.get("TOOL_SERVER_URL")
+    assert str(url.port) in {p.rsplit(":", 1)[-1] for p in _ports(_service(compose, "tools"))}
+
+
+def test_no_other_compose_service_sets_dev_paths():
+    """The web tier never reads DEV_PATHS, and no overlay changes the worker's."""
+    files = sorted(PROTO.glob("docker-compose*.yml"))
+    assert COMPOSE in files and SQSD_OVERLAY in files and len(files) >= 4
+    for path in files:
+        for name, service in (_load(path).get("services") or {}).items():
+            if (path, name) == (COMPOSE, "worker"):
+                continue
+            env = _env(service or {})
+            assert "DEV_PATHS" not in env, f"{path.name}: {name} sets DEV_PATHS"
+            if name == "worker":
+                assert "TOOL_SERVER_URL" not in env, f"{path.name} overrides the worker's TOOL_SERVER_URL"
 
 
 def _wait_services(line: str) -> list[str]:

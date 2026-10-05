@@ -24,10 +24,21 @@ path equals `scripts/eb_bundles/layout.py`'s, every environment value is inside
 Beanstalk's character set with no secret or dev-only variable, no option is set in two
 files, and the hook carries `set -euo pipefail` and the git exec bit.
 
-- **Not in the bundle:** `PG_DSN`, `QUEUE_URL`, `MODEL_PROVIDER` and every key, all
-  API-level settings (among the keys `FS_TOKEN_ENC_KEY`, the web tier's grant key, the same
-  value: the worker decrypts each patron's grant with it, U3), and `PYTHONPATH` and `HOME`, which the worker does not need (it puts
-  its own root on `sys.path`).
+- **Not in the bundle:** `PG_DSN`, `QUEUE_URL`, `MODEL_PROVIDER`, `TOOL_SERVER_URL` and
+  every key, all API-level settings (among the keys `FS_TOKEN_ENC_KEY`, the web tier's grant
+  key, the same value: the worker decrypts each patron's grant with it, U3), and
+  `PYTHONPATH` and `HOME`, which the worker does not need (it puts its own root on
+  `sys.path`). `MODEL_PROVIDER` (`anthropic` or `gateway`) and `TOOL_SERVER_URL` are
+  required; `QUEUE_URL` and a non-default `FS_TOKEN_ENC_KEY` are required unless
+  `DEV_PATHS=true`. Each refusal is one `ev=prepare step=<x>` line and exit 2 (U11).
+- **`DEV_PATHS` is never set here or at API level** (U11). It opens the D3 stub arms,
+  `BLOCKED_TOOLS`, a start with no `QUEUE_URL` and the development grant key; compose sets
+  it, and `ev=start` logs `dev_paths`. `scripts/eb_bundles/layout.py`'s dev list (the `DEV_`
+  and `GENEALOGY_DEBUG_` prefixes, `BLOCKED_TOOLS`, `AUTONOMOUS_MAX_NUDGES` on this tier,
+  `WORKER_TURN_USERS=none`, ...) is refused in the template by `test_proto_bundles.py` and in
+  the built zip by `make eb-bundles-verify`. The bundle smoke (`scripts/eb_bundles/smoke.py`,
+  `API_LEVEL_STANDINS`) supplies dummy API-level values for the required variables, never
+  `DEV_PATHS`, and checks `ev=start` `dev_paths` is false.
 - **The plugin hook's interpreter.** The worker puts its own interpreter's directory first
   on the CLI child's `PATH`, and at start refuses (exit 2, `ev=prepare step=hook_python`)
   a first `python3` there that is missing or below 3.10; `ev=start` logs `hook_python`.

@@ -745,14 +745,6 @@ def test_person_warnings_is_allowed_while_block_is_on(tmp_path):
                         "tool_input": {"projectPath": "/w", "personId": "97XW-7VN"}}) == {}, \
         "person_warnings reads the local tree: always allowed"
     assert rows[-1]["decision"] == "allow"
-    # Held equal to the harness's table, read off its source.
-    tree = ast.parse(ORCHESTRATOR.read_text(encoding="utf-8"))
-    harness = [
-        ast.literal_eval(node.value) for node in ast.walk(tree)
-        if isinstance(node, ast.Assign)
-        and any(isinstance(t, ast.Name) and t.id == "LIVE_TREE_ARG_TOOLS" for t in node.targets)
-    ]
-    assert harness == [options.LIVE_TREE_ARG_TOOLS], "re-sync with orchestrator.py's LIVE_TREE_ARG_TOOLS"
 
 
 def test_the_hook_never_raises(tmp_path):
@@ -874,8 +866,10 @@ def test_registration_problems_compares_against_the_constants_not_the_loaded_set
 
 
 WORKER_ENV = {
+    "MODEL_PROVIDER": "anthropic",
     "ANTHROPIC_API_KEY": "sk-test",
     "TMPDIR": "/tmp",
+    "TOOL_SERVER_URL": "http://tools:8787/mcp",
 }
 
 
@@ -1082,7 +1076,9 @@ def test_worker_tmpfs_holds_tmpdir_and_the_key_is_passed_through_not_literal():
     # The tools are the `tools` service's: the store credentials and image_transcribe's
     # key stay out of the process that runs the agent loop.
     assert not [k for k in env if k.startswith("GENEALOGY_")], "the worker holds no store credentials"
-    assert "OPENROUTER_API_KEY" not in env and "TOOL_SERVER" not in env
+    assert "OPENROUTER_API_KEY" not in env
+    assert env["TOOL_SERVER_URL"] == "http://tools:8787/mcp", "required: the worker has no default"
+    assert env["DEV_PATHS"] == "true", "compose is the dev deployment; no image or template sets it"
     assert "minio" not in svc["depends_on"]
 
 
@@ -1166,7 +1162,7 @@ def test_004_worker_only_adds_nullable_columns():
 def test_tool_server_http_sends_the_bearer_and_the_project_id_as_headers(tmp_path):
     # The shared server's contract is two per-request headers: `Authorization: Bearer
     # <patron token>` -> principal, `X-Genealogy-Project-Id` -> the request's store. The
-    # project header is always sent; the default URL is the compose `tools` service.
+    # project header is always sent; the URL is TOOL_SERVER_URL's, with no default.
     env = WORKER_ENV
     server = _server(_options(config_dir=str(tmp_path), bearer="turn-token", worker_env=env))
     assert server == {
@@ -1180,6 +1176,10 @@ def test_tool_server_http_sends_the_bearer_and_the_project_id_as_headers(tmp_pat
         config_dir=str(tmp_path), bearer="t", worker_env={**env, "TOOL_SERVER_URL": "http://127.0.0.1:8787/mcp"}
     ))
     assert custom["url"] == "http://127.0.0.1:8787/mcp"
+    for unset in ({k: v for k, v in env.items() if k != "TOOL_SERVER_URL"}, {**env, "TOOL_SERVER_URL": " "}):
+        with pytest.raises(ValueError, match="TOOL_SERVER_URL"):
+            _options(config_dir=str(tmp_path), bearer="t", worker_env=unset)
+    assert not hasattr(options, "TOOL_SERVER_DEFAULT_URL"), "a guessed host would get the bearer"
     with pytest.raises(ValueError):  # an empty bearer is refused, never a project-only header
         _options(config_dir=str(tmp_path), bearer="", worker_env=env)
     other = _server(_options(config_dir=str(tmp_path), project_id="proj-2", bearer="t", worker_env=env))
@@ -2160,8 +2160,15 @@ class _PrepareRan(Exception):
     pass
 
 
-def _stop_at_prepare(monkeypatch):
+def _start_env(monkeypatch):
+    """What every start needs (U11), with DEV_PATHS left as conftest sets it."""
     monkeypatch.setenv("WORKER_TURN_USERS", "none")
+    monkeypatch.setenv("MODEL_PROVIDER", "anthropic")
+    monkeypatch.setenv("TOOL_SERVER_URL", "http://tools:8787/mcp")
+
+
+def _stop_at_prepare(monkeypatch):
+    _start_env(monkeypatch)
 
     def prepare():
         raise _PrepareRan("ran past the check")
@@ -2196,7 +2203,7 @@ def test_queue_startup_fields_exits_2_and_ignores_stray_keys_without_a_queue(mon
 
 def _start_only(monkeypatch):
     """main() up to ev=start, with nothing real started."""
-    monkeypatch.setenv("WORKER_TURN_USERS", "none")
+    _start_env(monkeypatch)
     monkeypatch.setattr(worker, "prepare", lambda: None)
 
     class Server:
@@ -3816,7 +3823,8 @@ def refused_pg():
 def _serving():
     """The worker's real Handler on a ThreadingHTTPServer, port 0."""
     server = ThreadingHTTPServer(("127.0.0.1", 0), worker.Handler)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    # serve_forever's default 0.5 s poll is what shutdown() waits out on every exit.
+    thread = threading.Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01}, daemon=True)
     thread.start()
     try:
         yield server.server_address[1]
@@ -4758,3 +4766,268 @@ def test_the_main_thread_gate_is_membership_not_truthiness():
         "end the researcher's turn"
     )
     assert halted == []
+
+
+# ── U11: the dev-only paths ──────────────────────────────────────────────────────
+
+IDS = {"turn_id": "turn-u11", "session_id": "sess-u11", "project_id": "proj-u11"}
+
+
+class _ExitCalled(Exception):
+    pass
+
+
+def _post_turn(port: int, body: dict) -> tuple[int, dict] | None:
+    """POST /turn; None when the handler died without replying (a patched ``_exit``)."""
+    conn = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
+    try:
+        conn.request("POST", "/turn", body=json.dumps(body),
+                     headers={"Content-Type": "application/json", "X-Aws-Sqsd-Receive-Count": "1"})
+        response = conn.getresponse()
+        return response.status, json.loads(response.read().decode("utf-8"))
+    except (http.client.RemoteDisconnected, ConnectionResetError):
+        return None
+    finally:
+        conn.close()
+
+
+@pytest.fixture
+def post_env(monkeypatch):
+    """The real Handler with every road past the gate recorded: ``claim`` and ``_exit``
+    (which raises, so no process dies), and the two serve functions when replaced."""
+    calls: dict[str, list] = {"claim": [], "exit": [], "real": [], "stub": []}
+    monkeypatch.setattr(worker, "claim", lambda conn, turn, rc, **kw: calls["claim"].append(turn["turn_id"]))
+    monkeypatch.setattr(worker.psycopg, "connect", lambda *a, **k: FakeConn())
+
+    def _exit(code):
+        calls["exit"].append(code)
+        raise _ExitCalled(code)
+    monkeypatch.setattr(worker.os, "_exit", _exit)
+    monkeypatch.setattr(worker, "log", lambda **f: calls.setdefault("log", []).append(f))
+    return calls
+
+
+def _record_serves(monkeypatch, calls) -> None:
+    monkeypatch.setattr(worker, "serve_real_turn", lambda turn, rc, **kw: calls["real"].append(turn) or (200, {"ok": True}))
+    monkeypatch.setattr(worker, "serve_stub_turn",
+                        lambda turn, rc, behaviour, seconds, **kw: calls["stub"].append((behaviour, seconds)) or (200, {"ok": True}))
+
+
+@pytest.mark.parametrize("body", [
+    {"behaviour": "crash"}, {"behaviour": "ok"}, {"behaviour": "sleep", "seconds": "x"}, {}, {"text": "\x1c"},
+], ids=["crash", "ok", "bad-seconds", "empty", "unstrippable-text"])
+def test_a_stub_turn_without_dev_paths_is_400_before_any_claim(monkeypatch, post_env, body):
+    monkeypatch.delenv("DEV_PATHS")
+    with _serving() as port:
+        reply = _post_turn(port, {**IDS, **body})
+    assert reply == (400, {"ok": False, "turn_id": "turn-u11", "error": "stub turns are disabled"})
+    assert post_env["claim"] == [] and post_env["exit"] == [], "os._exit must be unreachable"
+    [line] = [f for f in post_env["log"] if f.get("ev") == "turn"]
+    assert line["status"] == 400 and line["error"] == "stub turns are disabled"
+
+
+@pytest.mark.parametrize("value", ["false", "1", "yes", "", "truthy"])
+def test_dev_paths_is_on_only_for_true(monkeypatch, post_env, value):
+    assert options.dev_paths({"DEV_PATHS": value}) is False
+    monkeypatch.setenv("DEV_PATHS", value)
+    with _serving() as port:
+        assert _post_turn(port, {**IDS, "behaviour": "crash"})[0] == 400
+    assert post_env["exit"] == []
+
+
+@pytest.mark.parametrize("value", ["true", "TRUE", " True "])
+def test_dev_paths_reaches_the_crash_arm(monkeypatch, post_env, value):
+    assert options.dev_paths({"DEV_PATHS": value}) is True
+    monkeypatch.setenv("DEV_PATHS", value)
+    with _serving() as port:
+        assert _post_turn(port, {**IDS, "behaviour": "crash"}) is None, "the crash arm never replies"
+    assert post_env["claim"] == ["turn-u11"] and post_env["exit"] == [1], "smoke's crash needs a real death"
+    assert options.dev_paths({}) is False
+
+
+def test_a_real_turn_runs_without_dev_paths(monkeypatch, post_env):
+    monkeypatch.delenv("DEV_PATHS")
+    _record_serves(monkeypatch, post_env)
+    with _serving() as port:
+        assert _post_turn(port, {**IDS, "text": "hello"}) == (200, {"ok": True})
+    assert [t["turn_id"] for t in post_env["real"]] == ["turn-u11"] and post_env["stub"] == []
+
+
+@pytest.mark.parametrize("body, error", [
+    ({}, "unknown behaviour None"),
+    ({"behaviour": "OK"}, "unknown behaviour 'OK'"),
+    ({"behaviour": "sleep", "seconds": "x"}, "seconds must be a number >= 0, not 'x'"),
+    ({"behaviour": "sleep", "seconds": -1}, "seconds must be a number >= 0, not -1"),
+    ({"behaviour": "sleep", "seconds": "nan"}, "seconds must be a number >= 0, not 'nan'"),
+    ({"behaviour": "sleep", "seconds": "inf"}, "seconds must be a number >= 0, not 'inf'"),
+    ({"behaviour": "sleep", "seconds": [1]}, "seconds must be a number >= 0, not [1]"),
+    ({"behaviour": "sleep", "seconds": True}, "seconds must be a number >= 0, not True"),
+], ids=["no-behaviour", "unknown", "non-numeric", "negative", "nan", "inf", "list", "bool"])
+def test_a_malformed_stub_turn_is_400_even_with_dev_paths(monkeypatch, post_env, body, error):
+    _record_serves(monkeypatch, post_env)
+    with _serving() as port:
+        reply = _post_turn(port, {**IDS, **body})
+    assert reply == (400, {"ok": False, "turn_id": "turn-u11", "error": error})
+    assert post_env["claim"] == [] and post_env["stub"] == [], "no claim, no stub arm"
+
+
+@pytest.mark.parametrize("body, ran", [
+    ({"behaviour": "ok"}, ("ok", 0.0)),
+    ({"behaviour": "sleep", "seconds": "1.5"}, ("sleep", 1.5)),
+    ({"behaviour": "sleep", "seconds": 2}, ("sleep", 2.0)),
+    ({"behaviour": "sleep", "seconds": 0}, ("sleep", 0.0)),
+    ({"behaviour": "fail", "seconds": None}, ("fail", 0.0)),
+])
+def test_a_well_formed_stub_turn_still_runs_with_dev_paths(monkeypatch, post_env, body, ran):
+    _record_serves(monkeypatch, post_env)
+    with _serving() as port:
+        assert _post_turn(port, {**IDS, **body}) == (200, {"ok": True})
+    assert post_env["stub"] == [ran]
+
+
+@pytest.mark.parametrize("field", ["turn_id", "session_id", "project_id"])
+@pytest.mark.parametrize("value", [None, "", "   ", 7, ["turn"]], ids=["missing", "empty", "blank", "int", "list"])
+@pytest.mark.parametrize("kind", [{"behaviour": "ok"}, {"text": "hello"}], ids=["stub", "real"])
+def test_a_turn_without_its_ids_is_400_naming_the_field(monkeypatch, post_env, field, value, kind):
+    _record_serves(monkeypatch, post_env)
+    body = {**IDS, **kind}
+    if value is None:
+        del body[field]
+    else:
+        body[field] = value
+    with _serving() as port:
+        reply = _post_turn(port, body)
+    assert reply == (400, {"ok": False, "error": f"{field} must be a non-empty string"})
+    assert post_env["claim"] == [] and post_env["real"] == [] and post_env["stub"] == [], "no stand-in id is claimed"
+
+
+def test_the_ids_are_the_message_s_own(monkeypatch, post_env):
+    _record_serves(monkeypatch, post_env)
+    with _serving() as port:
+        conn = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
+        conn.request("POST", "/turn", body=json.dumps({**IDS, "text": "hello"}),
+                     headers={"X-Aws-Sqsd-Msgid": "msg-1", "Content-Type": "application/json"})
+        assert conn.getresponse().status == 200
+        conn.close()
+    [turn] = post_env["real"]
+    assert {k: turn[k] for k in IDS} == IDS, "msgid is a log field, never the turn id"
+
+
+# U11 start refusals: one ev=prepare line, exit 2, before the hook interpreter (and so
+# before setup_turn_users and queue_startup_fields).
+
+PROD_START_ENV = {
+    "MODEL_PROVIDER": "anthropic", "TOOL_SERVER_URL": "http://tools.internal:8787/mcp",
+    "FS_TOKEN_ENC_KEY": "k" * 40,
+}
+
+
+def _refusal_env(monkeypatch, env: dict) -> list[dict]:
+    """``env`` as the whole start configuration, DEV_PATHS off unless it says so; the
+    hook interpreter check raises _PrepareRan, so a start that passes them all says so."""
+    for name in (*PROD_START_ENV, "DEV_PATHS", "BLOCKED_TOOLS", "GATEWAY_BASE_URL"):
+        monkeypatch.delenv(name, raising=False)
+    for name, value in env.items():
+        if value is not None:
+            monkeypatch.setenv(name, value)
+    monkeypatch.setattr(worker, "QUEUE_URL", env.get("QUEUE_URL", "https://sqs.us-east-1.amazonaws.com/000000000000/turns"))
+
+    def past(*a, **k):
+        raise _PrepareRan("past the start configuration")
+    monkeypatch.setattr(worker, "require_hook_python", past)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    return logged
+
+
+@pytest.mark.parametrize("change, step, error", [
+    ({"MODEL_PROVIDER": None}, "model_provider", "unset"),
+    ({"MODEL_PROVIDER": ""}, "model_provider", "unset"),
+    ({"MODEL_PROVIDER": " Bedrock "}, "model_provider", "unknown:bedrock"),
+    ({"MODEL_PROVIDER": "gateway"}, "model_provider", "gateway_needs_base_url"),
+    ({"MODEL_PROVIDER": "gateway", "GATEWAY_BASE_URL": " "}, "model_provider", "gateway_needs_base_url"),
+    ({"TOOL_SERVER_URL": None}, "tool_server_url", "unset"),
+    ({"TOOL_SERVER_URL": "  "}, "tool_server_url", "unset"),
+    ({"BLOCKED_TOOLS": "person_read"}, "blocked_tools", "needs_dev_paths"),
+    ({"QUEUE_URL": ""}, "queue_url", "unset"),
+    ({"QUEUE_URL": "  "}, "queue_url", "unset"),
+    ({"FS_TOKEN_ENC_KEY": None}, "fs_token_enc_key", "default"),
+    ({"FS_TOKEN_ENC_KEY": " "}, "fs_token_enc_key", "default"),
+    ({"FS_TOKEN_ENC_KEY": "dev-insecure-fs-token-key-change-me"}, "fs_token_enc_key", "default"),
+    ({"QUEUE_URL": "", "DEV_PATHS": "1"}, "queue_url", "unset"),
+])
+def test_start_refuses_a_dev_path_or_a_missing_setting(monkeypatch, change, step, error):
+    logged = _refusal_env(monkeypatch, {**PROD_START_ENV, **change})
+    with pytest.raises(SystemExit) as exc:
+        worker.main()
+    assert exc.value.code == 2
+    assert [(f["ev"], f["step"], f["error"]) for f in logged] == [("prepare", step, error)]
+
+
+@pytest.mark.parametrize("change, dev", [
+    ({}, False),
+    ({"MODEL_PROVIDER": " Anthropic "}, False),
+    ({"MODEL_PROVIDER": "GATEWAY", "GATEWAY_BASE_URL": "http://gateway.invalid/bedrock"}, False),
+    ({"BLOCKED_TOOLS": " , "}, False),
+    ({"BLOCKED_TOOLS": "person_read"}, True),
+    ({"QUEUE_URL": ""}, True),
+    ({"FS_TOKEN_ENC_KEY": None}, True),
+    ({"BLOCKED_TOOLS": "person_read", "QUEUE_URL": "", "FS_TOKEN_ENC_KEY": None}, True),
+])
+def test_start_passes_with_the_setting_or_dev_paths(monkeypatch, change, dev):
+    env = {**PROD_START_ENV, **change, **({"DEV_PATHS": " TRUE "} if dev else {})}
+    logged = _refusal_env(monkeypatch, env)
+    with pytest.raises(_PrepareRan):
+        worker.main()
+    assert not [f for f in logged if f.get("ev") == "prepare"], logged
+
+
+@pytest.mark.parametrize("change", [{"MODEL_PROVIDER": None}, {"TOOL_SERVER_URL": None}])
+def test_dev_paths_never_excuses_the_provider_or_the_tool_server(monkeypatch, change):
+    logged = _refusal_env(monkeypatch, {**PROD_START_ENV, **change, "DEV_PATHS": "true"})
+    with pytest.raises(SystemExit):
+        worker.main()
+    assert len(logged) == 1 and logged[0]["step"] in ("model_provider", "tool_server_url")
+
+
+def test_ev_start_logs_dev_paths_and_the_validated_provider(monkeypatch, capsys):
+    import proto.enqueue as enq
+
+    _start_only(monkeypatch)
+    monkeypatch.setenv("MODEL_PROVIDER", " Gateway ")
+    monkeypatch.setenv("GATEWAY_BASE_URL", "http://gateway.invalid/bedrock")
+    worker.main()
+    ev = _start_event(capsys.readouterr().out)
+    assert ev["provider"] == "gateway" and ev["dev_paths"] is True
+
+    monkeypatch.delenv("DEV_PATHS")
+    monkeypatch.setenv("FS_TOKEN_ENC_KEY", "k" * 40)
+    monkeypatch.setenv("GENEALOGY_SQS_ACCESS_KEY", "AKIASTART")
+    monkeypatch.setenv("GENEALOGY_SQS_SECRET_KEY", "start-secret")
+    monkeypatch.setattr(worker, "QUEUE_URL", "https://sqs.us-east-1.amazonaws.com/000000000000/turns")
+    monkeypatch.setattr(enq, "prewarm", lambda: None)
+    worker.main()
+    ev = _start_event(capsys.readouterr().out)
+    assert ev["provider"] == "gateway" and ev["dev_paths"] is False
+
+
+def test_model_provider_labels_and_its_two_callers():
+    assert options.model_provider({"MODEL_PROVIDER": " Anthropic "}) == "anthropic"
+    for env, label in (({}, "unset"), ({"MODEL_PROVIDER": "vertex"}, "unknown:vertex"),
+                       ({"MODEL_PROVIDER": "gateway"}, "gateway_needs_base_url")):
+        with pytest.raises(options.ProviderError, match="anthropic or gateway|GATEWAY_BASE_URL") as exc:
+            options.model_provider(env)
+        assert exc.value.label == label
+        with pytest.raises(ValueError):
+            options.provider_env(env)
+    with pytest.raises(options.ProviderError):
+        _options(worker_env={k: v for k, v in WORKER_ENV.items() if k != "MODEL_PROVIDER"})
+    assert not hasattr(options, "LIVE_TREE_ARG_TOOLS"), "an empty table with a dead branch"
+
+
+def test_the_agent_count_literals_are_the_pinned_set():
+    from dev.p1 import plugin_agents as p1_agents
+    from proto.worker import plugin_agents
+
+    assert plugin_agents.EXPECTED_AGENT_COUNT == len(worker.EXPECTED_AGENTS)
+    assert p1_agents.EXPECTED_AGENT_COUNT == len(worker.EXPECTED_AGENTS)
