@@ -109,13 +109,15 @@ writable exits 2 before anything else (``check_tmpdir``); so does a plugin-hook
 ``python3`` below 3.10 or missing -- the first on the CLI child's ``PATH``, which puts this
 interpreter's directory first (U12, ``check_hook_python``); then the SQS credentials and
 region are settled (U7: a half pair exits 2; the default chain may ask IMDS); then the
-plugin's agents are parsed once, the server binds, and ../sql/*.sql (all idempotent) is
-applied on a daemon thread that retries a refused or silent Postgres, and an apply that
-raced the web tier's or another worker's (``schema_loop``), with backoff -- so Postgres
-is never waited on before listen, and no failed store ever exits the process.
+plugin's agents are parsed once, the server binds, and a daemon thread checks the schema
+(``schema_loop``): it reads the ledger ``proto/migrate.py`` keeps and compares it with the
+../sql/*.sql this worker ships, running no DDL (U9), and keeps checking with backoff until
+it is at this build's level -- so Postgres is never waited on before listen, a database
+migrated later turns ``schema`` green with no restart, and no failed store ever exits
+the process.
 ``GET /healthz`` is readiness: 200 or 503 with ``{ok, checks}`` over ``postgres`` (a
 fresh connection that sees every table, under one ``READY_TIMEOUT_S`` deadline),
-``schema`` (the start apply), ``agents``, ``cwd``, ``tmpdir`` and ``transcript`` (the
+``schema`` (the ledger check), ``agents``, ``cwd``, ``tmpdir`` and ``transcript`` (the
 last model turn appended entries); each ``error`` is a label, never a message.
 ThreadingHTTPServer, so a second POST is served while a turn is running.
 
@@ -169,7 +171,6 @@ HERE = Path(__file__).resolve().parent
 # apps/server in the repo, /opt/genealogy/server in the container: the import root for
 # both ``app.agent.real_agent`` (map_message) and ``proto.worker.*``.
 SERVER_DIR = HERE.parents[1]
-SQL_DIR = HERE.parent / "sql"
 if str(SERVER_DIR) not in sys.path:
     sys.path.insert(0, str(SERVER_DIR))
 
@@ -184,6 +185,7 @@ from proto.worker.options import (  # noqa: E402
     SPEND_CAP_REASON,
     STOP_REASON,
     TERMINAL_BUDGET,
+    TERMINAL_DELIVERED,
     TERMINAL_QUEUED,
     TERMINAL_STOPPED,
     build_worker_options,
@@ -196,6 +198,7 @@ from proto.worker.options import (  # noqa: E402
     parse_blocked_tools,
 )
 from proto import grants  # noqa: E402
+from proto import migrate  # noqa: E402
 from proto.worker.plugin_agents import load_agent_definitions  # noqa: E402
 from proto.worker.session_store import PgSessionStore  # noqa: E402
 from proto.worker import turn_users  # noqa: E402
@@ -226,7 +229,7 @@ READY_TCP_OPTIONS = {"tcp_user_timeout": 3000, "keepalives": 1, "keepalives_idle
 WORKER_TABLES = ("sessions", "turns", "session_events", "session_seq", "session_activity",
                  "session_entries", "tool_calls", "documents", "projects", "familysearch_tokens")
 WORKER_FUNCTIONS = ("next_session_seq(text)",)
-# The start schema apply's thread: one attempt's connect bound, and its backoff.
+# The schema check's thread: one attempt's connect bound, and its backoff.
 SCHEMA_CONNECT_TIMEOUT_S = 5
 SCHEMA_BACKOFF_FIRST_S = 1.0
 SCHEMA_BACKOFF_MAX_S = 30.0
@@ -1014,19 +1017,19 @@ def ensure_cwd(path: str) -> None:
     Path(path).mkdir(parents=True, exist_ok=True)
 
 
-def _apply_schema_once(
-    dsn: str, *, connect_timeout: int = SCHEMA_CONNECT_TIMEOUT_S, sql_dir: Path = SQL_DIR,
+def _verify_schema_once(
+    dsn: str, *, connect_timeout: int = SCHEMA_CONNECT_TIMEOUT_S, sql_dir: Path = migrate.SQL_DIR,
 ) -> list[str]:
-    """Run ../sql/*.sql in name order (every statement idempotent), once. Every exception
-    goes through: ``schema_loop`` is what retries, and only the errors it names as transient."""
-    files = sorted(sql_dir.glob("*.sql"))
-    if not files:
-        raise RuntimeError(f"no schema files under {sql_dir}")
-    with psycopg.connect(dsn, connect_timeout=connect_timeout) as conn:
-        for path in files:
-            conn.execute(path.read_text(encoding="utf-8"))
-        conn.commit()
-    return [p.name for p in files]
+    """The ledger against ../sql/*.sql, once, read-only: the shipped names when it is at
+    this build's level (or ahead of it), else ``ReadyCheckError`` with the verdict's label.
+    Every exception goes through: ``schema_loop`` is what retries."""
+    shipped = migrate.load(sql_dir)
+    with psycopg.connect(dsn, connect_timeout=connect_timeout, autocommit=True) as conn:
+        ledger = migrate.read_ledger(conn)
+    found = migrate.verdict(shipped, ledger)
+    if found.label is not None:
+        raise ReadyCheckError(found.label, f"{found.label}; run proto/migrate.py with MIGRATE_PG_DSN")
+    return [m.name for m in shipped]
 
 
 def _errno_label(exc: OSError) -> str:
@@ -1135,7 +1138,7 @@ def load_plugin_agents(plugin_dir: str) -> tuple[dict[str, Any] | None, str | No
 def prepare() -> None:
     """Everything a real turn needs that touches no network, done once; a failure is
     logged, fails only the real turns (the stub arms keep working) and fails /healthz.
-    The schema is applied after listen, by ``start_schema_thread``."""
+    The schema is checked after listen, by ``start_schema_thread``."""
     global _AGENTS, _AGENTS_ERROR, _BLOCKED, _AUTONOMOUS_MAX_NUDGES
     try:
         ensure_cwd(WORKER_CWD)
@@ -1182,8 +1185,8 @@ def pg_connect(*args: Any, **kwargs: Any) -> psycopg.Connection:
 # -- readiness (U10) -----------------------------------------------------------
 
 # Process state /healthz reports; the tests' autouse fixture resets each to this value.
-# The start schema apply: None once applied, "pending" until then, else the label of the
-# error that stopped it.
+# The schema check: None once the ledger is at this build's level, "pending" until
+# Postgres first answers, else the label of the last answer that was not ok.
 _SCHEMA_ERROR: str | None = "pending"
 # "no_entries" after a transcript_lost turn (D6), cleared by the next model turn that
 # appends entries. Per instance, because the cause is this instance's configuration.
@@ -1343,34 +1346,34 @@ def readiness() -> dict[str, Any]:
 
 
 def schema_loop(dsn: str | None = None) -> None:
-    """Apply the schema, retrying ``psycopg.OperationalError`` (a refused or silent
-    Postgres) and the errors an apply racing another one raises (the web tier, or a second
-    worker, applies the same files at boot: ``23505`` and ``42P07``/``42710`` on a fresh
-    database, ``XX000`` "tuple concurrently updated" on an applied one; the next attempt
-    finds the schema in place), with backoff ``SCHEMA_BACKOFF_FIRST_S`` doubling to
-    ``SCHEMA_BACKOFF_MAX_S``, taken as ``SHUTDOWN.wait`` so a SIGTERM ends it at once. Any
-    other error (bad SQL, ``42501`` under a DML-only role) is a misconfiguration: it stops
-    the loop and leaves ``schema`` failing with its label. One log line per change."""
+    """Check the schema (``_verify_schema_once``) until the ledger is at this build's
+    level, with backoff ``SCHEMA_BACKOFF_FIRST_S`` doubling to ``SCHEMA_BACKOFF_MAX_S``,
+    taken as ``SHUTDOWN.wait`` so a SIGTERM ends it at once. ``psycopg.OperationalError``
+    (a refused or silent Postgres) leaves ``schema`` as it was (``pending`` until a first
+    answer); any other failure (a
+    verdict label such as ``schema: behind <file>``, ``42501`` on a role that cannot read
+    the ledger) sets it to its label and keeps checking: the check is a read, so it heals
+    once someone migrates or grants. One log line per change."""
     global _SCHEMA_ERROR
     dsn = PG_DSN if dsn is None else dsn
     delay = SCHEMA_BACKOFF_FIRST_S
     logged: str | None = None
     while True:
         try:
-            applied = _apply_schema_once(dsn, connect_timeout=SCHEMA_CONNECT_TIMEOUT_S)
-        except (psycopg.OperationalError, psycopg.errors.UniqueViolation, psycopg.errors.InternalError_,
-                psycopg.errors.DuplicateTable, psycopg.errors.DuplicateObject) as exc:
+            shipped = _verify_schema_once(dsn, connect_timeout=SCHEMA_CONNECT_TIMEOUT_S)
+        except psycopg.OperationalError as exc:
             label = ready_label(exc)
             if label != logged:
                 logged = label
                 log(ev="prepare", step="schema", error=redact(f"{type(exc).__name__}: {exc}"), retrying=True)
-        except Exception as exc:  # noqa: BLE001 - reported, and /healthz answers 503
-            _SCHEMA_ERROR = ready_label(exc)
-            log(ev="prepare", step="schema", error=redact(f"{type(exc).__name__}: {exc}"), retrying=False)
-            return
+        except Exception as exc:  # noqa: BLE001 - reported, /healthz answers 503, and checked again
+            label = _SCHEMA_ERROR = ready_label(exc)
+            if label != logged:
+                logged = label
+                log(ev="prepare", step="schema", error=redact(f"{type(exc).__name__}: {exc}"), retrying=True)
         else:
             _SCHEMA_ERROR = None
-            log(ev="prepare", step="schema", applied=applied)
+            log(ev="prepare", step="schema", at=shipped[-1] if shipped else None)
             return
         if SHUTDOWN.wait(delay):
             return
@@ -1922,10 +1925,18 @@ async def _run_turn(
                     return SPEND_CAP_REASON.format(cap=SPEND_CAP_USD)
             return None
 
+        def on_delivered() -> None:
+            """The agent delivered what a bounded request asked for. The turn ends
+            `delivered`, not `completed`: the ask was met while the PROJECT is still
+            open, and calling it complete would read as a finished project."""
+            terminal["reason"] = TERMINAL_DELIVERED
+            terminal["halted"] = True
+            log(ev="delivered_exit", turn_id=turn_id, session_id=session_id)
+
         hook = make_pretool_hook(
             turn_id=turn_id, session_id=session_id, cwd=WORKER_CWD,
             config_root=lambda: config_root["path"], record=record, log=log, blocked=_BLOCKED,
-            halt=halt,
+            halt=halt, on_delivered=on_delivered,
         )
 
         def finish(tool_use_id: str) -> None:
