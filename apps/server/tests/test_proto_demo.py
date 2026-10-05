@@ -4,6 +4,7 @@ rendering, the verdict, and the make target that runs it. No Postgres, no stack,
 from __future__ import annotations
 
 import argparse
+import ast
 import contextlib
 import os
 import pathlib
@@ -205,6 +206,68 @@ def test_wait_turn_done_gives_up_at_the_deadline(monkeypatch):
         demo.wait_turn_done(None, "http://x", "s", "t", 3.0)
 
 
+# ── the grant (U3) ──────────────────────────────────────────────────────────────────
+
+
+def _no_grant_db(dsn, sql, params):
+    if sql == turn.GRANT_SQL:
+        return []
+    return [(1,)]
+
+
+def test_scripts_refuse_to_run_without_a_grant(monkeypatch, capsys):
+    """Without a grant every real turn would only end signin_required. Both scripts check
+    up front, exit 2 and say what to run -- before anything is posted."""
+    monkeypatch.setattr(turn.httpx, "get", lambda *a, **k: httpx.Response(200, json={"queue": "SqsQueue"},
+                                                                         request=httpx.Request("GET", "http://x")))
+    monkeypatch.setattr(turn, "db", _no_grant_db)
+    monkeypatch.setattr(turn, "run", lambda *a, **k: (_ for _ in ()).throw(AssertionError("posted")))
+    monkeypatch.setattr(turn, "run_kill", lambda *a, **k: (_ for _ in ()).throw(AssertionError("posted")))
+    assert turn.main([]) == 2
+    assert "make proto-grant EMAIL=dev@localhost" in capsys.readouterr().err
+    assert turn.main(["--kill", "--email", "b@example.org"]) == 2
+    assert "make proto-grant EMAIL=b@example.org" in capsys.readouterr().err
+    monkeypatch.setattr(demo, "run", lambda args: (_ for _ in ()).throw(AssertionError("seeded")))
+    assert demo.main([]) == 2
+    assert "make proto-grant" in capsys.readouterr().err
+    # With a grant the check is silent; a refused one is not a grant.
+    assert turn.require_grant("dsn", "dev@localhost") is not None
+    monkeypatch.setattr(turn, "db", lambda dsn, sql, params: [(1,)])
+    assert turn.require_grant("dsn", "Dev@Localhost") is None
+    assert "refresh_refused_at IS NULL" in turn.GRANT_SQL
+
+
+def test_reauth_entry_hits_reads_full_tool_results(monkeypatch):
+    """The summaries reauth_hits reads are cut at 160 chars, so an instruction deep in a long
+    result is invisible there; this reads the whole tool_result. Only the engine's two
+    anchors: record text has page and film numbers \\b401\\b would flag."""
+    pad = "x" * 300
+    entries = [
+        ({"type": "user", "message": {"content": [{"type": "tool_result", "content": pad + " Call the login tool to authenticate."}]}},),
+        ({"type": "user", "message": {"content": [{"type": "tool_result", "content": [
+            {"type": "text", "text": "census page 401, film 1234401"}]}]}},),
+        ({"type": "assistant", "message": {"content": [{"type": "text", "text": "Reconnect FamilySearch?"}]}},),
+        ({"type": "user", "message": {"content": [{"type": "tool_result", "content": [
+            {"type": "text", "text": pad}, {"type": "text", "text": 'Click "Reconnect FamilySearch" at the top'}]}]}},),
+    ]
+    seen = []
+
+    def fake_db(dsn, sql, params):
+        seen.append((sql, params))
+        return entries
+
+    monkeypatch.setattr(turn, "db", fake_db)
+    hits = turn.reauth_entry_hits("dsn", "sdk-1", "turn-1")
+    assert len(hits) == 2, hits
+    assert "Call the login tool" in hits[0] and "Reconnect FamilySearch" in hits[1]
+    [(sql, params)] = seen
+    assert params == ("sdk-1", "turn-1") and "entries_seq_before" in sql and "subpath" not in sql, \
+        "every subpath (delegated agents' too), above the turn's high-water mark"
+    assert turn.reauth_entry_hits("dsn", None, "turn-1") == []
+    assert not turn.REAUTH_ENTRY.search("page 401") and turn.REAUTH_HITS.search("HTTP 401")
+    assert demo.REAUTH is turn.REAUTH_HITS and demo.reauth_hits is turn.reauth_hits
+
+
 # ── the make targets ────────────────────────────────────────────────────────────────
 
 
@@ -219,9 +282,14 @@ def test_proto_demo_target_brings_the_stack_up_and_runs_the_script():
     assert re.search(r"\$\(if \$\(FIXTURE\),\s*--fixture '\$\(FIXTURE\)',\s*\)", body), body
     assert "bagley-father-1884" not in body and demo.DEFAULT_FIXTURE == "bagley-father-1884"
     # The harness's tree-read block reaches the worker, and an explicit empty value lifts it.
-    assert re.search(r'export BLOCKED_TOOLS="\$\$\{BLOCKED_TOOLS-', body), body  # raw make text: $$ is the shell's $
-    for tool in ("person_read", "person_search", "person_ancestors", "person_record_matches", "person_person_matches", "person_quality"):
-        assert tool in body, tool
+    blocked = re.search(r'export BLOCKED_TOOLS="\$\$\{BLOCKED_TOOLS-([^}]*)\}"', body)  # raw make text: $$ is the shell's $
+    assert blocked, body
+    assert {p.strip() for p in blocked.group(1).split(",") if p.strip()} == _harness_constant("BLOCKED_TREE_TOOLS"), \
+        "proto-demo's BLOCKED_TOOLS default is the harness's BLOCKED_TREE_TOOLS (orchestrator.py): re-sync the Makefile"
+    # The worker blocks by bare name only; it has no copy of the harness's argument-decided map.
+    assert _harness_constant("LIVE_TREE_ARG_TOOLS") == {}, \
+        "orchestrator.py's LIVE_TREE_ARG_TOOLS is no longer empty: the worker blocks by bare name " \
+        "only (BLOCKED_TOOLS), so an argument-decided block needs a worker port before proto-demo compares"
 
 
 def test_proto_test_runs_the_d17_and_demo_suites():
@@ -231,6 +299,18 @@ def test_proto_test_runs_the_d17_and_demo_suites():
 
 
 ORCHESTRATOR = Path(__file__).resolve().parents[3] / "eval" / "harness" / "e2e" / "orchestrator.py"
+
+
+def _harness_constant(name: str):
+    """A module-level literal in orchestrator.py, read by AST (the harness is not importable
+    here); a ``frozenset({...})`` call reads as its set."""
+    for node in ast.parse(ORCHESTRATOR.read_text(encoding="utf-8")).body:
+        if isinstance(node, ast.Assign) and [getattr(t, "id", None) for t in node.targets] == [name]:
+            value = node.value
+            if isinstance(value, ast.Call) and getattr(value.func, "id", None) == "frozenset" and len(value.args) == 1:
+                value = value.args[0]
+            return ast.literal_eval(value)
+    raise AssertionError(f"orchestrator.py has no module-level {name}")
 
 
 def test_proto_demo_auto_exports_the_harness_cap_and_delegates_to_proto_demo():

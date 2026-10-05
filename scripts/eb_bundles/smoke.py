@@ -8,8 +8,11 @@ Web and worker run in an amazonlinux:2023 helper image (python3.12, unzip, util-
 shadow-utils, user webapp) with --network none and a tmpfs /tmp: unzip to
 /var/app/staging, build the venv and pip install requirements.txt from the bundle's own
 wheels (Beanstalk's build step), run .platform/hooks/predeploy/* as root, move staging to
-/var/app/current, then run the Procfile's web: command as webapp with the template's
-environment. Tools runs in node:24-slim with --network none from a root-owned
+/var/app/current, run its migrate.py --status with no DSN (U9: it must import and count the
+bundle's sql/), then run the Procfile's web: command with the template's environment and
+API_LEVEL_STANDINS, as
+webapp (web) or as root (worker: the hook's drop-in, so it can launch each turn's CLI as its
+slot user, U3). Tools runs in node:24-slim with --network none from a root-owned
 /var/app/current, as user node. Each tier is then probed over loopback.
 
 The bundle reaches the container by `docker cp`, never a bind mount (colima cannot mount
@@ -19,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import posixpath
 import re
 import shlex
 import stat
@@ -41,6 +45,18 @@ ENV_NAMESPACE = "aws:elasticbeanstalk:application:environment"
 VENV = "/var/app/venv/staging"
 STAGING = "/var/app/staging"
 NODE_IMAGE = "node:24-slim"
+# U9's schema applier in each Python bundle; its SQL_DIR is the sql/ beside it.
+MIGRATE = {"web": "migrate.py", "worker": "proto/migrate.py"}
+# Stand-ins for the API-level settings each tier refuses to start without; nothing they
+# name answers under --network none. Never DEV_PATHS (U11): the worker must start without it.
+SMOKE_QUEUE_URL = "https://sqs.us-east-1.amazonaws.com/000000000000/smoke"
+API_LEVEL_STANDINS = {
+    "web": {"QUEUE_URL": SMOKE_QUEUE_URL},
+    "worker": {"QUEUE_URL": SMOKE_QUEUE_URL, "TOOL_SERVER_URL": "http://127.0.0.1:9/mcp",
+               "FS_TOKEN_ENC_KEY": "eb-smoke-stand-in-not-a-secret-0123456789",
+               "MODEL_PROVIDER": "gateway", "GATEWAY_BASE_URL": "http://gateway.invalid/bedrock"},
+    "tools": {"GENEALOGY_PG_DSN": "postgresql://u:p@127.0.0.1:1/x", "GENEALOGY_S3_BUCKET": "smoke"},
+}
 AL2023_DOCKERFILE = b"""FROM amazonlinux:2023
 RUN dnf install -y -q python3.12 python3.12-pip unzip util-linux shadow-utils findutils procps-ng \\
     && dnf clean all \\
@@ -68,6 +84,23 @@ while True:
             sys.exit(0)
         time.sleep(1)
 print(json.dumps({p: get(p) for p in paths}))
+"""
+# U11: a stub `crash` body to the worker as sqsd would POST it. Without DEV_PATHS it must
+# answer 400 and leave the process up; with them on it would os._exit(1).
+PY_CRASH_POST = r"""
+import json, sys, urllib.error, urllib.request
+body = json.dumps({"turn_id": "turn-smoke", "session_id": "sess-smoke", "project_id": "proj-smoke",
+                   "behaviour": "crash"}).encode("utf-8")
+req = urllib.request.Request(sys.argv[1] + "/turn", data=body, method="POST", headers={
+    "Content-Type": "application/json", "X-Aws-Sqsd-Msgid": "m-smoke", "X-Aws-Sqsd-Receive-Count": "1"})
+try:
+    r = urllib.request.urlopen(req, timeout=10)
+except urllib.error.HTTPError as e:
+    r = e
+except OSError as e:
+    print(json.dumps({"error": str(e)}))
+    sys.exit(0)
+print(json.dumps({"status": r.status, "body": r.read(2000).decode("utf-8", "replace")}))
 """
 NODE_PROBE = r"""
 const [base, ...paths] = process.argv.slice(1);
@@ -173,10 +206,27 @@ def ca_check(c: Checks, container: str, env: dict[str, str]) -> None:
             f"{var}={path} exists in the deployed tree")
 
 
+def migrate_check(c: Checks, container: str, zip_path: Path, extra: dict[str, str]) -> None:
+    """`migrate.py --status` from the deployed tree, with the bundle's venv and no DSN: exit 2
+    naming MIGRATE_PG_DSN and the bundle's own sql/*.sql count under the deployed sql/ --
+    the module imports with the vendored psycopg and finds SQL_DIR in this tier's layout."""
+    script = MIGRATE[c.tier]
+    sql_dir = posixpath.join(posixpath.dirname(script), "sql")
+    with zipfile.ZipFile(zip_path) as zf:
+        files = sum(1 for n in zf.namelist() if re.fullmatch(rf"{re.escape(sql_dir)}/[^/]+\.sql", n))
+    assigns = " ".join(f"{k}={shlex.quote(v)}" for k, v in sorted(extra.items()))
+    proc = sh(container, f"cd {layout.APP_DIR} && env -u MIGRATE_PG_DSN {assigns} {VENV}/bin/python {script} --status",
+              user="root" if c.tier == "worker" else "webapp", timeout=120)
+    err = proc.stderr.decode("utf-8", "replace").strip()
+    want = f"no MIGRATE_PG_DSN; {files} files under {layout.APP_DIR}/{sql_dir}"
+    c.check(files > 0 and proc.returncode == 2 and want in err,
+            f"{script} --status with no DSN exits 2: {want}", (proc.returncode, err[-500:]))
+
+
 def python_tier(tier: str, zip_path: Path, platform: str, keep: bool, extra: dict[str, str]) -> int:
     c = Checks(tier)
     env, command = template(zip_path)
-    env = {**env, **extra}
+    env = {**env, **API_LEVEL_STANDINS[tier], **extra}
     arch = platform.split("/")[-1]
     image = f"eb-bundles-smoke-al2023:{arch}"
     print(f"== {tier}: building the AL2023 helper image ({platform}) ==", flush=True)
@@ -196,8 +246,11 @@ def python_tier(tier: str, zip_path: Path, platform: str, keep: bool, extra: dic
         if not c.check(proc.returncode == 0, "offline deploy (unzip, venv, pip install, predeploy hooks)",
                        (proc.stdout + proc.stderr).decode("utf-8", "replace").strip()[-2000:]):
             return c.failed
+        migrate_check(c, name, zip_path, extra)
         put(name, "/run-app.sh", launcher(env, command, f"{VENV}/bin:/usr/local/bin:/usr/bin:/bin", "/home/webapp"))
-        docker("exec", "-d", "-u", "webapp", name, "/run-app.sh")
+        # U3: on Beanstalk the hook's drop-in runs the worker's web.service as root, so it
+        # can launch each turn's CLI as its slot user; the web tier stays webapp.
+        docker("exec", "-d", "-u", "root" if tier == "worker" else "webapp", name, "/run-app.sh")
         ca_check(c, name, env)
         port = int(env.get("PORT", "0"))
         py = [f"{VENV}/bin/python", "-c"]
@@ -231,23 +284,39 @@ def python_tier(tier: str, zip_path: Path, platform: str, keep: bool, extra: dic
                     "/healthz is 503 with postgres failing", (h["status"], h["body"][:300]))
             for key in ("agents", "cwd", "tmpdir"):
                 c.check(checks.get(key, {}).get("ok") is True, f"/healthz {key} ok", checks.get(key))
+            crash = probe(name, py, PY_CRASH_POST, port, [])
+            c.check(crash.get("status") == 400 and "stub turns are disabled" in crash.get("body", ""),
+                    "a stub crash POST answers 400 without DEV_PATHS", crash)
+            again = probe(name, py, PY_PROBE, port, ["/healthz"])
+            c.check(again.get("/healthz", {}).get("status") == 503, "the worker still answers after it", again)
             start = next((json.loads(ln) for ln in out(docker("exec", name, "cat", "/tmp/app.log")).splitlines()
                           if ln.startswith("{") and '"ev":"start"' in ln), None)
             hook = (start or {}).get("hook_python", "")
             m = re.search(r"(\d+)\.(\d+)", hook.rsplit(" ", 1)[-1]) if hook else None
             c.check(m is not None and (int(m.group(1)), int(m.group(2))) >= (3, 10),
                     "ev=start hook_python >= 3.10", hook or app_log(name))
+            c.check((start or {}).get("dev_paths") is False, "ev=start dev_paths is false",
+                    (start or {}).get("dev_paths", app_log(name)))
+            provider = env.get("MODEL_PROVIDER", "").strip().lower()
+            c.check((start or {}).get("provider") == provider, f"ev=start provider is {provider}",
+                    (start or {}).get("provider", app_log(name)))
             dest = shlex.quote(layout.PLUGIN_DEST)
             c.check(out(sh(name, f"stat -c %U:%G {dest}")) == "root:root", f"{layout.PLUGIN_DEST} is root-owned",
                     out(sh(name, f"stat -c %U:%G {dest}")))
-            c.check(sh(name, f"touch {dest}/x || test -w {dest}", user="webapp").returncode != 0,
-                    f"webapp cannot write {layout.PLUGIN_DEST}")
+            pool = (start or {}).get("turn_users")
+            c.check(isinstance(pool, list) and len(pool) >= 2 and "root" not in pool,
+                    "ev=start names the slot users each CLI runs as", pool or app_log(name))
+            slot = pool[0] if isinstance(pool, list) and pool else "genealogy-turn-0"
+            dropin = out(sh(name, "cat /etc/systemd/system/web.service.d/10-genealogy-root.conf"))
+            c.check("User=root" in dropin, "the hook's drop-in runs web.service as root", dropin)
+            c.check(sh(name, f"touch {dest}/x || test -w {dest}", user=slot).returncode != 0,
+                    f"{slot} cannot write {layout.PLUGIN_DEST}")
             c.check(out(sh(name, f"stat -c %a {layout.WORKER_CWD}")) == "555", f"{layout.WORKER_CWD} is mode 555",
                     out(sh(name, f"stat -c %a {layout.WORKER_CWD}")))
             cli = out(sh(name, f"{VENV}/bin/python -c 'import claude_agent_sdk, pathlib; "
                                "print(pathlib.Path(claude_agent_sdk.__file__).parent / \"_bundled\" / \"claude\")'"))
-            ver = sh(name, f"HOME=/home/webapp {shlex.quote(cli)} --version", user="webapp", timeout=120)
-            c.check(ver.returncode == 0, "the SDK's bundled claude --version runs",
+            ver = sh(name, f"HOME=/tmp {shlex.quote(cli)} --version", user=slot, timeout=120)
+            c.check(ver.returncode == 0, f"the SDK's bundled claude --version runs as {slot}",
                     out(ver) or ver.stderr.decode("utf-8", "replace")[-300:])
         return c.failed
     finally:
@@ -268,7 +337,7 @@ def extract(zip_path: Path, dest: Path) -> None:
 def tools_tier(zip_path: Path, platform: str, keep: bool, extra: dict[str, str]) -> int:
     c = Checks("tools")
     env, command = template(zip_path)
-    env = {**env, "GENEALOGY_PG_DSN": "postgresql://u:p@127.0.0.1:1/x", "GENEALOGY_S3_BUCKET": "smoke", **extra}
+    env = {**env, **API_LEVEL_STANDINS["tools"], **extra}
     manifest = json.loads((REPO / layout.ENGINE_DIR / "manifest.json").read_text(encoding="utf-8"))
     tool_count = len(manifest["tools"])
     print(f"== tools: {NODE_IMAGE} ({platform}) ==", flush=True)
