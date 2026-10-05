@@ -1,0 +1,454 @@
+{
+  "run_log": "v4.json",
+  "annotator": "edenosas1@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_proof_conclusion_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The persisted ps_001 is accurate to the fixture (two 1850 candidate households, the 1860 boarder with no Flynn, the death certificate with father 'unknown', the empty baptism search). But the summary_for_user tells the user 'Both questions about Patrick's parents remain open' when the project has exactly one question (q_001, the father). That is a false claim on the user-facing surface, which makes this partial."
+    },
+    {
+      "test_id": "ut_proof_conclusion_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It read every relevant section, wrote ps_001 with every required field, wrote no tree changes, and stamped the project. Leaving q_001 open is defensible because h_001 and h_002 are both still active. Minor contract slip: paragraph 2 of the summary is two sentences where the contract asks for one."
+    },
+    {
+      "test_id": "ut_proof_conclusion_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All 13 calls used the correct projectPath, section, questionId and personId (I1, I2, I3). The single research_append batch and the empty project update are well-formed, and nothing landed in fixture_not_found."
+    },
+    {
+      "test_id": "ut_proof_conclusion_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "not_proved fits two candidates nobody can tell apart. The narrative says why neither can be accepted ('would need to (1) accept... and (2) establish a link... neither of which the evidence supports'). shortfall 'ceiling' matches both exhaustive_search_summary ('No further record type in any accessible repository...') and the declared exhaustiveness."
+    },
+    {
+      "test_id": "ut_proof_conclusion_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It reads on its own: each census household is described by dwelling number and age, citations sit inline in brackets, the boarder and death-certificate records are explained in prose, and the tier is stated. Small leaks of internal labels ('pe_005', 'h_001'/'h_002', 'informant_proximity: researcher, coded as absent') are always explained in the surrounding prose, so they do not reach the partial bar."
+    },
+    {
+      "test_id": "ut_proof_conclusion_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All 12 assertions are cited. The narrative uses the negative evidence itself: the blank or 'unknown' father on the death certificate, and the baptism search that found nothing. The 1860 boarder record is treated as evidence that fails to connect him to either household, not dropped."
+    },
+    {
+      "test_id": "ut_proof_conclusion_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "vehicle 'argument' is the right form for two candidates resting only on indirect, inferred-household evidence. The structure really is an argument: the two candidates get the same treatment, and the same reasoning is applied 'symmetrically' to Michael."
+    },
+    {
+      "test_id": "ut_proof_conclusion_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "N/A is correct. The tier is not_proved and the conclusion is neither bounded nor a documented negative. The run made no tree write and marked nothing primary, which is the right behaviour."
+    },
+    {
+      "test_id": "ut_proof_conclusion_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The narrative and fields match the fixture: burial 14 Nov 1842 (a_003), birth about 1845 from the 1850 age 5 (a_002) and the death-certificate age about 63 (a_006), with the son-in-law informant correctly treated as secondary. tier disproved, shortfall none, q_001 resolved and project completed are all consistent."
+    },
+    {
+      "test_id": "ut_proof_conclusion_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "This run set project.status to 'completed'. The return contract then requires paragraph 2 of summary_for_user to say the research is finished AND that the user can ask for a second opinion. The agent wrote 'The research on this question is finished... ask to open a new research question' and never offered the second opinion, which is the concrete omission this PR's contract adds. (test_completion_summary_offers_second_opinion skipped because this test is not tagged for it.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The research_query calls (assertions, conflicts, questions, hypotheses, person_evidence for I1/I2, proof_summaries, sources src_001-003) all have the correct ids. The batched append plus question update, and the project status:'completed' write, are well-formed and both returned valid."
+    },
+    {
+      "test_id": "ut_proof_conclusion_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The run picks disproved and says plainly that it is a refutation, not merely unsupported ('A man cannot father a child after his own death'). shortfall 'none' is allowed on disproved, and the exhaustive_search_summary agrees ('No records remain unsearched that could alter this conclusion')."
+    },
+    {
+      "test_id": "ut_proof_conclusion_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Self-contained prose: the research question, the evidence with footnotes ^1-^3 copied verbatim from the source citations, informants named and weighed, the source of the claim (an unsourced online tree), and an explicit 'Tier: Disproved' declaration."
+    },
+    {
+      "test_id": "ut_proof_conclusion_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All six assertions are cited across the three sources. The narrative admits the weaker informant (the son-in-law) instead of hiding it, and uses the burial's identifiers (townland, wife Bridget) to show the man buried is the one the online tree means."
+    },
+    {
+      "test_id": "ut_proof_conclusion_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A Statement fits a refutation that is plain arithmetic (buried 1842, born about 1845), with nothing to weigh, and the narrative is a short Statement in structure."
+    },
+    {
+      "test_id": "ut_proof_conclusion_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": null,
+      "comment": "The judge's 3 is wrong. The rubric says to score null when the concluded tier is disproved (no bounded or documented-negative carve-out applies), and the judge's own rationale cites that threshold before awarding 3. Leaving the tree untouched was the right behaviour; the dimension is N/A."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Most of the review is accurate: the citations are verbatim, c_001 is described faithfully, and the exhaustiveness gaps are the right ones. It mischaracterizes src_005, though. The source's citation reads 'St. Mary's Catholic Church, Pottsville, baptism of Patrick Flynn, 1845', which is the subject's own baptism and the record most likely to name both parents. The agent describes it only as sibling data, calls it 'corroborating context' and ranks it last. It then says 'no maternal candidate is named in any evidence' and tells the user to go looking for record types that might name the mother, without pointing to this baptism."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It walks all five GPS components plus a tree check, flags all five unincorporated sources (src_005-009), and says whether each could move the tier. It never states checklist item 6 (claims that something cannot be resolved), but ps_001 makes no such claim, so nothing was left out."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "15 read-only research_query/project_context calls, all scoped correctly (proof_summaries/assertions by q_001, assertions by src_001/003/004/005, person_evidence I1/I2, plus global conflicts). This is a review, so it correctly wrote nothing."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It confirms probable against the tier above: censuses for 1870/1880/1900 and probate are not yet searched, and shortfall 'gap' is accurate. It names what would push the tier to proved (a will naming Patrick, completing the census run), which is the review-branch pass."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The judge's 2 should be 3. On the review branch the dimension grades whether the self-containment check was done, and it was. The agent found that the narrative has no inline citation anchors and does not acknowledge the open maternal side, and it confirmed that the ps_001 narrative uses no bare ids, which is true. The judge's stated reason, 'could have been more systematic', matches no partial criterion in the rubric."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It lists the three cited assertions (a_004, a_010, a_013) and c_001, and flags all five uncited sources as gaps rather than defects, which matches the per-test scope note. How it weighed src_005 is a characterization error, already counted under Correctness."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The judge's 3 is not supported by the transcript. The only mention of form is the header 'vehicle `summary`'; the review never says whether a Summary still fits this evidence. That matches the rubric's review-branch partial exactly ('doesn't explicitly judge whether the existing form still fits'). The judge's rationale credits the agent with a judgment it never made."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": null,
+      "comment": "The judge's 3 is wrong. The rubric says to score null when the skill only assessed an existing proof and wrote nothing (gps-review), because the tree's state is the fixture's setup. This run wrote nothing, so the dimension is N/A."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d7g",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "I agree with 2, but for a different reason. The judge docked Correctness for the 'all five GPS components... substantially met' sentence, which Tier justification already owns, so counting it here grades it twice. The real factual error is in the persisted exhaustive_search_summary: it says the 12 Nov 1826 marriage was 'seven years before the baptism', which is wrong for the 1832 date the narrative adopts (the narrative itself says six). The summary_for_user also overclaims ('the most reliable type of historical evidence')."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d7g",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It wrote ps_001 with every field, resolved q_001, completed the project, and paragraph 2 offers the second opinion as required. It also resisted the delegation's pressure to 'state it as fact'. Nothing the input required was skipped."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d7g",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every read is scoped correctly (q_001, LR9N-VGQ/I1/I2, src_001-004). The append batch, two tree_correct batches (update_fact on fa26a9c0 and R27/F1, update_source S1-S4) and the project completion all used correct ids and returned valid."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d7g",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "probable with shortfall 'gap' is right, and the narrative names the searches still to do (1841/1851 census, sibling baptisms, nonconformist registers). Two things keep it at partial. The Tier Declaration says 'all five GPS components are otherwise substantially met', which per-test context forbids. And the narrative claims those searches 'would not narrow or alter the parentage conclusion', against the scenario premise that at least one could contradict it, so it never explains what would be needed for proved."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d7g",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Self-contained: research question, footnotes ^1-^4 with full citations, entry numbers, officiants, a source-classification table, the 1832/1833 discrepancy named (index 1832, tree 1833, the original image governs at 1832), and a tier declaration in hedged language ('strongly suggests'). The bare src_00N ids in the table and one sentence each sit beside a full description of the source."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d7g",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All 16 assertions are cited, both originals and both indexes are covered, the date discrepancy is surfaced rather than hidden, and there were no conflicts to account for."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d7g",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A Summary is the right form: two independent original registers that agree, no rival candidates. The structure follows it (evidence by strength, classification, correlation, limitations)."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d7g",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The judge's 3 should be 2. The run set primary:true on christening fact fa26a9c0, whose date is '25 September 1833', while its own narrative concludes that 'the original image governs and records 25 September 1832'. So the tree now marks as concluded a date the conclusion rejects; it should have corrected the date or added an 1832 fact. The ParentChild edges R28/R29 already existed and are sourced, though only to the derivative index S1."
+    },
+    {
+      "test_id": "ut_proof_conclusion_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The final ps_001 (not_proved, shortfall conflict, q_001 left open, no tree write) is correct, but the judge's 'gate was properly applied' is false. The agent's first research_append wrote tier probable AND resolved q_001, with a narrative arguing c_001 'does not call into question whether the three records describe the same man'. That is exactly the identity misjudgement this test exists to catch, and the writer tool's precondition refused it, not the agent's own gate. The persisted state is correct only because the tool caught the error."
+    },
+    {
+      "test_id": "ut_proof_conclusion_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The final state covers every required element: ps_001 updated in place to not_proved, a narrative that names c_001, the disputed birthplace and what would settle it, q_001 untouched, conflicts untouched, no tree write, and conflict-resolution recommended. The summary paragraph ends with the unsearched 1870/1880/1900 censuses and the probate file, and offers no second opinion, which is correct because the project was not completed."
+    },
+    {
+      "test_id": "ut_proof_conclusion_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All research_query calls used correct projectPath, section and filters. The one research_append rejection (tier probable refused while c_001 is unresolved) was followed immediately by a single clean retry at not_proved with valid fields. Under the fixed retry policy that scores full credit, and the reasoning error is graded under Correctness instead."
+    },
+    {
+      "test_id": "ut_proof_conclusion_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Final tier not_proved with shortfall conflict matches the document state: c_001 is unresolved and lists q_001 in blocks_question_ids. The narrative explains that correlation presupposes identity across src_001/003/004 and names the weighing that would settle it. test_conflict_blocks_proved and test_shortfall_matches_document_state both passed."
+    },
+    {
+      "test_id": "ut_proof_conclusion_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The persisted narrative names each record in prose (1850 and 1860 Schuylkill censuses, 1908 death certificate no. 4521) and gives the disputed values (Ireland vs Pennsylvania), full inline citations and a status section. It does carry parenthetical ids (src_001, c_001), contrary to the judge's claim, but each one sits beside a prose description, so a reader does not need the JSON."
+    },
+    {
+      "test_id": "ut_proof_conclusion_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It cites a_004, a_010 and a_013, the only parentage assertions, and names the open conflict c_001 as the blocker rather than hiding it. It also accurately states that c_001 has no weighing or preferred assertion yet. This scenario has no unincorporated sources (src_001 to src_004 only, all queried)."
+    },
+    {
+      "test_id": "ut_proof_conclusion_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A Summary-shaped blocked-attempt narrative (evidence in hand, then the blocking conflict, what would settle it, and status) fits a not_proved result whose reasoning is a single precondition failure. No Argument machinery is needed because nothing is being weighed toward a conclusion."
+    },
+    {
+      "test_id": "ut_proof_conclusion_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "N/A is right: the concluded tier is not_proved, which is below the encoding threshold and not bounded. The run made no tree_edit or tree_correct call."
+    },
+    {
+      "test_id": "ut_proof_conclusion_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The score of 2 is right, but the reason is different. The concrete errors: the reply claims 'c_001 ... no longer exists in the system', yet c_001 is present and resolved in the scenario (blocks_question_ids []). The agent only queried conflicts filtered by q_001 and wrongly read the empty result as deletion. It also rewrote exhaustive_search_summary to say 'Thomas Flynn's probate records have not been located' while src_006 (Schuylkill County will of Thomas Flynn, 1881) is on file. The judge's 'refinement not persisted' theory is weaker: the agent's own return claimed only metadata changes. The 'Proof Narrative' heading was added by the main-thread relay."
+    },
+    {
+      "test_id": "ut_proof_conclusion_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The required actions were done: ps_001 updated in place with no duplicate, q_001 resolved with a_004/a_010/a_013, and project set to completed after confirming no in_progress questions. The summary paragraph ends with the unsearched censuses and probate, and paragraph 2 offers a second opinion as required on completion. The missed unincorporated sources are graded under Evidence completeness, not here."
+    },
+    {
+      "test_id": "ut_proof_conclusion_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every call had valid, correctly targeted args. These were project_context, research_query by section, question, person and source, a batched research_append updating ps_001 and q_001, and a project status update. The conflicts query filtered by questionId was a legitimate call; the error was in interpreting its empty result, which is graded under Correctness."
+    },
+    {
+      "test_id": "ut_proof_conclusion_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Probable with shortfall gap is coherent: there are two indirect census co-enumerations plus a death certificate whose informant is secondary, and the summary names reachable unsearched records (the 1870/1880/1900 censuses). Shortfall agrees with exhaustive_search_summary. The tier was correctly left unchanged."
+    },
+    {
+      "test_id": "ut_proof_conclusion_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Corrected up from the judge's 2. The persisted ps_001.narrative_markdown, unchanged from the fixture, is self-contained prose: the records are named, the citations are inline, it has a conflict-resolution section, and the tier is declared. The judge docked this dimension for chat-only prose, but the per-test context assigns that to Correctness. The agent's own return also did not claim a narrative rewrite."
+    },
+    {
+      "test_id": "ut_proof_conclusion_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Corrected down from the judge's 3. The judge's claim that src_005–src_009 are 'flagged in the exhaustive_search_summary as not yet available' is false: the rewritten summary never mentions the baptism, will, deed, birth certificate or obituary on file. It even calls probate 'not located' when the will is src_006. The agent also emptied resolved_conflict_ids, dropping c_001, a resolved conflict that the narrative's own Conflict Resolution section still accounts for."
+    },
+    {
+      "test_id": "ut_proof_conclusion_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It keeps the existing Summary vehicle, which fits three correlated sources pointing one way with no competing candidate. The persisted narrative follows that form: evidence summary, conflict resolution, then assessment. The agent did not comment on the form, but nothing called for changing it."
+    },
+    {
+      "test_id": "ut_proof_conclusion_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "N/A per the per-test instruction: R1 (I2 to I1) and the primary Birth fact F1 are already on the fixture tree. The run correctly made no tree call."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The narrative reproduces src_001.citation verbatim ('Dubuque County, Iowa, marriage certificate, Michael Doyle and Ellen [surname illegible], 12 June 1889; Dubuque County Recorder, digital image, FamilySearch'). It adds only the stored URL and access date, which per judge_context is a match."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A first ps_001 was appended with every required field (tier not_proved, vehicle summary, shortfall gap, assertions a_001–a_003, an exhaustive_search_summary naming the unsearched records, and a narrative). q_001 correctly stays open and the tree is untouched. The summary paragraph ends with the unsearched census, baptismal, birth and probate records, and offers no second opinion because the project was not completed."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The research_query calls (assertions, question, conflicts, person_evidence x2, hypotheses, src_001, proof_summaries) and the research_append proof_summaries append all carried correct args, with no rejection. The final project update with empty fields correctly stamps updated alone."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Not_proved with shortfall gap fits a single original record whose target field is illegible. The narrative names concrete reachable records (the 1880 federal census, the 1885/1895 Iowa state censuses, Dubuque diocesan registers, county probate) and explicitly denies that the surname is permanently unknowable. That correctly distinguishes a gap from a ceiling despite the stored exhaustive declaration."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The narrative is readable without the JSON: it names the 1889 Dubuque marriage certificate, quotes the stored citation inline, describes each assertion in prose and declares the tier. One formatting defect is not owned by this rubric: several paragraph and list breaks were persisted as literal backslash-n sequences ('...accessed 2026-06-01.\\n\\nThe certificate yields...'), so those sections render as run-on text with visible escapes."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three assertions from the only source are cited, and there are no conflicts or other sources on file. The illegibility is stated candidly rather than worked around."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A Summary fits one record with no competing candidates or conflicts. The narrative follows that form: question, evidence, why it cannot be established, tier declaration, limitations."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "N/A is right: the tier is not_proved with no bounded or negative conclusion, and the run made no tree call."
+    }
+  ]
+}

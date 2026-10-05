@@ -1,0 +1,126 @@
+{
+  "run_log": "v8.json",
+  "annotator": "edenosas1@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Loaded research, queried state (project_context plus research_query across questions/plans/log/assertions/person_evidence/conflicts), then went person-evidence agent (unlinked a_002..a_012), research-exhaustiveness agent, then Skill search-records for pli_006. That order matches routing rows 146/149. The reply doesn't invent a probate result; it lists both branches (will found vs nil). It does say the eight assertions 'now carry person_evidence entries', but the stub told it to narrate as if the call ran, and nothing was written. No gps-mentor spawn."
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It ran on without stopping to ask, which is what --autonomous grades. When exhaustiveness declined at Step 0 it kept going and drained pli_006, and the summary lists the 1870/1880/1900 census gaps for research-plan. Small flaw: it stopped after search-records without extending the plan, but the stub told it to stop, so that's not a deduction."
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every research_query call used a valid section, with questionId/personId/planItemId filters where it filtered, and all matched live. A few calls were repeats (project_context twice, conflicts with q_001 twice back to back), and it did a raw Read of tree.gedcomx.json. That's waste, not wrong arguments. The judge's line about the search-records 'query parameters' grades a Skill call, not an MCP argument."
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "No skill was invoked and no project was created (invariant test_creates_no_project_when_none_exists passed). It used AskUserQuestion to ask who the person is, which the spec lists as a state-safe decline. The judge says it 'correctly recognized that no project exists', but the reply never says that. It frames the problem as the user forgetting the person's details and never mentions init-project. Nothing it says is false, though."
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The request names no person, so collecting the name, dates and places is the step init-project needs first anyway. The reply promises to 'set up a new project' once it has them. It never says there's no project yet, but the behavior meets what the test expects."
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls; the only call was the built-in AskUserQuestion. N/A is right."
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Routing was right. One project_context call, then an Agent spawn of question-selection (routing row 1), with no gps-mentor or other detour. But the reply makes up what the stubbed agent produced: it says the first question 'centers on documenting Patrick's parentage' through 'naturalization ... church registers given the likely Irish-Catholic background'. Nothing returned any of that. It also leaks internals ('research.json', '@plugin:question-selection'). The stub only licensed saying the call ran normally, not inventing its contents, so 3 is too high."
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It read state, saw the objective with zero questions, handed off to question-selection, and stopped as the stub told it to. Its next-step note (locality-guide, then research-plan) matches the routing table."
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One MCP call, project_context, with the correct projectPath, matched live. The Agent delegation prompt passed the objective correctly."
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Neither research nor research-plan was invoked (skills_invoked is empty). It ran project_context, a Glob and a raw Read of research.json, then wrote a full five-priority browse strategy with a sequence table inline. That is exactly the inline planning judge_context names as wrong. Every source it cites (src_005 baptism, src_006 will, src_008 deed, pli_006) is in the fixture, but on a negative test accurate content doesn't earn credit, so 1 is right."
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "It never routed to research-plan, and it ended by offering to 'kick off the image browse' itself. No browse ran, so the invariant passes, but the routing decision being graded wasn't made."
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The one MCP call, project_context, had the correct projectPath. No volume_search or image_search call was made. The raw Read of the whole research.json breaks the skill's 'query, don't Read' rule, but that's a built-in tool, not an MCP argument."
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The router sent this straight to Skill search-records with the user's message as args. research never activated, and no volume_search or image_search call happened, so the no-browse-on-indexed invariant holds. That's the correct route."
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The routing decision is the whole graded behavior, and the run picked search-records. The empty reply and no_result_message=true come from the negative-test short-circuit after the hand-off, not from the router leaving something out. Per the judge rules, terseness isn't a deduction."
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls; the only call was the Skill hand-off. N/A is right."
+    }
+  ]
+}
