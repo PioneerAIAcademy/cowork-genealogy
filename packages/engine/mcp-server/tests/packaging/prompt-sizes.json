@@ -26,7 +26,7 @@
     "packages/engine/plugin/agents/translation.md": 19677,
     "packages/engine/plugin/agents/tree-edit.md": 30669,
     "packages/engine/plugin/agents/validate-schema.md": 4382,
-    "packages/engine/plugin/skills/conflict-resolution/SKILL.md": 27656,
+    "packages/engine/plugin/skills/conflict-resolution/SKILL.md": 29118,
     "packages/engine/plugin/skills/forget-and-rederive/SKILL.md": 13208,
     "packages/engine/plugin/skills/init-project/SKILL.md": 30042,
     "packages/engine/plugin/skills/record-extraction/SKILL.md": 15878,
@@ -42,6 +42,7 @@
   "tools": {
     "tool:auth_status": 274,
     "tool:build_external_search_url": 4140,
+    "tool:catalog_search": 1965,
     "tool:collections_search": 1344,
     "tool:convert_calendar": 3213,
     "tool:external_links_search": 2332,

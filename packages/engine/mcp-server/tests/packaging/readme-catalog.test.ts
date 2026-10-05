@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { allToolSchemas } from "../../src/tool-schemas.js";
@@ -121,6 +121,46 @@ describe("README catalog", () => {
         `are registered: ${wrong.join(", ")}. Update the number, or drop it ` +
         `and point at the tables.`,
     ).toEqual([]);
+  });
+
+  it("ADR-0002's headline counts match reality", () => {
+    // Third instance of the same class this file already guards for README:
+    // a stated count rots because the PR that moves it edits code, not prose.
+    // ADR-0002 drifted TWICE in two days — one PR took tools 50->51 while
+    // another converted a skill to an agent, and neither touched the other's
+    // number. Nothing read the sentence, and `readme-catalog` reaches
+    // README.md only.
+    //
+    // The sentence is required, not optional: CLAUDE.md and the architecture
+    // guide both cite this ADR for the decomposition, and a reword should be
+    // a deliberate edit here rather than a silently skipped assertion.
+    const adr = readFileSync(
+      join(projectRoot, "docs/adrs/ADR-0002-decompose-into-tools-skills-and-agents.md"),
+      "utf8",
+    );
+    const m = /Today that is (\d+) tools?, (\d+) skills?, and (\d+) agents?\./.exec(adr);
+    expect(
+      m,
+      "ADR-0002 no longer states its 'Today that is N tools, M skills, and " +
+        "K agents.' headline. If that is deliberate, update this test; if it " +
+        "was reworded by accident, restore it.",
+    ).not.toBeNull();
+
+    const skills = readdirSync(join(pluginRoot, "skills"), { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .filter((d) => existsSync(join(pluginRoot, "skills", d.name, "SKILL.md")));
+    const agents = readdirSync(join(pluginRoot, "agents")).filter((f) =>
+      f.endsWith(".md"),
+    );
+    expect({
+      tools: Number(m?.[1]),
+      skills: Number(m?.[2]),
+      agents: Number(m?.[3]),
+    }).toEqual({
+      tools: allToolSchemas.length,
+      skills: skills.length,
+      agents: agents.length,
+    });
   });
 
   it("states an agent count that matches reality, if it states one at all", () => {
