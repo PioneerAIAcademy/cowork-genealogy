@@ -522,18 +522,26 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // in the routing skill: `/research` may spawn this agent directly, so no
   // plane guarantees the router runs at all. Still no `Read` and no
   // `project_context` — the body reaches project state through research_query
-  // and never named either.
+  // and never named either. `place_search`, `place_distance` and `wiki_read`
+  // were added for #2537: the identity decision measures a move outside the
+  // residence cluster and reads the destination's migration page and the
+  // country's naming page (ADR-0012), so those facts left the body.
+  // `place_distance` alone would be a dead grant — it takes the `standardPlace`
+  // only `place_search` returns.
   "person-evidence.md": {
     tools: [
       "materialize_facts",
       "merge_warnings",
       "person_quality",
       "person_warnings",
+      "place_distance",
+      "place_search",
       "record_read",
       "research_append",
       "research_query",
       "same_person",
       "tree_edit",
+      "wiki_read",
     ],
     denies: [],
   },

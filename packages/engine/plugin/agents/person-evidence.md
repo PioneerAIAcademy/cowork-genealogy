@@ -36,6 +36,9 @@ tools:
   - mcp__genealogy__merge_warnings
   - mcp__genealogy__person_warnings
   - mcp__genealogy__person_quality
+  - mcp__genealogy__place_search
+  - mcp__genealogy__place_distance
+  - mcp__genealogy__wiki_read
   - mcp__remote-devices__Genealogy_Research__research_append
   - mcp__remote-devices__Genealogy_Research__research_query
   - mcp__remote-devices__Genealogy_Research__tree_edit
@@ -45,6 +48,9 @@ tools:
   - mcp__remote-devices__Genealogy_Research__merge_warnings
   - mcp__remote-devices__Genealogy_Research__person_warnings
   - mcp__remote-devices__Genealogy_Research__person_quality
+  - mcp__remote-devices__Genealogy_Research__place_search
+  - mcp__remote-devices__Genealogy_Research__place_distance
+  - mcp__remote-devices__Genealogy_Research__wiki_read
   - mcp__Genealogy_Research__research_append
   - mcp__Genealogy_Research__research_query
   - mcp__Genealogy_Research__tree_edit
@@ -54,6 +60,9 @@ tools:
   - mcp__Genealogy_Research__merge_warnings
   - mcp__Genealogy_Research__person_warnings
   - mcp__Genealogy_Research__person_quality
+  - mcp__Genealogy_Research__place_search
+  - mcp__Genealogy_Research__place_distance
+  - mcp__Genealogy_Research__wiki_read
 ---
 
 
@@ -296,6 +305,38 @@ which GedcomX person(s) it might be:
 - Relationship fit (is this persona in the right position relative
   to known family members?)
 
+**Place and naming lookups — before you assess match strength.** Each
+lookup below runs whenever its trigger holds. Decide the triggers from the
+assertions and the tree in hand.
+
+1. **Record outside the residence cluster.** The cluster is the places the
+   project attests the person *lived*: census, tax, land, and Residence facts.
+   A birthplace alone makes no cluster. The trigger holds when the record's
+   state (in the United States) or country differs from every attested
+   residence within ten years of the record's date. When it holds:
+   - `place_search` the record's place and the nearest attested residence,
+     then `place_distance` on the two `standardPlace`s.
+   - `wiki_read` the destination's page:
+     `https://www.familysearch.org/en/wiki/{Jurisdiction}_Emigration_and_Immigration`,
+     the state for the United States and the country elsewhere
+     (`Kentucky_Emigration_and_Immigration`, `Utah_Emigration_and_Immigration`).
+     Read which origins and eras it names as arriving there.
+   - Search the project for a documentary bridge: a passenger list,
+     naturalization, warning-out, land grant, or a relative documented at the
+     destination first.
+2. **A name that a naming system could explain.** The given name agrees and
+   the surname is a different word (not a spelling or phonetic variant), or
+   the given name is in another language. `wiki_read`
+   `https://www.familysearch.org/en/wiki/{Country}_Naming_Customs` for the
+   record's country. Read which system it used and when that system ended.
+3. **An age at first marriage or first child that decides between
+   candidates.** `wiki_read` `https://www.familysearch.org/en/wiki/Guessing_a_Date`
+   for the norm.
+
+A page that does not exist, or a fetch that fails, is recorded in the
+rationale as not retrieved. Never substitute a remembered rule or another
+place's page for it.
+
 **Assess match strength.** Weigh the data points above by reasoning
 directly — correlation analysis is the spine of every identity
 decision. A match is *strong* when name, age, place, and relationship
@@ -383,6 +424,39 @@ the field null when nothing contradicts, and clear it to null — saying
 why in the `rationale` — when the conflict is explained and does not
 bear on identity. The score never promotes a declared conflict.
 
+The comparison runs on every row of the table below, **Obvious included**:
+a person minted from this record, or found by searching for it, still has
+the record's dates and places compared against everything else the tree
+attests. A conflict whose `conflicts` entry is `resolved` or `moot` is not a
+contradiction. It neither caps nor lowers the link; cite its resolution in
+the `rationale`.
+
+Confidence is identity: how sure you are that this persona *is* this
+person, judged on every record that bears on the pairing. It is not the
+weight of the single assertion being linked. A secondary informant on one
+fact lowers that assertion's evidence quality, not the identity.
+
+**Geographic plausibility.** When Step 2's residence-cluster lookup fired,
+decide whether something bridges the move: a documentary bridge in the
+project, or a corridor the destination's page names for that origin and
+era. If nothing does, the link is **`probable` at most, never
+`confident`**, and the `rationale` names the gap: both places, the measured
+distance, and that no bridge or corridor accounts for it. This is not a
+`core_identifier_conflict` and does not take `speculative` (an unexplained
+move is an unfinished argument, and `speculative` is a no-link in an
+autonomous run). If the page could not be retrieved, only a documentary
+bridge in the project lifts the cap. Distance alone never weighs. A move
+that a corridor or a record explains takes the ordinary tiers; name what
+explains it.
+
+**Occupation and age norms weigh; they never cap.** Where trades were
+bound by apprenticeship or indenture, an agreeing occupation is strong
+correlation and a differing one is a reservation to name, not a conflict.
+People who plied several trades are the exception, and so are the very
+poor, recorded as yeoman, labourer or farmer interchangeably. An age at
+first marriage or first child far from the norm Step 2 fetched is named in
+the `rationale` as a departure; it does not move the tier by itself.
+
 | Match strength | Allowed confidence | Action |
 |------------|-------------------|--------|
 | **Weak** — only the name matches, or a core identifier conflicts. **Not Weak: a strong household relationship-fit** — a member positioned under known parents or beside a known spouse — even when the persona is a fact-less stub (see the note below the table). | `speculative` only | **Pause for user confirmation.** Present the evidence and ask: "This is a weak match. The name/age/place similarities are [details]. Do you want to create a speculative link, or is this a different person?" Never auto-link. |
@@ -412,8 +486,9 @@ score should pull a tentative Strong back to Moderate. But:
   the conflict caps it at `speculative` and a pause for the user. A
   high score never auto-links past a conflict.
 - A **patronymic mismatch or an unaccounted-for name element is a
-  core-identifier conflict**, not a spelling variant. In patronymic
-  cultures a differing patronymic names a *different father*; a name
+  core-identifier conflict**, not a spelling variant. Where the naming
+  page Step 2 fetched shows a patronymic system in use at the record's
+  date, a differing patronymic names a *different father*; a name
   element with no source (an extra middle initial, an added byname)
   stays unexplained until a record accounts for it. Either one **caps
   confidence at `speculative`** and must be **named explicitly in the
@@ -762,10 +837,9 @@ hands a merge set to proof-conclusion to fold. For a household record:
    resolver `materialize_facts` uses), including the stated/inferred quality
    distinction, and rejects the call clearly if the assertion or its source
    doesn't resolve — cheaper to fix than a silent wrong ref, and removes the
-   chain-walking mistake that used to cost a retry. A pre-1880 census
-   parent-child edge is *indirect* evidence (a headship/co-residence
-   inference, not a stated relationship) — its assertion's `record_basis`
-   already reflects that, so the resolved ref quality follows automatically.
+   chain-walking mistake that used to cost a retry. The resolved ref
+   quality follows the assertion's `record_basis`, so an edge inferred from
+   household position lands as indirect evidence automatically.
    `tree_edit`'s `ops[]` form is validate-once/write-once/all-or-nothing, so
    a household's edges land atomically — none of them, or all of them,
    never a partial household.
@@ -851,9 +925,9 @@ When multiple candidates share the same name in the same area:
   window. Use occupational and life-stage cues instead (e.g., "listed
   as head of household suggests adult"). Mark confidence no higher
   than `probable` without age corroboration.
-- **Name variants across languages:** Treat Johannes/John/Johann,
-  Marguerite/Margaret, etc. as potential matches. Note the variant
-  mapping in the rationale.
+- **Name variants across languages:** A given name rendered in another
+  language is a potential match. Read the equivalence from the naming page
+  Step 2 fetched, and note the mapping in the rationale.
 - **Multiple records, same repository session:** When a single search
   returns multiple records about the same person, link them in one
   batch but evaluate each independently. Do not let one record's
@@ -1071,8 +1145,8 @@ match or reject candidate records:
 - Race or ethnicity
 - Religion
 - Military unit
-- Geographic proximity including burial location (use `place_distance`
-  when coordinates are available)
+- Geographic proximity including burial location (measured in Step 2's
+  residence-cluster lookup)
 
 ## Why Profiles Matter
 
