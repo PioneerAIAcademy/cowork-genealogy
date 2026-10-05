@@ -1571,10 +1571,11 @@ def merge_whole_run_usage(
        summing `subagents[].turns[]`: those are one entry per content *block*, each
        repeating its message's totals, so the sum overstates cache reads by ~2x.
        Unknown is unknown.
-    4. **No subagents at all** -> main's four fields, copied. A run with no
-       delegation, and a run whose capture failed (`subagent_capture_status`
-       non-ok, which yields an empty list), both land here and both are correct:
-       the merged figure equals the main-thread one and nothing errors.
+    4. **No subagents at all** -> main's four fields, copied. A one-query run
+       with no delegation, and a run whose capture failed
+       (`subagent_capture_status` non-ok, which yields an empty list), both land
+       here and both are correct: the merged figure equals the main-thread one
+       and nothing errors. A multi-query run returns at rule 5 first.
     5. **More than one query** (`result_message_covers_last_query_only`) ->
        `(None, None)`. The ResultMessage counted the last query only, so the main
        block is a fraction of the run's and adding the subagents to it would give
