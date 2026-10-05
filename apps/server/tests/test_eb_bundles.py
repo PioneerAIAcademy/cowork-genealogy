@@ -225,7 +225,8 @@ def good(tier: str) -> dict[str, tuple[bytes, int]]:
                 ".ebextensions/01-web.config": (_config({"PORT": "8000", "PGSSLROOTCERT": CA}), f),
                 "requirements.txt": (REQS, f), "wheels/foo-1.0-py3-none-any.whl": (b"x", f),
                 "web/app.py": (b"", f), "web/auth.py": (b"", f), "web/spa.py": (b"", f),
-                "enqueue.py": (b"", f), "grants.py": (b"", f), "sql/001_schema.sql": (b"", f),
+                "enqueue.py": (b"", f), "grants.py": (b"", f), "migrate.py": (b"", f),
+                "sql/001_schema.sql": (b"", f),
                 "config/familysearch.json": (b"{}", f),
                 "web-dist/index.html": (b"<html>", f),
                 "web-dist/assets/index-abc.js": (b"const s=new EventSource(u);", f)}
@@ -238,7 +239,8 @@ def good(tier: str) -> dict[str, tuple[bytes, int]]:
                 ".platform/hooks/predeploy/01-worker-layout.sh": (b"#!/bin/bash\n", 0o755),
                 "requirements.txt": (REQS, f), "wheels/foo-1.0-py3-none-any.whl": (b"x", f),
                 "app/__init__.py": (b"", f), "app/agent/__init__.py": (b"", f), "app/agent/real_agent.py": (b"", f),
-                "proto/enqueue.py": (b"", f), "proto/grants.py": (b"", f), "proto/sql/001_schema.sql": (b"", f),
+                "proto/enqueue.py": (b"", f), "proto/grants.py": (b"", f), "proto/migrate.py": (b"", f),
+                "proto/sql/001_schema.sql": (b"", f),
                 "proto/worker/worker.py": (b"", f), "proto/worker/options.py": (b"", f),
                 "plugin/.claude-plugin/plugin.json": (b"{}", f), "plugin/hooks/hooks.json": (b"{}", f),
                 "plugin/agents/citation.md": (b"", f), "plugin/skills/research/SKILL.md": (b"", f)}
@@ -369,6 +371,8 @@ REJECTED = {
         ".platform/hooks/predeploy/01-worker-layout.sh": (b"#!/bin/bash\n", 0)}), "has no exec bit"),
     "no predeploy hook": ("worker", lambda: _drop("worker", ".platform/hooks/predeploy/01-worker-layout.sh"),
                           "missing .platform/hooks/predeploy/"),
+    "no migrate.py in web": ("web", lambda: _drop("web", "migrate.py"), "missing migrate.py"),
+    "no migrate.py in worker": ("worker", lambda: _drop("worker", "proto/migrate.py"), "missing proto/migrate.py"),
     "the WebSocket SPA": ("web", lambda: _add("web", **{"web-dist/assets/index-abc.js": b"x=new WebSocket(u)"}),
                           "opens a WebSocket"),
     "a SPA with no SSE": ("web", lambda: _add("web", **{"web-dist/assets/index-abc.js": b"x=1"}),
