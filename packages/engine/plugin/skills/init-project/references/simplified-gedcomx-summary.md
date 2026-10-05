@@ -44,18 +44,17 @@ Full spec: `docs/specs/simplified-gedcomx-spec.md`.
 ```
 
 - `gender`: `Male`, `Female`, `Unknown`
-- `ark`: the FamilySearch anchor, and what marks tree membership. For a person
-  read from the tree it is `ark:/61903/4:1:<their FamilySearch person id>` — the
-  canonical form, identical to what `person_search` returns for that person.
-  Omit the key on local stubs. Never a page URL, never a bare id
+- `ark`: the FamilySearch anchor, and what marks tree membership
+  (`ark:/61903/4:1:<FamilySearch person id>`). `project_create` sets it on every
+  person from the read. Omit the key on stubs
 - `preferred` on names: omit rather than setting false
 - `primary` on facts: omit rather than setting false
 - `type` on names: `BirthName`, `MarriedName`, `AlsoKnownAs`, etc.
 - `type` on facts: PascalCase — `Birth`, `Death`, `Marriage`,
   `Residence`, `Immigration`, `Military`, `Occupation`, etc.
 - `standard_date` / `standard_place` on facts: the standardized sidecars beside
-  the raw `date`/`place`. `person_read` supplies both — carry them through, do
-  not re-derive them
+  the raw `date`/`place`. `project_create` carries the read's through; a place
+  you enter by hand is resolved with `place_search`
 - `sources` on persons, facts, names: optional array of source references
 
 ## Stub persons (minimal valid person)
@@ -103,8 +102,7 @@ Full spec: `docs/specs/simplified-gedcomx-spec.md`.
 - `citation`: omit during active research (populated at upload time)
 - `url`: optional
 - The whole allowed set is `id`, `title`, `citation`, `author`, `url`. Any other
-  key fails the write. `person_read` may return a source carrying `notes` —
-  drop it
+  key fails the write
 
 ## Source references (on persons, facts, names, relationships)
 
@@ -112,7 +110,7 @@ Full spec: `docs/specs/simplified-gedcomx-spec.md`.
 { "ref": "S1", "page": "Schuylkill Co., dwelling 84", "quality": 1 }
 ```
 
-- `quality`: 0=unreliable, 1=questionable, 2=secondary, 3=direct+primary. init-project writes `1`
+- `quality`: 0=unreliable, 1=questionable, 2=secondary, 3=direct+primary. `project_create` cites the FamilySearch tree and the researcher's statement at `1`
 
 ## Date formats
 
@@ -124,6 +122,10 @@ Full spec: `docs/specs/simplified-gedcomx-spec.md`.
 
 ## ID conventions
 
+`project_create` assigns every id when it builds from a staged `person_read`;
+an addition's ids are labels it re-assigns. These are the conventions it uses,
+and the ones an objective-only tree follows.
+
 - ALL persons: `I` prefix (`I1`, `I2`) — including FamilySearch-seeded ones.
   Never a FamilySearch PID. A person's FamilySearch identity travels in `ark`,
   not in `id`
@@ -131,23 +133,3 @@ Full spec: `docs/specs/simplified-gedcomx-spec.md`.
 - Facts: `F` prefix (`F1`, `F2`)
 - Relationships: `R` prefix (`R1`, `R2`)
 - Sources: `S` prefix (`S1`, `S2`)
-
-## Converting a `person_read` response
-
-`person_read` already returns this format — persons/relationships/sources,
-snake_case, `standard_place` on facts. It is not full GedcomX and needs no
-field renaming. It may also return a top-level `notes` array, reporting a
-relationship it dropped because the other endpoint was not in `persons`; it is
-not part of the tree and is not copied into one. What it does need:
-
-- **Re-id.** Persons get `I` ids; names and relationships arrive with no ids, so
-  mint `N`/`R`, and mint `F` for any fact the tool did not id. Rewrite every
-  relationship endpoint to the new person ids. Sources get `S` ids: rewrite
-  each person's own `sources[].ref` to the new id of the source it names
-- **Drop `notes`** from returned source descriptions
-- **Add source references** — `{ "ref": "S1", "quality": 1 }` on every fact and
-  every relationship
-- **Keep both standardized sidecars** — `standard_place` and `standard_date` —
-  exactly as returned; never re-derive either from the raw `place`/`date`. For a
-  fact that has `place` but no `standard_place`, resolve it with `place_search` —
-  never copy `place` into `standard_place`

@@ -157,6 +157,24 @@ const tokenStep = (tool: string, args: Record<string, unknown>): SmokeStep => ({
 
 export const CALL_PLAN: readonly SmokeStep[] = [
   // Project tools, in fixture order against a fresh project.
+  //
+  // personReadRef first, while the project does not exist yet, asserting its
+  // refusal through the transport. A successful staged create cannot be
+  // smoked: the run has one project, every later row works on the one the
+  // next row creates, and a second create is refused as "already exist".
+  {
+    tool: "project_create",
+    offline: true,
+    args: (ctx) => ({
+      projectPath: ctx.projectPath,
+      objective: "Does the staged-read path reach the store?",
+      personReadRef: STAGED_REF,
+    }),
+    expect: (res) => ({
+      ok: res.body?.ok === false && /personReadRef/.test(JSON.stringify(res.body?.errors ?? "")),
+      detail: brief(res, 300),
+    }),
+  },
   {
     tool: "project_create",
     offline: true,

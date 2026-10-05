@@ -745,6 +745,7 @@ def _stage_person_read(
     """
     person_read_js = _MCP_BUILD / "tools" / "person-read.js"
     if not person_read_js.exists():
+        _warn_unstaged(f"no engine build at {person_read_js}")
         return response
 
     posix = str(person_read_js).replace("\\", "/").replace("'", "\\'")
@@ -770,13 +771,27 @@ def _stage_person_read(
         )
         out = proc.stdout.strip()
         if proc.returncode != 0 or not out:
+            _warn_unstaged(f"node exited {proc.returncode}: {proc.stderr.strip()[:200]}")
             return response
         parsed = json.loads(out)
         if not isinstance(parsed, dict) or "staged" not in parsed:
+            _warn_unstaged("the stager returned no `staged` key")
             return response
         return {**response, **parsed}
-    except Exception:
+    except Exception as e:
+        _warn_unstaged(f"{type(e).__name__}: {e}")
         return response
+
+
+def _warn_unstaged(why: str) -> None:
+    """A canned person_read the mock could not stage. init-project now passes
+    the staged ref to project_create and stops when there is none, so this reads
+    as the skill stopping. Say it was the harness (#2944 Stage B)."""
+    warnings.warn(
+        f"mock person_read could not be staged ({why}); the response goes back with no "
+        "`staged`, so a skill that needs the ref will stop for a harness reason",
+        stacklevel=2,
+    )
 
 
 def create_mock_server(
