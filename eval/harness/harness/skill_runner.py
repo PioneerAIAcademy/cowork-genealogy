@@ -36,6 +36,7 @@ from claude_agent_sdk import (
     HookMatcher,
     RateLimitEvent,
     ResultMessage,
+    SystemMessage,
     TextBlock,
     ToolResultBlock,
     ToolUseBlock,
@@ -425,7 +426,9 @@ def slash_skill_from_entry(
 
 
 def judge_skills_slot(
-    skills_invoked: list[str], builtin_tool_calls: list[dict[str, Any]]
+    skills_invoked: list[str],
+    builtin_tool_calls: list[dict[str, Any]],
+    slash_entry: str | None = None,
 ) -> list[str]:
     """The judge's "Skills Claude invoked" list on a skill test: `skills_invoked`,
     with each agent the main thread spawned inserted at its place in call order
@@ -455,9 +458,15 @@ def judge_skills_slot(
     # A slash entry sits in `skills_invoked` with no `Skill` call of its own, so
     # the positional walk below would never match it, stall on it permanently,
     # and dump the whole list after the spawns — destroying the call order this
-    # function exists to preserve, and only on slash-entry tests. Emit it first.
-    # (issue #3116; fix per chesworthrm 2026-10-05.)
-    if len(remaining) == sum(1 for c in calls if c.get("tool") == "Skill") + 1:
+    # function exists to preserve, and only on slash-entry tests (issue #3116).
+    #
+    # Passed in, never inferred. An earlier version detected it as
+    # `len(skills_invoked) == n_Skill_calls + 1`, which a single Skill call with
+    # an unreadable input shape defeats: the hook puts that call in
+    # `unread_skill_calls` and NOT in `skills_invoked`, while it still counts as
+    # a `Skill` call here, so the arithmetic silently reverts to the corruption
+    # it was added to prevent. `run_skill` knows the fact outright.
+    if slash_entry is not None and remaining and remaining[0] == slash_entry:
         out.append(remaining.pop(0))
     for call in calls:
         tool = call.get("tool")
@@ -788,6 +797,11 @@ class SkillRunResult:
     # this harness reads, holding that input's actual keys. Non-empty means the
     # SDK's Skill-tool contract moved and `skills_invoked` is undercounting.
     unread_skill_calls: list[list[str]] = field(default_factory=list)
+    # The skill a `/<name> …` entry loaded, or None. Carried so callers are
+    # TOLD rather than inferring it from `skills_invoked`'s shape — see
+    # `judge_skills_slot`, where that inference was defeated by an unreadable
+    # `Skill` call.
+    slash_entry_skill: str | None = None
     # Every built-in (non-MCP) tool call the run emitted, as
     # {"tool", "args", "agent_id"?} — see builtin_call_record for why this
     # exists. Telemetry for every tool EXCEPT `Agent`/`Task`: the direct-agent arm
@@ -1175,13 +1189,18 @@ async def run_skill(
                 return
             except asyncio.TimeoutError:
                 raise _LimitExceeded("sdk_stream_silence")
-            if type(message).__name__ == "SystemMessage":
+            if (
+                isinstance(message, SystemMessage)
+                and getattr(message, "subtype", None) == "init"
+            ):
                 # The init message is the only carrier of `slash_commands`, and
                 # nothing else in the stream shows a command was registered
-                # (#3116 Step 0). Read by name rather than isinstance so this
-                # does not add an import the module does not otherwise need.
-                data = getattr(message, "data", None) or {}
-                cmds = data.get("slash_commands")
+                # (#3116 Step 0). Filtered on `subtype` because SystemMessage
+                # covers several kinds, and `isinstance(data, dict)` because a
+                # non-mapping `data` on some other subtype would otherwise
+                # raise inside the stream loop and abort a paid run.
+                data = getattr(message, "data", None)
+                cmds = data.get("slash_commands") if isinstance(data, dict) else None
                 if isinstance(cmds, list):
                     slash_commands_seen.extend(
                         c for c in cmds if isinstance(c, str)
@@ -1559,7 +1578,14 @@ async def run_skill(
     slash_entry = slash_skill_from_entry(
         user_message, slash_commands_seen, workspace / ".claude" / "skills"
     )
-    if slash_entry and slash_entry not in skills_invoked:
+    if slash_entry:
+        # Unconditional, because "recorded first" is the contract the spec and
+        # every position-reading caller rest on. A `slash_entry not in
+        # skills_invoked` guard looked like sensible de-duplication and broke
+        # it: when the model ALSO reached the skill through a `Skill` call, the
+        # entry point was left at whatever position that call produced. The two
+        # are different events — entered-by-slash and called-as-a-tool — and
+        # collapsing them loses the one this change exists to record.
         skills_invoked.insert(0, slash_entry)
 
     return SkillRunResult(
@@ -1580,6 +1606,7 @@ async def run_skill(
         blocked_protected_writes=blocked_protected_writes,
         registered_mcp_tools=set(tools_by_name.keys()),
         unread_skill_calls=unread_skill_calls,
+        slash_entry_skill=slash_entry,
         builtin_tool_calls=builtin_tool_calls,
         agent_returns=agent_returns,
         no_result_message=no_result_message_flag["v"],

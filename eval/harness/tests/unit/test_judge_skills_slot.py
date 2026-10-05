@@ -174,7 +174,7 @@ def test_slash_entry_keeps_call_order():
         {"tool": "Skill", "args": {"skill": "research-plan"}},
     ]
     assert judge_skills_slot(
-        ["research", "question-selection", "research-plan"], calls
+        ["research", "question-selection", "research-plan"], calls, "research"
     ) == ["research", "question-selection", "gps-mentor (agent)", "research-plan"]
 
 
@@ -185,8 +185,29 @@ def test_without_a_slash_entry_the_walk_is_unchanged():
         {"tool": "Task", "args": {"subagent_type": "gps-mentor"}},
         {"tool": "Skill", "args": {"skill": "research-plan"}},
     ]
-    assert judge_skills_slot(["question-selection", "research-plan"], calls) == [
+    assert judge_skills_slot(["question-selection", "research-plan"], calls, None) == [
         "question-selection",
+        "gps-mentor (agent)",
+        "research-plan",
+    ]
+
+
+def test_an_unreadable_skill_call_does_not_defeat_the_slash_entry():
+    """The entry is passed in, never inferred from list arithmetic.
+
+    A `Skill` call whose input shape the hook could not read goes to
+    `unread_skill_calls` and NOT to `skills_invoked`, while still counting as a
+    `Skill` call here. A `len(skills_invoked) == n_Skill_calls + 1` heuristic
+    therefore misses the entry and silently reverts to the corruption it was
+    added to prevent.
+    """
+    calls = [
+        {"tool": "Skill", "args": {"unreadable": 1}},
+        {"tool": "Task", "args": {"subagent_type": "gps-mentor"}},
+        {"tool": "Skill", "args": {"skill": "research-plan"}},
+    ]
+    assert judge_skills_slot(["research", "research-plan"], calls, "research") == [
+        "research",
         "gps-mentor (agent)",
         "research-plan",
     ]

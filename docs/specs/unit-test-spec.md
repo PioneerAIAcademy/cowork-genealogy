@@ -1596,7 +1596,7 @@ def report_example_pattern(text_response):
 - `tool_calls` (list) — every MCP tool call made by the skill, with the shape `{"tool": "mcp__genealogy__record_search", "args": {...}, "matched": {...}, "response_fixture": "...", "response": {...}}` (Section 10). `response` is present for `live` and unmatched (`none`) calls, and for a fixture-matched response the mock enriched — see Section 10.
 - `skill_frontmatter` (dict) — the parsed YAML frontmatter of the skill under test's SKILL.md (also available inside `before_state`/`after_state`).
 - `test` (dict) — the parsed test JSON dict, including `test.type`, `test.tags`, and any validator-facing blocks the orchestrator threads in.
-- `skills_invoked` (list[str]) — every skill invoked through the SDK's `Skill` tool, in call order, **plus a skill loaded by a slash-command expansion at entry**, which is recorded first. See "Capturing `skills_invoked`" below for what the slash case can and cannot show.
+- `skills_invoked` (list[str]) — every skill invoked through the SDK's `Skill` tool, in call order, **plus a skill loaded by a slash-command expansion at entry**, which is recorded first. See "Capturing `skills_invoked`: the PreToolUse hook, and slash entry" below for what the slash case can and cannot show.
 - `blocked_context_calls` (list) — main-thread calls to subagent-only tools denied by the PreToolUse hook.
 - `blocked_protected_writes` (list) — raw writes to protected project files denied by the hook.
 - `blocked_owned_section_writes` (list) — `research_append` ops the shipped ownership rule refused, denied by the hook, as `{"tool", "args", "section", "rule", "caller"}`. Empty is the healthy case; `test_no_out_of_lane_section_writes` gates on it.
@@ -2274,7 +2274,7 @@ should be updated.
 
 The guard fires only when all three hold: the tool is in `SUBAGENT_ONLY_TOOLS`, the call is on the main thread, and the skill did **not** declare the tool in its own `allowed-tools`. That last clause is what separates a violation from a legitimate direct call — a skill that declares a guarded tool for itself may call it directly, while `record-extraction` holds `image_read` only through `@plugin:image-reader` and must delegate. **No skill declares either guarded tool today**, so that clause is currently unreachable: `search-images` used to declare `image_read` directly and moved to delegating via `@plugin:image-reader` (2026-07-17), and `extraction_append` — the set's second member — has only ever lived on `agents/record-extractor.md`. The exemption mechanism stays available for a skill that legitimately needs it; both facts are pinned by tests in `harness/tests/unit/test_context_policy.py`. `declared_skill_tools()` (above) returns the pre-union set the check needs; `compute_allowed_tools` is the wrong input because it already contains the union. See `harness/context_policy.py` and `docs/plan/image-read-context-policy.md` §4.1. The universal validator `test_no_main_thread_subagent_only_calls` fails any run that breaks it, so routing is graded deterministically rather than by the judge (§5.10's pattern, applied to routing).
 
-### Capturing `skills_invoked` via PreToolUse
+### Capturing `skills_invoked`: the PreToolUse hook, and slash entry
 
 The Agent SDK fires a `PreToolUse` hook before every tool call. The harness uses it to observe `Skill` invocations:
 
