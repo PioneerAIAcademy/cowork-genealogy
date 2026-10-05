@@ -1,0 +1,454 @@
+{
+  "run_log": "v2.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_historical_context_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_frq",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_frq",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_frq",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Grade: N/A\nReason: No MCP tool calls were made, and routing the date-conversion task to the appropriate convert-dates agent was the correct behavior for this skill."
+    },
+    {
+      "test_id": "ut_historical_context_frq",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_frq",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_frq",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No wiki or Wikipedia tools were called, so this dimension does not apply."
+    },
+    {
+      "test_id": "ut_historical_context_frq",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response is largely accurate and provides well-supported genealogical guidance, but it presents several specific historical claims about 1840s German emigration and Pennsylvania settlement without sufficient tool evidence."
+    },
+    {
+      "test_id": "ut_historical_context_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response contains accurate, well-supported genealogical guidance, but it fails to explicitly flag the specific historical claims that were not verified by the tool results."
+    },
+    {
+      "test_id": "ut_historical_context_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response appropriately avoids fabricating place-specific facts, but its confident wording overstates certainty; these explanations should consistently be framed as possibilities given the lack of specific evidence."
+    },
+    {
+      "test_id": "ut_historical_context_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response appropriately states that no place-specific results were found, but the general explanations are not consistently framed as unverified possibilities throughout the response."
+    },
+    {
+      "test_id": "ut_historical_context_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response correctly explains the 1863 statehood change and that the ancestor did not move, but it omits the required clarification that county boundaries also changed frequently and that county-level research is essential."
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response covers the main historical and genealogical points, but it omits two required elements: explicitly explaining frequent county-boundary changes and directing the researcher to historical boundary maps to identify the correct county."
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response provides useful research guidance, but it does not name or direct the researcher to the required historical boundary-map resources, such as Historical Map Works or the FamilySearch locality guide."
+    }
+  ]
+}
