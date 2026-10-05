@@ -1045,7 +1045,6 @@ gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 
              then "ANSWERED" else "WAITING" end) as $s
       | "\(.updatedAt[0:10])\t\($s)\t#\(.number)\t\(.title)"' | sort
 # /tmp/board.json is the cached snapshot from § 1 "Measure Ready depth" — not refetched
-git fetch origin main --quiet
 jq -r '.items[] | select((.labels|index("senior"))
       and (.status|IN("Backlog","Ready","In Progress","Review")))
     | "\(.status)\t\(if (.assignees|length)==0 then "unassigned" else "assigned" end)\t#\(.content.number)\t\([.labels[]|select(.=="reviewed" or .=="needs-decision" or .=="icebox")]|join(","))"' \
