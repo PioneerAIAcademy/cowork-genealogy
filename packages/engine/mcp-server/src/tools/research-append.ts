@@ -401,6 +401,91 @@ function conflictInvariants(entry: any): string[] {
   return errs;
 }
 
+/** A [?] assertion cannot win a conflict on its own evidence — it needs
+ *  corroboration from a different record with the same fact_type, same value
+ *  (once [?] is stripped, whitespace collapsed and case folded), no [?] of its
+ *  own, and tied to the same person. Reads live `research`. */
+function uncertainPreferenceInvariants(entry: any, research: any): string[] {
+  if (entry.preferred_assertion_id == null) return [];
+  const assertions: any[] = research.assertions ?? [];
+  const byId = new Map<string, any>(assertions.map((a: any) => [a.id, a]));
+  const preferred = byId.get(entry.preferred_assertion_id);
+  if (!preferred || !hasUncertainReading(preferred)) return [];
+
+  const competing: string[] = Array.isArray(entry.competing_assertion_ids)
+    ? entry.competing_assertion_ids
+    : [];
+  const preferredRecord = preferred.record_id ?? preferred.source_id ?? null;
+  const normalizedPreferredValue = normalizeUncertainValue(preferred.value);
+
+  // Build set of person_ids the preferred assertion is linked to via live
+  // person_evidence rows.
+  const preferredPersonIds = new Set<string>();
+  for (const pe of research.person_evidence ?? []) {
+    if (pe && pe.assertion_id === entry.preferred_assertion_id && pe.superseded_by == null) {
+      if (pe.person_id != null) preferredPersonIds.add(pe.person_id);
+    }
+  }
+
+  // Build a map from assertion_id → set of person_ids for fast lookup.
+  const assertionToPersonIds = new Map<string, Set<string>>();
+  for (const pe of research.person_evidence ?? []) {
+    if (pe && pe.superseded_by == null && pe.person_id != null) {
+      let s = assertionToPersonIds.get(pe.assertion_id);
+      if (!s) {
+        s = new Set<string>();
+        assertionToPersonIds.set(pe.assertion_id, s);
+      }
+      s.add(pe.person_id);
+    }
+  }
+
+  for (const a of assertions) {
+    if (!a || a.id === entry.preferred_assertion_id) continue;
+    // Condition 1: no [?] on the corroborator.
+    if (hasUncertainReading(a)) continue;
+    // Condition 2: different record.
+    const aRecord = a.record_id ?? a.source_id ?? null;
+    if (aRecord == null || aRecord === preferredRecord) continue;
+    // Condition 3: same fact_type, equal value once [?] removed + normalized.
+    if (a.fact_type !== preferred.fact_type) continue;
+    if (typeof a.value !== "string") continue;
+    if (normalizeUncertainValue(a.value) !== normalizedPreferredValue) continue;
+    // Condition 4: same person — in competing_assertion_ids, or linked to
+    // the same person via live person_evidence.
+    const inCompeting = competing.includes(a.id);
+    if (!inCompeting) {
+      const aPersonIds = assertionToPersonIds.get(a.id);
+      if (!aPersonIds || !setsOverlap(aPersonIds, preferredPersonIds)) continue;
+    }
+    // All four conditions met — corroborated.
+    return [];
+  }
+
+  return [
+    `preferred_assertion_id '${entry.preferred_assertion_id}' carries an uncertain reading ` +
+      `([?]) and no assertion from a different record corroborates it. To settle the conflict: ` +
+      `find a second record whose reading agrees, or update the assertion (op: "update", ` +
+      `entryId: "${entry.preferred_assertion_id}", fields: {value: "<confirmed reading>"}) to ` +
+      `remove the [?] once the user confirms the reading. Leaving preferred_assertion_id null ` +
+      `— a deferral is a finding, not an omission — stays legal.`,
+  ];
+}
+
+/** Strip [?], collapse whitespace, fold case — for value comparison. */
+function normalizeUncertainValue(v: string): string {
+  return v.replace(/\[\?\]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+/** True when two sets share at least one element. */
+function setsOverlap(a: Set<string>, b: Set<string>): boolean {
+  const [smaller, larger] = a.size <= b.size ? [a, b] : [b, a];
+  for (const x of smaller) {
+    if (larger.has(x)) return true;
+  }
+  return false;
+}
+
 function planActiveInvariants(entry: any, research: any): string[] {
   if (entry.status !== "active") return [];
   // `p &&`: a legacy `plans: [null]` made this throw
@@ -3313,6 +3398,16 @@ function applyOne(
       // the two dates cannot be ordered. See unorderableDateWarnings for why
       // this is a warning rather than a precondition.
       opWarnings.push(...unorderableDateWarnings(resultEntry, research));
+    }
+    // Uncertain-preference guard: on append, or an update that (re)sets
+    // preferred_assertion_id or status. Scoped so an unrelated edit to a
+    // conflict written before this rule is not refused.
+    if (
+      op.op === "append" ||
+      Object.prototype.hasOwnProperty.call(conflictFields, "preferred_assertion_id") ||
+      Object.prototype.hasOwnProperty.call(conflictFields, "status")
+    ) {
+      invariantErrors.push(...uncertainPreferenceInvariants(resultEntry, research));
     }
   }
   // One active plan per question — enforced on append OR an update that
