@@ -27,6 +27,7 @@ from validators_lib import new_log_entries as _new_log_entries
 from validators_lib import record_search_sent as _record_search_sent
 from validators_lib import tool_input_keys as _tool_input_keys
 from validators_lib import (
+    assert_topical_fixture_used,
     assert_capture_pending_item_not_terminal as _assert_capture_pending_item_not_terminal,
 )
 
@@ -771,3 +772,107 @@ def report_log_query_traces_to_record_search_call(before_state, after_state, too
         for claim in differs:
             errors.append(f"log entry {e.get('id')} ({how}) value differs — {claim}")
     assert not errors, "record_search log queries that do not trace to their call:\n  - " + "\n  - ".join(errors)
+
+
+# --- The census wiki fetch actually fires (issue #2123) ----------------
+
+# Maps a tagged test id to the topical fixture stem its `mcp_fixtures` names.
+# Hardcoded rather than read from the test spec: the `test` fixture only carries
+# the inner "test" block (id/skill/name/type/tags), not top-level
+# `mcp_fixtures` (validator_runner.py). Add an entry here whenever the
+# "topical-fixture-required" tag is added to a test.
+#
+# Every entry is the SAME stem because every census scenario in this suite is a
+# US one. `England_Census` and the other `{Country}_Census` branches of the
+# Step 2 pre-work block therefore ship unexercised by this suite -- recorded
+# here rather than left to look like coverage.
+#
+# The firing set is the tests whose SEARCH is a census search, derived from each
+# test's user_message plus its scenario's census plan item. It is deliberately
+# NOT the `census` tag (10 tests, too few) and NOT "the scenario holds a census
+# plan item" (22, too many -- that set includes ut_search_records_011, a general
+# sibling search, and ut_search_records_025, a marriage search, neither of which
+# runs a census search at all).
+_TOPICAL_FIXTURE_BY_TEST_ID = {
+    "ut_search_records_001": "wiki-read-united-states-census",
+    "ut_search_records_002": "wiki-read-united-states-census",
+    "ut_search_records_010": "wiki-read-united-states-census",
+    "ut_search_records_012": "wiki-read-united-states-census",
+    "ut_search_records_013": "wiki-read-united-states-census",
+    "ut_search_records_014": "wiki-read-united-states-census",
+    "ut_search_records_015": "wiki-read-united-states-census",
+    "ut_search_records_016": "wiki-read-united-states-census",
+    "ut_search_records_017": "wiki-read-united-states-census",
+    "ut_search_records_018": "wiki-read-united-states-census",
+    "ut_search_records_026": "wiki-read-united-states-census",
+    "ut_search_records_027": "wiki-read-united-states-census",
+    "ut_search_records_h4k": "wiki-read-united-states-census",
+    "ut_search_records_t9p": "wiki-read-united-states-census",
+    "ut_search_records_nickname_bitsie": "wiki-read-united-states-census",
+    "ut_search_records_nickname_bitsie_in_record": "wiki-read-united-states-census",
+}
+
+
+def test_census_wiki_fixture_actually_used(tool_calls, test):
+    """A census search must actually fetch the jurisdiction's census page.
+
+    ADR-0012 moves census schedule facts onto the wiki and records its own
+    Enforcement as "None", so without this the move ships while doing nothing:
+    the agent skips the fetch, states the schedule from memory as it does today,
+    and every dimension still grades green. The same failure mode the
+    historical-context validator was written for (issue #2283).
+
+    The membership half and the map/tag guard are
+    `validators_lib.assert_topical_fixture_used`, shared with
+    `test_historical_context` -- two copies was the signal to lift it. What stays
+    here is the ORDER arm below, which that caller does not need.
+
+    `prefix_match` is on because the expected stem is the COUNTRY page and the
+    skill may follow Step 2's per-year link; any `wiki-read-...-census*` stem
+    satisfies "the schedule was read before searching", which is what this
+    grades. (The per-year fixtures themselves were removed in 320f4d098 -- the
+    generic predicate is a case-insensitive substring match, so a per-year URL
+    is served the country page, which is the one stating the relationship-column
+    date range.)
+    """
+    expected = assert_topical_fixture_used(
+        tool_calls,
+        test,
+        _TOPICAL_FIXTURE_BY_TEST_ID,
+        map_name="_TOPICAL_FIXTURE_BY_TEST_ID",
+        prefix_match=True,
+    )
+
+    test_id = test.get("id")
+
+    def _is_census_page(stem: object) -> bool:
+        """Prefix, to match whatever census page the skill constructed."""
+        return isinstance(stem, str) and stem.startswith(expected)
+
+    # ORDER, not merely occurrence. Step 2 calls this "pre-work ... before
+    # constructing the query": a page fetched AFTER the search cannot have
+    # informed it, so a run that searches first and reads the schedule
+    # afterwards satisfies the membership check above while doing the thing the
+    # block exists to prevent. `tool_calls` is in call order.
+    calls = tool_calls or []
+    first_fetch = next(
+        (i for i, c in enumerate(calls) if _is_census_page(c.get("response_fixture"))),
+        None,
+    )
+    first_search = next(
+        (
+            i
+            for i, c in enumerate(calls)
+            if _bare_tool_name(c.get("tool") or "") == "record_search"
+        ),
+        None,
+    )
+    if first_search is None:
+        return  # nothing was searched, so there is no ordering to enforce
+    assert first_fetch < first_search, (
+        f"{test_id}: the census page was fetched at call {first_fetch + 1}, AFTER "
+        f"the first record_search at call {first_search + 1}. Step 2 requires it "
+        "before the query is constructed — a schedule read afterwards cannot have "
+        "shaped the search, and reading it late is how a run states from memory "
+        "and then confirms itself."
+    )

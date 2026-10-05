@@ -238,9 +238,11 @@ export async function fetchWithRetry(
       const remaining = deadline - Date.now();
       if (remaining <= 0) break;
       const backoff = baseMs * 2 ** attempt;
-      const jitter = backoff * 0.5 * Math.random();
-      const delay = Math.min(backoff + jitter, remaining);
-      if (delay > 0) await retrySleep(delay);
+      const delay = backoff + backoff * 0.5 * Math.random();
+      // A backoff that would spend the rest of the budget leaves the next
+      // attempt nothing to run on, so stop instead of sleeping into it.
+      if (delay >= remaining) break;
+      await retrySleep(delay);
       continue;
     }
 
@@ -268,10 +270,14 @@ export async function fetchWithRetry(
       );
     }
 
-    const backoff = baseMs * 2 ** attempt;
-    const jitter = backoff * 0.5 * Math.random();
-    const delay = ra ?? Math.min(backoff + jitter, remaining);
-    if (delay > 0) await retrySleep(Math.min(delay, remaining));
+    if (ra === null) {
+      const backoff = baseMs * 2 ** attempt;
+      const delay = backoff + backoff * 0.5 * Math.random();
+      if (delay >= remaining) break;
+      await retrySleep(delay);
+    } else if (ra > 0) {
+      await retrySleep(ra);
+    }
   }
 
   // Exhausted: return the last retryable Response if we have one (so the
