@@ -104,6 +104,26 @@ describe("project_context", () => {
     ]);
   });
 
+  it("returns the objective verbatim and untruncated, and null when absent (#3026)", async () => {
+    const objective =
+      "Identify the parents of Rosalind Hartwell (b. ca. 1855, Ohio). Her recorded surname 'Hartwell' is " +
+      "unverified — it may be her birth (maiden) name or the married name she took from her husband.";
+    expect(objective.length).toBeGreaterThan(140);
+    await writeProject(
+      { project: { id: "rp_001", objective, status: "active", created: "2026-01-01", updated: "2026-01-01" } },
+      { persons: [], relationships: [], sources: [] },
+    );
+    const r = await projectContext({ projectPath: dir });
+    expect(r.ok && r.objective).toBe(objective);
+
+    await writeProject(
+      { project: { id: "rp_001", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
+      { persons: [], relationships: [], sources: [] },
+    );
+    const bare = await projectContext({ projectPath: dir });
+    expect(bare.ok && bare.objective).toBeNull();
+  });
+
   it("returns empty arrays for an empty project", async () => {
     await writeProject(
       { project: { id: "rp_001", objective: "Fresh", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
@@ -114,6 +134,7 @@ describe("project_context", () => {
       ok: true,
       buildId: readBuildInfo().version,
       projectStatus: "active",
+      objective: "Fresh",
       openQuestions: [],
       questionStatuses: [],
       persons: [],

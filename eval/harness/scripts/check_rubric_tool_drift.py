@@ -493,19 +493,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "eval/tests/unit/research-exhaustiveness/ut_research_exhaustiveness_011.json",
-        "tool": "validate_research_schema",
-        "quotes": [
-            "The correct outcome is routing to proof-conclusion, with no exhaustive_declaration changes and no validate_research_schema call",
-        ],
-        "reason": (
-            "negative mention in a triggering-boundary test - 'The correct "
-            "outcome is routing to proof-conclusion, with no "
-            "exhaustive_declaration changes and no validate_research_schema "
-            "call'"
-        ),
-    },
-    {
         "file": "eval/tests/unit/research-plan/locality-survey-first-plan.json",
         "tool": "wiki_search",
         "quotes": [

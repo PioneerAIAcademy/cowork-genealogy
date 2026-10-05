@@ -57,6 +57,7 @@ repo's identifier-casing rule):
   ok: true,
   buildId: string,                       // engine build stamp, e.g. "0.1.0+2026-09-17.abc12345"
   projectStatus: string | null,          // research.project.status
+  objective: string | null,              // research.project.objective, verbatim
   openQuestions: [{
     id: string,                          // q_*
     question: string,                    // truncated to ≤140 chars (139 + "…")
@@ -120,6 +121,10 @@ Projection rules:
   order) across `research.assertions[]` entries whose `source_id` is this
   source's id; `assertionCount` counts those assertions.
 - **`projectStatus`** — `research.project.status`, `null` when absent.
+- **`objective`** — `research.project.objective`, verbatim and untruncated, `null` when absent. It is the
+  only surface that returns the objective: `research_query` serves array sections only, so without it a
+  cold-started agent sees the objective — and any doubt it states about its own premise — only by reading
+  `research.json` whole.
 
 The tree is read as-is (no `sanitizeTree` healing pass — a read-only
 projection must not imply a migration); traversal is defensive, skipping

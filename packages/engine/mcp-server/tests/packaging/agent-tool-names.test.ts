@@ -689,6 +689,20 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     ],
     denies: [],
   },
+  // Cost- and context-motivated conversion (issue #2115), not a hook route.
+  // The grant is derived from what the folded body actually CALLS, not from the
+  // former skill's `allowed-tools`, which listed `research_append` alone: that
+  // field is a grant and never constrained the skill, since production and the
+  // unit harness both hand a skill every registered MCP tool. An agent's
+  // `tools:` is exact-match restrictive, so copying that one-entry list would
+  // have spawned an agent that cannot read project state — and, because one
+  // entry resolves, the runtime's zero-tools refusal would NOT have fired.
+  // `Read` is required by the narration line, which reads
+  // researcher_profile.narration_guidance out of research.json directly.
+  "question-selection.md": {
+    tools: ["Read", "project_context", "research_append", "research_query"],
+    denies: [],
+  },
 
   // The folded search-external-sites skill (issue #2802): its seven tools plus
   // `project_context`, which is how a triage invocation finds the open hand-off

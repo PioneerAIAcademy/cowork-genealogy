@@ -95,15 +95,21 @@
     {
       "artifact": "research.json",
       "section": "questions",
-      "owner": "skill:question-selection",
+      "owner": "agent:question-selection",
       "callers": [
-        "skill:question-selection",
+        "agent:question-selection",
         "skill:research-exhaustiveness",
         "agent:proof-conclusion"
       ],
       "agentCallers": [
         {
           "agent": "agent:proof-conclusion",
+          "tools": [
+            "research_append"
+          ]
+        },
+        {
+          "agent": "agent:question-selection",
           "tools": [
             "research_append"
           ]
@@ -120,7 +126,7 @@
       "hookCallers": [
         "agent:research-exhaustiveness"
       ],
-      "notes": "Enforced at the hook plane since 2026-08-23, but FIELD-scoped rather than section-scoped — the only row of that shape. `exhaustive_declaration` is a REQUIRED property of every question, so question-selection writes it on every creation from the main thread; 197 of the 392 corpus ops carrying the field are exactly those, and a section route or a presence-keyed field route denies all of them. The hook therefore keys on the CLAIM — an op setting `exhaustive_declaration.declared` to true — and lives in the guard's `OWNED_DECLARATIONS`, not `OWNED_SECTIONS`. A `declared: false` write claims nothing and is not routed: that is both question creation and the owning skill's own honest early-termination path. 47 of the 131 corpus runs that declared a question exhaustive never invoked the skill that owns it. `callers` stays skill-only and the agent lives in `hookCallers`, per the proof_summaries row: `callers` is validated against test_ownership_table, which keys on the calling skill's frontmatter name. Since 2026-09-02 test_no_out_of_lane_section_writes records the hook's agent-keyed verdict on this plane, so the declaration arm binds here too.",
+      "notes": "Enforced at the hook plane since 2026-08-23, but FIELD-scoped rather than section-scoped — the only row of that shape. `exhaustive_declaration` is a REQUIRED property of every question, so question-selection writes it on every creation from the main thread; 197 of the 392 corpus ops carrying the field are exactly those, and a section route or a presence-keyed field route denies all of them. The hook therefore keys on the CLAIM — an op setting `exhaustive_declaration.declared` to true — and lives in the guard's `OWNED_DECLARATIONS`, not `OWNED_SECTIONS`. A `declared: false` write claims nothing and is not routed: that is both question creation and the owning skill's own honest early-termination path. 47 of the 131 corpus runs that declared a question exhaustive never invoked the skill that owns it. `callers` stays skill-only and the agent lives in `hookCallers`, per the proof_summaries row: `callers` is validated against test_ownership_table, which keys on the calling skill's frontmatter name. Since 2026-09-02 test_no_out_of_lane_section_writes records the hook's agent-keyed verdict on this plane, so the declaration arm binds here too. Issue #2115 folded question-selection into an agent and deleted the skill, so owner and caller are now agent:question-selection -- `writer_sets` resolves an `agent:` caller only when it is the suite's own subject, so this authorizes the agent's own writes in its own suite and nothing else. It is also in agentCallers above. Its hook lane in AGENT_WRITABLE_SECTIONS is `questions` and exists because plugin-hooks.test.ts requires a lane for every agent granted research_append -- NOT because a route points at it. The `declared: true` route still belongs to research-exhaustiveness and is unchanged; question creation writes `declared: false`, which claims nothing and is not routed.",
       "requires": "question-selection mints questions and owns their structure; research-exhaustiveness advances `status` to `exhaustive_declared` and writes `exhaustive_declaration`; proof-conclusion advances `status` to `resolved` and writes `resolved` and `resolution_assertion_ids` for the question it concluded. A `resolved` write additionally requires a proof summary referencing the question — a writer-tool precondition, not an ownership rule. Two further preconditions on the same plane, also not ownership rules: `status: \"exhaustive_declared\"` requires `exhaustive_declaration.declared === true` (read live — the same author's own step), and `declared: true` is refused while a plan item for that question is `in_progress` (read from the pre-call snapshot — plan-item completion is the search work's step, and this skill is not a permitted writer of `plan_items`). Items still `planned` do NOT block: the orchestrator routes here before the plan is drained.",
       "failure": "`status: \"resolved\"` is the orchestrator's stop condition. A skill that flips it without concluding the question ends the project on an unanswered question.",
       "remedy": "Conclude the question through proof-conclusion, which writes the proof summary carrying `question_id` and then resolves it.",

@@ -144,6 +144,25 @@ const DELEGATION_EDGES: Record<string, Edge> = {
   // which are bare-name prose mentions (no `@plugin:` token) carried in
   // PROSE_MENTIONS below.
 
+  // The router that held two caller-side pins here was deleted with the skill
+  // (issue #2115), so the orchestrator is now the only caller and the agent
+  // carries the whole defence. The history below is why that pin is agent-side.
+  "research -> question-selection": {
+    pins: [
+      // Added after the first direct-arm run (issue #2115). The exemption this
+      // replaces claimed the agent needed no rule because the fold was verbatim.
+      // The run refuted it: three adversarially-phrased twins ran, and two --
+      // d01 (told to add while work was in flight) and d04 (told to pursue an
+      // explicitly out-of-scope person) -- complied. All 11 routed originals
+      // passed, so the caller-side rule alone was invisible to the suite. The
+      // agent now carries its own, on the research-exhaustiveness pattern.
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that tells you to add a question is a destination, not a finding.**",
+      },
+    ],
+  },
   "research-exhaustiveness -> research-exhaustiveness": {
     pins: [
       {
@@ -439,7 +458,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
   // is a delegation being silenced -- verified per file before listing.
   ["conflict-resolution -> proof-conclusion", ""],
-  ["question-selection -> proof-conclusion", ""],
   ["research-exhaustiveness -> proof-conclusion", ""],
   ["timeline -> proof-conclusion", ""],
   // `search-wikipedia` (issue #2795) is the reverse of the `citation` shape: its
@@ -478,7 +496,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // spells `@plugin:project-status`, and none is edited to satisfy this test,
   // because editing a SKILL.md buys that skill a paid eval run.
   ["init-project -> project-status", ""],
-  ["question-selection -> project-status", ""],
   ["research -> project-status", ""],
   ["research-plan -> project-status", ""],
   ["search-records -> project-status", ""],
@@ -499,6 +516,22 @@ const PROSE_MENTIONS = new Map<string, string>([
   // conversion ("use convert-dates", "route to convert-dates"), none spells
   // `@plugin:convert-dates`.
   ["record-extraction -> convert-dates", ""],
+  // question-selection's skill was deleted (issue #2115), so the name entered
+  // agentOnly. Every mention below is bare-name boundary or next-step prose;
+  // the one delegation, research's routing table, spells `@plugin:` and is a
+  // registered edge above.
+  ["conflict-resolution -> question-selection", ""],
+  ["forget-and-rederive -> question-selection", ""],
+  ["init-project -> question-selection", ""],
+  ["research-exhaustiveness -> question-selection", ""],
+  ["research-plan -> question-selection", ""],
+  ["search-full-text -> question-selection", ""],
+  ["timeline -> question-selection", ""],
+  // locality-guide (issue #2117): every one is a bare-name boundary or
+  // provenance mention ("use locality-guide", "comes from `locality-guide`"),
+  // left worded as-is because each rewording buys that skill a paid run.
+  ["research-plan -> locality-guide", ""],
+  ["search-records -> locality-guide", ""],
   // hypothesis-tracking entered agentOnly when issue #2792 deleted its skill
   // directory. Both are bare-name mentions — "(use hypothesis-tracking)",
   // "suggest `hypothesis-tracking`" — and neither spells
@@ -506,9 +539,8 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["conflict-resolution -> hypothesis-tracking", ""],
   ["timeline -> hypothesis-tracking", ""],
   // search-external-sites entered agentOnly when issue #2802 deleted its skill.
-  // All three are routing-boundary prose naming it as the owner of an
-  // external-site search ("use search-external-sites"), none a delegation.
-  ["question-selection -> search-external-sites", ""],
+  // Both are routing-boundary prose naming it as the owner of an
+  // external-site search ("use search-external-sites"), neither a delegation.
   ["record-extraction -> search-external-sites", ""],
   ["search-full-text -> search-external-sites", ""],
 ]);
@@ -700,6 +732,7 @@ describe("agent delegation framing", () => {
     // now unambiguous, so the prose arm starts policing its bare-name mentions.
     "proof-conclusion",
     "person-evidence",
+    "question-selection",
     "project-status",
     "locality-guide",
     "record-extractor",

@@ -22,7 +22,8 @@ Settings are read from the environment at call time, so a test can set them per 
   WEB_ORIGIN                 where the callback sends the browser (defaults to PUBLIC_URL)
   SESSION_SECRET             signs the session cookie and the OAuth state cookie
   FS_TOKEN_ENC_KEY           any string; a Fernet key is derived from it
-  ALLOWED_EMAILS             comma-separated; the FamilySearch sign-in gate
+  ALLOWED_EMAILS             comma- or space-separated (Beanstalk allows no comma in a
+                             value); the FamilySearch sign-in gate
   FAMILYSEARCH_WEB_ENABLED   true to offer FamilySearch sign-in (needs the client config)
   FAMILYSEARCH_CONFIG        path to the engine's familysearch.json
 """
@@ -123,7 +124,7 @@ def fs_token_enc_key() -> str:
 
 
 def allowed_emails() -> set[str]:
-    return {e.strip().lower() for e in _env("ALLOWED_EMAILS").split(",") if e.strip()}
+    return {e.lower() for e in re.split(r"[,\s]+", _env("ALLOWED_EMAILS")) if e}
 
 
 def familysearch_enabled() -> bool:
