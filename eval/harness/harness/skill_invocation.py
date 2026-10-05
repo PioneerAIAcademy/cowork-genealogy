@@ -1877,22 +1877,32 @@ def find_relationship_writes_without_warnings_check(
         return []  # no new relationship written this run
 
     # Check for unresolved unjustified_warnings refusals from writer tools.
-    has_refusal = any(
-        isinstance(call, dict)
+    # ORDER IS LOAD-BEARING, and the polarity note on the retired predicate
+    # applies here too: this arm CREDITS a call rather than skipping it, so a
+    # success matched in the wrong place is a MISSED violation, and a missed
+    # violation in a shadow detector reports nothing at all (issue #1695).
+    # Scanning the whole call list for "any success" credits a write that
+    # landed BEFORE the refusal — an agent that wrote op A, was refused on op
+    # B, and gave up reads as clean. Take the LAST refusal and require a
+    # successful writer call after it.
+    refusals = [
+        i
+        for i, call in enumerate(tool_calls or [])
+        if isinstance(call, dict)
         and bare_tool_name(call.get("tool") or "") in _WRITER_TOOLS
         and "unjustified_warnings" in str(call.get("response_summary") or "")
-        for call in (tool_calls or [])
-    )
-    if not has_refusal:
+    ]
+    if not refusals:
         return []  # no unjustified_warnings refusal — the gate was satisfied
 
-    # A refusal exists. Check if any writer call succeeded afterwards.
+    # A refusal exists. Did a writer call succeed AFTER the last one?
+    last_refusal = refusals[-1]
     any_succeeded = any(
         isinstance(call, dict)
         and bare_tool_name(call.get("tool") or "") in _WRITER_TOOLS
         and "unjustified_warnings" not in str(call.get("response_summary") or "")
         and not did_not_land(call)
-        for call in (tool_calls or [])
+        for call in (tool_calls or [])[last_refusal + 1 :]
     )
     if any_succeeded:
         return []  # refusal was resolved by a successful re-call

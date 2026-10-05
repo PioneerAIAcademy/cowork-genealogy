@@ -1733,6 +1733,56 @@ def test_warnings_unchecked_silent_after_refusal_then_success():
     assert out == []
 
 
+def test_warnings_unchecked_fires_when_the_success_predates_the_refusal():
+    """A writer call that landed BEFORE the refusal does not resolve it.
+
+    Scanning the whole call list for "any success" credits an unrelated
+    earlier write, so an agent that wrote op A, was refused on op B, and
+    gave up reads as clean — a MISSED violation, and a missed violation in
+    a shadow detector reports nothing at all (the issue #1695 polarity trap
+    on the predicate this one replaced).
+    """
+    out = find_relationship_writes_without_warnings_check(
+        [
+            {"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": true}'},
+            {"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": false, "reason": "unjustified_warnings"}'},
+        ],
+        _tree_with_parentchild(),
+        starting_tree={"relationships": []},
+    )
+    assert len(out) == 1
+
+
+def test_warnings_unchecked_fires_when_the_agent_gives_up_on_a_later_refusal():
+    """Keyed on the LAST refusal: a resolved first refusal does not excuse a
+    second one the agent abandoned."""
+    out = find_relationship_writes_without_warnings_check(
+        [
+            {"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": false, "reason": "unjustified_warnings"}'},
+            {"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": true}'},
+            {"tool": "mcp__genealogy__materialize_facts", "response_summary": '{"ok": false, "reason": "unjustified_warnings"}'},
+        ],
+        _tree_with_parentchild(),
+        starting_tree={"relationships": []},
+    )
+    assert len(out) == 1
+
+
+def test_warnings_unchecked_silent_when_a_repeated_refusal_is_finally_resolved():
+    """The other direction: two refusals then a success is a run that kept at
+    it until the gate was satisfied, and must stay silent."""
+    out = find_relationship_writes_without_warnings_check(
+        [
+            {"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": false, "reason": "unjustified_warnings"}'},
+            {"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": false, "reason": "unjustified_warnings"}'},
+            {"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": true}'},
+        ],
+        _tree_with_parentchild(),
+        starting_tree={"relationships": []},
+    )
+    assert out == []
+
+
 def test_warnings_unchecked_matches_the_tool_under_any_server_spelling():
     """bare_tool_name strips the mcp__<server>__ prefix, so the on-computer /
     bridge spellings are recognized too."""
