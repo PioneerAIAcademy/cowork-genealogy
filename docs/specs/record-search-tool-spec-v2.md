@@ -112,8 +112,9 @@ serving — in section K of `dev/probe-search-qualifiers.ts`:
 - **Literal quotes are inert.** `"van der Linde"` returns the identical set as
   `van der Linde`, and an *unbalanced* quote returns the same unscoped total as
   the bare form, so the server strips them before matching rather than honouring
-  them. `search-records/references/name-search-mechanics.md` prescribes quoting;
-  it neither helps nor hurts, and the tool does not send it.
+  them. `search-records/references/name-search-mechanics.md` used to prescribe
+  quoting and now records this measured finding instead; quoting neither helps
+  nor hurts, and the tool does not send it.
 - **Spacing, case and the particle itself carry no signal.** `vanderlinde`,
   `Van Der Linde` and even `Linde` — the particle dropped entirely — each
   enumerate the **identical 558-row set** as `van der Linde`. All five are one
