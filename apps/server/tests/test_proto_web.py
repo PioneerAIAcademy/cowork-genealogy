@@ -91,6 +91,9 @@ class FakeStore:
         # 1b/1c: held messages, and the sessions the patron pressed Stop on.
         self.queued: list[Turn] = []
         self.stopped: set[str] = set()
+        # U23: turns a worker has received (a put-back must leave them running), and put-backs.
+        self.received: set[str] = set()
+        self.put_back: list[str] = []
 
     def seed_session(
         self, session_id: str = "sess_1", project_id: str = "proj_1", owner: str | None = USER_A.id
@@ -180,6 +183,15 @@ class FakeStore:
 
     async def fail_turn(self, turn_id: str, reason: str) -> None:
         self.failed.append((turn_id, reason))
+        self.queued = [t for t in self.queued if t.turn_id != turn_id]  # closed: no longer held
+
+    async def put_back_held(self, turn_id: str) -> bool:
+        turn = next((t for t in self.turns if t.turn_id == turn_id), None)
+        if turn is None or turn in self.queued or turn_id in self.received:
+            return False
+        self.queued.insert(0, turn)
+        self.put_back.append(turn_id)
+        return True
 
     async def events_after(self, session_id: str, after: int, limit: int) -> list[EventRow]:
         return [r for r in self.events.get(session_id, []) if r.seq > after][:limit]
@@ -891,6 +903,33 @@ async def test_post_message_on_queue_failure_marks_the_turn_and_returns_502(capl
     assert detail == {"message": detail["message"], "turn_id": store.turns[0].turn_id, "seq": 1}
     assert store.failed == [(store.turns[0].turn_id, "enqueue_failed")]
     assert queue.sent == []
+
+
+async def test_a_failed_rescue_send_fails_the_patrons_message_and_holds_the_older_one_again():
+    """D7 sends every post behind a stranded held message down the rescue path. When that
+    send fails, the 502 tells the patron THEIR message failed -- so it is their row that is
+    failed, and the older message goes back to held for the retry to rescue, not closed."""
+    store, queue = FakeStore(), FakeQueue(fail=True)
+    row = store.seed_session()
+    older = await store.begin_turn(row, "older", queued=True)  # stranded: no turn running
+    async with make_client(store, queue) as c:
+        r = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "mine"})
+    assert r.status_code == 502
+    mine = store.turns[-1]
+    assert r.json()["detail"]["turn_id"] == mine.turn_id and r.json()["detail"]["seq"] == mine.seq
+    assert store.failed == [(mine.turn_id, "enqueue_failed")]
+    assert store.put_back == [older.turn_id] and [t.turn_id for t in store.queued] == [older.turn_id]
+
+
+async def test_a_failed_rescue_send_leaves_a_received_older_message_running():
+    store, queue = FakeStore(), FakeQueue(fail=True)
+    row = store.seed_session()
+    older = await store.begin_turn(row, "older", queued=True)
+    store.received.add(older.turn_id)
+    async with make_client(store, queue) as c:
+        r = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "mine"})
+    assert r.status_code == 502 and store.put_back == []
+    assert store.failed == [(store.turns[-1].turn_id, "enqueue_failed")]
 
 
 async def test_a_queue_refusal_never_reaches_the_patron(caplog):

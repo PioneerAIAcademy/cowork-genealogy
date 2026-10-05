@@ -972,15 +972,16 @@ def case_probe_resume(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     rep.figures.update({"kill_after_s": ctx.kill_after_s, "killed": killed})
     finished = done(ctx, client, rep, tid, label="resumed")
     rep.evidence.append(turn.render_evidence(turn.gather_evidence(ctx.dsn, rep.session_id, tid, sdk_before, project_id, marks)))
+    # Findings first: a resumed run that outlasts the deadline still answers both questions.
+    inputs = agent_inputs(entries(ctx, sdk_before, 0))
+    rep.findings.append(f"Agent inputs as session_entries keeps them (name, has run_in_background, value): {inputs}")
+    rep.findings.append(f"ev=foregrounded lines: {len([e for e in events_for(worker_events(), tid) if e.get('ev') == 'foregrounded'])}")
     if not finished:
         return
     snap = snapshot(ctx, rep.session_id, tid)
     after = int(turn.one(ctx.dsn, "SELECT count(*) FROM session_entries WHERE session_id = %s", (sdk_before or "",)) or 0)
     rep.checks += resume_checks("probe_resume", snap, sdk_before=sdk_before, sdk_after=sdk_of(ctx, rep.session_id),
                                 entries_at_kill=at_kill, entries_after=after)
-    inputs = agent_inputs(entries(ctx, sdk_before, 0))
-    rep.findings.append(f"Agent inputs as session_entries keeps them (name, has run_in_background, value): {inputs}")
-    rep.findings.append(f"ev=foregrounded lines: {len([e for e in events_for(worker_events(), tid) if e.get('ev') == 'foregrounded'])}")
 
 
 CASES: dict[str, Callable[[Ctx, httpx.Client, Report], None]] = {

@@ -252,6 +252,7 @@ class Store(Protocol):
     async def documents(self, project_id: str) -> dict[str, tuple[int, Any]]: ...
     async def admit_message(self, session: SessionRow, text: str) -> tuple[Turn, bool, dict[str, Any] | None]: ...
     async def fail_turn(self, turn_id: str, reason: str) -> None: ...
+    async def put_back_held(self, turn_id: str) -> bool: ...
     async def events_after(self, session_id: str, after: int, limit: int) -> list[EventRow]: ...
     async def activity(self, session_id: str) -> Activity | None: ...
     async def turn_active(self, session_id: str) -> bool: ...
@@ -755,6 +756,19 @@ class PgStore:
             await conn.execute(
                 "UPDATE turns SET outcome = %s, completed_at = now() WHERE turn_id = %s", (reason, turn_id)
             )
+
+    async def put_back_held(self, turn_id: str) -> bool:
+        """Hold a rescued message again after its send failed (U23), so an older message is
+        never closed for a failure the patron is told was theirs. Only while no worker has
+        received it: a send that landed after its timeout is claimed, which bumps
+        ``receive_count``. False when the row had moved on."""
+        async with await self._connect() as conn:
+            cur = await conn.execute(
+                "UPDATE turns SET outcome = %s WHERE turn_id = %s AND completed_at IS NULL "
+                "AND outcome IS NULL AND receive_count = 0",
+                (QUEUED_OUTCOME, turn_id),
+            )
+            return cur.rowcount == 1
 
     async def events_after(self, session_id: str, after: int, limit: int) -> list[EventRow]:
         async with await self._connect() as conn:
@@ -1604,16 +1618,19 @@ def create_app(
         try:
             message_id = await request.app.state.queue.send(sending)
         except Exception as exc:  # any queue failure: the row stays, marked, and the UI sees 502
-            # Whichever turn we tried to send is the one that failed, and for a rescue
-            # that is not `turn`.
-            failed_id = str(sending.get("turn_id") or turn.turn_id)
-            await _store(request).fail_turn(failed_id, "enqueue_failed")
-            log.error("enqueue failed for turn %s: %s", failed_id, exc)
+            # The 502 is about the patron's OWN message, so that is the one failed. A rescued
+            # OLDER message goes back to held, not closed: the patron is told to try again,
+            # and the retry rescues it first (U23; D7 made this path common).
+            sent_id = str(sending.get("turn_id") or turn.turn_id)
+            if sent_id != turn.turn_id and not await store.put_back_held(sent_id):
+                log.error("rescued turn %s moved on after its failed send; not held again", sent_id)
+            await store.fail_turn(turn.turn_id, "enqueue_failed")
+            log.error("enqueue failed for turn %s (sent %s): %s", turn.turn_id, sent_id, exc)
             # The user_msg row was committed before the send and stays (seqs are dense), so
             # the 502 names its seq: the SPA still has an echo to drop.
             raise HTTPException(
                 status_code=502,
-                detail={"message": ENQUEUE_FAILED_MESSAGE, "turn_id": failed_id, "seq": turn.seq},
+                detail={"message": ENQUEUE_FAILED_MESSAGE, "turn_id": turn.turn_id, "seq": turn.seq},
             ) from exc
         return {"turn_id": turn.turn_id, "seq": turn.seq, "message_id": message_id, "queued": held}
 

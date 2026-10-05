@@ -509,6 +509,22 @@ def test_settle_reports_a_turn_it_could_not_stop_and_leaves_held_rows_alone(monk
     assert bounds.settle(_ctx(), _Client(log), "sess_1") == ([], ["turn_2"]), "held alone is not billed"
 
 
+def test_a_resume_that_outlasts_the_deadline_still_records_both_findings(monkeypatch):
+    """The 2026-10-05 probe resumed, crossed the ceiling and was still extracting at its
+    deadline; its findings were skipped, so the stored-input answer had to come by hand."""
+    _fake(monkeypatch, wait=("seen", call(1, agent="a1")))
+    monkeypatch.setattr(bounds, "done", lambda *a, **k: False)
+    monkeypatch.setattr(bounds.time, "sleep", lambda s: None)
+    monkeypatch.setattr(bounds.turn, "take_marks", lambda *a: None)
+    monkeypatch.setattr(bounds.turn, "gather_evidence", lambda *a: None)
+    monkeypatch.setattr(bounds.turn, "render_evidence", lambda e: "")
+    monkeypatch.setattr(bounds, "entries", lambda ctx, sdk, after: [])
+    monkeypatch.setattr(bounds, "worker_events", lambda: [ev("foregrounded", "turn_1")])
+    rep = bounds.run_case(_ctx(), "probe_resume")
+    assert any(f.startswith("Agent inputs as session_entries keeps them") for f in rep.findings), rep.findings
+    assert "ev=foregrounded lines: 1" in rep.findings, rep.findings
+
+
 @pytest.mark.parametrize("case", ["held_release", "held_after_stop"])
 def test_the_held_cases_wait_for_the_shims_line_for_the_released_msgid(monkeypatch, case):
     """The shim logs a delivery's post line only when the worker answers it -- after B's

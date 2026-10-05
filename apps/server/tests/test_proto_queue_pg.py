@@ -475,3 +475,18 @@ async def test_the_bound_is_the_transactions_own(pg_dsn, sent):
         before = conn.execute("SHOW lock_timeout").fetchone()[0]
         assert worker.release_next_held(conn, row.session_id, lock_timeout=0.2) == "m-1"
         assert conn.execute("SHOW lock_timeout").fetchone()[0] == before
+
+
+async def test_a_rescued_message_whose_send_failed_is_held_again_unless_it_was_received(pg_dsn):
+    """The web tier's failed rescue send (U23): B goes back to held while no worker has
+    received it; once one has (a send that landed after its timeout), it stays running."""
+    row = session(pg_dsn, held=("B",))
+    store = PgStore(pg_dsn)
+    _, _, rescued = await store.admit_message(row, "C")
+    assert await store.put_back_held(rescued["turn_id"]) is True
+    assert held(pg_dsn, row.session_id) == ["B", "C"] and running(pg_dsn, row.session_id) == []
+    _, _, again = await store.admit_message(row, "D")
+    assert again["turn_id"] == rescued["turn_id"], "the retry rescues the older message first"
+    sql(pg_dsn, "UPDATE turns SET receive_count = 1 WHERE turn_id = %s", (again["turn_id"],))
+    assert await store.put_back_held(again["turn_id"]) is False
+    assert running(pg_dsn, row.session_id) == ["B"]

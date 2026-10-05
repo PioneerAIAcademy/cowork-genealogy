@@ -163,7 +163,7 @@ time in 3; the worker never does.
 - **Re-logged duplicates:** PR #2850 refuses a re-extraction of the same record, person and fact type under the same log entry, even reworded: the measured resume shape (P1, D17). Under a new or missing log entry it gets through; never seen on a resume, and a corpus replay's 27 such misses (194 runs, 2026-09-29) left no duplicate. U16 counts them.
 - **Missing against the current stack:** uploads, images, logs, stored search results, two wiki skills, `evaluations/` gates, continuing a capped project. U20.
 - **Silent transcript loss:** a config-dir mismatch persists nothing; the turn now closes `transcript_lost`, answers 500, and `/healthz` answers 503 (U10). A partial loss (one dropped frame) is still silent.
-- **Stop, held messages, the $35 cap:** recorded live on compose 2026-10-05 (n=1 per case), main thread and mid-delegation (handoff U23); a Postgres error now fails the attempt closed (500, redelivered) instead of letting the call through. AWS half: U13.
+- **Stop, held messages, the $35 cap:** recorded live on compose 2026-10-05 (n=1 per case), main thread and mid-delegation (handoff U23); a Postgres error now fails the attempt closed (500, redelivered) instead of letting the call through. The live outages failed in the receive loop, so the hook's own fail-closed path is tested offline only, and a freeze longer than the CLI's hook timeout is unmeasured (U19). AWS half: U13.
 - **Dev-only paths ship:** an unauthenticated crash stub, fixture tree-read block, debug holds. U11 (built, PR #3162: the stub arms and the tree-read block need `DEV_PATHS=true`, and a packaging test refuses dev variables in the Beanstalk templates).
 
 ## What the prototype deliberately did not test
