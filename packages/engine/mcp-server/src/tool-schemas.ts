@@ -7,6 +7,7 @@
 import { volumeBisectSchema } from "./tools/volume-bisect.js";
 import { catalogSearchSchema } from "./tools/catalog-search.js";
 import { wikipediaSearchSchema } from "./tools/wikipedia.js";
+import { researchDeliveredSchema } from "./tools/research-delivered.js";
 import {
   placeSearchToolSchema,
   placeSearchAllToolSchema,
@@ -122,6 +123,7 @@ export const allToolSchemas = [
   buildExternalSearchUrlSchema,
   sidecarReadSchema,
   getNameVariantsSchema,
+  researchDeliveredSchema,
 ];
 
 // Set in place, not copied: ownership-manifest.test.ts matches schemas by object identity.
