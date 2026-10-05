@@ -232,10 +232,14 @@ _DETACH_ACTIVE_ON_TITLE_RE = re.compile(
     r"(?:[A-Z0-9][\w.'-]*\s+)*?" + _TITLE_WORDS + r"\b"
 )
 # "The 1885 Minnesota State Census should be detached": the title word is the
-# sentence's subject, with no comma between it and the verb.
+# sentence's subject, with nothing between it and the verb that carries in a
+# new subject: no comma, semicolon or colon, and no "and"/"so" followed by an
+# article or pronoun ("... and the index entry should be detached").
 _DETACH_PASSIVE_ON_TITLE_RE = re.compile(
     r"^\W*(?:(?i:the|this|that|a|an)\s+)?(?:[A-Z0-9][\w.'-]*\s+)*?"
-    + _TITLE_WORDS + r"\b[^,]*?\b" + _DETACH_VERB
+    + _TITLE_WORDS
+    + r"\b(?:(?!\b(?:and|so)\s+(?:the|a|an|this|that|it|its|he|she|they)\b)[^,;:])*\b"
+    + _DETACH_VERB
 )
 
 

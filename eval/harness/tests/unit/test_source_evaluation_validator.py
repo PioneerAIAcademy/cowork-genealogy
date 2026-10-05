@@ -700,6 +700,11 @@ _X6B_PARAGRAPH = (
 
 def test_a_detach_sentence_naming_another_record_passes():
     _no_detach(_X6B_PARAGRAPH, _TEST)
+    _no_detach(
+        "The Minnesota Death Index gives 1954 against the profile's 1945. "
+        "The 1885 Minnesota State Census belongs to another man and should be detached.",
+        _TEST,
+    )
 
 
 def test_a_detach_sentence_that_names_no_record_still_fails():
@@ -716,6 +721,13 @@ def test_a_detach_sentence_that_names_no_record_still_fails():
         "The Minnesota Death Index gives 1954 against the profile's 1945. Unlink it and rely on the 1900 Census instead.",
         "The Minnesota Death Index gives 1954 against the profile's 1945. Detach the entry and rely on the 1900 Census instead.",
         "The Minnesota Death Index gives 1954 against the profile's 1945. Detach the record and keep the 1900 Census.",
+        "The Minnesota Death Index gives 1954 against the profile's 1945. The 1900 Census agrees with 1945 and the index entry should be detached.",
+        "The Minnesota Death Index gives 1954 against the profile's 1945. The Census shows he lived to 1945 so it should be detached.",
+        "The Minnesota Death Index gives 1954 against the profile's 1945. The 1900 Census proves the year wrong: it should be detached.",
+        "The Minnesota Death Index gives 1954 against the profile's 1945. The 1900 Census proves the year wrong; it should be detached.",
+        "The Minnesota Death Index gives 1954 against the profile's 1945. Unlike the 1900 Census, detach.",
+        "The Minnesota Death Index gives 1954 against the profile's 1945. Detach the Death Index and keep the 1900 Census.",
+        "The Minnesota Death Index gives 1954 against the profile's 1945. The Death Index should be detached, not the 1900 Census.",
         _X6B_PARAGRAPH + " Detach it as well.",
     ):
         try:
