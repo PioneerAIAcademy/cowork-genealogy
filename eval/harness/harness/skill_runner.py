@@ -876,26 +876,30 @@ async def run_skill(
     _stub_agents = stub_agents or {}
     # `execution.stop_at_stub` (#3119): the first main-thread hand-off to a
     # stubbed name, by `Skill` call or agent spawn, ends the run through the
-    # stop path of the negative-test short-circuit above. For a test whose
-    # verdict is that hand-off, such as a router told to walk on down its table
-    # after it, a walk no stub can stop. False leaves every other test as it was.
+    # stop path of the negative-test short-circuit above, once the turn that
+    # made it is over. For a test whose verdict is that hand-off, such as a
+    # router told to walk on down its table after it, a walk no stub can stop.
+    # False leaves every other test as it was.
 
     def stop_at_stub_denial(name: str, tool_use_id: str | None) -> dict[str, Any]:
         # Once armed, every later main-thread hand-off is denied too, stubbed or
         # not: a second one in the same turn is a shortcut the validators must
-        # still see, and it must not run. The stop point is found by name in the
-        # message scan, so which hand-off's id is kept here does not move it.
+        # still see, and it must not run. The stop waits for the model's next
+        # turn (the message scan), so every hook of this turn has run and
+        # recorded its call first; which hand-off's id is kept here does not
+        # move the stop.
         routing_resolved["v"] = True
         routing_resolved["tool_use_id"] = tool_use_id
         if name in _stub_skills:
             denial = stub_denial(name, _stub_skills[name])
         else:
+            callee = repr(name) if name else "a callee whose name cannot be read"
             denial = {
                 "hookSpecificOutput": {
                     "hookEventName": "PreToolUse",
                     "permissionDecision": "deny",
                     "permissionDecisionReason": (
-                        f"hand-off to {name!r} observed; this test ends at its "
+                        f"hand-off to {callee} observed; this test ends at its "
                         "first stubbed hand-off"
                     ),
                 }
@@ -932,6 +936,14 @@ async def run_skill(
             skill_name, unread_keys = read_skill_tool_input(tool_input)
             if not skill_name:
                 unread_skill_calls.append(unread_keys)
+                # An armed stop denies every later main-thread hand-off, and an
+                # unreadable name is no reason to let one run.
+                if (
+                    stop_at_stub
+                    and routing_resolved["v"]
+                    and not input_data.get("agent_id")
+                ):
+                    return stop_at_stub_denial("", tool_use_id)
             else:
                 skills_invoked.append(skill_name)
                 # Negative-test routing short-circuit: the correct skill was
@@ -1134,6 +1146,24 @@ async def run_skill(
     # flag is already up while messages that PRECEDE the hand-off are still
     # arriving, and stopping on one of those drops the hand-off entirely.
     handoff_seen: dict[str, bool] = {"v": False}
+    # A `stop_at_stub` run stops at the model's next turn, not at the hand-off
+    # message. The CLI streams one block per AssistantMessage, so a second
+    # hand-off in the same turn arrives as a message of its own, and its hook
+    # can run after the first one's. Stopping at the hand-off message, or
+    # reading that block as the model's reaction, ended the run before its
+    # hook ran, and the validators never saw it. Every block of one turn
+    # carries that API response's `message_id`, and the next turn cannot begin
+    # until every hook of this one has returned, so the first main-thread
+    # message with another id is the reaction. With no id to compare, the
+    # first main-thread tool result after the hand-off marks the turn's end.
+    handoff_turn: dict[str, Any] = {"message_id": None, "results_seen": False}
+
+    def after_handoff_turn(message: Any) -> bool:
+        message_id = getattr(message, "message_id", None)
+        if message_id is not None and handoff_turn["message_id"] is not None:
+            return message_id != handoff_turn["message_id"]
+        return handoff_turn["results_seen"]
+
     # See SkillRunResult.suppressed_post_deny_calls.
     suppressed_post_deny_calls: list[dict[str, Any]] = []
     # Set on the routing short-circuit path when no ResultMessage arrived, so
@@ -1217,6 +1247,10 @@ async def run_skill(
                 # that reaction as the skill's own turns and text (review of
                 # #2189, round 2).
                 routed_call_seen = False
+                # A subagent's own messages carry the spawn's id here. Like the
+                # hook arms, which skip a call carrying `agent_id`, the stop
+                # reads only the main thread's.
+                main_thread = getattr(message, "parent_tool_use_id", None) is None
                 # Held per-turn rather than appended straight through: a turn
                 # that turns out to be the model's reaction to the deny is not
                 # the skill's own work and must not reach the run log.
@@ -1263,8 +1297,11 @@ async def run_skill(
                             # By name too, for the ordering where the hook has
                             # not run yet; only until the first hand-off is
                             # seen, or a later spawn in the model's reaction
-                            # would be recorded as the hand-off.
+                            # would be recorded as the hand-off; and only on
+                            # the main thread, since a subagent's call is never
+                            # the hand-off.
                             stop_at_stub
+                            and main_thread
                             and not handoff_seen["v"]
                             and is_stubbed_handoff(block, _stub_skills)
                         ):
@@ -1282,10 +1319,23 @@ async def run_skill(
                 # the flag is already up and THIS message is not the hand-off,
                 # the message is the model reacting to the deny: it is not the
                 # skill's turn, so nothing from it is recorded and the turn it
-                # was already counted as is given back.
-                post_routing_reaction = (
-                    routing_resolved["v"] and handoff_seen["v"] and not routed_call_seen
-                )
+                # was already counted as is given back. On a `stop_at_stub`
+                # run, a later block of the hand-off's own turn is still the
+                # skill's turn; only a message of the next turn is the
+                # reaction (`handoff_turn` above).
+                if stop_at_stub:
+                    post_routing_reaction = (
+                        routing_resolved["v"]
+                        and handoff_seen["v"]
+                        and main_thread
+                        and after_handoff_turn(message)
+                    )
+                else:
+                    post_routing_reaction = (
+                        routing_resolved["v"] and handoff_seen["v"] and not routed_call_seen
+                    )
+                if routed_call_seen and not handoff_seen["v"]:
+                    handoff_turn["message_id"] = getattr(message, "message_id", None)
                 if routed_call_seen:
                     handoff_seen["v"] = True
                 if post_routing_reaction:
@@ -1325,7 +1375,12 @@ async def run_skill(
                     )
                     if turn_input > max_input_tokens_per_turn:
                         raise _LimitExceeded("max_input_tokens_per_turn")
-                if routing_resolved["v"] and (routed_call_seen or post_routing_reaction):
+                # A `stop_at_stub` run never stops at the hand-off message
+                # itself: the rest of that turn, and its hooks, come first.
+                stop_here = post_routing_reaction or (
+                    routed_call_seen and not stop_at_stub
+                )
+                if routing_resolved["v"] and stop_here:
                     # Negative-test routing short-circuit: the hook denied the
                     # correct-skill launch when it saw the ToolUseBlock and set
                     # routing_resolved. Keyed on the flag, never on this message
@@ -1376,7 +1431,17 @@ async def run_skill(
                 # Tool results stream back as ToolResultBlocks on a UserMessage.
                 # Only a spawn's result is kept; every other tool's result is
                 # already recorded by the mock (`tool_calls`) or is noise.
-                for block in message.content if isinstance(message.content, list) else []:
+                result_blocks = message.content if isinstance(message.content, list) else []
+                # The end of the hand-off turn when no `message_id` can say so
+                # (`handoff_turn` above).
+                if (
+                    stop_at_stub
+                    and handoff_seen["v"]
+                    and getattr(message, "parent_tool_use_id", None) is None
+                    and any(isinstance(b, ToolResultBlock) for b in result_blocks)
+                ):
+                    handoff_turn["results_seen"] = True
+                for block in result_blocks:
                     if not isinstance(block, ToolResultBlock):
                         continue
                     subagent = _spawn_ids.get(block.tool_use_id)

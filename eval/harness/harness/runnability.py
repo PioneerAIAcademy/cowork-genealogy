@@ -253,8 +253,8 @@ def check_runnable(
     # nothing stubbed it can never fire, and on a negative test the routing
     # short-circuit already owns the stop: both are declarations that silently
     # do nothing, so refuse them. A `no-shortcut` test must set it, because its
-    # validator reads the first hand-off and, without the stop, the router walks
-    # on past it until a cap.
+    # validator fails on any paired row reached besides the expected one and,
+    # without the stop, the router walks on down the table to those rows.
     if spec.execution.get("stop_at_stub"):
         if spec.type != "positive":
             return RunnabilityResult(

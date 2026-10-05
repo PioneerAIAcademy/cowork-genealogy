@@ -948,17 +948,23 @@ verdict is the router's first routing decision, and the router is then told to w
 on down its table, which no stub can stop, since a stub's text reaches the model as
 a tool result and stubs write nothing. With `stop_at_stub: true` the first
 main-thread hand-off to a name in `stub_skills`, by a `Skill` call or an agent
-spawn, is denied and the run stops, through the same path the negative-test routing
-short-circuit uses, so it ends clean rather than aborted (`run_skill`'s
-`stop_at_stub`). Any other hand-off made in the same turn is denied and recorded too,
-so a validator still sees it. A `Skill` call whose name cannot be read is not
-counted; `unread_skill_calls` warns about it. The runnability gate refuses the field
-on a negative test or with nothing stubbed, and requires it on a test tagged
-`no-shortcut`, whose validator (`test_no_paired_skill_shortcut`) reads the first
-hand-off. The transcript ends at the hand-off, so the test's `judge_context` must say
-not to deduct for a missing closing summary, and because the run ends before the
-skill can write or summarize, the recorded hand-off counts as its activation (§6,
-rule 4).
+spawn, is denied, and the run stops once the turn that made it is over, through the
+same path the negative-test routing short-circuit uses, so it ends clean rather than
+aborted (`run_skill`'s `stop_at_stub`). Every later main-thread hand-off is denied
+and recorded too, whatever its name, so a validator still sees a second hand-off
+made in that turn. The run stops at the model's next turn, not at the hand-off's own
+message, because the CLI streams one block per message: a second hand-off in the
+same turn arrives as a message of its own, and its hook can run after the first
+one's. The blocks of one turn share the API response's `message_id`; with no id to
+compare, the first tool result after the hand-off ends the turn. A hand-off made
+before the first stubbed one is not denied, and a `Skill` call whose name cannot be
+read never arms the stop (`unread_skill_calls` warns about it). The runnability gate
+refuses the field on a negative test or with nothing stubbed, and requires it on a
+test tagged `no-shortcut`, whose validator (`test_no_paired_skill_shortcut`) fails on
+any paired row reached besides the expected one. The transcript ends with the
+hand-off's turn, so the test's `judge_context` must say not to deduct for a missing
+closing summary, and because the run ends before the skill can write or summarize,
+the recorded hand-off counts as its activation (§6, rule 4).
 
 **`run_skills` — letting a sub-skill really run.** The opposite declaration:
 this test wants the callee to execute. Naming it here unions the callee's
@@ -1023,7 +1029,9 @@ crossed a `Skill` seam.
 
 A `stub_skills` entry may name an agent with no skill directory; the hook then
 denies that agent's main-thread spawn the same way it denies a `Skill` call. A
-name that is still a skill is stubbed at its `Skill` call only.
+name that is still a skill is stubbed at its `Skill` call only, except on a test
+that sets `stop_at_stub`, where a main-thread spawn of any stubbed name is denied
+too and ends the run.
 
 ### 5.8 `intentionally_invalid`
 

@@ -2131,8 +2131,18 @@ def test_stop_at_stub_is_on_only_when_a_positive_test_sets_it():
 
 
 def test_stop_at_stub_is_off_on_a_negative_test():
-    """A negative test already stops on its own routing short-circuit."""
-    assert _stop_at_stub(_negative_spec()) is False
+    """A negative test already stops on its own routing short-circuit, so the
+    field is ignored there even when it is set."""
+    spec = load_test_from_dict({
+        "test": {"id": "ut_o_004", "skill": "research", "name": "n", "type": "negative",
+                  "description": "x", "tags": []},
+        "input": {"user_message": "m", "scenario": None},
+        "negative": {"correct_skill": ["search-records"], "explanation": "x"},
+        "execution": _STOPPING,
+        "judge_context": [],
+    })
+    assert spec.execution.get("stop_at_stub") is True
+    assert _stop_at_stub(spec) is False
 
 
 def _run_with(*builtin_calls):
@@ -2153,6 +2163,10 @@ def test_stopped_at_a_handoff_needs_the_opt_in_and_a_stubbed_hand_off():
     assert _stopped_at_a_handoff(stopping, _run_with(_ENTRY, _SPAWN)) is True
     assert _stopped_at_a_handoff(stopping, _run_with(_ENTRY)) is False, (
         "the skill's own entry is not a stubbed hand-off"
+    )
+    unstubbed = {"tool": "Agent", "args": {"subagent_type": "gps-mentor"}}
+    assert _stopped_at_a_handoff(stopping, _run_with(_ENTRY, unstubbed)) is False, (
+        "a hand-off to an unstubbed name is not what the stop ends at"
     )
     plain = _positive_spec_with({"stub_skills": ["question-selection"]})
     assert _stopped_at_a_handoff(plain, _run_with(_ENTRY, _SPAWN)) is False

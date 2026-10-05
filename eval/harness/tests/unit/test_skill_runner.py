@@ -1683,10 +1683,29 @@ def _spawn_block(agent, block_id):
     )
 
 
-def _turn(text, *blocks):
+def _turn(text, *blocks, message_id=None):
+    """One AssistantMessage. `message_id` is the API response's id, which the CLI
+    sends on every message and which a `stop_at_stub` stop reads to tell the
+    hand-off's own turn from the model's next one."""
     from claude_agent_sdk import AssistantMessage, TextBlock
 
-    return AssistantMessage(content=[TextBlock(text=text), *blocks], model="stub")
+    content = [TextBlock(text=text)] if text else []
+    return AssistantMessage(
+        content=[*content, *blocks], model="stub", message_id=message_id
+    )
+
+
+def _results(*tool_use_ids, parent_tool_use_id=None):
+    """The UserMessage carrying a turn's tool results, as the CLI streams it."""
+    from claude_agent_sdk import ToolResultBlock, UserMessage
+
+    return UserMessage(
+        content=[
+            ToolResultBlock(tool_use_id=i, content="denied", is_error=True)
+            for i in tool_use_ids
+        ],
+        parent_tool_use_id=parent_tool_use_id,
+    )
 
 
 def _done():
@@ -1734,9 +1753,12 @@ async def _run_stop_at_stub(
 
 def _router_messages(handoff_block):
     return [
-        _turn("Reading the project.", _skill_block("research", "activation-id")),
-        _turn("No questions yet, routing to the first row.", handoff_block),
-        _turn("Next, the locality survey.", _spawn_block("locality-guide", "walk-id")),
+        _turn("Reading the project.", _skill_block("research", "activation-id"),
+              message_id="turn-1"),
+        _turn("No questions yet, routing to the first row.", handoff_block,
+              message_id="turn-2"),
+        _turn("Next, the locality survey.", _spawn_block("locality-guide", "walk-id"),
+              message_id="turn-3"),
         _done(),
     ]
 
@@ -1812,9 +1834,9 @@ def test_stop_at_stub_holds_when_the_hook_fires_after_its_message(tmp_path, monk
         monkeypatch, tmp_path, [_SPAWN_QS],
         [
             _turn("No questions yet, routing to the first row.",
-                  _spawn_block("question-selection", "tool-use-id")),
+                  _spawn_block("question-selection", "tool-use-id"), message_id="turn-1"),
             _turn("Next, the locality survey.",
-                  _spawn_block("locality-guide", "walk-id")),
+                  _spawn_block("locality-guide", "walk-id"), message_id="turn-2"),
             _done(),
         ],
         message_first=True,
@@ -1839,8 +1861,10 @@ def test_stop_at_stub_holds_for_a_skill_call_when_the_hook_fires_after_it(
         monkeypatch, tmp_path,
         [{"tool_name": "Skill", "tool_input": {"skill": "research-plan"}}],
         [
-            _turn("Routing to the plan.", _skill_block("research-plan", "tool-use-id")),
-            _turn("Next, the searches.", _skill_block("search-records", "walk-id")),
+            _turn("Routing to the plan.", _skill_block("research-plan", "tool-use-id"),
+                  message_id="turn-1"),
+            _turn("Next, the searches.", _skill_block("search-records", "walk-id"),
+                  message_id="turn-2"),
             _done(),
         ],
         message_first=True,
@@ -1981,6 +2005,278 @@ def test_without_stop_at_stub_a_stubbed_spawn_still_continues(tmp_path, monkeypa
     ))
 
     assert "locality survey" in result.text_response
+
+
+def test_an_unreadable_skill_call_after_the_stop_is_armed_is_denied(tmp_path, monkeypatch):
+    """Before the stop is armed an unreadable call is left alone, as in any test;
+    once it is armed, no later main-thread hand-off runs, whatever its name."""
+    import asyncio
+
+    returns = []
+    unread = {"tool_name": "Skill", "tool_input": {"unexpected": "x"}}
+    result = asyncio.run(_run_stop_at_stub(
+        monkeypatch, tmp_path,
+        [_ACTIVATE, unread, _SPAWN_QS, unread, {**unread, "agent_id": "agent-sub-1"}],
+        _router_messages(_spawn_block("question-selection", "tool-use-id")),
+        returns=returns,
+        stop_at_stub=True, stub_skills=_ROWS, stub_agents=_ROWS,
+    ))
+
+    assert "continue_" not in returns[1], "an unreadable call before the stop was denied"
+    assert returns[3]["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert returns[3]["continue_"] is False
+    assert "continue_" not in returns[4], "a subagent's unreadable call was denied"
+    assert len(result.unread_skill_calls) == 3
+
+
+# The CLI streams one block per AssistantMessage, every block of one model turn
+# carrying that turn's `message_id`, and each hook runs where it runs relative to
+# the messages. `_InterleavedStream` scripts that: a hook entry runs only when the
+# consumer asks for the next message, so a hook scripted after the point where the
+# run stopped never runs, as a closed stream never runs it.
+
+
+class _InterleavedStream:
+    """Yields scripted messages, running each ("hook", input, tool_use_id) entry
+    when the consumer reaches it, and keeping what the hook returned by id."""
+
+    def __init__(self, hook, events, returns):
+        self._hook = hook
+        self._events = list(events)
+        self._returns = returns
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        while self._events:
+            event = self._events.pop(0)
+            if isinstance(event, tuple):
+                _, hook_input, tool_use_id = event
+                self._returns[tool_use_id] = await self._hook(hook_input, tool_use_id, None)
+                continue
+            return event
+        raise StopAsyncIteration
+
+    async def aclose(self):
+        return None
+
+
+async def _run_interleaved(monkeypatch, tmp_path, events, returns, **run_kwargs):
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _InterleavedStream(hook, events, returns)
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    return await sr.run_skill(
+        user_message="go",
+        workspace=tmp_path,
+        fixture_names=[],
+        fixtures_dir=tmp_path,
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        **run_kwargs,
+    )
+
+
+def _hook_runs(hook_input, tool_use_id):
+    return ("hook", hook_input, tool_use_id)
+
+
+_SPAWN_PE = {
+    "tool_name": "Agent",
+    "tool_input": {"subagent_type": "person-evidence", "prompt": "go"},
+}
+_QS_ONLY = {"question-selection": None}
+
+
+def _spawned(result):
+    return [
+        c["args"].get("subagent_type") for c in result.builtin_tool_calls
+        if c["tool"] == "Agent"
+    ]
+
+
+def test_a_same_turn_hand_off_in_its_own_message_is_recorded_when_hooks_run_first(
+    tmp_path, monkeypatch
+):
+    """Each hook runs before its own block's message. A stop at the hand-off
+    message closed the stream before the second spawn's hook ran, so the second
+    spawn was never recorded and the validators could not see it."""
+    import asyncio
+
+    returns = {}
+    result = asyncio.run(_run_interleaved(
+        monkeypatch, tmp_path,
+        [
+            _hook_runs(_ACTIVATE, "activation-id"),
+            _turn("Reading the project.", _skill_block("research", "activation-id"),
+                  message_id="turn-1"),
+            _turn("Routing to the first row.", message_id="turn-2"),
+            _hook_runs(_SPAWN_QS, "qs-id"),
+            _turn("", _spawn_block("question-selection", "qs-id"), message_id="turn-2"),
+            _hook_runs(_SPAWN_PE, "pe-id"),
+            _turn("", _spawn_block("person-evidence", "pe-id"), message_id="turn-2"),
+            _results("qs-id", "pe-id"),
+            _turn("Reacting to the denial.", message_id="turn-3"),
+            _done(),
+        ],
+        returns,
+        stop_at_stub=True, stub_skills=_QS_ONLY, stub_agents=_QS_ONLY,
+    ))
+
+    assert _spawned(result) == ["question-selection", "person-evidence"]
+    assert returns["pe-id"]["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert "Routing to the first row." in result.text_response
+    assert "Reacting to the denial." not in result.text_response
+    assert result.aborted_reason is None
+    assert result.no_result_message is True, "the stop path never fired"
+
+
+def test_a_same_turn_hand_off_after_the_stop_is_armed_is_not_read_as_the_reaction(
+    tmp_path, monkeypatch
+):
+    """The first spawn's hook runs after its message and before the second
+    spawn's message. That message then arrives with the stop armed; read as the
+    model's reaction, it ended the run before its own hook ran."""
+    import asyncio
+
+    returns = {}
+    result = asyncio.run(_run_interleaved(
+        monkeypatch, tmp_path,
+        [
+            _turn("Routing to the first row.",
+                  _spawn_block("question-selection", "qs-id"), message_id="turn-1"),
+            _hook_runs(_SPAWN_QS, "qs-id"),
+            _turn("", _spawn_block("person-evidence", "pe-id"), message_id="turn-1"),
+            _hook_runs(_SPAWN_PE, "pe-id"),
+            _results("qs-id", "pe-id"),
+            _turn("Reacting to the denial.", message_id="turn-2"),
+            _done(),
+        ],
+        returns,
+        stop_at_stub=True, stub_skills=_QS_ONLY, stub_agents=_QS_ONLY,
+    ))
+
+    assert _spawned(result) == ["question-selection", "person-evidence"]
+    assert returns["pe-id"]["continue_"] is False
+    assert "Reacting to the denial." not in result.text_response
+
+
+def test_without_message_ids_the_stop_waits_for_the_turns_tool_results(
+    tmp_path, monkeypatch
+):
+    """The fallback end of the hand-off turn is its first main-thread tool result.
+    An earlier turn's results and a subagent's do not end it."""
+    import asyncio
+
+    returns = {}
+    result = asyncio.run(_run_interleaved(
+        monkeypatch, tmp_path,
+        [
+            _turn("Reading the project.", _skill_block("research", "activation-id")),
+            _hook_runs(_ACTIVATE, "activation-id"),
+            _results("activation-id"),
+            _turn("Routing to the first row.",
+                  _spawn_block("question-selection", "qs-id")),
+            _hook_runs(_SPAWN_QS, "qs-id"),
+            _results("mentor-call-id", parent_tool_use_id="mentor-id"),
+            _turn("", _spawn_block("person-evidence", "pe-id")),
+            _hook_runs(_SPAWN_PE, "pe-id"),
+            _results("qs-id", "pe-id"),
+            _turn("Reacting to the denial."),
+            _done(),
+        ],
+        returns,
+        stop_at_stub=True, stub_skills=_QS_ONLY, stub_agents=_QS_ONLY,
+    ))
+
+    assert _spawned(result) == ["question-selection", "person-evidence"]
+    assert "Reacting to the denial." not in result.text_response
+    assert result.no_result_message is True
+
+
+def test_a_reaction_whose_hook_ran_first_is_still_the_reaction(tmp_path, monkeypatch):
+    """The reaction's own call can reach the hook before its message reaches the
+    loop. An id match on that call read the reaction as the hand-off turn and
+    recorded its text as the router's."""
+    import asyncio
+
+    returns = {}
+    walk = {
+        "tool_name": "Agent",
+        "tool_input": {"subagent_type": "locality-guide", "prompt": "go"},
+    }
+    result = asyncio.run(_run_interleaved(
+        monkeypatch, tmp_path,
+        [
+            _turn("Routing to the first row.",
+                  _spawn_block("question-selection", "qs-id"), message_id="turn-1"),
+            _hook_runs(_SPAWN_QS, "qs-id"),
+            _results("qs-id"),
+            _hook_runs(walk, "walk-id"),
+            _turn("Next, the locality survey.",
+                  _spawn_block("locality-guide", "walk-id"), message_id="turn-2"),
+            _done(),
+        ],
+        returns,
+        stop_at_stub=True, stub_skills=_ROWS, stub_agents=_ROWS,
+    ))
+
+    assert "Next, the locality survey." not in result.text_response
+    assert result.no_result_message is True
+
+
+def test_a_subagents_messages_neither_start_nor_end_the_hand_off_turn(
+    tmp_path, monkeypatch
+):
+    """A subagent's own messages carry the spawn's id as their parent. Its call to
+    a stubbed name is not the router's hand-off, and its message after the
+    hand-off is not the router's next turn."""
+    import asyncio
+    from claude_agent_sdk import AssistantMessage, TextBlock
+
+    def subagent_turn(text, *blocks, message_id):
+        return AssistantMessage(
+            content=[TextBlock(text=text), *blocks], model="stub",
+            parent_tool_use_id="mentor-id", message_id=message_id,
+        )
+
+    returns = {}
+    mentor = {
+        "tool_name": "Agent",
+        "tool_input": {"subagent_type": "gps-mentor", "prompt": "go"},
+    }
+    result = asyncio.run(_run_interleaved(
+        monkeypatch, tmp_path,
+        [
+            _hook_runs(mentor, "mentor-id"),
+            _hook_runs(_SPAWN_QS, "qs-id"),
+            _turn("", _spawn_block("gps-mentor", "mentor-id"), message_id="turn-1"),
+            subagent_turn("Mentor notes.", _skill_block("research-plan", "sub-id"),
+                          message_id="sub-turn-1"),
+            _turn("Routing to the first row.",
+                  _spawn_block("question-selection", "qs-id"), message_id="turn-1"),
+            subagent_turn("More mentor notes.", message_id="sub-turn-2"),
+            _hook_runs(_SPAWN_PE, "pe-id"),
+            _turn("", _spawn_block("person-evidence", "pe-id"), message_id="turn-1"),
+            _results("mentor-id", "qs-id", "pe-id"),
+            _turn("Reacting to the denial.", message_id="turn-2"),
+            _done(),
+        ],
+        returns,
+        stop_at_stub=True,
+        stub_skills={"question-selection": None, "research-plan": None},
+        stub_agents=_QS_ONLY,
+    ))
+
+    assert "Routing to the first row." in result.text_response, (
+        "the run stopped on the subagent's message, before the router's hand-off"
+    )
+    assert _spawned(result) == ["gps-mentor", "question-selection", "person-evidence"]
+    assert "Reacting to the denial." not in result.text_response
 
 
 # --- the short-circuit's abort clearing is scoped, and nothing pinned it ------

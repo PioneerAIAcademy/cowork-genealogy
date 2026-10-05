@@ -347,11 +347,11 @@
         "stop_at_stub": {
           "type": "boolean",
           "default": false,
-          "description": "Positive tests only. When true, the first hand-off to a name in stub_skills, by a Skill call or an agent spawn, ENDS the run (denied and stopped, as a negative test's routing hand-off is) instead of denying and continuing. Use when the hand-off itself is the deliverable under test, so what the callee or an orchestrator above it does afterwards is not measured. Requires a non-empty stub_skills; a test tagged no-shortcut requires it."
+          "description": "Positive tests only. When true, the first main-thread hand-off to a name in stub_skills, by a Skill call or an agent spawn, ENDS the run once the turn that made it is over (denied and stopped, as a negative test's routing hand-off is) instead of denying and continuing; every later main-thread hand-off is denied and recorded too. Use when the hand-off itself is the deliverable under test, so what the callee or an orchestrator above it does afterwards is not measured. Requires a non-empty stub_skills; a test tagged no-shortcut requires it."
         },
         "stub_skills": {
           "type": "array",
-          "description": "Positive tests only. Sub-skills this test does not want executed. The PreToolUse hook records the delegation in skills_invoked, denies the launch, and lets the run continue, so the caller still finishes its own logging. Use when the callee has its own unit suite. Two forms: a bare string denies the launch and returns nothing; an object with `response` hands that text back as the callee's result, which is required when the CALLER's own remaining work consumes the output (e.g. search-records is specced to present the URLs search-external-sites returns). See eval/harness/harness/skill_stubs.py.",
+          "description": "Positive tests only. Sub-skills this test does not want executed. The PreToolUse hook records the delegation in skills_invoked, denies the launch, and lets the run continue, so the caller still finishes its own logging, unless execution.stop_at_stub is set, which ends the run once the turn of the first stubbed hand-off is over. Use when the callee has its own unit suite. Two forms: a bare string denies the launch and returns nothing; an object with `response` hands that text back as the callee's result, which is required when the CALLER's own remaining work consumes the output (e.g. search-records is specced to present the URLs search-external-sites returns). See eval/harness/harness/skill_stubs.py.",
           "items": {
             "oneOf": [
               {

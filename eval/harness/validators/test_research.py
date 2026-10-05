@@ -136,13 +136,14 @@ def test_no_paired_skill_shortcut(test, skills_invoked, builtin_tool_calls):
     """On a ``no-shortcut`` test, no paired row but the expected one may be reached.
 
     Such a test must set ``execution.stop_at_stub`` (the runnability gate
-    requires it), so the harness ends the run at the router's first stubbed
-    hand-off (#3119), and ``test_routes_to_expected_skill`` asserts, in call
-    order, that it is the expected one. So a paired row other than the expected one is either that
-    first hand-off itself, which the routing check also fails, or one made in
-    the same turn, which the stop denies but records, and which only this check
-    sees. Both call mechanisms are checked because the routing table reaches
-    its ``@plugin:`` rows by spawn and the rest by ``Skill``.
+    requires it), so the harness ends the run once the turn of the router's
+    first stubbed hand-off is over (#3119), and ``test_routes_to_expected_skill``
+    asserts, in call order, that the hand-off is the expected one. So a paired
+    row other than the expected one is either that first hand-off itself, which
+    the routing check also fails, or one made later in that turn, which the stop
+    denies but records, and which only this check sees. Both call mechanisms
+    are checked because the routing table reaches its ``@plugin:`` rows by spawn
+    and the rest by ``Skill``.
     """
     from harness.skill_runner import spawned_agents
 

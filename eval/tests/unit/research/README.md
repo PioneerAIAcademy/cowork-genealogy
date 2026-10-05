@@ -49,7 +49,9 @@ means the router should finish without handing off at all.
 A `stub_skills` entry may name an agent with no skill directory. That is how a
 routing test keeps working when its callee is converted from a skill to an
 agent: the hook denies the spawn exactly as it denies a `Skill` call. A name
-that is still a skill is stubbed at its `Skill` call only.
+that is still a skill is stubbed at its `Skill` call only, except on a test that
+sets `execution.stop_at_stub`, such as `ut_research_015` below: there a spawn of
+any stubbed name is denied too and ends the run.
 
 ## What is NOT covered (and why)
 
@@ -75,15 +77,16 @@ validator reads `handoffs`.
 The user names a downstream destination ("through to a proof conclusion") on a
 project that has only an objective, so the first hand-off must be row 1,
 question-selection. Its `execution.stop_at_stub: true` makes the harness end the
-run at that first hand-off, and the runnability gate requires it on a
-`no-shortcut` test. Without the stop the test cannot pass reliably:
+run with the turn of that first hand-off, and the runnability gate requires it on
+a `no-shortcut` test. Without the stop the test cannot pass reliably:
 `research/SKILL.md` tells the router to drive the table forward to the named
 destination, so after question-selection it walks on down the table. The stubs
 write nothing, so nothing it hands to ever lands: one measured walk ran on until
 the turn cap, and another came back to the first row. The test's committed
 failures on main were mostly the activation defect above, then that walk. One
-committed run (`v1_2026-08-25_20-14-29.json`) did hand off to proof-conclusion
-first. In every committed run, person-evidence, research-exhaustiveness and
+more (`v1_2026-08-25_20-14-29.json`), from when the test asked to "write the
+conclusion", went straight to proof-conclusion, and research never ran. In
+every committed run, person-evidence, research-exhaustiveness and
 proof-conclusion were reached by `Skill` calls, which is why a count of agent
 spawns alone finds none. The test keeps the paired agents in `stub_skills`: a
 denied spawn is still recorded, so a shortcut fails the validator rather than
@@ -92,7 +95,8 @@ running.
 That validator is not redundant with `test_routes_to_expected_skill`, which
 asserts only the first hand-off. A router that spawns question-selection and
 `@plugin:proof-conclusion` in the same turn passes the routing check. The stop
-denies and records both, and this validator fails the run.
+waits for the end of that turn, so it denies and records both, and this
+validator fails the run.
 
 ## Moved negatives (issue #2268)
 

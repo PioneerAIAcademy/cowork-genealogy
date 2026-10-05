@@ -361,9 +361,10 @@ def _stop_at_stub(spec: TestSpec) -> bool:
     `execution.stop_at_stub`: for a test whose verdict is that hand-off, such
     as a `no-shortcut` router test. The router is then told to walk on down
     its table, which no stub can stop: a stub's text reaches the model as a
-    tool result, and stubs write nothing. So run_skill stops at the hand-off,
-    the way a negative test stops at its routing. The runnability gate refuses
-    it on a negative test and with nothing stubbed.
+    tool result, and stubs write nothing. So run_skill ends the run once the
+    turn that made the hand-off is over, the way a negative test stops at its
+    routing. The runnability gate refuses it on a negative test and with
+    nothing stubbed.
     """
     return spec.type == "positive" and bool((spec.execution or {}).get("stop_at_stub"))
 
@@ -584,7 +585,7 @@ async def _execute_single_run(
     file_changes = file_changes or None
 
     # Set of every *other* skill name in the packages/engine/plugin/skills/ directory —
-    # used by rule 4 to detect "routing to another skill" patterns in
+    # used by rule 3 to detect "routing to another skill" patterns in
     # short responses without false-flagging legitimate concise outputs.
     other_skill_names = {
         d.name for d in paths.skills_dir.iterdir()
