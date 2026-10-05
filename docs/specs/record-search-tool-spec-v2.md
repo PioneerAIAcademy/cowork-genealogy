@@ -695,8 +695,9 @@ this is the common shape, not an edge case.
 
 `subjectResolvable: false` is set by **two** branches of `rank-search-matches.ts`,
 and the hint deliberately fires on both. One is a scoreable subject against a pool
-that holds no match (a real negative). The other is a subject too thin to
-discriminate — no dated or placed fact — where the scores are noise. Those two
+that holds no match (a real negative). The other is a subject with no dated or
+placed fact, which cannot be discriminated, so the scores are noise. (That is
+not the `subjectTooThin` flag, which is a separate, wider test.) Those two
 need opposite responses from the caller *about the ranking*, but they want the same
 response here, and the thin-subject case may be the more valuable of the two: in
 genealogy you often cannot enrich the subject, because not knowing the missing

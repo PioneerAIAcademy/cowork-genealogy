@@ -328,20 +328,56 @@ it is matched on `labelId`.
 
 ### `subjectTooThin` — namesake gate flag
 
-Present and `true` when the subject has **no date narrower than a year** (a bare
-"1829" or standard_date "+1829" does not count) **AND** no named spouse, parent
-or child in the tree — i.e. nothing that separates this person from any
-same-named individual. Omitted when the subject is not too thin.
+Present and `true` when the subject has **no date narrower than a year** **AND**
+no named spouse, parent or child — in the tree or in the `research.json`
+evidence linked to the subject — i.e. nothing that separates this person from
+any same-named individual. Omitted otherwise; never `false`. It is computed from
+the subject, not the pool, so it is set on an empty staged set as well.
+
+- **Narrow date.** A fact's `standard_date` and its `date` are each
+  standardized and measured with `getDayRange` (`src/utils/date-helpers.ts`);
+  either counts when its day span is shorter than a bare year's. A GedcomX
+  formal date open on one side (`/+1917-12-04`, `+1917-12-04/`) is read as
+  `Bef`/`Aft` that date, so it does not count. So a month, quarter or day counts,
+  while "1829", "Abt 1829", "Bef 1855", "Bet 1917 and 1918", "1829-1830" and an
+  unparseable date do not. "Abt 4 Dec 1917" does not count either: `Abt` widens
+  any date by a year on each side. The facts read are the subject's own after
+  `research.json` enrichment, plus the facts on any Couple or ParentChild
+  relationship the subject is in (a marriage date counts even when the spouse is
+  unnamed), plus every assertion linked to the subject through
+  `person_evidence` — its `date`, its `structured_value.date`, and any day- or
+  month-precise date written in its `value` ("born 4 Dec 1917"), whatever its
+  `fact_type`. Enrichment keeps only a year from prose and skips unmapped
+  fact types, so the flag reads the assertions directly rather than the
+  enriched facts alone.
+- **Named relative.** A parent, spouse or child resolved through
+  `gatherRelatives` (`src/utils/relatives.ts`) that has at least one name with a
+  real given name. A surname-only stub does not count, since it repeats what the
+  subject's own name says, and neither do placeholder given names ("Unknown",
+  "N. N.", "Mrs.", "Living", "Infant", "Wife", "Stillborn", …; compared with
+  dots and spaces removed). A relationship whose other end is missing from
+  `persons[]` does not count. A linked assertion counts too: a `marriage` or
+  `relationship` assertion whose `structured_value` carries `spouse_given`,
+  `related_person_name`, `father`, `mother` or `spouse` with a real given name,
+  or a `relationship` assertion whose `relationship_type` is a parent, spouse or
+  child role and whose `value` reads "<role> of <Given> …" (the extraction house
+  form, e.g. "child of Niels Blyeberg").
+- **Never fails the call.** Malformed tree entries are skipped; if the test
+  itself throws, the flag is omitted.
 
 Independent of the withholding branch (`subjectResolvable: false` +
 `matches: []`), which fires on zero dated/placed facts. A subject with a
 city-only residence has a placed fact (withholding does not fire) but may still
 be `subjectTooThin` (no narrow date, no relative). Both can be true
-simultaneously — the desired semantics for the search-records namesake gate,
-which reads the flag regardless of whether matches were returned.
+simultaneously — the desired semantics for the namesake gate in search-records,
+which will read the flag regardless of whether matches were returned. That gate
+is not built yet, so nothing reads the flag today.
 
 The **stricter form** — ignore facts the query already filtered on, since every
-result shares those by construction — was deferred. Ship the base rule only.
+result shares those by construction — is not built: the base rule shipped alone
+by a review-ready decision of 2026-09-30. It is buildable when wanted, since the
+staged envelope carries the producing tool's echoed `query`
+(`readStagedEnvelopeQuery` in `src/utils/results-staging.ts`).
 
 ## Tool schema
 

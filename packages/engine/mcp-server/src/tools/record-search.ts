@@ -1146,7 +1146,7 @@ export async function recordSearchTool(
   // Fires on a search that did not find the subject here — either literally no
   // hits, or hits that ranking judged to hold no match (`subjectResolvable`
   // false). The ranker sets that in TWO branches — a scoreable subject against a
-  // pool with no match, and a subject too thin to discriminate — and the hint
+  // pool with no match, and a subject with no dated or placed fact — and the hint
   // fires on both deliberately; see the spec's `subjectResolvable` paragraph.
   // Nil-only was too narrow: in one verification run it fired once, at 121 of 180
   // minutes. A search that returned rows but matched nobody is an equally good

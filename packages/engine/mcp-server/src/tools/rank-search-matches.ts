@@ -5,7 +5,10 @@ import { mapWithConcurrency, withRetry } from "../utils/place-resolver.js";
 import { assertInsideProject, isInsideProject } from "../utils/project-io.js";
 import { readStagedResults } from "../utils/results-staging.js";
 import { sourceAttachmentsTool } from "./source-attachments.js";
-import type { SimplifiedGedcomX } from "../types/gedcomx.js";
+import { getDayRange } from "../utils/date-helpers.js";
+import { stdDate } from "../utils/date-standardize.js";
+import { gatherRelatives } from "../utils/relatives.js";
+import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
 import type { RecordSearchResult } from "../types/record-search.js";
 import type {
   RankSearchMatchesInput,
@@ -69,6 +72,7 @@ export async function rankSearchMatches(
       returnedCount: 0,
       scoringErrors: 0,
       scoreLogError: null,
+      ...tooThinField(subject),
       matches: [],
     };
   }
@@ -128,7 +132,7 @@ export async function rankSearchMatches(
 
   // No score clears the degenerate floor. Two very different situations share
   // this signature, and they need opposite responses from the caller:
-  //   (a) the SUBJECT is too thin to score — the ranking is noise;
+  //   (a) the SUBJECT carries no dated or placed fact — the ranking is noise;
   //   (b) the subject is fine and genuinely nothing in this pool matches — a
   //       real, useful negative ("not here; page deeper or narrow").
   // Inferring from the score distribution alone conflates them. Disambiguate by
@@ -162,11 +166,11 @@ export async function rankSearchMatches(
     returnedCount: matches.length,
     scoringErrors,
     scoreLogError,
+    ...tooThinField(subject),
     matches,
   };
   if (subject.enrichedFacts > 0) out.subjectEnrichedFacts = subject.enrichedFacts;
   if (subject.enrichedNames > 0) out.subjectEnrichedNames = subject.enrichedNames;
-  if (subject.subjectTooThin) out.subjectTooThin = true;
 
   if (noSignal && noDatedOrPlacedFact) {
     // Withhold the ranking rather than flag it. Returning a ranked-LOOKING
@@ -248,53 +252,140 @@ function discriminatingFactCount(person: { facts?: any[] }): number {
   ).length;
 }
 
-/** A bare year: "1829", "+1829". Anything with a month or day is narrower. */
-const BARE_YEAR_RE = /^\+?\d{4}$/;
+/** A bare year spans 364 days in `getDayRange`'s 365-day calendar; any date
+ *  whose span is shorter carries a month, quarter or day. */
+const BARE_YEAR_SPAN_DAYS = 364;
 
-/** True when at least one fact carries a date more specific than a bare year.
- *  Used for the #2811 `subjectTooThin` definition: a year-only date does not
- *  separate namesakes. */
-function hasDateNarrowerThanYear(facts: any[]): boolean {
-  for (const f of facts) {
-    if (!f) continue;
-    for (const d of [f.date, f.standard_date]) {
-      if (typeof d === "string" && d.length > 0 && !BARE_YEAR_RE.test(d)) {
-        return true;
-      }
-    }
-  }
-  return false;
+const MONTH =
+  "(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t|tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\\.?";
+const DATE_IN_TEXT = new RegExp(`\\b(?:\\d{1,2}\\s+)?${MONTH}\\s+\\d{4}\\b|\\b${MONTH}\\s+\\d{1,2},?\\s+\\d{4}\\b`, "gi");
+
+/** Day- or month-precise dates written in an assertion's prose value
+ *  ("born 4 Dec 1917", "baptized March 3, 1850"). */
+function datesInText(text: unknown): string[] {
+  return typeof text === "string" ? (text.match(DATE_IN_TEXT) ?? []) : [];
 }
 
-/** True when the tree records at least one named spouse, parent or child for
- *  `subjectId`. A "named" person has at least one SimplifiedName with a `given`
- *  or `surname`. */
+/** A GedcomX formal date open on one side ("/+1917-12-04" before,
+ *  "+1917-12-04/" after) is unbounded, but `stdDate` drops the slash and reads
+ *  it as the exact day; restate it as the qualified form `getDayRange` widens. */
+function openRangeAsQualified(raw: string): string {
+  const t = raw.trim();
+  if (/^\/[+-]\d/.test(t)) return `Bef ${t.slice(1)}`;
+  if (/^[+-]\d.*\/$/.test(t) && !t.slice(0, -1).includes("/")) {
+    return `Aft ${t.slice(0, -1)}`;
+  }
+  return t;
+}
+
+/** True when `raw` is a date more specific than a year. Precision is the
+ *  date's day span, so qualified years ("Abt 1829", "Bef 1855",
+ *  "Bet 1917 and 1918") count as year-level or wider, and an unparseable date
+ *  counts as no date. */
+function isDateNarrowerThanYear(raw: unknown): boolean {
+  if (typeof raw !== "string" || !raw.trim()) return false;
+  const range = getDayRange(stdDate(openRangeAsQualified(raw)));
+  return range !== null && range.max - range.min < BARE_YEAR_SPAN_DAYS;
+}
+
+/** True when at least one fact carries a date more specific than a year, in
+ *  either its `standard_date` or its `date`. */
+function hasDateNarrowerThanYear(facts: any[]): boolean {
+  return facts.some(
+    (f) => isDateNarrowerThanYear(f?.standard_date) || isDateNarrowerThanYear(f?.date),
+  );
+}
+
+/** Given names that record a missing name rather than a name, compared after
+ *  lower-casing and dropping dots and spaces ("N. N." → "nn"). */
+const PLACEHOLDER_GIVEN = new Set([
+  "unknown", "unk", "unkn", "nn", "fnu", "lnu", "living", "private",
+  "mr", "mrs", "miss", "ms", "infant", "baby", "child", "stillborn",
+  "son", "daughter", "wife", "husband", "boy", "girl", "male", "female",
+]);
+
+function isRealGivenName(given: unknown): boolean {
+  if (typeof given !== "string") return false;
+  const key = given.toLowerCase().replace(/[.\s]/g, "");
+  return /\p{L}/u.test(key) && !PLACEHOLDER_GIVEN.has(key);
+}
+
+/** A relative separates namesakes only through a real given name: a
+ *  surname-only stub repeats what the subject's own name already says. */
+function hasRealGivenName(person: SimplifiedPerson): boolean {
+  const names = Array.isArray(person?.names) ? person.names : [];
+  return names.some((n) => isRealGivenName((n as any)?.given));
+}
+
+/** True when the tree records a spouse, parent or child of `subjectId` with a
+ *  real given name. */
 function hasNamedRelative(
   tree: SimplifiedGedcomX,
   subjectId: string,
 ): boolean {
-  const personHasName = (id: string): boolean => {
-    const p = (tree.persons ?? []).find((per) => per.id === id);
-    return (p?.names ?? []).some(
-      (n) => (n.given && n.given.trim()) || (n.surname && n.surname.trim()),
-    );
-  };
+  const { parent, spouse, child } = gatherRelatives(tree, subjectId);
+  return [...parent, ...spouse, ...child].some(hasRealGivenName);
+}
 
-  for (const rel of tree.relationships ?? []) {
-    if (rel.type === "ParentChild") {
-      if (rel.parent === subjectId && rel.child && personHasName(rel.child))
+/** Relationship types (the subject's own role) that name a spouse, parent or
+ *  child — not a sibling, uncle or godparent. */
+const NEAR_RELATIONSHIP_TYPES = new Set([
+  "parent", "father", "mother", "child", "son", "daughter",
+  "spouse", "wife", "husband",
+]);
+
+/** Structured-value keys that carry a relative's name on a linked assertion. */
+const RELATIVE_NAME_KEYS = [
+  "spouse_given", "related_person_name", "father", "mother", "spouse",
+];
+
+/** True when a research.json assertion linked to the subject names a spouse,
+ *  parent or child — through a structured name key, or a relationship value
+ *  in the house form "<role> of <Given> <Surname>". The tree lags the
+ *  evidence, so a relative the project knows of may not be a tree person yet. */
+function assertionNamesRelative(a: any): boolean {
+  const sv = a?.structured_value ?? {};
+  if (typeof sv !== "object") return false;
+  if (a?.fact_type === "marriage" || a?.fact_type === "relationship") {
+    for (const k of RELATIVE_NAME_KEYS) {
+      const v = sv[k];
+      if (typeof v === "string" && isRealGivenName(v.trim().split(/\s+/)[0])) {
         return true;
-      if (rel.child === subjectId && rel.parent && personHasName(rel.parent))
-        return true;
-    }
-    if (rel.type === "Couple") {
-      if (rel.person1 === subjectId && rel.person2 && personHasName(rel.person2))
-        return true;
-      if (rel.person2 === subjectId && rel.person1 && personHasName(rel.person1))
-        return true;
+      }
     }
   }
-  return false;
+  if (a?.fact_type !== "relationship") return false;
+  const type = String(sv.relationship_type ?? "").toLowerCase().replace(/_inferred$/, "");
+  if (!NEAR_RELATIONSHIP_TYPES.has(type)) return false;
+  const m = typeof a?.value === "string" ? a.value.match(/\bof\s+(\p{Lu}[\p{L}'.-]*)/u) : null;
+  return m !== null && isRealGivenName(m[1]);
+}
+
+/** Facts on the subject's own Couple and ParentChild relationships — a
+ *  marriage date separates namesakes even when the spouse is unnamed. */
+function subjectRelationshipFacts(
+  tree: SimplifiedGedcomX,
+  subjectId: string,
+): any[] {
+  return (tree.relationships ?? [])
+    .filter((r) => [r.person1, r.person2, r.parent, r.child].includes(subjectId))
+    .flatMap((r) => (Array.isArray(r.facts) ? r.facts : []));
+}
+
+/** The tree with non-object person and relationship entries dropped, so the
+ *  relative walk cannot throw on a hand-edited or legacy file. */
+function wellFormedTree(tree: SimplifiedGedcomX): SimplifiedGedcomX {
+  const isObj = (x: unknown) => typeof x === "object" && x !== null;
+  return {
+    ...tree,
+    persons: (Array.isArray(tree.persons) ? tree.persons : []).filter(isObj),
+    relationships: (Array.isArray(tree.relationships) ? tree.relationships : []).filter(isObj),
+  };
+}
+
+/** The response's `subjectTooThin` field: present only when true. */
+function tooThinField(subject: SubjectDoc): { subjectTooThin?: true } {
+  return subject.subjectTooThin ? { subjectTooThin: true } : {};
 }
 
 interface SubjectDoc {
@@ -361,6 +452,10 @@ export async function buildSubjectDoc(
   const before = (enriched.facts ?? []).length;
   const namesBefore = (enriched.names ?? []).length;
   const hadGender = Boolean(enriched.gender);
+  // #2811 reads every linked assertion, not just the ones enrichment folds in:
+  // enrichment skips unmapped fact_types and keeps only a year from prose.
+  const evidenceDates: unknown[] = [];
+  let evidenceNamesRelative = false;
 
   try {
     const research = JSON.parse(
@@ -390,6 +485,8 @@ export async function buildSubjectDoc(
 
     for (const a of assertions) {
       const sv = a?.structured_value ?? {};
+      evidenceDates.push(a?.date, sv?.date, ...datesInText(a?.value));
+      if (assertionNamesRelative(a)) evidenceNamesRelative = true;
 
       if (a?.fact_type === "name") {
         const given = sv.given ?? undefined;
@@ -441,9 +538,21 @@ export async function buildSubjectDoc(
   // for the ark-less subject, so scoring stays deterministic.
   // #2811: a subject is "too thin" when it has no date narrower than a year AND
   // no named relative — nothing that separates it from any same-named person.
-  const tooThin =
-    !hasDateNarrowerThanYear(enriched.facts ?? []) &&
-    !hasNamedRelative(tree, subjectId);
+  let tooThin: boolean;
+  try {
+    const safeTree = wellFormedTree(tree);
+    tooThin =
+      !hasDateNarrowerThanYear([
+        ...(Array.isArray(enriched.facts) ? enriched.facts : []),
+        ...subjectRelationshipFacts(safeTree, subjectId),
+      ]) &&
+      !evidenceDates.some(isDateNarrowerThanYear) &&
+      !evidenceNamesRelative &&
+      !hasNamedRelative(safeTree, subjectId);
+  } catch {
+    // An advisory flag never fails the ranking; unflagged is the prior behavior.
+    tooThin = false;
+  }
 
   return {
     doc: { persons: [enriched] },

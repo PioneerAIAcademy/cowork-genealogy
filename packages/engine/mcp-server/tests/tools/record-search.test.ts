@@ -1065,6 +1065,25 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     expect(out.rankingError).toBeUndefined();
   });
 
+  it.each([
+    ["1900", true],
+    ["4 Dec 1900", undefined],
+  ])("carries ranked.subjectTooThin through the folded path (birth %j → %j)", async (date, flag) => {
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify({
+        persons: [{ id: "I1", names: [{ preferred: true, given: "A", surname: "B" }], facts: [{ type: "Birth", date, place: "X" }] }],
+      }),
+      "utf-8",
+    );
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir, subjectId: "I1" }, LOCAL);
+
+    expect(out.rankingError).toBeUndefined();
+    expect(out.ranked!.subjectTooThin).toBe(flag);
+  });
+
   it("keeps count at 20 when there is no subject to rank against", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 

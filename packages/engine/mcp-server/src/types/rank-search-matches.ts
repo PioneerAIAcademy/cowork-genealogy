@@ -117,11 +117,12 @@ export interface RankSearchMatchesResult {
   relativeTermNote?: string;
   /**
    * Present and `true` when the subject has no date narrower than a year (a bare
-   * "1829" or standard_date "+1829" does not count) AND no named spouse, parent
-   * or child in the tree — i.e. nothing that separates this person from any
-   * same-named individual. The namesake gate in search-records keys on this.
-   * Omitted when the subject is not too thin.
+   * or qualified year such as "1829" or "Abt 1829" does not count) AND no named
+   * spouse, parent or child in the tree or the subject's linked evidence —
+   * i.e. nothing that separates this person from any same-named individual.
+   * For the search-records namesake gate (#2213 PR2, not yet built).
+   * Omitted when the subject is not too thin; never `false`.
    */
-  subjectTooThin?: boolean;
+  subjectTooThin?: true;
   matches: RankedMatch[];
 }

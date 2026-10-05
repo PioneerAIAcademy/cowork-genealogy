@@ -969,67 +969,259 @@ describe("rank_search_matches", () => {
   // ── #2811: subjectTooThin — the namesake gate flag ─────────────────────────
 
   describe("subjectTooThin (#2811)", () => {
-    it("returns subjectTooThin: true for {name + city} — no narrow date, no relatives", async () => {
-      const tree = {
-        persons: [{ id: "I1", names: [{ given: "Ugo", surname: "Stella" }], facts: [{ type: "Residence", place: "Milan" }] }],
-        relationships: [],
-        sources: [],
-      };
+    const UGO = { given: "Ugo", surname: "Stella" };
+
+    async function rankFlag(tree: unknown): Promise<boolean | undefined> {
       await writeTree(tree);
       scorePairMock.mockResolvedValue(scoreResult(0.5, 3));
       const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
-
       const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
+      return out.subjectTooThin;
+    }
 
-      expect(out.subjectTooThin).toBe(true);
+    const solo = (facts: unknown[]) => ({
+      persons: [{ id: "I1", names: [UGO], facts }],
+      relationships: [],
+      sources: [],
     });
 
-    it("returns subjectTooThin: true for {name + year + country} — year-only does not count as narrower", async () => {
-      const tree = {
-        persons: [{ id: "I1", names: [{ given: "Ugo", surname: "Stella" }], facts: [{ type: "Birth", date: "1910", place: "Italy" }] }],
-        relationships: [],
-        sources: [],
-      };
-      await writeTree(tree);
-      scorePairMock.mockResolvedValue(scoreResult(0.5, 3));
-      const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
-
-      const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
-
-      expect(out.subjectTooThin).toBe(true);
+    it("flags {name + city} — no narrow date, no relatives", async () => {
+      expect(await rankFlag(solo([{ type: "Residence", place: "Milan" }]))).toBe(true);
     });
 
-    it("returns subjectTooThin: false for {name + spouse} — a named relative separates namesakes", async () => {
-      const tree = {
-        persons: [
-          { id: "I1", names: [{ given: "Ugo", surname: "Stella" }] },
-          { id: "I2", names: [{ given: "Anna", surname: "Rossi" }] },
-        ],
-        relationships: [{ type: "Couple", person1: "I1", person2: "I2" }],
-        sources: [],
-      };
-      await writeTree(tree);
-      scorePairMock.mockResolvedValue(scoreResult(0.5, 3));
-      const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
-
-      const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
-
-      expect(out.subjectTooThin).toBeUndefined();
+    it("flags {name + year + country} — year-only does not count as narrower", async () => {
+      expect(await rankFlag(solo([{ type: "Birth", date: "1910", place: "Italy" }]))).toBe(true);
     });
 
-    it("returns subjectTooThin: false for {name + full date + place} — a narrow date separates namesakes", async () => {
+    it.each([
+      ["abt 1829"],
+      ["Abt 1829"],
+      ["Bef 1855"],
+      ["Bet 1917 and 1918"],
+      ["1829-1830"],
+      ["1829?"],
+      ["1829 "],
+      ["1820s"],
+      ["sometime"],
+    ])("flags a qualified, ranged or unparseable year %j as not narrower than a year", async (date) => {
+      expect(await rankFlag(solo([{ type: "Birth", date, place: "Italy" }]))).toBe(true);
+    });
+
+    it("reads standard_date when present", async () => {
+      expect(
+        await rankFlag(solo([{ type: "Birth", date: "about 1829", standard_date: "Abt 1829" }])),
+      ).toBe(true);
+      expect(
+        await rankFlag(solo([{ type: "Birth", date: "winter 1917", standard_date: "4 Dec 1917" }])),
+      ).toBeUndefined();
+    });
+
+    it.each([["4 Dec 1917"], ["Dec 1917"], ["Q1 1917"], ["+1917-12-04"]])(
+      "omits the flag for a month-, quarter- or day-precise date %j",
+      async (date) => {
+        expect(await rankFlag(solo([{ type: "Birth", date }]))).toBeUndefined();
+      },
+    );
+
+    it("omits the flag for {name + full date + place} — a narrow date separates namesakes", async () => {
       const tree = {
         persons: [{ id: "I1", names: [{ given: "Kenneth", surname: "Quass" }], facts: [{ type: "Birth", date: "4 Dec 1917", place: "Sumner, Bremer, Iowa" }] }],
         relationships: [],
         sources: [],
       };
-      await writeTree(tree);
-      scorePairMock.mockResolvedValue(scoreResult(0.5, 3));
-      const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
+      expect(await rankFlag(tree)).toBeUndefined();
+    });
 
-      const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
+    it.each([
+      ["spouse", { type: "Couple", person1: "I1", person2: "I2" }],
+      ["spouse (subject as person2)", { type: "Couple", person1: "I2", person2: "I1" }],
+      ["parent", { type: "ParentChild", parent: "I2", child: "I1" }],
+      ["child", { type: "ParentChild", parent: "I1", child: "I2" }],
+    ])("omits the flag for {name + named %s}", async (_role, rel) => {
+      const tree = {
+        persons: [
+          { id: "I1", names: [UGO] },
+          { id: "I2", names: [{ given: "Anna", surname: "Rossi" }] },
+        ],
+        relationships: [rel],
+        sources: [],
+      };
+      expect(await rankFlag(tree)).toBeUndefined();
+    });
 
-      expect(out.subjectTooThin).toBeUndefined();
+    it.each([
+      ["surname-only stub", { surname: "Stella" }],
+      ["'Unknown'", { given: "Unknown", surname: "Stella" }],
+      ["'?'", { given: "?", surname: "Rossi" }],
+      ["'Mrs.'", { given: "Mrs.", surname: "Stella" }],
+    ])("still flags a subject whose only relative is a %s", async (_label, name) => {
+      const tree = {
+        persons: [
+          { id: "I1", names: [UGO] },
+          { id: "I2", names: [name] },
+        ],
+        relationships: [{ type: "ParentChild", parent: "I2", child: "I1" }],
+        sources: [],
+      };
+      expect(await rankFlag(tree)).toBe(true);
+    });
+
+    it("still flags when the relationship points at a person missing from persons[]", async () => {
+      const tree = {
+        persons: [{ id: "I1", names: [UGO] }],
+        relationships: [{ type: "Couple", person1: "I1", person2: "I404" }],
+        sources: [],
+      };
+      expect(await rankFlag(tree)).toBe(true);
+    });
+
+    it("omits the flag when a day-precise marriage date sits on the Couple relationship, spouse unnamed", async () => {
+      const tree = {
+        persons: [
+          { id: "I1", names: [UGO] },
+          { id: "I2", names: [] },
+        ],
+        relationships: [
+          { type: "Couple", person1: "I1", person2: "I2", facts: [{ type: "Marriage", date: "4 Dec 1917" }] },
+        ],
+        sources: [],
+      };
+      expect(await rankFlag(tree)).toBeUndefined();
+    });
+
+    it("ignores a narrow date on a relationship the subject is not in", async () => {
+      const tree = {
+        persons: [
+          { id: "I1", names: [UGO] },
+          { id: "I2", names: [{ surname: "Rossi" }] },
+          { id: "I3", names: [{ surname: "Bianchi" }] },
+        ],
+        relationships: [
+          { type: "Couple", person1: "I2", person2: "I3", facts: [{ type: "Marriage", date: "4 Dec 1917" }] },
+        ],
+        sources: [],
+      };
+      expect(await rankFlag(tree)).toBe(true);
+    });
+
+    it("omits the flag when research.json enrichment supplies the narrow date", async () => {
+      await writeResearch({
+        person_evidence: [{ id: "pe_001", person_id: "I1", assertion_id: "a_001" }],
+        assertions: [
+          { id: "a_001", fact_type: "birth", structured_value: { date: "4 Dec 1917", place: "Milan" } },
+        ],
+      });
+      expect(await rankFlag(solo([{ type: "Residence", place: "Milan" }]))).toBeUndefined();
+    });
+
+    const linked = (assertions: Record<string, unknown>[]) =>
+      writeResearch({
+        person_evidence: assertions.map((a, i) => ({ id: `pe_${i}`, person_id: "I1", assertion_id: a.id })),
+        assertions,
+      });
+
+    it.each([
+      ["an unmapped fact_type", { id: "a_001", fact_type: "emigration", value: "emigrated", structured_value: { date: "4 Dec 1917" } }],
+      ["a date only in prose", { id: "a_001", fact_type: "birth", value: "born 4 Dec 1917", structured_value: {} }],
+      ["a US-order date in prose", { id: "a_001", fact_type: "religion", value: "baptized March 3, 1850" }],
+      ["the assertion's own date field", { id: "a_001", fact_type: "other", value: "x", date: "Dec 1917" }],
+    ])("omits the flag when a linked assertion carries a narrow date as %s", async (_label, a) => {
+      await linked([a]);
+      expect(await rankFlag(solo([{ type: "Residence", place: "Milan" }]))).toBeUndefined();
+    });
+
+    it.each([
+      ["a year in prose", { id: "a_001", fact_type: "birth", value: "born 1917" }],
+      ["a word that starts like a month", { id: "a_001", fact_type: "marriage", value: "married 1917" }],
+      ["an unlinked assertion", { id: "a_999", fact_type: "birth", value: "born 4 Dec 1917" }],
+    ])("still flags when the only evidence date is %s", async (_label, a) => {
+      await writeResearch({
+        person_evidence: [{ id: "pe_0", person_id: "I1", assertion_id: "a_001" }],
+        assertions: [a],
+      });
+      expect(await rankFlag(solo([{ type: "Residence", place: "Milan" }]))).toBe(true);
+    });
+
+    it.each([
+      ["a relationship value in the house form", { id: "a_001", fact_type: "relationship", value: "son of Giovanni Stella", structured_value: { relationship_type: "son", related_person_role: "father" } }],
+      ["an _inferred relationship", { id: "a_001", fact_type: "relationship", value: "child of Anna Rossi", structured_value: { relationship_type: "child_inferred", related_person_role: "head_of_household" } }],
+      ["a marriage spouse_given", { id: "a_001", fact_type: "marriage", value: "married", structured_value: { spouse_given: "Anna", spouse_surname: "Rossi" } }],
+      ["a related_person_name key", { id: "a_001", fact_type: "relationship", value: "x", structured_value: { relationship_type: "child", related_person_name: "Anna Rossi" } }],
+    ])("omits the flag when linked evidence names a relative through %s", async (_label, a) => {
+      await linked([a]);
+      expect(await rankFlag(solo([{ type: "Residence", place: "Milan" }]))).toBeUndefined();
+    });
+
+    it.each([
+      ["a sibling", { id: "a_001", fact_type: "relationship", value: "sibling of Anna Stella", structured_value: { relationship_type: "sibling" } }],
+      ["a godparent role", { id: "a_001", fact_type: "relationship", value: "godfather of Anna Stella", structured_value: { relationship_type: "godparent" } }],
+      ["a placeholder name", { id: "a_001", fact_type: "relationship", value: "child of Unknown Stella", structured_value: { relationship_type: "child" } }],
+      ["a lower-case 'of' phrase", { id: "a_001", fact_type: "relationship", value: "child of the household", structured_value: { relationship_type: "child" } }],
+    ])("still flags when the only evidence relative is %s", async (_label, a) => {
+      await linked([a]);
+      expect(await rankFlag(solo([{ type: "Residence", place: "Milan" }]))).toBe(true);
+    });
+
+    it.each([["Infant"], ["Wife"], ["Baby"], ["Son"], ["Stillborn"], ["N.N"], ["N. N."], ["nn"]])(
+      "treats %j as a placeholder given name",
+      async (given) => {
+        const tree = {
+          persons: [{ id: "I1", names: [UGO] }, { id: "I2", names: [{ given, surname: "Stella" }] }],
+          relationships: [{ type: "ParentChild", parent: "I1", child: "I2" }],
+          sources: [],
+        };
+        expect(await rankFlag(tree)).toBe(true);
+      },
+    );
+
+    it.each([["Anna"], ["Nn. Maria"], ["Ännchen"]])("counts %j as a real given name", async (given) => {
+      const tree = {
+        persons: [{ id: "I1", names: [UGO] }, { id: "I2", names: [{ given, surname: "Stella" }] }],
+        relationships: [{ type: "ParentChild", parent: "I1", child: "I2" }],
+        sources: [],
+      };
+      expect(await rankFlag(tree)).toBeUndefined();
+    });
+
+    it.each([[""], [42], [null]])(
+      "falls back to date when standard_date is %j",
+      async (standard_date) => {
+        expect(await rankFlag(solo([{ type: "Birth", date: "4 Dec 1917", standard_date }]))).toBeUndefined();
+      },
+    );
+
+    it.each([["/+1917-12-04"], ["+1917-12-04/"]])(
+      "flags a formal date %j that is open on one side",
+      async (date) => {
+        expect(await rankFlag(solo([{ type: "Birth", date }]))).toBe(true);
+      },
+    );
+
+    it("still ranks a tree with malformed relative names and relationships", async () => {
+      const tree = {
+        persons: [
+          { id: "I1", names: [UGO], facts: [{ type: "Residence", place: "Milan" }] },
+          { id: "I2", names: [null, { given: 123 }] },
+          null,
+        ],
+        relationships: [null, { type: "ParentChild", parent: "I2", child: "I1", facts: "x" }],
+        sources: [],
+      };
+      expect(await rankFlag(tree)).toBe(true);
+    });
+
+    it("carries the flag on an empty staged set", async () => {
+      await writeTree(solo([{ type: "Residence", place: "Milan" }]));
+      await mkdir(join(dir, STAGING_SUBDIR), { recursive: true });
+      const rel = `${STAGING_SUBDIR}/empty.json`;
+      await writeFile(
+        join(dir, rel),
+        JSON.stringify({ tool: "record_search", payload: { results: [] } }),
+        "utf-8",
+      );
+      const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: rel, subjectId: "I1" }, LOCAL);
+      expect(out.scoredCount).toBe(0);
+      expect(out.subjectTooThin).toBe(true);
     });
 
     it("the withholding branch still fires only on zero dated/placed facts, not on subjectTooThin", async () => {
