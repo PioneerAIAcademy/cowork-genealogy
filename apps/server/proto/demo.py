@@ -50,9 +50,8 @@ from proto import audit, seed, turn  # noqa: E402
 DEFAULT_FIXTURE = "bagley-father-1884"
 DEFAULT_DEADLINE_S = 3900.0  # 2 x the shim's 1800 s per-attempt ceiling, plus slack
 # What the engine's auth module actually says when the bearer is missing, expired or rejected
-# (src/auth/refresh.ts, the hosted message) -- not turn.REAUTH, whose `log ?in|authenticat`
-# also matches "the Login family" and "Authenticated copy" in record text.
-REAUTH = re.compile(r"Call the login tool|Reconnect FamilySearch|unauthori[sz]ed|\b401\b", re.I)
+# -- turn.REAUTH_HITS, owned by turn.py since the kill arm reads it too (U3).
+REAUTH = turn.REAUTH_HITS
 # Transient web-tier faults a 65-minute poll must ride out rather than die on.
 TRANSIENT = (httpx.HTTPError, ValueError, KeyError)
 
@@ -168,12 +167,7 @@ def project_status(dsn: str, project_id: str) -> str | None:
     return found[0][0] if found else None
 
 
-def reauth_hits(dsn: str, session_id: str, since_seq: int) -> list[str]:
-    """tool_result summaries after ``since_seq`` matching ``REAUTH`` -- what a FamilySearch tool
-    answers when its bearer is empty or rejected."""
-    found = rows(dsn, "SELECT payload->>'summary' FROM session_events WHERE session_id = %s AND seq > %s "
-                      "AND kind = 'tool_result' ORDER BY seq", (session_id, since_seq))
-    return [s or "" for (s,) in found if REAUTH.search(s or "")]
+reauth_hits = turn.reauth_hits
 
 
 def reply_text(dsn: str, session_id: str, turn_id: str) -> tuple[int, str]:
@@ -299,8 +293,8 @@ def run(args: argparse.Namespace) -> int:
 
     hits = reauth_hits(args.pg_dsn, session_id, since)
     if hits:
-        print("VOID: a FamilySearch tool answered with the reconnect instruction (the token expired) --")
-        print("      make proto-token, then a new session")
+        print("VOID: a FamilySearch tool answered with the reconnect instruction -- the grant was refused or")
+        print("      is missing: make proto-grant, then a new session")
         for h in hits[:3]:
             print(f"      {h[:160]!r}")
         print()
@@ -336,6 +330,10 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
     args.fixture_given = args.fixture is not None
     args.fixture = args.fixture or DEFAULT_FIXTURE
+    problem = turn.require_grant(args.pg_dsn, args.email)
+    if problem:
+        print(f"demo: {problem}", file=sys.stderr)
+        return 2
     return run(args)
 
 

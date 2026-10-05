@@ -138,6 +138,42 @@ def test_each_check_reads_its_row():
     assert failed(_rows(reply="Somewhere else")) == ["kill: the reply names Nauvoo"]
 
 
+def test_expect_grant_refresh_adds_the_three_checks():
+    """U3's Done-when on the kill arm: the grant moved in the kill gap, and neither the
+    summaries nor the full results carry the reconnect instruction. Off, nothing is added."""
+    spec = turn.KillSpec(expect_grant_refresh=True)
+    ok = _rows(grant_refreshed=True)
+    names = [name for name, _, _ in turn.kill_checks(ok, spec)]
+    assert len(names) == len(turn.kill_checks(ok, turn.KillSpec())) + 3
+    assert names[-3:] == ["kill: grant refreshed between attempts", "kill: reauth_hits=0 since the user_msg",
+                          "kill: reauth_entry_hits=0 (full tool results)"]
+    assert all(passed for _, passed, _ in turn.kill_checks(ok, spec))
+
+    def failed(rows):
+        return [name for name, passed, _ in turn.kill_checks(rows, spec) if not passed]
+
+    assert failed(_rows(grant_refreshed=False)) == ["kill: grant refreshed between attempts"]
+    assert failed(_rows(grant_refreshed=None)) == ["kill: grant refreshed between attempts"]
+    assert failed(_rows(grant_refreshed=True, reauth_hits=["Call the login tool"])) == \
+        ["kill: reauth_hits=0 since the user_msg"]
+    assert failed(_rows(grant_refreshed=True, reauth_entry_hits=["Reconnect FamilySearch"])) == \
+        ["kill: reauth_entry_hits=0 (full tool results)"]
+    assert turn.kill_spec(_args("--expect-grant-refresh")).expect_grant_refresh is True
+    with pytest.raises(ValueError, match="kill-signal kill"):
+        turn.kill_spec(_args("--expect-grant-refresh", "--kill-signal", "term"))
+
+
+def test_the_grant_refresh_wait_sits_between_the_kill_and_the_start(monkeypatch, capsys):
+    order: list[str] = []
+    _fake_stack(monkeypatch, order)
+    monkeypatch.setattr(turn, "wait_grant_refresh",
+                        lambda dsn, project_id, before, *a: order.append(f"wait_grant_refresh {before}") or True)
+    spec = turn.KillSpec(kill_on="Agent", text="x", session_id="sess_1", container="w", expect_grant_refresh=True)
+    checks, figures = turn.run_kill("http://x", "dsn", 100.0, spec)
+    assert order[order.index("docker kill w") + 1:][:2] == ["wait_grant_refresh v", "docker start w"], order
+    assert figures["grant_refreshed"] is True
+
+
 # ── the kill-on match, by bare name ─────────────────────────────────────────────────
 
 
@@ -246,8 +282,10 @@ def test_the_kill_check_fails_only_on_a_resume_that_did_nothing():
     assert outcome_check("no_progress") is False, "a dead resume is the one thing this probe catches"
     assert outcome_check("retries_exhausted") is False, "U5: a turn closed for running out of receives never resumed"
     assert outcome_check("transcript_lost") is False, "U10: a turn whose transcript was lost did not resume"
+    assert outcome_check("signin_required") is False, "U3: a turn with no usable grant never ran"
     assert outcome_check(None) is False, "no outcome at all is not a completed turn"
-    assert turn.RESUMED_FAILED_OUTCOMES == frozenset({"no_progress", "retries_exhausted", "transcript_lost"})
+    assert turn.RESUMED_FAILED_OUTCOMES == frozenset({"no_progress", "retries_exhausted", "transcript_lost",
+                                                      "signin_required"})
 
 
 # ── the two-turn run (proto-turn): its outcome checks ───────────────────────────────
