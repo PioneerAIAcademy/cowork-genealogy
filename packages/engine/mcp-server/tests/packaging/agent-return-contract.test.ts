@@ -38,6 +38,12 @@ const EXCLUDED: Record<string, string> = {
   "image-reader.md": "returns a full transcription and nothing else, by spec",
   "project-status.md":
     "returns the user-friendly and detailed summaries, warnings first, as its whole output, by its own contract",
+  // Issue #2796, applying issue #2793's "PS return: A" ruling (2026-09-24): the
+  // agent writes nothing, so the per-source findings ARE the deliverable, and a
+  // summary_for_user paragraph (no identifiers) printed in place of the return
+  // would drop them in a production relay while the unit harness, which relays
+  // the whole return, stayed green.
+  "source-evaluation.md": "returns the audit report as its whole output; it writes nothing, so the report is the deliverable",
 };
 
 const PENDING: Record<string, string> = {
