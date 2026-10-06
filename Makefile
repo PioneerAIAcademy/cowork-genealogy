@@ -1164,13 +1164,11 @@ e2e-nudges: ## How /research hands back at a step boundary, over committed e2e r
 	# continue-nudge with the seam it sits on and its hand-back class --
 	# step / silent / completion_claim, per classify_hand_back.
 	#
-	# A yield is NOT a defect: /research is meant to yield at every step
-	# boundary and in an e2e run the harness is the user, so a well-formed
-	# hand-back gets answered "Yes." A silent stop and a false completion claim
-	# are the defects. `step` reads 0 until a skill ends a turn on the hand-back
-	# line -- init-project and question-selection emit it since PR #2649,
-	# research/SKILL.md will with issue #2292 -- a zero is the correct result,
-	# not a broken classifier.
+	# Every yield before project.status == completed is vetoed with the
+	# worker's continue text (handoff U17), so every class is a stall. `step`
+	# is the hand-back line issue #2292 retired (PR #2870, 2026-09-27): runs
+	# since then should read 0, and earlier runs carry it from init-project
+	# and question-selection (PR #2649).
 	# `narration` replaced transcripts in #1238; committed .transcript.md files
 	# were removed in PR #2204 (zombie re-lands from stale-base merges).
 	# The transcript fallback code path is retained for local copies only.

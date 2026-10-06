@@ -802,31 +802,34 @@ the `max_cost_usd` note in §6 step 5.
    sweep that keeps `high` must not also repin the extractor back to sonnet-5.
 
    **Continue-nudge on a hand-back.** An autonomous `/research` run must end at
-   `project.status == "completed"`. `/research` is *meant* to yield at every step
-   boundary — it names the next step and asks whether to do it — and
-   **in an e2e run the harness is the user**, so a yield is not by itself a defect.
-   A `Stop` hook intercepts the voluntary yield and classifies the agent's closing
-   words (`classify_hand_back`, `eval/harness/e2e/stop_checker.py`) into three
-   classes. The class is the FORM; the key counted in `usage.hand_back_classes` is the
-   OUTCOME, and for a completion claim the two differ — no run log ever carries a
+   `project.status == "completed"`. A `Stop` hook vetoes every voluntary yield before
+   that with **one** reply, the prototype worker's `CONTINUE_REASON`
+   (`apps/server/app/agent/continue_policy.py`) verbatim, so a paired grade compares
+   two stacks under one Stop policy (handoff U17; `test_continue_policy_parity.py` pins
+   the copy). Before replying, the hook classifies the agent's closing words
+   (`classify_hand_back`, `eval/harness/e2e/stop_checker.py`) for telemetry only. The
+   class is the FORM; the key counted in `usage.hand_back_classes` is the OUTCOME, and
+   for a completion claim the two differ — no run log ever carries a
    `completion_claim` key:
 
-   | class | form | counted as | harness reply |
-   |---|---|---|---|
-   | `step` | ends with the literal `Next: <step>. Continue?` | `step` | **"Yes."** — the researcher's answer |
-   | `completion_claim` | ends with the literal `Research complete.` | `false_completion`, or `terminal_completed` when the project really is completed | if `project.status != "completed"`, says so and asks the agent to verify with `research_query` and continue |
-   | `silent` | anything else | `silent` | the procedural resume instruction |
+   | class | form | counted as |
+   |---|---|---|
+   | `step` | ends with the literal `Next: <step>. Continue?` — the agent asking the patron | `step` |
+   | `completion_claim` | ends with the literal `Research complete.` | `false_completion`, or `terminal_completed` when the project really is completed |
+   | `silent` | anything else | `silent` |
+
+   Runs from 2026-09-20 until U17 answered a `step` with **"Yes."** and a false
+   completion with a request to verify with `research_query`; their
+   `continue_nudges` count those replies too.
 
    **Hand-back form.** A fixed closing line (lead ruling, 2026-09-07), matched
    literally and nothing else. Free-prose matching was set aside: the predicate it
-   replaced caught 15 of 41 real yields. `step` reads **0** for as long as no skill that
-   closes the main thread's turn emits that closing line — `init-project` and
-   `question-selection` already emit it as their final line; `research/SKILL.md`
-   does not yet — so a zero is the correct result, not a broken classifier, and a
-   non-zero before `research/SKILL.md` carries the line is a sub-skill's final line
-   ending the turn, not a loosened pattern. Do not loosen the pattern to make it
-   non-zero, and note that markdown emphasis around the line
-   (`**Research complete.**`) does not match.
+   replaced caught 15 of 41 real yields. Issue #2292 and PR #2870 (2026-09-27)
+   retired the line from every prompt (`test_every_shipped_hand_back_literal_classifies`
+   requires zero), so `step` should read **0** on runs since then and a non-zero is
+   the model asking anyway; earlier runs carry it from `init-project` and
+   `question-selection`. Do not loosen the pattern, and note that markdown emphasis
+   around the line (`**Research complete.**`) does not match.
 
    **A declared blocker reads as `silent`.** `research/SKILL.md` names a genuine
    logged blocker as a third legitimate autonomous stop, but it names no next step,
@@ -1910,8 +1913,8 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative, except on a run with more than one query, where its tokens, turns and `duration_ms` cover the last query and its cost and `duration_api_ms` the last CLI process, §8.1.5) or `streamed_fallback` (it did not). |
 | `usage.message_usage` | Per-assistant-message context window, split by thread: `[thread, input, cache_read, cache_creation]`. See 8.1.4. |
 | `usage.thread_windows` | Per-thread summary — `main: {peak_window_tokens, message_count}`, `sub: {message_count}`. See 8.1.4. |
-| `usage.continue_nudges` | How many times the Stop hook vetoed a voluntary yield and told the agent to resume — every class, including a well-formed `step` answered "Yes.". The weak-signal reading belongs to `silent` plus `false_completion` in `hand_back_classes`, not to this total. |
-| `usage.hand_back_classes` | Per-class tally of how the agent handed back: `step` / `silent` / `false_completion`, plus `terminal_completed` / `terminal_mcp_unavailable` for the two gate-False reasons that are **not** agent defects. Counts hand-backs **including the terminal one**, so a hook-terminated run carries one more than `continue_nudges` — but a run killed by a cap or an error never reaches the hook and records no terminal class at all, so this is not universally the larger number. `step` is 0 until the skill emits the hand-back line. See the Continue-nudge note in §6. |
+| `usage.continue_nudges` | How many times the Stop hook vetoed a voluntary yield and told the agent to resume — every class, all with the same continue text (U17). The weak-signal reading belongs to `silent`, `step` and `false_completion` in `hand_back_classes`, not to this total. |
+| `usage.hand_back_classes` | Per-class tally of how the agent handed back: `step` / `silent` / `false_completion`, plus `terminal_completed` / `terminal_mcp_unavailable` for the two gate-False reasons that are **not** agent defects. Counts hand-backs **including the terminal one**, so a hook-terminated run carries one more than `continue_nudges` — but a run killed by a cap or an error never reaches the hook and records no terminal class at all, so this is not universally the larger number. `step` is the hand-back line issue #2292 retired, so 0 on runs since 2026-09-27. See the Continue-nudge note in §6. |
 | `wall_clock_seconds` | Active time: monotonic minus `counted_sleep_seconds` — §6 "Clocks". Alongside `real_clock_seconds`, `slept_seconds`, `counted_sleep_seconds` (sleep the heartbeat counted because monotonic did not leave it out, the Windows case), `judge_seconds`. |
 | `resumes`, `session_id` | §6 "Stall-detect + resume". |
 | `agent_model` | Effective parent model. |

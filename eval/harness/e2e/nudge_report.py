@@ -1,12 +1,12 @@
 """How `/research` hands back at a step boundary, over committed e2e runs.
 
 GitHub issues #1104 and #2328. The `/research` skill must run until
-`project.status == "completed"`, and it is *meant* to yield at every step
-boundary — naming the next step and asking whether to do it (#2292). In an e2e
-run the harness IS the user, so a yield is not a defect: a well-formed hand-back
-gets answered "Yes." Two things at a yield still are defects — a **silent stop**
-(the turn ends naming no next step) and a **false completion claim** (it claims
-done while `project.status != "completed"`).
+`project.status == "completed"`. Every voluntary yield before that is vetoed with
+the same continue text the prototype worker sends (U17), so every class counted
+here is a stall: a **silent stop** (the turn ends naming no next step), a `step`
+(the retired `Next: <step>. Continue?` hand-back — the agent asking the patron),
+and a **false completion claim** (it claims done while
+`project.status != "completed"`).
 
 So the question this report answers is not "how often does it yield" but "how
 does it hand back", via `classify_hand_back` — the same predicate the Stop hook
@@ -23,11 +23,10 @@ always available. What was not available is *where* and *in what form*. The seam
 says which artifact had just been written, and therefore which skill's closing
 prose to look at; the hand-back class says whether that prose did its job.
 
-`step` reads 0 for as long as no skill that closes the main thread's turn emits
-the hand-back line — `init-project` and `question-selection` do since PR #2649,
-`research/SKILL.md` will with #2292 — so a zero is the correct result, not a
-broken classifier. Every yield without that line is `silent`, and that figure is
-the pre-#2292 floor the post-#2292 `step` share is read against.
+Issue #2292 and PR #2870 (2026-09-27) retired the hand-back line from every
+prompt, so `step` should read 0 on runs since then; a non-zero is the model
+reaching for the old habit. Runs before then carry it from `init-project` and
+`question-selection` (PR #2649), which is why the classifier stays.
 
 ## Two sources
 
@@ -122,8 +121,8 @@ SEAMS: list[tuple[str, re.Pattern[str]]] = [
 # harness classifies every one of them `silent`. A report keyed on a predicate the
 # harness does not use is a report about nothing.
 #
-# `step` is structurally 0 until #2292 lands the hand-back prose. That is the correct
-# reading, not a broken classifier.
+# `step` should be 0 on runs since issue #2292 retired the hand-back line; a
+# non-zero there is the model asking the patron anyway.
 
 
 class Nudge(NamedTuple):
@@ -343,8 +342,8 @@ def format_report(nudges: list[Nudge], n_runs: int, recorded: tuple[int, int] = 
         f"worst single run reached nudge {worst}"
         + (f" against a cap of {sorted(caps)[0]}" if len(caps) == 1 else ""),
         "",
-        "By hand-back class — a well-formed `Next: <step>. Continue?` is the CORRECT"
-        " move (#2292); `silent` is a stall:",
+        "By hand-back class — every class is a stall; `step` is the retired"
+        " `Next: <step>. Continue?` (issue #2292):",
         *(
             f"  {sum(1 for n in nudges if n.hand_back == k):>4}  {k}"
             + (

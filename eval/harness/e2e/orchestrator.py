@@ -96,7 +96,7 @@ from e2e.stop_checker import (
     COUNTED_TERMINAL_REASONS,
     classify_hand_back,
     derive_stop_reason,
-    hand_back_outcome,
+    hand_back_key,
     project_completed,
     read_research_json,
     read_tree_json,
@@ -2375,11 +2375,12 @@ async def _run_agent(
         research = read_research_json(workspace)
 
         # Classify the hand-back BEFORE the gate, so the stop that actually ENDS a run
-        # is not invisible — it returns {} below and used to be counted nowhere.
+        # is not invisible — it returns {} below and used to be counted nowhere. The
+        # class is telemetry only; the reply below never depends on it (U17).
         # Only the agent's last words count, and only when no tool call landed after
         # them: 2 of the 71 committed narration nudges have tool calls between the last
-        # TextBlock and the nudge, and post-#2292 a hand-back narrated before a batch of
-        # calls would otherwise read as `step` on a turn that ended silently.
+        # TextBlock and the nudge, and a hand-back narrated before a batch of calls
+        # would otherwise read as `step` on a turn that ended silently.
         last_text = None
         for entry in reversed(narration):
             # `blocked` is a hook-deny message, not the agent's words — and a
@@ -2412,14 +2413,14 @@ async def _run_agent(
                 mcp_unavailable=mcp_state["unavailable"],
             )
             if reason in COUNTED_TERMINAL_REASONS:
-                key, _ = hand_back_outcome(hand_back, project_is_completed=completed_now)
+                key = hand_back_key(hand_back, project_is_completed=completed_now)
                 hand_back_classes[key] = hand_back_classes.get(key, 0) + 1
             else:
                 key = f"terminal_{reason}"
                 hand_back_classes[key] = hand_back_classes.get(key, 0) + 1
             return {}
 
-        counter_key, reply = hand_back_outcome(hand_back, project_is_completed=completed_now)
+        counter_key = hand_back_key(hand_back, project_is_completed=completed_now)
         hand_back_classes[counter_key] = hand_back_classes.get(counter_key, 0) + 1
         continue_nudges["n"] += 1
         last_nudge_activity_count["n"] = activity_count["n"]
@@ -2440,18 +2441,12 @@ async def _run_agent(
             f"{fixture.caps.max_continue_nudges}] agent yielded "
             f"({counter_key}); resuming"
         )
-        # A well-formed hand-back is the skill doing what #2292 asks of it, and in an
-        # e2e run the harness IS the user — so it gets the researcher's answer, "Yes.",
-        # not a scolding. `reply` is None for a silent stop, which keeps the existing
-        # block-reason semantics below.
-        #
-        # This wording deliberately does NOT tell the agent to emit
-        # "Next: <step>. Continue?": research/SKILL.md:53-55 calls that a failure in
-        # autonomous mode, so instructing it here would recreate the harness-vs-skill
-        # contradiction this card's sequencing exists to prevent, with the sides
-        # swapped. #2292 flips this wording when it lands the prose.
-        if reply is not None:
-            return {"decision": "block", "reason": reply}
+        # One reply for every vetoed stop, whatever its class: the worker's
+        # CONTINUE_REASON (apps/server/app/agent/continue_policy.py), verbatim. A
+        # `Next: <step>. Continue?` is the agent asking the patron, which the worker
+        # vetoes with these words too; answering it "Yes." here gave the e2e grade a
+        # Stop policy the prototype does not run (U17). This tree cannot import the
+        # constant, so `test_continue_policy_parity.py` pins the copy.
         return {
             "decision": "block",
             "reason": (
