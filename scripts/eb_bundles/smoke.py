@@ -9,7 +9,8 @@ shadow-utils, user webapp) with --network none and a tmpfs /tmp: unzip to
 /var/app/staging, build the venv and pip install requirements.txt from the bundle's own
 wheels (Beanstalk's build step), run .platform/hooks/predeploy/* as root, move staging to
 /var/app/current, run its migrate.py --status with no DSN (U9: it must import and count the
-bundle's sql/), then run the Procfile's web: command with the template's environment, as
+bundle's sql/), then run the Procfile's web: command with the template's environment and
+API_LEVEL_STANDINS, as
 webapp (web) or as root (worker: the hook's drop-in, so it can launch each turn's CLI as its
 slot user, U3). Tools runs in node:24-slim with --network none from a root-owned
 /var/app/current, as user node. Each tier is then probed over loopback.
@@ -46,6 +47,16 @@ STAGING = "/var/app/staging"
 NODE_IMAGE = "node:24-slim"
 # U9's schema applier in each Python bundle; its SQL_DIR is the sql/ beside it.
 MIGRATE = {"web": "migrate.py", "worker": "proto/migrate.py"}
+# Stand-ins for the API-level settings each tier refuses to start without; nothing they
+# name answers under --network none. Never DEV_PATHS (U11): the worker must start without it.
+SMOKE_QUEUE_URL = "https://sqs.us-east-1.amazonaws.com/000000000000/smoke"
+API_LEVEL_STANDINS = {
+    "web": {"QUEUE_URL": SMOKE_QUEUE_URL},
+    "worker": {"QUEUE_URL": SMOKE_QUEUE_URL, "TOOL_SERVER_URL": "http://127.0.0.1:9/mcp",
+               "FS_TOKEN_ENC_KEY": "eb-smoke-stand-in-not-a-secret-0123456789",
+               "MODEL_PROVIDER": "gateway", "GATEWAY_BASE_URL": "http://gateway.invalid/bedrock"},
+    "tools": {"GENEALOGY_PG_DSN": "postgresql://u:p@127.0.0.1:1/x", "GENEALOGY_S3_BUCKET": "smoke"},
+}
 AL2023_DOCKERFILE = b"""FROM amazonlinux:2023
 RUN dnf install -y -q python3.12 python3.12-pip unzip util-linux shadow-utils findutils procps-ng \\
     && dnf clean all \\
@@ -73,6 +84,23 @@ while True:
             sys.exit(0)
         time.sleep(1)
 print(json.dumps({p: get(p) for p in paths}))
+"""
+# U11: a stub `crash` body to the worker as sqsd would POST it. Without DEV_PATHS it must
+# answer 400 and leave the process up; with them on it would os._exit(1).
+PY_CRASH_POST = r"""
+import json, sys, urllib.error, urllib.request
+body = json.dumps({"turn_id": "turn-smoke", "session_id": "sess-smoke", "project_id": "proj-smoke",
+                   "behaviour": "crash"}).encode("utf-8")
+req = urllib.request.Request(sys.argv[1] + "/turn", data=body, method="POST", headers={
+    "Content-Type": "application/json", "X-Aws-Sqsd-Msgid": "m-smoke", "X-Aws-Sqsd-Receive-Count": "1"})
+try:
+    r = urllib.request.urlopen(req, timeout=10)
+except urllib.error.HTTPError as e:
+    r = e
+except OSError as e:
+    print(json.dumps({"error": str(e)}))
+    sys.exit(0)
+print(json.dumps({"status": r.status, "body": r.read(2000).decode("utf-8", "replace")}))
 """
 NODE_PROBE = r"""
 const [base, ...paths] = process.argv.slice(1);
@@ -198,7 +226,7 @@ def migrate_check(c: Checks, container: str, zip_path: Path, extra: dict[str, st
 def python_tier(tier: str, zip_path: Path, platform: str, keep: bool, extra: dict[str, str]) -> int:
     c = Checks(tier)
     env, command = template(zip_path)
-    env = {**env, **extra}
+    env = {**env, **API_LEVEL_STANDINS[tier], **extra}
     arch = platform.split("/")[-1]
     image = f"eb-bundles-smoke-al2023:{arch}"
     print(f"== {tier}: building the AL2023 helper image ({platform}) ==", flush=True)
@@ -256,12 +284,22 @@ def python_tier(tier: str, zip_path: Path, platform: str, keep: bool, extra: dic
                     "/healthz is 503 with postgres failing", (h["status"], h["body"][:300]))
             for key in ("agents", "cwd", "tmpdir"):
                 c.check(checks.get(key, {}).get("ok") is True, f"/healthz {key} ok", checks.get(key))
+            crash = probe(name, py, PY_CRASH_POST, port, [])
+            c.check(crash.get("status") == 400 and "stub turns are disabled" in crash.get("body", ""),
+                    "a stub crash POST answers 400 without DEV_PATHS", crash)
+            again = probe(name, py, PY_PROBE, port, ["/healthz"])
+            c.check(again.get("/healthz", {}).get("status") == 503, "the worker still answers after it", again)
             start = next((json.loads(ln) for ln in out(docker("exec", name, "cat", "/tmp/app.log")).splitlines()
                           if ln.startswith("{") and '"ev":"start"' in ln), None)
             hook = (start or {}).get("hook_python", "")
             m = re.search(r"(\d+)\.(\d+)", hook.rsplit(" ", 1)[-1]) if hook else None
             c.check(m is not None and (int(m.group(1)), int(m.group(2))) >= (3, 10),
                     "ev=start hook_python >= 3.10", hook or app_log(name))
+            c.check((start or {}).get("dev_paths") is False, "ev=start dev_paths is false",
+                    (start or {}).get("dev_paths", app_log(name)))
+            provider = env.get("MODEL_PROVIDER", "").strip().lower()
+            c.check((start or {}).get("provider") == provider, f"ev=start provider is {provider}",
+                    (start or {}).get("provider", app_log(name)))
             dest = shlex.quote(layout.PLUGIN_DEST)
             c.check(out(sh(name, f"stat -c %U:%G {dest}")) == "root:root", f"{layout.PLUGIN_DEST} is root-owned",
                     out(sh(name, f"stat -c %U:%G {dest}")))
@@ -299,7 +337,7 @@ def extract(zip_path: Path, dest: Path) -> None:
 def tools_tier(zip_path: Path, platform: str, keep: bool, extra: dict[str, str]) -> int:
     c = Checks("tools")
     env, command = template(zip_path)
-    env = {**env, "GENEALOGY_PG_DSN": "postgresql://u:p@127.0.0.1:1/x", "GENEALOGY_S3_BUCKET": "smoke", **extra}
+    env = {**env, **API_LEVEL_STANDINS["tools"], **extra}
     manifest = json.loads((REPO / layout.ENGINE_DIR / "manifest.json").read_text(encoding="utf-8"))
     tool_count = len(manifest["tools"])
     print(f"== tools: {NODE_IMAGE} ({platform}) ==", flush=True)

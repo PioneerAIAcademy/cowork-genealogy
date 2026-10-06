@@ -68,6 +68,15 @@ FORBIDDEN_OUTSIDE_NODE_MODULES = re.compile(
 # Image and doc files that belong to the checkout, not to tier code.
 FORBIDDEN_IN_CODE = re.compile(r"(^|/)(Dockerfile|README\.md)$")
 CODE_EXEMPT = ("node_modules/", "plugin/", "web-dist/", "wheels/")
+# Compose, harness and debug switches no template may set (U11).
+DEV_PREFIXES = ("DEV_", "GENEALOGY_DEBUG_")
+DEV_VARIABLES = frozenset({"BLOCKED_TOOLS", "SQS_ENDPOINT", "QUEUE_NAME", "FAMILYSEARCH_CONFIG"})
+DEV_VARIABLES_BY_TIER = {
+    "web": frozenset(),
+    "worker": frozenset({"AUTONOMOUS_MAX_NUDGES"}),
+    "tools": frozenset({"AUTONOMOUS_MAX_NUDGES"}),
+}
+DEV_VALUES = {"WORKER_TURN_USERS": "none"}
 TOOLS_FORBIDDEN_PREFIXES = ("src/", "dev/", "node_modules/typescript/", "node_modules/vitest/",
                             "node_modules/@anthropic-ai/mcpb/")
 HOOK_DIRS = (".platform/hooks/", ".platform/confighooks/")
@@ -102,6 +111,15 @@ def _env_settings(zf: zipfile.ZipFile, names: list[str], findings: list[str]) ->
                 if isinstance(item, dict) and item.get("namespace") == ENV_NAMESPACE and "option_name" in item:
                     env[str(item["option_name"])] = str(item.get("value", ""))
     return env
+
+
+def _check_dev_env(tier: str, env: dict[str, str], findings: list[str]) -> None:
+    for key in sorted(env):
+        if key.startswith(DEV_PREFIXES) or key in DEV_VARIABLES or key in DEV_VARIABLES_BY_TIER[tier]:
+            findings.append(f"template sets {key}, a dev-only variable")
+    for key, value in DEV_VALUES.items():
+        if key in env and env[key].strip().lower() == value:
+            findings.append(f"template sets {key}={env[key]}, a dev-only value")
 
 
 def _check_procfile(tier: str, text: str, env: dict[str, str], findings: list[str]) -> None:
@@ -156,6 +174,7 @@ def verify(path: Path, *, pip: bool = True, allow_dev: bool = False, arches: tup
         _check_names(tier, names, findings)
 
         env = _env_settings(zf, names, findings)
+        _check_dev_env(tier, env, findings)
         if "Procfile" in names:
             _check_procfile(tier, zf.read("Procfile").decode("utf-8", "replace"), env, findings)
 
