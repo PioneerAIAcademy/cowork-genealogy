@@ -57,6 +57,19 @@ def test_print_rollup_reports_cost_and_duration():
     assert "total: 30.0 min" in out
 
 
+def test_print_rollup_calls_cost_a_floor_when_a_run_resumed():
+    """#3128: a stall-resume starts a new CLI process, and its `total_cost_usd`
+    covers that process only."""
+    resumed = _make_result("a", "pass", cost=2.50, duration=600)
+    resumed.usage["resumes"] = 1
+    out = _capture([resumed, _make_result("b", "pass", cost=4.10, duration=1200)])
+    assert "1 resumed after a stall" in out
+    assert "resumed" not in _capture([_make_result("b", "pass", cost=4.10, duration=1200)])
+    costless = _make_result("c", "pass", duration=600)
+    costless.usage["resumes"] = 1
+    assert "resumed" not in _capture([costless, _make_result("b", "pass", cost=4.10, duration=1200)])
+
+
 def test_print_rollup_handles_missing_usage_fields():
     """Some runs may have no cost/duration (e.g., harness errored before
     the SDK returned). Roll-up should not crash."""
