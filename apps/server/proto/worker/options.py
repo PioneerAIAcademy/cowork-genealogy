@@ -325,32 +325,9 @@ SPEND_CAP_REASON = (
 )
 
 
-# The carrier for "I delivered what you asked". Deliberately NOT AskUserQuestion -- an ask
-# has `questions` and waits for an answer, a delivery waits for nothing, and one tool
-# carrying both leaves this hook with no discriminator.
-
-# When to reach for it. This rides the per-turn system prompt, NOT the skill bodies: the
-# hook that makes this tool end a turn exists only here, so a skill-body rule would teach
-# every skill to call a tool that is inert in Cowork and in the harness that grades them.
-#
-# Both exclusions are load-bearing. Calling it when the OBJECTIVE is finished would report
-# `delivered` where `completed` is true and the run ends on its own. Calling it instead of
-# asking would swallow a question nobody answers -- an ask waits, a delivery does not.
-
-
 
 def _halt(reason: str = STOP_REASON) -> dict[str, Any]:
     return {"continue_": False, "stopReason": reason, **_deny(reason)}
-
-# Delegation tools whose `run_in_background` the worker overrides. The worker ends a turn at
-# the main thread's ResultMessage and closes the CLI, so a background agent still running
-# then dies with it -- measured 2026-09-23 (plan D17: both background extractors lost, the
-# patron told their summaries would follow). Forcing the foreground keeps parallelism: several
-# Agent calls in one message still run concurrently. Lead ruling 2026-09-23, reaffirmed as the
-# design 2026-09-29. Every call that is not explicitly `False` is rewritten: CLI 2.1.220 runs an
-# agent in the background when the flag is absent, and the two extractors lost on 2026-09-21
-# (sess_25297de9b15b4ef5) carried no flag at all.
-
 
 def _foregrounded(tool_input: dict[str, Any]) -> dict[str, Any]:
     return {

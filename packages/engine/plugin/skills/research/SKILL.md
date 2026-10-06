@@ -92,7 +92,7 @@ not pay for a routing survey it will not use.
 finding a record; reviewing the sources already attached to a person; whether
 two people are the same, or should be merged; a verdict on a hint; a
 transcription; where the records are for a place and period; a research plan;
-a records-request letter.
+a records-request letter; whether a person's children or siblings are complete.
 
 **A job** — everything else. Route it exactly as the rest of this file says.
 

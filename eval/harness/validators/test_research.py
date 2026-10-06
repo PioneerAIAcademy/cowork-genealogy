@@ -320,10 +320,17 @@ _SEARCH_MCP_TOOLS = frozenset({
     "record_search", "person_search", "fulltext_search", "collections_search",
     "volume_search", "image_search", "external_links_search",
 })
-_SEARCH_STEPS = frozenset({"search-records", "search-images", "search-familysearch-wiki"})
+# Derived from the skills tree, not recalled: an omission here is silent, because a
+# hand-off to a step missing from this set passes the assertion below.
+_SEARCH_STEPS = frozenset({
+    "search-records", "search-images", "search-familysearch-wiki",
+    "search-full-text", "search-external-sites",
+})
 
 
-def test_reads_attachments_before_searching(test, tool_calls, skills_invoked, builtin_tool_calls):
+def test_reads_attachments_before_searching(
+    test, tool_calls, attempted_mcp_calls, skills_invoked, builtin_tool_calls
+):
     """Tag-gated (``attached-first``). Issue #2813 item 4.
 
     "Before any search, read the person's attached sources and relatives. Never
@@ -343,11 +350,13 @@ def test_reads_attachments_before_searching(test, tool_calls, skills_invoked, bu
     if "attached-first" not in test.get("tags", []):
         pytest.skip("not an attached-first test")
 
-    called = [
-        (c.get("tool") or "").rsplit("__", 1)[-1]
-        for c in (tool_calls or [])
-        if isinstance(c, dict)
-    ]
+    bare = lambda c: (c.get("tool") or "").rsplit("__", 1)[-1]
+    called = [bare(c) for c in (tool_calls or []) if isinstance(c, dict)]
+    # ATTEMPTED calls count too. `tool_calls` records only successful dispatches
+    # (conftest.py), so a search whose args miss every fixture predicate lands in
+    # `attempted_mcp_calls` instead -- and reading only the first list would let
+    # the exact behaviour this test forbids pass silently.
+    attempted = [bare(c) for c in (attempted_mcp_calls or []) if isinstance(c, dict)]
     read_first = {"person_read", "source_attachments"} & set(called)
     assert read_first, (
         "The router must read what is already attached before routing a request "
@@ -355,7 +364,7 @@ def test_reads_attachments_before_searching(test, tool_calls, skills_invoked, bu
         f"MCP calls={called}"
     )
 
-    searched = [t for t in called if t in _SEARCH_MCP_TOOLS]
+    searched = [t for t in called + attempted if t in _SEARCH_MCP_TOOLS]
     assert not searched, (
         "The requested record is already attached, so searching for it spends a paid "
         f"call to re-find what the project holds. Search tools called: {searched}"

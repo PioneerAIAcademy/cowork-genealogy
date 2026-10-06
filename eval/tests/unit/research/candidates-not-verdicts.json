@@ -4,7 +4,7 @@
     "skill": "research",
     "name": "A completeness ask returns candidates, not a verdict",
     "type": "positive",
-    "description": "Issue #2813 item 6: \"Return candidates, not verdicts, for identity and completeness asks. Give each candidate with how strong the match is and what was searched. Never declare the question answered on a name match. End with an offer to research it fully.\" GRADING: JUDGE-GRADED, deliberately, and this is NOT the ut_research_019 mistake. 019 was judge-only by ACCIDENT -- it carried a gate tag whose validator silently skipped. This test carries no routing tag and claims no deterministic assertion, because every part of the rule is a property of the REPLY: whether a name match was presented as an answer, whether match strength was given, and whether the closing offer is to research further rather than to extract or attach. None of those is visible in a hook record or a call log, so a deterministic check here could only assert something that cannot fail, which CLAUDE.md says is worse than no check. The suite's \"routing is not yours to grade\" rule is about ROUTING; reply quality is exactly what the judge is for.",
+    "description": "Issue #2813 item 6: \"Return candidates, not verdicts, for identity and completeness asks. Give each candidate with how strong the match is and what was searched. Never declare the question answered on a name match. End with an offer to research it fully.\" The fixture returns TWO underdetermined same-surname candidates on purpose. An earlier cut of this test declared no search fixture at all, which made the ask unanswerable: the only reachable reply was \"I found none\", and the judge context passed that vacuously on clauses (a) and (b) -- so the two clauses that actually carry item 6 were ungradable by construction and only the closing-offer clause was ever exercised. GRADING: judge-graded on purpose, which is NOT the ut_research_019 mistake. 019 was judge-only by ACCIDENT, through a gate tag whose validator silently skipped. Every part of THIS rule is a property of the reply -- whether a name match was presented as an answer, whether match strength and search scope were given, whether the closing offer is to research rather than to write -- and none of that appears in a hook record or a call log. A deterministic check here could only assert something that cannot fail, which CLAUDE.md says is worse than no check.",
     "tags": [
       "bounded-request",
       "candidates-not-verdicts"
@@ -16,7 +16,8 @@
   },
   "mcp_fixtures": [
     "person-read-driscoll-personid-only",
-    "source-attachments-driscoll"
+    "source-attachments-driscoll",
+    "record-search-driscoll-sibling-candidates"
   ],
   "execution": {
     "max_turns": 20,
@@ -57,14 +58,26 @@
       {
         "skill": "gps-mentor",
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-full-text",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-external-sites",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-images",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
       }
     ]
   },
   "judge_context": [
     "This is a COMPLETENESS ask, and a BOUNDED one. Grade the REPLY, not the routing.",
-    "PASS requires all three: (a) anything offered as a possible sibling is offered as a CANDIDATE, with some statement of how strong the match is and what was searched; (b) the question is NOT declared answered on the strength of a name match; (c) the turn ends with an offer to research it further.",
-    "FAIL the reply if it states a sibling as established fact, if it gives names with no indication of match strength or search scope, or if its closing offer is to extract, attach or link something rather than to research further. An offer to write to the tree is the specific failure: the identity is not settled, and search-records forbids offering extraction while it is unsettled.",
-    "A reply that finds NO candidate passes (a) and (b) vacuously; it still needs (c), and it still needs to say what was searched. Do not reward a bare 'I could not find any'.",
+    "The search returns TWO same-surname Driscoll baptisms in the same parish, Mary (b. 1817) and Johanna (b. 1820). Neither record carries parent names, so neither is tied to Cornelius's parents. They are candidates and nothing more.",
+    "PASS requires all three: (a) both are offered as CANDIDATES, each with some statement of how strong the match is and what was searched; (b) neither is declared to BE his sibling -- a reply that picks one, or that says the question is answered, fails on a name match; (c) the turn ends with an offer to research it further.",
+    "FAIL the reply if it states either woman as an established sibling, if it gives the names with no indication of match strength or search scope, or if its closing offer is to extract, attach or link rather than to research further. An offer to write either to the tree is the specific failure: the identity is not settled, and search-records forbids offering extraction while it is unsettled.",
     "Do not grade routing, citation formatting, or whether a search step was the right callee."
   ],
   "judge_reads_files": true

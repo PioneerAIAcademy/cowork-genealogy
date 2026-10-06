@@ -505,3 +505,31 @@ def test_the_alpha_system_prompt_carries_the_delivery_guidance(tmp_path):
     opts = real_agent.build_options(tmp_path)
     assert real_agent.DELIVERY_GUIDANCE in opts.system_prompt["append"]
     assert "research_delivered" in opts.system_prompt["append"]
+
+
+def test_a_delivery_does_not_disable_the_nudge_for_later_turns(tmp_path, monkeypatch):
+    """The flag is per-TURN, but `counter` is per-SESSION.
+
+    `build_options` runs once and the SDK client is cached (`if self._client is
+    None`), so the dict holding `delivered` outlives the turn that set it. The
+    first version of this arm never cleared the flag, which meant one bounded
+    delivery disabled the continue-nudge for the whole rest of the session: the
+    researcher's NEXT message, a full job, ended after a single step with no
+    error and nothing in the log. Every mutation test above probes one turn, so
+    none of them could see it.
+    """
+    _write(tmp_path, "active")
+    hooks = _hooks(tmp_path, monkeypatch)
+    counting, stop = _counting_hook(hooks), hooks["Stop"][0].kw["hooks"][0]
+
+    # Turn 1: a bounded ask that delivers.
+    _call(counting, _delivered_call())
+    assert _call(stop) == {}, "precondition: the delivering turn's own stop is allowed"
+
+    # Turn 2: ordinary work on an unfinished project, no delivery.
+    for _ in range(5):
+        _call(counting)
+    assert _call(stop).get("decision") == "block", (
+        "a delivery in an EARLIER turn must not authorise this turn's stop; the job "
+        "would end after one step"
+    )

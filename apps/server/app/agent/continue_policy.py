@@ -73,6 +73,16 @@ DELIVERED_REASON = (
 # never told about. Both hosted planes append this to their system prompt. It lives
 # here, beside the tool name and the halt text, because a plane that wires the ARM
 # without the GUIDANCE ships a dead rule that looks identical to a working one.
+#
+# IT RIDES THE SYSTEM PROMPT, NOT THE SKILL BODIES. The hook that makes this tool end a
+# turn exists only on the two hosted planes, so a skill-body rule would teach every skill
+# to call a tool that is inert in Cowork and in the harness that grades them.
+#
+# Both exclusions in the text are load-bearing. Calling it when the OBJECTIVE is finished
+# would report `delivered` where `completed` is true and the run ends on its own. Calling
+# it instead of asking would swallow a question nobody answers: an ask waits, a delivery
+# does not. That is also why the carrier is a separate tool rather than AskUserQuestion --
+# one tool carrying both speech acts leaves the hook with no discriminator.
 DELIVERY_GUIDANCE = (
     "When this message asked for one bounded thing and you have produced it, WRITE YOUR "
     "REPLY FIRST -- this call ends the turn, so nothing you say after it reaches the "
@@ -90,6 +100,13 @@ DELIVERY_GUIDANCE = (
 # Lead ruling 2026-09-23, reaffirmed as the design 2026-09-29. Forcing the
 # foreground does NOT serialise the work: several Agent calls in one message
 # still run concurrently, so a fan-out of four extractors stays a fan-out.
+#
+# The PROTOTYPE's original reason, kept because it is the measurement behind the
+# ruling: the worker ends a turn at the main thread's ResultMessage and closes the
+# CLI, so a background agent still running then dies with it -- measured 2026-09-23
+# (plan D17: both background extractors lost, the patron told their summaries would
+# follow; the two lost on 2026-09-21 were sess_25297de9b15b4ef5, and carried no flag
+# at all, which is why every call not explicitly False is rewritten).
 #
 # Shared because the hosted alpha reproduced, twice, the failure the prototype
 # already fixed. The Stop hook cannot see that the turn is waiting on its own
@@ -196,11 +213,18 @@ def terminal_reason(
     stopped: bool = False,
     pending_user_message: bool = False,
     pending_decision: bool = False,
+    delivered: bool = False,
 ) -> str:
     """WHY ``should_continue_run`` is about to return False.
 
     It mirrors that function's clause order exactly, which is the only thing keeping the
     two in agreement; a test walks both in lockstep over every combination.
+
+    ``delivered`` was added here in the same commit as its sibling clause. It is not
+    reachable from either plane yet -- the alpha ends a delivered turn through the
+    PreToolUse halt rather than this path -- but a flag that returns False in one function
+    and is unnameable in the other breaks the mirror this docstring promises, and the
+    parity test is hand-maintained, so nothing else would have caught it.
     """
     if stopped:
         return TERMINAL_STOPPED
@@ -210,6 +234,8 @@ def terminal_reason(
         return TERMINAL_QUEUED
     if pending_decision:
         return TERMINAL_DECISION
+    if delivered:
+        return TERMINAL_DELIVERED
     if project_completed(research):
         return TERMINAL_COMPLETED
     if nudges_used >= max_nudges:

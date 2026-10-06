@@ -429,6 +429,11 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
     # rewritten, because CLI 2.1.220 backgrounds an agent when the flag is absent
     # and the measured incidents carried no flag at all.
     if tool_name in DELEGATION_TOOLS and tool_input.get("run_in_background") is not False:
+        # Logged because the stated acceptance is a LIVE hosted turn, and this file's own
+        # doctrine is that an inert arm looks identical to a working one. Without a line
+        # here there is nothing in the log to tell a foregrounded delegation from an arm
+        # that never bound. The prototype emits `ev="foregrounded"` for the same reason.
+        _log(f"[agent] foregrounded {tool_name} delegation")
         return {
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",
@@ -601,6 +606,17 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
             counter["delivered"] = True
             _log("[agent] delivered — allowing the stop")
             return {"continue": False, "stopReason": DELIVERED_REASON}
+        # Any OTHER call means the session has moved on, so clear the flag. This
+        # is load-bearing, not tidiness: the SDK client is built once and cached
+        # for the whole session (`if self._client is None`), so `counter` outlives
+        # the turn that set the flag. Without this line one bounded delivery
+        # disables the continue-nudge for every LATER turn in the session -- the
+        # researcher asks for a full job next and gets a single step, silently,
+        # because the Stop hook keeps reading a delivery that already happened.
+        # Clearing in the Stop hook instead does NOT work: the halt above usually
+        # ends the turn without Stop being consulted at all, so the flag would
+        # survive unconsumed.
+        counter["delivered"] = False
         if agent is not None:
             try:
                 if agent.pending_user_message():
