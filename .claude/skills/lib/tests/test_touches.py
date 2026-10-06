@@ -28,7 +28,13 @@ sys.path.insert(0, os.path.join(_HERE, "..", "..", "fill-ready"))
 
 from _tree import make_tree, pin_repo_root  # noqa: E402
 import touches  # noqa: E402
-from touches import deleted_on_ref, paths_from_touches, slot_of  # noqa: E402
+from touches import (  # noqa: E402
+    deleted_on_ref,
+    deletion_check_skipped,
+    globs_from_touches,
+    paths_from_touches,
+    slot_of,
+)
 import collisions  # noqa: E402
 
 # Read before the autouse pin replaces it: the value production computes.
@@ -291,6 +297,9 @@ def board_repo(tmp_path, monkeypatch):
     deleting = _commit(repo, rm=[GONE])
     _commit(repo, add=["docs/live/b.md"])
     _git(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
+    # The checkout sits two commits back, where GONE still exists, so a check that
+    # read HEAD instead of origin/main would miss the deletion.
+    _git(repo, "checkout", "-q", "--detach", "HEAD~2")
     monkeypatch.setattr(touches, "REPO_ROOT", str(repo))
     return deleting
 
@@ -305,9 +314,18 @@ def test_a_deleted_path_is_flagged_with_the_commit_that_deleted_it(board_repo):
 
 def test_a_glob_into_a_deleted_directory_is_flagged_wherever_its_star_falls(board_repo):
     gone_dir = "packages/engine/plugin/skills/zz-gone"
-    entries = paths_from_touches(f"**Touches:** {gone_dir}/*, {gone_dir}/SKILL*.md\n")
-    assert set(deleted_on_ref(entries).values()) == {board_repo}
-    assert len(deleted_on_ref(entries)) == 2
+    body = f"**Touches:** {gone_dir}/*, {gone_dir}/SKILL*.md\n"
+    found = deleted_on_ref(paths_from_touches(body), globs=globs_from_touches(body))
+    assert set(found.values()) == {board_repo}
+    assert len(found) == 2
+
+
+def test_a_new_plain_path_under_a_deleted_directory_is_not_flagged(board_repo):
+    """Only a glob gets the parent fallback: a plain path with no history of its own is
+    one the card will create, even under a deleted directory."""
+    gone_dir = "packages/engine/plugin/skills/zz-gone"
+    body = f"**Touches:** {gone_dir}/newsub, {gone_dir}/Makefile\n"
+    assert deleted_on_ref(paths_from_touches(body), globs=globs_from_touches(body)) == {}
 
 
 def test_new_files_live_dirs_and_globs_are_not_flagged(board_repo):
@@ -316,13 +334,30 @@ def test_new_files_live_dirs_and_globs_are_not_flagged(board_repo):
             "docs/*/b.md, packages/engine/plugin/skills/zz-new-*\n")
     entries = paths_from_touches(body)
     assert len(entries) == 4
-    assert deleted_on_ref(entries) == {}
+    assert deleted_on_ref(entries, globs=globs_from_touches(body)) == {}
 
 
 def test_an_unresolvable_ref_skips_rather_than_flagging_everything(tmp_path, monkeypatch):
     repo = _init(tmp_path / "no-origin", monkeypatch)
     _commit(repo, add=["docs/live/a.md"])
     monkeypatch.setattr(touches, "REPO_ROOT", str(repo))
+    assert deleted_on_ref({("file", GONE)}) is None
+    assert deletion_check_skipped() == "origin/main does not resolve"
+
+
+def test_git_missing_is_named_as_the_reason(board_repo, monkeypatch):
+    monkeypatch.setenv("PATH", os.devnull)
+    assert deletion_check_skipped() == "git is not installed"
+    assert deleted_on_ref({("file", GONE)}) is None
+
+
+def test_a_shallow_clone_skips_rather_than_reporting_a_clean_board(board_repo, tmp_path, monkeypatch):
+    shallow = tmp_path / "shallow"
+    src = touches.REPO_ROOT
+    _git(tmp_path, "clone", "-q", "--depth", "1", f"file://{src}", str(shallow))
+    _git(shallow, "update-ref", "refs/remotes/origin/main", "HEAD")
+    monkeypatch.setattr(touches, "REPO_ROOT", str(shallow))
+    assert deletion_check_skipped() == "this clone is shallow, so an older deletion would be missed"
     assert deleted_on_ref({("file", GONE)}) is None
 
 
@@ -344,7 +379,14 @@ def test_collisions_prints_deleted_paths_and_counts_them(board_repo, tmp_path, c
     section = out.split("=== Touches paths deleted on origin/main ===")[1]
     assert f"issue #7: {GONE} (deleted in {board_repo})" in section
     assert "issue #8" not in section
-    assert out.splitlines()[-1].endswith(", 1 deleted")
+    assert out.splitlines()[-1] == "summary: 0 issue-issue, 0 issue-PR, 0 hubs, 0 broad, 1 deleted"
+
+
+def test_collisions_prints_a_glob_as_the_card_wrote_it(board_repo, tmp_path, capsys):
+    glob = "packages/engine/plugin/skills/zz-gone/SKILL*.md"
+    out = _run_collisions(tmp_path, capsys, {7: f"**Touches:** {glob}\n"})
+    section = out.split("=== Touches paths deleted on origin/main ===")[1]
+    assert f"issue #7: {glob} (deleted in {board_repo})" in section
 
 
 def test_collisions_says_the_check_was_skipped_without_origin_main(tmp_path, monkeypatch, capsys):
@@ -353,4 +395,4 @@ def test_collisions_says_the_check_was_skipped_without_origin_main(tmp_path, mon
     monkeypatch.setattr(touches, "REPO_ROOT", str(repo))
     out = _run_collisions(tmp_path, capsys, {7: f"**Touches:** {GONE}\n"})
     assert "skipped: origin/main does not resolve" in out
-    assert out.splitlines()[-1].endswith(", 0 deleted")
+    assert out.splitlines()[-1] == "summary: 0 issue-issue, 0 issue-PR, 0 hubs, 0 broad, 0 deleted"

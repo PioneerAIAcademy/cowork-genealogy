@@ -32,6 +32,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 
 from touches import (  # noqa: E402
     deleted_on_ref,
+    deletion_check_skipped,
+    globs_from_touches,
     in_snapshot,
     paths_from_touches,
     pairable,
@@ -80,7 +82,7 @@ def main(board_path, open_path, prs_path, statuses):
     prs = json.load(open(prs_path, encoding="utf-8"))
     status = {(it.get("content") or {}).get("number"): it.get("status") for it in board}
 
-    cand, broad = {}, {}
+    cand, broad, globs = {}, {}, {}
     for n, issue in issues.items():
         if status.get(n) not in statuses:
             continue
@@ -88,6 +90,7 @@ def main(board_path, open_path, prs_path, statuses):
         if not entries:
             continue
         cand[n] = entries
+        globs[n] = globs_from_touches(issue.get("body") or "")
         # sorted() because `entries` is a set -- without it the row order of the
         # "too broad to pair" list changes between runs on identical input.
         wide = sorted(p for k, p in entries if k == "prefix" and not pairable(k, p))
@@ -155,15 +158,17 @@ def main(board_path, open_path, prs_path, statuses):
             print(f"  issue #{n}: {desc}")
 
     print("\n=== Touches paths deleted on origin/main ===")
-    deleted = deleted_on_ref({e for entries in cand.values() for e in entries})
     n_del = 0
-    if deleted is None:
-        print("  skipped: origin/main does not resolve")
+    skipped = deletion_check_skipped()
+    if skipped:
+        print(f"  skipped: {skipped}")
     else:
+        heads = {h for g in globs.values() for h in g}
+        deleted = deleted_on_ref({e for entries in cand.values() for e in entries}, globs=heads)
         for n, entries in sorted(cand.items()):
             for p in sorted(p for _k, p in entries if p in deleted):
                 n_del += 1
-                print(f"  issue #{n}: {p} (deleted in {deleted[p]})")
+                print(f"  issue #{n}: {globs[n].get(p, p)} (deleted in {deleted[p]})")
         if not n_del:
             print("  (none)")
 

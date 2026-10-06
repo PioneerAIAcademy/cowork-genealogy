@@ -643,7 +643,7 @@ change there moves both passes, so re-run each after editing it.
 | A bare directory pairs only if it is a snapshot path or a **unit dir** — never an ordinary container | Naming `src/tools/` means "I add a file here", not "I edit all 47". A skill dir, a scenario, an e2e fixture *is* the unit, so naming it does mean all of it |
 | A file named by more than 3 candidates is a hub, reported once | `docs/architecture.md` is the repo's map; everyone edits it, in different sections |
 
-**"Touches paths deleted on origin/main"** lists paths a card names that `main` deleted; the shortlist run is the one that catches Backlog cards. Fix that card's Touches line to name where the work lives now, unless the card restores the path.
+**"Touches paths deleted on origin/main"** lists paths a card names that `main` deleted, for the statuses the run was given; a Backlog card is checked only when `Backlog` is among them. Fix that card's Touches line to name where the work lives now, unless the card restores the path.
 
 **Do not swap the unit/container test back for a size threshold.** Size is a
 proxy that misses in both directions: `apps/server/app/sandbox` is 5 files and a
