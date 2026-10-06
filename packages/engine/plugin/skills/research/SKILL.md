@@ -181,6 +181,7 @@ something you wait for — their answer arrives as the next message.
 
    | If research.json has... | Invoke |
    |-------------------------|--------|
+   | **No `research.json` at all** | `init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
    | Objective but no questions | `@plugin:question-selection` (derive first question) |
    | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
    | A question with no plan, and its jurisdiction **already has a `localities` entry** | `research-plan` |
