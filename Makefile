@@ -1344,6 +1344,13 @@ unit-report: ## Readable .txt per unit run log, into eval/runlogs/unit/<skill>/r
 	# The reports/ folders are gitignored — regenerate, don't commit.
 	cd eval/harness && uv run python -m unit_run_report $(if $(SKILL),--skill $(SKILL),) $(if $(FORCE),--force,)
 
+.PHONY: unit-compare
+unit-compare: ## Compare a skill's newest unit run with the one before it, printed: make unit-compare SKILL=<name> | BEFORE=a.json AFTER=b.json
+	# Pure formatting, no API. Per test in BOTH runs: result, cost, change %,
+	# turns, seconds, busiest moment; plus which files the runs depended on
+	# changed between them. Totals cover only tests present in both runs.
+	cd eval/harness && uv run python -m unit_run_compare $(if $(and $(BEFORE),$(AFTER)),--before $(abspath $(BEFORE)) --after $(abspath $(AFTER)),--skill $(SKILL))
+
 .PHONY: e2e-scratch
 e2e-scratch: $(ENGINE_BUILD) ## Set up a throwaway dir (outside the repo) to run /research by hand against a fixture: make e2e-scratch TEST=kenneth-quass-death
 	# Seeds the fixture's starting state + plugin skills into a sibling dir
