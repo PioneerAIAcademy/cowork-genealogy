@@ -4187,6 +4187,11 @@ function recordIdsForPersonEvidence(research: any, ops: ResearchAppendOp[]): Set
   return out;
 }
 
+/** Pre-processes a batch before commit: §3.4.1 source-reuse auto-detection
+ *  (including updates-only batches), §3.4.2 verdict sidecar, §3.4.3 re-extraction
+ *  guard, sourceDescription → tree S entry, auto-stamp source_id, D2 persona
+ *  matrix, place levers, and match-score gates. Returns the prepared state or
+ *  collected errors. */
 async function prepareOps(
   input: ResearchAppendInput,
   ops: ResearchAppendOp[],
@@ -4238,12 +4243,17 @@ async function prepareOps(
   // append with NO explicit S reference (a caller-supplied
   // gedcomx_source_description_id keeps the verified-reuse semantics and is
   // never second-guessed), plus at least one assertions append carrying a
-  // record_id. Record ids compare canonicalized (arkToBareId), repositories
-  // by normalized exact match (trim + casefold).
+  // record_id — OR, when the batch has zero assertion appends, at least one
+  // assertions update op whose pre-call target carries a record_id (and
+  // whose fields do not set source_id). Record ids compare canonicalized
+  // (arkToBareId), repositories by normalized exact match (trim + casefold).
   let reuseSkipsSourceDescription = false;
   let detectionEngaged = false;
   const assertionAppends = ops.filter(
     (op) => op.section === "assertions" && op.op === "append" && op.entry && typeof op.entry === "object",
+  );
+  const assertionUpdates = ops.filter(
+    (op) => op.section === "assertions" && op.op === "update" && typeof op.entryId === "string",
   );
   if (sourcesAppendIdx.length === 1) {
     const srcOp = ops[sourcesAppendIdx[0]];
@@ -4254,6 +4264,24 @@ async function prepareOps(
         .filter((v: unknown): v is string => factText(v) !== undefined)
         .map((v: string) => arkToBareId(v)),
     );
+    // When the batch has zero assertion appends, derive record keys from
+    // update targets in the pre-call research.assertions (§3.4.1 updates-only).
+    // Never mixed with append-derived keys: a mixed batch that extracts new
+    // record X and corrects old record Y would fold X's source onto Y's.
+    if (assertionAppends.length === 0 && assertionUpdates.length > 0) {
+      const existingAssertions: any[] = Array.isArray(research.assertions) ? research.assertions : [];
+      for (const uop of assertionUpdates) {
+        // Skip any update op whose fields set source_id — it is re-pointing
+        // the assertion, and a fold would leave it naming a source the batch
+        // no longer creates.
+        if (uop.fields && typeof uop.fields === "object" && Object.prototype.hasOwnProperty.call(uop.fields, "source_id")) continue;
+        const target = existingAssertions.find((a: any) => a && a.id === uop.entryId);
+        if (target && typeof target.record_id === "string") {
+          const bare = arkToBareId(target.record_id);
+          if (bare !== "") batchRecordKeys.add(bare);
+        }
+      }
+    }
     if (
       srcEntry &&
       typeof srcEntry === "object" &&

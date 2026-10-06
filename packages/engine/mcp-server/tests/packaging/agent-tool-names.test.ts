@@ -726,6 +726,21 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // survey-surname (issue #2065) holds three MCP tools and Write. place_search
+  // resolves the state/county. record_search with projectPath stages results.
+  // research_log_append logs each search page. Write saves the markdown table.
+  // No research_append: the log section is written via research_log_append,
+  // which takes no section argument. No Read: builds from inline stubs.
+  "survey-surname.md": {
+    tools: [
+      "Write",
+      "place_search",
+      "record_search",
+      "research_log_append",
+    ],
+    denies: [],
+  },
+
   // The folded check-warnings skill (issue #2118). `person_quality` is absent by
   // lead ruling 2026-09-27. No `Read`: with it the agent read research.json and
   // the tree and reported what it found there instead of the tool's answer (4
@@ -768,6 +783,22 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   },
   "search-wikipedia.md": {
     tools: ["Write", "wikipedia_search"],
+    denies: [],
+  },
+
+  // The folded source-evaluation skill (issue #2796) holds the four tools that
+  // skill declared, plus `Read` for the Narration line's read of research.json
+  // and the name match against tree.gedcomx.json. Writes nothing, so no hook
+  // route. A request belonging to conflict-resolution, check-warnings or
+  // record-extraction is handed back by name, so no spawn tool.
+  "source-evaluation.md": {
+    tools: [
+      "Read",
+      "person_read",
+      "record_read",
+      "source_attachments",
+      "person_quality",
+    ],
     denies: [],
   },
 
