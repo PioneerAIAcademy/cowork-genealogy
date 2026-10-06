@@ -192,7 +192,7 @@ def preflight() -> None:
     - FamilySearch enabled with no readable client config: named error, not a silent
       fall-through to dev-login.
     - On an https PUBLIC_URL (a deployed host), or with FamilySearch sign-in on at any
-      scheme (U13's rehearsal signs in over http on a loopback PUBLIC_URL): a default or
+      scheme (a grant is real whatever the scheme, e.g. an http loopback PUBLIC_URL): a default or
       empty SESSION_SECRET forges every session and the OAuth state; a default or empty
       FS_TOKEN_ENC_KEY encrypts every grant under a public string. Only http with
       FamilySearch off (compose's dev-login tier) may start on the defaults.

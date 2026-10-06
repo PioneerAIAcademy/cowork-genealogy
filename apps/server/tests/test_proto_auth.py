@@ -414,8 +414,8 @@ def test_preflight_refuses_default_secrets_on_https(monkeypatch, secret, key):
     ("s" * 32, auth.DEV_FS_TOKEN_ENC_KEY),                 # default key
 ])
 def test_preflight_refuses_default_secrets_on_http_when_familysearch_is_on(monkeypatch, secret, key):
-    """U13's rehearsal signs in over http on a loopback PUBLIC_URL (an SSM port-forward), so
-    the scheme cannot be the only trigger: sign-in on stores patron grants and signs sessions."""
+    """Sign-in can run over http (a loopback PUBLIC_URL), so the scheme cannot be the only
+    trigger: sign-in on stores patron grants and signs sessions."""
     monkeypatch.setenv("PUBLIC_URL", "http://127.0.0.1:1837")
     monkeypatch.setenv("FAMILYSEARCH_WEB_ENABLED", "true")
     for name, value in (("SESSION_SECRET", secret), ("FS_TOKEN_ENC_KEY", key)):
