@@ -2053,7 +2053,7 @@ proves nothing — it could come from the SDK-side `_pretool_hook` or from
   be read.
 
 **The confound ruled out first.** The hook command is `python3
-${CLAUDE_PLUGIN_ROOT}/hooks/guard_project_files.py`. A negative could be `python3`
+"${CLAUDE_PLUGIN_ROOT}/hooks/guard_project_files.py"`. A negative could be `python3`
 missing from PATH or the script erroring rather than the loader failing to bind,
 so a preflight runs the script directly with a synthetic payload and requires a
 deny back; a packaging problem reports as VOID (preflight), never as "does not

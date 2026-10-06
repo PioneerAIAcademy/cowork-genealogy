@@ -155,7 +155,7 @@ time in 3; the worker never does.
 
 - **Deployed gateway:** no research run; the worker ran two short turns on a local copy (P3k). Local copies add +0.35 s first byte per call, ~7–14 s a turn (P3g, 2026-09-25). TAP's auth, guardrails, capacity and deployed latency unmeasured. U14.
 - **Unmapped model id:** silently becomes a general-purpose stand-in that ignores the agent's `tools:`, and the turn reports success (P3h). U14.
-- **No prototype image on AWS:** SQS signing proven against real SQS and as an EC2 instance profile but not on Beanstalk, keyless S3 untried on AWS, schema applied at start, bundles built (U12) but not deployed. U7–U9, U13.
+- **No prototype image on AWS:** SQS signing proven against real SQS and as an EC2 instance profile but not on Beanstalk, keyless S3 untried on AWS, the migrations runner (U9) never run against RDS, bundles built (U12) but not deployed. U7–U9, U13.
 - **One patron, no sign-in:** any bearer reaches any project; a refresh revokes the prior token at once, so two turns on one grant break each other; token custody (R7) assumed minute-long turns. U2–U4 (U2, U3 built; U4 open).
 - **No time limit or fencing:** nothing ends a run by time; a cut attempt would keep running beside its redelivery; a dead-lettered turn holds the session; the cross-instance tool-server write lock is untested. U5, U6, U26.
 - **Postgres backend (R14):** 4 of 41 store cases run in CI (2026-09-29); tool suites and evals use files. U15.
@@ -164,7 +164,7 @@ time in 3; the worker never does.
 - **Missing against the current stack:** uploads, images, logs, stored search results, two wiki skills, `evaluations/` gates, continuing a capped project. U20.
 - **Silent transcript loss:** a config-dir mismatch persists nothing; the turn now closes `transcript_lost`, answers 500, and `/healthz` answers 503 (U10). A partial loss (one dropped frame) is still silent.
 - **Stop, held messages, the $35 cap:** offline tests only; while Postgres is down all three fail open, silently (the hooks swallow its errors). U23.
-- **Dev-only paths ship:** an unauthenticated crash stub, fixture tree-read block, token fallbacks (one persists in `turns.message`, SQS and the DLQ), debug holds. U11.
+- **Dev-only paths ship:** an unauthenticated crash stub, fixture tree-read block, debug holds. U11 (built, PR #3162: the stub arms and the tree-read block need `DEV_PATHS=true`, and a packaging test refuses dev variables in the Beanstalk templates).
 
 ## What the prototype deliberately did not test
 
