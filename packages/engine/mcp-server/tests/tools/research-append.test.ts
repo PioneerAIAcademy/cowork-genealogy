@@ -9554,19 +9554,43 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
     expect(singleOk(r).ok).toBe(true);
   });
 
-  it("allows a declaration while items are still `planned` — the licensed early consultation", async () => {
-    // research/SKILL.md routes here deliberately before the plan is drained.
-    // 122 corpus items sit at `planned` across 31 correct declarations; a gate
-    // built from the skill body's stricter opening sentence refuses all 31.
+  it("refuses a declaration while items are still `planned`, naming every one (#1830)", async () => {
+    // Reversed 2026-10-05: this test licensed the old behaviour, where a
+    // leftover `planned` item did not block. The measurement that decided it is
+    // in planCompleteInvariants' docstring — 38 leftovers across the e2e corpus
+    // and not one recorded reason, under prose that already asked for one.
     await writeProject(exhResearch(["completed", "planned", "planned"]));
-    const r = await researchAppend({
+    const errs = failure(await researchAppend({
       projectPath: dir,
       section: "questions",
       op: "update",
       entryId: "q_001",
       fields: { exhaustive_declaration: DECLARATION },
-    });
-    expect(singleOk(r).ok).toBe(true);
+    })).errors.join(" ");
+    expect(errs).toMatch(/cannot be declared exhaustive/);
+    // BOTH ids, not just the first: a refusal naming one of two sends the
+    // planner back for a second round it could have finished in one.
+    expect(errs).toMatch(/pli_002/);
+    expect(errs).toMatch(/pli_003/);
+    expect(errs).toMatch(/'planned'/);
+    // The completed item is not a blocker and must not be named as one.
+    expect(errs).not.toMatch(/pli_001/);
+  });
+
+  it("names the in_progress and the planned items separately when both are present", async () => {
+    // The two arms carry different remedies — one waits for a search to finish,
+    // the other needs disposal — so a reader has to be able to tell which item
+    // is which. A single merged list reads as one problem with four causes.
+    await writeProject(exhResearch(["in_progress", "planned"]));
+    const errs = failure(await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { exhaustive_declaration: DECLARATION },
+    })).errors.join(" ");
+    expect(errs).toMatch(/pli_001[^.]*'in_progress'/);
+    expect(errs).toMatch(/pli_002[^.]*'planned'/);
   });
 
   it("ignores an in_progress item on a plan belonging to a DIFFERENT question", async () => {

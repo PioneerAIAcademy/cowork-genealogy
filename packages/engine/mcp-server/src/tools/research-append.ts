@@ -1738,13 +1738,26 @@ function declarationStatusInvariants(entry: any): string[] {
  *  a researcher who believes the search is done has no way to say so. Issue
  *  #1821 owns that fix.
  *
- *  **`planned` does NOT block, and that is load-bearing.** `research/SKILL.md`
- *  routes here deliberately before the plan is drained — "even with plan items
- *  still `planned` → research-exhaustiveness (consult the stop criteria before
- *  draining the rest of the plan)" — and 122 corpus items sit at `planned`
- *  across 31 declarations that are all correct. The skill body's opening
- *  sentence is stricter than its own operative rule; the operative rule and the
- *  orchestrator agree, and this follows them.
+ *  **`planned` BLOCKS, decided 2026-10-05 on issue #1830.** It did not until
+ *  then. Dallan's `c78efb0b7` (#1847, 23 August) put "`planned` does NOT block"
+ *  here and the #1843 ruling shipped it, both resting on a skip having nowhere
+ *  to record its reason — the same ruling deferred the skip-reason field to
+ *  #1830 because it was a schema change. `skip_category` is that field, so the
+ *  premise lapsed and the ruling with it.
+ *
+ *  What decided it was not the vote. Six genealogists chose this and none chose
+ *  otherwise, but their shared argument — an unexplained leftover cannot be told
+ *  from a forgotten one — was already written in the skill bodies as prose, and
+ *  across 199 committed e2e runs it produced 38 leftover `planned` items and
+ *  ZERO recorded reasons. A rule with no compliance in prose belongs at the
+ *  write boundary. The decision, the case against it and the conditions it
+ *  ships under are on issue #1830.
+ *
+ *  The orchestrator still consults this gate BEFORE the plan is drained
+ *  (`research/SKILL.md:146`, unchanged): the judgement stays here, and only the
+ *  route taken on a refusal changed, to dispose of the named items rather than
+ *  extend the plan. Were disposal to happen first, the planner would be making
+ *  this gate's call for it.
  *
  *  **Reads the PRE-CALL snapshot, unlike the sibling above, and the asymmetry is
  *  the whole gate.** Plan-item completion is the search work's step, not this
@@ -1765,6 +1778,7 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
   const qid = entry?.id;
   if (typeof qid !== "string" || qid === "") return [];
   const inFlight: string[] = [];
+  const undisposed: string[] = [];
   for (const plan of Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []) {
     if (!plan || plan.question_id !== qid) continue;
     // ONLY the active plan blocks, and this is what keeps the gate escapable.
@@ -1780,19 +1794,42 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
     // is not the plan the question is being worked from.
     if (plan.status !== "active") continue;
     for (const item of Array.isArray(plan.items) ? plan.items : []) {
-      if (item?.status === "in_progress" && typeof item?.id === "string") inFlight.push(item.id);
+      if (typeof item?.id !== "string") continue;
+      if (item.status === "in_progress") inFlight.push(item.id);
+      else if (item.status === "planned") undisposed.push(item.id);
     }
   }
-  if (inFlight.length === 0) return [];
-  const ids = inFlight.sort().join(", ");
+  if (inFlight.length === 0 && undisposed.length === 0) return [];
+
+  // Both arms name the blocking items and stop. Neither tells the caller to
+  // change a status: the exhaustiveness agent holds `questions` and no
+  // `plan_items` write, so a refusal naming an action it cannot take names a
+  // locked door — which `guard_project_files.py`'s OWNER_REASON records as the
+  // thing that produces bypasses. Pinned by "the refusal names no plan_items
+  // action". Disposal is the plan owner's, reached through research/SKILL.md's
+  // route for a refused declaration.
+  const clauses: string[] = [];
+  if (inFlight.length > 0) {
+    const ids = inFlight.sort().join(", ");
+    clauses.push(
+      `${ids} ${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
+        "search has not finished, so the declaration would rest on work still running",
+    );
+  }
+  if (undisposed.length > 0) {
+    const ids = undisposed.sort().join(", ");
+    const one = undisposed.length === 1;
+    clauses.push(
+      `${ids} ${one ? "is" : "are"} still 'planned' — ${one ? "it has" : "they have"} not been ` +
+        `disposed of, so the record cannot say whether ${one ? "it was" : "they were"} answered ` +
+        `by what you already hold or simply never run (#1830)`,
+    );
+  }
   return [
-    `question '${qid}' cannot be declared exhaustive while ${ids} ` +
-      `${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
-      "search has not finished, so the declaration would rest on work still running. " +
-      `Report ${inFlight.length === 1 ? "this item" : "these items"} as the blocker and let ` +
-      "the search finish; declaring is available on the next call once the plan reflects it. " +
-      "Items still at `planned` do not block — consulting the stop criteria before draining " +
-      "the plan is the sanctioned path.",
+    `question '${qid}' cannot be declared exhaustive while ${clauses.join("; and ")}. ` +
+      `Report ${inFlight.length + undisposed.length === 1 ? "this item" : "these items"} as the ` +
+      "blocker and hand back; the plan's owner disposes of what is left, and declaring is " +
+      "available on the next call once the plan reflects it.",
   ];
 }
 

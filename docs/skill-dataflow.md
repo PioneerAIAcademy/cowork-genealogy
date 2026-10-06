@@ -140,7 +140,7 @@ unreachable from an autonomous run.
 | 7 | **`person-evidence`** (agent) | Spawned as `@plugin:person-evidence`. Assertions not yet linked to persons. Always the agent — writing a `pe_` link inline is how a same-named stranger's record gets attached to the subject | The identity decision — which tree person each persona is — scored with `same_person` first; and the household skeleton the link requires | `research_query` projections on `assertions` and `person_evidence`; `results/<log_id>.json`, or `record_read` when the assertion came from one; `tree.gedcomx.json` walked directly | `person_evidence` — `research_append`; tree `persons` and their sourced facts — `materialize_facts`; tree `relationships` (a household record's ParentChild and Couple edges only) — `tree_edit` |
 | 8 | **`conflict-resolution`** | Evidence conflicts present. Inline elimination of a namesake, or comparing two records for shared identity, is forbidden anywhere else | `conflicts` — independence analysis, the weighing, and the resolution rationale or the documented deferral | `research.json` `assertions`, `person_evidence`, `timelines`, `conflicts` by whole-file `Read`; `place_search`, `place_distance`, `convert_calendar` | `conflicts[]` only — `research_append` |
 | 9 | **`hypothesis-tracking`** (agent) | Spawned as `@plugin:hypothesis-tracking`. Identity uncertainty across assertions | `hypotheses` — the `active` → `supported` / `ruled_out` transitions and the reasoning behind each | `research.json` `hypotheses`, `assertions`, `person_evidence`, `questions` by whole-file `Read` | `hypotheses[]` only — `research_append` |
-| 10 | **`research-exhaustiveness`** (agent) | Spawned as `@plugin:research-exhaustiveness` when analyzed evidence now plausibly answers the question — **even with plan items still `planned`** — or all items are `completed`/`skipped`. Carries `questionId` + `projectPath`, and confirms the question by TEXT when the id does not resolve or disagrees with the prose. Refuses while an item on the question's **active** plan is `in_progress` | The seven stop criteria, assessed in order as a gate and stopping at the first that fails. The **only** caller permitted to set `exhaustive_declaration.declared: true` | `research_query` joins across `questions`, `plans`/`plan_items`, `log`, `assertions`, `person_evidence`; `Read` also granted | `questions[].exhaustive_declaration`, and on the declare path only `questions[].status = "exhaustive_declared"` — one `research_append` update |
+| 10 | **`research-exhaustiveness`** (agent) | Spawned as `@plugin:research-exhaustiveness` when analyzed evidence now plausibly answers the question — **even with plan items still `planned`** — or all items are `completed`/`skipped`. Carries `questionId` + `projectPath`, and confirms the question by TEXT when the id does not resolve or disagrees with the prose. Refuses while an item on the question's **active** plan is `in_progress` **or `planned`** (#1830). The two are not in tension: the orchestrator still consults this gate *before* the plan is drained, so the judgement is made here, and a refusal naming leftover items routes to `research-plan` to dispose of them | The seven stop criteria, assessed in order as a gate and stopping at the first that fails. The **only** caller permitted to set `exhaustive_declaration.declared: true` | `research_query` joins across `questions`, `plans`/`plan_items`, `log`, `assertions`, `person_evidence`; `Read` also granted | `questions[].exhaustive_declaration`, and on the declare path only `questions[].status = "exhaustive_declared"` — one `research_append` update |
 | 11 | **`proof-conclusion`** (agent) | Spawned as `@plugin:proof-conclusion` when a question is at `exhaustive_declared` with no `proof_summaries` entry, or re-invoked because a tier-≥-probable conclusion is not yet in the tree. Carries `questionId` + `projectPath`. Its own three-check gate — unresolved conflicts, unclassified assertions, unlinked persons — hard-blocks before Step 1 | Tier and form selection, the self-contained narrative, and the tree encoding | `research_query` projections (never a raw whole-file `Read`), `sources[].citation`, tree facts and relationships, `source_attachments`, `merge_warnings` | `proof_summaries[]` + the question's `status`/`resolved`/`resolution_assertion_ids` in one batch, and `project` — `research_append`; tree `relationships`, `persons[].facts[]` and `sources` at tier ≥ probable — `tree_edit` / `tree_correct` |
 | 12 | **`gps-mentor`** (agent) | `proof-conclusion` wrote a `ps_id`, and either tier < probable or the conclusion is now in the tree. Skipped when `evaluations/` already holds a `proof-critique-<ps_id>-*.json` newer than the summary | One structured advisory verdict on the finished proof, read as a standalone document. **Mandatory to invoke and record; advisory in what it recommends.** It holds no search tool — it grades what was gathered | `project_context`, `research_query` (`evaluations`, `conflicts`, `hypotheses`, and the proof's `narrative_markdown`), the `evaluations/` verdict files via `sidecar_read`, `validate_research_schema`, `collections_search` | `evaluations[]` in `research.json` — `research_append` — plus `superseded_by` on the prior entry for the same focus and target. The verdict file under `evaluations/` is written by the tool, not by the agent |
 | 13 | **`proof-conclusion`** (agent), re-entered | Every question `resolved`, **and** both gates pass: each tier-≥-probable conclusion encoded in the tree, and each resolved question's `ps_id` carrying a `proof-critique` verdict. The orchestrator is to route here and not write; `research/SKILL.md` still tells it to make the write itself | Closing the project | `research_query` | `project.status = "completed"` — `research_append`, refused by the tool while a blocking conflict is unresolved or a mentor verdict is missing |
@@ -314,20 +314,31 @@ touch either side.
    `known_holdings[].relates_to_person_ids` onto the surviving person. The manifest has
    `tree-edit` on tree rows only. — issue #1790, ruled: the tool is a legitimate
    cross-cutting writer and the manifest is what needs updating
-9. **When a plan blocks a declaration** — **RESOLVED (#1843, folded from #1830):** the
-   orchestrator said to consult exhaustiveness "even with plan items still `planned`",
-   while the gate said to evaluate only a question whose plan items are all `completed`
-   or `skipped`. The tool had already settled it and the prose had not caught up:
-   `planCompleteInvariants` (`research-append.ts`) skips any plan whose `status !==
-   "active"` and blocks only on `in_progress`, and its refusal says "Items still at
-   `planned` do not block". The gate side is now scoped to the active plan in all three
-   places it was stated unscoped. **Only the active plan blocks, and that is what keeps
-   the gate escapable:** `research-plan` supersedes a plan by flipping its status alone,
-   leaving item statuses untouched, and then forbids editing it ever again — so a
-   question re-planned while one item sat `in_progress` would otherwise carry that item
-   forever, with no route to clear it. Read literally, the old prose also made leftover
-   `planned` items look like a blocker, and the cheapest way past a blocker is to sweep
-   them to `skipped`, destroying the audit trail. — issue #1843 (closed by this PR)
+9. **When a plan blocks a declaration** — **RESOLVED (#1830, 2026-10-05): both
+   `in_progress` and `planned` block.** `planCompleteInvariants`
+   (`research-append.ts`) skips any plan whose `status !== "active"` and blocks on
+   either status, naming the two groups in separate clauses because their remedies
+   differ — one waits for a search to finish, the other needs disposing of.
+
+   It did not always. #1843 resolved this the other way in September, on the reading
+   that the orchestrator consults exhaustiveness "even with plan items still
+   `planned`" and that a leftover had nowhere to record why it was set aside. The
+   same ruling deferred the skip-reason field to #1830 because it was a schema
+   change; `skip_category` is that field, so the premise lapsed. Decided on #1830
+   after six genealogists were canvassed — the deciding evidence was that the
+   skill bodies already asked for a reason and produced **38 leftover `planned`
+   items and zero recorded reasons** across 199 e2e runs.
+
+   **Only the active plan blocks, and that is still what keeps the gate escapable:**
+   `research-plan` supersedes a plan by flipping its status alone, leaving item
+   statuses untouched, and then forbids editing it ever again — so a question
+   re-planned while one item sat `in_progress` would otherwise carry that item
+   forever, with no route to clear it.
+
+   The old worry — that a visible blocker invites sweeping items to `skipped` to
+   clear it — is now answered by the writer rule rather than by not blocking: a
+   `skipped` item without a `skip_category` is itself refused, so the cheap escape
+   costs a reason. — issues #1843, #1830
 
 ---
 
