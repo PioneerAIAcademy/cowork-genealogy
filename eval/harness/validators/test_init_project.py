@@ -377,6 +377,9 @@ def test_project_files_written_through_the_writer_tools(tool_calls, after_state,
 # looks like the skill's fault.
 
 _ARK_RE = re.compile(r"^ark:/61903/\d:\d:(.+)$")
+# A FamilySearch TREE person, as project_create's build recognises one (only a
+# `4:1:` ark names a person from the read; a record or image ark names none).
+_TREE_ARK_RE = re.compile(r"^ark:/61903/4:1:([A-Za-z0-9]{4}-[A-Za-z0-9]{3,4})$")
 
 # The profile is fixed (lead ruling 2026-09-18): init-project asks nothing
 # about the researcher and writes these two values on every project. The
@@ -654,11 +657,12 @@ def _relationship_owner(rel, pid_of):
 
 def _tree_fact_owners(tree):
     """(owner, fact) for every tree fact, the owner named by FamilySearch PID:
-    a person by its ark, a relationship by its type and endpoint arks. A fact on
-    a person with no ark gets owner None and matches no returned fact."""
+    a person by its tree ark, a relationship by its type and endpoint arks. A
+    fact on a person with no tree ark (none, or a record/image ark) gets owner
+    None and matches no returned fact."""
     pid_by_id = {}
     for person in tree.get("persons") or []:
-        match = _ARK_RE.match(person.get("ark") or "")
+        match = _TREE_ARK_RE.match(person.get("ark") or "")
         pid_by_id[person.get("id")] = match.group(1) if match else None
     for person in tree.get("persons") or []:
         for fact in person.get("facts") or []:

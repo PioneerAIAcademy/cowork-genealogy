@@ -568,6 +568,23 @@ def test_v3_does_not_exempt_without_a_starting_tree():
     assert "match neither" in _fails(check_std_place, _FILLED, [_unresolved_read(), _REF_CREATE])
 
 
+def test_v3_does_not_key_an_addition_with_a_record_ark_to_a_staged_person():
+    """project_create treats only a `4:1:` tree ark as naming a person from the
+    read, so an addition carrying the subject's RECORD ark is a separate person.
+    Its invented value at a place the host filled for the subject is not the
+    host's fill, though the addition is in the starting baseline too."""
+    after = _as_built(_tree(persons=[
+        {"id": "I1", "ark": _ARK, "facts": [
+            {"type": "Death", "place": "Pottsville, Schuylkill, Pennsylvania",
+             "standard_place": "Pottsville, Schuylkill, Pennsylvania, United States"}]},
+        {"id": "I7", "ark": "ark:/61903/1:1:LZNY-BRF", "facts": [
+            {"type": "Death", "place": "Pottsville, Schuylkill, Pennsylvania",
+             "standard_place": "Pottsville, Schuylkill, Pennsylvania, United States"}]},
+    ]))
+    message = _fails(check_std_place, after, [_unresolved_read(), _REF_CREATE])
+    assert "I7/Death" in message and "I1/Death" not in message
+
+
 def test_v3_does_not_trust_a_read_that_was_never_staged():
     read = _unresolved_read()
     del read["response"]["staged"]

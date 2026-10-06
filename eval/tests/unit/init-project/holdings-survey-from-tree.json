@@ -29,6 +29,7 @@
     "Should NOT extract the holdings into `sources` or `assertions` — at init they are lightweight survey notes only"
   ],
   "execution": {
+    "max_wall_clock_seconds": 480,
     "stub_skills": [
       {
         "skill": "question-selection",
