@@ -8,8 +8,9 @@ decisions. Both images copy it, as they copy ``enqueue.py`` (the web image as
 ``/app/grants.py``, imported as ``grants``; the worker image as ``proto/grants.py``,
 imported as ``proto.grants``). Stdlib and ``cryptography`` only.
 
-The locks (two-int4 advisory keys, ``(namespace, hashtext(user_id))``, so the engine's
-single-bigint ``pg_advisory_xact_lock(hashtext(projectId))`` space never overlaps):
+The locks (two-int4 advisory keys, ``(namespace, hashtext(user_id))`` -- the queue lock's
+second half is ``hashtext(session_id)`` -- so the engine's single-bigint
+``pg_advisory_xact_lock(hashtext(projectId))`` space never overlaps):
 
   ATTEMPT_LOCK_NS  each worker attempt holds it SHARED, session-level, on a dedicated
                    connection, from just before it reads the grant until its CLI is
@@ -20,6 +21,13 @@ single-bigint ``pg_advisory_xact_lock(hashtext(projectId))`` space never overlap
                    callback takes it in its write transaction (blocking, bounded). A
                    second sign-in does not revoke the first token (U2), so the callback
                    never waits on a live attempt.
+  QUEUE_LOCK_NS    (U23) transaction-scoped, per session: each tier holds it across its
+                   "is a turn running?" check and the claim or insert that acts on the
+                   answer -- the worker releasing a held message, the web tier admitting
+                   one -- so the two can never both start a turn on one session. Taken
+                   inside an explicit transaction (an autocommit statement would drop it
+                   at once), never on the grant connection, and never across an SQS send.
+                   The wait is bounded (``QUEUE_LOCK_TIMEOUT_SQL``), as the write lock's is.
 
 A ``hashtext`` collision between two patrons only over-serializes them (a refresh is
 skipped), never lets one through. Every namespace is cast ``::int4``. psycopg 3 types a
@@ -54,6 +62,7 @@ DEV_FS_TOKEN_ENC_KEY = "dev-insecure-fs-token-key-change-me"
 
 ATTEMPT_LOCK_NS = 30301
 WRITE_LOCK_NS = 30302
+QUEUE_LOCK_NS = 30303
 
 # -- thresholds ------------------------------------------------------------------
 
@@ -76,6 +85,9 @@ WAIT_POLL_S = 5
 REFRESH_HTTP_TIMEOUT_S = 30
 ATTEMPT_LOCK_TIMEOUT_S = 60
 WRITE_LOCK_TIMEOUT_S = 45
+# The queue lock is held for a few single-row statements, so a wait this long means a
+# holder that is not coming back (a host lost mid-transaction holds it until keepalive).
+QUEUE_LOCK_TIMEOUT_S = 5.0
 DUE_BATCH = 50
 
 # Server-side keepalives for a connection that holds a session lock: a host that vanishes
@@ -102,6 +114,9 @@ ATTEMPT_LOCK_HELD_SQL = (
 )
 TRY_LOCK_SQL = "SELECT pg_try_advisory_lock(%s::int4, hashtext(%s))"
 WRITE_XACT_LOCK_SQL = "SELECT pg_advisory_xact_lock(%s::int4, hashtext(%s))"
+QUEUE_LOCK_SQL = "SELECT pg_advisory_xact_lock(%s::int4, hashtext(%s))"
+# Before QUEUE_LOCK_SQL, in the same transaction; the value is ``queue_lock_timeout(s)``.
+QUEUE_LOCK_TIMEOUT_SQL = "SELECT set_config('lock_timeout', %s, true)"
 WRITE_LOCK_TIMEOUT_SQL = f"SET LOCAL lock_timeout = '{WRITE_LOCK_TIMEOUT_S}s'"
 _SESSION_START = "COALESCE(session_started_at, granted_at)"
 GRANT_SQL = (
@@ -194,6 +209,13 @@ def env_seconds(env: Mapping[str, str], name: str, default: float) -> float:
     except ValueError:
         return float(default)
     return value if value >= 0 else float(default)
+
+
+def queue_lock_timeout(seconds: float | None = None) -> str:
+    """``QUEUE_LOCK_TIMEOUT_SQL``'s value (default ``QUEUE_LOCK_TIMEOUT_S``): whole
+    milliseconds, at least 1, since 0 is no limit at all."""
+    seconds = QUEUE_LOCK_TIMEOUT_S if seconds is None else seconds
+    return f"{max(1, round(seconds * 1000))}ms"
 
 
 @dataclass(frozen=True)

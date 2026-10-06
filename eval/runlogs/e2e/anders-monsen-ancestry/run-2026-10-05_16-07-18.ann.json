@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Proof quality revised 3→2 after review: S2 (1801 census) corroborates couple identity but not the marriage date (25 Jun 1786) or place (Hamre), which rest on a single derivative index (S1). Also: person-evidence agent created duplicate Couple R1 instead of adding the marriage fact to existing rel-anders-unna — would upload a duplicate couple to FamilySearch."
+  },
+  "annotator": "mercyokum",
+  "findings_hash": "bbedf735a335074de029068986ec084ff7cf9b5d997effee5c728690fec8618a",
+  "blind_bundle_digest": "2de52def69615f4656e60535414a46185e2bfc16fd3eed4312cf7e0898e40f82"
+}
