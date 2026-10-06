@@ -24,8 +24,9 @@ were `xfail` for one defect: `research` and `project-status` both matched a
 "drive the workflow forward" request, so the orchestrator was skipped about half
 the time (issue #2927). `project-status`'s description now tells it not to drive
 the research workflow forward (#3092). `015`'s marker named a router shortcut
-instead; see "Paired rows". Each restored test was measured three times on main
-before it came back (#3119), and `015` needed one more change to pass.
+instead; see "Paired rows". Each restored test was measured three times, on a
+branch rebased onto main, before it came back (#3119), and `015` needed one more
+change to pass.
 
 Not restored:
 

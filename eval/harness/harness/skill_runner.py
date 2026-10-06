@@ -1415,14 +1415,12 @@ async def run_skill(
                             and block.id == routing_resolved["tool_use_id"]
                         ) or (
                             # By name too, for the ordering where the hook has
-                            # not run yet; only until the first hand-off is
-                            # seen, or a later spawn in the model's reaction
-                            # would be recorded as the hand-off; and only on
-                            # the main thread, since a subagent's call is never
-                            # the hand-off.
+                            # not run yet; only on the main thread, since a
+                            # subagent's call is never the hand-off. Which
+                            # message ends the hand-off's turn is decided by
+                            # `after_handoff_turn`, not by this match.
                             stop_at_stub
                             and main_thread
-                            and not handoff_seen["v"]
                             and is_stubbed_handoff(block, _stub_skills)
                         ):
                             routed_call_seen = True
