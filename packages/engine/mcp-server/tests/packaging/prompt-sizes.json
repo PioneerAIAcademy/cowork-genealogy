@@ -10,7 +10,7 @@
     "packages/engine/plugin/agents/citation.md": 44479,
     "packages/engine/plugin/agents/convert-dates.md": 11818,
     "packages/engine/plugin/agents/gps-mentor.md": 40731,
-    "packages/engine/plugin/agents/historical-context.md": 48963,
+    "packages/engine/plugin/agents/historical-context.md": 49497,
     "packages/engine/plugin/agents/hypothesis-tracking.md": 23552,
     "packages/engine/plugin/agents/image-reader.md": 9101,
     "packages/engine/plugin/agents/locality-guide.md": 53029,
@@ -23,6 +23,7 @@
     "packages/engine/plugin/agents/search-familysearch-wiki.md": 8480,
     "packages/engine/plugin/agents/search-images.md": 21550,
     "packages/engine/plugin/agents/search-wikipedia.md": 6843,
+    "packages/engine/plugin/agents/source-evaluation.md": 18680,
     "packages/engine/plugin/agents/survey-surname.md": 7068,
     "packages/engine/plugin/agents/translation.md": 19677,
     "packages/engine/plugin/agents/tree-edit.md": 30669,
@@ -37,7 +38,6 @@
     "packages/engine/plugin/skills/search-external-sites/SKILL.md": 32402,
     "packages/engine/plugin/skills/search-full-text/SKILL.md": 21694,
     "packages/engine/plugin/skills/search-records/SKILL.md": 64412,
-    "packages/engine/plugin/skills/source-evaluation/SKILL.md": 16823,
     "packages/engine/plugin/skills/timeline/SKILL.md": 21833
   },
   "tools": {

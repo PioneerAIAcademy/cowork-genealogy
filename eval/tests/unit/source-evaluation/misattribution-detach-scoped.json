@@ -9,11 +9,12 @@
       "index-discrepancy",
       "doctrine",
       "misattribution",
-      "regression"
+      "regression",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Go through the sources attached to Christian P. Hole (KD96-TV2) and tell me which of them actually belong on his profile.",
+    "delegation": "Go through the sources attached to Christian P. Hole (KD96-TV2) and tell me which of them actually belong on his profile.\n\nprojectPath: <workspace>",
     "scenario": "christian-hole-quality"
   },
   "mcp_fixtures": [
