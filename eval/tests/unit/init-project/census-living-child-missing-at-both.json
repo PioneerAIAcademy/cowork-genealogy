@@ -49,5 +49,6 @@
     "Do not penalise correct reasoning about which census window the missing living child belongs to; the graded point is that it is counted once, not two.",
     "The objective is the researcher's request stored verbatim, so its wording (\"find any of her children\") is not graded and does not make the reply wrong. Grade the number of missing living children the reply reports and the question it sets up: one child, born before 1900 and alive in 1910, is a pass.",
     "A `person_warnings` result reports a problem the TOOL detected. It is NOT evidence that the event it names exists in the tree. A reply saying 'the tool flags a coherence issue on Ellen' is accurate; a reply saying 'Ellen has an event recorded before her birth' is a claim about the tree and needs the tree to support it. Grade the first as correct and the second as the misattribution it is."
-  ]
+  ],
+  "judge_reads_files": true
 }

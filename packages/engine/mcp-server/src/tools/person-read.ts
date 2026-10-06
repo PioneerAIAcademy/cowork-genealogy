@@ -194,8 +194,8 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
   keepResolvablePersonSourceRefs(result);
 
   // Staged AFTER the memories merge, so the staged document is exactly what this
-  // call returns. Issue #2944: the staged copy is what `project_create` is to
-  // build the starting tree from (Stage B), instead of the model re-typing it.
+  // call returns. Issue #2944: `project_create` builds the starting tree from
+  // the staged copy (`personReadRef`) instead of the model re-typing it.
   // Best-effort, like record_read: a staging failure never fails the read.
   if (typeof projectPath === "string" && projectPath.trim() !== "") {
     return {

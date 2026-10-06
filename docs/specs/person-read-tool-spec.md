@@ -110,9 +110,10 @@ after the memories merge, through the shared `stageSearchResults`
   top-level `notes[]` and every source's response-only fields (`notes`, `text`,
   `image_ref`, `artifact_url`). Nothing is stripped on the way in.
 
-It exists so the starting tree can be built host-side from the staged copy rather
-than the model re-typing it into `project_create`. That consumer is not built
-yet: today nothing reads the staged file. It is **not a search**: it is in
+It exists so the starting tree is built host-side from the staged copy rather
+than the model re-typing it into `project_create`: init-project passes
+`staged.resultsRef` to `project_create` as `personReadRef`
+(`project-create-tool-spec.md` §4). It is **not a search**: it is in
 `STAGING_CAPABLE_TOOLS` and not `STAGING_SEARCH_TOOLS`, so no search note fires on
 it, and no shipped flow finalizes it with `research_log_append`. An unconsumed
 file is removed by the 24h TTL prune. Staging is best-effort: a failure never

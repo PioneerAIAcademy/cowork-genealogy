@@ -358,7 +358,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       mitigation: {
         side: "caller",
         excerpt:
-          "naming the subject and every\nimported relative by their LOCAL tree id from Step 3",
+          "naming the subject and every\nimported relative by their tree `I` id from `idMap`",
       },
     },
   },
