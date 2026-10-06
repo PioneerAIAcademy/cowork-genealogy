@@ -362,8 +362,10 @@ the tier:
   [the tree person's birth year]: gap [N] years." Compare only the party this
   link is about: on the second party of a relationship assertion (the father
   a "son of" entry names), the record states no year for that party, so write
-  "none stated", and score that link with `recordRole` naming the party. Write "none stated" for either side that gives no year. A gap
-  the event cannot explain goes in `core_identifier_conflict`.
+  "none stated", and score that link with `recordRole` naming the party. Write "none stated" for either side that gives no year. An
+  approximate tree year ("~1845") is the tree's birth year like any other: a
+  gap the event cannot explain goes in `core_identifier_conflict` whatever the
+  precision of either date.
 - "Residence check: [record place, year] vs [nearest attested residence,
   year, taken from the tree as it stood before this run, never from a
   record linked in this run]: same / neighbouring / outside [place_distance km], [the page
@@ -829,7 +831,10 @@ hands a merge set to proof-conclusion to fold. For a household record:
    head's `spouseIds` and `childIds` and each one's `died`. Then, before any
    write, write one line in your reply: "Household check: [each spouse and
    child of the head with `died` false] — present as [role] / absent." Every "absent" is raised as that identity
-   question. The
+   question, and also named as its own question in `summary_for_user`. Name
+   the possibilities: they died before the record, were enumerated
+   elsewhere, separated, or this household is a different family. "Not
+   extracted" is never the explanation offered alone. The
    `matchRelatives` triples from step 2.3 give the persona→tree-person
    pairings; a new member (no tree match) pairs to a fresh id you mint in
    step 3.
