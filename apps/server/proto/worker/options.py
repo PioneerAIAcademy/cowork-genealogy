@@ -51,6 +51,10 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 from app.agent.continue_policy import (
+    DELEGATION_TOOLS,
+    DELIVERED_REASON,
+    DELIVERY_GUIDANCE,
+    DELIVERED_TOOL,
     CONTINUE_REASON,
     env_float,
     env_int,
@@ -324,7 +328,6 @@ SPEND_CAP_REASON = (
 # The carrier for "I delivered what you asked". Deliberately NOT AskUserQuestion -- an ask
 # has `questions` and waits for an answer, a delivery waits for nothing, and one tool
 # carrying both leaves this hook with no discriminator.
-DELIVERED_TOOL = "mcp__genealogy__research_delivered"
 
 # When to reach for it. This rides the per-turn system prompt, NOT the skill bodies: the
 # hook that makes this tool end a turn exists only here, so a skill-body rule would teach
@@ -333,22 +336,7 @@ DELIVERED_TOOL = "mcp__genealogy__research_delivered"
 # Both exclusions are load-bearing. Calling it when the OBJECTIVE is finished would report
 # `delivered` where `completed` is true and the run ends on its own. Calling it instead of
 # asking would swallow a question nobody answers -- an ask waits, a delivery does not.
-DELIVERY_GUIDANCE = (
-    "When this message asked for one bounded thing and you have produced it, WRITE YOUR "
-    "REPLY FIRST -- this call ends the turn, so nothing you say after it reaches the "
-    "researcher -- then call "
-    "`research_delivered` with a one-sentence summary and stop: a plan the researcher "
-    "asked you to stop after, a single record or lookup, or a status question such as "
-    "\"where are we?\". Do not call it when the project's research objective itself is "
-    "finished -- that run ends on its own -- and do not call it in place of asking the "
-    "researcher a question, which waits for their answer. Its schema is deferred, so "
-    "search for it by name if you do not already hold it."
-)
 
-DELIVERED_REASON = (
-    "You have delivered what this message asked for. Stopping here rather than carrying "
-    "on; your next message picks up from here."
-)
 
 
 def _halt(reason: str = STOP_REASON) -> dict[str, Any]:
@@ -362,7 +350,6 @@ def _halt(reason: str = STOP_REASON) -> dict[str, Any]:
 # design 2026-09-29. Every call that is not explicitly `False` is rewritten: CLI 2.1.220 runs an
 # agent in the background when the flag is absent, and the two extractors lost on 2026-09-21
 # (sess_25297de9b15b4ef5) carried no flag at all.
-DELEGATION_TOOLS = frozenset({"Agent", "Task"})
 
 
 def _foregrounded(tool_input: dict[str, Any]) -> dict[str, Any]:

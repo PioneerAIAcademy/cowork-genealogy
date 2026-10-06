@@ -1,19 +1,23 @@
 {
   "test": {
-    "id": "ut_research_018",
+    "id": "ut_research_020",
     "skill": "research",
-    "name": "An open ask still routes as a job, not a bounded deliverable",
+    "name": "A bounded ask reads what is already attached instead of searching for it",
     "type": "positive",
-    "description": "Issue #2813's own 'Open asks still run as jobs' acceptance, and the risk the bounded/job section introduces: prose that over-classifies. 'Find the parents of X' names no single deliverable -- it is the whole research question -- so it must route down the ordinary table, not be treated as bounded. Uses the same scenario as ut_research_011 (objective, zero questions), where the correct first call is question-selection. If the new section wrongly reads this as bounded, the router stops instead and no Skill call is made, which the deterministic validator catches. NOTE on scope: the live risk -- a job ending itself `delivered` -- cannot manifest here. DELIVERY_GUIDANCE is appended only in the prototype worker (apps/server/proto/worker/options.py) and the unit harness never sees it; research_delivered is not in the harness's LIVE_TOOLS either. What this test guards is narrower and still worth having: the classification itself. The subject is named rather than given as a FamilySearch id: an earlier draft asked about GJ72-9WD, who appears nowhere in `empty-project-just-created` (its objective is Patrick Flynn and its tree holds I1), so the router was being asked about a stranger. That made the test reddable on a message-authoring choice -- a router that reasonably asked the user who that was, rather than delegating -- instead of on the rule under test.",
+    "description": "Issue #2813 item 4: \"Before any search, read the person's attached sources and relatives. Never search for a record that is already attached.\" Cornelius Driscoll already has SD-DRIS-D, a Quebec civil death registration, among seven attached sources, so a request for a death record is a request for something the project already holds. The correct turn reads (person_read / source_attachments) and reports what is there; searching for it -- by an MCP search call or by handing off to a search step -- is the failure, because it is a paid call that returns what the project already had. GRADING: deterministic. The `attached-first` tag fires test_reads_attachments_before_searching, which reads the MCP call log and the hand-off list rather than the reply, so a turn that only NARRATES having checked cannot pass. This is the gap the unit suite could not previously reach: neither person_read nor source_attachments is in mock_mcp.LIVE_TOOLS, so the mock registers them only for a test that declares fixtures -- which this one does.",
     "tags": [
-      "routing",
-      "routes-to:question-selection"
+      "attached-first",
+      "bounded-request"
     ]
   },
   "input": {
-    "user_message": "Find the parents of Patrick Flynn.",
-    "scenario": "empty-project-just-created"
+    "user_message": "Is there a death record for Cornelius Driscoll, GJ72-9WD? Just that one thing.",
+    "scenario": "driscoll-source-audit"
   },
+  "mcp_fixtures": [
+    "person-read-driscoll-personid-only",
+    "source-attachments-driscoll"
+  ],
   "execution": {
     "max_turns": 20,
     "max_wall_clock_seconds": 600,
@@ -57,9 +61,9 @@
     ]
   },
   "judge_context": [
-    "This is a ROUTING test. The only assertion that matters is whether Skill('question-selection') is the first Skill call. A deterministic validator (test_routes_to_expected_skill) owns that check -- do not grade the routing decision yourself.",
-    "'Find the parents of X' is an OPEN ask, not a bounded one: it names a research question, not one deliverable. The router must walk the routing table as it would for any job.",
-    "Do not penalise the reply for not naming a deliverable, and do not reward it for stopping early. Stopping early is the failure this test exists to catch."
+    "This is a BOUNDED-REQUEST test about not re-finding what is already attached.",
+    "Cornelius Driscoll already has a Quebec civil death registration attached (SD-DRIS-D). The reply should say the death record is already attached and identify it. The hand-off and search behaviour is asserted deterministically, so do NOT grade routing; grade only whether the reply tells the researcher what is already there rather than announcing a search.",
+    "Do not grade citation formatting or source quality. This turn is a lookup, not an evaluation."
   ],
   "judge_reads_files": true
 }

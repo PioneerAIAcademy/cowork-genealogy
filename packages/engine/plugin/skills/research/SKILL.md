@@ -45,8 +45,10 @@ log the decision and your rationale in the appropriate research.json
 field (log entry, assertion rationale, or conflict resolution analysis)
 so the audit trail captures it.
 
-**You are the only driver.** Do **not** end your turn to announce, plan,
-or ask about a next step. After a sub-skill returns, immediately invoke
+**On a job, you are the only driver.** Do **not** end your turn to
+announce, plan, or ask about a next step. (A bounded request is the
+exception, and the only one: it ends at its deliverable — see
+§"Bounded request or job".) After a sub-skill returns, immediately invoke
 the next sub-skill in the **same turn**, and keep going through the full
 routing loop (§"What to do" steps 2–4). Trust the compact summaries the
 sub-skills and writer tools return plus the state you already hold in
@@ -65,10 +67,12 @@ reply arrives as the next message.
 
 ## Direct user requests name a destination, not a shortcut
 
-When the user says "write the conclusion," "move toward a proof
-conclusion," "conclude this," or anything else that names a downstream
+**On a job**, when the user says "write the conclusion," "move toward a
+proof conclusion," "conclude this," or anything else that names a downstream
 skill or artifact directly, treat it as "drive the routing table forward
 to that outcome" — not as permission to invoke that skill immediately.
+(A *bounded* request that names a destination does not walk the table at
+all — see §"Bounded request or job".)
 Re-enter step 1 of "What to do," re-derive the current state from
 `research.json`, and walk the routing table from wherever the project
 actually is: unclassified assertions, unresolved conflicts, un-run Mentor
@@ -95,13 +99,16 @@ a records-request letter.
 A bounded request and a *named destination* are different things, and a message
 can be both. "Create a research plan for Mary Hales, but leave it at that" names
 a destination AND is bounded. They answer different questions: naming a
-destination says **where** to end up, and §"Direct user requests" still governs
-how you get there — walk the routing table, surface what is missing. Bounded says
-**whether to continue past it**. So: reach the named outcome the ordinary way,
-deliver it, and stop. Do not carry on into the next question.
+destination says **where** to end up; bounded says **whether to continue past
+it**. Hand a bounded request straight to the step that owns its deliverable — a
+transcription to `@plugin:image-reader`, a plan to `research-plan`, a record to
+`search-records`. Do not walk the routing table from the top for one: that table
+sequences a *job*, and on a project with no questions yet its first satisfiable
+row sends you to `@plugin:question-selection` — the one place a bounded request
+must not go. Deliver the one thing, and stop.
 
-**Start from what is already attached.** Before routing a bounded request
-to any search, read what the person already has: `person_read` for the
+**Start from what is already attached.** Before routing to any search —
+on a bounded request or a job alike — read what the person already has: `person_read` for the
 attached sources and relatives, `source_attachments` for where a source
 is already attached. Never search for a record that is already attached,
 and never offer to add a person who is already in the tree. The answer
@@ -475,7 +482,10 @@ a verdict:
   to find it;
 - **never declare the question answered on a name match.** A name is not
   an identification;
-- end with an offer to research it properly.
+- end with an offer to **research it further** — never an offer to extract,
+  attach, or link. Those are writes, and `search-records` forbids offering
+  one on an unsettled identity for the reason that a user who says yes has
+  just adopted a namesake's parents. Offer the investigation, not the write.
 
 A single plausible candidate is still a candidate. The researcher decides
 whether it is their person; your job is to show them what you found and
@@ -483,7 +493,9 @@ what it rests on.
 
 ## What this skill does not do
 
-- It does not introduce new GPS logic. Every sub-skill encodes its
+- It introduces no new GPS *method*: every sub-skill encodes its own, and
+  §"Candidates, not verdicts" restates the identity bar `person-evidence`
+  already owns, for the bounded path that does not reach it. Every sub-skill encodes its
   own portion of the GPS standard; this skill only routes between
   them.
 - It does not skip steps. GPS depends on the full chain — extraction
@@ -495,7 +507,7 @@ what it rests on.
 
 ## Re-invocation behavior
 
-**Writes:** nothing directly. This skill is a thin orchestrator — it
+**Writes:** nothing directly — it holds no writer tool. It reads `research.json` to decide the next step, and on a bounded request also reads the person's attached sources (`person_read`, `source_attachments`) before any search. This skill is a thin orchestrator — it
 reads `research.json` to decide the next step and delegates every
 write to the sub-skill it routes to. It does **not** insert defensive
 `validate_research_schema` passes between steps (the writer tools each

@@ -54,6 +54,55 @@ TERMINAL_DELIVERED = "delivered"
 TERMINAL_MCP_UNAVAILABLE = "mcp_unavailable"
 
 
+# The signal that produces TERMINAL_DELIVERED above. Shared because BOTH planes match on
+# string -- the prototype in its PreToolUse arm, the hosted alpha in `count_only` --
+# and a tool name that drifts between two copies fails open on the plane holding the
+# stale one: the arm simply never matches and the stop is vetoed as if the rule did
+# not exist.
+DELIVERED_TOOL = "mcp__genealogy__research_delivered"
+# What the researcher is told when that signal fires. Kept beside the tool name for the
+# same reason: both planes halt on this, and the prototype appends a one-sentence summary
+# ahead of it, so its length is load-bearing there.
+DELIVERED_REASON = (
+    "You have delivered what this message asked for. Stopping here rather than carrying "
+    "on; your next message picks up from here."
+)
+
+
+# The per-turn instruction that makes the halt reachable: nothing calls a tool it was
+# never told about. Both hosted planes append this to their system prompt. It lives
+# here, beside the tool name and the halt text, because a plane that wires the ARM
+# without the GUIDANCE ships a dead rule that looks identical to a working one.
+DELIVERY_GUIDANCE = (
+    "When this message asked for one bounded thing and you have produced it, WRITE YOUR "
+    "REPLY FIRST -- this call ends the turn, so nothing you say after it reaches the "
+    "researcher -- then call "
+    "`research_delivered` with a one-sentence summary and stop: a plan the researcher "
+    "asked you to stop after, a single record or lookup, or a status question such as "
+    "\"where are we?\". Do not call it when the project's research objective itself is "
+    "finished -- that run ends on its own -- and do not call it in place of asking the "
+    "researcher a question, which waits for their answer. Its schema is deferred, so "
+    "search for it by name if you do not already hold it."
+)
+
+
+# Delegation tools whose `run_in_background` both planes override to False.
+# Lead ruling 2026-09-23, reaffirmed as the design 2026-09-29. Forcing the
+# foreground does NOT serialise the work: several Agent calls in one message
+# still run concurrently, so a fan-out of four extractors stays a fan-out.
+#
+# Shared because the hosted alpha reproduced, twice, the failure the prototype
+# already fixed. The Stop hook cannot see that the turn is waiting on its own
+# background subagent -- it reads `project.status` and its own counters -- so it
+# nudges ("invoke the next GPS sub-skill"), and the model, told to get on with
+# it, starts a DUPLICATE of the agent still running. Measured on the alpha:
+# duplicate `q_001`/`q_002` from two question-selection spawns (feedback issue
+# #3156), and four record-extractors relaunched synchronously while the
+# background copies kept going -- one orphaned source, one extractor hung 56
+# minutes, ~20 minutes of re-extraction (feedback issue #3159).
+DELEGATION_TOOLS = frozenset({"Agent", "Task"})
+
+
 def read_research_json(project_dir: Path | str) -> dict[str, Any] | None:
     """``<project_dir>/research.json`` parsed, or None if missing or unusable.
 
@@ -93,6 +142,7 @@ def should_continue_run(
     stopped: bool = False,
     pending_user_message: bool = False,
     pending_decision: bool = False,
+    delivered: bool = False,
 ) -> bool:
     """Whether to veto an agent's *voluntary* stop and nudge it onward.
 
@@ -101,7 +151,8 @@ def should_continue_run(
              nudge budget is spent, the previous nudge produced no tool call (the agent
              isn't making progress, so another nudge won't either), a message the patron
              typed mid-turn is waiting (1b), the agent has asked something only the patron
-             can answer (the clause phase 3 fills in), or the genealogy MCP surface is
+             can answer (the clause phase 3 fills in), the agent met a BOUNDED request and
+             stopped on purpose (`delivered`), or the genealogy MCP surface is
              gone -- which neither plane can observe today, so callers leave the default.
 
     ``stopped`` is FIRST, ahead of everything. None of the original four paths is "the
@@ -109,8 +160,13 @@ def should_continue_run(
     still writes a tool_calls row and the counter counts ROWS, so it moves and that escape
     never fires.
 
-    The three new flags default False, so the harness's own truth table -- which the first
+    The four added flags default False, so the harness's own truth table -- which the first
     five parameters are a port of -- still describes this function exactly.
+
+    ``delivered`` was added, removed as dead code when no caller passed it, and added back
+    once one did: the router's "Bounded request or job" section (#2813 item 1) tells the
+    model to stop when a bounded request is met, and without this arm THIS plane vetoed
+    that stop and nudged it onward -- the exact thrash the section exists to end.
     """
     if stopped:
         return False
@@ -119,6 +175,8 @@ def should_continue_run(
     if pending_user_message:
         return False
     if pending_decision:
+        return False
+    if delivered:
         return False
     if project_completed(research):
         return False

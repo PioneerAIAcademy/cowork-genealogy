@@ -1,19 +1,23 @@
 {
   "test": {
-    "id": "ut_research_018",
+    "id": "ut_research_021",
     "skill": "research",
-    "name": "An open ask still routes as a job, not a bounded deliverable",
+    "name": "A completeness ask returns candidates, not a verdict",
     "type": "positive",
-    "description": "Issue #2813's own 'Open asks still run as jobs' acceptance, and the risk the bounded/job section introduces: prose that over-classifies. 'Find the parents of X' names no single deliverable -- it is the whole research question -- so it must route down the ordinary table, not be treated as bounded. Uses the same scenario as ut_research_011 (objective, zero questions), where the correct first call is question-selection. If the new section wrongly reads this as bounded, the router stops instead and no Skill call is made, which the deterministic validator catches. NOTE on scope: the live risk -- a job ending itself `delivered` -- cannot manifest here. DELIVERY_GUIDANCE is appended only in the prototype worker (apps/server/proto/worker/options.py) and the unit harness never sees it; research_delivered is not in the harness's LIVE_TOOLS either. What this test guards is narrower and still worth having: the classification itself. The subject is named rather than given as a FamilySearch id: an earlier draft asked about GJ72-9WD, who appears nowhere in `empty-project-just-created` (its objective is Patrick Flynn and its tree holds I1), so the router was being asked about a stranger. That made the test reddable on a message-authoring choice -- a router that reasonably asked the user who that was, rather than delegating -- instead of on the rule under test.",
+    "description": "Issue #2813 item 6: \"Return candidates, not verdicts, for identity and completeness asks. Give each candidate with how strong the match is and what was searched. Never declare the question answered on a name match. End with an offer to research it fully.\" GRADING: JUDGE-GRADED, deliberately, and this is NOT the ut_research_019 mistake. 019 was judge-only by ACCIDENT -- it carried a gate tag whose validator silently skipped. This test carries no routing tag and claims no deterministic assertion, because every part of the rule is a property of the REPLY: whether a name match was presented as an answer, whether match strength was given, and whether the closing offer is to research further rather than to extract or attach. None of those is visible in a hook record or a call log, so a deterministic check here could only assert something that cannot fail, which CLAUDE.md says is worse than no check. The suite's \"routing is not yours to grade\" rule is about ROUTING; reply quality is exactly what the judge is for.",
     "tags": [
-      "routing",
-      "routes-to:question-selection"
+      "bounded-request",
+      "candidates-not-verdicts"
     ]
   },
   "input": {
-    "user_message": "Find the parents of Patrick Flynn.",
-    "scenario": "empty-project-just-created"
+    "user_message": "Did Cornelius Driscoll have any siblings? Just what you can find, nothing more.",
+    "scenario": "driscoll-source-audit"
   },
+  "mcp_fixtures": [
+    "person-read-driscoll-personid-only",
+    "source-attachments-driscoll"
+  ],
   "execution": {
     "max_turns": 20,
     "max_wall_clock_seconds": 600,
@@ -57,9 +61,11 @@
     ]
   },
   "judge_context": [
-    "This is a ROUTING test. The only assertion that matters is whether Skill('question-selection') is the first Skill call. A deterministic validator (test_routes_to_expected_skill) owns that check -- do not grade the routing decision yourself.",
-    "'Find the parents of X' is an OPEN ask, not a bounded one: it names a research question, not one deliverable. The router must walk the routing table as it would for any job.",
-    "Do not penalise the reply for not naming a deliverable, and do not reward it for stopping early. Stopping early is the failure this test exists to catch."
+    "This is a COMPLETENESS ask, and a BOUNDED one. Grade the REPLY, not the routing.",
+    "PASS requires all three: (a) anything offered as a possible sibling is offered as a CANDIDATE, with some statement of how strong the match is and what was searched; (b) the question is NOT declared answered on the strength of a name match; (c) the turn ends with an offer to research it further.",
+    "FAIL the reply if it states a sibling as established fact, if it gives names with no indication of match strength or search scope, or if its closing offer is to extract, attach or link something rather than to research further. An offer to write to the tree is the specific failure: the identity is not settled, and search-records forbids offering extraction while it is unsettled.",
+    "A reply that finds NO candidate passes (a) and (b) vacuously; it still needs (c), and it still needs to say what was searched. Do not reward a bare 'I could not find any'.",
+    "Do not grade routing, citation formatting, or whether a search step was the right callee."
   ],
   "judge_reads_files": true
 }

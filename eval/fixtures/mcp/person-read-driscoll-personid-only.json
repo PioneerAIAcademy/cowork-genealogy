@@ -1,0 +1,98 @@
+{
+  "tool": "person_read",
+  "description": "Cornelius Driscoll (GJ72-9WD) with his seven attached sources, matched on personId ALONE. The sibling fixture person-read-driscoll-attached-sources.json also requires `sourceDescriptions: true`, and `matches()` demands every predicate key be present (harness/fixtures.py:93), so a router that omits that optional argument matches nothing and gets a refusal. That is the wrong failure for a test about whether the router LOOKS before it searches, so this copy drops the argument from the predicate and keeps the same response. SD-DRIS-D is a Quebec civil death registration, which is what makes a death-record request on this person a request for something already attached.",
+  "args": {
+    "personId": "GJ72-9WD"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "GJ72-9WD",
+        "gender": "Male",
+        "living": false,
+        "names": [
+          {
+            "given": "Cornelius",
+            "surname": "Driscoll"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "1814",
+            "standard_date": "1814",
+            "place": "Ireland",
+            "standard_place": "Ireland"
+          },
+          {
+            "type": "Marriage",
+            "date": "9 June 1849",
+            "standard_date": "9 Jun 1849",
+            "place": "Sherbrooke, Canada East",
+            "standard_place": "Sherbrooke, Quebec, Canada"
+          },
+          {
+            "type": "Residence",
+            "date": "1861",
+            "standard_date": "1861",
+            "place": "Sherbrooke, Canada East",
+            "standard_place": "Sherbrooke, Quebec, Canada"
+          },
+          {
+            "type": "Burial",
+            "place": "St. Patrick's Cemetery, Sherbrooke, Quebec, Canada",
+            "standard_place": "Sherbrooke, Quebec, Canada"
+          }
+        ]
+      }
+    ],
+    "relationships": [],
+    "sources": [
+      {
+        "id": "SD-DRIS-A",
+        "title": "Cornelius Driscoll, \"Ireland, Catholic Parish Registers, 1655-1915\"",
+        "citation": "\"Ireland, Catholic Parish Registers, 1655-1915\", database with images, FamilySearch, baptism of Cornelius Driscoll, 12 March 1814, Skibbereen, Co. Cork.",
+        "url": "https://familysearch.org/ark:/61903/1:1:DRIS-001"
+      },
+      {
+        "id": "SD-DRIS-B",
+        "title": "Cornelius Driscoll, \"Quebec, Vital and Church Records (Drouin Collection), 1621-1968\"",
+        "citation": "\"Quebec, Vital and Church Records (Drouin Collection), 1621-1968\", database with images, FamilySearch, marriage of Cornelius Driscoll and Margaret Hayes, St. Patrick's, Sherbrooke.",
+        "url": "https://familysearch.org/ark:/61903/1:1:DRIS-002"
+      },
+      {
+        "id": "SD-DRIS-C",
+        "title": "Cornelius Driscoll, \"Quebec, Catholic Parish Registers, 1621-1979\" — burial",
+        "citation": "\"Quebec, Catholic Parish Registers, 1621-1979\", database with images, FamilySearch, burial of Cornelius Driscoll, St. Patrick's Cemetery, Sherbrooke.",
+        "url": "https://familysearch.org/ark:/61903/1:1:DRIS-003"
+      },
+      {
+        "id": "SD-DRIS-D",
+        "title": "Cornelius Driscoll, \"Quebec, Civil Registration Deaths, 1867-1900\"",
+        "citation": "\"Quebec, Civil Registration Deaths, 1867-1900\", database, FamilySearch, entry for Cornelius Driscoll, Sherbrooke district.",
+        "url": "https://familysearch.org/ark:/61903/1:1:DRIS-004"
+      },
+      {
+        "id": "SD-DRIS-E",
+        "title": "Cornelius Driscoll, \"Census of Canada East, 1851\"",
+        "citation": "\"Census of Canada East, 1851\", database, FamilySearch, entry for Cornelius Driscoll, Canada East.",
+        "url": "https://familysearch.org/ark:/61903/1:1:DRIS-005"
+      },
+      {
+        "id": "SD-DRIS-F",
+        "title": "Driscoll headstone photograph, St. Patrick's Cemetery (uploaded memory)",
+        "citation": "Photograph of the Driscoll headstone, St. Patrick's Cemetery, Sherbrooke; digital image uploaded by a FamilySearch contributor.",
+        "url": "https://ancestors.familysearch.org/en/GJ72-9WD/memories",
+        "notes": [
+          "Contributor upload; no indexed record behind it."
+        ]
+      },
+      {
+        "id": "SD-DRIS-G",
+        "title": "Cornelius Driscoll, \"Census of Canada, 1861\"",
+        "citation": "\"Census of Canada, 1861\", database with images, FamilySearch, entry for Cornelius Driscoll, Sherbrooke, Canada East.",
+        "url": "https://familysearch.org/ark:/61903/1:1:DRIS-006"
+      }
+    ]
+  }
+}

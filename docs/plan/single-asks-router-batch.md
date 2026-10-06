@@ -1,12 +1,17 @@
 # Issue #2813 items 1, 4 and 6: the router's bounded/job decision
 
-**Status:** PENDING — not yet built. Plan only. Rewritten after plan-critic returned
+**Status:** CODE LANDED on `2813-router-bounded-decision` (items 1, 4, 6); **acceptance is
+unbought.** The paid `research` unit-eval run named at "Done when" has NOT been run — the
+newest log is `eval/runlogs/unit/research/v7`, which predates this branch — so the three
+"Provable today" bullets below are not yet proven. The run is deliberately held: #3087 owes a
+`research` run on the same snapshot and this work can ride it, which is the difference between
+two paid runs and one. Items 3 and 7 remain unbuilt and are blocked as described below. Rewritten after plan-critic returned
 five blocking findings on the first draft; what changed is listed at the end.
 
 **Throughout, `main` means `origin/main`.** The local `main` ref in this checkout is ~281
 commits behind it.
 
-## Why these four together, and nothing else from #2813
+## Why these three together, and nothing else from #2813
 
 ## What a `research` eval run actually costs
 
@@ -54,9 +59,14 @@ The other three #2813 items are deliberately NOT here:
   the browse-only pivot rule (`:667`). (Review first cited `:575/:626/:643`; PR #3099
   rewrote this file and moved them. Both sets above were re-verified on this branch.) And "a found record goes
   in as a source through
-  `record-extraction`" is already routing-table row `research/SKILL.md:142`. The router also
-  **holds no writer tool** (`research/SKILL.md:15-17` grants only `validate_research_schema`
-  and `research_query`; `:152` states it), so item 5 as drafted contradicted its own
+  `record-extraction`" is already routing-table row `research/SKILL.md:186`. The router also
+  **holds no tool that writes `research.json` or the tree** (`research/SKILL.md:15-19` grants
+  four: `validate_research_schema`, `research_query`, `person_read`, `source_attachments`;
+  `:196` states the rule). Stated precisely because `person_read` is NOT read-only in general
+  — given a `projectPath` it saves retained memories under `images/` and stages a results
+  sidecar (`src/tools/person-read.ts:300-316`, `:137-145`). It is absent from
+  `PROJECT_WRITER_TOOLS` (`eval/harness/validators/test_universal.py:1151-1159`), which is the
+  set this argument actually rests on, and the easy place to over-read it as "read-only", so item 5 as drafted contradicted its own
   frontmatter. The remaining gap it names, the single-ask path entering neither skill,
   belongs to item 3 and the router re-entry.
 - **Item 3** (lightweight project: `init-project` stops after its report on a bounded ask)
@@ -131,7 +141,7 @@ Apply that question to each item honestly:
   not about project state. No tool can read it. Prose is correct here.
 - **Item 6** (candidates not verdicts) is judgment about how to report. Prose is correct.
 
-## Where each edit goes, read from the current file (457 lines)
+## Where each edit goes, read from the pre-change file (457 lines; 527 after this branch)
 
 ### Item 1 — the bounded/job decision
 
@@ -214,14 +224,20 @@ Also: `research_delivered` is **not advertised in the unit harness at all**
    actually guards is narrower and still worth having: that the new prose does not
    over-classify an open ask as bounded.
 
-**Item 4 gets no in-batch test.** Both its candidates moved to e2e, so its prose rides the
-paid run graded only by the base dimensions. Stated rather than left to be discovered.
+**Item 4 gets no in-batch test.** ~~Both its candidates moved to e2e~~ **SUPERSEDED during
+implementation:** item 4 is covered in-batch by `ut_research_020`, deterministically. The
+premise here was wrong. It assumed the unit harness could not drive `person_read` /
+`source_attachments` because neither is in `mock_mcp.LIVE_TOOLS`; in fact `mock_mcp.py:1094`
+registers a non-`LIVE_TOOLS` tool for any test that declares a fixture for it, so the gap was
+one fixture wide.
 
 Both are routing assertions needing a `routes-to:` tag and `test_routes_to_expected_skill`,
 **not a judge line**: `route-no-questions.json`'s own `judge_context` says "ROUTING IS NOT
 YOURS TO GRADE".
 
-**Move to the e2e corpus:** item 4's already-attached case and item 6's candidate reporting.
+~~**Move to the e2e corpus:** item 4's already-attached case and item 6's candidate
+reporting.~~ **Both landed in the unit suite instead** — see the superseded note above and
+item 13 of "What changed".
 
 `eval/tests/unit/research/README.md` is itself in the snapshot and must be updated — it
 tracks test IDs, the `routes-to:` convention and a "what is NOT covered" register that two
@@ -265,12 +281,19 @@ Each bullet names the environment that checks it, because none holds everywhere.
 - a lookup whose answer is already attached answered from that source;
 - an identity ask returning candidates with match strength.
 
-No fixture in `eval/tests/e2e/` covers either — the corpus genre is the opposite (stripped
-trees). Writing them is genealogist work (`author-e2e-fixture`). **Naming them here without
-budgeting them would be CLAUDE.md step 4 in disguise**, so they are called out as a
-prerequisite card rather than parked as a limitation: item 4 and item 6 ship with their
-prose graded only by the paid run and the bundle replay, and their dedicated e2e coverage
-is filed separately.
+**SUPERSEDED. No card was filed and none is needed.** The reasoning above reached for
+CLAUDE.md step 4 because this plan said "card", and never re-tested its own premise. Both
+rules are now covered in the unit suite, in the PR that implements them, which is step 1:
+
+- item 4 -> `ut_research_020` (`attached-before-searching.json`), **deterministic**, graded off
+  the MCP call log and the hand-off list by `test_reads_attachments_before_searching`.
+- item 6 -> `ut_research_021` (`candidates-not-verdicts.json`), **judge-graded on purpose**,
+  because every part of that rule is a property of the reply and a deterministic check there
+  could only assert something that cannot fail.
+
+What the e2e corpus would still add is a LIVE subject rather than a fixture one. That is a
+genuine difference and it is written into `eval/tests/unit/research/README.md`, but it is not
+a coverage hole and does not need a card to hold it.
 
 **What item 5's drop loses, recorded so it is not silently gone:** item 5 also carried a
 reply contract — "the reply names what was saved and where", and "an interrupted extraction
@@ -294,6 +317,61 @@ reaches this file.
 6. **The router re-entry added** as the live blocking dependency; #3147 has merged.
 7. **`mutation-check.sh` kept, with its real path** — review called it non-existent on a
    `git grep` that could not see outside the repo.
+8. **The hosted alpha taught the `delivered` signal**, which this plan did not call for.
+   Found by the open-break pass: the section tells the model to stop when a bounded request
+   is met, and `real_agent.py` vetoed exactly that stop and injected `CONTINUE_REASON` — so
+   on a LIVE plane the new rule produced the thrash it exists to end. The scope ruling that
+   kept the alpha on phase-1 behaviour rested on no caller needing it, and item 1 is that
+   caller, so the premise lapsed. Re-ruled by the user, 2026-10-05. `DELIVERED_TOOL`,
+   `DELIVERED_REASON` and `DELIVERY_GUIDANCE` all moved into `continue_policy.py` so the two
+   planes cannot drift apart. The guidance move was a second catch on the same work: the
+   first cut wired the alpha's halt arm but not its prompt, and an arm the model is never
+   told to trigger is inert in exactly the way the arm was added to fix.
+9. **A delegation edge registered.** Sending a bounded transcription to
+   `@plugin:image-reader` created `research -> image-reader`, which
+   `agent-delegation-framing.test.ts` requires be declared with the sentence that keeps the
+   caller's expectation out of the hand-off. Caller side is exempt (the delegation names a
+   destination and nothing about content); the agent-side anti-slant pin carries it.
+10. **A pre-existing red fixed in passing** — `scripts/setup-feedback-case.sh` reported an
+   empty `feedback.json` as "the tester left blank", because `jq -er` exits 0 on an empty
+   file. Found while running `make feedback-case`, which this plan names only as a Done-when
+   bullet. CLAUDE.md step 1: fixed in the PR that found it rather than filed.
+11. **Item 6 gained a clause the content list did not carry** — "never an offer to extract,
+   attach, or link". Added to resolve a cross-file tension with `search-records/SKILL.md:435`,
+   which forbids offering extraction while an identity is unsettled. The offer this skill
+   makes is to *research* further, and saying so is what keeps the two files consistent.
+12. **Item 4 was briefly narrowed to bounded requests and is now back to the issue's scope.**
+   Issue #2813 item 4 says "Before **any** search"; the first cut scoped the rule to bounded
+   requests only, which would have left a job re-searching records already attached — the
+   exact waste the item targets. Caught by drift-critic against this plan.
+13. **The two "move to e2e" items came back into the unit suite**, and no card was filed.
+   `ut_research_020` covers item 4 deterministically; `ut_research_021` covers item 6 as an
+   openly judge-graded reply test. The plan's premise for deferring them was wrong:
+   `mock_mcp.py:1094` registers a tool outside `LIVE_TOOLS` for any test that declares a
+   fixture, so item 4's rule was one fixture away from testable, not one paid e2e run away.
+   Item 4's fixture also had to be NEW — the existing `person-read-driscoll-attached-sources`
+   predicate requires `sourceDescriptions: true`, and `matches()` demands every predicate key
+   be present, so a router omitting that optional argument would have been refused rather than
+   answered, which is the wrong failure for this test.
+14. **`ut_research_018`'s subject changed** from `GJ72-9WD` to "Patrick Flynn". The scenario it
+   runs on is `empty-project-just-created`, whose objective is Patrick Flynn and whose tree
+   holds `I1`; `GJ72-9WD` appears nowhere in it, so the router was being asked about a stranger
+   and could red the test by reasonably asking who that was. Raised by open-break as 018's one
+   soft spot.
+15. **Delegations forced to the foreground on the hosted alpha** — not in this plan, and added
+   because the lead reported two live incidents on #2813 while the branch was open (alpha
+   feedback #3156 and #3159). The Stop hook nudges a turn that is waiting on its own background
+   subagent, and the model answers by spawning a duplicate: duplicate `q_001`/`q_002` in the
+   first, and in the second four record-extractors relaunched synchronously while the background
+   copies ran on, costing an orphaned source, a 56-minute hung extractor and ~20 minutes of
+   duplicate work. The prototype has forced the foreground since the 2026-09-23 lead ruling
+   (reaffirmed 2026-09-29); the alpha never got it, which is why both incidents are platform web.
+   `DELEGATION_TOOLS` moved to `continue_policy.py`, the arm was added to `_pretool_hook`, and
+   `Agent`/`Task` were added to `_PRETOOL_MATCHER` — an arm the matcher does not reach is inert
+   with the suite green. Kept in this PR rather than split out: same two files, same class of
+   defect as the `delivered` port (a prototype mechanism the alpha never received), and a second
+   PR would touch the same hook. This is the lead's option B; option A, teaching the hook which
+   subagents are live, is strictly more machinery for a problem option B already closes.
 
 ## Explicitly not in this plan
 

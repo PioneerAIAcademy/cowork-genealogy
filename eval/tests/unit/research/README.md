@@ -78,14 +78,56 @@ job" section: an open ask must still walk the routing table, and a bounded ask
 must not enter the question/plan chain. They are paired deliberately — neither
 passes a body that classifies everything one way.
 
-Both are deterministic routing assertions (`routes-to:` + `test_routes_to_expected_skill`
-for 018; absence of a question-selection call for 019), not judge-graded, per this
-suite's own rule that routing is not the judge's to grade.
+**Both are deterministic, and both were briefly not.** Each carries a `routes-to:`
+tag and so fires `test_routes_to_expected_skill`, which reads hook records rather
+than the model's narration: 018 `routes-to:question-selection`, 019
+`routes-to:image-reader`. 019 was first written with the `routing` tag and no
+`routes-to:` tag — the one combination that validator *skips* (`test_research.py:58`),
+and a skipped validator records `passed=True`. It was therefore judge-only while
+three places (this README, the commit message, the plan) claimed it was
+deterministic. Nothing lints for that, which is why it is written down here.
+image-reader is 019's destination because its own description owns "transcribe this
+register page" / "OCR this scan", and the router holds no `image_transcribe`, so
+doing it inline is not available.
+
+`ut_research_020` (`attached-before-searching.json`) covers the third rule in that
+section, "Start from what is already attached" (issue #2813 item 4). Cornelius
+Driscoll already holds `SD-DRIS-D`, a Quebec civil death registration, so a request
+for a death record asks for something the project has; reading and reporting it is
+the pass, and searching for it — by an MCP call *or* by a hand-off to a search step —
+is the failure. Deterministic, via the `attached-first` tag and
+`test_reads_attachments_before_searching`, which reads the MCP call log and the
+hand-off list so a turn that only narrates having checked cannot pass.
+
+**This one needed a fixture to exist at all, and that is the general rule.** Neither
+`person_read` nor `source_attachments` is in `mock_mcp.LIVE_TOOLS`, and the mock
+registers a tool outside that set *only* for a test that declares a fixture for it
+(`mock_mcp.py:1094`). Before this test no research test declared one, so the rule was
+unexercisable and a body ignoring it passed every test in the suite. It also needed a
+NEW fixture rather than the existing `person-read-driscoll-attached-sources.json`:
+that one's predicate requires `sourceDescriptions: true`, and `matches()` demands
+every predicate key be present (`harness/fixtures.py:93`), so a router omitting that
+optional argument would have matched nothing and been refused — the wrong failure for
+a test about whether the router looks before it searches.
+
+`ut_research_021` (`candidates-not-verdicts.json`) covers item 6, and is **judge-graded
+on purpose** — which is a different thing from 019's accident. Every part of that rule
+is a property of the reply: whether a name match was presented as an answer, whether
+match strength and search scope were given, and whether the closing offer is to research
+further rather than to extract or attach. None of that appears in a hook record or a
+call log. A deterministic check here could only assert something that cannot fail, and
+CLAUDE.md is explicit that such a check is worse than none. The suite's "routing is not
+yours to grade" rule constrains ROUTING; reply quality is what the judge is for. The
+distinction worth holding on to: 019 was judge-only because a gate tag silently skipped
+its validator, and nobody could see it; 021 says so in its own description and here.
 
 **What they do NOT cover, and cannot:** that a bounded turn ends with the
-`delivered` outcome. `DELIVERY_GUIDANCE` is appended only in the prototype worker
-and `research_delivered` is not in this harness's `LIVE_TOOLS`, so the outcome is
-unobservable here. That half is prototype-only acceptance.
+`delivered` outcome. `research_delivered` is not in this harness's `LIVE_TOOLS` and
+no Stop hook binds here, so the outcome is unobservable in a unit test regardless of
+which plane implements it. Both hosted planes now halt on the signal — the prototype
+via its own `PreToolUse` arm plus `DELIVERY_GUIDANCE`, the alpha via `count_only` and
+`should_continue_run(delivered=...)` — and that half is covered by
+`apps/server/tests/test_alpha_stop_hook.py`, not here.
 
 ## Moved negatives (issue #2268)
 

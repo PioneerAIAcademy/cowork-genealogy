@@ -49,11 +49,23 @@ tools on purpose.
   (`mcp__genealogy__research_delivered`) and ends the turn **before the tool body runs**.
   The turn's `outcome` is `delivered` and the browser renders "Done — that's what you asked
   for. Send a message to carry on." Nothing reads the tool's return value.
-- **The hosted ALPHA (`real_agent.py`).** It registers the same MCP server, so the tool is
-  advertised and callable there, but it has neither `DELIVERY_GUIDANCE` nor a hook arm: its
-  Stop hook vetoes the exit like any other yield, and alpha testers keep phase-1 behaviour
-  until the alpha is retired (ruled: `docs/plan/research-as-a-job-later.md`, "Before phase 2").
-  A call there is the inert acknowledgement below, not a stop.
+- **The hosted ALPHA (`real_agent.py`).** It now halts on the same signal. The arm lives in
+  `count_only` — the `matcher=None` PreToolUse callback that already sees every call — and is
+  gated on the main thread (`"agent_id" not in` the payload) so a subagent's delivery cannot
+  strand the orchestrator mid-job. It sets a per-session flag that the Stop hook forwards as
+  `should_continue_run(delivered=...)`, so the voluntary exit is allowed instead of nudged.
+  `DELIVERED_TOOL` and `DELIVERED_REASON` moved to `continue_policy.py` and both planes import
+  them: a tool name that drifts between two copies fails open on whichever holds the stale one.
+  **This reverses the earlier scope ruling** that the alpha keeps phase-1 behaviour until it is
+  retired (`docs/plan/research-as-a-job-later.md`, "Before phase 2"). That ruling rested on
+  nothing needing the signal here; the router's "Bounded request or job" section then put a
+  stop instruction in `research/SKILL.md` which this plane contradicted mid-run, so the
+  premise no longer held. Re-ruled by the user, 2026-10-05.
+  `DELIVERY_GUIDANCE` moved there too and the alpha now appends it to its own system prompt.
+  That half is not optional: the arm fires only on a real call, and nothing calls a tool it
+  was never told about — wiring the arm alone ships a dead rule that looks identical to a
+  working one. `test_alpha_stop_hook.py` asserts the prompt carries it, mirroring the
+  assertion `test_proto_worker.py` already makes for the prototype.
 - **Cowork and the e2e harness.** No such hook binds, and the tool IS advertised (the
   e2e orchestrator binds the real engine server and grants `mcp__genealogy` as a
   server-prefix wildcard). So it must not error and must not claim an effect it did not

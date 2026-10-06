@@ -61,10 +61,18 @@ def test_the_tool_counter_sees_the_tools_a_research_loop_actually_runs(tmp_path,
 
     async def research_step():
         first = await stop({}, None, None)
-        # Exactly the calls a GPS step makes, and NOT one the deny matcher covers.
-        for tool in ("Skill", "mcp__genealogy__record_search", "Task",
-                     "mcp__genealogy__research_append", "Read"):
-            assert real_agent._PRETOOL_MATCHER and tool not in real_agent._PRETOOL_MATCHER, tool
+        # Exactly the calls a GPS step makes. The counter must see all of them.
+        step_tools = ("Skill", "mcp__genealogy__record_search", "Task",
+                      "mcp__genealogy__research_append", "Read")
+        # Most are outside the deny matcher, which is the whole argument for the
+        # split. `Task` is deliberately NOT asserted here: it joined the matcher
+        # with the foreground arm (issue #2813), so it is no longer an example of
+        # a call the narrow matcher misses. It stays in `step_tools` because the
+        # claim under test is that the COUNTER sees every call, and a delegation
+        # is one. Four of five still miss, so the under-count is unchanged.
+        for tool in step_tools:
+            if tool not in real_agent.DELEGATION_TOOLS:
+                assert real_agent._PRETOOL_MATCHER and tool not in real_agent._PRETOOL_MATCHER, tool
             await counter_hook({"tool_name": tool, "tool_input": {}}, "t", None)
         return first, await stop({}, None, None)
 
@@ -433,3 +441,67 @@ def test_the_alpha_carries_no_spend_meter():
     proto = (Path(__file__).resolve().parents[1]
              / "proto" / "worker" / "worker.py").read_text(encoding="utf-8")
     assert "SPEND_CAP_USD" in proto, "the prototype's $35 session cap must stay"
+
+
+# --- The `delivered` arm (#2813 item 1) -------------------------------------
+#
+# The router's "Bounded request or job" section tells the model to stop once a
+# bounded request is met. Before this arm THIS plane vetoed that stop and nudged
+# it onward -- the exact thrash the section exists to end -- because
+# `should_continue_run` had no way to hear about it. The prototype learned the
+# signal in #3147; the hosted alpha did not, and the alpha is a live plane.
+
+def _counting_hook(hooks: dict):
+    """The `matcher=None` PreToolUse callback -- the one that sees EVERY call."""
+    return hooks["PreToolUse"][0].kw["hooks"][0]
+
+
+def _delivered_call(**extra):
+    return {"tool_name": real_agent.DELIVERED_TOOL, "tool_input": {}, **extra}
+
+
+def test_delivered_on_the_main_thread_halts_the_turn(tmp_path, monkeypatch):
+    hooks = _hooks(tmp_path, monkeypatch)
+    out = _call(_counting_hook(hooks), _delivered_call())
+    assert out.get("continue") is False, "a delivery must end the turn"
+    assert out.get("stopReason") == real_agent.DELIVERED_REASON
+
+
+def test_a_subagent_delivering_does_not_halt_the_session(tmp_path, monkeypatch):
+    """A subagent calling it means ITS leg is done. Halting here would strand the
+    orchestrator mid-job, which is why the arm is gated on the main thread."""
+    hooks = _hooks(tmp_path, monkeypatch)
+    out = _call(_counting_hook(hooks), _delivered_call(agent_id="record-extractor"))
+    assert out == {}, "a subagent's delivery is not the session's"
+
+
+def test_an_ordinary_tool_call_does_not_halt(tmp_path, monkeypatch):
+    hooks = _hooks(tmp_path, monkeypatch)
+    assert _call(_counting_hook(hooks)) == {}
+
+
+def test_after_a_delivery_the_stop_hook_allows_the_stop(tmp_path, monkeypatch):
+    """The end-to-end direction that was broken: an UNFINISHED project, where the
+    Stop hook otherwise vetoes and injects CONTINUE_REASON."""
+    _write(tmp_path, "active")
+    hooks = _hooks(tmp_path, monkeypatch)
+    stop = hooks["Stop"][0].kw["hooks"][0]
+
+    vetoed = _call(stop)
+    assert vetoed.get("decision") == "block", (
+        "precondition: without a delivery this plane must still nudge an active project "
+        "onward -- if this ever stops holding, the test below proves nothing"
+    )
+
+    _call(_counting_hook(hooks), _delivered_call())
+    assert _call(stop) == {}, "after a delivery the voluntary stop must be allowed"
+
+
+def test_the_alpha_system_prompt_carries_the_delivery_guidance(tmp_path):
+    """The twin of `test_proto_worker.py`'s assertion, and the half this plane was
+    missing: the halt arm above only fires when the model CALLS `research_delivered`,
+    and nothing calls a tool it was never told about. Wiring the arm without the
+    guidance ships a dead rule that looks identical to a working one."""
+    opts = real_agent.build_options(tmp_path)
+    assert real_agent.DELIVERY_GUIDANCE in opts.system_prompt["append"]
+    assert "research_delivered" in opts.system_prompt["append"]

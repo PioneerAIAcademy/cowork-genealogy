@@ -4,9 +4,10 @@
     "skill": "research",
     "name": "A bounded ask is not routed into the question/plan chain",
     "type": "positive",
-    "description": "The other direction of the same rule. 'Transcribe this record for me' asks for ONE deliverable, so the new 'Bounded request or job' section must stop it entering the question-selection / research-plan chain that a job walks. The project has an objective and zero questions, so a router that ignored the new section would call question-selection first -- exactly what ut_research_011 asserts for an open ask. Here that call is the FAILURE. Paired with ut_research_018 so the two directions are pinned together: neither passes a body that classifies everything one way.",
+    "description": "The other direction of the same rule. 'Transcribe this record for me' asks for ONE deliverable, so the 'Bounded request or job' section must stop it entering the question-selection / research-plan chain that a job walks. The project has an objective and zero questions, so a router that ignored the section would call question-selection first -- exactly what ut_research_011 asserts for an open ask. Here that call is the FAILURE. GRADING: deterministic. `routes-to:image-reader` makes `test_routes_to_expected_skill` assert the first hand-off from hook records, which the judge cannot see (agent spawns are absent from `skills_invoked`). image-reader is the destination because its own description owns 'transcribe this register page' / 'OCR this scan', and the router holds no `image_transcribe`, so inline is not an option. Paired with ut_research_018 (open ask -> question-selection) so both directions are pinned deterministically: neither passes a body that classifies everything one way.",
     "tags": [
       "routing",
+      "routes-to:image-reader",
       "bounded-request"
     ]
   },
@@ -58,7 +59,7 @@
   },
   "judge_context": [
     "This is a BOUNDED-REQUEST test. The reply must show the router treating this as one deliverable: it must NOT invoke question-selection or research-plan, and must not start deriving research questions from the objective.",
-    "A transcription is named in the skill's own bounded list. Routing to a transcription-capable step, or doing the transcription, is correct. Walking the routing table from the top is the failure.",
+    "A transcription is named in the skill's own bounded list, and the body sends it to @plugin:image-reader. Walking the routing table from the top -- which on this scenario reaches question-selection -- is the failure. The hand-off itself is asserted deterministically; grade only the framing of the reply.",
     "Do not grade transcription quality -- no record is attached in this scenario. Grade only whether the request was treated as bounded."
   ],
   "judge_reads_files": true
