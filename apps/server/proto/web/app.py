@@ -42,9 +42,9 @@ and the transient frames are never replayed -- the same split as TRANSIENT_KINDS
 hosted runner.
 
 Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto), QUEUE_URL (a full SQS
-queue URL, the shim's shape; unset -> NullQueue, turns are recorded but not enqueued),
-POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (60 -- see ``max_nudges``). With
-QUEUE_URL set (and only then): GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
+queue URL, the shim's shape; required -- unset or empty refuses to start),
+POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (60 -- see ``max_nudges``),
+GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
 or neither; neither signs SendMessage with the default AWS chain, the instance profile on
 AWS; one alone refuses to start) and GENEALOGY_SQS_REGION (else the QUEUE_URL host's
 region). Startup verifies the schema -- reads the ledger ``migrate.py`` keeps and compares
@@ -93,7 +93,7 @@ from urllib.parse import urlparse
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 HERE = Path(__file__).resolve().parent
 PROTO_DIR = HERE.parent
@@ -250,13 +250,13 @@ class Store(Protocol):
     async def delete_session(self, session_id: str) -> bool: ...
     async def document_versions(self, project_id: str) -> dict[str, int]: ...
     async def documents(self, project_id: str) -> dict[str, tuple[int, Any]]: ...
-    async def begin_turn(self, session: SessionRow, text: str, *, queued: bool = False) -> Turn: ...
+    async def admit_message(self, session: SessionRow, text: str) -> tuple[Turn, bool, dict[str, Any] | None]: ...
     async def fail_turn(self, turn_id: str, reason: str) -> None: ...
+    async def put_back_held(self, turn_id: str) -> bool: ...
     async def events_after(self, session_id: str, after: int, limit: int) -> list[EventRow]: ...
     async def activity(self, session_id: str) -> Activity | None: ...
     async def turn_active(self, session_id: str) -> bool: ...
     async def has_queued(self, session_id: str) -> bool: ...
-    async def claim_queued_turn(self, session_id: str) -> dict[str, Any] | None: ...
     async def request_stop(self, session_id: str) -> bool: ...
     # 008: sign-in. store_grant takes CIPHERTEXT; web/auth.py encrypts before the call.
     async def get_user(self, user_id: str) -> User | None: ...
@@ -531,7 +531,9 @@ class PgStore:
         import psycopg
         from psycopg.rows import dict_row
 
-        return await psycopg.AsyncConnection.connect(self.dsn, row_factory=dict_row, autocommit=True)
+        # U23: a connect to a vanished host fails in 10 s rather than the OS's TCP timeout.
+        return await psycopg.AsyncConnection.connect(self.dsn, row_factory=dict_row, autocommit=True,
+                                                     connect_timeout=10)
 
     async def verify_schema(self, sql_dir: Path = SQL_DIR) -> list[str]:
         """The ledger ``migrate.py`` keeps against the files under ``sql_dir``: the shipped
@@ -683,38 +685,70 @@ class PgStore:
             cur = await conn.execute("SELECT name, version, doc FROM documents WHERE project_id = %s", (project_id,))
             return {r["name"]: (r["version"], r["doc"]) for r in await cur.fetchall()}
 
-    async def begin_turn(self, session: SessionRow, text: str, *, queued: bool = False) -> Turn:
+    async def admit_message(self, session: SessionRow, text: str) -> tuple[Turn, bool, dict[str, Any] | None]:
+        """Record the patron's message and decide whether it goes out now (1b): ``(turn,
+        held, rescued)``. Held when a turn is running OR an older message is already
+        held (U23 D7: otherwise a newer message overtakes the older one). ``rescued`` is
+        the oldest held body this call claimed because no turn is running -- possibly an
+        older message than this one -- which the caller enqueues.
+
+        U23 D8: one transaction under the session's queue lock (``grants.QUEUE_LOCK_NS``),
+        which the worker's release takes around its own check and claim. Two round trips
+        on two connections used to separate this tier's "is a turn running?" from its
+        insert, and the worker's from its claim, so a message could go straight out while
+        the worker released another: two turns on one session. The caller's send runs
+        after the commit, outside the lock. A lock wait past ``QUEUE_LOCK_TIMEOUT_S``
+        raises (a 500) rather than hanging the post."""
+        async with await self._connect() as conn:
+            async with conn.transaction():
+                await conn.execute(grants.QUEUE_LOCK_TIMEOUT_SQL, (grants.queue_lock_timeout(),))
+                await conn.execute(grants.QUEUE_LOCK_SQL, (grants.QUEUE_LOCK_NS, session.session_id))
+                held = (await self._exists(conn, TURN_ACTIVE_SQL, session.session_id, "active")
+                        or await self._exists(conn, HAS_QUEUED_SQL, session.session_id, "queued"))
+                turn = await self._insert_turn(conn, session, text, queued=held)
+                rescued = None
+                # Asked again after the write: a turn that closed in between without
+                # releasing (a crash between its close and its release) strands the row.
+                if held and not await self._exists(conn, TURN_ACTIVE_SQL, session.session_id, "active"):
+                    rescued = await self._claim_held(conn, session.session_id)
+        return turn, held, rescued
+
+    @staticmethod
+    async def _exists(conn, sql: str, session_id: str, column: str) -> bool:
+        cur = await conn.execute(sql, (session_id, QUEUED_OUTCOME))
+        return bool((await cur.fetchone())[column])
+
+    @staticmethod
+    async def _insert_turn(conn, session: SessionRow, text: str, *, queued: bool) -> Turn:
         from psycopg.types.json import Jsonb
 
         turn_id = str(uuid.uuid4())
         enqueued_at = datetime.now(tz=timezone.utc).isoformat()
         body = queue_body(turn_id, session, text, enqueued_at, max_nudges())
-        async with await self._connect() as conn:
-            async with conn.transaction():
-                await conn.execute(
-                    "INSERT INTO turns (turn_id, session_id, project_id, message, enqueued_at, outcome) "
-                    "VALUES (%s, %s, %s, %s, %s::timestamptz, %s)",
-                    (turn_id, session.session_id, session.project_id, Jsonb(body), enqueued_at,
-                     QUEUED_OUTCOME if queued else None),
-                )
-                # ONLY when this message is actually being enqueued. A HELD message
-                # must not clear the flag: the patron presses Stop, then types a
-                # correction while the turn is still winding down -- which 1b's own UI
-                # change encourages, since Send now sits beside Stop -- and clearing it
-                # here would cancel the Stop they just pressed. The worker's halt() reads
-                # this column on every tool call and would find nothing, so the run would
-                # carry on to job end with the turn recorded as an ordinary close.
-                if not queued:
-                    await conn.execute(CLEAR_STOP_SQL, (session.session_id,))
-                cur = await conn.execute("SELECT next_session_seq(%s) AS seq", (session.session_id,))
-                seq = (await cur.fetchone())["seq"]
-                await conn.execute(
-                    "INSERT INTO session_events (session_id, seq, kind, payload) VALUES (%s, %s, 'user_msg', %s)",
-                    (session.session_id, seq, Jsonb({"text": text, "turn_id": turn_id})),
-                )
-                await conn.execute(
-                    "UPDATE sessions SET updated_at = now() WHERE session_id = %s", (session.session_id,)
-                )
+        await conn.execute(
+            "INSERT INTO turns (turn_id, session_id, project_id, message, enqueued_at, outcome) "
+            "VALUES (%s, %s, %s, %s, %s::timestamptz, %s)",
+            (turn_id, session.session_id, session.project_id, Jsonb(body), enqueued_at,
+             QUEUED_OUTCOME if queued else None),
+        )
+        # ONLY when this message is actually being enqueued. A HELD message
+        # must not clear the flag: the patron presses Stop, then types a
+        # correction while the turn is still winding down -- which 1b's own UI
+        # change encourages, since Send now sits beside Stop -- and clearing it
+        # here would cancel the Stop they just pressed. The worker's halt() reads
+        # this column on every tool call and would find nothing, so the run would
+        # carry on to job end with the turn recorded as an ordinary close.
+        if not queued:
+            await conn.execute(CLEAR_STOP_SQL, (session.session_id,))
+        cur = await conn.execute("SELECT next_session_seq(%s) AS seq", (session.session_id,))
+        seq = (await cur.fetchone())["seq"]
+        await conn.execute(
+            "INSERT INTO session_events (session_id, seq, kind, payload) VALUES (%s, %s, 'user_msg', %s)",
+            (session.session_id, seq, Jsonb({"text": text, "turn_id": turn_id})),
+        )
+        await conn.execute(
+            "UPDATE sessions SET updated_at = now() WHERE session_id = %s", (session.session_id,)
+        )
         return Turn(turn_id=turn_id, seq=seq, body=body)
 
     async def fail_turn(self, turn_id: str, reason: str) -> None:
@@ -722,6 +756,19 @@ class PgStore:
             await conn.execute(
                 "UPDATE turns SET outcome = %s, completed_at = now() WHERE turn_id = %s", (reason, turn_id)
             )
+
+    async def put_back_held(self, turn_id: str) -> bool:
+        """Hold a rescued message again after its send failed (U23), so an older message is
+        never closed for a failure the patron is told was theirs. Only while no worker has
+        received it: a send that landed after its timeout is claimed, which bumps
+        ``receive_count``. False when the row had moved on."""
+        async with await self._connect() as conn:
+            cur = await conn.execute(
+                "UPDATE turns SET outcome = %s WHERE turn_id = %s AND completed_at IS NULL "
+                "AND outcome IS NULL AND receive_count = 0",
+                (QUEUED_OUTCOME, turn_id),
+            )
+            return cur.rowcount == 1
 
     async def events_after(self, session_id: str, after: int, limit: int) -> list[EventRow]:
         async with await self._connect() as conn:
@@ -755,7 +802,8 @@ class PgStore:
             cur = await conn.execute(HAS_QUEUED_SQL, (session_id, QUEUED_OUTCOME))
             return bool((await cur.fetchone())["queued"])
 
-    async def claim_queued_turn(self, session_id: str) -> dict[str, Any] | None:
+    @staticmethod
+    async def _claim_held(conn, session_id: str) -> dict[str, Any] | None:
         """Take the session's oldest held message so THIS tier can enqueue it (1b).
 
         Deliberately the same statement as the worker's ``take_queued_turn``: the UPDATE
@@ -763,22 +811,21 @@ class PgStore:
         tier rescuing a stranded row cannot both enqueue the same message -- exactly one
         UPDATE finds the row with ``outcome = 'queued'`` and the other returns nothing.
         That is the whole reason this is not a SELECT followed by an UPDATE."""
-        async with await self._connect() as conn:
-            cur = await conn.execute(
-                "UPDATE turns SET outcome = NULL, claimed_at = now() WHERE turn_id = ("
-                "  SELECT turn_id FROM turns WHERE session_id = %s AND outcome = %s "
-                "  AND completed_at IS NULL ORDER BY enqueued_at LIMIT 1 FOR UPDATE SKIP LOCKED"
-                ") RETURNING message",
-                (session_id, QUEUED_OUTCOME),
-            )
-            row = await cur.fetchone()
-            body = row["message"] if row else None
-            if body is not None:
-                # Claiming IS enqueuing, so the Stop flag clears here for the same reason
-                # it clears in the worker's `take_queued_turn`. `begin_turn` deliberately
-                # does not clear it for a held message, so without this the rescued turn
-                # halts at its first tool call with "Stopped by the researcher."
-                await conn.execute(CLEAR_STOP_SQL, (session_id,))
+        cur = await conn.execute(
+            "UPDATE turns SET outcome = NULL, claimed_at = now() WHERE turn_id = ("
+            "  SELECT turn_id FROM turns WHERE session_id = %s AND outcome = %s "
+            "  AND completed_at IS NULL ORDER BY enqueued_at LIMIT 1 FOR UPDATE SKIP LOCKED"
+            ") RETURNING message",
+            (session_id, QUEUED_OUTCOME),
+        )
+        row = await cur.fetchone()
+        body = row["message"] if row else None
+        if body is not None:
+            # Claiming IS enqueuing, so the Stop flag clears here for the same reason
+            # it clears in the worker's `take_queued_turn`. `_insert_turn` deliberately
+            # does not clear it for a held message, so without this the rescued turn
+            # halts at its first tool call with "Stopped by the researcher."
+            await conn.execute(CLEAR_STOP_SQL, (session_id,))
         return body if isinstance(body, dict) else None
 
     async def request_stop(self, session_id: str) -> bool:
@@ -1000,16 +1047,6 @@ class SqsQueue:
         return enqueue.xml_text(doc, "MessageId")
 
 
-class NullQueue:
-    """No queue configured: the turn is recorded (turns row + user_msg event) and never
-    enqueued. This is the 'rows a script inserts' mode; the compose service never uses it."""
-
-    async def send(self, body: dict[str, Any]) -> str:
-        message_id = "null-" + uuid.uuid4().hex[:12]
-        log.info("NullQueue: turn %s recorded, not enqueued", body.get("turn_id"))
-        return message_id
-
-
 # ── app ──────────────────────────────────────────────────────────────────────────
 
 
@@ -1028,9 +1065,16 @@ class PatchSessionBody(BaseModel):
 
 
 class MessageBody(BaseModel):
-    # Not blank: the worker would take a whitespace-only text for a stub message and
-    # complete the turn with no reply, and a 400 there would requeue it forever.
-    text: str = Field(min_length=1, pattern=r"\S")
+    # Not blank by the worker's own predicate (is_real_turn: text.strip()): a text it
+    # strips to nothing ("\x1c" passes a regex \S) is a stub message there, which it 400s.
+    text: str = Field(min_length=1)
+
+    @field_validator("text")
+    @classmethod
+    def _not_blank(cls, text: str) -> str:
+        if not text.strip():
+            raise ValueError("text is blank")
+        return text
 
 
 class DevLoginBody(BaseModel):
@@ -1189,7 +1233,7 @@ def create_app(
     stream_max_polls: int | None = None,
 ) -> FastAPI:
     """Factory. With no arguments the lifespan builds PgStore(PG_DSN) + SqsQueue(QUEUE_URL)
-    (or NullQueue) from env; tests pass fakes and shrink the timings."""
+    from env, refusing to start without a QUEUE_URL; tests pass fakes and shrink the timings."""
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -1197,20 +1241,19 @@ def create_app(
         # U7: a half SQS pair refuses here, before a startup step or its background retry
         # exists, so the refusal leaves nothing running.
         if app.state.queue is None:
-            queue_url = os.environ.get("QUEUE_URL")
-            if queue_url:
-                try:
-                    sqs_auth = await asyncio.to_thread(enqueue.configure, os.environ, queue_url)
-                except enqueue.SqsConfigError as exc:
-                    raise RuntimeError(str(exc)) from exc
-                app.state.queue = SqsQueue(queue_url)
-                log.info("queue: %s; %s", queue_url, enqueue.describe(sqs_auth))
-                if sqs_auth.method is None:
-                    log.warning("no AWS credentials found yet: SendMessage retries the chain "
-                                "and fails until it resolves")
-            else:
-                app.state.queue = NullQueue()
-                log.warning("QUEUE_URL unset: turns are recorded but NOT enqueued (NullQueue)")
+            # U11: no queue means a turn is recorded and nothing ever runs it.
+            queue_url = (os.environ.get("QUEUE_URL") or "").strip()
+            if not queue_url:
+                raise RuntimeError("QUEUE_URL is unset or empty: the web tier needs the turns queue")
+            try:
+                sqs_auth = await asyncio.to_thread(enqueue.configure, os.environ, queue_url)
+            except enqueue.SqsConfigError as exc:
+                raise RuntimeError(str(exc)) from exc
+            app.state.queue = SqsQueue(queue_url)
+            log.info("queue: %s; %s", queue_url, enqueue.describe(sqs_auth))
+            if sqs_auth.method is None:
+                log.warning("no AWS credentials found yet: SendMessage retries the chain "
+                            "and fails until it resolves")
         # U10 D8: the store goes on app.state before either step, so every route and
         # /api/health see it while Postgres is down; neither step can stop the tier listening.
         steps: dict[str, Callable[[], Awaitable[Any]]] = {}
@@ -1556,21 +1599,12 @@ def create_app(
         # session, two CLIs appending to one transcript. Hold it instead: the row is
         # written now (the patron sees their message immediately) and the worker enqueues
         # it when the turn holding it ends.
-        held = await store.turn_active(row.session_id)
-        turn = await store.begin_turn(row, body.text, queued=held)
+        turn, held, rescued = await store.admit_message(row, body.text)
         if held:
-            # The read above and the insert are two round-trips on two connections, and
-            # the worker releases held messages only at a turn's END -- so a turn that
-            # ends between them strands this row: its release found nothing, and the next
-            # one is not until the patron sends another message, which is exactly what
-            # someone who has just been told "picked up at the next step" will not do.
-            #
-            # So confirm after the write rather than trusting the read. If no turn is
-            # running now, claim the oldest held row and enqueue it here. The claim is the
-            # worker's own single-statement UPDATE, so if the worker IS releasing
-            # concurrently exactly one of the two wins and the message is enqueued once.
-            rescued = None if await store.turn_active(row.session_id) else \
-                await store.claim_queued_turn(row.session_id)
+            # A held message with no turn running would wait for a release that never
+            # comes, so admit_message claimed the oldest held row (the worker's own
+            # single-statement claim, under the lock its release takes) for this tier to
+            # enqueue.
             if rescued is None:
                 return {"turn_id": turn.turn_id, "seq": turn.seq, "message_id": None, "queued": True}
             # Oldest-first, so what got claimed may be a message held BEFORE this one --
@@ -1584,16 +1618,19 @@ def create_app(
         try:
             message_id = await request.app.state.queue.send(sending)
         except Exception as exc:  # any queue failure: the row stays, marked, and the UI sees 502
-            # Whichever turn we tried to send is the one that failed, and for a rescue
-            # that is not `turn`.
-            failed_id = str(sending.get("turn_id") or turn.turn_id)
-            await _store(request).fail_turn(failed_id, "enqueue_failed")
-            log.error("enqueue failed for turn %s: %s", failed_id, exc)
+            # The 502 is about the patron's OWN message, so that is the one failed. A rescued
+            # OLDER message goes back to held, not closed: the patron is told to try again,
+            # and the retry rescues it first (U23; D7 made this path common).
+            sent_id = str(sending.get("turn_id") or turn.turn_id)
+            if sent_id != turn.turn_id and not await store.put_back_held(sent_id):
+                log.error("rescued turn %s moved on after its failed send; not held again", sent_id)
+            await store.fail_turn(turn.turn_id, "enqueue_failed")
+            log.error("enqueue failed for turn %s (sent %s): %s", turn.turn_id, sent_id, exc)
             # The user_msg row was committed before the send and stays (seqs are dense), so
             # the 502 names its seq: the SPA still has an echo to drop.
             raise HTTPException(
                 status_code=502,
-                detail={"message": ENQUEUE_FAILED_MESSAGE, "turn_id": failed_id, "seq": turn.seq},
+                detail={"message": ENQUEUE_FAILED_MESSAGE, "turn_id": turn.turn_id, "seq": turn.seq},
             ) from exc
         return {"turn_id": turn.turn_id, "seq": turn.seq, "message_id": message_id, "queued": held}
 
