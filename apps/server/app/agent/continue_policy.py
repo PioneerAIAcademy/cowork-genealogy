@@ -21,6 +21,7 @@ predicates into a clean namespace without importing ``claude_agent_sdk``.
 from __future__ import annotations
 
 import json
+import math
 import os
 from collections.abc import Mapping
 from pathlib import Path
@@ -34,6 +35,7 @@ from typing import Any
 #   budget           a budget is spent -- the nudge cap, or 1e's per-session spend bound
 #   no_progress      a nudge produced no tool call, mid-research
 #   decision         the agent asked something only the patron can answer (phase 3)
+#   delivered        a BOUNDED request was met and the turn stopped on purpose
 #   mcp_unavailable  the genealogy tool surface went away
 #
 # The point of having more than one: ``complete()`` used to hardcode 'ok', so EVERY way a
@@ -46,6 +48,10 @@ TERMINAL_QUEUED = "queued"
 TERMINAL_BUDGET = "budget"
 TERMINAL_NO_PROGRESS = "no_progress"
 TERMINAL_DECISION = "decision"
+# The agent delivered what a BOUNDED request asked for and stopped on purpose.
+# A new value, not `ok`: `ok` means "ended with no terminal reason" and the browser
+# renders it as nothing, while a delivery has something to report.
+TERMINAL_DELIVERED = "delivered"
 TERMINAL_MCP_UNAVAILABLE = "mcp_unavailable"
 
 
@@ -161,12 +167,11 @@ def terminal_reason(
 # text is that all three readers send the SAME words, and two hand-kept copies is the one
 # arrangement that cannot guarantee it.
 #
-# The worker does not mirror the harness's `classify_hand_back` branch -- it classifies
-# nothing, because the classifier reads the harness's in-process narration list and the
-# prose half of #2292 has not landed, so copying a moving wording would drift the moment
-# it does. Every stop either plane sees therefore takes this text, and
-# `test_the_stop_hook_blocks_a_vetoable_stop_with_the_harness_reason_verbatim` reads it
-# off the orchestrator and goes red when either side moves.
+# Every vetoed stop takes this text, on every plane: the e2e harness's hook answers a
+# retired `Next: <step>. Continue?` hand-back (issue #2292) with it too, rather than
+# "Yes.", so the harness grades the Stop policy the prototype runs (U17).
+# `eval/harness` cannot import this module, so `test_continue_policy_parity.py` reads
+# the harness's copy off its source and goes red when either side moves.
 CONTINUE_REASON = (
     "You are mid-run in an autonomous /research session and the "
     "project is not yet complete (project.status is not "
@@ -203,16 +208,19 @@ def env_int(name: str, default: int, *, env=None, on_error=None, floor: int = 0)
 
 
 def env_float(name: str, default: float, *, env=None, on_error=None) -> float:
-    """``env_int`` for a float. Same reason, same shape; a negative takes the default
-    because every current reader is a price, an interval or a cap, and none of those has
-    a meaning below zero."""
+    """``env_int`` for a float. Same reason, same shape; a negative or non-finite value
+    takes the default because every current reader is a price, an interval or a cap, and
+    none of those has a meaning below zero or at ``nan``/``inf``. Those parse, so they
+    reach ``on_error`` like a typo does (U23: ``-1`` meaning "cap off" was a silent $35)."""
     raw = ((os.environ if env is None else env).get(name) or "").strip()
     if not raw:
         return default
     try:
         value = float(raw)
     except ValueError:
+        value = math.nan
+    if not (math.isfinite(value) and value >= 0):
         if on_error is not None:
             on_error(name, raw, default)
         return default
-    return value if value >= 0 else default
+    return value
