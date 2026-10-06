@@ -87,10 +87,12 @@ SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 #     same caveat for `agents/tree-edit.md`.
 #   - `validate-schema` left on 2026-09-30, same reason (issue #2798), NOT
 #     re-listed, same caveat for `agents/validate-schema.md`.
+#   - `source-evaluation` left on 2026-10-01, same reason (issue #2796), NOT
+#     re-listed, same caveat for `agents/source-evaluation.md`. Its dark-by-ruling
+#     entry above records why it was dark while it was a skill.
 DARK_SKILLS_2026_09_01 = frozenset(
     {
         "forget-and-rederive",
-        "source-evaluation",
         "timeline",
     }
 )
