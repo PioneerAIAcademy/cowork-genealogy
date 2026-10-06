@@ -7,8 +7,8 @@ verified, it says so.
 **This file is meant to stay true without maintenance.** Two shapes are
 therefore banned in it, and both were swept out on 2026-08-09: a **line-number
 citation** (cite the heading, symbol, or a distinctive quotable string instead —
-`doc-links.test.ts` blocks new `.ts`/`.py`/`.mjs` ones, and the `.md` ones it
-cannot yet see went stale within the hour twice), and a **register** — a list of
+`doc-links.test.ts` blocks new `.ts`/`.py`/`.mjs`/`.md` ones under `docs/`,
+outside `docs/plan/` and the dated `docs/deep-dives/` records), and a **register** — a list of
 open gaps, open questions, or issue numbers that GitHub already owns and that
 goes stale without telling anyone. Where you need a number that moves, name the
 command that recomputes it.
@@ -1890,8 +1890,8 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `field-render-drift.test.ts` | a `research.json` field is not an unexplained outlier among its own siblings in the viewer — if its object is displayed, each field renders or carries a reason it should not |
 | `gps-mentor-craft-doctrine.test.ts` | the four clauses of `gps-mentor`'s craft mode whose silent deletion would be invisible until a user hit it — the required scope sentence, the refusal row, advisory severity, and the `craft: true` marker (`gps-mentor-agent-spec.md` §6.4) |
 | `gps-terminology.test.ts` | no plugin prose collapses the two evidence axes into "primary/secondary source" or "primary/secondary evidence", with an allow-list keyed to (file, line) for the `citation` agent, which must quote the wrong phrasing back to correct it |
-| `adr-links.test.ts` | ADR required fields; every repo path cited in an ADR's **live** `Applies to` / `Enforcement` still resolves (the frozen-history sections are exempt) |
-| `doc-links.test.ts` | every repo path, markdown link, `make` target and **slash command** cited by `docs/task-lifecycle.md`, `CLAUDE.md`, `docs/skill-to-agent-pair-conversion.md` and by **`.claude/{agents,commands,skills}`** still resolves. These have no frozen-history half — every line is an instruction a model acts on. Shares its extraction rules with `adr-links.test.ts` via `repo-paths.ts` |
+| `adr-links.test.ts` | ADR required fields; every repo path cited in an ADR's **live** `Applies to` / `Enforcement` still resolves. `doc-links.test.ts` now also checks every section of every ADR, so this path check is a subset of that one |
+| `doc-links.test.ts` | every repo path, markdown link, `make` target and **slash command** cited by `docs/task-lifecycle.md`, `CLAUDE.md`, `docs/skill-to-agent-pair-conversion.md` and by **`.claude/{agents,commands,skills}`** still resolves; the same minus slash commands for every `.md` under **`docs/specs/` and `docs/adrs/`**. A path named because it was retired or is gitignored is a named `KNOWN_ABSENT` entry with its reason. Also bans `:NNN` line cites to `.ts`/`.py`/`.mjs`/`.md` files anywhere under `docs/` except `docs/plan/` and `docs/deep-dives/`. Shares its extraction rules with `adr-links.test.ts` via `repo-paths.ts` |
 | `prompt-budget.test.ts` | the report is warn-only; the baseline file must be current. `prompt-sizes.json` records byte sizes for every `SKILL.md`, agent body and `CLAUDE.md`, and character sizes for every MCP tool description (`description.length + JSON.stringify(inputSchema).length`). The staleness test fails when the file disagrees with the sizes computed at HEAD; the delta report stays warn-only — no ceiling, no threshold. Regenerate: `UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts` |
 
 Plus, from `.github/workflows/check-runlogs.yml`:

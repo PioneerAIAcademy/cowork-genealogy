@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync, type Dirent } from "node:fs";
 import { join } from "node:path";
 
 /**
@@ -49,7 +49,7 @@ export function citedPaths(text: string): string[] {
     // Known false negative: when the head is itself a command (`cd`, `npx`,
     // `make`), the whole span is dropped — including any repo path later in
     // it, e.g. `cd packages/engine/mcp-server && npx tsx dev/try-<tool>.ts`
-    // contributes nothing. Tracked in issue #1180.
+    // contributes nothing.
     const token = m[1].trim().split(/\s+/)[0];
     if (!token.includes("/")) continue;
     if (!REPO_ROOTS.some((r) => token.startsWith(r))) continue;
@@ -72,15 +72,18 @@ export function citedPaths(text: string): string[] {
  * nothing keeps the copy honest, so the style is banned rather than checked.
  * Cite the symbol instead; `citedPaths` already verifies the file exists.
  *
- * Deliberately narrow, same doctrine as the extractor above: source files only
- * (`.py`/`.ts`/`.mjs`), inside a backtick span, line number required. A bare
+ * Deliberately narrow, same doctrine as the extractor above: source and
+ * markdown files only (`.py`/`.ts`/`.mjs`/`.md`), inside a backtick span, line
+ * number required. A `.md:NNN` cite rots the same way — a skill or spec is
+ * edited far more often than it is renamed. A range may use a hyphen or an en
+ * dash (`SKILL.md:98–110`), and the whole range is reported. A bare
  * `orchestrator.py` is fine, `docs/foo.md#section` is fine (an anchor moves
  * with its heading), and `9:30` or `1:1:QL69-GBJC` are not source cites.
  */
 export function citedLineNumbers(text: string): string[] {
   const found = new Set<string>();
   for (const m of text.matchAll(/`([^`\n]+)`/g)) {
-    for (const t of m[1].matchAll(/[\w./-]+\.(?:py|ts|mjs):\d+(?:-\d+)?/g)) {
+    for (const t of m[1].matchAll(/[\w./-]+\.(?:py|ts|mjs|md):\d+(?:[-–]\d+)?/g)) {
       found.add(t[0]);
     }
   }
@@ -106,41 +109,64 @@ function isDir(p: string): boolean {
   }
 }
 
-/** Does at least one real file or directory match this single-`*` glob? */
-function globResolves(projectRoot: string, pattern: string): boolean {
-  const segments = pattern.split("/").filter((s) => s.length > 0);
-  let candidates = [projectRoot];
+/** A directory's entries, without following symlinks; empty when unreadable. */
+function entriesOf(dir: string): Dirent[] {
+  try {
+    return readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+}
 
-  for (let i = 0; i < segments.length; i++) {
-    const segment = segments[i];
-    const next: string[] = [];
+/**
+ * Directories a `**` may descend into. Symlinks are not followed, and
+ * `node_modules` and dot-directories (`.venv`, `.next`) are skipped: a developer
+ * checkout holds thousands of directories in them, so following them makes the
+ * lint slow and its answer differ from CI's. A few tracked files do live in a
+ * dot-directory (`packages/engine/plugin/.claude-plugin/plugin.json`), so a `**`
+ * glob never matches them; cite such a file by its full path.
+ */
+function walkableDirs(dir: string): string[] {
+  return entriesOf(dir)
+    .filter((e) => e.isDirectory() && e.name !== "node_modules" && !e.name.startsWith("."))
+    .map((e) => join(dir, e.name));
+}
 
-    for (const dir of candidates) {
-      if (!segment.includes("*")) {
-        const child = join(dir, segment);
-        if (existsSync(child)) next.push(child);
-        continue;
-      }
-      const re = new RegExp(`^${segment.split("*").map(escapeRe).join("[^/]*")}$`);
-      let entries: string[];
-      try {
-        entries = readdirSync(dir);
-      } catch {
-        continue;
-      }
-      for (const entry of entries) if (re.test(entry)) next.push(join(dir, entry));
-    }
+/**
+ * Does at least one real file or directory match this glob? `*` matches within
+ * one segment. `**` matches zero or more directories, so `eval/`, `**`,
+ * `research.json` joined by slashes names a corpus rather than one file. A trailing `**` needs at least one entry under it, as
+ * gitignore's `a/**` does, so it cannot pass on an empty directory.
+ */
+function globMatches(dir: string, segments: string[]): boolean {
+  if (segments.length === 0) return true;
+  const [segment, ...rest] = segments;
 
-    if (next.length === 0) return false;
-    candidates = i === segments.length - 1 ? next : next.filter(isDir);
+  if (segment === "**") {
+    if (rest.length === 0) return entriesOf(dir).length > 0;
+    if (globMatches(dir, rest)) return true;
+    return walkableDirs(dir).some((sub) => globMatches(sub, segments));
   }
 
-  return candidates.length > 0;
+  const isLast = rest.length === 0;
+  const fits = (child: string) => (isLast ? true : isDir(child)) && globMatches(child, rest);
+  if (!segment.includes("*")) {
+    const child = join(dir, segment);
+    return existsSync(child) && fits(child);
+  }
+  const re = new RegExp(`^${segment.split("*").map(escapeRe).join("[^/]*")}$`);
+  return entriesOf(dir).some((e) => re.test(e.name) && fits(join(dir, e.name)));
+}
+
+function globResolves(projectRoot: string, pattern: string): boolean {
+  return globMatches(projectRoot, pattern.split("/").filter((s) => s.length > 0));
 }
 
 /** Does a cited repo path (possibly containing placeholders) still resolve? */
 export function pathResolves(projectRoot: string, cited: string): boolean {
-  const pattern = cited.replace(PLACEHOLDER, "*");
+  // A run of placeholders fills one segment (`<a><b>`), so it becomes one `*`,
+  // never a `**` globstar.
+  const pattern = cited.replace(new RegExp(`(?:${PLACEHOLDER.source})+`, "g"), "*");
   if (!pattern.includes("*")) return existsSync(join(projectRoot, pattern));
   return globResolves(projectRoot, pattern);
 }
@@ -158,27 +184,53 @@ export function markdownLinkTargets(text: string): string[] {
 }
 
 /**
- * GitHub's heading-anchor slug: drop inline markup and punctuation, lowercase,
- * spaces to hyphens. Only used to check *same-file* `#anchor` links, where both
- * halves are computed from the same text.
+ * GitHub's heading-anchor slug (github-slugger, applied to the rendered text):
+ * drop inline markup, lowercase, delete every character that is not a letter,
+ * mark, number, connector (`_`), space or hyphen, then turn EACH space into a
+ * hyphen. Spaces are not collapsed, so `Place → collection scope` becomes
+ * `place--collection-scope`, and the result is not trimmed after the strip.
+ * Underscores survive (`Places_Search_resource`) unless they are emphasis
+ * delimiters outside a code span (`_word_`). Only used to check *same-file*
+ * `#anchor` links, where both halves are computed from the same text.
  */
 export function slugifyHeading(heading: string): string {
-  return heading
+  const rendered = heading
     .trim()
     .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // [text](url) -> text
-    .replace(/[`*_~]/g, "")
+    .split(/(`[^`]*`)/)
+    .map((part) =>
+      part.startsWith("`")
+        ? part.slice(1, -1)
+        : part
+            .replace(/[*~]/g, "")
+            .replace(/(^|[^\p{L}\p{N}_])(_+)(?=\S)(.+?)(?<=\S)\2(?=[^\p{L}\p{N}_]|$)/gu, "$1$3"),
+    )
+    .join("");
+  return rendered
     .toLowerCase()
-    .replace(/[^\p{L}\p{N} -]/gu, "")
-    .trim()
-    .replace(/\s+/g, "-");
+    .replace(/[^\p{L}\p{M}\p{N}\p{Pc} -]/gu, "")
+    .replace(/ /g, "-");
 }
 
-/** Anchors a reader could link to in this file, GitHub-style. */
+/**
+ * Anchors a reader could link to in this file, GitHub-style. A repeated
+ * heading gets `-1`, `-2`, ... in order, as GitHub renders it, so all six
+ * `## If you're asked to…` sections in docs/architecture.md are linkable.
+ */
 export function headingAnchors(text: string): Set<string> {
   const outsideFences = text.replace(/^```[^\n]*\n[\s\S]*?^```/gm, "");
   const anchors = new Set<string>();
+  const seen = new Map<string, number>();
   for (const m of outsideFences.matchAll(/^#{1,6}\s+(.+?)\s*$/gm)) {
-    anchors.add(slugifyHeading(m[1]));
+    // A closing sequence (`## Title ##`) is not part of the heading text.
+    const slug = slugifyHeading(m[1].replace(/\s+#+$/, ""));
+    // github-slugger: count up from the slug's last suffix until the name is
+    // unused, so `Foo`, `Foo 1`, `Foo` gives foo, foo-1, foo-2.
+    let n = seen.get(slug) ?? 0;
+    let anchor = n === 0 ? slug : `${slug}-${n}`;
+    while (anchors.has(anchor)) anchor = `${slug}-${++n}`;
+    seen.set(slug, n + 1);
+    anchors.add(anchor);
   }
   return anchors;
 }
