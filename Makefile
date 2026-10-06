@@ -809,6 +809,22 @@ replay-check: ## Acceptance check for the write-replay engine: reconstruct every
 	# comment. Run after any change to harness/replay.py.
 	cd eval/harness && uv run python scripts/check_replay_fidelity.py
 
+.PHONY: replay-sizes
+replay-sizes: $(ENGINE_BUILD) ## Replay committed e2e tool calls against a base and a candidate engine build and diff answer sizes — zero model calls, zero network: make replay-sizes [BASE=<ref>] [TEST=<slug>] [TOOLS=a,b] [TRACKED_ONLY=1] [JSON=<path>]
+	# T1.4 of docs/plan/cost-latency-10x.md. Re-asks every recorded call to the
+	# local-state read tools (research_query, project_context, person_warnings,
+	# merge_warnings, validate_research_schema — ~36% of recorded answer chars)
+	# to the BASE build (default: merge-base with origin/main, built once into a
+	# cached sparse worktree under $$TMPDIR/genealogy-replay-builds/; remove with
+	# `git worktree remove <dir>`) and to the working-tree build, over
+	# research.json rebuilt as of each call (harness/replay.py) and the run's
+	# FINAL tree (approximate). The headline is candidate - base, never vs the
+	# recorded size. FamilySearch/wiki tools are listed as NOT REPLAYED (T1.4c).
+	# Exit 2: selection, usage or build error. Exit 3: the replay is not
+	# measuring what it claims (rebase broke, state errors over the margin, a
+	# read wrote files, a network call) — it refuses to print a misleading 0%.
+	cd eval/harness && uv run python -m e2e.replay_sizes $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TOOLS),--tools $(TOOLS),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
+
 .PHONY: eval-skill
 eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]; SKILL="a b c" runs several in one pool
 	# $(ENGINE_BUILD) rebuilds packages/engine/mcp-server/build/ only when its

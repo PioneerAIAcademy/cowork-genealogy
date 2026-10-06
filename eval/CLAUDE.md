@@ -151,7 +151,10 @@ two reader families handle it differently (`harness/since_window.py`):
   structural question — does the ownership manifest name the writers that exist —
   rather than tallying a rate. A gap does not become untrue by ageing, and a
   window reads a strict subset of the same pairs as "fewer gaps". `SINCE=14` for
-  the house window.
+  the house window. `make replay-sizes` is not windowed either: it compares two
+  engine builds on the same fixed inputs, so mixing eras cannot corrupt it, and
+  its inputs — runs carrying `tool_calls[].result_chars` — all postdate the
+  2026-08-23 strip fix, so a stripped one still replays intact.
 - **Per-skill reports FLAG** — `make eval-timings`, `make skill-latency`, `make judge-report` show
   the newest 1–2 run logs per skill, so there is no sample to narrow: a date
   cut would delete the *skill*, hiding that it needs a re-run. They show every

@@ -300,7 +300,8 @@ the first time it is pulled.
   halves edit the same instrumentation, and under merge doctrine they are one PR.
 - **Per-thread windows for subagents**, so Wave 4's Haiku arms can be verified.
 
-**The replay harness — Promise's first build after issue #2582.** Re-issue a committed
+**The replay harness — built (T1.4): `make replay-sizes`.** Local-state read tools
+only (~36% of recorded answer chars); the network half is T1.4c. Re-issue a committed
 runlog's tool calls against a candidate tool implementation and diff the payload
 sizes. **Zero model calls**, repeatable, and it measures exactly what Waves 1–2
 change. This is the fast loop; `make gate-skill` cannot be it, because the unit plane
