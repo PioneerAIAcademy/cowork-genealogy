@@ -3244,6 +3244,26 @@ def collect_post_hoc_shadow(
     return out
 
 
+def _write_readable_report(result_path: Path) -> None:
+    """Write the run's readable `.txt` into `<runlog dir>/reports/`. Never raises.
+
+    Beside the run log it describes, so a run redirected with `--runlog-root`
+    stays self-contained. The grade stays hidden in it until the run is graded
+    (spec §7.4) — see `e2e.run_report`. A report that fails to render must never
+    cost a run whose log is already written, so this only prints.
+    """
+    try:
+        from e2e.run_report import write_reports
+
+        written, _skipped, unreadable = write_reports([result_path], force=True)
+        for report in written:
+            print(f"  readable report: {report}")
+        if unreadable:
+            print(f"  (no readable report: {result_path} could not be read)")
+    except Exception as exc:  # noqa: BLE001 — a report must never fail the run
+        print(f"  (no readable report: {type(exc).__name__}: {exc})")
+
+
 def _find_session_transcript(workspace: Path) -> Path | None:
     """Locate the Agent SDK's raw session JSONL for this run.
 
@@ -3598,6 +3618,7 @@ async def run_e2e_test(
             final_research=final_research,
             timestamp=result.captured_at,
         )
+        _write_readable_report(paths["result"])
 
         # Copy the raw SDK session transcript next to the runlog. The runlog
         # carries a summarized trace; this JSONL carries per-message

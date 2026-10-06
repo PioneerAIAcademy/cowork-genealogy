@@ -1242,7 +1242,15 @@ e2e-cache-window: ## Corpus cost of a 5-minute prompt-cache TTL over committed e
 	# distributed over its calls two stated ways (see the module docstring).
 	cd eval/harness && uv run python -m e2e.cache_window $(if $(TEST),--test $(TEST),) $(if $(MD),--markdown,) $(if $(SINCE),--since $(SINCE),)
 
-.PHONY: e2e-compaction
+.PHONY: e2e-report
+e2e-report: ## Readable .txt per e2e run, into eval/runlogs/e2e/<slug>/reports/: make e2e-report [TEST=<slug>] [FORCE=1]
+	# Every run already writes its own; this backfills older runs. Pure
+	# formatting, no API. The judge's verdict, recall and findings stay HIDDEN
+	# until the run's .ann.json exists (spec §7.4 — runs are graded blind); a
+	# hidden report is re-rendered here once its run is graded. Gitignored.
+	cd eval/harness && uv run python -m e2e.run_report $(if $(TEST),--test $(TEST),) $(if $(FORCE),--force,)
+
+.PHONY: e2e-agent-spend
 e2e-agent-spend: ## What each subagent costs, from subagents[].usage (#2582): make e2e-agent-spend | TEST=<slug>
 	# Pure analysis, no API: reads committed run JSONs' subagents[].usage.
 	# Per agent: what it spends, the models it ran on, whether it is in
@@ -1259,6 +1267,7 @@ e2e-agent-spend: ## What each subagent costs, from subagents[].usage (#2582): ma
 	# rule, not by agent; some rule names merely coincide with an agent name.
 	cd eval/harness && uv run python -m e2e.agent_spend_report $(if $(TEST),--test $(TEST),)
 
+.PHONY: e2e-compaction
 e2e-compaction: ## record_search subjectId supply by compaction segment, over committed e2e runs (issue #1155): make e2e-compaction | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API: reads committed run JSONs' usage.timeline +
 	# tool_calls. A run is segmentable only from a run committed after

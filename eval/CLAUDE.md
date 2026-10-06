@@ -328,6 +328,8 @@ A **separate** workflow, triggered on `eval/tests/e2e/**`, `eval/runlogs/e2e/**`
 
 The e2e `.ann.json` is written by the `/grade-e2e-run` skill (blind grading), **not** the CRUD UI — see the "never hand-write" note above, which is scoped to *unit* annotations.
 
+Each e2e run also leaves a readable `reports/run-<ts>.txt` beside its log (gitignored; `make e2e-report` backfills). It **withholds the verdict, recall and per-finding results until the run is graded**, because it sits in the folder the blind grader works from (`e2e-test-spec.md` §7.4).
+
 ## Model Pinning
 
 The skill harness pins a specific model per skill via `model:` in `packages/engine/plugin/skills/<skill>/SKILL.md` frontmatter (when set). Activating a run log restores that field along with the rest of the snapshot. The `model` field on the run log envelope records what the harness actually used.

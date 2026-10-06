@@ -1885,6 +1885,7 @@ Per run, under `eval/runlogs/e2e/<test-id>/`:
 | `run-<timestamp>.final-tree.gedcomx.json` | The agent's final tree (input to the judge) |
 | `run-<timestamp>.final-research.json` | The agent's final `research.json` |
 | `run-<timestamp>.ann.json` | *Optional.* A human's calibration grade of this run — present only when someone grades it, never auto-emitted (see §7.4) |
+| `reports/run-<timestamp>.txt` | *Gitignored, regenerable.* A plain-text reading of the run log — cost, time, the main researcher's tokens and busiest moment, every helper launch (`e2e/run_report.py`). Written after every run; `make e2e-report` backfills. **Carries no verdict, recall or per-finding result until the run's `.ann.json` exists** (§7.4 — it sits in the folder the blind grader works from); `make e2e-report` re-renders it once graded. |
 
 ### 8.1 `run-<timestamp>.json` fields
 
