@@ -514,7 +514,7 @@ state the relationship.
 #### Patronymic surnames (Scandinavian)
 
 Before fixed surnames, Scandinavian surnames were patronymic — the father's
-given name plus `-sen`/`-datter` — and changed every generation. A different
+given name plus `-sen`/`-son` or `-datter`/`-dotter` — and changed every generation. A different
 patronymic indicates a different father: `Lars Eriksen` is Lars son of Erik,
 `Lars Pedersen` is Lars son of Peder. So two records with different patronymics
 are generally **likely different people**, not simply surname variants of one
