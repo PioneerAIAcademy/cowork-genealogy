@@ -487,8 +487,8 @@ def make_pretool_hook(
         #
         # MAIN THREAD ONLY. The arm matches on tool NAME, and a subagent holds the
         # session's tool set, so without this a record-extractor saying "delivered" would
-        # halt -- the extraction at least, and the researcher's whole turn if a subagent's
-        # halt stops the parent, which is unmeasured (U23's Q2). `agent_id` is tested for
+        # halt the extraction; the parent carries on (U23's Q2: a subagent's halt does not
+        # stop the parent, 3 of 3 on compose). `agent_id` is tested for
         # MEMBERSHIP, not truthiness: it is absent as a KEY on the main thread, and
         # `agent_type` alone is not sufficient because it is present on the main thread of
         # a session started with `--agent`. That is the discriminator the shipped plugin
