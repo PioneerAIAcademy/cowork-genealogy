@@ -2051,14 +2051,11 @@ without whichever Bedrock refuses.
   compose default is 0 (off), and `proto-demo` itself stays a one-turn run. With the cap
   above 0 the worker binds a `Stop` hook (`apps/server/proto/worker/options.py`,
   `make_stop_hook`) that vetoes the model's voluntary yield exactly as the harness's does:
-  the same predicate and the same veto text for a **silent** stop — with one delta,
-  recorded because it will grow: since 2026-09-20 the harness also answers a
-  *well-formed* hand-back (one that names its next step and asks) with the
-  researcher's "Yes." rather than the veto (`classify_hand_back` / `hand_back_outcome`,
-  issues #2328 and #2292). The worker mirrors the silent-stop fallback only: the
-  classifier reads the harness's in-process narration list, and #2292's prose half has
-  not landed, so copying a moving wording would drift the moment it does. Revisit when
-  #2292 lands. The rest is as the harness has it —
+  the same predicate and the same veto text for every stop. From 2026-09-20 the
+  harness answered a *well-formed* hand-back (one that names its next step and asks)
+  with the researcher's "Yes." instead (issues #2328 and #2292); issue #2292 retired
+  that hand-back on 2026-09-27, and handoff U17 removed the "Yes." branch, so the
+  harness's classifier is telemetry only. The rest is as the harness has it —
   (`should_continue_run`, ported from
   `eval/harness/e2e/stop_checker.py` — allow once `project.status == "completed"`, once
   the cap is spent, or when the previous nudge produced no tool call, the no-progress
