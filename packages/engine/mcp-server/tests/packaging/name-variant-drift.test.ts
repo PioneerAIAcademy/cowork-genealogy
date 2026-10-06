@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // Drift guard for config/given-name-variants.json — the bundled vocabulary that
-// drives diminutive expansion in fulltext_search and image_transcribe.
+// drives diminutive expansion in image_transcribe and backs get_name_variants.
 // Pattern: tests/packaging/record-type-group-drift.test.ts.
 //
 // The JSON was hand-seeded from two markdown tables. This test parses both
