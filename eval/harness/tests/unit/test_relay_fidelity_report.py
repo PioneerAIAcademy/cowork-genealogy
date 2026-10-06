@@ -13,7 +13,10 @@ from a miscomputation -- which is the failure this report exists to catch.
 Hand-counted, from `fixtures/relay_fidelity/runlogs/alpha/v10.json`:
 
   direct   ut_fx_direct  conforming, tail, exact      (relay adds a preamble)
-           ut_fx_norm    conforming, tail, normalized (bold + em dash differ)
+           ut_fx_norm    conforming, tail, normalized (emphasis + smart quotes
+                         differ -- NOT dashes: normalize does not reconcile
+                         `--` with an em dash, so a dash-only difference
+                         scores a drop and leaves this branch unentered)
            ut_fx_drop    conforming, tail, neither
            ut_fx_notail  conforming, NO tail          (return has no rule)
            ut_fx_deep    conforming, tail, exact      (#### heading)
@@ -59,10 +62,10 @@ def counts(suite="alpha"):
 def test_direct_arm_counts_are_exactly_the_hand_count():
     alpha, _ = counts()
     assert alpha["direct"] == {
-        "conforming": 6,
-        "with_tail": 5,
-        "exact": 3,
-        "normalized": 3,
+        "conforming": 7,
+        "with_tail": 6,
+        "exact": 4,
+        "normalized": 5,
         "non_conforming": 1,
         "lines_found": 2,
         "lines_total": 4,
@@ -73,21 +76,59 @@ def test_routed_arm_is_counted_separately():
     alpha, _ = counts()
     assert alpha["routed"]["conforming"] == 1
     assert alpha["routed"]["exact"] == 1
-    assert alpha["direct"]["conforming"] == 6  # not folded together
+    assert alpha["direct"]["conforming"] == 7  # not folded together
 
 
 def test_normalized_includes_exact():
     """The issue counts "in 6 ... and in 15 after normalizing" inclusively."""
     alpha, _ = counts()
     assert alpha["direct"]["normalized"] >= alpha["direct"]["exact"]
-    assert alpha["direct"]["normalized"] == 3
+    assert alpha["direct"]["normalized"] == 5
+
+
+def test_a_normalized_only_survivor_is_counted_but_is_not_exact():
+    """Pins the `elif` branch itself.
+
+    Without this, a fixture that merely FAILS to match normalized is
+    indistinguishable from one that was never evaluated: deleting the branch
+    entirely left the whole suite green, because every survivor was exact and
+    `normalized == exact` held trivially.
+    """
+    alpha, _ = counts()
+    assert alpha["direct"]["exact"] == 4
+    assert alpha["direct"]["normalized"] == 5  # the extra one is ut_fx_norm
 
 
 def test_is_error_is_excluded_before_any_bucket():
     """Its text is the harness's stub denial, not the agent's."""
     alpha, _ = counts()
-    assert alpha["excluded_is_error"] == 1
-    assert alpha["direct"]["conforming"] == 6  # ut_fx_err is not among them
+    assert alpha["excluded_is_error"] == 2
+    assert alpha["direct"]["conforming"] == 7  # ut_fx_err is not among them
+
+
+def test_is_error_is_checked_before_the_orphan_branch():
+    """The ONLY shape that proves the order: a return that is BOTH.
+
+    `ut_fx_err_orphan` is an is_error return on a test with no test JSON.
+    Swapping the two blocks reclassifies it as an orphan return -- which is
+    what makes the "FIRST." comment in the source enforceable rather than
+    decorative. Two orphan TESTS, but only one orphan RETURN.
+    """
+    alpha, _ = counts()
+    assert alpha["excluded_is_error"] == 2
+    assert alpha["orphan_tests"] == 2
+    assert alpha["no_test_json"] == 1
+
+
+def test_a_runtime_trailer_is_stripped_before_the_tail_is_taken():
+    """`ut_fx_trailer` carries `<usage>...</usage>` after its summary.
+
+    Without the strip every real return's tail carries it and never
+    substring-matches the relay, collapsing exact/norm to 0 corpus-wide with
+    the suite green and the drop looking like a relay regression.
+    """
+    alpha, _ = counts()
+    assert alpha["direct"]["exact"] == 4
 
 
 def test_an_orphan_test_is_counted_and_its_returns_excluded():
@@ -95,7 +136,7 @@ def test_an_orphan_test_is_counted_and_its_returns_excluded():
     returns, so a per-return counter alone reports 0 and looks like a clean
     scan."""
     alpha, _ = counts()
-    assert alpha["orphan_tests"] == 1
+    assert alpha["orphan_tests"] == 2
     assert alpha["no_test_json"] == 1
 
 
@@ -107,12 +148,40 @@ def test_the_canonical_selector_beats_a_filename_sort():
     """
     alpha, _ = counts()
     assert alpha["log"] == "v10.json"
-    assert alpha["direct"]["conforming"] == 6
+    assert alpha["direct"]["conforming"] == 7
 
 
 def test_a_suite_with_only_scratch_logs_is_reported_not_skipped():
+    """Same shape as any other suite, with a null log.
+
+    This used to pin a bare `{"log": None}`, which meant every consumer had to
+    re-derive the guard and `suites[x]["direct"]` raised KeyError here.
+    """
     _, allsuites = counts()
-    assert allsuites["beta"] == {"log": None}
+    beta = allsuites["beta"]
+    assert beta["log"] is None
+    assert beta["direct"]["conforming"] == 0  # the shape is uniform
+    assert beta["routed"]["conforming"] == 0
+
+
+def test_a_missing_root_raises_rather_than_printing_zeros():
+    """A moved root printed a plausible all-zeros report and exited 0 --
+    indistinguishable from "no agent carries the contract any more"."""
+    import pytest as _pytest
+
+    with _pytest.raises(FileNotFoundError):
+        rfr.conforming_agents(FIXTURES / "nope")
+    with _pytest.raises(FileNotFoundError):
+        rfr.arm_index(FIXTURES / "nope")
+
+
+def test_an_agent_absent_from_the_snapshot_is_reported_unverifiable():
+    """`body_changed: 0` otherwise conflates "nothing stale" with "nothing
+    checkable"."""
+    alpha, _ = counts()
+    # alpha's snapshot carries only `good`; deep and fenced returns cannot be
+    # staleness-checked.
+    assert alpha["unverifiable_body"] >= 1
 
 
 def test_body_changed_is_additive_not_subtractive():
@@ -158,7 +227,22 @@ def test_the_final_rule_is_a_line_of_exactly_three_dashes():
 def test_a_rule_inside_a_fence_does_not_move_the_tail():
     """Zero instances on today's corpus, so a guard rather than a fix."""
     text = "a\n---\nreal tail\n\n```\n---\n```"
-    assert rfr.tail_after_final_rule(text) == "real tail"
+    tail = rfr.tail_after_final_rule(text)
+    assert tail.startswith("real tail")
+
+
+def test_the_tail_is_returned_verbatim_including_any_fence():
+    """It is matched against an UNSTRIPPED `text_response`.
+
+    Returning a fence-stripped tail made a summary containing a code block
+    impossible to match even when the relay reproduced it exactly.
+    """
+    text = "head\n---\nSummary para\n\n```\ncode\n```"
+    tail = rfr.tail_after_final_rule(text)
+    assert "```" in tail and "code" in tail
+    # ...and a verbatim relay of that summary matches.
+    relayed = f"Hand-back\n\n---\n\n{tail}"
+    assert tail in relayed
 
 
 @pytest.mark.parametrize("name,expected", [("good", True), ("deep", True),

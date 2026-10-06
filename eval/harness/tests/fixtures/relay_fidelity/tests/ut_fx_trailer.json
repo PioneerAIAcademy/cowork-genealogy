@@ -1,0 +1,16 @@
+{
+  "test": {
+    "id": "ut_fx_trailer",
+    "skill": "alpha",
+    "name": "ut_fx_trailer",
+    "type": "positive",
+    "description": "fixture",
+    "tags": []
+  },
+  "input": {
+    "delegation": "x"
+  },
+  "judge_context": [
+    "fixture"
+  ]
+}

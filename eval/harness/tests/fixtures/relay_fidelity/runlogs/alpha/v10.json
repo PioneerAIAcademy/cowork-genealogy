@@ -30,10 +30,10 @@
             "agent_returns": [
               {
                 "subagent_type": "good",
-                "text": "pre\n\n---\n\n**Bold** result -- done"
+                "text": "pre\n\n---\n\n**Bold** result \u201cquoted\u201d here"
               }
             ],
-            "text_response": "Hand-back\n\n---\n\nBold result \u2014 done"
+            "text_response": "Hand-back\n\n---\n\nBold result \"quoted\" here"
           }
         }
       ]
@@ -171,6 +171,41 @@
               }
             ],
             "text_response": "q\n\n---\n\nSUMMARY LINE ONE\nSUMMARY LINE TWO"
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_fx_err_orphan",
+      "outcome": "pass",
+      "runs": [
+        {
+          "output": {
+            "agent_returns": [
+              {
+                "subagent_type": "good",
+                "text": "'good' did not execute.",
+                "is_error": true
+              }
+            ],
+            "text_response": "noop"
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_fx_trailer",
+      "outcome": "pass",
+      "runs": [
+        {
+          "output": {
+            "agent_returns": [
+              {
+                "subagent_type": "good",
+                "text": "pre\n\n---\n\nSUMMARY LINE ONE\nSUMMARY LINE TWO\n\n<usage>42 tokens</usage>"
+              }
+            ],
+            "text_response": "Hand-back\n\n---\n\nSUMMARY LINE ONE\nSUMMARY LINE TWO"
           }
         }
       ]

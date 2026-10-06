@@ -611,17 +611,6 @@ skill never fired still fails.
 
 #### 5.2.1 The direct-agent arm
 
-> **How much of an agent's return actually reaches the user is not graded, and
-> deliberately so.** Every validator reads the agent's own return; nothing
-> compares it with the main thread's `text_response`. On this arm the main
-> thread is the harness's dispatcher rather than the subject, so a gate here
-> would fail most direct runs and a tier-2 `report_*` would hand the judge a
-> number that charges the agent for the dispatcher's drop. `make
-> unit-relay-fidelity` measures it offline over the committed run logs instead
-> — a report, never a gate, and its direct block is dispatcher fidelity rather
-> than a statement about production.
-
-
 A **paired** skill is a thin routing skill plus an agent. Production research
 spawns the agent **directly** and never loads the routing skill (lead's ruling of
 2026-08-31; `docs/skill-to-agent-pair-conversion.md` §0) — **usually, not
@@ -637,6 +626,17 @@ route a user takes when they name the skill. **Both are real and both stay
 graded** — a direct test is a separate file with its own `test.id`, not a second
 arm over an existing one, because a duplicated `test_id` in one envelope corrupts
 annotations, which key on `(test_id, dimension_source, dimension_name)`.
+
+> **How much of an agent's return actually reaches the user is not graded, and
+> deliberately so.** Reply-shape grading reads the agent's own return; nothing
+> compares it with the main thread's `text_response`. (Tier-2 `report_*`
+> validators *are* handed `text_response` and some read it — e.g.
+> `report_unsourced_year_in_response` — which is exactly why a new one here
+> would be the wrong instrument: on this arm that text is the harness's
+> dispatcher, not the subject, so the judge would be charged an observation
+> about the harness.) `make unit-relay-fidelity` measures it offline over the
+> committed run logs instead — a report, never a gate, whose direct block is
+> dispatcher fidelity rather than a statement about production.
 
 **A converted suite is the one case where the direct test keeps the original
 `test.id`.** Once a skill is deleted outright rather than thinned into a router
