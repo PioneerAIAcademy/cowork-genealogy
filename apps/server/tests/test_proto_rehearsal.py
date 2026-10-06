@@ -16,7 +16,7 @@ A fake ``aws`` runner stands in for the CLI: no network, no AWS. Plan: the U13 P
   in ``finally``;
 - the migrate policy's two ARNs and its removal on failure;
 - kinds created by ``up`` = kinds deleted by ``down`` = kinds checked by ``prove-empty``;
-- the D9 leak check and the 12-digit scan.
+- the account-id leak check and the 12-digit scan.
 """
 
 from __future__ import annotations
@@ -86,6 +86,9 @@ class FakeAws:
         self.leftover: dict[str, object] = {}
         self.ssm_status = "Success"
         self.env_settings: dict[str, dict] = {}
+        # describe-environments answers Launching/Updating this many times after a create
+        # or update; Beanstalk refuses an update or terminate until the env is Ready.
+        self.busy_polls = 0
 
     # plumbing
 
@@ -289,7 +292,18 @@ class FakeAws:
         self.add("db", _flag(rest, "--db-instance-identifier"))
 
     def rds_delete_db_instance(self, rest):
-        self.drop("db", _flag(rest, "--db-instance-identifier"))
+        name = _flag(rest, "--db-instance-identifier")
+        db = self.get("db", name)
+        if not db:
+            raise AwsError("An error occurred (DBInstanceNotFound) when calling the DeleteDBInstance operation")
+        if db.get("status") == "deleting":
+            raise AwsError("An error occurred (InvalidDBInstanceState) when calling the DeleteDBInstance "
+                           f"operation: Instance {name} is already being deleted.")
+        db["status"] = "deleting"
+
+    def rds_wait(self, rest):
+        if rest[0] == "db-instance-deleted":
+            self.drop("db", _flag(rest, "--db-instance-identifier"))
 
     # s3
 
@@ -352,7 +366,11 @@ class FakeAws:
         self.add("app", _flag(rest, "--application-name"))
 
     def elasticbeanstalk_delete_application(self, rest):
-        self.drop("app", _flag(rest, "--application-name"))
+        name = _flag(rest, "--application-name")
+        if not self.get("app", name):
+            raise AwsError("An error occurred (InvalidParameterValue) when calling the DeleteApplication "
+                           f"operation: No Application named '{name}' found.")
+        self.drop("app", name)
 
     def elasticbeanstalk_describe_application_versions(self, rest):
         label = _flag(rest, "--version-labels")
@@ -364,8 +382,27 @@ class FakeAws:
     def elasticbeanstalk_describe_environments(self, rest):
         names = _flag_values(rest, "--environment-names")
         envs = [e for e in self.all("env") if not names or e["name"] in names]
-        return {"Environments": [{"EnvironmentName": e["name"], "EnvironmentId": e["id"], "Status": "Ready",
-                                  "Health": "Green", "CNAME": f"{e['name']}.invalid"} for e in envs]}
+        out = []
+        for e in envs:
+            status = "Ready"
+            if e.get("busy"):
+                e["busy"] -= 1
+                status = "Launching" if e.get("new") else "Updating"
+            else:
+                e["new"] = False
+            out.append({"EnvironmentName": e["name"], "EnvironmentId": e["id"], "Status": status,
+                        "Health": "Green", "CNAME": f"{e['name']}.invalid"})
+        return {"Environments": out}
+
+    def _env_ready(self, name, operation):
+        env = self.get("env", name)
+        if not env:
+            raise AwsError(f"An error occurred (InvalidParameterValue) when calling the {operation} operation: "
+                           f"No Environment found for EnvironmentName = '{name}'.")
+        if env.get("busy"):
+            raise AwsError(f"An error occurred (InvalidParameterValue) when calling the {operation} operation: "
+                           f"Environment named {name} is in an invalid state for this operation. Must be Ready.")
+        return env
 
     def _apply(self, name, rest):
         settings = self.env_settings.setdefault(name, {})
@@ -383,14 +420,18 @@ class FakeAws:
 
     def elasticbeanstalk_create_environment(self, rest):
         name = _flag(rest, "--environment-name")
-        self.add("env", name, id=f"e-{name.rsplit('-', 1)[1]}")
+        self.add("env", name, id=f"e-{name.rsplit('-', 1)[1]}", busy=self.busy_polls, new=True)
         self._apply(name, rest)
 
     def elasticbeanstalk_update_environment(self, rest):
-        self._apply(_flag(rest, "--environment-name"), rest)
+        name = _flag(rest, "--environment-name")
+        self._env_ready(name, "UpdateEnvironment")["busy"] = self.busy_polls
+        self._apply(name, rest)
 
     def elasticbeanstalk_terminate_environment(self, rest):
-        self.drop("env", _flag(rest, "--environment-name"))
+        name = _flag(rest, "--environment-name")
+        self._env_ready(name, "TerminateEnvironment")
+        self.drop("env", name)
 
     def elasticbeanstalk_describe_environment_resources(self, rest):
         name = _flag(rest, "--environment-name")
@@ -576,10 +617,40 @@ def test_work_dir_inside_the_worktree_is_refused():
         shutil.rmtree(inside, ignore_errors=True)
 
 
+def test_work_dir_inside_any_git_checkout_is_refused(tmp_path):
+    """A .claude/worktrees/* checkout sits inside the main checkout, so a path outside this
+    worktree can still be inside a public repo's tree."""
+    other = tmp_path / "main-checkout"
+    other.mkdir()
+    subprocess.run(["git", "init", "-q", str(other)], check=True, capture_output=True, text=True, encoding="utf-8")
+    for target in (other / "u13-work", other / "deeper" / "u13-work"):
+        rc = rh.main(["plan", "--expect-account", ACCOUNT, "--work-dir", str(target)],
+                     runner=FakeAws(), out=lambda line: None)
+        assert rc == 2, target
+        assert not target.exists() and not (other / "deeper").exists()
+
+
+def test_work_dir_never_adopts_a_directory_it_did_not_make(tmp_path):
+    mine = tmp_path / "home-like"
+    mine.mkdir(mode=0o755)
+    (mine / "notes.txt").write_text("x\n", encoding="utf-8")
+    rc = rh.main(["plan", "--expect-account", ACCOUNT, "--work-dir", str(mine)], runner=FakeAws(),
+                 out=lambda line: None)
+    assert rc == 2
+    assert stat.S_IMODE(mine.stat().st_mode) == 0o755, "an existing directory is never chmodded"
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    assert rh.main(["plan", "--expect-account", ACCOUNT, "--work-dir", str(empty)], runner=FakeAws(),
+                   out=lambda line: None) == 0
+    assert stat.S_IMODE(empty.stat().st_mode) == 0o700
+    assert rh.main(["plan", "--expect-account", ACCOUNT, "--work-dir", str(empty)], runner=FakeAws(),
+                   out=lambda line: None) == 0, "a work dir this tool made is reused"
+
+
 def test_local_dir_is_gitignored():
     res = subprocess.run(["git", "check-ignore", "-q", str(rh.LOCAL_DIR / "account")], cwd=REPO,
                          capture_output=True, text=True, encoding="utf-8", check=False)
-    assert res.returncode == 0, f"{rh.LOCAL_DIR} must be gitignored (D9)"
+    assert res.returncode == 0, f"{rh.LOCAL_DIR} must be gitignored (the account-id leak rule)"
 
 
 # ── a full up against the fake ────────────────────────────────────────────────────────
@@ -821,7 +892,7 @@ def test_only_cases_set_dev_or_secret_shaped_names_and_values_are_literal():
                     assert var in allowed, (name, var)
                 if rh.SECRET_NAME.search(var):
                     assert "DUMMY" in value or value.startswith("dev-insecure"), (name, var)
-        assert case["measures"].startswith("M"), name
+        assert case["measures"] and not re.search(r"\b[DM]\d+\b", case["measures"]), name
 
 
 def test_cases_cover_the_plan_list():
@@ -933,6 +1004,43 @@ def test_probe_restores_on_exception_and_interrupt(stack, failure):
     assert (rh.ENV_NS, "SESSION_SPEND_CAP_USD") not in fake.env_settings["genealogy-u13-worker"]
 
 
+@pytest.mark.parametrize("case,env_name", [("tools_no_pgsslmode", "genealogy-u13-tools"),
+                                           ("tools_single", "genealogy-u13-x-tools-single")])
+def test_probe_interrupted_while_the_apply_is_in_progress_still_restores(stack, case, env_name):
+    """Ctrl-C while Beanstalk is still Updating (or Launching): the restore waits for Ready
+    before it sends anything, since Beanstalk refuses an update or terminate until then."""
+    env, fake, _ = stack
+    fake.reset()
+    fake.busy_polls = 2
+    interrupts = []
+
+    def sleep(seconds):
+        if not interrupts:
+            interrupts.append(seconds)
+            raise KeyboardInterrupt
+
+    rc, lines = run(env, fake, "probe", "--billed", "--case", case, "--hold-s", "0", sleep=sleep)
+    assert interrupts, "the interrupt landed in the apply's wait"
+    assert not [line for line in lines if line.startswith("restore failed")], lines
+    assert rc == 130
+    if case == "tools_single":
+        assert not fake.get("env", env_name)
+    else:
+        assert (rh.ENV_NS, "PGSSLMODE") not in fake.env_settings[env_name]
+
+
+def test_probe_reports_the_create_error_when_a_throwaway_is_refused(stack, capsys):
+    env, fake, _ = stack
+    fake.reset()
+    fake.fail["elasticbeanstalk create-environment"] = (
+        "An error occurred (InvalidParameterValue) when calling the CreateEnvironment operation: U13-REFUSED")
+    rc, lines = run(env, fake, "probe", "--billed", "--case", "tools_classic", "--hold-s", "0")
+    assert rc == 1
+    err = capsys.readouterr().err
+    assert "U13-REFUSED" in err and "No Environment found" not in err
+    assert not [line for line in lines if line.startswith("restore failed")], lines
+
+
 def test_probe_restores_when_a_later_case_fails(stack):
     env, fake, _ = stack
     fake.reset()
@@ -1023,6 +1131,30 @@ def test_up_down_and_proof_cover_the_same_kinds(stack):
     missing = {k: v for k, v in PROOF.items() if v not in ops}
     assert not missing, f"prove-empty never checks {missing}"
     assert not [k for k in fake.have if not k.startswith(("version:",))], fake.have.keys()
+
+
+def test_down_after_a_throwaway_probe_and_down_again(stack):
+    """A recorded environment Beanstalk no longer has (a terminated throwaway, or a re-run)
+    must not stop `down` before RDS; a second `down` is a no-op."""
+    env, fake, _ = stack
+    assert run(env, fake, "probe", "--billed", "--case", "tools_single", "--hold-s", "0")[0] == 0
+    assert not fake.get("env", "genealogy-u13-x-tools-single")
+    rc, lines = run(env, fake, "down", "--billed")
+    assert rc == 0, lines[-3:]
+    assert not fake.get("db", rh.RDS_ID) and not fake.all("sg") and not fake.all("role")
+    rc, lines = run(env, fake, "down", "--billed")
+    assert rc == 0, lines[-3:]
+
+
+def test_down_rerun_while_rds_is_still_deleting(stack):
+    env, fake, _ = stack
+    fake.fail["rds wait"] = "Waiter DBInstanceDeleted failed: Max attempts exceeded"
+    assert run(env, fake, "down", "--billed")[0] == 1
+    assert fake.get("db", rh.RDS_ID)["status"] == "deleting"
+    del fake.fail["rds wait"]
+    rc, lines = run(env, fake, "down", "--billed")
+    assert rc == 0, lines[-3:]
+    assert not fake.get("db", rh.RDS_ID)
 
 
 def test_down_order_follows_the_plan(stack):
@@ -1147,7 +1279,7 @@ def test_plan_with_another_instance_class_still_passes(env, monkeypatch):
     assert rc == 0
 
 
-# ── the D9 leak check ─────────────────────────────────────────────────────────────────
+# ── the leak check ────────────────────────────────────────────────────────────────────
 
 
 def _git(repo: Path, *args: str) -> str:
@@ -1211,6 +1343,32 @@ def test_leak_check_finds_a_body_file_and_a_commit_message(leak_repo, tmp_path):
     assert rc == 1 and any("commit messages" in line for line in lines)
 
 
+def test_leak_check_finds_a_value_committed_then_scrubbed(leak_repo):
+    repo = leak_repo["repo"]
+    (repo / "notes.md").write_text(f"account {leak_repo['value']}\n", encoding="utf-8")
+    _git(repo, "add", "notes.md")
+    _git(repo, "commit", "-q", "-m", "notes")
+    (repo / "notes.md").write_text("account <account>\n", encoding="utf-8")
+    _git(repo, "commit", "-q", "-am", "scrub")
+    rc, lines = _leak(leak_repo)
+    assert rc == 1, lines
+    history = [line for line in lines if line.startswith("LEAK history ")]
+    assert history and all(line.endswith(":notes.md") for line in history), lines
+    assert not any(leak_repo["value"] in line for line in lines), "a hit names the place, not the value"
+
+
+def test_leak_check_history_passes_placeholder_edits(leak_repo):
+    repo = leak_repo["repo"]
+    (repo / "notes.md").write_text("account <account> in zone <zone>\n+ a line starting with a plus\n",
+                                   encoding="utf-8")
+    _git(repo, "add", "notes.md")
+    _git(repo, "commit", "-q", "-m", "placeholders only")
+    (repo / "notes.md").write_text("host <host>\n", encoding="utf-8")
+    _git(repo, "commit", "-q", "-am", "reword")
+    rc, lines = _leak(leak_repo)
+    assert rc == 0, lines
+
+
 def test_leak_check_refuses_an_empty_value(leak_repo):
     (leak_repo["local"] / "host").write_text("  \n", encoding="utf-8")
     rc, _ = _leak(leak_repo)
@@ -1229,13 +1387,16 @@ def test_leak_check_patterns_file_stays_outside_the_repo(leak_repo):
     assert "leak-patterns" not in _git(leak_repo["repo"], "status", "--porcelain", "--untracked-files=all")
 
 
-# ── the 12-digit scan (D9, CI) ────────────────────────────────────────────────────────
+# ── the 12-digit scan (CI) ────────────────────────────────────────────────────────────
 
 TWELVE = re.compile(r"(?<![A-Za-z0-9-])\d{12}(?![A-Za-z0-9-])")
 ALLOWED_IDS = {"000000000000", "123456789012"}
-SCAN_PATHS = ("apps/server/proto/eb-rehearsal", "apps/server/tests/test_proto_rehearsal.py",
+# Every path outside apps/server/ here needs its own line in server-tests.yml's PATTERNS,
+# or a diff touching only it skips this job; test_scan_paths_trigger_the_server_job pins that.
+SCAN_PATHS = ("apps/server/proto", "apps/server/tests/test_proto_rehearsal.py",
               "apps/server/tests/test_proto_target.py", "apps/server/tests/fixtures/eb-cloudwatch",
-              "docs/plan/familysearch-handoff.md", "docs/search-agent-prototype-report.md")
+              "docs/architecture.md", "docs/plan/familysearch-handoff.md", "docs/search-agent-prototype-report.md")
+SERVER_WORKFLOW = REPO / ".github" / "workflows" / "server-tests.yml"
 
 
 def account_ids(text: str) -> list[str]:
@@ -1265,4 +1426,21 @@ def test_no_account_id_in_the_rehearsal_files():
             found = account_ids(path.read_text(encoding="utf-8", errors="replace"))
             if found:
                 hits[rel] = len(found)
-    assert not hits, f"a 12-digit run in {hits}: use <account> (D9)"
+    assert not hits, f"a 12-digit run in {hits}: use <account>"
+
+
+def server_job_patterns() -> re.Pattern:
+    steps = yaml.safe_load(SERVER_WORKFLOW.read_text(encoding="utf-8"))["jobs"]["server-pytest"]["steps"]
+    return re.compile(next(st for st in steps if st.get("id") == "scope")["env"]["PATTERNS"])
+
+
+def test_scan_paths_trigger_the_server_job():
+    """CI runs this suite only when a PR touches a path PATTERNS matches; a scanned doc it
+    misses lets a docs-only diff carry an account id past a green check."""
+    patterns = server_job_patterns()
+    listed = subprocess.run(["git", "ls-files", "--", *SCAN_PATHS], cwd=REPO, capture_output=True, text=True,
+                            encoding="utf-8", check=True).stdout.split()
+    assert {p for p in SCAN_PATHS if not p.startswith("apps/server/")} <= set(listed)
+    missed = [rel for rel in listed if not patterns.search(rel)]
+    assert not missed, f"server-tests.yml PATTERNS skips {missed}; add a line for each"
+    assert not patterns.search("docs/plan/search-agent-prototype.md"), "the patterns stay anchored"

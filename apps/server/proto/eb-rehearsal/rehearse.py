@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """U13's rehearsal deploy of the search-agent prototype into one AWS account (us-east-1).
 
-Provisioner, teardown, empty-proof, probe cases and the D9 leak check, in one stdlib
+Provisioner, teardown, empty-proof, probe cases and the account-id leak check, in one stdlib
 script that shells out to the ``aws`` CLI (no boto3). Usage and the rules it enforces:
 README.md beside this file; the plan is docs/plan/familysearch-handoff.md, section 3.
 
@@ -72,7 +72,7 @@ EB_LOG_PREFIX = f"/aws/elasticbeanstalk/{PREFIX}"
 STORAGE_PREFIX = f"{PREFIX}/"
 MIGRATE_POLICY = f"{PREFIX}-migrate"
 
-# Loopback sign-in (user decision D4): the dev key's registered callback.
+# Loopback sign-in: the dev key's registered callback.
 LOOPBACK_PUBLIC_URL = "http://127.0.0.1:1837"
 SIGNIN_NAMES = ("PUBLIC_URL", "FAMILYSEARCH_WEB_ENABLED", "ALLOWED_EMAILS")
 
@@ -131,9 +131,13 @@ OPTIONAL_PHASES = ("signin", "resolver")
 KINDS = ("budget", "iam-role", "instance-profile", "sg", "db-subnet-group", "db-param-group", "rds",
          "s3", "secret", "ec2", "app", "eb-storage", "env", "log-group", "resolver")
 
+# Beanstalk answers a missing environment or application with InvalidParameterValue and
+# "No Environment found for EnvironmentName = '...'" / "No Application named '...' found."
 NOT_FOUND = re.compile(
     r"NotFound|NoSuchEntity|NoSuchBucket|\(404\)|Not Found|does not exist|NonExistentQueue|"
-    r"ResourceNotFoundException|InvalidInstanceID\.Malformed", re.I)
+    r"ResourceNotFoundException|InvalidInstanceID\.Malformed|No Environment found|No Application named", re.I)
+RDS_DELETING = re.compile(r"NotFound|InvalidDBInstanceState.*(deleting|being deleted)", re.I)
+EB_TRANSITIONAL = ("Launching", "Updating", "Aborting", "LinkingFrom", "LinkingTo")
 ALREADY = re.compile(r"AlreadyExists|BucketAlreadyOwnedByYou|InvalidPermission\.Duplicate|"
                      r"DuplicateRecord|EntityAlreadyExists|ResourceExistsException|DuplicateRecordException",
                      re.I)
@@ -286,19 +290,46 @@ def write_private(path: Path, text: str) -> Path:
     return path
 
 
+WORK_MARKER = ".genealogy-u13-work"
+
+
+def inside_git(path: Path) -> bool:
+    """True when the nearest existing ancestor of path is in any git work tree or git dir."""
+    probe = path
+    while not probe.exists():
+        probe = probe.parent
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    res = subprocess.run(["git", "-C", str(probe if probe.is_dir() else probe.parent), "rev-parse", "--git-dir"],
+                         capture_output=True, text=True, encoding="utf-8", check=False, env=env)
+    return res.returncode == 0
+
+
 def resolve_work_dir(raw: str | None, repo: Path = REPO) -> Path:
+    """Refuse a work dir inside any git checkout (this worktree, the main checkout a
+    .claude/worktrees/* checkout sits in, or any other). Create it 0700; adopt an existing
+    directory only when it is empty or one this tool made, so it never chmods the operator's."""
     if not raw:
         raise Die("--work-dir is required: secret material and option files live there")
     path = Path(raw).expanduser().resolve()
     try:
         path.relative_to(repo.resolve())
+        inside = True
     except ValueError:
-        return secure_dir(path)
-    raise Die(f"--work-dir {path} is inside the git worktree {repo}; pick a directory outside it")
+        inside = inside_git(path)
+    if inside:
+        raise Die(f"--work-dir {path} is inside a git work tree; pick a directory outside every checkout")
+    if path.exists():
+        if not path.is_dir():
+            raise Die(f"--work-dir {path} is not a directory")
+        if not (path / WORK_MARKER).is_file() and any(path.iterdir()):
+            raise Die(f"--work-dir {path} already holds files this tool did not write; pick a new or empty directory")
+    secure_dir(path)
+    (path / WORK_MARKER).touch()
+    return path
 
 
 def anthropic_key(env_file: Path) -> str:
-    """D3: the eval/.env key (or the environment's), never printed."""
+    """The eval/.env key (or the environment's), never printed."""
     value = (os.environ.get("ANTHROPIC_API_KEY") or "").strip()
     if not value and env_file.is_file():
         for line in env_file.read_text(encoding="utf-8").splitlines():
@@ -320,52 +351,52 @@ def anthropic_key(env_file: Path) -> str:
 DEV_SESSION_SECRET = "dev-insecure-secret-change-me"
 DEV_FS_TOKEN_ENC_KEY = "dev-insecure-fs-token-key-change-me"
 CASES: dict[str, dict] = {
-    "env_chars": {"measures": "M7", "charset_probe": True, "ops": {"web": [
+    "env_chars": {"measures": "env value charset", "charset_probe": True, "ops": {"web": [
         (ENV_NS, "U13_PROBE_QUESTION", "a?b"), (ENV_NS, "U13_PROBE_AMP", "a&b"),
         (ENV_NS, "U13_PROBE_COMMA", "a,b")]}},
-    "env_4096": {"measures": "M7", "charset_probe": True, "ops": {"web": [
+    "env_4096": {"measures": "env properties size", "charset_probe": True, "ops": {"web": [
         (ENV_NS, f"U13_PROBE_PAD_{i}", "x" * 1000) for i in range(5)]}},
-    "tools_single": {"measures": "M9", "throwaway": "tools_single"},
-    "tools_classic": {"measures": "M9", "throwaway": "tools_classic"},
-    "ebext_naming": {"measures": "M11", "throwaway": "ebext_naming"},
-    "graviton_boot": {"measures": "M14", "throwaway": "graviton_boot"},
-    "tools_no_pgsslmode": {"measures": "M20", "ops": {"tools": [(ENV_NS, "PGSSLMODE", "disable")]}},
-    "tools_no_dsn": {"measures": "M27", "ops": {"tools": [(SECRETS_NS, "GENEALOGY_PG_DSN", REMOVE)]}},
-    "tools_bad_path_style": {"measures": "M27", "ops": {"tools": [
+    "tools_single": {"measures": "tools without a load balancer", "throwaway": "tools_single"},
+    "tools_classic": {"measures": "tools on the default load balancer", "throwaway": "tools_classic"},
+    "ebext_naming": {"measures": ".ebextensions file naming", "throwaway": "ebext_naming"},
+    "graviton_boot": {"measures": "worker boot on arm64", "throwaway": "graviton_boot"},
+    "tools_no_pgsslmode": {"measures": "tools with RDS TLS off", "ops": {"tools": [(ENV_NS, "PGSSLMODE", "disable")]}},
+    "tools_no_dsn": {"measures": "tools start refusal", "ops": {"tools": [(SECRETS_NS, "GENEALOGY_PG_DSN", REMOVE)]}},
+    "tools_bad_path_style": {"measures": "tools start refusal", "ops": {"tools": [
         (ENV_NS, "GENEALOGY_S3_FORCE_PATH_STYLE", "maybe")]}},
-    "tools_half_s3_pair": {"measures": "M27", "allow": ("GENEALOGY_S3_ACCESS_KEY",), "ops": {"tools": [
+    "tools_half_s3_pair": {"measures": "tools start refusal", "allow": ("GENEALOGY_S3_ACCESS_KEY",), "ops": {"tools": [
         (ENV_NS, "GENEALOGY_S3_ACCESS_KEY", "U13DUMMYACCESSKEY")]}},
-    "worker_half_sqs": {"measures": "M32", "allow": ("GENEALOGY_SQS_ACCESS_KEY",), "ops": {"worker": [
+    "worker_half_sqs": {"measures": "SQS settings refusal", "allow": ("GENEALOGY_SQS_ACCESS_KEY",), "ops": {"worker": [
         (ENV_NS, "GENEALOGY_SQS_ACCESS_KEY", "U13DUMMYACCESSKEY")]}},
-    "web_half_sqs": {"measures": "M32", "allow": ("GENEALOGY_SQS_ACCESS_KEY",), "ops": {"web": [
+    "web_half_sqs": {"measures": "SQS settings refusal", "allow": ("GENEALOGY_SQS_ACCESS_KEY",), "ops": {"web": [
         (ENV_NS, "GENEALOGY_SQS_ACCESS_KEY", "U13DUMMYACCESSKEY")]}},
-    "sqs_region_contradicts": {"measures": "M32", "ops": {
+    "sqs_region_contradicts": {"measures": "SQS settings refusal", "ops": {
         "web": [(ENV_NS, "GENEALOGY_SQS_REGION", "us-west-2")],
         "worker": [(ENV_NS, "GENEALOGY_SQS_REGION", "us-west-2")]}},
-    "fast_errors": {"measures": "M37 M38", "ops": {"worker": [(SQSD_NS, "ErrorVisibilityTimeout", "10")]}},
-    "maxretries_2": {"measures": "M37", "ops": {"worker": [
+    "fast_errors": {"measures": "error redelivery delay", "ops": {"worker": [(SQSD_NS, "ErrorVisibilityTimeout", "10")]}},
+    "maxretries_2": {"measures": "sqsd receive count", "ops": {"worker": [
         (SQSD_NS, "MaxRetries", "2"), (ENV_NS, "SQSD_MAX_RETRIES", "2")]}},
-    "maxretries_1": {"measures": "M37 M43", "ops": {"worker": [
+    "maxretries_1": {"measures": "sqsd receive count", "ops": {"worker": [
         (SQSD_NS, "MaxRetries", "1"), (ENV_NS, "SQSD_MAX_RETRIES", "1")]}},
-    "tmpdir_bad": {"measures": "M45", "ops": {"worker": [(ENV_NS, "TMPDIR", "/nonexistent")]}},
-    "worker_no_provider": {"measures": "M53", "ops": {"worker": [(ENV_NS, "MODEL_PROVIDER", REMOVE)]}},
-    "worker_no_tool_url": {"measures": "M53", "ops": {"worker": [(ENV_NS, "TOOL_SERVER_URL", REMOVE)]}},
-    "worker_blocked_tools": {"measures": "M53", "allow": ("BLOCKED_TOOLS",), "ops": {"worker": [
+    "tmpdir_bad": {"measures": "worker without a usable TMPDIR", "ops": {"worker": [(ENV_NS, "TMPDIR", "/nonexistent")]}},
+    "worker_no_provider": {"measures": "worker start refusal", "ops": {"worker": [(ENV_NS, "MODEL_PROVIDER", REMOVE)]}},
+    "worker_no_tool_url": {"measures": "worker start refusal", "ops": {"worker": [(ENV_NS, "TOOL_SERVER_URL", REMOVE)]}},
+    "worker_blocked_tools": {"measures": "worker start refusal", "allow": ("BLOCKED_TOOLS",), "ops": {"worker": [
         (ENV_NS, "BLOCKED_TOOLS", "Bash")]}},
-    "worker_no_queue_url": {"measures": "M53", "ops": {"worker": [(ENV_NS, "QUEUE_URL", REMOVE)]}},
-    "worker_default_enc_key": {"measures": "M53", "allow": ("FS_TOKEN_ENC_KEY",), "ops": {"worker": [
+    "worker_no_queue_url": {"measures": "worker start refusal", "ops": {"worker": [(ENV_NS, "QUEUE_URL", REMOVE)]}},
+    "worker_default_enc_key": {"measures": "worker start refusal", "allow": ("FS_TOKEN_ENC_KEY",), "ops": {"worker": [
         (SECRETS_NS, "FS_TOKEN_ENC_KEY", REMOVE), (ENV_NS, "FS_TOKEN_ENC_KEY", DEV_FS_TOKEN_ENC_KEY)]}},
-    "web_no_queue_url": {"measures": "M53", "ops": {"web": [(ENV_NS, "QUEUE_URL", REMOVE)]}},
-    "default_session_secret": {"measures": "M60", "allow": ("SESSION_SECRET",), "ops": {"web": [
+    "web_no_queue_url": {"measures": "web start refusal", "ops": {"web": [(ENV_NS, "QUEUE_URL", REMOVE)]}},
+    "default_session_secret": {"measures": "default-secret refusal with sign-in on", "allow": ("SESSION_SECRET",), "ops": {"web": [
         (SECRETS_NS, "SESSION_SECRET", REMOVE), (ENV_NS, "SESSION_SECRET", DEV_SESSION_SECRET)]}},
-    "kill_window": {"measures": "M51 M55 M65", "ops": {"worker": [
+    "kill_window": {"measures": "kill-and-redeliver window", "ops": {"worker": [
         (SQSD_NS, "InactivityTimeout", "1200"), (SQSD_NS, "VisibilityTimeout", "1500"),
         (ENV_NS, "SQSD_VISIBILITY_TIMEOUT_S", "1500")]}},
-    "debug_hold": {"measures": "M65", "allow": ("GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS",), "ops": {"tools": [
+    "debug_hold": {"measures": "acceptance step 4's hold", "allow": ("GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS",), "ops": {"tools": [
         (ENV_NS, "GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS", "20000")]}},
-    "refresh_age_0": {"measures": "M55", "ops": {"web": [(ENV_NS, "FS_GRANT_REFRESH_AGE_S", "0")]}},
-    "cap_1usd": {"measures": "M71", "ops": {"worker": [(ENV_NS, "SESSION_SPEND_CAP_USD", "1")]}},
-    "idle_session_60s": {"measures": "M22", "rds_param": ("idle_session_timeout", "60000")},
+    "refresh_age_0": {"measures": "grant refresh every turn", "ops": {"web": [(ENV_NS, "FS_GRANT_REFRESH_AGE_S", "0")]}},
+    "cap_1usd": {"measures": "session spend cap", "ops": {"worker": [(ENV_NS, "SESSION_SPEND_CAP_USD", "1")]}},
+    "idle_session_60s": {"measures": "Postgres idle-session timeout", "rds_param": ("idle_session_timeout", "60000")},
 }
 
 
@@ -749,7 +780,7 @@ class Rehearsal:
 
     def secret_values(self) -> dict[str, Path]:
         """Write (once) and return the 0600 file of every secret. Generated values are random
-        hex; the model key comes from eval/.env or the environment (D3)."""
+        hex; the model key comes from eval/.env or the environment."""
         endpoint = self.state.get("rds", {}).get("endpoint")
         if not endpoint:
             raise Die("run `up --phase stores` first: the DSNs need the RDS endpoint")
@@ -967,7 +998,7 @@ class Rehearsal:
         return out + self.signin_options() + self.extra_env("web")
 
     def signin_options(self) -> list[dict]:
-        """The loopback sign-in settings (user decision D4), present only once `up --phase
+        """The loopback sign-in settings, present only once `up --phase
         signin` has run; off on first boot."""
         signin = self.state.get("signin") or {}
         if signin.get("mode") != "loopback":
@@ -1012,6 +1043,16 @@ class Rehearsal:
 
     def wait_env_gone(self, name: str) -> None:
         self.poll(f"{name} is terminated", lambda: self.describe_env(name) is None, every_s=20, timeout_s=2700)
+
+    def settle_env(self, name: str) -> dict | None:
+        """Wait until the environment is gone or out of a transitional status: Beanstalk
+        refuses an update or a terminate mid-launch or mid-update ("Must be Ready")."""
+        def settled():
+            env = self.describe_env(name)
+            return {"env": env} if env is None or env.get("Status") not in EB_TRANSITIONAL else None
+
+        got = self.poll(f"{name} is out of {'/'.join(EB_TRANSITIONAL[:2])}", settled, every_s=20, timeout_s=2700)
+        return (got or {}).get("env")
 
     def ensure_env(self, tier: str, name: str, label: str, options: list[dict], *, worker: bool = False,
                    throwaway: bool = False) -> dict:
@@ -1172,7 +1213,7 @@ U13PY
     def phase_signin(self) -> None:
         mode = getattr(self.args, "mode", None) or "loopback"
         if mode == "https":
-            raise Die("--mode https needs a hostname and certificate; deferred (user decision D2)")
+            raise Die("--mode https needs a hostname and certificate; deferred until the hostname is decided")
         name = ENV_NAMES["web"]
         base = [o for o in (self.snapshot(name) if not self.dry else self.web_options())
                 if not (o["Namespace"] == ENV_NS and o["OptionName"] in SIGNIN_NAMES)]
@@ -1241,7 +1282,7 @@ U13PY
         return "tools", self.version("tools"), self.tools_options(variant if variant != "ebext_naming" else None), False
 
     def ebext_version(self) -> str:
-        """A copy of the tools zip carrying .ebextensions/03-u13.yaml (M11)."""
+        """A copy of the tools zip carrying .ebextensions/03-u13.yaml (ebext_naming)."""
         label = f"{self.version('tools')}-ebext"
         bundles = Path(getattr(self.args, "bundles_dir", None) or "")
         src = bundles / layout.BUNDLE_NAMES["tools"]
@@ -1330,10 +1371,16 @@ U13PY
                      "--parameters", f"ParameterName={item[1]},ApplyMethod=immediate")
             self.wait_param_in_sync()
         elif item[0] == "throwaway":
-            self.aws("elasticbeanstalk", "terminate-environment", "--environment-name", item[1], ok=NOT_FOUND)
+            env = self.settle_env(item[1]) if not self.dry else {}
+            if env is None:
+                self.note(f"{item[1]} does not exist; nothing to terminate")
+                return
+            if env.get("Status") != "Terminating":
+                self.aws("elasticbeanstalk", "terminate-environment", "--environment-name", item[1], ok=NOT_FOUND)
             self.wait_env_gone(item[1])
         else:
             _, env_name, snapshot, touched = item
+            self.wait_env(env_name)
             sets, removes = restore_options(snapshot, touched)
             call = ["elasticbeanstalk", "update-environment", "--environment-name", env_name]
             if sets:
@@ -1439,20 +1486,25 @@ U13PY
         self.note("local: remove the /etc/hosts line for the RDS endpoint, then delete the work-dir")
         return 0
 
-    def env_names(self) -> list[str]:
+    def live_envs(self) -> dict[str, str]:
+        """Name -> Status of every environment the application still has."""
         got = self.aws("elasticbeanstalk", "describe-environments", "--application-name", APP,
                        "--no-include-deleted", placeholder={"Environments": [
                            {"EnvironmentName": n, "Status": "Ready"} for n in ENV_NAMES.values()]})
-        names = {e["EnvironmentName"] for e in (got or {}).get("Environments", [])
-                 if e.get("Status") not in ("Terminated",)}
-        names |= {r["id"] for r in self.recorded("env")}
-        return sorted(names)
+        return {e["EnvironmentName"]: e.get("Status", "") for e in (got or {}).get("Environments", [])
+                if e.get("Status") != "Terminated"}
 
     def down_envs(self) -> None:
-        names = self.env_names()
-        for name in names:
-            self.aws("elasticbeanstalk", "terminate-environment", "--environment-name", name, ok=NOT_FOUND)
-        for name in names:
+        """Terminate only what Beanstalk still lists (a recorded name may be long gone: a
+        throwaway, or a re-run), then wait on every live and recorded name."""
+        live = self.live_envs()
+        for name in sorted(live):
+            status = live[name]
+            if status in EB_TRANSITIONAL:
+                status = (self.settle_env(name) or {"Status": "Terminated"}).get("Status")
+            if status not in ("Terminating", "Terminated"):
+                self.aws("elasticbeanstalk", "terminate-environment", "--environment-name", name, ok=NOT_FOUND)
+        for name in sorted(set(live) | {r["id"] for r in self.recorded("env")}):
             self.wait_env_gone(name)
 
     def down_bastion(self) -> None:
@@ -1469,7 +1521,7 @@ U13PY
         if self.aws("rds", "describe-db-instances", "--db-instance-identifier", RDS_ID, ok=NOT_FOUND,
                     placeholder={"DBInstances": [{}]}) is not None:
             self.aws("rds", "delete-db-instance", "--db-instance-identifier", RDS_ID, "--skip-final-snapshot",
-                     "--delete-automated-backups", ok=re.compile(r"NotFound|InvalidDBInstanceState.*deleting", re.I))
+                     "--delete-automated-backups", ok=RDS_DELETING)
             self.aws("rds", "wait", "db-instance-deleted", "--db-instance-identifier", RDS_ID)
         self.aws("rds", "delete-db-subnet-group", "--db-subnet-group-name", RDS_SUBNET_GROUP, ok=NOT_FOUND)
         self.aws("rds", "delete-db-parameter-group", "--db-parameter-group-name", RDS_PARAM_GROUP, ok=NOT_FOUND)
@@ -1742,7 +1794,7 @@ U13PY
         return 0
 
 
-# ── leak check (D9) ───────────────────────────────────────────────────────────────────
+# ── leak check ───────────────────────────────────────────────────────────────────────────
 
 
 def leak_values(local_dir: Path) -> list[str]:
@@ -1755,6 +1807,29 @@ def leak_values(local_dir: Path) -> list[str]:
     if not values:
         raise Die("leak-check: .local/ holds no value")
     return values
+
+
+def history_hits(repo: Path, base: str, values: list[str]) -> list[str]:
+    """Every added or removed diff line in <base>..HEAD holding a value, as
+    ``history <commit>:<path>``: a value committed and scrubbed later is still pushed."""
+    log = subprocess.run(["git", "log", "-p", "--no-color", "--no-ext-diff", "--no-textconv", "--text",
+                          "--format=commit %H", f"{base}..HEAD"], cwd=repo, capture_output=True, text=True,
+                         encoding="utf-8", errors="replace", check=False)
+    if log.returncode != 0:
+        raise Die(f"leak-check: git log -p {base}..HEAD failed: {log.stderr.strip()}")
+    out, commit, path, header = [], "?", "?", False
+    for line in log.stdout.splitlines():
+        if line.startswith("commit "):
+            commit, path, header = line.split()[1][:12], "?", False
+        elif line.startswith("diff --git "):
+            header, path = True, line.rsplit(" b/", 1)[-1]
+        elif header:
+            header = not line.startswith("@@")
+        elif line[:1] in "+-" and any(v in line for v in values):
+            hit = f"history {commit}:{path}"
+            if hit not in out:
+                out.append(hit)
+    return out
 
 
 def leak_check(args, *, local_dir: Path = LOCAL_DIR, repo: Path = REPO, out=print) -> int:
@@ -1784,6 +1859,7 @@ def leak_check(args, *, local_dir: Path = LOCAL_DIR, repo: Path = REPO, out=prin
     if log.returncode != 0:
         raise Die(f"leak-check: git log {args.base}..HEAD failed: {log.stderr.strip()}")
     scan(f"commit messages since {args.base}", log.stdout)
+    hits.extend(history_hits(repo, args.base, values))
     for hit in hits:
         out(f"LEAK {hit}")
     out(f"leak-check: {len(hits)} hit(s) for {len(values)} value(s) from .local/")
@@ -1823,10 +1899,10 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("down", parents=[common, billed], help="tear everything down, in order")
     proof = sub.add_parser("prove-empty", parents=[common], help="exit 1 if anything of the rehearsal remains")
     proof.add_argument("--repoll-s", type=float, default=600)
-    leak = sub.add_parser("leak-check", help="D9: no .local/ value in the tree, a PR body or commit messages")
+    leak = sub.add_parser("leak-check", help="no .local/ value in the tree, a PR body, or <base>..HEAD's messages and diffs")
     leak.add_argument("--work-dir")
     leak.add_argument("--body", action="append", help="a PR body (or any text) file to scan; repeatable")
-    leak.add_argument("--base", default="main", help="commit messages in <base>..HEAD are scanned")
+    leak.add_argument("--base", default="main", help="<base>..HEAD's commit messages and diffs are scanned")
     return p
 
 

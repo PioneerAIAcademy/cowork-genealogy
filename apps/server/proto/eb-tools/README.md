@@ -37,7 +37,7 @@ the logs block, `asg` 1/1, and nginx at 1800 s or more.
   test-only (handoff step 9). The template test and `make eb-bundles-verify` refuse any
   `GENEALOGY_DEBUG_*` variable in the bundle. The one API-level use is acceptance step 4 on
   U13's rehearsal host, through `../eb-rehearsal/rehearse.py probe --case debug_hold`, which
-  sets `GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS=20000` and removes it when the case ends (D6).
+  sets `GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS=20000` and removes it when the case ends.
   A hold set at API level makes `build/http.js` print `debug holds set (never in production):
   NAME="value"` on stderr before it listens (U11), so it shows in the logs.
 - **The instance count** is a default; an API-level `aws:autoscaling:asg` setting wins.
