@@ -933,7 +933,8 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	# entry point and reimplements this rather than shelling out to make.
 	# $(ENGINE_BUILD) rebuilds the MCP server only when stale. The run hits
 	# live FamilySearch (needs `login` first) and the judge needs an
-	# ANTHROPIC_API_KEY (shell or eval/.env). Expensive: ~20-60 min, $3-10.
+	# ANTHROPIC_API_KEY (shell or eval/.env). Expensive: about an hour and
+	# single-digit dollars, with a long tail.
 	# Keep the machine awake for the whole run — see eval/README.md "Keep the
 	# machine awake" (a sleep inflates real-clock time; the harness flags it).
 	# Stall recovery is ON by default; disable with RESUME_ON_STALL=0.
@@ -1028,7 +1029,8 @@ e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: mak
 	# RECOMPUTE=1 also re-derives violations from tool_calls + committed sidecars
 	# (the stored field is a floor; pre-detector runs record none) and prints a
 	# spend line (recorded / estimated / unrecoverable, never blended). CALIBRATE=1
-	# reports the estimate's measured accuracy over runs carrying both (issue #1484).
+	# reports the estimate's measured accuracy over runs carrying both, less the
+	# multi-query runs, whose tokens cover their last query only (#1484, #3128).
 	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),) $(if $(RECOMPUTE),--recompute,) $(if $(CALIBRATE),--calibrate-cost,)
 
 .PHONY: e2e-panel
