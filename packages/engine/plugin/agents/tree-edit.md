@@ -151,7 +151,7 @@ Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I
 
 ## Return contract
 
-Write the result first — the edit or merge from the tool's returned summary, the no-op report, the match results, or the single `Hand-back:` line. That line is for the caller.
+Write the result first — the edit or merge from the tool's returned summary, the no-op report, the match results, or the single `Hand-back:` line. Those lines are for the caller.
 
 ### `summary_for_user`
 

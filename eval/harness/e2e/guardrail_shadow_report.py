@@ -171,7 +171,15 @@ def format_summary(by_window: dict[int, list[dict[str, Any]]], *, n_runs: int) -
         affected = len({v["file"] for v in violations})
         by_skill: dict[str, int] = {}
         for v in violations:
-            by_skill[v["required_skill"]] = by_skill.get(v["required_skill"], 0) + 1
+            # Coerced for the same reason `format_detail` coerces, and this
+            # one matters more: `main()` prints the summary unconditionally
+            # while the detail prints only under --detail, so an unguarded
+            # None crashes here first. `sorted(by_skill.items())` raises
+            # "TypeError: '<' not supported between instances of 'str' and
+            # 'NoneType'" as soon as one None-skill entry sits beside a
+            # named one, and `warnings_unchecked` carries None by design.
+            skill = v.get("required_skill") or "-"
+            by_skill[skill] = by_skill.get(skill, 0) + 1
         skill_str = ", ".join(f"{k}={v}" for k, v in sorted(by_skill.items()))
         lines.append(f"{w:>8}  {len(violations):>10}  {affected:>14}  {skill_str or '(none)'}")
     return "\n".join(lines)
@@ -484,14 +492,26 @@ class RunInputs:
 
         THE TREES ARE NO LONGER READ. Both were required while the detector
         diffed relationships — without the seed it treated every relationship as
-        new and manufactured the violation being measured. Since issue #2840
-        retargeted it onto the engine gate, the signal is entirely in
-        `tool_calls`: a writer returned `unjustified_warnings` and nothing landed
-        after it. Keeping the tree requirement here skipped runs that are
-        perfectly gradable, which is the same detector going dark a second way —
-        the first being the tree gate inside the detector itself."""
+        new and manufactured the violation being measured. Since the gate moved
+        to the write boundary the signal is entirely in `tool_calls`: a writer
+        returned `unjustified_warnings` and nothing landed after it. Keeping the
+        tree requirement skipped runs that are perfectly gradable, which is the
+        same detector going dark a second way — the first being the tree gate
+        inside the detector itself.
+
+        A CAPTURE-STRIPPED RUN IS NOT SCANNABLE, and must be skipped rather
+        than counted clean. Retention drops `response_summary` from run logs
+        past 14 days; `replay_remnant` keeps `ok` and the bare `no_project`
+        marker but NOT `reason: "unjustified_warnings"`, so a stripped run
+        cannot carry this detector's only signal. 134 of the 201 committed run
+        logs are in that state. Counting them as scanned inflates the
+        denominator and reports a corpus as cleaner than it was measured to be
+        — the exact inverse of the shrinking-denominator failure this module
+        was built to prevent, and the number the promotion decision reads."""
         if self.run_log is None:
             return "unreadable run log"
+        if not any(c.get("response_summary") for c in self.tool_calls if isinstance(c, dict)):
+            return "no response_summary on any tool call (captures stripped)"
         return None
 
     def missing_for_tree_encoding(self) -> str | None:
@@ -1114,16 +1134,28 @@ def format_conflict_unpersisted(violations: list[dict[str, Any]]) -> str:
     )
 
 
+_SECTION = chr(0xA7)
+
+
 def format_warnings_unchecked(violations: list[dict[str, Any]]) -> str:
-    """One flat count — a fact about the final tree + tool_calls, not a windowed
-    scan. Retargeted by issue #2840: now counts runs where a writer returned
-    unjustified_warnings and the agent never re-called with justifications."""
+    """One flat count over STORED violations, not a windowed scan.
+
+    THESE ENTRIES WERE COMPUTED WHEN EACH RUN EXECUTED, by whatever detector
+    was live then, and are not re-derived here. Every committed run predates
+    the retarget, so every stored `warnings_unchecked` entry still means the
+    RETIRED question -- a new ParentChild/Couple edge with no successful
+    `person_warnings` call -- not the current one. Printing the stored count
+    under the new wording reports a pre-retarget measurement as a post-retarget
+    one. The recomputed number is the replay line (`REPLAY=1`), which is the
+    one to read for the current check.
+    """
     affected = len({v["file"] for v in violations})
     return (
-        "\n§7 warnings-unchecked check (issue #2840, shadow): "
-        f"{len(violations)} run(s) where a tree writer returned "
-        f"unjustified_warnings and the agent never re-called with "
-        f"warningJustifications, across {affected} run(s)."
+        "\n" + _SECTION + "7 warnings-unchecked check (shadow, STORED -- pre-retarget "
+        f"semantics): {len(violations)} run(s) recorded a warnings-unchecked "
+        f"violation when they ran, under the retired question (a parentage "
+        f"write with no person_warnings call), across {affected} run(s). Not "
+        f"comparable with the current check -- read the replay line for that."
     )
 
 

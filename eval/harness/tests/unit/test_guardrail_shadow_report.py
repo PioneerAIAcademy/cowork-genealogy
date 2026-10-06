@@ -758,29 +758,55 @@ def test_replay_warnings_unchecked_fires_on_a_synthetic_run(tmp_path):
     assert rep.warnings.skipped == []
 
 
-def test_replay_warnings_unchecked_silent_when_the_relationship_is_seeded(tmp_path):
-    """The paired negative, and the one that can tell a LOADED seed tree from a
-    silently missed one: the detector treats starting_tree=None as "everything is
-    new", so without this a replay that never opened the seed fires identically
-    to one that did. That is the defect that put a 59th run in this change's own
-    headline figure before it was caught."""
+def test_replay_warnings_unchecked_skips_a_capture_stripped_run(tmp_path):
+    """A stripped run must be NAMED, never counted clean.
+
+    This replaced a seeded-relationship negative that the retarget made
+    vacuous: the detector no longer reads either tree, so that test passed
+    identically with no seed file, a wrong one, or with the seed read deleted.
+
+    What matters now is the denominator. Retention reduces `response_summary`
+    to a replay remnant past 14 days, and 134 of the 201 committed run logs are
+    in that state, carrying no `response_summary` at all -- so they cannot hold
+    the refusal marker this check keys on. Counting them as scanned reports the
+    corpus as cleaner than it was measured to be, and the promotion decision
+    reads exactly that number."""
     d = tmp_path / "eval" / "tests" / "e2e" / "fx"
     d.mkdir(parents=True, exist_ok=True)
-    (d / "starting-tree.gedcomx.json").write_text(
-        json.dumps(_tree_with_parentchild()), encoding="utf-8"
-    )
     p = _write_posthoc_run(
         tmp_path,
         "fx",
         "run-1.json",
-        tool_calls=[_tree_edit_call()],
+        tool_calls=[_tree_edit_call()],  # no response_summary: a stripped log
         research={},
         tree=_tree_with_parentchild(),
     )
     rep = replay_post_hoc([p], fixtures_root=d.parent)
     assert rep.warnings.violations == []
-    assert rep.warnings.runs_scanned == 1
+    assert rep.warnings.runs_scanned == 0
+    assert len(rep.warnings.skipped) == 1
+    assert "captures stripped" in rep.warnings.skipped[0]
+    # The research-only checks keep their own denominators.
+    assert rep.citation.runs_scanned == 1
+
+
+def test_replay_warnings_unchecked_scans_a_run_that_kept_its_captures(tmp_path):
+    """The accept direction for the skip above: a run that still carries a
+    `response_summary` is scanned, not skipped."""
+    d = tmp_path / "eval" / "tests" / "e2e" / "fx"
+    d.mkdir(parents=True, exist_ok=True)
+    p = _write_posthoc_run(
+        tmp_path,
+        "fx",
+        "run-1.json",
+        tool_calls=[_tree_edit_call(unjustified=True)],
+        research={},
+        tree=_tree_with_parentchild(),
+    )
+    rep = replay_post_hoc([p], fixtures_root=d.parent)
     assert rep.warnings.skipped == []
+    assert rep.warnings.runs_scanned == 1
+    assert len(rep.warnings.violations) == 1
 
 
 def test_replay_citation_nulling_silent_on_a_populated_citation(tmp_path):

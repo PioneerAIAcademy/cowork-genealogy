@@ -359,7 +359,7 @@ and getting it wrong is what made three checks look dead for a fortnight:
 | §7.5 citation-nulling (`find_citation_nulling_in_conclusions`) | **0**, 0 runs | **0**, of 159 scanned | never observed either way |
 | §7.5 citation-nulling, TREE side (`find_citation_nulling_in_tree_sources`) | **0**, 0 runs — arm added 2026-08-25, no run has carried it yet | **111 source(s), across 50 runs**, of 159 scanned | shadow, reported; **deliberately not graduated** — see below |
 | §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **6**, across 5 runs, measured at 0b65122bc | **10** summaries across 9 of 194 runs, measured at 0b65122bc | **graduated 2026-09-28** to a `research_append` precondition that refuses the `proof_summaries` write, under ADR-0011's labelled-case rule. The harness detector stays as the document-plane reading, and both replay one case file |
-| §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **1**, 1 run | **59 runs**, of 158 scanned | **superseded by engine gate (2026-10-02)**: tree writers now refuse unjustified warnings at write time; retargeted to detect unresolved refusals |
+| §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **1**, 1 run | **0 runs**, of 67 scanned (134 skipped) | **retargeted (2026-10-06)**: tree writers refuse unjustified warnings at write time, so the check now detects a refusal nothing landed after. The 59-of-158 figure was the RETIRED question and is not comparable. 134 of 201 committed runs are capture-stripped and cannot carry the marker, so they are skipped rather than counted clean |
 | §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | **15**, across 1 run (of 20 that carry any attribution, 159 scanned) | **15**, 1 run | shadow, reported, no graduation count — revisit only if a **second** attributed run flags |
 | §11.5 tree-encoding (`find_conclusions_without_tree_encoding`) | **0**, 0 runs | **3**, across 3 runs, of 183 scanned | shadow, reported, and deliberately never a gate: the 2026-08-24 no-override ruling prefers a false allow to a false deny, so this count is calibration for a gate nobody has shipped; 2026-09-23 read: 2/3 fires are false denies (documented negatives), stays WARNING pending a negative-conclusion signal |
 | §7.5 tree-fact/assertion agreement (`find_tree_facts_disagreeing_with_assertions`) | **0**, 0 runs — arm added 2026-09-21, no run has carried it yet | **0**, of 184 scanned | shadow, reported; a MEASURED zero over a young population, not a structural one — why, and what would change it, is in `tree-materialization-spec.md` section 4.4 |
@@ -460,7 +460,7 @@ splits in two:
 
 | | is the zero ambiguous? | has the live store path ever been exercised? |
 |---|---|---|
-| warnings-unchecked | **no** — 59 corpus fires | **yes** — `stribling-father-1821/run-2026-08-17_23-35-44`, the corpus's only stored entry |
+| warnings-unchecked | **no** — 0 corpus fires post-retarget (the 59 were the retired question) | **yes** — `stribling-father-1821/run-2026-08-17_23-35-44`, the corpus's only stored entry |
 | conflict-unpersisted | **no** — 10 corpus fires, measured at 0b65122bc; now also refused at the writer tool | **yes** — 6 stored entries across 5 runs, measured at 0b65122bc, among them `robert-lord-children/run-2026-09-16_14-15-30` |
 | citation-nulling | **yes** — zero on both axes | **no** |
 
@@ -600,10 +600,11 @@ to understand before reading either:
   as the write, while the replay always sees the full prefix. Its second job is
   scoring a candidate *narrowing* of the rule against history before that
   narrowing ships. The three post-hoc checks: citation-nulling **0** of 159
-  scanned, conflict-unpersisted **4 runs** of 159 (10 summaries across 9 of 194 runs when it graduated, measured at 0b65122bc), warnings-unchecked **59 runs**
-  of 158 — the 159th being the corpus's one orphan run log
-  (`william-ferber-ancestry`, a committed run with no fixture directory, and so
-  no baseline to diff a relationship against). Every replay **names** the runs it
+  scanned, conflict-unpersisted **4 runs** of 159 (10 summaries across 9 of 194 runs when it graduated, measured at 0b65122bc), warnings-unchecked **0 runs**
+  of 67 scanned, 134 skipped. The skips are the capture-stripped logs, which
+  carry no `response_summary` and so cannot hold the refusal marker; the
+  orphan run log (`william-ferber-ancestry`) is no longer among them, because
+  the retargeted check needs no baseline tree to diff against. Every replay **names** the runs it
   could not read rather than counting them clean, per check: a denominator that
   quietly shrank reads as a clean corpus, which is the failure this whole section
   exists to correct.

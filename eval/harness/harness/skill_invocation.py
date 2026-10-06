@@ -206,7 +206,41 @@ def response_text(entry: dict[str, Any]) -> str:
         raw = entry.get("response")
     if raw is None:
         return ""
-    return raw if isinstance(raw, str) else json.dumps(raw)
+    if isinstance(raw, str):
+        return raw
+    try:
+        return json.dumps(raw)
+    except (TypeError, ValueError, RecursionError):
+        # `orchestrator._serialize_result` guards the same call for the same
+        # reason, with the comment "Letting it escape aborts a run costing
+        # $7-25". This function is reached live at the end of a billed run via
+        # `did_not_land` -> `find_unguarded_protected_writes`, from a
+        # shadow-mode detector whose contract is that it never fails a run.
+        return repr(raw)
+
+
+def _normalized_response(entry: dict[str, Any]) -> str:
+    """`response_text` with the envelope escaping flattened and `ok` spacing
+    normalised, for matchers that key on a QUOTED JSON key.
+
+    `did_not_land` documents why this is needed and matches the bare name
+    `no_project` to dodge it: `_summarize_tool_response` passes any response
+    under 500 chars through VERBATIM as the raw MCP envelope, where the tool's
+    document is an escaped string — `{\\"ok\\": false}` — so a quoted-key
+    match finds nothing. `ok` is too short to match bare the way `no_project`
+    can, so the escaping is flattened first instead, which is what
+    `e2e/image_transcribe_report.py` does for the same reason.
+
+    Measured over the committed corpus: of 797 `ok:false` occurrences, 102
+    (13%) are in the escaped shape. A quoted-key matcher is blind to all of
+    them, and this arm CREDITS a call, so each blind spot is a silent miss.
+    """
+    unescaped = response_text(entry).replace('\\"', '"')
+    # One canonical spacing. A plain `.replace('"ok":', '"ok": ')` doubles the
+    # space on the ALREADY-spaced shape and the matcher then misses it -- which
+    # is how the first version of this silently passed two of the corpus's four
+    # real spellings.
+    return re.sub(r'"ok"\s*:\s*', '"ok": ', unescaped)
 
 
 def did_not_land(entry: dict[str, Any]) -> bool:
@@ -1967,7 +2001,7 @@ def unresolved_warning_refusal(tool_calls: list[dict[str, Any]] | None) -> bool:
         _is_writer(call)
         and not _is_refusal(call)
         and not did_not_land(call)
-        and '"ok": false' not in response_text(call).replace('"ok":false', '"ok": false')
+        and '"ok": false' not in _normalized_response(call)
         for call in calls[refusals[-1] + 1 :]
     )
 

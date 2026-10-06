@@ -1689,8 +1689,12 @@ def test_warnings_unchecked_fires_on_a_new_couple_relationship():
 
 def test_warnings_unchecked_silent_on_a_writer_failure_that_is_not_the_gate():
     """A writer that failed validate-before-persist is not the warning gate --
-    no refusal, nothing to report. The accept direction for the `"ok": false`
-    arm added beside it."""
+    no refusal, nothing to report.
+
+    This does NOT exercise the `"ok": false` success arm: with no refusal in
+    the list the predicate returns at `if not refusals` and never reaches it.
+    That arm is covered by `test_a_writer_error_does_not_count_as_the_resolving_success`
+    and the spelling matrix below, which put the failure AFTER a refusal."""
     out = find_relationship_writes_without_warnings_check(
         [{"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": false, "errors": ["bad id"]}'}],
         {"relationships": []},
@@ -1788,6 +1792,60 @@ def test_a_success_before_the_refusal_does_not_resolve_it():
 def test_no_refusal_at_all_is_not_a_violation():
     calls = [{"tool": "mcp__genealogy__tree_edit", "response": '{"ok": true}'}]
     assert unresolved_warning_refusal(calls) is False
+
+
+# The corpus records `ok:false` in four spellings. Counted over every committed
+# run log: 361 `"ok":false`, 334 `"ok": false`, 95 escaped-compact and 7
+# escaped-spaced -- 102 of 797 (13%) in the escaped envelope that
+# `_summarize_tool_response` passes through verbatim under 500 chars. A
+# quoted-key matcher is blind to those, which is exactly the trap `did_not_land`
+# dodges by matching the bare `no_project`. This arm CREDITS a call, so every
+# blind spelling is a silent miss.
+@pytest.mark.parametrize(
+    "label,failed_response",
+    [
+        ("compact", '{"ok":false,"errors":["bad"]}'),
+        ("spaced", '{"ok": false, "errors": ["bad"]}'),
+        ("escaped compact", '[{"type":"text","text":"{\\"ok\\":false,\\"errors\\":[\\"bad\\"]}"}]'),
+        ("escaped spaced", '[{"type":"text","text":"{\\"ok\\": false,\\"errors\\":[\\"bad\\"]}"}]'),
+    ],
+)
+def test_a_failed_recall_never_clears_a_refusal_in_any_recorded_spelling(label, failed_response):
+    calls = [
+        {"tool": "mcp__genealogy__tree_edit", "response_summary": _REFUSAL},
+        {"tool": "mcp__genealogy__tree_edit", "response_summary": failed_response},
+    ]
+    assert unresolved_warning_refusal(calls) is True, label
+
+
+@pytest.mark.parametrize(
+    "label,ok_response",
+    [
+        ("plain", '{"ok": true}'),
+        ("escaped", '[{"type":"text","text":"{\\"ok\\":true}"}]'),
+    ],
+)
+def test_a_real_success_still_clears_a_refusal_in_any_recorded_spelling(label, ok_response):
+    """The accept direction for the same matcher: normalising the escaping must
+    not make a genuine success look like a failure."""
+    calls = [
+        {"tool": "mcp__genealogy__tree_edit", "response_summary": _REFUSAL},
+        {"tool": "mcp__genealogy__tree_edit", "response_summary": ok_response},
+    ]
+    assert unresolved_warning_refusal(calls) is False, label
+
+
+def test_response_text_falls_back_to_repr_on_an_unserializable_payload():
+    """Reached live at the end of a billed run via did_not_land ->
+    find_unguarded_protected_writes. `orchestrator._serialize_result` guards the
+    same json.dumps call because letting it escape aborts a $7-25 run."""
+
+    class Unserializable:
+        def __repr__(self):
+            return "<unserializable>"
+
+    calls = [{"tool": "mcp__genealogy__tree_edit", "response": {"x": Unserializable()}}]
+    assert unresolved_warning_refusal(calls) is False  # no exception
 
 
 def test_dedicated_agent_names_matches_the_shipped_agent_files():
