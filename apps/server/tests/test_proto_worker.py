@@ -104,7 +104,7 @@ PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
-AGENTS = {"check-warnings", "citation", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "locality-guide", "person-evidence", "project-status", "proof-conclusion", "question-selection", "record-extractor", "research-exhaustiveness", "search-familysearch-wiki", "search-full-text", "search-images", "search-wikipedia", "survey-surname", "translation", "tree-edit", "validate-schema"}
+AGENTS = {"check-warnings", "citation", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "locality-guide", "person-evidence", "project-status", "proof-conclusion", "question-selection", "record-extractor", "research-exhaustiveness", "search-familysearch-wiki", "search-full-text", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "translation", "tree-edit", "validate-schema"}
 
 
 # ── fakes ─────────────────────────────────────────────────────────────────────────
@@ -845,7 +845,7 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
     loaded = set(load_agent_definitions(copy))
     assert loaded == AGENTS - {"gps-mentor"} and loaded != worker.EXPECTED_AGENTS
     agents, error = worker.load_plugin_agents(str(copy))
-    assert agents is None, "twenty agents must not become the expectation"
+    assert agents is None, "twenty-one agents must not become the expectation"
     assert error == f"plugin agents ['gps-mentor'] missing under {copy}/agents"
     # An agent the plugin does not ship is named too (the name is the frontmatter's,
     # not the file's), so a mis-typed `name:` shows both halves.
@@ -857,24 +857,24 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
 
 
 def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
-    # Twenty-one agents and 12 skills registered: clean. Twenty, or 11: the miss, whatever loaded --
+    # Twenty-two agents and 11 skills registered: clean. Twenty-one, or 10: the miss, whatever loaded --
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
-    assert worker.registration_problems(_info(AGENTS, 12)) == []
-    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 12, ("genealogy-research:gps-mentor",)))
+    assert worker.registration_problems(_info(AGENTS, 11)) == []
+    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 11, ("genealogy-research:gps-mentor",)))
     assert problems == ["agents not registered under their bare names: ['gps-mentor']"]
-    assert worker.registration_problems(_info(AGENTS, 11)) == ["11 genealogy-research:* commands registered, expected 12"]
+    assert worker.registration_problems(_info(AGENTS, 10)) == ["10 genealogy-research:* commands registered, expected 11"]
     import inspect
 
     assert list(inspect.signature(worker.registration_problems).parameters) == ["info"]
     # The mutation the first build let through: a plugin copy short one skill folder
-    # registers 11, and a count of that same copy would have expected 11.
+    # registers 10, and a count of that same copy would have expected 10.
     copy = tmp_path / "plugin"
     shutil.copytree(PLUGIN_DIR / "skills", copy / "skills")
     shutil.rmtree(next(d for d in sorted((copy / "skills").iterdir()) if (d / "SKILL.md").is_file()))
-    assert worker.count_skills(str(copy)) == 11
+    assert worker.count_skills(str(copy)) == 10
     assert worker.registration_problems(_info(AGENTS, worker.count_skills(str(copy)))) == [
-        "11 genealogy-research:* commands registered, expected 12"
+        "10 genealogy-research:* commands registered, expected 11"
     ]
 
 
@@ -1376,7 +1376,7 @@ def turn_env(monkeypatch, tmp_path):
 
 
 def _run(state: dict, messages: list[Any], info: dict | None = None, *, receive_count: int = 1) -> dict:
-    state["client"] = FakeClient(messages, _info(AGENTS, 12) if info is None else info, state)
+    state["client"] = FakeClient(messages, _info(AGENTS, worker.EXPECTED_SKILLS) if info is None else info, state)
     return asyncio.run(worker.run_turn(TURN, receive_count, SID, agents={"gps-mentor": object()}))
 
 
@@ -1482,7 +1482,7 @@ def _run_passes(
     ``receive_count`` > 1 (the shim redelivered this message); the default is the D17
     shape, a second delivery of a resumed turn."""
     state["entries"] = entries
-    state["client"] = TwoPassClient(streams, _info(AGENTS, 12), state)
+    state["client"] = TwoPassClient(streams, _info(AGENTS, worker.EXPECTED_SKILLS), state)
     return asyncio.run(worker.run_turn(TURN, receive_count, SID, agents={"gps-mentor": object()}))
 
 
@@ -3026,13 +3026,10 @@ def test_the_stop_hook_blocks_a_vetoable_stop_with_the_harness_reason_verbatim()
     hook = _stop(state, nudged=nudged)
     assert _call(hook, {"stop_hook_active": False}) == {"decision": "block", "reason": options.CONTINUE_REASON}
     assert nudged == [1]
-    # The reason is the orchestrator's, read off its source: among the dict literals
-    # whose "decision" is "block", the one whose "reason" is a literal string is the
-    # silent-stop fallback the worker mirrors. Since 2026-09-20 a second such dict
-    # carries the "Yes." reply to a well-formed hand-back, whose reason is a NAME
-    # (`reply`) rather than a constant, so it is skipped here by shape and named in
-    # CONTINUE_REASON's comment — if that branch ever spells a literal too, this
-    # collects two and fails, which is the re-sync this test exists to force.
+    # The reason is the orchestrator's, read off its source: every dict literal whose
+    # "decision" is "block" must carry this one literal reason. A second reply, or one
+    # computed rather than spelled, is a Stop policy the worker does not run (U17);
+    # test_continue_policy_parity.py pins the computed case.
     tree = ast.parse(ORCHESTRATOR.read_text(encoding="utf-8"))
     blocks = [
         node for node in ast.walk(tree)
@@ -3050,7 +3047,7 @@ def test_the_stop_hook_blocks_a_vetoable_stop_with_the_harness_reason_verbatim()
         if isinstance(k, ast.Constant) and k.value == "reason" and isinstance(v, ast.Constant)
     ]
     assert reasons == [options.CONTINUE_REASON], \
-        "the worker's reason text must stay the harness's silent-stop fallback, verbatim"
+        "the worker's reason text must stay the harness's veto text, verbatim"
 
 
 def test_the_stop_hook_counts_nudges_and_allows_once_the_cap_is_spent():
@@ -3176,7 +3173,7 @@ def test_turn_max_nudges_prefers_the_body_and_falls_back_on_anything_unusable(me
 def test_run_turn_takes_the_caps_from_the_message_over_the_module_global(turn_env, monkeypatch):
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 0)
     turn = {**TURN, "message": {**TURN["message"], "max_nudges": 60}}
-    turn_env["client"] = FakeClient(_good(), _info(AGENTS, 12), turn_env)
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
     summary = asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
     assert callable(turn_env["options"]["stop_hook"]), \
         "the browser's turn arms the Stop hook even though the worker's own cap is 0"
@@ -3187,7 +3184,7 @@ def test_run_turn_takes_the_caps_from_the_message_over_the_module_global(turn_en
     # container and the value rides the message.
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
     turn = {**TURN, "message": {**TURN["message"], "max_nudges": 0}}
-    turn_env["client"] = FakeClient(_good(), _info(AGENTS, 12), turn_env)
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
     summary = asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
     assert turn_env["options"]["stop_hook"] is None and summary["max_nudges"] == 0
 
@@ -3264,7 +3261,7 @@ class NudgingClient(FakeClient):
 
 def test_two_vetoes_land_on_the_turns_row_and_in_the_summary(turn_env, monkeypatch):
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 5)
-    turn_env["client"] = NudgingClient(_info(AGENTS, 12), turn_env)
+    turn_env["client"] = NudgingClient(_info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
     summary = asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
     assert summary["nudges"] == 2
     sql, params = next((s, p) for s, p in turn_env["conn"].executed if s.startswith("UPDATE turns SET completed_at"))
@@ -4591,7 +4588,10 @@ def test_the_delivery_summary_reaches_a_human():
          "tool_input": {"summary": "the Mogan marriage record, 1874"}},
         "u1", None,
     ))
-    assert "the Mogan marriage record, 1874" in out["stopReason"], (
+    # startswith, not `in`: containment passes even when the summary is appended
+    # AFTER the reason, which is the ordering the chip cut makes load-bearing.
+    # With `in`, a reorder in the shared helper failed the alpha only.
+    assert out["stopReason"].startswith("Delivered: the Mogan marriage record, 1874"), (
         "the summary must survive into the text the model is handed"
     )
     delivered = [e for e in events if e.get("ev") == "delivered"]

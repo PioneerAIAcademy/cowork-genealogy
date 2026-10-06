@@ -1,9 +1,9 @@
 {
-  "run_log": "v1_2026-09-04_21-40-42.json",
-  "annotator": "eruth937@gmail.com",
+  "run_log": "v8.json",
+  "annotator": "praisenato@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_source_evaluation_m8q",
+      "test_id": "ut_research_021",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_m8q",
+      "test_id": "ut_research_021",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_m8q",
+      "test_id": "ut_research_021",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,87 +27,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_m8q",
-      "dimension_source": "rubric",
-      "dimension_name": "Remediation doctrine",
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_m8q",
-      "dimension_source": "rubric",
-      "dimension_name": "Classification before recommendation",
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_m8q",
-      "dimension_source": "rubric",
-      "dimension_name": "Signal versus backend noise",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_m8q",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection and argument quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_m8q",
-      "dimension_source": "rubric",
-      "dimension_name": "Coverage and honesty about what was not checked",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_r4k",
-      "dimension_source": "rubric",
-      "dimension_name": "Coverage and honesty about what was not checked",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_r4k",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection and argument quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_r4k",
-      "dimension_source": "rubric",
-      "dimension_name": "Signal versus backend noise",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_r4k",
-      "dimension_source": "rubric",
-      "dimension_name": "Classification before recommendation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_r4k",
-      "dimension_source": "rubric",
-      "dimension_name": "Remediation doctrine",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_r4k",
+      "test_id": "ut_research_005",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -115,15 +51,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_r4k",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_r4k",
+      "test_id": "ut_research_023",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -131,15 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_h3t",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_h3t",
+      "test_id": "ut_research_023",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -147,7 +67,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_h3t",
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_020",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -155,7 +99,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_c5n",
+      "test_id": "ut_research_022",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -163,7 +107,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_c5n",
+      "test_id": "ut_research_022",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -171,7 +115,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_c5n",
+      "test_id": "ut_research_022",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_017",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -179,7 +147,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_p2v",
+      "test_id": "ut_research_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -187,7 +155,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_p2v",
+      "test_id": "ut_research_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -195,7 +163,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_p2v",
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_016",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -203,41 +179,65 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_p2v",
-      "dimension_source": "rubric",
-      "dimension_name": "Remediation doctrine",
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_p2v",
-      "dimension_source": "rubric",
-      "dimension_name": "Classification before recommendation",
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_p2v",
-      "dimension_source": "rubric",
-      "dimension_name": "Signal versus backend noise",
+      "test_id": "ut_research_019",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_p2v",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection and argument quality",
+      "test_id": "ut_research_019",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_p2v",
-      "dimension_source": "rubric",
-      "dimension_name": "Coverage and honesty about what was not checked",
+      "test_id": "ut_research_019",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null

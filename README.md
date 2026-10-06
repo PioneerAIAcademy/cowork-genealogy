@@ -104,7 +104,7 @@ way project state changes.
 | `research_query` | Paged, filtered read of a `research.json` section without loading the whole document | None |
 | `sidecar_read` | Paged read of a project sidecar text file — a gps-mentor verdict body under `evaluations/` or a text upload under `uploads/`. Refuses `results/`, images, `research.json` and the tree with a pointer to the tool that serves each | None |
 | `research_log_append` | Append a research-log entry, including a search's result sidecar | None |
-| `research_delivered` | Signal that a bounded request has been delivered and the turn is stopping on purpose. A pure signal: writes nothing. On the PROTOTYPE worker a `PreToolUse` hook ends the turn on this tool's name; everywhere else (Cowork, e2e, and the hosted alpha, whose Stop hook keeps phase-1 behaviour until it is retired) it returns a harmless acknowledgement and the run carries on | None |
+| `research_delivered` | Signal that a bounded request has been delivered and the turn is stopping on purpose. A pure signal: writes nothing. BOTH hosted planes end the turn on this tool's name via a `PreToolUse` hook, the prototype worker and the hosted alpha; in Cowork and e2e no such hook binds, so it returns a harmless acknowledgement and the run carries on | None |
 | `extraction_append` | Record-level assertion extraction — held by the `record-extractor` agent, not the main thread | None |
 | `materialize_facts` | Project extracted assertions onto tree persons | None |
 | `tree_edit` | Add or amend persons, facts, names and relationships on the local tree | None |
@@ -196,7 +196,6 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 | Skill | What it does | Say this |
 |-------|-------------|----------|
 | **record-extraction** | Extracts atomic assertions from a record (MCP response, uploaded PDF, or image transcription) with first-and-final three-layer GPS classifications (Primary/Secondary/Indeterminate, Direct/Indirect/Negative) — each record is extracted by the `record-extractor` agent. | "Analyze this record" / "Extract assertions" / "Classify this evidence" |
-| **source-evaluation** | Audits the sources already attached to a person's FamilySearch profile. Classifies each finding as an indexing error (re-read the original and correct the index), a genuinely misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do) — and where the evidence does not decide between the first two, says so rather than picking one. A source that merely states a fact more precisely than the profile is reported as an improvement, not a contradiction. A disagreement between two attached sources is characterised and handed on with no verdict, since weighing them belongs to the conflict workflow. Closes with FamilySearch's own profile checklist — its completeness and source-tagging suggestions, grouped by category and kept out of the findings count, because they are suggestions rather than errors. Read-only. | "Evaluate the sources on this profile" / "Are these sources right?" |
 
 ### Identity resolution and analysis
 
@@ -257,6 +256,7 @@ don't load it explicitly.
 | **hypothesis-tracking** | Tracks competing candidates with evidence for/against each. Manages elimination. | "Could this be the same person?" |
 | **tree-edit** | Direct corrections to the tree file — add or correct a fact, create a person or relationship, check FamilySearch record hints and possible duplicates. Also executes person merges after proof-conclusion confirms identity. After any change it hands back so `check-warnings` runs on the persons it touched. | "Fix this name" / "Merge these two persons" |
 | **validate-schema** | Validates both project files against the published schemas — required fields, enum values, ID prefixes, cross-references — and reports each error with a suggested fix. Read-only: it never edits a file. The writer tools already validate before they persist, so this is an on-demand audit of the whole project. Asked about genealogical impossibilities or GPS quality, it hands the request back by name. | "Validate the project files" / "Is the schema valid?" |
+| **source-evaluation** | Audits the sources already attached to a person's FamilySearch profile. Classifies each finding as an indexing error (re-read the original and correct the index), a genuinely misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do) — and where the evidence does not decide between the first two, says so rather than picking one. A source that merely states a fact more precisely than the profile is reported as an improvement, not a contradiction. A disagreement between two attached sources is characterised and handed on with no verdict, since weighing them belongs to the conflict workflow. Closes with FamilySearch's own profile checklist — its completeness and source-tagging suggestions, grouped by category and kept out of the findings count, because they are suggestions rather than errors. Read-only. | "Evaluate the sources on this profile" / "Are these sources right?" |
 | **survey-surname** | Tabulates every household of a surname across a place's US federal censuses — one `record_search` per census year, staged results, a markdown table sectioned by year. Stops and asks for counties when a single year exceeds 600 matches. | "Find every Dixon family in Virginia" / "List all the Smiths in Ohio censuses 1820-1850" |
 
 ## Recommended workflow
@@ -488,7 +488,9 @@ What's shipped:
   as a markdown file), `search-wikipedia` (one encyclopedia lookup saved as a markdown file),
   `tree-edit` (direct corrections to the tree, and person merges after a proof
   conclusion), `hypothesis-tracking` (competing-candidate hypotheses, and the
-  only writer of `hypotheses`), `locality-guide` (the records survey for one
+  only writer of `hypotheses`), `source-evaluation` (read-only audit of the
+  sources attached to one FamilySearch profile), `project-status` (read-only
+  summary of where the research stands), `locality-guide` (the records survey for one
   place and period), `historical-context` (narrative historical context for
   interpreting records — boundary changes, naming conventions, migration),
   `image-reader` (page OCR), `project-status` (a read-only report of where the research stands) and `survey-surname` (surname

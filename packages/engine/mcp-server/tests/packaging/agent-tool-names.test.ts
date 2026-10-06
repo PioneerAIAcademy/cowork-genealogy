@@ -783,6 +783,22 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // The folded source-evaluation skill (issue #2796) holds the four tools that
+  // skill declared, plus `Read` for the Narration line's read of research.json
+  // and the name match against tree.gedcomx.json. Writes nothing, so no hook
+  // route. A request belonging to conflict-resolution, check-warnings or
+  // record-extraction is handed back by name, so no spawn tool.
+  "source-evaluation.md": {
+    tools: [
+      "Read",
+      "person_read",
+      "record_read",
+      "source_attachments",
+      "person_quality",
+    ],
+    denies: [],
+  },
+
   "translation.md": {
     tools: ["Read"],
     denies: [],
