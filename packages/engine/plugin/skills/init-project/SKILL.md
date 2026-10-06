@@ -28,7 +28,7 @@ If `research.json` already exists, do not initialize: make no MCP tool call and 
 
 **Narration** (initialize path only — the guard clause above reads nothing): the house style under "Researcher profile" below, verbatim. No preamble per action; one report when the project is written.
 
-**Places:** Follow `references/places-guidance.md`. Keep the `standard_place` a `person_read` fact carries; resolve anything else — hand-entered, or a fact returned with `place` and no `standard_place` — with `place_search`.
+**Places:** Follow `references/places-guidance.md` for places you enter by hand (stubs, the objective-only build): resolve each with `place_search`. Places from `person_read` are handled by `project_create`.
 
 ## Opening turn
 
@@ -81,9 +81,9 @@ them again," or "leave his death out so I can check you re-derive it." Your job
 here is unchanged: **build the complete tree and stop.** Never hand-omit anything
 at construction time, and never perform the forgetting yourself.
 
-Build the tree exactly as you normally would — every person, relationship, and
-documentary fact the survey turns up, *including the very slice they asked you to
-leave out*. Then finish init-project normally and tell the researcher the tree is
+Create the project from the read exactly as you normally would: `project_create`
+builds every person, relationship, and documentary fact from it, *including the
+very slice they asked you to leave out*. Then finish init-project normally and tell the researcher the tree is
 complete and that forgetting is a **separate next step** they run with the
 **forget-and-rederive** skill. In this skill you do **not**:
 
@@ -126,42 +126,25 @@ Call `person_read({ personId: "<id>", projectPath })`. It returns simplified Ged
 
 **Pass `projectPath` too.** For a non-living subject the `sources` array also carries that person's **memories** — scanned wills, certificates, obituaries, family stories — each with `text` when the read transcribed it, `image_ref` when a scan was retained, and a `notes` entry when it was not. `projectPath` is what retains those scans; without it they are transcribed but not kept.
 
+The response carries `staged.resultsRef`: the read, kept on the host. Step 4 passes it to `project_create`. If `staged` is absent or `null`, call `person_read` once more; if it is still missing, tell the user the project could not be created, quoting `stagingError` when present, and stop. Never type the tree out yourself.
+
 **User-stated facts vs. FamilySearch conflicts:**
 - **tree.gedcomx.json:** use FamilySearch data (the source being surveyed)
 - **Research objective:** use the user's stated facts, in the user's own wording (reflects user's understanding). Do not add the subject's vitals — birth/death dates or places — from `person_read`/FamilySearch to the `objective`, even when the user stated none: those belong in the tree, and the objective records the user's stated direction, not the record's
 - **Flag the discrepancy** with user's statement first: "You stated [Y]; FamilySearch shows [X] — both will need verification."
 - Never frame the user's information as an error.
 
-### 3. Build the tree from `person_read`
+### 3. Additions: people the researcher's statements imply
 
-Build the simplified-GedcomX document in memory — you pass it to `project_create` in Step 4, which writes it. Do NOT write either project file yourself; `Write` on them is blocked. Follow `references/simplified-gedcomx-summary.md`.
+`project_create` builds the tree from the staged read: every person, relationship, and source, with its ids and source references. Do not copy the read into a tree. Your only tree input is **additions**, people the read does not contain that the researcher's own statements imply.
 
-**`person_read` already returns this format** — `{ "persons": [], "relationships": [], "sources": [] }`, snake_case, no field renaming. It also returns a top-level `notes` array when it dropped a relationship whose other end it could not return; that is a sibling of `persons`, not a source field, and never goes in the tree. What it returns is still not persistable as-is: its ids, its source `notes`, and its missing source refs all need work below. Everything else — including both standardized sidecars — is carried through untouched.
+An addition is a person with a label `id` (`A1`, `A2`…), `gender`, and `names`; a relationship to someone from the read names that person by FamilySearch ID. Use `Male`/`Female`/`Unknown`; ParentChild uses `parent`/`child`, Couple uses `person1`/`person2`. Shape additions and an objective-only tree per `references/simplified-gedcomx-summary.md`.
 
-**Include:** subject person (names, facts), all relatives (parents, siblings, spouse, children), every person's person-level `sources` refs, all relationships, all source descriptions in the top-level `sources` array — minus `notes`, `text`, `image_ref` and `artifact_url`, none of which are allowed source fields and each of which fails the write. (`text` carries a memory's story text or OCR; keep it for Step 4b, then drop it from the tree.) A person object allows only `id`, `ark`, `living`, `gender`, `names`, `facts`, `sources`. `ark` is what marks a person as being *in* the FamilySearch tree, so every person read from it carries `ark: "ark:/61903/4:1:<their FamilySearch person ID>"` — that exact form, which is what `person_search` returns for the same person. Omit the key entirely on local stubs. Never a page URL, never a bare ID.
+Count attached sources from the read's top-level `sources` array, never from per-fact refs, and never call FamilySearch data "unsourced".
 
-**ID conventions:** ALL persons get local `I` IDs (`I1`, `I2`…) — including FamilySearch-seeded persons. Do NOT use FamilySearch PIDs as person IDs. Names `N1`…; facts `F1`…; relationships `R1`…; sources `S1`… — mint any the tool did not supply (it returns no name or relationship IDs), rewrite every relationship endpoint to the new person IDs, and rewrite every person-level `sources[].ref` to the new ID of the source it names.
+**With no FamilySearch data (objective-only build),** build the people the researcher stated as a tree, with local `I` ids for persons, and pass it as `tree`. `project_create` assigns any missing name, fact, or relationship id and cites the researcher's statement for anything unsourced.
 
-**Source every FamilySearch fact with `quality: 1`** (questionable — compiled/unverified tree data). Create one source description for the FamilySearch tree using only the schema-allowed fields (`id`, `title`, `citation`, `author`, `url` — NO `quality`, `notes`, `repository`, or `accessed`). Then attach a source reference to every fact and relationship (`quality` goes here, on fact-level refs, not on source descriptions):
-```json
-{ "id": "F1", "type": "Birth", "date": "~1845", "standard_date": "Abt 1845", "place": "Ireland", "standard_place": "Ireland", "sources": [{ "ref": "S1", "quality": 1 }] }
-```
-A relationship needs its OWN `sources` ref too — on the relationship object itself, not only on facts nested inside it:
-```json
-{ "id": "R1", "type": "Couple", "person1": "I1", "person2": "I2", "facts": [ ... ], "sources": [{ "ref": "S1", "quality": 1 }] }
-```
-
-The top-level `sources[]` array you already surveyed above is not the same thing as this per-fact `sources` ref — a fact with no ref yet just means you haven't attached one, not that no sources exist at all. If `person_read`'s result is too large to `Read` directly, count `len(sources)` on the top-level array before drawing any conclusion about how many sources are attached.
-
-`person_read` facts arrive with two standardized sidecars — `standard_place` and `standard_date`. **Carry both through exactly as returned; never re-derive either from the raw `place`/`date`.** Hand-entered places, and any returned fact with a `place` but no `standard_place`: resolve with `place_search` and use `standardPlace` from the first result. Never copy `place` into `standard_place`.
-
-Do NOT call data "unsourced" — it IS sourced to the FamilySearch tree. `quality: 1` signals it's unverified.
-
-**With no FamilySearch data (objective-only build), the researcher's own statement is the source.** Create one source description for it and attach a `quality: 1` reference to every fact and relationship built from it, exactly as for a tree import. Do not leave hand-built facts with no `sources` array: a sourceless fact reads downstream as a claim with no provenance, and it is not what "unsourced" means here.
-
-**Simplified GedcomX rules:** gender as flat string (`Male`/`Female`/`Unknown`); names with `given`, `surname`, optional `preferred: true`; facts with PascalCase `type`; ParentChild uses `parent`/`child`; Couple uses `person1`/`person2`; `preferred`/`primary` omit-when-false.
-
-**No placeholder unknown-person stubs.** Create stubs only for people with at least one concrete identifying detail. A known surname alone qualifies — when a maiden name is stated, it fixes a surname in that woman's **parental line**, but does not by itself tell you *which* parent carries it. Assuming it is the father assumes patrilineal surname descent without evidence — an unsound assumption, and the canonical example of one ("a bride's surname is the same as her parents' surname"); unsound assumptions need positive evidence, not a default. Create one stub for that parent, sex left unspecified, linked via a `ParentChild` relationship — do not label or default it as "father." **Spell the unknown given name as `given: ""` — do NOT omit the key.** `given` is required on every name; a surname-only stub is `{"id": "N1", "preferred": true, "given": "", "surname": "Donovan"}`. **Set this person's `gender` to `"Unknown"` — do NOT omit the key.** `gender` is required on every person; a stub missing it fails the write for both project files, not just this person.
+**No placeholder unknown-person stubs.** Create stubs only for people with at least one concrete identifying detail. A known surname alone qualifies — when a maiden name is stated, it fixes a surname in that woman's **parental line**, but does not by itself tell you *which* parent carries it. Assuming it is the father assumes patrilineal surname descent without evidence — an unsound assumption, and the canonical example of one ("a bride's surname is the same as her parents' surname"); unsound assumptions need positive evidence, not a default. Create one stub for that parent, sex left unspecified, linked via a `ParentChild` relationship — do not label or default it as "father." **Spell the unknown given name as `given: ""` — do NOT omit the key.** `given` is required on every name; a surname-only stub is `{"id": "A1", "gender": "Unknown", "names": [{ "given": "", "surname": "Donovan" }]}` (an `I` id in the objective-only build). **Set this person's `gender` to `"Unknown"` — do NOT omit the key.** `gender` is required on every person; a stub missing it fails the write for both project files, not just this person.
 
 **Stub only the people the user actually named or directly implied — no others.** A stated maiden name implies exactly one new person: that woman's parent (not specifically her father).
 
@@ -185,10 +168,14 @@ When unsure: did the user name them, or is their surname fixed by a stated maide
 **Call `project_create` once.** It writes both files together, validated against each other. It assigns `id`, `status`, `created` and `updated` — do not supply them.
 
 ```
-project_create({ projectPath, objective, title, subjectPersonIds: ["I1"], tree: <Step 3> })
+project_create({ projectPath, objective, title, personReadRef: <staged.resultsRef>, subjectPersonIds: ["<subject's FamilySearch ID>"], tree: { persons: [<additions>], relationships: [<their links>] } })
 ```
 
-`objective` from Step 1; `title` a concise 3-6 word session name (e.g. "Patrick Flynn's parents"); `subjectPersonIds` the primary subject's local tree ID. It refuses a subject ID your tree does not contain, and refuses if a project already exists.
+`objective` from Step 1; `title` a concise 3-6 word session name (e.g. "Patrick Flynn's parents"); `personReadRef` the subject's `staged.resultsRef` (if you read more than one person, the subject's); `subjectPersonIds` the subject's FamilySearch ID. Omit `tree` when there are no additions. With no FamilySearch data, omit `personReadRef` and pass the Step 3 tree, with `subjectPersonIds` its local `I` id.
+
+The result's `idMap` gives the tree ids assigned: `persons` (FamilySearch ID → `I` id), `sources` (FamilySearch source id → `S` id), `additions` (your labels → `I` ids). Use those ids in every later step.
+
+If `project_create` refuses with `subject_person_ids contains '<the subject's FamilySearch ID>' which is not in tree.gedcomx.json persons`, the installed extension predates `personReadRef`: tell the user to update it, and stop. Any other refusal is about your call: fix it and call again.
 
 Then relay to the user that the project was created, naming the folder.
 
@@ -202,7 +189,7 @@ Then relay to the user that the project was created, naming the folder.
 
 Record it **only** when the researcher volunteers access unprompted — the question was dropped, not the field. The enum is closed, so normalize before writing: case-fold and map to `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `FamilySearch-Partner` (a partner subscription held through FamilySearch), `LibraryAccess` (public library, family history centre, or affiliate library), or `other` for anything unrecognized. A plain FamilySearch account is the baseline everyone has — never store it. If nothing survives normalization, omit the field; never write `["none"]` or `[]`.
 
-**Memory sources** — for each Step 3 source that arrived with `text`, one `{ section: "sources", op: "append", entry: {...} }`. Put the `text` verbatim in `transcription`, the source's `image_ref` in `image_filename` (omit if absent), and point `gedcomx_source_description_id` at that SAME source's id in the tree you just wrote — never a second, duplicate entry for it. `source_classification` is `original` for a scanned record, `derivative` when the memory is a transcription or abstract of one, `authored` for a family-written story. Fill the rest from the memory itself:
+**Memory sources** — for each `person_read` source that arrived with `text`, one `{ section: "sources", op: "append", entry: {...} }`. Put the `text` verbatim in `transcription`, the source's `image_ref` in `image_filename` (omit if absent), and point `gedcomx_source_description_id` at `idMap.sources[<that source's id>]` — never a second, duplicate entry for it. `source_classification` is `original` for a scanned record, `derivative` when the memory is a transcription or abstract of one, `authored` for a family-written story. Fill the rest from the memory itself:
 
 ```
 { "section": "sources", "op": "append", "entry": {
@@ -220,13 +207,13 @@ Record it **only** when the researcher volunteers access unprompted — the ques
 
 A memory whose `notes` says it was not transcribed gets **no** `sources` entry — never one with `transcription: null`. It is already in `tree.gedcomx.json` with its title and URL, which is the lead; a `sources` entry would assert it was examined. Name each one in the Step 5 report, which has a bullet for them. If no memory was transcribed, `sources` stays empty.
 
-**`known_holdings`** — one `{ section: "known_holdings", op: "append", entry: {...} }` per reported item: `holding_type` (from mapping table), `description` (researcher's own words), `relevant_facts` (what it supplies; `null` if not stated), `relates_to_person_ids` (local `I` IDs that exist in the tree; `[]` if none), `confidence` (`confident`/`unsure`), `promoted` (`false`). The tool assigns `id` and `created`. If no holdings were reported, call nothing.
+**`known_holdings`** — one `{ section: "known_holdings", op: "append", entry: {...} }` per reported item: `holding_type` (from mapping table), `description` (researcher's own words), `relevant_facts` (what it supplies; `null` if not stated), `relates_to_person_ids` (`I` ids from `idMap`; `[]` if none), `confidence` (`confident`/`unsure`), `promoted` (`false`). The tool assigns `id` and `created`. If no holdings were reported, call nothing.
 
 ### 5. Pedigree analysis and project summary
 
 **First, invoke `@plugin:check-warnings` once, naming the subject and every
-imported relative by their LOCAL tree id from Step 3 (`I1`, `I2`… — never
-the FamilySearch PID or `ark`, even when the tree summary below lists both),
+imported relative by their tree `I` id from `idMap` (never the FamilySearch
+PID or `ark`, even when the tree summary below lists both),
 and asking it to check all of them.** Fold what it returns into the findings
 below exactly as check-warnings frames it — never restate a timeline
 impossibility as one more line on the "Obvious error detection" list below,
@@ -286,8 +273,8 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 
 1. Call `person_read({ personId: "KWCJ-RN4", projectPath })`
 2. Receive: Patrick Flynn, Male, Birth ~1845 Ireland, Death 1908-03-12 Schuylkill County PA. No parents. Spouse: Mary Kelly. Children: James, Margaret. Attached sources.
-3. Build the tree in memory — all persons, relationships, sources (quality: 1).
-4. `project_create({ projectPath, objective, title, subjectPersonIds: ["I1"], tree })`. Tell the user where the project was created.
+3. No additions: the user named no one the read lacks.
+4. `project_create({ projectPath, objective, title, personReadRef: <staged.resultsRef>, subjectPersonIds: ["KWCJ-RN4"] })`. Tell the user where the project was created.
 5. `research_append` for `researcher_profile` (the fixed novice profile) and one per volunteered holding.
 6. `@plugin:check-warnings` for I1, Mary Kelly, James, and Margaret. Pedigree
    analysis + summary, folding in whatever it returns. Mary Kelly and the
@@ -298,7 +285,7 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 
 - **Never overwrite an existing project.** Guard clause catches this.
 - **v1 is read-only.** tree.gedcomx.json is not uploaded to FamilySearch.
-- **Use local GedcomX IDs** (`I1`, `I2`…) in both project files, including FamilySearch-seeded persons.
+- **The project files use local `I` ids**, assigned by `project_create`. Before it, name a person from the read by FamilySearch ID; after it, by the `I` id in `idMap`.
 - **Include relatives** (FAN principle), **siblings included**. Known relatives from the start give downstream skills persons to link to. `person_read` returns siblings by reading each parent; a half-sibling comes back linked to the shared parent only, which is the truth of what was imported.
 - **Treat imported data as unverified.** FamilySearch tree is collaborative, quality varies. Never silently correct errors — flag them.
 - **Recording conventions:** maiden (birth) surnames for women; places most-specific to most-general; jurisdictions as they existed at event time; ISO 8601 dates in JSON.

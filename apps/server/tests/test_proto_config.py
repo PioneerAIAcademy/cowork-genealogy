@@ -24,7 +24,8 @@ topology exists to make, so a well-meaning edit cannot quietly undo one:
   reads under the worker's anchor, and is waited on by proto-up but never by
   proto-up-core (the D3 smoke must not gate on the engine image);
 - U11: the base worker, and no other service in any compose file, sets DEV_PATHS=true,
-  and it names its tool server as a literal.
+  and it names its tool server as a literal;
+- U13: the base web tier, and no other service in any compose file, sets DEV_LOGIN=true.
 
 No Docker needed: the compose files parse as YAML; the HOCON conf and the SQL are
 read as text with their comments stripped first, so a comment that *mentions*
@@ -305,6 +306,20 @@ def test_no_other_compose_service_sets_dev_paths():
             assert "DEV_PATHS" not in env, f"{path.name}: {name} sets DEV_PATHS"
             if name == "worker":
                 assert "TOOL_SERVER_URL" not in env, f"{path.name} overrides the worker's TOOL_SERVER_URL"
+
+
+
+def test_compose_opts_the_web_tier_into_dev_login_and_nothing_else():
+    """U13: dev-login is opt-in (web/auth.py dev_login_enabled). Compose's web tier opts in
+    with a literal, so no host variable at `up` time switches it; no other service or
+    overlay sets it."""
+    files = sorted(PROTO.glob("docker-compose*.yml"))
+    assert COMPOSE in files and len(files) >= 4
+    assert _env(_service(_load(COMPOSE), "web")).get("DEV_LOGIN") == "true"
+    for path in files:
+        for name, service in (_load(path).get("services") or {}).items():
+            if (path, name) != (COMPOSE, "web"):
+                assert "DEV_LOGIN" not in _env(service or {}), f"{path.name}: {name} sets DEV_LOGIN"
 
 
 def _wait_services(line: str) -> list[str]:
