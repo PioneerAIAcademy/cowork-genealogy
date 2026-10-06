@@ -6,6 +6,7 @@ no live run, no Anthropic API — runs in `make harness-test`.
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -195,3 +196,77 @@ def test_incumbent_baseline_overlays_human_corrections(tmp_path):
 
 def test_incumbent_baseline_none_when_no_runlog(tmp_path):
     assert incumbent_baseline("citation", tmp_path) is None
+
+
+# ---- snapshot drift detection -------------------------------------------
+
+
+def test_incumbent_baseline_populates_snapshot(tmp_path):
+    """The Baseline must carry the snapshot from the run-log envelope."""
+    skill = "citation"
+    d = tmp_path / "unit" / skill
+    d.mkdir(parents=True)
+    snap = {"packages/engine/plugin/skills/citation/SKILL.md": "abc123"}
+    (d / "v1_2026-07-16_10-00-00.json").write_text(json.dumps({
+        "timestamp": "2026-07-16_10-00-00",
+        "snapshot": snap,
+        "tests": [{
+            "test_id": "ut_citation_002",
+            "outcome_summary": {"aggregated_dimensions": [
+                {"source": "base", "name": "Correctness", "score": 3, "rationale": "r"},
+            ]},
+        }],
+    }), encoding="utf-8")
+
+    b = incumbent_baseline(skill, tmp_path)
+    assert b is not None
+    assert b.snapshot == snap
+
+
+def test_snapshot_drift_detected_on_non_skill_path(tmp_path):
+    """When a non-skill path in the baseline snapshot differs from disk, the
+    drift must be detected — this is the case that fires NEEDS YOUR EYES."""
+    from harness.snapshot import diff_snapshot_vs_disk, normalize, hash_content
+
+    skill = "citation"
+    skill_md_rel = f"packages/engine/plugin/skills/{skill}/SKILL.md"
+    fixture_rel = "eval/tests/unit/citation/rubric.md"
+
+    # Write the fixture file on disk with known content.
+    fixture_abs = tmp_path / fixture_rel.replace("/", os.sep)
+    fixture_abs.parent.mkdir(parents=True, exist_ok=True)
+    fixture_abs.write_text("# rubric v2\n", encoding="utf-8")
+
+    # Snapshot recorded a DIFFERENT hash for the fixture.
+    snapshot = {
+        skill_md_rel: "irrelevant-hash",
+        fixture_rel: "stale-hash-that-does-not-match-disk",
+    }
+
+    diffs = diff_snapshot_vs_disk(snapshot, tmp_path)
+    drifted = [p for p in sorted(diffs) if p != skill_md_rel]
+    assert drifted, "expected the fixture to show as drifted"
+    assert fixture_rel in drifted
+
+
+def test_snapshot_drift_excludes_gated_skill_md(tmp_path):
+    """The gated skill's own SKILL.md always differs (it IS the edit being
+    gated). Drift detection must not flag it as a stale-baseline indicator."""
+    from harness.snapshot import diff_snapshot_vs_disk
+
+    skill = "citation"
+    skill_md_rel = f"packages/engine/plugin/skills/{skill}/SKILL.md"
+
+    # Write the skill file on disk with content that differs from snapshot.
+    skill_md_abs = tmp_path / skill_md_rel.replace("/", os.sep)
+    skill_md_abs.parent.mkdir(parents=True, exist_ok=True)
+    skill_md_abs.write_text("edited body\n", encoding="utf-8")
+
+    snapshot = {skill_md_rel: "original-hash-that-differs"}
+
+    diffs = diff_snapshot_vs_disk(snapshot, tmp_path)
+    # The skill's own SKILL.md IS in the diffs (it really differs).
+    assert skill_md_rel in diffs
+    # But after excluding it, nothing remains.
+    drifted = [p for p in diffs if p != skill_md_rel]
+    assert not drifted, "the gated skill's own SKILL.md must be excluded from drift"
