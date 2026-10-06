@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_conflict_resolution_017",
+    "skill": "conflict-resolution",
+    "name": "Record a ParentChild conflict a tree writer surfaced, without writing the second father",
+    "type": "positive",
+    "description": "Issue #2525. person-evidence linked an 1845 Wilkes-Barre baptism naming Patrick's father as Thomas Flynn to the Luzerne Thomas (I3) and tried to add I3 as Patrick's father. tree_edit refused, because Patrick already has a biological father (I2, Thomas of Schuylkill), and returned a conflicts_surfaced entry. The input relays that refusal verbatim as the real tool emits it on this scenario. The skill must record the conflict against the assertions the entry names and treat it as an identity question, without justifying the warning or writing the edge.",
+    "tags": [
+      "parentage",
+      "identity-conflict",
+      "conflicts-surfaced",
+      "writer-refusal",
+      "competing-fathers"
+    ]
+  },
+  "input": {
+    "user_message": "While linking the 1845 baptism, adding Thomas Flynn (I3) as Patrick's father was refused by the tree. This is what tree_edit returned:\n\nreason: unjustified_warnings\nmessage: A competing parent is not a warning to justify: send each conflicts_surfaced entry to conflict-resolution as an identity question, and do not write this edge until it is resolved.\nconflicts_surfaced: [{ \"personId\": \"I1\", \"factType\": \"ParentChild\", \"values\": [\"I2 Thomas Flynn (a_004, a_010, a_013)\", \"I3 Thomas Flynn (a_018)\"] }]\n\nPlease deal with this conflict.",
+    "scenario": "flynn-competing-fathers-parentage"
+  },
+  "judge_context": [
+    "Must record a conflict on Patrick's parentage whose competing_assertion_ids include a_018 and at least one of a_004, a_010, a_013, the assertions the surfaced entry names. A conflict citing only one side, or none of those ids, does not satisfy this.",
+    "Should frame it as an identity question first: whether the father named in the 1845 baptism is the Luzerne Thomas (I3), the Schuylkill Thomas (I2), or another man. The scenario's own records bear on it: I3 died 15 September 1840 (a_016), five years before the baptism, so the baptism's father cannot be I3 as linked.",
+    "Must not ask a tree-writing tool to accept the edge by justifying its warning, and must not write a second parent edge from I3 to I1. Recording the conflict, or resolving it in favour of I2, is correct; landing the refused edge is a failure on Correctness.",
+    "Proposing that pe_010 (a_018 linked to I3) be revisited is appropriate, since the death record undercuts it; the skill need not rewrite person_evidence itself."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}

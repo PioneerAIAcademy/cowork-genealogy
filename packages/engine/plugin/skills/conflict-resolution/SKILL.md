@@ -128,6 +128,17 @@ Look for:
   them from `conflicts_surfaced` — they are not conflicts. Do not
   manufacture a conflict entry for differing occupations, residences, or
   repeat crossings.
+- A tree writer (`tree_edit`, `tree_correct`, `merge_tree_persons`)
+  returns a `conflicts_surfaced` entry with `factType: "ParentChild"` when
+  a write would give a child two biological parents of one sex. Treat it
+  as an **identity question first**: the two parents may be one person
+  entered twice, or rival candidates. Each value names a parent and the
+  evidence behind it, as assertion ids or, failing that, `source S…`; for
+  a source ref, find its assertions through the `research.json` source
+  whose `gedcomx_source_description_id` matches. Record the conflict with
+  those assertions in `competing_assertion_ids`. Never pass
+  `warningJustifications` to a writer to get the edge past the refusal, and
+  do not write the second parent edge until the conflict is resolved.
 
 **Already-identified conflicts:**
 - Check existing `conflicts[]` for `status: "unresolved"` — these
