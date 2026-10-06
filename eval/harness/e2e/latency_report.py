@@ -10,6 +10,7 @@ The raw material is already captured by the orchestrator and persisted into the
 committed result JSON (see e2e/result.py):
 
   - ``usage.duration_ms``      — the SDK's own total wall-clock for the agent loop
+    (the last query's only, on a multi-query run: ``exclusion_reason``)
   - ``usage.duration_api_ms``  — cumulative time awaiting the model API
   - ``usage.num_turns``        — assistant turns
   - ``usage.usage.output_tokens`` (and input / cache counters)
@@ -37,7 +38,8 @@ CLI (from eval/harness/):
   uv run python -m e2e.latency_report path/to/run-<ts>.json [more.json ...]
 
 Two independent decompositions are reported so they corroborate:
-  1. usage-based  — duration_api_ms / duration_ms  (SDK-internal, always present)
+  1. usage-based  — duration_api_ms / duration_ms  (SDK-internal; left out for a
+     multi-query run, whose two figures cover different spans)
   2. timeline-based — inter-message gaps split two ways by the *later* message's
      kind: gaps ending at ``tool_result`` are tool-execution; everything else
      (``assistant`` + ``system:*``) is non-tool (model generation, plus any
@@ -64,7 +66,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from e2e.result import axes_from_runlog
+from e2e.result import axes_from_runlog, result_message_covers_last_query_only
 from e2e.runlog_selection import (
     E2E_RUNLOGS,
     add_since_arg,
@@ -437,6 +439,34 @@ def _load(path: Path) -> LatencyBreakdown:
     return analyze_result(data, source_file=str(path))
 
 
+#: Why an excluded run prints no figures (issue #3128).
+MULTI_QUERY_NOTE = (
+    "its usage, num_turns and duration_ms describe the last query only; its "
+    "duration_api_ms and cost describe the last CLI process, which is the whole "
+    "run unless it resumed after a stall"
+)
+
+
+def exclusion_reason(result: dict[str, Any]) -> str | None:
+    """`"multi-query"` when this run's figures cover only its last query, else None.
+
+    The whole-run summary and the Markdown table print `duration_ms`, API time,
+    turns, tokens and cost. On such a run the ResultMessage's `duration_ms`,
+    turns and tokens cover the last query only and its API time and cost the
+    last CLI process (`result_message_covers_last_query_only`), so the row mixes
+    scopes. The per-skill phase breakdown reads the timeline and
+    `wall_clock_seconds`, which are whole-run, so `--by-skill` does not consult
+    this.
+    """
+    if result_message_covers_last_query_only(result.get("usage")):
+        return "multi-query"
+    return None
+
+
+def format_exclusion(path: Path, reason: str) -> str:
+    return f"  excluded ({reason}): {path}: {MULTI_QUERY_NOTE}."
+
+
 def main(argv: list[str] | None = None) -> int:
     # The house pattern (`e2e/author.py`). A Windows console defaults to cp1252
     # and dies on the arrows and box glyphs this module prints; the team it is
@@ -483,18 +513,33 @@ def main(argv: list[str] | None = None) -> int:
         print("Nothing to analyze. Pass files, --test <slug>, or --all.", file=sys.stderr)
         return 1
 
-    bds = [_load(p) for p in paths]
-
     if args.by_skill:
-        for bd in bds:
+        for bd in [_load(p) for p in paths]:
             print(format_skill_phases(bd))
             print()
-    elif args.markdown:
+        return 0
+
+    # Read each run's usage before `_load` builds its breakdown, so a run whose
+    # figures cover only its last query is named rather than printed (#3128).
+    kept: list[Path] = []
+    excluded: list[tuple[Path, str]] = []
+    for p in paths:
+        reason = exclusion_reason(json.loads(p.read_text(encoding="utf-8")))
+        if reason:
+            excluded.append((p, reason))
+        else:
+            kept.append(p)
+    bds = [_load(p) for p in kept]
+    if args.markdown:
         print(format_markdown_table(bds))
+        if excluded:
+            print()  # a line right after a GFM table would read as another row
     else:
         for bd in bds:
             print(format_breakdown(bd))
             print()
+    for p, reason in excluded:
+        print(format_exclusion(p, reason))
     return 0
 
 
