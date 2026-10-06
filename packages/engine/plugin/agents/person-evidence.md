@@ -323,7 +323,9 @@ persona. Decide the triggers from the assertions and the tree in hand.
      `https://www.familysearch.org/en/wiki/{Jurisdiction}_Emigration_and_Immigration`,
      the state for the United States and the country elsewhere
      (`Kentucky_Emigration_and_Immigration`, `Utah_Emigration_and_Immigration`).
-     Read which origins and eras it names as arriving there.
+     A corridor counts only when the page names people arriving from the
+     record person's own prior country or state, in that era. A sentence about
+     settlers' ancestry or ethnic origin is not a corridor.
    - Search the project for a documentary bridge: a passenger list,
      naturalization, warning-out, land grant, or a relative documented at the
      destination first.
@@ -349,8 +351,10 @@ the tier:
   either side that gives no year. A gap the event cannot explain goes in
   `core_identifier_conflict`.
 - "Residence check: [record place, year] vs [nearest attested residence,
-  year]: same / neighbouring / outside, [what bridged it, or nothing]." A
-  person with no attested residence gets "none attested".
+  year]: same / neighbouring / outside [place_distance km], [the page
+  sentence or record that bridges it, quoted, or nothing]." A person with
+  no attested residence gets "none attested". A line ending "outside ...
+  nothing" caps the link at `probable`.
 
 **Assess match strength.** Weigh the data points above by reasoning
 directly — correlation analysis is the spine of every identity

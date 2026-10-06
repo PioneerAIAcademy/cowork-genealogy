@@ -8,8 +8,7 @@
     "tags": [
       "person-evidence",
       "geography-from-tools",
-      "corridor-move-link",
-      "confidence-calibration"
+      "corridor-move-link"
     ]
   },
   "input": {
@@ -22,6 +21,7 @@
     "place-search-bedfordshire",
     "place-search-salt-lake",
     "place-search-utah",
+    "place-search-england",
     "place-search-any",
     "place-distance-england-utah",
     "place-distance-utah-england",
@@ -37,6 +37,7 @@
   ],
   "judge_reads_files": true,
   "execution": {
-    "max_wall_clock_seconds": 600
+    "max_wall_clock_seconds": 600,
+    "max_tool_calls": 90
   }
 }

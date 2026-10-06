@@ -1364,6 +1364,7 @@ def test_stub_catches_add_person_inside_a_STRINGIFIED_batch():
 # --- Geography and naming read from tools (#2537) -------------------------
 
 _GEO = {"tags": ["person-evidence", "geography-from-tools"]}
+_DIST = {"tags": ["person-evidence", "geography-from-tools", "geography-distance"]}
 _NAMING = {"tags": ["person-evidence", "naming-from-wiki"]}
 
 
@@ -1374,22 +1375,27 @@ def _call(tool, **args):
 def test_distance_fires_when_no_place_distance_call():
     calls = [_call("mcp__genealogy__place_search", placeName="Horsham")]
     with pytest.raises(AssertionError, match="no place_distance call"):
-        check_distance(calls, _GEO)
+        check_distance(calls, _DIST)
 
 
 def test_distance_fires_on_an_empty_call_list():
     with pytest.raises(AssertionError):
-        check_distance([], _GEO)
+        check_distance([], _DIST)
 
 
 def test_distance_passes_under_every_server_spelling():
     for prefix in ("mcp__genealogy__", "mcp__remote-devices__Genealogy_Research__", "mcp__Genealogy_Research__"):
-        check_distance([_call(prefix + "place_distance", standardPlace1="a", standardPlace2="b")], _GEO)
+        check_distance([_call(prefix + "place_distance", standardPlace1="a", standardPlace2="b")], _DIST)
 
 
 def test_distance_stands_down_without_the_tag():
     with pytest.raises(pytest.skip.Exception):
         check_distance([], {"tags": ["person-evidence"]})
+
+
+def test_distance_stands_down_on_the_corridor_case():
+    with pytest.raises(pytest.skip.Exception):
+        check_distance([], _GEO)
 
 
 def test_corridor_fires_when_no_wiki_read():
@@ -1429,7 +1435,7 @@ def test_corridor_reads_stringified_args():
 
 def test_distance_ignores_a_tool_that_only_contains_the_name():
     with pytest.raises(AssertionError):
-        check_distance([_call("mcp__genealogy__place_distance_matrix")], _GEO)
+        check_distance([_call("mcp__genealogy__place_distance_matrix")], _DIST)
 
 
 def test_corridor_tolerates_a_wiki_read_with_null_args():

@@ -1453,12 +1453,13 @@ def _wiki_read_slugs(tool_calls) -> list[str]:
 
 
 def test_geography_measured_with_place_distance(tool_calls, test):
-    """Tag-gated (`geography-from-tools`): a record outside the attested
-    residence cluster must be measured with place_distance, not asserted."""
-    if "geography-from-tools" not in (test.get("tags") or []):
-        pytest.skip("not a geography-from-tools test")
+    """Tag-gated (`geography-distance`): the implausible case must be measured
+    with place_distance, not asserted (issue #2537's acceptance names the
+    implausible case only; the corridor case is checked by its wiki read)."""
+    if "geography-distance" not in (test.get("tags") or []):
+        pytest.skip("not a geography-distance test")
     assert _calls_to(tool_calls, "place_distance"), (
-        "geography-from-tools test made no place_distance call: a record outside "
+        "geography-distance test made no place_distance call: a record outside "
         "the attested residence cluster must be measured (place_search, then "
         "place_distance on the two standardPlaces), not judged from memory. "
         f"Tools called: {sorted({tc.get('tool') for tc in (tool_calls or [])})}"

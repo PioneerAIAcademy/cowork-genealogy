@@ -9,7 +9,7 @@
       "person-evidence",
       "geography-from-tools",
       "unexplained-move-cap",
-      "confidence-calibration"
+      "geography-distance"
     ]
   },
   "input": {
@@ -22,6 +22,7 @@
     "place-search-sussex",
     "place-search-maury",
     "place-search-tennessee",
+    "place-search-england",
     "place-search-any",
     "place-distance-england-tennessee",
     "place-distance-tennessee-england",
@@ -38,6 +39,7 @@
   ],
   "judge_reads_files": true,
   "execution": {
-    "max_wall_clock_seconds": 600
+    "max_wall_clock_seconds": 600,
+    "max_tool_calls": 90
   }
 }
