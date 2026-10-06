@@ -325,6 +325,10 @@ _SEARCH_MCP_TOOLS = frozenset({
 _SEARCH_STEPS = frozenset({
     "search-records", "search-images", "search-familysearch-wiki",
     "search-full-text", "search-external-sites", "search-wikipedia",
+    # Not reachable from the router's table today, but it searches: it tabulates
+    # households across a place's censuses. Listed because reachability changes and
+    # the comment above is right that an omission here is silent.
+    "survey-surname",
 })
 
 
