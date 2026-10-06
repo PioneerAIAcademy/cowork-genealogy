@@ -1,6 +1,6 @@
 {
   "tool": "fulltext_search",
-  "description": "Full-text search returning Flynn family members named as witnesses in a Schuylkill County, Pennsylvania land record",
+  "description": "Broad full-text search for Flynn returning a large result set (847 total) plus a facets array showing collection breakdowns. Used in the too-many-results-boosting test to verify the skill narrows via includeFacets or boost terms rather than reporting all 847 results unfiltered.",
   "args": { "keywords": "~Flynn" },
   "input_schema": {
     "type": "object",
@@ -77,10 +77,10 @@
   },
   "response": {
     "query": { "keywords": "+Flynn" },
-    "totalResults": 1,
-    "returned": 1,
+    "totalResults": 847,
+    "returned": 5,
     "offset": 0,
-    "hasMore": false,
+    "hasMore": true,
     "results": [
       {
         "id": "https://familysearch.org/ark:/61903/1:1:QV9N-YS37",
@@ -90,22 +90,83 @@
         "recordDate": "1878",
         "recordType": "Land",
         "recordPlace": "Schuylkill, Pennsylvania",
-        "textDocument": "Know all men by these presents that James Brennan of Branch Township Schuylkill County Pennsylvania for and in consideration of the sum of two hundred dollars to him in hand paid by Michael Dougherty of the same place the receipt whereof is hereby acknowledged has granted bargained and sold unto the said Michael Dougherty a certain lot or piece of land situate in Branch Township aforesaid bounded and described as follows Beginning at a stone on the public road thence north forty degrees east one hundred perches to a post thence south fifty degrees east sixty perches to a stone thence south forty degrees west one hundred perches to the public road thence along the same north fifty degrees west sixty perches to the place of beginning containing thirty seven acres and a half more or less. Signed sealed and delivered in the presence of Thomas Flynn and Patrick Flynn both of Branch Township Schuylkill County as witnesses to the deed of conveyance this fifteenth day of March in the year of our Lord one thousand eight hundred and seventy eight.",
+        "textDocument": "Signed sealed and delivered in the presence of Thomas Flynn and Patrick Flynn both of Branch Township Schuylkill County as witnesses to the deed of conveyance this fifteenth day of March in the year of our Lord one thousand eight hundred and seventy eight.",
         "names": ["James Brennan", "Michael Dougherty", "Thomas Flynn", "Patrick Flynn"],
         "places": ["Branch Township", "Schuylkill County", "Pennsylvania"],
         "dates": ["1878"],
-        "highlightTerms": ["Flynn", "witness", "witnesses"]
+        "highlightTerms": ["Flynn"]
+      },
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:QV9N-KX84",
+        "collectionId": "2220359",
+        "collectionTitle": "Pennsylvania Land Records",
+        "title": "Mortgage — Patrick Flynn to First National Bank",
+        "recordDate": "1880",
+        "recordType": "Land",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "Patrick Flynn of Branch Township Schuylkill County mortgagee grants unto the First National Bank of Pottsville the following described property ...",
+        "names": ["Patrick Flynn"],
+        "places": ["Branch Township", "Schuylkill County"],
+        "dates": ["1880"],
+        "highlightTerms": ["Flynn"]
+      },
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:QV9N-KX85",
+        "collectionId": "2220359",
+        "collectionTitle": "Pennsylvania Land Records",
+        "title": "Deed — Mary Flynn to Bridget Sullivan",
+        "recordDate": "1882",
+        "recordType": "Land",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "Mary Flynn widow of Branch Township in consideration of natural love and affection doth grant unto Bridget Sullivan her daughter the parcel of land ...",
+        "names": ["Mary Flynn", "Bridget Sullivan"],
+        "places": ["Branch Township", "Schuylkill County"],
+        "dates": ["1882"],
+        "highlightTerms": ["Flynn"]
+      },
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:QV9N-KX86",
+        "collectionId": "2017696",
+        "collectionTitle": "Pennsylvania, Wills and Probate Records, 1683-1993",
+        "title": "Will of James Flynn",
+        "recordDate": "1876",
+        "recordType": "Probate",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "I James Flynn of the Township of Branch being of sound mind do make this my last will and testament ...",
+        "names": ["James Flynn"],
+        "places": ["Branch Township", "Schuylkill County"],
+        "dates": ["1876"],
+        "highlightTerms": ["Flynn"]
+      },
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:QV9N-KX87",
+        "collectionId": "2220359",
+        "collectionTitle": "Pennsylvania Land Records",
+        "title": "Sheriff Deed — County of Schuylkill to Michael Flynn",
+        "recordDate": "1877",
+        "recordType": "Land",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "County of Schuylkill by the Sheriff to Michael Flynn following judgment on foreclosure ...",
+        "names": ["Michael Flynn"],
+        "places": ["Schuylkill County", "Pennsylvania"],
+        "dates": ["1877"],
+        "highlightTerms": ["Flynn"]
       }
     ],
     "facets": [
       {
         "name": "collectionId",
-        "count": 1,
+        "count": 2,
         "items": [
           {
             "name": "Pennsylvania Land Records",
-            "count": 1,
+            "count": 623,
             "filterParam": "2220359"
+          },
+          {
+            "name": "Pennsylvania, Wills and Probate Records, 1683-1993",
+            "count": 224,
+            "filterParam": "2017696"
           }
         ]
       }
