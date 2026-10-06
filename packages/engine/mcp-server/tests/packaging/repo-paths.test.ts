@@ -3,7 +3,15 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { citedLineNumbers, headingAnchors, pathResolves, slugifyHeading } from "./repo-paths.js";
+import {
+  citedLineNumbers,
+  citedMakeTargets,
+  headingAnchors,
+  makeTargetResolves,
+  pathResolves,
+  pathResolvesIn,
+  slugifyHeading,
+} from "./repo-paths.js";
 
 /**
  * Unit tests for the forms the doc lints must read the way GitHub and a reader
@@ -108,5 +116,58 @@ describe("citedLineNumbers", () => {
     expect(
       citedLineNumbers("`docs/foo.md#section`, `9:30`, `1:1:QL69-GBJC`, and docs/a.md:12 outside a span"),
     ).toEqual([]);
+  });
+});
+
+describe("make target citations", () => {
+  const targets = new Set(["e2e-run", "e2e-corpus", "engine-test"]);
+
+  it("reads a family glob after a literal prefix", () => {
+    expect(citedMakeTargets("their `make e2e-*` targets")).toEqual(["e2e-*"]);
+    expect(makeTargetResolves(targets, "e2e-*")).toBe(true);
+    expect(makeTargetResolves(targets, "zz-*")).toBe(false);
+    expect(makeTargetResolves(targets, "engine-test*")).toBe(false);
+  });
+
+  it("does not extract a target that is only a placeholder", () => {
+    expect(citedMakeTargets("run `make <target>`")).toEqual([]);
+  });
+
+  it("still checks a plain target exactly", () => {
+    expect(citedMakeTargets("`make engine-test TEST=x`")).toEqual(["engine-test"]);
+    expect(makeTargetResolves(targets, "engine-test")).toBe(true);
+    expect(makeTargetResolves(targets, "engine-tests")).toBe(false);
+  });
+});
+
+describe("pathResolvesIn (what git can see, not the disk)", () => {
+  const entries = new Set([
+    "docs", "docs/a.md",
+    ".claude", ".claude/agents", ".claude/agents/x.md",
+    "eval", "eval/x", "eval/x/research.json",
+  ]);
+
+  it("resolves literal files and directories, with or without a trailing slash", () => {
+    expect(pathResolvesIn(entries, "docs/a.md")).toBe(true);
+    expect(pathResolvesIn(entries, "docs/")).toBe(true);
+    expect(pathResolvesIn(entries, "docs/b.md")).toBe(false);
+  });
+
+  it("matches a brace or angle placeholder against the real entries", () => {
+    expect(pathResolvesIn(entries, ".claude/{agents,commands,skills}")).toBe(true);
+    expect(pathResolvesIn(entries, ".claude/agents/<name>.md")).toBe(true);
+    expect(pathResolvesIn(entries, "docs/<a><b>/a.md")).toBe(false);
+  });
+
+  it("reads ** as zero or more directories, and a trailing ** as needing an entry", () => {
+    expect(pathResolvesIn(entries, "eval/**/research.json")).toBe(true);
+    expect(pathResolvesIn(entries, "**/a.md")).toBe(true);
+    expect(pathResolvesIn(entries, "eval/**/zz.json")).toBe(false);
+    expect(pathResolvesIn(entries, "eval/x/**")).toBe(true);
+    expect(pathResolvesIn(entries, "eval/x/research.json/**")).toBe(false);
+  });
+
+  it("does not see a gitignored file that exists on this checkout", () => {
+    expect(pathResolvesIn(entries, "eval/.env")).toBe(false);
   });
 });
