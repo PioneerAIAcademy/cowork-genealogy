@@ -896,7 +896,7 @@ def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
     assert options.check_registration(None, expected_agents=AGENTS, expected_skills=11)
 
 
-def test_the_plugin_ships_twenty_two_agents_and_eleven_skills():
+def test_the_plugin_ships_twenty_three_agents_and_ten_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
