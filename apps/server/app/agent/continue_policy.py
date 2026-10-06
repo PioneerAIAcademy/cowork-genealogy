@@ -21,6 +21,7 @@ predicates into a clean namespace without importing ``claude_agent_sdk``.
 from __future__ import annotations
 
 import json
+import math
 import os
 from collections.abc import Mapping
 from pathlib import Path
@@ -208,16 +209,19 @@ def env_int(name: str, default: int, *, env=None, on_error=None, floor: int = 0)
 
 
 def env_float(name: str, default: float, *, env=None, on_error=None) -> float:
-    """``env_int`` for a float. Same reason, same shape; a negative takes the default
-    because every current reader is a price, an interval or a cap, and none of those has
-    a meaning below zero."""
+    """``env_int`` for a float. Same reason, same shape; a negative or non-finite value
+    takes the default because every current reader is a price, an interval or a cap, and
+    none of those has a meaning below zero or at ``nan``/``inf``. Those parse, so they
+    reach ``on_error`` like a typo does (U23: ``-1`` meaning "cap off" was a silent $35)."""
     raw = ((os.environ if env is None else env).get(name) or "").strip()
     if not raw:
         return default
     try:
         value = float(raw)
     except ValueError:
+        value = math.nan
+    if not (math.isfinite(value) and value >= 0):
         if on_error is not None:
             on_error(name, raw, default)
         return default
-    return value if value >= 0 else default
+    return value

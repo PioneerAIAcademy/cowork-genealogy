@@ -704,6 +704,21 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // survey-surname (issue #2065) holds three MCP tools and Write. place_search
+  // resolves the state/county. record_search with projectPath stages results.
+  // research_log_append logs each search page. Write saves the markdown table.
+  // No research_append: the log section is written via research_log_append,
+  // which takes no section argument. No Read: builds from inline stubs.
+  "survey-surname.md": {
+    tools: [
+      "Write",
+      "place_search",
+      "record_search",
+      "research_log_append",
+    ],
+    denies: [],
+  },
+
   // The folded check-warnings skill (issue #2118). `person_quality` is absent by
   // lead ruling 2026-09-27. No `Read`: with it the agent read research.json and
   // the tree and reported what it found there instead of the tool's answer (4

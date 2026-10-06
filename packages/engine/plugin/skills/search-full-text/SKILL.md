@@ -2,21 +2,22 @@
 name: search-full-text
 description: Invoke for FamilySearch full-text search (FTS) — immediately
   when the user says "full-text search", "FTS", "search document
-  transcripts", or "construct a full-text query". Use this skill to find a
-  person as a witness, executor, executrix, administrator, appraiser, heir,
-  neighbor, surety, or other non-principal in deeds, probate, wills, court
-  minutes, or notarial protocolos; to run Lucene-style queries with
-  +required terms, wildcards, or phrase matching; and to cover spelling and
-  transcription variants across FamilySearch's AI-transcribed historical
-  documents. FamilySearch document images only. Exclude external sites like
-  Ancestry or Newspapers.com (use search-external-sites), structured
-  indexed search by name/date/place (use search-records), and planning what
-  to search (use research-plan). Do NOT use to scope a new project or
-  propose opening questions with no plan item yet (use question-selection),
-  or when the user has a record in hand wanting extraction (use
-  record-extraction).
+  transcripts", or "construct a full-text query". Use to find a
+  non-principal (witness, executor, heir, neighbor, surety) in deeds,
+  probate, wills, court minutes, or notarial protocolos; or a principal
+  in bulk-digitized unindexed records; to run Lucene-style queries with
+  +required terms, wildcards, or phrase matching; and to cover spelling
+  and transcription variants across FamilySearch's AI-transcribed
+  historical documents. FamilySearch document images only. Exclude
+  external sites like Ancestry or Newspapers.com (use
+  search-external-sites), structured indexed search by name/date/place
+  (use search-records), and planning what to search (use research-plan).
+  Do NOT use to scope a new project or propose opening questions with no
+  plan item yet (use question-selection), or when the user has a record
+  in hand wanting extraction (use record-extraction).
 allowed-tools:
   - fulltext_search
+  - get_name_variants
   - source_attachments
   - research_log_append
   - research_append
@@ -33,7 +34,8 @@ historical document images. FTS searches the raw transcript text of
 those images — a fundamentally different search surface than indexed
 Records search. FTS finds people mentioned
 anywhere in a document (witnesses, neighbors, heirs, appraisers),
-not just indexed principals.
+and finds any person — principal or not — in a paragraph-style record
+that was never name-indexed.
 
 This skill is the FTS counterpart to search-records (indexed search)
 and search-external-sites (non-FamilySearch repositories).
@@ -51,10 +53,10 @@ This skill uses one search tool:
 FTS and indexed search are completely different systems:
 
 - **What's searched:** Raw transcript text, not structured name/date/place fields.
-- **No fuzzy matching** in `keywords` and `place` fields. Exact text only — no nicknames, phonetic variants, or Soundex. The `name` field auto-expands recognized English given names with historical diminutives.
-- **No abbreviation expansion** in `keywords` and `place` fields. The `name` field auto-expands (e.g. Elizabeth also matches Betty, Bess, Eliza).
+- **No fuzzy matching** in any field. Exact text only — no nicknames, phonetic variants, or Soundex. Use `get_name_variants` to build an explicit variant set and run each as a separate query.
+- **No abbreviation expansion** in `keywords`, `place`, or `name` fields. Run abbreviations explicitly.
 - **Default is OR** — at least one term must appear. Always use `+` to require terms in `keywords`.
-- **Unique strength:** Finding non-principal mentions (witnesses, neighbors, heirs).
+- **Unique strength:** Finding non-principal mentions (witnesses, neighbors, heirs), and finding any person in a paragraph-style record that was never name-indexed, principal included.
 
 FTS results are derivative sources (original → image → AI transcript,
 ~10% error rate). **Always verify against the original image.**
@@ -121,7 +123,7 @@ you nothing. Do not drop an instruction that does not depend on the page.
 
 | Research goal | Query approach |
 |---|---|
-| Find person as witness/appraiser/heir | `Surname` in Name field (no `+` — it disables auto-expansion), place filter after |
+| Find person as witness/appraiser/heir | `+Surname` in Keywords first; if ≥1 result, triage and stop — do not run variants; if nil, call `get_name_variants` and try alternate spellings (filter-free); if NLP missed the name, retry with `Surname` in Name field |
 | Find person in narrative records | `+GivenName +Surname` in Keywords, place filter after |
 | FAN cluster search | `+TargetSurname +AssociateSurname` in Keywords |
 | Compound surname parentage (Iberian `Paterno Materno`) | `+PaternalSurname +MaternalSurname` co-occurrence — **never** as one phrase (see step 4 rules) |
@@ -134,40 +136,47 @@ Read `references/query-syntax.md` for operator details and wildcards.
 **Critical rules:**
 - **Always use `+` to require terms in `keywords`.** Default is OR,
   which returns millions of irrelevant results. Do NOT use `+` in the
-  `name` field — it disables auto-expansion of diminutives, and terms
-  are already required by `m.queryRequireDefault`.
-- **Search by name only first.** Do NOT send `recordPlace0/1/2/3`,
-  `yearFrom`/`yearTo`, or `recordType` on the first `fulltext_search`
-  call for a query — whether as `keywords` text or a structured
-  argument, both count as "the initial query." **This holds even when
-  the user's own request phrases the place in the same sentence as the
-  person** — "find X as a witness in Schuylkill County, Pennsylvania"
-  is still an unscoped first call (`keywords: "+X +witness"`, no
-  `recordPlace*`); the place is a post-search filter to add on a later
-  call, not part of the request's wording to carry into the first one.
-  The log entry for that first call is unscoped too (step 7) — do not
-  resolve the temptation to include the place by adding it to the call
-  instead of dropping it from the log. See `references/query-syntax.md`'s
-  "Filters (post-search)" section for why, and the decision ladder below
-  for when to add them.
-- **Do NOT scope a full-text search to a record `collectionId`.** The
-  FTS corpus is partitioned into its own auto-generated collections;
-  a `collectionId` guessed from `record_search` (or from a collections
-  survey) frequently does **not** contain the FTS volume that holds the
-  answer, so scoping silently drops it. Search the whole corpus first;
-  narrow with `recordPlace*` / `recordType` / year filters (or a
-  known `imageGroupNumber`) only after you have hits.
+  `name` field — `m.queryRequireDefault` requires at least one term to match.
+- **Scope by place when the plan or the user names the jurisdiction** — in
+  the `place` field (plain text; it matches collection metadata), or in
+  `recordPlace*` with a place `filterParam` from an `includeFacets` response
+  (e.g. `10,Pennsylvania`). A plain-text `recordPlace*` value silently returns
+  zero. `yearFrom`/`yearTo` and record-type filters are allowed too, but collection
+  metadata dates can be off, so treat them more cautiously. **If a
+  post-search-filtered keywords search returns zero results, re-run it with
+  ALL post-search filters removed (place, year range, and record type).**
+  Never add post-search filters to spelling-variant or wildcard queries —
+  run those filter-free. If the primary search returns ≥1 result, stop and
+  triage those results; do not continue running variants for the same target.
+- **Never borrow a `collectionId` from `record_search` or a collections
+  survey.** The FTS corpus uses its own auto-generated partitions that
+  do not map 1:1 onto indexed-record collection IDs; a borrowed ID
+  silently excludes the very FTS volume that holds the answer. The safe
+  path: pass `includeFacets: true` on the first call; the response
+  `facets` array gives `filterParam` values that are real FTS partition
+  IDs. Use only those on scoped follow-up calls — never a borrowed ID.
+  See `references/query-syntax.md` "Scoping FTS to a collection ID" for
+  the two-call pattern. **This is a mandatory sequential two-step: (1)
+  send a call with `includeFacets: true` explicitly and wait for its
+  response, (2) use a `filterParam` value from that response's `facets`
+  array as the `collectionId` on the follow-up call. You MUST send
+  `includeFacets: true` — the server may return facets without it, but
+  those do not authorize a scoped follow-up. Never submit the scoped
+  call in the same parallel batch as the `includeFacets: true` call.**
 - **Decompose a compound surname into co-occurrence, not a phrase.**
   For an Iberian / Latin-American name (`Given Paterno Materno`, e.g.
   "Francisco **Naveda Somarriba**"), require the two surnames as
   separate terms — `+Naveda +Somarriba` — **never** `+"Naveda
-  Somarriba"`. The parents' own records name the father with the
-  paternal surname and the mother with the maternal, so the words are
-  on **different people and not adjacent**. See `references/query-syntax.md`
+  Somarriba"`. In the father's own records he is named with the
+  paternal surname and the mother with hers, so the words sit on
+  different people and are not adjacent there. A married woman is
+  often written with her own surnames plus her husband's ("María
+  Somarriba de Naveda"), where adjacency is available — the
+  co-occurrence still covers that case, and the phrase form still
+  misses the parentage records you want. See `references/query-syntax.md`
   for escalation once the mother's fuller form is known.
-- **Abbreviations must be searched explicitly** in `keywords` and
-  `place` fields. FTS does not auto-expand (Wm/William, Thos/Thomas)
-  there. The `name` field auto-expands recognized English given names.
+- **Abbreviations must be searched explicitly** in all fields. FTS does not auto-expand (Wm/William, Thos/Thomas).
+  Use `get_name_variants` to build an explicit given-name variant set and run each as a separate query.
 - **Mine prior records for known surname variants before querying.**
   Scan existing `research.json` assertions and log entries for the
   target surname. If prior records show a transcription variant,
@@ -179,7 +188,12 @@ Read `references/query-syntax.md` for operator details and wildcards.
 # Require both terms; always pass projectPath for result staging
 fulltext_search({ keywords: "+Patrick +Flynn", projectPath })
 
-# Compound-surname parentage: co-occurrence, UNSCOPED (no collectionId)
+# includeFacets: get real FTS partition IDs from the first call
+fulltext_search({ keywords: "+Flynn +Patrick", includeFacets: true, projectPath })
+# Scoped follow-up using a facet-derived collectionId
+fulltext_search({ keywords: "+Flynn +Patrick", collectionId: "<filterParam from the Collection group in facets>", projectPath })
+
+# Compound-surname parentage: co-occurrence
 fulltext_search({ keywords: "+Naveda +Somarriba", projectPath })
 
 # Natural language search / tree person ID
@@ -193,7 +207,11 @@ fulltext_search({ keywords: "+Fl?nn +Patrick" })
 
 Call `fulltext_search` with the constructed query. This skill **logs
 every search**, so `projectPath` (the absolute path to the project
-folder) is **mandatory on every call** — never omit it. When supplied,
+folder) is **mandatory on every call** — never omit it. **Execute every
+planned search for the task before logging any results or calling
+`research_append`.** Do not stop after the first search if the plan
+item or the user's message requires multiple queries (e.g., separate
+searches for two different people). When supplied,
 the host stages the raw results and the response gains a
 `staged.resultsRef` handle you hand to `research_log_append` in step 7
 to retain them — you never serialize the payload yourself.
@@ -254,14 +272,20 @@ attachment status. Let the user confirm which records to examine.
 ### 7. Retain results and write the log entry
 
 **Every search gets a log entry — no exceptions.** Call
-`research_log_append` once per search. **`query` must mirror exactly the
+`research_log_append` once per search. **Log positive results immediately
+— call `research_log_append` in the same turn as the `fulltext_search`
+that returned them. Do not defer logging while more searches run.**
+For a nil result only: complete all retries for that specific nil query
+first — then log the nil and the retry together. If a filtered search
+returns zero and requires an unfiltered retry, run the retry first — then
+log both (or just the final result if the retry was positive). **`query` must mirror exactly the
 arguments the `fulltext_search` call actually sent.** Record only a filter
 the call actually sent — never add one the call itself omitted, even one
 the user mentioned, one a later call will add, or one that matches the
 locality under research; and never one merely because the response echoes
 it back — the tool echoes your own request, so an echoed key you did not
-send is not a filter you applied. An unscoped first call (step 4) logs an
-unscoped `query`; a filter only appears once it is actually sent in a call:
+send is not a filter you applied. A call sent with no filter logs a
+`query` with no filter key; a filter only appears once it is actually sent in a call:
 
 ```
 research_log_append({
@@ -269,11 +293,11 @@ research_log_append({
   planItemId: "pli_010",          // null for ad-hoc
   tool: "fulltext_search",
   query: { keywords: "+Flynn +\"Last Will and Testament\"",
-           recordPlace1: "Pennsylvania", yearFrom: 1870, yearTo: 1890 },
+           collectionId: "2220359", yearFrom: 1870, yearTo: 1890 },
   outcome: "positive",
   resultsExamined: 5,
   resultsAvailable: 47,
-  notes: "47 Schuylkill will hits 1870-1890; 5 examined.",
+  notes: "47 PA Land Records will hits 1870-1890; collectionId from includeFacets; 5 examined.",
   stagedResultsRef: staged.resultsRef   // omit for a nil search
 })
 ```
@@ -322,10 +346,17 @@ When a search returns no results:
    negative.** A bare "no results" note is insufficient for the GPS
    exhaustive-search audit trail.
 2. **Iterate through variants before declaring negative — but cap
-   total queries (initial + retries) at 5 per plan item.** Pick the
-   most promising 4 variants from `references/search-strategies.md`
-   and `references/online-search-literacy.md`; log each retry
-   separately. After 5 nil queries, declare a coverage gap.
+   total queries (initial + retries) at 5 per plan item.** Start with:
+   - **Switch Keywords↔Name field.** If the initial search used the
+     Name field, retry with `+Surname` in Keywords (NLP may have missed
+     the name). If it used Keywords, retry with `Surname` in the Name
+     field — do not add place or year filters to the name-field search
+     (NLP tagging may have failed for place/date too, so filters would
+     exclude the records you are looking for). This counts as one retry
+     against the 5-query cap.
+   Then pick the most promising remaining variants from
+   `references/search-strategies.md` and `references/online-search-literacy.md`;
+   log each retry separately. After 5 nil queries, declare a coverage gap.
 3. **Verify coverage exists.** A nil result may mean the record was
    never transcribed — not that it doesn't exist.
 4. Assess whether absence is meaningful (negative evidence) — only
@@ -356,7 +387,8 @@ image itself for the transcript.
 ### 12. Present results
 
 Summarize what was searched and found, highlighting non-principal
-mentions (FTS's unique value). Show log entries, plan progress, and
+mentions and any principals found in records that are only searchable
+via FTS (FTS's twin unique values). Show log entries, plan progress, and
 suggest next steps (more plan items, cross-references, or re-plan).
 
 ## Important rules

@@ -490,7 +490,7 @@ what the VLM was primed with before reading a contested hand):
 - `expansions`: which formal names were expanded and to which variant
   forms (keyed by the table's formal name, e.g. `"Elizabeth"`)
 
-This mirrors `fulltext_search`'s `nameExpansion` without
+This uses the same underlying name-variant tables as `get_name_variants`, without
 `variantsInResults`, which has no equivalent for VLM transcription.
 
 ### 5.4 Behavior (pipeline)
@@ -968,7 +968,8 @@ when the key is needed: no tool reads a credential from the environment, and
 what the "no env-var fallback" rule protects, and it holds. What does **not** hold, and
 was claimed here until 2026-09-20, is the stronger sentence that the server makes zero
 `process.env` reads: `http.ts` reads these four, and a shipped tool
-(`research-append.ts`) reads two debug-hold variables. The bridge is at the
+(`research-append.ts`) reads two debug-hold variables, which `http.ts` also reads
+only to name them at start-up (`research-append-tool-spec.md` §11.5). The bridge is at the
 **entrypoint** for a container and at the **orchestrator** for a sandbox; both are
 outside the tool, which is the line that matters. The hosted-path
 `fs_oauth.write_tokens` (`TOKENS_PATH = {HOME}/.familysearch-mcp/tokens.json`,

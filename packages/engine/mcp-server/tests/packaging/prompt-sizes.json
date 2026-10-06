@@ -5,7 +5,7 @@
     "regenerate": "UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts"
   },
   "prompts": {
-    "CLAUDE.md": 57175,
+    "CLAUDE.md": 57177,
     "packages/engine/plugin/agents/check-warnings.md": 47535,
     "packages/engine/plugin/agents/citation.md": 44479,
     "packages/engine/plugin/agents/convert-dates.md": 11818,
@@ -24,6 +24,7 @@
     "packages/engine/plugin/agents/search-images.md": 21550,
     "packages/engine/plugin/agents/search-wikipedia.md": 6843,
     "packages/engine/plugin/agents/source-evaluation.md": 18680,
+    "packages/engine/plugin/agents/survey-surname.md": 7068,
     "packages/engine/plugin/agents/translation.md": 19677,
     "packages/engine/plugin/agents/tree-edit.md": 30669,
     "packages/engine/plugin/agents/validate-schema.md": 4382,
@@ -35,7 +36,7 @@
     "packages/engine/plugin/skills/research-plan/SKILL.md": 32666,
     "packages/engine/plugin/skills/research/SKILL.md": 31118,
     "packages/engine/plugin/skills/search-external-sites/SKILL.md": 32402,
-    "packages/engine/plugin/skills/search-full-text/SKILL.md": 19118,
+    "packages/engine/plugin/skills/search-full-text/SKILL.md": 21694,
     "packages/engine/plugin/skills/search-records/SKILL.md": 64412,
     "packages/engine/plugin/skills/timeline/SKILL.md": 21833
   },
@@ -47,7 +48,7 @@
     "tool:convert_calendar": 4040,
     "tool:external_links_search": 2332,
     "tool:extraction_append": 6025,
-    "tool:fulltext_search": 3414,
+    "tool:fulltext_search": 3280,
     "tool:get_name_variants": 375,
     "tool:image_read": 1854,
     "tool:image_search": 1517,

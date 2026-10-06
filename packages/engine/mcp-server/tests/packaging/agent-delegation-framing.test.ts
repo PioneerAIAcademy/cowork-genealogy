@@ -696,6 +696,7 @@ describe("agent delegation framing", () => {
     "search-wikipedia",
     // ARRIVED when issue #2796 deleted skills/source-evaluation/.
     "source-evaluation",
+    "survey-surname",
     "translation",
     "tree-edit",
     "validate-schema",

@@ -4,14 +4,15 @@
 The worker registers agents through ``ClaudeAgentOptions.agents`` -- bare names, parsed
 once at worker start, never staged into a project directory (plan: D15) -- so the
 frontmatter has to be read here. A minimal stdlib parser covers exactly the shapes the
-twenty-one shipped agents use -- ``name``, ``description`` (plain or a ``>-`` / ``>`` / ``|``
+shipped agents use -- ``name``, ``description`` (plain or a ``>-`` / ``>`` / ``|``
 block scalar), ``model``, ``tools`` (a ``- item`` list with ``#`` comment lines) -- and
 nothing else; PyYAML is deliberately not used.
 
     python proto/worker/plugin_agents.py [--plugin-dir DIR]
 
 prints one line per agent (name, model, tool count, description length) and exits 1 if
-fewer than twenty-one were found.
+fewer than ``EXPECTED_AGENT_COUNT`` were found (held equal to
+``worker.EXPECTED_AGENTS`` by test_proto_worker).
 """
 from __future__ import annotations
 
@@ -24,7 +25,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from claude_agent_sdk import AgentDefinition
 
-EXPECTED_AGENT_COUNT = 21
+EXPECTED_AGENT_COUNT = 22
 
 _KEY_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_-]*):(?:\s+(.*))?$")
 _BLOCK_INDICATORS = frozenset({">", ">-", ">+", "|", "|-", "|+"})

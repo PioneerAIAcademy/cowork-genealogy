@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_survey_surname_d4",
+    "skill": "survey-surname",
+    "name": "Negative: single-person census search handed back to search-records",
+    "type": "negative",
+    "description": "A request to find one person's census record is not a surname survey. The agent should recognize this and hand back to search-records without calling any tool.",
+    "tags": ["routing", "negative", "direct-arm"]
+  },
+  "negative": {
+    "correct_skill": [],
+    "explanation": "The user is asking to find one person's census record, not to tabulate every household of a surname across a place's censuses. survey-surname handles multi-household surveys; a single-person record lookup belongs to search-records."
+  },
+  "input": {
+    "delegation": "Find Edmund Dixon's 1850 census record.\n\nprojectPath: <workspace>"
+  },
+  "mcp_fixtures": [],
+  "execution": {
+    "max_wall_clock_seconds": 120
+  },
+  "judge_context": [
+    "This is a NEGATIVE test: the request is for one person's census record, not a surname survey.",
+    "The agent should recognize this is a single-person search and decline WITHOUT calling any tool — no place_search, no record_search, no research_log_append, no Write.",
+    "The agent should say something like 'That is a search for one person's record — please use search-records' and stop.",
+    "A single tool call (even place_search) is a failure."
+  ]
+}
