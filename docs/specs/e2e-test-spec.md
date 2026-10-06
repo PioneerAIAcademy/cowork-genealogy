@@ -824,8 +824,8 @@ the `max_cost_usd` note in §6 step 5.
 
    **Hand-back form.** A fixed closing line (lead ruling, 2026-09-07), matched
    literally and nothing else. Free-prose matching was set aside: the predicate it
-   replaced caught 15 of 41 real yields. Issue #2292 and PR #2870 (2026-09-27)
-   retired the line from every prompt (`test_every_shipped_hand_back_literal_classifies`
+   replaced caught 15 of 41 real yields. On 2026-09-27 the line was retired
+   from every prompt (`test_every_shipped_hand_back_literal_classifies`
    requires zero), so `step` should read **0** on runs since then and a non-zero is
    the model asking anyway; earlier runs carry it from `init-project` and
    `question-selection`. Do not loosen the pattern, and note that markdown emphasis
@@ -1914,7 +1914,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `usage.message_usage` | Per-assistant-message context window, split by thread: `[thread, input, cache_read, cache_creation]`. See 8.1.4. |
 | `usage.thread_windows` | Per-thread summary — `main: {peak_window_tokens, message_count}`, `sub: {message_count}`. See 8.1.4. |
 | `usage.continue_nudges` | How many times the Stop hook vetoed a voluntary yield and told the agent to resume — every class, all with the same continue text (U17). The weak-signal reading belongs to `silent`, `step` and `false_completion` in `hand_back_classes`, not to this total. |
-| `usage.hand_back_classes` | Per-class tally of how the agent handed back: `step` / `silent` / `false_completion`, plus `terminal_completed` / `terminal_mcp_unavailable` for the two gate-False reasons that are **not** agent defects. Counts hand-backs **including the terminal one**, so a hook-terminated run carries one more than `continue_nudges` — but a run killed by a cap or an error never reaches the hook and records no terminal class at all, so this is not universally the larger number. `step` is the hand-back line issue #2292 retired, so 0 on runs since 2026-09-27. See the Continue-nudge note in §6. |
+| `usage.hand_back_classes` | Per-class tally of how the agent handed back: `step` / `silent` / `false_completion`, plus `terminal_completed` / `terminal_mcp_unavailable` for the two gate-False reasons that are **not** agent defects. Counts hand-backs **including the terminal one**, so a hook-terminated run carries one more than `continue_nudges` — but a run killed by a cap or an error never reaches the hook and records no terminal class at all, so this is not universally the larger number. `step` is the retired hand-back line, so 0 on runs since 2026-09-27. See the Continue-nudge note in §6. |
 | `wall_clock_seconds` | Active time: monotonic minus `counted_sleep_seconds` — §6 "Clocks". Alongside `real_clock_seconds`, `slept_seconds`, `counted_sleep_seconds` (sleep the heartbeat counted because monotonic did not leave it out, the Windows case), `judge_seconds`. |
 | `resumes`, `session_id` | §6 "Stall-detect + resume". |
 | `agent_model` | Effective parent model. |
