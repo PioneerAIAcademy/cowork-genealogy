@@ -28,7 +28,7 @@ It split because only an agent carries an `agent_id`, which is what lets the
 `PreToolUse` hook route a section's writes to exactly one caller.
 Former pairs: `person-evidence` (paired 2026-09-09, skill deleted — issue #2821),
 `proof-conclusion` (paired, skill deleted — issue #2822),
-`research-exhaustiveness` (paired, skill deleted 2026-10-02 — issue #2738),
+`research-exhaustiveness` (paired, skill deleted 2026-10-06 — issue #2738),
 `search-images` (paired 2026-09-21, skill deleted 2026-09-29 — issue #2268).
 In each case the agent remains and is now reached directly by delegation from
 the orchestrator.
