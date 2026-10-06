@@ -311,9 +311,10 @@ call.** Run each lookup whose trigger holds, once per record, not once per
 persona. Decide the triggers from the assertions and the tree in hand.
 
 1. **Record outside the residence cluster.** The cluster is the places the
-   project attests the person *lived*: census, tax, land, and Residence facts.
-   A birthplace alone makes no cluster, and a residence resting only on a
-   `probable` or lower link does not join it. For each record, write down its
+   project attests the person *lived*: census, tax, land, and Residence facts
+   on the tree person as they stood before this run. The records you are
+   linking never join it, a birthplace alone makes no cluster, and a residence
+   resting only on a `probable` or lower link does not join it. For each record, write down its
    place and year beside the tree person's Residence fact nearest in date. The
    trigger holds when the record's state (in the United States) or country
    differs from that residence and is not a neighbour of it. When it holds:
