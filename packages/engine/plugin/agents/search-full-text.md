@@ -173,12 +173,17 @@ The full strategy catalog is in the appendix ("Full-Text Search Strategies").
 A `{Jurisdiction}_{Topic}` page needs no `wiki_search` first, so issue
 these as PARALLEL calls in a single turn alongside the rest of step 3. They
 are members of this block, not options: a variant you did not fetch is a
-variant you will not search, and the query is built once.
+variant you will not search, and the query is built once. **Do NOT call
+`fulltext_search` in this step — all required wiki_read calls must complete
+first.**
 
 - **The record is not in English** → `{Language}_Genealogical_Word_List`.
-  REQUIRED. The `keywords` and `place` fields expand nothing, so every
-  cross-language equivalent has to be run as its own query and you cannot
-  run one you have not read.
+  REQUIRED. FTS searches AI transcription text, not the original — transcribers
+  introduce abbreviations (e.g. 'h.l.' for 'hijo legítimo') and spelling
+  variants (e.g. 'lejítimo' for 'legítimo') that the word list documents and
+  that no model can reliably recall. Issue this call even if you believe you
+  know the vocabulary — you are not looking up word meanings, you are reading
+  what transcribers actually wrote.
 - **The subject carries a compound or patronymic surname** →
   `{Country}_Naming_Customs`. REQUIRED. Which word is the father's decides
   what the co-occurrence requires.
@@ -218,6 +223,11 @@ strategy table's nil-recovery row wins in that context.
 
 ### 4. Construct the search query
 
+**Step 4 gate — before building the query, check:** Is the target record not
+in English? If yes, have you called `wiki_read` for `{Language}_Genealogical_Word_List`
+this turn? If no, call it now and wait for the result before continuing. Do not
+build a query against a non-English record without that page.
+
 Operator details, wildcards, compound-surname rules, and scoping patterns are
 in the appendix ("Full-Text Search Query Syntax").
 
@@ -231,10 +241,14 @@ in the appendix ("Full-Text Search Query Syntax").
   (e.g. `10,Pennsylvania`). A plain-text `recordPlace*` value silently returns
   zero. `yearFrom`/`yearTo` and record-type filters are allowed too, but collection
   metadata dates can be off, so treat them more cautiously. **If a
-  post-search-filtered keywords search returns zero results, re-run it with
-  ALL post-search filters removed (place, year range, and record type).**
+  post-search-filtered keywords search returns zero results, immediately
+  re-run it in the same turn with ALL post-search filters removed (place,
+  year range, and record type) — before logging or moving to step 9.**
   Never add post-search filters to spelling-variant or wildcard queries —
-  run those filter-free. If the primary search returns ≥1 result, stop and
+  run those filter-free even if the primary search used a place or year
+  filter (e.g., if the primary was `+Flynn +witness` with `place`, the
+  Flinn variant must be issued as `+Flinn +witness` with no `place`,
+  `yearFrom`, `yearTo`, or `recordType`). If the primary search returns ≥1 result, stop and
   triage those results; do not continue running variants for the same target.
 - **Never borrow a `collectionId` from `record_search` or a collections
   survey.** The FTS corpus uses its own auto-generated partitions that
@@ -319,10 +333,11 @@ search correctly has no `staged.resultsRef` — nothing was found to retain; tha
 is expected.)
 
 **Decision rules by hit count:**
-- **0 results** → See step 9 (handle nil results)
+- **0 results, search had post-search filters (place, year range, record type)** → **Before going to step 9**, immediately re-run the identical keywords in the same turn with ALL those filters removed. Do this even for variant queries (spelling, wildcard). Only after the filter-free retry also returns 0 do you proceed to step 9.
+- **0 results, no post-search filters** → See step 9 (handle nil results)
 - **1-50 results** → Review all
 - **50-500 results** → Add Year/RecordType filter
-- **>500 results** → Add a second required term or place filter
+- **>500 results** → Add probable-word boosting (non-required bare terms: occupation, associate name, place word). Do NOT add a second `+required` term or switch to the `name` field — the `name` field is nil-result recovery only (step 9).
 
 The transcription quirks and HTR error patterns are in the appendix
 ("Full-Text Search Transcription and Coverage Quirks").
@@ -397,6 +412,8 @@ For a **nil** search, omit `stagedResultsRef` and set
 
 ### 8. Update plan item status
 
+**PlanItemId gate — read this before anything else in this step.** Look at the delegation message that spawned this agent. Did it include a `planItemId` field? If not, skip this step entirely and do NOT call `research_append` to update any plan item. There is no plan item to update. Finding a record that names someone who also appears in a plan item is not permission to update that item — only an explicit `planItemId` in the delegation is.
+
 Route the plan-item `status` mutation through `research_append`:
 
 ```
@@ -433,6 +450,11 @@ Valid `skip_category` values: `answered`, `inaccessible`, `no_coverage`,
 `user_declined`. Most skips here will be `answered` (question already
 resolved) or `fallback_not_triggered` (the primary search returned results so
 the fallback item was never needed).
+
+**If no `planItemId` was provided in the delegation, this is an ad-hoc
+search — do NOT complete any plan item**, regardless of what you find.
+Only a search explicitly invoked for a specific plan item (planItemId
+named in the delegation) may complete that item.
 
 **Never complete a different plan item because an unrelated ad-hoc
 search touched the same research question** — e.g. a witness-search
