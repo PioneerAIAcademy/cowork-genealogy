@@ -329,7 +329,10 @@ persona. Decide the triggers from the assertions and the tree in hand.
      settlers' ancestry or ethnic origin is not a corridor.
    - Search the project for a documentary bridge: a passenger list,
      naturalization, warning-out, land grant, or a relative documented at the
-     destination first.
+     destination first. A bridge is a record of the move or of the person at
+     the destination earlier. The person's absence from the origin's later
+     records, and a research question's framing, are what a bridge must
+     explain, never a bridge.
 2. **A name that a naming system could explain.** The given name agrees and
    the surname is a different word (not a spelling or phonetic variant, and
    not a woman's maiden and married surnames), or the given name is in
@@ -356,8 +359,10 @@ the tier:
 - "Residence check: [record place, year] vs [nearest attested residence,
   year]: same / neighbouring / outside [place_distance km], [the page
   sentence or record that bridges it, quoted, or nothing]." A person with
-  no attested residence gets "none attested". A line ending "outside ...
-  nothing" caps the link at `probable`.
+  no attested residence gets "none attested". A line that says "outside"
+  without a `place_distance` figure and a fetched page is incomplete: make
+  those calls before writing the link. A line ending "outside ... nothing"
+  caps the link at `probable`.
 
 **Assess match strength.** Weigh the data points above by reasoning
 directly — correlation analysis is the spine of every identity
