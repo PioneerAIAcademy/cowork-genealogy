@@ -38,6 +38,14 @@ name: Server tests
 # frontmatter `name:` ↔ filename check, and the SKILL.md `@plugin:` delegation
 # contract. An agent rename is the change most likely to break bare-name
 # binding, and it touches no apps/server path.
+#
+# tests/test_proto_grants_pg.py (U3) needs a real Postgres: it proves the grant
+# locks -- a refresher can never win a patron's attempt lock while an attempt
+# holds it, and the sign-in callback waits on the refresher -- which no fake can.
+# The step below starts postgres:16 only when the scope check says the suite
+# runs (a `services:` block would start on every PR, including the out-of-scope
+# ones this job answers in ~5 s), and the module FAILS rather than skips when CI
+# is set without PROTO_TEST_PG_DSN, so this job cannot go green by skipping it.
 
 #
 # Runs on EVERY pull request — no `paths:` filter — so this check always reports
@@ -80,7 +88,11 @@ jobs:
           # regex with scripts/build-stamp.mjs's, and checks the Makefile's
           # EB_PYYAML pin against uv.lock. A diff to any of them alone would
           # otherwise report success having run nothing.
-          PATTERNS: '^apps/server/|^packages/engine/plugin/agents/|^docs/specs/schemas/|^\.gitignore$|^scripts/eb_bundles/|^scripts/build-stamp\.mjs$|^Makefile$|^\.github/workflows/server-tests\.yml$'
+          #
+          # `^packages/engine/plugin/skills/` (U11): tests/test_proto_worker.py pins
+          # the worker's EXPECTED_SKILLS to the plugin's skill count, so a diff that
+          # adds or removes only a skill would otherwise report success.
+          PATTERNS: '^apps/server/|^packages/engine/plugin/agents/|^packages/engine/plugin/skills/|^docs/specs/schemas/|^\.gitignore$|^scripts/eb_bundles/|^scripts/build-stamp\.mjs$|^Makefile$|^\.github/workflows/server-tests\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
@@ -109,7 +121,22 @@ jobs:
         working-directory: apps/server
         run: uv sync --frozen
 
+      - name: Start Postgres for the grant-lock tests
+        if: steps.scope.outputs.relevant == 'true'
+        run: |
+          set -euo pipefail
+          docker run -d --name u3pg -e POSTGRES_PASSWORD=proto -p 5432:5432 postgres:16-alpine
+          for _ in $(seq 1 60); do
+            if docker exec u3pg pg_isready -U postgres -h 127.0.0.1 >/dev/null 2>&1; then exit 0; fi
+            sleep 1
+          done
+          docker logs u3pg
+          echo "::error::postgres:16 never became ready"
+          exit 1
+
       - name: Run control-plane tests
         if: steps.scope.outputs.relevant == 'true'
         working-directory: apps/server
+        env:
+          PROTO_TEST_PG_DSN: postgresql://postgres:proto@localhost:5432/postgres
         run: uv run --frozen pytest -q

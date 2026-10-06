@@ -7,8 +7,8 @@ verified, it says so.
 **This file is meant to stay true without maintenance.** Two shapes are
 therefore banned in it, and both were swept out on 2026-08-09: a **line-number
 citation** (cite the heading, symbol, or a distinctive quotable string instead —
-`doc-links.test.ts` blocks new `.ts`/`.py`/`.mjs` ones, and the `.md` ones it
-cannot yet see went stale within the hour twice), and a **register** — a list of
+`doc-links.test.ts` blocks new `.ts`/`.py`/`.mjs`/`.md` ones under `docs/`,
+outside `docs/plan/` and the dated `docs/deep-dives/` records), and a **register** — a list of
 open gaps, open questions, or issue numbers that GitHub already owns and that
 goes stale without telling anyone. Where you need a number that moves, name the
 command that recomputes it.
@@ -222,13 +222,13 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **12** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **20** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **21** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The twenty agents are `gps-mentor`, `record-extractor`, `image-reader`,
+The twenty-one agents are `gps-mentor`, `record-extractor`, `image-reader`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
 `search-images`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
 `search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
-`hypothesis-tracking`, `locality-guide`, `historical-context` and `project-status`.
+`hypothesis-tracking`, `locality-guide`, `historical-context`, `project-status` and `survey-surname`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -403,6 +403,13 @@ so a skipped `Read` does leave a trace:
 | a bare noun phrase, not an instruction | `check-warnings/warning-checks.md` | **0/16** |
 | point-of-use, gated on "for that year" | `search-records/census-field-availability.md` | **0/25** |
 
+The last row is a historical measurement: that file has since been **deleted**,
+which is what the 0/25 argued for. Its census-schedule content is now
+fetched from the wiki by an unconditional member of a labelled Step 2 pre-work
+block (ADR-0012), and the craft the wiki does not carry was folded into the body.
+The row stays because it is the sharpest measurement of the effect this section
+documents — a bolded, unconditional, point-of-use imperative that still read zero.
+
 Positive unit fixtures only — a negative fixture is a skill correctly declining,
 which loads nothing, and including them understates every row.
 
@@ -467,22 +474,28 @@ Code's relative-path resolution from one SKILL.md into another skill's folder is
 unreliable (claude-code#17741). So guidance several skills must follow
 identically is **physically duplicated** into each one rather than linked.
 
-Three families are duplicated today, and only one is lint-guarded:
+**One family is duplicated today, and it is the lint-guarded one:**
 
 | File | Copies | Distinct contents | Lint |
 |---|---|---|---|
 | `places-guidance.md` | 9 | 2 | `tests/packaging/skill-guidance.test.ts` |
-| `validation-protocol.md` | 2 | **2** | **none** |
-| `research-log-protocol.md` | 1 | 1 | **none** |
 
-The last two were 11 and 3 until the unnamed copies were deleted. Nine
+The other two families are **gone**. `validation-protocol.md` ran 11 → 2 → 1
+(the `citation` copy went) → **0**, and `research-log-protocol.md` 3 → 1 → **0**,
+both retiring when the last `search-records` copies were deleted. The
+long-standing note here that "the two surviving `validation-protocol.md` copies
+contradict each other" described a two-file disagreement that no longer has two
+files: what each copy said is now either enforced by the writer tool's own error
+contract or stated once in the body that used to point at it.
+
+The history is worth keeping because it is the argument for the lint: nine
 `validation-protocol.md` copies and two `research-log-protocol.md` copies were
-named by no `SKILL.md`, so nothing loaded them deliberately; three of the nine also
-carried the retired "run `validate_research_schema` after writing" doctrine, and
-four named a `check-warnings` trigger their skill cannot reach — it writes
-`questions` or `plans`, never `assertions` or `person_evidence`. The two
-surviving `validation-protocol.md` copies still **contradict each other**, and
-that is now a two-file disagreement rather than a nine-way one.
+named by no `SKILL.md`, so nothing loaded them deliberately; three of the nine
+also carried the retired "run `validate_research_schema` after writing"
+doctrine, and four named a `check-warnings` trigger their skill cannot reach —
+it writes `questions` or `plans`, never `assertions` or `person_evidence`. A
+duplicated family with no lint decayed in exactly the way the guarded one did
+not.
 
 The `places-guidance` lint holds 8 copies byte-identical to a canonical at
 `packages/engine/plugin/references/places-guidance.md` — a path deliberately
@@ -497,17 +510,17 @@ a fourth family gets a lint: every skill must land in exactly one of the two
 lists, and the test asserts that too.
 
 > **Today:** editing a duplicated reference means editing every copy by hand and
-> knowing which divergences are deliberate. For `validation-protocol.md`,
-> **nothing records which is which** — its two survivors disagree on whether a
-> post-write `validate_research_schema` pass is required.
+> knowing which divergences are deliberate — now only for `places-guidance.md`,
+> which is the family that has the lint.
 > **Direction:** either lint a shared core plus a
 > per-skill "who calls what" section, or derive each copy at build time from the
-> skill's `allowed-tools`. The cheaper move is to *shrink* them —
-> `validation-protocol.md` largely restates rules `research_append`'s error
-> contract already enforces at write time, and a rule the tool rejects can be one
-> sentence. **Before adding a copy, say why in the PR — and name it in the
-> `SKILL.md`, or you are shipping a file nothing loads on purpose — and that a
-> globbing model can still read, unreviewed.**
+> skill's `allowed-tools`. **The cheapest move is the one actually taken: delete
+> them.** `validation-protocol.md` largely restated rules `research_append`'s
+> error contract already enforces at write time, and a rule the tool rejects
+> needs no prose copy at all — so the two unguarded families were removed rather
+> than shrunk or linted. **Before adding a copy, say why in the PR — and name it
+> in the `SKILL.md`, or you are shipping a file nothing loads on purpose — and
+> that a globbing model can still read, unreviewed.**
 
 ### 3.4 Agent bodies are self-contained — do not split them
 
@@ -1473,7 +1486,7 @@ document** — never mixing them across the repo, which is intentional.
 ### 6.5 State reaches the prompt too
 
 All 12 skills carry a `**Narration:**` line (`init-project` spells it
-`**Narration**`, without the colon) — 12 of them as the first line of the body,
+`**Narration**`, without the colon) — 11 of them as the first line of the body,
 the other one further down — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. `init-project` writes the profile from two
@@ -1877,8 +1890,8 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `field-render-drift.test.ts` | a `research.json` field is not an unexplained outlier among its own siblings in the viewer — if its object is displayed, each field renders or carries a reason it should not |
 | `gps-mentor-craft-doctrine.test.ts` | the four clauses of `gps-mentor`'s craft mode whose silent deletion would be invisible until a user hit it — the required scope sentence, the refusal row, advisory severity, and the `craft: true` marker (`gps-mentor-agent-spec.md` §6.4) |
 | `gps-terminology.test.ts` | no plugin prose collapses the two evidence axes into "primary/secondary source" or "primary/secondary evidence", with an allow-list keyed to (file, line) for the `citation` agent, which must quote the wrong phrasing back to correct it |
-| `adr-links.test.ts` | ADR required fields; every repo path cited in an ADR's **live** `Applies to` / `Enforcement` still resolves (the frozen-history sections are exempt) |
-| `doc-links.test.ts` | every repo path, markdown link, `make` target and **slash command** cited by `docs/task-lifecycle.md`, `CLAUDE.md`, `docs/skill-to-agent-pair-conversion.md` and by **`.claude/{agents,commands,skills}`** still resolves. These have no frozen-history half — every line is an instruction a model acts on. Shares its extraction rules with `adr-links.test.ts` via `repo-paths.ts` |
+| `adr-links.test.ts` | ADR required fields; every repo path cited in an ADR's **live** `Applies to` / `Enforcement` still resolves. `doc-links.test.ts` now also checks every section of every ADR, so this path check is a subset of that one |
+| `doc-links.test.ts` | every repo path, markdown link, `make` target and **slash command** cited by `docs/task-lifecycle.md`, `CLAUDE.md`, `docs/skill-to-agent-pair-conversion.md` and by **`.claude/{agents,commands,skills}`** still resolves; the same minus slash commands for every `.md` under **`docs/specs/` and `docs/adrs/`**. A path named because it was retired or is gitignored is a named `KNOWN_ABSENT` entry with its reason. Also bans `:NNN` line cites to `.ts`/`.py`/`.mjs`/`.md` files anywhere under `docs/` except `docs/plan/` and `docs/deep-dives/`. Shares its extraction rules with `adr-links.test.ts` via `repo-paths.ts` |
 | `prompt-budget.test.ts` | the report is warn-only; the baseline file must be current. `prompt-sizes.json` records byte sizes for every `SKILL.md`, agent body and `CLAUDE.md`, and character sizes for every MCP tool description (`description.length + JSON.stringify(inputSchema).length`). The staleness test fails when the file disagrees with the sizes computed at HEAD; the delta report stays warn-only — no ceiling, no threshold. Regenerate: `UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts` |
 
 Plus, from `.github/workflows/check-runlogs.yml`:
@@ -2130,7 +2143,9 @@ an agent failure). Then `make e2e-view TEST=<slug>` loads the run into the viewe
 and per-fixture concentration, across the last 14 days of committed runs —
 most run-log readers window that way, `SINCE=all` to opt out — `make
 e2e-agent-tools` reports, per plugin agent, which declared tools it never
-actually called across those runs, `make e2e-writer-attribution` reports which
+actually called across those runs, `make e2e-rule-adherence` reports, per
+registered rule, how many episodes obeyed the instruction over those runs
+(counts, not rates), `make e2e-writer-attribution` reports which
 subagent wrote a project document and whether an ownership row says it may
 (the one reader that defaults to the whole corpus, because a manifest gap is not
 a freshness question), and the

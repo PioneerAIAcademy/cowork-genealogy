@@ -18,6 +18,7 @@
   "mcp_fixtures": [
     "fulltext-search-flynn-witnesses",
     "fulltext-search-flynn-flinn-variant",
+    "fulltext-search-flinn-witnesses-by-name",
     "fulltext-search-flynn-wildcard-variant",
     "fulltext-search-flynn-prefix-wildcard-variant",
     "wiki-read-any",

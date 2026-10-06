@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_search_full_text_014",
+    "skill": "search-full-text",
+    "name": "Find principal in bulk-digitized unindexed deed books",
+    "type": "positive",
+    "description": "Researcher asks to find Thomas Flynn as a grantor/grantee in Schuylkill County deed books that exist only as bulk-digitized image scans whose names were never transcribed into the indexed genealogy database. The skill must use fulltext_search — not route to record_search — to find the principal in these unindexed records.",
+    "tags": ["fulltext", "principal-search", "unindexed-records"]
+  },
+  "input": {
+    "user_message": "Thomas Flynn may have deeded property in Schuylkill County, Pennsylvania around 1877–1882. The deed books from that period were digitized as scanned images on FamilySearch, but the names were never transcribed into the indexed genealogy database. Search for any deed or land record naming Thomas Flynn as a grantor, grantee, or party to a transaction.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "fulltext-search-flynn-principal-deed",
+    "fulltext-search-flynn-principal-deed-by-name",
+    "fulltext-search-flinn-variant-zero",
+    "wiki-read-any",
+    "wiki-search-any"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "The user explicitly says these deed books are digitized image scans with names not in the indexed record database — the only way to find Thomas Flynn here is via full-text search of the AI-transcribed images. The skill MUST call fulltext_search. Routing to record_search or telling the user to search the indexed genealogy database is a fail.",
+    "The returned record shows Thomas Flynn as the GRANTOR (principal party) in a land deed — not as a witness. The skill should recognize this as a principal-role mention, log the result, and present it for image verification.",
+    "QUERY-CONSTRUCTION GRADING NOTE: keywords-first is preferred per SKILL.md Step 3, but a name-field query that finds the record is also acceptable. The decisive criterion is that fulltext_search was used at all. A skill that routes to record_search or suggests the user use the indexed name search scores FAIL.",
+    "FAN AWARENESS: This is a direct principal search — the user asked to find Thomas Flynn himself. The FAN dimension passes solely on whether the requested search executed; the skill is NOT expected to unprompted expand to FAN.",
+    "TOOL ARGUMENTS NOTE: The skill may try spelling variant calls for Flynn — for example +Thomas +Flinn, +Thomas +Fl?n*, +Fl?nn +Thomas, +Thos +Flynn, name field variants, or wildcard forms. The test fixture corpus covers a representative subset but cannot enumerate every reasonable variant. A fixture_not_found result on a structurally correct variant query (valid Lucene operators, sensible field choice, plausible alternate spelling of the target name) is NOT a Tool Arguments failure — score Tool Arguments PASS. The skill's label for the fixture_not_found result does NOT matter: whether the skill calls it an 'evaluation environment artifact', 'fixture gap', 'environment issue', 'test harness limitation', or any other characterization is irrelevant to grading. Only the structural validity of the query determines Tool Arguments. Do NOT deduct from Tool Arguments or Correctness because the skill explained or named the fixture_not_found result. Score Tool Arguments PASS unless the call had a true structural defect: wrong field for the intent, invalid operator syntax, or a query unrelated to Thomas Flynn."
+  ]
+}

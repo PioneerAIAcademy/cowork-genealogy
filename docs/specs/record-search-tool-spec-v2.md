@@ -112,8 +112,9 @@ serving — in section K of `dev/probe-search-qualifiers.ts`:
 - **Literal quotes are inert.** `"van der Linde"` returns the identical set as
   `van der Linde`, and an *unbalanced* quote returns the same unscoped total as
   the bare form, so the server strips them before matching rather than honouring
-  them. `search-records/references/name-search-mechanics.md` prescribes quoting;
-  it neither helps nor hurts, and the tool does not send it.
+  them. `search-records/references/name-search-mechanics.md` used to prescribe
+  quoting and now records this measured finding instead; quoting neither helps
+  nor hurts, and the tool does not send it.
 - **Spacing, case and the particle itself carry no signal.** `vanderlinde`,
   `Van Der Linde` and even `Linde` — the particle dropped entirely — each
   enumerate the **identical 558-row set** as `van der Linde`. All five are one
@@ -543,7 +544,8 @@ settling for this note to be correct.
 
 **The nil note's wording is load-bearing.** `negative` records what the search
 returned, never that the record is absent — this spec's own consumers say so at
-`search-records/SKILL.md:223`, `:72` and `:593` — and the note reaches an agent that
+`packages/engine/plugin/skills/search-records/SKILL.md` §"MCP tools and routing",
+§"2. Construct the search query" and §"8. Handle nil results" — and the note reaches an agent that
 by construction has read none of them.
 
 Both are advisory: no deny, no error, no changed exit path. Both are withheld from
@@ -1929,7 +1931,7 @@ npx @modelcontextprotocol/inspector node build/index.js
 
 ### Manual Layers 3 + 4 (Cowork via WSL2 + native Windows)
 Standard end-to-end testing per `docs/testing-guides/oauth-tool-testing-guide.md`
-template. Detailed playbook in `docs/testing-guides/search-tool-testing-guide.md`.
+template.
 
 ---
 
@@ -1991,6 +1993,6 @@ the headline changes:
 19. **Browser User-Agent header** required (WAF) — same constant
     as `collections_search`.
 
-Everything in this spec is grounded in evidence from probe scripts
-under `packages/engine/mcp-server/dev/probe-svc-*.ts` (run April 30 – May 4,
-2026, ~170 queries total).
+Everything in this spec is grounded in evidence from the `probe-svc-*.ts` probe
+scripts (run April 30 – May 4, 2026, ~170 queries total; removed with the other
+unused probes before the move to `packages/engine/`).

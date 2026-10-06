@@ -1727,31 +1727,36 @@ referenced sources here, across 50 of the same 159 runs**. This one is shadow
 too, and deliberately not graduated: part of that 111 is
 legitimately-not-yet-uploaded evidence only a genealogist can price.
 
-**A fifth check runs in shadow mode only: a conclusion relies on a resolved
-conflict that was never persisted.** `find_unpersisted_conflict_resolutions` (in
-`harness/skill_invocation.py`) reads the final `research.json` and, for each
-written `proof_summaries` conclusion, flags a question whose
-`exhaustive_declaration.stop_criteria.conflict_resolution` asserts a resolution
-(positive resolution language, not merely the absence of "no conflict" wording —
-a required field that is always populated would otherwise default to firing) that
-**no resolved `conflicts[]` entry is *linked* to the conclusion** — neither cited
-on the proof_summary's `resolved_conflict_ids`, nor naming the question in a
-resolved conflict's `blocks_question_ids`, nor named by its `c_` id in the
-stop-criterion prose (and, when the prose names no `c_` id, no resolved entry
-exists at all). A resolved conflict that exists but is linked to nothing fires
-only when the stop-criterion names a `c_` id that is not resolved; when it names
-no id, an existing resolved entry silences the check. So read the count as **"no
-resolved conflict backs this conclusion"** — every firing on the committed corpus
-today has an empty `conflicts[]`. The alpha-tester case is that same shape: the
-viewer's Conflicts section stayed blank because nothing structured was persisted.
-Gated on a written conclusion so an honest partial run does not fire. Like the citation-nulling check it **logs to
-`guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
-entries carry `kind: "conflict_unpersisted"` for their own bucket
-(`make e2e-guardrail-shadow`). The reliance signal is a text heuristic on one
-structured field, so it ships shadow-first; **promotion to a hard check — or to a
-`proof-conclusion` decline-and-route nudge so a conflict entry actually gets
-written — is gated on reading the fire rate across the corpus first**, not decided
-here.
+**A fifth check reports here, and is enforced at the writer tool: a conclusion
+relies on a resolved conflict that was never persisted.**
+`find_unpersisted_conflict_resolutions` (in `harness/skill_invocation.py`) reads
+the final `research.json` and, for each written `proof_summaries` conclusion,
+flags a question whose `exhaustive_declaration.stop_criteria.conflict_resolution`
+asserts a resolution (positive resolution language, not merely the absence of "no
+conflict" wording — a required field that is always populated would otherwise
+default to firing) while `conflicts[]` holds no record of it: the array is empty,
+or it does not hold the `c_` id the stop-criterion names. A settled (`resolved`
+or `moot`) conflict cited on the summary or blocking the question also backs it.
+The check asks whether the conflict was **persisted**, not whether it was
+resolved: a recorded but open conflict does not fire, because `proof-conclusion`
+is told to write a `not_proved` summary in exactly that state. The alpha-tester
+case is the empty-array shape: the viewer's Conflicts section stayed blank
+because nothing structured was persisted. Gated on a written conclusion, so an
+honest partial run does not fire.
+
+It **graduated on 2026-09-28**: `research_append` now refuses the
+`proof_summaries` write itself (`unpersistedConflictResolutionInvariants`,
+`guardrail-enforcement-spec.md` §5), and in the e2e harness the detector stays
+as the document-plane reading. It logs to `guardrail_shadow_violations` and never
+touches `compliance`/`outcome`; its entries carry `kind: "conflict_unpersisted"`
+and a `proof_summary_id` for their own bucket (`make e2e-guardrail-shadow`). The
+two planes share one labelled case file,
+`packages/engine/mcp-server/tests/guard-cases/unpersisted-conflict-resolution.json`,
+and must agree on every case in it. A live run now hits the refusal before the
+summary lands, so a stored entry from a run after the graduation means one of
+two things: a document the writer tool never checked, or the one ordering the
+refusal cannot see — a resolution claim written to the question after the
+summary.
 
 **A sixth check runs in shadow mode only: the warnings guardrail was never
 consulted before a parentage write.** `find_relationship_writes_without_warnings_check`
@@ -1917,8 +1922,8 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `person_evidence_guard` | `shadow` (default) or `deny` — how the §7.5 check-3 *live* sibling behaved (`--person-evidence-guard`). **Read this before comparing a run's `compliance`:** under `deny` the blocked write never lands, so check 3 finds no `person_evidence` entry for that person and passes **vacuously**. Deny-mode provenance entries also carry `kind: "person_evidence_deny"` and are excluded from `guardrail_shadow_report`'s stored scan. |
 | `deny_shell` | `true` / `false` (default) — whether `--deny-shell` refused `Bash` and `PowerShell` for the run (§6.1 filesystem denials). **A run with this on is not comparable to one without:** the agent had no shell, and every refused attempt sits in `blocked_tree_reads[]` as `blocked_by: "shell"`. |
 | `deny_project_reads` | `true` / `false` (default) — whether `--deny-project-reads` refused `Read`/`Grep`/`Glob` of the project folder (§6.1 filesystem denials). **A run with this on is not comparable to one without:** its project reads were rerouted through the MCP tools, and every refused attempt sits in `blocked_tree_reads[]` as `blocked_by: "path"`. |
-| `timeline[]` | Per-message `[elapsed_seconds, kind]`, plus the `caps` used. The offsets are raw monotonic, so on Windows they include standby: compare them with `wall_clock_seconds + counted_sleep_seconds`, not `wall_clock_seconds` (§6 "Clocks"). |
-| `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. **Read `subagent_capture_status` before concluding anything from an empty list.** |
+| `timeline[]` | Per-message `[elapsed_seconds, kind, tool_names, wall_ts, message_id]`, plus the `caps` used. Five columns since 2026-10-02; rows written before that are three wide and the earliest are two, so **index, never unpack**. `wall_ts` is ISO-8601 UTC with milliseconds (`2026-09-18T06:52:42.431Z`), matching byte-for-byte what a subagent transcript record and the copied `.session.jsonl` write, so lining a row up against either is a match rather than a conversion. It is derived as `run_started_wall + (now - run_started)` so column 0 keeps its monotonic clock, which cannot jump backwards over an NTP correction mid-run. `message_id` is the SDK's own id on an assistant row and `null` on every other kind. **Neither join target is committed** — the session transcript is gitignored and the subagent cache is ephemeral — so on a committed run log these two columns join to a locally held artifact or to nothing. The offsets are raw monotonic, so on Windows they include standby: compare them with `wall_clock_seconds + counted_sleep_seconds`, not `wall_clock_seconds` (§6 "Clocks"). |
+| `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, `usage` (the four token fields, see §8.1.5), per-turn `stop_reason` / `output_tokens` / block shape, and `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. **Read `subagent_capture_status` before concluding anything from an empty list.** |
 | `subagent_capture_status` | Why `subagents[]` is empty, so `[]` stops meaning three distinct things. `captured` — at least one transcript summarized. `matched_no_transcripts` — the directory resolved but held no subagent transcript. **This is the ordinary "no subagent ran" value**: a session that started always leaves its own parent transcript in that directory, so the directory exists whether or not any subagent was dispatched. It also covers a transcript that is present but unusable. `no_cache_dir` — no candidate spelling of the cache directory exists at all; the cache was cleaned, or the run never reached the agent. `error` — the lookup itself failed; recorded, never raised, because capture must not cost a completed run its log. `unknown` — nobody recorded one; the default, and not a claim that capture succeeded. The field is absent altogether on runs logged before it existed. |
 | `git_sha` | `git rev-parse HEAD` at run start, or `null` outside a checkout. The tree the run started from — check it out to reproduce. §8.1.3. |
 | `skills_hash` | One sha256 over the sorted `{path: hash}` of every skill + agent **source** file the run stages. Ties the run to the prompt that produced it — and unlike `git_sha` catches an **uncommitted** SKILL.md edit. Does not move with `--agent-model` (read `subagent_model_override` alongside it). §8.1.3. |
@@ -1958,6 +1963,53 @@ list is where the fire-rate measurement is read from, so a second copy would
 have to be excluded from every count anyway. A reader looking for it should
 filter `guardrail_shadow_violations` on that `kind`, not scan the `blocked_*`
 lists.
+
+#### 8.1.5 `usage.whole_run_usage` — the main thread plus its subagents
+
+`usage.usage` counts the **main thread only**. Subagent turns run in their own SDK
+sub-session and never enter it, so until the fields below existed an agent's cost
+could only be inferred as total-minus-main — a residual, not a measurement. One
+published claim over this corpus turned out to be nothing but that gap restated,
+and is retracted in `docs/plan/cost-latency-10x.md` appendix A3.
+
+Two sibling fields now carry the whole-run figure:
+
+| field | what |
+|---|---|
+| `usage.whole_run_usage` | The four priced token fields, `usage.usage` plus the sum of every `subagents[].usage`. Carries exactly those four keys — the unsummable siblings (`server_tool_use`, `service_tier`, `cache_creation`, `iterations`) are dropped. |
+| `usage.whole_run_cost_usd_estimated` | `pricing.estimate_cost_usd` over that block. **Corpus basis** — a flat Sonnet table with cache writes at the 1-hour rate. The production (5-minute) basis is about 8% lower. State the basis next to any figure lifted from it. |
+
+**`usage.usage` is deliberately left alone.** It is what `corpus_report`'s spend
+tally and the cost calibration read, so widening it in place would have moved every
+historical comparison underneath them.
+
+Both fields are `null`, never a plausible substitute, in three cases:
+
+- **`usage_source` is `streamed_fallback`.** That path's `output_tokens` is a
+  start-of-message snapshot, and since commit `76bc0655b` its accumulator already
+  holds subagent messages that surfaced on the main stream — so adding subagent
+  totals would double-count them on top of a field that is already wrong. Null
+  follows the precedent §8.1.2 sets.
+- **Any `subagents[]` entry carries no `usage` object.** Every run committed before
+  this change is that shape. Do **not** fall back to summing `subagents[].turns[]`:
+  those are one entry per content *block*, each repeating its message's totals, so
+  the sum roughly doubles cache reads. Unknown is unknown.
+- **No main-thread token block at all.**
+
+A run with no subagents, and a run whose capture failed (`subagent_capture_status`
+non-ok, which yields an empty list), both merge to exactly `usage.usage`.
+
+**Why `subagents[].usage` is counted per message, not per record.** Claude Code
+writes one record per content block and every one repeats its message's usage, so
+`subagent_usage` keys on `message["id"]` and lets the last write win — the same
+rule `_accumulate_usage` already applies on the main thread, where the docstring
+records a naive sum reporting 358,610 output tokens against a true 106,661.
+`turns[]` stays one entry per record, because the runaway readers and
+`max_output_tokens` need per-record shape.
+
+`make e2e-agent-spend` reads these fields and reports spend per agent. It counts a
+spawn with no `usage` object as uncovered rather than as zero, and prints no table
+at all when nothing in the corpus is priced.
 
 #### 8.1.2 `usage` when the `ResultMessage` never arrived
 
