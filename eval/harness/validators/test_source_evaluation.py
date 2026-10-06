@@ -677,3 +677,49 @@ def test_checklist_pointer_carries_no_action(text_response, test, agent_returns=
         if _recommends_detach(p) or _GO_TO_SOURCE_PATTERN.search(p) or _POINTER_ACTION_RE.search(p)
     ]
     assert not acting, f"a checklist pointer carries an action: {acting[0].strip()[:200]!r}"
+
+
+#: A FamilySearch person id: four characters, a hyphen, three characters.
+_FS_PERSON_ID = re.compile(r"\b[A-Z0-9]{4}-[A-Z0-9]{3}\b")
+
+
+def test_no_person_is_named_without_being_read(tool_calls, text_response, test, agent_returns=None):
+    """Naming another tree person as a record's true subject requires reading them.
+
+    The agent body already says so, twice, at the misattribution branch:
+    "`person_read` each one before you name them", and "If you cannot read them,
+    say the source is attached elsewhere and stop there -- do not assert whose it
+    is." The v1 run of 2026-10-06 shows the rule not binding:
+    `ut_source_evaluation_m8q` asserted "the source is also attached to KD96-WX7,
+    a different person in the tree named ..." having never called `person_read`
+    on KD96-WX7, and the judge scored it a fabrication.
+
+    This is the rule moved off prose and onto a check, which is what ADR-0011
+    asks for when a rule can be decided from the run itself. It is deliberately
+    narrow: it does not ask whether the identification is CORRECT, only whether
+    the agent looked before it spoke. A reply that says the source is attached
+    elsewhere without naming anyone passes, because that is the body's own
+    fallback.
+
+    Fails iff the reply names a FamilySearch person id that is neither the
+    subject's nor the target of a `person_read` call in the same run.
+    """
+    reply = (agent_returns or [{}])[0].get("text") if agent_returns else text_response
+    reply = reply or text_response or ""
+
+    read_ids = {
+        str((c.get("args") or {}).get("personId") or "").upper()
+        for c in (tool_calls or [])
+        if isinstance(c, dict) and (c.get("tool") or "").rsplit("__", 1)[-1] == "person_read"
+    }
+    read_ids.discard("")
+    # The subject is whoever the run read FIRST; anything else named is a claim
+    # about a person the agent may not have opened.
+    named = {m.upper() for m in _FS_PERSON_ID.findall(reply)}
+    unread = sorted(named - read_ids)
+    assert not unread, (
+        f"the reply names {unread} as tree person(s) but never called `person_read` on "
+        f"them. The body requires reading a person before naming them as a record's true "
+        f"subject, and says to stop at 'attached elsewhere' when you cannot. person_read "
+        f"was called for: {sorted(read_ids) or 'nobody'}"
+    )

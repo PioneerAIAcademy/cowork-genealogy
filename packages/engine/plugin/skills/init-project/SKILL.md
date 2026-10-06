@@ -140,6 +140,14 @@ Build the simplified-GedcomX document in memory — you pass it to `project_crea
 
 **Include:** subject person (names, facts), all relatives (parents, siblings, spouse, children), every person's person-level `sources` refs, all relationships, all source descriptions in the top-level `sources` array — minus `notes`, `text`, `image_ref` and `artifact_url`, none of which are allowed source fields and each of which fails the write. (`text` carries a memory's story text or OCR; keep it for Step 4b, then drop it from the tree.) A person object allows only `id`, `ark`, `living`, `gender`, `names`, `facts`, `sources`. `ark` is what marks a person as being *in* the FamilySearch tree, so every person read from it carries `ark: "ark:/61903/4:1:<their FamilySearch person ID>"` — that exact form, which is what `person_search` returns for the same person. Omit the key entirely on local stubs. Never a page URL, never a bare ID.
 
+**Person-level sources are not optional, and dropping them is the measured failure.**
+`person_read` returns each person's own `sources: [{ ref }]`. Every one of those refs must
+reach that person in the tree you build, re-pointed at the tree's source id. Before you
+call `project_create`, check it: for each person the read returned, the number of entries
+in their written `sources` equals the number the read gave them. A person who had three
+and is written with none is the defect this check exists for, and it is decided from the
+two documents alone, so there is no judgement in it.
+
 **ID conventions:** ALL persons get local `I` IDs (`I1`, `I2`…) — including FamilySearch-seeded persons. Do NOT use FamilySearch PIDs as person IDs. Names `N1`…; facts `F1`…; relationships `R1`…; sources `S1`… — mint any the tool did not supply (it returns no name or relationship IDs), rewrite every relationship endpoint to the new person IDs, and rewrite every person-level `sources[].ref` to the new ID of the source it names.
 
 **Source every FamilySearch fact with `quality: 1`** (questionable — compiled/unverified tree data). Create one source description for the FamilySearch tree using only the schema-allowed fields (`id`, `title`, `citation`, `author`, `url` — NO `quality`, `notes`, `repository`, or `accessed`). Then attach a source reference to every fact and relationship (`quality` goes here, on fact-level refs, not on source descriptions):
@@ -202,7 +210,7 @@ Then relay to the user that the project was created, naming the folder.
 
 Record it **only** when the researcher volunteers access unprompted — the question was dropped, not the field. The enum is closed, so normalize before writing: case-fold and map to `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `FamilySearch-Partner` (a partner subscription held through FamilySearch), `LibraryAccess` (public library, family history centre, or affiliate library), or `other` for anything unrecognized. A plain FamilySearch account is the baseline everyone has — never store it. If nothing survives normalization, omit the field; never write `["none"]` or `[]`.
 
-**Memory sources** — for each Step 3 source that arrived with `text`, one `{ section: "sources", op: "append", entry: {...} }`. Put the `text` verbatim in `transcription`, the source's `image_ref` in `image_filename` (omit if absent), and point `gedcomx_source_description_id` at that SAME source's id in the tree you just wrote — never a second, duplicate entry for it. `source_classification` is `original` for a scanned record, `derivative` when the memory is a transcription or abstract of one, `authored` for a family-written story. Fill the rest from the memory itself:
+**Memory sources** — for each Step 3 source that arrived with `text`, one. **A memory that arrived with no `text` gets no entry at all** — not an entry with an empty `transcription`, not a placeholder. Untranscribed means unrecorded here, and writing one anyway is what `test_init_empty_sections` fails. Then, for each with `text`: `{ section: "sources", op: "append", entry: {...} }`. Put the `text` verbatim in `transcription`, the source's `image_ref` in `image_filename` (omit if absent), and point `gedcomx_source_description_id` at that SAME source's id in the tree you just wrote — never a second, duplicate entry for it. `source_classification` is `original` for a scanned record, `derivative` when the memory is a transcription or abstract of one, `authored` for a family-written story. Fill the rest from the memory itself:
 
 ```
 { "section": "sources", "op": "append", "entry": {

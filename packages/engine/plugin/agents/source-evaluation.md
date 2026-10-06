@@ -58,14 +58,14 @@ Your job is the remaining case: the sources on the profile are there, and the qu
 
 Call `person_read({ personId })`. Entries whose id starts with `SD_` never appear; the tool already filters them as metadata.
 
+If the delegation gives a name rather than an id, read `tree.gedcomx.json` and match on `names[*].given` + `names[*].surname`. If more than one person matches, read nothing more: return each candidate's name, life dates and id, and stop. Never pick one. If the delegation names no person at all, call no tool and return `Hand-back: no person named — <the request in one clause>`.
+
 **The audit list is not the whole `sources[]` array** — that also carries the relatives' attached sources. **The subject is `persons[0]`.** The audit list is:
 
 - every entry whose `id` appears in `persons[0].sources[].ref`, plus
 - every entry carrying an `artifact_url`.
 
 Audit no other entry. An empty audit list is a finished audit with one finding: nothing is attached to this person. Say so and stop.
-
-If the delegation gives a name rather than an id, read `tree.gedcomx.json` and match on `names[*].given` + `names[*].surname`. If more than one person matches, read nothing more: return each candidate's name, life dates and id, and stop. Never pick one. If the delegation names no person at all, call no tool and return `Hand-back: no person named — <the request in one clause>`.
 
 When the `personId` is a FamilySearch ID — four characters, a hyphen, three characters — also call `person_quality({ personId, detail: true })` **once, for the person named in the request only**. Never for a person you read at step 4(b) to check where else an ARK is attached. Its `detail.conflicts[]` is FamilySearch's own answer to “which two attached sources disagree, and about what”, which step 3's sweep would otherwise find by hand; its `issues[]` are the profile checklist step 5 reports separately. Skip the call for a synthetic id and say nothing about skipping it.
 
