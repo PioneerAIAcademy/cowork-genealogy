@@ -1755,7 +1755,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
       "cache_creation_input_tokens": "number",
       "output_tokens": "number",
       "model_usage": "object (per-model ledger, keyed by model id; the token fields above are its column sums)",
-      "subagents": "array (optional; one summary per subagent — agent_type, usage, peak_window_tokens, compactions, models; written with subagent_capture_status, absent when no capture ran)",
+      "subagents": "array (optional; one summary per subagent — agent_type, usage, peak_window_tokens, compactions, models, duration_seconds; written with subagent_capture_status, absent when no capture ran)",
       "subagent_capture_status": "string (optional; captured | matched_no_transcripts | no_cache_dir | error)",
       "main_thread": "object (optional; the parent session's peak_window_tokens, compactions, models; absent when its transcript could not be read)",
       "skill_cost_usd": "number",

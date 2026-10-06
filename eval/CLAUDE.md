@@ -328,7 +328,7 @@ A **separate** workflow, triggered on `eval/tests/e2e/**`, `eval/runlogs/e2e/**`
 
 The e2e `.ann.json` is written by the `/grade-e2e-run` skill (blind grading), **not** the CRUD UI — see the "never hand-write" note above, which is scoped to *unit* annotations.
 
-Each e2e run also leaves a readable `reports/run-<ts>.txt` beside its log (gitignored; `make e2e-report` backfills). It **withholds the verdict, recall and per-finding results until the run is graded**, because it sits in the folder the blind grader works from (`e2e-test-spec.md` §7.4).
+Each e2e run also leaves a readable `reports/run-<ts>.txt` beside its log (gitignored; `make e2e-report` backfills; newest five per fixture kept): every helper's cost, time and busiest moment, then a summary. `make e2e-compare TEST=<slug>` writes two runs side by side to `comparison/NN_comparison.txt`. Both **withhold the verdict, recall and per-finding results until graded** — a comparison until *both* runs are — because they sit in the folder the blind grader works from (`e2e-test-spec.md` §7.4).
 
 ## Model Pinning
 

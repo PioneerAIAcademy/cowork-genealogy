@@ -1244,11 +1244,19 @@ e2e-cache-window: ## Corpus cost of a 5-minute prompt-cache TTL over committed e
 
 .PHONY: e2e-report
 e2e-report: ## Readable .txt per e2e run, into eval/runlogs/e2e/<slug>/reports/: make e2e-report [TEST=<slug>] [FORCE=1]
-	# Every run already writes its own; this backfills older runs. Pure
+	# Every run already writes its own; this backfills the newest five runs per
+	# fixture (older reports are deleted; run logs are all kept). Pure
 	# formatting, no API. The judge's verdict, recall and findings stay HIDDEN
 	# until the run's .ann.json exists (spec §7.4 — runs are graded blind); a
 	# hidden report is re-rendered here once its run is graded. Gitignored.
 	cd eval/harness && uv run python -m e2e.run_report $(if $(TEST),--test $(TEST),) $(if $(FORCE),--force,)
+
+.PHONY: e2e-compare
+e2e-compare: ## Two runs of one e2e fixture side by side, saved as comparison/NN_comparison.txt: make e2e-compare TEST=<slug> | BEFORE=<run.json> AFTER=<run.json>
+	# Default: the fixture's two newest runs. Printed, and saved as the next
+	# numbered file in eval/runlogs/e2e/<slug>/comparison/ (newest five kept,
+	# gitignored). Verdict/recall only when BOTH runs are graded (spec §7.4).
+	cd eval/harness && uv run python -m e2e.run_compare $(if $(and $(BEFORE),$(AFTER)),--before $(abspath $(BEFORE)) --after $(abspath $(AFTER)),--test $(TEST))
 
 .PHONY: e2e-agent-spend
 e2e-agent-spend: ## What each subagent costs, from subagents[].usage (#2582): make e2e-agent-spend | TEST=<slug>

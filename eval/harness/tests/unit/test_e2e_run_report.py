@@ -11,8 +11,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from e2e.agent_spend_report import collect
 from e2e.run_report import (
     GRADE_HIDDEN,
+    agent_call_durations,
+    keep_newest_reports,
     prune_orphan_reports,
     render,
     txt_path_for,
@@ -139,3 +142,66 @@ def test_orphan_reports_are_removed(tmp_path: Path):
     orphan.write_text("x", encoding="utf-8")
     assert prune_orphan_reports(path.parent) == [orphan]
     assert txt_path_for(path).exists()
+
+
+def test_the_real_catharina_run_shows_helper_time_and_who_spent_what():
+    """Its helpers were captured before `duration_seconds` existed, so their
+    time comes from each Agent call's own `duration_ms` trailer."""
+    log = json.loads(REAL.read_text(encoding="utf-8"))
+    assert len(agent_call_durations(log)) == 16
+    text = render(log, REAL.name, graded=False, per_agent=collect([REAL])[0])
+    summary = text.split("SUMMARY")[1]
+    assert "main $3.48 (39%) · helpers $5.45 (61%)   of the $8.93 whole-run flat estimate" in summary
+    assert "32.2 min summed over 16 launch(es)" in summary
+    assert "busiest moment   165,043 tokens (main researcher)" in summary
+    assert "squeezes         main 1 · helpers 0" in summary
+    assert "  1  question-selection            12    $0.16      42 s" in text
+
+
+_SUB = {"agent_type": "record-extractor", "num_assistant_turns": 6,
+        "usage": {"input_tokens": 1, "output_tokens": 500,
+                  "cache_read_input_tokens": 20_000, "cache_creation_input_tokens": 2_000},
+        "peak_window_tokens": 26_000, "compactions": [], "models": ["claude-sonnet-4-6"]}
+
+
+def test_a_helpers_own_duration_wins_over_the_call_trailer():
+    sub = dict(_SUB, duration_seconds=61.0, transcript="agent-abc123.jsonl")
+    call = {"tool": "Agent", "response_summary": "agentId: abc123 … <usage>duration_ms: 99000</usage>"}
+    log = _log(subagents=[sub], subagent_capture_status="captured", tool_calls=[call])
+    assert "      61 s" in render(log, "r.json", graded=False)
+
+
+def test_a_failed_capture_never_reads_as_main_100_percent():
+    """Capture failed: `subagents` is [] and the whole-run figure equals main."""
+    usage = dict(_log()["usage"], whole_run_cost_usd_estimated=3.0)
+    log = _log(usage=usage, subagents=[], subagent_capture_status="no_cache_dir")
+    text = render(log, "r.json", graded=False)
+    assert "who spent it     not recorded" in text
+    assert "100%" not in text
+
+
+def test_no_helper_ran_is_main_100_percent():
+    log = _log(subagents=[], subagent_capture_status="matched_no_transcripts")
+    assert "main 100% — no helper ran" in render(log, "r.json", graded=False)
+
+
+def test_retention_keeps_the_five_newest_run_reports_and_ignores_scratch(tmp_path: Path):
+    reports = tmp_path / "fx" / "reports"
+    reports.mkdir(parents=True)
+    for day in range(1, 7):
+        (reports / f"run-2026-10-0{day}_00-00-00.txt").write_text("x", encoding="utf-8")
+    (reports / "scratch_2026-10-09_00-00-00.txt").write_text("x", encoding="utf-8")
+    removed = keep_newest_reports(tmp_path / "fx")
+    assert [p.name for p in removed] == ["run-2026-10-01_00-00-00.txt"]
+    kept = sorted(p.name for p in reports.glob("run-*.txt"))
+    assert kept[0] == "run-2026-10-02_00-00-00.txt" and len(kept) == 5
+
+
+def test_a_scratch_run_gets_no_report(tmp_path: Path):
+    fixture = tmp_path / "fx"
+    fixture.mkdir()
+    crashed = fixture / "scratch_2026-10-06_10-00-00.json"
+    crashed.write_text(json.dumps(_log()), encoding="utf-8")
+    written, _, _ = write_reports([crashed])
+    assert written == []
+    assert not (fixture / "reports").exists()

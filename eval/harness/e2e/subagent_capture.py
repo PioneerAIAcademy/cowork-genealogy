@@ -343,6 +343,31 @@ def subagent_models(records: list[dict[str, Any]]) -> list[str]:
     return seen
 
 
+def subagent_duration_seconds(records: list[dict[str, Any]]) -> float | None:
+    """Seconds from the earliest to the latest record timestamp, or None.
+
+    Earliest/latest, not first/last: `queued_command` attachment records carry
+    their enqueue time, so timestamps can step backwards within a transcript.
+    Measured against the CLI's own `duration_ms` on the 16 helpers of the
+    2026-10-05 catharina run: within 0.1 s. None with fewer than two parseable
+    timestamps — never a fake 0.
+    """
+    from datetime import datetime
+
+    moments = []
+    for rec in records:
+        stamp = rec.get("timestamp") if isinstance(rec, dict) else None
+        if not isinstance(stamp, str):
+            continue
+        try:
+            moments.append(datetime.fromisoformat(stamp.replace("Z", "+00:00")).timestamp())
+        except ValueError:
+            continue
+    if len(moments) < 2:
+        return None
+    return round(max(moments) - min(moments), 3)
+
+
 def summarize_transcript(
     records: list[dict[str, Any]],
     *,
@@ -378,6 +403,7 @@ def summarize_transcript(
         "peak_window_tokens": subagent_peak_window(records),
         "compactions": subagent_compactions(records),
         "models": subagent_models(records),
+        "duration_seconds": subagent_duration_seconds(records),
         "turns": turns,
     }
     if transcript_name:

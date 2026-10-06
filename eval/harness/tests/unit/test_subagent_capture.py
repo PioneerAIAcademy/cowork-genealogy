@@ -837,3 +837,28 @@ def test_collect_main_thread_is_none_not_zero_when_nothing_is_found(tmp_path: Pa
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
     monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
     assert collect_main_thread(tmp_path / "nowhere") is None
+
+
+def test_duration_is_earliest_to_latest_timestamp_not_first_to_last():
+    """`queued_command` attachments carry their enqueue time, so a later record
+    can be stamped earlier; the span must still be max - min."""
+    from e2e.subagent_capture import subagent_duration_seconds
+
+    records = [
+        {"type": "user", "timestamp": "2026-10-05T14:00:05.000Z"},
+        {"type": "attachment", "timestamp": "2026-10-05T14:00:00.000Z"},
+        {"type": "assistant", "timestamp": "2026-10-05T14:01:47.500Z"},
+    ]
+    assert subagent_duration_seconds(records) == 107.5
+    assert summarize_transcript(records)["duration_seconds"] == 107.5
+
+
+@pytest.mark.parametrize("records", [
+    [],
+    [{"timestamp": "2026-10-05T14:00:00.000Z"}],
+    [{"timestamp": "not a time"}, {"timestamp": 7}, {}],
+])
+def test_duration_is_none_not_zero_without_two_timestamps(records):
+    from e2e.subagent_capture import subagent_duration_seconds
+
+    assert subagent_duration_seconds(records) is None
