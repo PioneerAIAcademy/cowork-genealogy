@@ -705,6 +705,17 @@ def test_a_detach_sentence_naming_another_record_passes():
         "The 1885 Minnesota State Census belongs to another man and should be detached.",
         _TEST,
     )
+    for tail in (
+        "belongs to another man and must be detached.",
+        "belongs to another man and so should be detached.",
+        "is another man's record and is to be detached.",
+        "should be detached.",
+    ):
+        _no_detach(
+            "The Minnesota Death Index gives 1954 against the profile's 1945. "
+            "The 1885 Minnesota State Census " + tail,
+            _TEST,
+        )
 
 
 def test_a_detach_sentence_that_names_no_record_still_fails():
@@ -732,6 +743,21 @@ def test_a_detach_sentence_that_names_no_record_still_fails():
         "The Minnesota Death Index gives 1954 against the profile's 1945. The 1900 Census agrees with 1945 and hence the entry should be detached.",
         "The Minnesota Death Index gives 1954 against the profile's 1945. The 1900 Census agrees with 1945 and thus it should be detached.",
         "The Minnesota Death Index gives 1954 against the profile's 1945. The 1900 Census agrees with 1945 while the index entry should be detached.",
+        *(
+            "The Minnesota Death Index gives 1954 against the profile's 1945. The 1900 Census agrees with 1945 " + tail
+            for tail in (
+                "and consequently the entry should be detached.",
+                "and accordingly the entry should be detached.",
+                "and as a result the entry should be detached.",
+                "and now the entry should be detached.",
+                "whereas the entry should be detached.",
+                "although the entry should be detached.",
+                "yet the entry should be detached.",
+                "meaning the entry should be detached.",
+                "and his index entry should be detached.",
+                "and Death Index entry should be detached.",
+            )
+        ),
         _X6B_PARAGRAPH + " Detach it as well.",
     ):
         try:

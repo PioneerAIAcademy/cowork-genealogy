@@ -232,16 +232,21 @@ _DETACH_ACTIVE_ON_TITLE_RE = re.compile(
     r"(?:[A-Z0-9][\w.'-]*\s+)*?" + _TITLE_WORDS + r"\b"
 )
 # "The 1885 Minnesota State Census should be detached": the title word is the
-# sentence's subject, with nothing between it and the verb that carries in a
-# new subject: no comma, semicolon or colon, no "but" or "while", and no
-# "and"/"so" followed by an article, a pronoun or a connective ("... and the
-# index entry should be detached", "... and thus it should be detached").
+# sentence's subject. Cleared only when the words between it and the verb hold
+# no clause boundary at all, or hold one "and" (optionally "and so") followed
+# directly by the verb phrase ("... and must be detached"). Anything else may
+# carry in a new subject ("... and his index entry should be detached").
+_NO_CLAUSE_BOUNDARY = (
+    r"(?:(?!\b(?:and|but|while|whereas|although|yet|meaning|so)\b)[^,;:])*"
+)
 _DETACH_PASSIVE_ON_TITLE_RE = re.compile(
     r"^\W*(?:(?i:the|this|that|a|an)\s+)?(?:[A-Z0-9][\w.'-]*\s+)*?"
     + _TITLE_WORDS
-    + r"\b(?:(?!\b(?:but|while)\b"
-    r"|\b(?:and|so)\s+(?:the|a|an|this|that|it|its|he|she|they"
-    r"|hence|thus|therefore|yet|also)\b)[^,;:])*\b"
+    + r"\b"
+    + _NO_CLAUSE_BOUNDARY
+    + r"(?:\band(?:\s+so)?\s+(?=(?:should|must|is|be)\b)"
+    + _NO_CLAUSE_BOUNDARY
+    + r")?\b"
     + _DETACH_VERB
 )
 
