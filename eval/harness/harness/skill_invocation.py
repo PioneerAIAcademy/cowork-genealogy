@@ -1949,6 +1949,18 @@ TREE_WRITER_TOOLS = frozenset(
     {"tree_edit", "tree_correct", "merge_tree_persons", "materialize_facts"}
 )
 
+# The engine's STALE-JUSTIFICATION branch returns the same
+# `reason: "unjustified_warnings"` as a genuine refusal while meaning the
+# opposite: the agent sent a warningId matching no introduced warning, and the
+# gate is telling it to re-call WITHOUT justifications to get the current ids.
+# That is a round-trip the agent is expected to make, not a refusal it
+# abandoned, so counting it inflates the fire rate the promotion decision reads
+# (`guardrail-enforcement-spec.md`). The `reason` cannot discriminate the two,
+# so the message must — and because that couples this module to a string in
+# `src/tools/tree-edit.ts`, `test_stale_justification_marker_matches_the_engine`
+# reads the engine source and fails if the wording moves.
+STALE_JUSTIFICATION_MARKER = "Stale warningId"
+
 
 def unresolved_warning_refusal(tool_calls: list[dict[str, Any]] | None) -> bool:
     """True when a tree writer returned `unjustified_warnings` (issue #2840's
@@ -1992,6 +2004,12 @@ def unresolved_warning_refusal(tool_calls: list[dict[str, Any]] | None) -> bool:
     the time while their unit tests, which hand-build `response_summary`,
     passed. A check that cannot fail reads as coverage; CLAUDE.md forbids one.
 
+    A STALE-JUSTIFICATION ANSWER IS NEITHER. The engine returns the same
+    `reason` for it (`STALE_JUSTIFICATION_MARKER`), so it is excluded from the
+    refusals; and it carries `"ok": false`, so it cannot pass as the resolving
+    success either. Both arms have to agree on that or the exclusion just moves
+    the miscount from one side to the other.
+
     KNOWN IMPRECISION, deliberately not guessed at: any later landed writer
     call clears the refusal, including one for an unrelated op. Tying the
     success to the refused op is not generally decidable here — the agent may
@@ -2006,7 +2024,8 @@ def unresolved_warning_refusal(tool_calls: list[dict[str, Any]] | None) -> bool:
         return isinstance(call, dict) and bare_tool_name(call.get("tool") or "") in TREE_WRITER_TOOLS
 
     def _is_refusal(call: dict[str, Any]) -> bool:
-        return "unjustified_warnings" in response_text(call)
+        text = response_text(call)
+        return "unjustified_warnings" in text and STALE_JUSTIFICATION_MARKER not in text
 
     refusals = [i for i, call in enumerate(calls) if _is_writer(call) and _is_refusal(call)]
     if not refusals:

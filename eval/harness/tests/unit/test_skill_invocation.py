@@ -1769,6 +1769,54 @@ def test_a_no_project_answer_does_not_count_as_the_resolving_success():
     assert unresolved_warning_refusal(calls) is True
 
 
+def test_a_stale_justification_answer_is_not_counted_as_a_refusal():
+    """The engine reuses `reason: "unjustified_warnings"` for the stale-id
+    branch, which means the opposite of a refusal: the agent sent a warningId
+    matching no introduced warning and is being told to re-call WITHOUT
+    justifications to get the current ids. That round-trip is expected, not an
+    abandonment, and counting it inflates the fire rate the promotion decision
+    reads."""
+    from harness.skill_invocation import STALE_JUSTIFICATION_MARKER
+
+    stale = (
+        '{"ok": false, "reason": "unjustified_warnings", "warnings": [{"message": '
+        '"' + STALE_JUSTIFICATION_MARKER + '(s) not matching any introduced '
+        'warning: w9. Re-call without warningJustifications to get the current '
+        'warning ids."}]}'
+    )
+    assert unresolved_warning_refusal(
+        [{"tool": "mcp__genealogy__tree_edit", "response": stale}]
+    ) is False
+
+    # And it must not pass as the success that clears a real refusal either —
+    # excluding it from one arm only moves the miscount to the other.
+    assert unresolved_warning_refusal(
+        [
+            {"tool": "mcp__genealogy__tree_edit", "response": _REFUSAL},
+            {"tool": "mcp__genealogy__tree_edit", "response": stale},
+        ]
+    ) is True
+
+
+def test_stale_justification_marker_matches_the_engine():
+    """Pins the cross-language coupling. `STALE_JUSTIFICATION_MARKER` keys on a
+    string literal in the engine, so a reword there would silently restore the
+    conflation this exclusion exists to prevent."""
+    from pathlib import Path
+
+    from harness.skill_invocation import STALE_JUSTIFICATION_MARKER
+
+    repo_root = Path(__file__).resolve().parents[4]
+    src = (repo_root / "packages/engine/mcp-server/src/tools/tree-edit.ts").read_text(
+        encoding="utf-8"
+    )
+    assert STALE_JUSTIFICATION_MARKER in src, (
+        f"{STALE_JUSTIFICATION_MARKER!r} is no longer in tree-edit.ts — the "
+        "stale-justification branch was reworded, so unresolved_warning_refusal "
+        "is counting those round-trips as abandoned refusals again"
+    )
+
+
 def test_a_recall_whose_result_never_arrived_does_not_resolve_the_refusal():
     """The third shape of the same credit trap. A run truncated by the
     wall-clock or turn cap leaves the re-call with NO recorded response at all,
