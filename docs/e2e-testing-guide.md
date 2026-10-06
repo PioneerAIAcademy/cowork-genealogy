@@ -630,8 +630,8 @@ limits bind every figure it prints. **Only the visible top 3 is measurable**:
 of an unranked record, and "outside the top 3" is an upper bound on ranker
 disagreement rather than a count of ignored rankings. **Subagent reads are not
 the main thread's**: `record_search` is only ever called by the main thread,
-but a third of `record_read` calls come from `record-extractor` and
-`person-evidence`, which run in fresh context and read the `recordId` they were
+but a third of `record_read` calls come from `record-extractor` (since retired)
+and `person-evidence`, which run in fresh context and read the `recordId` they were
 handed — they are reported separately as delegated reads, never scored against
 the main thread's choice.
 

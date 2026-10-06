@@ -375,10 +375,10 @@ neighbours" skills:
 
 - `tree-edit` skill can suggest record attachments via
   `person_record_matches`.
-- `record-extraction` skill can warn about already-attached records
-  via `record_person_matches`.
+- Extraction (`extraction_append`) could warn about already-attached
+  records via `record_person_matches`.
 - A future `merge-candidate` skill can use `person_person_matches`.
-- `record-extraction` can suggest collateral records via
+- Extraction could suggest collateral records via
   `record_record_matches`.
 
 None of these consumers are written yet — this issue only ships the

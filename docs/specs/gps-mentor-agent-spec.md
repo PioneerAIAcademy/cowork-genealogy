@@ -211,7 +211,7 @@ bare `Read` used to resolve under every registrar, which meant a session whose
 spelling missed every MCP entry would still spawn the mentor, holding
 `Read` alone, instead of refusing it outright. That guaranteed spawn is gone;
 what protects the mentor now is the same three-spelling insurance that protects
-`record-extractor`.
+every other MCP-only agent.
 
 **Model requirement:** `claude-sonnet-5`. The gates read and cross-reference large research
 files with careful analytical reasoning. Sonnet 5 — released after this spec was first written —

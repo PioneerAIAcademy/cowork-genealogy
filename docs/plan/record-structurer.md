@@ -1,9 +1,9 @@
 # Plan: the record-structurer agent (issue #2939)
 
-**Status:** not started. The spec is written, to the lead's 2026-09-29 call
-shape: `docs/specs/record-structurer-agent-spec.md` and
-`research-append-tool-spec.md` §11.7. #2937 and #2939 land on `main` as **one
-merge**, so PR #2979 does not merge on its own first.
+**Status:** built in PR #3007 (with #2979), to the spec
+`docs/specs/record-structurer-agent-spec.md` and `research-append-tool-spec.md`
+§11.7. #2937 and #2939 land on `main` as **one merge**; this file is deleted
+when that PR merges.
 
 This file holds the section walk the issue asks for. It becomes the PR body's
 walk, and the file is deleted when the PR merges.

@@ -448,7 +448,7 @@ with no manifest block to sit in.
 
 **The first of those two is now measured, and it lands harder than the block
 does.** A `craftNotes` payload returned from `project_context` — a call
-`record-extractor` makes on every spawn — was adopted on **289 of 289** eligible
+`record-extractor` (since retired) made on every spawn — was adopted on **289 of 289** eligible
 assertions across 12 of 12 census tests, against a baseline of **0 of 1,638 over
 six runs**, while honouring every carve-out the note declared (zero leak onto the
 record types it excluded). It was adopted **even though it contradicted the census
@@ -604,7 +604,7 @@ prose bug. Before editing any `SKILL.md` or agent body, classify it:
 |---|---|---|
 | 1 | a tooling defect | an MCP tool PR |
 | 2 | an eval defect (judge, rubric, or fixture is wrong) | an eval PR |
-| 3 | a **record-type craft gap** — this census/probate/deed handled wrong, other types fine | **Depends on whose gap it is.** An *agent* finding → the table for that type inside the agent body (e.g. the census informant table in `agents/record-extractor.md`); agents carry no sibling reference files, by decision (§3.4). A *skill* finding → that skill's own `references/` file — skills do have them (§3.3). Either way a table edit is scoped: it changes one type and nothing else. |
+| 3 | a **record-type craft gap** — this census/probate/deed handled wrong, other types fine | **Depends on whose gap it is.** An *agent* finding → the table for that type inside the agent body ; agents carry no sibling reference files, by decision (§3.4). Extraction is not an agent finding: roles and classifications are decided in code (`src/utils/record-extract.ts`, `src/utils/structured-document.ts`), so an extraction craft gap is lane 1. A *skill* finding → that skill's own `references/` file — skills do have them (§3.3). Either way a table edit is scoped: it changes one type and nothing else. |
 | 4 | **core doctrine** — a rule that applies across record types or skills | the stewarded prose edit, gated by the unit suite. **Often the same file as lane 3; the difference is blast radius, not location.** If your edit changes behavior on records you didn't look at, it's lane 4. |
 | 5 | a **triggering / routing miss** — the skill never ran | the `description` (§3.2) or the routing table (§4), **never the body**. See "Fix a skill that isn't triggering" at the end of §4. |
 
@@ -837,8 +837,8 @@ There **is** an orchestrator, and it is a skill:
 
 **Two contracts the orchestrator enforces on itself**, both load-bearing for
 §§5–6: it never extracts records inline (every positive/partial log entry routes
-through `record-extraction`, which delegates one `record-extractor` agent per
-record), and it never writes identity links or eliminations inline
+through `extraction_append` — `recordIds` for FamilySearch records, one
+`record-structurer` spawn for any other source), and it never writes identity links or eliminations inline
 (`person-evidence`, `conflict-resolution`, `hypothesis-tracking` own those).
 
 > **Direction.** Only **6 of the 17 rows are mechanically
@@ -990,8 +990,8 @@ which says nothing about `bypassPermissions`, denies, or omissions. Probed
 2026-08-30 against Claude Code 2.1.220 / SDK 0.2.128 (`make
 probe-agent-binding`, reproduced twice): under `bypassPermissions` **both**
 bind. A tool merely omitted from `tools:` is absent from the agent, exactly as a
-denied one is. So the omission is what keeps `record-extractor` off the broad
-`research_append`, and its deny restates that rather than being the last line.
+denied one is. So the omission is what kept `record-extractor` (since retired) off the broad
+`research_append`, and its deny restated that rather than being the last line.
 
 **So all five deny blocks were deleted on 2026-08-30.** Every one named a tool
 already absent from its agent's `tools:`, which makes it a restatement, and 83
@@ -1108,8 +1108,8 @@ driver must wait.
 Where a boundary must hold against a **misdirected caller**, this system narrows
 the *tool*, not the prompt.
 
-`extraction_append` is `research_append` restricted to the two sections
-`record-extractor` owns (`sources`, `assertions`) — same implementation, gated
+`extraction_append` is `research_append` restricted to the two extraction
+sections (`sources`, `assertions`) — same implementation, gated
 by a **second function parameter** (`researchAppend(input, { allowedSections, toolName })`)
 that a tool caller structurally cannot reach, because dispatch builds only the
 first argument from tool input.
@@ -1254,11 +1254,10 @@ enforcing-vs-shadow status.
 
 - **A `tools:` entry grants a capability; it does not create a behavior.** The
   agent will not call a tool its body never tells it to call. `record-extractor`
-  has held `place_search` and `place_search_all` since 2026-07-12, under two
-  spellings since 07-18 and all three since 2026-08-05, while its body tells
-  it to *omit* `standard_place` (`record-extractor.md`, its `standard_place`
-  instruction) — dead grants that every lint
-  passes. **Every tool addition is two edits: the frontmatter, and the
+  (since retired) held `place_search` and `place_search_all` from 2026-07-12, under two
+  spellings from 07-18 and all three from 2026-08-05, while its body told
+  it to *omit* `standard_place` — dead grants that every lint
+  passed. **Every tool addition is two edits: the frontmatter, and the
   instruction in the body that makes the call happen.**
 - **A writer tool also needs the ownership manifest.** Name the agent in
   `agentCallers` (with the tool in its `tools`) on every row that tool reaches,
@@ -2237,7 +2236,7 @@ questions that only look open.
 | The write boundary and the `extraction_append` lane | [`research-append-tool-spec.md`](specs/research-append-tool-spec.md) §11 |
 | The persisted schemas | [`research-schema-spec.md`](specs/research-schema-spec.md), [`simplified-gedcomx-spec.md`](specs/simplified-gedcomx-spec.md) |
 | The projection tools | [`project-context-tool-spec.md`](specs/project-context-tool-spec.md), [`research-query-tool-spec.md`](specs/research-query-tool-spec.md) |
-| Per-agent contracts | [`gps-mentor-agent-spec.md`](specs/gps-mentor-agent-spec.md), [`image-reader-agent-spec.md`](specs/image-reader-agent-spec.md) (`record-extractor` has no standalone spec — its lane is `research-append-tool-spec.md` §11) |
+| Per-agent contracts | [`gps-mentor-agent-spec.md`](specs/gps-mentor-agent-spec.md), [`image-reader-agent-spec.md`](specs/image-reader-agent-spec.md) , [`record-structurer-agent-spec.md`](specs/record-structurer-agent-spec.md) |
 | How do I write a skill? How does it get tuned, tested, and rebuilt? | [`skill-authoring-guide.md`](skill-authoring-guide.md), [`skill-lifecycle.md`](skill-lifecycle.md) |
 | The eval harness — formats, workflow, run logs, CI rules | [`unit-test-spec.md`](specs/unit-test-spec.md) (the live format — [`unit-test-spec-v2.md`](specs/unit-test-spec-v2.md) is a **plan** for deferred features, not the format), [`e2e-test-spec.md`](specs/e2e-test-spec.md), [`e2e-testing-guide.md`](e2e-testing-guide.md), `eval/README.md`, `eval/CLAUDE.md` |
 | Setup paths the harness can't reach | `docs/testing-guides/` — OAuth tokens, `.mcpb` install, gps-mentor |

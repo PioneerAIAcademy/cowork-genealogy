@@ -316,8 +316,8 @@ the defect in one line; a judge gives an opinion that moves between runs.
 
 ## 5. Folded size sizes the work; it does not disqualify
 
-There is no size ceiling. `wc -c` on `record-extractor.md` gives the largest
-agent body shipped so far — precedent, not a limit — and it moves (53,845 bytes,
+There is no size ceiling. `wc -c` on `record-extractor.md` (since retired) gave the
+largest agent body shipped — precedent, not a limit — and it moved (53,845 bytes,
 then 58,541, then 57,229), so a candidate measured against it crosses in either
 direction without anyone touching the candidate. Nor do agent bodies only grow:
 roughly a quarter of that file's committed revisions shrank it.
@@ -414,8 +414,8 @@ up while the body ran on the main thread, and each cost a run to find.
   lines" paged through the whole file and then skipped the section queries the
   body requires. Telling it *how* to read does not hold; fix the tool.
 - **The narration line is a file read.** It sends the agent into
-  `research.json` for a fixed house-style string. `record-extractor` carries
-  none; drop it from an agent that should not read that file.
+  `research.json` for a fixed house-style string. `record-extractor` (since
+  retired) carried none; drop it from an agent that should not read that file.
 - **A rule the delegation contradicts loses some of the time.** The agent
   observed a plan item `in_progress`, said so, and wrote the dependent
   question anyway because the delegation called the search done — on some runs
@@ -535,22 +535,20 @@ up while the body ran on the main thread, and each cost a run to find.
 - **Nothing enforces the routing-skill contents list.** A routing skill that grows a
   gate back fails no test, and the acceptance check is applied by a reader. Both
   *thin-routing* pairs — `proof-conclusion` and `research-exhaustiveness` — were
-  written before the rule and both violate it. `record-extraction` is the third
-  pair and is not one of these: it acquires, triages and logs before batching one
-  extractor per record, so the list above does not describe it and the
-  orchestrator still routes it as a skill. **This is a settled ruling, not an
-  open question (#2491, 2026-09-15): the fan-out loop stays in the skill as the
-  sanctioned exception.** It was tested — moving the loop into `/research`
-  (Shape B) vs leaving it in the skill (Shape A) — and the measured effect
-  ceiling is ~0.1%: `record-extraction/SKILL.md` is ~15.5 KB (~4k tokens),
+  written before the rule and both violate it. `record-extraction` was the third
+  pair and was not one of these: it acquired, triaged and logged before batching one
+  extractor per record, so the list above did not describe it. **The ruling that
+  kept its fan-out loop in the skill (#2491, 2026-09-15) is moot: both the skill and
+  the agent are retired, and extraction runs in code through `extraction_append`.**
+  It was tested — moving the loop into `/research` (Shape B) vs leaving it in the
+  skill (Shape A) — and the measured effect ceiling was ~0.1%:
+  `record-extraction/SKILL.md` was ~15.5 KB (~4k tokens),
   invoked 0–2× per run (0× in 50 committed runs, 1× in 105, 2× in 17), against a
   median main-thread `cache_read_input_tokens` of 8.0M — so the entire
   main-thread saving is ≤~8k tokens against ~8M, which is why the run's
   peak-window metric saturated at the SDK auto-compaction ceiling and could not
-  discriminate the two shapes at any affordable sample size. Do not re-open this
-  as an unmeasured paid comparison. (After #2490 strips acquisition paths 2–4
-  from the skill, the question may re-enter as a free **doctrine** call inside
-  #2490's own design — never again as a paid comparison.)
+  discriminate the two shapes at any affordable sample size. The measurement stands
+  for any future skill-vs-orchestrator fan-out question.
 - **The direct route dominates but does not displace the routed one.** Over
   every committed e2e run dated on or after 2026-08-20: 15 runs reach
   `research-exhaustiveness`, 14 spawn it directly and one reaches it only via

@@ -240,10 +240,10 @@ described under "Who actually writes a row" below.
 | `researcher_profile` | init-project (at creation, fixed values); any caller may correct a field later | all (every skill reads `narration_guidance`) | Mutable, deliberately **not** set-once — a researcher who picked the wrong experience level needs a route that is not starting over. Written through `research_append` as a singleton section. Optional: the object is created on its first real write, and an agent must never fabricate one, since a wrong profile is indistinguishable downstream from a real one while an absent one has a working fallback everywhere |
 | `known_holdings` | init-project (survey at creation) | question-selection, research-plan, all | Mutable (`promoted` flag); never delete. Written after the tree persons exist — `relates_to_person_ids` names them, and the validator rejects a reference to a person that does not yet exist |
 | `questions` | question-selection (new questions); research-exhaustiveness (`status` up through `exhaustive_declared`, `exhaustive_declaration`); proof-conclusion (`status` → `resolved`, `resolved` date, `resolution_assertion_ids` on the question being concluded) | research-plan, all downstream | Mutable; never delete. **A question is never retired** — `question_status` has no supersede value, so `status` only advances through the transitions in the Written-by column. An overtaken question stays as it is. A `resolved` write is additionally refused by `research_append` unless a proof summary already references the question. Two further `research_append` preconditions guard the exhaustiveness pair: `status: "exhaustive_declared"` requires `exhaustive_declaration.declared === true` (checked from either side, on the post-merge entry), and `declared: true` is refused while an item on the question's **active** plan is `in_progress` (checked against the pre-call snapshot, since plan-item completion is the search work's step — a superseded or completed plan's items never block, or a re-planned question could never be declared). Items still `planned` do not block |
-| `plans` | research-plan; search-records, search-external-sites, search-full-text, search-images, record-extraction (`items[].status`) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search and extraction skills update only an item's `status` after executing or extracting from it |
-| `log` | search-records, search-full-text, search-external-sites, search-images, record-extraction (all embed research-log-protocol) | question-selection, all | **Append-only; entries never modified or deleted.** No single skill owns the section — `research_log_append` owns entry structure and id allocation, and takes no `section` argument |
-| `sources` | record-extraction, citation | all | Mutable (citation can be refined); never delete. citation refines and never creates — see §8 "Source ownership" |
-| `assertions` | record-extraction | timeline, conflict-resolution, proof-conclusion, question-selection | Mutable (classification fields, date fields); never delete. convert-dates was listed here and never could write: its only tool is `convert_calendar` and it holds no writer tool |
+| `plans` | research-plan; search-records, search-external-sites, search-full-text, search-images (`items[].status`) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search skills update only an item's `status` after executing it |
+| `log` | search-records, search-full-text, search-external-sites, search-images (all embed research-log-protocol); `extraction_append` (its own `record_read` entry per record) | question-selection, all | **Append-only; entries never modified or deleted.** No single skill owns the section — `research_log_append` owns entry structure and id allocation, and takes no `section` argument |
+| `sources` | `extraction_append` (by tool identity), citation | all | Mutable (citation can be refined); never delete. citation refines and never creates — see §8 "Source ownership" |
+| `assertions` | `extraction_append` (by tool identity) | timeline, conflict-resolution, proof-conclusion, question-selection | Classifications are set in code at extraction and not refined afterward; `research_append` refuses every assertions write except an update setting only `informant_bias_notes`. Never delete. convert-dates was listed here and never could write: its only tool is `convert_calendar` and it holds no writer tool |
 | `person_evidence` | person-evidence | all downstream | Mutable (confidence, rationale); never delete, use superseded_by |
 | `conflicts` | conflict-resolution | question-selection, proof-conclusion | Mutable (status, analysis, preferred_assertion_id) |
 | `hypotheses` | the hypothesis-tracking agent | question-selection, proof-conclusion | Mutable (status, assertion lists, ruled_out fields) |
@@ -283,7 +283,7 @@ defined, and every such write was rejected on validation.
 The manifest's checks all used to run one way: every name a row lists must
 resolve to something that ships. Nothing ran the other way, so a writer that
 existed in the plugin and was missing from the manifest was invisible. The
-`record-extractor` agent held `research_log_append` under all three server
+`record-extractor` agent (since retired) held `research_log_append` under all three server
 spellings and called it a dozen times across the committed e2e corpus while
 appearing in no row — for as long as that was true, no check could see it.
 
@@ -337,9 +337,9 @@ hook's permission, and the hook routes `research_append` alone, so a name there
 counts for that tool only — a hook row that also lists `merge_tree_persons` does
 not list its agent for it. An `agentCallers` entry is
 `{"agent": …, "tools": […]}` and counts only for the tools it names: the writer
-tools that agent reaches the row with. `record-extractor` on tree `persons` is
-paired with `extraction_append` alone, so the seven other tree writers that row
-lists do not make it count as listed for them: grant it a new tree writer and the
+tools that agent reaches the row with. `person-evidence` on tree `persons` is
+paired with `materialize_facts` and `tree_edit` alone, so the six other tree
+writers that row lists do not make it count as listed for them: grant it a new tree writer and the
 guard reds until the manifest names that tool for it on every row it reaches. A
 second test fails an entry that names no tool, a tool its row does not list, or
 one the agent is no longer granted.
@@ -418,7 +418,7 @@ Three sections (`persons`, `relationships`, `sources`) carry overlapping writer 
 |---------|-----------|---------|---------------|
 | `persons` | init-project, tree-edit, proof-conclusion, person-evidence, forget-and-rederive | (terminal — uploaded to FamilySearch) | Mutable; preserve IDs |
 | `relationships` | init-project, tree-edit, proof-conclusion, person-evidence, forget-and-rederive | (terminal) | Mutable; preserve IDs |
-| `sources` | init-project, tree-edit, proof-conclusion, record-extraction | (terminal) | Mutable; preserve IDs. **The person-evidence skill is not a writer here**: `materialize_facts` attaches a source *ref* to a person or a fact, it does not mint a source description. The person-evidence *agent* holds `tree_edit`, whose `add_source` does, so the manifest records it in this row's `agentCallers` |
+| `sources` | init-project, tree-edit, proof-conclusion, `extraction_append` | (terminal) | Mutable; preserve IDs. **The person-evidence skill is not a writer here**: `materialize_facts` attaches a source *ref* to a person or a fact, it does not mint a source description. The person-evidence *agent* holds `tree_edit`, whose `add_source` does, so the manifest records it in this row's `agentCallers` |
 
 `init-project` writes the initial stub persons at project creation;
 `tree-edit` applies user-directed changes; `proof-conclusion` lands the
@@ -429,18 +429,19 @@ update timing" and [`simplified-gedcomx-spec.md`](simplified-gedcomx-spec.md) §
 when a newly discovered persona matches no one in the tree — with its
 first sourced evidence facts, via `materialize_facts` create-or-enrich,
 never a name-only stub — and writes the parent-child / spouse edges via
-`add_relationship` (see Section 8). `record-extraction` is
+`add_relationship` (see Section 8). Extraction (`extraction_append`) is
 **assertion-only**: it writes `sources` (the GedcomX `S` entry that
 mirrors each `src_` it appends to `research.json`) plus the assertions,
-and is **not a writer of `persons` or `relationships`**. One derived
-exception, and it is authorized by tool identity rather than by adding
-the skill to the `persons` writer set: correcting an assertion's
-`place`/`standard_place`/`date`/`value` through
-`research_append`/`extraction_append` rewrites the same attributes on a
-fact already carrying that assertion's `assertion_id`
-(`tree-materialization-spec.md` §4.4). It adds or removes no person,
-fact, name or ref, and the validator admits only that exact delta, so
-adding an unsourced person or setting `primary` stays refused.
+and is **not a writer of `persons` or `relationships`**. The validator
+still admits, by tool identity, one derived tree delta: an assertion
+update that rewrites `place`/`standard_place`/`date`/`value` on a fact
+already carrying that assertion's `assertion_id`
+(`tree-materialization-spec.md` §4.4), and nothing else. Nothing reaches
+it today: `research_append` refuses every assertions write except an
+update setting only `informant_bias_notes` (genealogist ruling
+2026-10-05, option B), and `extraction_append` takes no updates. There is
+currently no path to correct an assertion's value; a disputed reading
+goes in a conflict.
 `forget-and-rederive` is the fifth writer of `persons` and `relationships` and
 the only **subtractive** one: `tree_forget` removes a slice of the tree so it can
 be re-derived from records as a practice run. It mints nothing, sources nothing,
@@ -500,10 +501,11 @@ FamilySearch tree fetch.
 
 Entries are intentionally lightweight: a free-text description plus a
 type tag and a confidence flag. They are **not** sources or assertions.
-When the researcher later brings the actual document, `record-extraction`
-and `citation` extract it into proper sources/assertions and set
-`promoted` to `true` on the originating holding (the entry is never
-deleted, preserving the survey record).
+When the researcher later brings the actual document, it is extracted
+through `extraction_append` (the record-structurer agent structures it) into
+proper sources/assertions. The originating holding is never deleted,
+preserving the survey record; nothing currently sets its `promoted` flag —
+which writer should is an open question (`ownership.json`, `known_holdings`).
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -513,7 +515,7 @@ deleted, preserving the survey record).
 | `relevant_facts` | string or null | no | Facts or leads the item may supply, if the researcher described them (e.g., "lists her parents' names"). Null when not stated |
 | `relates_to_person_ids` | string[] | no | GedcomX person IDs the holding concerns (may be empty) |
 | `confidence` | `holding_confidence` | yes | How settled the researcher is about the item: `confident` or `unsure`. Lets downstream skills prioritize verifying shaky holdings over re-confirming settled ones |
-| `promoted` | boolean | yes | Whether the item has been extracted into proper sources/assertions yet. `false` at survey time; set `true` by record-extraction/citation when promoted. Never delete the entry |
+| `promoted` | boolean | yes | Whether the item has been extracted into proper sources/assertions yet. `false` at survey time; meant to become `true` once the item is extracted; no writer sets it today (see above). Never delete the entry |
 | `created` | string | yes | ISO 8601 date |
 
 ### 5.2 `questions`
@@ -763,7 +765,7 @@ Do not confuse this field with the closed `relationship_type` enum in `enums.sch
 
 **`_inferred` suffix convention:** Use the `_inferred` suffix on `relationship_type` (e.g., `child_inferred`) when the relationship is deduced from household position rather than explicitly stated in the record — the 1790–1870 censuses, which have no relationship column (introduced in 1880). This convention is specific to `relationship_type`; other fact types handle uncertainty through the assertion's `record_basis` (`inferred`) and `informant_bias_notes` rather than through the structured value itself.
 
-**Who may write one — not extraction (2026-08-15).** A deduced household link is a *hypothesis*, and record extraction does not form hypotheses: on a pre-1880 census it extracts each person's stated facts and their co-residence and writes **no** parent-child or spousal assertion, in any form. The suffix therefore belongs to the downstream correlation skills that weigh evidence across records. Nothing in this schema requires an `_inferred` relationship to exist for a pre-1880 record, and the record-extraction validator asserts their absence. The distinction is worth stating explicitly because "never assert a relationship without evidence" admits two readings — omit the link, or assert it labelled `inferred` — and a prompt carrying both produced either output unpredictably across runs of the same record.
+**Who may write one — not extraction (2026-08-15).** A deduced household link is a *hypothesis*, and record extraction does not form hypotheses: on a pre-1880 census it extracts each person's stated facts and their co-residence and writes **no** parent-child or spousal assertion, in any form. The suffix therefore belongs to the downstream correlation skills that weigh evidence across records. Nothing in this schema requires an `_inferred` relationship to exist for a pre-1880 record, and extraction (`extraction_append`) writes none. The distinction is worth stating explicitly because "never assert a relationship without evidence" admits two readings — omit the link, or assert it labelled `inferred` — and a prompt carrying both produced either output unpredictably across runs of the same record.
 
 ### 5.7 `person_evidence`
 
@@ -781,7 +783,7 @@ Array of person-evidence link objects. **This section bridges assertions (attach
 | `created` | string | yes | ISO 8601 date |
 | `superseded_by` | string or null | no | `pe_` ID if this linking was revised |
 
-**Cardinality:** One assertion can have multiple person_evidence entries linking it to different persons. This is the expected pattern for assertions that imply relationships — e.g., a_004 ("Listed in household of Thomas Flynn, position consistent with child") is evidence for both I1 (Patrick, the child) and I2 (Thomas, the head). Create one `pe_` entry per person the assertion bears on. The `person-evidence` skill writes all links; `record-extraction` does not create provisional links.
+**Cardinality:** One assertion can have multiple person_evidence entries linking it to different persons. This is the expected pattern for assertions that imply relationships — e.g., a_004 ("Listed in household of Thomas Flynn, position consistent with child") is evidence for both I1 (Patrick, the child) and I2 (Thomas, the head). Create one `pe_` entry per person the assertion bears on. The `person-evidence` skill writes all links; extraction (`extraction_append`) does not create provisional links.
 
 When a link is revised (e.g., the assertion is re-linked to a different person), the old entry gets `superseded_by` set to the new entry's ID. The old entry is never deleted.
 
@@ -1118,12 +1120,12 @@ Users may manually edit `tree.gedcomx.json` — adding a person, correcting a fa
 The worked example (§9) shows the evidence layer: the GedcomX birthplace "Ireland" is a materialized evidence fact sourced to the records that assert it, and the ParentChild relationship R1 records the parentage evidence. Their *concluded* status — that "Ireland" is the primary birthplace and R1 the concluded parentage — is carried by the `primary`/`proof_tier` markers that proof summary ps_001 (`probable`) sets, not by the facts' mere presence in the file. Were ps_001 revised to `not_proved`, R1 and the birthplace evidence would remain, but their `primary`/`proof_tier` conclusion markers would be cleared.
 
 **Two further evidence-layer writes during active research:**
-- **Source descriptions (`S` entries)** are created by record-extraction — via `research_append`'s composite `sourceDescription` (see `research-append-tool-spec.md` §3.4) — because `research.json` sources need `gedcomx_source_description_id` references to point at. An `S` entry means "this source was consulted," not "this source's conclusions are finalized."
+- **Source descriptions (`S` entries)** are created by `extraction_append` — via `research_append`'s composite `sourceDescription` (see `research-append-tool-spec.md` §3.4) — because `research.json` sources need `gedcomx_source_description_id` references to point at. An `S` entry means "this source was consulted," not "this source's conclusions are finalized."
 - **Person stubs** are minted when a newly discovered person doesn't yet exist in the GedcomX file — by person-evidence, increasingly via `materialize_facts`' create-or-enrich (the stub arrives *with* its first evidence facts and their provenance). Stubs carry minimal data and gain evidence facts as research progresses.
 
-### Source ownership: record-extraction vs. citation
+### Source ownership: extraction vs. citation
 
-Both `record-extraction` and `citation` write to the `sources` section. The protocol: `record-extraction` creates the source entry with a working citation (best-effort from available metadata) and sets `source_classification`. The `citation` agent later refines the same entry — updating `citation` and `citation_detail` fields to Evidence Explained standards. This is an in-place update to the existing `src_` entry, not a new entry. The `citation` agent never creates new source entries; it only refines entries created by `record-extraction`.
+Both `extraction_append` and `citation` write to the `sources` section. The protocol: `extraction_append` creates the source entry with a working citation (best-effort from available metadata) and sets `source_classification`. The `citation` agent later refines the same entry — updating `citation` and `citation_detail` fields to Evidence Explained standards. This is an in-place update to the existing `src_` entry, not a new entry. The `citation` agent never creates new source entries; it only refines entries created by `extraction_append`.
 
 ---
 
@@ -1131,7 +1133,7 @@ Both `record-extraction` and `citation` write to the `sources` section. The prot
 
 Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsylvania, died 1908. The example shows two questions (q_001, q_002). q_002 unblocks q_001 — locating Patrick in the 1850 census is a prerequisite for identifying his parents.
 
-> **Whose output this is.** The example is the state of a project part-way through, not the output of any one skill. In particular `a_004` (1850) and `a_010` (1860) are `child_inferred` relationship assertions on pre-1880 censuses: per §5.6.1 those are written by the downstream correlation skills that weigh evidence across records, **never** by `record-extraction`, whose validator asserts their absence. Read them as already-correlated state, not as an extraction result.
+> **Whose output this is.** The example is the state of a project part-way through, not the output of any one skill. In particular `a_004` (1850) and `a_010` (1860) are `child_inferred` relationship assertions on pre-1880 censuses: per §5.6.1 those are written by the downstream correlation skills that weigh evidence across records, **never** by extraction (`extraction_append`), which writes none. Read them as already-correlated state, not as an extraction result.
 
 ### `tree.gedcomx.json` (simplified GedcomX, abbreviated)
 

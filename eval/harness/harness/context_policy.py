@@ -3,10 +3,10 @@
 Some tools are safe in an isolated subagent and unsafe on the main thread.
 `image_read` is the motivating case: it returns a page scan as inline base64,
 and if that lands in the router's context the bytes accumulate and overflow the
-transport's ~1 MiB per-turn buffer, crashing the whole run. The
-record-extraction skill therefore delegates every image read to the
-`image-reader` subagent, which absorbs the base64 in a throwaway context and
-returns text only (`record-extraction/SKILL.md` §4, `agents/image-reader.md`).
+transport's ~1 MiB per-turn buffer, crashing the whole run. Every image read is
+therefore delegated to the `image-reader` subagent, which absorbs the base64 in
+a throwaway context and returns text only (`agents/image-reader.md`); the text
+then goes to `record-structurer` for extraction.
 
 Until now that rule was prose, and prose did not hold — the router was observed
 calling `image_read` directly (runlog v1_2026-07-16_20-23-34). It cannot be
@@ -32,9 +32,9 @@ One scope limit (plan §4.1):
   pass the pre-union set from `allowed_tools.declared_skill_tools`.
 
   **The exemption is now REACHED.** It was unreachable while the set had two
-  members that no skill declared; issue #2937 changed that. `record-extraction`
-  declares `extraction_append` in its own `allowed-tools` and calls it from the
-  main thread as its ordinary route, and `extraction_append` accordingly left
+  members that no skill declared; issue #2937 changed that. `research` and
+  `search-records` declare `extraction_append` in their own `allowed-tools` and
+  call it from the main thread as their ordinary route, and `extraction_append` accordingly left
   `SUBAGENT_ONLY_TOOLS` (see the set's own comment for what that retires). The
   one remaining member, `image_read`, is still declared by no skill and no agent
   — `search-images` moved to delegating via `@plugin:image-reader` (2026-07-17),
@@ -79,23 +79,23 @@ from typing import Any
 #
 # `extraction_append` was the second member and LEFT this set in issue #2937.
 # That card routes extraction of a FamilySearch-indexed record through code
-# rather than a `record-extractor` spawn, so the record-extraction skill now
-# calls `extraction_append` from the main thread as its ordinary path and
-# declares it in its own `allowed-tools`. A deny here would refuse the shipped
+# rather than a `record-extractor` spawn (that agent is since retired), so
+# `research` and `search-records` call `extraction_append` from the main thread
+# as their ordinary path and declare it in their own `allowed-tools`. A deny here would refuse the shipped
 # route on every eval run.
 #
 # WHAT THAT RETIRES, stated because nothing else records it: the #942 guard
 # existed to catch the router substituting for a FAILED `record-extractor`
-# spawn. The unindexed path (images, full text, external sites, prose) still
-# delegates to that agent until issue #2939, so that substitution is still
-# possible and is now unchecked. `subagent_only_violation`'s declared-tools
+# spawn. The unindexed path (images, full text, external sites, prose) now
+# delegates to `record-structurer` (issue #2939), so the router substituting for
+# a failed `record-structurer` spawn is possible and is unchecked. `subagent_only_violation`'s declared-tools
 # exemption is the mechanism that would distinguish the two, but
 # `e2e/orchestrator.py`'s arm cannot supply `declared_tools`, so it does not
 # reach e2e. Filed on the `nothing-checks` register (docs/architecture.md §9.4
 # keeps that register as a LABEL, not a table, so this gap is a labelled issue).
 #
-# The declared-tools exemption below is NO LONGER unreachable: record-extraction
-# declares `extraction_append`, which is exactly the case condition 3 describes.
+# The declared-tools exemption below is NO LONGER unreachable: `research` and
+# `search-records` declare `extraction_append`, which is exactly the case condition 3 describes.
 #
 # Keep this a plain set, not a policy engine — one entry certainly does not
 # justify machinery. Matched on the bare name, so it is transport-agnostic.
@@ -175,8 +175,8 @@ def subagent_only_violation(
 # just relocates the substitution. `image_read` has somewhere legitimate to go:
 # delegate the read to an agent that returns text. (The `extraction_append`
 # reason lived here until issue #2937 removed that tool from the set; it told the
-# router to re-delegate a failed `record-extractor` spawn rather than extract the
-# record itself, issue #942.)
+# router to re-delegate a failed `record-extractor` spawn, since retired, rather
+# than extract the record itself, issue #942.)
 _DENIAL_REASONS = {
     "image_read": (
         "image_read may not be called from the main session — it returns "

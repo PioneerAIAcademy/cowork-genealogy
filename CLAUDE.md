@@ -239,7 +239,7 @@ plugin. The hosted control plane does **both**: it passes
 *agents* into the project (`real_agent.stage_plugin_agents`). That is not
 redundancy — SDK plugin loading registers agents **only** under the namespaced
 name `genealogy-research:<agent>`, while every SKILL.md delegates by the bare
-name (`@plugin:record-extractor`), so without the staging the Task call errors
+name (`@plugin:record-structurer`), so without the staging the Task call errors
 and the model silently falls back to a general-purpose stand-in that binds none
 of the `tools:`/`disallowedTools:` below (ADR-0004; skills are unaffected —
 the loader registers *those* under bare names). If you change how the hosted
@@ -287,7 +287,7 @@ Under `bypassPermissions` **both** bind: a tool merely omitted from `tools:` is
 absent from the agent, exactly as a denied one is (`make probe-agent-binding`,
 2026-08-30, Claude Code 2.1.220 / SDK 0.2.128). Every deny we shipped named a
 tool already absent from the list above it, so all five were deleted as
-restatements. What keeps `record-extractor` off the broad `research_append` is
+restatements. What keeps `record-structurer` off the broad `research_append` is
 `research_append` not being in its `tools:`.
 
 **To take a capability away from an agent, remove it from `tools:`.** The

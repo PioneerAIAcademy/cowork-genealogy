@@ -527,10 +527,12 @@ function planActiveInvariants(entry: any, research: any): string[] {
  *  the same author's own prior step." Neither half is this author's own step —
  *  `ownership.json` gives `hypotheses.callers` as `["agent:hypothesis-tracking"]`
  *  while `conflicts` belongs to `skill:conflict-resolution` and `assertions` is
- *  written only by `extraction_append`. Both of those sections are `enforceableAt:
- *  ["unit"]` only (no hook arm, no tool arm), so under a live read nothing would
- *  stop a session from writing the satisfying conflict or assertion in the same
- *  batch as the promote and clearing this gate from inside the call it gates.
+ *  written only by `extraction_append`. `conflicts` is `enforceableAt: ["unit"]`
+ *  only (no hook arm, no tool arm), so under a live read nothing would stop a
+ *  session from writing the satisfying conflict in the same batch as the promote
+ *  and clearing this gate from inside the call it gates. (`assertions` gained a
+ *  tool arm on 2026-10-05: a caller's assertions write is refused before this
+ *  runs, so only `extraction_append`'s own batches can carry one.)
  *
  *  Measured cost of the snapshot read: **0 refusals** across the calibration
  *  corpus — no batch appends an assertion ahead of the promote, and neither of

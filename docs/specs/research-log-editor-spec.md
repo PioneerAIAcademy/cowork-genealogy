@@ -18,7 +18,7 @@ schema-valid. The log is append-only by GPS rule, so the tool deliberately offer
 
 Every search produces a log entry (`research-log-protocol.md` Rule 1), so this is
 the highest-volume write in the system, performed today by hand across four skills
-(`search-records`, `search-external-sites`, `search-full-text`, `record-extraction`).
+(`search-records`, `search-external-sites`, `search-full-text`, `record-extraction` — the last since retired).
 The hand-write is the worst-case version of the problems the read/write direction
 exists to kill:
 
@@ -621,9 +621,9 @@ recorded for different arguments.
   hand-written log + sidecar step with a `research_log_append` call. Their
   `research-log-protocol.md` references shrink to "call the tool" + the analytical
   rules (when to log negative, what to put in `query`/`notes`).
-- `record-extraction` — uses it for the `user_provided` log entry it writes when no
-  search skill logged the record (`research-log-protocol.md` §"When record-extraction
-  writes log entries").
+- `extraction_append` — calls it in code: a `record_read` entry for each
+  `recordIds` record it reads, and an `image_transcribe` or `user_provided` entry
+  for each `documents` source.
 - Downstream skills are unaffected: they still link to a log entry via
   `log_entry_id` on sources/assertions (the reverse-lookup provenance model is
   unchanged).

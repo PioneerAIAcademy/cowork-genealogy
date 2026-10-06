@@ -608,7 +608,8 @@ the production code path.
 here:
 
 - It primes the agent on the GPS workflow (question-selection →
-  research-plan → search-records → record-extraction →
+  research-plan → search-records → `extraction_append` (text sources via
+  `record-structurer`) →
   conflict-resolution → proof-conclusion, iterating as needed)
 - It instructs the agent to read `research.json` and decide the
   next sub-skill based on state
@@ -786,7 +787,7 @@ the `max_cost_usd` note in §6 step 5.
    run's effort level, repinning that agent — its model, its effort, or both —
    is the change that does not move every other step too. **When the repin below
    was made, effort was believed to be session-wide, so the model was the only
-   lever available; it is not any more.** `record-extractor` was repinned `claude-sonnet-5`
+   lever available; it is not any more.** `record-extractor` (since retired) was repinned `claude-sonnet-5`
    → `claude-sonnet-4-6` on 2026-07-18 for exactly this: sonnet-5 hangs as a
    subagent at Cowork/e2e `effortLevel: high` — adaptive-thinking runaway, not a
    model defect, and fine at default effort. Capping its output at 8k instead was
@@ -1057,10 +1058,10 @@ page scan as inline base64); a main-thread call is the router substituting for a
 
 **`extraction_append` is no longer in this set.** Extraction of a
 FamilySearch-indexed record runs as code called from the main thread, and
-`record-extraction` declares the tool in its own `allowed-tools`, so a deny
+`research/SKILL.md` declares the tool in its own `allowed-tools`, so a deny
 would refuse the shipped route on every e2e run. The guard that retired with it
-— catching the router substituting for a failed `record-extractor` spawn on the
-still-delegated unindexed path — is on the `nothing-checks` register
+— catching the router substituting for a failed delegated spawn on the
+unindexed path (now `record-structurer`) — is on the `nothing-checks` register
 (`docs/architecture.md` §9.4 keeps that register as a label, not a table).
 
 The discriminator is `agent_id` alone: **no skill declares `image_read`** in its
@@ -1083,11 +1084,10 @@ covered here automatically.
 
 Semantics match the tree block — the denied call doesn't run, doesn't count
 toward the cap, and doesn't stop the run. Here, continuing is the **intended**
-response: the denial reason names a reachable recovery — delegate the record to
-`@plugin:record-extractor`, and if that spawn fails again on the same record, skip
-it and note it in the run summary — not an unreachable "stop" the Stop hook would
-override anyway. The router must never extract the record itself or retry another
-way (a deny that leaves the goal in place just relocates the substitution). Denied attempts are
+response: the denial reason names a reachable recovery — delegate the read to
+`@plugin:image-reader`, which returns a text transcription — not an unreachable
+"stop" the Stop hook would override anyway. The router must never read the scan
+itself or retry another way (a deny that leaves the goal in place just relocates the substitution). Denied attempts are
 recorded in a separate `blocked_context_calls` array
 (`{tool, args, blocked_by: "context"}`), kept apart from `blocked_tree_reads`
 because this is a write denied by a different guard.
@@ -1111,7 +1111,8 @@ could never satisfy.
 
 This guard covers only the *main-thread* half of the `extraction_append`
 policy. The complementary *delegate* half — a general-purpose or otherwise
-unnamed subagent (anything but `record-extractor`) making the write — is caught
+unnamed subagent (anything but `record-structurer`, or the retired
+`record-extractor` on a replayed run) making the write — is caught
 post-hoc by `find_protected_writes_by_unnamed_delegate`
 (guardrail-enforcement-spec §11). That detector lists a main-thread
 call among its "legitimate" cases, but only as an attribution class (a
@@ -1126,7 +1127,7 @@ The two halves are not enforced alike, and the difference matters when reading a
 run: the main-thread half is **denied**, the delegate half is only **logged**.
 `protected_writes_by_unnamed_delegate` is shadow-mode — deliberately not read by
 `E2eResult.__post_init__`, so it never moves the compliance axis until its
-false-positive rate is calibrated. A non-`record-extractor` delegate's
+false-positive rate is calibrated. A non-`record-structurer` delegate's
 `extraction_append` therefore still succeeds today; it is recorded, not blocked.
 The same detector now also records such a delegate's `research_append` to
 `sources` or `assertions` — the same protected write by another door

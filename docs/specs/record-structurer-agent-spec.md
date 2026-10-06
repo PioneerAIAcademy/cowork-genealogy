@@ -1,8 +1,8 @@
 # Specification: Record Structurer Agent
 
-> **Status:** specified, not built. It replaces `record-extractor` and the
-> `record-extraction` skill. It lands in the same merge to `main` as §11.6's call
-> shape (lead, 2026-09-29).
+> **Status:** built (`packages/engine/plugin/agents/record-structurer.md`). It
+> replaced `record-extractor` and the `record-extraction` skill, both deleted, and
+> lands in the same merge to `main` as §11.6's call shape (lead, 2026-09-29).
 
 A Cowork plugin subagent that **reads** a batch of unindexed sources and returns
 their content as structure. It reads; code classifies. The document it emits and the
