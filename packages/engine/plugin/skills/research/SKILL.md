@@ -15,6 +15,8 @@ description: >-
 allowed-tools:
   - validate_research_schema
   - research_query
+  - person_read
+  - source_attachments
 ---
 
 # /research — Full GPS Research Workflow
@@ -32,9 +34,10 @@ moving.
 
 ## Continuous work
 
-**You work continuously, in one turn, until a stop condition in
-§"When to stop" is met.** This is how every run behaves; it is not a
-mode and no flag turns it on. Proceed without pausing for clarifying
+**Once a request is a job, you work continuously, in one turn, until a
+stop condition in §"When to stop" is met.** That is how every job
+behaves; it is not a mode and no flag turns it on. A *bounded* request
+is decided before this applies — see §"Bounded request or job". Proceed without pausing for clarifying
 questions: use your best judgment for any decision that would normally
 prompt the user (which records to prioritize when several are plausible,
 how to weight conflicting evidence, when to declare exhaustiveness), and
@@ -42,8 +45,10 @@ log the decision and your rationale in the appropriate research.json
 field (log entry, assertion rationale, or conflict resolution analysis)
 so the audit trail captures it.
 
-**You are the only driver.** Do **not** end your turn to announce, plan,
-or ask about a next step. After a sub-skill returns, immediately invoke
+**On a job, you are the only driver.** Do **not** end your turn to
+announce, plan, or ask about a next step. (A bounded request is the
+exception, and the only one: it ends at its deliverable — see
+§"Bounded request or job".) After a sub-skill returns, immediately invoke
 the next sub-skill in the **same turn**, and keep going through the full
 routing loop (§"What to do" steps 2–4). Trust the compact summaries the
 sub-skills and writer tools return plus the state you already hold in
@@ -56,14 +61,18 @@ briefly, but always follow the narration with the actual tool call or
 sub-skill invocation in the same turn.
 
 The user can type at any time and can halt you at any time. Neither is
-something you stop and wait for.
+something you stop and wait for. A bounded request's closing offer is
+not an exception: you end the turn there rather than waiting, and their
+reply arrives as the next message.
 
 ## Direct user requests name a destination, not a shortcut
 
-When the user says "write the conclusion," "move toward a proof
-conclusion," "conclude this," or anything else that names a downstream
+**On a job**, when the user says "write the conclusion," "move toward a
+proof conclusion," "conclude this," or anything else that names a downstream
 skill or artifact directly, treat it as "drive the routing table forward
 to that outcome" — not as permission to invoke that skill immediately.
+(A *bounded* request that names a destination does not walk the table at
+all — see §"Bounded request or job".)
 Re-enter step 1 of "What to do," re-derive the current state from
 `research.json`, and walk the routing table from wherever the project
 actually is: unclassified assertions, unresolved conflicts, un-run Mentor
@@ -76,6 +85,44 @@ regardless of how directly the request named the destination.
 
 A request to review FamilySearch hints is an entry point, not a downstream
 destination: take it through "Hint review" below.
+
+## Bounded request or job
+
+**Decide this first, before any `research_query`.**
+
+**`--autonomous` is always a job**, whatever shape the question takes. The flag
+means drive this to completion, so the list below does not apply to it.
+
+**Bounded** — the message asks for ONE deliverable:
+finding a record; reviewing the sources already attached to a person; whether
+two people are the same, or should be merged; a verdict on a hint; a
+transcription; where the records are for a place and period; a research plan;
+a records-request letter; whether a person's children or siblings are complete.
+
+**A job** — everything else. Route it exactly as the rest of this file says.
+
+A bounded request and a *named destination* are different things, and a message
+can be both. "Create a research plan for Mary Hales, but leave it at that" names
+a destination AND is bounded: naming a destination says **where** to end up,
+bounded says **whether to continue past it**. Hand a bounded request straight
+to the step that owns its deliverable — a
+transcription to `@plugin:image-reader`, a plan to `research-plan`, a record to
+`search-records`. Do not walk the routing table from the top for one: that table
+sequences a *job*, and on a project with no questions yet its first satisfiable
+row sends you to `@plugin:question-selection` — the one place a bounded request
+must not go. Deliver the one thing, and stop.
+
+**Start from what is already attached.** Before routing to any search —
+on a bounded request or a job alike — when the project holds a FamilySearch
+link for the person, read what they already have: `person_read` for the
+attached sources and relatives, `source_attachments` for where a source
+is already attached. Never search for a record that is already attached,
+and never offer to add a person who is already in the tree.
+
+When a bounded request is met, **end your turn**. Say what you produced first:
+the turn ends where you stop, so anything you were going to add afterwards never
+reaches the researcher. Then offer to take it further, and end. The offer is not
+something you wait for — their answer arrives as the next message.
 
 ## What to do
 
@@ -137,7 +184,8 @@ destination: take it through "Hint review" below.
 
    | If research.json has... | Invoke |
    |-------------------------|--------|
-   | Objective but no questions | `@plugin:question-selection` (derive first question) |
+   | **No `research.json` at all** | `init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
+   | Objective but no questions | `@plugin:question-selection`. **Even when the message already states the question**, it is not a question until question-selection WRITES it: `research-plan` may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
    | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
    | A question with no plan, and its jurisdiction **already has a `localities` entry** | `research-plan` |
    | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `exhausted` plan, which a revision leaves behind still `planned` | `search-records` (or `search-external-sites` for non-FS sources) |
@@ -430,17 +478,40 @@ rationale, and continue; the audit trail captures the choice for later
 review. "Only the user can supply it" means the research cannot proceed
 without them — not that the call is difficult, contested, or slow.
 
-**These four are the *only* stop conditions.** Finishing a
+**On a JOB, these four are the *only* stop conditions.** Finishing a
 sub-skill is not one of them — having selected a question, written a
 plan, or run one search, you are mid-loop, not done. Do not end your
 turn to report progress or to say what you'll do next; return to step 2
 of "What to do" and invoke the next sub-skill. (See "Continuous work".)
 
+**A bounded request has a fifth: its deliverable.** When the one thing
+the message asked for is produced, end the turn — see §"Bounded request
+or job".
+
+### Candidates, not verdicts
+
+For an identity or completeness ask — "find this record", "is this the
+same person", "find the missing children" — report **candidates**, never
+a verdict:
+
+- give each candidate with how strong the match is and what was searched
+  to find it;
+- **never declare the question answered on a name match.** A name is not
+  an identification;
+- end with an offer to **research it further** — never an offer to extract,
+  attach, or link. Those are writes, and `search-records` forbids offering one
+  on an unsettled identity. Offer the investigation, not the write.
+
+A single plausible candidate is still a candidate. The researcher decides
+whether it is their person; your job is to show them what you found and
+what it rests on.
+
 ## What this skill does not do
 
-- It does not introduce new GPS logic. Every sub-skill encodes its
-  own portion of the GPS standard; this skill only routes between
-  them.
+- It introduces no new GPS *method*: every sub-skill encodes its own portion of
+  the standard and this skill only routes between them. §"Candidates, not
+  verdicts" restates the identity bar `person-evidence` already owns, for the
+  bounded path that does not reach it.
 - It does not skip steps. GPS depends on the full chain — extraction
   (which writes final evidence classifications) precedes
   person-linking, person-linking precedes conflict detection, conflict
@@ -450,9 +521,10 @@ of "What to do" and invoke the next sub-skill. (See "Continuous work".)
 
 ## Re-invocation behavior
 
-**Writes:** nothing directly. This skill is a thin orchestrator — it
-reads `research.json` to decide the next step and delegates every
-write to the sub-skill it routes to. It does **not** insert defensive
+**Writes:** nothing directly — it holds no writer tool. This skill is a thin
+orchestrator: it reads `research.json` to decide the next step, reads a linked
+person's attached sources (`person_read`, `source_attachments`) before any
+search, and delegates every write to the sub-skill it routes to. It does **not** insert defensive
 `validate_research_schema` passes between steps (the writer tools each
 validate the whole project before persisting); it calls
 `validate_research_schema` (read-only) only to confirm an external/manual

@@ -75,7 +75,7 @@ from e2e.runlog_selection import (
     filter_since,
     result_jsons_for,
 )
-from e2e.result import axes_from_runlog
+from e2e.result import axes_from_runlog, result_message_covers_last_query_only
 from e2e import pricing
 
 # `check_guardrail_compliance` lives in `harness.skill_invocation` (SDK-free) so
@@ -414,10 +414,16 @@ def recompute_tally(paths: list[Path], *, fixtures_root: Path = E2E_FIXTURES) ->
 class Spend(NamedTuple):
     """Abort-path cost, never blended into one total (issue #1484 b).
 
-    `recorded` sums the authoritative `total_cost_usd`; `estimated` sums the
+    `recorded` sums the authoritative `total_cost_usd` (a floor where a run
+    resumed, see `resumed_n`); `estimated` sums the
     flat-rate `pricing.estimate_cost_usd` over runs that carry a token block but
     no recorded cost; `neither` counts runs with neither (the pre-fallback runs
     with no token counts, unrecoverable).
+
+    `resumed_n` counts the recorded runs that resumed after a stall. A resume
+    starts a new CLI process and `total_cost_usd` covers the last process only, so
+    when it is not zero `recorded` is a floor (#3128). The total is not moved:
+    the shortfall is unknown, since a stalled process reports no cost.
     """
 
     recorded: float
@@ -425,6 +431,15 @@ class Spend(NamedTuple):
     estimated: float
     estimated_n: int
     neither_n: int
+    resumed_n: int = 0
+
+
+class Calibration(NamedTuple):
+    """estimated/recorded per calibrating run, and how many were left out because
+    their token block covers only their last query (#3128)."""
+
+    ratios: list[float]
+    n_multi_query: int
 
 
 def _median(values: list[float]) -> float | None:
@@ -449,7 +464,7 @@ def spend_tally(paths: list[Path]) -> Spend:
     rest fall in `neither` rather than being imputed.
     """
     recorded = estimated = 0.0
-    recorded_n = estimated_n = neither_n = 0
+    recorded_n = estimated_n = neither_n = resumed_n = 0
     for path in paths:
         data = _load_json(path)
         if data is None:
@@ -459,6 +474,9 @@ def spend_tally(paths: list[Path]) -> Spend:
         if isinstance(cost, (int, float)) and not isinstance(cost, bool):
             recorded += cost
             recorded_n += 1
+            resumes = usage.get("resumes")
+            if isinstance(resumes, int) and not isinstance(resumes, bool) and resumes > 0:
+                resumed_n += 1
             continue
         est = pricing.estimate_cost_usd(usage.get("usage"))
         if est is not None:
@@ -466,15 +484,25 @@ def spend_tally(paths: list[Path]) -> Spend:
             estimated_n += 1
         else:
             neither_n += 1
-    return Spend(recorded, recorded_n, estimated, estimated_n, neither_n)
+    return Spend(recorded, recorded_n, estimated, estimated_n, neither_n, resumed_n)
 
 
-def _calibration_ratios(paths: list[Path]) -> list[float]:
+def _calibration_ratios(paths: list[Path]) -> Calibration:
     """estimated/recorded for every run carrying BOTH a recorded cost and a token
     block — the free, offline accuracy measurement (issue #1484 3a). Single
     source for both the inline accuracy note and `--calibrate-cost`.
+
+    A run with more than one query is left out and counted (#3128). Its token
+    block is the last query's; its cost is the whole run's when it never resumed
+    and the last process's when it did. Rather than pair the two scopes case by
+    case, every such run is dropped: on the unresumed ones the ratio measures the
+    split, not the price table. The resumed ones are dropped too, though both of
+    their sides are the last process, because the blanket rule needs no `resumes`
+    logic and stays right on a run that both resumed and restarted on a
+    `task_notification` (none is committed yet).
     """
     ratios: list[float] = []
+    n_multi_query = 0
     for path in paths:
         data = _load_json(path)
         if data is None:
@@ -484,9 +512,13 @@ def _calibration_ratios(paths: list[Path]) -> list[float]:
         if not isinstance(cost, (int, float)) or isinstance(cost, bool) or cost <= 0:
             continue
         est = pricing.estimate_cost_usd(usage.get("usage"))
-        if est is not None:
-            ratios.append(est / cost)
-    return ratios
+        if est is None:
+            continue
+        if result_message_covers_last_query_only(usage):
+            n_multi_query += 1
+            continue
+        ratios.append(est / cost)
+    return Calibration(ratios, n_multi_query)
 
 
 def _counts(c: Counter, order: tuple[str, ...]) -> str:
@@ -706,26 +738,34 @@ def format_report(
     return "\n".join(lines)
 
 
-def format_spend(spend: Spend, ratios: list[float]) -> str:
+def format_spend(spend: Spend, ratios: list[float], n_multi_query: int = 0) -> str:
     """The three-number spend line (issue #1484 step 4), with the estimate's
     measured accuracy beside it (3a). Recorded, estimated and unrecoverable are
     never blended into one total: abort-path cost is estimated, and folding it
     into recorded would launder an approximation into the authoritative figure.
+    The accuracy note names the multi-query runs it left out (#3128).
     """
     median = _median(ratios)
+    excluded = f"; {n_multi_query} multi-query run(s) excluded" if n_multi_query else ""
     acc = (
-        f" (~{median:.2f}x recorded, median over {len(ratios)} calibrating run(s))"
+        f" (~{median:.2f}x recorded, median over {len(ratios)} calibrating run(s){excluded})"
         if median is not None
         else ""
     )
-    return "\n".join(
-        [
-            "  spend:",
-            f"    recorded    ${spend.recorded:,.2f}  over {spend.recorded_n} run(s) carrying total_cost_usd",
-            f"    estimated   ${spend.estimated:,.2f}  over {spend.estimated_n} null-cost run(s) with token counts{acc}",
-            f"    unrecovered {spend.neither_n} run(s) carry neither a cost nor token counts",
-        ]
-    )
+    lines = [
+        "  spend:",
+        f"    recorded    ${spend.recorded:,.2f}  over {spend.recorded_n} run(s) carrying total_cost_usd",
+    ]
+    if spend.resumed_n:
+        lines.append(
+            f"                {spend.resumed_n} of them resumed after a stall: their recorded "
+            "cost covers the last process only, so recorded is a floor"
+        )
+    lines += [
+        f"    estimated   ${spend.estimated:,.2f}  over {spend.estimated_n} null-cost run(s) with token counts{acc}",
+        f"    unrecovered {spend.neither_n} run(s) carry neither a cost nor token counts",
+    ]
+    return "\n".join(lines)
 
 
 def format_recompute(stored_arms: Counter, rt: RecomputeTally) -> str:
@@ -781,19 +821,26 @@ def format_recompute(stored_arms: Counter, rt: RecomputeTally) -> str:
     return "\n".join(lines)
 
 
-def format_calibration(ratios: list[float]) -> str:
+def format_calibration(ratios: list[float], n_multi_query: int = 0) -> str:
     """`--calibrate-cost`: median + range of estimated/recorded, offline and free
-    over the runs carrying both (issue #1484 3a). Anything materially worse than
-    ~0.90x median means the price table is wrong, not the corpus — re-measure,
-    do not reword.
+    over the runs carrying both, less the multi-query runs, whose tokens cover
+    their last query only (issue #1484 3a, #3128). Anything materially worse
+    than ~0.90x median means the price table is wrong, not the corpus —
+    re-measure, do not reword.
     """
+    if not ratios and n_multi_query:
+        return (
+            "  calibrate-cost: every run carrying both a recorded cost and token "
+            f"counts was left out; {n_multi_query} multi-query run(s) excluded."
+        )
     if not ratios:
         return "  calibrate-cost: no run carries both a recorded cost and token counts."
     return "\n".join(
         [
             "  calibrate-cost (estimated / recorded, flat sonnet table w/ 1h cache-write):",
             f"    median {_median(ratios):.2f}x   range {min(ratios):.2f}x - {max(ratios):.2f}x"
-            f"   over {len(ratios)} run(s)",
+            f"   over {len(ratios)} run(s)"
+            + (f"; {n_multi_query} multi-query run(s) excluded" if n_multi_query else ""),
         ]
     )
 
@@ -823,7 +870,8 @@ def main(argv: list[str] | None = None) -> int:
         "--calibrate-cost",
         action="store_true",
         help="report median + range of estimated/recorded cost over runs carrying "
-        "both — the offline accuracy check for the flat price table.",
+        "both, less multi-query runs — the offline accuracy check for the flat "
+        "price table.",
     )
     # `--since` is the shared one (`harness/since_window.py`), not a second
     # spelling of it: `type=parse_since` rejects a malformed value at parse
@@ -877,12 +925,13 @@ def main(argv: list[str] | None = None) -> int:
     # spend line is the only always-added output (issue #1484 step 4). The
     # accuracy note beside the estimate reuses the same ratios `--calibrate-cost`
     # would print (3a).
-    ratios = _calibration_ratios(paths)
-    print(format_spend(spend_tally(paths), ratios))
+    calibration = _calibration_ratios(paths)
+    ratios = calibration.ratios
+    print(format_spend(spend_tally(paths), ratios, calibration.n_multi_query))
     if args.recompute:
         print(format_recompute(counts.arms, recompute_tally(paths)))
     if args.calibrate_cost:
-        print(format_calibration(ratios))
+        print(format_calibration(ratios, calibration.n_multi_query))
     # Nothing readable is a failure, not an empty success: a caller keying on the
     # exit code must be able to tell "clean run, nothing to say" from "the whole
     # corpus was unreadable", and both print a report.
