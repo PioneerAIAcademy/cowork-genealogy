@@ -347,9 +347,11 @@ Every `pe_` rationale opens with two check lines, written before you choose
 the tier:
 
 - "Date check: [the record's birth, christening or age-derived year] vs
-  [the tree person's birth year]: gap [N] years." Write "none stated" for
-  either side that gives no year. A gap the event cannot explain goes in
-  `core_identifier_conflict`.
+  [the tree person's birth year]: gap [N] years." Compare only the party this
+  link is about: on the second party of a relationship assertion (the father
+  a "son of" entry names), the record states no year for that party, so write
+  "none stated", and score that link with `recordRole` naming the party. Write "none stated" for either side that gives no year. A gap
+  the event cannot explain goes in `core_identifier_conflict`.
 - "Residence check: [record place, year] vs [nearest attested residence,
   year]: same / neighbouring / outside [place_distance km], [the page
   sentence or record that bridges it, quoted, or nothing]." A person with

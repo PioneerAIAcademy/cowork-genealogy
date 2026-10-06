@@ -1535,3 +1535,53 @@ def test_outcome_checks_stand_down_without_their_tags():
         check_unexplained(b, a, _LINK)
     with pytest.raises(pytest.skip.Exception):
         check_corridor_link(b, a, _CAP)
+
+
+def _son_of_states():
+    """1880 census: George (DP3, ~1859) 'son of' the head. The relationship
+    assertion links to George and to the father William (I1, ~1825)."""
+    a = [
+        {"id": "a_019", "record_id": "ark:/61903/1:1:TN80", "record_role": "son",
+         "record_persona_id": "DP3", "fact_type": "birth", "date": "~1859"},
+        {"id": "a_020", "record_id": "ark:/61903/1:1:TN80", "record_role": "son",
+         "record_persona_id": "DP3", "fact_type": "relationship",
+         "structured_value": {"relationship_type": "son", "related_person_role": "head"}},
+    ]
+    tree = {"persons": [{"id": "I1", "facts": [{"type": "Birth", "date": "~1825"}]},
+                        {"id": "I5", "facts": [{"type": "Birth", "date": "~1859"}]}]}
+    before = {"assertions": a, "person_evidence": []}
+    after = {"assertions": a, "person_evidence": [
+        {"id": "pe_001", "assertion_id": "a_020", "person_id": "I5", "confidence": "probable", "rationale": "r"},
+        {"id": "pe_002", "assertion_id": "a_020", "person_id": "I1", "confidence": "probable", "rationale": "r"},
+    ]}
+    return _state(before, tree), _state(after, tree)
+
+
+def test_chrono_skips_the_second_party_a_call_names_by_role():
+    """The father's link on a 'son of' assertion, scored with recordRole 'head',
+    carries no birth year for the father; the son's age is not a contradiction."""
+    b, a = _son_of_states()
+    calls = [
+        {"tool": "mcp__genealogy__same_person", "args": {"projectPath": "/p", "assertionId": "a_020", "treePersonId": "I5"}},
+        {"tool": "mcp__genealogy__same_person", "args": {"projectPath": "/p", "assertionId": "a_020", "treePersonId": "I1", "recordRole": "head"}},
+    ]
+    check_chrono(b, a, calls)
+
+
+def test_chrono_still_fires_when_the_call_scored_the_son_against_the_father():
+    """With no role named the call scored the assertion's own persona (George)
+    against William: that is the pairing the score describes, and it is flagged."""
+    b, a = _son_of_states()
+    calls = [
+        {"tool": "mcp__genealogy__same_person", "args": {"projectPath": "/p", "assertionId": "a_020", "treePersonId": "I5"}},
+        {"tool": "mcp__genealogy__same_person", "args": {"projectPath": "/p", "assertionId": "a_020", "treePersonId": "I1"}},
+    ]
+    with pytest.raises(AssertionError, match="pe_002"):
+        check_chrono(b, a, calls)
+
+
+def test_chrono_does_not_treat_the_assertions_own_role_as_a_second_party():
+    b, a = _son_of_states()
+    calls = [{"tool": "mcp__genealogy__same_person", "args": {"projectPath": "/p", "assertionId": "a_020", "treePersonId": "I1", "recordRole": "son"}}]
+    with pytest.raises(AssertionError, match="pe_002"):
+        check_chrono(b, a, calls)

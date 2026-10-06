@@ -1319,10 +1319,20 @@ def report_chronological_contradiction_not_speculative(
 
     # Build (record_persona_id, tree_person_id) → same_person args index.
     sp_by_pair: dict[tuple, dict] = {}
+    # (assertionId, treePersonId) → the record party that call scored, for the
+    # project-relative shape. A call naming a recordRole/recordPersonaId other
+    # than the assertion's own scored the assertion's SECOND party (the father a
+    # "son of" entry names), and the record states no birth year for that party.
+    second_party: set[tuple] = set()
+    _own = _assertions_by_id(after_state.get("research_json") or {})
     for tc in (tool_calls or []):
         if "same_person" not in (tc.get("tool") or ""):
             continue
-        args = tc.get("args") or {}
+        args = as_mapping(tc.get("args"))
+        named = args.get("recordPersonaId") or args.get("recordRole")
+        own = _own.get(args.get("assertionId") or "") or {}
+        if named and named not in (own.get("record_persona_id"), own.get("record_role")):
+            second_party.add((args.get("assertionId"), args.get("treePersonId")))
         p1, p2 = args.get("primaryId1"), args.get("primaryId2")
         if not (p1 and p2):
             # The project-relative call shape (issue #1731) names its two sides
@@ -1367,6 +1377,8 @@ def report_chronological_contradiction_not_speculative(
         if not person_id:
             continue
 
+        if (pe.get("assertion_id"), person_id) in second_party:
+            continue
         record_persona_id = assertion.get("record_persona_id")
         sp_args = (
             sp_by_pair.get((record_persona_id, person_id))
