@@ -1,0 +1,81 @@
+{
+  "test": {
+    "id": "ut_research_h7w",
+    "skill": "research",
+    "name": "Routes to hypothesis-tracking when the tree carries two competing parent sets and no hypotheses exist",
+    "type": "positive",
+    "description": "Mined from issue #3177 puzzle 1 (GHLT-TFG). The subject is linked to two different parent couples in the imported tree, every positive search is extracted and linked, the plan is complete, and research.json holds no hypotheses, conflicts or proof. In Cowork the router went on to proof-conclusion and the proof narrative eliminated one parent set inline. The routing table's identity-uncertainty row and the conflict/hypothesis contract require spawning @plugin:hypothesis-tracking first, so each candidate parent set is persisted as its own hypothesis before any conclusion.",
+    "tags": [
+      "routing",
+      "routes-to:hypothesis-tracking",
+      "from-cowork",
+      "research-competing-parent-sets-no-hypotheses"
+    ]
+  },
+  "input": {
+    "user_message": "/research I'm researching a War of 1812 veteran. My tree ID is GHLT-TFG. He appears with two different parent sets in my tree — one set from Virginia, one from New York. Which parents are actually his?",
+    "scenario": "research-competing-parent-sets-no-hypotheses"
+  },
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-images",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-extraction",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "conflict-resolution",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "hypothesis-tracking",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test. The first hand-off is asserted deterministically by test_routes_to_expected_skill from the PreToolUse hook records; do not grade which callee was reached, or in what order, from the transcript.",
+    "The project state: the subject is linked in tree.gedcomx.json to two different parent couples, both sourced only to the Family Tree; research.json has every positive log entry extracted, every assertion linked, the plan complete, and empty hypotheses, conflicts and proof_summaries. Two candidate parent sets with no hypotheses on file is identity uncertainty the router must hand off, not weigh.",
+    "Fail the router's own work if it compares the two parent sets, favours one, or argues either out in its own narration instead of delegating that judgement. The research skill forbids inline elimination of a candidate outside conflict-resolution or hypothesis-tracking.",
+    "The patron's message says the parent sets are from Virginia and New York; the tree places them in Virginia, Kentucky, South Carolina and Alabama. Do not penalize the router for noting that mismatch, but do penalize it for treating the patron's framing as evidence for either set.",
+    "Every callee is stubbed and returns a denial telling the router to stop. Do not penalize it for not completing the research cycle. Grade only the router's state derivation, its honesty about what it delegated and did not do, and whether it kept its narration free of a parentage judgement."
+  ],
+  "judge_reads_files": true
+}

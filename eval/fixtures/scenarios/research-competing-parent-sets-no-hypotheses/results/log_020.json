@@ -1,0 +1,35 @@
+{
+ "log_id": "log_020",
+ "tool": "fulltext_search",
+ "retrieved": "2026-10-06T17:10:00Z",
+ "returned_count": 5,
+ "payload": {
+  "results": [
+   {
+    "id": "ark:/61903/3:1:3Q9M-CS79-13FG-2",
+    "title": "Greenville Co., SC deed, 5 May 1792",
+    "excerpt": "Samuel Tarrant of ... Greenville to Larkin Tarrant Esqr, 80 pounds, 172 acres on Reedy River (granted 6 Apr 1789); acknowledged May term 1792"
+   },
+   {
+    "id": "ark:/61903/3:1:3Q9M-C9YW-G34T-D",
+    "title": "Greenville Co., SC bill of sale 16 Apr 1792 (abstract)",
+    "excerpt": "Reuben Daniel ... Witnesses: Samuel Tarrant, John Ware"
+   },
+   {
+    "id": "ark:/61903/3:1:3Q9M-CS7S-MSSP-K",
+    "title": "Greenville Co., SC deed 1815",
+    "excerpt": "... unto the said Samuel Tarrant his heirs and assigns (grantee)"
+   },
+   {
+    "id": "ark:/61903/3:1:3Q9M-C9YW-G3H2-9",
+    "title": "Greenville Republican, 24 Feb 1827, sheriff's sale",
+    "excerpt": "property of Samuel Tarrant at the suits of John E. Brown ... vs Samuel Tarrant"
+   },
+   {
+    "id": "ark:/61903/3:1:3Q9M-CSRD-QSL6-7",
+    "title": "Greenville Co., SC court 1829",
+    "excerpt": "served Samuel Tarrent & Leonard Tarrant personally ... James Tarrant could not be [found]"
+   }
+  ]
+ }
+}
