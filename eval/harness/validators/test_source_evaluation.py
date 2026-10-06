@@ -707,16 +707,27 @@ def test_no_person_is_named_without_being_read(tool_calls, text_response, test, 
     reply = (agent_returns or [{}])[0].get("text") if agent_returns else text_response
     reply = reply or text_response or ""
 
-    read_ids = {
-        str((c.get("args") or {}).get("personId") or "").upper()
-        for c in (tool_calls or [])
-        if isinstance(c, dict) and (c.get("tool") or "").rsplit("__", 1)[-1] == "person_read"
-    }
+    read_ids, source_ids = set(), set()
+    for c in tool_calls or []:
+        if not isinstance(c, dict):
+            continue
+        bare = (c.get("tool") or "").rsplit("__", 1)[-1]
+        if bare == "person_read":
+            read_ids.add(str((c.get("args") or {}).get("personId") or "").upper())
+        # SOURCE ids share the person-id SHAPE: `DRIS-001` is four characters, a
+        # hyphen and three, exactly like `KD96-TV2`. The first cut of this check
+        # matched on shape alone and flagged six source ids as unread persons --
+        # the collides-with-an-unrelated-key false positive CLAUDE.md names. Shape
+        # cannot separate them, so subtract the ids the responses actually call
+        # sources.
+        for src in ((c.get("response") or {}).get("sources") or []):
+            if isinstance(src, dict) and src.get("id"):
+                source_ids.add(str(src["id"]).upper())
     read_ids.discard("")
     # The subject is whoever the run read FIRST; anything else named is a claim
     # about a person the agent may not have opened.
     named = {m.upper() for m in _FS_PERSON_ID.findall(reply)}
-    unread = sorted(named - read_ids)
+    unread = sorted(named - read_ids - source_ids)
     assert not unread, (
         f"the reply names {unread} as tree person(s) but never called `person_read` on "
         f"them. The body requires reading a person before naming them as a record's true "
