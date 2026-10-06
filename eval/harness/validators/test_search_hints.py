@@ -137,6 +137,23 @@ def test_hint_already_in_the_project_is_named(agent_returns, text_response, test
     )
 
 
+def test_extracted_unlinked_hint_is_triaged(tool_calls, agent_returns, text_response, test):
+    """Extracted is not linked: a record whose assertions no live
+    `person_evidence` entry cites was never decided to be this person, so its
+    hint is read and given a recommendation like any other. Reporting it as
+    already in the project skips exactly the identity question hint review
+    exists to ask."""
+    if "extracted-not-linked" not in test.get("tags", []):
+        pytest.skip("not an extracted-not-linked test")
+    verdict = _verdict_for(_reply(agent_returns, text_response, test), "MDEF")
+    assert verdict in ("accept", "reject", "not enough information to judge"), (
+        "the MDEF death certificate is extracted as src_004 but no person_evidence entry links "
+        f"it; expected a recommendation on its line, got {verdict!r}"
+    )
+    reads = [c for c in _calls(tool_calls, "record_read") if "MDEF" in str((c.get("args") or {}).get("recordId", ""))]
+    assert reads, "the MDEF hint got a recommendation without its record ever being read"
+
+
 def test_thin_hint_is_not_enough_information(agent_returns, text_response, test):
     """A hint that neither confirms nor contradicts the tree person gets
     `not enough information to judge`, never a forced accept or reject."""

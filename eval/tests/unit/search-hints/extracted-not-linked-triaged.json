@@ -1,0 +1,40 @@
+{
+  "test": {
+    "id": "ut_search_hints_006",
+    "skill": "search-hints",
+    "name": "A hint whose record is extracted but never linked is triaged, not reported as already in the project",
+    "type": "positive",
+    "description": "Patrick Flynn (FamilySearch LZNY-BRF) has three pending hints. The 1908 death certificate (MDEF) is extracted as src_004 (a_011-a_013), but in this scenario no person_evidence entry links any of those assertions to anyone: whether the certificate is Patrick's was never decided. Extracted is not linked, so triage must read it and recommend a verdict like any other hint, naming src_004 and saying it is not linked, instead of reporting it as already in the project and skipping it (issue #2029, benter-070's review on PR #3157).",
+    "tags": [
+      "triage",
+      "extracted-not-linked",
+      "confidence-disclosed",
+      "writes-nothing",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Check the FamilySearch hints on Patrick Flynn, FamilySearch ID LZNY-BRF, and tell me which look valid.\n\npersonId: LZNY-BRF\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn-unlinked"
+  },
+  "mcp_fixtures": [
+    "person-record-matches-flynn-pending",
+    "person-record-matches-flynn",
+    "record-read-flynn-hint-1870-census-m70c",
+    "record-read-flynn-hint-1880-census-m80c",
+    "record-read-flynn-hint-death-cert-mdef",
+    "record-read-flynn-hint-1860-census-mabc",
+    "image-transcribe-flynn-1880-census-m80c",
+    "image-transcribe-any",
+    "person-read-flynn"
+  ],
+  "judge_context": [
+    "The death certificate (MDEF) is extracted as src_004, but no person_evidence entry links its assertions to Patrick or anyone else. It is NOT already in the project in the sense that matters: its identity question was never asked. Reporting it as 'already in the project' and giving it no recommendation is wrong",
+    "The certificate names Patrick Flynn, died 12 March 1908 in Schuylkill County, born 1845 in Pennsylvania, father Thomas Flynn. A recommendation should weigh those against the tree, and the return should name src_004 and say it is extracted but not linked",
+    "Each hint's FamilySearch confidence (1-5) must be stated, and must not be the sole reason for its recommendation. The 1850 census is an ACCEPTED match, not a hint",
+    "Triage writes nothing: no log entry, no person_evidence link, no tree edit. Linking the certificate is person-evidence's job, not this agent's"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 420
+  }
+}

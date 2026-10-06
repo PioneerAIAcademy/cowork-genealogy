@@ -1,6 +1,6 @@
 {
   "tool": "record_read",
-  "description": "record_read for hint MDEF, Patrick Flynn's 1908 Pennsylvania death certificate. The project already extracted this record as src_004 (log_005, assertions a_011–a_013, record_id ark:/61903/1:1:MDEF), and the persona here matches those assertions. Triage should find it already in the project before reading it at all (issue #2029).",
+  "description": "record_read for hint MDEF, Patrick Flynn's 1908 Pennsylvania death certificate. The project already extracted this record as src_004 (log_005, assertions a_011–a_013, record_id ark:/61903/1:1:MDEF), and the persona here matches those assertions. Under mid-research-flynn, pe_005 links a_013 to Patrick, so triage finds it already in the project before reading it at all; under mid-research-flynn-unlinked nothing links it, so triage reads it (issue #2029).",
   "args": {
     "recordId": "~MDEF"
   },

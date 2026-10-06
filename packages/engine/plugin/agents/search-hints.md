@@ -101,11 +101,20 @@ Otherwise proceed.
    failure: say there are none and stop.
 2. **Check the project first.** FamilySearch keeps a hint pending until someone
    attaches it there, and nothing here writes to FamilySearch, so a record this
-   project already extracted still shows as a hint. For each hint,
-   `research_query({ projectPath, section: "assertions", recordId:
-   "ark:/61903/1:1:<pid>" })`. If assertions come back, the hint is **already in
-   the project**: name its source and stop on that hint — its evidence is
-   already in the chain, so it needs no recommendation.
+   project already extracted still shows as a hint. Extracted is not linked:
+   whether the record is this person is a separate `person_evidence` decision.
+   Once, before the hints: `research_query({ projectPath, section:
+   "person_evidence" })`, paging with `offset` while `truncated`. Then for each
+   hint, `research_query({ projectPath, section: "assertions", recordId:
+   "ark:/61903/1:1:<pid>" })`.
+   - **Already in the project** — a `person_evidence` entry with `superseded_by`
+     null cites one of those assertion ids. Name its source and the person it
+     links, and stop on that hint. When that link's `confidence` is
+     `speculative` or it carries `core_identifier_conflict`, say so: that link is
+     person-evidence's to re-examine.
+   - **Extracted, not linked** — assertions came back but no such entry cites
+     them (never linked, or only superseded links). Name its source and triage
+     the hint normally.
 3. **Read each remaining hint:** `record_read({ recordId: <ark> })`. Compare its persona to
    the tree person — the project's `tree.gedcomx.json` first, `person_read` when
    the project tree does not hold them: name, dates, places, parents, spouse,
@@ -116,7 +125,9 @@ Otherwise proceed.
    lookingFor: <the disputed field> })` before recommending anything. Indexes of
    European parish and civil registers are routinely wrong; the image outranks
    the index. If the image cannot be read, the recommendation is `not enough
-   information to judge`.
+   information to judge`. When the record carries no `imageArk`, say the index
+   is the only evidence: a reject then needs a contradiction no transcription
+   error could produce.
 5. **A one-field near miss is weak evidence.** A date one day off, or a
    neighbouring parish, neither rejects a hint nor accepts one.
 6. **Decide each recommendation:**
@@ -136,10 +147,12 @@ Otherwise proceed.
 
 ## Record
 
-1. **A hint already in the project** (step 2's check): an `accept` logs nothing —
-   its source already carries the evidence; report it as already in the project.
-   A `reject` is logged as below and also handed back to `person-evidence`, whose
-   links rest on a record the researcher says is not this person.
+1. **A hint whose record the project already extracted** (step 2's check): an
+   `accept` logs nothing — its source already carries the evidence. Already in
+   the project: report it so. Extracted, not linked: hand it back to
+   `person-evidence` to link. A `reject` is logged as below; when it is already
+   in the project, also hand it back to `person-evidence`, whose link rests on a
+   record the researcher says is not this person.
 2. One `research_log_append` per other decided hint:
 
    ```
@@ -183,14 +196,16 @@ Return **≤12 lines** to the caller.
 **Triage:** one line per hint, exactly
 `Hint <ark>: accept | reject | not enough information to judge | already in the project`,
 each followed by its record title, the FamilySearch confidence and the deciding
-facts in one clause (name the image when one was read; for a hint already in
-the project, name its source). Then this line, verbatim:
+facts in one clause (name the image when one was read, or say the index was
+the only evidence; for a hint whose record is extracted, name its source and
+whether it is linked). Then this line, verbatim:
 `Awaiting verdicts: spawn search-hints again with personId and {ark, verdict} per hint`.
 
 **Record:** one line per decided hint, `<ark>: <verdict> → <logId>` (or
 `→ already in the project`), then the accepted hints as `{ark, logId}` for
 record-extraction, any hint left undecided, and a `Hand-back: person-evidence`
-line for a rejected hint already in the project.
+line for a rejected hint already in the project or an accepted hint extracted
+but not linked.
 
 ### `summary_for_user`
 

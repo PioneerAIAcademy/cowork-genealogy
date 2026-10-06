@@ -17,6 +17,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 
 # Aliased away from the `test_` prefix so pytest does not collect them here.
 from test_search_hints import (  # noqa: E402
+    test_extracted_unlinked_hint_is_triaged as check_unlinked,
     test_hint_already_in_the_project_is_named as check_in_project,
     test_hint_list_asks_for_pending_only as check_pending,
     test_image_read_before_reject as check_image,
@@ -30,6 +31,7 @@ IMAGE = {"type": "positive", "tags": ["triage", "image-before-reject"], "delegat
 THIN = {"type": "positive", "tags": ["triage", "not-enough-information"], "delegation": "x"}
 RECORD = {"type": "positive", "tags": ["record-mode", "already-in-project-accept"], "delegation": "x"}
 IN_PROJECT = {"type": "positive", "tags": ["triage", "already-in-project"], "delegation": "x"}
+UNLINKED = {"type": "positive", "tags": ["triage", "extracted-not-linked"], "delegation": "x"}
 M80C_ARK = "https://familysearch.org/ark:/61903/1:1:M80C"
 MDEF_ARK = "https://familysearch.org/ark:/61903/1:1:MDEF"
 
@@ -141,6 +143,42 @@ def test_in_project_passes_the_named_line():
 def test_in_project_fails_a_fresh_recommendation(verdict):
     with pytest.raises(AssertionError, match="already extracted as src_004"):
         check_in_project(_returns(f"Hint {MDEF_ARK}: {verdict}"), "", IN_PROJECT)
+
+
+# --- extracted, not linked ----------------------------------------------
+
+_MDEF_READ = [_call("record_read", recordId="ark:/61903/1:1:MDEF")]
+
+
+@pytest.mark.parametrize("verdict", ["accept", "reject", "not enough information to judge"])
+def test_unlinked_passes_a_read_and_a_recommendation(verdict):
+    check_unlinked(_MDEF_READ, _returns(f"Hint {MDEF_ARK}: {verdict} — death certificate, src_004, not linked"), "", UNLINKED)
+
+
+def test_unlinked_passes_a_bare_id_read_and_a_bold_verdict():
+    reads = [_call("record_read", recordId="MDEF")]
+    check_unlinked(reads, _returns("Hint `ark:/61903/1:1:MDEF`: **accept** — extracted as src_004"), "", UNLINKED)
+
+
+def test_unlinked_fails_the_old_already_in_the_project_shortcut():
+    with pytest.raises(AssertionError, match="expected a recommendation"):
+        check_unlinked([], _returns(f"Hint {MDEF_ARK}: already in the project — src_004"), "", UNLINKED)
+
+
+def test_unlinked_fails_a_missing_line():
+    with pytest.raises(AssertionError, match="expected a recommendation"):
+        check_unlinked(_MDEF_READ, _returns("The death certificate is src_004."), "", UNLINKED)
+
+
+def test_unlinked_fails_a_recommendation_without_reading_the_record():
+    reads = [_call("record_read", recordId="ark:/61903/1:1:M70C")]
+    with pytest.raises(AssertionError, match="without its record ever being read"):
+        check_unlinked(reads, _returns(f"Hint {MDEF_ARK}: accept — src_004, not linked"), "", UNLINKED)
+
+
+def test_unlinked_skips_other_tests():
+    with pytest.raises(pytest.skip.Exception):
+        check_unlinked([], _returns(""), "", IN_PROJECT)
 
 
 # --- thin evidence ------------------------------------------------------
