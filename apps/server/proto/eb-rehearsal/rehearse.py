@@ -389,7 +389,7 @@ CASES: dict[str, dict] = {
     "web_no_queue_url": {"measures": "web start refusal", "ops": {"web": [(ENV_NS, "QUEUE_URL", REMOVE)]}},
     "default_session_secret": {"measures": "default-secret refusal with sign-in on", "allow": ("SESSION_SECRET",), "ops": {"web": [
         (SECRETS_NS, "SESSION_SECRET", REMOVE), (ENV_NS, "SESSION_SECRET", DEV_SESSION_SECRET)]}},
-    "kill_window": {"measures": "kill-and-redeliver window", "ops": {"worker": [
+    "kill_window": {"measures": "redelivery window for a kill that also stops sqsd", "ops": {"worker": [
         (SQSD_NS, "InactivityTimeout", "1200"), (SQSD_NS, "VisibilityTimeout", "1500"),
         (ENV_NS, "SQSD_VISIBILITY_TIMEOUT_S", "1500")]}},
     "debug_hold": {"measures": "acceptance step 4's hold", "allow": ("GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS",), "ops": {"tools": [
@@ -1511,8 +1511,7 @@ U13PY
         got = self.aws("ec2", "describe-instances", "--filters", f"Name=tag:{TAG_REHEARSAL[0]},Values={TAG_REHEARSAL[1]}",
                        "Name=instance-state-name,Values=pending,running,stopping,stopped",
                        placeholder={"Reservations": [{"Instances": [{"InstanceId": "<bastion-id>"}]}]})
-        ids = sorted({i["InstanceId"] for r in got.get("Reservations", []) for i in r.get("Instances", [])}
-                     | {r["id"] for r in self.recorded("ec2")})
+        ids = sorted({i["InstanceId"] for r in got.get("Reservations", []) for i in r.get("Instances", [])})
         if ids:
             self.aws("ec2", "terminate-instances", "--instance-ids", *ids, ok=NOT_FOUND)
             self.aws("ec2", "wait", "instance-terminated", "--instance-ids", *ids, ok=NOT_FOUND)
@@ -1834,8 +1833,7 @@ def history_hits(repo: Path, base: str, values: list[str]) -> list[str]:
 
 def leak_check(args, *, local_dir: Path = LOCAL_DIR, repo: Path = REPO, out=print) -> int:
     if not local_dir.is_dir():
-        out("leak-check: skipped, no .local/")
-        return 0
+        raise Die(f"leak-check: no {local_dir}; copy .local/ into this worktree before pushing")
     work = resolve_work_dir(args.work_dir, repo)
     values = leak_values(local_dir)
     patterns = write_private(work / "leak-patterns", "\n".join(values) + "\n")
