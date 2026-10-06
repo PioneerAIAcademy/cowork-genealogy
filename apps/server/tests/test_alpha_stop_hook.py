@@ -61,10 +61,18 @@ def test_the_tool_counter_sees_the_tools_a_research_loop_actually_runs(tmp_path,
 
     async def research_step():
         first = await stop({}, None, None)
-        # Exactly the calls a GPS step makes, and NOT one the deny matcher covers.
-        for tool in ("Skill", "mcp__genealogy__record_search", "Task",
-                     "mcp__genealogy__research_append", "Read"):
-            assert real_agent._PRETOOL_MATCHER and tool not in real_agent._PRETOOL_MATCHER, tool
+        # Exactly the calls a GPS step makes. The counter must see all of them.
+        step_tools = ("Skill", "mcp__genealogy__record_search", "Task",
+                      "mcp__genealogy__research_append", "Read")
+        # Most are outside the deny matcher, which is the whole argument for the
+        # split. `Task` is deliberately NOT asserted here: it joined the matcher
+        # with the foreground arm (issue #2813), so it is no longer an example of
+        # a call the narrow matcher misses. It stays in `step_tools` because the
+        # claim under test is that the COUNTER sees every call, and a delegation
+        # is one. Four of five still miss, so the under-count is unchanged.
+        for tool in step_tools:
+            if tool not in real_agent.DELEGATION_TOOLS:
+                assert real_agent._PRETOOL_MATCHER and tool not in real_agent._PRETOOL_MATCHER, tool
             await counter_hook({"tool_name": tool, "tool_input": {}}, "t", None)
         return first, await stop({}, None, None)
 
@@ -433,3 +441,248 @@ def test_the_alpha_carries_no_spend_meter():
     proto = (Path(__file__).resolve().parents[1]
              / "proto" / "worker" / "worker.py").read_text(encoding="utf-8")
     assert "SPEND_CAP_USD" in proto, "the prototype's $35 session cap must stay"
+
+
+# --- The `delivered` arm (#2813 item 1) -------------------------------------
+#
+# The router's "Bounded request or job" section tells the model to stop once a
+# bounded request is met. Before this arm THIS plane vetoed that stop and nudged
+# it onward -- the exact thrash the section exists to end -- because
+# `should_continue_run` had no way to hear about it. The prototype learned the
+# signal in #3147; the hosted alpha did not, and the alpha is a live plane.
+
+def _counting_hook(hooks: dict):
+    """The `matcher=None` PreToolUse callback -- the one that sees EVERY call."""
+    return hooks["PreToolUse"][0].kw["hooks"][0]
+
+
+def _delivered_call(**extra):
+    return {"tool_name": real_agent.DELIVERED_TOOL, "tool_input": {}, **extra}
+
+
+def test_delivered_on_the_main_thread_halts_the_turn(tmp_path, monkeypatch):
+    hooks = _hooks(tmp_path, monkeypatch)
+    out = _call(_counting_hook(hooks), _delivered_call())
+    assert out.get("continue") is False, "a delivery must end the turn"
+    assert out.get("stopReason") == real_agent.DELIVERED_REASON
+
+
+def test_a_subagent_delivering_does_not_halt_the_session(tmp_path, monkeypatch):
+    """A subagent calling it means ITS leg is done. Halting here would strand the
+    orchestrator mid-job, which is why the arm is gated on the main thread."""
+    hooks = _hooks(tmp_path, monkeypatch)
+    out = _call(_counting_hook(hooks), _delivered_call(agent_id="record-extractor"))
+    assert out == {}, "a subagent's delivery is not the session's"
+
+
+def test_an_ordinary_tool_call_does_not_halt(tmp_path, monkeypatch):
+    hooks = _hooks(tmp_path, monkeypatch)
+    assert _call(_counting_hook(hooks)) == {}
+
+
+def test_after_a_delivery_the_stop_hook_allows_the_stop(tmp_path, monkeypatch):
+    """The end-to-end direction that was broken: an UNFINISHED project, where the
+    Stop hook otherwise vetoes and injects CONTINUE_REASON."""
+    _write(tmp_path, "active")
+    hooks = _hooks(tmp_path, monkeypatch)
+    stop = hooks["Stop"][0].kw["hooks"][0]
+
+    vetoed = _call(stop)
+    assert vetoed.get("decision") == "block", (
+        "precondition: without a delivery this plane must still nudge an active project "
+        "onward -- if this ever stops holding, the test below proves nothing"
+    )
+
+    _call(_counting_hook(hooks), _delivered_call())
+    assert _call(stop) == {}, "after a delivery the voluntary stop must be allowed"
+
+
+def test_the_alpha_system_prompt_carries_the_delivery_guidance(tmp_path):
+    """The twin of `test_proto_worker.py`'s assertion, and the half this plane was
+    missing: the halt arm above only fires when the model CALLS `research_delivered`,
+    and nothing calls a tool it was never told about. Wiring the arm without the
+    guidance ships a dead rule that looks identical to a working one."""
+    opts = real_agent.build_options(tmp_path)
+    assert real_agent.DELIVERY_GUIDANCE in opts.system_prompt["append"]
+    assert "research_delivered" in opts.system_prompt["append"]
+
+
+class _Turns:
+    """Stands in for the session, borrowing the REAL turn-boundary method.
+
+    `pending_user_message` is part of the interface `_build_hooks` binds, so the
+    stand-in has to carry it; returning False keeps that arm out of the way of
+    what these tests are about.
+    """
+    _begin_turn_hook_state = real_agent.RealAgent._begin_turn_hook_state
+
+    def pending_user_message(self) -> bool:
+        return False
+
+
+def _session(tmp_path, monkeypatch):
+    """Hooks plus the object the turn boundary runs against."""
+    _write(tmp_path, "active")
+    agent = _Turns()
+    monkeypatch.setattr(real_agent, "AUTONOMOUS_MAX_NUDGES", 60)
+    hooks = real_agent._build_hooks(FakeMatcher, tmp_path, agent)
+    return agent, _counting_hook(hooks), hooks["Stop"][0].kw["hooks"][0]
+
+
+def test_build_hooks_publishes_the_counter_to_the_turn_boundary(tmp_path, monkeypatch):
+    """Without this the boundary method is a no-op and every test below passes
+    vacuously, because `getattr(self, "_hook_counter", None)` returns None."""
+    agent, _, _ = _session(tmp_path, monkeypatch)
+    assert getattr(agent, "_hook_counter", None) is not None
+    assert agent._hook_counter["delivered"] is False
+
+
+def test_a_delivery_does_not_disable_the_nudge_for_later_turns(tmp_path, monkeypatch):
+    """The flag is per-TURN; `counter` is per-SESSION.
+
+    `build_options` runs once and the SDK client is cached, so the dict holding
+    `delivered` outlives the turn that set it. Unfixed, one bounded delivery
+    disabled the continue-nudge for the whole rest of the session: the next
+    message, a full job, ended after a single step with no error and nothing in
+    the log.
+    """
+    agent, counting, stop = _session(tmp_path, monkeypatch)
+
+    _call(counting, _delivered_call())
+    assert _call(stop) == {}, "precondition: the delivering turn's own stop is allowed"
+
+    agent._begin_turn_hook_state()          # the next turn starts
+    for _ in range(5):
+        _call(counting)
+    assert _call(stop).get("decision") == "block", (
+        "a delivery in an EARLIER turn must not authorise this turn's stop"
+    )
+
+
+def test_a_later_turn_that_calls_no_tool_at_all_is_still_nudged(tmp_path, monkeypatch):
+    """The case the first fix could not see. It cleared the flag on the next TOOL
+    CALL, so a turn that yields without calling anything inherited the delivery and
+    was allowed to stop. Reported by a blind re-derivation of the claim, against a
+    test that made five tool calls and therefore could not reach it.
+    """
+    agent, counting, stop = _session(tmp_path, monkeypatch)
+    _call(counting, _delivered_call())
+
+    agent._begin_turn_hook_state()          # new turn, and NOT one tool call in it
+    assert _call(stop).get("decision") == "block", (
+        "a turn that calls no tool before yielding must still be nudged"
+    )
+
+
+def test_a_subagent_call_cannot_clear_a_main_thread_delivery(tmp_path, monkeypatch):
+    """The setting arm is main-thread gated, so the clearing must not be reachable
+    by a subagent either. The first fix cleared on ANY non-delivery tool call, so a
+    straggler subagent call landing after the delivery wiped it.
+    """
+    agent, counting, stop = _session(tmp_path, monkeypatch)
+    _call(counting, _delivered_call())
+    _call(counting, {"tool_name": "Read", "tool_input": {}, "agent_id": "record-extractor"})
+    assert _call(stop) == {}, "a subagent's call must not clear this turn's delivery"
+
+
+def test_the_delivery_summary_leads_the_stop_reason(tmp_path, monkeypatch):
+    """The halt text carries the model's own sentence, as the prototype's does.
+
+    NOT full parity, and the first version of this docstring overclaimed it: the
+    prototype RENDERS the summary, the alpha does not yet. `map_message` has no
+    `ResultMessage` branch and nothing under `apps/server/app` reads `stopReason`,
+    so on the alpha the sentence reaches the CLI and the log but not the browser.
+    Raised in review. What this test pins is that the text is BUILT correctly and
+    shared with the prototype, which is what stops the two drifting; surfacing it
+    is a separate change to the event stream.
+
+    Summary FIRST because the prototype's chip cuts at 160 chars and
+    DELIVERED_REASON alone is 124, so appending would leave almost no room.
+
+    Added because the suite passed both before and after the behaviour existed:
+    every other test here asserts only that the turn halts.
+    """
+    hooks = _hooks(tmp_path, monkeypatch)
+    out = _call(_counting_hook(hooks), {
+        "tool_name": real_agent.DELIVERED_TOOL,
+        "tool_input": {"summary": "Transcribed the 1881 census page."},
+    })
+    reason = out["stopReason"]
+    assert reason.startswith("Delivered: Transcribed the 1881 census page."), reason
+    assert real_agent.DELIVERED_REASON in reason
+
+
+def test_a_delivery_with_no_summary_still_halts_cleanly(tmp_path, monkeypatch):
+    hooks = _hooks(tmp_path, monkeypatch)
+    for payload in ({"summary": "   "}, {"summary": None}, {}):
+        out = _call(_counting_hook(hooks), {
+            "tool_name": real_agent.DELIVERED_TOOL, "tool_input": payload,
+        })
+        assert out["stopReason"] == real_agent.DELIVERED_REASON, payload
+        assert out["continue"] is False
+
+
+def test_a_present_but_null_agent_id_is_still_a_subagent(tmp_path, monkeypatch):
+    """Pins membership, not truthiness.
+
+    Mutating the arm to `not (_input_data or {}).get("agent_id")` passed the entire
+    server suite, and under it a subagent whose `agent_id` is present-but-None would
+    halt the researcher's whole session. The prototype pins this exact distinction;
+    the alpha copy shipped unguarded because the only subagent test passed a
+    non-empty string.
+    """
+    hooks = _hooks(tmp_path, monkeypatch)
+    out = _call(_counting_hook(hooks), _delivered_call(agent_id=None))
+    assert out == {}, "agent_id present-but-None is a subagent, not the main thread"
+
+
+def test_handle_turn_clears_a_delivery_from_the_previous_turn(tmp_path):
+    """Drives the REAL turn boundary, not the stand-in.
+
+    Raised in review: every other test here calls `_begin_turn_hook_state` on a
+    stand-in, never through `handle_turn`, so replacing the call site with `pass`
+    left the whole server suite green. The fix for the session-scoped `delivered`
+    leak could have been deleted with CI passing, which is the shape this branch
+    has been removing all along.
+
+    It fails with the call deleted, and fails if the reset also zeroes
+    `tool_calls` -- that counter is deliberately session-scoped, because the
+    no-progress arm compares it across two stops.
+    """
+    import asyncio
+
+    from claude_agent_sdk import ResultMessage
+
+    from _fakes import ReplayFakeClient, attach, turn_events
+
+    agent = real_agent.RealAgent(tmp_path)
+    agent._hook_counter = {"tool_calls": 3, "delivered": True}
+    done = ResultMessage(subtype="success", duration_ms=1, duration_api_ms=1,
+                         is_error=False, num_turns=1, session_id="s1")
+    attach(agent, ReplayFakeClient([done]))
+    asyncio.run(turn_events(agent, "next message"))
+
+    assert agent._hook_counter["delivered"] is False, (
+        "a new turn must clear the previous turn's delivery"
+    )
+    assert agent._hook_counter["tool_calls"] == 3, (
+        "tool_calls is session-scoped; zeroing it would make every second stop look "
+        "like no progress and end the job after one nudge"
+    )
+
+
+@pytest.mark.parametrize("summary", [123, ["a", "b"], {"x": 1}])
+def test_a_non_string_summary_still_halts(tmp_path, monkeypatch, summary):
+    """A regression introduced by sharing the stop-reason helper, caught in review.
+
+    The alpha used to cast with `str()` before stripping; the shared helper did not,
+    so a non-string summary raised `AttributeError` inside the PreToolUse callback.
+    That fails the tool call, loses the halt, and leaves `delivered` already set.
+    Nothing validates the tool's `inputSchema`, so the input is reachable.
+    """
+    hooks = _hooks(tmp_path, monkeypatch)
+    out = _call(_counting_hook(hooks), {
+        "tool_name": real_agent.DELIVERED_TOOL, "tool_input": {"summary": summary},
+    })
+    assert out.get("continue") is False
+    assert str(summary) in out["stopReason"]

@@ -108,7 +108,7 @@
 Prototype: `main` at `2a553477f` (before PR #2870), Anthropic API (tool search on), 5-minute TTL, 7,200 s ceiling.
 Current stack: 1-hour TTL, foreground by default (CLI 2.1.139). Same week and engine/plugin commit; SDK 0.1.81 /
 CLI 2.1.139 against 0.2.128 / 2.1.220. Its Stop hook nudged the agent on with a bare "Yes." 1
-time in 3; the worker never does.
+time in 3; the worker never does (removed from the harness by handoff U17, 2026-10-06).
 
 | | **bagley, current, 09-24** | **bagley, prototype** | paerai, current, 09-21 | paerai, prototype |
 |---|---|---|---|---|
