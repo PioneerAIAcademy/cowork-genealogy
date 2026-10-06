@@ -29,7 +29,7 @@ def _load(name: str) -> dict:
 
 def test_driscoll_still_has_an_attached_death_record() -> None:
     """ut_research_021's premise: the requested record is already attached."""
-    sources = _load("person-read-driscoll-personid-only")["response"]["sources"]
+    sources = _load("person-read-driscoll-attached-sources")["response"]["sources"]
     assert sources, "the fixture carries no sources at all"
     deaths = [s for s in sources if "death" in json.dumps(s).lower()]
     assert deaths, (
@@ -56,24 +56,17 @@ def test_no_sibling_candidate_carries_a_parent() -> None:
         )
 
 
-def test_the_two_driscoll_person_reads_agree_on_the_subject() -> None:
-    """A copy that drifts from its original is worse than no copy.
+def test_the_canonical_fixture_is_the_only_driscoll_person_read() -> None:
+    """There used to be two, and a copy that drifts is worse than no copy.
 
-    `person-read-driscoll-personid-only` exists only because its sibling's
-    predicate requires `sourceDescriptions: true`. Both PR #3077 and PR #3115
-    modify that sibling, so the two can diverge with nothing noticing.
+    This branch carried `person-read-driscoll-personid-only`, derived from the
+    canonical fixture because the canonical predicate demanded
+    `sourceDescriptions: true` and would otherwise have missed. PR #3077 dropped
+    that key (the tool has ignored it since #2666), which made the copy redundant.
+    Guarding the drift was the second-best answer; deleting the copy is the first.
     """
-    a = _load("person-read-driscoll-personid-only")
-    b = _load("person-read-driscoll-attached-sources")
-    assert a["args"]["personId"] == b["args"]["personId"]
-    # `id`, NOT `source_id`. The first cut of this guard used `source_id`, which
-    # these fixtures do not carry, so both sides collapsed to {None} and compared
-    # equal no matter what changed -- a check that could not fail, caught only by
-    # mutating a fixture and watching it pass.
-    ids_a = {s["id"] for s in a["response"]["sources"]}
-    ids_b = {s["id"] for s in b["response"]["sources"]}
-    assert ids_a == ids_b, (
-        "the personId-only copy has drifted from the fixture it was derived from. "
-        f"only in the copy: {ids_a - ids_b}; only in the original: {ids_b - ids_a}. "
-        "Re-derive the copy, or state in both descriptions why they now differ."
+    reads = sorted(f.stem for f in FIXTURES.glob("person-read-driscoll*.json"))
+    assert reads == ["person-read-driscoll-attached-sources"], (
+        f"a second Driscoll person_read fixture is back: {reads}. Two fixtures for one subject "
+        "drift, and two rubrics here rest on facts only one of them would carry."
     )
