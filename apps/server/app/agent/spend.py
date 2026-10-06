@@ -15,7 +15,8 @@ no opinion about money.
 
 ``eval/harness/e2e/pricing.py`` stays a second, genuinely separate copy -- the worker image
 carries no ``eval/`` -- pinned against this one by
-``test_the_two_price_tables_are_the_same_four_rates``.
+``test_the_two_price_tables_share_three_rates_and_differ_by_cache_ttl``, which lets the
+cache-write rate differ by TTL (see ``PRICE_PER_MTOK``).
 """
 
 from __future__ import annotations
@@ -39,14 +40,21 @@ def _spend_env(name: str, default: float) -> float:
 
 # USD per 1M tokens. `eval/harness`'s `e2e/pricing.py` stays a second, genuinely separate
 # copy -- the worker image carries no `eval/` -- pinned against this one by
-# `test_the_two_price_tables_are_the_same_four_rates`.
+# `test_the_two_price_tables_share_three_rates_and_differ_by_cache_ttl`.
+#
+# Cache writes are the 5-minute rate (1.25x input), not the harness's 1-hour one (2x): the
+# worker authenticates with an API key and never sets ENABLE_PROMPT_CACHING_1H, and the
+# gateway discards the TTL, so every write it meters is 5-minute (handoff U23: 149k
+# 5-minute write tokens metered $1.05 at the 1-hour rate where the CLI billed $0.72; at
+# this rate they come to $0.71). The e2e corpus runs on a subscription, where the CLI
+# writes 1-hour entries, which is why the harness keeps $6.
 #
 # Env-overridable so an operator can re-price without a rebuild (compose passes each
 # through), and guarded so a typo can neither crash-loop the reader (`env_float`) nor pass
 # unseen (`_bad_env`).
 PRICE_PER_MTOK = {
     "input": _spend_env("PRICE_INPUT_PER_MTOK", 3.0),
-    "cache_write": _spend_env("PRICE_CACHE_WRITE_PER_MTOK", 6.0),
+    "cache_write": _spend_env("PRICE_CACHE_WRITE_PER_MTOK", 3.75),
     "cache_read": _spend_env("PRICE_CACHE_READ_PER_MTOK", 0.30),
     "output": _spend_env("PRICE_OUTPUT_PER_MTOK", 15.0),
 }
