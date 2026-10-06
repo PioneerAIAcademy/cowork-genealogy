@@ -146,6 +146,21 @@ def test_in_project_fails_a_fresh_recommendation(verdict):
 
 
 
+def test_in_project_passes_a_bold_token_with_the_link():
+    check_in_project(_returns(f"Hint {MDEF_ARK}: **already linked by pe_005** — src_004"), "", IN_PROJECT)
+
+
+def test_in_project_fails_a_link_claim_with_no_link_named():
+    with pytest.raises(AssertionError, match="does not name the link"):
+        check_in_project(_returns(f"Hint {MDEF_ARK}: already linked — src_004, extracted"), "", IN_PROJECT)
+
+
+def test_in_project_fails_naming_the_link_on_another_hint_only():
+    reply = f"Hint {MDEF_ARK}: already linked — src_004\nHint {M80C_ARK}: accept — unlike pe_005"
+    with pytest.raises(AssertionError, match="does not name the link"):
+        check_in_project(_returns(reply), "", IN_PROJECT)
+
+
 def test_in_project_fails_the_retired_token():
     # Renamed 2026-10-07: "already in the project" also describes an extracted
     # record nobody linked, which is the state the agent kept mislabelling.

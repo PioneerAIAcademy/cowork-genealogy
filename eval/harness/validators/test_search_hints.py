@@ -130,10 +130,16 @@ def test_hint_already_in_the_project_is_named(agent_returns, text_response, test
     it as a fresh accept sends it to a second extraction."""
     if "already-in-project" not in test.get("tags", []):
         pytest.skip("not an already-in-project test")
-    verdict = _verdict_for(_reply(agent_returns, text_response, test), "MDEF")
+    reply = _reply(agent_returns, text_response, test)
+    verdict = _verdict_for(reply, "MDEF")
     assert verdict == "already linked", (
         f"the MDEF death certificate is already extracted as src_004 and linked by pe_005; expected "
         f"its line to read 'already linked', got {verdict!r}"
+    )
+    lines = [m.group(0) + reply[m.end():].split("\n", 1)[0] for m in _HINT_LINE.finditer(reply)
+             if "MDEF" in m.group(1).upper()]
+    assert any("pe_005" in line for line in lines), (
+        "the MDEF line says already linked but does not name the link that makes it so (pe_005)"
     )
 
 

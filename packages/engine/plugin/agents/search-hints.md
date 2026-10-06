@@ -109,15 +109,15 @@ Otherwise proceed.
    Then for each hint, `research_query({ projectPath, section: "assertions",
    recordId: "ark:/61903/1:1:<pid>" })`.
    - **Already linked** — a `person_evidence` entry with `superseded_by` null
-     cites one of those assertion ids. Its line reads `already linked`, never a
-     recommendation: name its source and the person it links,
+     cites one of those assertion ids. Its line reads `already linked by
+     <that entry's pe_ id>`, never a recommendation: name its source and the person it links,
      and do not read the record. When that link's `confidence` is `speculative`
      or it carries `core_identifier_conflict`, say so: that link is
      person-evidence's to re-examine.
    - **Extracted, not linked** — assertions came back but no such entry cites
      them (never linked, or only superseded links). Its line is a
      recommendation — `accept`, `reject` or `not enough information to judge` —
-     never `already linked`. Being unlinked is no reason for `not enough
+     never `already linked`: there is no pe_ id to name. Being unlinked is no reason for `not enough
      information to judge`, and triage hands nothing back. Name its source,
      read it and triage it like any other hint.
 3. **Read each remaining hint:** `record_read({ recordId: <ark> })`. Compare its persona to
@@ -200,7 +200,7 @@ before logging it, and do not log the same verdict twice.
 Return **≤12 lines** to the caller.
 
 **Triage:** one line per hint, exactly
-`Hint <ark>: accept | reject | not enough information to judge | already linked`,
+`Hint <ark>: accept | reject | not enough information to judge | already linked by <pe id>`,
 each followed by its record title, the FamilySearch confidence and the deciding
 facts in one clause (name the image when one was read, or say the index was
 the only evidence; for a hint whose record is extracted, name its source and
@@ -208,7 +208,7 @@ whether it is linked). Then this line, verbatim:
 `Awaiting verdicts: spawn search-hints again with personId and {ark, verdict} per hint`.
 
 **Record:** one line per decided hint, `<ark>: <verdict> → <logId>` (or
-`→ already linked`), then the accepted hints as `{ark, logId}` for
+`→ already linked by <pe id>`), then the accepted hints as `{ark, logId}` for
 record-extraction, any hint left undecided, and a `Hand-back: person-evidence`
 line for a rejected hint already linked or an accepted hint extracted but not
 linked.
