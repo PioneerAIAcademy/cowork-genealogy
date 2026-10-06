@@ -114,9 +114,9 @@ Otherwise proceed.
      or it carries `core_identifier_conflict`, say so: that link is
      person-evidence's to re-examine.
    - **Extracted, not linked** — assertions came back but no such entry cites
-     them (never linked, or only superseded links). Name its source and triage
-     the hint normally: your recommendation is the identity call, never a
-     deferral to person-evidence.
+     them (never linked, or only superseded links). Name its source, read it
+     and triage it like any other hint: your recommendation is the identity
+     call, never a deferral to person-evidence.
 3. **Read each remaining hint:** `record_read({ recordId: <ark> })`. Compare its persona to
    the tree person — the project's `tree.gedcomx.json` first, `person_read` when
    the project tree does not hold them: name, dates, places, parents, spouse,
