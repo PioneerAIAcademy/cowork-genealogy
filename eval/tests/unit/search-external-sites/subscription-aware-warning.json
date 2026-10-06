@@ -14,7 +14,7 @@
       "direct-arm"
     ],
     "expected_outcome": "xfail",
-    "xfail_reason": "Agent-body defect, hand-off presentation: the URL the agent shows is not the URL the builder logged. It either retypes the logged URL with a changed character (epmo.similar became epmo=similar) or builds a second URL and presents that one instead. Measured on the converted agent 2026-10-02: the committed suite run failed, then --runs-per-test 3 went pass/fail/pass. Removal condition: a --runs-per-test 3 run of this test on the agent passes 3 of 3."
+    "xfail_reason": "Agent-body defect, owned by issue #3185: the agent mis-copies the URL build_external_search_url returned when it writes the hand-off, so the URL shown is not the URL logged. Measured on the agent 2026-10-06 with --runs-per-test 3: fail/pass/fail; in both failures the builder was called once and the agent retyped its URL wrong (a doubled segment, a dropped segment). Removal condition: issue #3185's fix, then a --runs-per-test 3 run of this test passes 3 of 3."
   },
   "input": {
     "delegation": "Search MyHeritage for Patrick Flynn's marriage record in Pennsylvania, around 1865 to 1875.\n\nuserPresent: yes\nprojectPath: <workspace>",
