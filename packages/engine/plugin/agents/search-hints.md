@@ -108,13 +108,15 @@ Otherwise proceed.
    hint, `research_query({ projectPath, section: "assertions", recordId:
    "ark:/61903/1:1:<pid>" })`.
    - **Already in the project** — a `person_evidence` entry with `superseded_by`
-     null cites one of those assertion ids. Name its source and the person it
-     links, and stop on that hint. When that link's `confidence` is
-     `speculative` or it carries `core_identifier_conflict`, say so: that link is
+     null cites one of those assertion ids. Its line reads `already in the
+     project`, never a recommendation: name its source and the person it links,
+     and do not read the record. When that link's `confidence` is `speculative`
+     or it carries `core_identifier_conflict`, say so: that link is
      person-evidence's to re-examine.
    - **Extracted, not linked** — assertions came back but no such entry cites
      them (never linked, or only superseded links). Name its source and triage
-     the hint normally.
+     the hint normally: your recommendation is the identity call, never a
+     deferral to person-evidence.
 3. **Read each remaining hint:** `record_read({ recordId: <ark> })`. Compare its persona to
    the tree person — the project's `tree.gedcomx.json` first, `person_read` when
    the project tree does not hold them: name, dates, places, parents, spouse,
@@ -140,8 +142,8 @@ Otherwise proceed.
      against an estimated or unsourced tree fact may mean the tree is wrong:
      that is `not enough information to judge`, with the possible tree error
      named.
-   - `not enough information to judge` — anything else. This is a correct answer,
-     not a fallback to avoid.
+   - `not enough information to judge` — anything else, naming what would decide
+     it. This is a correct answer, not a fallback to avoid.
 7. **FamilySearch's confidence (1–5) is a triage signal, never the verdict.**
    Disclose it for every hint; never recommend on it alone.
 
