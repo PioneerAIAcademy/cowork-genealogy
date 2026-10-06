@@ -14,7 +14,9 @@
 // GENEALOGY_S3_FORCE_PATH_STYLE is one stderr line and exit 2 before listen.
 // With neither S3 key set the AWS SDK default chain supplies credentials
 // (environment, ~/.aws shared config/SSO, web identity, then instance
-// metadata); one stderr line names the mode, never a key. Nothing connects
+// metadata); one stderr line names the mode, never a key. A set debug hold
+// (debug-holds.ts) is one more stderr line, so a forgotten one shows in the
+// logs; with neither set, nothing is printed. Nothing connects
 // before listen: `GET /healthz` probes Postgres (schema included) and S3 per
 // request and answers 503 while either is unreachable, never exiting.
 import { parseArgs } from "node:util";
@@ -25,6 +27,7 @@ import { createPgS3Backend, PgS3ProjectStore } from "./store/pg-s3-project-store
 import { readPgS3Env } from "./store/pg-s3-env.js";
 import { setProjectStore, unboundProjectStore } from "./store/project-store.js";
 import { configFromEnv } from "./hosted-config-env.js";
+import { debugHoldStartupLine } from "./debug-holds.js";
 
 const { values } = parseArgs({
   options: {
@@ -55,6 +58,8 @@ process.stderr.write(
   `s3 credentials: ${s3Options.accessKeyId ? "static keys" : "SDK default chain"}; ` +
     `region ${s3Options.region}; endpoint ${s3Options.endpoint ?? "AWS default"}\n`,
 );
+const holdLine = debugHoldStartupLine(process.env);
+if (holdLine) process.stderr.write(holdLine);
 
 // One pool and one S3 client for the process; a store per request over them.
 const backend = createPgS3Backend(storeEnv.backendOptions);

@@ -8,7 +8,9 @@ to each zip's root. Plan: docs/plan/familysearch-handoff.md, U12; the interface 
 - the Procfile is one ``web:`` line in Beanstalk's shape; web and tools carry ``--port``
   equal to the template's ``PORT``, and the worker's takes no arguments with ``PORT=8000``;
 - every environment value is inside Beanstalk's documented character set -- which has no
-  ``?``, ``&`` or ``,`` -- and no secret or dev-only variable is in any template;
+  ``?``, ``&`` or ``,`` -- and no secret, API-level or dev-only variable is in any template;
+- U11: no file under a template directory but its README, and no tier ``Dockerfile``,
+  names one of ``layout.py``'s dev-only variables outside a comment;
 - the logs block, the health paths, nginx at 1800 s for tools, one instance for worker
   and tools;
 - the worker's ``ENGINE_PLUGIN_DIR`` is where its predeploy hook puts the plugin, and the
@@ -55,12 +57,9 @@ EB_VALUE = re.compile(r"""^[A-Za-z0-9 _.:/=+\\\-@'"]*$""")
 EB_PROCFILE_LINE = re.compile(r"^[A-Za-z0-9_-]+:\s*\S.*$")
 HEALTH_PATHS = {"web": "/api/health", "tools": "/healthz"}
 # A secret travels as an API-level setting (or environmentsecrets), never in a bundle;
-# the rest are compose, harness or per-deploy switches.
+# API_LEVEL are per-deploy switches. The dev-only list is layout.py's.
 SECRET_NAME = re.compile(r"KEY|SECRET|TOKEN|PASSWORD|DSN")
-NEVER_IN_A_TEMPLATE = frozenset({
-    "BLOCKED_TOOLS", "MODEL_PROVIDER", "PYTHONPATH", "HOME", "SQS_ENDPOINT", "QUEUE_NAME",
-    "GATEWAY_BASE_URL", "FS_ACCESS_TOKEN_FILE",
-})
+API_LEVEL = frozenset({"MODEL_PROVIDER", "GATEWAY_BASE_URL", "PYTHONPATH", "HOME"})
 NGINX_UNIT_S = {"": 1, "s": 1, "m": 60, "h": 3600, "d": 86400}
 TOOLS_MIN_TIMEOUT_S = 1800
 
@@ -178,10 +177,89 @@ def test_environment_values_are_in_the_eb_character_set(tier):
 
 
 @pytest.mark.parametrize("tier", layout.TIERS)
-def test_no_secret_or_dev_variable_in_a_template(tier):
-    bad = sorted(k for k in _env(tier)
-                 if SECRET_NAME.search(k) or k.startswith(("DEV_", "AWS_")) or k in NEVER_IN_A_TEMPLATE)
-    assert not bad, f"{tier}: API-level or dev-only variables in the template: {bad}"
+def test_no_secret_or_api_level_variable_in_a_template(tier):
+    bad = sorted(k for k in _env(tier) if SECRET_NAME.search(k) or k.startswith("AWS_") or k in API_LEVEL)
+    assert not bad, f"{tier}: secret or API-level variables in the template: {bad}"
+
+
+def _dev_settings(tier: str, env: dict[str, str]) -> list[str]:
+    bad = [k for k in env if k.startswith(layout.DEV_PREFIXES) or k in layout.DEV_VARIABLES
+           or k in layout.DEV_VARIABLES_BY_TIER[tier]]
+    bad += [f"{k}={env[k]}" for k, v in layout.DEV_VALUES.items() if env.get(k, "").strip().lower() == v]
+    return sorted(bad)
+
+
+@pytest.mark.parametrize("tier", layout.TIERS)
+def test_no_dev_variable_in_a_template(tier):
+    assert not _dev_settings(tier, _env(tier)), f"{tier}: dev-only settings in the template"
+
+
+@pytest.mark.parametrize(("tier", "env", "dev"), [
+    ("worker", {"DEV_PATHS": "true"}, True),
+    ("tools", {"GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS": "30000"}, True),
+    ("web", {"BLOCKED_TOOLS": "person_read"}, True),
+    ("worker", {"AUTONOMOUS_MAX_NUDGES": "60"}, True),
+    ("worker", {"WORKER_TURN_USERS": "none"}, True),
+    ("web", {"AUTONOMOUS_MAX_NUDGES": "60"}, False),
+    ("worker", {"WORKER_TURN_USERS": "genealogy-turn-0 genealogy-turn-1"}, False),
+    ("worker", {"PGSSLMODE": "verify-full", "SWEEP_INTERVAL_S": "300"}, False),
+])
+def test_the_dev_rule_sees_each_shape(tier, env, dev):
+    assert bool(_dev_settings(tier, env)) is dev, (tier, env)
+
+
+def _dev_pattern(tier: str) -> re.Pattern[str]:
+    names = sorted(layout.DEV_VARIABLES | layout.DEV_VARIABLES_BY_TIER[tier])
+    words = [re.escape(p) + r"\w+" for p in layout.DEV_PREFIXES] + [re.escape(n) + r"\b" for n in names]
+    words += [rf"{re.escape(k)}\s*[=:]\s*[\"']?(?i:{re.escape(v)})\b" for k, v in layout.DEV_VALUES.items()]
+    return re.compile(r"\b(?:" + "|".join(words) + ")")
+
+
+def _dev_mentions(tier: str, text: str) -> list[str]:
+    """Each dev-only name or value outside a whole-line ``#`` comment."""
+    pattern = _dev_pattern(tier)
+    return [m.group(0) for line in text.splitlines() if not line.lstrip().startswith("#")
+            for m in pattern.finditer(line)]
+
+
+def _shipped_files(tier: str) -> list[Path]:
+    """Every file the builder copies from the tier's template directory (dot-dirs too) but
+    its README, and the tier's image."""
+    files = [p for p in sorted(_template(tier).rglob("*"))
+             if p.is_file() and not p.name.upper().startswith("README")]
+    return files + [PROTO / tier / "Dockerfile"]
+
+
+def test_the_scan_reaches_the_hidden_directories():
+    scanned = {p for tier in layout.TIERS for p in _shipped_files(tier)}
+    assert WORKER_HOOK in scanned and TOOLS_NGINX in scanned
+    assert all(p in scanned for tier in layout.TIERS for p in _config_files(tier))
+    assert all((PROTO / tier / "Dockerfile").is_file() for tier in layout.TIERS)
+    assert not [p for p in scanned if p.name == "README.md"]
+
+
+@pytest.mark.parametrize("tier", layout.TIERS)
+def test_no_dev_variable_in_a_shipped_file_or_image(tier):
+    bad = {p.relative_to(REPO).as_posix(): hits for p in _shipped_files(tier)
+           if (hits := _dev_mentions(tier, p.read_text(encoding="utf-8")))}
+    assert not bad, f"{tier}: dev-only variables in a shipped file or image: {bad}"
+
+
+@pytest.mark.parametrize(("tier", "text", "dev"), [
+    ("worker", "set -euo pipefail\nexport DEV_PATHS=1\n", True),
+    ("worker", "FROM python:3.12-slim\nENV DEV_PATHS=1\n", True),
+    ("worker", "export DEV_PATHS=1  # a trailing comment is not a comment line\n", True),
+    ("web", 'RUN echo "${GENEALOGY_DEBUG_HOLD_AFTER_COMMIT_MS}"\n', True),
+    ("tools", "ENV AUTONOMOUS_MAX_NUDGES=5\n", True),
+    ("worker", "ENV WORKER_TURN_USERS=none\n", True),
+    ("worker", "WORKER_TURN_USERS: \"None\"\n", True),
+    ("worker", "# DEV_PATHS is compose's, never set here\nset -euo pipefail\n", False),
+    ("web", "ENV AUTONOMOUS_MAX_NUDGES=60\n", False),
+    ("worker", 'TURN_USERS="genealogy-turn-0"\ndev_dir=/opt\nWORKER_TURN_USERS=nonesuch\n', False),
+    ("web", "ENV GENEALOGY_SQS_REGION=us-east-1 SQS_ENDPOINT_URL=x\n", False),
+])
+def test_the_scan_sees_each_shape(tier, text, dev):
+    assert bool(_dev_mentions(tier, text)) is dev, (tier, text)
 
 
 @pytest.mark.parametrize("tier", layout.TIERS)
@@ -246,3 +324,19 @@ def test_ca_variable_names_the_bundled_ca(tier):
     env = _env(tier)
     assert env.get(layout.CA_ENV_VAR[tier]) == f"{layout.APP_DIR}/{layout.CA_PATH_IN_BUNDLE}", (tier, env)
     assert env.get("PGSSLMODE") == "verify-full", (tier, env)
+
+
+def test_the_hook_creates_exactly_the_slot_users_the_worker_is_told():
+    """U3: the hook's users and 02-worker.config's WORKER_TURN_USERS are two copies of one
+    list. A name only in the config refuses start (no such user); one only in the hook is a
+    slot no turn uses."""
+    text = WORKER_HOOK.read_text(encoding="utf-8")
+    match = re.search(r'^TURN_USERS="([^"]+)"$', text, re.MULTILINE)
+    assert match, f"{WORKER_HOOK.name} sets no TURN_USERS=\"…\""
+    assert match.group(1).split() == _env("worker")["WORKER_TURN_USERS"].split()
+    assert re.search(r"useradd [^\n]*--gid \"\$TURN_GROUP\"", text), "the users share the hook's group"
+    # The offline smoke runs the hook with no systemd; an unguarded reload fails the deploy.
+    reload_lines = [ln for ln in text.splitlines() if "systemctl daemon-reload" in ln and not ln.lstrip().startswith("#")]
+    assert reload_lines, "the drop-in is never loaded"
+    assert re.search(r"if \[ -d /run/systemd/system \]; then\n\s+systemctl daemon-reload", text), \
+        "the reload runs only where systemd does"
