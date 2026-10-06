@@ -86,7 +86,14 @@ NEWLY_ENFORCED = {"localities"}
 #: text, and the batches that write a summary and its resolve together all name
 #: `proof-conclusion`. A widening cannot newly fail a test; the matching skill
 #: body edit is a separate, eval-gated change.
-WIDENED: dict[str, set[str]] = {"questions": {"proof-conclusion"}}
+WIDENED: dict[str, set[str]] = {
+    "questions": {"proof-conclusion"},
+    #: `log` gains `survey-surname`. The agent calls `research_log_append` to log
+    #: each census-year search page. The `agent:survey-surname` caller was added to
+    #: ownership.json's `callers` so the ownership validator resolves it when the
+    #: agent is the suite subject.
+    "log": {"survey-surname"},
+}
 
 #: `assertions` loses `convert-dates`. The grant was dead on arrival: the skill's
 #: only tool is `convert_calendar`, it holds no writer tool, and its own body

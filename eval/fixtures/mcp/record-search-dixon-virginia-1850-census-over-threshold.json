@@ -1,0 +1,119 @@
+{
+  "tool": "record_search",
+  "description": "FamilySearch record search for Dixon surname in the 1850 Virginia census. totalMatches 2218 exceeds the 600 per-year threshold — the agent should NOT page further and should ask for counties instead.",
+  "args": {
+    "surname": "~Dixon",
+    "residenceYearFrom": 1850,
+    "residenceYearTo": 1850
+  },
+  "response": {
+    "query": {
+      "surname": "Dixon",
+      "recordType": "census",
+      "recordCountry": "United States",
+      "recordSubdivision": "Virginia",
+      "residenceYearFrom": 1850,
+      "residenceYearTo": 1850
+    },
+    "totalMatches": 2218,
+    "paginationCappedAt": 4999,
+    "returned": 2,
+    "offset": 0,
+    "hasMore": true,
+    "rankingSkipped": "No subjectId provided — results are in FamilySearch relevance order.",
+    "results": [
+      {
+        "personId": "XJQV-1850-A",
+        "recordId": "XJQV-1850-A",
+        "personName": "Edmund Dixon",
+        "score": 0.92,
+        "sex": "Male",
+        "birthDate": "1810",
+        "birthPlace": "Virginia",
+        "role": "Principal",
+        "events": [
+          { "type": "Residence", "date": "1850", "place": "Wheeling, Ohio, Virginia, United States" }
+        ],
+        "collectionId": "1401638",
+        "collectionTitle": "United States Census, 1850",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1850-A",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                { "id": "N1", "preferred": true, "given": "Edmund", "surname": "Dixon", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F1", "type": "Birth", "date": "1810", "place": "Virginia" },
+                { "id": "F2", "type": "Residence", "date": "1850", "place": "Wheeling, Ohio, Virginia, United States" }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Female",
+              "names": [
+                { "id": "N2", "preferred": true, "given": "Mary", "surname": "Dixon", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F3", "type": "Residence", "date": "1850", "place": "Wheeling, Ohio, Virginia, United States" }
+              ]
+            }
+          ],
+          "relationships": [
+            { "id": "R1", "type": "Couple", "person1": "P1", "person2": "P2" }
+          ]
+        }
+      },
+      {
+        "personId": "XJQV-1850-B",
+        "recordId": "XJQV-1850-B",
+        "personName": "Mary Dixon",
+        "score": 0.89,
+        "sex": "Female",
+        "birthDate": "1815",
+        "birthPlace": "Virginia",
+        "role": "Other",
+        "events": [
+          { "type": "Residence", "date": "1850", "place": "Wheeling, Ohio, Virginia, United States" }
+        ],
+        "collectionId": "1401638",
+        "collectionTitle": "United States Census, 1850",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1850-A",
+        "treeMatches": [],
+        "primaryId": "P2",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                { "id": "N1", "preferred": true, "given": "Edmund", "surname": "Dixon", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F1", "type": "Birth", "date": "1810", "place": "Virginia" },
+                { "id": "F2", "type": "Residence", "date": "1850", "place": "Wheeling, Ohio, Virginia, United States" }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Female",
+              "names": [
+                { "id": "N2", "preferred": true, "given": "Mary", "surname": "Dixon", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F3", "type": "Residence", "date": "1850", "place": "Wheeling, Ohio, Virginia, United States" }
+              ]
+            }
+          ],
+          "relationships": [
+            { "id": "R1", "type": "Couple", "person1": "P1", "person2": "P2" }
+          ]
+        }
+      }
+    ]
+  }
+}

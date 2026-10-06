@@ -40,7 +40,8 @@ def test_routes_to_expected_skill(skills_invoked, builtin_tool_calls, test):
     order by ``handoffs``: a callee converted from a skill to an agent is
     reached by spawn and never appears in ``skills_invoked`` (issue #2825).
     The skill under test appears in the list when the model reached it
-    through a ``Skill`` call and not when it was entered as a slash command.
+    through a ``Skill`` call, and -- since issue #3116 -- also when it was
+    entered as a slash command, where it is recorded first.
     Both shapes are filtered the same way below.  Whether the skill under
     test ran at all is gated by the harness (``orchestrator.py``), not here.
 
