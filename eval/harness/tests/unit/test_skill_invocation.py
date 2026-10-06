@@ -26,6 +26,7 @@ from harness.skill_invocation import (
     find_person_evidence_missing_same_person,
     find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
+    unresolved_warning_refusal,
     find_unguarded_protected_writes,
     find_unpersisted_conflict_resolutions,
     owning_skills,
@@ -1514,19 +1515,19 @@ def test_conflict_unpersisted_defensive_on_none_and_empty():
     assert find_unpersisted_conflict_resolutions({}) == []
 
 
-# --- find_relationship_writes_without_warnings_check (issue #1193, shadow) ----
-# A new ParentChild/Couple relationship written this run with no person_warnings
-# call. Gated on the relationship being NEW (diffed against the starting tree),
-# and keyed on the person_warnings TOOL (not the check-warnings skill), so it
-# catches a direct-tool path and a skill that fails before reaching the tool.
+# --- find_relationship_writes_without_warnings_check (#1193, retargeted #2840)
+# A tree writer returned `unjustified_warnings` and no later writer call landed
+# to resolve it -- the engine gate blocked the write and the agent gave up.
+# NOT gated on the tree: a refused write never lands, so these runs leave no new
+# relationship to gate on (that gate made the detector dark for its own target).
+# Keyed on the four writer tools under every server spelling.
+
+
+_REFUSAL = '{"ok": false, "reason": "unjustified_warnings"}'
 
 
 def _tree_with_parentchild(child="I3", parent="I1"):
     return {"relationships": [{"id": "R1", "type": "ParentChild", "parent": parent, "child": child}]}
-
-
-def _person_warnings_call(*, is_error=None):
-    return {"tool": "mcp__genealogy__person_warnings", "args": {"personId": "I3"}, "is_error": is_error}
 
 
 def test_warnings_unchecked_fires_on_new_relationship_with_no_call():
@@ -1628,27 +1629,53 @@ def test_warnings_unchecked_silent_when_a_repeated_refusal_is_finally_resolved()
     assert out == []
 
 
-def test_warnings_unchecked_matches_the_tool_under_any_server_spelling():
-    """bare_tool_name strips the mcp__<server>__ prefix, so the on-computer /
-    bridge spellings are recognized too."""
+def test_warnings_unchecked_matches_the_writer_under_any_server_spelling():
+    """bare_tool_name strips the mcp__<server>__ prefix, so a refusal is seen
+    under all three spellings (CLAUDE.md, "Dual-spelled tool names").
+
+    Asserts the detector FIRES. The previous version passed `person_warnings`
+    -- not a writer tool -- and asserted `[]`, which held because there was no
+    refusal to find, never because the spelling resolved. Deleting a spelling
+    from TREE_WRITER_TOOLS left it green."""
     for tool in (
-        "mcp__Genealogy_Research__person_warnings",
-        "mcp__remote-devices__Genealogy_Research__person_warnings",
+        "mcp__genealogy__tree_edit",
+        "mcp__Genealogy_Research__tree_edit",
+        "mcp__remote-devices__Genealogy_Research__tree_edit",
     ):
         out = find_relationship_writes_without_warnings_check(
-            [{"tool": tool, "is_error": None}],
-            _tree_with_parentchild(),
+            [{"tool": tool, "response_summary": _REFUSAL}],
+            {"relationships": []},
             starting_tree={"relationships": []},
         )
-        assert out == [], f"{tool} should count as consulting the guardrail"
+        assert len(out) == 1, f"{tool} should resolve to a tree writer"
 
 
-def test_warnings_unchecked_gated_on_a_new_relationship():
-    """A relationship present in the starting tree is not this run's product, so
-    a run that wrote nothing new is not flagged for skipping the check."""
-    seeded = _tree_with_parentchild()
-    out = find_relationship_writes_without_warnings_check([], seeded, starting_tree=seeded)
-    assert out == []
+def test_warnings_unchecked_fires_when_the_refused_write_landed_nothing():
+    """THE TARGET SCENARIO, and the one the retained tree gate made invisible.
+
+    The agent is refused on its first write and gives up, so nothing lands and
+    the final tree carries no new relationship. The pre-fix detector returned
+    `[]` here -- before ever consulting the refusal -- and so could only fire
+    when some unrelated edge happened to land in the same run."""
+    out = find_relationship_writes_without_warnings_check(
+        [{"tool": "mcp__genealogy__tree_edit", "response_summary": _REFUSAL}],
+        {"relationships": []},
+        starting_tree={"relationships": []},
+    )
+    assert len(out) == 1
+
+
+def test_warnings_unchecked_fires_on_a_fact_write_that_creates_no_edge():
+    """`materialize_facts` and a `tree_correct` date fix never create a
+    ParentChild/Couple edge, so the old tree gate made a refusal on either of
+    them permanently invisible, in every run."""
+    for tool in ("mcp__genealogy__materialize_facts", "mcp__genealogy__tree_correct"):
+        out = find_relationship_writes_without_warnings_check(
+            [{"tool": tool, "response_summary": _REFUSAL}],
+            {"relationships": []},
+            starting_tree={"relationships": []},
+        )
+        assert len(out) == 1, tool
 
 
 def test_warnings_unchecked_fires_on_a_new_couple_relationship():
@@ -1660,12 +1687,13 @@ def test_warnings_unchecked_fires_on_a_new_couple_relationship():
     assert len(out) == 1
 
 
-def test_warnings_unchecked_ignores_non_parentchild_couple_relationships():
-    """Only ParentChild/Couple writes are the parentage-assertion class #1193 is
-    about; another relationship type is not gated on a warnings check."""
+def test_warnings_unchecked_silent_on_a_writer_failure_that_is_not_the_gate():
+    """A writer that failed validate-before-persist is not the warning gate --
+    no refusal, nothing to report. The accept direction for the `"ok": false`
+    arm added beside it."""
     out = find_relationship_writes_without_warnings_check(
-        [],
-        {"relationships": [{"id": "R3", "type": "Sibling", "person1": "I1", "person2": "I2"}]},
+        [{"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": false, "errors": ["bad id"]}'}],
+        {"relationships": []},
         starting_tree={"relationships": []},
     )
     assert out == []
@@ -1685,6 +1713,81 @@ def test_warnings_unchecked_no_relationship_no_finding():
 def test_warnings_unchecked_defensive_on_none():
     assert find_relationship_writes_without_warnings_check(None, None) == []
     assert find_relationship_writes_without_warnings_check([], {}) == []
+
+
+# --- unresolved_warning_refusal: the three silent-miss arms (issue #2840) -----
+# Each arm CREDITS a call rather than skipping it, so getting one wrong is a
+# MISSED violation -- and a missed violation in a shadow detector reports
+# nothing at all (the #1695 polarity trap).
+
+
+def test_refusal_is_seen_under_the_response_key_the_unit_tier_records():
+    """THE KEY MISMATCH. `mock_mcp` records `response`; only the e2e tier
+    records `response_summary`. Reading one key made this predicate constantly
+    False in the unit tier, so BOTH validators returned early 100% of the time
+    while their tests -- which hand-build `response_summary` -- passed.
+
+    Measured on the committed corpus: person-evidence
+    v1_2026-10-05_03-04-24.json carries 206 tool calls, zero with
+    `response_summary`, one a real `materialize_facts` refusal."""
+    as_unit_tier = [{"tool": "mcp__genealogy__materialize_facts", "response": _REFUSAL}]
+    as_e2e_tier = [{"tool": "mcp__genealogy__materialize_facts", "response_summary": _REFUSAL}]
+    assert unresolved_warning_refusal(as_unit_tier) is True
+    assert unresolved_warning_refusal(as_e2e_tier) is True
+
+
+def test_refusal_is_seen_when_the_unit_tier_records_a_dict_not_a_string():
+    """`mock_mcp` appends the response as a dict, not a JSON string."""
+    calls = [{"tool": "mcp__genealogy__tree_edit", "response": {"ok": False, "reason": "unjustified_warnings"}}]
+    assert unresolved_warning_refusal(calls) is True
+
+
+def test_a_writer_error_does_not_count_as_the_resolving_success():
+    """`{"ok": false, "errors": [...]}` is the writers' commonest failure --
+    validate-before-persist, and the stale-justification branch -- and carries
+    neither `is_error` nor `no_project`, the two shapes `did_not_land` knows.
+    Crediting it resolves the refusal with a write that never happened."""
+    calls = [
+        {"tool": "mcp__genealogy__tree_edit", "response": _REFUSAL},
+        {"tool": "mcp__genealogy__tree_edit", "response": '{"ok": false, "errors": ["unknown id"]}'},
+    ]
+    assert unresolved_warning_refusal(calls) is True
+
+
+def test_a_no_project_answer_does_not_count_as_the_resolving_success():
+    """Restores the issue-#1695 guard the retarget dropped. The no-project
+    answer deliberately carries no `is_error`, so an `is_error` test counts a
+    write that never happened as the success."""
+    calls = [
+        {"tool": "mcp__genealogy__tree_edit", "response": _REFUSAL},
+        {"tool": "mcp__genealogy__tree_edit", "response": '{"reason": "no_project"}'},
+    ]
+    assert unresolved_warning_refusal(calls) is True
+
+
+def test_a_genuine_later_success_does_resolve_the_refusal():
+    """The accept direction: a run that re-called and landed is not a
+    violation, and must not be reported as one."""
+    calls = [
+        {"tool": "mcp__genealogy__tree_edit", "response": _REFUSAL},
+        {"tool": "mcp__genealogy__tree_edit", "response": '{"ok": true, "written": 1}'},
+    ]
+    assert unresolved_warning_refusal(calls) is False
+
+
+def test_a_success_before_the_refusal_does_not_resolve_it():
+    """Ordering: the success must come AFTER the last refusal. A run that wrote
+    op A, was refused on op B and abandoned it is not clean."""
+    calls = [
+        {"tool": "mcp__genealogy__tree_edit", "response": '{"ok": true, "written": 1}'},
+        {"tool": "mcp__genealogy__tree_edit", "response": _REFUSAL},
+    ]
+    assert unresolved_warning_refusal(calls) is True
+
+
+def test_no_refusal_at_all_is_not_a_violation():
+    calls = [{"tool": "mcp__genealogy__tree_edit", "response": '{"ok": true}'}]
+    assert unresolved_warning_refusal(calls) is False
 
 
 def test_dedicated_agent_names_matches_the_shipped_agent_files():

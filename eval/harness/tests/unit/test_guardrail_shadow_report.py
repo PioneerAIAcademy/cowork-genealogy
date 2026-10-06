@@ -169,6 +169,26 @@ def test_format_detail_empty_list():
     assert "none" in format_detail([])
 
 
+def test_format_detail_survives_a_null_required_skill():
+    """`warnings_unchecked` entries carry `required_skill: None` by design --
+    the retargeted check names no skill, because the engine refuses the write
+    and no skill invocation would resolve it. The printer pads that field, and
+    `format(None, "<24")` raises TypeError, so an unguarded printer crashes the
+    whole report the first time one of these entries reaches it."""
+    out = format_detail(
+        [
+            {
+                "fixture": "f",
+                "index": -1,
+                "tool": "tree.gedcomx.json",
+                "required_skill": None,
+                "question_id": None,
+            }
+        ]
+    )
+    assert "tree.gedcomx.json" in out
+
+
 # --- scan_provenance / format_provenance (issue #963 stored shadow entries) ---
 # These are READ from each run's stored `guardrail_shadow_violations`, not
 # replayed from tool_calls: the #963 check depends on the seed tree and on what
@@ -801,28 +821,34 @@ def test_replay_conflict_unpersisted_silent_when_a_resolved_conflict_backs_it(tm
     assert rep.conflict.skipped == []
 
 
-def test_replay_post_hoc_names_a_run_with_no_seed_tree_and_still_scans_research_only(tmp_path):
-    """The per-check denominators. One run in the corpus today
-    (william-ferber-ancestry) has a committed run log and no fixture directory.
-    It cannot be scanned for warnings-unchecked, which needs a baseline — but the
-    two research-only checks need no tree at all, so a single shared skip list
-    would drop it from their denominators too and discard anything it held."""
+def test_replay_post_hoc_scans_a_run_with_no_seed_tree_for_warnings(tmp_path):
+    """The per-check denominators, and the warnings check no longer needs a tree.
+
+    One run in the corpus (william-ferber-ancestry) has a committed run log and
+    no fixture directory. It used to be skipped for warnings-unchecked, which
+    diffed relationships and so needed a baseline. The retargeted check reads
+    `tool_calls` only -- a writer was refused and nothing landed after it -- so
+    a missing tree no longer tells us anything about whether it can be graded,
+    and skipping on one would quietly shrink this check's denominator.
+
+    The original point stands and is still asserted: the research-only checks
+    keep their own skip lists, so a run dropped from one denominator is not
+    dropped from theirs."""
     empty_fixtures = tmp_path / "eval" / "tests" / "e2e"
     empty_fixtures.mkdir(parents=True, exist_ok=True)
     p = _write_posthoc_run(
         tmp_path,
         "orphan",
         "run-1.json",
-        tool_calls=[_tree_edit_call()],
+        tool_calls=[_tree_edit_call(unjustified=True)],
         research=_research_nulled_citation(""),
         tree=_tree_with_parentchild(),
     )
     rep = replay_post_hoc([p], fixtures_root=empty_fixtures)
 
-    assert len(rep.warnings.skipped) == 1
-    assert "orphan/run-1.json" in rep.warnings.skipped[0]
-    assert rep.warnings.runs_scanned == 0
-    assert rep.warnings.violations == []
+    assert rep.warnings.skipped == []
+    assert rep.warnings.runs_scanned == 1
+    assert len(rep.warnings.violations) == 1
 
     assert rep.citation.skipped == []
     assert rep.citation.runs_scanned == 1

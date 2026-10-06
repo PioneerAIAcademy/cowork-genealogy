@@ -141,8 +141,10 @@ def test_no_unjustified_warning_write(
         return
 
     assert False, (
-        f"tree.gedcomx.json changed but every writer call returned "
-        f"unjustified_warnings — the engine gate should have prevented this"
+        f"tree.gedcomx.json changed, but the LAST tree-writer refusal "
+        f"(unjustified_warnings) was never followed by a writer call that "
+        f"landed — so the run changed the tree while leaving the warning gate "
+        f"unsatisfied. Re-call with warningJustifications, or abandon the write."
     )
 
 

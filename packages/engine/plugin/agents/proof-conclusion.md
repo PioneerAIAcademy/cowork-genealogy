@@ -671,7 +671,7 @@ genealogical warning (`tree_edit`, `tree_correct`, `merge_tree_persons`,
 `materialize_facts`). When a write would introduce a warning, the tool
 returns `{ ok: false, reason: "unjustified_warnings" }` with each
 warning's id. Re-call with `warningJustifications` for each id, or
-leave `preferred_assertion_id` null.
+abandon the write.
 
 ---
 

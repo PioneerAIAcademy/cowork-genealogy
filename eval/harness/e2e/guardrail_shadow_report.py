@@ -180,9 +180,17 @@ def format_summary(by_window: dict[int, list[dict[str, Any]]], *, n_runs: int) -
 def format_detail(violations: list[dict[str, Any]]) -> str:
     lines = []
     for v in violations:
+        # `required_skill` is legitimately None on some kinds and
+        # format(None, "<24") raises TypeError, so coerce before formatting.
+        # The section-4.1 entries this printer receives today all carry a skill
+        # name; `warnings_unchecked` carries None by design, because the
+        # retargeted check names no skill -- the engine refuses the write and no
+        # skill invocation would resolve it. Widening this printer to the other
+        # stored kinds would otherwise crash the report.
+        needs = v.get("required_skill") or "-"
         lines.append(
             f"  {v['fixture']:<35} idx={v['index']:<4} tool={v['tool']:<30} "
-            f"needs={v['required_skill']:<24} q={v.get('question_id')}"
+            f"needs={needs:<24} q={v.get('question_id')}"
         )
     return "\n".join(lines) if lines else "  (none)"
 
@@ -472,20 +480,19 @@ class RunInputs:
 
     def missing_for_warnings(self) -> str | None:
         """Why `find_relationship_writes_without_warnings_check` cannot read this
-        run, or None. The seed tree is required, not optional: without it the
-        detector treats every relationship as new, which manufactures exactly the
-        violation being measured."""
+        run, or None.
+
+        THE TREES ARE NO LONGER READ. Both were required while the detector
+        diffed relationships — without the seed it treated every relationship as
+        new and manufactured the violation being measured. Since issue #2840
+        retargeted it onto the engine gate, the signal is entirely in
+        `tool_calls`: a writer returned `unjustified_warnings` and nothing landed
+        after it. Keeping the tree requirement here skipped runs that are
+        perfectly gradable, which is the same detector going dark a second way —
+        the first being the tree gate inside the detector itself."""
         if self.run_log is None:
             return "unreadable run log"
-        absent = [
-            name
-            for name, value in (
-                ("no readable final-tree.gedcomx.json sidecar", self.final_tree),
-                ("no readable starting-tree.gedcomx.json", self.seed_tree),
-            )
-            if value is None
-        ]
-        return ", ".join(absent) or None
+        return None
 
     def missing_for_tree_encoding(self) -> str | None:
         """Why `find_conclusions_without_tree_encoding` cannot read this run, or
@@ -1031,7 +1038,7 @@ def format_post_hoc_replay(replay: PostHocReplay) -> str:
         ("citation-nulling", "concluded source(s) with a null/empty citation string", False, replay.citation),
         ("tree citation-nulling", "uploaded tree source(s) with a null/empty citation string", False, replay.tree_citation),
         ("conflict-unpersisted", "concluded question(s) relying on an unpersisted conflict resolution", False, replay.conflict),
-        ("warnings-unchecked", "run(s) that wrote a new ParentChild/Couple relationship without calling person_warnings", True, replay.warnings),
+        ("warnings-unchecked", "run(s) where a tree writer was refused for unjustified warnings and nothing landed after it", True, replay.warnings),
         ("tree-encoding", "tier->=-probable conclusion(s) that added no new tree structure — a gate would refuse/warn", False, replay.tree_encoding),
         ("fact/assertion drift", "backlinked tree fact attribute(s) disagreeing with the assertion they were materialized from", False, replay.fact_agreement),
     ):

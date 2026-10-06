@@ -1758,24 +1758,36 @@ two things: a document the writer tool never checked, or the one ordering the
 refusal cannot see — a resolution claim written to the question after the
 summary.
 
-**A sixth check runs in shadow mode only: the warnings guardrail was never
-consulted before a parentage write.** `find_relationship_writes_without_warnings_check`
-(in `harness/skill_invocation.py`) flags a run whose final tree has a **new**
-`ParentChild`/`Couple` relationship (diffed against the starting tree, so seeded
-relationships do not count) for which `person_warnings` — the cheapest, LLM-free
-guardrail — was never successfully called. It keys on the `person_warnings`
-**tool** across all server spellings, not the `check-warnings` agent, so it
-catches a direct-tool path and an agent that launches but fails before reaching the
-tool. Like the citation-nulling check it **logs to
-`guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
-entries carry `kind: "warnings_unchecked"` for its own bucket
-(`make e2e-guardrail-shadow`). It exists because two runs of the same fixture
-diverged only on whether the parentage write was delegated to `proof-conclusion`
-(which carries the check-warnings step) or inlined by the orchestrator (which does
-not), and nothing recorded that the guardrail was skipped. **Promotion — to a hard
-check, or to a mandatory `person_warnings` call in the `/research` orchestrator so
-an inlined write is still gated — is gated on reading this fire rate across the
-corpus first**; not decided here.
+**A sixth check runs in shadow mode only: a tree write was refused for
+unjustified warnings and the agent gave up.** `find_relationship_writes_without_warnings_check`
+(in `harness/skill_invocation.py`) flags a run in which one of the four tree
+writers — `tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts`
+— returned `{ ok: false, reason: "unjustified_warnings" }` and no later writer
+call landed to resolve it. It keys on those tools across all server spellings.
+Like the citation-nulling check it **logs to `guardrail_shadow_violations` and
+never touches `compliance`/`outcome`**; its entries carry
+`kind: "warnings_unchecked"` for its own bucket (`make e2e-guardrail-shadow`).
+
+**Retargeted when the gate moved to the write boundary, and the name is now
+historical.** It originally
+asked whether `person_warnings` was called after a parentage write, because the
+obligation lived in prose and two runs of the same fixture diverged only on
+whether the write was delegated to `proof-conclusion` (which carried the step)
+or inlined by the orchestrator (which did not). The writer tools now refuse
+such a write outright,
+so the prose step — and the question this check used to ask — went with it.
+
+**It reads `tool_calls` and nothing else.** It takes `tree`/`starting_tree` for
+the call sites and the record shape, but gates on neither, and this is
+load-bearing rather than incidental: a refused write never lands, so the runs
+it hunts leave no new relationship behind. The retarget first shipped with the
+old tree gate still in front of it, which made it fire only when an unrelated
+edge happened to land, and never at all for a refusal on a fact write. For the
+same reason `missing_for_warnings` no longer skips a run for a missing tree.
+
+**Promotion is gated on reading this fire rate across the corpus first**; not
+decided here. Read the rate only from runs recorded after the retarget — every
+earlier run was graded by the `person_warnings` question and is not comparable.
 
 **This numbered list stopped at six and the check set did not.** The ordinals
 are filing order, not a census: the tree-side citation arm is written up above

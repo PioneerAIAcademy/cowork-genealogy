@@ -1066,8 +1066,10 @@ def test_no_unjustified_warning_write(
         return
 
     assert False, (
-        f"project changed (new links or persons) but every writer call returned "
-        f"unjustified_warnings — the engine gate should have prevented this"
+        f"project changed (new links or persons), but the LAST tree-writer "
+        f"refusal (unjustified_warnings) was never followed by a writer call "
+        f"that landed — so the run changed state while leaving the warning gate "
+        f"unsatisfied. Re-call with warningJustifications, or abandon the write."
     )
 
 

@@ -27,6 +27,7 @@ Three consumers, all described in the plan:
 
 from __future__ import annotations
 
+import json
 import re
 from collections import Counter
 from typing import Any
@@ -177,6 +178,37 @@ def recently_succeeded(
     return False
 
 
+def response_text(entry: dict[str, Any]) -> str:
+    """The tool call's response payload as a string, whichever tier recorded it.
+
+    THE TWO TIERS USE DIFFERENT KEYS, and a predicate that reads only one is
+    silently dead in the other. The e2e tier records `response_summary`
+    (`e2e/feedback_transcript_adapter.py`, and `_summarize_tool_response` in
+    `e2e/orchestrator.py`). The unit tier records `response`: `mock_mcp.py`
+    appends `entry["response"] = <dict>` at every one of its `call_log.append`
+    sites, `skill_runner` passes `call_log` through as `tool_calls`, and
+    `validator_runner` hands it to the validators unchanged.
+
+    Measured, not assumed: `eval/runlogs/unit/person-evidence/
+    v1_2026-10-05_03-04-24.json` carries 206 tool calls whose keys are
+    `tool`/`args`/`expected_args`/`matched`/`response_fixture`/`response` and
+    ZERO `response_summary` — including one real `materialize_facts` refusal
+    (`{"ok": false, "reason": "unjustified_warnings", ...}`) that a
+    `response_summary`-only read cannot see.
+
+    Returns a string so callers keep doing substring matching, which is what
+    `did_not_land` documents at length: the payload arrives single-encoded,
+    double-encoded and truncated across the corpus, and a parse fails on shapes
+    a substring handles.
+    """
+    raw = entry.get("response_summary")
+    if raw is None:
+        raw = entry.get("response")
+    if raw is None:
+        return ""
+    return raw if isinstance(raw, str) else json.dumps(raw)
+
+
 def did_not_land(entry: dict[str, Any]) -> bool:
     """True when this tool call changed nothing on disk.
 
@@ -211,7 +243,7 @@ def did_not_land(entry: dict[str, Any]) -> bool:
     """
     if entry.get("is_error") is True:
         return True
-    return "no_project" in str(entry.get("response_summary") or "")
+    return "no_project" in response_text(entry)
 
 
 def find_unguarded_protected_writes(
@@ -1898,22 +1930,44 @@ def unresolved_warning_refusal(tool_calls: list[dict[str, Any]] | None) -> bool:
     success that resolves the refusal — and this arm CREDITS a call rather than
     skipping it, so a wrong credit is a MISSED violation, and a missed
     violation here reports nothing at all.
+
+    `{"ok": false, "errors": [...]}` IS ALSO NOT A SUCCESS. `did_not_land`
+    knows two non-landing shapes, `is_error` and `no_project`; the writers
+    return their commoner failure — validate-before-persist errors, and the
+    stale-justification branch — as an ordinary result with neither. Without
+    this arm a re-call that failed for an unrelated reason is credited as the
+    success resolving the refusal, which is the same silent miss again.
+
+    READ BOTH RESPONSE KEYS (`response_text`). Keying on `response_summary`
+    alone made this predicate constantly False in the unit tier, where
+    `mock_mcp` records `response` — so both validators returned early 100% of
+    the time while their unit tests, which hand-build `response_summary`,
+    passed. A check that cannot fail reads as coverage; CLAUDE.md forbids one.
+
+    KNOWN IMPRECISION, deliberately not guessed at: any later landed writer
+    call clears the refusal, including one for an unrelated op. Tying the
+    success to the refused op is not generally decidable here — the agent may
+    resolve it with `warningJustifications`, or by amending the write so it
+    introduces no warning at all, and only the first is visible in the args.
+    This errs toward missing a violation rather than manufacturing one, which
+    is the right direction for a shadow detector.
     """
     calls = tool_calls or []
-    refusals = [
-        i
-        for i, call in enumerate(calls)
-        if isinstance(call, dict)
-        and bare_tool_name(call.get("tool") or "") in TREE_WRITER_TOOLS
-        and "unjustified_warnings" in str(call.get("response_summary") or "")
-    ]
+
+    def _is_writer(call: Any) -> bool:
+        return isinstance(call, dict) and bare_tool_name(call.get("tool") or "") in TREE_WRITER_TOOLS
+
+    def _is_refusal(call: dict[str, Any]) -> bool:
+        return "unjustified_warnings" in response_text(call)
+
+    refusals = [i for i, call in enumerate(calls) if _is_writer(call) and _is_refusal(call)]
     if not refusals:
         return False
     return not any(
-        isinstance(call, dict)
-        and bare_tool_name(call.get("tool") or "") in TREE_WRITER_TOOLS
-        and "unjustified_warnings" not in str(call.get("response_summary") or "")
+        _is_writer(call)
+        and not _is_refusal(call)
         and not did_not_land(call)
+        and '"ok": false' not in response_text(call).replace('"ok":false', '"ok": false')
         for call in calls[refusals[-1] + 1 :]
     )
 
@@ -1941,23 +1995,16 @@ def find_relationship_writes_without_warnings_check(
     Still SHADOW MODE ONLY: returns violation records shaped for
     ``guardrail_shadow_violations``.
     """
-    tree = tree or {}
-    relationships = tree.get("relationships") if isinstance(tree.get("relationships"), list) else []
-
-    starting_relationship_keys = {
-        _relationship_key(r)
-        for r in ((starting_tree or {}).get("relationships") or [])
-        if isinstance(r, dict) and r.get("type") in ("ParentChild", "Couple")
-    }
-    new_relationship = any(
-        isinstance(r, dict)
-        and r.get("type") in ("ParentChild", "Couple")
-        and (starting_tree is None or _relationship_key(r) not in starting_relationship_keys)
-        for r in relationships
-    )
-    if not new_relationship:
-        return []  # no new relationship written this run
-
+    # NO TREE GATE. The pre-#2840 predicate asked "was a relationship written
+    # without a person_warnings call", so gating on a new ParentChild/Couple
+    # edge was the question. The retargeted one asks "was a writer refused and
+    # the agent gave up" — and a refused write never lands, so the very runs
+    # this hunts leave NOTHING in the final tree to gate on. Keeping the gate
+    # made the detector fire only when some unrelated edge happened to land,
+    # and never at all for a refusal on a fact write (`tree_correct` on a date,
+    # `materialize_facts`), which creates no edge by construction. `tree` and
+    # `starting_tree` are kept in the signature for the two call sites and the
+    # record shape; they no longer decide anything.
     if not unresolved_warning_refusal(tool_calls):
         return []  # no refusal, or one the run went on to resolve
 
