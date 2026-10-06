@@ -359,9 +359,8 @@ def format_report(nudges: list[Nudge], n_runs: int, recorded: tuple[int, int] = 
             if tool_calls_total
             else "  (no tool calls counted — rates omitted)"
         ),
-        "  (step is 0 for as long as no skill emits the closing line at a turn end —"
-        " init-project and question-selection do, research/SKILL.md does not yet;"
-        " check them before reading 0 as expected)",
+        "  (step should be 0 on runs since PR #2870 retired the line, 2026-09-27;"
+        " earlier runs carry it from init-project and question-selection)",
         "",
         "By seam — which artifact had just been written:",
     ]
