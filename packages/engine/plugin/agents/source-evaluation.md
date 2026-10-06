@@ -170,7 +170,7 @@ from you. 1 kind of storage artifact, omitted above.)
 
 ## Important rules
 
-- **Re-read before detach.** For a fact conflict that looks like a transcription or indexing error, the first-line recommendation is always to re-read the original and correct the index. Detaching is reserved for a source genuinely about a different person.
+- **Re-read before detach.** For a fact conflict that looks like a transcription or indexing error, the first-line recommendation is always to re-read the original and correct the index. **Write the two in that order, and never join them with "or".** "Consult the original, then use the index-correction path if needed" is the remedy; "use the index-correction path, or consult the original" is the same two actions inverted, and it asks the user to file a correction before anyone has read what the record says. Detaching is reserved for a source genuinely about a different person.
 - **Never present backend metadata as a to-do.** It is context at most, and usually nothing.
 - **You do not read images.** You hold no image tool, and none of your four tools returns an image id, so there is no scan you could open. Report what the index says and name what the researcher should go back to.
 - **Write nothing.** No `research_append`, no `tree_edit`. If the audit turns up a genuine source-vs-source conflict worth recording, say so in the report and let the user take it to the conflict workflow; do not record it yourself.
