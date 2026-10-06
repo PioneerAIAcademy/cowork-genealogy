@@ -80,8 +80,9 @@ asserting the turn ended.
 
 ## When the agent is told to call it
 
-The instruction rides the worker's per-turn system prompt (`DELIVERY_GUIDANCE` in
-`apps/server/proto/worker/options.py`), **not** any skill body — the hook that gives this
+The instruction rides each hosted plane's per-turn system prompt (`DELIVERY_GUIDANCE`, now
+defined once in `apps/server/app/agent/continue_policy.py` and appended by the prototype worker
+and the hosted alpha alike), **not** any skill body — the hook that gives this
 tool its meaning exists only on the hosted path, so a skill-body rule would teach every
 skill to call a tool that is inert in Cowork and in the harness that grades them.
 

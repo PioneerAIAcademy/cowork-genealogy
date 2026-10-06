@@ -439,8 +439,9 @@ def make_pretool_hook(
                 log(ev="delivered", turn_id=turn_id, tool_name=tool_name,
                     tool_use_id=tool_use_id, summary=summary)
             # Summary FIRST: the browser replaces the chip with the result text cut at
-            # 160 chars, and DELIVERED_REASON alone is 157 -- appended, the summary is
-            # lost. What the researcher most needs to see leads.
+            # 160 chars, and DELIVERED_REASON alone is 124 (re-measured 2026-10-06; the
+            # comment said 157). Appended rather than prepended, the reason eats most of
+            # the window and the summary is cut. What the researcher most needs leads.
             return _halt(f"Delivered: {summary} {DELIVERED_REASON}" if summary
                          else DELIVERED_REASON)
         try:

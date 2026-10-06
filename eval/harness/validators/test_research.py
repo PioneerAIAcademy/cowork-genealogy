@@ -324,7 +324,7 @@ _SEARCH_MCP_TOOLS = frozenset({
 # hand-off to a step missing from this set passes the assertion below.
 _SEARCH_STEPS = frozenset({
     "search-records", "search-images", "search-familysearch-wiki",
-    "search-full-text", "search-external-sites",
+    "search-full-text", "search-external-sites", "search-wikipedia",
 })
 
 

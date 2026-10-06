@@ -85,8 +85,10 @@ regardless of how directly the request named the destination.
 
 ## Bounded request or job
 
-**Decide this first, before any `research_query`.** A bounded request should
-not pay for a routing survey it will not use.
+**Decide this first, before any `research_query`.**
+
+**`--autonomous` is always a job**, whatever shape the question takes. The flag
+means drive this to completion, so the list below does not apply to it.
 
 **Bounded** — the message asks for ONE deliverable:
 finding a record; reviewing the sources already attached to a person; whether
@@ -108,12 +110,11 @@ row sends you to `@plugin:question-selection` — the one place a bounded reques
 must not go. Deliver the one thing, and stop.
 
 **Start from what is already attached.** Before routing to any search —
-on a bounded request or a job alike — read what the person already has: `person_read` for the
+on a bounded request or a job alike — when the project holds a FamilySearch
+link for the person, read what they already have: `person_read` for the
 attached sources and relatives, `source_attachments` for where a source
 is already attached. Never search for a record that is already attached,
-and never offer to add a person who is already in the tree. The answer
-is often already there, and a search that re-finds it costs the
-researcher money and tells them nothing.
+and never offer to add a person who is already in the tree.
 
 When a bounded request is met, **end your turn**. Say what you produced first:
 the turn ends where you stop, so anything you were going to add afterwards never
@@ -493,11 +494,10 @@ what it rests on.
 
 ## What this skill does not do
 
-- It introduces no new GPS *method*: every sub-skill encodes its own, and
-  §"Candidates, not verdicts" restates the identity bar `person-evidence`
-  already owns, for the bounded path that does not reach it. Every sub-skill encodes its
-  own portion of the GPS standard; this skill only routes between
-  them.
+- It introduces no new GPS *method*: every sub-skill encodes its own portion of
+  the standard and this skill only routes between them. §"Candidates, not
+  verdicts" restates the identity bar `person-evidence` already owns, for the
+  bounded path that does not reach it.
 - It does not skip steps. GPS depends on the full chain — extraction
   (which writes final evidence classifications) precedes
   person-linking, person-linking precedes conflict detection, conflict
@@ -507,7 +507,7 @@ what it rests on.
 
 ## Re-invocation behavior
 
-**Writes:** nothing directly — it holds no writer tool. It reads `research.json` to decide the next step, and on a bounded request also reads the person's attached sources (`person_read`, `source_attachments`) before any search. This skill is a thin orchestrator — it
+**Writes:** nothing directly — it holds no writer tool. It reads `research.json` to decide the next step, and before any search reads a linked person's attached sources (`person_read`, `source_attachments`). This skill is a thin orchestrator — it
 reads `research.json` to decide the next step and delegates every
 write to the sub-skill it routes to. It does **not** insert defensive
 `validate_research_schema` passes between steps (the writer tools each

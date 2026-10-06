@@ -1,10 +1,10 @@
 {
   "test": {
-    "id": "ut_research_019",
+    "id": "ut_research_020",
     "skill": "research",
     "name": "A bounded ask is not routed into the question/plan chain",
     "type": "positive",
-    "description": "The other direction of the same rule. 'Transcribe this record for me' asks for ONE deliverable, so the 'Bounded request or job' section must stop it entering the question-selection / research-plan chain that a job walks. The project has an objective and zero questions, so a router that ignored the section would call question-selection first -- exactly what ut_research_011 asserts for an open ask. Here that call is the FAILURE. GRADING: deterministic. `routes-to:image-reader` makes `test_routes_to_expected_skill` assert the first hand-off from hook records, which the judge cannot see (agent spawns are absent from `skills_invoked`). image-reader is the destination because its own description owns 'transcribe this register page' / 'OCR this scan', and the router holds no `image_transcribe`, so inline is not an option. Paired with ut_research_018 (open ask -> question-selection) so both directions are pinned deterministically: neither passes a body that classifies everything one way.",
+    "description": "The other direction of the same rule. 'Transcribe this record for me' asks for ONE deliverable, so the 'Bounded request or job' section must stop it entering the question-selection / research-plan chain that a job walks. The project has an objective and zero questions, so a router that ignored the section would call question-selection first -- exactly what ut_research_011 asserts for an open ask. Here that call is the FAILURE. GRADING: deterministic. `routes-to:image-reader` makes `test_routes_to_expected_skill` assert the first hand-off from hook records, which the judge cannot see (agent spawns are absent from `skills_invoked`). image-reader is the destination because its own description owns 'transcribe this register page' / 'OCR this scan', and the router holds no `image_transcribe`, so inline is not an option. Paired with ut_research_019 (open ask -> question-selection) so both directions are pinned deterministically: neither passes a body that classifies everything one way.",
     "tags": [
       "routing",
       "routes-to:image-reader",
@@ -65,6 +65,10 @@
       },
       {
         "skill": "search-images",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "image-reader",
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
       }
     ]

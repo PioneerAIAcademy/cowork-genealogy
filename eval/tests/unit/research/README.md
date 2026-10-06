@@ -72,7 +72,7 @@ first and *then* spawns `@plugin:proof-conclusion` passes it green.
 
 ## Bounded requests (issue #2813)
 
-`ut_research_018` (`open-ask-still-a-job.json`) and `ut_research_019`
+`ut_research_019` (`open-ask-still-a-job.json`) and `ut_research_020`
 (`bounded-ask-not-a-job.json`) pin the two directions of the "Bounded request or
 job" section: an open ask must still walk the routing table, and a bounded ask
 must not enter the question/plan chain. They are paired deliberately — neither
@@ -90,7 +90,7 @@ image-reader is 019's destination because its own description owns "transcribe t
 register page" / "OCR this scan", and the router holds no `image_transcribe`, so
 doing it inline is not available.
 
-`ut_research_020` (`attached-before-searching.json`) covers the third rule in that
+`ut_research_021` (`attached-before-searching.json`) covers the third rule in that
 section, "Start from what is already attached" (issue #2813 item 4). Cornelius
 Driscoll already holds `SD-DRIS-D`, a Quebec civil death registration, so a request
 for a death record asks for something the project has; reading and reporting it is
@@ -110,7 +110,7 @@ every predicate key be present (`harness/fixtures.py:93`), so a router omitting 
 optional argument would have matched nothing and been refused — the wrong failure for
 a test about whether the router looks before it searches.
 
-`ut_research_021` (`candidates-not-verdicts.json`) covers item 6, and is **judge-graded
+`ut_research_022` (`candidates-not-verdicts.json`) covers item 6, and is **judge-graded
 on purpose** — which is a different thing from 019's accident. Every part of that rule
 is a property of the reply: whether a name match was presented as an answer, whether
 match strength and search scope were given, and whether the closing offer is to research

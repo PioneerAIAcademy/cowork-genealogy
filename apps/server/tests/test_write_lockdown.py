@@ -606,3 +606,14 @@ def test_the_matcher_reaches_every_delegation_tool():
             "so the arm never runs"
         )
     assert not re.search(real_agent._PRETOOL_MATCHER, "AgentFoo"), "the alternation stays anchored"
+
+
+async def test_an_explicitly_backgrounded_delegation_is_rewritten():
+    """The case where the rewrite overturns a decision the model made on purpose,
+    and the one the other three tests miss. Mutating the predicate from
+    `is not False` to `is None` passed the whole server suite, because nothing
+    covered an explicit True."""
+    out = await real_agent._pretool_hook(
+        {"tool_name": "Agent", "tool_input": {"run_in_background": True}}, None, None
+    )
+    assert out["hookSpecificOutput"]["updatedInput"]["run_in_background"] is False

@@ -13,7 +13,7 @@ carrying its own. What stays genuinely separate is ``eval/harness``: the worker 
 not copy ``eval/``, and a test asserts those two trees never import each other.
 
 So this file pins the one remaining seam. The harness's version is the original; the
-shared copy is a port that has since grown three clauses (``stopped``,
+shared copy is a port that has since grown several clauses (``stopped``,
 ``pending_user_message``, ``pending_decision``) the harness does not have. Those default
 False, which is exactly what makes the comparison meaningful: **with the new flags off,
 the two must be the same function**, case for case. A change to the harness's rule that
@@ -140,7 +140,8 @@ def test_the_shared_copy_is_the_one_with_the_new_clauses(copies):
     base = dict(research=None, nudges_used=0, max_nudges=5, tool_count=0,
                 tool_count_at_last_nudge=-1)
     for flag, reason in (("stopped", "stopped"), ("pending_user_message", "queued"),
-                         ("pending_decision", "decision"), ("delivered", "delivered")):
+                         ("pending_decision", "decision"), ("delivered", "delivered"),
+                         ("mcp_unavailable", "mcp_unavailable")):
         assert shared["should_continue_run"](**{**base, flag: True}) is False, flag
         assert shared["terminal_reason"](
             research=None, nudges_used=0, max_nudges=5, **{flag: True}) == reason

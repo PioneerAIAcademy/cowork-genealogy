@@ -236,7 +236,7 @@ _EXFIL_GUARD_TOOLS = ("Bash",)
 _PRETOOL_MATCHER = "|".join(
     (
         # Anchored, so a search cannot bind a tool that merely CONTAINS one of
-        # these names. Three constants, not two.
+        # these names. FOUR constants: DELEGATION_TOOLS joined with the foreground arm.
         "^("
         + "|".join((*_FILE_WRITE_TOOLS, *_EXFIL_GUARD_TOOLS, *sorted(DELEGATION_TOOLS)))
         + ")$",
@@ -576,11 +576,17 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
     ``should_continue_run``'s no-progress arm compares between two stops: without it the
     second nudge always looks like no progress and the run stops after one."""
     counter = {"tool_calls": 0, "delivered": False}
+    # Published so `handle_turn` can clear the per-TURN half at the turn boundary.
+    # `tool_calls` is deliberately session-scoped (the no-progress arm compares it
+    # across two stops); `delivered` is not, and the dict outlives the turn because
+    # the SDK client is built once and cached (`if self._client is None`).
+    if agent is not None:
+        agent._hook_counter = counter
 
     async def count_only(_input_data, _tool_use_id, _ctx):
         """Counts, and does nothing else. Bound with ``matcher=None`` because the count
-        has to see EVERY call -- ``_PRETOOL_MATCHER`` covers five tool names (Write, Edit,
-        NotebookEdit, Bash, device_commit_files) and a research loop runs almost none of
+        has to see EVERY call -- ``_PRETOOL_MATCHER`` covers seven tool names (Write, Edit,
+        NotebookEdit, Bash, device_commit_files, Agent, Task) and a research loop runs almost none of
         them, so counting behind it stays at 0 all run and the Stop hook's no-progress arm
         ends the job after ONE nudge.
 
@@ -605,18 +611,17 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
         ):
             counter["delivered"] = True
             _log("[agent] delivered — allowing the stop")
-            return {"continue": False, "stopReason": DELIVERED_REASON}
-        # Any OTHER call means the session has moved on, so clear the flag. This
-        # is load-bearing, not tidiness: the SDK client is built once and cached
-        # for the whole session (`if self._client is None`), so `counter` outlives
-        # the turn that set the flag. Without this line one bounded delivery
-        # disables the continue-nudge for every LATER turn in the session -- the
-        # researcher asks for a full job next and gets a single step, silently,
-        # because the Stop hook keeps reading a delivery that already happened.
-        # Clearing in the Stop hook instead does NOT work: the halt above usually
-        # ends the turn without Stop being consulted at all, so the flag would
-        # survive unconsumed.
-        counter["delivered"] = False
+            # Prepend the model's own one-sentence summary, as the prototype does
+            # (`options.py`). It is the whole reason the tool takes a `summary`:
+            # without it the researcher is told a delivery happened but not what
+            # was delivered, and the two planes claim a parity they do not have.
+            delivered_input = (_input_data or {}).get("tool_input") or {}
+            summary = str(delivered_input.get("summary") or "").strip()
+            return {
+                "continue": False,
+                "stopReason": f"Delivered: {summary} {DELIVERED_REASON}" if summary
+                else DELIVERED_REASON,
+            }
         if agent is not None:
             try:
                 if agent.pending_user_message():
@@ -1201,6 +1206,26 @@ class RealAgent:
             self._client_key = key
         return self._client
 
+    def _begin_turn_hook_state(self) -> None:
+        """Clear the per-TURN half of the hook counter. Called at the turn boundary.
+
+        `delivered` means "THIS turn delivered what was asked". The hooks dict is
+        built once per SESSION, because the SDK client is cached (`if self._client
+        is None`), so without this the flag set by one bounded turn authorises a
+        voluntary stop in every later turn -- the next research job ends after a
+        single sub-skill, with no error and nothing in the log.
+
+        A method rather than three inline lines so it can be driven by a test. The
+        first cut cleared on the next tool call instead, and was wrong twice: a turn
+        that yields without calling any tool never cleared it, and the clearing was
+        not main-thread gated, so a straggler subagent call could clear a
+        main-thread delivery. `tool_calls` is deliberately NOT reset -- the
+        no-progress arm compares it across two stops.
+        """
+        counter = getattr(self, "_hook_counter", None)
+        if counter is not None:
+            counter["delivered"] = False
+
     def _usage_delta(self, cost, in_tok, out_tok):
         """Convert the SDK's cumulative session totals into per-turn increments.
 
@@ -1315,6 +1340,7 @@ class RealAgent:
         try:
             await client.query(text)
             self._stream_dirty = True
+            self._begin_turn_hook_state()
             # Whether an errored AssistantMessage has already told the user about
             # this turn. Turn-scoped, not session-scoped: a later turn's failure
             # is a new fact the user needs.

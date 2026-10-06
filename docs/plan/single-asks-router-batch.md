@@ -245,7 +245,7 @@ Also: `research_delivered` is **not advertised in the unit harness at all**
    over-classify an open ask as bounded.
 
 **Item 4 gets no in-batch test.** ~~Both its candidates moved to e2e~~ **SUPERSEDED during
-implementation:** item 4 is covered in-batch by `ut_research_020`, deterministically. The
+implementation:** item 4 is covered in-batch by `ut_research_021`, deterministically. The
 premise here was wrong. It assumed the unit harness could not drive `person_read` /
 `source_attachments` because neither is in `mock_mcp.LIVE_TOOLS`; in fact `mock_mcp.py:1094`
 registers a non-`LIVE_TOOLS` tool for any test that declares a fixture for it, so the gap was
@@ -305,9 +305,9 @@ Each bullet names the environment that checks it, because none holds everywhere.
 CLAUDE.md step 4 because this plan said "card", and never re-tested its own premise. Both
 rules are now covered in the unit suite, in the PR that implements them, which is step 1:
 
-- item 4 -> `ut_research_020` (`attached-before-searching.json`), **deterministic**, graded off
+- item 4 -> `ut_research_021` (`attached-before-searching.json`), **deterministic**, graded off
   the MCP call log and the hand-off list by `test_reads_attachments_before_searching`.
-- item 6 -> `ut_research_021` (`candidates-not-verdicts.json`), **judge-graded on purpose**,
+- item 6 -> `ut_research_022` (`candidates-not-verdicts.json`), **judge-graded on purpose**,
   because every part of that rule is a property of the reply and a deterministic check there
   could only assert something that cannot fail.
 
@@ -367,7 +367,7 @@ reaches this file.
    requests only, which would have left a job re-searching records already attached — the
    exact waste the item targets. Caught by drift-critic against this plan.
 13. **The two "move to e2e" items came back into the unit suite**, and no card was filed.
-   `ut_research_020` covers item 4 deterministically; `ut_research_021` covers item 6 as an
+   `ut_research_021` covers item 4 deterministically; `ut_research_022` covers item 6 as an
    openly judge-graded reply test. The plan's premise for deferring them was wrong:
    `mock_mcp.py:1094` registers a tool outside `LIVE_TOOLS` for any test that declares a
    fixture, so item 4's rule was one fixture away from testable, not one paid e2e run away.
@@ -375,7 +375,7 @@ reaches this file.
    predicate requires `sourceDescriptions: true`, and `matches()` demands every predicate key
    be present, so a router omitting that optional argument would have been refused rather than
    answered, which is the wrong failure for this test.
-14. **`ut_research_018`'s subject changed** from `GJ72-9WD` to "Patrick Flynn". The scenario it
+14. **`ut_research_019`'s subject changed** from `GJ72-9WD` to "Patrick Flynn". The scenario it
    runs on is `empty-project-just-created`, whose objective is Patrick Flynn and whose tree
    holds `I1`; `GJ72-9WD` appears nowhere in it, so the router was being asked about a stranger
    and could red the test by reasonably asking who that was. Raised by open-break as 018's one
