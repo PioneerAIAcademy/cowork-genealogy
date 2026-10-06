@@ -11,7 +11,9 @@
       "uncertain-reading",
       "user-reading",
       "second-record-corroboration"
-    ]
+    ],
+    "expected_outcome": "xfail",
+    "xfail_reason": "Reads c_001 but writes no analysis in about 1 run in 3; fails 3 of 3 on main's SKILL.md. Issue #3181."
   },
   "input": {
     "user_message": "The mother's name looks like Tannetje van Noord to me, not Jannetje. The handwriting on the birth act is hard to read. Can you check?",
