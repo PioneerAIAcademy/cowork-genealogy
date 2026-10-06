@@ -55,7 +55,7 @@ from cryptography.fernet import Fernet, InvalidToken
 
 # The alpha's development default (apps/server/app/config.py), kept identical so a grant
 # either tier wrote under it decrypts in the other. web/auth.py's preflight refuses it on
-# an https PUBLIC_URL.
+# an https PUBLIC_URL or with FamilySearch sign-in on.
 DEV_FS_TOKEN_ENC_KEY = "dev-insecure-fs-token-key-change-me"
 
 # -- locks -----------------------------------------------------------------------
