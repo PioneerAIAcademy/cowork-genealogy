@@ -20,7 +20,7 @@ backstop. *none* = nothing checks it.
 | 1 | Must not call `project-status` (or read/query state) before routing a planning question — route to `research-plan` immediately, with no prior tool calls. | Route check | none (closed as a doctrine question instead — see commit `99a728a0`, covered by a state-harm invariant, not a compliance test) |
 | 2 | Must not run `fulltext_search` or delegate to `search-full-text` from this skill. | "MCP tools and routing" | none |
 | 3 | A collection-mismatch is not a nil — must not apply spelling-variant escalation to it. | Step 5 | none |
-| 4 | Must never drop `givenName` on a retry — surname-only is not a valid lever. | Step 8.2 | none — and disputed: issue #1817 (folded into #1642) flags this against `search-strategy-levers.md:48`/`:109-110`, parked pending the lead's #1008 answer |
+| 4 | ~~Must never drop `givenName` on a retry — surname-only is not a valid lever.~~ **Retired** by the lead's 2026-08-23 ruling on issue #1008: dropping given name is a legitimate escalation step (`search-strategy-levers.md`'s "Drop given name" lever). Both SKILL.md clauses removed. | — | n/a |
 | 5 | Must never set an `*Exact` qualifier to try to find a record it could not otherwise find. | Step 2 | none |
 | 6 | Every search, including nils, must get its own `research_log_append` call — "a search without a log entry is a search that didn't happen." | Step 5, "Important rules" | guard, untagged (`test_positive_appends_log_entry`) for positive tests; nil-sidecar shape is tag-gated (`sidecar-nil`) |
 | 7 | Must never edit, reorder, or reformat an existing `log[]` entry — append only. | Step 5, "Important rules" | guard (`test_log_append_only`, universal validator, not this file) |
@@ -53,11 +53,11 @@ backstop. *none* = nothing checks it.
 
 ## Coverage summary
 
-Of 33 checkable rules, **10 have a deterministic guard**: 5 are purely
+Of 32 checkable rules (row 4 retired), **10 have a deterministic guard**: 5 are purely
 tag-gated (rows 15, 21, 29, 32, 33), 2 mix an untagged check with a tag-gated
 one (row 6, an untagged base check plus a tag-gated stricter shape; row 22, a
 tag-gated validator plus an untagged tool precondition), and 3 are
-universal/packaging-level checks that run regardless of tags (rows 7, 19, 27). The remaining 23 rely on the LLM
+universal/packaging-level checks that run regardless of tags (rows 7, 19, 27). The remaining 22 rely on the LLM
 judge or nothing at all. This matches the pattern the guide's own worked
 examples describe: the body is most detailed exactly where scrutiny is
 hardest to mechanize (Step 4's match-triage judgment calls), and least

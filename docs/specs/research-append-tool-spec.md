@@ -1522,12 +1522,29 @@ that many milliseconds just before its atomic write and just after it (before th
 result returns). They exist for the P1 cross-process resume probe
 (`apps/server/dev/p1/`, `docs/plan/search-agent-prototype.md`), which needs to kill a
 worker between a delegated extraction's validate and its commit, and between its
-commit and its `tool_result`. They are the only environment variables the engine
-reads — everything else is config-only (CLAUDE.md, "Secrets/config convention") —
-and they ship in the `.mcpb`, so the contract is pinned by
-`tests/tools/extraction-append.test.ts` ("debug holds"): unset, `0`, empty or a
-non-numeric value is inert; `research_append` is never held whatever the value;
-a set value on `extraction_append` waits on both sides of the commit. Nothing
-else may read them. Keep a hold well under 60 s: the CLI's MCP client times the call out at
-60,013 ms (measured, D17 2026-09-23) while the server still commits when the hold
-ends, so the agent reads a committed write as a failure and retries it.
+commit and its `tool_result`. They are the only environment variables a tool
+reads — everything else a tool uses is config-only (CLAUDE.md, "Secrets/config
+convention"; the hosted entrypoint's own environment reads are listed in
+`image-transcribe-tool-spec.md` §6.5) — and they ship in the `.mcpb`, so the
+contract is pinned by `tests/tools/extraction-append.test.ts` ("debug holds"):
+unset, `0`, empty or a non-numeric value is inert; `research_append` is never held
+whatever the value; a set value on `extraction_append` waits on both sides of the
+commit. Nothing else may act on them.
+
+The hosted entrypoint (`build/http.js`) names them at start-up: when either is set
+to a non-empty value it prints one stderr line, `debug holds set (never in
+production): <NAME>="<value>"[, …]`, before it listens, so a hold left on a
+deployed tool server shows in its logs; with neither set it prints nothing. The
+names come from `src/debug-holds.ts` (`DEBUG_HOLD_ENV`), which
+`tests/http/debug-holds.test.ts` holds to the names this file reads.
+
+A hold must stay under the calling MCP client's request timeout, because the server
+still commits when the hold ends: a client that has already timed the call out
+reports a committed write as a failure and the agent retries it (D17, 2026-09-23,
+when the prototype worker sent no timeout and the CLI cut the call at 60,013 ms). The
+prototype worker now sends `timeout: MCP_HTTP_TIMEOUT_MS` = 1,800,000 ms on its http
+server entry (`apps/server/proto/worker/options.py`), so on that path the bound is
+30 minutes; an http server entry that sets no timeout still has the CLI's 60 s. A hold
+is never set in production: the Beanstalk packaging guard refuses any
+`GENEALOGY_DEBUG_*` variable in an `eb-web`, `eb-worker` or `eb-tools` template
+(`DEV_PREFIXES`, `scripts/eb_bundles/layout.py`).

@@ -151,15 +151,21 @@ all, principal included, in a paragraph-style record that was never
 name-indexed. It behaves nothing like an indexed search: no fuzzy matching,
 no Soundex, no abbreviation expansion in `keywords`/`place` — *Wm* and
 *William* are separate `keywords` searches (the `name` field
-auto-expands recognized English given names). Three rules come from repeated failures:
+does not auto-expand given names — use `get_name_variants` first). Three rules come from repeated failures:
 
-- Search by **name only**, then filter for place. Putting the place in the
-  query matches the collection's description, not the document.
-- **Don't scope to a single collection.** The full-text corpus is
+- Search by **name**, and narrow only with filters the full-text corpus
+  accepts: a collection through the `collectionId` filterParam from
+  `includeFacets` results, and — when the plan or the user names the
+  jurisdiction — a place through the `place` field (plain text, matching
+  collection metadata) or a place filterParam in `recordPlace*`. Never a
+  plain-text `recordPlace*` value: it returns zero results in production.
+- **Don't borrow a collection ID from indexed record search.** The full-text corpus is
   partitioned into collections of its own, so an id borrowed from indexed
   record search can name a partition that does not hold the document: a
   Cantabrian baptism found by an unscoped name search returned nothing when
-  scoped that way.
+  scoped that way. Use `includeFacets: true` on the first call to get real
+  FTS partition IDs from the response's `facets` array; those are safe to
+  scope on a follow-up call.
 - **Decompose compound surnames into co-occurrence, not an exact phrase.**
   In the parents' own records the father carries the paternal surname and
   the mother the maternal one, so the two sit on different people. The phrase
