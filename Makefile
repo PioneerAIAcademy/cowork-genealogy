@@ -678,7 +678,7 @@ PROTO_PG_DSN ?= postgresql://postgres:proto@localhost:5434/proto
 
 .PHONY: proto-web
 proto-web: ## D11–12 web tier from the venv on :8085, against the compose postgres + elasticmq (a migrated database: make proto-migrate)
-	cd apps/server && PG_DSN=$(PROTO_PG_DSN) QUEUE_URL=http://localhost:9324/000000000000/turns \
+	cd apps/server && PG_DSN=$(PROTO_PG_DSN) QUEUE_URL=http://localhost:9324/000000000000/turns DEV_LOGIN=true \
 	  $(PROTO_SQS_ENV) uv run python proto/web/app.py
 
 .PHONY: proto-drive

@@ -1339,15 +1339,17 @@ async def test_create_session_on_a_seeded_project_and_refuse_a_bad_project_id():
 # ── U2: patron sign-in and owner scoping ────────────────────────────────────────
 
 AUTH_ENV = ("PUBLIC_URL", "WEB_ORIGIN", "SESSION_SECRET", "FS_TOKEN_ENC_KEY", "ALLOWED_EMAILS",
-            "FAMILYSEARCH_WEB_ENABLED", "FAMILYSEARCH_CONFIG")
+            "FAMILYSEARCH_WEB_ENABLED", "FAMILYSEARCH_CONFIG", "DEV_LOGIN")
 
 
 @pytest.fixture(autouse=True)
 def _clean_auth_env(monkeypatch):
-    """A developer's shell can carry PUBLIC_URL or FAMILYSEARCH_WEB_ENABLED; either turns
-    dev-login off and changes what every route test here means."""
+    """A developer's shell can carry PUBLIC_URL, FAMILYSEARCH_WEB_ENABLED or DEV_LOGIN;
+    each changes whether dev-login is on and so what every route test here means. Then
+    DEV_LOGIN=true, as compose sets it."""
     for name in AUTH_ENV:
         monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("DEV_LOGIN", "true")
 
 
 def _per_session_routes() -> list[tuple[str, str]]:
@@ -1475,7 +1477,7 @@ async def test_create_session_on_own_project_opens_a_second_session():
 async def test_supplied_project_id_is_created_or_claimed_only_under_dev_login(monkeypatch):
     store, queue = FakeStore(), FakeQueue()
     store.seed_session("sess_x", "proj_unowned", owner=None)
-    # Dev-login on (the default): a new id is created and an unowned one is claimed.
+    # Dev-login on (the fixture's DEV_LOGIN=true): a new id is created and an unowned one is claimed.
     async with make_client(store, queue) as c:
         assert (await c.post("/api/sessions", json={"project_id": "proj_new"})).status_code == 200
         assert (await c.post("/api/sessions", json={"project_id": "proj_unowned"})).status_code == 200

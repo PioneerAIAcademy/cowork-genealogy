@@ -42,8 +42,8 @@ export const STAGING_SEARCH_TOOLS = new Set([
  * retained as a ONE-element `results[]` envelope, so finalize needs no second
  * shape. The acquisition producers carry none of the search notes:
  * record-extraction logs an upload as `user_provided` and a `record_read` with no
- * `stagedResultsRef`, and a `person_read` file is staged for `project_create` to
- * build the starting tree from (issue #2944's Stage B, not yet built) rather than
+ * `stagedResultsRef`, and a `person_read` file is what `project_create` builds
+ * the starting tree from (`personReadRef`, issue #2944) rather than something
  * logged, so a nag on any of them would contradict the shipped flow. An
  * unfinalized acquisition file is simply TTL-pruned.
  */

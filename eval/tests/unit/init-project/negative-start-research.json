@@ -18,12 +18,14 @@
   },
   "negative": {
     "correct_skill": [
+      "research",
       "project-status"
     ],
-    "explanation": "A research.json already exists (mid-research-flynn). init-project only creates a brand-new project from scratch; its guard clause refuses when research.json is present. Even though 'start research' is an init-project trigger phrase, the refuse-if-exists invariant must hold and route the user to project-status to review the existing project state. The skill must NOT re-run the initialization workflow or call person_read/person_search."
+    "explanation": "A research.json already exists (mid-research-flynn). init-project only creates a brand-new project from scratch; its guard clause refuses when research.json is present. Even though 'start research' is an init-project trigger phrase, the refuse-if-exists invariant must hold and route the user to the research skill (or the project-status agent) to review the existing project state. The skill must NOT re-run the initialization workflow or call person_read/person_search.",
+    "grade_on_invariant": true
   },
   "judge_context": [
-    "Should decline to initialize (research.json already exists) and route to project-status, not re-run the init workflow",
+    "Should decline to initialize (research.json already exists) and route to the research skill (which reviews the existing project's state) or the project-status agent, not re-run the init workflow",
     "Should make no MCP tool calls — no person_read, no person_search, no place_search",
     "Judge the routing decision and the absence of init work only. Once the run routes, the harness stops it and `text_response` is empty, so there is no decline wording to weigh here — the guard clause's literal one-line text is not gradable on this test and must not be scored as present or absent."
   ],
@@ -39,6 +41,14 @@
       },
       {
         "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "project-status",
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
       }
     ]
