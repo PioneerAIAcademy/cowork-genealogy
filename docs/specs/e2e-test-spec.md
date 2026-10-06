@@ -669,7 +669,7 @@ the `max_cost_usd` note in §6 step 5.
    | Wall-clock cap | `timeout` | **Active** (monotonic) elapsed time > `caps.wall_clock_seconds` |
    | Tool-call cap | `tool_cap` | Total tool calls > `caps.tool_calls` |
    | Turn cap | `max_turns` | SDK turn count > `caps.max_turns` |
-   | Cost cap | `cost_cap` | Final cost > `caps.max_cost_usd`. **Label only — this does not stop a run.** See note below. |
+   | Cost cap | `cost_cap` | Final cost (the last CLI process's, on a resumed run) > `caps.max_cost_usd`. **Label only — this does not stop a run.** See note below. |
    | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"` after the continue-nudge budget is exhausted (or a nudge made no progress). The terminal hand-back is classified and counted in `usage.hand_back_classes` — these are the two gate-False reasons that ARE agent defects — see note below |
    | Harness error | `error` | Unhandled exception in the harness or SDK |
    | **Genealogy MCP surface absent** | `mcp_unavailable` | The CLI's `system`/`init` message reports the `genealogy` server `failed` / `needs-auth` / `disabled`, or does not list it at all; **or** the mid-run backstop sees `CONSECUTIVE_TOOL_SEARCH_MISSES` no-match `ToolSearch` results with no `mcp__` call dispatched in between. A *matched* lookup does **not** clear that count — tool search defers the built-ins too, so matching one of those is no evidence about the genealogy surface, and treating it as such let a dead server starve the counter indefinitely. **This run writes no files — see the retention rule below.** |
@@ -802,31 +802,34 @@ the `max_cost_usd` note in §6 step 5.
    sweep that keeps `high` must not also repin the extractor back to sonnet-5.
 
    **Continue-nudge on a hand-back.** An autonomous `/research` run must end at
-   `project.status == "completed"`. `/research` is *meant* to yield at every step
-   boundary — it names the next step and asks whether to do it — and
-   **in an e2e run the harness is the user**, so a yield is not by itself a defect.
-   A `Stop` hook intercepts the voluntary yield and classifies the agent's closing
-   words (`classify_hand_back`, `eval/harness/e2e/stop_checker.py`) into three
-   classes. The class is the FORM; the key counted in `usage.hand_back_classes` is the
-   OUTCOME, and for a completion claim the two differ — no run log ever carries a
+   `project.status == "completed"`. A `Stop` hook vetoes every voluntary yield before
+   that with **one** reply, the prototype worker's `CONTINUE_REASON`
+   (`apps/server/app/agent/continue_policy.py`) verbatim, so a paired grade compares
+   two stacks under one Stop policy (handoff U17; `test_continue_policy_parity.py` pins
+   the copy). Before replying, the hook classifies the agent's closing words
+   (`classify_hand_back`, `eval/harness/e2e/stop_checker.py`) for telemetry only. The
+   class is the FORM; the key counted in `usage.hand_back_classes` is the OUTCOME, and
+   for a completion claim the two differ — no run log ever carries a
    `completion_claim` key:
 
-   | class | form | counted as | harness reply |
-   |---|---|---|---|
-   | `step` | ends with the literal `Next: <step>. Continue?` | `step` | **"Yes."** — the researcher's answer |
-   | `completion_claim` | ends with the literal `Research complete.` | `false_completion`, or `terminal_completed` when the project really is completed | if `project.status != "completed"`, says so and asks the agent to verify with `research_query` and continue |
-   | `silent` | anything else | `silent` | the procedural resume instruction |
+   | class | form | counted as |
+   |---|---|---|
+   | `step` | ends with the literal `Next: <step>. Continue?` — the agent asking the patron | `step` |
+   | `completion_claim` | ends with the literal `Research complete.` | `false_completion`, or `terminal_completed` when the project really is completed |
+   | `silent` | anything else | `silent` |
+
+   Runs from 2026-09-20 until U17 answered a `step` with **"Yes."** and a false
+   completion with a request to verify with `research_query`; their
+   `continue_nudges` count those replies too.
 
    **Hand-back form.** A fixed closing line (lead ruling, 2026-09-07), matched
    literally and nothing else. Free-prose matching was set aside: the predicate it
-   replaced caught 15 of 41 real yields. `step` reads **0** for as long as no skill that
-   closes the main thread's turn emits that closing line — `init-project` and
-   `question-selection` already emit it as their final line; `research/SKILL.md`
-   does not yet — so a zero is the correct result, not a broken classifier, and a
-   non-zero before `research/SKILL.md` carries the line is a sub-skill's final line
-   ending the turn, not a loosened pattern. Do not loosen the pattern to make it
-   non-zero, and note that markdown emphasis around the line
-   (`**Research complete.**`) does not match.
+   replaced caught 15 of 41 real yields. On 2026-09-27 the line was retired
+   from every prompt (`test_every_shipped_hand_back_literal_classifies`
+   requires zero), so `step` should read **0** on runs since then and a non-zero is
+   the model asking anyway; earlier runs carry it from `init-project` and
+   `question-selection`. Do not loosen the pattern, and note that markdown emphasis
+   around the line (`**Research complete.**`) does not match.
 
    **A declared blocker reads as `silent`.** `research/SKILL.md` names a genuine
    logged blocker as a third legitimate autonomous stop, but it names no next step,
@@ -1492,8 +1495,9 @@ Four integrity rules make the agreement number trustworthy:
 
   It distinguishes a judge that raised (quoting the judge's own error
   text)
-  from an agent that produced no final tree, from `--skip-judge`; none of those
-  is a genealogical conclusion, and the presence of an error says nothing about
+  from an agent that produced no final tree, from a host that slept past the
+  inactivity cap (`host_slept`, whose tree is intact), from `--skip-judge`; none
+  of those is a genealogical conclusion, and the presence of an error says nothing about
   what the agent recovered. It exists because the previous single fixed string
   printed the same words for all three, directly beneath
   `stop_reason: completed`, so a judge crash read as "this run succeeded and
@@ -1918,11 +1922,11 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `blocked_context_calls[]` | Calls the per-context policy refused: a `SUBAGENT_ONLY_TOOLS` tool (`extraction_append`, `image_read` — §6.1.1), **or** an owned-section `research_append` write (§6.1.2). `blocked_by` is `"context"` for both, so only `tool` discriminates which guard fired; every entry in the committed corpus is the latter. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1, §6.1.2. |
 | `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }`, `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
 | `usage` | Tokens, cost, duration. See 8.1.2 for the fallback shape. |
-| `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative) or `streamed_fallback` (it did not). |
+| `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative, except on a run with more than one query, where its tokens, turns and `duration_ms` cover the last query and its cost and `duration_api_ms` the last CLI process, §8.1.5) or `streamed_fallback` (it did not). |
 | `usage.message_usage` | Per-assistant-message context window, split by thread: `[thread, input, cache_read, cache_creation]`. See 8.1.4. |
 | `usage.thread_windows` | Per-thread summary — `main: {peak_window_tokens, message_count}`, `sub: {message_count}`. See 8.1.4. |
-| `usage.continue_nudges` | How many times the Stop hook vetoed a voluntary yield and told the agent to resume — every class, including a well-formed `step` answered "Yes.". The weak-signal reading belongs to `silent` plus `false_completion` in `hand_back_classes`, not to this total. |
-| `usage.hand_back_classes` | Per-class tally of how the agent handed back: `step` / `silent` / `false_completion`, plus `terminal_completed` / `terminal_mcp_unavailable` for the two gate-False reasons that are **not** agent defects. Counts hand-backs **including the terminal one**, so a hook-terminated run carries one more than `continue_nudges` — but a run killed by a cap or an error never reaches the hook and records no terminal class at all, so this is not universally the larger number. `step` is 0 until the skill emits the hand-back line. See the Continue-nudge note in §6. |
+| `usage.continue_nudges` | How many times the Stop hook vetoed a voluntary yield and told the agent to resume — every class, all with the same continue text (U17). The weak-signal reading belongs to `silent`, `step` and `false_completion` in `hand_back_classes`, not to this total. |
+| `usage.hand_back_classes` | Per-class tally of how the agent handed back: `step` / `silent` / `false_completion`, plus `terminal_completed` / `terminal_mcp_unavailable` for the two gate-False reasons that are **not** agent defects. Counts hand-backs **including the terminal one**, so a hook-terminated run carries one more than `continue_nudges` — but a run killed by a cap or an error never reaches the hook and records no terminal class at all, so this is not universally the larger number. `step` is the retired hand-back line, so 0 on runs since 2026-09-27. See the Continue-nudge note in §6. |
 | `wall_clock_seconds` | Active time: monotonic minus `counted_sleep_seconds` — §6 "Clocks". Alongside `real_clock_seconds`, `slept_seconds`, `counted_sleep_seconds` (sleep the heartbeat counted because monotonic did not leave it out, the Windows case), `judge_seconds`. |
 | `resumes`, `session_id` | §6 "Stall-detect + resume". |
 | `agent_model` | Effective parent model. |
@@ -1995,7 +1999,7 @@ Two sibling fields now carry the whole-run figure:
 tally and the cost calibration read, so widening it in place would have moved every
 historical comparison underneath them.
 
-Both fields are `null`, never a plausible substitute, in three cases:
+Both fields are `null`, never a plausible substitute, in four cases:
 
 - **`usage_source` is `streamed_fallback`.** That path's `output_tokens` is a
   start-of-message snapshot, and since commit `76bc0655b` its accumulator already
@@ -2007,9 +2011,23 @@ Both fields are `null`, never a plausible substitute, in three cases:
   those are one entry per content *block*, each repeating its message's totals, so
   the sum roughly doubles cache reads. Unknown is unknown.
 - **No main-thread token block at all.**
+- **The run had more than one query.** The SDK's `ResultMessage` reports `usage`,
+  `num_turns` and `duration_ms` for the last query of a session, and a query starts
+  at each `system:init` row in `usage.timeline`: a stall-resume starts one, and so
+  does a background subagent's `task_notification` followed by a fresh
+  `system:init` (compaction emits `system:compact_boundary`, so a long run is still
+  one query). On such a run `usage.usage`, `num_turns` and `duration_ms` describe
+  the last query only. `total_cost_usd` and `duration_api_ms` are per CLI process:
+  they span the run when `resumes` is 0, and cover only the last process when it
+  is not, because a stall-resume starts a new one. The test is
+  `result_message_covers_last_query_only` in `e2e/result.py`. `make e2e-latency`
+  (its whole-run summary and Markdown table), `make e2e-cache-window` and the cost
+  calibration exclude these runs by name (`multi-query`), and `make e2e-corpus`
+  says its `recorded` spend is a floor when a resumed run is in it.
 
-A run with no subagents, and a run whose capture failed (`subagent_capture_status`
-non-ok, which yields an empty list), both merge to exactly `usage.usage`.
+A single-query run with no subagents, and one whose capture failed
+(`subagent_capture_status` non-ok, which yields an empty list), both merge to
+exactly `usage.usage`.
 
 **Why `subagents[].usage` is counted per message, not per record.** Claude Code
 writes one record per content block and every one repeats its message's usage, so
@@ -2164,7 +2182,9 @@ omitted to preserve blind grading (§7.4):
 ```
 
 The compliance line is always printed — a silent compliance line puts us back
-to one number meaning two things (§7.2.1). Verdict-bearing totals (recall,
+to one number meaning two things (§7.2.1). When a run resumed after a stall, a
+note under the cost line says the figures are a floor: its cost covers the last
+CLI process only (§8.1.5). Verdict-bearing totals (recall,
 gate, by-tag) are available via `make e2e-corpus` (below), which reads
 committed run logs and is not part of the grading path.
 
@@ -2216,7 +2236,8 @@ prevent.
 **Spend, and recomputed violations.** The report always prints a `spend:` line —
 recorded cost, estimated cost, and the count of runs with neither — as three
 numbers, never one blend: abort-path cost is estimated (§8.1.2) and must not be
-folded into the authoritative recorded total. Beside the estimate is its
+folded into the recorded total. When a recorded run resumed after a stall, one
+more line says `recorded` is a floor (§8.1.5). Beside the estimate is its
 measured accuracy (median estimated/recorded); `CALIBRATE=1`
 (`--calibrate-cost`) adds the full median + range. `RECOMPUTE=1` (`--recompute`)
 additionally re-derives violations from each run's committed `tool_calls` +

@@ -5,7 +5,11 @@
     "name": "A living child missing at both censuses is one missing child, not two",
     "type": "positive",
     "description": "Exercises the living-side de-duplication of the census fertility-gap rule: when a living child is absent from the tree at BOTH the 1900 and 1910 censuses, it is one missing child, not one per census. Guards against double-counting the living-missing figure across the two censuses. Here born equals living at both censuses, so there are no deceased children.",
-    "tags": ["from-review", "census-living-cumulative", "re-invoke-safe"]
+    "tags": [
+      "from-review",
+      "census-living-cumulative",
+      "re-invoke-safe"
+    ]
   },
   "input": {
     "user_message": "Start a new research project. The subject is my great-grandmother Ellen Brannon, FamilySearch ID BRNN-MOM. Two census records describe her children: the 1900 US census records 3 children born and 3 still living, and the 1910 US census records 4 children born and 4 still living. I want to find any of her children who are not already in the tree.",
@@ -48,6 +52,8 @@
     "There are no deceased children to research: children-born equals children-living at both censuses (3/3 and 4/4), so born minus living is zero. The reply must not invent a deceased target.",
     "Do not penalise correct reasoning about which census window the missing living child belongs to; the graded point is that it is counted once, not two.",
     "The objective is the researcher's request stored verbatim, so its wording (\"find any of her children\") is not graded and does not make the reply wrong. Grade the number of missing living children the reply reports and the question it sets up: one child, born before 1900 and alive in 1910, is a pass.",
-    "`known_holdings[].relates_to_person_ids` names the persons a holding CONCERNS, not the persons it newly discovers. A census that enumerates the household correctly lists everyone enumerated, children already in the tree included — do not mark a run down for naming them, and do not require the entry to point only at the missing child. Holding linkage is not the graded point on this test."
-  ]
+    "`known_holdings[].relates_to_person_ids` names the persons a holding CONCERNS, not the persons it newly discovers. A census that enumerates the household correctly lists everyone enumerated, children already in the tree included — do not mark a run down for naming them, and do not require the entry to point only at the missing child. Holding linkage is not the graded point on this test.",
+    "A `person_warnings` result reports a problem the TOOL detected. It is NOT evidence that the event it names exists in the tree. A reply saying 'the tool flags a coherence issue on Ellen' is accurate; a reply saying 'Ellen has an event recorded before her birth' is a claim about the tree and needs the tree to support it. Grade the first as correct and the second as the misattribution it is."
+  ],
+  "judge_reads_files": true
 }

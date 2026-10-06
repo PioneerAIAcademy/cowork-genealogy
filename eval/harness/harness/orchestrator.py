@@ -1945,7 +1945,9 @@ def _run_judge(
         # Also a VALUE change, not a template change, for the reason above: the
         # skill path's slot names the agents the skill spawned as well.
         judge_ran = judge_skills_slot(
-            result.skills_invoked, getattr(result, "builtin_tool_calls", []) or []
+            result.skills_invoked,
+            getattr(result, "builtin_tool_calls", []) or [],
+            getattr(result, "slash_entry_skill", None),
         )
     return grade(
         rubric=judge_rubric,

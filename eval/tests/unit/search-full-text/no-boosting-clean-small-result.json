@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_search_full_text_020",
+    "skill": "search-full-text",
+    "name": "No boosting on a clean small result set",
+    "type": "positive",
+    "description": "A keywords search for Thomas Flynn returns 1 clean, highly relevant result — well below the 50-result threshold at which the SKILL.md decision rules say to review all results. The skill must log and present that result without applying probable-word boosting, collection-scoping, or additional narrowing queries. Boosting a single-result set wastes turns and adds no value. Closes #2549.",
+    "tags": ["fulltext", "boosting", "anti-redundancy", "small-result-set"]
+  },
+  "input": {
+    "user_message": "Search the full-text index for Thomas Flynn in Pennsylvania land records.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "fulltext-search-flynn-witnesses",
+    "wiki-read-any",
+    "wiki-search-any"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "The keywords search returns 1 result. SKILL.md's decision rules: 1–50 results → review all (no narrowing needed). 50–500 → add Year/RecordType filter. >500 → add a second required term or place filter. 1 result is far below the narrowing threshold. A skill that applies probable-word boosting (bare non-required terms), adds a Year/RecordType filter, or issues a collection-scoping follow-up to this 1-result set scores FAIL on Query construction — the too-many-results ladder does not apply when totalResults is already manageable.",
+    "RESULT TRIAGE: The returned result names Thomas Flynn and Patrick Flynn as witnesses in a Schuylkill County deed. The skill should assess match quality from the stub fields and present the result for image verification without further narrowing queries.",
+    "TOOL ARGUMENTS NOTE: The skill may try spelling-variant calls for Flynn — for example +Thomas +Flinn, +Thomas +Fl?n*, +Fl?nn, +Thos +Flynn, or other wildcard forms. A fixture_not_found result on a structurally correct variant query (valid Lucene operators, sensible field choice, plausible alternate spelling) is NOT a Tool Arguments failure — score Tool Arguments PASS. Penalize Tool Arguments only when the call had a true structural defect: wrong field for the intent, invalid operator syntax, or a query unrelated to Thomas Flynn."
+  ]
+}

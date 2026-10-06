@@ -294,7 +294,7 @@ called six of the seven below "genuinely unruled," and that is now false:
 
 | Issue | What it is | Status |
 |---|---|---|
-| #2191 | the judge does not obey rules written in its own prompt and rubric, and nothing measures a prompt edit | **Ruled 2026-09-09** — instrument only, `prompt.md` untouched; rule 2b blocks and only a fresh `make eval-skill` run clears it; `make judge-regrade` is the card's other deliverable |
+| #2191 | the judge does not obey rules written in its own prompt and rubric, and nothing measures a prompt edit | **Ruled 2026-09-09** — instrument only, `prompt.md` untouched; rule 2b blocks and only a fresh `make eval-skill` run clears it; a `judge-regrade` make target is the card's other deliverable |
 | #2057 | one failing validator skips the *entire* judge, leaving every judged dimension ungraded on an unrelated failure | **Ruled 2026-09-07** — judge every non-aborted run; defective runs graded for diagnosis, excluded from the modal. **Ready** |
 | #2190 | negative-test framing ignores `grade_on_invariant`, and on four tests tells the judge the skill should route to itself | **Ruled 2026-09-07** — surface the judge's 1, do not soften the framing |
 | #1913 | a research-plan rubric dimension scored 3 in 67 of 67 and every axis is already deterministic | **Ruled 2026-09-09** — delete the dimension |
@@ -393,7 +393,7 @@ argument, and reopening needs a measurement.
 
 What survives it:
 
-- **`make judge-regrade` was never this card's**, it is issue #2191's ruled
+- **A `judge-regrade` make target was never this card's**, it is issue #2191's ruled
   deliverable. Everything that actually needed a regrade still has one: issue
   #2427's acceptance check, issue #2057's 110 ungraded runs, and #2191's own
   need to price a candidate prompt.

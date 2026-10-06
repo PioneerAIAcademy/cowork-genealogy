@@ -47,5 +47,6 @@
     "The 1900-to-1910 delta reasoning (two more births between the censuses, the deceased count holding at one) is correct and must NOT be penalised; the deceased child of 1900 is the same child still counted among the dead in 1910, not a second deceased child.",
     "Naming only the post-1900 living child while missing the pre-1900 deceased child is a FAIL on the gap dimension, not a partial.",
     "The deceased child is a research target (born and died before the enumeration), NOT a tree or data error; it must not be presented under obvious-error detection."
-  ]
+  ],
+  "judge_reads_files": true
 }

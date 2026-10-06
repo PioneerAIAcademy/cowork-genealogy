@@ -19,6 +19,7 @@ criteria-demotion rollout.
 
 from __future__ import annotations
 
+import json
 import re
 
 from collections import Counter
@@ -43,50 +44,27 @@ def test_both_project_files_created(before_state, after_state, test):
         assert False, "init-project did not create tree.gedcomx.json"
 
 
+_INIT_TOOLS = ("person_read", "person_search", "project_create")
 
-# --- Refuse-if-exists, graded on the invariant (tag-gated) --------------
 
+def test_existing_project_is_not_reinitialized(before_state, after_state, tool_calls, test):
+    """Tag-gated on `refuse-if-exists`: with a project already in the folder,
+    init-project's work must not run, whichever skill or agent the request
+    routes to. The negative test grades on this invariant because the right
+    destination may be an agent, and agents are not in `skills_invoked`."""
+    if "refuse-if-exists" not in test.get("tags", []):
+        pytest.skip("not a refuse-if-exists scenario")
+    called = sorted({_tool(c) for c in tool_calls or []} & set(_INIT_TOOLS))
+    assert not called, f"an existing project was re-initialized: called {called}"
+    before = (before_state.get("research_json") or {}).get("project") or {}
+    after = (after_state.get("research_json") or {}).get("project") or {}
+    assert before, "refuse-if-exists needs a scenario with an existing research.json"
+    for key in ("id", "created", "objective"):
+        assert after.get(key) == before.get(key), (
+            f"project.{key} changed from {before.get(key)!r} to {after.get(key)!r}: "
+            "the existing project was replaced"
+        )
 
-def test_refuse_if_exists_leaves_the_project_untouched(before_state, after_state, test):
-    """Tag-gated on `grade-on-invariant`: init-project must not re-initialize
-    over a project that already exists. Nothing it could write here is
-    recoverable — a second `project_create` over a live research.json would
-    overwrite the researcher's work — so the invariant is that BOTH files come
-    out byte-identical.
-
-    This carries the whole verdict (`negative.grade_on_invariant`), replacing a
-    routing assertion that stopped being stable. `project-status` became an
-    agent on 2026-10-03 (#3092); since then the main thread sometimes spawns it
-    and sometimes answers the status question itself off a `Glob` of
-    research.json. Both are non-routings, and neither re-initialized — the
-    thing actually worth guarding held in both, while the routing assertion
-    failed in both.
-
-    A `grade_on_invariant` test with no validator that runs passes VACUOUSLY,
-    which `runnability.py` blocks at load time by matching the test's tags
-    against this file's gate tags — so this function's tag and the test's must
-    stay in step.
-    """
-    if "grade-on-invariant" not in test.get("tags", []):
-        pytest.skip("not a grade-on-invariant test")
-
-    before_research = before_state.get("research_json")
-    after_research = after_state.get("research_json")
-    before_tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
-    after_tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
-
-    assert before_research is not None, (
-        "the refuse-if-exists premise needs a research.json on the BEFORE side; "
-        "this scenario shipped without one, so the test would pass vacuously"
-    )
-    assert after_research == before_research, (
-        "research.json changed — init-project re-initialized over an existing "
-        "project instead of declining"
-    )
-    assert after_tree == before_tree, (
-        "tree.gedcomx.json changed — init-project re-initialized over an "
-        "existing project instead of declining"
-    )
 
 # --- Opening-turn defaults, checked exactly (tag-gated) -----------------
 
@@ -399,6 +377,9 @@ def test_project_files_written_through_the_writer_tools(tool_calls, after_state,
 # looks like the skill's fault.
 
 _ARK_RE = re.compile(r"^ark:/61903/\d:\d:(.+)$")
+# A FamilySearch TREE person, as project_create's build recognises one (only a
+# `4:1:` ark names a person from the read; a record or image ark names none).
+_TREE_ARK_RE = re.compile(r"^ark:/61903/4:1:([A-Za-z0-9]{4}-[A-Za-z0-9]{3,4})$")
 
 # The profile is fixed (lead ruling 2026-09-18): init-project asks nothing
 # about the researcher and writes these two values on every project. The
@@ -661,14 +642,54 @@ def test_tree_ark_is_canonical_and_traceable(after_state, tool_calls):
 
 # --- V3: standard_place provenance --------------------------------------
 
+def _relationship_owner(rel, pid_of):
+    """A relationship's identity as (type, endpoint PIDs), a Couple unordered.
+
+    `pid_of` maps an endpoint as the document spells it to a FamilySearch PID:
+    identity for a person_read response, the person's ark for a written tree.
+    """
+    if rel.get("type") == "Couple":
+        ends = tuple(sorted(str(pid_of(rel.get(k))) for k in ("person1", "person2")))
+    else:
+        ends = (str(pid_of(rel.get("parent"))), str(pid_of(rel.get("child"))))
+    return (rel.get("type"), ends)
+
+
+def _tree_fact_owners(tree):
+    """(owner, fact) for every tree fact, the owner named by FamilySearch PID:
+    a person by its tree ark, a relationship by its type and endpoint arks. A
+    fact on a person with no tree ark (none, or a record/image ark) gets owner
+    None and matches no returned fact."""
+    pid_by_id = {}
+    for person in tree.get("persons") or []:
+        match = _TREE_ARK_RE.match(person.get("ark") or "")
+        pid_by_id[person.get("id")] = match.group(1) if match else None
+    for person in tree.get("persons") or []:
+        for fact in person.get("facts") or []:
+            if isinstance(fact, dict):
+                yield pid_by_id.get(person.get("id")), fact
+    for rel in tree.get("relationships") or []:
+        owner = _relationship_owner(rel, pid_by_id.get)
+        for fact in rel.get("facts") or []:
+            if isinstance(fact, dict):
+                yield owner, fact
+
+
 def test_standard_place_came_from_a_tool(after_state, tool_calls):
     """`standard_place` means "FamilySearch's standardized name", so a value no
     place authority returned is a claim about FamilySearch's vocabulary that
     FamilySearch did not make.
 
-    Two legitimate origins: carried from a `person_read` fact that already had
-    one, or taken from a `place_search` result. A copy of the fact's own
-    free-text `place` is neither -- that is the 56-value defect this closes.
+    Three legitimate origins: carried from a `person_read` fact that already
+    had one; taken from a `place_search` result; or, when `project_create` built
+    the tree from a staged read (`personReadRef`, issue #2944), resolved by its
+    host-side retry for a fact that read (the one the ref named, never a second
+    `person_read`) returned with a `place` and no `standard_place`. The third is
+    matched on the fact's owner (by FamilySearch PID), type and raw `place`,
+    which the build carries unchanged, and only for facts that really arrived
+    unresolved, and only for the value the build wrote into the write-once
+    `starting-tree.gedcomx.json`. A copy of the fact's own free-text `place` is none of these --
+    that is the 56-value defect this closes.
     """
     tree = _written_tree(after_state)
     written = [
@@ -685,11 +706,68 @@ def test_standard_place_came_from_a_tool(after_state, tool_calls):
         for result in response.get("results") or []:
             if result.get("standardPlace"):
                 allowed.add(result["standardPlace"])
+    # Only a ref call that SUCCEEDED built the tree; a refused one built nothing.
+    # And the host retry covered only the read that ref named, never a second
+    # person_read whose people joined as additions.
+    # By staged file name: project_create accepts `./results/...`, an absolute
+    # path and other spellings of one ref, and every staged name is a fresh uuid.
+    def staged_name(ref):
+        return ref.strip().replace("\\", "/").rstrip("/").rsplit("/", 1)[-1]
+
+    built_refs = {
+        staged_name(c["args"]["personReadRef"])
+        for c in tool_calls or []
+        if _tool(c) == "project_create"
+        and isinstance((c.get("args") or {}).get("personReadRef"), str)
+        and isinstance(c.get("response"), dict)
+        and c["response"].get("ok") is True
+    }
+    # Every returned fact, not `_returned_person_facts`: that keys on
+    # (owner, type) and keeps one fact per type, so a second Residence, or a
+    # second Couple's Marriage, would be lost.
+    # Keyed on the owner too: a fact the read left unresolved on one person
+    # must not exempt an invented value on another person's fact of that type.
+    host_filled = set()
+    for response in _responses(tool_calls, "person_read"):
+        staged = response.get("staged")
+        if isinstance(staged, dict) and isinstance(staged.get("resultsRef"), str) \
+                and staged_name(staged["resultsRef"]) in built_refs:
+            holders = [
+                *((p.get("id"), p) for p in response.get("persons") or []),
+                *(
+                    (_relationship_owner(r, lambda v: v), r)
+                    for r in response.get("relationships") or []
+                ),
+            ]
+            for owner, holder in holders:
+                for f in holder.get("facts") or []:
+                    if isinstance(f, dict) and f.get("place") and not f.get("standard_place"):
+                        host_filled.add((owner, f.get("type"), f.get("place")))
+    owner_of = {id(f): owner for owner, f in _tree_fact_owners(tree)}
+    # What the host build actually wrote: the write-once starting tree. A value
+    # on that fact now that differs from it (a copy of `place`, or anything a
+    # later `tree_edit` invented) is not the host's fill.
+    baseline = set()
+    raw = (after_state.get("files") or {}).get("starting-tree.gedcomx.json")
+    try:
+        starting = json.loads(raw) if isinstance(raw, str) else None
+    except ValueError:
+        starting = None
+    if isinstance(starting, dict):
+        baseline = {
+            (owner, f.get("type"), f.get("place"), f.get("standard_place"))
+            for owner, f in _tree_fact_owners(starting)
+        }
 
     bad = []
     for pid, fact in written:
         value = fact["standard_place"]
         if value in allowed:
+            continue
+        # A resolved name can equal the raw text ("Ireland"), so no copy check
+        # here: the fact arrived unresolved and the host resolver filled it.
+        key = (owner_of.get(id(fact)), fact.get("type"), fact.get("place"))
+        if key in host_filled and (*key, value) in baseline:
             continue
         note = (
             " (a copy of the fact's own free-text place)"
@@ -751,6 +829,11 @@ def test_every_fact_and_relationship_is_sourced(after_state, test):
     """SKILL.md Step 3: attach a source reference to every fact AND every
     relationship, at `quality: 1`. On the objective-only path the researcher's
     own statement is the source, and the rule is unchanged.
+
+    Since issue #2944 `project_create` writes these refs itself: from a staged
+    `person_read` every fact and relationship gets the FamilySearch-tree ref, and
+    on the objective-only path anything unsourced is cited to the researcher's
+    statement. So this now checks the tool's build, not the skill's prose.
 
     `test_id_references_resolve` already checks that a ref which EXISTS
     resolves. Nothing checked that one exists -- and on the objective-only path

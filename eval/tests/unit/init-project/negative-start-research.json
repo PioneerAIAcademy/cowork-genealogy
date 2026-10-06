@@ -9,8 +9,7 @@
       "near-miss",
       "init-vs-project-status",
       "boundary",
-      "refuse-if-exists",
-      "grade-on-invariant"
+      "refuse-if-exists"
     ]
   },
   "input": {
@@ -18,14 +17,13 @@
     "scenario": "mid-research-flynn"
   },
   "negative": {
-    "grade_on_invariant": true,
     "correct_skill": [
-      "project-status"
+      "project-status",
+      "research"
     ],
-    "explanation": "A research.json already exists (mid-research-flynn). init-project only creates a brand-new project from scratch; its guard clause refuses when research.json is present. Even though 'start research' is an init-project trigger phrase, the refuse-if-exists invariant must hold and route the user to project-status to review the existing project state. The skill must NOT re-run the initialization workflow or call person_read/person_search. GRADED ON THE INVARIANT, not on the routing decision: project-status became an agent on 2026-10-03 (#3092), and since then the main thread sometimes spawns it and sometimes answers the status question inline off a Glob of research.json — two runs, two different non-routings, neither of which re-initialized. The durable guard is that nothing was written; `test_refuse_if_exists_leaves_the_project_untouched` is what enforces it. correct_skill is kept because the hand-off is still the preferred answer and the reciprocity lint reads this edge."
-  },
+    "explanation": "A research.json already exists (mid-research-flynn). init-project only creates a brand-new project from scratch; its guard clause refuses when research.json is present. Even though 'start research' is an init-project trigger phrase, the refuse-if-exists invariant must hold and route the user to project-status to review the existing project state. The skill must NOT re-run the initialization workflow or call person_read/person_search. WIDENED 2026-10-06 to accept `research` as well. The invariant this test guards is that init-project REFUSES when research.json exists, and that is what it must fail on. The message reads both ways on purpose -- 'Start research on this project' is the research router's territory and 'where do things stand' is project-status's -- so insisting on one of the two graded a coin-flip rather than the refusal. Measured: init-project declined in both the 2026-10-06 15:53 run (routed project-status, pass) and the 18:05 run (routed research, fail), with activated=False in each. A run where init-project ACTIVATES still fails, whichever destination follows, so the defect this test was built to catch is untouched."  },
   "judge_context": [
-    "Should decline to initialize (research.json already exists) and route to project-status, not re-run the init workflow",
+    "Should decline to initialize (research.json already exists) and route to the research skill (which reviews the existing project's state) or the project-status agent, not re-run the init workflow",
     "Should make no MCP tool calls — no person_read, no person_search, no place_search",
     "Judge the routing decision and the absence of init work only. Once the run routes, the harness stops it and `text_response` is empty, so there is no decline wording to weigh here — the guard clause's literal one-line text is not gradable on this test and must not be scored as present or absent."
   ],
@@ -41,6 +39,14 @@
       },
       {
         "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "project-status",
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
       }
     ]
