@@ -720,6 +720,7 @@ describe("agent delegation framing", () => {
     "search-familysearch-wiki",
     "search-images",
     "search-wikipedia",
+    "survey-surname",
     "translation",
     "tree-edit",
     "validate-schema",

@@ -180,12 +180,6 @@ jobs:
           # Raw PR label names, one per line (empty on a push). Set through env,
           # never interpolated into a script: a label name is repo-controlled text.
           COSMETIC_SKIP_LABELS: ${{ steps.cosmetic.outputs.labels }}
-          # Rule 6's closed-owner arm resolves each xfail marker's cited issue
-          # via `gh api`, to catch a marker whose removal condition can never be
-          # met. Warn-only and it swallows every error, so without a token it is
-          # silently inert rather than red -- the shape that ships a dead check.
-          # Same reason the eval-slot lint below sets it.
-          GH_TOKEN: ${{ github.token }}
         run: python eval/harness/scripts/check_runlogs.py
 
       # `!cancelled()` here and on every step below: an `if:` with no
