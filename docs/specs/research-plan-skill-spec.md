@@ -50,7 +50,17 @@ birth country.
 | Trigger | Page |
 |---|---|
 | Male subject of a parentage question, born in continental Europe or Scandinavia (not the British Isles or the Americas) | `{Country}_Military_Records` |
-| Compound (two-surname) or patronymic surname | `{Country}_Naming_Customs` |
+| Compound (two-surname) surname, or a second name element that is the father's given name | `{Country}_Naming_Customs` |
+
+**Patronymic detection (genealogist review, 2026-10-05).** The first wording,
+"compound or patronymic surname", left detection to the model's sense of a
+patronymic, which is the `-sen` / `-son` / `-dóttir` / `-wicz` endings. Luo
+(Wandhala Oyiembo, son of Oyiembo Wandhala), Arabic *nasab*, and Ethiopian and
+Eritrean names carry the father's given name with no suffix, so that trigger
+would never fire on them, silently, on exactly the subjects where knowing the
+system decides the search. The trigger now keys on the second element
+recurring as a given name in the family. A country with no naming-customs page
+falls to the `No wiki page found` arm.
 
 **On failure** (`No wiki page found`, any error, or an empty page): the
 affected item's rationale says so, and the plan is built from the `localities`
@@ -106,11 +116,15 @@ that would replace it (probed 2026-10-02, §5):
   record may be planned freely. The caution applies to what is written down: no
   rationale calls it her maiden name, and a companion item must test it.
 
-**Regression risk to watch:** `ut_research_plan_r3d` fails, recorded as `xfail`,
-because its plan puts the Trysil death record ahead of the Kongsberg baptism the
+**Regression risk to watch:** `ut_research_plan_r3d` has failed in every
+committed research-plan run, because its plan puts the Trysil death record ahead of the Kongsberg baptism the
 objective asks for. The death-route rule fires only "when no baptism can be
 expected", which does not hold for r3d, and Step 4 item 7 still puts the
-objective's target first. Watch r3d's ordering on every run after this change.
+objective's target first. The same-day run of the unchanged skill ordered it the
+same way, so the death route is not the cause. Its xfail marker was removed
+under rule 10 (`check_runlogs.py`: a PR touching a skill retires that skill's
+xfail markers); whether r3d stays, or is deleted until the sequencing
+precondition restores it as that work's acceptance test, is the lead's call.
 
 ## 4. What `references/` holds
 

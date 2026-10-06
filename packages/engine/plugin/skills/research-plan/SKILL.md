@@ -239,8 +239,11 @@ type you will plan from memory.
 - **A male subject of a parentage question, born in continental Europe
   or Scandinavia** → `{Country}_Military_Records`. REQUIRED. Not for a
   subject born in the British Isles or the Americas.
-- **The subject carries a compound (two-surname) or patronymic surname** →
-  `{Country}_Naming_Customs`. REQUIRED.
+- **The subject carries a compound (two-surname) surname, or the second
+  element of their name is their father's given name** →
+  `{Country}_Naming_Customs`. REQUIRED. Judge by whether that element
+  recurs as a given name in the family, not by a `-sen`, `-son` or
+  `-dóttir` ending: many patronymic systems carry no suffix.
 
 On `No wiki page found`, an error, or an empty page, say so in the
 affected item's `rationale` and plan from the `localities` entry; do not
