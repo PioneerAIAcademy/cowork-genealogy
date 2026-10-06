@@ -1,7 +1,7 @@
 # Research as a job — phase 2 status log
 
 **Branch:** `research-as-a-job-phase2` (pushed to origin; **no PR yet, by instruction**).
-**Last updated:** 2026-09-29 (R1 + R4 built, feed captured; only the stall item is left). Update this file whenever the branch moves.
+**Last updated:** 2026-10-06. The 2026-09-29 entry said the acceptance was blocked on Cia-3's #2793/#2927; **both closed 2026-10-03**, so that block is gone. R2's measurement is now waiting on #3119 instead, and its MECHANISM has changed. Update this file whenever the branch moves.
 
 This is a status log, not a plan. The plan is
 [`docs/plan/research-as-a-job-phase2.md`](./plan/research-as-a-job-phase2.md); the parent
@@ -9,9 +9,10 @@ is [`docs/plan/research-as-a-job-later-REVISED.md`](./plan/research-as-a-job-lat
 
 ## Where we are in one line
 
-*Before phase 2* is built and its acceptance is met except the three-run measurement, which
-is blocked on someone else. **Phase 2 is built.** Every parent item is done or deferred by design, and the only thing
-left is the acceptance measurement, which is not ours.
+*Before phase 2* is built and its acceptance is met except R2's activation measurement.
+**Phase 2 is built.** Every parent item is done or deferred by design. The measurement is
+still the only thing left, but what blocks it has changed: #2793/#2927 closed on 2026-10-03,
+and it now waits on #3119 restoring the activation tests it measures.
 
 ## Before phase 2 — built
 
@@ -52,8 +53,40 @@ apart.
 
 ## What is left, and who owns it
 
-1. **The three-run acceptance** — blocked on #2793/#2927, **Cia-3's**. R2 wants three
-   consecutive runs and R3 says #2927 must be fixed first or the measurement means nothing.
+1. **R2's activation measurement** — no longer blocked by Cia-3. #2793 and #2927 both closed
+   2026-10-03 (#3092), so R3's precondition is satisfied. It now waits on **#3119**
+   (chrisedeson, open): the #2927 activation tests R2 measures were DELETED, and that issue
+   restores them. Its `Touches:` names `eval/tests/unit/research/` and a fresh run log, which
+   is the same snapshot this measurement reads, so the two should land together rather than
+   buy the slot twice.
+
+   **The bar still applies; the mechanism does not.** R2 says "3/3, not one run" because
+   #2927 measured the trigger as a coin flip and one PASS of a coin flip proves nothing. That
+   concern is intact. But "three consecutive all-green SUITE runs" was retired
+   (`eval/CLAUDE.md` § "Clearing a card") after zero-red suites measured 8 of 54, so one
+   unrelated flapper blocked cards that had fixed every red they named. The modern form of
+   the same idea is `run_tests.py --test <id> --runs-per-test 3`, requiring `flaky: false`,
+   then ONE committed suite run. It is the same three draws at roughly a sixth of the spend,
+   and it reports `flaky` per test, which three suite runs never did. Measured today on
+   PR #3077: the scratch settled two ambiguous tests at ~$0.50 each where suite laps at ~$3
+   had settled nothing in three attempts.
+
+   One trigger test survives today and is not enough on its own: `ut_research_005`, tagged
+   `grade:trigger`, passed in `research/v8.json` — on a single run.
+
+## What changed under this branch while it sat
+
+Re-verify before trusting the "built" rows above: `#3140` moved tree building into
+`project_create` and rewrote `init-project/SKILL.md`; `#3092` converted project-status from a
+skill to an agent; `#3187` landed the bounded/job router decision, taught BOTH hosted planes
+the `delivered` signal, and forced delegations to the foreground; `#3077` changed
+`person-read-driscoll-attached-sources.json`, which `research/v8.json` embeds — so the
+research suite owes a re-run (warn-only today).
+
+Harness change worth knowing here: the negative-routing short-circuit now resolves an AGENT
+spawn, not only a `Skill` call. Before that, a negative test whose callee had been converted
+to an agent could never resolve — which is how `ut_init_project_009` broke silently for three
+days after project-status converted.
 
 ## What we found (each measured, none assumed)
 
