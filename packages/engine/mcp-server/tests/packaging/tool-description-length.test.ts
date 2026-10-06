@@ -152,7 +152,35 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  * The BEFORE pair (15,509 / 3,745) is a property of `origin/main` and cannot drift.
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
-  ["record_search", 14947],
+  // 14947 -> 16605: the tool-level description gained the event-family, date-
+  // granularity and place-expansion rules when issue #2123 deleted
+  // search-records/references/place-date-mechanics.md, which was the only place
+  // that stated them and which no agent can read. Stated once at tool level
+  // rather than per parameter, exactly as the CEILING rule below requires.
+  // 16605 -> 16819: the place clause first carried the deleted file's NOMINAL
+  // "within 3 jurisdiction levels" figure, which that same file's measured
+  // section contradicts ("far broader than '3 levels' suggests"); it now states
+  // the measured behaviour instead. Measured independently (2455 tool-level +
+  // 14364 params), not copied from the failure message.
+  // 16819 -> 17042: the DATES clause stopped recommending options the tool does
+  // not expose. It had said to send a range "rather than relying on a single
+  // year" when every `*YearFrom` must already be sent with its `*YearTo`, and
+  // that a day or month is "accepted and discarded" when neither can be sent at
+  // all; it now names the five `*YearExact` parameters, which are the actual
+  // single-year mechanism. `recordSubdivision` also stopped misstating which
+  // place question the spec leaves open: county -> state, not subdivision ->
+  // country (record-search-tool-spec-v2.md line 1511).
+  // 17042 -> 17082: the DATES clause had then recommended `*YearExact` INSTEAD
+  // of a range, which is incoherent -- it is a boolean that narrows a range to
+  // indexed dates inside it, so sent alone it pins nothing. It now says to send
+  // `*YearFrom` = `*YearTo` together with `*YearExact: true`. The same edit
+  // dropped the unsourced "fuzzes outward ~2 years / ~5 for any and residence"
+  // figure, which `measured-figures.json` does not carry and which contradicts
+  // the estimate-overlap mechanism stated in `birthYearExact`'s own description
+  // and in the spec's `<event>Year` row -- the same defect as the retired
+  // "3 jurisdiction levels". Measured independently (2695 tool-level + 14387
+  // params), not copied from the failure message.
+  ["record_search", 17082],
   // 5292 -> 5302: the tool-level description gained "siblings, " when the
   // sibling fan-out landed (#2593). 5302 -> 5281: it lost " with relatives:
   // true" when person_read started ignoring that flag (#2696). Measured

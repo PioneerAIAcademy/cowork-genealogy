@@ -11,13 +11,13 @@
 > `conflicts[]` says about a disputed field); the tool does only the
 > string-templating.
 
-A pure, offline tool that builds a pre-filled search URL for one of fifteen
+An offline tool that builds a pre-filled search URL for one of seventeen
 supported external genealogy sites from structured search attributes, either
 as a fresh site-wide search or by appending parameters onto a FamilySearch-
-curated collection link.
+curated collection link. Given a `projectPath` it also logs the hand-off (§6).
 
 ```
-build_external_search_url({ site, baseUrl?, locale?, attributes }) -> { ok: true, url, notes, access } | { ok: false, reason, errors, supportedSites? }
+build_external_search_url({ site, baseUrl?, locale?, attributes }) -> { ok: true, url, notes, access, logId? } | { ok: false, reason, errors, supportedSites? }
 ```
 
 ---
@@ -72,9 +72,9 @@ Facts still verifiable in the current tree, cited at their current location:
 | Fact | Source |
 |------|--------|
 | `conflicts[]` c_001 rejects Pennsylvania in favor of Ireland | `eval/fixtures/scenarios/mid-research-flynn/research.json` |
-| The "check `conflicts[]` before encoding" rule | `SKILL.md:314-333` |
-| The two worked examples now encoding Ireland | `SKILL.md:264`, `:278` |
-| `digital_newspaper_archive` is an open bucket identified by `url_generated`, not a fixed per-state URL | `docs/specs/schemas/enums.schema.json:177-178`, `docs/specs/research-schema-spec.md:452` |
+| The "check `conflicts[]` before encoding" rule | `packages/engine/plugin/skills/search-external-sites/SKILL.md` §"3. Build the URL" |
+| The two worked examples now encoding Ireland | `packages/engine/plugin/skills/search-external-sites/SKILL.md` §"3. Build the URL" (Case A and Case B) |
+| `digital_newspaper_archive` is an open bucket identified by `url_generated`, not a fixed per-state URL | `docs/specs/schemas/enums.schema.json` (`$defs.external_site`), [`research-schema-spec.md` §5.4 `log`](research-schema-spec.md#54-log) |
 | `convert_calendar` — the architectural precedent for a pure, no-network, no-project-files tool | `packages/engine/mcp-server/src/tools/convert-calendar.ts` |
 | `research-log-append.ts` derives its MCP schema enum from `VALIDATOR_ENUMS`; this tool deliberately does **not** (§8) — `SUPPORTED_SITES` is the keys of its own `SITE_BASE_URL`, since the shared enum also names `familysearch_web`, which the tool has no template for | `packages/engine/mcp-server/src/tools/research-log-append.ts`, `EXTERNAL_SITE_VALUES` |
 
@@ -158,6 +158,9 @@ build_external_search_url({
 | { ok: false, reason: "invalid_base_url", errors: string[] }
 | { ok: false, reason: "outside_coverage", errors: string[] }
 | { ok: false, reason: "no_attributes", errors: string[] }
+// MCP tool only (buildExternalSearchUrlTool, §6): the build above, plus
+| { ok: true, url, notes, access, logId?: string }   // logId when projectPath was given
+| { ok: false, reason: "log_write_failed", errors: string[] }
 ```
 
 `notes` carries non-fatal observations the caller should narrate:
@@ -191,8 +194,12 @@ build_external_search_url({
   photographed evidence outweighs contributor-entered text),
   `chronicling_america` (page coverage runs 1798–1963, title-by-title and
   complete for no state, so a nil never means no newspaper covered the
-  event), and `digital_newspaper_archive` (the URL carries no date filter —
-  the user sets the range in the site's own UI).
+  event), `digital_newspaper_archive` (the URL carries no date filter —
+  the user sets the range in the site's own UI), and the two browse sites
+  `archion` and `matricula` (the path through the site — parish → register
+  type → volume → image — and, for Archion, that viewing needs a pass; §3.11).
+- **A browse site called without `baseUrl`** returns the site root with a note
+  asking for the parish page (§3.11).
 
 `access` classifies the target site's own barrier to entry — `"free"` (no
 barrier), `"free_bot_protected"` (free, but bot protection blocks an
@@ -274,14 +281,22 @@ produce byte-identical output. An `http:` link is accepted with a note that
 the desktop viewer does not open it. All of this reads only the call's own
 arguments; the tool still fetches nothing (§9).
 
+**For the two browse sites, `baseUrl` is the parish page and is returned
+unchanged.** Decided by the lead 2026-09-29: Archion and
+Matricula take the parish URL from the caller's `baseUrl`, not from a
+`standardPlace` lookup. It beat a tool-side place-to-parish table because the
+FamilySearch Wiki pages the agent already reads carry Archion and Matricula
+parish links, while nothing in the repo sources such a table and the tool has
+no `standardPlace` input. The full behaviour is in §3.11.
+
 ### 3.3 `digital_newspaper_archive` requires `baseUrl`
 
-Unlike the other fourteen sites, `digital_newspaper_archive` has no fixed
+Unlike the other sixteen sites, `digital_newspaper_archive` has no fixed
 site-wide URL — it is an open bucket for whichever state/regional free
 archive applies to the place being researched (Utah Digital Newspapers,
 California Digital Newspaper Collection, …), and "which one is identified by
 `url_generated`, not by a per-state enum value"
-(`research-schema-spec.md:452`). A single hard-coded URL would be wrong for
+([`research-schema-spec.md` §5.4 `log`](research-schema-spec.md#54-log)). A single hard-coded URL would be wrong for
 every place but the one it names. So for this site, `baseUrl` — the specific
 archive's own search endpoint, from `locality-guide` output or a curated
 link — is **required** (`{ ok: false, reason: "base_url_required" }` without
@@ -416,6 +431,46 @@ follows the same one-edit-site path any other parameter correction does
 
 ---
 
+### 3.11 Browse sites: `archion` and `matricula`
+
+German church books are not name-indexed on these two sites. A researcher
+reaches a record by browsing: parish → register type (baptisms, marriages,
+burials, family registers) → the volume covering the year → the image. So
+neither site has a search-URL template, and the tool treats both as **browse
+sites**:
+
+- `siteWideParams` returns `{}` and reads no attribute, so any attribute
+  supplied is reported as unused (§3.1) and nothing is appended.
+- A browse site is exempt from `no_attributes`: a call with `attributes: {}`
+  is the normal case, not an empty search.
+- With `baseUrl` — the parish page, or a register's viewer URL, taken from
+  the wiki or the locality guide — the URL comes back unchanged apart from
+  the `sid` strip every site gets (§3.2). Archion's viewer `cHash` survives.
+  Any path on the site's host is accepted: the live parish page is
+  `/de/alle-archive/<state>/<archive>/<deanery>/<parish>`, the viewer is
+  `/en/viewer/churchRegister/<id>?cHash=…`, and the issue quotes wiki links
+  of the form `/de/browse/?path=…`; the tool does not pattern-match any one
+  of them.
+- Without `baseUrl`, the site root (`https://www.archion.de/de/`,
+  `https://data.matricula-online.eu/de/`) and a note asking for the parish
+  page.
+- A standing note carries the browse path, so the caller relays exactly what
+  to open rather than bare directions — the shape two alpha-feedback reports
+  of 2026-09-22 and 2026-09-23 showed (the agent named "Archion → Baiersbronn → Familienbücher →
+  Band II" with no link).
+- `access`: `archion` is `subscription` (viewing the scans needs a paid
+  pass); `matricula` is `free` — measured 2026-10-01: a parish page and the
+  root both return HTTP 200 with no `cf-mitigated` header, with and without a
+  user agent. Measured from one network vantage.
+
+The tests build from two real pages fetched 2026-10-01: Baiersbronn's
+Archion parish page (Dekanat Freudenstadt, 34 registers) plus a Baiersbronn
+register in the viewer, and Aicha vorm Wald, a Catholic parish of the
+diocese of Passau, on Matricula. Nothing proves that a returned URL opens
+the right parish; the URL is the caller's own.
+
+---
+
 ## 4. Per-site parameter tables (the ported prose)
 
 Each site's table below is a straight port of the site-wide templates this
@@ -440,6 +495,8 @@ here — this section documents the same mapping the implementation embeds.
 | `library_archives_canada` | `https://recherche-collection-search.bac-lac.gc.ca/eng/Home/Result` | `DataSource=Genealogy\|Census`, `ST=SCTB` (required by the search form's own client JS to select the census/genealogy dataset before the results redirect) | `FirstName`, `LastName`, `YearOfBirth` (`birthYear`). Deliberately omits `ProvinceCode`/`GenderCode`/`MaritalStatusCode` — coded `<select>` values with no verified string mapping, and no death data exists in a census (it records the living population at census time) |
 | `american_ancestors` | `https://app.americanancestors.org/SearchResults/AdvancedSearch` | — | `Keywords` (`givenName`+`surname`+`keywords`, space-joined — **not** `Name.First`/`Name.Last`, confirmed non-binding via round-trip GET reflection testing), `Location` (`birthPlace`, falling back to `deathPlace`), `FromYear`/`ToYear` (both set to `birthYear`) |
 | `italian_genealogy` | `https://www.italiangenealogy.com/forum/search` | `terms=all`, `sf=all`, `sr=posts` (the exact fields present on the one confirmed-working search URL — omitting them was not tested) | `keywords` (`givenName`+`surname`+`keywords`, space-joined). A phpBB forum, not a records database — no structured name/date/place fields exist anywhere on the site |
+| `archion` | `https://www.archion.de/de/` (the site root, returned only without `baseUrl`) | — | none — **browse, not search** (§3.11): the caller's parish `baseUrl` is returned unchanged |
+| `matricula` | `https://data.matricula-online.eu/de/` (likewise) | — | none — **browse, not search** (§3.11) |
 
 **Why `keywordsplace` defaults to `birthPlace` and `eventyear` is generic.**
 FindMyPast's template pairs `yearofbirth`/`yearofbirth_offset` with
@@ -476,8 +533,8 @@ The static `access` value each site returns (§3.1). `digital_newspaper_archive`
 returns the class value state archives carry generally, `"free_bot_protected"`,
 for whichever archive `baseUrl` names — **not verified per archive** — and
 refuses a `baseUrl` on another supported site's own domain (`invalid_base_url`
-naming that site, §3.2). That refusal covers the other fourteen sites and
-nothing else: a **subscription archive outside** the fifteen still receives the
+naming that site, §3.2). That refusal covers the other sixteen sites and
+nothing else: a **subscription archive outside** the seventeen still receives the
 class default, measured 2026-09-15 returning `free_bot_protected` for
 genealogybank.com, newspaperarchive.com, newsbank.com and
 britishnewspaperarchive.co.uk. This matters because `SKILL.md` instructs the
@@ -490,9 +547,9 @@ round 5).
 
 | Site | `access` |
 |------|----------|
-| `ancestry`, `myheritage`, `findmypast`, `newspapers` | `subscription` |
+| `ancestry`, `myheritage`, `findmypast`, `newspapers`, `archion` | `subscription` |
 | `chronicling_america`, `digital_newspaper_archive`, `library_archives_canada` | `free_bot_protected` |
-| `findagrave`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `american_ancestors`, `italian_genealogy` | `free` |
+| `findagrave`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `american_ancestors`, `italian_genealogy`, `matricula` | `free` |
 
 `library_archives_canada` moved into `free_bot_protected` on 2026-09-15: the
 collection-search host answers HTTP 403 with `cf-mitigated: challenge` and a
@@ -531,15 +588,38 @@ network vantage; a second vantage would settle it.
 | FindMyPast call with name/place but no `birthYear`/`eventYear` | succeeds; `notes` flags the search as unscoped by year |
 | A supplied attribute the target site doesn't read (e.g. `keywords` on `ancestry`) | succeeds; `notes` flags the attribute as unused |
 | Any relative-name field given with only given-name or only surname (e.g. `fatherGivenName` but no `fatherSurname`) | the joined value uses whichever half is present — not an error |
+| `archion`/`matricula` with `attributes: {}` | succeeds — a browse site appends nothing, so it is exempt from `no_attributes` (§3.11) |
+| `archion`/`matricula` with no `baseUrl` | succeeds with the site root; `notes` asks for the parish page |
+| MCP tool, `projectPath` given, folder holds neither project file | succeeds with the URL and no `logId`; the log tool's no-project sentence rides in `notes` — a standalone search outside a project still gets its link |
+| MCP tool, `projectPath` given, the log write refused (a `planItemId` that is not a `pli_` id, a missing folder, half a project) | `{ ok: false, reason: "log_write_failed", errors }` with the log tool's own errors and **no URL**: a hand-off nobody logged is the failure §6 exists to remove |
+| MCP tool, `planItemId` given without `projectPath` | succeeds; nothing is logged and `notes` says `planItemId` had no effect |
 
 ---
 
 ## 6. Non-goals / persistence
 
-- **Writes nothing.** Like `convert_calendar`, output-only — no
-  `research.json` or `tree.gedcomx.json` access. The skill still owns
-  writing the `external_site` log entry (SKILL.md `:378-392`); the tool
-  returns only the URL string.
+- **Writes one log entry, and only when given a `projectPath`.** Decided by
+  the lead 2026-09-30, after an alpha-feedback session re-raised one Fold3
+  petition seven times over eight turns. The URL build itself
+  (`buildExternalSearchUrl`) stays pure and synchronous. The MCP tool
+  (`buildExternalSearchUrlTool`) builds the URL and then, given a
+  `projectPath` and an optional `planItemId`, appends the in-flight
+  hand-off: `tool: "external_site"`, `outcome: "partial"`,
+  `results_examined: 0`, `capture_received: false`, `url_generated` = the
+  returned URL, `query` = the call's attributes (flat, the shape the skill
+  wrote by hand), with `baseUrl`/`locale` in `notes`. It calls
+  `researchLogAppend` itself, not a copy, and returns the assigned `logId`.
+  `project_context` lists every such entry still open as `awaitingUser`
+  (`project-context-tool-spec.md` §2.3). The log write's warnings and its
+  nil-escalation note are merged into `notes`. Writes nothing to
+  `tree.gedcomx.json`.
+- **`projectPath` and `planItemId` are not advertised yet.** The function
+  accepts them; the skill-to-agent conversion adds them to the MCP `inputSchema`
+  in the same change that deletes the skill's own step-4
+  `research_log_append` call. Advertised earlier, a model following the
+  skill's habit of passing `projectPath` everywhere would log each URL
+  twice. Until then the write path is reachable only from the tests and the
+  eval harness.
 - **Does not decide which event a search targets, or resolve `conflicts[]`.**
   Those are the skill's judgments (SKILL.md `:314-333`) — the tool receives
   already-decided attribute values and templates them.
@@ -555,7 +635,7 @@ network vantage; a second vantage would settle it.
 
 ## 7. Test plan (vitest)
 
-- **One passing case per site** — the fifteen rows in §4, each producing the
+- **One passing case per site** — the seventeen rows in §4, each producing the
   documented parameter names with the correct join/encoding.
 - **Chronicling America's corrections** — `dates=YYYY/YYYY` (never
   `start_date`/`end_date`), and `q` (never `qs`).
@@ -577,8 +657,22 @@ network vantage; a second vantage would settle it.
   `base_url_required`; with it, only `q=<given>+<surname>[+<keywords>]` is
   appended, and a facet/date parameter is never invented even if
   `attributes` supplies `searchStartYear`/`usState`.
-- **Unsupported site** — `supportedSites` names exactly the fifteen supported
+- **Unsupported site** — `supportedSites` names exactly the seventeen supported
   sites.
+- **Browse sites** — the Baiersbronn Archion parish page and a Baiersbronn
+  viewer URL (`cHash` kept) come back unchanged with `access: "subscription"`
+  and the browse-path note; a Matricula Catholic parish page comes back
+  unchanged with `access: "free"`; no `baseUrl` gives the site root and the
+  no-parish note; supplied attributes are noted unused; a `baseUrl` on the
+  other site's host (or ancestry.com) is `invalid_base_url`; a search site
+  with `attributes: {}` is still `no_attributes`.
+- **The hand-off write** — with `projectPath`, exactly one `partial`
+  `external_site` entry whose id is the returned `logId` and whose
+  `url_generated` is the returned URL; without it, no write and no `logId`;
+  a failed build writes nothing; a bad `planItemId` is `log_write_failed`
+  with the log untouched. `tests/tools/no-project.test.ts` carries the three
+  path states: no project (URL, no `logId`), a missing folder and half a
+  project (loud).
 - **`no_attributes`** — a site with every one of its own parameters absent
   (or present only as empty strings) is rejected rather than returning a
   bare site URL.
@@ -601,11 +695,16 @@ network vantage; a second vantage would settle it.
 
 Standard MCP tool: implementation in
 `src/tools/build-external-search-url.ts`, schema added to `allToolSchemas` in
-`src/tool-schemas.ts`, dispatch in `src/index.ts`, name in `manifest.json`'s
-`tools` array, `README.md` tool table row (and its tool-count line — 49).
-Signals its one failure mode by returning `ok: false`, so it is listed in
-`tool-result.ts`'s `OK_FALSE_IS_FAILURE`. camelCase at the boundary; no
-persisted output so no snake_case rename applies.
+`src/tool-schemas.ts`, dispatch in `src/server.ts` (to
+`buildExternalSearchUrlTool`), name in `manifest.json`'s `tools` array,
+`README.md` tool table row (and its tool-count line). Signals its failure modes
+by returning `ok: false`, so it is listed in `tool-result.ts`'s
+`OK_FALSE_IS_FAILURE` — and, since it writes the hand-off log entry (§6), not
+in `NOT_A_DOCUMENT_WRITER`. It is a `writerTools` entry on the `log` row of
+`docs/specs/schemas/ownership.json`; its one plugin holder,
+`skill:search-external-sites`, is that row's caller. camelCase at the
+boundary; the log entry it writes goes through `researchLogAppend`, which owns
+the snake_case rename.
 
 `SUPPORTED_SITES` (and the `site` enum in the MCP schema) is **derived from
 `Object.keys(SITE_BASE_URL)`** (plus `digital_newspaper_archive`, handled
@@ -632,7 +731,13 @@ Eval harness: registered as a `LIVE_TOOL` in `mock_mcp.py` (calling the
 compiled `build/**` output directly, same as `convert_calendar`) rather than
 fixture-mocked — a canned fixture would supply the exact URL string the eval
 exists to measure. `check_tool_coverage.py`'s `EXEMPT_TOOLS` carries the same
-justification `convert_calendar` does.
+justification `convert_calendar` does. The harness rebases a `projectPath` the
+agent sent onto the workspace and never adds one (`_OPTIONAL_PROJECT_PATH_TOOLS`
+in `mock_mcp.py`): production does not supply it on the model's behalf, and an
+injected one would write a hand-off entry the agent never asked for. `replay.py`
+models a call that carried `projectPath` and returned a `logId` as that one log
+append, and the universal hand-edit detector counts the tool as a writer only
+then.
 
 ---
 

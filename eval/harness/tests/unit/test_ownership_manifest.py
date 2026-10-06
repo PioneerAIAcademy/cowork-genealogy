@@ -86,7 +86,14 @@ NEWLY_ENFORCED = {"localities"}
 #: text, and the batches that write a summary and its resolve together all name
 #: `proof-conclusion`. A widening cannot newly fail a test; the matching skill
 #: body edit is a separate, eval-gated change.
-WIDENED: dict[str, set[str]] = {"questions": {"proof-conclusion"}}
+WIDENED: dict[str, set[str]] = {
+    "questions": {"proof-conclusion"},
+    #: `log` gains `survey-surname`. The agent calls `research_log_append` to log
+    #: each census-year search page. The `agent:survey-surname` caller was added to
+    #: ownership.json's `callers` so the ownership validator resolves it when the
+    #: agent is the suite subject.
+    "log": {"survey-surname"},
+}
 
 #: `assertions` loses `convert-dates`. The grant was dead on arrival: the skill's
 #: only tool is `convert_calendar`, it holds no writer tool, and its own body
@@ -229,6 +236,26 @@ def test_the_only_newly_enforced_section_is_localities():
     after = set(_union_writer_sets(RESEARCH_JSON))
     assert after - before == NEWLY_ENFORCED
     assert before - after == set()
+
+
+@pytest.mark.parametrize(
+    "agent, sections",
+    [
+        ("person-evidence", {"person_evidence"}),
+        ("question-selection", {"questions"}),
+    ],
+)
+def test_a_converted_agent_still_owns_its_sections_as_subject(agent, sections):
+    """An agent `NARROWED` hides from citation's vantage point keeps its writes.
+
+    `NARROWED` records a writer vanishing from one fixed perspective. That is only
+    harmless if the writer still resolves from its own — otherwise the entry is a
+    real drop wearing a comment, and the suite under test fails ownership on every
+    positive test it runs.
+    """
+    actual = writer_sets(RESEARCH_JSON, UNIT_PLANE, subject=agent)
+    for section in sections:
+        assert agent in actual.get(section, set()), section
 
 
 def test_no_owner_was_dropped_except_the_declared_one():

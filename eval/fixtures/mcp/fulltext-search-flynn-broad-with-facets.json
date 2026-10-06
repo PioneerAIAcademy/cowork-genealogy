@@ -1,0 +1,175 @@
+{
+  "tool": "fulltext_search",
+  "description": "Broad full-text search for Flynn returning a large result set (847 total) plus a facets array showing collection breakdowns. Used in the too-many-results-boosting test to verify the skill narrows via includeFacets or boost terms rather than reporting all 847 results unfiltered.",
+  "args": { "keywords": "~Flynn" },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "keywords": {
+        "type": "string",
+        "description": "Full-text search query with Lucene operators. Use + to require a term, - to exclude, \"...\" for phrase, * for wildcard (min 3 chars). Default is OR — always use + for required terms."
+      },
+      "name": {
+        "type": "string",
+        "description": "Search within name fields only. Same operator syntax as keywords."
+      },
+      "place": {
+        "type": "string",
+        "description": "Search within place fields. Note: place matches collection metadata and can cause false positives. Prefer post-filtering."
+      },
+      "nlQuery": {
+        "type": "string",
+        "description": "Natural language search query or a FamilySearch tree person ID."
+      },
+      "collectionId": {
+        "type": "string",
+        "description": "Filter to a specific FamilySearch collection by ID."
+      },
+      "imageGroupNumber": {
+        "type": "string",
+        "description": "Filter to a specific digitized volume by Image Group Number."
+      },
+      "yearFrom": {
+        "type": "number",
+        "description": "Start of year range filter. Must be paired with yearTo."
+      },
+      "yearTo": {
+        "type": "number",
+        "description": "End of year range filter. Must be paired with yearFrom."
+      },
+      "recordType": {
+        "type": "string",
+        "description": "Filter by record type."
+      },
+      "recordPlace0": {
+        "type": "string",
+        "description": "Filter by region."
+      },
+      "recordPlace1": {
+        "type": "string",
+        "description": "Filter by country (or state within US/Mexico/Canada/UK)."
+      },
+      "recordPlace2": {
+        "type": "string",
+        "description": "Filter by county."
+      },
+      "recordPlace3": {
+        "type": "string",
+        "description": "Filter by city."
+      },
+      "count": {
+        "type": "number",
+        "description": "Number of results to return. Default 5, max 100."
+      },
+      "offset": {
+        "type": "number",
+        "description": "Pagination offset. Default 0."
+      },
+      "includeFacets": {
+        "type": "boolean",
+        "description": "When true, include facet counts in the response. Default false."
+      },
+      "projectPath": {
+        "type": "string",
+        "description": "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle to pass to research_log_append as stagedResultsRef, so the results are retained without re-serializing them. Only omit it for a throwaway exploratory search you are certain you will not log."
+      }
+    }
+  },
+  "response": {
+    "query": { "keywords": "+Flynn" },
+    "totalResults": 847,
+    "returned": 5,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:QV9N-YS37",
+        "collectionId": "2220359",
+        "collectionTitle": "Pennsylvania Land Records",
+        "title": "Deed of Conveyance — James Brennan to Michael Dougherty",
+        "recordDate": "1878",
+        "recordType": "Land",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "Signed sealed and delivered in the presence of Thomas Flynn and Patrick Flynn both of Branch Township Schuylkill County as witnesses to the deed of conveyance this fifteenth day of March in the year of our Lord one thousand eight hundred and seventy eight.",
+        "names": ["James Brennan", "Michael Dougherty", "Thomas Flynn", "Patrick Flynn"],
+        "places": ["Branch Township", "Schuylkill County", "Pennsylvania"],
+        "dates": ["1878"],
+        "highlightTerms": ["Flynn"]
+      },
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:QV9N-KX84",
+        "collectionId": "2220359",
+        "collectionTitle": "Pennsylvania Land Records",
+        "title": "Mortgage — Patrick Flynn to First National Bank",
+        "recordDate": "1880",
+        "recordType": "Land",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "Patrick Flynn of Branch Township Schuylkill County mortgagee grants unto the First National Bank of Pottsville the following described property ...",
+        "names": ["Patrick Flynn"],
+        "places": ["Branch Township", "Schuylkill County"],
+        "dates": ["1880"],
+        "highlightTerms": ["Flynn"]
+      },
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:QV9N-KX85",
+        "collectionId": "2220359",
+        "collectionTitle": "Pennsylvania Land Records",
+        "title": "Deed — Mary Flynn to Bridget Sullivan",
+        "recordDate": "1882",
+        "recordType": "Land",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "Mary Flynn widow of Branch Township in consideration of natural love and affection doth grant unto Bridget Sullivan her daughter the parcel of land ...",
+        "names": ["Mary Flynn", "Bridget Sullivan"],
+        "places": ["Branch Township", "Schuylkill County"],
+        "dates": ["1882"],
+        "highlightTerms": ["Flynn"]
+      },
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:QV9N-KX86",
+        "collectionId": "2017696",
+        "collectionTitle": "Pennsylvania, Wills and Probate Records, 1683-1993",
+        "title": "Will of James Flynn",
+        "recordDate": "1876",
+        "recordType": "Probate",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "I James Flynn of the Township of Branch being of sound mind do make this my last will and testament ...",
+        "names": ["James Flynn"],
+        "places": ["Branch Township", "Schuylkill County"],
+        "dates": ["1876"],
+        "highlightTerms": ["Flynn"]
+      },
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:QV9N-KX87",
+        "collectionId": "2220359",
+        "collectionTitle": "Pennsylvania Land Records",
+        "title": "Sheriff Deed — County of Schuylkill to Michael Flynn",
+        "recordDate": "1877",
+        "recordType": "Land",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "County of Schuylkill by the Sheriff to Michael Flynn following judgment on foreclosure ...",
+        "names": ["Michael Flynn"],
+        "places": ["Schuylkill County", "Pennsylvania"],
+        "dates": ["1877"],
+        "highlightTerms": ["Flynn"]
+      }
+    ],
+    "facets": [
+      {
+        "name": "collectionId",
+        "count": 2,
+        "items": [
+          {
+            "name": "Pennsylvania Land Records",
+            "count": 623,
+            "filterParam": "2220359"
+          },
+          {
+            "name": "Pennsylvania, Wills and Probate Records, 1683-1993",
+            "count": 224,
+            "filterParam": "2017696"
+          }
+        ]
+      }
+    ]
+  }
+}

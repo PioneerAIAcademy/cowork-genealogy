@@ -13,10 +13,14 @@ imports ``enqueue`` as a top-level module because that is how the container lays
 
 from __future__ import annotations
 
+import asyncio
 import json
 import re
+import socket
 import sys
 import pathlib
+import threading
+import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -87,6 +91,9 @@ class FakeStore:
         # 1b/1c: held messages, and the sessions the patron pressed Stop on.
         self.queued: list[Turn] = []
         self.stopped: set[str] = set()
+        # U23: turns a worker has received (a put-back must leave them running), and put-backs.
+        self.received: set[str] = set()
+        self.put_back: list[str] = []
 
     def seed_session(
         self, session_id: str = "sess_1", project_id: str = "proj_1", owner: str | None = USER_A.id
@@ -149,6 +156,16 @@ class FakeStore:
     async def documents(self, project_id: str) -> dict[str, tuple[int, Any]]:
         return dict(self.docs.get(project_id, {}))
 
+    async def admit_message(self, session: SessionRow, text: str) -> tuple[Turn, bool, dict | None]:
+        """PgStore.admit_message's sequence over the fake's own steps (U23 D7: an older held
+        message holds this one too), so a test can still patch a step to open a window.
+        The lock it holds is test_proto_queue_pg.py's to prove."""
+        sid = session.session_id
+        held = await self.turn_active(sid) or await self.has_queued(sid)
+        turn = await self.begin_turn(session, text, queued=held)
+        rescued = None if not held or await self.turn_active(sid) else await self.claim_queued_turn(sid)
+        return turn, held, rescued
+
     async def begin_turn(self, session: SessionRow, text: str, *, queued: bool = False) -> Turn:
         turn_id = str(uuid.uuid4())
         seq = self.add_event(session.session_id, "user_msg", {"text": text, "turn_id": turn_id})
@@ -166,6 +183,15 @@ class FakeStore:
 
     async def fail_turn(self, turn_id: str, reason: str) -> None:
         self.failed.append((turn_id, reason))
+        self.queued = [t for t in self.queued if t.turn_id != turn_id]  # closed: no longer held
+
+    async def put_back_held(self, turn_id: str) -> bool:
+        turn = next((t for t in self.turns if t.turn_id == turn_id), None)
+        if turn is None or turn in self.queued or turn_id in self.received:
+            return False
+        self.queued.insert(0, turn)
+        self.put_back.append(turn_id)
+        return True
 
     async def events_after(self, session_id: str, after: int, limit: int) -> list[EventRow]:
         return [r for r in self.events.get(session_id, []) if r.seq > after][:limit]
@@ -428,7 +454,7 @@ async def test_a_message_typed_while_a_turn_runs_is_held_not_enqueued():
 async def test_a_held_turn_does_not_itself_count_as_an_active_turn():
     """The latch bug this design has to avoid: a held row has completed_at NULL too, so a
     turn_active that did not exclude it would hold every later message behind a turn that
-    is not running."""
+    is not running. U23 D7: "three" now waits behind "two" -- but "two" goes out."""
     store, queue = FakeStore(), FakeQueue()
     row = store.seed_session()
     async with make_client(store, queue) as c:
@@ -436,8 +462,23 @@ async def test_a_held_turn_does_not_itself_count_as_an_active_turn():
         await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "two"})
         store.active.discard(row.session_id)  # the worker finished the running turn
         third = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "three"})
-    assert third.json()["queued"] is False, "with no turn running the next message goes straight out"
-    assert len(queue.sent) == 2
+    assert [b["text"] for b in queue.sent] == ["one", "two"], \
+        "with no turn running the held message goes out, not behind a turn that does not exist"
+    assert third.json()["queued"] is True and [t.body["text"] for t in store.queued] == ["three"]
+
+
+async def test_a_message_posted_while_an_older_one_waits_is_held_behind_it():
+    """U23 D7. The hold read only "is a turn running?", so a message posted while an older
+    one sat held with no turn running went straight out and overtook it, and the older one
+    then waited for a release that only the NEXT turn's end would bring."""
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session()
+    older = await store.begin_turn(row, "the 1881 census", queued=True)  # stranded: no turn runs
+    async with make_client(store, queue) as c:
+        r = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "and his will"})
+    assert r.json()["queued"] is True and r.json()["turn_id"] != older.turn_id
+    assert [b["text"] for b in queue.sent] == ["the 1881 census"], "oldest first"
+    assert [t.body["text"] for t in store.queued] == ["and his will"]
 
 
 async def test_the_stream_says_a_message_is_waiting_so_a_reload_still_shows_it():
@@ -619,30 +660,19 @@ async def test_the_rescue_claim_clears_the_stop_flag_too():
     flag for a held row. Without this the rescued turn halts at its first tool call with
     "Stopped by the researcher." -- the patron's words swallowed by a Stop they pressed
     before they typed them."""
-    conn = RecordingConn()
-    store = app.PgStore("postgresql://unused")
-
-    async def fake_connect():
-        return conn
-
-    store._connect = fake_connect  # type: ignore[method-assign]
-    assert await store.claim_queued_turn("sess_1") == {"turn_id": "t2"}  # RecordingConn answers
-    cleared = [sql for sql in conn.sql if "stop_requested_at = NULL" in sql]
-    assert cleared == [" ".join(app.CLEAR_STOP_SQL.split())], \
+    conn = await _admit(active=False, queued=True)
+    assert conn.result[2] == {"turn_id": "t2"}  # RecordingConn answers the claim
+    cleared = [i for i, sql in enumerate(conn.sql) if "stop_requested_at = NULL" in sql]
+    [claim] = [i for i, sql in enumerate(conn.sql) if "RETURNING message" in sql]
+    assert len(cleared) == 1 and cleared[0] > claim, \
         "a claimed message must resume a stopped session, exactly as the worker's does"
 
 
 async def test_a_rescue_that_finds_nothing_leaves_a_stop_alone():
     """The other direction: with nothing held there is nothing to enqueue, so a Stop the
     patron just pressed must stay exactly where it is."""
-    conn = RecordingConn(message=None)
-    store = app.PgStore("postgresql://unused")
-
-    async def fake_connect():
-        return conn
-
-    store._connect = fake_connect  # type: ignore[method-assign]
-    assert await store.claim_queued_turn("sess_1") is None
+    conn = await _admit(active=False, queued=True, message=None)
+    assert conn.result[2] is None and any("RETURNING message" in sql for sql in conn.sql)
     assert not [sql for sql in conn.sql if "stop_requested_at = NULL" in sql]
 
 
@@ -653,7 +683,7 @@ def test_the_rescue_claim_is_the_workers_own_statement():
     message can be enqueued twice and nothing else would notice."""
     import inspect
 
-    web = " ".join(inspect.getsource(app.PgStore.claim_queued_turn).split())
+    web = " ".join(inspect.getsource(app.PgStore._claim_held).split())
     worker_src = (
         pathlib.Path(__file__).resolve().parents[1] / "proto" / "worker" / "worker.py"
     ).read_text(encoding="utf-8")
@@ -695,10 +725,13 @@ class RecordingConn:
     — so the SQL the real store runs was only ever string-matched, and a fake that
     happened to mirror the wrong rule kept every test green. This runs the real method."""
 
-    def __init__(self, message: dict | None = {"turn_id": "t2"}) -> None:
+    def __init__(self, message: dict | None = {"turn_id": "t2"}, *, active: bool = True,
+                 queued: bool = True) -> None:
         self.sql: list[str] = []
         self.params: list[tuple] = []
         self.message = message  # what the 1b claim's RETURNING hands back
+        self.active, self.queued = active, queued  # TURN_ACTIVE_SQL's and HAS_QUEUED_SQL's answers
+        self.result: Any = None  # what the method under test returned (_admit)
 
     async def execute(self, sql, params=()):
         self.sql.append(" ".join(sql.split()))
@@ -710,22 +743,24 @@ class RecordingConn:
         # `queued`, turn_active reads `active`, request_stop only checks for a row.
         if "RETURNING message" in self.sql[-1]:  # the 1b claim
             return {"message": self.message} if self.message is not None else None
-        return {"seq": 1, "queued": True, "active": True, "stop_requested_at": "now"}
+        return {"seq": 1, "queued": self.queued, "active": self.active, "stop_requested_at": "now"}
 
     def transaction(self):
         conn = self
 
-        class _Tx:
-            async def __aenter__(self): return None
-            async def __aexit__(self, *exc): return False
+        class _Tx:  # the markers let a test see which statements ran inside it
+            async def __aenter__(self): conn.sql.append("<tx>"); conn.params.append(())
+            async def __aexit__(self, *exc): conn.sql.append("</tx>"); conn.params.append(()); return False
         return _Tx()
 
     async def __aenter__(self): return self
     async def __aexit__(self, *exc): return False
 
 
-async def _begin(queued: bool) -> RecordingConn:
-    conn = RecordingConn()
+async def _admit(*, active: bool, queued: bool, message: dict | None = {"turn_id": "t2"}) -> RecordingConn:
+    """The real ``PgStore.admit_message`` against a RecordingConn answering ``active`` and
+    ``queued``; its return value lands on ``conn.result``."""
+    conn = RecordingConn(message, active=active, queued=queued)
     store = app.PgStore("postgresql://unused")
 
     async def fake_connect():
@@ -734,8 +769,44 @@ async def _begin(queued: bool) -> RecordingConn:
     store._connect = fake_connect  # type: ignore[method-assign]
     row = SessionRow(session_id="sess_1", project_id="proj_1", title="t", model="m",
                      created_at=T0, updated_at=T0)
-    await store.begin_turn(row, "hello", queued=queued)
+    conn.result = await store.admit_message(row, "hello")
     return conn
+
+
+async def _begin(queued: bool) -> RecordingConn:
+    """An admitted message that goes out (``queued=False``: nothing running or held) or is
+    held behind a running turn."""
+    return await _admit(active=queued, queued=False)
+
+
+async def test_admit_message_decides_under_the_queue_lock():
+    """U23 D8, offline: the session's queue lock is the transaction's first lock, after
+    the statement bounding its wait, so both reads and every write after it run while the
+    worker's release waits. test_proto_queue_pg.py proves the lock serializes and the
+    bound fires; this pins where each is taken."""
+    conn = await _admit(active=False, queued=False)
+    assert conn.sql[0] == "<tx>" and conn.sql[-1] == "</tx>", "one transaction, nothing outside it"
+    assert (conn.sql[1], tuple(conn.params[1])) == (app.grants.QUEUE_LOCK_TIMEOUT_SQL, ("5000ms",))
+    assert conn.sql[2] == " ".join(app.grants.QUEUE_LOCK_SQL.split())
+    assert tuple(conn.params[2]) == (app.grants.QUEUE_LOCK_NS, "sess_1"), "the session's key, in the queue namespace"
+    assert conn.sql.count("<tx>") == 1
+
+
+@pytest.mark.parametrize("active, queued, held, claims", [
+    (False, False, False, False),  # idle: straight out
+    (True, False, True, False),    # a turn runs: held, nothing claimed
+    (True, True, True, False),
+    (False, True, True, True),     # D7: an older message waits with nothing running
+])
+async def test_admit_message_holds_behind_a_turn_or_an_older_held_message(active, queued, held, claims):
+    """U23 D7 on the real method: held when a turn runs OR an older message is held, and
+    the rescue claim runs only when nothing is running."""
+    conn = await _admit(active=active, queued=queued)
+    [insert] = [p for sql, p in zip(conn.sql, conn.params) if sql.startswith("INSERT INTO turns")]
+    assert insert[-1] == (app.QUEUED_OUTCOME if held else None)
+    assert conn.result[1] is held
+    assert any("RETURNING message" in sql for sql in conn.sql) is claims
+    assert (conn.result[2] is not None) is claims
 
 
 async def test_the_real_has_queued_and_request_stop_run_the_sql_they_claim():
@@ -814,8 +885,8 @@ def test_the_real_begin_turn_clears_the_stop_flag():
     outlives its turn halts the NEXT turn at its first tool call."""
     assert "stop_requested_at = NULL" in app.CLEAR_STOP_SQL
     import inspect
-    source = inspect.getsource(app.PgStore.begin_turn)
-    assert "CLEAR_STOP_SQL" in source, "begin_turn must clear the flag, or a stopped session never resumes"
+    source = inspect.getsource(app.PgStore._insert_turn)
+    assert "CLEAR_STOP_SQL" in source, "_insert_turn must clear the flag, or a stopped session never resumes"
 
 
 async def test_post_message_on_queue_failure_marks_the_turn_and_returns_502(caplog):
@@ -832,6 +903,33 @@ async def test_post_message_on_queue_failure_marks_the_turn_and_returns_502(capl
     assert detail == {"message": detail["message"], "turn_id": store.turns[0].turn_id, "seq": 1}
     assert store.failed == [(store.turns[0].turn_id, "enqueue_failed")]
     assert queue.sent == []
+
+
+async def test_a_failed_rescue_send_fails_the_patrons_message_and_holds_the_older_one_again():
+    """D7 sends every post behind a stranded held message down the rescue path. When that
+    send fails, the 502 tells the patron THEIR message failed -- so it is their row that is
+    failed, and the older message goes back to held for the retry to rescue, not closed."""
+    store, queue = FakeStore(), FakeQueue(fail=True)
+    row = store.seed_session()
+    older = await store.begin_turn(row, "older", queued=True)  # stranded: no turn running
+    async with make_client(store, queue) as c:
+        r = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "mine"})
+    assert r.status_code == 502
+    mine = store.turns[-1]
+    assert r.json()["detail"]["turn_id"] == mine.turn_id and r.json()["detail"]["seq"] == mine.seq
+    assert store.failed == [(mine.turn_id, "enqueue_failed")]
+    assert store.put_back == [older.turn_id] and [t.turn_id for t in store.queued] == [older.turn_id]
+
+
+async def test_a_failed_rescue_send_leaves_a_received_older_message_running():
+    store, queue = FakeStore(), FakeQueue(fail=True)
+    row = store.seed_session()
+    older = await store.begin_turn(row, "older", queued=True)
+    store.received.add(older.turn_id)
+    async with make_client(store, queue) as c:
+        r = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "mine"})
+    assert r.status_code == 502 and store.put_back == []
+    assert store.failed == [(store.turns[-1].turn_id, "enqueue_failed")]
 
 
 async def test_a_queue_refusal_never_reaches_the_patron(caplog):
@@ -860,7 +958,8 @@ async def test_post_message_rejects_empty_or_blank_text_and_unknown_session():
     store, queue = FakeStore(), FakeQueue()
     row = store.seed_session()
     async with make_client(store, queue) as c:
-        for blank in ("", " ", "\n", "  \t "):
+        # "\x1c": str.strip() empties it but a regex \S matches it; the worker's predicate is strip().
+        for blank in ("", " ", "\n", "  \t ", "\x1c", " \x1f\x1e "):
             r = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": blank})
             assert r.status_code == 422, repr(blank)
         assert (await c.post("/api/sessions/nope/messages", json={"text": "x"})).status_code == 404
@@ -1015,7 +1114,7 @@ def _env(service: dict) -> dict[str, str]:
     return dict(str(item).partition("=")[::2] for item in raw)
 
 
-def test_web_service_is_published_and_depends_on_postgres_and_the_queue_only():
+def test_web_service_is_published_and_depends_on_postgres_the_migration_and_the_queue_only():
     services = _compose()["services"]
     web = services["web"]
     assert web["container_name"] == "proto-web"
@@ -1023,6 +1122,8 @@ def test_web_service_is_published_and_depends_on_postgres_and_the_queue_only():
     assert all(str(p).startswith("127.0.0.1:") for p in web["ports"]), "dev-login signs anyone in: publish on loopback only"
     deps = web["depends_on"]
     assert deps["postgres"] == {"condition": "service_healthy"}
+    assert deps["migrate"] == {"condition": "service_completed_successfully"}, \
+        "U9: the tier runs no DDL, so it starts once the one-shot has migrated"
     assert deps["elasticmq"] == {"condition": "service_healthy"}
     assert "worker" not in deps, "the tier is driven against rows a script inserts until the worker exists"
     assert "shim" not in deps
@@ -1062,8 +1163,30 @@ async def test_lifespan_refuses_a_half_sqs_pair_only_with_a_queue(monkeypatch):
 
     monkeypatch.delenv("QUEUE_URL")
     application = create_app(store=FakeStore())
+    with pytest.raises(RuntimeError, match="QUEUE_URL") as exc:
+        async with application.router.lifespan_context(application):
+            pass
+    assert "GENEALOGY_SQS" not in str(exc.value)
+
+
+@pytest.mark.parametrize("queue_url", [None, "", "  "])
+async def test_lifespan_refuses_to_start_without_a_queue_url(monkeypatch, queue_url):
+    """U11: a tier with no queue records a turn and nothing ever runs it."""
+    if queue_url is None:
+        monkeypatch.delenv("QUEUE_URL", raising=False)
+    else:
+        monkeypatch.setenv("QUEUE_URL", queue_url)
+    application = create_app(store=FakeStore())
+    entered = False
+    with pytest.raises(RuntimeError, match="QUEUE_URL"):
+        async with application.router.lifespan_context(application):
+            entered = True
+    assert not entered and application.state.queue is None
+    assert not hasattr(app, "NullQueue"), "NullQueue is drive.py's embedded tier's, not the web tier's"
+
+    application = create_app(store=FakeStore(), queue=FakeQueue())  # a queue passed in needs no URL
     async with application.router.lifespan_context(application):
-        assert isinstance(application.state.queue, app.NullQueue)
+        assert isinstance(application.state.queue, FakeQueue)
 
 
 async def test_lifespan_start_line_names_mode_and_region(monkeypatch, caplog):
@@ -1126,16 +1249,66 @@ def test_web_build_context_carries_enqueue_sql_and_the_client_config():
     assert web["build"] == {"context": "../../..", "dockerfile": "apps/server/proto/web/Dockerfile"}
     repo = PROTO.parents[2]
     assert (repo / web["build"]["dockerfile"]).is_file()
-    dockerfile = (PROTO / "web" / "Dockerfile").read_text(encoding="utf-8")
-    copies = dict(ln.split()[1:3] for ln in dockerfile.splitlines() if ln.startswith("COPY "))
+    stages = _dockerfile_stages(PROTO / "web" / "Dockerfile")
+    assert list(stages) == ["spa", ""], "a node stage that builds the SPA, then the tier"
+    copies, _ = _copies(stages[""])
     assert copies["apps/server/proto/enqueue.py"] == "./"
     assert copies["apps/server/proto/sql"] == "./sql"
     assert copies["apps/server/proto/web"] == "./web"
     assert copies["packages/engine/mcp-server/config/familysearch.json"] == "./config/familysearch.json"
-    for src in copies:
+    spa_copies, _ = _copies(stages["spa"])
+    for src in copies.keys() | spa_copies.keys():
         assert (repo / src).exists(), f"the web Dockerfile copies {src}, which is not in the repo"
     # ./config/familysearch.json under WORKDIR /app is the path web/auth.py looks at first.
     assert auth.CLIENT_CONFIG_CANDIDATES[0].relative_to(auth.PROTO_DIR).as_posix() == "config/familysearch.json"
+
+
+def test_web_image_carries_the_sse_spa_where_web_dist_dir_points():
+    """U12 D18: the image serves the SPA too, so an image deploy cannot ship a tier where
+    `/` serves nothing. The build is the SSE variant, its output is what the tier stage
+    copies, and the relative WEB_DIST_DIR resolves (against /app, web/'s parent, which
+    is what spa.py takes as the tier root) to where it lands."""
+    stages = _dockerfile_stages(PROTO / "web" / "Dockerfile")
+    assert stages["spa"][0].startswith("FROM node:24-slim AS spa"), stages["spa"][0]
+    [build] = [ln for ln in stages["spa"] if "vite build" in ln]
+    assert "VITE_SESSION_TRANSPORT=sse" in build.split(), build
+    out = re.search(r"--outDir (\S+)", build).group(1)
+    copies, from_stage = _copies(stages[""])
+    assert from_stage == {out: "./web-dist"}, from_stage
+    assert "WORKDIR /app" in stages[""] and copies["apps/server/proto/web"] == "./web"
+    env = dict(ln.split()[1].split("=", 1) for ln in stages[""] if ln.startswith("ENV ") and "=" in ln.split()[1])
+    assert Path("/app", env["WEB_DIST_DIR"]) == Path("/app/web-dist")
+
+
+def _dockerfile_stages(path: Path) -> dict[str, list[str]]:
+    """Logical lines (comments dropped, continuations joined) per stage, keyed by the
+    stage's AS name ('' for an unnamed one)."""
+    text = "\n".join(ln for ln in path.read_text(encoding="utf-8").splitlines() if not ln.lstrip().startswith("#"))
+    stages: dict[str, list[str]] = {}
+    current: list[str] = []
+    for line in (" ".join(ln.split()) for ln in text.replace("\\\n", " ").splitlines()):
+        if not line:
+            continue
+        if line.startswith("FROM "):
+            m = re.search(r" AS (\S+)$", line, re.I)
+            current = stages.setdefault(m.group(1) if m else "", [])
+        current.append(line)
+    return stages
+
+
+def _copies(lines: list[str]) -> tuple[dict[str, str], dict[str, str]]:
+    """(source -> dest for the build context, source -> dest for COPY --from=<stage>)."""
+    context: dict[str, str] = {}
+    staged: dict[str, str] = {}
+    for line in lines:
+        if not line.startswith("COPY "):
+            continue
+        words = line.split()[1:]
+        flags = [w for w in words if w.startswith("--")]
+        *srcs, dest = [w for w in words if not w.startswith("--")]
+        target = staged if any(f.startswith("--from=") for f in flags) else context
+        target.update(dict.fromkeys(srcs, dest))
+    return context, staged
 
 
 def test_003_web_only_adds_not_null_default_columns_to_sessions():
@@ -1325,3 +1498,398 @@ def test_queue_body_carries_no_token_or_user_field():
     would persist in turns.message, SQS and the DLQ."""
     body = app.queue_body("t", SessionRow("s", "p", "t", "m", T0, T0, USER_A.id), "hi", T0.isoformat(), 1)
     assert set(body) == {"turn_id", "session_id", "project_id", "text", "enqueued_at", "max_nudges"}
+
+
+# ── U10: /api/health as readiness ────────────────────────────────────────────────
+
+
+class SilentPostgres:
+    """A local listener that accepts and never answers: a blackholed Postgres, no
+    network. ``accepted`` counts the connections the probes opened."""
+
+    hang_up = False
+
+    def __init__(self) -> None:
+        self.sock = socket.socket()
+        self.sock.bind(("127.0.0.1", 0))
+        self.sock.listen(16)
+        self.sock.settimeout(0.05)
+        self.port = self.sock.getsockname()[1]
+        self.accepted: list[socket.socket] = []
+        self.stopped = threading.Event()
+        threading.Thread(target=self._accept, daemon=True).start()
+
+    def _accept(self) -> None:
+        while not self.stopped.is_set():
+            try:
+                conn, _ = self.sock.accept()
+            except (TimeoutError, socket.timeout):
+                continue
+            except OSError:
+                return
+            if self.hang_up:
+                conn.close()
+            else:
+                self.accepted.append(conn)
+
+    @property
+    def dsn(self) -> str:
+        return f"postgresql://probeuser:secretpw@127.0.0.1:{self.port}/proto"
+
+    def close(self) -> None:
+        self.stopped.set()
+        self.sock.close()
+        for conn in self.accepted:
+            conn.close()
+
+
+@pytest.fixture
+def silent_pg():
+    pg = SilentPostgres()
+    yield pg
+    pg.close()
+
+
+class RefusingPostgres(SilentPostgres):
+    """A local listener that hangs up on every connection at once: a Postgres that is down
+    and says so fast on every OS. Port 1 is not that on Windows, which retries a refused
+    loopback connect for about two seconds, past ``READY_TIMEOUT_S``."""
+
+    hang_up = True
+
+
+@pytest.fixture
+def refused_pg():
+    pg = RefusingPostgres()
+    yield pg
+    pg.close()
+
+
+REFUSED_DSN = "postgresql://probeuser:secretpw@127.0.0.1:1/proto"
+HEALTH_KEYS = {"ok", "tier", "queue", "poll_s", "ping_s"}
+
+
+class ReadyStore(FakeStore):
+    """A FakeStore with the optional probe, answering ``check``."""
+
+    def __init__(self, check: dict[str, Any]) -> None:
+        super().__init__()
+        self.check = check
+
+    async def check_ready(self, timeout_s: float | None = None) -> dict[str, Any]:
+        return {"ok": self.check["ok"], "checks": {"postgres": self.check}}
+
+
+async def test_health_is_503_when_the_store_is_not_ready():
+    store = ReadyStore({"ok": False, "error": "OperationalError"})
+    async with make_client(store, FakeQueue(), user=None) as c:
+        r = await c.get("/api/health")
+    body = r.json()
+    assert r.status_code == 503 and HEALTH_KEYS <= set(body) and body["ok"] is False
+    assert body["queue"] == "FakeQueue", "the keys the drivers read survive a 503"
+    assert body["checks"] == {"postgres": {"ok": False, "error": "OperationalError"}}
+
+
+async def test_health_is_200_with_checks_when_ready():
+    async with make_client(ReadyStore({"ok": True}), FakeQueue(), user=None) as c:
+        r = await c.get("/api/health")
+    assert r.status_code == 200 and r.json()["checks"] == {"postgres": {"ok": True}}
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        r = await c.get("/api/health")
+    assert r.status_code == 200 and "checks" not in r.json(), "a store with no probe keeps today's body"
+
+
+async def test_health_that_raises_is_503_not_500():
+    class Broken(FakeStore):
+        async def check_ready(self, timeout_s=None):
+            raise RuntimeError("probe exploded")
+
+    async with make_client(Broken(), FakeQueue(), user=None) as c:
+        r = await c.get("/api/health")
+    assert r.status_code == 503 and "checks" not in r.json() and HEALTH_KEYS <= set(r.json())
+
+
+def test_the_tier_logs_its_info_lines_under_a_bare_interpreter():
+    """uvicorn configures only its own loggers; an ok health transition is an info line,
+    and the live stack showed none until proto.web had its own handler."""
+    import subprocess
+
+    code = (
+        "import asyncio, sys; sys.path.insert(0, sys.argv[1]); from web import app\n"
+        "store = app.PgStore(sys.argv[2])\n"
+        "async def fake(): return None\n"
+        "store._probe_postgres = fake\n"
+        "asyncio.run(store.check_ready())\n"
+    )
+    out = subprocess.run([sys.executable, "-c", code, str(PROTO), REFUSED_DSN], capture_output=True,
+                         text=True, encoding="utf-8", timeout=60)
+    assert out.returncode == 0, out.stderr
+    assert "ev=health check=postgres ok=true" in out.stderr, out.stderr
+
+
+async def test_pgstore_check_ready_fails_fast_on_refused_and_silent_postgres(refused_pg, silent_pg):
+    refused = await app.PgStore(refused_pg.dsn).check_ready()
+    assert refused == {"ok": False, "checks": {"postgres": {"ok": False, "error": "OperationalError"}}}
+    started = time.monotonic()
+    silent = await app.PgStore(silent_pg.dsn).check_ready(timeout_s=0.3)
+    elapsed = time.monotonic() - started
+    assert silent["checks"]["postgres"] == {"ok": False, "error": "TimeoutError"}
+    assert elapsed < 0.8, f"{elapsed:.2f}s: psycopg's own connect_timeout decided, not the race"
+    for report in (refused, silent):
+        raw = json.dumps(report)
+        assert "probeuser" not in raw and "127.0.0.1" not in raw and "secretpw" not in raw
+
+
+async def test_concurrent_health_share_one_probe(monkeypatch, silent_pg):
+    monkeypatch.setattr(app, "READY_TIMEOUT_S", 0.3)
+    async with make_client(app.PgStore(silent_pg.dsn), FakeQueue(), user=None) as c:
+        replies = await asyncio.gather(*(c.get("/api/health") for _ in range(3)))
+    accepted = len(silent_pg.accepted)
+    assert [r.status_code for r in replies] == [503, 503, 503]
+    assert all(r.json()["checks"]["postgres"] == {"ok": False, "error": "TimeoutError"} for r in replies)
+    assert accepted == 1, f"{accepted} connections: a stalled host must cost one, not one per probe"
+
+
+# ── U3: the grant refresh loop ──────────────────────────────────────────────────
+
+
+class RefreshingStore(FakeStore):
+    """A store with PgStore's two refresh methods, answering from scripts."""
+
+    def __init__(self, due=None, results=None) -> None:
+        super().__init__()
+        self.due_script = list(due or [])
+        self.results = dict(results or {})
+        self.due_calls = 0
+        self.refreshed: list[str] = []
+
+    async def due_grant_users(self, refresh_age_s, limit=50):
+        self.due_calls += 1
+        step = self.due_script.pop(0) if self.due_script else []
+        if isinstance(step, Exception):
+            raise step
+        return step
+
+    async def refresh_grant(self, user_id, *, refresh, refresh_age_s):
+        self.refreshed.append(user_id)
+        result = self.results.get(user_id, "refreshed")
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+
+async def test_lifespan_starts_and_cancels_the_grant_refresh_loop(monkeypatch):
+    monkeypatch.setenv("FS_GRANT_REFRESH_INTERVAL_S", "0.01")
+    monkeypatch.setenv("FS_GRANT_REFRESH_AGE_S", "0")
+    store = RefreshingStore()
+    application = create_app(store=store, queue=FakeQueue())
+    async with application.router.lifespan_context(application):
+        for _ in range(200):
+            if store.due_calls >= 2:
+                break
+            await asyncio.sleep(0.01)
+        assert store.due_calls >= 2, "the loop ticks while the tier runs"
+    calls = store.due_calls
+    await asyncio.sleep(0.05)
+    assert store.due_calls == calls, "cancelled at lifespan exit"
+
+    plain = FakeStore()  # no refresh_grant: the route tests' store never gets a loop
+    application = create_app(store=plain, queue=FakeQueue())
+    async with application.router.lifespan_context(application):
+        await asyncio.sleep(0.03)
+
+
+async def test_the_refresh_loop_survives_a_failing_store_and_logs_no_token(caplog):
+    token = "gAAAAA-secret-access-u3"
+    store = RefreshingStore(
+        due=[RuntimeError(f"db down {token}"), [("usr_a", 4000.0), ("usr_b", 4000.0)],
+             [("usr_a", 4001.0)], [("usr_a", 4002.0)], [("usr_a", 4003.0)]],
+        results={"usr_a": "skipped_live", "usr_b": RuntimeError(token)},
+    )
+    with caplog.at_level("INFO", logger="proto.web"):
+        task = asyncio.create_task(app.grant_refresh_loop(store, interval_s=0.0, refresh_age_s=3600,
+                                                          refresh=lambda r: None))
+        for _ in range(200):
+            if store.due_calls >= 6:
+                break
+            await asyncio.sleep(0.005)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+    assert store.refreshed[:2] == ["usr_a", "usr_b"], "one patron's failure does not stop the next"
+    lines = [r.getMessage() for r in caplog.records if "ev=grant_refresh" in r.getMessage()]
+    assert sum("user_id=usr_a result=skipped_live" in line for line in lines) == 1, \
+        f"skipped_live is logged on change only: {lines}"
+    assert any("ev=grant_refresh_tick" in line for line in lines), "the failed tick is reported"
+    assert any("user_id=usr_b result=error error=RuntimeError" in line for line in lines)
+    assert token not in caplog.text, "no token in any log line"
+
+
+async def test_a_patrons_next_live_period_logs_skipped_live_again(caplog):
+    """The on-change memory is cleared once a patron stops being due (no open turn), so a
+    later run's live attempt is logged rather than hidden behind the previous run's line.
+    Seen live 2026-10-03: a whole second run passed with no grant_refresh line."""
+    store = RefreshingStore(
+        due=[[("usr_a", 10.0)], [("usr_a", 40.0)], [], [("usr_a", 70.0)], [("usr_a", 100.0)]],
+        results={"usr_a": "skipped_live"},
+    )
+    with caplog.at_level("INFO", logger="proto.web"):
+        task = asyncio.create_task(app.grant_refresh_loop(store, interval_s=0.0, refresh_age_s=0,
+                                                          refresh=lambda r: None))
+        for _ in range(200):
+            if store.due_calls >= 6:
+                break
+            await asyncio.sleep(0.005)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+    lines = [r.getMessage() for r in caplog.records if "result=skipped_live" in r.getMessage()]
+    assert len(lines) == 2, f"one line per live period, two periods: {lines}"
+
+
+# ── U12: the SPA (web/spa.py) ────────────────────────────────────────────────────
+
+from starlette.routing import Mount, Route  # noqa: E402
+
+from web import spa  # noqa: E402
+
+INDEX = "<!doctype html><title>workbench</title><script src=\"/assets/x-abc.js\"></script>"
+
+
+@pytest.fixture(autouse=True)
+def _no_spa_env(monkeypatch):
+    """The alpha reads WEB_DIST_DIR too, so a developer's shell can carry one; every other
+    test here means the tier with no SPA."""
+    monkeypatch.delenv(spa.ENV_VAR, raising=False)
+
+
+@pytest.fixture
+def dist(tmp_path, monkeypatch) -> Path:
+    """A vite-shaped dist (index.html, a root file, a hashed asset), named by WEB_DIST_DIR."""
+    root = tmp_path / "web-dist"
+    (root / "assets").mkdir(parents=True)
+    (root / "index.html").write_text(INDEX, encoding="utf-8")
+    (root / "favicon.svg").write_text("<svg/>", encoding="utf-8")
+    (root / "assets" / "x-abc.js").write_text("new EventSource('/x')", encoding="utf-8")
+    monkeypatch.setenv(spa.ENV_VAR, str(root))
+    return root
+
+
+async def test_spa_root_and_index_html_are_served_no_cache(dist):
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        for method, path in (("GET", "/"), ("HEAD", "/"), ("GET", "/index.html")):
+            r = await c.request(method, path)
+            assert r.status_code == 200, (method, path, r.status_code)
+            assert r.headers["content-type"].startswith("text/html"), (method, path)
+            assert r.headers["cache-control"] == "no-cache", (method, path)
+            assert r.content == (b"" if method == "HEAD" else INDEX.encode()), (method, path)
+
+
+async def test_spa_hashed_assets_are_immutable_and_root_files_are_served(dist):
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        asset = await c.get("/assets/x-abc.js")
+        assert asset.status_code == 200 and asset.text == "new EventSource('/x')"
+        assert asset.headers["cache-control"] == spa.IMMUTABLE
+        assert "immutable" in asset.headers["cache-control"]
+        assert (await c.head("/assets/x-abc.js")).status_code == 200
+        icon = await c.get("/favicon.svg")
+        assert icon.status_code == 200 and icon.headers["cache-control"] == "no-cache"
+        missing = await c.get("/assets/nope.js")
+        assert missing.status_code == 404 and "immutable" not in missing.headers.get("cache-control", "")
+
+
+# What each answers WITHOUT the SPA; a Mount("/") turns the first three into 404/404/405.
+PRE_MOUNT_STATUS = [
+    ("GET", "/api/sessions/x/messages", 405),
+    ("GET", "/api/sessions/", 307),
+    ("POST", "/api/feedback", 404),
+    ("GET", "/api/nope", 404),
+    ("GET", "/api/health", 200),
+]
+
+
+@pytest.mark.parametrize(("method", "path", "status"), PRE_MOUNT_STATUS)
+async def test_spa_mount_leaves_every_api_status_unchanged(dist, monkeypatch, method, path, status):
+    replies = {}
+    for mounted in (True, False):
+        if not mounted:
+            monkeypatch.delenv(spa.ENV_VAR)
+        async with make_client(FakeStore(), FakeQueue()) as c:
+            r = await c.request(method, path, json={} if method == "POST" else None)
+        replies[mounted] = r.status_code
+    assert replies == {True: status, False: status}, (method, path, replies)
+
+
+def test_spa_mount_leaves_the_per_session_route_sweep_unchanged(dist):
+    mounted = _per_session_routes()
+    assert len(mounted) == 13 and any(isinstance(r, Mount) for r in create_app(FakeStore(), FakeQueue()).routes)
+    with pytest.MonkeyPatch.context() as mp:
+        mp.delenv(spa.ENV_VAR)
+        assert _per_session_routes() == mounted
+
+
+@pytest.mark.parametrize("value", [None, "", "   "])
+async def test_spa_unset_or_empty_serves_nothing_at_root(monkeypatch, value):
+    if value is not None:
+        monkeypatch.setenv(spa.ENV_VAR, value)
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        assert (await c.get("/")).status_code == 404
+        assert (await c.get("/api/health")).status_code == 200
+
+
+@pytest.mark.parametrize("breakage", ["missing", "no_index", "api_dir", "auth_file", "callback_dir"])
+def test_spa_refuses_to_start_on_a_dist_it_cannot_serve_safely(dist, monkeypatch, breakage):
+    """A set WEB_DIST_DIR that serves nothing, or whose top level would shadow the API, is a
+    refusal at create_app -- uvicorn never starts -- not the alpha's silent skip."""
+    if breakage == "missing":
+        monkeypatch.setenv(spa.ENV_VAR, str(dist.parent / "nope"))
+    elif breakage == "no_index":
+        (dist / "index.html").unlink()
+    elif breakage == "api_dir":
+        (dist / "api").mkdir()
+    elif breakage == "auth_file":
+        (dist / "auth").write_text("x", encoding="utf-8")
+    else:
+        (dist / "callback").mkdir()
+    with pytest.raises(RuntimeError, match=spa.ENV_VAR):
+        create_app(FakeStore(), FakeQueue())
+
+
+def test_spa_refuses_a_top_level_name_a_route_already_uses(dist, monkeypatch):
+    """Not on the reserved list, but routed: the check reads the app's routes as well."""
+    monkeypatch.delenv(spa.ENV_VAR)
+    application = create_app(FakeStore(), FakeQueue())
+    application.router.routes.append(Route("/extra/x", lambda request: None))
+    (dist / "extra").mkdir()
+    with pytest.raises(RuntimeError, match=r"\['extra'\] collide"):
+        spa.mount_spa(application, tier_root=PROTO, env={spa.ENV_VAR: str(dist)})
+
+
+def test_spa_a_relative_dist_resolves_against_the_tier_root_not_cwd(tmp_path, monkeypatch):
+    (tmp_path / "tier" / "web-dist").mkdir(parents=True)
+    (tmp_path / "tier" / "web-dist" / "index.html").write_text(INDEX, encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    application = create_app(FakeStore(), FakeQueue())
+    assert spa.mount_spa(application, tier_root=tmp_path / "tier", env={spa.ENV_VAR: "web-dist"}) == (
+        tmp_path / "tier" / "web-dist"
+    )
+    # The tier itself resolves against web/'s parent: the bundle's and the image's root.
+    assert spa.dist_dir(app.PROTO_DIR, {spa.ENV_VAR: "web-dist"}) == PROTO / "web-dist"
+
+
+async def test_spa_serves_an_extra_root_file_like_robots_txt(dist):
+    (dist / "robots.txt").write_text("User-agent: *\nDisallow: /\n", encoding="utf-8")
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        r = await c.get("/robots.txt")
+        assert r.status_code == 200 and r.text.startswith("User-agent")
+        assert r.headers["cache-control"] == "no-cache"
+        assert (await c.get("/")).status_code == 200
+
+
+@pytest.mark.parametrize("with_spa", [True, False])
+async def test_docs_and_openapi_are_off_with_and_without_the_spa(dist, monkeypatch, with_spa):
+    if not with_spa:
+        monkeypatch.delenv(spa.ENV_VAR)
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        for path in ("/docs", "/redoc", "/openapi.json", "/docs/oauth2-redirect"):
+            assert (await c.get(path)).status_code == 404, path

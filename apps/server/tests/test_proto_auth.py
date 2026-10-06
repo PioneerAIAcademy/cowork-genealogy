@@ -10,6 +10,7 @@ all green.
 from __future__ import annotations
 
 import ast
+import asyncio
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -20,7 +21,9 @@ from urllib.parse import parse_qs, urlparse
 import httpx
 import pytest
 
-from tests.test_proto_web import AUTH_ENV, PROTO, USER_A, FakeQueue, FakeStore, make_client
+from tests.test_proto_web import (  # noqa: F401  (refused_pg and silent_pg are fixtures)
+    AUTH_ENV, PROTO, USER_A, FakeQueue, FakeStore, make_client, refused_pg, silent_pg,
+)
 from web import app, auth
 from web.app import IdentityMismatch, ProjectNotOwned, create_app
 
@@ -246,6 +249,101 @@ async def test_the_lifespan_syncs_the_allowlist_from_the_environment(monkeypatch
     assert store.allowed == {"a@example.org", "b@example.org"}
 
 
+@pytest.mark.parametrize("raw", ["a@x.org b@x.org", "a@x.org,b@x.org", " A@x.org ,\n b@x.org ", "a@x.org\tb@x.org,,"])
+def test_allowed_emails_split_on_commas_and_whitespace(monkeypatch, raw):
+    """U12 D32: a comma is outside Beanstalk's environment-value character set, so a list
+    of two must be writable space-separated; compose's commas keep working."""
+    monkeypatch.setenv("ALLOWED_EMAILS", raw)
+    assert auth.allowed_emails() == {"a@x.org", "b@x.org"}
+
+
+@pytest.mark.parametrize("raw", ["", "  ", " , \n"])
+def test_allowed_emails_blank_is_empty(monkeypatch, raw):
+    monkeypatch.setenv("ALLOWED_EMAILS", raw)
+    assert auth.allowed_emails() == set()
+
+
+# ── U10: the lifespan listens with Postgres down; the allowlist stays fail-closed ─
+
+
+@pytest.mark.parametrize("postgres", ["refused", "silent"])
+async def test_the_lifespan_listens_with_postgres_down(monkeypatch, refused_pg, silent_pg, postgres):
+    monkeypatch.setenv("PG_DSN", (refused_pg if postgres == "refused" else silent_pg).dsn)
+    monkeypatch.setattr(app, "READY_TIMEOUT_S", 0.3)
+    application = create_app(queue=FakeQueue())
+    started = time.monotonic()
+    async with application.router.lifespan_context(application):
+        entered = time.monotonic() - started
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=application), base_url="http://t") as c:
+            r = await c.get("/api/health")
+    assert entered < 6, f"{entered:.1f}s: the two inline steps must share one budget"
+    body = r.json()
+    assert r.status_code == 503 and body["queue"] == "FakeQueue"
+    assert set(body["checks"]) == {"postgres", "schema", "allowlist"}, "the store is installed while Postgres is down"
+    assert not any(check["ok"] for check in body["checks"].values()), body
+    assert "probeuser" not in r.text and "127.0.0.1" not in r.text
+
+
+async def test_signed_in_routes_are_503_until_the_allowlist_syncs(fs_on):
+    _fake_fs(fs_on)
+    store = FakeStore()
+    store.allowed = {"a@example.org"}
+    application = create_app(store, FakeQueue())
+    application.state.startup = {"allowlist": "pending"}
+    cookies = {auth.COOKIE_NAME: auth.session_cookie_value(USER_A.id)}
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=application), base_url="http://t",
+                                 cookies=cookies) as c:
+        r = await c.get("/api/sessions")
+        assert r.status_code == 503 and r.json()["detail"] == "Not ready"
+        assert (await c.get("/api/health")).status_code == 503
+    oauth = auth.oauth_state_cookie("verifier-1", "st", None)
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=application), base_url="http://t",
+                                 cookies={auth.FS_OAUTH_COOKIE: oauth}) as c:
+        r = await c.get("/callback", params={"code": "code-1", "state": "st"})
+    assert r.status_code == 503 and store.grants == {}, "no sign-in against a table this boot has not synced"
+
+
+class FlakyStore(FakeStore):
+    """The schema check and the allowlist sync each fail their first call."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.calls = {"schema": 0, "allowlist": 0}
+
+    async def verify_schema(self) -> list[str]:
+        self.calls["schema"] += 1
+        if self.calls["schema"] == 1:
+            raise OSError("connection refused")
+        return ["001_schema.sql"]
+
+    async def sync_allowlist(self, emails: set[str]) -> None:
+        self.calls["allowlist"] += 1
+        if self.calls["allowlist"] == 1:
+            raise OSError("connection refused")
+        await super().sync_allowlist(emails)
+
+
+async def test_the_allowlist_gate_lifts_when_the_background_sync_succeeds(fs_on):
+    fs_on.setenv("ALLOWED_EMAILS", "a@example.org")
+    fs_on.setattr(app, "STARTUP_BACKOFF_FIRST_S", 0.0)
+    store = FlakyStore()
+    fs_on.setattr(app, "PgStore", lambda dsn: store)
+    application = create_app(queue=FakeQueue())
+    cookies = {auth.COOKIE_NAME: auth.session_cookie_value(USER_A.id)}
+    async with application.router.lifespan_context(application):
+        assert application.state.startup["allowlist"] == "OSError", "the inline attempt failed"
+        for _ in range(200):
+            if application.state.startup == {"schema": "ok", "allowlist": "ok"}:
+                break
+            await asyncio.sleep(0.01)
+        assert application.state.startup == {"schema": "ok", "allowlist": "ok"}, application.state.startup
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=application), base_url="http://t",
+                                     cookies=cookies) as c:
+            assert (await c.get("/api/sessions")).status_code == 200
+            assert (await c.get("/api/health")).status_code == 200
+    assert store.allowed == {"a@example.org"} and store.calls == {"schema": 2, "allowlist": 2}
+
+
 # ── encryption, preflight, the client config ────────────────────────────────────
 
 
@@ -317,7 +415,7 @@ def _imports_app_package(source: str) -> list[str]:
     return hits
 
 
-@pytest.mark.parametrize("name", ["auth.py", "app.py"])
+@pytest.mark.parametrize("name", ["auth.py", "app.py", "spa.py"])
 def test_web_tier_does_not_import_app_package(name):
     """The web image does not carry apps/server/app, so an import passes every test (the
     suite has the whole tree on the path) and fails only in the container."""
@@ -466,14 +564,84 @@ async def test_pgstore_delete_session_drops_project_data_only_with_its_last_sess
         next(q for q in conn.sql if q.startswith("DELETE FROM projects"))), "the NOT EXISTS must see the session gone"
 
 
-async def test_pgstore_store_grant_keeps_refresh_and_resets_granted_at():
+async def test_pgstore_store_grant_takes_the_write_lock_before_the_row():
+    """U3: the sign-in's grant rewrite takes the patron's grant WRITE lock (bounded), in the
+    same transaction and before the row, so it never interleaves with a refresh; it never
+    takes the attempt lock (a second sign-in does not revoke the first token). The upsert
+    starts a new session and clears a refusal and the ambiguous-refresh marker; granted_at
+    still restarts on every sign-in and a missing refresh token keeps the stored one."""
     conn = ScriptedConn()
     await _store(conn).store_grant("usr_a", "gAAAAA-access", None, T0)
-    [sql] = conn.sql
-    update = sql.split("DO UPDATE SET", 1)[1]
+    timeout, lock, upsert = conn.sql
+    assert timeout == f"SET LOCAL lock_timeout = '{app.grants.WRITE_LOCK_TIMEOUT_S}s'"
+    assert lock == "SELECT pg_advisory_xact_lock(%s::int4, hashtext(%s))"
+    assert conn.params[1] == (app.grants.WRITE_LOCK_NS, "usr_a"), "the write key, never the attempt key"
+    update = upsert.split("DO UPDATE SET", 1)[1]
     assert "refresh_token_enc = COALESCE(EXCLUDED.refresh_token_enc, familysearch_tokens.refresh_token_enc)" in update
-    assert "granted_at = now()" in update and "ON CONFLICT (user_id)" in sql
-    assert conn.params == [("usr_a", "gAAAAA-access", None, T0)]
+    assert "granted_at = now()" in update and "ON CONFLICT (user_id)" in upsert
+    for clause in ("session_started_at = now()", "refresh_started_at = NULL", "refresh_refused_at = NULL",
+                   "refresh_refused_reason = NULL"):
+        assert clause in update, clause
+    assert "session_started_at" in upsert.split("DO UPDATE", 1)[0], "a first sign-in starts the session too"
+    assert conn.params[2] == ("usr_a", "gAAAAA-access", None, T0)
+
+
+async def test_a_busy_grant_write_answers_503_and_signs_nobody_in(fs_on):
+    class BusyStore(FakeStore):
+        async def store_grant(self, *a, **k):
+            raise app.GrantBusy("usr_x")
+
+    _fake_fs(fs_on)
+    store = BusyStore()
+    store.allowed = {"a@example.org"}
+    r = await _callback(store)
+    assert r.status_code == 503 and "try again" in r.text
+    assert auth.COOKIE_NAME not in r.cookies
+
+
+async def test_refresh_tokens_classifies_responses_and_transport_errors(monkeypatch):
+    """D5's classifier over the wire. The stall is the case the total deadline exists for:
+    httpx's ``timeout=`` is per phase and never cuts a handler that sleeps, so without
+    ``asyncio.timeout`` around the whole POST it would hold both refresh locks unbounded."""
+    seen: list[dict] = []
+
+    def answer(status: int, body: object):
+        def handler(request: httpx.Request) -> httpx.Response:
+            seen.append(dict(parse_qs(request.content.decode())))
+            return httpx.Response(status, json=body)
+        return httpx.MockTransport(handler)
+
+    def raising(exc: Exception):
+        def handler(request: httpx.Request) -> httpx.Response:
+            raise exc
+        return httpx.MockTransport(handler)
+
+    ok = await auth.refresh_tokens("r-1", transport=answer(200, {"access_token": "a-2", "refresh_token": "r-2"}))
+    assert (ok.kind, ok.access_token, ok.refresh_token) == ("ok", "a-2", "r-2")
+    assert seen[0] == {"grant_type": ["refresh_token"], "refresh_token": ["r-1"],
+                       "client_id": [auth.client_id()]}
+    refused = await auth.refresh_tokens("r-1", transport=answer(400, {"error": "invalid_grant"}))
+    assert (refused.kind, refused.reason) == ("refused", "invalid_grant")
+    assert (await auth.refresh_tokens("r", transport=answer(401, {}))).reason == "http_401"
+    assert (await auth.refresh_tokens("r", transport=answer(429, {}))).kind == "not_sent"
+    assert (await auth.refresh_tokens("r", transport=answer(503, {}))).kind == "ambiguous"
+    assert (await auth.refresh_tokens("r", transport=answer(200, {"token_type": "bearer"}))).kind == "ambiguous"
+    request = httpx.Request("POST", auth.FS_TOKEN_URL)
+    assert (await auth.refresh_tokens("r", transport=raising(httpx.ConnectError("no", request=request)))).kind == "not_sent"
+    assert (await auth.refresh_tokens("r", transport=raising(httpx.ConnectTimeout("no", request=request)))).kind == "not_sent"
+    assert (await auth.refresh_tokens("r", transport=raising(httpx.ReadTimeout("no", request=request)))).kind == "ambiguous"
+    assert (await auth.refresh_tokens("r", transport=raising(httpx.RemoteProtocolError("no", request=request)))).kind \
+        == "ambiguous"
+
+    async def stall(request: httpx.Request) -> httpx.Response:
+        await asyncio.sleep(30)
+        return httpx.Response(200, json={"access_token": "late"})
+
+    monkeypatch.setattr(app.grants, "REFRESH_HTTP_TIMEOUT_S", 1)
+    t0 = time.monotonic()
+    stalled = await auth.refresh_tokens("r", transport=httpx.MockTransport(stall))
+    assert time.monotonic() - t0 < app.grants.REFRESH_HTTP_TIMEOUT_S + 1, "the one total deadline bounds the POST"
+    assert stalled.kind == "ambiguous", "a deadline cannot tell whether FamilySearch processed it"
 
 
 @pytest.mark.parametrize("stored, presented, raises", [
@@ -501,3 +669,46 @@ def test_the_client_config_lookup_survives_the_image_layout():
     assert auth.client_config_candidates(Path("/app")) == (Path("/app/config/familysearch.json"),)
     deep = auth.client_config_candidates(Path("/r/apps/server/proto"))
     assert deep[1] == Path("/r/packages/engine/mcp-server/config/familysearch.json")
+
+
+# ── make proto-grant (U3) ───────────────────────────────────────────────────────
+
+
+async def test_grant_script_stores_ciphertext_and_prints_no_token(monkeypatch, capsys):
+    """proto/grant.py's callback: the state first (nothing exchanged on a mismatch), then the
+    dev-login patron's grant stored as ciphertext through the store's own store_grant. The
+    message names the patron and never a token."""
+    import grant
+
+    calls = _fake_fs(monkeypatch, access="access-plain-u3", refresh="refresh-plain-u3")
+    store = FakeStore()
+    bad = await grant.handle_callback({"code": ["c"], "state": ["other"]}, state="st", verifier="v",
+                                      store=store, email="dev@localhost")
+    assert bad[0] == 400 and calls == [] and store.grants == {}
+    status, message = await grant.handle_callback({"code": ["code-9"], "state": ["st"]}, state="st",
+                                                  verifier="v-9", store=store, email="Dev@Localhost")
+    assert status == 200 and calls == ["exchange code-9 v-9"]
+    user = next(u for u in store.users.values() if u.email == "dev@localhost")
+    stored = store.grants[user.id]
+    assert auth.decrypt(stored["access_token_enc"]) == "access-plain-u3"
+    assert auth.decrypt(stored["refresh_token_enc"]) == "refresh-plain-u3"
+    assert message == f"grant stored for dev@localhost (user {user.id})"
+    for secret in ("access-plain-u3", "refresh-plain-u3", stored["access_token_enc"]):
+        assert secret not in message and secret not in capsys.readouterr().out
+
+
+def test_grant_script_points_the_redirect_at_the_dev_keys_registration(monkeypatch, capsys):
+    """The dev key's only registered redirect is http://127.0.0.1:1837/callback."""
+    import grant
+
+    seen: dict[str, str] = {}
+
+    def serve_once(port, on_callback):
+        seen["redirect"] = auth.redirect_uri()
+        return 400, "OAuth state mismatch"
+
+    monkeypatch.setattr(grant, "serve_once", serve_once)
+    monkeypatch.setattr(grant.webbrowser, "open", lambda url: seen.setdefault("url", url))
+    assert grant.main(["--pg-dsn", "postgresql://unused"]) == 1
+    assert seen["redirect"] == "http://127.0.0.1:1837/callback"
+    assert "redirect_uri=http%3A%2F%2F127.0.0.1%3A1837%2Fcallback" in seen["url"]

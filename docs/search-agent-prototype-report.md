@@ -61,7 +61,7 @@
 | Browser | `apps/web` on SSE; Vite dev server only | Static, behind the edge |
 
 - **Beanstalk probe** (D3, 2026-09-11, torn down): sqsd 3.0.5 cuts the POST at `InactivityTimeout` silently and redelivers after `VisibilityTimeout`: 300 s idle at 2,100 / 1,800. The worker tier always creates a DLQ.
-- Untested on Beanstalk: bundle cap, worker 5xx, deploy mid-message, closed-VPC egress, memory, tmpfs.
+- Untested on Beanstalk: bundle cap (500 MB per AWS's documentation), worker 5xx, deploy mid-message, closed-VPC egress, memory, tmpfs.
 
 **Since D17 and D18:** PR #2870 (merged 2026-09-27) runs a browser turn until the project completes, 60 continue-nudges, or $35 a session, with a zero-progress guard, Stop, held messages (sent mid-run, queued until it ends) and a 1,800 s step ceiling.
 
@@ -120,7 +120,7 @@ time in 3; the worker never does.
 - **1.37×:** cache writes 1.56 M against 1.03 M tokens (21 delegations against 13, each a fresh cache, plus 272k main-thread rewrites); output 464k against 261k. Delegation count drives most of it and may be sampling; the research skill's `evaluations/` gates (U20), CLI version and stop policy are unmeasured. The 1,800 s time limit (U26) would have stopped it well before 5,151 s.
 - **Since bagley's $5.29 current-stack run of 07-31,** the plugin added $6.56 (60%) and the prototype $4.44 (40%).
 - **paerai's ~6.5× is not an architecture figure:** 108 `image_transcribe` calls the baseline never made. The demo driver reported FAIL; its judge "true" was graded while the run was still active. A hard cap is decided, not built (handoff U25, issue #3010).
-- The $35 bound would have stopped paerai: its meter prices cache writes at the 1-hour $6/M, not the gateway's 5-minute $3.75/M used here. It never fired live (repricing U19; live test U23).
+- The $35 bound would have stopped paerai: its meter prices cache writes at the 1-hour $6/M, not the gateway's 5-minute $3.75/M used here. It first fired live on 2026-10-05 (compose, n=1 per case, handoff U23): at $35 on injected usage, and at a lowered $1 on the real meter, which read $1.05 where the CLI reported $0.72 (repricing U19).
 - **Main-thread cache rewrites**, while a foreground delegation idles it past the 5-minute TTL, cost 5.8% of bagley (3, 272k tokens) and 20.7% of paerai (17, 1.94 M); the corpus (177 runs, 2026-09-24, autonomous only), re-priced from 1 h to 5 min, 2.2–2.3%. Each patron pause over 5 min adds ~$0.11 per 30k tokens of context. At a 1-hour TTL bagley is +12%, paerai −6%: the lever is the idle main thread. **Not forced foreground:** the corpus delegated in the foreground too (81 of 1,585 delegations in the background, in 20 of 194 runs, 2026-09-29). D18's excess fits more and longer delegations (21 against 13 on bagley, 46 against 8 on paerai).
 
 ## The gap: quality parity
@@ -155,16 +155,16 @@ time in 3; the worker never does.
 
 - **Deployed gateway:** no research run; the worker ran two short turns on a local copy (P3k). Local copies add +0.35 s first byte per call, ~7–14 s a turn (P3g, 2026-09-25). TAP's auth, guardrails, capacity and deployed latency unmeasured. U14.
 - **Unmapped model id:** silently becomes a general-purpose stand-in that ignores the agent's `tools:`, and the turn reports success (P3h). U14.
-- **No prototype image on AWS:** SQS signing proven against real SQS and as an EC2 instance profile but not on Beanstalk, keyless S3 untried on AWS, schema applied at start, no bundles. U7–U9, U12, U13.
-- **One patron, no sign-in:** any bearer reaches any project; a refresh revokes the prior token at once, so two turns on one grant break each other; token custody (R7) assumed minute-long turns. U2–U4.
+- **No prototype image on AWS:** SQS signing proven against real SQS and as an EC2 instance profile but not on Beanstalk, keyless S3 untried on AWS, the migrations runner (U9) never run against RDS, bundles built (U12) but not deployed. U7–U9, U13.
+- **One patron, no sign-in:** any bearer reaches any project; a refresh revokes the prior token at once, so two turns on one grant break each other; token custody (R7) assumed minute-long turns. U2–U4 (U2, U3 built; U4 open).
 - **No time limit or fencing:** nothing ends a run by time; a cut attempt would keep running beside its redelivery; a dead-lettered turn holds the session; the cross-instance tool-server write lock is untested. U5, U6, U26.
 - **Postgres backend (R14):** 4 of 41 store cases run in CI (2026-09-29); tool suites and evals use files. U15.
 - **Throughput:** ~166k tokens/min a session (2026-09-09 estimate); 50 sessions ≈ 0.5M–8.1M TPM, up to 4× the 2M default, depending on burndown and cache-read counting. The gateway is one 0.25 vCPU task, no autoscaling (2026-09-11). U18.
 - **Re-logged duplicates:** PR #2850 refuses a re-extraction of the same record, person and fact type under the same log entry, even reworded: the measured resume shape (P1, D17). Under a new or missing log entry it gets through; never seen on a resume, and a corpus replay's 27 such misses (194 runs, 2026-09-29) left no duplicate. U16 counts them.
 - **Missing against the current stack:** uploads, images, logs, stored search results, two wiki skills, `evaluations/` gates, continuing a capped project. U20.
-- **Silent transcript loss:** a config-dir mismatch persists nothing; `/healthz` answers 200 regardless. U10.
-- **Stop, held messages, the $35 cap:** offline tests only; while Postgres is down all three fail open, silently (the hooks swallow its errors). U23.
-- **Dev-only paths ship:** an unauthenticated crash stub, fixture tree-read block, token fallbacks (one persists in `turns.message`, SQS and the DLQ), debug holds. U11.
+- **Silent transcript loss:** a config-dir mismatch persists nothing; the turn now closes `transcript_lost`, answers 500, and `/healthz` answers 503 (U10). A partial loss (one dropped frame) is still silent.
+- **Stop, held messages, the $35 cap:** recorded live on compose 2026-10-05 (n=1 per case), main thread and mid-delegation (handoff U23); a Postgres error now fails the attempt closed (500, redelivered) instead of letting the call through. Live, both paths failed closed: a terminated connection in the receive loop, and a cancelled query inside the halt check; a 120 s freeze stalled the attempt without letting a call through (the stall itself is U19's). AWS half: U13.
+- **Dev-only paths ship:** an unauthenticated crash stub, fixture tree-read block, debug holds. U11 (built, PR #3162: the stub arms and the tree-read block need `DEV_PATHS=true`, and a packaging test refuses dev variables in the Beanstalk templates).
 
 ## What the prototype deliberately did not test
 
