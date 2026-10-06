@@ -31,7 +31,8 @@ GRACE_S = 2.0
 pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals and modes")
 
 
-def _start(tmp_path: Path, tmpdir: str | None) -> tuple[subprocess.Popen, "queue.Queue[dict]"]:
+def _start(tmp_path: Path, tmpdir: str | None,
+           extra_env: dict[str, str] | None = None) -> tuple[subprocess.Popen, "queue.Queue[dict]"]:
     cwd = tmp_path / "project"
     cwd.mkdir(exist_ok=True)
     env = {**os.environ, "PORT": "0", "PG_DSN": REFUSED_DSN, "WORKER_CWD": str(cwd), "QUEUE_URL": "",
@@ -40,6 +41,10 @@ def _start(tmp_path: Path, tmpdir: str | None) -> tuple[subprocess.Popen, "queue
            "SWEEP_INTERVAL_S": "0", "SHUTDOWN_GRACE_S": str(GRACE_S), "PYTHONUNBUFFERED": "1"}
     env.pop("SQSD_MAX_RETRIES", None)
     env.pop("SQSD_RETENTION_PERIOD_S", None)
+    for name in ("SESSION_SPEND_CAP_USD", "PRICE_INPUT_PER_MTOK", "PRICE_CACHE_WRITE_PER_MTOK",
+                 "PRICE_CACHE_READ_PER_MTOK", "PRICE_OUTPUT_PER_MTOK"):
+        env.pop(name, None)
+    env.update(extra_env or {})
     if tmpdir is None:
         env.pop("TMPDIR", None)
     else:
@@ -150,6 +155,33 @@ def test_worker_listens_and_answers_503_with_postgres_down(tmp_path):
         assert code == 0, "the schema thread backing off must not hold the process open"
     finally:
         _stop(proc)
+
+
+@pytest.mark.parametrize(
+    "cap, expected, bad",
+    [("0.5", 0.5, False), ("0", 0.0, False), ("3O", 35.0, True), ("-1", 35.0, True),
+     ("nan", 35.0, True), ("inf", 35.0, True)],
+    ids=["set", "off", "typo", "negative", "nan", "inf"],
+)
+def test_start_reports_the_spend_cap_and_prices_and_a_typo_is_logged(tmp_path, cap, expected, bad):
+    """U23: ev=start says what this worker will cap at and how it prices, so a live cap
+    case can confirm its override took; a malformed value is a bad_env line, not a silent 35.
+    A value that parses but is no cap (``-1`` meant as "off", ``nan``, ``inf``) is malformed too."""
+    tmpdir = tmp_path / "tmp"
+    tmpdir.mkdir()
+    proc, lines = _start(tmp_path, str(tmpdir), {"SESSION_SPEND_CAP_USD": cap, "PRICE_INPUT_PER_MTOK": "2.5"})
+    try:
+        start, seen = _wait_for(lines, "start", timeout=10)
+        assert start is not None, seen
+    finally:
+        _stop(proc)
+    assert start["spend_cap_usd"] == expected
+    assert start["prices"] == {"input": 2.5, "cache_write": 6.0, "cache_read": 0.3, "output": 15.0}
+    bad_env = [line for line in seen if line.get("ev") == "bad_env"]
+    if bad:
+        assert bad_env == [{"ev": "bad_env", "name": "SESSION_SPEND_CAP_USD", "value": cap, "using": 35.0}]
+    else:
+        assert bad_env == []
 
 
 # U12 D27: the plugin hook's interpreter. check_hook_python takes the interpreter's

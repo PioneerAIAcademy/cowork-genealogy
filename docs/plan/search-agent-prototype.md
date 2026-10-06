@@ -2007,7 +2007,8 @@ without whichever Bedrock refuses.
   and 22 assertions, `receive_count` 1, $1.24. So a background delegation cannot occur in
   the worker any more (corrected 2026-09-29: it can; the rewrite catches only an explicit
   `true`, and CLI 2.1.220 also backgrounds a call without the flag, as the 2026-09-21 run's
-  two `record-extractor` calls were): criterion 1's delegation case is the foreground one,
+  two `record-extractor` calls were; since PR #3011 the rewrite covers every call not
+  explicitly `false`, so it cannot again): criterion 1's delegation case is the foreground one,
   which passed on
   2026-09-20 (D14) and on the first 2026-09-23 re-run, and the resume rule keeps covering
   a zero-turn redelivery from any other cause.
