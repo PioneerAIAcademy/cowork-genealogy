@@ -201,7 +201,8 @@
         "agent:search-external-sites",
         "skill:search-full-text",
         "agent:search-images",
-        "skill:record-extraction"
+        "skill:record-extraction",
+        "agent:survey-surname"
       ],
       "agentCallers": [
         {
@@ -221,6 +222,12 @@
           "tools": [
             "research_log_append",
             "build_external_search_url"
+          ]
+        },
+        {
+          "agent": "agent:survey-surname",
+          "tools": [
+            "research_log_append"
           ]
         }
       ],

@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import ast
 import contextlib
+import importlib.util
 import json
 import os
 import re
@@ -497,6 +498,42 @@ def test_max_nudges_reads_the_environment_and_never_silently_disables_itself(env
     would ship the stop-every-step behaviour the plan exists to remove, and it would look
     exactly like the feature not working. An explicit 0 is honoured -- proto-demo needs it."""
     assert app.max_nudges(env) == expected
+
+
+SPEND_PY = ROOT / "apps" / "server" / "app" / "agent" / "spend.py"
+
+
+def _spend_env_reads() -> dict[str, float]:
+    """Every ``_spend_env("NAME", default)`` in spend.py, by AST so a reflow still reads."""
+    tree = ast.parse(SPEND_PY.read_text(encoding="utf-8"))
+    return {
+        node.args[0].value: float(node.args[1].value)
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "_spend_env"
+        and len(node.args) == 2 and all(isinstance(a, ast.Constant) for a in node.args)
+    }
+
+
+def test_the_worker_passes_every_spend_variable_through_at_its_default():
+    """U23: the cap and the price vector reach the worker container, each overridable at
+    `up` time and defaulting to spend.py's own value -- so a compose run caps where an
+    image run would, and `SESSION_SPEND_CAP_USD=1` is how a live cap case lowers it. An
+    operator knob, so packaging must not refuse it as a dev variable."""
+    reads = _spend_env_reads()
+    assert set(reads) == {"SESSION_SPEND_CAP_USD", "PRICE_INPUT_PER_MTOK", "PRICE_CACHE_WRITE_PER_MTOK",
+                          "PRICE_CACHE_READ_PER_MTOK", "PRICE_OUTPUT_PER_MTOK"}, reads
+    worker = _env(_service(_load(COMPOSE), "worker"))
+    for name, default in reads.items():
+        assert name in worker, f"compose does not pass {name} to the worker"
+        var, value = _compose_default(worker[name])
+        assert var == name, f"{name} must be the caller's value, else a default: {worker[name]!r}"
+        assert float(value) == default, f"{name} defaults to {value}, spend.py to {default}"
+    spec = importlib.util.spec_from_file_location("eb_bundles_verify", ROOT / "scripts" / "eb_bundles" / "verify.py")
+    verify = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(verify)
+    findings: list[str] = []
+    verify._check_dev_env("worker", {name: "1" for name in reads}, findings)
+    assert findings == [], findings
 
 
 def test_elasticmq_has_no_redrive_policy():
