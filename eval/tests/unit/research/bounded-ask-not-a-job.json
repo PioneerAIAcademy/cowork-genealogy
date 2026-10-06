@@ -69,14 +69,15 @@
       },
       {
         "skill": "image-reader",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+        "response": "TRANSCRIPTION of image 004022578_00190, 1881 Census of Canada, Sherbrooke, Quebec, page 14:\nLine 7: Driscoll, Cornelius, M, 67, Ireland, Irish, R. Catholic, Labourer.\nLine 8: Driscoll, Johanna, F, 61, Ireland, Irish, R. Catholic.\nLine 9: Driscoll, Mary, F, 24, Quebec, Irish, R. Catholic.\nNothing else on the page concerns this household. No project state was changed."
       }
     ]
   },
   "judge_context": [
     "This is a BOUNDED-REQUEST test. The reply must show the router treating this as one deliverable: it must NOT invoke question-selection or research-plan, and must not start deriving research questions from the objective.",
     "A transcription is named in the skill's own bounded list, and the body sends it to @plugin:image-reader. Walking the routing table from the top -- which on this scenario reaches question-selection -- is the failure. The hand-off itself is asserted deterministically; grade only the framing of the reply.",
-    "Do not grade transcription quality -- no record is attached in this scenario. Grade only whether the request was treated as bounded."
+    "Do not grade transcription quality -- no record is attached in this scenario. Grade only whether the request was treated as bounded.",
+    "The hand-off to image-reader is asserted deterministically and is INVISIBLE to you: agent spawns do not appear in `skills_invoked`. The v8 run graded this Correctness 1 for 'performed its own transcription' when the agent call list was literally ['image-reader'] and the validator passed. Do NOT infer an inline transcription from transcription text being present: that text came from the delegated agent and the router relays it. The router holds no `image_transcribe`, so transcribing inline is not available to it."
   ],
   "judge_reads_files": true
 }
