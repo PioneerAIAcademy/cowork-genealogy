@@ -2,7 +2,8 @@
 replaced: ``prepare`` (plugin agents), ``_verify_schema_once`` (the schema thread's
 check, which would otherwise make its own ``connect_timeout`` connect at start and
 print ``ev=harness_release`` before any shutdown), ``psycopg.connect`` (a fake that
-answers ``claim``, ``turn_completed``, ``choose_sdk_session_id`` and a last-receive close;
+answers ``claim`` -- the web tier's row exists, U4 -- ``turn_completed``,
+``choose_sdk_session_id`` and a last-receive close;
 the shutdown release's connect -- the one passing ``RELEASE_CONNECT_TIMEOUT_S`` -- prints
 ``ev=harness_release``) and the attempt's body, which prints ``ev=harness_attempt`` and
 blocks until cancelled. ``ev=shutdown`` is written a second late: it runs on the daemon
@@ -28,6 +29,7 @@ from proto.worker import worker  # noqa: E402
 class _Cursor:
     def __init__(self) -> None:
         self.sql = ""
+        self.params: tuple = ()
 
     def __enter__(self) -> "_Cursor":
         return self
@@ -36,9 +38,12 @@ class _Cursor:
         pass
 
     def execute(self, sql: str, params: tuple = ()) -> None:
-        self.sql = sql
+        self.sql, self.params = sql, params
 
     def fetchone(self) -> tuple | None:
+        if "RETURNING turns.message" in self.sql:
+            _, _, turn_id, session_id, project_id = self.params
+            return ({"turn_id": turn_id, "session_id": session_id, "project_id": project_id, "text": "hello"},)
         if "RETURNING sdk_session_id" in self.sql:
             return ("11111111-1111-1111-1111-111111111111",)
         if "SELECT completed_at FROM turns" in self.sql:
