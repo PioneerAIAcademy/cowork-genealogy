@@ -64,6 +64,8 @@ CURRENT_SCHEMA_VERSION = 3
 # Marks a run log the sweep has already stripped, so a re-sweep is a no-op and
 # a reader can tell "this run made no tool calls worth summarizing" apart from
 # "the summaries were reclaimed". Absent on every log written by the harness.
+from harness.skill_invocation import STALE_JUSTIFICATION_MARKER  # noqa: E402
+
 CAPTURES_STRIPPED_KEY = "captures_stripped"
 
 # The calibration triple. `e2e/calibrate_judge.py` hard-errors when the
@@ -378,6 +380,13 @@ def replay_remnant(response_summary: Any) -> str | None:
     # this is not still a silent hole.)
     has_no_project = "no_project" in str(response_summary or "")
     has_unjustified = "unjustified_warnings" in str(response_summary or "")
+    # The stale-justification answer carries the SAME `reason`, and the live
+    # predicate tells the two apart only by this marker. Dropping it here makes
+    # every aged log replay a correct stale round-trip as an abandoned refusal,
+    # inflating the fire rate the promotion decision reads -- and stripping is
+    # irreversible, so the exclusion would silently revert itself on a 14-day
+    # delay rather than failing anywhere visible.
+    has_stale = STALE_JUSTIFICATION_MARKER in str(response_summary or "")
     parsed = parse_tool_result(response_summary) or {}
     ids = parsed.get("ids") or []
     full_length = parsed.get("full_length")
@@ -408,8 +417,14 @@ def replay_remnant(response_summary: Any) -> str | None:
     # written rather than after a run trips it. Matched and re-emitted as the
     # bare name, per `did_not_land`: the quoted-key form never appears in the
     # verbatim envelope the summarizer passes through.
+    # BOTH markers, never one overwriting the other. `reason` was assigned twice
+    # in sequence, so a payload carrying both lost `no_project` -- and that loses
+    # in the dangerous direction: `did_not_land` would stop recognising a call
+    # that never landed, and `find_unguarded_protected_writes` uses it to SKIP,
+    # so the loss manufactures a violation rather than missing one.
+    reasons = []
     if has_no_project:
-        remnant["reason"] = "no_project"
+        reasons.append("no_project")
     # The warning-gate refusal marker, for the same polarity reason and with a
     # sharper consequence: `unresolved_warning_refusal` keys on
     # `unjustified_warnings` and NOTHING ELSE, so dropping it does not merely
@@ -418,7 +433,13 @@ def replay_remnant(response_summary: Any) -> str | None:
     # the replay skips it. Stripping is irreversible, so a marker not kept here
     # is gone from the corpus permanently.
     if has_unjustified:
-        remnant["reason"] = "unjustified_warnings"
+        reasons.append("unjustified_warnings")
+    if reasons:
+        remnant["reason"] = reasons[0] if len(reasons) == 1 else reasons
+    if has_stale:
+        # Re-emitted verbatim: the predicate matches the bare marker, so it
+        # survives the escaped envelope the summarizer passes through.
+        remnant["message"] = STALE_JUSTIFICATION_MARKER
     return json.dumps(remnant)
 
 

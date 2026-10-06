@@ -642,13 +642,21 @@ def test_format_provenance_replay_reports_rate_against_the_denominator(tmp_path)
 # plumbing must redden these.
 
 
-def _write_posthoc_run(root, slug, name, *, tool_calls=None, research=None, tree=None):
+def _write_posthoc_run(
+    root, slug, name, *, tool_calls=None, research=None, tree=None, captures_stripped=False
+):
     """A committed-run layout: the run log plus its two final-state sidecars.
-    A sidecar passed as None is not written, which is how a skip is provoked."""
+    A sidecar passed as None is not written, which is how a skip is provoked.
+    `captures_stripped` stamps the flag `strip_captures_one` writes, which is
+    what the warnings skip reads -- inferring it from an absent
+    `response_summary` is wrong in both directions."""
     d = root / "eval" / "runlogs" / "e2e" / slug
     d.mkdir(parents=True, exist_ok=True)
     p = d / name
-    p.write_text(json.dumps({"tool_calls": tool_calls or []}), encoding="utf-8")
+    log = {"tool_calls": tool_calls or []}
+    if captures_stripped:
+        log["captures_stripped"] = True
+    p.write_text(json.dumps(log), encoding="utf-8")
     if research is not None:
         p.with_name(f"{p.stem}.final-research.json").write_text(
             json.dumps(research), encoding="utf-8"
@@ -777,7 +785,12 @@ def test_replay_warnings_unchecked_skips_a_capture_stripped_run(tmp_path):
         tmp_path,
         "fx",
         "run-1.json",
-        tool_calls=[_tree_edit_call()],  # no response_summary: a stripped log
+        # The real retention flag, not an inference. A log stripped under the
+        # current remnant logic KEEPS a `response_summary` on every parseable
+        # call, so absence of the field does not mean stripped -- and a run that
+        # aborted before any tool returned is not stripped either.
+        tool_calls=[_tree_edit_call(unjustified=True)],
+        captures_stripped=True,
         research={},
         tree=_tree_with_parentchild(),
     )
@@ -788,6 +801,27 @@ def test_replay_warnings_unchecked_skips_a_capture_stripped_run(tmp_path):
     assert "captures stripped" in rep.warnings.skipped[0]
     # The research-only checks keep their own denominators.
     assert rep.citation.runs_scanned == 1
+
+
+def test_replay_warnings_unchecked_names_a_run_that_recorded_no_response(tmp_path):
+    """Skipped too, but under its OWN reason. A run that aborted before any tool
+    returned is not capture-stripped, and calling it so mis-describes the
+    denominator the spec table quotes."""
+    d = tmp_path / "eval" / "tests" / "e2e" / "fx"
+    d.mkdir(parents=True, exist_ok=True)
+    p = _write_posthoc_run(
+        tmp_path,
+        "fx",
+        "run-1.json",
+        tool_calls=[_tree_edit_call()],
+        research={},
+        tree=_tree_with_parentchild(),
+    )
+    rep = replay_post_hoc([p], fixtures_root=d.parent)
+    assert rep.warnings.runs_scanned == 0
+    assert len(rep.warnings.skipped) == 1
+    assert "no tool call recorded a response" in rep.warnings.skipped[0]
+    assert "captures stripped" not in rep.warnings.skipped[0]
 
 
 def test_replay_warnings_unchecked_scans_a_run_that_kept_its_captures(tmp_path):

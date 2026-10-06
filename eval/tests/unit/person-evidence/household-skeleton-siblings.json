@@ -11,8 +11,7 @@
       "materialization",
       "sibling-mint",
       "edge-source-ref",
-      "pre-1880-census-indirect",
-      "check-warnings-required"
+      "pre-1880-census-indirect"
     ]
   },
   "input": {

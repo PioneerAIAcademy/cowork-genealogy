@@ -112,6 +112,7 @@ from harness.skill_invocation import (
     TREE_FACT_ASSERTION_KIND,
     unguarded_new_person_evidence_links,
     WARNINGS_UNCHECKED_KIND,
+    WARNINGS_UNCHECKED_KIND_LEGACY,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -278,6 +279,7 @@ def scan_provenance(paths: list[Path]) -> list[dict[str, Any]]:
             CONFLICT_UNPERSISTED_KIND,
             PERSON_EVIDENCE_DENY_KIND,
             WARNINGS_UNCHECKED_KIND,
+            WARNINGS_UNCHECKED_KIND_LEGACY,
             TREE_ENCODING_KIND,
             TREE_FACT_ASSERTION_KIND,
         ),
@@ -320,9 +322,18 @@ def scan_warnings_unchecked(paths: list[Path]) -> list[dict[str, Any]]:
     `guardrail_shadow_violations`. Retargeted by issue #2840: now detects runs
     where a tree writer returned ``unjustified_warnings`` and the agent never
     re-called with justifications. Identified by
-    ``kind == WARNINGS_UNCHECKED_KIND``.
+    BOTH KINDS, because the corpus holds both meanings. Every committed entry
+    today carries ``WARNINGS_UNCHECKED_KIND_LEGACY`` and answers the RETIRED
+    question -- a parentage write with no ``person_warnings`` call. Runs
+    recorded after the retarget carry ``WARNINGS_UNCHECKED_KIND`` and answer the
+    current one. Matching only the new kind silently drops the history;
+    matching only the old silently drops everything from here on.
+    `format_warnings_unchecked` is what tells a reader which it is looking at.
     """
-    return _scan_stored(paths, lambda v: v.get("kind") == WARNINGS_UNCHECKED_KIND)
+    return _scan_stored(
+        paths,
+        lambda v: v.get("kind") in (WARNINGS_UNCHECKED_KIND, WARNINGS_UNCHECKED_KIND_LEGACY),
+    )
 
 
 def scan_tree_encoding(paths: list[Path]) -> list[dict[str, Any]]:
@@ -509,8 +520,13 @@ class RunInputs:
         was built to prevent, and the number the promotion decision reads."""
         if self.run_log is None:
             return "unreadable run log"
+        if self.run_log.get("captures_stripped"):
+            return "captures stripped (the refusal marker cannot survive)"
         if not any(c.get("response_summary") for c in self.tool_calls if isinstance(c, dict)):
-            return "no response_summary on any tool call (captures stripped)"
+            # Distinct from the above: a run that aborted before any tool
+            # returned is not "stripped", and labelling it so mis-describes
+            # the denominator the spec table quotes.
+            return "no tool call recorded a response"
         return None
 
     def missing_for_tree_encoding(self) -> str | None:
@@ -1149,12 +1165,16 @@ def format_warnings_unchecked(violations: list[dict[str, Any]]) -> str:
     one to read for the current check.
     """
     affected = len({v["file"] for v in violations})
+    legacy = sum(1 for v in violations if v.get("kind") == WARNINGS_UNCHECKED_KIND_LEGACY)
+    current = sum(1 for v in violations if v.get("kind") == WARNINGS_UNCHECKED_KIND)
     return (
-        "\n" + _SECTION + "7 warnings-unchecked check (shadow, STORED -- pre-retarget "
-        f"semantics): {len(violations)} run(s) recorded a warnings-unchecked "
-        f"violation when they ran, under the retired question (a parentage "
-        f"write with no person_warnings call), across {affected} run(s). Not "
-        f"comparable with the current check -- read the replay line for that."
+        "\n" + _SECTION + "7 warnings-unchecked check (shadow, STORED): "
+        f"{len(violations)} entr(ies) across {affected} run(s) -- {legacy} under "
+        f"the RETIRED question (a parentage write with no person_warnings call) "
+        f"and {current} under the current one (a writer refused for unjustified "
+        f"warnings with nothing landing after it). The two answer different "
+        f"questions and must not be summed; the retired count is history. For "
+        f"the current check across the corpus, read the replay line."
     )
 
 

@@ -201,10 +201,13 @@ def response_text(entry: dict[str, Any]) -> str:
     double-encoded and truncated across the corpus, and a parse fails on shapes
     a substring handles.
     """
-    raw = entry.get("response_summary")
-    if raw is None:
-        raw = entry.get("response")
-    if raw is None:
+    # FALSY, not just None. A producer that sets `response_summary` to "" rather
+    # than omitting the key would otherwise shadow a populated `response` and
+    # reopen the tier-blindness this function exists to close. The scannability
+    # check in `guardrail_shadow_report.missing_for_warnings` uses truthiness on
+    # the same field, and the two must agree on what "recorded" means.
+    raw = entry.get("response_summary") or entry.get("response")
+    if raw is None or raw == "":
         return ""
     if isinstance(raw, str):
         return raw
@@ -1454,7 +1457,15 @@ PERSON_EVIDENCE_DENY_KIND = "person_evidence_deny"
 # `guardrail_shadow_report.py` keys on it to count this class in its
 # own bucket. Lives here beside its siblings so the report can read it without
 # importing the orchestrator (and the Claude Agent SDK) for one string.
-WARNINGS_UNCHECKED_KIND = "warnings_unchecked"
+# Bumped when the check was retargeted onto the engine gate. The pre-retarget
+# entries already in the committed corpus answer a DIFFERENT question -- a
+# parentage write with no `person_warnings` call -- and keeping one bucket would
+# mix two incompatible meanings with nothing to tell them apart, which is what
+# made the "STORED -- pre-retarget semantics" caveat on the §7 line true only
+# until the next panel run. Readers that want the history still match the old
+# value, which is retained for exactly that.
+WARNINGS_UNCHECKED_KIND_LEGACY = "warnings_unchecked"
+WARNINGS_UNCHECKED_KIND = "unresolved_warning_refusal"
 
 
 def find_citation_nulling_in_conclusions(
