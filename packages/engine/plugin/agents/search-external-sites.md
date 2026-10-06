@@ -319,8 +319,8 @@ it:
 
 ### 2b. Check FamilySearch's own holdings
 
-Before you present any external-site result as a source, run `collections_search`
-for the same place and window:
+**Always** call `collections_search` for the same place and window before step 3,
+even when the researcher named the site and the collection:
 
 ```
 collections_search({ standardPlace: "<standardPlace>", startYear: <year>, endYear: <year> })
@@ -496,11 +496,10 @@ one `research_log_append` call: `tool: "external_site"`, `outcome: "partial"`,
 captureReceived: false, captureFilename: null }`. `project_context` lists every
 such entry in `awaitingUser` until a later entry for the same URL closes it.
 
-Then present the URL, with every note from the tool's response, and the
-**hand-off** in full — the researcher has to fetch this themselves, so give them:
-1. the URL, exactly as the tool returned it — character for character, never
-   shortened or rewritten — on a line of its own as plain text, not as the
-   target of a markdown link;
+Then present the **hand-off** in full, with every note from the tool's
+response — the researcher has to fetch this themselves, so give them:
+1. the tool's `handoffLine`, pasted whole as plain text — never type the URL
+   yourself, and never wrap it in a markdown link;
 2. what the record would settle, in plain words (for example: "her mother's name,
    from the three-generation family register");
 3. exactly what to look for — the register or volume, the folio or page, the
@@ -510,14 +509,15 @@ Then present the URL, with every note from the tool's response, and the
 **If the results for that URL are already in the delegation,
 skip this whole step** — no in-flight entry and no capture instructions.
 The search is not awaiting anything: go to step 5, and log it once at step 6
-as the capture that arrived with no file.
+as the capture that arrived with no file, with the built URL as
+`urlGenerated`. Paste the tool's `handoffLine` once in your reply, so the
+researcher sees the search the results came from.
 
 ---
 
 **Search: 1850 Census on Ancestry for Patrick Flynn**
 
-Open this search:
-<the url from build_external_search_url, unchanged>
+<the handoffLine from build_external_search_url, pasted whole>
 
 It would settle Patrick's household in 1850: who he lived with, and their ages
 and birthplaces. Look for a Patrick Flynn born about 1845 in Ireland.

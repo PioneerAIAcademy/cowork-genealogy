@@ -17,7 +17,7 @@ as a fresh site-wide search or by appending parameters onto a FamilySearch-
 curated collection link. Given a `projectPath` it also logs the hand-off (§6).
 
 ```
-build_external_search_url({ site, baseUrl?, locale?, attributes }) -> { ok: true, url, notes, access, logId? } | { ok: false, reason, errors, supportedSites? }
+build_external_search_url({ site, baseUrl?, locale?, attributes }) -> { ok: true, url, handoffLine, notes, access, logId? } | { ok: false, reason, errors, supportedSites? }
 ```
 
 ---
@@ -152,16 +152,22 @@ build_external_search_url({
 ### 3.1 Return value
 
 ```typescript
-{ ok: true, url: string, notes: string[], access: "free" | "free_bot_protected" | "subscription" }
+{ ok: true, url: string, handoffLine: string, notes: string[], access: "free" | "free_bot_protected" | "subscription" }
 | { ok: false, reason: "unsupported_site", errors: string[], supportedSites: string[] }
 | { ok: false, reason: "base_url_required", errors: string[] }
 | { ok: false, reason: "invalid_base_url", errors: string[] }
 | { ok: false, reason: "outside_coverage", errors: string[] }
 | { ok: false, reason: "no_attributes", errors: string[] }
 // MCP tool only (buildExternalSearchUrlTool, §6): the build above, plus
-| { ok: true, url, notes, access, logId?: string }   // logId when projectPath was given
+| { ok: true, url, handoffLine, notes, access, logId?: string }   // logId when projectPath was given
 | { ok: false, reason: "log_write_failed", errors: string[] }
 ```
+
+`handoffLine` is the hand-off as the researcher reads it — `Open this search:`, a
+newline, then `url` — built in the tool from the same string it logs as
+`url_generated`. The agent pastes it whole. A model that retyped a long URL into
+its reply drifted from the logged one (a doubled segment, a dropped segment),
+so the line is built here rather than in the agent.
 
 `notes` carries non-fatal observations the caller should narrate:
 

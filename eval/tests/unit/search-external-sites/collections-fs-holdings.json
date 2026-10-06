@@ -13,9 +13,7 @@
       "collections-cross-check",
       "issue-1313",
       "direct-arm"
-    ],
-    "expected_outcome": "xfail",
-    "xfail_reason": "Agent-body defect, issue #2966: on the agent path the agent sometimes skips its collections_search step, so it never sees that FamilySearch holds the 1855 Massachusetts State Census and does not surface it. Measured on the agent 2026-10-06 with --runs-per-test 3: fail/pass/pass; the failing run made no collections_search call. Removal condition: a --runs-per-test 3 run of this test on the agent passes 3 of 3."
+    ]
   },
   "input": {
     "delegation": "Generate a MyHeritage search URL to look for Josiah Barnes in the 1855 Massachusetts State Census.\n\nuserPresent: yes\nprojectPath: <workspace>",

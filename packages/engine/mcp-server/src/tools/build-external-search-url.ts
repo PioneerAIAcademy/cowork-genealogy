@@ -82,7 +82,7 @@ export interface BuildExternalSearchUrlInput {
 export type AccessClassification = "free" | "free_bot_protected" | "subscription";
 
 export type BuildExternalSearchUrlResult =
-  | { ok: true; url: string; notes: string[]; access: AccessClassification }
+  | { ok: true; url: string; handoffLine: string; notes: string[]; access: AccessClassification }
   | { ok: false; reason: "unsupported_site"; errors: string[]; supportedSites: string[] }
   | { ok: false; reason: "base_url_required"; errors: string[] }
   | { ok: false; reason: "invalid_base_url"; errors: string[] }
@@ -97,7 +97,7 @@ export interface BuildExternalSearchUrlToolInput extends BuildExternalSearchUrlI
 }
 
 export type BuildExternalSearchUrlToolResult =
-  | ({ ok: true; url: string; notes: string[]; access: AccessClassification; logId?: string })
+  | ({ ok: true; url: string; handoffLine: string; notes: string[]; access: AccessClassification; logId?: string })
   | Exclude<BuildExternalSearchUrlResult, { ok: true }>
   | { ok: false; reason: "log_write_failed"; errors: string[] };
 
@@ -1248,7 +1248,14 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
     notes.push("baseUrl uses http:, which the desktop viewer does not open — prefer the https form of this link");
   }
 
-  return { ok: true, url, notes, access: SITE_ACCESS[site] };
+  return { ok: true, url, handoffLine: handoffLineFor(url), notes, access: SITE_ACCESS[site] };
+}
+
+// The hand-off as the researcher reads it, built here from the same `url` the
+// tool logs, so the agent pastes it rather than retyping a long URL — the
+// retyped copy is what drifted from the logged one (spec §6).
+export function handoffLineFor(url: string): string {
+  return `Open this search:\n${url}`;
 }
 
 // ─── The tool: build, then log the hand-off (spec §6) ─────────────────────────
@@ -1326,7 +1333,9 @@ export const buildExternalSearchUrlSchema = {
     "tool only templates the URL. On success the response's `access` field " +
     "classifies the site as `free`, `free_bot_protected`, or `subscription` — " +
     "read it from here, not from memory, when telling the user what access " +
-    "the search needs. Given `projectPath`, it also appends the search's " +
+    "the search needs. `handoffLine` is the finished hand-off line for the " +
+    "researcher, carrying the same URL: paste it whole and never retype the URL. " +
+    "Given `projectPath`, it also appends the search's " +
     "in-flight `external_site` log entry (outcome partial, captureReceived false) " +
     "to research.json and returns its `logId` — do not log that hand-off again. " +
     "It makes no network call.",
