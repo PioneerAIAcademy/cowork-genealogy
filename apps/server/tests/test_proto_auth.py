@@ -34,6 +34,7 @@ FS_ID = "MMMM-AAA"
 def _clean_auth_env(monkeypatch):
     for name in AUTH_ENV:
         monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("DEV_LOGIN", "true")
 
 
 @pytest.fixture
@@ -238,6 +239,29 @@ async def test_dev_login_disabled_when_fs_configured_or_https(monkeypatch, env):
         assert (await c.get("/auth/config")).json()["devLogin"] is False
         assert (await c.post("/auth/dev-login", json={"email": "x@y.z"})).status_code == 403
     assert all(u.email != "x@y.z" for u in store.users.values())
+
+
+@pytest.mark.parametrize("value", [None, "", "false", "1", "yes", "on"])
+async def test_dev_login_is_opt_in(monkeypatch, value):
+    """U13: FamilySearch off and PUBLIC_URL unset (http) is what a deployed host that forgot
+    both looks like; without DEV_LOGIN=true it still offers no allowlist-free sign-in."""
+    if value is None:
+        monkeypatch.delenv("DEV_LOGIN")
+    else:
+        monkeypatch.setenv("DEV_LOGIN", value)
+    assert not auth.familysearch_enabled() and not auth.is_https()
+    assert not auth.dev_login_enabled()
+    store = FakeStore()
+    async with _client(store) as c:
+        assert (await c.get("/auth/config")).json()["devLogin"] is False
+        assert (await c.post("/auth/dev-login", json={"email": "x@y.z"})).status_code == 403
+    assert all(u.email != "x@y.z" for u in store.users.values())
+
+
+@pytest.mark.parametrize("value", ["true", " TRUE ", "True"])
+def test_dev_login_accepts_true_in_any_case(monkeypatch, value):
+    monkeypatch.setenv("DEV_LOGIN", value)
+    assert auth.dev_login_enabled()
 
 
 async def test_the_lifespan_syncs_the_allowlist_from_the_environment(monkeypatch):

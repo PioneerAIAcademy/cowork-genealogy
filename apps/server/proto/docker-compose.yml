@@ -240,8 +240,8 @@ services:
     container_name: proto-web
     restart: unless-stopped
     # Loopback only. U2 put patron sign-in in front of every session route, but dev-login
-    # (on while FamilySearch sign-in is off and PUBLIC_URL is http) signs anyone in, so the
-    # tier must still not be LAN-reachable. docker-compose.fs-signin.yml adds the 1837
+    # (on with DEV_LOGIN=true while FamilySearch sign-in is off and PUBLIC_URL is http)
+    # signs anyone in, so the tier must still not be LAN-reachable. docker-compose.fs-signin.yml adds the 1837
     # publish the FamilySearch round-trip needs.
     ports:
       - "127.0.0.1:8085:8085"
@@ -258,7 +258,10 @@ services:
       SSE_PING_S: "15"
       # U2 sign-in (web/auth.py). The defaults are dev-only; web/auth.py refuses to start
       # on an https PUBLIC_URL with a default secret. FamilySearch sign-in stays off here
-      # (dev-login only) -- docker-compose.fs-signin.yml turns it on.
+      # (dev-login only) -- docker-compose.fs-signin.yml turns it on, which turns dev-login
+      # off. DEV_LOGIN is the opt-in no template may set (U11); a literal, so no host
+      # variable at `up` time switches it.
+      DEV_LOGIN: "true"
       PUBLIC_URL: ${PUBLIC_URL:-http://127.0.0.1:8085}
       WEB_ORIGIN: ${WEB_ORIGIN:-}
       SESSION_SECRET: ${SESSION_SECRET:-}
