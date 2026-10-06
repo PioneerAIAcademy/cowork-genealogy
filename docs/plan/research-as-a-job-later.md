@@ -52,7 +52,9 @@ Phase 1 turned continuous work on for every hosted turn. These follow from that 
 before any new surface. The nudge text and the body edits reach the alpha and Cowork too — one
 constant, one plugin — and the exit's handler is now on both hosted planes (see below). ~~The alpha's Stop hook
 passes no decision clause, so it vetoes the exit like any yield and alpha testers keep phase 1's
-behaviour until the alpha is retired~~ — **SUPERSEDED, re-ruled by the user 2026-10-06.** The
+behaviour until the alpha is retired~~ — **SUPERSEDED 2026-10-06** on the lead's own Done-when (a new browser session must end with
+the delivered outcome, and the default web transport is the alpha) and his 2026-10-06 comments
+asking for the duplicate-spawn fix. The struck ruling was his (496566c29). The
 alpha now halts on the delivered signal and forwards it as `should_continue_run(delivered=...)`,
 and it forces delegations to the foreground like the worker. The ruling above rested on nothing
 needing those signals there; the router's "Bounded request or job" section needed the first, and

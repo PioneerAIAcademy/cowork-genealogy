@@ -45,8 +45,10 @@ from pathlib import Path
 from .continue_policy import (
     CONTINUE_REASON,
     DELEGATION_TOOLS,
-    DELIVERED_REASON,
+    DELIVERED_REASON,  # noqa: F401 - tests read it off this module
     DELIVERED_TOOL,
+    delivered_stop_reason,
+    foreground_rewrite,
     DELIVERY_GUIDANCE,
     env_int,
     read_research_json,
@@ -428,19 +430,13 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
     # duplicate (see DELEGATION_TOOLS). Every call not explicitly False is
     # rewritten, because CLI 2.1.220 backgrounds an agent when the flag is absent
     # and the measured incidents carried no flag at all.
-    if tool_name in DELEGATION_TOOLS and tool_input.get("run_in_background") is not False:
-        # Logged because the stated acceptance is a LIVE hosted turn, and this file's own
-        # doctrine is that an inert arm looks identical to a working one. Without a line
-        # here there is nothing in the log to tell a foregrounded delegation from an arm
-        # that never bound. The prototype emits `ev="foregrounded"` for the same reason.
+    # Shared with the prototype: one predicate, one rewrite, so a mutation in either
+    # fails tests on both planes. Logged because the stated acceptance is a LIVE hosted
+    # turn, and this file's own doctrine is that an inert arm looks identical to a
+    # working one.
+    if (rewritten := foreground_rewrite(tool_name, tool_input)) is not None:
         _log(f"[agent] foregrounded {tool_name} delegation")
-        return {
-            "hookSpecificOutput": {
-                "hookEventName": "PreToolUse",
-                "permissionDecision": "allow",
-                "updatedInput": {**tool_input, "run_in_background": False},
-            },
-        }
+        return rewritten
 
     return {}
 
@@ -616,11 +612,9 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
             # without it the researcher is told a delivery happened but not what
             # was delivered, and the two planes claim a parity they do not have.
             delivered_input = (_input_data or {}).get("tool_input") or {}
-            summary = str(delivered_input.get("summary") or "").strip()
             return {
                 "continue": False,
-                "stopReason": f"Delivered: {summary} {DELIVERED_REASON}" if summary
-                else DELIVERED_REASON,
+                "stopReason": delivered_stop_reason(delivered_input.get("summary")),
             }
         if agent is not None:
             try:

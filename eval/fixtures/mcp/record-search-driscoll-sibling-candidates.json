@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "Two same-surname, same-parish Driscoll baptisms for ut_research_021. Authored so the candidates-not-verdicts rule is EXERCISABLE: with no search result the only reachable reply is 'I found none', which the judge context passes vacuously, so the two clauses that carry item 6 (give each candidate with how strong the match is; never declare the question answered on a name match) could never be graded. Both hits are deliberately UNDERDETERMINED -- same surname and parish, plausible dates, and NO parent names on either record -- so the only correct reply offers them as candidates with their weakness stated. A reply naming either as Cornelius's sibling is the failure.",
+  "description": "Two same-surname, same-parish Driscoll baptisms for ut_research_022. Authored so the candidates-not-verdicts rule is EXERCISABLE: with no search result the only reachable reply is 'I found none', which the judge context passes vacuously, so the two clauses that carry item 6 (give each candidate with how strong the match is; never declare the question answered on a name match) could never be graded. Both hits are deliberately UNDERDETERMINED -- same surname and parish, plausible dates, and NO parent names on either record -- so the only correct reply offers them as candidates with their weakness stated. A reply naming either as Cornelius's sibling is the failure.",
   "args": {
     "surname": "~Driscoll"
   },

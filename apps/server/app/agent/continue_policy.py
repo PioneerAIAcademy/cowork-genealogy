@@ -121,6 +121,42 @@ DELIVERY_GUIDANCE = (
 DELEGATION_TOOLS = frozenset({"Agent", "Task"})
 
 
+
+def delivered_stop_reason(summary: str | None) -> str:
+    """The halt text for a delivery, summary FIRST.
+
+    Shared because both planes built this string by hand and the two could drift
+    on exactly the thing that matters: the browser replaces the chip with the
+    result text cut at 160 chars, and DELIVERED_REASON alone is 124, so appending
+    rather than prepending eats the window and cuts what the researcher most
+    needs. A single mutation here now fails tests on both planes.
+    """
+    text = (summary or "").strip()
+    return f"Delivered: {text} {DELIVERED_REASON}" if text else DELIVERED_REASON
+
+
+def foreground_rewrite(tool_name: str, tool_input: Mapping[str, Any] | None) -> dict[str, Any] | None:
+    """An allow-with-rewrite forcing a delegation to the foreground, or None.
+
+    The one hook arm on either plane that CHANGES a call rather than refusing it.
+    Returns None when the call is not a delegation, or when it already carries an
+    explicit `run_in_background: False`. Every other shape is rewritten, because
+    CLI 2.1.220 backgrounds an agent when the key is absent and both measured
+    incidents carried no key at all.
+    """
+    data = dict(tool_input or {})
+    if tool_name not in DELEGATION_TOOLS or data.get("run_in_background") is False:
+        return None
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "allow",
+            "updatedInput": {**data, "run_in_background": False},
+        },
+    }
+
+
+
 def read_research_json(project_dir: Path | str) -> dict[str, Any] | None:
     """``<project_dir>/research.json`` parsed, or None if missing or unusable.
 

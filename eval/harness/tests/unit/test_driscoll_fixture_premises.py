@@ -35,7 +35,7 @@ def test_driscoll_still_has_an_attached_death_record() -> None:
     assert deaths, (
         "ut_research_021 asks for a death record BECAUSE one is already attached. "
         "With no death source the ask becomes a genuine search and the test is "
-        f"grading the opposite behaviour. Sources present: {[s.get('source_id') for s in sources]}"
+        f"grading the opposite behaviour. Sources present: {[s['id'] for s in sources]}"
     )
 
 
@@ -52,7 +52,7 @@ def test_no_sibling_candidate_carries_a_parent() -> None:
         parents = [r for r in rels if r.get("type") == "ParentChild"]
         assert not parents, (
             f"{hit['personName']} carries a parent link, so the ask is answerable and "
-            "'candidates, not verdicts' stops being exercised. Relationships: {rels}"
+            f"'candidates, not verdicts' stops being exercised. Relationships: {rels}"
         )
 
 

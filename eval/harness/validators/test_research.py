@@ -318,7 +318,7 @@ def test_no_browse_executed_on_indexed_search(
 # `search-records` both spend a paid call to re-find what the project holds.
 _SEARCH_MCP_TOOLS = frozenset({
     "record_search", "person_search", "fulltext_search", "collections_search",
-    "volume_search", "image_search", "external_links_search",
+    "volume_search", "image_search", "external_links_search", "catalog_search",
 })
 # Derived from the skills tree, not recalled: an omission here is silent, because a
 # hand-off to a step missing from this set passes the assertion below.

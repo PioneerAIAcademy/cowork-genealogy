@@ -586,12 +586,18 @@ def test_a_subagent_call_cannot_clear_a_main_thread_delivery(tmp_path, monkeypat
 
 
 def test_the_delivery_summary_leads_the_stop_reason(tmp_path, monkeypatch):
-    """Parity with the prototype, which prepends the model's own sentence.
+    """The halt text carries the model's own sentence, as the prototype's does.
 
-    It is the whole reason the tool takes a `summary`. Without it the researcher is
-    told a delivery happened but not what was delivered. Summary FIRST because the
-    browser cuts the chip text at 160 chars and DELIVERED_REASON alone is 124, so
-    appending would leave almost no room for it.
+    NOT full parity, and the first version of this docstring overclaimed it: the
+    prototype RENDERS the summary, the alpha does not yet. `map_message` has no
+    `ResultMessage` branch and nothing under `apps/server/app` reads `stopReason`,
+    so on the alpha the sentence reaches the CLI and the log but not the browser.
+    Raised in review. What this test pins is that the text is BUILT correctly and
+    shared with the prototype, which is what stops the two drifting; surfacing it
+    is a separate change to the event stream.
+
+    Summary FIRST because the prototype's chip cuts at 160 chars and
+    DELIVERED_REASON alone is 124, so appending would leave almost no room.
 
     Added because the suite passed both before and after the behaviour existed:
     every other test here asserts only that the turn halts.
@@ -628,3 +634,38 @@ def test_a_present_but_null_agent_id_is_still_a_subagent(tmp_path, monkeypatch):
     hooks = _hooks(tmp_path, monkeypatch)
     out = _call(_counting_hook(hooks), _delivered_call(agent_id=None))
     assert out == {}, "agent_id present-but-None is a subagent, not the main thread"
+
+
+def test_handle_turn_clears_a_delivery_from_the_previous_turn(tmp_path):
+    """Drives the REAL turn boundary, not the stand-in.
+
+    Raised in review: every other test here calls `_begin_turn_hook_state` on a
+    stand-in, never through `handle_turn`, so replacing the call site with `pass`
+    left the whole server suite green. The fix for the session-scoped `delivered`
+    leak could have been deleted with CI passing, which is the shape this branch
+    has been removing all along.
+
+    It fails with the call deleted, and fails if the reset also zeroes
+    `tool_calls` -- that counter is deliberately session-scoped, because the
+    no-progress arm compares it across two stops.
+    """
+    import asyncio
+
+    from claude_agent_sdk import ResultMessage
+
+    from _fakes import ReplayFakeClient, attach, turn_events
+
+    agent = real_agent.RealAgent(tmp_path)
+    agent._hook_counter = {"tool_calls": 3, "delivered": True}
+    done = ResultMessage(subtype="success", duration_ms=1, duration_api_ms=1,
+                         is_error=False, num_turns=1, session_id="s1")
+    attach(agent, ReplayFakeClient([done]))
+    asyncio.run(turn_events(agent, "next message"))
+
+    assert agent._hook_counter["delivered"] is False, (
+        "a new turn must clear the previous turn's delivery"
+    )
+    assert agent._hook_counter["tool_calls"] == 3, (
+        "tool_calls is session-scoped; zeroing it would make every second stop look "
+        "like no progress and end the job after one nudge"
+    )

@@ -100,9 +100,9 @@ a records-request letter; whether a person's children or siblings are complete.
 
 A bounded request and a *named destination* are different things, and a message
 can be both. "Create a research plan for Mary Hales, but leave it at that" names
-a destination AND is bounded. They answer different questions: naming a
-destination says **where** to end up; bounded says **whether to continue past
-it**. Hand a bounded request straight to the step that owns its deliverable — a
+a destination AND is bounded: naming a destination says **where** to end up,
+bounded says **whether to continue past it**. Hand a bounded request straight
+to the step that owns its deliverable — a
 transcription to `@plugin:image-reader`, a plan to `research-plan`, a record to
 `search-records`. Do not walk the routing table from the top for one: that table
 sequences a *job*, and on a project with no questions yet its first satisfiable
@@ -470,8 +470,7 @@ of "What to do" and invoke the next sub-skill. (See "Continuous work".)
 
 **A bounded request has a fifth: its deliverable.** When the one thing
 the message asked for is produced, end the turn — see §"Bounded request
-or job". That is the whole difference between the two: a job stops on
-one of the four above, a bounded request stops at what it was asked for.
+or job".
 
 ### Candidates, not verdicts
 
@@ -484,9 +483,8 @@ a verdict:
 - **never declare the question answered on a name match.** A name is not
   an identification;
 - end with an offer to **research it further** — never an offer to extract,
-  attach, or link. Those are writes, and `search-records` forbids offering
-  one on an unsettled identity for the reason that a user who says yes has
-  just adopted a namesake's parents. Offer the investigation, not the write.
+  attach, or link. Those are writes, and `search-records` forbids offering one
+  on an unsettled identity. Offer the investigation, not the write.
 
 A single plausible candidate is still a candidate. The researcher decides
 whether it is their person; your job is to show them what you found and
@@ -507,9 +505,10 @@ what it rests on.
 
 ## Re-invocation behavior
 
-**Writes:** nothing directly — it holds no writer tool. It reads `research.json` to decide the next step, and before any search reads a linked person's attached sources (`person_read`, `source_attachments`). This skill is a thin orchestrator — it
-reads `research.json` to decide the next step and delegates every
-write to the sub-skill it routes to. It does **not** insert defensive
+**Writes:** nothing directly — it holds no writer tool. This skill is a thin
+orchestrator: it reads `research.json` to decide the next step, reads a linked
+person's attached sources (`person_read`, `source_attachments`) before any
+search, and delegates every write to the sub-skill it routes to. It does **not** insert defensive
 `validate_research_schema` passes between steps (the writer tools each
 validate the whole project before persisting); it calls
 `validate_research_schema` (read-only) only to confirm an external/manual

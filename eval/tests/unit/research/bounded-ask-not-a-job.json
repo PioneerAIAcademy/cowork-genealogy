@@ -4,7 +4,7 @@
     "skill": "research",
     "name": "A bounded ask is not routed into the question/plan chain",
     "type": "positive",
-    "description": "The other direction of the same rule. 'Transcribe this record for me' asks for ONE deliverable, so the 'Bounded request or job' section must stop it entering the question-selection / research-plan chain that a job walks. The project has an objective and zero questions, so a router that ignored the section would call question-selection first -- exactly what ut_research_011 asserts for an open ask. Here that call is the FAILURE. GRADING: deterministic. `routes-to:image-reader` makes `test_routes_to_expected_skill` assert the first hand-off from hook records, which the judge cannot see (agent spawns are absent from `skills_invoked`). image-reader is the destination because its own description owns 'transcribe this register page' / 'OCR this scan', and the router holds no `image_transcribe`, so inline is not an option. Paired with ut_research_019 (open ask -> question-selection) so both directions are pinned deterministically: neither passes a body that classifies everything one way.",
+    "description": "The other direction of the same rule. 'Transcribe image <id> for me' asks for ONE deliverable, so the 'Bounded request or job' section must stop it entering the question-selection / research-plan chain that a job walks. The project has an objective and zero questions, so a router that ignored the section would call question-selection first -- exactly what ut_research_011 asserts for an open ask. Here that call is the FAILURE. GRADING: deterministic. `routes-to:image-reader` makes `test_routes_to_expected_skill` assert the first hand-off from hook records, which the judge cannot see (agent spawns are absent from `skills_invoked`). image-reader is the destination because its own description owns 'transcribe this register page' / 'OCR this scan', and the router holds no `image_transcribe`, so inline is not an option. Paired with ut_research_019 (open ask -> question-selection) so both directions are pinned deterministically: neither passes a body that classifies everything one way. The message NAMES an image because `image-reader`'s invocation contract requires an `imageId`; without one the correct router behaviour is to ask which page, which makes no hand-off at all and reds the deterministic validator on a message-authoring choice rather than on the rule.",
     "tags": [
       "routing",
       "routes-to:image-reader",
@@ -12,7 +12,7 @@
     ]
   },
   "input": {
-    "user_message": "Transcribe the 1881 census page I'm looking at, and leave it at that.",
+    "user_message": "Transcribe image 004022578_00190 for me, and leave it at that.",
     "scenario": "empty-project-just-created"
   },
   "execution": {

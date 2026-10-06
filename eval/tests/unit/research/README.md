@@ -80,13 +80,13 @@ passes a body that classifies everything one way.
 
 **Both are deterministic, and both were briefly not.** Each carries a `routes-to:`
 tag and so fires `test_routes_to_expected_skill`, which reads hook records rather
-than the model's narration: 018 `routes-to:question-selection`, 019
-`routes-to:image-reader`. 019 was first written with the `routing` tag and no
+than the model's narration: 019 `routes-to:question-selection`, 020
+`routes-to:image-reader`. 020 was first written with the `routing` tag and no
 `routes-to:` tag — the one combination that validator *skips* (`test_research.py:58`),
 and a skipped validator records `passed=True`. It was therefore judge-only while
 three places (this README, the commit message, the plan) claimed it was
 deterministic. Nothing lints for that, which is why it is written down here.
-image-reader is 019's destination because its own description owns "transcribe this
+image-reader is 020's destination because its own description owns "transcribe this
 register page" / "OCR this scan", and the router holds no `image_transcribe`, so
 doing it inline is not available.
 
@@ -111,15 +111,24 @@ optional argument would have matched nothing and been refused — the wrong fail
 a test about whether the router looks before it searches.
 
 `ut_research_022` (`candidates-not-verdicts.json`) covers item 6, and is **judge-graded
-on purpose** — which is a different thing from 019's accident. Every part of that rule
+on purpose** — which is a different thing from 020's accident. Every part of that rule
 is a property of the reply: whether a name match was presented as an answer, whether
 match strength and search scope were given, and whether the closing offer is to research
 further rather than to extract or attach. None of that appears in a hook record or a
 call log. A deterministic check here could only assert something that cannot fail, and
 CLAUDE.md is explicit that such a check is worse than none. The suite's "routing is not
 yours to grade" rule constrains ROUTING; reply quality is what the judge is for. The
-distinction worth holding on to: 019 was judge-only because a gate tag silently skipped
-its validator, and nobody could see it; 021 says so in its own description and here.
+distinction worth holding on to: 020 was judge-only because a gate tag silently skipped
+its validator, and nobody could see it; 022 says so in its own description and here.
+
+`ut_research_023` (`autonomous-is-always-a-job.json`) guards the e2e corpus against
+this whole section. Every e2e run enters as `/research --autonomous {question}`, so
+every run reads it, and 63 of the 136 committed e2e fixtures ask a question whose
+SHAPE is on the bounded list. Without the `--autonomous` carve-out the router would
+deliver one answer and stop on those. Its message deliberately omits the leading
+`/research`: `skills_invoked` is filled only by a `Skill` tool call, so a slash entry
+grades a positive test `fail` whatever the router does (issue #3116, fix PR #3146 open).
+Restore the prefix once that lands and this becomes the e2e entry form exactly.
 
 **What they do NOT cover, and cannot:** that a bounded turn ends with the
 `delivered` outcome. `research_delivered` is not in this harness's `LIVE_TOOLS` and

@@ -54,7 +54,9 @@ from typing import Any
 
 from app.agent.continue_policy import (
     DELEGATION_TOOLS,
-    DELIVERED_REASON,
+    DELIVERED_REASON,  # noqa: F401 - tests read it off this module
+    delivered_stop_reason,
+    foreground_rewrite,
     DELIVERY_GUIDANCE,
     DELIVERED_TOOL,
     CONTINUE_REASON,
@@ -364,14 +366,6 @@ SPEND_CAP_REASON = (
 def _halt(reason: str = STOP_REASON) -> dict[str, Any]:
     return {"continue_": False, "stopReason": reason, **_deny(reason)}
 
-def _foregrounded(tool_input: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "allow",
-            "updatedInput": {**tool_input, "run_in_background": False},
-        },
-    }
 
 
 def make_pretool_hook(
@@ -495,8 +489,7 @@ def make_pretool_hook(
             # 160 chars, and DELIVERED_REASON alone is 124 (re-measured 2026-10-06; the
             # comment said 157). Appended rather than prepended, the reason eats most of
             # the window and the summary is cut. What the researcher most needs leads.
-            return _halt(f"Delivered: {summary} {DELIVERED_REASON}" if summary
-                         else DELIVERED_REASON)
+            return _halt(delivered_stop_reason(summary))
         try:
             protected = direct_project_file_write(tool_name, tool_input)
             if protected:
@@ -534,7 +527,7 @@ def make_pretool_hook(
         if tool_name in DELEGATION_TOOLS and tool_input.get("run_in_background") is not False:
             if log is not None:
                 log(ev="foregrounded", turn_id=turn_id, tool_name=tool_name, tool_use_id=tool_use_id)
-            return _foregrounded(tool_input)
+            return foreground_rewrite(tool_name, tool_input) or {}
         return {}
 
     return _pretool
