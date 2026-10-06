@@ -25,6 +25,7 @@ import importlib.util
 import json
 import re
 import shlex
+import shutil
 import stat
 import subprocess
 from pathlib import Path
@@ -368,11 +369,16 @@ class FakeAws:
 
     def _apply(self, name, rest):
         settings = self.env_settings.setdefault(name, {})
+
+        def read(flag):
+            ref = _flag(rest, flag)
+            return json.loads(self.files[ref] if ref.startswith("file://") else ref)
+
         if "--option-settings" in rest:
-            for o in json.loads(self.files[_flag(rest, "--option-settings")]):
+            for o in read("--option-settings"):
                 settings[(o["Namespace"], o["OptionName"])] = o["Value"]
         if "--options-to-remove" in rest:
-            for o in json.loads(self.files[_flag(rest, "--options-to-remove")]):
+            for o in read("--options-to-remove"):
                 settings.pop((o["Namespace"], o["OptionName"]), None)
 
     def elasticbeanstalk_create_environment(self, rest):
@@ -559,11 +565,15 @@ def test_billed_commands_need_billed(env, cmd):
     assert rc != 0 and fake.calls == []
 
 
-def test_work_dir_inside_the_worktree_is_refused(tmp_path):
-    rc = rh.main(["plan", "--expect-account", ACCOUNT, "--work-dir", str(REHEARSAL_DIR / "w")],
-                 runner=FakeAws(), out=lambda line: None)
-    assert rc == 2
-    assert not (REHEARSAL_DIR / "w").exists()
+def test_work_dir_inside_the_worktree_is_refused():
+    inside = REHEARSAL_DIR / "w-refused"
+    try:
+        rc = rh.main(["plan", "--expect-account", ACCOUNT, "--work-dir", str(inside)],
+                     runner=FakeAws(), out=lambda line: None)
+        assert rc == 2
+        assert not inside.exists()
+    finally:
+        shutil.rmtree(inside, ignore_errors=True)
 
 
 def test_local_dir_is_gitignored():
