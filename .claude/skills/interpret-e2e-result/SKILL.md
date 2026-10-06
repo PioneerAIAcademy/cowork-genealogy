@@ -38,10 +38,11 @@ That means all of:
   than only when `compliance` is `pass`.
 
 Those are the judge's *grades*: the thing the maintainer calibrates, and
-unnecessary for explaining what the agent did. The user runs `/grade-e2e-run`
-right after this to grade the run **blind**; if you surface the judge's labels
-here, that grade is no longer independent and the calibration number is
-corrupted.
+unnecessary for explaining what the agent did. The human grade comes first
+(`/grade-e2e-run`, blind) and must stay independent of the judge. Your report
+says which expected findings the tree recovered, which is what the grader
+labels, so it comes after the grade. If you also surface the judge's labels, a
+later re-grade is anchored and the calibration number is corrupted.
 
 **`compliance` and `guardrail_bypass_violations` are NOT judge output** — read
 and report them freely (Step 2d). They are a deterministic harness check on
@@ -81,9 +82,25 @@ is a fabrication.
 
 ### Step 1 — Locate the run log
 
-If the user pointed at a specific `run-<ts>.json`, use it. Otherwise
-ask which fixture and which timestamp, or take the most recent if
-only one is present.
+If the user pointed at a specific `run-<ts>.json`, or a `scratch_<ts>.json` (the
+harness's name for a run the judge skipped), use it. Otherwise ask which fixture
+and which timestamp, or take the most recent if only one is present.
+
+**Grade first.** When the run owes a grade, tell the user to run `/grade-e2e-run`
+first and stop. Do not produce the per-finding report. A run owes a grade when all
+of these hold: it is under `eval/runlogs/e2e/` (a quarantine directory is not the
+corpus); it is a `run-<ts>.json`, not a `scratch_` file; its
+`run-<ts>.final-tree.gedcomx.json` sibling is on disk; its top-level `stop_reason`
+(not `usage.stop_reason`) is not `host_slept`; and no `run-<ts>.ann.json` is on
+disk. These are the exemptions `check_added_runlogs_graded` applies in
+`eval/harness/scripts/check_e2e_fixtures.py`, read from the files on disk rather
+than from a commit, so a run that is not committed yet still owes its grade.
+Otherwise interpret as below, and also when the user says they will not grade
+this run or is mining a unit test from it.
+
+**A slept run.** When the top-level `stop_reason` is `host_slept`, go straight to
+Step 3's `host_slept` entry. It is the whole interpretation, so skip every other
+step.
 
 The fixture's `expected-findings.json` lives in `eval/tests/e2e/<id>/`.
 Read it alongside the run so you can compare expected vs found yourself.
@@ -119,7 +136,7 @@ conclusion it *wrote* — the claim, the evidence it cites, and the
 confidence/tier it asserted. Report observable characteristics as facts (e.g.
 "rests on a single 1910 census entry," "notes an unresolved date conflict,"
 "claims a `proof_argument` tier"). **Do not score its soundness** (1 / 2 / 3) —
-that's what the user grades blind next. If no proof summary was written, say so;
+that is what `/grade-e2e-run` scores. If no proof summary was written, say so;
 it's not itself a failure, just nothing to describe.
 
 ### Step 2c — Note any blocked tree-reads or context-writes
@@ -223,19 +240,28 @@ Translate `stop_reason` into something a researcher can act on:
   preceded an entry, so for the last call — index `len(tool_calls) - 1` — the
   narration that followed it carries `tool_calls_before == len(tool_calls)`.
   That entry is usually where the issue shows.
-- `timeout` — wall-clock cap fired (default 60 min). Either the
-  question is too big for the cap or the agent looped. Skim the tail
-  of `tool_calls` for repeating patterns.
-- `tool_cap` — agent hit the per-run tool-call cap (default 200).
+- `timeout` — wall-clock cap fired (default 120 min; a fixture's `caps` can
+  override). Either the question is too big for the cap or the agent looped.
+  Skim the tail of `tool_calls` for repeating patterns.
+- `tool_cap` — agent hit the per-run tool-call cap (default 300).
   Almost always means looping. Read the last 20 tool calls; the loop
   shape is usually obvious.
 - `cost_cap` — spent past the cost threshold. **Not an interruption** — it
-  is a post-hoc label (e2e-test-spec.md:648), so read `usage.stop_reason`
-  to see how the run actually ended before calling it unfinished.
+  is a post-hoc label (the cost-cap row of the stop-reason table in
+  `docs/specs/e2e-test-spec.md`), so read `usage.stop_reason` to see how the
+  run actually ended before calling it unfinished.
 - `max_turns` — SDK turn limit fired. Rare; usually means a
   conversational loop rather than a tool loop.
 - `error` — SDK or harness exception. Read `result.error` for the
   message and the last `narration` entries for the surrounding context.
+- `host_slept` — **an environment failure, not a research result.** The
+  harness counted at least the inactivity cap's worth of host sleep
+  (`usage.counted_sleep_seconds`), labeled the run `host_slept` and skipped
+  the judge. The run is left out of outcome rates and owes no grade. Tell the
+  researcher to commit its three files with no `.ann.json`, keep the machine
+  awake (`eval/README.md`, "Keep the machine awake during a run") and re-run.
+  The whole interpretation is this paragraph: do not report what the run
+  recovered, and do not read its misses as agent failures.
 - `mcp_unavailable` — **an environment failure, not a research result.**
   The genealogy MCP tools were absent from the session, so the agent had
   no way to search anything. Tell the researcher to **re-run the test —
@@ -347,12 +373,8 @@ ambiguity:
 - File a regression issue if the cause looks like an agent or
   sub-skill regression.
 
-**Then remind the user to grade this run.** Whatever the outcome — the run
-recovered everything, some, or none — it's committed and owes a calibration
-grade: tell the user to run `/grade-e2e-run` next to label the findings blind
-and write `run-<ts>.ann.json`. Because you stayed blind to the judge's grade, that
-grade is still independent. Grading is same-PR, and CI blocks committing a run
-that produced a tree without its `.ann.json` (a treeless skip run is exempt).
+The run and its `run-<ts>.ann.json` land in the same PR; CI blocks a run that
+produced a tree without its `.ann.json` (a treeless or `host_slept` run is exempt).
 
 ## What you do not do
 
@@ -378,7 +400,8 @@ User: "Why did the <slug> run fail?"
 
 You should:
 1. Read `eval/runlogs/e2e/<slug>/run-<latest>.json` (harness
-   fields only — skip `judge_output`, `verdict`, and `outcome`).
+   fields only — skip `judge_output`, `verdict`, and `outcome`) and check that
+   `run-<latest>.ann.json` exists.
 2. Read `eval/tests/e2e/<slug>/expected-findings.json` and the
    final tree; the tree contains **none** of the required findings.
 3. See `stop_reason: tool_cap`.
@@ -386,12 +409,11 @@ You should:
    on `place_search` for "Augusta County" with three near-duplicate
    queries.
 5. Tell the user: "Recovered none of the required findings; stopped at the
-   tool cap (200 calls). Agent looped on `place_search` from turn 47 onward —
+   tool cap (300 calls). Agent looped on `place_search` from turn 47 onward —
    three near-duplicate queries for Augusta County. Likely cause: `/research`
    skill regression (place-disambiguation guidance is weaker than the last
    passing run). Recommend diffing `tool_calls[]` against the previous green
-   run for this fixture before changing the skill. Then grade this run blind
-   with `/grade-e2e-run`."
+   run for this fixture before changing the skill."
 
 ## Re-invocation behavior
 
