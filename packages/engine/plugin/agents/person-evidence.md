@@ -324,15 +324,20 @@ persona. Decide the triggers from the assertions and the tree in hand.
      `https://www.familysearch.org/en/wiki/{Jurisdiction}_Emigration_and_Immigration`,
      the state for the United States and the country elsewhere
      (`Kentucky_Emigration_and_Immigration`, `Utah_Emigration_and_Immigration`).
-     A corridor counts only when the page names people arriving from the
-     record person's own prior country or state, in that era. A sentence about
-     settlers' ancestry or ethnic origin is not a corridor.
+     Then write one verdict line before any link: "Corridor: [one sentence
+     quoted from the page] / none". The quoted sentence qualifies only if it
+     names the person's own prior country or state together with an arrival
+     verb (came, arrived, emigrated, sailed, settled from), in an era that
+     contains the move. A sentence saying who settlers were ("of English
+     origin", "English settlers among the population") names no arrival and
+     does not qualify; with no qualifying sentence the verdict is "none".
    - Search the project for a documentary bridge: a passenger list,
      naturalization, warning-out, land grant, or a relative documented at the
-     destination first. A bridge is a record of the move or of the person at
-     the destination earlier. The person's absence from the origin's later
-     records, and a research question's framing, are what a bridge must
-     explain, never a bridge.
+     destination first. A documentary bridge is a record of the move or of
+     the person at the destination earlier. The person's absence from the
+     origin's later records, and a research question's framing, are never a
+     bridge. A corridor the page names explains the move as fully as a
+     documentary bridge: either one alone lifts the cap.
 2. **A name that a naming system could explain.** The given name agrees and
    the surname is a different word (not a spelling or phonetic variant, and
    not a woman's maiden and married surnames), or the given name is in
@@ -357,11 +362,13 @@ the tier:
   "none stated", and score that link with `recordRole` naming the party. Write "none stated" for either side that gives no year. A gap
   the event cannot explain goes in `core_identifier_conflict`.
 - "Residence check: [record place, year] vs [nearest attested residence,
-  year]: same / neighbouring / outside [place_distance km], [the page
+  year, taken from the tree as it stood before this run, never from a
+  record linked in this run]: same / neighbouring / outside [place_distance km], [the page
   sentence or record that bridges it, quoted, or nothing]." A person with
-  no attested residence gets "none attested". A line that says "outside"
-  without a `place_distance` figure and a fetched page is incomplete: make
-  those calls before writing the link. A line ending "outside ... nothing"
+  no attested residence gets "none attested". The km figure is the one
+  `place_distance` returned, never an estimate: write the line after the
+  call. A line that says "outside" without that figure and a fetched page is
+  incomplete: make those calls before writing the link. A line ending "outside ... nothing"
   caps the link at `probable`.
 
 **Assess match strength.** Weigh the data points above by reasoning
@@ -469,7 +476,9 @@ decide whether something bridges the move: a documentary bridge in the
 project, or a corridor the destination's page names for that origin and
 era. If nothing does, the link is **`probable` at most, never
 `confident`**, and the `rationale` names the gap: both places, the measured
-distance, and that no bridge or corridor accounts for it. This is not a
+distance, and that no bridge or corridor accounts for it. Every record
+beyond the same unexplained move shares the cap: a later record in the new
+place continues the move, it does not explain it. This is not a
 `core_identifier_conflict` and does not take `speculative` (an unexplained
 move is an unfinished argument, and `speculative` is a no-link in an
 autonomous run). If the page could not be retrieved, only a documentary
