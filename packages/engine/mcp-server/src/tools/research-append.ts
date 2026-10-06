@@ -4187,7 +4187,7 @@ async function prepareOps(
         // Skip any update op whose fields set source_id — it is re-pointing
         // the assertion, and a fold would leave it naming a source the batch
         // no longer creates.
-        if (uop.fields && typeof uop.fields === "object" && uop.fields.source_id !== undefined) continue;
+        if (uop.fields && typeof uop.fields === "object" && Object.prototype.hasOwnProperty.call(uop.fields, "source_id")) continue;
         const target = existingAssertions.find((a: any) => a && a.id === uop.entryId);
         if (target && typeof target.record_id === "string") {
           const bare = arkToBareId(target.record_id);

@@ -312,7 +312,7 @@ describe("extraction_append (issue #695 lane enforcement)", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.sourceReuse).toEqual(
-      expect.objectContaining({ action: "updated_existing", srcId: "src_001" }),
+      expect.objectContaining({ action: "updated_existing", srcId: "src_001", sId: "SD-001" }),
     );
     expect(r).not.toHaveProperty("sourceDescriptionId");
     const after = await readResearch();
@@ -346,12 +346,13 @@ describe("extraction_append (issue #695 lane enforcement)", () => {
     if (!r.ok) return;
     // Appends drive detection: rec2 has no existing source → "created"
     expect(r.sourceReuse).toEqual(
-      expect.objectContaining({ action: "created" }),
+      expect.objectContaining({ action: "created", srcId: "src_002" }),
     );
     const after = await readResearch();
     expect(after.sources).toHaveLength(2);
     // The newly appended assertion cites the new source
     const newAssertion = after.assertions.find((a: any) => a.record_id === "rec2");
+    expect(newAssertion).toBeDefined();
     expect(newAssertion.source_id).toBe("src_002");
   });
 
@@ -372,7 +373,8 @@ describe("extraction_append (issue #695 lane enforcement)", () => {
     } as any);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    // Detection did not engage (the only update sets source_id), so a new source was created
+    // Detection did not engage (the only update sets source_id), so no sourceReuse echo
+    expect(r.sourceReuse).toBeUndefined();
     const after = await readResearch();
     expect(after.sources).toHaveLength(2);
     expect(after.sources[1].id).toBe("src_002");
