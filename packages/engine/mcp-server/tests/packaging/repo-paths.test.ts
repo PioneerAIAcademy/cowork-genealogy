@@ -9,6 +9,7 @@ import {
   headingAnchors,
   makeTargetResolves,
   pathResolves,
+  pathResolvesIn,
   slugifyHeading,
 } from "./repo-paths.js";
 
@@ -136,5 +137,37 @@ describe("make target citations", () => {
     expect(citedMakeTargets("`make engine-test TEST=x`")).toEqual(["engine-test"]);
     expect(makeTargetResolves(targets, "engine-test")).toBe(true);
     expect(makeTargetResolves(targets, "engine-tests")).toBe(false);
+  });
+});
+
+describe("pathResolvesIn (what git can see, not the disk)", () => {
+  const entries = new Set([
+    "docs", "docs/a.md",
+    ".claude", ".claude/agents", ".claude/agents/x.md",
+    "eval", "eval/x", "eval/x/research.json",
+  ]);
+
+  it("resolves literal files and directories, with or without a trailing slash", () => {
+    expect(pathResolvesIn(entries, "docs/a.md")).toBe(true);
+    expect(pathResolvesIn(entries, "docs/")).toBe(true);
+    expect(pathResolvesIn(entries, "docs/b.md")).toBe(false);
+  });
+
+  it("matches a brace or angle placeholder against the real entries", () => {
+    expect(pathResolvesIn(entries, ".claude/{agents,commands,skills}")).toBe(true);
+    expect(pathResolvesIn(entries, ".claude/agents/<name>.md")).toBe(true);
+    expect(pathResolvesIn(entries, "docs/<a><b>/a.md")).toBe(false);
+  });
+
+  it("reads ** as zero or more directories, and a trailing ** as needing an entry", () => {
+    expect(pathResolvesIn(entries, "eval/**/research.json")).toBe(true);
+    expect(pathResolvesIn(entries, "**/a.md")).toBe(true);
+    expect(pathResolvesIn(entries, "eval/**/zz.json")).toBe(false);
+    expect(pathResolvesIn(entries, "eval/x/**")).toBe(true);
+    expect(pathResolvesIn(entries, "eval/x/research.json/**")).toBe(false);
+  });
+
+  it("does not see a gitignored file that exists on this checkout", () => {
+    expect(pathResolvesIn(entries, "eval/.env")).toBe(false);
   });
 });

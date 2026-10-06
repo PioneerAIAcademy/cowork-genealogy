@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, statSync, type Dirent } from "node:fs";
 import { join } from "node:path";
 
@@ -169,6 +170,54 @@ export function pathResolves(projectRoot: string, cited: string): boolean {
   const pattern = cited.replace(new RegExp(`(?:${PLACEHOLDER.source})+`, "g"), "*");
   if (!pattern.includes("*")) return existsSync(join(projectRoot, pattern));
   return globResolves(projectRoot, pattern);
+}
+
+/**
+ * Every path git can see — tracked files plus untracked files that are not
+ * ignored (`git ls-files --cached --others --exclude-standard`) — and every
+ * directory above one. A gitignored path can exist on one checkout and not
+ * another (a linked `eval/.env`, a build, installed `node_modules`), so a cite
+ * resolved against the disk passes locally and fails in CI. Resolving against
+ * this set gives the same answer everywhere; a gitignored cite needs a
+ * `KNOWN_ABSENT` entry.
+ */
+export function visibleEntries(projectRoot: string): Set<string> {
+  const run = spawnSync("git", ["ls-files", "-z", "--cached", "--others", "--exclude-standard"], {
+    cwd: projectRoot,
+    encoding: "utf8",
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  if (run.status !== 0) throw new Error(`git ls-files failed in ${projectRoot}: ${run.stderr}`);
+  const entries = new Set<string>();
+  for (const file of run.stdout.split("\0")) {
+    if (!file) continue;
+    entries.add(file);
+    for (let i = file.indexOf("/"); i !== -1; i = file.indexOf("/", i + 1)) entries.add(file.slice(0, i));
+  }
+  return entries;
+}
+
+/**
+ * `pathResolves`, answered from `visibleEntries` instead of the disk. Same
+ * placeholder and glob rules: placeholders become `*`, `*` matches within one
+ * segment, `**` matches zero or more directories, a trailing `**` needs an entry.
+ */
+export function pathResolvesIn(entries: Set<string>, cited: string): boolean {
+  const pattern = cited.replace(new RegExp(`(?:${PLACEHOLDER.source})+`, "g"), "*");
+  const segments = pattern.split("/").filter((s) => s.length > 0);
+  if (!pattern.includes("*")) return entries.has(segments.join("/"));
+  let re = "^";
+  segments.forEach((segment, i) => {
+    const last = i === segments.length - 1;
+    if (segment === "**") {
+      re += last ? "[^/]+(?:/[^/]+)*" : "(?:[^/]+/)*";
+      return;
+    }
+    re += segment.split("*").map(escapeRe).join("[^/]*") + (last ? "" : "/");
+  });
+  const rx = new RegExp(`${re}$`);
+  for (const entry of entries) if (rx.test(entry)) return true;
+  return false;
 }
 
 /** Fenced ```code``` blocks, contents only. */
