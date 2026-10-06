@@ -487,7 +487,10 @@ place continues the move, it does not explain it. This is not a
 `core_identifier_conflict` and does not take `speculative` (an unexplained
 move is an unfinished argument, and `speculative` is a no-link in an
 autonomous run). If the page could not be retrieved, only a documentary
-bridge in the project lifts the cap. Distance alone never weighs. A move
+bridge in the project lifts the cap. When a corridor or record does bridge
+it, quote it in the entry's `move_bridge` field: `research_append` refuses
+`confident` across a move between countries without one. Distance alone
+never weighs. A move
 that a corridor or a record explains takes the ordinary tiers; name what
 explains it.
 

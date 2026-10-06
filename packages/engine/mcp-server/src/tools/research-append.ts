@@ -983,6 +983,175 @@ export function coreIdentifierContradictionInvariants(
   ];
 }
 
+const US_STATES: ReadonlySet<string> = new Set([
+  "alabama", "alaska", "arizona", "arkansas", "california", "colorado", "connecticut", "delaware",
+  "district of columbia", "florida", "georgia", "hawaii", "idaho", "illinois", "indiana", "iowa",
+  "kansas", "kentucky", "louisiana", "maine", "maryland", "massachusetts", "michigan", "minnesota",
+  "mississippi", "missouri", "montana", "nebraska", "nevada", "new hampshire", "new jersey",
+  "new mexico", "new york", "north carolina", "north dakota", "ohio", "oklahoma", "oregon",
+  "pennsylvania", "rhode island", "south carolina", "south dakota", "tennessee", "texas", "utah",
+  "vermont", "virginia", "washington", "west virginia", "wisconsin", "wyoming",
+]);
+const US_STATE_CODES: ReadonlySet<string> = new Set([
+  "al", "ak", "az", "ar", "ca", "co", "ct", "de", "dc", "fl", "ga", "hi", "id", "il", "in", "ia",
+  "ks", "ky", "la", "me", "md", "ma", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nh", "nj", "nm",
+  "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "vt", "va", "wa",
+  "wv", "wi", "wy",
+]);
+/** Recognized country names, endonyms included, folded to one canonical name.
+ *  A place whose last segment is not here reads as no country at all, and the
+ *  move check stays silent: an unrecognized name is far likelier to be a region
+ *  or a spelling than a move (147 false refusals over the committed corpus when
+ *  every last segment was taken as a country, 2026-10-06). */
+const COUNTRIES: ReadonlyMap<string, string> = new Map(
+  ([
+    ["united states", ["united states", "united states of america", "usa", "u.s.a.", "us", "u.s."]],
+    ["united kingdom", ["united kingdom", "uk", "great britain", "england", "scotland", "wales", "northern ireland"]],
+    ["ireland", ["ireland", "éire", "eire", "irish free state"]],
+    ["canada", ["canada"]],
+    ["mexico", ["mexico", "méxico"]],
+    ["norway", ["norway", "norge", "noreg"]],
+    ["sweden", ["sweden", "sverige"]],
+    ["denmark", ["denmark", "danmark"]],
+    ["finland", ["finland", "suomi"]],
+    ["iceland", ["iceland", "ísland"]],
+    ["germany", ["germany", "deutschland", "prussia", "preußen", "preussen", "bavaria", "bayern", "württemberg", "wurttemberg", "baden", "hesse", "hessen", "saxony", "sachsen", "hanover", "hannover"]],
+    ["netherlands", ["netherlands", "nederland", "holland"]],
+    ["belgium", ["belgium", "belgique", "belgië"]],
+    ["france", ["france"]],
+    ["switzerland", ["switzerland", "schweiz", "suisse", "svizzera"]],
+    ["austria", ["austria", "österreich", "osterreich"]],
+    ["italy", ["italy", "italia"]],
+    ["spain", ["spain", "españa", "espana"]],
+    ["portugal", ["portugal"]],
+    ["poland", ["poland", "polska"]],
+    ["czech republic", ["czech republic", "czechia", "bohemia", "česko"]],
+    ["hungary", ["hungary", "magyarország"]],
+    ["russia", ["russia", "russian empire"]],
+    ["australia", ["australia"]],
+    ["new zealand", ["new zealand"]],
+    ["south africa", ["south africa"]],
+    ["philippines", ["philippines", "filipinas"]],
+    ["brazil", ["brazil", "brasil"]],
+    ["argentina", ["argentina"]],
+    ["chile", ["chile"]],
+    ["peru", ["peru", "perú"]],
+    ["cuba", ["cuba"]],
+    ["puerto rico", ["puerto rico"]],
+    ["china", ["china"]],
+    ["japan", ["japan"]],
+    ["india", ["india"]],
+  ] as Array<[string, string[]]>).flatMap(([canon, names]) => names.map((n) => [n, canon] as [string, string])),
+);
+
+/** The country a free-text place names, or null when its last comma segment is
+ *  not a recognized country (or a US state or state code, read as the United
+ *  States). Country, never state: a state line is crossed by a short move as
+ *  often as a long one, and the tool cannot tell which (#2537). */
+export function placeCountry(place: unknown): string | null {
+  if (typeof place !== "string") return null;
+  const segments = place.split(",").map((p) => p.trim().toLowerCase()).filter((p) => p !== "");
+  const last = segments[segments.length - 1];
+  if (!last) return null;
+  if (US_STATES.has(last) || US_STATE_CODES.has(last)) return "united states";
+  return COUNTRIES.get(last) ?? null;
+}
+
+const RESIDENCE_FACT_TYPES: ReadonlySet<string> = new Set(["residence", "census"]);
+
+/** A `confident` link across an unexplained move between countries is refused.
+ *
+ *  The move is read from the documents alone (ADR-0011's first question): the
+ *  record's residence country, from any residence or census assertion on the
+ *  linked record, against the countries of the Residence facts the tree person
+ *  carries. A Residence fact whose every source is a record this person is linked
+ *  to only below `confident` does not count, so the first capped link cannot
+ *  vouch for the next record in the same new place. No attested residence, no
+ *  cluster, no refusal. The agent clears it by naming what bridges the move in
+ *  `move_bridge`; `probable` is never refused. The body's prose cap held about
+ *  two runs in three (ut_person_evidence_g7m, 2026-10-06), which is why it is
+ *  enforced here. */
+export function unexplainedMoveInvariants(
+  entry: any,
+  research: any,
+  tree: any,
+  batchAssertions?: Map<string, any>,
+): string[] {
+  if (entry?.confidence !== "confident") return [];
+  if (typeof entry.move_bridge === "string" && entry.move_bridge.trim() !== "") return [];
+  const assertionById = new Map<string, any>();
+  for (const a of (research?.assertions ?? []) as any[]) {
+    if (a && typeof a.id === "string") assertionById.set(a.id, a);
+  }
+  if (batchAssertions) for (const [id, a] of batchAssertions) assertionById.set(id, { ...a, id });
+  const linked = assertionById.get(entry.assertion_id);
+  if (!linked) return [];
+  const recordId = linked.record_id ?? linked.source_id ?? null;
+  if (recordId == null) return [];
+
+  const recordCountries = new Set<string>();
+  let recordPlace: string | null = null;
+  for (const a of assertionById.values()) {
+    if ((a.record_id ?? a.source_id ?? null) !== recordId) continue;
+    if (!RESIDENCE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase())) continue;
+    const c = placeCountry(a.place);
+    if (c) {
+      recordCountries.add(c);
+      recordPlace ??= a.place;
+    }
+  }
+  if (recordCountries.size === 0) return [];
+
+  const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === entry.person_id);
+  if (!person) return [];
+
+  // Tree S id -> research source id, and which research sources carry a
+  // confident link to this person.
+  const researchSourceByTreeRef = new Map<string, string>();
+  for (const src of (research?.sources ?? []) as any[]) {
+    if (src && typeof src.gedcomx_source_description_id === "string" && typeof src.id === "string") {
+      researchSourceByTreeRef.set(src.gedcomx_source_description_id, src.id);
+    }
+  }
+  const linkedBelowConfident = new Set<string>();
+  const linkedConfident = new Set<string>();
+  for (const pe of (research?.person_evidence ?? []) as any[]) {
+    if (!pe || pe.person_id !== entry.person_id || pe.superseded_by) continue;
+    const a = assertionById.get(pe.assertion_id);
+    if (!a || typeof a.source_id !== "string") continue;
+    (pe.confidence === "confident" ? linkedConfident : linkedBelowConfident).add(a.source_id);
+  }
+
+  const residenceCountries = new Set<string>();
+  let residencePlace: string | null = null;
+  for (const f of (person.facts ?? []) as any[]) {
+    const kind = typeof f?.type === "string" ? f.type.split("/").pop()!.toLowerCase() : "";
+    if (kind !== "residence") continue;
+    const c = placeCountry(f.place);
+    if (!c) continue;
+    const refs = ((f.sources ?? []) as any[]).map((r: any) => researchSourceByTreeRef.get(r?.ref)).filter(Boolean) as string[];
+    const onlyWeak =
+      refs.length > 0 &&
+      refs.length === ((f.sources ?? []) as any[]).length &&
+      refs.every((id) => linkedBelowConfident.has(id) && !linkedConfident.has(id));
+    if (onlyWeak) continue;
+    residenceCountries.add(c);
+    residencePlace ??= f.place;
+  }
+  if (residenceCountries.size === 0) return [];
+  for (const c of recordCountries) if (residenceCountries.has(c)) return [];
+
+  return [
+    `confidence 'confident' is not available on this link: the record places the person in ` +
+      `'${recordPlace}' while the tree attests residence only in '${residencePlace}', a move ` +
+      `between countries that nothing on the entry explains. Measure it (place_search, then ` +
+      `place_distance), read the destination's {Jurisdiction}_Emigration_and_Immigration wiki ` +
+      `page, and look for a record of the move. If a page sentence naming arrivals from the ` +
+      `person's prior country, or a record, bridges it, quote it in move_bridge and keep ` +
+      `'confident'; otherwise write 'probable' and name the gap in the rationale.`,
+  ];
+}
+
 /** A declared core-identifier conflict caps the link at `speculative`.
  *
  *  Decidable from the write payload alone: it reads the entry's own
@@ -3691,6 +3860,11 @@ function applyOne(
       ...(op.op === "update" && resultEntry.superseded_by
         ? []
         : coreIdentifierContradictionInvariants(resultEntry, research, tree, personLinks, batchAssertions)),
+    );
+    invariantErrors.push(
+      ...(op.op === "update" && resultEntry.superseded_by
+        ? []
+        : unexplainedMoveInvariants(resultEntry, research, tree, batchAssertions)),
     );
     // #1731 step 3. The two halves have different scope, and collapsing them
     // into "append only" left the CIRCULAR arm reachable in two calls: append

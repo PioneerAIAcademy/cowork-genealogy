@@ -582,7 +582,7 @@ export const RESEARCH_SHAPES = {
   ]),
   person_evidence_entry: new Set([
     "id", "assertion_id", "person_id", "confidence", "rationale",
-    "core_identifier_conflict", "match_score", "created", "superseded_by",
+    "core_identifier_conflict", "move_bridge", "match_score", "created", "superseded_by",
   ]),
   conflict: new Set([
     "id", "conflict_type", "description", "disputed_attribute",
@@ -1179,6 +1179,11 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
           pp,
           "core_identifier_conflict must be a non-empty string or null",
         );
+      }
+    }
+    if ("move_bridge" in pe && pe.move_bridge != null) {
+      if (typeof pe.move_bridge !== "string" || pe.move_bridge === "") {
+        addError(report, pp, "move_bridge must be a non-empty string or null");
       }
     }
     if ("assertion_id" in pe) {
