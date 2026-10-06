@@ -196,9 +196,18 @@ def test_the_matcher_tracks_the_deny_arm_constants(tmp_path, monkeypatch):
     # THREE constants, not two. The earlier form of this join omitted
     # _EXFIL_GUARD_TOOLS, and the spec still described a two-constant derivation
     # after the Bash arm landed.
+    #
+    # FOUR constants now. DELEGATION_TOOLS joined when the foreground arm landed
+    # (issue #2813): that arm is an ALLOW-with-rewrite rather than a deny, but it
+    # needs the matcher just as much -- an arm the matcher does not reach is inert
+    # with the suite green, which is this test's whole subject. Sorted because the
+    # source is a frozenset and an unsorted join would make the matcher differ
+    # between runs.
+    delegation_tools = real_agent.DELEGATION_TOOLS
+    assert delegation_tools, "DELEGATION_TOOLS is empty — the foreground arm would go inert"
     expected = "|".join(
         (
-            "^(" + "|".join((*file_tools, *exfil_tools)) + ")$",
+            "^(" + "|".join((*file_tools, *exfil_tools, *sorted(delegation_tools))) + ")$",
             *(f".*{t}$" for t in device_tools),
         )
     )
@@ -209,7 +218,7 @@ def test_the_matcher_tracks_the_deny_arm_constants(tmp_path, monkeypatch):
     # The bare names are ANCHORED. Unanchored, the CLI's regex branch is a
     # search, so `Write` also bound `TodoWrite` — a tool this hook can deny
     # nothing about, which is the class of call the narrowing exists to spare.
-    for t in (*file_tools, *exfil_tools):
+    for t in (*file_tools, *exfil_tools, *delegation_tools):
         assert re.fullmatch(real_agent._PRETOOL_MATCHER, t), f"{t} no longer binds"
         assert not re.search(real_agent._PRETOOL_MATCHER, f"Todo{t}Suffix"), (
             f"{t} is unanchored in the matcher, so it binds names that merely "
@@ -551,3 +560,60 @@ def test_the_matcher_binds_under_both_readings(tool_name):
     pattern = real_agent._PRETOOL_MATCHER
     assert re.search(pattern, tool_name), f"{tool_name} does not bind under search"
     assert re.fullmatch(pattern, tool_name), f"{tool_name} does not bind under fullmatch"
+
+
+# ── delegations run in the foreground (issue #2813, feedback #3156 and #3159) ──
+#
+# The Stop hook cannot see that a turn is waiting on its own background subagent
+# -- it reads `project.status` and its own counters -- so it nudges, and the
+# model answers the nudge by spawning a DUPLICATE of the agent still running.
+# Measured twice on the alpha: duplicate q_001/q_002 from two question-selection
+# spawns, and four record-extractors relaunched synchronously while the
+# background copies kept going. The prototype has forced the foreground since
+# the 2026-09-23 lead ruling; this is that arm on the hosted plane.
+
+async def test_a_delegation_is_rewritten_to_run_in_the_foreground():
+    out = await real_agent._pretool_hook(
+        {"tool_name": "Agent", "tool_input": {"subagent_type": "record-extractor"}}, None, None
+    )
+    hook = out["hookSpecificOutput"]
+    assert hook["permissionDecision"] == "allow", "this arm changes the call, it does not refuse it"
+    assert hook["updatedInput"]["run_in_background"] is False
+    assert hook["updatedInput"]["subagent_type"] == "record-extractor", "other input is preserved"
+
+
+async def test_a_delegation_with_no_flag_at_all_is_rewritten():
+    """The measured incidents carried NO flag: CLI 2.1.220 backgrounds an agent
+    when the key is absent, so 'absent' is the case that matters most."""
+    out = await real_agent._pretool_hook({"tool_name": "Task", "tool_input": {}}, None, None)
+    assert out["hookSpecificOutput"]["updatedInput"]["run_in_background"] is False
+
+
+async def test_an_explicit_foreground_delegation_is_left_alone():
+    assert await real_agent._pretool_hook(
+        {"tool_name": "Agent", "tool_input": {"run_in_background": False}}, None, None
+    ) == {}
+
+
+def test_the_matcher_reaches_every_delegation_tool():
+    """The arm above is inert unless the matcher binds the hook for these tools.
+    That is this file's own documented failure mode: an arm that landed while the
+    matcher was `None` bound by accident and went inert when it was narrowed."""
+    import re
+    for tool in real_agent.DELEGATION_TOOLS:
+        assert re.search(real_agent._PRETOOL_MATCHER, tool), (
+            f"{tool} is handled by _pretool_hook but _PRETOOL_MATCHER does not bind it, "
+            "so the arm never runs"
+        )
+    assert not re.search(real_agent._PRETOOL_MATCHER, "AgentFoo"), "the alternation stays anchored"
+
+
+async def test_an_explicitly_backgrounded_delegation_is_rewritten():
+    """The case where the rewrite overturns a decision the model made on purpose,
+    and the one the other three tests miss. Mutating the predicate from
+    `is not False` to `is None` passed the whole server suite, because nothing
+    covered an explicit True."""
+    out = await real_agent._pretool_hook(
+        {"tool_name": "Agent", "tool_input": {"run_in_background": True}}, None, None
+    )
+    assert out["hookSpecificOutput"]["updatedInput"]["run_in_background"] is False

@@ -55,6 +55,115 @@ TERMINAL_DELIVERED = "delivered"
 TERMINAL_MCP_UNAVAILABLE = "mcp_unavailable"
 
 
+# The signal that produces TERMINAL_DELIVERED above. Shared because BOTH planes match on
+# string -- the prototype in its PreToolUse arm, the hosted alpha in `count_only` --
+# and a tool name that drifts between two copies fails open on the plane holding the
+# stale one: the arm simply never matches and the stop is vetoed as if the rule did
+# not exist.
+DELIVERED_TOOL = "mcp__genealogy__research_delivered"
+# What the researcher is told when that signal fires. Kept beside the tool name for the
+# same reason: both planes halt on this, and the prototype appends a one-sentence summary
+# ahead of it, so its length is load-bearing there.
+DELIVERED_REASON = (
+    "You have delivered what this message asked for. Stopping here rather than carrying "
+    "on; your next message picks up from here."
+)
+
+
+# The per-turn instruction that makes the halt reachable: nothing calls a tool it was
+# never told about. Both hosted planes append this to their system prompt. It lives
+# here, beside the tool name and the halt text, because a plane that wires the ARM
+# without the GUIDANCE ships a dead rule that looks identical to a working one.
+#
+# IT RIDES THE SYSTEM PROMPT, NOT THE SKILL BODIES. The hook that makes this tool end a
+# turn exists only on the two hosted planes, so a skill-body rule would teach every skill
+# to call a tool that is inert in Cowork and in the harness that grades them.
+#
+# Both exclusions in the text are load-bearing. Calling it when the OBJECTIVE is finished
+# would report `delivered` where `completed` is true and the run ends on its own. Calling
+# it instead of asking would swallow a question nobody answers: an ask waits, a delivery
+# does not. That is also why the carrier is a separate tool rather than AskUserQuestion --
+# one tool carrying both speech acts leaves the hook with no discriminator.
+DELIVERY_GUIDANCE = (
+    "When this message asked for one bounded thing and you have produced it, WRITE YOUR "
+    "REPLY FIRST -- this call ends the turn, so nothing you say after it reaches the "
+    "researcher -- then call "
+    "`research_delivered` with a one-sentence summary and stop: a plan the researcher "
+    "asked you to stop after, a single record or lookup, or a status question such as "
+    "\"where are we?\". Do not call it when the project's research objective itself is "
+    "finished -- that run ends on its own -- and do not call it in place of asking the "
+    "researcher a question, which waits for their answer. Its schema is deferred, so "
+    "search for it by name if you do not already hold it."
+)
+
+
+# Delegation tools whose `run_in_background` both planes override to False.
+# Lead ruling 2026-09-23, reaffirmed as the design 2026-09-29. Forcing the
+# foreground does NOT serialise the work: several Agent calls in one message
+# still run concurrently, so a fan-out of four extractors stays a fan-out.
+#
+# The PROTOTYPE's original reason, kept because it is the measurement behind the
+# ruling: the worker ends a turn at the main thread's ResultMessage and closes the
+# CLI, so a background agent still running then dies with it -- measured 2026-09-23
+# (plan D17: both background extractors lost, the patron told their summaries would
+# follow; the two lost on 2026-09-21 were sess_25297de9b15b4ef5, and carried no flag
+# at all, which is why every call not explicitly False is rewritten).
+#
+# Shared because the hosted alpha reproduced, twice, the failure the prototype
+# already fixed. The Stop hook cannot see that the turn is waiting on its own
+# background subagent -- it reads `project.status` and its own counters -- so it
+# nudges ("invoke the next GPS sub-skill"), and the model, told to get on with
+# it, starts a DUPLICATE of the agent still running. Measured on the alpha:
+# duplicate `q_001`/`q_002` from two question-selection spawns (feedback issue
+# #3156), and four record-extractors relaunched synchronously while the
+# background copies kept going -- one orphaned source, one extractor hung 56
+# minutes, ~20 minutes of re-extraction (feedback issue #3159).
+DELEGATION_TOOLS = frozenset({"Agent", "Task"})
+
+
+
+def delivered_stop_reason(summary: str | None) -> str:
+    """The halt text for a delivery, summary FIRST.
+
+    Shared because both planes built this string by hand and the two could drift
+    on exactly the thing that matters: the browser replaces the chip with the
+    result text cut at 160 chars, and DELIVERED_REASON alone is 124, so appending
+    rather than prepending eats the window and cuts what the researcher most
+    needs. A single mutation here fails tests on both planes -- but only once the
+    prototype's assertion checks the PREFIX rather than mere containment, which is
+    why `test_proto_worker` now uses `startswith`.
+    """
+    # str() BEFORE strip(). The alpha used to cast and the de-duplication dropped it,
+    # so a non-string summary (123, ["a"], {"x": 1}) raised AttributeError inside the
+    # PreToolUse callback -- which fails the tool call, loses the halt, and leaves
+    # `delivered` already set. Nothing validates the tool's inputSchema, so that input
+    # is reachable. Casting here covers both planes rather than one.
+    text = str(summary or "").strip()
+    return f"Delivered: {text} {DELIVERED_REASON}" if text else DELIVERED_REASON
+
+
+def foreground_rewrite(tool_name: str, tool_input: Mapping[str, Any] | None) -> dict[str, Any] | None:
+    """An allow-with-rewrite forcing a delegation to the foreground, or None.
+
+    The one hook arm on either plane that CHANGES a call rather than refusing it.
+    Returns None when the call is not a delegation, or when it already carries an
+    explicit `run_in_background: False`. Every other shape is rewritten, because
+    CLI 2.1.220 backgrounds an agent when the key is absent and both measured
+    incidents carried no key at all.
+    """
+    data = dict(tool_input or {})
+    if tool_name not in DELEGATION_TOOLS or data.get("run_in_background") is False:
+        return None
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "allow",
+            "updatedInput": {**data, "run_in_background": False},
+        },
+    }
+
+
+
 def read_research_json(project_dir: Path | str) -> dict[str, Any] | None:
     """``<project_dir>/research.json`` parsed, or None if missing or unusable.
 
@@ -94,6 +203,7 @@ def should_continue_run(
     stopped: bool = False,
     pending_user_message: bool = False,
     pending_decision: bool = False,
+    delivered: bool = False,
 ) -> bool:
     """Whether to veto an agent's *voluntary* stop and nudge it onward.
 
@@ -102,7 +212,8 @@ def should_continue_run(
              nudge budget is spent, the previous nudge produced no tool call (the agent
              isn't making progress, so another nudge won't either), a message the patron
              typed mid-turn is waiting (1b), the agent has asked something only the patron
-             can answer (the clause phase 3 fills in), or the genealogy MCP surface is
+             can answer (the clause phase 3 fills in), the agent met a BOUNDED request and
+             stopped on purpose (`delivered`), or the genealogy MCP surface is
              gone -- which neither plane can observe today, so callers leave the default.
 
     ``stopped`` is FIRST, ahead of everything. None of the original four paths is "the
@@ -110,8 +221,13 @@ def should_continue_run(
     still writes a tool_calls row and the counter counts ROWS, so it moves and that escape
     never fires.
 
-    The three new flags default False, so the harness's own truth table -- which the first
+    The four added flags default False, so the harness's own truth table -- which the first
     five parameters are a port of -- still describes this function exactly.
+
+    ``delivered`` was added, removed as dead code when no caller passed it, and added back
+    once one did: the router's "Bounded request or job" section (#2813 item 1) tells the
+    model to stop when a bounded request is met, and without this arm THIS plane vetoed
+    that stop and nudged it onward -- the exact thrash the section exists to end.
     """
     if stopped:
         return False
@@ -120,6 +236,8 @@ def should_continue_run(
     if pending_user_message:
         return False
     if pending_decision:
+        return False
+    if delivered:
         return False
     if project_completed(research):
         return False
@@ -139,11 +257,18 @@ def terminal_reason(
     stopped: bool = False,
     pending_user_message: bool = False,
     pending_decision: bool = False,
+    delivered: bool = False,
 ) -> str:
     """WHY ``should_continue_run`` is about to return False.
 
     It mirrors that function's clause order exactly, which is the only thing keeping the
     two in agreement; a test walks both in lockstep over every combination.
+
+    ``delivered`` was added here in the same commit as its sibling clause. It is not
+    reachable from either plane yet -- the alpha ends a delivered turn through the
+    PreToolUse halt rather than this path -- but a flag that returns False in one function
+    and is unnameable in the other breaks the mirror this docstring promises, and the
+    parity test is hand-maintained, so nothing else would have caught it.
     """
     if stopped:
         return TERMINAL_STOPPED
@@ -153,6 +278,8 @@ def terminal_reason(
         return TERMINAL_QUEUED
     if pending_decision:
         return TERMINAL_DECISION
+    if delivered:
+        return TERMINAL_DELIVERED
     if project_completed(research):
         return TERMINAL_COMPLETED
     if nudges_used >= max_nudges:
