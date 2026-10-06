@@ -1034,45 +1034,6 @@ def test_matched_persona_is_materialized_onto_its_person(
     )
 
 
-def test_no_unjustified_warning_write(
-    before_state, after_state, tool_calls, test,
-):
-    """Engine gate (issue #2840): tree writer tools (tree_edit, tree_correct,
-    merge_tree_persons, materialize_facts) refuse a write that introduces an
-    unjustified genealogical warning. This validator checks that no such
-    refusal went unaddressed.
-
-    Supersedes `test_check_warnings_runs_after_a_write`, which checked whether
-    `person_warnings` was called or `check-warnings` was invoked after a write.
-    The engine gate makes that step redundant: the writer tools themselves
-    enforce it.
-    """
-    before = before_state.get("research_json")
-    after = after_state.get("research_json")
-    wrote_links = bool(_new_person_evidence(before, after)) if before and after else False
-    before_tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
-    after_tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
-    minted = (_tree_person_ids(after_tree) - _tree_person_ids(before_tree)) if before_tree and after_tree else set()
-
-    if not wrote_links and not minted:
-        pytest.skip("no new pe_ entries and no new persons — nothing to check")
-
-    from harness.skill_invocation import unresolved_warning_refusal
-
-    # One shared predicate (issue #2840): it keys on the LAST refusal and
-    # treats a no-project answer as a write that did not land. Both were got
-    # wrong in each hand-rolled copy of this check.
-    if not unresolved_warning_refusal(tool_calls):
-        return
-
-    assert False, (
-        f"project changed (new links or persons), but the LAST tree-writer "
-        f"refusal (unjustified_warnings) was never followed by a writer call "
-        f"that landed — so the run changed state while leaving the warning gate "
-        f"unsatisfied. Re-call with warningJustifications, or abandon the write."
-    )
-
-
 # --- Issue #2194: pe_005 informant-conflation and chronological-cap checks --
 #
 # Both are tier-2 (report_) validators: they raise AssertionError to produce

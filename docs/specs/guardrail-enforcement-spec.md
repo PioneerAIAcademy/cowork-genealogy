@@ -488,6 +488,33 @@ removed from the three bodies that call a gated writer (`tree-edit`,
 only through `project_create` and `research_append`, and both are deliberately
 ungated (above), so nothing else would surface a warning on an imported tree.
 
+**No eval validator asserts this gate, deliberately.** PR 2 first replaced the
+retired `test_check_warnings_runs_after_a_write` validators with
+`test_no_unjustified_warning_write` in `validators/test_tree_edit.py` and
+`validators/test_person_evidence.py`. Both were removed again, because the
+check they performed cannot be expressed at that layer:
+
+- **A real leak is invisible to them.** The thing the gate guarantees is that
+  an unjustified write never LANDS. A leak would therefore show up in the tree,
+  not in `tool_calls` — and these validators read `tool_calls`.
+- **The one path on which they fire is a false positive.** They gated on the
+  project having changed, then failed the run if the last refusal had no landed
+  writer after it. But "a writer landed after the refusal" is the same fact as
+  "the refusal was resolved", so the only way to reach the assertion is a run
+  that changed state through an UNGATED writer (`research_append` writing `pe_`
+  links) and then correctly abandoned a refused one. Abandoning is exactly what
+  the refusal message and both agent bodies tell the agent it may do.
+- They were dead on arrival and so never fired: the shared predicate keyed on
+  `response_summary`, which only the e2e tier records, while the unit harness
+  records `response`. Fixing that key would have turned two inert checks into a
+  false-positive generator reddening compliant paid runs.
+
+What enforces the gate is the engine, and what proves it is the engine's own
+tests (PR 1). That is the ADR-0011 position — the guardrail lives at the write
+boundary — and a second, weaker assertion in the eval layer adds no coverage.
+The shadow detector stays: it MEASURES how often a refusal is abandoned without
+failing a run on it, which is a different question and a legitimate one.
+
 **What the replay claims, and what it does not.** It is a **behaviour-presence**
 measurement: did this shape occur in the corpus at all. It is **not** a per-run
 compliance score. `docs/specs/e2e-test-spec.md` ("Historical runs") withholds

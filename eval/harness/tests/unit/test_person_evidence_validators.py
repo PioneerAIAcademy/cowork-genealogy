@@ -35,7 +35,6 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 # collect the imported validators as tests of this module and error on their
 # harness-supplied fixtures. Same pattern as test_init_project_validator.py.
 from test_person_evidence import (  # noqa: E402
-    test_no_unjustified_warning_write as check_warning_gate,
     test_matched_persona_is_materialized_onto_its_person as check_materialized,
     test_same_person_called_when_persona_meets_existing_candidate as check_scored,
     test_stub_person_created_and_linked as check_stub,
@@ -411,65 +410,6 @@ def test_materialized_stands_down_without_the_tag():
             [],
             {"tags": []},
         )
-
-
-# --- test_no_unjustified_warning_write (issue #2840 PR 2) ----------------
-#
-# Engine gate: tree writers refuse unjustified warnings. The validator checks
-# that no refusal went unaddressed.
-
-_LINKED_AFTER = {
-    "assertions": [{"id": "a_010", "record_persona_id": None, "fact_type": "relationship"}],
-    "person_evidence": [{"id": "pe_009", "assertion_id": "a_010", "person_id": "I2"}],
-}
-_LINKED_BEFORE = {"assertions": _LINKED_AFTER["assertions"], "person_evidence": []}
-
-
-def test_warning_gate_passes_when_writer_succeeds():
-    check_warning_gate(
-        _state(_LINKED_BEFORE, _tree("I1", "I2")),
-        _state(_LINKED_AFTER, _tree("I1", "I2")),
-        [_call("materialize_facts", response_summary='{"ok": true}')],
-        {"tags": []},
-    )
-
-
-def test_warning_gate_passes_after_refusal_then_retry():
-    check_warning_gate(
-        _state(_LINKED_BEFORE, _tree("I1", "I2")),
-        _state(_LINKED_AFTER, _tree("I1", "I2")),
-        [
-            _call("materialize_facts", response_summary='{"ok": false, "reason": "unjustified_warnings"}'),
-            _call("materialize_facts", response_summary='{"ok": true}'),
-        ],
-        {"tags": []},
-    )
-
-
-def test_warning_gate_fails_on_unresolved_refusal():
-    with pytest.raises(AssertionError, match="unjustified_warnings"):
-        check_warning_gate(
-            _state(_LINKED_BEFORE, _tree("I1", "I2")),
-            _state(_LINKED_AFTER, _tree("I1", "I2")),
-            [_call("materialize_facts", response_summary='{"ok": false, "reason": "unjustified_warnings"}')],
-            {"tags": []},
-        )
-
-
-def test_warning_gate_skips_on_read_only_run():
-    same = {"assertions": [], "person_evidence": [{"id": "pe_001"}]}
-    with pytest.raises(pytest.skip.Exception):
-        check_warning_gate(
-            _state(same, _tree("I1")),
-            _state(same, _tree("I1")),
-            [],
-            {"tags": []},
-        )
-
-
-def test_warning_gate_skips_when_no_research():
-    with pytest.raises(pytest.skip.Exception):
-        check_warning_gate(_state(None), _state(None), [], {"tags": []})
 
 
 # --- report_informant_fields_not_in_pe_confidence_reason ------------------
@@ -897,23 +837,6 @@ def test_chrono_fires_when_record_persona_id_is_null():
 def test_chrono_stands_down_without_research_json():
     with pytest.raises(pytest.skip.Exception):
         check_chrono(_state(None), _state(None), [])
-
-
-def test_warning_gate_accepts_writer_under_any_server_spelling():
-    """The prefix is chosen by whoever registers the server, so a bare-name
-    match on the qualified tool is the only form that works in all three."""
-    for spelling in (
-        "materialize_facts",
-        "mcp__genealogy__materialize_facts",
-        "mcp__remote-devices__Genealogy_Research__materialize_facts",
-        "mcp__Genealogy_Research__materialize_facts",
-    ):
-        check_warning_gate(
-            _state(_LINKED_BEFORE, _tree("I1", "I2")),
-            _state(_LINKED_AFTER, _tree("I1", "I2")),
-            [{"tool": spelling, "response_summary": '{"ok": true}'}],
-            {"tags": []},
-        )
 
 
 # --- Pinning tests (review of #1882, item 3) ----------------------------

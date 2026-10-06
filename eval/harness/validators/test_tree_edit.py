@@ -112,41 +112,6 @@ def test_tree_edit_noop(before_state, after_state, test):
 
 # --- No unjustified-warning write landed (issue #2840 PR 2) -----------
 
-def test_no_unjustified_warning_write(
-    before_state, after_state, tool_calls, test,
-):
-    """Engine gate (issue #2840): tree_edit, tree_correct, merge_tree_persons
-    and materialize_facts refuse a write that introduces an unjustified
-    genealogical warning. This validator checks that no such refusal went
-    unaddressed — i.e., the tree changed only through writes that either
-    introduced no warnings or justified every one.
-
-    Supersedes `test_check_warnings_runs_after_any_tree_write`, which checked
-    for a prose hand-back to check-warnings. The engine gate makes that step
-    redundant: the writer tools themselves enforce it.
-    """
-    before_tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
-    after_tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
-    if before_tree is None or after_tree is None:
-        pytest.skip("missing tree.gedcomx.json on one side")
-    if before_tree == after_tree:
-        pytest.skip("tree.gedcomx.json unchanged -- no edit to validate")
-
-    from harness.skill_invocation import unresolved_warning_refusal
-
-    # One shared predicate (issue #2840): it keys on the LAST refusal and
-    # treats a no-project answer as a write that did not land. Both were got
-    # wrong in each hand-rolled copy of this check.
-    if not unresolved_warning_refusal(tool_calls):
-        return
-
-    assert False, (
-        f"tree.gedcomx.json changed, but the LAST tree-writer refusal "
-        f"(unjustified_warnings) was never followed by a writer call that "
-        f"landed — so the run changed the tree while leaving the warning gate "
-        f"unsatisfied. Re-call with warningJustifications, or abandon the write."
-    )
-
 
 # --- Guardianship: which kin reading leads (issue #2449) --------------
 
