@@ -163,6 +163,7 @@ def _missing_prerequisites() -> list[str]:
         + "; ".join(_missing_prerequisites())
     ),
 )
+@pytest.mark.spawns_subprocess
 async def test_bare_agent_names_are_registered(tmp_path, monkeypatch):
     """Start a real SDK client with the hosted options and assert every shipped
     agent is registered under its BARE name.
