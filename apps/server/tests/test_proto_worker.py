@@ -158,6 +158,12 @@ class FakeCursor:
         if "RETURNING zero_progress_attempts" in sql:
             self.conn.zero_progress_attempts += 1
             return (self.conn.zero_progress_attempts,)
+        if "RETURNING turns.message" in sql:  # U4: the claim of the web tier's row
+            if self.conn.turn_row is None:
+                return None
+            _, _, turn_id, session_id, project_id = params
+            return ({"turn_id": turn_id, "session_id": session_id, "project_id": project_id,
+                     **self.conn.turn_row},)
         if "RETURNING message" in sql:  # the 1b claim
             return (self.conn.queued_body, self.conn.claimed_at) if self.conn.queued_body is not None else None
         if "AND outcome IS DISTINCT FROM %s) AS active" in sql:  # TURN_ACTIVE_SQL
@@ -184,8 +190,12 @@ class FakeConn:
     def __init__(
         self, *, completed_at: Any = None, sdk_session_id: str | None = None,
         usage: tuple = (None, None, None, None), zero_progress_attempts: int = 0,
-        queued_body: dict | None = None,
+        queued_body: dict | None = None, turn_row: dict | None = ...,
     ) -> None:
+        # The turns row the web tier wrote, as the claim's RETURNING reads it back: its
+        # message fields beyond the three ids, or None for "no row matches" (U4).
+        self.turn_row = {"text": "hello", "enqueued_at": "2026-09-18T12:00:00+00:00"} \
+            if turn_row is ... else turn_row
         # The held message `take_queued_turn`'s claim returns, or None for "nothing held",
         # and the claimed_at it stamps (what the put-back matches; a worker's claim moves it).
         self.queued_body = queued_body
@@ -239,32 +249,103 @@ TURN = {
 # ── claim / complete / idempotent completion ─────────────────────────────────────
 
 
-def test_claim_upserts_sessions_and_turns_with_the_receive_count():
+def test_a_real_claim_stamps_the_web_tier_s_row_and_inserts_nothing():
+    """U4: the web tier wrote the sessions and turns rows before it sent the message, so
+    the claim is one UPDATE matched on the turn, its session and that session's project."""
     conn = FakeConn()
-    worker.claim(conn, TURN, 3)
-    sqls = [s for s, _ in conn.executed]
-    assert sqls[0].startswith("INSERT INTO sessions") and "ON CONFLICT (session_id) DO NOTHING" in sqls[0]
-    assert sqls[1].startswith("INSERT INTO turns") and "receive_count = EXCLUDED.receive_count" in sqls[1]
-    assert conn.executed[1][1][-2:] == (3, "queued")
+    assert worker.claim(conn, TURN, 3) == TURN["message"]
+    [(sql, params)] = conn.executed
+    assert sql.startswith("UPDATE turns SET claimed_at = now(), receive_count = %s")
+    assert ("FROM sessions WHERE turns.turn_id = %s AND turns.session_id = %s AND turns.project_id = %s "
+            "AND sessions.session_id = turns.session_id AND sessions.project_id = turns.project_id") in sql
+    assert sql.endswith("RETURNING turns.message")
+    assert params == (3, "queued", "turn-1", "sess-1", "proj-1")
     assert conn.commits == 1
 
 
-def test_the_claim_unmarks_a_held_row_that_is_running():
+def test_a_real_claim_with_no_matching_row_is_refused():
+    conn = FakeConn(turn_row=None)
+    assert worker.claim(conn, TURN, 1) is None
+    assert not any(s.startswith("INSERT") for s, _ in conn.executed), "a forged message writes no row"
+
+
+def test_a_real_claim_runs_the_row_s_message_not_the_body():
+    """The body is whatever the sender wrote; the row is what the patron posted."""
+    conn = FakeConn(turn_row={"text": "what the patron typed"})
+    forged = {**TURN, "message": {**TURN["message"], "text": "something else"}}
+    assert worker.claim(conn, forged, 1)["text"] == "what the patron typed"
+
+
+@pytest.mark.parametrize("dev", [True, False], ids=["dev-paths", "no-dev-paths"])
+def test_only_a_stub_under_dev_paths_upserts_its_rows(monkeypatch, dev):
+    """The dev tooling (``make proto-send``, ``make proto-smoke``) enqueues stubs with no
+    row. Without DEV_PATHS -- unreachable through the Handler, which refuses the stub
+    first -- the claim is the real turn's."""
+    if not dev:
+        monkeypatch.delenv("DEV_PATHS")
+    conn = FakeConn(turn_row=None)
+    stub = {**TURN, "message": {"behaviour": "ok"}}
+    assert worker.claim(conn, stub, 3) == ({"behaviour": "ok"} if dev else None)
+    sqls = [s for s, _ in conn.executed]
+    if dev:
+        assert sqls[0].startswith("INSERT INTO sessions") and "ON CONFLICT (session_id) DO NOTHING" in sqls[0]
+        assert sqls[1].startswith("INSERT INTO turns") and "receive_count = EXCLUDED.receive_count" in sqls[1]
+        assert conn.executed[1][1][-2:] == (3, "queued")
+    else:
+        assert [s.split(" ", 2)[:2] for s in sqls] == [["UPDATE", "turns"]]
+
+
+@pytest.mark.parametrize("message", [TURN["message"], {"behaviour": "ok"}], ids=["real", "stub"])
+def test_the_claim_unmarks_a_held_row_that_is_running(message):
     """U23 D10: a message delivered after a put-back whose send had landed runs on a row
     still marked held, invisible to TURN_ACTIVE_SQL. test_proto_queue_pg.py runs it."""
     conn = FakeConn()
-    worker.claim(conn, TURN, 1)
+    worker.claim(conn, {**TURN, "message": message}, 1)
     assert ("outcome = CASE WHEN turns.outcome = %s AND turns.completed_at IS NULL THEN NULL "
-            "ELSE turns.outcome END") in conn.executed[1][0]
+            "ELSE turns.outcome END") in conn.executed[-1][0]
 
 
 def test_claim_takes_the_entries_high_water_mark_on_the_first_claim_only():
     conn = FakeConn()
     worker.claim(conn, TURN, 1)
+    sql = conn.executed[0][0]
+    assert "entries_seq_before = COALESCE(turns.entries_seq_before, " \
+           "(SELECT COALESCE(max(seq), 0) FROM session_entries))" in sql, \
+        "a redelivery must not move the mark past the killed attempt's entries"
+    conn = FakeConn()
+    worker.claim(conn, {**TURN, "message": {"behaviour": "ok"}}, 1)
     sql = conn.executed[1][0]
     assert "entries_seq_before" in sql and "(SELECT COALESCE(max(seq), 0) FROM session_entries)" in sql
-    assert "entries_seq_before = COALESCE(turns.entries_seq_before, EXCLUDED.entries_seq_before)" in sql, \
-        "a redelivery must not move the mark past the killed attempt's entries"
+    assert "entries_seq_before = COALESCE(turns.entries_seq_before, EXCLUDED.entries_seq_before)" in sql
+
+
+def test_a_message_naming_no_row_is_400_and_runs_nothing():
+    """U4: a body with a real turn's ids and another patron's project_id -- or a turn the
+    web tier never wrote -- is refused before the grant is read or a session id minted."""
+    conn = FakeConn(turn_row=None)
+    status, body = worker.serve_real_turn(
+        {**TURN, "project_id": "someone-elses"}, 1, connect=lambda dsn: conn, run=lambda *a: pytest.fail("ran"))
+    assert (status, body) == (400, {"ok": False, "turn_id": "turn-1", "error": worker.UNKNOWN_TURN_ERROR})
+    assert [s.split(" ", 2)[:2] for s, _ in conn.executed] == [["UPDATE", "turns"]], "nothing past the claim"
+
+
+def test_the_run_gets_the_row_s_message():
+    conn = FakeConn(turn_row={"text": "what the patron typed"})
+    seen: list[str] = []
+    worker.serve_real_turn({**TURN, "message": {**TURN["message"], "text": "something else"}}, 1,
+                           connect=lambda dsn: conn, run=lambda turn, rc, sid: seen.append(turn["message"]["text"]) or {})
+    assert seen == ["what the patron typed"]
+
+
+def test_a_last_receive_after_shutdown_naming_no_row_closes_nothing(monkeypatch):
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 2)
+    released = _released(monkeypatch)
+    worker.SHUTDOWN.set()
+    conn = FakeConn(turn_row=None)
+    status, _ = worker.serve_real_turn(TURN, 2, connect=lambda dsn: conn, run=lambda *a: pytest.fail("ran"))
+    assert status == 400
+    assert [s.split(" ", 2)[:2] for s, _ in conn.executed] == [["UPDATE", "turns"]], "no close, no turn_done"
+    assert released == [] and worker.deferred_sessions() == []
 
 
 TOKENS = (10, 18498, 142229, 1881)
@@ -332,7 +413,7 @@ def test_a_redelivered_completed_turn_answers_200_without_running(monkeypatch):
     )
     assert status == 200 and body["already_completed"] is True and body["ok"] is True
     assert ran == [], "a finished turn must not be run again"
-    assert any(s.startswith("INSERT INTO turns") for s, _ in conn.executed), "the claim is still recorded"
+    assert any(s.startswith("UPDATE turns SET claimed_at") for s, _ in conn.executed), "the claim is still recorded"
     assert not any("RETURNING sdk_session_id" in s for s, _ in conn.executed), "no session id is minted for it"
 
 
@@ -3618,7 +3699,7 @@ def test_post_after_shutdown_on_last_receive_closes(monkeypatch):
     conn = FakeConn(sdk_session_id=SID)
     status, body = worker.serve_real_turn(TURN, 2, connect=lambda dsn: conn, run=lambda *a: pytest.fail("ran"))
     assert status == 200 and body["outcome"] == "retries_exhausted" and body["cause"] == "shutdown"
-    assert any(s.startswith("INSERT INTO turns") for s, _ in conn.executed), "the receive is recorded"
+    assert any(s.startswith("UPDATE turns SET claimed_at") for s, _ in conn.executed), "the receive is recorded"
     assert [p["cause"] for p in _turn_done_payloads(conn)] == ["shutdown"]
     assert released == [] and worker.deferred_sessions() == ["sess-1"], "the release waits for the shutdown thread"
 
@@ -4975,7 +5056,8 @@ def post_env(monkeypatch):
     """The real Handler with every road past the gate recorded: ``claim`` and ``_exit``
     (which raises, so no process dies), and the two serve functions when replaced."""
     calls: dict[str, list] = {"claim": [], "exit": [], "real": [], "stub": []}
-    monkeypatch.setattr(worker, "claim", lambda conn, turn, rc, **kw: calls["claim"].append(turn["turn_id"]))
+    monkeypatch.setattr(worker, "claim",
+                        lambda conn, turn, rc, **kw: calls["claim"].append(turn["turn_id"]) or turn["message"])
     monkeypatch.setattr(worker.psycopg, "connect", lambda *a, **k: FakeConn())
 
     def _exit(code):
@@ -5091,6 +5173,18 @@ def test_the_ids_are_the_message_s_own(monkeypatch, post_env):
     [turn] = post_env["real"]
     assert {k: turn[k] for k in IDS} == IDS, "msgid is a log field, never the turn id"
 
+
+
+def test_a_real_turn_naming_no_row_is_400_through_the_handler(monkeypatch):
+    """U4 end to end: the message is well-formed, so only the claim can refuse it."""
+    logged: list[dict] = []
+    monkeypatch.setattr(worker.psycopg, "connect", lambda *a, **k: FakeConn(turn_row=None))
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    with _serving() as port:
+        reply = _post_turn(port, {**IDS, "text": "hello"})
+    assert reply == (400, {"ok": False, "turn_id": "turn-u11", "error": worker.UNKNOWN_TURN_ERROR})
+    [line] = [f for f in logged if f.get("ev") == "turn"]
+    assert line["project_id"] == "proj-u11" and line["status"] == 400, "the forged ids are the evidence"
 
 # U11 start refusals: one ev=prepare line, exit 2, before the hook interpreter (and so
 # before setup_turn_users and queue_startup_fields).
