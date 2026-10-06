@@ -12,7 +12,7 @@
     ]
   },
   "input": {
-    "user_message": "Keep researching Patrick Flynn's parentage — and start by checking the FamilySearch hints on him (FamilySearch ID LZNY-BRF): are any of them valid?",
+    "user_message": "/research Keep researching Patrick Flynn's parentage — and start by checking the FamilySearch hints on him (FamilySearch ID LZNY-BRF): are any of them valid?",
     "scenario": "mid-research-flynn"
   },
   "execution": {
