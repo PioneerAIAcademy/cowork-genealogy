@@ -589,7 +589,18 @@ append op (deliberately simple):
      `standard_place` is **copied** — no geocoding call;
   2. otherwise (and unless `resolveStandardPlace: false`), the tool geocodes via
      the shared `resolveStandardPlace` — best-effort, a miss leaves the field
-     unset with a warning, never fails the op.
+     unset with a warning, never fails the op. The op's record context goes with
+     it: the places the call's other assertions with the same `record_id` name.
+     A bare single-segment place ("Shenandoah") has no context of its own, so
+     the resolver uses that record context: a sibling place whose first segment
+     ends in the name is resolved instead, else only a candidate inside the
+     jurisdiction the siblings share counts, else the name resolves only to
+     itself at the top of the hierarchy (a country, or a state under one) and is
+     otherwise left unset (genealogist ruling 2026-10-06, option C). Measured on
+     the record-structurer trials (2026-10-04): with no context, the will's "Shenandoah" beside "Borough
+     of Shenandoah, County of Schuylkill" resolved to New Zealand and "Logan LDS
+     Temple" to France, and the country guard below cannot catch either, since a
+     one-token place names no country.
 
   Every value the tool resolved is echoed in the success response's
   `resolvedPlaces: [{ place, standardPlace, source: "sidecar" | "geocoded" }]`

@@ -166,7 +166,7 @@ describe("toSimplifiedStandardized — hybrid", () => {
     expect(facts[0]!.standard_place).toBe("Paris, France"); // from normalized
     expect(facts[1]!.standard_place).toBe("RESOLVED PLACE"); // from resolver
     expect(mockResolve).toHaveBeenCalledTimes(1);
-    expect(mockResolve).toHaveBeenCalledWith("Freetext");
+    expect(mockResolve).toHaveBeenCalledWith("Freetext", { contextPlaces: [] });
   });
 });
 
