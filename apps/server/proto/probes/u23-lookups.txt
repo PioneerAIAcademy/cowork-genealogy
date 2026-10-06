@@ -1,0 +1,4 @@
+Use place_search to find the standardized FamilySearch place name for each of these places,
+one call at a time and in this order: Nauvoo, Illinois; Topsham, Maine; Salem, Massachusetts;
+Provo, Utah; Kirtland, Ohio; Independence, Missouri. Then list the six names it returned, one
+per line.

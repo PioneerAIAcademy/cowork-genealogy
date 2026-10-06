@@ -129,7 +129,8 @@ mcp_servers={"genealogy": {"type": "http", "url": "http://tools:8787/mcp",
                                        "X-Genealogy-Project-Id": "<project id>"}}}
 ```
 
-Both headers are per turn (`proto/worker/options.py`, `tool_server_headers`): the bearer
+The URL is the worker's `TOOL_SERVER_URL`, required with no default (U11); compose sets
+the value above. Both headers are per turn (`proto/worker/options.py`, `tool_server_headers`): the bearer
 from the patron's row, the project id from the turn. The project header is always sent; the
 bearer only when there is a token. Nothing on this service caches either. This is the
 worker's only tool server; the worker itself carries no Node, no engine and no S3
