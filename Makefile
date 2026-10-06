@@ -1029,7 +1029,8 @@ e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: mak
 	# RECOMPUTE=1 also re-derives violations from tool_calls + committed sidecars
 	# (the stored field is a floor; pre-detector runs record none) and prints a
 	# spend line (recorded / estimated / unrecoverable, never blended). CALIBRATE=1
-	# reports the estimate's measured accuracy over runs carrying both (issue #1484).
+	# reports the estimate's measured accuracy over runs carrying both, less the
+	# multi-query runs, whose tokens cover their last query only (#1484, #3128).
 	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),) $(if $(RECOMPUTE),--recompute,) $(if $(CALIBRATE),--calibrate-cost,)
 
 .PHONY: e2e-panel

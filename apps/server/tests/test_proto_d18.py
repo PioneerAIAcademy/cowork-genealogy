@@ -438,6 +438,28 @@ def test_harness_record_says_unknown_rather_than_guessing():
     assert "tokens ?/?/?/?" in text, "unknown tokens read as unknown on this side too"
 
 
+def _usage_over(*kinds, num_turns=12):
+    return {"num_turns": num_turns, "total_cost_usd": 6.2, "duration_ms": 17_000,
+            "timeline": [[i * 10.0, kind] for i, kind in enumerate(kinds)]}
+
+
+def test_harness_record_says_when_its_figures_cover_the_last_query_only():
+    """A stall-resume or a background subagent's task_notification starts a second query,
+    and the ResultMessage then reports duration, turns and tokens for the last one alone:
+    clark-migration's committed run reads "17 s ... 1 SDK turns" over 38 minutes (#3128)."""
+    two = _usage_over("system:init", "assistant", "system:init", "assistant", "result")
+    assert compare.HARNESS_LAST_QUERY in compare.harness_record({"usage": two})
+
+
+def test_harness_record_leaves_one_query_and_a_fallback_block_alone():
+    compacted = _usage_over("system:init", "assistant", "system:compact_boundary", "result")
+    assert compare.HARNESS_LAST_QUERY not in compare.harness_record({"usage": compacted})
+    fallback = _usage_over("system:init", "assistant", "system:init", "result", num_turns=None)
+    assert compare.HARNESS_LAST_QUERY not in compare.harness_record({"usage": fallback}), (
+        "a streamed fallback spans every query; only a ResultMessage block is cut short"
+    )
+
+
 # A turns row as TURN_COLUMNS orders it: cost, SDK turns, duration, nudges, then the
 # four token columns (input / cache write / cache read / output).
 def _turn(cost, turns, ms, nudges, tokens=(0, 0, 0, 0)):
