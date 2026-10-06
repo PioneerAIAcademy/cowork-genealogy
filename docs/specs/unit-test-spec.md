@@ -611,6 +611,17 @@ skill never fired still fails.
 
 #### 5.2.1 The direct-agent arm
 
+> **How much of an agent's return actually reaches the user is not graded, and
+> deliberately so.** Every validator reads the agent's own return; nothing
+> compares it with the main thread's `text_response`. On this arm the main
+> thread is the harness's dispatcher rather than the subject, so a gate here
+> would fail most direct runs and a tier-2 `report_*` would hand the judge a
+> number that charges the agent for the dispatcher's drop. `make
+> unit-relay-fidelity` measures it offline over the committed run logs instead
+> — a report, never a gate, and its direct block is dispatcher fidelity rather
+> than a statement about production.
+
+
 A **paired** skill is a thin routing skill plus an agent. Production research
 spawns the agent **directly** and never loads the routing skill (lead's ruling of
 2026-08-31; `docs/skill-to-agent-pair-conversion.md` §0) — **usually, not

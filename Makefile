@@ -809,6 +809,13 @@ replay-check: ## Acceptance check for the write-replay engine: reconstruct every
 	# comment. Run after any change to harness/replay.py.
 	cd eval/harness && uv run python scripts/check_replay_fidelity.py
 
+.PHONY: unit-relay-fidelity
+unit-relay-fidelity: ## How much of an agent's return survives the main thread's relay — offline report over committed unit run logs, never a gate
+	# NOT replay-check above, which is one letter away and replays e2e runs.
+	# Report only: the direct block measures the HARNESS DISPATCHER, not
+	# production, so nothing here gates a build or reaches the judge (#3188).
+	cd eval/harness && uv run python scripts/relay_fidelity_report.py
+
 .PHONY: eval-skill
 eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]; SKILL="a b c" runs several in one pool
 	# $(ENGINE_BUILD) rebuilds packages/engine/mcp-server/build/ only when its

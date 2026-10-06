@@ -1,0 +1,179 @@
+{
+  "skill": "alpha",
+  "snapshot": {
+    "packages/engine/plugin/agents/good.md": "bbb0e31b39da2e3b9db861ac9e3525098a41c605785cbac0611bfebd56a88949"
+  },
+  "tests": [
+    {
+      "test_id": "ut_fx_direct",
+      "outcome": "pass",
+      "runs": [
+        {
+          "output": {
+            "agent_returns": [
+              {
+                "subagent_type": "good",
+                "text": "pre\n\n---\n\nSUMMARY LINE ONE\nSUMMARY LINE TWO"
+              }
+            ],
+            "text_response": "Hand-back: good\n\n---\n\nSUMMARY LINE ONE\nSUMMARY LINE TWO"
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_fx_norm",
+      "outcome": "pass",
+      "runs": [
+        {
+          "output": {
+            "agent_returns": [
+              {
+                "subagent_type": "good",
+                "text": "pre\n\n---\n\n**Bold** result -- done"
+              }
+            ],
+            "text_response": "Hand-back\n\n---\n\nBold result \u2014 done"
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_fx_drop",
+      "outcome": "pass",
+      "runs": [
+        {
+          "output": {
+            "agent_returns": [
+              {
+                "subagent_type": "good",
+                "text": "pre\n\n---\n\nSUMMARY LINE ONE\nSUMMARY LINE TWO"
+              }
+            ],
+            "text_response": "I summarised it differently."
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_fx_notail",
+      "outcome": "pass",
+      "runs": [
+        {
+          "output": {
+            "agent_returns": [
+              {
+                "subagent_type": "good",
+                "text": "no rule anywhere in this return"
+              }
+            ],
+            "text_response": "whatever"
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_fx_fenced",
+      "outcome": "pass",
+      "runs": [
+        {
+          "output": {
+            "agent_returns": [
+              {
+                "subagent_type": "fenced",
+                "text": "alpha line\nbeta line\ngamma line\ndelta line"
+              }
+            ],
+            "text_response": "alpha line and beta line only"
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_fx_deep",
+      "outcome": "pass",
+      "runs": [
+        {
+          "output": {
+            "agent_returns": [
+              {
+                "subagent_type": "deep",
+                "text": "pre\n\n---\n\nSUMMARY LINE ONE\nSUMMARY LINE TWO"
+              }
+            ],
+            "text_response": "x\n\n---\n\nSUMMARY LINE ONE\nSUMMARY LINE TWO"
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_fx_stale",
+      "outcome": "pass",
+      "runs": [
+        {
+          "output": {
+            "agent_returns": [
+              {
+                "subagent_type": "good",
+                "text": "pre\n\n---\n\nSUMMARY LINE ONE\nSUMMARY LINE TWO"
+              }
+            ],
+            "text_response": "y\n\n---\n\nSUMMARY LINE ONE\nSUMMARY LINE TWO"
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_fx_err",
+      "outcome": "pass",
+      "runs": [
+        {
+          "output": {
+            "agent_returns": [
+              {
+                "subagent_type": "good",
+                "text": "'good' did not execute.",
+                "is_error": true
+              }
+            ],
+            "text_response": "noop"
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_fx_routed",
+      "outcome": "pass",
+      "runs": [
+        {
+          "output": {
+            "agent_returns": [
+              {
+                "subagent_type": "good",
+                "text": "pre\n\n---\n\nSUMMARY LINE ONE\nSUMMARY LINE TWO"
+              }
+            ],
+            "text_response": "z\n\n---\n\nSUMMARY LINE ONE\nSUMMARY LINE TWO"
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_fx_orphan",
+      "outcome": "pass",
+      "runs": [
+        {
+          "output": {
+            "agent_returns": [
+              {
+                "subagent_type": "good",
+                "text": "pre\n\n---\n\nSUMMARY LINE ONE\nSUMMARY LINE TWO"
+              }
+            ],
+            "text_response": "q\n\n---\n\nSUMMARY LINE ONE\nSUMMARY LINE TWO"
+          }
+        }
+      ]
+    }
+  ]
+}
