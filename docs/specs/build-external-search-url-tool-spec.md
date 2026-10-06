@@ -72,9 +72,9 @@ Facts still verifiable in the current tree, cited at their current location:
 | Fact | Source |
 |------|--------|
 | `conflicts[]` c_001 rejects Pennsylvania in favor of Ireland | `eval/fixtures/scenarios/mid-research-flynn/research.json` |
-| The "check `conflicts[]` before encoding" rule | `SKILL.md:314-333` |
-| The two worked examples now encoding Ireland | `SKILL.md:264`, `:278` |
-| `digital_newspaper_archive` is an open bucket identified by `url_generated`, not a fixed per-state URL | `docs/specs/schemas/enums.schema.json:177-178`, `docs/specs/research-schema-spec.md:452` |
+| The "check `conflicts[]` before encoding" rule | `packages/engine/plugin/skills/search-external-sites/SKILL.md` §"3. Build the URL" |
+| The two worked examples now encoding Ireland | `packages/engine/plugin/skills/search-external-sites/SKILL.md` §"3. Build the URL" (Case A and Case B) |
+| `digital_newspaper_archive` is an open bucket identified by `url_generated`, not a fixed per-state URL | `docs/specs/schemas/enums.schema.json` (`$defs.external_site`), [`research-schema-spec.md` §5.4 `log`](research-schema-spec.md#54-log) |
 | `convert_calendar` — the architectural precedent for a pure, no-network, no-project-files tool | `packages/engine/mcp-server/src/tools/convert-calendar.ts` |
 | `research-log-append.ts` derives its MCP schema enum from `VALIDATOR_ENUMS`; this tool deliberately does **not** (§8) — `SUPPORTED_SITES` is the keys of its own `SITE_BASE_URL`, since the shared enum also names `familysearch_web`, which the tool has no template for | `packages/engine/mcp-server/src/tools/research-log-append.ts`, `EXTERNAL_SITE_VALUES` |
 
@@ -296,7 +296,7 @@ site-wide URL — it is an open bucket for whichever state/regional free
 archive applies to the place being researched (Utah Digital Newspapers,
 California Digital Newspaper Collection, …), and "which one is identified by
 `url_generated`, not by a per-state enum value"
-(`research-schema-spec.md:452`). A single hard-coded URL would be wrong for
+([`research-schema-spec.md` §5.4 `log`](research-schema-spec.md#54-log)). A single hard-coded URL would be wrong for
 every place but the one it names. So for this site, `baseUrl` — the specific
 archive's own search endpoint, from `locality-guide` output or a curated
 link — is **required** (`{ ok: false, reason: "base_url_required" }` without
