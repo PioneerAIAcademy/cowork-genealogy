@@ -380,6 +380,40 @@ describe("extraction_append (issue #695 lane enforcement)", () => {
     expect(after.sources[1].id).toBe("src_002");
   });
 
+  it("a blank-record_id append does not fall through to updates-only detection (#3159)", async () => {
+    const research = baseResearch();
+    research.assertions = [
+      { ...validAssertion("a_001"), fact_type: "name", value: "John Smith" },
+    ] as any;
+    await writeProject(research);
+    const { gedcomx_source_description_id: _g, ...sourceNoRef } = noId(validSource("x"));
+    const { source_id: _s, ...assertionNoSrc } = noId(validAssertion("x"));
+    const r = await extractionAppend({
+      projectPath: dir,
+      sourceDescription: { title: "Flynn family Bible" },
+      ops: [
+        { section: "sources", op: "append", entry: { ...sourceNoRef, citation: "Flynn family Bible" } },
+        {
+          section: "assertions",
+          op: "append",
+          entry: { ...assertionNoSrc, record_id: "", fact_type: "marriage", value: "1875" },
+        },
+        { section: "assertions", op: "update", entryId: "a_001", fields: { value: "John H. Smith" } },
+      ],
+    } as any);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    // The batch has an assertion append (even though its record_id is blank),
+    // so updates-only detection must NOT engage. A new source is created.
+    const after = await readResearch();
+    expect(after.sources).toHaveLength(2);
+    expect(after.sources[1].id).toBe("src_002");
+    // The marriage assertion cites the new source, not the census one
+    const marriage = after.assertions.find((a: any) => a.fact_type === "marriage");
+    expect(marriage).toBeDefined();
+    expect(marriage.source_id).toBe("src_002");
+  });
+
   // ─── research_append is untouched ─────────────────────────────────────────
 
   it("research_append still accepts person_evidence (the lane is per-tool, not global)", async () => {

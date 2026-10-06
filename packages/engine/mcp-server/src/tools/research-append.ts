@@ -4181,7 +4181,7 @@ async function prepareOps(
     // update targets in the pre-call research.assertions (§3.4.1 updates-only).
     // Never mixed with append-derived keys: a mixed batch that extracts new
     // record X and corrects old record Y would fold X's source onto Y's.
-    if (batchRecordKeys.size === 0 && assertionUpdates.length > 0) {
+    if (assertionAppends.length === 0 && assertionUpdates.length > 0) {
       const existingAssertions: any[] = Array.isArray(research.assertions) ? research.assertions : [];
       for (const uop of assertionUpdates) {
         // Skip any update op whose fields set source_id — it is re-pointing
