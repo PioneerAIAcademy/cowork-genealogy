@@ -89,7 +89,7 @@ call no tool:
   `search-records`.
 - **Extracting facts from an accepted record** → `record-extraction`.
 - **Linking a record to a person, or deciding whether two records are one
-  person** → `person-evidence`.
+  person** → `person-evidence`. A pending hint is not such a request: triage it.
 
 Otherwise proceed.
 
@@ -117,8 +117,9 @@ Otherwise proceed.
    - **Extracted, not linked** — assertions came back but no such entry cites
      them (never linked, or only superseded links). Its line is a
      recommendation — `accept`, `reject` or `not enough information to judge` —
-     never `already linked`, and triage hands nothing back. Name its
-     source, read it and triage it like any other hint.
+     never `already linked`. Being unlinked is no reason for `not enough
+     information to judge`, and triage hands nothing back. Name its source,
+     read it and triage it like any other hint.
 3. **Read each remaining hint:** `record_read({ recordId: <ark> })`. Compare its persona to
    the tree person — the project's `tree.gedcomx.json` first, `person_read` when
    the project tree does not hold them: name, dates, places, parents, spouse,

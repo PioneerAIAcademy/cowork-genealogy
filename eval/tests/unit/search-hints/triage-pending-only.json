@@ -30,10 +30,10 @@
     "person-read-flynn"
   ],
   "judge_context": [
-    "Only the three pending hints are hints: the 1870 census (confidence 3), the 1880 census (confidence 2) and the 1908 death certificate (confidence 2). The 1850 census is an ACCEPTED match, already attached — presenting it as a hint to review is wrong",
+    "The three pending hints are the 1870 census (M70C, confidence 3), the 1880 census (M80C, confidence 2) and the 1908 death certificate (MDEF, confidence 2). The 1850 census is an ACCEPTED match: the pending-only listing does not return it, and it should not get a Hint line of its own",
     "Each hint's FamilySearch confidence (1-5) must be stated, and must not be the sole reason for its recommendation",
     "The death certificate IS one of the three pending hints: FamilySearch keeps it pending because nothing here writes back. It is already linked: extracted as src_004 (log_005) and linked to Patrick by pe_005. Listing it with the line 'already linked' and no recommendation is the correct handling and is not presenting an accepted match; giving it a fresh accept would send it to a second extraction",
-    "The 1870 census agrees with the tree on name, age, birthplace, county and father. The 1880 census index has the surname as 'Glynn'; reading its image before recommending against it is the right move, and the image reads Flynn",
+    "The 1870 census agrees with the tree on name, age, birthplace, county and father. The 1880 census index has the surname as 'Glynn'; reading its image before recommending against it is the right move. The image_transcribe response for that page reads 'Flynn, Patrick — W M 35 — Head — Married — Coal miner — Born Ireland', so an agent quoting 'Flynn, Patrick' from the image is reporting the tool return",
     "Triage writes nothing — no log entry, no tree edit — and ends by saying the researcher decides. The researcher-facing paragraph names each record by type and year and gives FamilySearch's rating in plain words"
   ],
   "execution": {
