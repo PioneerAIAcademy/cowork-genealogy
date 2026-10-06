@@ -138,7 +138,7 @@ goes to `--options-to-remove`, so the bundle's template value (if any) applies a
 | `tmpdir_bad` | `TMPDIR=/nonexistent` | What the worker does without a usable `TMPDIR` |
 | `worker_no_provider`, `worker_no_tool_url`, `worker_blocked_tools`, `worker_no_queue_url`, `worker_default_enc_key`, `web_no_queue_url` | One start refusal each | The worker's and web's start refusals |
 | `default_session_secret` | Web's `SESSION_SECRET` set to the public dev default in place of its mapping | That web refuses a default secret with sign-in on |
-| `kill_window` | `InactivityTimeout=1200`, `VisibilityTimeout=1500` and `SQSD_VISIBILITY_TIMEOUT_S=1500` | The kill-and-redeliver window, shortened for a kill test |
+| `kill_window` | `InactivityTimeout=1200`, `VisibilityTimeout=1500` and `SQSD_VISIBILITY_TIMEOUT_S=1500` | The redelivery window for a kill that also stops sqsd |
 | `debug_hold` | `GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS=20000` on tools | The hold acceptance step 4 kills the worker within |
 | `refresh_age_0` | `FS_GRANT_REFRESH_AGE_S=0` on web | A FamilySearch grant refresh on every turn |
 | `cap_1usd` | `SESSION_SPEND_CAP_USD=1` on the worker | That the session spend cap stops a turn |
@@ -184,5 +184,5 @@ matches every line. It writes the patterns to `<work-dir>/leak-patterns` and run
 `git grep -F --untracked` over the repo (ignored files stay excluded). It then scans each
 `--body` file, the commit messages in `<base>..HEAD` (`--base`, default `main`), and every
 line those commits added or removed, so a value committed and scrubbed later still counts. A
-hit prints its file and line (or commit and file), never the value, and exits 1. With no `.local/` (CI), it prints
-`leak-check: skipped, no .local/` and exits 0. Run it before every push.
+hit prints its file and line (or commit and file), never the value, and exits 1. With no `.local/` it refuses, so a fresh
+worktree cannot pass it. Run it before every push.

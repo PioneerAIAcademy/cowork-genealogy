@@ -241,7 +241,11 @@ class FakeAws:
         return {"Instances": [{"InstanceId": "i-bastion"}]}
 
     def ec2_terminate_instances(self, rest):
-        for i in _flag_values(rest, "--instance-ids"):
+        ids = _flag_values(rest, "--instance-ids")
+        known = {i["name"] for i in self.all("instance")}
+        if any(i not in known for i in ids):  # EC2 fails the whole call on one purged id
+            raise AwsError("An error occurred (InvalidInstanceID.NotFound) when calling the TerminateInstances operation")
+        for i in ids:
             self.drop("instance", i)
 
     def ec2_describe_addresses(self, rest):
@@ -1147,6 +1151,18 @@ def test_down_after_a_throwaway_probe_and_down_again(stack):
     assert rc == 0, lines[-3:]
 
 
+def test_down_terminates_a_live_bastion_beside_a_purged_recorded_one(stack):
+    """The inventory is never pruned: after `down` and another `up` in the same work dir it
+    still records the old bastion. EC2 fails a terminate naming a purged id outright, so
+    `down` must send only the instances EC2 still lists."""
+    env, fake, _ = stack
+    fake.drop("instance", "i-bastion")
+    fake.add("instance", "i-live")
+    rc, lines = run(env, fake, "down", "--billed")
+    assert rc == 0, lines[-3:]
+    assert not fake.all("instance")
+
+
 def test_down_rerun_while_rds_is_still_deleting(stack):
     env, fake, _ = stack
     fake.fail["rds wait"] = "Waiter DBInstanceDeleted failed: Max attempts exceeded"
@@ -1376,10 +1392,11 @@ def test_leak_check_refuses_an_empty_value(leak_repo):
     assert rc == 2
 
 
-def test_leak_check_skips_without_local(leak_repo):
-    lines = []
-    rc = rh.main(["leak-check"], out=lines.append, local_dir=leak_repo["repo"] / "absent", repo=leak_repo["repo"])
-    assert rc == 0 and lines == ["leak-check: skipped, no .local/"]
+def test_leak_check_refuses_without_local(leak_repo, capsys):
+    """A fresh worktree has no .local/ (it is gitignored), so a skip would pass it silently."""
+    rc = rh.main(["leak-check"], out=lambda line: None, local_dir=leak_repo["repo"] / "absent", repo=leak_repo["repo"])
+    assert rc == 2
+    assert "copy .local/ into this worktree before pushing" in capsys.readouterr().err
 
 
 def test_leak_check_patterns_file_stays_outside_the_repo(leak_repo):
