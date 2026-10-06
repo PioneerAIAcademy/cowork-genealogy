@@ -108,8 +108,8 @@ REAUTH_ENTRY = re.compile(r"call the login tool|Reconnect FamilySearch", re.I)
 
 
 # U2: every /api/sessions route needs a signed-in patron. The scripts sign in through
-# dev-login, which the tier offers only while FamilySearch sign-in is off and PUBLIC_URL is
-# http -- the default compose stack. Distinct emails are distinct patrons.
+# dev-login, which the tier offers only with DEV_LOGIN=true, FamilySearch sign-in off and
+# PUBLIC_URL http -- the default compose stack. Distinct emails are distinct patrons.
 DEV_LOGIN_EMAIL = "dev@localhost"
 
 
@@ -126,7 +126,8 @@ def signed_in_client(
         r = login.post("/auth/dev-login", json={"email": email})
         if r.status_code == 403:
             raise RuntimeError(
-                f"dev-login is disabled at {base} (FamilySearch sign-in is on, or PUBLIC_URL is https); "
+                f"dev-login is disabled at {base} (DEV_LOGIN is not true, FamilySearch sign-in is on, "
+                "or PUBLIC_URL is https); "
                 "run the scripts against the default stack, not docker-compose.fs-signin.yml"
             )
         r.raise_for_status()
