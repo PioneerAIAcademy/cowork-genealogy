@@ -93,10 +93,10 @@
     {
       "test_id": "ut_research_011",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
-      "corrected_score": 2,
-      "comment": "Routing and state reading are right (objective present, no questions, so question-selection). But the stub reply says plainly \"It changed no project state\", and the reply tells the user the agent \"derived the opening research question and written it to research.json… First research question: Now written\". file_changes is null. The router reported a write the delegate said didn't happen. This isn't new: v6 and v7 made the same claim on this test (v7 was annotated 3 and missed it), and ut_research_005 in this run shows the same pattern."
+      "corrected_score": 3,
+      "comment": "One valid project_context call before routing; the hand-off used the agent spawn, not a call to the deleted skill."
     },
     {
       "test_id": "ut_research_011",
@@ -107,20 +107,20 @@
       "comment": "Read the state, routed, explained why, and gave a forward plan (locality guide → research plan → searches). The false \"written\" claim is scored under Correctness."
     },
     {
-      "test_id": "ut_research_011",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "One valid project_context call before routing; the hand-off used the agent spawn, not a call to the deleted skill."
-    },
-    {
       "test_id": "ut_research_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 2,
-      "comment": "Routing is right and the cited facts hold (three evidence lines, the Ireland/PA conflict resolved, R1 present, no prior critique). But the reply reports \"mentor gate invoked and recorded; question marked resolved; project marked completed\", while file_changes is null and both agent spawns returned no result: it reported outcomes no file shows. And the genealogy is wrong: it sends proof-conclusion to resolve q_001 and complete the project while pli_006 (Thomas Flynn probate) is still in_progress, after itself saying the probate and the later censuses weren't searched and could raise the tier. A parentage question shouldn't close at probable with its strongest open search still in flight."
+      "comment": "Routing is right and the cited facts hold (three evidence lines, the Ireland/PA conflict resolved, R1 present, no prior critique). The ground for 2: it sends proof-conclusion to resolve q_001 and complete the project at probable while pli_006 (Thomas Flynn's probate) is still in_progress, after itself saying the probate and later censuses were not searched and could raise the tier. A parentage question should not close with its strongest open search in flight. Note: the reply also reports recorded/completed with nothing written; that narration is harness-induced (issue 3160) and not part of this score.\n"
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Routing and state reading are right (objective present, no questions, so question-selection). The reply's claim that the question was written to research.json is induced by the harness: the stub text (_NO_DISCLOSE in skill_stubs.py) tells the model to narrate and record exactly as if question-selection had run normally. Not a skill defect; noted on issue 3160.\n"
     }
   ]
 }
