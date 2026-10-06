@@ -294,12 +294,11 @@ def terminal_reason(
 # text is that all three readers send the SAME words, and two hand-kept copies is the one
 # arrangement that cannot guarantee it.
 #
-# The worker does not mirror the harness's `classify_hand_back` branch -- it classifies
-# nothing, because the classifier reads the harness's in-process narration list and the
-# prose half of #2292 has not landed, so copying a moving wording would drift the moment
-# it does. Every stop either plane sees therefore takes this text, and
-# `test_the_stop_hook_blocks_a_vetoable_stop_with_the_harness_reason_verbatim` reads it
-# off the orchestrator and goes red when either side moves.
+# Every vetoed stop takes this text, on every plane: the e2e harness's hook answers a
+# retired `Next: <step>. Continue?` hand-back (issue #2292) with it too, rather than
+# "Yes.", so the harness grades the Stop policy the prototype runs (U17).
+# `eval/harness` cannot import this module, so `test_continue_policy_parity.py` reads
+# the harness's copy off its source and goes red when either side moves.
 CONTINUE_REASON = (
     "You are mid-run in an autonomous /research session and the "
     "project is not yet complete (project.status is not "

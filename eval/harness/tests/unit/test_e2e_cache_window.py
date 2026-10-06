@@ -46,6 +46,7 @@ TIMELINE = [
 def _doc(timeline=TIMELINE, **usage_overrides):
     usage = {
         "timeline": timeline,
+        "num_turns": 12,
         "total_cost_usd": 1.5,
         "usage": {
             "cache_read_input_tokens": 500,
@@ -217,6 +218,28 @@ def test_missing_cost_is_estimated_from_tokens_and_marked():
 def test_exclusion_reasons():
     assert analyze_run({"usage": {}}, fixture="fx", run="r") == "no-timeline"
     assert analyze_run(_doc(usage={}), fixture="fx", run="r") == "no-cache-figures"
+
+
+def test_a_run_with_more_than_one_query_is_excluded_by_name():
+    """#3128: its cache figures are the last query's, not the run's. A second
+    `system:init` after a background subagent's notification is the shape."""
+    second_query = TIMELINE[:11] + [[31.0, "system:init", []]] + TIMELINE[11:]
+    assert analyze_run(_doc(timeline=second_query), fixture="fx", run="r") == "multi-query"
+    # The other direction: TIMELINE also has a background subagent and a
+    # task_notification, but one query, so it is analysed.
+    assert not isinstance(analyze_run(_doc(), fixture="fx", run="r"), str)
+
+
+def test_scan_counts_a_multi_query_run(tmp_path):
+    import json
+
+    second_query = TIMELINE[:11] + [[31.0, "system:init", []]] + TIMELINE[11:]
+    run = tmp_path / "fx" / "run-2026-09-24_07-23-44.json"
+    run.parent.mkdir()
+    run.write_text(json.dumps(_doc(timeline=second_query)), encoding="utf-8")
+    rows, excluded = scan([run])
+    assert rows == []
+    assert dict(excluded) == {"multi-query": 1}
 
 
 def test_scan_counts_unreadable_and_excluded(tmp_path):
