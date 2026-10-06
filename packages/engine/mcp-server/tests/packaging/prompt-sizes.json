@@ -5,7 +5,7 @@
     "regenerate": "UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts"
   },
   "prompts": {
-    "CLAUDE.md": 57175,
+    "CLAUDE.md": 57177,
     "packages/engine/plugin/agents/check-warnings.md": 47535,
     "packages/engine/plugin/agents/citation.md": 44479,
     "packages/engine/plugin/agents/convert-dates.md": 11818,
@@ -23,6 +23,7 @@
     "packages/engine/plugin/agents/search-familysearch-wiki.md": 8480,
     "packages/engine/plugin/agents/search-images.md": 21550,
     "packages/engine/plugin/agents/search-wikipedia.md": 6843,
+    "packages/engine/plugin/agents/survey-surname.md": 7068,
     "packages/engine/plugin/agents/translation.md": 19677,
     "packages/engine/plugin/agents/tree-edit.md": 30669,
     "packages/engine/plugin/agents/validate-schema.md": 4382,
