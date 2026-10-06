@@ -234,12 +234,22 @@ _DETACH_ACTIVE_ON_TITLE_RE = re.compile(
 # "The 1885 Minnesota State Census should be detached": the title word is the
 # sentence's subject. Decided by what stands directly before the verb phrase:
 # the title phrase itself, or "and" / "and so" ("... and must be detached").
-# Anything else there ("entry", "it", a bracket or dash) is a new subject.
+# Anything else there ("entry", "it", a bracket or dash) is a new subject, and
+# so is a second record named before the verb ("... while the index does not
+# and should be detached"): a determiner-led record word, or a bare "it".
 _PASSIVE_VERB_PHRASE = r"(?:should|must|needs\s+to|is(?:\s+to)?)\s+(?:be\s+)?|be\s+"
+_SECOND_RECORD = (
+    r"\b(?i:(?:the|this|that|a|an|his|her|their|its|my|your|these|those)\s+"
+    r"(?:[\w'-]+\s+){0,2}?"
+    r"(?:index|entry|entries|records?|census|register|registration|collection"
+    r"|certificate|source)|it)\b"
+)
 _DETACH_PASSIVE_ON_TITLE_RE = re.compile(
     r"^\W*(?:(?i:the|this|that|a|an)\s+)?(?:[A-Z0-9][\w.'-]*\s+)*?"
     + _TITLE_WORDS
-    + r"\b(?:\s+|[^.]*?\sand(?:\s+so)?\s+)(?:"
+    + r"\b(?:\s+|(?:(?!"
+    + _SECOND_RECORD
+    + r")[^.])*?\sand(?:\s+so)?\s+)(?:"
     + _PASSIVE_VERB_PHRASE
     + r")"
     + _DETACH_VERB

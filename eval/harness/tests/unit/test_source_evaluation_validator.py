@@ -764,6 +764,17 @@ def test_a_detach_sentence_that_names_no_record_still_fails():
                 "— the entry should be detached.",
             )
         ),
+        *(
+            "The Minnesota Death Index gives 1954 against the profile's 1945. " + second
+            for second in (
+                "The 1900 Census agrees with 1945 because the entry is wrong and should be detached.",
+                "The 1900 Census agrees with 1945 while the index does not and should be detached.",
+                "The 1900 Census shows the index is wrong and so should be detached.",
+                "The 1900 Census agrees with 1945 but the index entry does not and must be detached.",
+                "The 1900 Census agrees with 1945 and the index disagrees and should be detached.",
+                "The Census has 1945 though the Index has 1954 and is to be detached.",
+            )
+        ),
         _X6B_PARAGRAPH + " Detach it as well.",
     ):
         try:
