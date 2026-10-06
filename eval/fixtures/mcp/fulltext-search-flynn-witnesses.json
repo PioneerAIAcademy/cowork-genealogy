@@ -96,6 +96,19 @@
         "dates": ["1878"],
         "highlightTerms": ["Flynn", "witness", "witnesses"]
       }
+    ],
+    "facets": [
+      {
+        "name": "collectionId",
+        "count": 1,
+        "items": [
+          {
+            "name": "Pennsylvania Land Records",
+            "count": 1,
+            "filterParam": "2220359"
+          }
+        ]
+      }
     ]
   }
 }
