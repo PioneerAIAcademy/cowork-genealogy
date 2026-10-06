@@ -264,6 +264,34 @@ def test_outage_checks_pass_either_store_loss_path():
         assert all(oks(bounds.outage_checks("x", events, "t1", terminated=1, ran=[])))
 
 
+def _hook_events(**over):
+    base = [ev("halt_check_failed", clause="handover", error="QueryCanceled: canceling statement due to user request",
+               store_down=True),
+            ev("halt", reason=bounds.STORE_UNAVAILABLE_REASON),
+            ev("turn", status=500, error="StoreUnavailable: the store was unreachable mid-attempt on turn t1")]
+    return [e for e in base if e["ev"] not in over.get("drop", ())] + over.get("add", [])
+
+
+def test_hook_outage_checks_pass_only_on_the_hooks_own_path():
+    assert all(oks(bounds.hook_outage_checks("x", _hook_events(), "t1", cancelled=1, ran=[])))
+
+
+def test_hook_outage_checks_fail_when_the_receive_loop_or_nothing_saw_it():
+    # The receive loop's own error is the OTHER path: this case exists to prove the hook's.
+    loop = [ev("turn", status=500, error="OperationalError: terminating connection")]
+    assert not all(oks(bounds.hook_outage_checks("x", loop, "t1", cancelled=1, ran=[])))
+    assert oks(bounds.hook_outage_checks("x", _hook_events(), "t1", cancelled=0, ran=[]))[0] is False
+    down_false = _hook_events(drop=("halt_check_failed",), add=[ev("halt_check_failed", clause="handover",
+                                                                   error="DataError: x", store_down=False)])
+    assert oks(bounds.hook_outage_checks("x", down_false, "t1", cancelled=1, ran=[]))[1] is False
+    assert oks(bounds.hook_outage_checks("x", _hook_events(drop=("halt",)), "t1", cancelled=1, ran=[]))[2] is False
+    assert oks(bounds.hook_outage_checks("x", _hook_events(drop=("turn",)), "t1", cancelled=1, ran=[]))[3] is False
+    other_500 = _hook_events(drop=("turn",), add=[ev("turn", status=500, error="OperationalError: x")])
+    assert oks(bounds.hook_outage_checks("x", other_500, "t1", cancelled=1, ran=[]))[3] is False
+    assert oks(bounds.hook_outage_checks("x", _hook_events(), "t1", cancelled=1,
+                                         ran=[("", "mcp__genealogy__place_search", "u1")]))[4] is False
+
+
 def test_outage_checks_fail_no_backend_another_error_or_a_call_that_ran():
     events = [ev("turn", status=500, error="StoreUnavailable: x")]
     assert oks(bounds.outage_checks("x", events, "t1", terminated=0, ran=[]))[0] is False, "application_name not set"
@@ -474,6 +502,7 @@ def _ctx(**over) -> bounds.Ctx:
 @pytest.mark.parametrize("case, subagent", [
     ("stop_main", False), ("held_release", False), ("held_after_stop", False), ("cap_main", False),
     ("outage_stop", False), ("outage_cap", False), ("outage_held", False), ("outage_pause", False),
+    ("outage_hook", False),
     ("stop_delegation", True), ("cap_delegation", True), ("probe_resume", True),
 ])
 def test_each_case_waits_on_its_thread_and_a_miss_bounds_nothing(monkeypatch, case, subagent):

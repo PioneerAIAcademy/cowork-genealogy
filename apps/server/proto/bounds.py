@@ -29,6 +29,10 @@ subagent's halt stop the parent?). Billed, except ``precli``.
                    Stop / inject / hold, then pg_terminate_backend on the turn's own
                    connection (application_name turn:<id>): no call runs after, the attempt
                    answers 500, the redelivery closes stopped / budget / hands over
+  outage_hook      the store fails INSIDE the halt check, not the receive loop: turns locked
+                   ACCESS EXCLUSIVE so the handover read blocks, then that one backend
+                   cancelled (QueryCanceled): the hook halts store_unavailable, 500, the
+                   redelivery runs on
   outage_pause     docker pause proto-postgres --pause-s mid-turn: recorded, not judged,
                    beyond the driver recovering
   probe_resume     the worker killed --kill-after-s (5-20) after the first subagent row
@@ -104,6 +108,13 @@ ENTRIES_SQL = "SELECT seq, subpath, entry FROM session_entries WHERE session_id 
 INJECT_SQL = "INSERT INTO session_entries (project_key, session_id, subpath, entry) VALUES (%s, %s, '', %s)"
 DELETE_PROBE_SQL = "DELETE FROM session_entries WHERE project_key = %s"
 TERMINATE_SQL = "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE application_name = %s"
+# outage_hook: the turn's own backend, waiting on the `turns` lock inside the halt check's
+# handover read -- the receive loop never reads `turns`, so only the hook can be waiting here.
+HOOK_WAITER_SQL = (
+    "SELECT pid FROM pg_stat_activity WHERE application_name = %s AND wait_event_type = 'Lock' "
+    "AND query ILIKE %s"
+)
+HOOK_WAIT_QUERY = "%FROM turns WHERE session_id%"
 # The session's cache writes by TTL, one row per API message (TURN_USAGE_SQL's dedupe).
 CACHE_SPLIT_SQL = (
     "SELECT sum((u->'cache_creation'->>'ephemeral_5m_input_tokens')::bigint), "
@@ -415,6 +426,27 @@ def outage_checks(label: str, events: list[dict], turn_id: str, *, terminated: i
         (f"{label}: the attempt failed closed (ev=halt_check_failed / halt_failed, or the receive loop's error)",
          bool(failed) or bool(store_500), f"failed={failed[:2]} 500s={five[:2]}"),
         (f"{label}: the attempt answered 500 carrying {' or '.join(STORE_ERRORS)}", bool(store_500),
+         f"500s={[e.get('error') for e in five]}"),
+        (f"{label}: no tool call ran after the outage (session_entries)", not ran, f"ran={ran}"),
+    ]
+
+
+def hook_outage_checks(label: str, events: list[dict], turn_id: str, *, cancelled: int,
+                       ran: list[tuple]) -> list[Check]:
+    """The store failed inside the halt check: the hook (not the receive loop) saw it,
+    classified it down, halted with STORE_UNAVAILABLE_REASON, and the attempt answered 500
+    StoreUnavailable with no call run after."""
+    mine = events_for(events, turn_id)
+    failed = [e for e in mine if e.get("ev") == "halt_check_failed" and e.get("store_down")]
+    halts = [e for e in mine if e.get("ev") == "halt" and e.get("reason") == STORE_UNAVAILABLE_REASON]
+    five = [e for e in mine if e.get("ev") == "turn" and e.get("status") == 500]
+    return [
+        (f"{label}: cancelled the turn's backend waiting in the halt check", cancelled >= 1, f"cancelled={cancelled}"),
+        (f"{label}: the hook classified the store down (ev=halt_check_failed store_down)",
+         bool(failed), f"failed={failed[:2]}"),
+        (f"{label}: the hook halted with the store-unavailable reason", bool(halts), f"halts={halts[:2]}"),
+        (f"{label}: the attempt answered 500 StoreUnavailable",
+         any(str(e.get("error") or "").startswith("StoreUnavailable") for e in five),
          f"500s={[e.get('error') for e in five]}"),
         (f"{label}: no tool call ran after the outage (session_entries)", not ran, f"ran={ran}"),
     ]
@@ -914,6 +946,55 @@ def case_outage_held(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     _outage(ctx, client, rep, condition="held")
 
 
+def cancel_hook_waiter(ctx: Ctx, turn_id: str) -> int:
+    """Lock ``turns`` ACCESS EXCLUSIVE, wait for the turn's backend to block on it inside the
+    halt check, cancel that backend, release. Returns how many backends were cancelled. No
+    other driver read may touch ``turns`` while the lock is held."""
+    # Two connections: pg_stat_activity is snapshotted once per transaction, so a poll inside
+    # the transaction holding the lock never sees the backend that starts waiting on it.
+    with psycopg.connect(ctx.dsn) as lock, psycopg.connect(ctx.dsn, autocommit=True) as watch:
+        lock.execute("SET lock_timeout = '10s'")
+        lock.execute("LOCK TABLE turns IN ACCESS EXCLUSIVE MODE")
+        try:
+            t0 = time.monotonic()
+            while time.monotonic() - t0 < 60:
+                pids = [r[0] for r in watch.execute(HOOK_WAITER_SQL, (f"turn:{turn_id}", HOOK_WAIT_QUERY)).fetchall()]
+                if pids:
+                    return sum(1 for pid in pids
+                               if watch.execute("SELECT pg_cancel_backend(%s)", (pid,)).fetchone()[0])
+                time.sleep(0.2)
+            return 0
+        finally:
+            lock.rollback()
+
+
+def case_outage_hook(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
+    fresh_session(ctx, client, rep)
+    tid = post(ctx, client, rep, LOOKUPS_TEXT.read_text(encoding="utf-8").strip())["turn_id"]
+    if reach(ctx, rep, tid, subagent=False) is None:  # the handover read needs one call made
+        return
+    sdk = sdk_of(ctx, rep.session_id)
+    rc1 = int(turn.one(ctx.dsn, "SELECT receive_count FROM turns WHERE turn_id = %s", (tid,)) or 0)
+    mark1 = max_entry(ctx, sdk)
+    cancelled = cancel_hook_waiter(ctx, tid)
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < ctx.deadline_s:
+        row = turn.db(ctx.dsn, "SELECT receive_count, completed_at FROM turns WHERE turn_id = %s", (tid,))
+        if row and (row[0][0] > rc1 or row[0][1] is not None):
+            break
+        time.sleep(0.3)
+    mark2 = max_entry(ctx, sdk)
+    ran, unresolved = calls_ran(entries(ctx, sdk, mark1, mark2))
+    rep.figures.update({"cancelled_backends": cancelled, "entries_window": f"({mark1}, {mark2}]"})
+    rep.findings.append(f"calls issued in attempt 1 after the cancel with no result: {unresolved}")
+    if not done(ctx, client, rep, tid, label="redelivered"):
+        return
+    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    rep.checks += [*hook_outage_checks(rep.case, events, tid, cancelled=cancelled, ran=ran),
+                   redelivered_check(rep.case, snap), ran_check(f"{rep.case}: the redelivery", snap)]
+    rep.findings.extend(f"{rep.case}: {line}" for line in result_findings(events, tid))
+
+
 def case_outage_pause(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     fresh_session(ctx, client, rep)
     tid = post(ctx, client, rep, LOOKUPS_TEXT.read_text(encoding="utf-8").strip())["turn_id"]
@@ -996,6 +1077,7 @@ CASES: dict[str, Callable[[Ctx, httpx.Client, Report], None]] = {
     "outage_stop": case_outage_stop,
     "outage_cap": case_outage_cap,
     "outage_held": case_outage_held,
+    "outage_hook": case_outage_hook,
     "outage_pause": case_outage_pause,
     "probe_resume": case_probe_resume,
 }
