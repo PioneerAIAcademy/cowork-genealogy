@@ -38,13 +38,15 @@ services:
       timeout: 3s
       retries: 30
 
-  # quay.io, not Docker Hub, for both minio images below: `docker pull minio/minio` (any
-  # tag, including :latest) now answers "pull access denied ... repository does not exist
-  # or may require 'docker login'" anonymously, so `make proto-up` fails on any machine
-  # with no cached image -- every fresh clone, every CI runner. quay.io serves the SAME
-  # tags and is MinIO's own second registry. Verified 2026-09-24 for both.
+  # pgsty/minio (Docker Hub), not minio/minio or quay.io/minio/minio: Docker Hub's
+  # minio/minio denied anonymous pulls by ~2026-09-18; quay.io/minio/minio followed
+  # by 2026-10-05 ("unauthorized: access to the requested resource is not authorized").
+  # pgsty is a community fork that ships the same minio binary with mc included (as a
+  # symlink to mcli), so the healthcheck and the minio-init one-shot work unchanged.
+  # Both services use ONE image, eliminating the separate mc pin.
+  # Cold-pull verify: docker compose -f apps/server/proto/docker-compose.yml pull minio minio-init
   minio:
-    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
     container_name: proto-minio
     command: server /data --console-address ":9001"
     environment:
@@ -63,7 +65,7 @@ services:
 
   # One-shot: creates the `projects` bucket, then exits 0.
   minio-init:
-    image: quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
     container_name: proto-minio-init
     depends_on:
       minio:

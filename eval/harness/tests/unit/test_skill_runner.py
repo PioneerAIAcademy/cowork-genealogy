@@ -2395,3 +2395,246 @@ def test_the_suppressed_reaction_calls_are_recorded_not_dropped(tmp_path, monkey
         "a post-deny call must still stay OUT of attempted_mcp_calls, or the "
         "uncovered_tool_call advisory fires on a deliberately stopped run"
     )
+
+
+# --- #3116: a slash-command entry records the skill it loaded -----------------
+#
+# `skills_invoked` is filled by the PreToolUse hook on a `Skill` call. A slash
+# command is expanded by the CLI, so the hook never fires and `/research …` --
+# the entry point production uses -- was ungradable.
+#
+# Step 0 measured what reaches the SDK stream: no `<command-name>`, no `Base
+# directory for this skill`, no `isMeta`, no `sourceToolUseID`. So the rule is
+# "registered and staged", not "expanded" (ruling: chesworthrm, 2026-10-05).
+
+
+def _staged(tmp_path, *names):
+    root = tmp_path / ".claude" / "skills"
+    for n in names:
+        (root / n).mkdir(parents=True)
+    return root
+
+
+def test_slash_entry_records_a_registered_and_staged_skill(tmp_path):
+    from harness.skill_runner import slash_skill_from_entry
+
+    root = _staged(tmp_path, "research")
+    assert slash_skill_from_entry("/research --autonomous Who…", ["research"], root) == "research"
+
+
+def test_slash_entry_to_an_unknown_skill_records_nothing(tmp_path):
+    from harness.skill_runner import slash_skill_from_entry
+
+    root = _staged(tmp_path, "research")
+    assert slash_skill_from_entry("/no-such-skill go", ["research"], root) is None
+
+
+def test_slash_prefix_without_registration_records_nothing(tmp_path):
+    """The prefix-only guard.
+
+    A rule keyed on the leading `/` alone would let every slash test pass
+    activation by default. `slash_commands` comes from the init SystemMessage
+    and is what distinguishes a command the CLI registered from a message that
+    merely starts with a slash.
+    """
+    from harness.skill_runner import slash_skill_from_entry
+
+    root = _staged(tmp_path, "research")
+    assert slash_skill_from_entry("/research go", [], root) is None
+
+
+def test_registered_but_unstaged_skill_records_nothing(tmp_path):
+    from harness.skill_runner import slash_skill_from_entry
+
+    root = _staged(tmp_path, "research")
+    assert slash_skill_from_entry("/other go", ["other"], root) is None
+
+
+def test_a_namespaced_spelling_records_nothing(tmp_path):
+    """Staging is by bare name, so a namespaced command resolves to no dir."""
+    from harness.skill_runner import slash_skill_from_entry
+
+    root = _staged(tmp_path, "research")
+    assert (
+        slash_skill_from_entry("/genealogy-research:research go", ["research"], root)
+        is None
+    )
+
+
+def test_an_ordinary_message_records_nothing(tmp_path):
+    from harness.skill_runner import slash_skill_from_entry
+
+    root = _staged(tmp_path, "research")
+    assert slash_skill_from_entry("Research the parents of X", ["research"], root) is None
+
+
+def test_a_bare_slash_records_nothing(tmp_path):
+    from harness.skill_runner import slash_skill_from_entry
+
+    root = _staged(tmp_path, "research")
+    assert slash_skill_from_entry("/", ["research"], root) is None
+    assert slash_skill_from_entry("/ research", ["research"], root) is None
+
+
+# --- #3116: the stream capture and the insertion, end to end ------------------
+#
+# The pure helper above is tested with hand-built lists. These drive the real
+# `run_skill` so the message TYPE, the `data` key spelling and the entry format
+# are asserted against what the SDK actually emits -- a mismatch in any of them
+# makes the whole feature a silent no-op indistinguishable from the pre-fix
+# state, with every helper test still green.
+
+
+def _run_with_init(monkeypatch, tmp_path, user_message, init_data, stage="research"):
+    import asyncio
+    from claude_agent_sdk import ResultMessage, SystemMessage
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    if stage:
+        (tmp_path / ".claude" / "skills" / stage).mkdir(parents=True)
+
+    async def fake_query(*, prompt, options):
+        yield SystemMessage(subtype="init", data=init_data)
+        yield ResultMessage(
+            subtype="result",
+            duration_ms=1,
+            duration_api_ms=1,
+            is_error=False,
+            num_turns=1,
+            session_id="s",
+            total_cost_usd=0.0,
+            usage={},
+            result="done",
+        )
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "create_mock_server", lambda *a, **kw: (None, [], {}))
+    return asyncio.run(
+        sr.run_skill(
+            user_message=user_message,
+            workspace=tmp_path,
+            fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+            max_wall_clock_seconds=10,
+        )
+    )
+
+
+def test_slash_entry_is_recorded_from_the_real_init_message(monkeypatch, tmp_path):
+    """The shape here is what Step 0 measured off the live SDK: a bare name,
+    no leading slash, under `data["slash_commands"]` on `subtype="init"`."""
+    r = _run_with_init(
+        monkeypatch,
+        tmp_path,
+        "/research --autonomous Who were the parents?",
+        {"slash_commands": ["research", "search-full-text"]},
+    )
+    assert r.skills_invoked == ["research"]
+    assert r.slash_entry_skill == "research"
+
+
+def test_no_init_slash_commands_records_nothing(monkeypatch, tmp_path):
+    """Guards the key spelling: if `slash_commands` ever moves or is renamed,
+    this reds instead of the feature silently reverting."""
+    r = _run_with_init(monkeypatch, tmp_path, "/research go", {})
+    assert r.skills_invoked == []
+    assert r.slash_entry_skill is None
+
+
+def test_a_leading_slash_spelling_in_slash_commands_is_not_assumed(monkeypatch, tmp_path):
+    """The SDK emits bare names. If it ever emitted `/research`, the feature
+    would silently stop working -- this pins which spelling is relied on."""
+    r = _run_with_init(
+        monkeypatch, tmp_path, "/research go", {"slash_commands": ["/research"]}
+    )
+    assert r.skills_invoked == []
+
+
+def test_a_non_slash_message_records_nothing_end_to_end(monkeypatch, tmp_path):
+    r = _run_with_init(
+        monkeypatch, tmp_path, "Research the parents", {"slash_commands": ["research"]}
+    )
+    assert r.skills_invoked == []
+    assert r.slash_entry_skill is None
+
+
+def test_a_non_init_system_message_is_ignored(monkeypatch, tmp_path):
+    """SystemMessage covers several subtypes; only init carries the list."""
+    import asyncio
+    from claude_agent_sdk import ResultMessage, SystemMessage
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    (tmp_path / ".claude" / "skills" / "research").mkdir(parents=True)
+
+    async def fake_query(*, prompt, options):
+        yield SystemMessage(subtype="compact_boundary", data={"slash_commands": ["research"]})
+        yield ResultMessage(
+            subtype="result", duration_ms=1, duration_api_ms=1, is_error=False,
+            num_turns=1, session_id="s", total_cost_usd=0.0, usage={}, result="d",
+        )
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "create_mock_server", lambda *a, **kw: (None, [], {}))
+    r = asyncio.run(
+        sr.run_skill(
+            user_message="/research go", workspace=tmp_path, fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+            max_wall_clock_seconds=10,
+        )
+    )
+    assert r.skills_invoked == []
+
+
+def test_a_non_mapping_data_does_not_abort_the_run(monkeypatch, tmp_path):
+    """A non-dict `data` on some other subtype must not raise inside the
+    stream loop, which would abort a paid run on a message we otherwise skip."""
+    r = _run_with_init(monkeypatch, tmp_path, "/research go", None)
+    assert r.skills_invoked == []
+
+
+def test_slash_entry_is_first_and_each_skill_call_recorded_once(monkeypatch, tmp_path):
+    """A slash entry plus three `Skill` calls (#3116's fourth case). Pins index
+    0 -- an append puts the entry point last -- and the unconditional insert --
+    a `not in skills_invoked` guard drops it when the model also calls
+    `Skill(research)`."""
+    import asyncio
+    from claude_agent_sdk import ResultMessage, SystemMessage
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    (tmp_path / ".claude" / "skills" / "research").mkdir(parents=True)
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingStream(
+            hook,
+            [
+                {"tool_name": "Skill", "tool_input": {"skill": s}}
+                for s in ("question-selection", "research", "research-plan")
+            ],
+            [
+                SystemMessage(subtype="init", data={"slash_commands": ["research"]}),
+                ResultMessage(
+                    subtype="result", duration_ms=1, duration_api_ms=1,
+                    is_error=False, num_turns=1, session_id="s",
+                ),
+            ],
+        )
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "create_mock_server", lambda *a, **kw: (None, [], {}))
+    r = asyncio.run(
+        sr.run_skill(
+            user_message="/research go", workspace=tmp_path, fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+            max_wall_clock_seconds=10,
+        )
+    )
+    assert r.skills_invoked == [
+        "research", "question-selection", "research", "research-plan"
+    ]
