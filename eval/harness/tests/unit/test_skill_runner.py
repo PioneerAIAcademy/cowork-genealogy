@@ -1975,3 +1975,47 @@ def test_a_non_mapping_data_does_not_abort_the_run(monkeypatch, tmp_path):
     stream loop, which would abort a paid run on a message we otherwise skip."""
     r = _run_with_init(monkeypatch, tmp_path, "/research go", None)
     assert r.skills_invoked == []
+
+
+def test_slash_entry_is_first_and_each_skill_call_recorded_once(monkeypatch, tmp_path):
+    """A slash entry plus three `Skill` calls (#3116's fourth case). Pins index
+    0 -- an append puts the entry point last -- and the unconditional insert --
+    a `not in skills_invoked` guard drops it when the model also calls
+    `Skill(research)`."""
+    import asyncio
+    from claude_agent_sdk import ResultMessage, SystemMessage
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    (tmp_path / ".claude" / "skills" / "research").mkdir(parents=True)
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingStream(
+            hook,
+            [
+                {"tool_name": "Skill", "tool_input": {"skill": s}}
+                for s in ("question-selection", "research", "research-plan")
+            ],
+            [
+                SystemMessage(subtype="init", data={"slash_commands": ["research"]}),
+                ResultMessage(
+                    subtype="result", duration_ms=1, duration_api_ms=1,
+                    is_error=False, num_turns=1, session_id="s",
+                ),
+            ],
+        )
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "create_mock_server", lambda *a, **kw: (None, [], {}))
+    r = asyncio.run(
+        sr.run_skill(
+            user_message="/research go", workspace=tmp_path, fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+            max_wall_clock_seconds=10,
+        )
+    )
+    assert r.skills_invoked == [
+        "research", "question-selection", "research", "research-plan"
+    ]
