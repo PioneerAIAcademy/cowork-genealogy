@@ -524,10 +524,13 @@ def make_pretool_hook(
             if log is not None:
                 log(ev="deny", turn_id=turn_id, tool_name=tool_name, tool_use_id=tool_use_id, reason=reason)
             return _deny(reason or "denied")
-        if tool_name in DELEGATION_TOOLS and tool_input.get("run_in_background") is not False:
+        # The PREDICATE lives in the shared helper too, not just the rewrite. Restating
+        # it here left the sharing half-done: removing the explicit-False exemption
+        # inside `foreground_rewrite` failed a test on the alpha and none here.
+        if (rewritten := foreground_rewrite(tool_name, tool_input)) is not None:
             if log is not None:
                 log(ev="foregrounded", turn_id=turn_id, tool_name=tool_name, tool_use_id=tool_use_id)
-            return foreground_rewrite(tool_name, tool_input) or {}
+            return rewritten
         return {}
 
     return _pretool

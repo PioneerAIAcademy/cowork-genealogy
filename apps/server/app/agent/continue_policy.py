@@ -129,9 +129,16 @@ def delivered_stop_reason(summary: str | None) -> str:
     on exactly the thing that matters: the browser replaces the chip with the
     result text cut at 160 chars, and DELIVERED_REASON alone is 124, so appending
     rather than prepending eats the window and cuts what the researcher most
-    needs. A single mutation here now fails tests on both planes.
+    needs. A single mutation here fails tests on both planes -- but only once the
+    prototype's assertion checks the PREFIX rather than mere containment, which is
+    why `test_proto_worker` now uses `startswith`.
     """
-    text = (summary or "").strip()
+    # str() BEFORE strip(). The alpha used to cast and the de-duplication dropped it,
+    # so a non-string summary (123, ["a"], {"x": 1}) raised AttributeError inside the
+    # PreToolUse callback -- which fails the tool call, loses the halt, and leaves
+    # `delivered` already set. Nothing validates the tool's inputSchema, so that input
+    # is reachable. Casting here covers both planes rather than one.
+    text = str(summary or "").strip()
     return f"Delivered: {text} {DELIVERED_REASON}" if text else DELIVERED_REASON
 
 

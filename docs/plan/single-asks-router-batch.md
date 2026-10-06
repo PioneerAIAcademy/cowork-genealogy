@@ -344,7 +344,7 @@ reaches this file.
    is met, and `real_agent.py` vetoed exactly that stop and injected `CONTINUE_REASON` — so
    on a LIVE plane the new rule produced the thrash it exists to end. The scope ruling that
    kept the alpha on phase-1 behaviour rested on no caller needing it, and item 1 is that
-   caller, so the premise lapsed. Re-ruled by the user, 2026-10-05. `DELIVERED_TOOL`,
+   caller, so the premise lapsed. Re-ruled 2026-10-06 on the lead's own Done-when; the struck ruling was his (496566c29). `DELIVERED_TOOL`,
    `DELIVERED_REASON` and `DELIVERY_GUIDANCE` all moved into `continue_policy.py` so the two
    planes cannot drift apart. The guidance move was a second catch on the same work: the
    first cut wired the alpha's halt arm but not its prompt, and an arm the model is never
@@ -378,7 +378,7 @@ reaches this file.
 14. **`ut_research_019`'s subject changed** from `GJ72-9WD` to "Patrick Flynn". The scenario it
    runs on is `empty-project-just-created`, whose objective is Patrick Flynn and whose tree
    holds `I1`; `GJ72-9WD` appears nowhere in it, so the router was being asked about a stranger
-   and could red the test by reasonably asking who that was. Raised by open-break as 018's one
+   and could red the test by reasonably asking who that was. Raised by open-break as 019's one
    soft spot.
 15. **Delegations forced to the foreground on the hosted alpha** — not in this plan, and added
    because the lead reported two live incidents on #2813 while the branch was open (alpha

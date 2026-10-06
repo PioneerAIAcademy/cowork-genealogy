@@ -669,3 +669,20 @@ def test_handle_turn_clears_a_delivery_from_the_previous_turn(tmp_path):
         "tool_calls is session-scoped; zeroing it would make every second stop look "
         "like no progress and end the job after one nudge"
     )
+
+
+@pytest.mark.parametrize("summary", [123, ["a", "b"], {"x": 1}])
+def test_a_non_string_summary_still_halts(tmp_path, monkeypatch, summary):
+    """A regression introduced by sharing the stop-reason helper, caught in review.
+
+    The alpha used to cast with `str()` before stripping; the shared helper did not,
+    so a non-string summary raised `AttributeError` inside the PreToolUse callback.
+    That fails the tool call, loses the halt, and leaves `delivered` already set.
+    Nothing validates the tool's `inputSchema`, so the input is reachable.
+    """
+    hooks = _hooks(tmp_path, monkeypatch)
+    out = _call(_counting_hook(hooks), {
+        "tool_name": real_agent.DELIVERED_TOOL, "tool_input": {"summary": summary},
+    })
+    assert out.get("continue") is False
+    assert str(summary) in out["stopReason"]

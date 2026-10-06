@@ -4591,7 +4591,10 @@ def test_the_delivery_summary_reaches_a_human():
          "tool_input": {"summary": "the Mogan marriage record, 1874"}},
         "u1", None,
     ))
-    assert "the Mogan marriage record, 1874" in out["stopReason"], (
+    # startswith, not `in`: containment passes even when the summary is appended
+    # AFTER the reason, which is the ordering the chip cut makes load-bearing.
+    # With `in`, a reorder in the shared helper failed the alpha only.
+    assert out["stopReason"].startswith("Delivered: the Mogan marriage record, 1874"), (
         "the summary must survive into the text the model is handed"
     )
     delivered = [e for e in events if e.get("ev") == "delivered"]
