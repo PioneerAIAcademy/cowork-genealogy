@@ -104,7 +104,7 @@ PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
-AGENTS = {"check-warnings", "citation", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "locality-guide", "person-evidence", "project-status", "proof-conclusion", "question-selection", "record-extractor", "research-exhaustiveness", "search-familysearch-wiki", "search-images", "search-wikipedia", "translation", "tree-edit", "validate-schema"}
+AGENTS = {"check-warnings", "citation", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "locality-guide", "person-evidence", "project-status", "proof-conclusion", "question-selection", "record-extractor", "research-exhaustiveness", "search-familysearch-wiki", "search-images", "search-wikipedia", "survey-surname", "translation", "tree-edit", "validate-schema"}
 
 
 # ── fakes ─────────────────────────────────────────────────────────────────────────
@@ -113,6 +113,7 @@ AGENTS = {"check-warnings", "citation", "convert-dates", "gps-mentor", "historic
 class FakeCursor:
     def __init__(self, conn: "FakeConn") -> None:
         self.conn = conn
+        self.rowcount = -1
 
     def __enter__(self) -> "FakeCursor":
         return self
@@ -123,6 +124,7 @@ class FakeCursor:
     def execute(self, sql: str, params: tuple = ()) -> None:
         flat = re.sub(r"\s+", " ", sql).strip()
         self.conn.executed.append((flat, params))
+        self.conn.in_tx.append(self.conn.transactions > self.conn.transaction_exits)
         if "SET zero_progress_attempts = 0" in flat:
             self.conn.zero_progress_attempts = 0
         if flat.startswith("UPDATE turns SET completed_at"):
@@ -130,6 +132,8 @@ class FakeCursor:
             # with the outcome it was closed with (U10).
             self.conn.completed_at = "2026-10-01T00:00:00+00:00"
             self.conn.outcome = params[0]
+        if flat.startswith("UPDATE turns SET outcome = %s WHERE turn_id"):  # the 1b put-back
+            self.rowcount = 1 if params[-1] == self.conn.claimed_at else 0
 
     def fetchone(self) -> tuple | None:
         sql, params = self.conn.executed[-1]
@@ -155,7 +159,7 @@ class FakeCursor:
             self.conn.zero_progress_attempts += 1
             return (self.conn.zero_progress_attempts,)
         if "RETURNING message" in sql:  # the 1b claim
-            return (self.conn.queued_body,) if self.conn.queued_body is not None else None
+            return (self.conn.queued_body, self.conn.claimed_at) if self.conn.queued_body is not None else None
         if "AND outcome IS DISTINCT FROM %s) AS active" in sql:  # TURN_ACTIVE_SQL
             return (self.conn.turn_active,)
         if "SELECT sdk_session_id FROM sessions" in sql:
@@ -182,9 +186,12 @@ class FakeConn:
         usage: tuple = (None, None, None, None), zero_progress_attempts: int = 0,
         queued_body: dict | None = None,
     ) -> None:
-        # The held message `take_queued_turn`'s claim returns, or None for "nothing held".
+        # The held message `take_queued_turn`'s claim returns, or None for "nothing held",
+        # and the claimed_at it stamps (what the put-back matches; a worker's claim moves it).
         self.queued_body = queued_body
+        self.claimed_at = "2026-10-05T12:00:00.000001+00:00"
         self.executed: list[tuple[str, tuple]] = []
+        self.in_tx: list[bool] = []  # per executed statement: inside a transaction() block
         self.commits = 0
         self.transactions = 0
         self.transaction_exits = 0
@@ -238,8 +245,17 @@ def test_claim_upserts_sessions_and_turns_with_the_receive_count():
     sqls = [s for s, _ in conn.executed]
     assert sqls[0].startswith("INSERT INTO sessions") and "ON CONFLICT (session_id) DO NOTHING" in sqls[0]
     assert sqls[1].startswith("INSERT INTO turns") and "receive_count = EXCLUDED.receive_count" in sqls[1]
-    assert conn.executed[1][1][-1] == 3
+    assert conn.executed[1][1][-2:] == (3, "queued")
     assert conn.commits == 1
+
+
+def test_the_claim_unmarks_a_held_row_that_is_running():
+    """U23 D10: a message delivered after a put-back whose send had landed runs on a row
+    still marked held, invisible to TURN_ACTIVE_SQL. test_proto_queue_pg.py runs it."""
+    conn = FakeConn()
+    worker.claim(conn, TURN, 1)
+    assert ("outcome = CASE WHEN turns.outcome = %s AND turns.completed_at IS NULL THEN NULL "
+            "ELSE turns.outcome END") in conn.executed[1][0]
 
 
 def test_claim_takes_the_entries_high_water_mark_on_the_first_claim_only():
@@ -799,7 +815,7 @@ def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
     assert options.check_registration(None, expected_agents=AGENTS, expected_skills=12)
 
 
-def test_the_plugin_ships_twenty_agents_and_twelve_skills():
+def test_the_plugin_ships_twenty_one_agents_and_twelve_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
@@ -829,7 +845,7 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
     loaded = set(load_agent_definitions(copy))
     assert loaded == AGENTS - {"gps-mentor"} and loaded != worker.EXPECTED_AGENTS
     agents, error = worker.load_plugin_agents(str(copy))
-    assert agents is None, "nineteen agents must not become the expectation"
+    assert agents is None, "twenty agents must not become the expectation"
     assert error == f"plugin agents ['gps-mentor'] missing under {copy}/agents"
     # An agent the plugin does not ship is named too (the name is the frontmatter's,
     # not the file's), so a mis-typed `name:` shows both halves.
@@ -841,7 +857,7 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
 
 
 def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
-    # Twenty agents and 12 skills registered: clean. Nineteen, or 11: the miss, whatever loaded --
+    # Twenty-one agents and 12 skills registered: clean. Twenty, or 11: the miss, whatever loaded --
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
     assert worker.registration_problems(_info(AGENTS, 12)) == []
@@ -1368,6 +1384,12 @@ def _turn_done_written(conn: FakeConn) -> bool:
     return any("'turn_done'" in sql for sql, _ in conn.executed)
 
 
+def _mid_run(monkeypatch) -> None:
+    """The bound a test sets is reached AFTER the CLI started -- Stop pressed, or the cap
+    crossed, mid-run -- so the in-run halt is what meets it, not U23's pre-CLI close."""
+    monkeypatch.setattr(worker, "bound_before_cli", lambda *a, **k: None)
+
+
 def test_run_turn_completes_a_good_stream_with_the_results_figures(turn_env):
     summary = _run(turn_env, _good())
     conn, client, opts = turn_env["conn"], turn_env["client"], turn_env["options"]
@@ -1700,7 +1722,8 @@ def test_releasing_a_held_message_clears_the_stop_flag():
     next message is enqueued ... a flag that outlived the turn would wedge the session."
     """
     conn = FakeConn(queued_body={"turn_id": "turn-2", "text": "also the 1881 census"})
-    assert worker.take_queued_turn(conn, "sess_1") == {"turn_id": "turn-2", "text": "also the 1881 census"}
+    assert worker.take_queued_turn(conn, "sess_1") == ({"turn_id": "turn-2", "text": "also the 1881 census"},
+                                                       conn.claimed_at)
     cleared = [p for sql, p in conn.executed if "stop_requested_at = NULL" in sql]
     assert cleared == [("sess_1",)], \
         "claiming a held message IS enqueuing the session's next message"
@@ -1979,16 +2002,34 @@ def test_the_halt_is_checked_before_every_other_decision(tmp_path):
         assert _call(hook, {"tool_name": tool, "tool_input": tool_input})["continue_"] is False
 
 
-def test_a_halt_predicate_that_raises_lets_the_call_through(tmp_path):
-    """The house rule for every hook here: an exception must not fail a call the patron
-    was entitled to make. A Stop that cannot be read is a Stop that has not been pressed."""
+def test_a_halt_predicate_that_raises_halts_the_call(tmp_path):
+    """U23 reverses the house rule for this one predicate. "A call the patron was entitled to
+    make" fails as a premise once Stop is pressed or the cap crossed, and allowing here is
+    what let both fail open, silently, during an outage. The halt is loud and reported."""
     rows: list[dict] = []
+    logged: list[dict] = []
+    failed: list[str] = []
     hook = options.make_pretool_hook(
         turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
-        record=rows.append, halt=lambda: (_ for _ in ()).throw(RuntimeError("pg is down")),
+        record=rows.append, log=lambda **f: logged.append(f),
+        halt=lambda: (_ for _ in ()).throw(RuntimeError("pg is down")),
+        on_halt_failed=lambda: failed.append("x"),
     )
-    assert _call(hook, {"tool_name": "mcp__genealogy__record_search", "tool_input": {}}) == {}
-    assert [r["decision"] for r in rows] == ["allow"]
+    out = _call(hook, {"tool_name": "mcp__genealogy__record_search", "tool_input": {}})
+    assert out == options._halt(options.STORE_UNAVAILABLE_REASON)
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert [r["decision"] for r in rows] == ["halt"]
+    assert failed == ["x"], "the worker learns the halt failed, so the attempt answers 500"
+    [bad] = [f for f in logged if f.get("ev") == "halt_failed"]
+    assert bad["error"] == "RuntimeError: pg is down"
+
+
+def test_a_halt_failure_callback_that_raises_still_halts(tmp_path):
+    hook = options.make_pretool_hook(
+        turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
+        record=lambda r: None, halt=lambda: 1 / 0, on_halt_failed=lambda: 1 / 0,
+    )
+    assert _call(hook, {"tool_name": "Read", "tool_input": {}})["continue_"] is False
 
 
 def test_no_halt_predicate_is_the_old_behaviour_exactly(tmp_path):
@@ -2042,6 +2083,7 @@ def test_run_turn_halts_on_the_stop_flag_and_answers_200_with_a_stopped_outcome(
     answers any raise 500, decide.py requeues every non-2xx, and elasticmq has no redrive
     policy, so a stop reported as a failure re-runs the model forever -- and the row must
     say `stopped` rather than 'ok'."""
+    _mid_run(monkeypatch)
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: True)
     summary = _run(turn_env, _good())
     assert summary["outcome"] == "stopped"
@@ -2063,6 +2105,7 @@ def test_run_turn_releases_a_held_message_when_the_turn_ends(turn_env, monkeypat
 def test_the_handover_runs_for_every_ending_including_a_stopped_one(turn_env, monkeypatch):
     """A held message is the patron's own words. A turn that was stopped, or capped, still
     hands it over -- dropping it would lose input the UI already showed as accepted."""
+    _mid_run(monkeypatch)
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: True)
     released: list[str] = []
     monkeypatch.setattr(worker, "release_queued_turn", lambda conn, sid, **kw: released.append(sid) or "m")
@@ -2085,7 +2128,7 @@ def test_the_release_actually_enqueues_on_the_configured_queue(monkeypatch):
     So count the call and check what it was handed."""
     monkeypatch.setattr(worker, "QUEUE_URL", "http://q.example:9324/000000000000/turns")
     body = {"turn_id": "held-1", "text": "also the 1881 census"}
-    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid: dict(body))
+    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid, **kw: (dict(body), "t0"))
     calls: list[tuple] = []
 
     def fake_sqs(endpoint, action, params, *, timeout):
@@ -2112,15 +2155,16 @@ def test_a_failed_release_puts_the_message_back_rather_than_losing_it(monkeypatc
     """Losing the patron's words is worse than releasing them late: the next turn's
     completion tries again."""
     monkeypatch.setattr(worker, "QUEUE_URL", "http://q/000000000000/turns")
-    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid: {"turn_id": "held-1"})
+    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid, **kw: ({"turn_id": "held-1"}, "t0"))
     logged: list[dict] = []
     monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
     import proto.enqueue as enq
     monkeypatch.setattr(enq, "credentials_ready", lambda timeout=None: True)
     monkeypatch.setattr(enq, "sqs_call", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("queue down")))
     conn = FakeConn()
+    conn.claimed_at = "t0"
     assert worker.release_queued_turn(conn, "sess-1") is None
-    assert any("SET outcome = %s" in sql and p[:2] == ("queued", "held-1")
+    assert any("SET outcome = %s" in sql and p == ("queued", "held-1", "t0")
                for sql, p in conn.executed), conn.executed
     assert [f["ev"] for f in logged] == ["queued_release_failed"]
 
@@ -2132,7 +2176,8 @@ def test_a_release_with_no_sqs_credentials_never_claims_the_message(monkeypatch,
     under its own event, since there may have been nothing held at all."""
     monkeypatch.setattr(worker, "QUEUE_URL", "http://q/000000000000/turns")
     claimed: list[str] = []
-    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid: claimed.append(sid) or {"turn_id": "h"})
+    monkeypatch.setattr(worker, "take_queued_turn",
+                        lambda conn, sid, **kw: claimed.append(sid) or ({"turn_id": "h"}, "t0"))
     logged: list[dict] = []
     monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
     import proto.enqueue as enq
@@ -2266,7 +2311,7 @@ def test_cli_env_blanks_static_sqs_keys():
 def test_a_release_with_static_sqs_keys_claims_and_sends(monkeypatch):
     """The real ``credentials_ready`` (not a stub), with the static pair configured."""
     monkeypatch.setattr(worker, "QUEUE_URL", "http://q/000000000000/turns")
-    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid: {"turn_id": "h"})
+    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid, **kw: ({"turn_id": "h"}, "t0"))
     import proto.enqueue as enq
 
     enq.configure({"GENEALOGY_SQS_ACCESS_KEY": "AKIDX", "GENEALOGY_SQS_SECRET_KEY": "sx"}, worker.QUEUE_URL)
@@ -2279,7 +2324,7 @@ def test_the_credentials_cap_reaches_credentials_ready(monkeypatch):
     ``credentials_ready`` itself: dropped there, a shutdown release blocks on an uncapped
     IMDS refresh and overruns the stop grace period. An ordinary release passes none."""
     monkeypatch.setattr(worker, "QUEUE_URL", "http://q/000000000000/turns")
-    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid: {"turn_id": "h"})
+    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid, **kw: ({"turn_id": "h"}, "t0"))
     import proto.enqueue as enq
 
     given: list = []
@@ -2295,6 +2340,127 @@ def test_the_credentials_cap_reaches_credentials_ready(monkeypatch):
     worker.defer_release("sess-2", "turn-2")
     worker.run_deferred_releases(connect=lambda dsn, **kw: FakeConn(), deadline=time.monotonic() + 60)
     assert given == [worker.RELEASE_CREDENTIALS_TIMEOUT_S], "the shutdown path, deadline to credentials_ready"
+
+
+# ── U23 D8/D9: the release under the queue lock, and loud ─────────────────────────
+
+
+def test_the_take_checks_and_claims_under_the_session_queue_lock():
+    """U23 D8. The running-turn check and the claim ran as two autocommit statements, so a
+    message the web tier admitted between them went straight out beside the one claimed
+    here. test_proto_queue_pg.py proves the interleaving; this pins the order."""
+    conn = FakeConn(queued_body={"turn_id": "held-1"})
+    assert worker.take_queued_turn(conn, "sess-1") == ({"turn_id": "held-1"}, conn.claimed_at)
+    sqls = [s for s, _ in conn.executed]
+    assert conn.executed[0] == (worker.grants.QUEUE_LOCK_TIMEOUT_SQL, ("5000ms",)), \
+        "the lock wait is bounded, set first in the same transaction"
+    assert sqls[1] == " ".join(worker.grants.QUEUE_LOCK_SQL.split())
+    assert tuple(conn.executed[1][1]) == (worker.grants.QUEUE_LOCK_NS, "sess-1")
+    assert sqls[2] == " ".join(worker.TURN_ACTIVE_SQL.split()) and "RETURNING message, claimed_at" in sqls[3]
+    assert sqls[4] == worker.CLEAR_STOP_SQL
+    assert all(conn.in_tx) and conn.transactions == conn.transaction_exits == 1, \
+        "the xact lock is held only inside an explicit transaction on an autocommit connection"
+    assert conn.commits == 1, "the caller's open transaction ends first, or the block is a savepoint"
+
+
+def test_the_take_claims_nothing_beside_a_running_turn():
+    conn = FakeConn(queued_body={"turn_id": "held-1"})
+    conn.turn_active = True
+    assert worker.take_queued_turn(conn, "sess-1") is None
+    assert not [s for s, _ in conn.executed if "RETURNING message" in s or s == worker.CLEAR_STOP_SQL]
+
+
+def _sending(monkeypatch, send=lambda *a, **k: "<R><MessageId>m-9</MessageId></R>") -> list[dict]:
+    """A configured queue that signs and answers ``send``; returns the log."""
+    monkeypatch.setattr(worker, "QUEUE_URL", "http://q/000000000000/turns")
+    import proto.enqueue as enq
+    monkeypatch.setattr(enq, "credentials_ready", lambda timeout=None: True)
+    monkeypatch.setattr(enq, "sqs_call", send)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    return logged
+
+
+@pytest.mark.parametrize("error", [RuntimeError("bug"), worker.psycopg.OperationalError("server closed")])
+def test_a_put_back_that_fails_never_raises_and_says_the_message_is_lost(monkeypatch, error):
+    """U23 D9. The put-back ran bare in the except clause, so a dead connection raised out
+    of a release documented as never raising -- failing a turn that did its work -- and
+    nothing named the claimed-but-unsent message."""
+    logged = _sending(monkeypatch, send=lambda *a, **k: (_ for _ in ()).throw(RuntimeError("queue down")))
+
+    def put_back(conn, turn_id, claimed_at):
+        raise error
+
+    monkeypatch.setattr(worker, "hold_queued_turn", put_back)
+    assert worker.release_queued_turn(FakeConn(queued_body={"turn_id": "held-1"}), "sess-1") is None
+    assert [f["ev"] for f in logged] == ["queued_release_failed", "queued_release_lost"]
+    assert logged[1]["turn_id"] == "held-1" and type(error).__name__ in logged[1]["error"]
+
+
+def test_a_put_back_a_workers_claim_beat_leaves_the_running_turn_alone(monkeypatch):
+    """U23: a send that times out after it landed is delivered within a second, and the
+    worker that claims it stamps a later claimed_at. The put-back matches THIS release's
+    claimed_at, so it changes nothing and says so. test_proto_queue_pg.py runs it."""
+    logged = _sending(monkeypatch, send=lambda *a, **k: (_ for _ in ()).throw(TimeoutError("read timed out")))
+    conn = FakeConn(queued_body={"turn_id": "held-1"})
+    stamped = conn.claimed_at
+    real_take = worker.take_queued_turn
+
+    def take_then_claimed_elsewhere(c, sid, **kw):
+        taken = real_take(c, sid, **kw)
+        c.claimed_at = "2026-10-05T12:00:00.900000+00:00"  # the delivered message's claim
+        return taken
+
+    monkeypatch.setattr(worker, "take_queued_turn", take_then_claimed_elsewhere)
+    assert worker.release_queued_turn(conn, "sess-1") is None
+    [(_, params)] = [(s, p) for s, p in conn.executed if s.startswith("UPDATE turns SET outcome = %s")]
+    assert params == ("queued", "held-1", stamped), "the put-back names the claim it is undoing"
+    assert [f["ev"] for f in logged] == ["queued_release_failed", "queued_release_raced"]
+
+
+def test_the_put_back_runs_in_a_transaction_of_its_own(monkeypatch):
+    """On a non-autocommit connection a bare UPDATE would sit uncommitted until the
+    caller's connection closed -- and roll back with it."""
+    _sending(monkeypatch, send=lambda *a, **k: (_ for _ in ()).throw(RuntimeError("queue down")))
+    conn = FakeConn(queued_body={"turn_id": "held-1"})
+    worker.release_queued_turn(conn, "sess-1")
+    [(i, _)] = [(i, p) for i, (s, p) in enumerate(conn.executed) if "SET outcome = %s" in s]
+    assert conn.in_tx[i] and conn.transactions == 2
+
+
+def _close_turn(conn):
+    worker.close_turn(conn, TURN, 1, cause="sweep", sdk_session_id=None)
+
+
+def _release_guarded(conn):
+    worker.release_guarded(lambda dsn: conn, "sess-1", "turn-1")
+
+
+def _deferred(conn):
+    worker.defer_release("sess-1", "turn-1")
+    worker.run_deferred_releases(connect=lambda dsn, **kw: conn, deadline=None)
+
+
+def _already_completed(conn):
+    conn.completed_at = "2026-09-30T10:00:00+00:00"
+    worker.serve_real_turn(TURN, 2, connect=lambda dsn: conn, run=lambda *a: pytest.fail("ran"))
+
+
+@pytest.mark.parametrize("path", [_close_turn, _release_guarded, _deferred, _already_completed])
+def test_every_release_path_logs_the_released_turn_and_its_message_id(monkeypatch, path):
+    """U23 D9: ``released_turn`` reached only the attempt's own summary, so the release a
+    close, a guarded retry, a deferred shutdown release or an already_completed redelivery
+    made was invisible -- and U23's held_release case could not tie a delivered msgid to
+    the held turn. The held turn's id, not the closing turn's."""
+    logged = _sending(monkeypatch)
+    path(FakeConn(queued_body={"turn_id": "held-1", "text": "and his will"}))
+    assert [(f["turn_id"], f["message_id"]) for f in logged if f["ev"] == "released"] == [("held-1", "m-9")]
+
+
+def test_nothing_released_logs_no_release(monkeypatch):
+    logged = _sending(monkeypatch)
+    worker.release_next_held(FakeConn(queued_body=None), "sess-1")
+    assert not [f for f in logged if f["ev"] == "released"]
 
 
 # ── 1e: the per-session spend bound ──────────────────────────────────────────────
@@ -2514,6 +2680,7 @@ def test_stop_outranks_a_waiting_message(turn_env, monkeypatch):
     """Both end the turn, but only one of them means "do not carry on". A Stop reported as
     a handover would show the run resuming on the queued message, which is the opposite of
     what the patron asked for."""
+    _mid_run(monkeypatch)
     monkeypatch.setattr(worker, "pending_user_message", lambda conn, sid: True)
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: True)
     assert _run(turn_env, [_init(), ToolCall(), _text("x"), _result(num_turns=2)])["outcome"] == "stopped"
@@ -2611,6 +2778,7 @@ def test_a_stopped_turn_is_never_re_run_as_a_zero_progress_attempt(turn_env, mon
     exactly the synthetic zero-turn result 0a keys on, and with no tool call halt() never
     fires -- so without this the attempt raises ResumeFailure, answers 500, decide.py
     requeues it, and the model is re-run and BILLED after the patron pressed Stop."""
+    _mid_run(monkeypatch)
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: True)
     logged: list[dict] = []
     monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
@@ -2628,6 +2796,7 @@ def test_a_stopped_turn_is_never_re_run_as_a_zero_progress_attempt(turn_env, mon
 def test_a_stopped_turn_at_the_cap_is_still_reported_as_stopped(turn_env, monkeypatch):
     """The other half: at the cap the branch used to overwrite the outcome, so the person
     who pressed Stop was told 'the agent stopped making progress'."""
+    _mid_run(monkeypatch)
     conn = FakeConn(usage=(10, 0, 0, 5), zero_progress_attempts=worker.ZERO_PROGRESS_CAP - 1)
     turn_env["conn"] = conn
     monkeypatch.setattr(worker.psycopg, "connect", lambda *a, **k: conn)
@@ -2659,6 +2828,7 @@ def test_the_bound_halts_the_turn_and_says_how_to_carry_on(turn_env, monkeypatch
     """1e's acceptance: it stops within seconds (the PreToolUse hook fires every few
     seconds, where a yield-gated check fires about once a run), it is visibly different
     from a completed run, and it says how to continue."""
+    _mid_run(monkeypatch)
     monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
     monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 35.01)
     logged: list[dict] = []
@@ -2687,6 +2857,7 @@ def test_a_stop_dispatch_after_a_halt_cannot_veto_the_halt(turn_env, monkeypatch
 
     So the hook reads the turn's own halt decision, not just the row, and this drives the
     Stop hook directly to prove it."""
+    _mid_run(monkeypatch)
     monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
     monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 100.0)
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
@@ -2719,6 +2890,7 @@ def test_a_stop_dispatched_after_a_spend_halt_does_not_relabel_the_turn(turn_env
     overwrote the reason, a turn that hit the patron's spend cap would be recorded and
     rendered as "you pressed Stop", and the sentence telling them to start a new session
     would never appear."""
+    _mid_run(monkeypatch)
     monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
     monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 100.0)
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
@@ -2745,6 +2917,7 @@ def test_a_stop_dispatch_with_nothing_wrong_vetoes_and_keeps_the_run_going(turn_
 def test_the_stop_hooks_verdict_never_overwrites_a_halt_reason(turn_env, monkeypatch):
     """A halted turn recorded as `no_progress` would tell the patron the opposite of what
     happened: that the agent ran out of things to do, rather than that it hit their cap."""
+    _mid_run(monkeypatch)
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: True)
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
     summary = _run(turn_env, [_init(), ToolCall(), _text("x"), _result(num_turns=2)])
@@ -2781,6 +2954,7 @@ def test_stop_outranks_the_spend_bound(turn_env, monkeypatch):
     The stream MUST carry a ToolCall: halt() runs only on a PreToolUse dispatch, and
     without one this passed on the unrelated completion-time fallback while the ordering
     inside halt() went untested entirely."""
+    _mid_run(monkeypatch)
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: True)
     monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 999.0)
     monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
@@ -3586,19 +3760,23 @@ def test_deferred_releases_are_bounded_by_their_deadline(monkeypatch):
     worker.defer_release("sess-2", "turn-2")
     worker.run_deferred_releases(connect=connect, deadline=time.monotonic() + 60)
     assert kwargs == [{"connect_timeout": worker.RELEASE_CONNECT_TIMEOUT_S}]
-    # U7: resolving the SQS credentials (an IMDS refresh, at worst) is capped and counted.
+    # U7: resolving the SQS credentials (an IMDS refresh, at worst) is capped and counted;
+    # U23: so is the queue-lock wait.
     assert seen == [{"sqs_timeout": worker.RELEASE_SQS_TIMEOUT_S,
-                     "credentials_timeout": worker.RELEASE_CREDENTIALS_TIMEOUT_S}]
+                     "credentials_timeout": worker.RELEASE_CREDENTIALS_TIMEOUT_S,
+                     "lock_timeout": worker.RELEASE_LOCK_TIMEOUT_S}]
     assert (worker.RELEASE_CONNECT_TIMEOUT_S + worker.RELEASE_CREDENTIALS_TIMEOUT_S
-            + worker.RELEASE_SQS_TIMEOUT_S < worker.RELEASE_BUDGET_S), \
+            + worker.RELEASE_LOCK_TIMEOUT_S + worker.RELEASE_SQS_TIMEOUT_S < worker.RELEASE_BUDGET_S), \
         "otherwise every release after a timed-out drain is skipped"
 
-    worker.defer_release("sess-3", "turn-3")
-    worker.run_deferred_releases(
-        connect=connect,
-        deadline=time.monotonic() + worker.RELEASE_CONNECT_TIMEOUT_S + worker.RELEASE_SQS_TIMEOUT_S + 0.1)
-    assert [f["session_id"] for f in logged if f.get("ev") == "deferred_release_skipped"] == ["sess-1", "sess-3"], \
-        "the deadline check counts the credentials cap too"
+    for sid, uncounted in (("sess-3", worker.RELEASE_CREDENTIALS_TIMEOUT_S),
+                           ("sess-4", worker.RELEASE_LOCK_TIMEOUT_S)):
+        worker.defer_release(sid, sid)
+        caps = (worker.RELEASE_CONNECT_TIMEOUT_S + worker.RELEASE_CREDENTIALS_TIMEOUT_S
+                + worker.RELEASE_LOCK_TIMEOUT_S + worker.RELEASE_SQS_TIMEOUT_S)
+        worker.run_deferred_releases(connect=connect, deadline=time.monotonic() + caps - uncounted + 0.01)
+    assert [f["session_id"] for f in logged if f.get("ev") == "deferred_release_skipped"] == \
+        ["sess-1", "sess-3", "sess-4"], "the deadline check counts the credentials and lock caps too"
 
 
 def test_an_attempt_stopped_by_shutdown_answers_as_a_shutdown(monkeypatch):
@@ -4243,6 +4421,7 @@ def test_a_synthetic_zero_turn_result_is_not_transcript_lost(turn_env):
 
 def test_session_spend_usd_prices_decimal_sums(turn_env, monkeypatch):
     """Postgres sums ``bigint`` to ``numeric``; psycopg hands that back as ``Decimal``."""
+    _mid_run(monkeypatch)
     sums = (Decimal(1_000_000), Decimal(0), Decimal(0), Decimal(1_000_000))
     spent = worker.session_spend_usd(FakeConn(usage=sums), "sdk-1")
     assert isinstance(spent, float)
@@ -5031,3 +5210,276 @@ def test_the_agent_count_literals_are_the_pinned_set():
 
     assert plugin_agents.EXPECTED_AGENT_COUNT == len(worker.EXPECTED_AGENTS)
     assert p1_agents.EXPECTED_AGENT_COUNT == len(worker.EXPECTED_AGENTS)
+
+
+# ── U23: fail closed on a store outage; a bound reached before the CLI ─────────────
+#
+# The halt clauses read Postgres before every tool call. They used to swallow every
+# error and allow the call, so during an outage Stop, the handover and the spend cap
+# failed open, silently. A store error now halts the attempt and answers 500; any other
+# error is logged and the next clause still runs.
+
+
+def _outage(exc: BaseException, *, after: int = 1, value: Any = False):
+    """A clause predicate that answers ``value`` ``after`` times, then raises ``exc``."""
+    calls: list[int] = []
+
+    def predicate(*_a: Any) -> Any:
+        calls.append(1)
+        if len(calls) > after:
+            raise exc
+        return value
+
+    predicate.calls = calls  # type: ignore[attr-defined]
+    return predicate
+
+
+def test_an_outage_with_stop_pressed_halts_and_the_attempt_answers_500(turn_env, monkeypatch):
+    """The Stop row cannot be read, so the call is halted rather than run on, nothing
+    completes the turn, and the redelivery reads Stop fresh."""
+    _mid_run(monkeypatch)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    monkeypatch.setattr(worker, "stop_requested",
+                        _outage(worker.psycopg.OperationalError("server closed the connection unexpectedly")))
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 0)
+    turn_env["client"] = FakeClient([_init(), ToolCall(), ToolCall(), _text("x"), _result(num_turns=2)],
+                                    _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    status, body = _serve(turn_env, monkeypatch)
+    assert status == 500 and "StoreUnavailable" in body["error"], body
+    assert not _turn_done_payloads(turn_env["conn"]), "the turn stays open for the redelivery"
+    [failed] = [f for f in logged if f.get("ev") == "halt_check_failed"]
+    assert failed["clause"] == "stop" and failed["store_down"] is True
+    assert failed["error"].startswith("OperationalError: ")
+    [halt] = [f for f in logged if f.get("ev") == "halt"]
+    assert halt["reason"] == options.STORE_UNAVAILABLE_REASON
+    assert _tool_call_decisions(turn_env["conn"]) == ["allow"], "the halt row is not written to a down store"
+    assert turn_env["events"] == ["disconnect", "held.close"]
+
+
+@pytest.mark.parametrize("exc", [
+    worker.psycopg.OperationalError("terminating connection due to administrator command"),
+    worker.psycopg.InterfaceError("the connection is closed"),
+    worker.psycopg.errors.AdminShutdown("terminating connection due to administrator command"),
+], ids=["operational", "interface", "admin_shutdown"])
+def test_once_the_store_is_down_nothing_asks_postgres_again(turn_env, monkeypatch, exc):
+    """Sticky: after the first store error, halt(), record(), finish() and the Stop hook
+    leave Postgres alone, and the raise comes before the zero-progress count, the Stop
+    re-read and complete()."""
+    _mid_run(monkeypatch)
+    monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
+    spend = _outage(RuntimeError("never reached"), after=99, value=1.0)
+    monkeypatch.setattr(worker, "session_spend_usd", spend)
+    stop = _outage(exc)
+    monkeypatch.setattr(worker, "stop_requested", stop)
+    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
+    finished: list[str] = []
+    monkeypatch.setattr(worker, "finish_tool_call", lambda conn, tid, tuid: finished.append(tuid))
+    turn_env["entries"] = True
+    turn_env["client"] = FakeClient(
+        [_init(), ToolCall(), ToolCall(), ToolCall(), StopDispatch(), _text("x"), _result(num_turns=0)],
+        _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    with pytest.raises(worker.StoreUnavailable):
+        asyncio.run(worker.run_turn(TURN, 2, SID, agents={"gps-mentor": object()}))
+    hook = turn_env["options"]["posttool_hook"]
+    asyncio.run(hook({"tool_name": "x"}, "toolu_after", None))
+    assert finished == [], "finish() wrote to a down store"
+    assert len(stop.calls) == 2 and len(spend.calls) == 1, "halt() asked Postgres after the outage"
+    client = turn_env["client"]
+    assert client.tool_uses == 3 and client.stops == [{}], "the Stop hook allowed the stop"
+    assert len(client.queried) == 1, "no resume re-query after the outage"
+    sql = [s for s, _ in turn_env["conn"].executed]
+    assert sum(s.startswith("INSERT INTO tool_calls") for s in sql) == 1
+    for forbidden in ("SELECT count(*) FROM tool_calls", "SELECT doc FROM documents",
+                      "zero_progress_attempts + 1", "'turn_done'"):
+        assert not any(forbidden in s for s in sql), forbidden
+
+
+def test_a_bug_in_one_clause_still_reaches_the_spend_clause(turn_env, monkeypatch):
+    """Not an outage: logged, and the next clause runs -- an earlier raising clause once
+    skipped the spend clause on every call (the Decimal bug, price_usd)."""
+    _mid_run(monkeypatch)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    monkeypatch.setattr(worker, "stop_requested", _outage(RuntimeError("a bug"), after=0))
+    monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
+    monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 40.0)
+    summary = _run(turn_env, [_init(), ToolCall(), _text("x"), _result(num_turns=2)])
+    assert summary["outcome"] == "budget" and summary["limit"] == "spend"
+    assert [f for f in logged if f.get("ev") == "spend_cap"]
+    [failed] = [f for f in logged if f.get("ev") == "halt_check_failed"]
+    assert failed["clause"] == "stop" and failed["store_down"] is False
+
+
+def test_a_data_error_in_the_spend_clause_is_not_an_outage(turn_env, monkeypatch):
+    """Only a lost connection is an outage. A DataError is a psycopg error too, and the
+    store is answering: the call runs and the turn completes."""
+    _mid_run(monkeypatch)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
+    monkeypatch.setattr(worker, "session_spend_usd", _outage(worker.psycopg.DataError("numeric overflow"), after=0))
+    summary = _run(turn_env, [_init(), ToolCall(), _text("x"), _result(num_turns=2)])
+    assert summary["outcome"] == worker.OK_OUTCOME
+    assert _tool_call_decisions(turn_env["conn"]) == ["allow"]
+    [failed] = [f for f in logged if f.get("ev") == "halt_check_failed"]
+    assert failed["clause"] == "spend" and failed["store_down"] is False
+
+
+def test_a_broken_connection_is_an_outage_whatever_the_error(turn_env, monkeypatch):
+    _mid_run(monkeypatch)
+
+    def broken(conn, sid):
+        conn.broken = True
+        raise RuntimeError("an error psycopg wrapped oddly")
+
+    monkeypatch.setattr(worker, "stop_requested", broken)
+    with pytest.raises(worker.StoreUnavailable):
+        _run(turn_env, [_init(), ToolCall(), _text("x"), _result(num_turns=2)])
+
+
+def test_a_halt_that_raises_past_its_clauses_still_answers_500(turn_env, monkeypatch):
+    """_pretool's last-resort catch reaches the worker through on_halt_failed: the halt
+    stands AND the attempt answers 500, rather than completing a cut-off turn."""
+    _mid_run(monkeypatch)
+    seen: list[dict] = []
+
+    def log(**f):
+        seen.append(f)
+        if f.get("ev") == "halt_check_failed":
+            raise OSError("stdout is gone")
+
+    monkeypatch.setattr(worker, "log", log)
+    monkeypatch.setattr(worker, "stop_requested", _outage(RuntimeError("a bug"), after=0))
+    with pytest.raises(worker.StoreUnavailable):
+        _run(turn_env, [_init(), ToolCall(), _text("x"), _result(num_turns=2)])
+    assert [f for f in seen if f.get("ev") == "halt_failed"]
+    assert not _turn_done_written(turn_env["conn"])
+
+
+def test_a_failed_tool_call_insert_still_counts_the_call(turn_env, monkeypatch):
+    """The handover clause waits for one call of this turn. A call whose row failed to
+    insert ran all the same, so it must count, or a held message waits one call longer --
+    and with every insert failing, forever."""
+    _mid_run(monkeypatch)
+    monkeypatch.setattr(worker, "insert_tool_call", _outage(RuntimeError("insert failed"), after=0))
+    monkeypatch.setattr(worker, "pending_user_message", lambda conn, sid: True)
+    summary = _run(turn_env, [_init(), ToolCall(), ToolCall(), _text("x"), _result(num_turns=2)])
+    assert summary["outcome"] == "queued" and summary["tool_calls"] == 2
+
+
+def test_a_stopped_session_closes_before_the_grant_and_the_cli(turn_env, monkeypatch):
+    """A redelivery after Stop, or a message reaching a stopped session: closed `stopped`,
+    nothing billed, and the next held message released (which clears the flag)."""
+    import claude_agent_sdk
+
+    monkeypatch.setattr(claude_agent_sdk, "ClaudeSDKClient",
+                        lambda options: (_ for _ in ()).throw(AssertionError("a CLI was spawned")))
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: True)
+    monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 999.0)
+    released = _released(monkeypatch)
+    status, body = _serve(turn_env, monkeypatch, receive_count=2)
+    assert status == 200 and body["outcome"] == "stopped" and body["cause"] == "before_cli"
+    assert "limit" not in body, "Stop outranks the cap, as in halt()"
+    [payload] = _turn_done_payloads(turn_env["conn"])
+    assert payload["outcome"] == "stopped" and payload["cause"] == "before_cli"
+    assert turn_env["acquired"] == [] and turn_env["options"] is None, "no grant read, no CLI built"
+    assert released == ["sess-1"] and body["released_turn"] == "msg-held"
+    [bound] = [f for f in logged if f.get("ev") == "bound_before_cli"]
+    assert bound["outcome"] == "stopped" and "spent_usd" not in bound
+
+
+def test_a_session_over_the_cap_closes_before_the_grant_and_the_cli(turn_env, monkeypatch):
+    import claude_agent_sdk
+
+    monkeypatch.setattr(claude_agent_sdk, "ClaudeSDKClient",
+                        lambda options: (_ for _ in ()).throw(AssertionError("a CLI was spawned")))
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
+    monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 35.0)
+    released = _released(monkeypatch)
+    status, body = _serve(turn_env, monkeypatch)
+    assert status == 200 and body["outcome"] == "budget"
+    [payload] = _turn_done_payloads(turn_env["conn"])
+    assert (payload["limit"], payload["spent_usd"], payload["cause"]) == ("spend", 35.0, "before_cli"), \
+        "the SPA's 'start a new session' copy keys on limit=spend"
+    assert turn_env["acquired"] == [] and released == ["sess-1"]
+    [bound] = [f for f in logged if f.get("ev") == "bound_before_cli"]
+    assert bound["outcome"] == "budget" and bound["spent_usd"] == 35.0
+
+
+def test_under_the_cap_or_with_it_off_the_turn_runs(turn_env, monkeypatch):
+    monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
+    monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 34.99)
+    assert _run(turn_env, _good())["outcome"] == worker.OK_OUTCOME
+    monkeypatch.setattr(worker, "SPEND_CAP_USD", 0.0)
+    monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 999.0)
+    turn_env["conn"] = FakeConn(usage=(10, 0, 0, 5))
+    assert _run(turn_env, _good())["outcome"] == worker.OK_OUTCOME
+
+
+def test_the_pre_cli_check_raises_on_a_store_error_and_logs_any_other(turn_env, monkeypatch):
+    """A store error is a 500 with nothing billed; a bug must not refuse every turn, so
+    it is logged and the run's own halt checks again at the first tool call."""
+    monkeypatch.setattr(worker, "stop_requested", _outage(worker.psycopg.OperationalError("down"), after=0))
+    with pytest.raises(worker.psycopg.OperationalError):
+        _run(turn_env, _good())
+    assert turn_env["acquired"] == []
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
+    monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
+    monkeypatch.setattr(worker, "session_spend_usd", _outage(TypeError("Decimal * float"), after=0))
+    assert _run(turn_env, _good())["outcome"] == worker.OK_OUTCOME
+    [failed] = [f for f in logged if f.get("ev") == "bound_check_failed"]
+    assert failed["clause"] == "spend" and failed["error"] == "TypeError: Decimal * float"
+
+
+def test_the_turns_main_connection_is_bounded_and_named(turn_env, monkeypatch):
+    """The keepalives and tcp_user_timeout turn a vanished host into an error halt() can
+    see; application_name lets an outage drill terminate exactly this backend."""
+    assert worker.TURN_CONN_KWARGS == {
+        "autocommit": True, "connect_timeout": 10, "keepalives": 1, "keepalives_idle": 60,
+        "keepalives_interval": 10, "keepalives_count": 6, "tcp_user_timeout": 30000,
+    }
+    seen: list[dict] = []
+    monkeypatch.setattr(worker.psycopg, "connect", lambda *a, **k: seen.append(k) or turn_env["conn"])
+    _run(turn_env, _good())
+    assert seen[0] == {**worker.TURN_CONN_KWARGS, "application_name": "turn:turn-1"}
+    # The post-turn release connects too; it must not wait out the OS's TCP connect.
+    assert len(seen) == 2 and seen[1] == {"autocommit": True, "connect_timeout": worker.PG_CONNECT_TIMEOUT_S}
+
+
+def test_pg_connect_bounds_the_connect_unless_the_caller_does(monkeypatch):
+    seen: list[dict] = []
+    monkeypatch.setattr(worker.psycopg, "connect", lambda *a, **k: seen.append(k))
+    worker.pg_connect("dsn")
+    worker.pg_connect("dsn", connect_timeout=worker.RELEASE_CONNECT_TIMEOUT_S)
+    worker.pg_connect("dsn", **worker.GRANT_CONN_KWARGS)
+    assert [k["connect_timeout"] for k in seen] == [10, worker.RELEASE_CONNECT_TIMEOUT_S, 10]
+    assert "connect_timeout" not in worker.GRANT_CONN_KWARGS, "pg_connect adds it; the constant is unchanged"
+
+
+@pytest.mark.parametrize("cap, shown", [(35.0, "$35 "), (0.5, "$0.5 "), (12.25, "$12.25 ")])
+def test_the_spend_cap_reason_shows_the_cap_unrounded(cap, shown):
+    assert shown in options.SPEND_CAP_REASON.format(cap=cap)
+
+
+def test_the_stop_hook_allows_a_halted_turn_without_reading_the_store():
+    """U23: a halted turn (one whose store is down among them) allows the stop before the
+    tool-count and research reads, and still says why."""
+    seen: list[str] = []
+    logged: list[dict] = []
+
+    def down():
+        raise worker.psycopg.OperationalError("down")
+
+    hook = options.make_stop_hook(
+        turn_id="t", max_nudges=5, research=down, tool_count=down, on_nudge=lambda n: None,
+        on_allow=seen.append, stopped=lambda: True, log=lambda **f: logged.append(f),
+    )
+    assert asyncio.run(hook({}, None, None)) == {}
+    assert seen == ["stopped"] and logged == []
