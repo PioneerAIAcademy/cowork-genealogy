@@ -632,7 +632,8 @@ def test_work_dir_inside_any_git_checkout_is_refused(tmp_path):
 
 def test_work_dir_never_adopts_a_directory_it_did_not_make(tmp_path):
     mine = tmp_path / "home-like"
-    mine.mkdir(mode=0o755)
+    mine.mkdir()
+    mine.chmod(0o755)  # explicit: mkdir(mode=) is masked by the umask
     (mine / "notes.txt").write_text("x\n", encoding="utf-8")
     rc = rh.main(["plan", "--expect-account", ACCOUNT, "--work-dir", str(mine)], runner=FakeAws(),
                  out=lambda line: None)
