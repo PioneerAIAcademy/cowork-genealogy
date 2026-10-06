@@ -36,6 +36,7 @@ from claude_agent_sdk import (
     HookMatcher,
     RateLimitEvent,
     ResultMessage,
+    SystemMessage,
     TextBlock,
     ToolResultBlock,
     ToolUseBlock,
@@ -375,12 +376,64 @@ def handoffs(
     return out
 
 
+def slash_skill_from_entry(
+    user_message: str,
+    slash_commands: list[str] | None,
+    staged_skills_root: Path | None,
+) -> str | None:
+    """The skill a `/<name> …` entry loaded, or None.
+
+    `skills_invoked` is filled by the PreToolUse hook on a `Skill` call. A slash
+    command is expanded by the CLI, not called as a tool, so the hook never
+    fires and the entry point production uses (`/research --autonomous`) was
+    ungradable: `derive_activated` and `_compute_outcome` both test membership
+    (issue #3116).
+
+    **Registered and staged, not expanded.** Step 0 measured what reaches the
+    SDK stream and the answer was nothing: no `<command-name>`, no `Base
+    directory for this skill`, and `UserMessage` carries neither `isMeta` nor
+    `sourceToolUseID` — those are CLI-transcript fields that do not survive into
+    the stream. So this cannot witness the expansion and does not claim to. It
+    reports that the CLI **registered** the command and that the skill was
+    **staged**, which is what the init message and the workspace can show.
+    Ruling: chesworthrm on #3116, 2026-10-05.
+
+    Three conditions, all required — the `slash_commands` check is what keeps
+    this from being a prefix rule that passes every slash test by default:
+
+    1. the message begins `/<name>`;
+    2. `<name>` is in the init `SystemMessage`'s `slash_commands`;
+    3. `.claude/skills/<name>/` was staged into the workspace.
+
+    A namespaced spelling (`/genealogy-research:research`) resolves to neither 2
+    nor 3 and records nothing — staging is by bare name
+    (`workspace.py` stages to `.claude/skills/<name>/`).
+    """
+    if not user_message.startswith("/"):
+        return None
+    rest = user_message[1:]
+    # The name must follow the slash immediately. `split()` skips leading
+    # whitespace, so without this `"/ research"` -- which the CLI does not
+    # expand -- resolved to `research`.
+    if not rest or rest[0].isspace():
+        return None
+    head = rest.split(None, 1)[0]
+    if not slash_commands or head not in slash_commands:
+        return None
+    if staged_skills_root is None or not (staged_skills_root / head).is_dir():
+        return None
+    return head
+
+
 def judge_skills_slot(
-    skills_invoked: list[str], builtin_tool_calls: list[dict[str, Any]]
+    skills_invoked: list[str],
+    builtin_tool_calls: list[dict[str, Any]],
+    slash_entry: str | None = None,
 ) -> list[str]:
     """The judge's "Skills Claude invoked" list on a skill test: `skills_invoked`,
     with each agent the main thread spawned inserted at its place in call order
-    as "<name> (agent)".
+    as "<name> (agent)", and a slash-command entry marked as
+    "<name> (slash command)".
 
     `skills_invoked` holds `Skill` calls only, so without the spawns a
     judge_context asking whether the skill delegated to an agent is graded on a
@@ -397,12 +450,38 @@ def judge_skills_slot(
     """
     calls = builtin_tool_calls or []
     spawns = spawned_agents(calls)
+    rest = list(skills_invoked or [])
+
+    # Lifted above the branching so EVERY return path marks it. The judge is
+    # told to ground its rationales in this list, and a bare name would let it
+    # write "the right skill was invoked" on a slash test — asserting exactly
+    # what this harness deliberately does NOT claim, since the entry comes from
+    # registration and staging rather than from anything the model did. Marked
+    # like a spawn is, for the same reason.
+    #
+    # `skills_invoked` itself stays plain: `derive_activated` and
+    # `_compute_outcome` test membership and must keep matching the bare name.
+    lead: list[str] = []
+    if slash_entry is not None and rest and rest[0] == slash_entry:
+        lead.append(f"{rest.pop(0)} (slash command)")
+
     if not spawns:
-        return list(skills_invoked or [])
+        return lead + rest
     if not any(call.get("tool") == "Skill" for call in calls):
-        return list(skills_invoked or []) + [f"{name} (agent)" for name in spawns]
-    remaining = list(skills_invoked or [])
-    out: list[str] = []
+        return lead + rest + [f"{name} (agent)" for name in spawns]
+    remaining = rest
+    out: list[str] = list(lead)
+    # Removing the entry above is also what keeps the positional walk below
+    # honest: it has no `Skill` call of its own, so the walk would never match
+    # it, stall permanently, and dump the whole list after the spawns —
+    # destroying call order, and only on slash-entry tests (issue #3116).
+    #
+    # Passed in, never inferred. An earlier version detected it as
+    # `len(skills_invoked) == n_Skill_calls + 1`, which one `Skill` call with an
+    # unreadable input shape defeats: the hook puts that call in
+    # `unread_skill_calls` and NOT in `skills_invoked` while it still counts as
+    # a `Skill` call here, so the arithmetic silently reverted to the corruption
+    # it was added to prevent. `run_skill` knows the fact outright.
     for call in calls:
         tool = call.get("tool")
         if tool == "Skill":
@@ -732,6 +811,11 @@ class SkillRunResult:
     # this harness reads, holding that input's actual keys. Non-empty means the
     # SDK's Skill-tool contract moved and `skills_invoked` is undercounting.
     unread_skill_calls: list[list[str]] = field(default_factory=list)
+    # The skill a `/<name> …` entry loaded, or None. Carried so callers are
+    # TOLD rather than inferring it from `skills_invoked`'s shape — see
+    # `judge_skills_slot`, where that inference was defeated by an unreadable
+    # `Skill` call.
+    slash_entry_skill: str | None = None
     # Every built-in (non-MCP) tool call the run emitted, as
     # {"tool", "args", "agent_id"?} — see builtin_call_record for why this
     # exists. Telemetry for every tool EXCEPT `Agent`/`Task`: the direct-agent arm
@@ -829,6 +913,8 @@ async def run_skill(
     disallowed_tools = list(DISALLOWED_BACKSTOP)
 
     skills_invoked: list[str] = []
+    # Filled from the init SystemMessage; read once the stream ends.
+    slash_commands_seen: list[str] = []
     # Mutable counter shared between hook and loop so the hook can flag
     # over-limit calls without raising (the SDK swallows hook exceptions
     # in some paths).
@@ -1117,6 +1203,22 @@ async def run_skill(
                 return
             except asyncio.TimeoutError:
                 raise _LimitExceeded("sdk_stream_silence")
+            if (
+                isinstance(message, SystemMessage)
+                and getattr(message, "subtype", None) == "init"
+            ):
+                # The init message is the only carrier of `slash_commands`, and
+                # nothing else in the stream shows a command was registered
+                # (#3116 Step 0). Filtered on `subtype` because SystemMessage
+                # covers several kinds, and `isinstance(data, dict)` because a
+                # non-mapping `data` on some other subtype would otherwise
+                # raise inside the stream loop and abort a paid run.
+                data = getattr(message, "data", None)
+                cmds = data.get("slash_commands") if isinstance(data, dict) else None
+                if isinstance(cmds, list):
+                    slash_commands_seen.extend(
+                        c for c in cmds if isinstance(c, str)
+                    )
             if isinstance(message, RateLimitEvent):
                 # The CLI emits this whenever rate-limit state transitions. It
                 # is in the SDK's Message union and streamed straight past this
@@ -1483,6 +1585,23 @@ async def run_skill(
 
     duration_ms = (time.perf_counter() - start) * 1000.0
 
+    # Index 0: `derive_activated` and `_compute_outcome` test membership, and
+    # the judge's slot and the routing validators both read position. Inserted
+    # after the stream because `slash_commands` only arrives with the init
+    # message — never appended, which would put the entry point last.
+    slash_entry = slash_skill_from_entry(
+        user_message, slash_commands_seen, workspace / ".claude" / "skills"
+    )
+    if slash_entry:
+        # Unconditional, because "recorded first" is the contract the spec and
+        # every position-reading caller rest on. A `slash_entry not in
+        # skills_invoked` guard looked like sensible de-duplication and broke
+        # it: when the model ALSO reached the skill through a `Skill` call, the
+        # entry point was left at whatever position that call produced. The two
+        # are different events — entered-by-slash and called-as-a-tool — and
+        # collapsing them loses the one this change exists to record.
+        skills_invoked.insert(0, slash_entry)
+
     return SkillRunResult(
         # Turn-separated, not "".join: two AssistantMessages' text must not
         # run together (issue #2189). Each text_chunks entry is already one
@@ -1501,6 +1620,7 @@ async def run_skill(
         blocked_protected_writes=blocked_protected_writes,
         registered_mcp_tools=set(tools_by_name.keys()),
         unread_skill_calls=unread_skill_calls,
+        slash_entry_skill=slash_entry,
         builtin_tool_calls=builtin_tool_calls,
         agent_returns=agent_returns,
         no_result_message=no_result_message_flag["v"],
