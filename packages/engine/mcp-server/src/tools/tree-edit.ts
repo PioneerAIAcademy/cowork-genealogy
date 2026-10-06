@@ -30,11 +30,12 @@ import {
   introducedWarnings,
   staleJustifications,
   computeTouchedPersonIds,
-  competingParentage,
+  findCompetingParentage,
   parentChildKey,
   type WarningJustificationInput,
 } from "../validation/introduced-warnings.js";
 import type { ConflictSurfaced } from "../types/materialize-facts.js";
+import { getPersonName } from "./person-warnings.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   atomicWriteJson,
@@ -799,14 +800,14 @@ export async function checkWarningGate(
   proposedAssertionIds?: Map<string, string>,
 ): Promise<WarningGateRefusal | WarningGatePass | null> {
   const touchedIds = computeTouchedPersonIds(beforeTree, afterTree);
-  if (touchedIds.length === 0) return null;
-
-  // materialize_facts' own conflicts_surfaced means vital facts only, and it
-  // never writes a relationship, so parentage is not surfaced through it.
-  const parentage = toolName === "materialize_facts"
-    ? []
-    : competingParentage(beforeTree, afterTree, touchedIds, research, proposedAssertionIds);
+  // Competing biological parentage is gated on its own finding, not on whether
+  // tooManyFathers2/tooManyMothers2 is new: that warning can already stand on
+  // the child, and a parent's gender change does not touch the child at all.
+  const found = findCompetingParentage(beforeTree, afterTree, research, proposedAssertionIds, collapseMap);
+  if (touchedIds.length === 0 && found.length === 0) return null;
+  const parentage = found.map((c) => c.entry);
   const surfaced = parentage.length > 0 ? { conflicts_surfaced: parentage } : {};
+  const route = parentage.length > 0 ? ROUTE_PARENTAGE : "";
 
   const result = introducedWarnings(
     beforeTree,
@@ -816,17 +817,49 @@ export async function checkWarningGate(
     collapseMap,
   );
 
-  if (result.unjustified.length > 0) {
+  // A finding replaces the count warning for the same child and sex, so the
+  // caller is asked once, under the finding's own id.
+  const covered = new Set(
+    found.map((c) => `${c.sex === "Male" ? "tooManyFathers2" : "tooManyMothers2"}|${c.entry.personId}`),
+  );
+  const keep = (w: { issueType: string; personId: string }) => !covered.has(`${w.issueType}|${w.personId}`);
+  const justified = new Set(
+    (warningJustifications ?? [])
+      .filter((j) => typeof j.justification === "string" && j.justification.trim() !== "")
+      .map((j) => j.warningId),
+  );
+  const nameOf = (id: string) => {
+    const p = (afterTree.persons ?? []).find((x) => x.id === id);
+    return p ? getPersonName(p) : "";
+  };
+  const parentageWarnings = found.map((c) => ({
+    warningId: c.warningId,
+    issueType: "competingParentage",
+    severity: "implausible" as const,
+    personId: c.entry.personId,
+    personName: nameOf(c.entry.personId),
+    message:
+      `This write gives ${nameOf(c.entry.personId)} (${c.entry.personId}) two or more biological ${c.sex === "Male" ? "fathers" : "mothers"}: ` +
+      `${c.entry.values.join("; ")}.`,
+    facts: undefined,
+    relatedPersonId: undefined,
+  }));
+  const allIntroduced = [...result.allIntroduced.filter(keep), ...parentageWarnings];
+  const unjustified = [
+    ...result.unjustified.filter(keep),
+    ...parentageWarnings.filter((w) => !justified.has(w.warningId)),
+  ];
+
+  if (unjustified.length > 0) {
     const message = "This write introduces genealogical warnings that must be justified. " +
-      "Re-call with warningJustifications listing each warningId and a justification string." +
-      (parentage.length > 0 ? ROUTE_PARENTAGE : "");
+      "Re-call with warningJustifications listing each warningId and a justification string." + route;
     return {
       ok: false,
       reason: "unjustified_warnings",
       errors: [message],
       message,
       ...surfaced,
-      warnings: result.unjustified.map((w) => ({
+      warnings: unjustified.map((w) => ({
         warningId: w.warningId,
         issueType: w.issueType,
         severity: w.severity,
@@ -841,19 +874,22 @@ export async function checkWarningGate(
 
   // All introduced warnings are justified — check for stale justification ids
   if (warningJustifications && warningJustifications.length > 0) {
-    const stale = staleJustifications(result.allIntroduced, warningJustifications);
+    const stale = staleJustifications(allIntroduced, warningJustifications);
     if (stale.length > 0) {
-      const message = `Stale warningId(s) not matching any introduced warning: ${stale.join(", ")}. Re-call without warningJustifications to get the current warning ids.`;
+      const message = `Stale warningId(s) not matching any introduced warning: ${stale.join(", ")}. ` +
+        "Re-call without warningJustifications to get the current warning ids." + route;
       return {
         ok: false,
         reason: "unjustified_warnings",
         errors: [message],
+        message,
+        ...surfaced,
         warnings: [{ message }],
       };
     }
 
     // Persist justifications to research.json
-    if (result.allIntroduced.length > 0) {
+    if (allIntroduced.length > 0) {
       const now = new Date().toISOString().slice(0, 10);
       const existing = Array.isArray(research.warning_justifications)
         ? research.warning_justifications
@@ -862,7 +898,7 @@ export async function checkWarningGate(
         warning_id: j.warningId,
         justification: j.justification,
         person_ids: [...new Set(
-          result.allIntroduced
+          allIntroduced
             .filter((w) => w.warningId === j.warningId)
             .flatMap((w) => [w.personId, ...(w.relatedPersonId ? [w.relatedPersonId] : [])]),
         )],

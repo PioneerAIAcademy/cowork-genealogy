@@ -178,4 +178,26 @@ describe("merge_tree_persons", () => {
       ["I1", "ParentChild", 2],
     ]);
   });
+
+  it("does not report two fathers that already stood when a merge only folds one into another", async () => {
+    const p = (id: string, given: string, birth: string) => ({
+      id,
+      gender: "Male",
+      names: [{ id: `N${id}`, given, surname: "Flynn" }],
+      facts: [{ id: `F${id}`, type: "Birth", date: birth, primary: true }],
+    });
+    const tree = {
+      persons: [p("I1", "Patrick", "1845"), p("I2", "Thomas", "1815"), p("I3", "John", "1818"), p("I4", "John", "1818")],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I2", child: "I1", sources: [{ ref: "S1" }] },
+        { id: "R2", type: "ParentChild", parent: "I3", child: "I1", sources: [{ ref: "S1" }] },
+      ],
+      sources: [{ id: "S1", title: "1850 census" }],
+    };
+    await writeProject(tree, baseResearch());
+
+    const result = await mergeTreePersons({ projectPath: dir, merges: [["I4", "I3"]] });
+
+    expect((result as any).conflicts_surfaced).toBeUndefined();
+  });
 });

@@ -308,7 +308,7 @@ describe("competingParentage", () => {
   ) => {
     const before = tree(beforePeople, beforeRels);
     const after = tree(afterPeople, afterRels);
-    return competingParentage(before, after, computeTouchedPersonIds(before, after), research, proposed);
+    return competingParentage(before, after, research, proposed);
   };
 
   it("names both fathers and the assertion behind each when a second biological father is added", () => {
@@ -376,6 +376,35 @@ describe("competingParentage", () => {
 
   it("does not surface a mother added beside a father", () => {
     expect(surface([pc("R1", "I2")], [pc("R1", "I2"), pc("R2", "I4")])).toEqual([]);
+  });
+
+  it("does not cite an assertion linked only to the child (it may name the mother)", () => {
+    const rs = {
+      sources: [{ id: "src_001", gedcomx_source_description_id: "S1" }],
+      assertions: [
+        { id: "a_001", source_id: "src_001", fact_type: "relationship", value: "Father: Thomas" },
+        { id: "a_002", source_id: "src_001", fact_type: "relationship", value: "Mother: Mary" },
+      ],
+      person_evidence: [
+        { assertion_id: "a_001", person_id: "I2" },
+        { assertion_id: "a_002", person_id: "I1" },
+      ],
+    };
+    const before = tree(people(), [pc("R1", "I2")]);
+    const after = tree(people(), [pc("R1", "I2"), pc("R2", "I3", undefined, "S2")]);
+    expect(competingParentage(before, after, rs)[0].values).toEqual([
+      "I2 Thomas Flynn (a_001)",
+      "I3 John Flynn (source S2)",
+    ]);
+  });
+
+  it("is skipped when no ParentChild edge or gender changed", () => {
+    // A fact edit on a tree that already holds two fathers raises nothing new.
+    const rels = [pc("R1", "I2"), pc("R2", "I3")];
+    const before = tree(people(), []);
+    const after = tree(people(), rels);
+    expect(competingParentage(after, after, research)).toEqual([]);
+    expect(competingParentage(before, after, research)).toHaveLength(1);
   });
 
   it("does not surface a set that did not grow", () => {

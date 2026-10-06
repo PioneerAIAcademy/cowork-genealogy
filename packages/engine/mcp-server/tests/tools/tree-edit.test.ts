@@ -18,7 +18,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   };
 });
 
-import { treeEdit } from "../../src/tools/tree-edit.js";
+import { treeEdit, checkWarningGate } from "../../src/tools/tree-edit.js";
 import { treeCorrect } from "../../src/tools/tree-correct.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
 import { validateProject } from "../../src/validation/validator.js";
@@ -1797,7 +1797,9 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
 
     expect(r.ok).toBe(false);
     expect((r as any).reason).toBe("unjustified_warnings");
-    expect((r as any).warnings.map((w: any) => [w.issueType, w.personId])).toEqual([["tooManyFathers2", "I1"]]);
+    // The competing-parentage finding replaces tooManyFathers2 for this child,
+    // so the caller is asked once, under the finding's id.
+    expect((r as any).warnings.map((w: any) => [w.issueType, w.personId])).toEqual([["competingParentage", "I1"]]);
     expect(await readTree()).toEqual(treeBefore);
   });
 
@@ -1818,6 +1820,9 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
     assertions: [
       { id: "a_001", source_id: "src_001", fact_type: "relationship" },
       { id: "a_002", source_id: "src_001", fact_type: "relationship" },
+    ],
+    person_evidence: [
+      { id: "pe_001", assertion_id: "a_001", person_id: "I2", confidence: "probable", rationale: "x", created: "2026-01-01" },
     ],
   };
   const addParentFrom = (parent: string, sourceAssertionId: string, extra: object = {}) =>
@@ -1840,7 +1845,7 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
       {
         personId: "I1",
         factType: "ParentChild",
-        values: ["I2 Thomas Flynn (a_001, a_002)", "I3 John Flynn (a_002)"],
+        values: ["I2 Thomas Flynn (a_001)", "I3 John Flynn (a_002)"],
       },
     ]);
     expect(r.message).toContain("send each conflicts_surfaced entry to conflict-resolution");
@@ -1860,7 +1865,7 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
     expect((r as any).conflicts_surfaced?.[0]?.personId).toBe("I1");
   });
 
-  it("writes and echoes a new biological father when the warning already stood", async () => {
+  it("refuses a new biological father even when tooManyFathers2 already stood", async () => {
     const t = parentage();
     t.persons.push({
       id: "I5",
@@ -1871,16 +1876,67 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
     (t.relationships as any[]).push({ id: "R2", type: "ParentChild", parent: "I3", child: "I1", subtype: "Adoptive", sources: [{ ref: "S1" }] });
     await writeProject(t, parentageResearch);
 
+    const treeBefore = await readTree();
+
     const r = await addParentFrom("I5", "a_002");
 
-    expect(r.ok).toBe(true);
-    expect((r as any).conflicts_surfaced).toEqual([
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.conflicts_surfaced).toEqual([
       {
         personId: "I1",
         factType: "ParentChild",
-        values: ["I2 Thomas Flynn (a_001, a_002)", "I5 James Flynn (a_002)"],
+        values: ["I2 Thomas Flynn (a_001)", "I5 James Flynn (a_002)"],
       },
     ]);
+    expect(await readTree()).toEqual(treeBefore);
+  });
+
+  it("refuses a gender change that makes a parent a second father", async () => {
+    const t = parentage();
+    t.persons[3].gender = "Unknown";
+    (t.relationships as any[]).push({ id: "R2", type: "ParentChild", parent: "I4", child: "I1", sources: [{ ref: "S1" }] });
+    await writeProject(t, parentageResearch);
+    const treeBefore = await readTree();
+
+    const r = await treeCorrect({ projectPath: dir, operation: "update_person", personId: "I4", gender: "Male" } as any);
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.conflicts_surfaced?.map((c) => c.personId)).toEqual(["I1"]);
+    expect(await readTree()).toEqual(treeBefore);
+  });
+
+  it("gates materialize_facts too: a gender it fills in can make a second father", async () => {
+    const before = parentage() as any;
+    before.persons[3].gender = "Unknown";
+    before.relationships.push({ id: "R2", type: "ParentChild", parent: "I4", child: "I1", sources: [{ ref: "S1" }] });
+    const after = structuredClone(before);
+    after.persons[3].gender = "Male";
+
+    const r = await checkWarningGate(before, after, parentageResearch, dir, undefined, "materialize_facts");
+
+    expect(r && "ok" in r && r.ok === false).toBe(true);
+    expect((r as any).conflicts_surfaced?.map((c: any) => c.personId)).toEqual(["I1"]);
+  });
+
+  it("a stale justification on a competing parent keeps the entry and the route", async () => {
+    await writeProject(parentage(), parentageResearch);
+    const refused = await addParentFrom("I3", "a_002");
+    const ids = (refused as any).warnings.map((w: any) => w.warningId);
+
+    const r = await addParentFrom("I3", "a_002", {
+      warningJustifications: [
+        ...ids.map((warningId: string) => ({ warningId, justification: "recorded as c_001" })),
+        { warningId: "not-a-real-id", justification: "x" },
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toContain("Stale warningId");
+    expect(r.errors[0]).toContain("send each conflicts_surfaced entry to conflict-resolution");
+    expect(r.conflicts_surfaced?.map((c) => c.personId)).toEqual(["I1"]);
   });
 
   it("refuses an adoptive second father without conflicts_surfaced", async () => {

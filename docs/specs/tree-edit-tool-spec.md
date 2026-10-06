@@ -334,14 +334,20 @@ committed e2e corpus set one of those fields.
 // on failure: { ok: false, errors: string[] } — nothing written
 ```
 
-`conflicts_surfaced` appears on a write that lands while giving a child two or
-more **biological** parents of one sex, where that set grew: a justified
-re-call, or a write past a `tooManyFathers2`/`tooManyMothers2` warning that
-already stood. The refusal carries it too (§7). Each value names one parent as
-`"<personId> <name> (<evidence>)"`, where the evidence is the call's
-`sourceAssertionId` for the proposed edge, else the parentage assertions on the
-edge's sources, else `source <S-id>`. It is the same `ConflictSurfaced` shape
-`materialize_facts` returns for vital facts.
+A write that gives a child two or more **biological** parents of one sex,
+where that set grew, is refused (§7) with a `competingParentage` warning and a
+`conflicts_surfaced` entry. It is refused whether or not
+`tooManyFathers2`/`tooManyMothers2` is new to the child, and whether the second
+parent arrives by a new edge, a merge, or a parent's gender being set. Only a
+re-call that justifies that warning's id lands, and its success response
+echoes the entry. Each value names one parent as
+`"<personId> <name> (<evidence>)"`. The evidence is the call's
+`sourceAssertionId` for the proposed edge; else the parentage assertions
+`person_evidence` links to that parent on the edge's sources, plus
+`source <S-id>` for any source those do not cover; else `no source`. An
+assertion linked only to the child is never cited, because it may name the
+other parent. It is the same `ConflictSurfaced` shape `materialize_facts`
+returns for vital facts.
 
 ### 4.3 Batch form (`ops`) — several edits in one call
 
@@ -514,10 +520,16 @@ Sequence (validate-before-persist, tree-only):
   ADR-0011). **Only biological parents count** (no `subtype`, or
   `Biological`): the warning itself ignores `subtype`, so an adoptive father
   beside a biological one is still refused for a justification, but it is not
-  routed as disputed paternity. The entry is computed from the before and after
-  trees, not from the gate's introduced warnings, because a `tooManyFathers2`
-  id carries no related person: a child who already held the warning would hide
-  a new biological father from that list.
+  routed as disputed paternity. The finding is computed from the before and
+  after trees and gated under its own id (`competingParentage|child|sex|parents`,
+  which replaces the count warning for that child), not from the gate's
+  introduced warnings. A `tooManyFathers2` id carries no related person, so a
+  child who already held it would hide a new biological father, and a parent's
+  gender change touches the parent while the warning sits on the child. Every
+  gated writer runs it, `materialize_facts` included, since filling in an
+  Unknown gender can make a second father. A merge renames parent ids through
+  its collapse map, so folding one father into another is not reported, while
+  folding two records of one child together is.
 - **`remove` is fact/relationship-only.** The skill permits deletion only on a
   tier downgrade (`SKILL.md:118–124`); person removal is structurally reserved to
   the merge tools, so `tree_edit` cannot delete a person.

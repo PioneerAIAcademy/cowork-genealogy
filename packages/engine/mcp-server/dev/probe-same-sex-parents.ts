@@ -19,7 +19,7 @@
  * forward; the corpus moves as run logs land.
  *
  * Usage:
- *   npx tsx dev/probe-same-sex-parents.ts [--list]
+ *   npx tsx dev/probe-same-sex-parents.ts [--list] [--all-warnings]
  */
 import { readFileSync, readdirSync, statSync } from "fs";
 import { join, resolve } from "path";
@@ -70,6 +70,34 @@ for (const fixture of readdirSync(root).sort()) {
       }
     }
   }
+}
+
+// Every warning a ParentChild edge introduces, by type: take each edge out of
+// the final tree and diff the gate's introduced warnings for putting it back.
+// Before the gate saw these edges this was invisible; it is the full set the
+// gate now refuses on a parent link, not just the same-sex parent count above.
+if (process.argv.includes("--all-warnings")) {
+  const { introducedWarnings, computeTouchedPersonIds } = await import("../src/validation/introduced-warnings.js");
+  const byType = new Map<string, number>();
+  let edges = 0;
+  let refused = 0;
+  for (const fixture of readdirSync(root).sort()) {
+    const dir = join(root, fixture);
+    if (!statSync(dir).isDirectory()) continue;
+    for (const file of readdirSync(dir).filter((f) => f.endsWith(".final-tree.gedcomx.json"))) {
+      const tree = JSON.parse(readFileSync(join(dir, file), "utf-8")) as SimplifiedGedcomX;
+      for (const edge of tree.relationships ?? []) {
+        if (edge.type !== "ParentChild") continue;
+        edges++;
+        const without = { ...tree, relationships: (tree.relationships ?? []).filter((r) => r !== edge) };
+        const result = introducedWarnings(without, tree, computeTouchedPersonIds(without, tree));
+        for (const w of result.allIntroduced) byType.set(w.issueType, (byType.get(w.issueType) ?? 0) + 1);
+        if (result.allIntroduced.length > 0) refused++;
+      }
+    }
+  }
+  console.log(`ParentChild edges replayed: ${edges}; would be refused: ${refused}`);
+  for (const [t, n] of [...byType].sort((a, b) => b[1] - a[1])) console.log(`  ${String(n).padStart(5)}  ${t}`);
 }
 
 console.log(`final trees read:            ${trees}`);
