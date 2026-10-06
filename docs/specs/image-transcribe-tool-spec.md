@@ -490,7 +490,7 @@ what the VLM was primed with before reading a contested hand):
 - `expansions`: which formal names were expanded and to which variant
   forms (keyed by the table's formal name, e.g. `"Elizabeth"`)
 
-This mirrors `fulltext_search`'s `nameExpansion` without
+This uses the same underlying name-variant tables as `get_name_variants`, without
 `variantsInResults`, which has no equivalent for VLM transcription.
 
 ### 5.4 Behavior (pipeline)
@@ -1069,7 +1069,7 @@ the `research_append` TTL sweep above, not a validator orphan check — unlike
 `viewer-ui` `SourcesSection` renders the scan beside the transcription whenever
 a source has `image_filename`, lazy-loading it through an optional transport
 method (absent → no scan shown). Both adapters implement it:
-- **Electron:** `apps/electron/main` reads `images/<file>` from the connected
+- **Electron:** `apps/electron/src/main` reads `images/<file>` from the connected
   project folder over a validated `project:read-image` IPC channel and returns
   a `data:` URL (`img-src data:` already in the CSP).
 - **Hosted web:** the browser cannot read the sandbox filesystem, so
@@ -1362,7 +1362,7 @@ passed unedited across the move:*
 - `eval/Setup.bat` — write `OPENROUTER_API_KEY` into `eval/.env`
 
 *Electron viewer (fast-follow):*
-- `apps/electron/main` + `packages/viewer-ui` (+ `transport.ts`) — display the saved scan
+- `apps/electron/src/main` + `packages/viewer-ui` (+ `transport.ts`) — display the saved scan
 
 **Keep + extend (not retire)**
 - `packages/engine/plugin/agents/image-reader.md` — make `image_transcribe`
