@@ -239,17 +239,30 @@ export function headingAnchors(text: string): Set<string> {
  * `make <target>` citations. Read only from code — inline spans and fenced
  * blocks — never from prose, because "make sure", "make the call", and "make
  * it fail" all parse as `make <target>` otherwise.
+ *
+ * A target may name a family with `*` after a literal prefix (`make e2e-*`);
+ * `makeTargetResolves` reads that as a glob. A target that is only a
+ * placeholder (`make <target>`) names no target and is not extracted.
  */
+const MAKE_TARGET = String.raw`[A-Za-z0-9_.-]+(?:\*[A-Za-z0-9_.-]*)*`;
+
 export function citedMakeTargets(text: string): string[] {
   const found = new Set<string>();
   for (const m of text.matchAll(/`([^`\n]+)`/g)) {
-    const inline = m[1].trim().match(/^make\s+([A-Za-z0-9_.-]+)/);
+    const inline = m[1].trim().match(new RegExp(`^make\\s+(${MAKE_TARGET})`));
     if (inline) found.add(inline[1]);
   }
   for (const block of fencedBlocks(text)) {
-    for (const m of block.matchAll(/^[ \t]*make\s+([A-Za-z0-9_.-]+)/gm)) found.add(m[1]);
+    for (const m of block.matchAll(new RegExp(`^[ \\t]*make\\s+(${MAKE_TARGET})`, "gm"))) found.add(m[1]);
   }
   return [...found];
+}
+
+/** Does a cited make target exist? A `*` matches one or more characters of one target name. */
+export function makeTargetResolves(targets: Set<string>, cited: string): boolean {
+  if (!cited.includes("*")) return targets.has(cited);
+  const re = new RegExp(`^${cited.split("*").map(escapeRe).join("[A-Za-z0-9_.-]+")}$`);
+  return [...targets].some((t) => re.test(t));
 }
 
 /**

@@ -3,7 +3,14 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { citedLineNumbers, headingAnchors, pathResolves, slugifyHeading } from "./repo-paths.js";
+import {
+  citedLineNumbers,
+  citedMakeTargets,
+  headingAnchors,
+  makeTargetResolves,
+  pathResolves,
+  slugifyHeading,
+} from "./repo-paths.js";
 
 /**
  * Unit tests for the forms the doc lints must read the way GitHub and a reader
@@ -108,5 +115,26 @@ describe("citedLineNumbers", () => {
     expect(
       citedLineNumbers("`docs/foo.md#section`, `9:30`, `1:1:QL69-GBJC`, and docs/a.md:12 outside a span"),
     ).toEqual([]);
+  });
+});
+
+describe("make target citations", () => {
+  const targets = new Set(["e2e-run", "e2e-corpus", "engine-test"]);
+
+  it("reads a family glob after a literal prefix", () => {
+    expect(citedMakeTargets("their `make e2e-*` targets")).toEqual(["e2e-*"]);
+    expect(makeTargetResolves(targets, "e2e-*")).toBe(true);
+    expect(makeTargetResolves(targets, "zz-*")).toBe(false);
+    expect(makeTargetResolves(targets, "engine-test*")).toBe(false);
+  });
+
+  it("does not extract a target that is only a placeholder", () => {
+    expect(citedMakeTargets("run `make <target>`")).toEqual([]);
+  });
+
+  it("still checks a plain target exactly", () => {
+    expect(citedMakeTargets("`make engine-test TEST=x`")).toEqual(["engine-test"]);
+    expect(makeTargetResolves(targets, "engine-test")).toBe(true);
+    expect(makeTargetResolves(targets, "engine-tests")).toBe(false);
   });
 });
