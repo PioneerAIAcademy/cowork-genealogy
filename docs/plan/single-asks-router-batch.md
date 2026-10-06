@@ -52,7 +52,8 @@ The other three #2813 items are deliberately NOT here:
 - **Item 2** (end a bounded turn at its deliverable) **SHIPPED** in PR #3147, merged
   2026-10-05 as `39a1c7ac7`. The `delivered` exit, `research_delivered` and
   `DELIVERY_GUIDANCE` are on `main`.
-- **Item 5** (save what the turn finds) is **dropped: already built elsewhere.**
+- **Item 5** (save what the turn finds) is **dropped for THREE of its four clauses, which are
+  already built elsewhere. The fourth is not built anywhere** — see below.
   `search-records` already owns this: it **holds `research_log_append`** in its own
   frontmatter (`:21`), calls it once per search (`:586`), defines the required log-entry
   fields (`:600`), **logs the nil result with `outcome: "negative"` (`:651`)** and carries
@@ -184,6 +185,25 @@ Inside `## What to do`'s routing table region. A found record routes to `record-
 a search that found nothing writes a negative `research_log_append` entry naming collection,
 place, years and names searched. The reply then names what was saved and where.
 
+**CORRECTION (2026-10-06), after re-checking rather than re-asserting.** This plan dropped item
+5 whole, on the claim that it is "already implemented in `search-records/SKILL.md`". That holds
+for three clauses: the record-extraction route, the negative log entry, and the reply naming
+what was saved (`search-records/SKILL.md:686`, "Summarize what was searched and what was
+found"). It does **not** hold for the fourth:
+
+> An extraction that gets interrupted is either finished or named in the reply as unsaved.
+
+`grep -rn interrupted packages/engine/plugin/skills/ packages/engine/plugin/agents/` returns
+**nothing**. That clause is implemented in no skill and no agent. It is not in this PR either,
+and this PR never claimed it: item 5 is out of scope here. What was wrong was the *reason*
+given for dropping it, which would have told the next reader there was nothing left to do.
+
+Whoever picks item 5 up should also decide where it belongs, which is not obvious: the clause
+is a property of the REPLY, and the orchestrator writes the reply while `record-extraction`
+owns the extraction. Note that the foreground-delegation arm added in this PR narrows the
+window — a delegation now completes before the turn moves on — but it does not close it, since
+a turn can still be cut by the patron or by a timeout.
+
 ### Item 6 — candidates, not verdicts
 
 New subsection under `## When to stop` (line 394), because it is a stopping rule: give each
@@ -308,7 +328,9 @@ reaches this file.
 
 1. **Cost corrected** from an inflated generic figure to the measured median ($3.24), and
    the batch re-argued on coherence rather than money.
-2. **Item 5 dropped** — already implemented in `search-records/SKILL.md`, and the router
+2. **Item 5 dropped** — three of its four clauses are already implemented in
+   `search-records/SKILL.md` (the fourth is implemented nowhere; see the correction under
+   "Item 5"), and the router
    holds no writer tool.
 3. **Three of five tests moved** to e2e; non-falsifiable in a suite that stubs every callee.
 4. **Four colliding sections named**, where the draft named one.
