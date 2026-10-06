@@ -201,12 +201,10 @@ def wait_turn_done(client: httpx.Client, base: str, session_id: str, turn_id: st
 
 def preflight(base: str, dsn: str) -> str | None:
     try:
-        health = httpx.get(f"{base}/api/health", timeout=5.0).json()
+        httpx.get(f"{base}/api/health", timeout=5.0).json()
         rows(dsn, "SELECT 1", ())
     except Exception as exc:  # noqa: BLE001
         return f"stack not up ({type(exc).__name__}: {exc}); run `make proto-up` first"
-    if health.get("queue") == "NullQueue":
-        return "the tier has no queue (NullQueue): nothing would run the turn"
     return None
 
 

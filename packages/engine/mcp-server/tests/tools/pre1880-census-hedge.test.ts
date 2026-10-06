@@ -211,8 +211,12 @@ describe("requirePre1880CensusHedge with a staged census payload", () => {
     ok(PARISH, [1850]);
   });
 
-  it("allows a note that omits the census year, the limit the tie accepts", () => {
-    ok("1 result: Amos Whitfield in the Household of Nancy Doss.", [1850]);
+  it("refuses a note that omits the census year, which the payload supplies", () => {
+    // Until 2026-10-02 the payload tie also required one of its years to appear
+    // in the note text, and this note passed. It is a true miss: the staged rows
+    // are all 1850 US federal census, so "the Household of Nancy Doss" is read
+    // off a schedule with no relationship column.
+    bad("1 result: Amos Whitfield in the Household of Nancy Doss.", [1850]);
   });
 
   it("still allows a hedged note", () => {
@@ -226,15 +230,336 @@ describe("requirePre1880CensusHedge with a staged census payload", () => {
     bad(plural, [1850]);
   });
 
-  it("accepts an unbound-census note even with a payload whose year is absent from the note", () => {
-    // Says "census", binds no year, payload year (1850) not in the note text:
-    // undecidable inputs skip (issue #2945), and the payload tie requires the
-    // year to appear in the note, so this passes on both branches.
-    ok(
+  it("refuses an unbound-census note when the payload names the year", () => {
+    // `requirePre1880CensusHedge`'s own docstring listed this sentence under
+    // "What this gives up": it says "census", binds no year to it, and the 1871
+    // it does carry is a marriage. The note-only branch still skips it (issue
+    // #2945 stands -- no year is read out of the note), but the payload decides
+    // it now, which is what that docstring wanted and could not have.
+    bad(
       "The federal census shows Daniel in one dwelling with Margaret and sons Thomas and Stephen; marriage 1871, Adams County.",
       [1850],
     );
   });
+
+  it("still skips that sentence with no payload behind it", () => {
+    // The other direction: the widening must not leak into the note-only branch.
+    ok("The federal census shows Daniel in one dwelling with Margaret and sons Thomas and Stephen; marriage 1871, Adams County.");
+  });
+
+  it("refuses the two notes the eval validator caught after the write", () => {
+    // ut_search_records_001 and _017, v2_2026-10-02_11-36-52. Both describe a
+    // pre-1880 US census household flat and carry a BIRTH year, not a census
+    // year, so the pre-2026-10-02 tie let them through and the eval validator
+    // failed the run instead.
+    bad(
+      "Fresh search with collection pin (1401638) + residence place + birth year range. " +
+        "Returned 1 result: Patrick Flynn, b. 1845, Ireland, in household of Thomas Flynn " +
+        "-- matchScore 0.9481, unattached to subject in FS tree.",
+      [1850],
+    );
+    bad(
+      "Found Sarah A. Mullen (matchScore 0.9376) in household of William Mullen, Dodge " +
+        "County, Wisconsin -- birth year 1852, birth place Wisconsin; consistent with all " +
+        "known facts. Clean top match, no needs-review flags. Passing to extraction.",
+      [1860],
+    );
+  });
+
+  it("does not let an ordinary English word cancel the gate", () => {
+    // The first carve-out carried a bare `will`, which the VERB matched, so a
+    // note that had been refused silently stopped being. A missing deny fails
+    // open where a missing allow merely annoys, so the carve-out is positional:
+    // the source must be named BEFORE the household it qualifies.
+    bad(`${H4K} Will pass to extraction.`, [1850]);
+    bad(`${H4K} It will be attached next.`, [1850]);
+    bad(`${H4K} Cross-check the parish register next.`, [1850]);
+  });
+
+  it("allows a note that is ABOUT another record type", () => {
+    ok("Marriage record 1861: Sarah, of the household of William Mullen.", [1850]);
+    ok("Death certificate 1866 lists the household of William Mullen.", [1850]);
+    ok("Obituary 1869 names the household of William Mullen.", [1850]);
+    ok("Will of John Mullen, 1854, naming the household of William Mullen.", [1850]);
+  });
+
+  it("keeps the parish carve-out load-bearing", () => {
+    // Without the namesOtherSource guard this refuses: an untitled parish row can
+    // share a staged payload with the titled 1850 census rows that produced the
+    // years, so the payload cannot prove the note is about a census row.
+    ok("Parish register 1861: baptism of Sarah, in the household of William Mullen.", [1850]);
+    ok("Probate 1854: estate of John Mullen, naming the household of William Mullen.", [1850]);
+    // ...but the carve-out must not become a bypass: naming a census alongside
+    // its own bound year still refuses.
+    bad("1850 census: Amos Whitfield in the household of Nancy Doss.", [1850]);
+  });
+
+  it("refuses a kinship claim whose only source word comes AFTER it", () => {
+    // Round 2's anchor change, pinned. Before it, `claimAt` read only the
+    // household word, so a kinship claim with no household word left the anchor
+    // at -1 and ANY source word anywhere in the note cancelled the gate. Both
+    // of these pass against the code at c7e34e0c5 and are refused here; without
+    // this test nothing fails if the fix is reverted, and a deny that fails
+    // open and silently is the one shape this PR says must be pinned.
+    bad("1 result: Amos Whitfield with wife Nancy and son Thomas Whitfield. Check baptism next.", [1850]);
+    bad("1 result: Amos Whitfield with wife Nancy and son Thomas Whitfield. Order the death certificate.", [1850]);
+    // The other direction, unchanged: named FIRST, the source still carves out.
+    ok("Baptism register 1852: Amos Whitfield with wife Nancy and son Thomas Whitfield.", [1850]);
+  });
+
+  it("names a source in the PLURAL, which is how notes actually spell it", () => {
+    // Every SOURCE_NAMED alternative used to end on a word boundary after the
+    // singular, so the commonest spelling of its own terms missed the list and
+    // the note was refused. Reported in review; reproduced before the fix.
+    ok("Church records show Sarah in the household of William Mullen.", [1850]);
+    ok("Marriage records: Sarah in the household of William Mullen.", [1850]);
+    ok("Parish registers place Sarah in the household of William Mullen.", [1850]);
+    ok("Deeds of 1854 name the household of William Mullen.", [1850]);
+    // The plural must not import the bare-verb hole the carve-out exists to
+    // avoid: `will`/`wills` is still not a source word on its own.
+    bad("1 result: Amos Whitfield in the Household of Nancy Doss. Wills to check next.", [1850]);
+  });
+});
+
+/**
+ * The household NOUN is not a claim by itself. Splitting the anchor is what
+ * stopped the payload trigger refusing notes that assert no structure, and the
+ * boundary matters in both directions, so each side is pinned.
+ */
+describe("requirePre1880CensusHedge tells a household claim from a household word", () => {
+  const bad = (n: string, years?: number[]) =>
+    expect(() => requirePre1880CensusHedge(n, years)).toThrow(/relationship-to-head/);
+  const ok = (n: string, years?: number[]) => expect(() => requirePre1880CensusHedge(n, years)).not.toThrow();
+
+  it("allows ut_search_records_027's note, which only plans to read the record", () => {
+    // In the released v2 run, and one of the four payload ops this branch
+    // newly refused against main. The words are "household members"; the
+    // sentence asserts nothing and names nobody.
+    ok(
+      "Ad-hoc user-requested search. One result: George Ackerman, Bucks Co., PA, born abt 1818 " +
+        "in PA. Spouse field absent in index — reading full record to view household members " +
+        "and marriage indicator.",
+      [1850],
+    );
+  });
+
+  it.each([
+    // Every one of these is a real corpus note this branch refused and main did
+    // not, or refused on both. None places a named person in a household.
+    "1850 census: William A Bagley (matchScore 0.813), born 1816, Topsham, Orange, Vermont. Reading record for household composition.",
+    "1840 federal census for Geach in Licking County not indexed in FamilySearch. Rebecca's 1840 household cannot be confirmed via this index.",
+    "Retry broadened to all Mississippi 1840. No Stribling found in Amite County in 1840 census. Possible the family had moved, died, or the head-of-household name differs.",
+    "Manually browsed 7 of approximately 34 name-bearing pages in the 1830 US Federal Census Amite County MS image group. Neither 'Stribling' nor 'McDowell' appeared as a household head on any readable page.",
+    "Searched FamilySearch 1850 U.S. Federal Census for a child Patrick Flynn age ca. 5 in Schuylkill County, Pennsylvania. No matching household found.",
+  ])("allows a plan, a nil or a candidate list that names no one in a household (%#)", (n) => ok(n, [1850]));
+
+  it.each([
+    // ...and the claim shapes stay refused. Name after the noun, name before
+    // it, and the relational phrases, which assert co-residence with no name.
+    "1 result: Patrick Flynn, b. 1845 Ireland, in household of Thomas Flynn; matchScore 0.948.",
+    "1 result: Amos Whitfield in the Household of Nancy Doss.",
+    "1 result: Sarah A. Mullen, William Mullen household, Dodge County, Wisconsin.",
+    "1 result: Patrick Flynn, age 15, living with Thomas Flynn and Bridget Flynn.",
+    "1 result: Daniel McElwee, enumerated with Margaret and Hannah.",
+  ])("still refuses a household placed on a person (%#)", (n) => bad(n, [1850]));
+
+  it("still refuses the flat spouse-and-children note the split nearly freed", () => {
+    // Requiring a name of the WHOLE anchor set freed this one on re-measure:
+    // the name precedes "co-resident" at a distance, and neither `spouse` nor
+    // `children` is in KINSHIP_CLAIM. `co-resident` predicates co-residence by
+    // itself, so it needs no name -- which is why the set is split.
+    bad(
+      "1860 census: Elijah Wilkins (male, b.1813, KY) with Sarah Wilkins (female, b.1821, " +
+        "North Carolina) as co-resident spouse. Children: Margaret E (1841), Jesse (1844).",
+    );
+  });
+
+  it("accepts the hedge spelled the way the refusal message spells it", () => {
+    // The message says "relationship-to-head column"; the hedge patterns only
+    // accepted spaces, so hedging in the exact words handed to you was refused
+    // again, with nothing in the message that would clear it. Real corpus note.
+    ok(
+      "User pasted the household listing directly. Eight members enumerated: John Baker " +
+        "(head, ~1822 Bavaria), Barbara Baker (~1825 Bavaria), and six children born Ohio. " +
+        "No relationship-to-head column in 1870 census.",
+    );
+    ok("1 result: Amos Whitfield in the Household of Nancy Doss. No relationship-to-head column.", [1850]);
+    ok("1 result: Amos Whitfield in the Household of Nancy Doss. The relationship-to-head column is absent.", [1850]);
+    // The spaced spellings that already worked still do.
+    ok("1 result: Amos Whitfield in the Household of Nancy Doss. No relationship to head column.", [1850]);
+    ok("1 result: Amos Whitfield in the Household of Nancy Doss. The relationship column is absent.", [1850]);
+  });
+});
+
+/**
+ * Every mechanism `assertsHousehold` is built from, pinned one at a time.
+ *
+ * The first version of that predicate asked whether a capital letter sat
+ * within 24 characters of the noun, and review broke it three ways in each
+ * direction at once. Capitalisation is not a test for a name: it misses a
+ * lowercase one and a list of bracketed roles, and it fires on a place. The
+ * predicate reads the GRAMMAR now, and each clause below has a test that goes
+ * red when that clause alone is removed -- the omission the previous round
+ * shipped, where disabling either the backward branch or the sentence stop
+ * left all 88 tests green.
+ */
+describe("assertsHousehold reads the relation, not the capitalisation", () => {
+  const bad = (n: string, years?: number[]) =>
+    expect(() => requirePre1880CensusHedge(n, years)).toThrow(/relationship-to-head/);
+  const ok = (n: string, years?: number[]) => expect(() => requirePre1880CensusHedge(n, years)).not.toThrow();
+
+  it.each([
+    // Each of these is refused on main and was ALLOWED by the capital test.
+    ["a bracketed role list", "1850 census: Amos (head), Nancy (wife), Thomas (son); dwelling 112."],
+    ["an all-lowercase name", "1850 census: amos whitfield in household of nancy doss."],
+    ["a lowercase name before the noun", "1850 census: Amos in the doss household."],
+  ])("refuses %s", (_label, n) => bad(n, [1850]));
+
+  it.each([
+    // ...and each of these is allowed on main and was REFUSED by it, because
+    // the only capital near the noun is a place.
+    ["a nil naming a county", "no household found in Pike County"],
+    ["a state abbreviation before the noun", "Bucks Co., PA household: no Whitfield found"],
+  ])("allows %s", (_label, n) => ok(n, [1850]));
+
+  it("needs each relation on its own, not just whichever one a note happens to carry", () => {
+    // A mutation sweep found `of` and `includes` unpinned: every note that
+    // exercised them also carried an `in`, so deleting either clause left the
+    // suite green. One note per clause, carrying that clause and no other.
+    bad("1850 census. Household of Nancy Doss, Pike County, Kentucky.", [1850]);
+    bad("1850 census. The household also includes: Mary J, age 9, and Thomas, age 4.", [1850]);
+    // Lowercase on purpose: a capitalised possessive is also a compound, so a
+    // capitalised note cannot pin this clause.
+    bad("1850 census. Amos listed at nancy doss's household, Pike County.", [1850]);
+    bad("1850 census. Amos was enumerated with Nancy Doss.", [1850]);
+  });
+
+  it("does not read a capitalised article as a name", () => {
+    // Stripping the sentence opener is what stops the compound arm becoming
+    // the capital test again from the other end. Both of these are mentions.
+    ok("1850 census. The household could not be identified from the index.", [1850]);
+    ok("1850 census. No household was located for this surname.", [1850]);
+  });
+
+  it("reads headship in both orders, and a numbered dwelling that holds people", () => {
+    // All three are refused on main and were freed by the round-4 rewrite:
+    // the headship arm read `head` BEFORE the noun only, and the third note's
+    // "her son" is suppressed by KINSHIP_CLAIM's possessive carve-out, so
+    // nothing was left once the bare noun stopped counting.
+    bad("1850 census: household headed by Nancy Doss", [1850]);
+    bad("1850 census: the household headed by Nancy Doss includes Amos.", [1850]);
+    bad("1850 census: Dwelling 112 holds Nancy Doss and her son Amos.", [1850]);
+  });
+
+  it("refuses the two corpus claims the round-4 rewrite freed", () => {
+    // Both are refused on main. Neither reaches any household relation, so
+    // each is caught on the kinship side.
+    //
+    // 'wife is listed as Mary A. Ranny' is the indexer's inference for a role
+    // an 1870 schedule does not carry, written flat. It is a REJECTION note,
+    // and the position this PR took when it declined round 2's #2 is that a
+    // rejection still writes the claim -- so freeing it was inconsistent with
+    // our own ruling, not merely a miss.
+    bad(
+      "Broadened to all Ohio 1870, 28 results. No Albert Raney + Mary wife household anywhere in Ohio. " +
+        "The only Seneca County hit is the Sabra Raney widowed household (Albert b.1850, wrong person). " +
+        "Albert S. Ranny in Hardin Co (b.1846) was noted but wife is listed as Mary A. Ranny (b.1827) " +
+        "— older by 19 years, inconsistent with our Mary L. Ruse (b.ca.1845). " +
+        "1870 census exhausted for subject.",
+    );
+    // ...and an 1841 England schedule carries no relationship column either.
+    bad(
+      "Found the Thomas Young family at Stanhope Cottages, Walcot, Somerset. Household confirmed as " +
+        "correct family: Thomas Young (Male, b. 1807-1811), Elizabeth Young (Female, b. 1807-1811), " +
+        "and children Thomas (b.1829), Mary (b.1830), Elizabeth (b.1832). The 1841 census confirms " +
+        "Thomas and Elizabeth Young as a married couple residing in Walcot.",
+    );
+  });
+
+  it("keeps `children` plural and `child` out of the kinship list", () => {
+    // The singular refused a marriage-record note reasoning from the wedding
+    // date, which asserts nothing about a census household. It is bound to an
+    // 1870 census by a different sentence, so nothing else saves it.
+    ok(
+      "Georgia County Marriages 1785-1950 search for Joseph Wood marrying Mary, 1850-1862. Timing is " +
+        "consistent: marriage Nov 1859, first child Martha J. born ~1860 (nine months later). " +
+        "DISCREPANCY: the 1870 census shows wife as 'Mary E. Wood'.",
+    );
+  });
+
+  it("reads a role reported through a copula, but not an index attribution", () => {
+    bad("1870 census: wife is listed as Mary A. Ranny.", [1850]);
+    bad("1870 census: father was recorded as Thomas Flynn.", [1850]);
+    // `indexed` stays a hedge, and only beside head/relationship/co-resident/
+    // role -- INDEXED_ROLE_HEDGES excludes bare kinship on purpose, which is
+    // why the Ranny note above is a claim rather than a hedged one.
+    ok("1850 US Census, Schuylkill: role indexed as 'Head' for a person born 1845.", [1850]);
+  });
+
+  it.each([
+    // Raised in review alongside the above and NOT fixed here: each passes on
+    // main and on this head, so none is a regression, and widening the gate's
+    // vocabulary needs its own corpus re-measure. Tracked on issue #3125.
+    "1850 census: Amos Whitfield, son of Nancy Doss",
+    "1850 census: Head: Nancy Doss. Amos, son.",
+    "1850 census: Nancy Doss [head], Amos [son]",
+    "1850 census: Amos (grandson) with Nancy Doss.",
+  ])("records a vocabulary gap this gate still has (%#)", (n) => ok(n, [1850]));
+
+  it("needs the noun-compound arm, which no relation reaches", () => {
+    // Eleven corpus notes take this shape. Without hasHouseholdCompound each
+    // is freed: there is no of, no in, no possessive and no kinship word.
+    bad("1850 U.S. Census, Schuylkill County, Pennsylvania - Thomas Flynn household, Dwelling 84, Family 91.", [1850]);
+    bad("1 result: Sarah A. Mullen, William Mullen household, Dodge County, Wisconsin.", [1850]);
+  });
+
+  it("needs the place guard on that arm, and the complement guard", () => {
+    // Both are what stop the compound arm becoming the capital test again.
+    ok("Bucks Co., PA household: no Whitfield found", [1850]);
+    ok("1830 census search for Bagley surname in Vermont. Reading Topsham household records to check age columns.", [1850]);
+  });
+
+  it("needs the sentence stop, because a relation does not cross a full stop", () => {
+    // Real corpus note: the `in` governs FamilySearch in one sentence and the
+    // noun opens the next. Matched against the whole string it is refused.
+    ok(
+      "1840 federal census for Geach in Licking County not indexed in FamilySearch. " +
+        "Rebecca's 1840 household cannot be confirmed via this index.",
+      [1850],
+    );
+    // ...and the stop must not cut at an abbreviating period, or the claim in
+    // this one is split away from its own `in`.
+    bad("1 result: Patrick Flynn, b. 1845 Ireland, in household of Thomas Flynn.", [1850]);
+  });
+
+  it("reads the participle, which is the form the one corpus instance uses", () => {
+    // 'heading own household with John Clark b.1822 Ohio and Sanfrancisco
+    // Clark b.1849 Ohio' - a headship claim that `heads?` alone missed, found
+    // by re-reading the freed list rather than by a test.
+    bad(
+      "CRITICAL LEAD: Christena Clark b.1787 Virginia, Cambridge, Guernsey County, Ohio " +
+        "- heading own household with John Clark b.1822 Ohio and Sanfrancisco Clark b.1849 Ohio.",
+      [1850],
+    );
+  });
+
+  it("wants the role OUTSIDE the bracket and the person outside it", () => {
+    // The loose form of ROLE_IN_PARENS refused four corpus notes that assert
+    // nothing. In each the role heads the parenthetical and the person sits
+    // inside it, which is a gloss; in a claim the person is outside and the
+    // bracket holds only the label.
+    ok("Anders Monsen in Norway Census (spouse Unna) - all 50 results from the 1801 census.", [1850]);
+    ok("c_002 (mother identity) cannot be resolved via this source without image browsing.", [1850]);
+    ok("The better approach is to search for Margret Reagan (the mother, b. 1820).", [1850]);
+    ok("Children named are John Flynn and Mary Ann Dougherty (wife of Patrick Dougherty).", [1850]);
+    // The claim shape, including the one that carries detail after the role.
+    bad("1850 census: Sarah (wife), Jesse (son).", [1850]);
+    bad("1850 census: John Baker (head, ~1822 Bavaria), Barbara Baker (~1825 Bavaria).", [1850]);
+  });
+});
+
+describe("requirePre1880CensusHedge with a staged census payload, continued", () => {
+  const ok = (n: string, years?: number[]) => expect(() => requirePre1880CensusHedge(n, years)).not.toThrow();
 
   // The lead's standing proof: a year the note binds itself still wins.
   it.each([

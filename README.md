@@ -54,7 +54,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 51 tools.
+The MCP server exposes 52 tools.
 
 ### FamilySearch records and places
 
@@ -104,6 +104,7 @@ way project state changes.
 | `research_query` | Paged, filtered read of a `research.json` section without loading the whole document | None |
 | `sidecar_read` | Paged read of a project sidecar text file — a gps-mentor verdict body under `evaluations/` or a text upload under `uploads/`. Refuses `results/`, images, `research.json` and the tree with a pointer to the tool that serves each | None |
 | `research_log_append` | Append a research-log entry, including a search's result sidecar | None |
+| `research_delivered` | Signal that a bounded request has been delivered and the turn is stopping on purpose. A pure signal: writes nothing. On the PROTOTYPE worker a `PreToolUse` hook ends the turn on this tool's name; everywhere else (Cowork, e2e, and the hosted alpha, whose Stop hook keeps phase-1 behaviour until it is retired) it returns a harmless acknowledgement and the run carries on | None |
 | `extraction_append` | Record-level assertion extraction — held by the `record-extractor` agent, not the main thread | None |
 | `materialize_facts` | Project extracted assertions onto tree persons | None |
 | `tree_edit` | Add or amend persons, facts, names and relationships on the local tree | None |
@@ -229,7 +230,7 @@ specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships twenty Cowork agents. Unlike skills, an agent runs in
+The plugin ships twenty-one Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 at its mentor checkpoint, or by the skill that delegates to it — you
 don't load it explicitly.
@@ -256,6 +257,7 @@ don't load it explicitly.
 | **hypothesis-tracking** | Tracks competing candidates with evidence for/against each. Manages elimination. | "Could this be the same person?" |
 | **tree-edit** | Direct corrections to the tree file — add or correct a fact, create a person or relationship, check FamilySearch record hints and possible duplicates. Also executes person merges after proof-conclusion confirms identity. After any change it hands back so `check-warnings` runs on the persons it touched. | "Fix this name" / "Merge these two persons" |
 | **validate-schema** | Validates both project files against the published schemas — required fields, enum values, ID prefixes, cross-references — and reports each error with a suggested fix. Read-only: it never edits a file. The writer tools already validate before they persist, so this is an on-demand audit of the whole project. Asked about genealogical impossibilities or GPS quality, it hands the request back by name. | "Validate the project files" / "Is the schema valid?" |
+| **survey-surname** | Tabulates every household of a surname across a place's US federal censuses — one `record_search` per census year, staged results, a markdown table sectioned by year. Stops and asks for counties when a single year exceeds 600 matches. | "Find every Dixon family in Virginia" / "List all the Smiths in Ohio censuses 1820-1850" |
 
 ## Recommended workflow
 
@@ -461,14 +463,14 @@ then narrows the search.
 
 What's shipped:
 
-- **51 MCP tools.** See the tables above for the full catalog, by category:
+- **52 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
 - **12 shipped skills.** Full GPS research cycle from `init-project`
   through the conclusion. The three
   e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result, grade-e2e-run)
   are repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
-- **20 Cowork agents.** `translation` (genealogy-specific translation of foreign-language
+- **21 Cowork agents.** `translation` (genealogy-specific translation of foreign-language
   records), `gps-mentor` (BCG-style senior-genealogist review,
   invoked by `/research` at GPS checkpoints and on demand), `record-extractor`
   (per-record assertion extraction), `proof-conclusion` (the proof conclusion
@@ -488,8 +490,9 @@ What's shipped:
   conclusion), `hypothesis-tracking` (competing-candidate hypotheses, and the
   only writer of `hypotheses`), `locality-guide` (the records survey for one
   place and period), `historical-context` (narrative historical context for
-  interpreting records — boundary changes, naming conventions, migration) and
-  `image-reader` (page OCR).
+  interpreting records — boundary changes, naming conventions, migration),
+  `image-reader` (page OCR), `project-status` (a read-only report of where the research stands) and `survey-surname` (surname
+  household tabulation across censuses).
 - **Researcher profile.** `init-project` asks only the research objective, in
   one non-blocking opening turn; the profile itself is fixed (`novice`, one
   house-style narration string) and nothing about the researcher is asked.

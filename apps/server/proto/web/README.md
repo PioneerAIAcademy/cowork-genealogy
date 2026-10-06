@@ -94,8 +94,8 @@ and drops the one the 202's `seq` names; everything else relays.
   `drive.py --embedded-pg` starts a pip-installed PostgreSQL 16 (`pgserver`, in the
   `proto` dependency group — never installed by `uv sync` or CI; wheels exist for macOS
   arm64/x86_64, Linux x86_64 and Windows x86_64, **not** Linux aarch64), migrates it
-  (`migrate.migrate`, the runner step 6 uses) and runs the tier in-process with **no
-  queue**.
+  (`migrate.migrate`, the runner step 6 uses) and runs the tier in-process on the
+  driver's own **`NullQueue`** (nothing is enqueued).
 - **Compose** (`make proto-up`): the `web` service on `127.0.0.1:8085`, `QUEUE_URL` pointed
   at the queue the shim reads, `PG_DSN` at the compose postgres. Startup applies no
   schema (U9): the one-shot `migrate` service runs `../migrate.py` first and the tier
@@ -143,13 +143,14 @@ and drops the one the 202's `seq` names; everything else relays.
   `python -m uvicorn web.app:app --host 127.0.0.1 --port 8000` with `WEB_DIST_DIR=web-dist`;
   why each setting: `../eb-web/README.md`.
 
-`QUEUE_URL` unset → `NullQueue`: the turn is recorded (a `turns` row, a `user_msg` event)
-and never enqueued, logged loudly at start. Under `NullQueue` nothing completes a turn, so
-a posted turn stays `turn_active` until a script closes it (the driver's seeder does, through
-`worker.complete()` itself).
+`QUEUE_URL` unset or empty refuses to start (a `RuntimeError` from the lifespan, U11): a
+tier with no queue records a turn and nothing ever runs it. The driver's embedded tier is
+the one queue-less mode, and it passes `drive.py`'s own `NullQueue` to `create_app`: the
+turn is recorded (a `turns` row, a `user_msg` event) and never enqueued, and stays
+`turn_active` until the seeder closes it through `worker.complete()` itself.
 
-Env: `PG_DSN`, `QUEUE_URL` (a full queue URL, the shim's shape), `POLL_S` (1),
-`SSE_PING_S` (15), `WEB_DIST_DIR` (unset: no SPA). With `QUEUE_URL` set (and only then), `GENEALOGY_SQS_ACCESS_KEY` +
+Env: `PG_DSN`, `QUEUE_URL` (a full queue URL, the shim's shape; required), `POLL_S` (1),
+`SSE_PING_S` (15), `WEB_DIST_DIR` (unset: no SPA), `GENEALOGY_SQS_ACCESS_KEY` +
 `GENEALOGY_SQS_SECRET_KEY` (both or neither; neither signs with the default AWS chain, the
 instance profile on AWS; one alone refuses to start) and `GENEALOGY_SQS_REGION` (else the
 `QUEUE_URL` host's region). The start line names the mode, never a key:
