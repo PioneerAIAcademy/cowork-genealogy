@@ -1681,6 +1681,86 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
     sources: [{ id: "S1", title: "Parish Register" }],
   });
 
+  // A child with one father, and a second father to add. Both men and the child
+  // are individually plausible; the impossibility is purely relational, which is
+  // why only a gate that SEES the parentage edge can catch it.
+  const twoFathersTree = () => ({
+    persons: [
+      {
+        id: "I1",
+        gender: "Male",
+        names: [{ id: "N1", given: "John", surname: "Smith", preferred: true }],
+        facts: [{ id: "F1", type: "Birth", date: "1900", primary: true }],
+      },
+      {
+        id: "I2",
+        gender: "Male",
+        names: [{ id: "N2", given: "Peter", surname: "Brown", preferred: true }],
+        facts: [{ id: "F2", type: "Birth", date: "1902", primary: true }],
+      },
+      {
+        id: "I3",
+        gender: "Female",
+        names: [{ id: "N3", given: "Mary", surname: "Smith", preferred: true }],
+        facts: [{ id: "F3", type: "Birth", date: "1930", primary: true }],
+      },
+    ],
+    relationships: [{ id: "R1", type: "ParentChild", parent: "I1", child: "I3" }],
+    sources: [{ id: "S1", title: "Parish Register" }],
+  });
+
+  it("refuses a second biological father on a child (the parentage edge the gate used to miss)", async () => {
+    // Returned ok: true on main. `computeTouchedPersonIds` read relationship
+    // endpoints from `person1`/`person2` only -- the Couple pair -- so adding a
+    // ParentChild edge, which carries `parent`/`child`, marked NOBODY as
+    // touched and the gate computed warnings for no one. Measured over the 201
+    // committed e2e final trees: 2240 ParentChild edges, 0 using person1/person2.
+    await writeProject(twoFathersTree());
+    const treeBefore = await readTree();
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "ParentChild",
+        parent: "I2",
+        child: "I3",
+        sources: [{ ref: "S1" }],
+      },
+    } as any);
+
+    expect(r.ok).toBe(false);
+    expect((r as any).reason).toBe("unjustified_warnings");
+    expect(JSON.stringify((r as any).warnings)).toMatch(/tooManyFathers2/);
+    expect(await readTree()).toEqual(treeBefore);
+  });
+
+  it("lands the same second father when every introduced warning is justified", async () => {
+    // The accept direction: the gate narrows, it does not forbid. A genuine
+    // second father -- an adoption, or a correction -- goes through on a
+    // justified re-call.
+    await writeProject(twoFathersTree());
+    const refused = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I2", child: "I3", sources: [{ ref: "S1" }] },
+    } as any);
+    expect(refused.ok).toBe(false);
+
+    const ok = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I2", child: "I3", sources: [{ ref: "S1" }] },
+      warningJustifications: (refused as any).warnings.map((w: any) => ({
+        warningId: w.warningId,
+        justification: "Adoptive father, recorded on the 1940 decree.",
+      })),
+    } as any);
+    expect(ok.ok).toBe(true);
+    const rels = (await readTree()).relationships.filter((r: any) => r.type === "ParentChild");
+    expect(rels).toHaveLength(2);
+  });
+
   it("refuses a write that introduces a >120-year-lifespan warning, tree unchanged", async () => {
     await writeProject(longLifeTree());
     const treeBefore = await readTree();

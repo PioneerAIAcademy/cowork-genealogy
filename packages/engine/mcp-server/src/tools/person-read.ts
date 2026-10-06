@@ -15,6 +15,7 @@ import {
 import { mapWithConcurrency } from "../utils/place-resolver.js";
 import { stageSearchResults } from "../utils/results-staging.js";
 import { imageTranscribeTool } from "./image-transcribe.js";
+import { relationshipEndpoints } from "../utils/relationship-endpoints.js";
 import type {
   GedcomX,
   GedcomXFact,
@@ -936,9 +937,7 @@ function dropStrandedPersons(
 ): TreePerson[] {
   const linked = new Set<string>();
   for (const r of relationships) {
-    for (const endpoint of [r.parent, r.child, r.person1, r.person2]) {
-      if (endpoint) linked.add(endpoint);
-    }
+    for (const endpoint of relationshipEndpoints(r)) linked.add(endpoint);
   }
   return persons.filter((p) => !p.id || p.id === pid || linked.has(p.id));
 }

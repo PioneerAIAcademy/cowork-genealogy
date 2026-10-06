@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ALL_WARNING_TAGS } from "../../src/tools/person-warnings.js";
+import { GATE_EXEMPT_TYPES } from "../../src/validation/introduced-warnings.js";
 
 // Contract: docs/specs/person-warnings-tool-spec.md § "Tag Catalogue".
 //
@@ -119,6 +120,24 @@ describe("person-warnings spec catalogue and the shipped tags agree", () => {
     expect(
       extra,
       "these tags are documented in § Tag Catalogue but the tool emits no such tag",
+    ).toEqual([]);
+  });
+
+  // (3) Every gate exemption names a tag the tool actually emits.
+  //
+  // `GATE_EXEMPT_TYPES` is matched against `issueType` by string equality, so a
+  // misspelled or mis-cased entry exempts NOTHING and the gate keeps refusing
+  // the write the entry was added to let through. Nothing caught that: the
+  // type is `string`, the two drift arms above walk the code/spec pair and
+  // never look at the exempt set, and an exemption that does nothing is
+  // invisible until someone re-measures the fire rate. The set grew from 5 to
+  // 10 when the gate began seeing parentage edges, which is when a silent
+  // no-op started costing real refusals.
+  it("exempts only tags the tool actually emits", () => {
+    const unknown = [...GATE_EXEMPT_TYPES].filter((t) => !shipped.has(t)).sort();
+    expect(
+      unknown,
+      "these GATE_EXEMPT_TYPES entries match no tag the tool emits, so they exempt nothing",
     ).toEqual([]);
   });
 });

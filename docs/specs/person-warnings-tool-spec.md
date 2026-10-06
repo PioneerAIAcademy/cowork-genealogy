@@ -873,6 +873,53 @@ Grep for `calculateWarnings` when sizing the blast radius.
   the tag is in `GATE_EXEMPT_TYPES`. A new `implausible` tag therefore can refuse a
   tree write. Decide whether it belongs in that exempt set.
 
+  **`GATE_EXEMPT_TYPES` membership, and why each entry is there.** The set is
+  matched against `issueType` by string equality, so an entry that is not a real
+  tag exempts nothing — pinned by `person-warnings-spec-drift.test.ts`, which
+  fails on a typo and on a case-only variant.
+
+  **The line is the class, not the frequency.** A tag is exempt when it reports
+  a DATA-QUALITY artefact — an import that duplicated a person, a stub with one
+  fact, two spellings of one name — and gating when it reports a genealogical
+  IMPOSSIBILITY the writer would be asserting. An earlier draft of this list
+  picked the five most frequent tags instead, which put a real impossibility
+  (`hasCloseChildBirthsIgnoreSimilarChildren`, two DISSIMILAR children born
+  2–240 days apart) on the exempt side while `similarChildren` — one person
+  recorded twice, the artefact class the list exists for — kept refusing.
+
+  **A relative or gendered form is exempt iff its self form is.** They are the
+  same predicate at the same severity evaluated from a different anchor, so
+  splitting a pair means one write refuses and an identical one does not.
+
+  Measured over the committed e2e final trees: gating parentage edges
+  unexempted refuses 416 of 2240 (18.6%) — 483 instances across 73 runs,
+  measured at MEASURED_SHA. After
+  the exemptions it refuses 59 of 2240 (2.6%), 59 instances across 16 runs, and
+  every tag still gating is an impossibility rather than a prior:
+  `hasCloseChildBirthsIgnoreSimilarChildren` (32), `tooManyMothers2` (16),
+  `tooManyFathers2` (6), `childBirthRange40` (3) and
+  `relativesHasAgeRangeGreaterThan120` (2). The two-parents-of-one-sex tags
+  account for 22 edge-level instances but only 10 distinct warnings, because
+  removing either parent edge introduces the same one; the script prints both
+  columns so they are not confused. A genealogist read those cases on
+  2026-10-05 and reported most to be one person entered twice rather than
+  competing parentage, with no adoption the warning would wrongly refuse — a
+  human judgement, attributed rather than quoted as a measurement.
+
+  **Known false allow: one relative hop.** The gate computes warnings for the
+  write's touched persons — changed persons plus both ends of every changed
+  relationship — so a `relatives*` warning landing on a one-hop relative OF an
+  endpoint (a pre-existing sibling of the child, say) is not computed. The
+  shape is constructible and predates parentage edges being seen at all, since
+  it applies to `Couple` edges equally. Its measured cost is **0 of 2240**
+  edges: widening the touched set by one relative hop refuses the same 59
+  edges. Re-measure before widening; a cost of zero is a reason to leave it
+  alone, not a reason to believe the shape cannot occur.
+
+  Re-derive every count above with `dev/measure-parentage-gate-rate.ts`
+  (`--all` for the unexempted figure) before changing the list; do not
+  hand-copy them.
+
 **The prose counts in this spec are not linted.** `catalogueTags()` compares the
 tag *set* only, so every sentence stating a total ("the N tags", "M of the K
 self-checks") ships stale and silent. Update them with step 7; `git grep -n` for

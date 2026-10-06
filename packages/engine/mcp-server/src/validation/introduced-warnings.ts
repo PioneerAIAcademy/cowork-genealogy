@@ -16,6 +16,7 @@
  */
 
 import type { SimplifiedGedcomX, SimplifiedPerson, SimplifiedRelationship } from "../types/gedcomx.js";
+import { relationshipEndpoints } from "../utils/relationship-endpoints.js";
 import type { PersonWarning } from "../types/person-warnings.js";
 import { Mob } from "../utils/mob.js";
 import { calculateWarnings } from "../tools/person-warnings.js";
@@ -25,6 +26,56 @@ export function warningId(w: PersonWarning): string {
   const factIds = (w.facts ?? []).map((f) => f.id).sort();
   return `${w.issueType}|${w.personId}|${w.relatedPersonId ?? ""}|${factIds.join(",")}`;
 }
+
+// Warning types exempt from the gate.
+//
+// THE LINE IS THE CLASS, NOT THE FREQUENCY. A tag is exempt when it reports a
+// DATA-QUALITY artefact -- an import that duplicated a person, a stub with one
+// fact, two spellings of one name -- and gating when it reports a genealogical
+// IMPOSSIBILITY the writer would be asserting. Picking by frequency instead
+// put a real impossibility (`hasCloseChildBirthsIgnoreSimilarChildren`: two
+// DISSIMILAR children born 2-240 days apart) on the exempt side while the
+// duplicate-person class it is paired with kept refusing.
+//
+// A relative/gendered form is exempt iff its self form is. They are the same
+// predicate at the same severity evaluated from a different anchor, so
+// splitting them means one write refuses and an identical one does not.
+//
+// Measured over the committed e2e final trees with
+// dev/measure-parentage-gate-rate.ts; re-derive before changing this, and do
+// not hand-copy the counts.
+export const GATE_EXEMPT_TYPES: ReadonlySet<string> = new Set([
+  // Import and stub artefacts -- predate the gate seeing parentage edges.
+  "missingFactsAndRelatives",     // stub detection — every one-fact person trips it on remove
+  "tooManyBirthDates2",           // duplicate birth facts in imported records
+  "hasEventBeforeBirth365_2",     // fires when adding a second birth-like fact
+  "hasDiffSurnameMale",           // two names with different surnames — common in merges and imports
+  "hasBlankName",                 // a name node with empty given/surname — named-party materializations
+
+  // One person recorded twice: the duplicate-person class, which is what an
+  // import produces rather than a claim the writer is making.
+  "similarChildren",
+  "similarChildrenConflictingDates",
+
+  // Soft demographic and naming priors on a relative — heuristics, not
+  // impossibilities.
+  "relativesHasEventBeforeChristening365_3",
+  "relativesDeathRangeGreaterThan2",
+  "maleRelativesHasDiffSurname",               // self form `hasDiffSurnameMale` exempt above
+
+  // Child-bearing age and marriage-interval priors. Each appears in a self, a
+  // gendered and a relative form; all forms travel together.
+  "femaleRelativesLatestChildBirthToBirth45",
+  "latestChildBirthToBirthFemale45",
+  "relativesEarliestChildBirthToBirth12",
+  "earliestChildBirthToBirth12",
+  "femaleRelativesEarliestChildBirthToBirth14",
+  "earliestChildBirthToBirthFemale14",
+  "maleRelativesEarliestChildBirthToBirth14",
+  "earliestChildBirthToBirthMale14",
+  "relativesLatestChildBirthToMarriage35",
+  "latestChildBirthToMarriage35",
+]);
 
 /** Compute warnings for a single person on a tree, returning [] if the
  *  person does not exist (e.g. collapsed after a merge) or if the warning
@@ -69,6 +120,10 @@ export function introducedWarnings(
   touchedPersonIds: string[],
   warningJustifications?: WarningJustificationInput[],
   collapseMap?: Map<string, string>,
+  /** Measurement-only. `false` bypasses `GATE_EXEMPT_TYPES`, so the committed
+   *  rate script can re-derive what the exempt list is actually buying rather
+   *  than quoting a number nobody can reproduce. No shipped caller passes it. */
+  applyExemptions = true,
 ): IntroducedWarningsResult {
   // Dedupe touched ids and, for merges, remap collapsed→survivor
   const uniqueIds = new Set<string>();
@@ -105,24 +160,10 @@ export function introducedWarnings(
     }
   }
 
-  // Warning types exempt from the gate. The satisfiability replay (ADR-0011
-  // limit 2) showed these fire routinely on minimal trees and FamilySearch
-  // imports, producing false-deny rates too high for the gate's intended
-  // catches (implausible lifespan, event after death, burial after death).
-  // Each is a data-quality indicator — not a genealogical contradiction the
-  // writer introduced through a judgment error.
-  const GATE_EXEMPT_TYPES = new Set([
-    "missingFactsAndRelatives",     // stub detection — every one-fact person trips it on remove
-    "tooManyBirthDates2",           // duplicate birth facts in imported records
-    "hasEventBeforeBirth365_2",     // fires when adding a second birth-like fact
-    "hasDiffSurnameMale",           // two names with different surnames — common in merges and imports
-    "hasBlankName",                 // a name node with empty given/surname — named-party materializations
-  ]);
-
   // Delta: warnings in after that were not in before
   const introduced: Array<PersonWarning & { warningId: string }> = [];
   for (const [wid, w] of afterWarnings) {
-    if (!beforeWarnings.has(wid) && !GATE_EXEMPT_TYPES.has(w.issueType)) {
+    if (!beforeWarnings.has(wid) && !(applyExemptions && GATE_EXEMPT_TYPES.has(w.issueType))) {
       introduced.push({ ...w, warningId: wid });
     }
   }
@@ -191,21 +232,25 @@ export function computeTouchedPersonIds(
   for (const r of after.relationships ?? []) {
     if (r.id) afterRels.set(r.id, r);
   }
+  // `relationshipEndpoints`, never a hand-written field read. These three
+  // sites read only `person1`/`person2` -- the Couple pair -- so a ParentChild
+  // edge, which carries `parent`/`child` and no `person1`, marked NOBODY as
+  // touched and the gate could not fire on any parentage write.
   for (const [id, r] of afterRels) {
     const br = beforeRels.get(id);
     if (!br || JSON.stringify(br) !== JSON.stringify(r)) {
-      if (r.person1) touched.add(r.person1);
-      if (r.person2) touched.add(r.person2);
+      for (const e of relationshipEndpoints(r)) touched.add(e);
+      // The BEFORE side of a changed relationship is the repoint case: when a
+      // parent moves A -> B, A must enter `touched` or the before-side
+      // warnings are never computed and the delta is wrong in A's favour.
       if (br) {
-        if (br.person1) touched.add(br.person1);
-        if (br.person2) touched.add(br.person2);
+        for (const e of relationshipEndpoints(br)) touched.add(e);
       }
     }
   }
   for (const [id, r] of beforeRels) {
     if (!afterRels.has(id)) {
-      if (r.person1) touched.add(r.person1);
-      if (r.person2) touched.add(r.person2);
+      for (const e of relationshipEndpoints(r)) touched.add(e);
     }
   }
 

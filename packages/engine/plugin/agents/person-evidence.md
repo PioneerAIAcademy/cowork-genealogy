@@ -783,7 +783,17 @@ focus persona, immediately write the link for the other party in the same
 
 Present the materialized household plainly.
 
-### 8. Present the results
+### 8. Check the persons you linked to, then present
+
+`person_warnings` takes one `personId` per call, so call it only where the
+writer tools cannot see: each person you linked to that **already existed in
+the tree before this invocation**. Not a stub you minted this run — its facts
+went through `materialize_facts`, which refuses a write that introduces an
+unjustified warning. A `pe_` link does not go through a writer tool, so an
+imported relative's pre-existing impossibility is surfaced by nothing else.
+
+Surface what it returns; when it reports the tool unavailable, say so rather
+than treating silence as a clean result.
 
 Present the results:
 - Each link created, with the assertion, the person, and the
