@@ -954,7 +954,13 @@ before the first stubbed one is not denied, and a `Skill` call whose name cannot
 read never arms the stop (`unread_skill_calls` warns about it). The runnability gate
 refuses the field on a negative test or with nothing stubbed, and requires it on a
 test tagged `no-shortcut`, whose validator (`test_no_paired_skill_shortcut`) fails on
-any paired row reached besides the expected one. The transcript ends with the
+any paired row reached besides the expected one. Under the stop that validator sees
+only a paired hand-off made in the same turn as the first one: a shortcut in a later
+turn is cut off by the stop and passes, and a shortcut as the first hand-off already
+fails `test_routes_to_expected_skill`. A hand-off of the next turn whose hook runs
+before its message reaches the loop is denied but not kept: only a call that appears
+in a message of the hand-off's own turn stays in `skills_invoked` and
+`builtin_tool_calls`. The transcript ends with the
 hand-off's turn, so the test's `judge_context` must say not to deduct for a missing
 closing summary, and because the run ends before the skill can write or summarize,
 the recorded hand-off counts as its activation (§6, rule 4).

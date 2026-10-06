@@ -142,7 +142,8 @@ def test_no_paired_skill_shortcut(test, skills_invoked, builtin_tool_calls):
     asserts, in call order, that the hand-off is the expected one. So a paired
     row other than the expected one is either that first hand-off itself, which
     the routing check also fails, or one made later in that turn, which the stop
-    denies but records, and which only this check sees. Both call mechanisms
+    denies but records, and which only this check sees. A shortcut in a later
+    turn is cut off by the stop and never reaches the record. Both call mechanisms
     are checked because the routing table reaches its ``@plugin:`` rows by spawn
     and the rest by ``Skill``.
     """

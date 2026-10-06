@@ -82,13 +82,16 @@ a `no-shortcut` test. Without the stop the test cannot pass reliably:
 `research/SKILL.md` tells the router to drive the table forward to the named
 destination, so after question-selection it walks on down the table. The stubs
 write nothing, so nothing it hands to ever lands: one measured walk ran on until
-the turn cap, and another came back to the first row. The test's committed
-failures on main were mostly the activation defect above, then that walk. One
+the turn cap, and another came back to the first row. The test's failures
+committed to main were mostly the activation defect above, then that walk. One
 more (`v1_2026-08-25_20-14-29.json`), from when the test asked to "write the
-conclusion", went straight to proof-conclusion, and research never ran. In
-every committed run, person-evidence, research-exhaustiveness and
+conclusion", went straight to proof-conclusion, and research never ran, and one
+(`v1_2026-08-26_20-01-53.json`) made no hand-off at all. In every 015 run
+committed to main, person-evidence, research-exhaustiveness and
 proof-conclusion were reached by `Skill` calls, which is why a count of agent
-spawns alone finds none. The test keeps the paired agents in `stub_skills`: a
+spawns alone finds none there; runs committed only to unmerged branches do spawn
+person-evidence and research-exhaustiveness. The test keeps the paired agents in
+`stub_skills`: a
 denied spawn is still recorded, so a shortcut fails the validator rather than
 running.
 
@@ -96,7 +99,10 @@ That validator is not redundant with `test_routes_to_expected_skill`, which
 asserts only the first hand-off. A router that spawns question-selection and
 `@plugin:proof-conclusion` in the same turn passes the routing check. The stop
 waits for the end of that turn, so it denies and records both, and this
-validator fails the run.
+validator fails the run. That is all it now sees: a paired hand-off made in the
+same turn as the first one. A shortcut in a later turn is cut off by the stop and
+passes, and a shortcut as the first hand-off already fails
+`test_routes_to_expected_skill`.
 
 ## Moved negatives (issue #2268)
 

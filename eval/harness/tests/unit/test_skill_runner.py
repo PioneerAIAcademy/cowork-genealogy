@@ -2279,6 +2279,45 @@ def test_a_subagents_messages_neither_start_nor_end_the_hand_off_turn(
     assert "Reacting to the denial." not in result.text_response
 
 
+def test_a_hand_off_in_the_next_turn_is_not_recorded_when_its_hook_runs_first(
+    tmp_path, monkeypatch
+):
+    """The model's next turn can reach the hook before its message reaches the
+    loop. The hook denies and records the call, but it belongs to that turn, not
+    the hand-off's, so it must not stay in `builtin_tool_calls` or
+    `skills_invoked`, where `test_no_paired_skill_shortcut` would count the walk
+    the stop exists to cut off."""
+    import asyncio
+
+    returns = {}
+    plan = {"tool_name": "Skill", "tool_input": {"skill": "research-plan"}}
+    result = asyncio.run(_run_interleaved(
+        monkeypatch, tmp_path,
+        [
+            _turn("Routing to the first row.",
+                  _spawn_block("question-selection", "qs-id"), message_id="turn-1"),
+            _hook_runs(_SPAWN_QS, "qs-id"),
+            _results("qs-id"),
+            _hook_runs(_SPAWN_PE, "pe-id"),
+            _hook_runs(plan, "plan-id"),
+            _turn("Next, the evidence and the plan.",
+                  _spawn_block("person-evidence", "pe-id"),
+                  _skill_block("research-plan", "plan-id"), message_id="turn-2"),
+            _done(),
+        ],
+        returns,
+        stop_at_stub=True,
+        stub_skills={"question-selection": None, "research-plan": None},
+        stub_agents=_QS_ONLY,
+    ))
+
+    assert returns["pe-id"]["continue_"] is False, "the next turn's spawn was let run"
+    assert returns["plan-id"]["continue_"] is False, "the next turn's Skill call was let run"
+    assert _spawned(result) == ["question-selection"]
+    assert "research-plan" not in result.skills_invoked
+    assert "Next, the evidence and the plan." not in result.text_response
+
+
 # --- the short-circuit's abort clearing is scoped, and nothing pinned it ------
 #
 # `if routing_resolved["v"] and aborted_reason != QUOTA_ABORT_REASON: clear`

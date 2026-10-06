@@ -967,13 +967,25 @@ async def run_skill(
     # router told to walk on down its table after it, a walk no stub can stop.
     # False leaves every other test as it was.
 
-    def stop_at_stub_denial(name: str, tool_use_id: str | None) -> dict[str, Any]:
+    # Every hand-off the stop denied: (tool_use_id, the builtin_tool_calls
+    # record, the skills_invoked index or None). Once the stream ends, one whose
+    # call never appeared in a message of the hand-off's own turn is taken back
+    # out of both lists (after the stream, below).
+    stop_denials: list[tuple[str | None, dict[str, Any] | None, int | None]] = []
+
+    def stop_at_stub_denial(
+        name: str,
+        tool_use_id: str | None,
+        record: dict[str, Any] | None,
+        skill_index: int | None,
+    ) -> dict[str, Any]:
         # Once armed, every later main-thread hand-off is denied too, stubbed or
         # not: a second one in the same turn is a shortcut the validators must
         # still see, and it must not run. The stop waits for the model's next
         # turn (the message scan), so every hook of this turn has run and
         # recorded its call first; which hand-off's id is kept here does not
         # move the stop.
+        stop_denials.append((tool_use_id, record, skill_index))
         routing_resolved["v"] = True
         routing_resolved["tool_use_id"] = tool_use_id
         if name in _stub_skills:
@@ -1029,7 +1041,7 @@ async def run_skill(
                     and routing_resolved["v"]
                     and not input_data.get("agent_id")
                 ):
-                    return stop_at_stub_denial("", tool_use_id)
+                    return stop_at_stub_denial("", tool_use_id, builtin_record, None)
             else:
                 skills_invoked.append(skill_name)
                 # Negative-test routing short-circuit: the correct skill was
@@ -1057,7 +1069,9 @@ async def run_skill(
                     and not input_data.get("agent_id")
                     and (skill_name in _stub_skills or routing_resolved["v"])
                 ):
-                    return stop_at_stub_denial(skill_name, tool_use_id)
+                    return stop_at_stub_denial(
+                        skill_name, tool_use_id, builtin_record, len(skills_invoked) - 1
+                    )
                 # Positive-test stub: record the hand-off, skip the callee's
                 # execution, but let this run finish its own remaining work —
                 # handing back the canned response when the caller reads one.
@@ -1073,7 +1087,7 @@ async def run_skill(
             )
         ):
             agent = (input_data.get("tool_input") or {}).get("subagent_type") or ""
-            return stop_at_stub_denial(agent, tool_use_id)
+            return stop_at_stub_denial(agent, tool_use_id, builtin_record, None)
         elif (denial := spawn_stub_denial(tool_name, input_data, _stub_agents)):
             return denial
         # Per-context tool policy: deny a subagent-only tool (see
@@ -1242,7 +1256,11 @@ async def run_skill(
     # until every hook of this one has returned, so the first main-thread
     # message with another id is the reaction. With no id to compare, the
     # first main-thread tool result after the hand-off marks the turn's end.
-    handoff_turn: dict[str, Any] = {"message_id": None, "results_seen": False}
+    # `tool_ids` holds the id of every call in a main-thread message of the
+    # hand-off's turn; a denied hand-off outside it belongs to the next turn.
+    handoff_turn: dict[str, Any] = {
+        "message_id": None, "results_seen": False, "tool_ids": set()
+    }
 
     def after_handoff_turn(message: Any) -> bool:
         message_id = getattr(message, "message_id", None)
@@ -1440,6 +1458,16 @@ async def run_skill(
                     handoff_turn["message_id"] = getattr(message, "message_id", None)
                 if routed_call_seen:
                     handoff_seen["v"] = True
+                if (
+                    stop_at_stub
+                    and main_thread
+                    and handoff_seen["v"]
+                    and not post_routing_reaction
+                ):
+                    handoff_turn["tool_ids"].update(
+                        b.id for b in message.content
+                        if isinstance(b, ToolUseBlock) and b.id
+                    )
                 if post_routing_reaction:
                     turns_seen["n"] -= 1
                     suppressed_post_deny_calls.extend(turn_mcp_calls)
@@ -1722,6 +1750,30 @@ async def run_skill(
         error = None
 
     duration_ms = (time.perf_counter() - start) * 1000.0
+
+    # A `stop_at_stub` run keeps a denied hand-off only if its call appeared in
+    # a message of the hand-off's own turn. The hook records before it decides,
+    # and the model's next turn can reach the hook before its message reaches
+    # the loop, so its hand-offs were recorded as the skill's: the walk the stop
+    # exists to cut off, failing `test_no_paired_skill_shortcut` on a run that
+    # stopped correctly. A call with no id is kept, as before. Done before the
+    # slash-command entry is inserted, while every index still holds.
+    if stop_at_stub and stop_denials:
+        turn_ids = handoff_turn["tool_ids"]
+        dropped = [
+            (record, index) for tool_use_id, record, index in stop_denials
+            if tool_use_id is not None and tool_use_id not in turn_ids
+        ]
+        if dropped:
+            dropped_records = [record for record, _ in dropped if record is not None]
+            builtin_tool_calls[:] = [
+                call for call in builtin_tool_calls
+                if not any(call is record for record in dropped_records)
+            ]
+            dropped_indexes = {index for _, index in dropped if index is not None}
+            skills_invoked[:] = [
+                name for i, name in enumerate(skills_invoked) if i not in dropped_indexes
+            ]
 
     # Index 0: `derive_activated` and `_compute_outcome` test membership, and
     # the judge's slot and the routing validators both read position. Inserted
