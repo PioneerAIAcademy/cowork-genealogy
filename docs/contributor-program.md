@@ -16,8 +16,9 @@ month 1; the payback is a helper doing the mentor's real work.
   and `contributor`, with a "Done when", and opens its own PR to main, small
   enough to review in half an hour, with a screenshot and "how I verified this".
   They run `/review` before the mentor reviews it.
-- **Contact:** a short check-in each working day (done, next, stuck) and a
-  30-minute weekly call.
+- **Contact:** a short check-in each working day (done, next, stuck), and a
+  30-minute weekly call. Stuck an hour after asking Claude? Send the mentor
+  what you tried.
 - **Week 3:** no merged PR, or a silent week, means deciding together whether
   to continue.
 - **Week 8:** the mentor decides whether the Contributor is ready for an issue
