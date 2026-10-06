@@ -24,7 +24,8 @@
     "This is a NEGATIVE routing test. The user wants to EXTRACT facts from a found record, not create a research plan.",
     "The correct action is to route to `extraction_append` or `@plugin:record-structurer`, not to write plan items.",
     "If the skill writes any new plan items to research.json in response to this request, that is a routing error — score Correctness=1.",
-    "Acceptable responses: routing the user to extraction, or a one-line explanation that extracting facts from records is handled by extraction."
+    "Acceptable responses: routing the user to extraction, or a one-line explanation that extracting facts from records is handled by extraction.",
+    "The message gives no death certificate text, file or record id, so nothing can be extracted yet. Asking for one, without planning, searching, extracting or writing, is a correct response: do not lower Correctness or Completeness because no facts were extracted."
   ],
   "execution": {
     "max_wall_clock_seconds": 300
