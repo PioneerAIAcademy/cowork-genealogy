@@ -1,0 +1,35 @@
+{
+  "tool": "record_read",
+  "description": "record_read catch-all for ut_search_records_028 -- matches ANY recordId (predicate '~' = empty-substring match) so a batch entry the search served but no specific record-read fixture stocks degrades to a content-light response instead of fixture_not_found (issue #2484 PR1; lead ruling 2026-10-01). Deliberately content-light: one Richardson christening at Church of St. Michael and All Angels, Ashton-under-Lyne (collection 1473014), with NO given name, no sex, no date and no ark, so it contradicts none of the 18 differently-named, differently-sexed, differently-dated hits in record-search-batch-c00558-7-narrowed-richardson.json. A named or dated canned record would answer a read of (e.g.) 'Rachel Richardson' with someone else's data and recreate this card's defect. MUST be ordered LAST among the test's record_read fixtures so the four specific record-read-richardson-* records win first (first-match-wins).",
+  "args": {
+    "recordId": "~"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_richardson_ashton_any",
+        "names": [
+          {
+            "type": "BirthName",
+            "surname": "Richardson"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Christening",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ]
+      }
+    ],
+    "relationships": [],
+    "sources": [
+      {
+        "id": "sd_c_1473014",
+        "title": "England, Births and Christenings, 1538-1975",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1473014"
+      }
+    ],
+    "places": []
+  }
+}
