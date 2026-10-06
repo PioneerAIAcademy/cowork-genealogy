@@ -334,6 +334,22 @@ evidence linked to the subject — i.e. nothing that separates this person from
 any same-named individual. Omitted otherwise; never `false`. It is computed from
 the subject, not the pool, so it is set on an empty staged set as well.
 
+**A sibling does not count: no search parameter accepts one, so it cannot narrow
+the query.** `record_search` takes `fatherGivenName`, `motherGivenName` and
+`spouseGivenName`, with no sibling field. A child counts for the opposite
+reason — a named child yields a second search in the other direction (the
+child's own records, with the subject as father or mother), while a named
+sibling only reaches the subject through parents, who already count on their
+own.
+
+**Place is not a discriminator here: it is already in the query, so it cannot
+separate same-named people within the same place.** The namesake problem is two
+people of the same name in the *same* place, and only a date or a named
+relative cuts between them. This is the asymmetry with the local
+`noDatedOrPlacedFact` a few lines up, which drives the withholding branch
+instead: that branch fires when the subject carries no signal at all, so place
+is read as a signal there.
+
 - **Narrow date.** A date counts when its day span, measured with
   `getDayRange` (`src/utils/date-helpers.ts`) after `stdDate`, is shorter than
   a bare year's. So a month, quarter or day counts, while "1829", "Abt 1829",
@@ -385,7 +401,11 @@ the subject, not the pool, so it is set on an empty staged set as well.
   before scoring, applies the same filter.
 - **Never fails the call.** Malformed tree entries are skipped, each assertion
   is read on its own so one malformed entry cannot hide the rest, and if the
-  test itself throws, the flag is omitted.
+  test itself throws, the flag is omitted. Consumers read the flag as a
+  two-value signal — "thin" vs "not thin" — and treat a missing flag as "not
+  thin"; an aborted computation looks identical to a well-identified subject,
+  which is the correct direction to fail (ranks everyone, never silently gates
+  them).
 
 Independent of the withholding branch (`subjectResolvable: false` +
 `matches: []`), which fires on zero dated/placed facts. A subject with a
