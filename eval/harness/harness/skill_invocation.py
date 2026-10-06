@@ -231,9 +231,12 @@ def _normalized_response(entry: dict[str, Any]) -> str:
     can, so the escaping is flattened first instead, which is what
     `e2e/image_transcribe_report.py` does for the same reason.
 
-    Measured over the committed corpus: of 797 `ok:false` occurrences, 102
-    (13%) are in the escaped shape. A quoted-key matcher is blind to all of
-    them, and this arm CREDITS a call, so each blind spot is a silent miss.
+    Measured over the committed corpus, counting per tool-call payload rather
+    than per raw file byte: of 851 `ok:false` occurrences, 107 (13%) are in the
+    escaped shape — and the escaping is concentrated in the e2e tier, where 102
+    of 480 (21%) are escaped and the unit tier has none. A quoted-key matcher
+    is blind to all of them, and this arm CREDITS a call, so each blind spot is
+    a silent miss.
     """
     unescaped = response_text(entry).replace('\\"', '"')
     # One canonical spacing. A plain `.replace('"ok":', '"ok": ')` doubles the
@@ -368,9 +371,10 @@ def _relationship_key(r: dict[str, Any]) -> tuple[Any, ...]:
     the endpoint tuple, never on `id`: 7 fixtures seed a relationship pointing at
     a PID-TODO placeholder that the agent resolves during the run, and an `id`
     key would read that genuinely-re-pointed relationship as seeded — a false
-    negative in the gates that diff against the starting tree. Shared by
-    `find_effects_without_invocation` (§8 hard gate) and
-    `find_relationship_writes_without_warnings_check` (§7 shadow).
+    negative in the gates that diff against the starting tree. Used by
+    `find_effects_without_invocation` (§8 hard gate). The §7 warnings check was
+    a second consumer until issue #2840 retargeted it onto the write boundary;
+    it diffs no relationships now and reads `tool_calls` alone.
     """
     return (r.get("type"), r.get("person1"), r.get("person2"), r.get("parent"), r.get("child"))
 
@@ -380,9 +384,7 @@ def _relationship_conclusion_signature(r: dict[str, Any]) -> tuple[Any, ...]:
     INTO an existing relationship — a marriage fact dated onto a seeded couple, a
     parentage re-classified Biological->Adopted — which `_relationship_key` alone
     cannot see (issue #1569, was #1368). Used only by
-    `find_effects_without_invocation`'s proof-conclusion arm;
-    `find_relationship_writes_without_warnings_check` asks a different question (was a
-    NEW edge written) and keeps using the plain endpoint key.
+    `find_effects_without_invocation`'s proof-conclusion arm.
 
     Ignores `id` for the same reason `_relationship_key` does, and ignores fact ORDER —
     a harmless re-serialization must not register as a new conclusion, the exact disease
@@ -1442,10 +1444,14 @@ CITATION_NULLING_KIND = "citation_nulling"
 # (and with it the Claude Agent SDK) just to learn one string.
 PERSON_EVIDENCE_DENY_KIND = "person_evidence_deny"
 
-# Marks a #1193 warnings-unchecked shadow entry in the shared
-# `guardrail_shadow_violations` list: a run wrote a new ParentChild/Couple
-# relationship but never called the (free, deterministic) `person_warnings`
-# guardrail. `guardrail_shadow_report.py` keys on it to count this class in its
+# Marks a warnings-unchecked shadow entry in the shared
+# `guardrail_shadow_violations` list: a tree writer returned
+# `unjustified_warnings` and nothing landed after it, so the write was blocked
+# and the agent gave up. The NAME IS HISTORICAL — under #1193 this meant a
+# parentage write with no `person_warnings` call, and every entry stored before
+# the #2840 retarget still carries that retired meaning, which is why
+# `format_warnings_unchecked` prints the stored count under its own caveat.
+# `guardrail_shadow_report.py` keys on it to count this class in its
 # own bucket. Lives here beside its siblings so the report can read it without
 # importing the orchestrator (and the Claude Agent SDK) for one string.
 WARNINGS_UNCHECKED_KIND = "warnings_unchecked"
@@ -1949,9 +1955,11 @@ def unresolved_warning_refusal(tool_calls: list[dict[str, Any]] | None) -> bool:
     engine gate) and nothing resolved it — the write was blocked and the agent
     gave up.
 
-    One predicate, three callers: this module's shadow detector and the
-    `tree-edit` / `person-evidence` validators. It was written three times and
-    carried the same two defects in each copy, which is why it is shared now.
+    One caller today: this module's shadow detector. It was written three
+    times — here and in the `tree-edit` / `person-evidence` validators — and
+    carried the same defects in each copy, which is why it was shared; both
+    validators were then deleted (`guardrail-enforcement-spec.md`, "No eval
+    validator asserts this gate"), leaving this the single consumer.
 
     ORDER IS LOAD-BEARING. Asking whether *any* writer call succeeded credits
     one that landed BEFORE the refusal, so a run that wrote op A, was refused
@@ -1965,12 +1973,18 @@ def unresolved_warning_refusal(tool_calls: list[dict[str, Any]] | None) -> bool:
     skipping it, so a wrong credit is a MISSED violation, and a missed
     violation here reports nothing at all.
 
-    `{"ok": false, "errors": [...]}` IS ALSO NOT A SUCCESS. `did_not_land`
-    knows two non-landing shapes, `is_error` and `no_project`; the writers
-    return their commoner failure — validate-before-persist errors, and the
-    stale-justification branch — as an ordinary result with neither. Without
-    this arm a re-call that failed for an unrelated reason is credited as the
-    success resolving the refusal, which is the same silent miss again.
+    A SUCCESS MUST SAY SO: `"ok": true` present, never merely `"ok": false`
+    absent. `did_not_land` knows two non-landing shapes, `is_error` and
+    `no_project`; the writers return their commoner failure — validate-before-
+    persist errors, and the stale-justification branch — as an ordinary result
+    with neither, so an absence test credits a re-call that failed for an
+    unrelated reason. Absence also credits a call with NO RECORDED RESPONSE AT
+    ALL (`response_text` returns `""`), which is what a run truncated by the
+    wall-clock or turn cap leaves behind — the write never completed, and the
+    refusal reads as resolved. Requiring the positive marker costs nothing:
+    across the 67 runs the replay scans, all 351 writer calls carry an explicit
+    `ok` (316 true, 35 false) and none is response-less, so this manufactures
+    no violation on today's corpus while closing the shape for future runs.
 
     READ BOTH RESPONSE KEYS (`response_text`). Keying on `response_summary`
     alone made this predicate constantly False in the unit tier, where
@@ -2001,7 +2015,7 @@ def unresolved_warning_refusal(tool_calls: list[dict[str, Any]] | None) -> bool:
         _is_writer(call)
         and not _is_refusal(call)
         and not did_not_land(call)
-        and '"ok": false' not in _normalized_response(call)
+        and '"ok": true' in _normalized_response(call)
         for call in calls[refusals[-1] + 1 :]
     )
 

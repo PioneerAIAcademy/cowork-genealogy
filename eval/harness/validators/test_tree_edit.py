@@ -110,9 +110,6 @@ def test_tree_edit_noop(before_state, after_state, test):
     )
 
 
-# --- No unjustified-warning write landed (issue #2840 PR 2) -----------
-
-
 # --- Guardianship: which kin reading leads (issue #2449) --------------
 
 _LEAD_MARKER = re.compile(

@@ -433,8 +433,8 @@ class RunInputs:
     `missing_for_*` methods below — five of them, one per distinct requirement
     tuple rather than one per check. They are NOT a ladder of supersets, and
     writing them as one is the error the next paragraph exists to warn about:
-    `missing_for_warnings` reads the run log, the final tree and the seed and
-    never `final_research`, while `missing_for_tree_encoding` reads the research,
+    `missing_for_warnings` reads the run log and nothing else, while
+    `missing_for_tree_encoding` reads the research,
     the tree and the seed and never the run log. A single shared skip list would
     drop a run from every denominator because one check's input was absent (see
     `PostHocReplay`).
@@ -472,11 +472,10 @@ class RunInputs:
 
         Its own combination, and deliberately not either of its neighbours':
         it needs the final research (for the conclusion gate) AND the final tree
-        (for the sources), but NOT the seed tree — unlike warnings-unchecked,
-        which compares against the seed to tell a new relationship from a
-        carried-in one. Reusing `missing_for_warnings` here would discard every
-        run with no fixture directory for a seed this check never reads, and
-        under-report the rate it exists to measure.
+        (for the sources), but NOT the seed tree. Reusing `missing_for_warnings`
+        here would go the other way and scan a run whose research sidecar is
+        absent, since that method now reads the run log alone — and this check
+        cannot be run without the research.
         """
         if self.run_log is None:
             return "unreadable run log"

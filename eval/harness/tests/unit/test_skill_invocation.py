@@ -1769,6 +1769,23 @@ def test_a_no_project_answer_does_not_count_as_the_resolving_success():
     assert unresolved_warning_refusal(calls) is True
 
 
+def test_a_recall_whose_result_never_arrived_does_not_resolve_the_refusal():
+    """The third shape of the same credit trap. A run truncated by the
+    wall-clock or turn cap leaves the re-call with NO recorded response at all,
+    so `response_text` returns `""` — which carries neither `is_error` nor
+    `no_project` nor `"ok": false`, and an absence-based success test credits
+    it. The write never completed; the refusal stands.
+
+    This is why the arm requires `"ok": true` to be PRESENT. Across the 67 runs
+    the replay scans, all 351 writer calls carry an explicit `ok`, so demanding
+    it manufactures nothing on today's corpus."""
+    calls = [
+        {"tool": "mcp__genealogy__tree_edit", "response": _REFUSAL},
+        {"tool": "mcp__genealogy__tree_edit", "args": {"operation": "add_fact"}},
+    ]
+    assert unresolved_warning_refusal(calls) is True
+
+
 def test_a_genuine_later_success_does_resolve_the_refusal():
     """The accept direction: a run that re-called and landed is not a
     violation, and must not be reported as one."""

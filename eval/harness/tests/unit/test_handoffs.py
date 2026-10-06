@@ -124,9 +124,10 @@ def test_live_callee_hand_off_passes_on_a_spawn_and_fails_without_one():
 
 # --- Warning gate (issue #2840): replaced check-warnings hand-off tests --------
 # The engine gate now refuses unjustified warnings at write time, so the
-# validators no longer check for check-warnings hand-offs. The retargeted
-# validators check tool call responses instead, which is tested in
-# test_tree_edit_validator.py and test_person_evidence_validators.py.
+# validators no longer check for check-warnings hand-offs. No eval validator
+# asserts the gate at all — the engine enforces it and PR 1's tests prove it
+# (`guardrail-enforcement-spec.md`, "No eval validator asserts this gate").
+# What remains is the shadow detector, tested in test_skill_invocation.py.
 
 
 @pytest.mark.parametrize(
