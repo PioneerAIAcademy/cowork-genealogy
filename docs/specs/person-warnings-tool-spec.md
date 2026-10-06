@@ -893,7 +893,7 @@ Grep for `calculateWarnings` when sizing the blast radius.
 
   Measured over the committed e2e final trees: gating parentage edges
   unexempted refuses 416 of 2240 (18.6%) — 483 instances across 73 runs,
-  measured at MEASURED_SHA. After
+  measured at 0be7f897a. After
   the exemptions it refuses 59 of 2240 (2.6%), 59 instances across 16 runs, and
   every tag still gating is an impossibility rather than a prior:
   `hasCloseChildBirthsIgnoreSimilarChildren` (32), `tooManyMothers2` (16),
