@@ -120,9 +120,11 @@ function entriesOf(dir: string): Dirent[] {
 
 /**
  * Directories a `**` may descend into. Symlinks are not followed, and
- * `node_modules` and dot-directories (`.venv`, `.next`) are skipped: no tracked
- * file lives there, and a developer checkout holds thousands of directories in
- * them, so following them makes the lint slow and its answer differ from CI's.
+ * `node_modules` and dot-directories (`.venv`, `.next`) are skipped: a developer
+ * checkout holds thousands of directories in them, so following them makes the
+ * lint slow and its answer differ from CI's. A few tracked files do live in a
+ * dot-directory (`packages/engine/plugin/.claude-plugin/plugin.json`), so a `**`
+ * glob never matches them; cite such a file by its full path.
  */
 function walkableDirs(dir: string): string[] {
   return entriesOf(dir)

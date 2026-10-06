@@ -1662,17 +1662,18 @@ The CRUD UI ([`eval-crud-ui-spec.md`](eval-crud-ui-spec.md)) surfaces non-runnab
 When the harness executes a unit test, it writes a run log to:
 
 ```
-eval/runlogs/unit/<skill-name>/<model-version>/YYYY-MM-DDTHH-MM-SSZ.json
+eval/runlogs/unit/<skill-name>/v{N}_YYYY-MM-DD_HH-MM-SS.json   # candidate (full skill run)
+eval/runlogs/unit/<skill-name>/v{N}.json                        # released
 ```
 
 The timestamp is UTC second-resolution, filename-safe (no colons). Same-second collisions raise `RunlogCollisionError` rather than overwriting the prior log; v1 serial execution makes collisions rare, so the operator simply waits a second and re-runs.
 
-Including the model version in the path makes it easy to compare runs across model versions.
+The scheme (released, candidate, and gitignored `scratch_` runs) is in `eval/harness/harness/versioning.py`.
 
 **Annotations** use the per-PR convention defined in `docs/per-pr-review-workflow.md` §2.3 and the schema at [`docs/specs/schemas/ann.schema.json`](schemas/ann.schema.json):
 
 ```
-YYYY-MM-DDTHH-MM-SSZ.ann.json    # team's corrected grades for this run
+<run log name>.ann.json    # team's corrected grades for this run, e.g. v1_2026-09-29_08-50-54.ann.json
 ```
 
 One `.ann` file per run log per PR, written by the team submitting the PR. Senior feedback flows through GitHub PR comments — there is no separate `.adj` adjudication file.
@@ -2166,8 +2167,7 @@ Unit tests and e2e tests are complementary (see `e2e-test-spec.md`):
 | ID prefix | `ut_` | `e2e_` |
 | Location | `eval/tests/unit/` | `eval/tests/e2e/` |
 | Run logs | `eval/runlogs/unit/<skill>/v1_<timestamp>.json` | `eval/runlogs/e2e/<slug>/run-<timestamp>.json` |
-| Annotations | `.ann.<username>.json` | `.ann.<username>.json` |
-| Adjudications | `.adj.<username>.json` | `.adj.<username>.json` |
+| Annotations | `<run log name>.ann.json` | `run-<timestamp>.ann.json` |
 | MCP data | Mocked via fixtures | Live API calls |
 | Grading layers | Deterministic + LLM judge + human | Deterministic + LLM judge + human |
 

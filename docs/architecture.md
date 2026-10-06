@@ -8,7 +8,7 @@ verified, it says so.
 therefore banned in it, and both were swept out on 2026-08-09: a **line-number
 citation** (cite the heading, symbol, or a distinctive quotable string instead —
 `doc-links.test.ts` blocks new `.ts`/`.py`/`.mjs`/`.md` ones under `docs/`,
-outside the dated `docs/deep-dives/` records), and a **register** — a list of
+outside `docs/plan/` and the dated `docs/deep-dives/` records), and a **register** — a list of
 open gaps, open questions, or issue numbers that GitHub already owns and that
 goes stale without telling anyone. Where you need a number that moves, name the
 command that recomputes it.

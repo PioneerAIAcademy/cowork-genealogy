@@ -53,7 +53,7 @@ a single-entity edit is a strict subset of it.
 
 In scope — the `tree-edit` ad-hoc operations (`packages/engine/plugin/agents/tree-edit.md` §"Ad-hoc edits"):
 
-| Operation | Tool | Replaces (SKILL.md) |
+| Operation | Tool | Replaces (`tree-edit/SKILL.md` §, at `d0915210`) |
 |-----------|------|---------------------|
 | `add_fact` | `tree_edit` | "Adding a fact to a person" |
 | `update_fact` | `tree_correct` | "Correcting a value" (fact date/place/value) |
