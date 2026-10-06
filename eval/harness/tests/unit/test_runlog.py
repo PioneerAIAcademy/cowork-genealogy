@@ -958,3 +958,89 @@ def test_a_skill_name_written_as_a_name_is_still_routing(text):
     from harness.runlog import _is_substantive
 
     assert _is_substantive(text, other_skill_names=_OTHERS) is False
+
+
+# ---- busiest-moment capture (subagents / main_thread) ---------------------
+
+
+def _validate_both_schema_trees(log):
+    """The write-path validator (docs tree) and the packages/schema mirror."""
+    import jsonschema
+    from referencing import Registry, Resource
+
+    validate_run_log(log)
+    schemas_dir = Path(__file__).resolve().parents[4] / "packages/schema/schemas"
+    schema = json.loads((schemas_dir / "run-log.schema.json").read_text(encoding="utf-8"))
+    registry = Registry()
+    enums_path = schemas_dir / "enums.schema.json"
+    if enums_path.exists():
+        registry = registry.with_resource(
+            uri="enums.schema.json",
+            resource=Resource.from_contents(
+                json.loads(enums_path.read_text(encoding="utf-8"))
+            ),
+        )
+    jsonschema.Draft202012Validator(schema, registry=registry).validate(log)
+
+
+def _captured_entry(run):
+    entry = assemble_test_entry(
+        test_id="ut_check_warnings_001",
+        test_type="positive",
+        expected_outcome="pass",
+        scenario=None,
+        mcp_fixtures=[],
+        runs=[run],
+        timestamp_for_run_id="2026-10-06_10-00-00",
+    )
+    return entry, _wrap_envelope(entry, skill="check-warnings")
+
+
+def test_a_captured_run_serializes_and_validates_against_both_schema_trees():
+    """Both trees declare `additionalProperties: false` on a run, so a field the
+    serializer writes and a schema omits makes every paid suite end with no log."""
+    run = _stub_run()
+    run.subagents = [{
+        "agent_type": "check-warnings",
+        "num_assistant_turns": 3,
+        "max_output_tokens": 900,
+        "hit_output_cap": False,
+        "runaway_thinking": False,
+        "usage": {"input_tokens": 9, "output_tokens": 900,
+                  "cache_read_input_tokens": 40_000, "cache_creation_input_tokens": 1_200},
+        "peak_window_tokens": 41_230,
+        "compactions": [{"trigger": "auto", "pre_tokens": 167_000, "post_tokens": None}],
+        "models": ["claude-sonnet-4-6"],
+    }]
+    run.subagent_capture_status = "captured"
+    run.main_thread = {"peak_window_tokens": 9_100, "compactions": [],
+                       "models": ["claude-sonnet-4-6"]}
+    entry, log = _captured_entry(run)
+
+    written = entry["runs"][0]
+    assert written["subagents"][0]["peak_window_tokens"] == 41_230
+    assert written["subagent_capture_status"] == "captured"
+    assert written["main_thread"]["peak_window_tokens"] == 9_100
+    _validate_both_schema_trees(log)
+
+
+def test_an_uncaptured_run_writes_no_capture_keys_and_still_validates():
+    """Absent means "not captured" — never an empty list or a zeroed block."""
+    entry, log = _captured_entry(_stub_run())
+    written = entry["runs"][0]
+    assert "subagents" not in written
+    assert "subagent_capture_status" not in written
+    assert "main_thread" not in written
+    _validate_both_schema_trees(log)
+
+
+def test_a_malformed_main_thread_is_rejected_by_both_schema_trees():
+    """The schema must be able to fail: an extra key in main_thread is refused."""
+    import jsonschema
+
+    run = _stub_run()
+    run.subagents, run.subagent_capture_status = [], "matched_no_transcripts"
+    run.main_thread = {"peak_window_tokens": 1, "compactions": [], "models": [], "extra": 1}
+    _, log = _captured_entry(run)
+    with pytest.raises(jsonschema.ValidationError):
+        _validate_both_schema_trees(log)

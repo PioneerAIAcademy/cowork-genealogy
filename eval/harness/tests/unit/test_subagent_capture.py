@@ -791,3 +791,49 @@ def test_collect_subagents_carries_the_new_fields_into_the_runlog_shape(
     assert summaries[0]["peak_window_tokens"] == 90_000
     assert len(summaries[0]["compactions"]) == 1
     assert summaries[0]["models"] == ["claude-sonnet-4-6"]
+
+
+# ---------------------------------------------------------------------------
+# The main thread's own meter (unit harness, routed tests run their skill here).
+# ---------------------------------------------------------------------------
+
+
+def test_collect_main_thread_reads_the_parent_session_and_skips_sidechains(
+    shortspace: Path, monkeypatch
+):
+    from e2e.subagent_capture import collect_main_thread
+
+    home = shortspace / "home"
+    workspace = shortspace / "eval-ut-abc123"
+    cache = home / ".claude" / "projects" / _key(workspace)
+    (cache / "session-uuid" / "subagents").mkdir(parents=True)
+    main_records = [
+        _window_record("m1", window=60_000),
+        _boundary({"trigger": "auto", "preTokens": 167_000, "postTokens": 9_000}),
+        _window_record("m2", window=20_000),
+        dict(_window_record("s1", window=190_000), isSidechain=True),
+    ]
+    (cache / "session-uuid.jsonl").write_text(
+        "\n".join(json.dumps(r) for r in main_records), encoding="utf-8"
+    )
+    # A subagent transcript one level down must never be read as the main thread.
+    (cache / "session-uuid" / "subagents" / "agent-1.jsonl").write_text(
+        json.dumps(_window_record("x", window=150_000)), encoding="utf-8"
+    )
+    monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+
+    main = collect_main_thread(workspace)
+    assert main == {
+        "peak_window_tokens": 60_000,
+        "compactions": [{"trigger": "auto", "pre_tokens": 167_000, "post_tokens": 9_000}],
+        "models": ["claude-sonnet-4-6"],
+    }
+
+
+def test_collect_main_thread_is_none_not_zero_when_nothing_is_found(tmp_path: Path, monkeypatch):
+    from e2e.subagent_capture import collect_main_thread
+
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+    assert collect_main_thread(tmp_path / "nowhere") is None

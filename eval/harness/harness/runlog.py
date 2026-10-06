@@ -154,6 +154,15 @@ class SingleRun:
     # advisory deliberately does not. Present so a future run log can settle
     # whether a reaction call ever executes at all (issue #2740).
     suppressed_post_deny_calls: list[dict] = field(default_factory=list)
+    # Busiest moment / compactions / model, read from the SDK's own transcripts
+    # by `_execute_skill_with_retry` before the session store is deleted.
+    # `subagents` is one compact `e2e.subagent_capture` summary per helper (the
+    # agent under test, on a direct-arm test); `main_thread` is the parent
+    # session (where a routed test's skill runs). None when no capture ran — an
+    # abort before execution — which the serializer leaves out entirely.
+    subagents: list[dict[str, Any]] | None = None
+    subagent_capture_status: str | None = None
+    main_thread: dict[str, Any] | None = None
 
 
 # ---- Timing helpers ------------------------------------------------------
@@ -489,6 +498,18 @@ def assemble_test_entry(
                 if r.suppressed_post_deny_calls
                 else {}
             ),
+            # Written only when the capture ran, like `started_at`: an absent
+            # key means "not captured" (an older log, or an abort before
+            # execution), never a zero.
+            **(
+                {
+                    "subagents": r.subagents,
+                    "subagent_capture_status": r.subagent_capture_status,
+                }
+                if r.subagent_capture_status is not None
+                else {}
+            ),
+            **({"main_thread": r.main_thread} if r.main_thread is not None else {}),
             "skill_cost_usd": r.skill_cost_usd,
             "output": r.output,
             "validators": {

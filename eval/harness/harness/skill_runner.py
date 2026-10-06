@@ -698,6 +698,15 @@ class SkillRunResult:
     # denied call, and grading routing by transcript inference is what made
     # ut_015 detect the violation ~1-in-8.
     blocked_context_calls: list[dict[str, Any]] = field(default_factory=list)
+    # Busiest moment / compactions / model, read from the SDK's own transcripts
+    # by `_execute_skill_with_retry` before the session store is deleted.
+    # `subagents` is one compact `e2e.subagent_capture` summary per helper (the
+    # agent under test, on a direct-arm test); `main_thread` is the parent
+    # session (where a routed test's skill runs). None when no capture ran — an
+    # abort before execution — which the serializer leaves out entirely.
+    subagents: list[dict[str, Any]] | None = None
+    subagent_capture_status: str | None = None
+    main_thread: dict[str, Any] | None = None
     # Raw Write/Edit/NotebookEdit calls to a protected project file
     # (research.json / tree.gedcomx.json) the main thread tried and was denied,
     # as {"tool", "args"} (see harness.context_policy.protected_file_denial).

@@ -821,6 +821,9 @@ async def _execute_single_run(
         model_usage=per_model,
         no_result_message=result.no_result_message,
         suppressed_post_deny_calls=result.suppressed_post_deny_calls,
+        subagents=result.subagents,
+        subagent_capture_status=result.subagent_capture_status,
+        main_thread=result.main_thread,
         skill_cost_usd=float(_usage.get("total_cost_usd") or 0.0),
         output={
             "text_response": result.text_response,
@@ -905,6 +908,36 @@ def _is_zero_progress_timeout(result) -> bool:
     # handler is ever removed this guard quietly reverts to the old
     # never-retry behaviour instead of silently retrying every slow test.
     return (result.usage or {}).get("num_turns") == 0
+
+
+# What a unit run log keeps of each subagent summary. `turns` (one entry per
+# record) and `transcript` (a local cache filename) are dropped: unit logs are
+# committed in bulk, and neither is read by anything downstream of them.
+_UNIT_SUBAGENT_DROP = ("turns", "transcript")
+
+
+def _capture_context_meters(result, workspace: Path) -> None:
+    """Attach the busiest-moment capture to `result`. Never raises.
+
+    Must run BEFORE `cleanup_session_store(workspace)`: that deletes the very
+    SDK cache directory these transcripts live in. Both readers resolve the
+    directory with the SDK's own `project_key_for_directory`, the same key the
+    cleanup deletes. Imported here, not at module top, so a broken e2e package
+    can never stop the orchestrator loading.
+    """
+    try:
+        from e2e.subagent_capture import collect_main_thread, collect_subagents
+
+        subagents, status = collect_subagents(workspace)
+        result.subagents = [
+            {k: v for k, v in s.items() if k not in _UNIT_SUBAGENT_DROP}
+            for s in subagents
+        ]
+        result.subagent_capture_status = status
+        result.main_thread = collect_main_thread(workspace)
+    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
+        result.subagents = []
+        result.subagent_capture_status = "error"
 
 
 def _is_retryable_abort(result) -> bool:
@@ -1023,6 +1056,7 @@ async def _execute_skill_with_retry(
                         ),
                     )
                     after_snapshot = snapshot_files(workspace)
+                    _capture_context_meters(result, workspace)
                     attempt_completed = True
                 finally:
                     # Always clean up the SDK's session-store entry so long

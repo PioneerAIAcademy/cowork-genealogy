@@ -483,6 +483,55 @@ def find_subagent_transcripts(workspace: Path, cache_dir: Path | None = None) ->
     return pairs
 
 
+def find_session_transcript(workspace: Path, cache_dir: Path | None = None) -> Path | None:
+    """The main thread's own `<session-uuid>.jsonl`, or None. Never raises.
+
+    It sits at the top of the cache directory; subagent transcripts live a level
+    down under `<uuid>/subagents/`, so a top-level glob never picks one up. The
+    newest file wins, which is the run's own session when the cache directory
+    is per-workspace (it is: the key is the workspace path).
+    """
+    try:
+        cache = cache_dir if cache_dir is not None else sdk_cache_dir(workspace)
+        if cache is None:
+            return None
+        candidates = list(cache.glob("*.jsonl"))
+        if not candidates:
+            return None
+        return max(candidates, key=lambda p: p.stat().st_mtime)
+    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
+        return None
+
+
+def collect_main_thread(workspace: Path) -> dict[str, Any] | None:
+    """The main thread's busiest moment, compactions and models, or None.
+
+    The unit harness runs a routed test's skill on the main thread, not in a
+    subagent, so `collect_subagents` alone would report nothing for it. Records
+    marked `isSidechain` are skipped so a subagent's messages, should any land
+    in the parent file, never inflate the main thread's peak. None when the
+    transcript cannot be found or read — never a zeroed block, which would read
+    as "the main thread read nothing". Never raises.
+    """
+    try:
+        path = find_session_transcript(workspace)
+        if path is None:
+            return None
+        records = [
+            r for r in parse_jsonl(path, errors="replace")
+            if r.get("isSidechain") is not True
+        ]
+        if not records:
+            return None
+        return {
+            "peak_window_tokens": subagent_peak_window(records),
+            "compactions": subagent_compactions(records),
+            "models": subagent_models(records),
+        }
+    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
+        return None
+
+
 def collect_subagents(workspace: Path) -> tuple[list[dict[str, Any]], str]:
     """Top-level entry: summarize every subagent transcript for this run.
 

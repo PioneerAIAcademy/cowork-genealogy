@@ -2486,3 +2486,65 @@ def test_a_matched_suppressed_call_cannot_mask_an_earlier_uncovered_one():
         "an executed, fixture-matching reaction call raised `covered` and "
         "masked the earlier unregistered call"
     )
+
+
+# --- busiest-moment capture must run before the session store is deleted ---
+
+
+def test_capture_runs_before_session_cleanup(tmp_path, monkeypatch):
+    """The SDK cache holding the transcripts is the very directory
+    `cleanup_session_store` deletes. Capturing after it would record nothing,
+    silently, on every run — so the real cleanup runs here, against a
+    redirected home, and the capture must still have read both transcripts."""
+    import json as _json
+
+    from claude_agent_sdk import project_key_for_directory
+
+    from harness import workspace as workspace_mod
+
+    home = tmp_path / "home"
+    projects = home / ".claude" / "projects"
+    monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+    monkeypatch.setattr(workspace_mod, "_SESSION_STORE_ROOT", projects)
+    monkeypatch.setattr(orchestrator, "build_workspace", lambda **kw: None)
+    monkeypatch.setattr(orchestrator, "snapshot_files", lambda ws: {})
+
+    def _msg(mid, window):
+        return {"type": "assistant", "message": {
+            "role": "assistant", "id": mid, "model": "claude-sonnet-4-6",
+            "content": [{"type": "text"}],
+            "usage": {"input_tokens": 0, "output_tokens": 5,
+                      "cache_read_input_tokens": window, "cache_creation_input_tokens": 0}}}
+
+    seen = {}
+
+    async def fake_run_skill(**kwargs):
+        ws = kwargs["workspace"]
+        cache = projects / project_key_for_directory(str(ws))
+        (cache / "sess" / "subagents").mkdir(parents=True)
+        (cache / "sess.jsonl").write_text(_json.dumps(_msg("m1", 9_100)), encoding="utf-8")
+        (cache / "sess" / "subagents" / "agent-1.jsonl").write_text(
+            _json.dumps(_msg("a1", 41_230)), encoding="utf-8")
+        (cache / "sess" / "subagents" / "agent-1.meta.json").write_text(
+            _json.dumps({"agentType": "check-warnings"}), encoding="utf-8")
+        seen["cache"] = cache
+        return _retry_stub_result()
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    paths = OrchestratorPaths(runlogs_root=tmp_path / "runlogs")
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    result, _b, _a = asyncio.run(orchestrator._execute_skill_with_retry(
+        run_index=0, spec=_positive_spec(), paths=paths,
+        skill_baseline=["Read"], auth=auth, model="claude-sonnet-4-6",
+        base_delay=0,
+    ))
+
+    assert result.subagent_capture_status == "captured"
+    assert result.subagents[0]["agent_type"] == "check-warnings"
+    assert result.subagents[0]["peak_window_tokens"] == 41_230
+    assert "turns" not in result.subagents[0]
+    assert result.main_thread == {"peak_window_tokens": 9_100, "compactions": [],
+                                  "models": ["claude-sonnet-4-6"]}
+    # The real cleanup ran afterwards and removed the store.
+    assert not seen["cache"].exists()

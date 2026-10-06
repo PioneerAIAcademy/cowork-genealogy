@@ -98,7 +98,7 @@ from e2e.stop_checker import (
     should_continue_run,
     terminal_reason,
 )
-from e2e.subagent_capture import collect_subagents, sdk_cache_dir
+from e2e.subagent_capture import collect_subagents, find_session_transcript
 from e2e import judge as judge_module
 
 
@@ -3263,17 +3263,11 @@ def _find_session_transcript(workspace: Path) -> Path | None:
 
     Returns the newest matching JSONL, or None if none is found. Never raises:
     a failure here must not cost the run its log.
+
+    The lookup itself is `subagent_capture.find_session_transcript`, shared with
+    the unit harness's main-thread capture.
     """
-    try:
-        cache = sdk_cache_dir(workspace)
-        if cache is None:
-            return None
-        candidates = list(cache.glob("*.jsonl"))
-        if not candidates:
-            return None
-        return max(candidates, key=lambda p: p.stat().st_mtime)
-    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
-        return None
+    return find_session_transcript(workspace)
 
 
 async def run_e2e_test(

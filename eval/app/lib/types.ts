@@ -292,6 +292,10 @@ export interface RunLogRun {
   num_turns?: number;
   /** Skill-execution attempts; >1 means transient stall/error retries. */
   skill_attempts?: number;
+  // Busiest-moment capture (optional; absent on older logs and pre-execution aborts).
+  subagents?: Array<Record<string, unknown>>;
+  subagent_capture_status?: "captured" | "matched_no_transcripts" | "no_cache_dir" | "error";
+  main_thread?: { peak_window_tokens: number; compactions: unknown[]; models: string[] };
   /** Epoch seconds bracketing the whole run. Absent for never-executed runs. */
   started_at?: number;
   ended_at?: number;
