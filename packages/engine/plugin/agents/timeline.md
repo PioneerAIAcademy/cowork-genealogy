@@ -15,7 +15,6 @@ description: >-
   wants to attach a record to a person or decide which of several same-name
   persons a specific record belongs to (use person-evidence), or wants to write a
   conclusion (use proof-conclusion).
-model: claude-sonnet-4-6
 tools:
   - Read
   - mcp__genealogy__project_context
