@@ -4,7 +4,7 @@
     "skill": "init-project",
     "name": "Initialize project from objective text only — no FamilySearch tree ID",
     "type": "positive",
-    "description": "Single-turn decomposition: the user provides a research objective in detail but no FamilySearch person ID to seed the tree. Tests whether init-project can create a project with a minimal stub person built purely from the objective text. The init-project SKILL.md describes this as the bootstrap-sequence case where `subject_person_ids` may even be null at creation.",
+    "description": "Single-turn decomposition: the user provides a research objective in detail but no FamilySearch person ID to seed the tree. Tests whether init-project can create a project with a minimal stub person built purely from the objective text. The init-project SKILL.md describes this as the bootstrap-sequence case where `subject_person_ids` may even be null at creation. TURN BUDGET: `max_turns: 32`, above the harness default of 20. This test builds a whole project from an objective alone, and its measured length across 14 committed run logs is 11 to 24 turns -- it passed at 24 in v4 and ABORTED at 21 in v11_2026-10-06_15-53-25. A cap inside the test's own natural range turns a long-but-correct run into an abort, which Rule 6 treats as a failure, so the cap was the defect rather than the behaviour. 32 clears the measured maximum with room and is still a bound.",
     "tags": [
       "initialization",
       "objective-only",
@@ -37,7 +37,8 @@
         "skill": "locality-guide",
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
       }
-    ]
+    ],
+    "max_turns": 32
   },
   "judge_context": [
     "Should create a stub for Sarah Hennessy in tree.gedcomx.json (name, approximate birth year, place). Standardizing the user's stated 'Boston, Massachusetts' to a fuller form like 'Boston, Suffolk County, Massachusetts' is acceptable — it is place standardization of a stated fact, not fabrication",
