@@ -133,17 +133,24 @@ def test_image_reads_the_agents_return_not_the_relay():
         check_image([_READ], [], f"Hint {M80C_ARK}: accept", IMAGE)
 
 
-# --- already in the project --------------------------------------------
+# --- already linked ---------------------------------------------------
 
 def test_in_project_passes_the_named_line():
-    check_in_project(_returns(f"Hint `{MDEF_ARK}`: already in the project — src_004"), "", IN_PROJECT)
+    check_in_project(_returns(f"Hint `{MDEF_ARK}`: already linked — src_004, pe_005"), "", IN_PROJECT)
 
 
 @pytest.mark.parametrize("verdict", ["accept", "not enough information to judge"])
 def test_in_project_fails_a_fresh_recommendation(verdict):
-    with pytest.raises(AssertionError, match="already extracted as src_004"):
+    with pytest.raises(AssertionError, match="already extracted as src_004 and linked"):
         check_in_project(_returns(f"Hint {MDEF_ARK}: {verdict}"), "", IN_PROJECT)
 
+
+
+def test_in_project_fails_the_retired_token():
+    # Renamed 2026-10-07: "already in the project" also describes an extracted
+    # record nobody linked, which is the state the agent kept mislabelling.
+    with pytest.raises(AssertionError, match="already extracted as src_004 and linked"):
+        check_in_project(_returns(f"Hint {MDEF_ARK}: already in the project — src_004"), "", IN_PROJECT)
 
 # --- extracted, not linked ----------------------------------------------
 
@@ -162,7 +169,12 @@ def test_unlinked_passes_a_bare_id_read_and_a_bold_verdict():
 
 def test_unlinked_fails_the_old_already_in_the_project_shortcut():
     with pytest.raises(AssertionError, match="expected a recommendation"):
-        check_unlinked([], _returns(f"Hint {MDEF_ARK}: already in the project — src_004"), "", UNLINKED)
+        check_unlinked([], _returns(f"Hint {MDEF_ARK}: already linked — src_004"), "", UNLINKED)
+
+
+def test_unlinked_fails_the_retired_token():
+    with pytest.raises(AssertionError, match="expected a recommendation"):
+        check_unlinked(_MDEF_READ, _returns(f"Hint {MDEF_ARK}: already in the project — src_004"), "", UNLINKED)
 
 
 def test_unlinked_fails_a_missing_line():

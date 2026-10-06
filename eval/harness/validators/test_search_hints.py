@@ -28,7 +28,7 @@ _AGENT = "search-hints"
 # _emphasis_) is tolerated: the line's meaning is the ark and the verdict word.
 _HINT_LINE = re.compile(
     r"Hint\s+`?([^\s`]+?)`?\s*:\s*[*_`]*\s*"
-    r"(accept|reject|not enough information to judge|already in the project)(?![A-Za-z])",
+    r"(accept|reject|not enough information to judge|already linked)(?![A-Za-z])",
     re.IGNORECASE,
 )
 # The 1880 census page's image (fixture image-transcribe-flynn-1880-census-m80c).
@@ -126,14 +126,14 @@ def test_image_read_before_reject(tool_calls, agent_returns, text_response, test
 def test_hint_already_in_the_project_is_named(agent_returns, text_response, test):
     """FamilySearch keeps a hint pending until someone attaches it there, and
     nothing here writes back, so a record the project already extracted still
-    shows as a hint. Triage reports it as already in the project; recommending
+    shows as a hint. Triage reports a linked one as already linked; recommending
     it as a fresh accept sends it to a second extraction."""
     if "already-in-project" not in test.get("tags", []):
         pytest.skip("not an already-in-project test")
     verdict = _verdict_for(_reply(agent_returns, text_response, test), "MDEF")
-    assert verdict == "already in the project", (
-        f"the MDEF death certificate is already extracted as src_004; expected its line to read "
-        f"'already in the project', got {verdict!r}"
+    assert verdict == "already linked", (
+        f"the MDEF death certificate is already extracted as src_004 and linked by pe_005; expected "
+        f"its line to read 'already linked', got {verdict!r}"
     )
 
 
@@ -141,7 +141,7 @@ def test_extracted_unlinked_hint_is_triaged(tool_calls, agent_returns, text_resp
     """Extracted is not linked: a record whose assertions no live
     `person_evidence` entry cites was never decided to be this person, so its
     hint is read and given a recommendation like any other. Reporting it as
-    already in the project skips exactly the identity question hint review
+    already linked skips exactly the identity question hint review
     exists to ask."""
     if "extracted-not-linked" not in test.get("tags", []):
         pytest.skip("not an extracted-not-linked test")
@@ -200,7 +200,7 @@ def test_record_mode_logs_each_verdict(before_state, after_state, agent_returns,
         )
     if "already-in-project-accept" in test.get("tags", []):
         assert _for("MDEF") is None, (
-            "an accepted hint already in the project (MDEF, src_004) was logged; its source "
+            "an accepted hint already linked (MDEF, src_004, pe_005) was logged; its source "
             "already carries the evidence, and a positive entry with no new assertion sends "
             "/research back to record-extraction for a record the project holds"
         )

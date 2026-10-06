@@ -4,7 +4,7 @@
     "skill": "search-hints",
     "name": "Record mode logs one entry per researcher verdict and returns the accepted logId",
     "type": "positive",
-    "description": "Second spawn: the researcher accepted the 1870 census hint (M70C), rejected the 1880 census hint (M80C), and accepted the death certificate (MDEF), which is already in the project as src_004. The agent logs exactly two entries — tool person_record_matches, plan_item_id null, positive for M70C and negative for M80C — logs nothing for MDEF (its source already carries the evidence, and a positive entry with no new assertion would send /research back to record-extraction for a record it holds), and returns M70C as {ark, logId}. It extracts nothing and links nothing (issue #2029).",
+    "description": "Second spawn: the researcher accepted the 1870 census hint (M70C), rejected the 1880 census hint (M80C), and accepted the death certificate (MDEF), which is already extracted as src_004 and linked to Patrick by pe_005. The agent logs exactly two entries — tool person_record_matches, plan_item_id null, positive for M70C and negative for M80C — logs nothing for MDEF (its source already carries the evidence, and a positive entry with no new assertion would send /research back to record-extraction for a record it holds), and returns M70C as {ark, logId}. It extracts nothing and links nothing (issue #2029).",
     "tags": [
       "record-mode",
       "two-verdicts",
@@ -29,7 +29,7 @@
   ],
   "judge_context": [
     "Exactly two new log entries: one for M70C with outcome positive, one for M80C with outcome negative. Both have tool person_record_matches and plan_item_id null",
-    "No log entry for MDEF: the death certificate is already in the project as src_004, so accepting it adds no new evidence and needs no extraction",
+    "No log entry for MDEF: the death certificate is already extracted as src_004 and linked by pe_005, so accepting it adds no new evidence and needs no extraction",
     "The outcomes follow the researcher's verdicts as given — not the agent's own view of the hints",
     "The return names the accepted M70C hint's ark and its log id, so record-extraction can reuse that log entry",
     "No extraction, no person_evidence link, no tree edit"

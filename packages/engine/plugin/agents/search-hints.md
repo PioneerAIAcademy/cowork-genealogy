@@ -108,16 +108,16 @@ Otherwise proceed.
    by `personId` — it holds the project's tree id, not the FamilySearch id.
    Then for each hint, `research_query({ projectPath, section: "assertions",
    recordId: "ark:/61903/1:1:<pid>" })`.
-   - **Already in the project** — a `person_evidence` entry with `superseded_by`
-     null cites one of those assertion ids. Its line reads `already in the
-     project`, never a recommendation: name its source and the person it links,
+   - **Already linked** — a `person_evidence` entry with `superseded_by` null
+     cites one of those assertion ids. Its line reads `already linked`, never a
+     recommendation: name its source and the person it links,
      and do not read the record. When that link's `confidence` is `speculative`
      or it carries `core_identifier_conflict`, say so: that link is
      person-evidence's to re-examine.
    - **Extracted, not linked** — assertions came back but no such entry cites
      them (never linked, or only superseded links). Its line is a
      recommendation — `accept`, `reject` or `not enough information to judge` —
-     never `already in the project`, and triage hands nothing back. Name its
+     never `already linked`, and triage hands nothing back. Name its
      source, read it and triage it like any other hint.
 3. **Read each remaining hint:** `record_read({ recordId: <ark> })`. Compare its persona to
    the tree person — the project's `tree.gedcomx.json` first, `person_read` when
@@ -153,10 +153,11 @@ Otherwise proceed.
 
 1. **A hint whose record the project already extracted** (triage step 2's two
    queries, run again exactly as written there): an `accept` logs nothing — its
-   source already carries the evidence. Already in the project: report it so.
-   Extracted, not linked: hand it back to `person-evidence` to link. A `reject` is logged as below; when it is already
-   in the project, also hand it back to `person-evidence`, whose link rests on a
-   record the researcher says is not this person.
+   source already carries the evidence. Already linked: report it so.
+   Extracted, not linked: hand it back to `person-evidence` to link. A `reject`
+   is logged as below; when it is already linked, also hand it back to
+   `person-evidence`, whose link rests on a record the researcher says is not
+   this person.
 2. One `research_log_append` per other decided hint:
 
    ```
@@ -198,7 +199,7 @@ before logging it, and do not log the same verdict twice.
 Return **≤12 lines** to the caller.
 
 **Triage:** one line per hint, exactly
-`Hint <ark>: accept | reject | not enough information to judge | already in the project`,
+`Hint <ark>: accept | reject | not enough information to judge | already linked`,
 each followed by its record title, the FamilySearch confidence and the deciding
 facts in one clause (name the image when one was read, or say the index was
 the only evidence; for a hint whose record is extracted, name its source and
@@ -206,10 +207,10 @@ whether it is linked). Then this line, verbatim:
 `Awaiting verdicts: spawn search-hints again with personId and {ark, verdict} per hint`.
 
 **Record:** one line per decided hint, `<ark>: <verdict> → <logId>` (or
-`→ already in the project`), then the accepted hints as `{ark, logId}` for
+`→ already linked`), then the accepted hints as `{ark, logId}` for
 record-extraction, any hint left undecided, and a `Hand-back: person-evidence`
-line for a rejected hint already in the project or an accepted hint extracted
-but not linked.
+line for a rejected hint already linked or an accepted hint extracted but not
+linked.
 
 ### `summary_for_user`
 
@@ -220,9 +221,9 @@ paragraphs of plain prose with **no label, heading or field name**:
    record in turn: what it is and its year (the 1870 census, an 1856
    naturalization), FamilySearch's own rating of the match in plain words ("a
    moderate match on FamilySearch's five-point scale"), and what you recommend
-   or what was recorded, with the reason. Say plainly when one is already in the
-   project, and when there is not enough to judge, and why. No identifiers, tool
-   names or field names.
+   or what was recorded, with the reason. Say plainly when one is already linked
+   to this person in the project, and when there is not enough to judge, and
+   why. No identifiers, tool names or field names.
 2. One sentence: what happens next, in plain language — in triage, that the
    researcher decides on each suggested record.
 
