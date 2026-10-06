@@ -1,0 +1,29 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        { "id": "N1", "preferred": true, "given": "Cornelis", "surname": "van Noord", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F1", "type": "Birth", "date": "1828", "place": "Zuid-Holland, Netherlands", "standard_date": "+1828", "standard_place": "Zuid-Holland, Netherlands" }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        { "id": "N2", "preferred": true, "given": "Jannetje", "surname": "van Noord", "type": "BirthName" }
+      ],
+      "facts": []
+    }
+  ],
+  "relationships": [
+    { "id": "RT1", "type": "ParentChild", "parent": "I2", "child": "I1" }
+  ],
+  "sources": [
+    { "id": "SD-001", "title": "Burgerlijke Stand, Zuid-Holland, birth act no. 42, 1828, Cornelis van Noord" },
+    { "id": "SD-002", "title": "Tienjarige tafels (ten-year marriage index), Zuid-Holland, 1838-1848, Cornelis van Noord" }
+  ]
+}

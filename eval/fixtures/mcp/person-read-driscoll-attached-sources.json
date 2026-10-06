@@ -33,6 +33,13 @@
           },
           {
             "type": "Residence",
+            "date": "1851",
+            "standard_date": "1851",
+            "place": "Sherbrooke, Canada East",
+            "standard_place": "Sherbrooke, Quebec, Canada"
+          },
+          {
+            "type": "Residence",
             "date": "1861",
             "standard_date": "1861",
             "place": "Sherbrooke, Canada East",

@@ -496,3 +496,33 @@ def test_person_read_fixture_keys_are_snake_case():
         "person_read fixture keys must be snake_case -- the tool returns a "
         f"simplified-GedcomX shape: {offenders}"
     )
+
+
+_PERSON_READ_TS = REPO_ROOT / "packages/engine/mcp-server/src/tools/person-read.ts"
+
+
+def _person_read_ignored_params() -> set[str]:
+    """Parameters person_read's input schema describes as `Ignored:`, read from
+    the source so a newly ignored flag is covered without editing this file."""
+    text = _PERSON_READ_TS.read_text(encoding="utf-8")
+    return set(re.findall(r"(\w+):\s*\{\s*type:\s*\"\w+\",\s*description:\s*\"Ignored:", text))
+
+
+def test_person_read_fixtures_never_key_on_an_ignored_param():
+    """A predicate keyed on a flag the tool ignores matches only the calls that
+    still pass it. After #3066 made `relatives` and `sourceDescriptions`
+    ignored, models stopped passing them, and every call missed a fixture still
+    keyed on one: 8 of 10 source-evaluation tests read `fixture_not_found` on
+    `v1_2026-10-01_16-32-27`. #3066 fixed six such fixtures by hand and missed
+    two; this is the shared guard."""
+    ignored = _person_read_ignored_params()
+    assert ignored >= {"relatives", "sourceDescriptions"}, (
+        f"read no ignored params from {_PERSON_READ_TS.name} ({sorted(ignored)}); "
+        "the schema parse is broken, so this guard checks nothing"
+    )
+    wrong = [
+        f"{name}: {sorted(set(data.get('args') or {}) & ignored)}"
+        for name, data in _person_read_fixtures()
+        if set(data.get("args") or {}) & ignored
+    ]
+    assert not wrong, "person_read fixtures keyed on an ignored param: " + "; ".join(wrong)

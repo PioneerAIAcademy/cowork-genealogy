@@ -9,11 +9,12 @@
       "index-discrepancy",
       "doctrine",
       "quality-detail",
-      "presentation-order"
+      "presentation-order",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Have a look at the sources attached to Christian P. Hole (KD96-TV2) — are they actually right, or is something mis-indexed?",
+    "delegation": "Have a look at the sources attached to Christian P. Hole (KD96-TV2) — are they actually right, or is something mis-indexed?\n\nprojectPath: <workspace>",
     "scenario": "christian-hole-quality"
   },
   "mcp_fixtures": [

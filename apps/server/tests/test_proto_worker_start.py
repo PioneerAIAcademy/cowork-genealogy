@@ -31,13 +31,20 @@ GRACE_S = 2.0
 pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals and modes")
 
 
-def _start(tmp_path: Path, tmpdir: str | None) -> tuple[subprocess.Popen, "queue.Queue[dict]"]:
+def _start(tmp_path: Path, tmpdir: str | None,
+           extra_env: dict[str, str] | None = None) -> tuple[subprocess.Popen, "queue.Queue[dict]"]:
     cwd = tmp_path / "project"
     cwd.mkdir(exist_ok=True)
     env = {**os.environ, "PORT": "0", "PG_DSN": REFUSED_DSN, "WORKER_CWD": str(cwd), "QUEUE_URL": "",
+           "WORKER_TURN_USERS": "none", "MODEL_PROVIDER": "anthropic",
+           "TOOL_SERVER_URL": "http://tools:8787/mcp",
            "SWEEP_INTERVAL_S": "0", "SHUTDOWN_GRACE_S": str(GRACE_S), "PYTHONUNBUFFERED": "1"}
     env.pop("SQSD_MAX_RETRIES", None)
     env.pop("SQSD_RETENTION_PERIOD_S", None)
+    for name in ("SESSION_SPEND_CAP_USD", "PRICE_INPUT_PER_MTOK", "PRICE_CACHE_WRITE_PER_MTOK",
+                 "PRICE_CACHE_READ_PER_MTOK", "PRICE_OUTPUT_PER_MTOK"):
+        env.pop(name, None)
+    env.update(extra_env or {})
     if tmpdir is None:
         env.pop("TMPDIR", None)
     else:
@@ -146,5 +153,117 @@ def test_worker_listens_and_answers_503_with_postgres_down(tmp_path):
         proc.send_signal(signal.SIGTERM)
         code = proc.wait(timeout=GRACE_S + 2)
         assert code == 0, "the schema thread backing off must not hold the process open"
+    finally:
+        _stop(proc)
+
+
+@pytest.mark.parametrize(
+    "cap, expected, bad",
+    [("0.5", 0.5, False), ("0", 0.0, False), ("3O", 35.0, True), ("-1", 35.0, True),
+     ("nan", 35.0, True), ("inf", 35.0, True)],
+    ids=["set", "off", "typo", "negative", "nan", "inf"],
+)
+def test_start_reports_the_spend_cap_and_prices_and_a_typo_is_logged(tmp_path, cap, expected, bad):
+    """U23: ev=start says what this worker will cap at and how it prices, so a live cap
+    case can confirm its override took; a malformed value is a bad_env line, not a silent 35.
+    A value that parses but is no cap (``-1`` meant as "off", ``nan``, ``inf``) is malformed too."""
+    tmpdir = tmp_path / "tmp"
+    tmpdir.mkdir()
+    proc, lines = _start(tmp_path, str(tmpdir), {"SESSION_SPEND_CAP_USD": cap, "PRICE_INPUT_PER_MTOK": "2.5"})
+    try:
+        start, seen = _wait_for(lines, "start", timeout=10)
+        assert start is not None, seen
+    finally:
+        _stop(proc)
+    assert start["spend_cap_usd"] == expected
+    assert start["prices"] == {"input": 2.5, "cache_write": 6.0, "cache_read": 0.3, "output": 15.0}
+    bad_env = [line for line in seen if line.get("ev") == "bad_env"]
+    if bad:
+        assert bad_env == [{"ev": "bad_env", "name": "SESSION_SPEND_CAP_USD", "value": cap, "using": 35.0}]
+    else:
+        assert bad_env == []
+
+
+# U12 D27: the plugin hook's interpreter. check_hook_python takes the interpreter's
+# directory as an argument, so these run on temporary directories rather than by
+# shadowing PATH -- a venv's bin/ always carries a python3, so only exe_dir can fail.
+
+def _fake_python3(directory: Path, version: str) -> Path:
+    directory.mkdir(parents=True, exist_ok=True)
+    exe = directory / "python3"
+    exe.write_text(f"#!/bin/sh\necho {version}\n", encoding="utf-8")
+    exe.chmod(0o755)
+    return exe
+
+
+def _refused_exit(monkeypatch, exe_dir: str, path: str) -> tuple[int, list[dict]]:
+    from proto.worker import worker
+
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    with pytest.raises(SystemExit) as exc:
+        worker.require_hook_python(exe_dir, path)
+    return exc.value.code, logged
+
+
+def test_hook_python_refuses_a_3_9_interpreter_dir(tmp_path, monkeypatch):
+    from proto.worker import worker
+
+    exe = _fake_python3(tmp_path / "bin", "3.9.18")
+    assert worker.check_hook_python(str(tmp_path / "bin"), "") == (str(exe), "3.9.18", "too_old")
+    code, logged = _refused_exit(monkeypatch, str(tmp_path / "bin"), "")
+    assert code == 2
+    assert [(f["ev"], f["step"], f["error"]) for f in logged] == [("prepare", "hook_python", "too_old")]
+
+
+def test_hook_python_refuses_when_no_python3_is_found(tmp_path, monkeypatch):
+    from proto.worker import worker
+
+    (tmp_path / "bin").mkdir()
+    (tmp_path / "elsewhere").mkdir()
+    assert worker.check_hook_python(str(tmp_path / "bin"), str(tmp_path / "elsewhere")) == (None, None, "missing")
+    code, logged = _refused_exit(monkeypatch, str(tmp_path / "bin"), str(tmp_path / "elsewhere"))
+    assert code == 2
+    assert [(f["ev"], f["step"], f["error"]) for f in logged] == [("prepare", "hook_python", "missing")]
+
+
+def test_hook_python_prefers_the_interpreter_dir_over_an_older_path_entry(tmp_path):
+    from proto.worker import worker
+
+    exe = _fake_python3(tmp_path / "venv-bin", "3.12.4")
+    _fake_python3(tmp_path / "usr-bin", "3.9.18")
+    assert worker.check_hook_python(str(tmp_path / "venv-bin"), str(tmp_path / "usr-bin")) == (
+        str(exe), "3.12.4", None)
+    assert worker.require_hook_python(str(tmp_path / "venv-bin"), str(tmp_path / "usr-bin")) == f"{exe} 3.12.4"
+
+
+@pytest.mark.parametrize("path, tail", [("/usr/local/bin:/usr/bin", "/usr/local/bin:/usr/bin"), (None, None), ("", None)])
+def test_hook_python_child_path_starts_with_the_interpreter_dir(tmp_path, path, tail):
+    from proto.worker import options
+
+    worker_env = {"MODEL_PROVIDER": "anthropic", "ANTHROPIC_API_KEY": "sk-test", "TMPDIR": "/tmp",
+                  "TOOL_SERVER_URL": "http://tools:8787/mcp"}
+    if path is not None:
+        worker_env["PATH"] = path
+    opts = options.build_worker_options(
+        project_id="proj-1", cwd="/project", plugin_dir="/opt/genealogy/plugin", agents={},
+        store=object(), config_dir=str(tmp_path), pretool_hook=lambda *a: {},
+        posttool_hook=lambda *a: {}, worker_env=worker_env, bearer="grant-token",
+    )
+    exe_dir = os.path.dirname(sys.executable)
+    assert opts.env["PATH"] == (exe_dir if tail is None else f"{exe_dir}{os.pathsep}{tail}")
+
+
+def test_hook_python_start_reports_the_real_interpreter(tmp_path):
+    tmpdir = tmp_path / "tmp"
+    tmpdir.mkdir()
+    proc, lines = _start(tmp_path, str(tmpdir))
+    try:
+        start, seen = _wait_for(lines, "start", timeout=10)
+        assert start is not None, seen
+        assert not any(line.get("step") == "hook_python" for line in seen), seen
+        exe, _, version = start["hook_python"].rpartition(" ")
+        assert Path(exe).parent == Path(sys.executable).parent, start["hook_python"]
+        assert tuple(int(part) for part in version.split("."))[:2] >= (3, 10), start["hook_python"]
     finally:
         _stop(proc)

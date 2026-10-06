@@ -54,15 +54,10 @@ After invoking any routed Skill, stop. Do not read files, call MCP tools, or pro
 
 GPS Element 1 (Reasonably Exhaustive Research) — execution layer:
 
-- **Collect impartially.** Record contradicting evidence with the same care as supporting evidence.
+- **Collect impartially.** Record contradicting evidence with the same care as supporting evidence. Do not let a working hypothesis decide what you collect — evidence that complicates it is worth as much as evidence that confirms it, and a log holding only positive results is a red flag for cherry-picking.
 - **Index entries are pointers, not records.** Always attempt to locate the underlying original.
 - **Negative results are findings.** Log them with the same detail as positive results.
 - **Evaluate the database before interpreting results.** Read the collection description before searching.
-
-On demand, load:
-- `references/data-collection-standards.md` — source classification, information quality, evidence types
-- `references/research-log-standards.md` — nine essential log elements, completeness criteria
-- `references/validation-protocol.md` — genealogical plausibility checks (`check-warnings`) after a write
 
 ## MCP tools and routing
 
@@ -118,6 +113,12 @@ with no user present too — `research-plan` decides in the user's place, so rou
 search through it rather than running it yourself.
 
 ### 2. Construct the search query
+
+**Pre-work — issue this before constructing the query. Do not drop the call.**
+
+- **The search is a census search** (the plan item's `record_type` is `census`, or the user asked for a census): `wiki_read({ url: "https://www.familysearch.org/en/wiki/{Country}_Census" })` for the jurisdiction's country — `United_States_Census`, `England_Census`, `Norway_Census`, `Luxembourg_Census`. Take the country from the jurisdiction string when it names one; when it names only a county and state, resolve the country from those and say which you did. Never state what a census schedule collected from memory.
+- **If that page does not settle which fields the schedule collected for the year you are searching**, follow its own per-year link (`United_States_Census_{year}`) before asserting or denying a field.
+- A constructed URL that 404s, or a page that comes back generic, is a gap to record and report — not a prompt to fill from memory.
 
 **Choose a search strategy:**
 
@@ -250,7 +251,7 @@ and on how often that relative is indexed in the records you are searching:
   Whether it also drops indexed abbreviations (`Wm` for `William`) is not
   established.
 
-For wildcard rules and fuzzy matching behavior, read `references/name-search-mechanics.md`. For place hierarchy expansion and date range behavior, read `references/place-date-mechanics.md`.
+For wildcard rules and fuzzy matching behavior, read `references/name-search-mechanics.md`. Place expansion, date granularity and event-family semantics are in `record_search`'s own parameter descriptions — read them there, not from memory.
 
 **Before finalizing queries for a named collection (a specific `collectionId`, or a collection you can name — e.g. "Norway, Marriages, 1660-1926"), check `references/collection-quirks.md` for an entry on it and apply its guidance exactly.** Required, not optional — it documents transcription and indexing behaviors (abbreviations, vowel substitutions, wildcard restrictions) the general name-variant strategy will not surface. If an entry says two fields must be varied together (e.g. a given name and a surname abbreviation), vary them together in the same call before concluding a plan item is exhausted.
 
@@ -298,8 +299,6 @@ wildcard, and a wildcard still expands with `.exact` set. `%` is not a
 FamilySearch wildcard — use `*` or `?`. Prefer explicit spelling variants first,
 because a wildcard widens in ways you cannot see; reach for one when the variants
 are exhausted (`references/search-strategy-levers.md`, steps 8 and 9).
-
-**Always keep givenName in variant searches.** A surname-only query broadens results to every person of that surname and makes triage impossible. Keep both surname and givenName on every retry; change the spelling of one or both.
 
 **Patronymic cultures are the exception to leaning on the surname.** In Scandinavian and other patronymic systems the surname changes every generation (-sen/-datter, -son/-dotter) or is a farm/emigrant name adopted later — the *least* stable identifier, not the anchor. There, anchor on the **given name + exact date + the parents' given names**, expect the surname to differ from record to record, and do not require a surname match (the given name still stays — it's the surname you loosen). A shifting patronymic across a family is normal; a *conflicting* patronymic for the same person is a different-person signal, not a variant (see person-evidence / conflict-resolution).
 
@@ -500,8 +499,24 @@ candidates; you still confirm the top ones:
   reasoning about were never stated by the record either. Write both in the
   sentence you are already building, not as a fact appended once the
   candidate reasoning is settled.
-  **When a match turns on a field — or before calling one absent — check that
-  year's entry in `references/census-field-availability.md`.**
+  **When a match turns on a field — or before calling one absent — check what
+  that year's schedule actually collected, from the census page fetched in
+  Step 2. Three rules hold whatever the page says:**
+  - **State what the schedule recorded; label everything else inferred, and name
+    what it was inferred from** (surname, age, listing order). This is not only
+    about relationships: any fact the schedule did not collect that year —
+    parents' birthplaces, marital status, years married, exact month of birth —
+    is inferred if you report it at all.
+  - **A missing field is not a defective record and not a reason to downgrade a
+    match.** Check whether the field existed that year first. A field that *did*
+    exist and is genuinely blank is meaningful, and is worth a note.
+  - **A year-of-immigration mismatch across censuses is not automatically a
+    conflict.** Some immigrants made several trips; a later census may record a
+    return rather than the original emigration. Flag it for investigation
+    instead of resolving it.
+  Non-federal **state censuses** follow their own schedules and often carry
+  fields the federal census of that decade lacks — read the collection
+  description rather than assuming the federal pattern.
 - **Cite `matchScore`, never `results[].score` — they are different numbers.** A
   raw search stub's `score` (and `confidence`) is FamilySearch's own *search
   relevance*, the unreliable ordering the match-ranker exists to replace;
@@ -568,7 +583,17 @@ before extraction.
 
 ### 5. Log the search
 
-Call `research_log_append` once per search — it assigns the next `log_` id, stamps the timestamp, writes the `results/<log_id>.json` sidecar, validates, and **appends** atomically. Field-level guidance: `references/research-log-protocol.md`.
+Call `research_log_append` once per search — it assigns the next `log_` id, stamps the timestamp, writes the `results/<log_id>.json` sidecar, validates, and **appends** atomically.
+
+**A read-style entry has no search parameters — it still needs a `query` object, with the identifier under a canonical key and the prose in `notes`:**
+
+| entry `tool` | canonical `query` |
+|---|---|
+| `record_read`, one record | `{"recordId": "ark:/61903/1:1:XXXX-XXX"}` |
+| `record_read`, several | `{"recordIds": ["ark:/61903/1:1:…", "ark:/61903/1:1:…"]}` |
+| `image_transcribe`, `image_read` | `{"imageArk": "ark:/61903/3:1:XXXX-XXXX-XXX"}` |
+
+Never write a bare sentence there. An ARK is dense with `:` and `/`, and prose containing one produces `InputValidationError: … could not be parsed as JSON` — the call is rejected **before** the tool runs, so nothing is logged and the whole turn is wasted. Keep ARKs in a keyed field.
 
 Pass: `projectPath`, `tool`, `planItemId`, `query` (enough detail to reproduce the search), `outcome`, `resultsExamined`, `resultsAvailable`, `notes` (a one-line summary), and `stagedResultsRef` from Step 3 (the `staged.resultsRef` handle, when present).
 
@@ -609,7 +634,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 
 ### 7. Pass records to extraction
 
-**Distinguish index entries from original records.** Most search results are index entries — derivative sources that are pointers to originals, not the records themselves.
+**Distinguish index entries from original records.** Most search results are index entries — derivative sources that are pointers to originals, not the records themselves. Four things an index does to a record, each a reason the original still has to be examined: a transcription error from misread handwriting; partial indexing that omits fields the original carries; names or dates standardized differently than the original wrote them; and context that only the full document shows — marginal notes, adjacent entries, the structure of the page.
 
 **Hand off the `recordId` explicitly.** Each ranked match (like each `record_search` result) carries a `recordId` field that record-extraction uses as the assertion `record_id`. Pass it through in the handoff (alongside the persona ids you already hold) so record-extraction does **not** have to recover it by re-running `record_search` — that lets its first `research_append` validate without a re-search. The format is the validator's concern (it matches `record_id` by canonical ARK form), so pass `recordId` straight through.
 
@@ -625,7 +650,6 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 
 1. **Log the nil result** via `research_log_append` with `outcome: "negative"` and the exact parameters used. Omit `stagedResultsRef`.
 2. **Iterate through search strategy levers** before declaring negative. Read `references/search-strategy-levers.md`. Try at least 3 lever variations for important plan items. **Log each retry via `research_log_append` — either its own call immediately after the retry completes, or grouped into a batched `ops[]` call — but flush every few retries rather than holding the whole ladder for one call at the end.** A batch still unsent when a run aborts loses every retry inside it; log incrementally enough that an abort mid-ladder still leaves a trail.
-   **NEVER drop given name as a nil search lever.** A surname-only search is not a valid escalation step. Keep both surname and given name on every retry.
    **Wildcards are a sanctioned lever here, after the explicit variants.** Once you
    have tried the spellings you can name, `surname: "Fl*n"` or `givenName: "Eli?abeth"`
    is a legitimate next step, not an unsupported guess — `*` and `?` both bind, and the
@@ -638,7 +662,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
    (a) the record type existed in this jurisdiction at this time,
    (b) the collection is reasonably complete for the period,
    (c) the subject should have appeared based on known facts.
-   State each condition clearly. If all three hold, note in the log and suggest record-extraction create a negative assertion. If the collection is incomplete or the subject may have been absent, note this as a limitation rather than a conclusion.
+   State each condition clearly. **Condition (b) is answered from the collection, not from impression** — read its description for what it actually contains (a title like "U.S. Marriage Records" may cover only some states and years), whether it is index-only or carries images, its time and geographic bounds, who indexed it (volunteer, professional, or OCR/HTR, each with its own error profile), and any gaps it declares. A collection you have not read cannot support a claim that absence is meaningful. If all three hold, note in the log and suggest record-extraction create a negative assertion. If the collection is incomplete or the subject may have been absent, note this as a limitation rather than a conclusion.
 5. **Distinguish "not found" from "does not exist."** A nil result may mean the record is undigitized, unindexed, or indexed under a variant. Note which applies.
    **Low index coverage → pivot to full-text, do not conclude absent.** When the nil is on a collection the locality survey flagged as covering this place+period but whose index coverage is very low (browse-only image volumes — probate, court order books, land/deeds, many pre-1900 registers; `recordSearchablePercent` near 0), the record is almost certainly present as an **un-indexed page image**, not absent. `outcome` is still **`negative`** — that field records what the search returned, not what it means. The *interpretation* goes in `notes` and in the plan-item status: say the collection is browse-only / near-zero indexed and the record is very likely present as un-indexed page text, and keep the plan item **`in_progress`**. **Never let the narrative claim absence** — "no estate record exists" is the error, not the `negative` enum. Then report that a full-text search of that collection's volumes (a co-occurrence search — surname plus a distinguishing term like an heir/administrator's name or `deceased`/`estate`), and possibly image browsing, is the next step. **Do not run or delegate that search yourself** — the caller owns that decision. Absence may only be called after full-text/browse has also come up empty. (Example: a pre-1911 Kentucky death has no statewide certificate; it is established from the county estate administration — bond and settlement — which `record_search` on a ~1%-indexed probate collection will never surface.)
    **Zero results is NOT "service unavailability."** If `record_search` returns `totalMatches: 0` with no error, the search completed — do not attribute this to service issues.
