@@ -508,13 +508,10 @@ up while the body ran on the main thread, and each cost a run to find.
    verdict, and read a disagreement with its routed original by cause: a rule the
    router holds and the agent does not is a rule in the wrong file — move it into
    the agent before you run; a step the agent's own body names and the run skips
-   is an agent-body defect, which belongs to the pair's eval slot rather than the
-   conversion PR, so mark the twin `expected_outcome: "xfail"` with the cause, a
-   dated measurement, and the removal condition — never a live rate, since
-   `xfail_reason` is snapshot-tracked and a rate is falsified by the run log that
-   ships beside it (`ut_research_exhaustiveness_d3c` is the worked example, and
-   `docs/specs/unit-test-spec.md` §5.2.1 carries the rule). Read neither off one
-   run: settling the first five twins took ten, and both of the two that moved
+   is an agent-body defect: fix it in the agent body in this PR, one thing per
+   run (steps 9–10), until the twin passes. Never mark it
+   `expected_outcome: "xfail"`: the marker is retired, and `check_runlogs.py`
+   rule 10 blocks it. Read neither off one run: settling the first five twins took ten, and both of the two that moved
    reversed on a later run.
 9. Run once, unchanged. Compare against step 1.
 10. Fix one thing per run.
