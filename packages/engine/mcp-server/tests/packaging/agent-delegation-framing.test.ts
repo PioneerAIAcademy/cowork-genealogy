@@ -713,6 +713,7 @@ describe("agent delegation framing", () => {
     "search-hints",
     "search-images",
     "search-wikipedia",
+    "survey-surname",
     "translation",
     "tree-edit",
     "validate-schema",

@@ -126,16 +126,28 @@ def test_lock_namespaces_are_distinct_int4():
     call casts the namespace, so the overload never depends on how the driver types a Python
     int (psycopg 3 sends these as smallint today; an int8 would find no (bigint, integer)
     form)."""
-    for ns in (grants.ATTEMPT_LOCK_NS, grants.WRITE_LOCK_NS):
+    namespaces = (grants.ATTEMPT_LOCK_NS, grants.WRITE_LOCK_NS, grants.QUEUE_LOCK_NS)
+    for ns in namespaces:
         assert isinstance(ns, int) and 0 < ns < 2**31
-    assert grants.ATTEMPT_LOCK_NS != grants.WRITE_LOCK_NS
+    assert len(set(namespaces)) == len(namespaces)
     for sql in (grants.ATTEMPT_LOCK_SQL, grants.ATTEMPT_UNLOCK_SQL, grants.TRY_LOCK_SQL,
-                grants.WRITE_XACT_LOCK_SQL, grants.ATTEMPT_LOCK_HELD_SQL):
+                grants.WRITE_XACT_LOCK_SQL, grants.ATTEMPT_LOCK_HELD_SQL, grants.QUEUE_LOCK_SQL):
         assert "%s::int4" in sql, sql
-    for sql in (grants.ATTEMPT_LOCK_SQL, grants.ATTEMPT_UNLOCK_SQL, grants.TRY_LOCK_SQL, grants.WRITE_XACT_LOCK_SQL):
+    for sql in (grants.ATTEMPT_LOCK_SQL, grants.ATTEMPT_UNLOCK_SQL, grants.TRY_LOCK_SQL, grants.WRITE_XACT_LOCK_SQL,
+                grants.QUEUE_LOCK_SQL):
         assert "hashtext(%s)" in sql, sql
+    # U23: transaction-scoped, so a tier that dies mid-release can never wedge the session.
+    assert grants.QUEUE_LOCK_SQL.startswith("SELECT pg_advisory_xact_lock(")
     # The web image imports it as `grants`, the worker as `proto.grants`: one file, one key space.
     assert Path(app.grants.__file__).resolve() == Path(grants.__file__).resolve()
+
+
+@pytest.mark.parametrize("seconds, value", [(None, "5000ms"), (0.25, "250ms"), (2, "2000ms"), (0, "1ms"), (0.0001, "1ms")])
+def test_the_queue_lock_wait_is_always_bounded(seconds, value):
+    """U23: lock_timeout '0' is NO limit, so a cap that rounds to zero must not reach it."""
+    assert grants.queue_lock_timeout(seconds) == value
+    assert grants.QUEUE_LOCK_TIMEOUT_SQL == "SELECT set_config('lock_timeout', %s, true)", \
+        "is_local true: the bound ends with the transaction that holds the lock"
 
 
 @pytest.mark.parametrize("raw, expected", [

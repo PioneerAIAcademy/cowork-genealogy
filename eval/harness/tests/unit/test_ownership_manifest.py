@@ -86,13 +86,20 @@ NEWLY_ENFORCED = {"localities"}
 #: text, and the batches that write a summary and its resolve together all name
 #: `proof-conclusion`. A widening cannot newly fail a test; the matching skill
 #: body edit is a separate, eval-gated change.
-#:
-#: `log` gains `search-hints` (issue #2029), a new agent. A hint the researcher
-#: decided is a search result: its record-mode entry is what routes an accepted
-#: hint to record-extraction, and before it a hint review persisted nothing. The
-#: agent writes only through `research_log_append`, which takes no `section`, so
-#: the widening adds a writer to an append-only, multi-writer section.
-WIDENED: dict[str, set[str]] = {"questions": {"proof-conclusion"}, "log": {"search-hints"}}
+WIDENED: dict[str, set[str]] = {
+    "questions": {"proof-conclusion"},
+    #: `log` gains `survey-surname`. The agent calls `research_log_append` to log
+    #: each census-year search page. The `agent:survey-surname` caller was added to
+    #: ownership.json's `callers` so the ownership validator resolves it when the
+    #: agent is the suite subject.
+    #:
+    #: `log` gains `search-hints` (issue #2029), a new agent. A hint the researcher
+    #: decided is a search result: its record-mode entry is what routes an accepted
+    #: hint to record-extraction, and before it a hint review persisted nothing. The
+    #: agent writes only through `research_log_append`, which takes no `section`, so
+    #: the widening adds a writer to an append-only, multi-writer section.
+    "log": {"survey-surname", "search-hints"},
+}
 
 #: `assertions` loses `convert-dates`. The grant was dead on arrival: the skill's
 #: only tool is `convert_calendar`, it holds no writer tool, and its own body
