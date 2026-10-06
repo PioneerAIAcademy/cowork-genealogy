@@ -189,8 +189,15 @@ describe("plugin hooks are packaged and wired", () => {
         // ${CLAUDE_PLUGIN_ROOT} is the only portable way to reference a
         // bundled script; a relative path resolves against the session's cwd.
         expect(hook.command).toContain("${CLAUDE_PLUGIN_ROOT}");
-        const rel = hook.command!.split("${CLAUDE_PLUGIN_ROOT}/")[1]?.trim();
-        expect(existsSync(join(PLUGIN_DIR, rel))).toBe(true);
+        // Each use must sit inside double quotes: the root is a user path, and
+        // an unquoted one with a space ("C:\Users\First Last\...") splits
+        // into two arguments, so the hook errors and blocks every Write.
+        const uses = hook.command!.split("${CLAUDE_PLUGIN_ROOT}").length - 1;
+        const quoted = [...hook.command!.matchAll(/"\$\{CLAUDE_PLUGIN_ROOT\}\/([^"]+)"/g)];
+        expect(quoted.length, `unquoted \${CLAUDE_PLUGIN_ROOT} in: ${hook.command}`).toBe(uses);
+        for (const [, rel] of quoted) {
+          expect(existsSync(join(PLUGIN_DIR, rel))).toBe(true);
+        }
       }
     }
   });
