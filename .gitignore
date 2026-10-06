@@ -55,6 +55,10 @@ eval/runlogs/unit/*/scratch_*.ann.json
 # staging file.
 eval/runlogs/unit/*/.partial_*.json
 eval/runlogs/unit/*/.partial_*.json.tmp
+# Readable per-run reports (`make unit-report`), regenerable from the run log.
+eval/runlogs/unit/*/reports/
+eval/runlogs/e2e/*/reports/
+eval/runlogs/e2e/*/comparison/
 
 # A skipped e2e run (the judge never ran — the agent crashed before producing
 # a tree, so there is nothing to grade) writes as scratch_* and stays out of
