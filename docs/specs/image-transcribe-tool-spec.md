@@ -490,7 +490,7 @@ what the VLM was primed with before reading a contested hand):
 - `expansions`: which formal names were expanded and to which variant
   forms (keyed by the table's formal name, e.g. `"Elizabeth"`)
 
-This mirrors `fulltext_search`'s `nameExpansion` without
+This uses the same underlying name-variant tables as `get_name_variants`, without
 `variantsInResults`, which has no equivalent for VLM transcription.
 
 ### 5.4 Behavior (pipeline)

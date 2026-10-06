@@ -15,6 +15,7 @@ signature contract. The `test` argument is the parsed test JSON dict
 from __future__ import annotations
 
 import json
+import re
 
 import pytest
 
@@ -129,14 +130,14 @@ FILTER_KEYS = (
     "recordType", "yearFrom", "yearTo", "collectionId",
 )
 
-# The subset SKILL.md's decision ladder adds only after an unfiltered look
-# (step 5: 50-500 hits -> add Year/RecordType; >500 -> add a second term or
-# place). collectionId is deliberately excluded: it is not a "wait, then
-# add" filter at all -- SKILL.md forbids it on every call, full stop ("Do
-# NOT scope a full-text search to a record collectionId"), so it gets its
-# own always-applies check below rather than living in the first-call-only
-# one.
+# Place, date, and record-type filters are allowed on any call, but a filtered
+# search that returns zero results must be followed by an unfiltered retry
+# (checked by test_filtered_nil_is_followed_by_unfiltered_retry below).
+# `place` (q.recordPlace) narrows by collection metadata like recordPlace*, so a
+# nil under it owes the same retry. collectionId is excluded: its guard is
+# test_fulltext_search_never_scopes_to_collection_id, not this one.
 POST_SEARCH_FILTER_KEYS = (
+    "place",
     "recordPlace0", "recordPlace1", "recordPlace2", "recordPlace3",
     "recordType", "yearFrom", "yearTo",
 )
@@ -318,50 +319,134 @@ def test_log_query_traces_to_fulltext_search_call(before_state, after_state, too
     assert not errors, "Log entries claiming an unsent filter:\n  - " + "\n  - ".join(errors)
 
 
-# --- First look at a query must be unscoped ----------------------------
+# --- Filtered nil must be followed by an unfiltered retry --------------
 
-def test_first_fulltext_search_call_is_unscoped(tool_calls):
-    """SKILL.md step 4: Search by name only first; apply place as a
-    post-search filter. The decision ladder in step 5 only ever adds a
-    Year/RecordType/place filter once the unfiltered hit count is known
-    (50-500 add Year/RecordType; over 500 add a second term or place) so
-    the FIRST fulltext_search call in a turn must carry none of them
-    (deep-dive #1651 finding 2). collectionId is intentionally not part of
-    this check -- see test_fulltext_search_never_scopes_to_collection_id,
-    which covers every call, not just the first.
+_RECORD_PLACE_KEYS = ("recordPlace0", "recordPlace1", "recordPlace2", "recordPlace3")
+# A place filterParam from an includeFacets response: a level id, a comma, the
+# name (e.g. "10,Pennsylvania"). Anything else is plain text.
+_FACET_PLACE_FORM = re.compile(r"^\d+,")
 
-    Checks only the literal first call, not every later first look at an
-    independent target within the same turn (e.g. two names searched in
-    parallel) -- a known narrower scope than the full rule, chosen to keep
-    false positives at zero; widening it needs a way to tell a new target
-    apart from the same target narrowed, which is a judgment call, not a
-    mechanical one."""
+
+def test_record_place_filters_use_facet_form(tool_calls):
+    """`recordPlace*` (`f.recordPlace*`) accepts only a place filterParam from an
+    includeFacets response; a plain-text value silently returns zero
+    (fulltext-search-tool-spec.md, place parameter behaviour, measured
+    2026-09-10). A named jurisdiction in plain text belongs in `place`.
+
+    Deterministic because the unit eval cannot see it any other way: the
+    fixtures match on keywords alone, so a plain-text `recordPlace1` is served
+    results the live index would never return (issue #1828 review).
+    """
     calls = _fts_tool_calls(tool_calls)
     if not calls:
         pytest.skip("no fulltext_search calls this turn")
-    first_args = calls[0]["args"]
-    present = [k for k in POST_SEARCH_FILTER_KEYS if k in first_args]
-    assert not present, (
-        f"first fulltext_search call ({first_args.get('keywords') or first_args.get('nlQuery')!r}) "
-        f"includes post-search filter(s) before any unfiltered hit count was observed: {present}"
+    plain = [
+        (k, c["args"][k])
+        for c in calls
+        for k in _RECORD_PLACE_KEYS
+        if c.get("args", {}).get(k) not in (None, "")
+        and not _FACET_PLACE_FORM.match(str(c["args"][k]))
+    ]
+    assert not plain, (
+        "plain-text recordPlace* values silently return zero on the live index; "
+        "use the `place` field for a named jurisdiction, or a place filterParam "
+        f"from includeFacets (e.g. '10,Pennsylvania'). Got: {plain}"
+    )
+
+
+def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
+    """SKILL.md step 4 / query-syntax.md: when a fulltext_search call carries
+    post-search filters and returns zero results, the next call for the same
+    topic (same keywords/nlQuery handle) must omit those filters — a nil under
+    a filter may be a metadata mismatch, not a true negative. Spelling and
+    abbreviation variants are not exempt (SKILL.md step 4)."""
+    calls = _fts_tool_calls(tool_calls)
+    if not calls:
+        pytest.skip("no fulltext_search calls this turn")
+
+    by_handle: dict = {}
+    for c in calls:
+        args = c["args"]
+        handle = args.get("keywords") or args.get("nlQuery") or ""
+        by_handle.setdefault(handle, []).append(c)
+
+    errors = []
+    for handle, handle_calls in by_handle.items():
+        for i, c in enumerate(handle_calls):
+            args = c["args"]
+            present_filters = [k for k in POST_SEARCH_FILTER_KEYS if k in args]
+            if not present_filters:
+                continue
+            resp = c.get("response") or {}
+            results = resp.get("results")
+            total_hits = resp.get("totalResults")
+            is_zero = (
+                (isinstance(results, list) and len(results) == 0) or
+                (total_hits is not None and int(total_hits) == 0)
+            )
+            if not is_zero:
+                continue
+            later_calls = handle_calls[i + 1:]
+            retry_found = any(
+                {k for k in POST_SEARCH_FILTER_KEYS if k in lc["args"]} < set(present_filters)
+                for lc in later_calls
+            )
+            if not retry_found:
+                errors.append(
+                    f"fulltext_search for topic {handle!r} sent filter(s) "
+                    f"{present_filters} and returned zero results, but no "
+                    f"unfiltered retry for that topic follows in this turn"
+                )
+    assert not errors, (
+        "Filtered nil not followed by unfiltered retry:\n  - " + "\n  - ".join(errors)
     )
 
 
 def test_fulltext_search_never_scopes_to_collection_id(tool_calls):
-    """SKILL.md: "Do NOT scope a full-text search to a record collectionId"
-    -- an absolute rule, unlike place/date/recordType, which only wait for
-    the first unfiltered look (see test_first_fulltext_search_call_is_unscoped,
-    which checks call 0 only and never mentions collectionId). Without this
-    check, collectionId sent on a second-or-later call had no coverage
-    anywhere in the suite (task review on PR #1758, chrisedeson)."""
+    """collectionId is allowed only when a prior fulltext_search call in
+    the same turn sent includeFacets=true AND the value matches a filterParam
+    from that response's facets array. A borrowed collectionId silently
+    excludes the FTS partition holding the answer.
+    Safe path: pass includeFacets=true on the first call and use the
+    filterParam values from the response's facets array on a follow-up."""
     calls = _fts_tool_calls(tool_calls)
     if not calls:
         pytest.skip("no fulltext_search calls this turn")
-    offenders = [c["args"] for c in calls if "collectionId" in c["args"]]
-    assert not offenders, (
-        f"fulltext_search must never send collectionId; offending call(s): "
-        f"{[(a.get('keywords') or a.get('nlQuery'), a.get('collectionId')) for a in offenders]}"
-    )
+
+    # facets_seen is per-turn, not per-topic. A false negative is still possible
+    # if topic A's includeFacets=true call is followed by a borrowed collectionId
+    # for unrelated topic B. That case is not detectable without topic-boundary
+    # parsing. The filterParam check below catches the most common case: using
+    # an ID that was never returned in any prior facet response this turn.
+    facets_seen = False
+    allowed_filter_params: set = set()
+    errors = []
+    for c in calls:
+        args = c["args"]
+        if "collectionId" in args:
+            cid = args["collectionId"]
+            if not facets_seen:
+                errors.append(
+                    f"fulltext_search sent collectionId={cid!r} "
+                    f"without a prior includeFacets=true call in this turn "
+                    f"(query: {(args.get('keywords') or args.get('nlQuery'))!r})"
+                )
+            elif cid not in allowed_filter_params:
+                errors.append(
+                    f"fulltext_search sent collectionId={cid!r} which was not "
+                    f"among the filterParam values from any prior includeFacets "
+                    f"response this turn (allowed: {sorted(allowed_filter_params)!r}; "
+                    f"query: {(args.get('keywords') or args.get('nlQuery'))!r})"
+                )
+        if args.get("includeFacets"):
+            facets_seen = True
+            resp = c.get("response") or {}
+            for group in (resp.get("facets") or []):
+                for item in (group.get("items") or []):
+                    fp = item.get("filterParam")
+                    if fp:
+                        allowed_filter_params.add(fp)
+    assert not errors, "collectionId not from a prior filterParam:\n  - " + "\n  - ".join(errors)
 
 
 # --- A plan item only completes via its own search ----------------------

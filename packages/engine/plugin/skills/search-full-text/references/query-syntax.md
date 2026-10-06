@@ -10,7 +10,7 @@ Behavior differs fundamentally from indexed Records search.
 |---|---|---|
 | Keywords | Free text against entire transcript | All operators (`+`, `-`, `"…"`, `?`, `*`) work here |
 | Name | NLP-recognized person names only | Auto-handles last-name-first inversions ("Mills Alexander" matches "Alexander Mills"). Keywords field does NOT auto-invert. |
-| Place | Place name | Matches BOTH transcript content AND collection metadata — major source of false positives. **Prefer filtering by place after search rather than including place in the query.** |
+| Place | Place name | Matches collection metadata only — NOT transcript text. Causes false positives because a document's actual place may differ from the collection's place metadata. **Prefer filtering by place after search rather than including place in the query.** |
 | Year Range | Numeric range | Matches AI-recognized years in transcript and/or collection metadata. Documents often contain multiple dates. |
 | Image Group Number | Restrict to one digitized volume | Enter without leading zeros. Combine with keywords to scan one volume. |
 
@@ -73,18 +73,32 @@ and the phrase does not match the non-adjacent one.
 When in doubt which word is paternal and which maternal, run the
 co-occurrence — it does not care about order.
 
-## Do not scope FTS to a record collection ID
+## Scoping FTS to a collection ID
 
-`fulltext_search` accepts a `collectionId`, but the full-text corpus is
-partitioned into its **own** auto-generated collections that do **not**
-line up with the indexed-`record_search` collection IDs (or with a
-`collections_search` survey). Passing a `collectionId` guessed from
-those sources frequently excludes the very FTS volume that holds the
-answer, and the search returns zero with no hint that scoping caused it.
+The FTS corpus is partitioned into its **own** auto-generated collections
+that do **not** line up with `record_search` collection IDs or a
+`collections_search` survey. A `collectionId` borrowed from those sources
+frequently excludes the very FTS volume that holds the answer, silently
+returning zero.
 
-Search the **whole corpus first**. Narrow only *after* you have hits,
-using the post-search filters below (`recordPlace*`, `recordType`, year
-range) or a known `imageGroupNumber` — never a borrowed `collectionId`.
+**Safe path — use `includeFacets: true` on the first call.** When
+`includeFacets: true`, the response includes a `facets` array. Find the
+**Collection** group in `facets`; each item in that group carries a
+`filterParam` string — the exact `collectionId` value to pass on a scoped
+follow-up call. That value is safe because it names a real FTS partition
+that already returned hits.
+
+```
+# Step 1: unscoped, with facets
+fulltext_search({ keywords: "+Flynn +Patrick", includeFacets: true, projectPath })
+# Step 2: scoped to one facet-derived partition
+fulltext_search({ keywords: "+Flynn +Patrick", collectionId: "<filterParam from the Collection group in facets>", projectPath })
+```
+
+**Never borrow a `collectionId` from `record_search` or `collections_search`.**
+Search the whole corpus first; narrow only via `recordPlace*` / `recordType` /
+year-range filters, a known `imageGroupNumber`, or a `collectionId` taken from
+`includeFacets` results.
 
 ## What is NOT supported
 
@@ -98,9 +112,8 @@ range) or a known `imageGroupNumber` — never a borrowed `collectionId`.
   Jarmon". Search both explicitly.
 - **No abbreviation expansion** in `keywords` and `place` fields.
   `Wm`≠`William`, `Jno`≠`John`, `Jas`≠`James`, `Thos`≠`Thomas`. Run
-  separate queries. The `name` field auto-expands recognized English
-  given names with historical diminutives (do not use `+` in the `name`
-  field — it disables expansion).
+  separate queries. Call `get_name_variants` first to build an explicit
+  given-name variant list; run each variant as a separate query.
 - **Case insensitive** — confirmed.
 - **Diacritic insensitivity** — partial; generally works for
   Spanish/Portuguese but coverage is uneven.
@@ -133,16 +146,15 @@ Filters operate on **collection metadata**, not transcript text:
   collection metadata place, NOT places mentioned in the document.
 - **Record Type** — deeds, probate, court, vital, military, etc.
 
-**Critical rule:** Apply place, date, and record type via filters
-(`recordPlace*`, `yearFrom`/`yearTo`, `recordType`) AFTER the initial
-search — never on the first `fulltext_search` call for a query, whether
-typed into a keywords string or passed as the structured argument.
-Place risks false positives (matches collection metadata, not document
-content). Date and record type risk the opposite: a document's real
-date may not match its collection's metadata date (see
+**Scoping guidance:** Place filters match collection metadata — that is
+the useful place to narrow. Put a named jurisdiction in `place` (plain text),
+or use `recordPlace*` only with a place `filterParam` from an `includeFacets`
+response — plain-text `recordPlace*` values return zero. Date (`yearFrom`/`yearTo`) and record
+type are allowed too, but collection metadata dates can be off (see
 references/transcription-quirks.md's "Auto-collection dates/places come
-from metadata, not document content"), so filtering on the first call
-can silently exclude the right record instead of just adding noise.
+from metadata, not document content"), so apply them more cautiously.
+**If a filtered search returns zero results, re-run it without that
+filter before logging anything as not found.**
 
 **Filter order:** Place first, then year, then record type.
 
