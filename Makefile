@@ -1337,9 +1337,11 @@ skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-l
 
 .PHONY: unit-report
 unit-report: ## Readable .txt per unit run log, into eval/runlogs/unit/<skill>/reports/: make unit-report [SKILL=<name>] [FORCE=1]
+	# Every harness run already writes its own report; this backfills older logs.
 	# Pure formatting, no API. Per test: result, turns, cost by model (the SDK's
 	# own per-model figure), judge cost, agent / judge / wall-clock time, and each
-	# thread's busiest moment. Skips logs that already have a report; FORCE=1
+	# thread's busiest moment. Removes reports whose run log was pruned (same
+	# keep-newest-5 retention). Skips logs that already have a report; FORCE=1
 	# rewrites them (needed after a log is rehashed or released under a new name).
 	# The reports/ folders are gitignored — regenerate, don't commit.
 	cd eval/harness && uv run python -m unit_run_report $(if $(SKILL),--skill $(SKILL),) $(if $(FORCE),--force,)

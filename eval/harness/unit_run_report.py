@@ -4,8 +4,10 @@ A unit run log (`eval/runlogs/unit/<agent>/v1_<timestamp>.json`) already holds
 everything a reader wants per test — result, turns, cost by model, seconds — but
 as JSON. This writes the same facts as plain text beside it, in
 `eval/runlogs/unit/<agent>/reports/<log-stem>.txt`, one file per run log, so a
-run can be read without opening the JSON. Those reports are regenerable from the
-log and gitignored.
+run can be read without opening the JSON. `run_tests.py` writes one after every
+run; `make unit-report` backfills older logs. Reports are regenerable from the
+log and gitignored, and a report lives exactly as long as its run log — when
+the harness prunes a candidate beyond the newest five, its report goes too.
 
 **One run per file, no comparison.** A report is a fact about one run, so a
 later run can never rewrite it. Comparing two runs is separate work.
@@ -222,6 +224,25 @@ def render(log: dict[str, Any], name: str) -> str:
     return "\n".join(out) + "\n"
 
 
+def prune_orphan_reports(skill_dir: Path) -> list[Path]:
+    """Delete reports whose run log no longer exists. Returns what was removed.
+
+    A report lives exactly as long as its run log: the harness keeps the newest
+    candidates and every released log (`runlog.prune_old_candidates`), so
+    mirroring the log's existence applies that same retention here without
+    restating it.
+    """
+    reports = skill_dir / REPORTS_DIRNAME
+    if not reports.is_dir():
+        return []
+    removed = []
+    for txt in sorted(reports.glob("*.txt")):
+        if not (skill_dir / f"{txt.stem}.json").exists():
+            txt.unlink(missing_ok=True)
+            removed.append(txt)
+    return removed
+
+
 def write_reports(paths: list[Path], force: bool = False) -> tuple[list[Path], list[Path], list[Path]]:
     """`(written, skipped_existing, unreadable)`."""
     written: list[Path] = []
@@ -260,6 +281,7 @@ def main(argv: list[str] | None = None) -> int:
         print("No unit run logs found — nothing written.")
         return 2
     written, skipped, unreadable = write_reports(paths, force=args.force)
+    pruned = [p for d in sorted({p.parent for p in paths}) for p in prune_orphan_reports(d)]
     for p in written:
         print(f"wrote   {p.relative_to(UNIT_RUNLOGS.parent.parent.parent)}")
     print(
@@ -268,6 +290,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     for p in unreadable:
         print(f"  unreadable: {p}")
+    if pruned:
+        print(f"{len(pruned)} report(s) removed whose run log no longer exists.")
     return 0
 
 

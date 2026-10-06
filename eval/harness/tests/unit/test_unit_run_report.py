@@ -216,3 +216,41 @@ def test_an_empty_capture_names_its_status_and_a_missing_main_thread():
     text = render(log, "v1.json")
     assert "helpers        none captured (capture status: no_cache_dir)" in text
     assert "main thread    not captured" in text
+
+
+def test_a_report_lives_exactly_as_long_as_its_run_log(tmp_path: Path):
+    """The harness prunes old candidates; their reports must go with them."""
+    from unit_run_report import prune_orphan_reports
+
+    skill = tmp_path / "check-warnings"
+    (skill / "reports").mkdir(parents=True)
+    (skill / "v1_kept.json").write_text("{}", encoding="utf-8")
+    (skill / "reports" / "v1_kept.txt").write_text("x", encoding="utf-8")
+    (skill / "reports" / "v1_pruned.txt").write_text("x", encoding="utf-8")
+    removed = prune_orphan_reports(skill)
+    assert [p.name for p in removed] == ["v1_pruned.txt"]
+    assert (skill / "reports" / "v1_kept.txt").exists()
+    assert prune_orphan_reports(tmp_path / "no-such-skill") == []
+
+
+def test_every_unit_run_leaves_a_readable_report(tmp_path: Path, capsys):
+    """`run_tests` writes the report right after the log, and a log it cannot
+    render prints a note rather than failing a run whose log is already saved."""
+    import run_tests
+
+    skill = tmp_path / "check-warnings"
+    skill.mkdir()
+    log_path = skill / "v1_2026-10-06_10-00-00.json"
+    log_path.write_text(json.dumps(_log({"ut_a": [_run()]})), encoding="utf-8")
+    (skill / "reports").mkdir()
+    (skill / "reports" / "v1_old_pruned.txt").write_text("x", encoding="utf-8")
+
+    run_tests._write_readable_report(log_path)
+    assert (skill / "reports" / "v1_2026-10-06_10-00-00.txt").exists()
+    assert not (skill / "reports" / "v1_old_pruned.txt").exists()
+    assert "(readable report)" in capsys.readouterr().out
+
+    broken = skill / "v1_broken.json"
+    broken.write_text("{", encoding="utf-8")
+    run_tests._write_readable_report(broken)  # must not raise
+    assert "no readable report" in capsys.readouterr().out
