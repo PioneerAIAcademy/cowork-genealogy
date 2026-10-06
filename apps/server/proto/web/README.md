@@ -28,8 +28,10 @@ bundle both set it.
 `wb_session` cookie, the email allowlist, Fernet encryption of the grant). Handoff:
 U2 in `docs/plan/familysearch-handoff.md`.
 
-- **Dev-login** (`POST /auth/dev-login {email}`) is on while FamilySearch sign-in is off
-  and `PUBLIC_URL` is http, which is the default compose stack. Any email signs in, so
+- **Dev-login** (`POST /auth/dev-login {email}`) is opt-in: on only with `DEV_LOGIN=true`,
+  FamilySearch sign-in off and `PUBLIC_URL` http, which is the default compose stack. No
+  Beanstalk template may set a `DEV_` variable (U11), so a deployed host never offers it,
+  even with `PUBLIC_URL` unset. Any email signs in, so
   two emails are two patrons. `seed.py`, `demo.py`, `turn.py` and `drive.py` sign in this
   way (`--email`, default `dev@localhost`), and `seed.py` hands the project the engine
   created, which has no owner, to that patron.

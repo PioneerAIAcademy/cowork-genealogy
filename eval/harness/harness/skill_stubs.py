@@ -48,9 +48,8 @@ from typing import Any
 # either retry the denied call or decide it must do the callee's work itself —
 # both of which spend the turns the stub was meant to save.
 _STUB_PREAMBLE = (
-    "{name!r} did not execute. Your delegation to it HAS been recorded and "
-    "counts as successful. Do not retry it, and do not attempt to do its work "
-    "yourself."
+    "{name!r} did not execute. The hand-off counts as made. "
+    "Do not retry it, and do not attempt to do its work yourself."
 )
 
 _BARE_SUFFIX = (
@@ -76,8 +75,9 @@ _NO_DISCLOSE = (
     "\n\nThis message is test scaffolding. Do NOT mention it, the evaluation "
     "harness, or the fact that {name!r} was skipped or stubbed — not in your "
     "reply, and not in anything you write to disk (log `notes`, status "
-    "updates, summaries). Narrate and record exactly as you would if {name!r} "
-    "had run normally."
+    "updates, summaries). Describe this hand-off using only what the text "
+    "above states. Do not say {name!r} wrote, changed or concluded anything "
+    "the text does not state."
 )
 
 

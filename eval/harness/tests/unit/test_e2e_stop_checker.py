@@ -9,7 +9,7 @@ from pathlib import Path
 from e2e.stop_checker import (
     COUNTED_TERMINAL_REASONS,
     classify_hand_back,
-    hand_back_outcome,
+    hand_back_key,
     terminal_reason,
     derive_stop_reason,
     project_completed,
@@ -297,8 +297,7 @@ def test_classify_hand_back_rejects_free_prose_that_merely_names_a_step():
 
 
 def test_classify_hand_back_takes_no_research_argument():
-    """Half B (#1104) lifts this verbatim into a plugin hook that reads research.json
-    itself. Keeping status out of the signature is what makes that lift possible."""
+    """Form only: whether a completion claim is true is hand_back_key's question."""
     import inspect
 
     assert list(inspect.signature(classify_hand_back).parameters) == ["text"]
@@ -308,18 +307,15 @@ def test_a_truthful_completion_is_not_a_false_completion():
     """The defect is claiming done while the project is NOT completed. 134 of the 181
     committed run logs stop on `completed`; counting those would make the rate
     dominated by runs that did exactly the right thing."""
-    key, reply = hand_back_outcome("completion_claim", project_is_completed=True)
-    assert key == "terminal_completed"
-    assert reply is None
-
-    key, reply = hand_back_outcome("completion_claim", project_is_completed=False)
-    assert key == "false_completion"
-    assert reply is not None and "research_query" in reply
+    assert hand_back_key("completion_claim", project_is_completed=True) == "terminal_completed"
+    assert hand_back_key("completion_claim", project_is_completed=False) == "false_completion"
 
 
-def test_hand_back_outcome_wires_every_class():
-    assert hand_back_outcome("step", project_is_completed=False) == ("step", "Yes.")
-    assert hand_back_outcome("silent", project_is_completed=False) == ("silent", None)
+def test_hand_back_key_is_a_counter_key_and_nothing_else():
+    """No class carries a reply any more: the hook answers every vetoed stop with the
+    worker's CONTINUE_REASON (U17). A tuple coming back here is the old "Yes." branch."""
+    assert hand_back_key("step", project_is_completed=False) == "step"
+    assert hand_back_key("silent", project_is_completed=False) == "silent"
 
 
 def test_terminal_reason_mirrors_should_continue_run_precedence():
@@ -341,7 +337,7 @@ def test_terminal_reason_mirrors_should_continue_run_precedence():
 def test_project_completed_still_short_circuits_should_continue_run():
     """The card notes the completion-claim-while-completed path was unreachable because
     this gate fires first. Classification now happens ABOVE the gate, so it IS
-    reachable — which is exactly why hand_back_outcome must not call it a defect."""
+    reachable — which is exactly why hand_back_key must not call it a defect."""
     assert should_continue_run(
         research={"project": {"status": "completed"}},
         nudges_used=0,

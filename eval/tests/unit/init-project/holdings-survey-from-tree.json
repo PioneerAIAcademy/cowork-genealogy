@@ -21,7 +21,7 @@
     "person-read-flynn"
   ],
   "judge_context": [
-    "Should create both research.json and tree.gedcomx.json, seeding a stub for Patrick Flynn from the person-read-flynn fixture (Birth ~1845 Ireland, Death 1908 Schuylkill County PA), sourced to FamilySearch at quality 1",
+    "Should create both research.json and tree.gedcomx.json, with Patrick Flynn from the person-read-flynn fixture in the written tree (Birth ~1845 Ireland, Death 1908 Schuylkill County PA), sourced to FamilySearch at quality 1. project_create builds him from the staged read; the skill does not type him out",
     "Should record at least two `known_holdings` entries — one for the death certificate and one for the aunt's typed family history — using the researcher's own words in `description`. Holdings are user-reported; do not invent any the user did not state",
     "The death certificate should be `holding_type: document` with `confidence: confident`. The aunt's typed family history should be `holding_type: prior_research` (treating it as a family-knowledge / oral lead under `oral_knowledge` is also defensible — genealogist to confirm the preferred tag) with `confidence: unsure`",
     "Every known_holdings entry must have `promoted: false` and a `created` date, and a `kh_` prefixed id",
@@ -29,6 +29,7 @@
     "Should NOT extract the holdings into `sources` or `assertions` — at init they are lightweight survey notes only"
   ],
   "execution": {
+    "max_wall_clock_seconds": 480,
     "stub_skills": [
       {
         "skill": "question-selection",
@@ -43,5 +44,6 @@
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
       }
     ]
-  }
+  },
+  "judge_reads_files": true
 }
