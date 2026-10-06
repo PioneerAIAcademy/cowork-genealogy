@@ -481,7 +481,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["init-project -> question-selection", ""],
   ["research-exhaustiveness -> question-selection", ""],
   ["research-plan -> question-selection", ""],
-  ["search-full-text -> question-selection", ""],
   ["timeline -> question-selection", ""],
   // locality-guide (issue #2117): every one is a bare-name boundary or
   // provenance mention ("use locality-guide", "comes from `locality-guide`"),
@@ -495,6 +494,12 @@ const PROSE_MENTIONS = new Map<string, string>([
   // `@plugin:hypothesis-tracking`.
   ["conflict-resolution -> hypothesis-tracking", ""],
   ["timeline -> hypothesis-tracking", ""],
+  // search-full-text entered agentOnly when issue #2120 deleted its skill
+  // directory. All mentions below are bare-name boundary prose ("use
+  // search-full-text", "search-full-text skill") — none spells
+  // `@plugin:search-full-text`.
+  ["record-extraction -> search-full-text", ""],
+  ["search-records -> search-full-text", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -689,6 +694,8 @@ describe("agent delegation framing", () => {
     "locality-guide",
     "record-extractor",
     "search-familysearch-wiki",
+    // ARRIVED when issue #2120 deleted skills/search-full-text/.
+    "search-full-text",
     "search-images",
     "search-wikipedia",
     "survey-surname",

@@ -104,7 +104,7 @@ PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
-AGENTS = {"check-warnings", "citation", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "locality-guide", "person-evidence", "project-status", "proof-conclusion", "question-selection", "record-extractor", "research-exhaustiveness", "search-familysearch-wiki", "search-images", "search-wikipedia", "survey-surname", "translation", "tree-edit", "validate-schema"}
+AGENTS = {"check-warnings", "citation", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "locality-guide", "person-evidence", "project-status", "proof-conclusion", "question-selection", "record-extractor", "research-exhaustiveness", "search-familysearch-wiki", "search-full-text", "search-images", "search-wikipedia", "survey-surname", "translation", "tree-edit", "validate-schema"}
 
 
 # ── fakes ─────────────────────────────────────────────────────────────────────────
@@ -802,27 +802,27 @@ def _info(agents: set[str], skills: int, extra_agents: tuple[str, ...] = ()) -> 
 
 
 def test_registration_passes_with_every_bare_agent_and_every_skill():
-    assert options.check_registration(_info(AGENTS, 12, ("general-purpose", "genealogy-research:gps-mentor")),
-                                      expected_agents=AGENTS, expected_skills=12) == []
+    assert options.check_registration(_info(AGENTS, 11, ("general-purpose", "genealogy-research:gps-mentor")),
+                                      expected_agents=AGENTS, expected_skills=11) == []
 
 
 def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
-    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 12, ("genealogy-research:gps-mentor",)),
-                                          expected_agents=AGENTS, expected_skills=12)
+    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 11, ("genealogy-research:gps-mentor",)),
+                                          expected_agents=AGENTS, expected_skills=11)
     assert problems and "gps-mentor" in problems[0] and "bare" in problems[0]
-    problems = options.check_registration(_info(AGENTS, 11), expected_agents=AGENTS, expected_skills=12)
-    assert problems == ["11 genealogy-research:* commands registered, expected 12"]
-    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=12)
+    problems = options.check_registration(_info(AGENTS, 10), expected_agents=AGENTS, expected_skills=11)
+    assert problems == ["10 genealogy-research:* commands registered, expected 11"]
+    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=11)
 
 
-def test_the_plugin_ships_twenty_one_agents_and_twelve_skills():
+def test_the_plugin_ships_twenty_two_agents_and_eleven_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
-    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 12
+    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 11
     # A literal in the source, not an expression over the plugin dir (the mutation the
     # review named: both sides of the check shrinking together).
-    assert "\nEXPECTED_SKILLS = 12\n" in Path(worker.__file__).read_text(encoding="utf-8")
+    assert "\nEXPECTED_SKILLS = 11\n" in Path(worker.__file__).read_text(encoding="utf-8")
 
 
 def test_expected_agents_is_the_shipped_set():
