@@ -1765,4 +1765,156 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
     expect(blank.ok).toBe(false);
     expect((blank as any).reason).toBe("unjustified_warnings");
   });
+
+  // Issue #2525: a ParentChild edge touched no person, so the gate never ran on
+  // one. These go through the real tree_edit, not the delta function alone.
+  const parentage = () => ({
+    persons: ["Patrick:Male:1845", "Thomas:Male:1815", "John:Male:1818", "Mary:Female:1820"].map((s, i) => {
+      const [given, gender, birth] = s.split(":");
+      return {
+        id: `I${i + 1}`,
+        gender,
+        names: [{ id: `N${i + 1}`, given, surname: "Flynn", preferred: true }],
+        facts: [{ id: `F${i + 1}`, type: "Birth", date: birth, primary: true }],
+      };
+    }),
+    relationships: [{ id: "R1", type: "ParentChild", parent: "I2", child: "I1", sources: [{ ref: "S1" }] }],
+    sources: [{ id: "S1", title: "1850 census" }],
+  });
+  const addParent = (parent: string, extra: object = {}) =>
+    treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent, child: "I1", sources: [{ ref: "S1" }] },
+      ...extra,
+    } as any);
+
+  it("refuses a ParentChild edge that gives the child a second father, tree unchanged", async () => {
+    await writeProject(parentage());
+    const treeBefore = await readTree();
+
+    const r = await addParent("I3");
+
+    expect(r.ok).toBe(false);
+    expect((r as any).reason).toBe("unjustified_warnings");
+    expect((r as any).warnings.map((w: any) => [w.issueType, w.personId])).toEqual([["tooManyFathers2", "I1"]]);
+    expect(await readTree()).toEqual(treeBefore);
+  });
+
+  it("lets a ParentChild edge to a parent of the other sex through", async () => {
+    await writeProject(parentage());
+
+    const r = await addParent("I4");
+
+    expect(r.ok).toBe(true);
+    expect((await readTree()).relationships).toHaveLength(2);
+    expect((r as any).conflicts_surfaced).toBeUndefined();
+  });
+
+  // Issue #2525: the refusal is the detector, and it names the route.
+  const parentageResearch = {
+    ...minimalResearch,
+    sources: [{ id: "src_001", gedcomx_source_description_id: "S1" }],
+    assertions: [
+      { id: "a_001", source_id: "src_001", fact_type: "relationship" },
+      { id: "a_002", source_id: "src_001", fact_type: "relationship" },
+    ],
+  };
+  const addParentFrom = (parent: string, sourceAssertionId: string, extra: object = {}) =>
+    treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent, child: "I1" },
+      sourceAssertionId,
+      ...extra,
+    } as any);
+
+  it("refuses a second father with conflicts_surfaced naming both claims and the route", async () => {
+    await writeProject(parentage(), parentageResearch);
+
+    const r = await addParentFrom("I3", "a_002");
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.conflicts_surfaced).toEqual([
+      {
+        personId: "I1",
+        factType: "ParentChild",
+        values: ["I2 Thomas Flynn (a_001, a_002)", "I3 John Flynn (a_002)"],
+      },
+    ]);
+    expect(r.message).toContain("send each conflicts_surfaced entry to conflict-resolution");
+    expect(r.errors).toEqual([r.message]);
+  });
+
+  it("echoes conflicts_surfaced when the second father is written with a justification", async () => {
+    await writeProject(parentage(), parentageResearch);
+    const refused = await addParentFrom("I3", "a_002");
+    const warningId = (refused as any).warnings[0].warningId;
+
+    const r = await addParentFrom("I3", "a_002", {
+      warningJustifications: [{ warningId, justification: "conflict c_001 recorded" }],
+    });
+
+    expect(r.ok).toBe(true);
+    expect((r as any).conflicts_surfaced?.[0]?.personId).toBe("I1");
+  });
+
+  it("writes and echoes a new biological father when the warning already stood", async () => {
+    const t = parentage();
+    t.persons.push({
+      id: "I5",
+      gender: "Male",
+      names: [{ id: "N5", given: "James", surname: "Flynn", preferred: true }],
+      facts: [{ id: "F5", type: "Birth", date: "1816", primary: true }],
+    });
+    (t.relationships as any[]).push({ id: "R2", type: "ParentChild", parent: "I3", child: "I1", subtype: "Adoptive", sources: [{ ref: "S1" }] });
+    await writeProject(t, parentageResearch);
+
+    const r = await addParentFrom("I5", "a_002");
+
+    expect(r.ok).toBe(true);
+    expect((r as any).conflicts_surfaced).toEqual([
+      {
+        personId: "I1",
+        factType: "ParentChild",
+        values: ["I2 Thomas Flynn (a_001, a_002)", "I5 James Flynn (a_002)"],
+      },
+    ]);
+  });
+
+  it("refuses an adoptive second father without conflicts_surfaced", async () => {
+    await writeProject(parentage(), parentageResearch);
+
+    const r = await addParent("I3", { relationship: { type: "ParentChild", parent: "I3", child: "I1", subtype: "Adoptive", sources: [{ ref: "S1" }] } });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.reason).toBe("unjustified_warnings");
+    expect(r.conflicts_surfaced).toBeUndefined();
+    expect(r.message).not.toContain("conflict-resolution");
+  });
+
+  it("the stale-justification refusal carries errors too", async () => {
+    await writeProject(longLifeTree());
+    const fact = { type: "Death", date: "1950", sources: [{ ref: "S1" }] };
+    const refused = await treeEdit({ projectPath: dir, operation: "add_fact", personId: "I1", fact });
+    const real = (refused as any).warnings[0].warningId;
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact,
+      warningJustifications: [
+        { warningId: real, justification: "probate confirms it" },
+        { warningId: "not-a-real-id", justification: "x" },
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors).toHaveLength(1);
+    expect(r.errors[0]).toContain("Stale warningId");
+  });
 });

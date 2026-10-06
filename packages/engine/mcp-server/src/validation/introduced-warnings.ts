@@ -16,9 +16,11 @@
  */
 
 import type { SimplifiedGedcomX, SimplifiedPerson, SimplifiedRelationship } from "../types/gedcomx.js";
+import type { ConflictSurfaced } from "../types/materialize-facts.js";
 import type { PersonWarning } from "../types/person-warnings.js";
-import { Mob } from "../utils/mob.js";
-import { calculateWarnings } from "../tools/person-warnings.js";
+import { Mob, normalizeGender } from "../utils/mob.js";
+import { calculateWarnings, getPersonName, isQualifyingParentChildEdge } from "../tools/person-warnings.js";
+import { isRelationshipEstablishing } from "../utils/source-ref-resolver.js";
 
 /** Stable warning identifier: tag + person + related + sorted fact ids. */
 export function warningId(w: PersonWarning): string {
@@ -151,6 +153,13 @@ export function staleJustifications(
     .filter((id) => !introducedIds.has(id));
 }
 
+/** Both ends of an edge: `person1`/`person2` on a Couple, `parent`/`child` on
+ *  a ParentChild. Reading only the Couple pair left every ParentChild edit with
+ *  no touched person, so the gate never saw it (issue #2525). */
+function relationshipEndpoints(r: SimplifiedRelationship): string[] {
+  return [r.person1, r.person2, r.parent, r.child].filter((p): p is string => !!p);
+}
+
 /**
  * Compute the set of person IDs whose data changed between two tree snapshots.
  * Includes every person whose names, facts, or gender differ, plus both
@@ -194,20 +203,121 @@ export function computeTouchedPersonIds(
   for (const [id, r] of afterRels) {
     const br = beforeRels.get(id);
     if (!br || JSON.stringify(br) !== JSON.stringify(r)) {
-      if (r.person1) touched.add(r.person1);
-      if (r.person2) touched.add(r.person2);
-      if (br) {
-        if (br.person1) touched.add(br.person1);
-        if (br.person2) touched.add(br.person2);
-      }
+      for (const p of relationshipEndpoints(r)) touched.add(p);
+      if (br) for (const p of relationshipEndpoints(br)) touched.add(p);
     }
   }
   for (const [id, r] of beforeRels) {
-    if (!afterRels.has(id)) {
-      if (r.person1) touched.add(r.person1);
-      if (r.person2) touched.add(r.person2);
-    }
+    if (!afterRels.has(id)) for (const p of relationshipEndpoints(r)) touched.add(p);
   }
 
   return [...touched];
+}
+
+/** Key for one parent-child pair, as `executeTreeOps` records a proposed edge's
+ *  `sourceAssertionId` for `competingParentage`. */
+export function parentChildKey(parent: string, child: string): string {
+  return `${parent}|${child}`;
+}
+
+/** Biological parents of `childId` of one sex. An edge with a non-biological
+ *  `subtype` does not count; a parent holding both kinds of edge counts once. */
+function biologicalParents(tree: SimplifiedGedcomX, childId: string, sex: "Male" | "Female"): Set<string> {
+  const gender = new Map((tree.persons ?? []).map((p) => [p.id, normalizeGender(p.gender)]));
+  const out = new Set<string>();
+  for (const r of tree.relationships ?? []) {
+    if (r.child !== childId || !r.parent || !isQualifyingParentChildEdge(r)) continue;
+    if (gender.get(r.parent) === sex) out.add(r.parent);
+  }
+  return out;
+}
+
+/** Where a parent edge's claim comes from: the proposed edge's own
+ *  `sourceAssertionId`, else the parentage assertions on the edge's sources
+ *  (tree S-id → research source → assertion), else the bare source refs. */
+function parentEvidence(
+  tree: SimplifiedGedcomX,
+  research: any,
+  parent: string,
+  child: string,
+  proposed: Map<string, string> | undefined,
+): string {
+  const fromCall = proposed?.get(parentChildKey(parent, child));
+  if (fromCall) return fromCall;
+  const refs = new Set<string>();
+  for (const r of tree.relationships ?? []) {
+    if (r.parent === parent && r.child === child && isQualifyingParentChildEdge(r)) {
+      for (const s of r.sources ?? []) if (s.ref) refs.add(s.ref);
+    }
+  }
+  if (refs.size === 0) return "no source";
+  const sourceIds = new Set(
+    (Array.isArray(research?.sources) ? research.sources : [])
+      .filter((s: any) => s && refs.has(s.gedcomx_source_description_id))
+      .map((s: any) => s.id),
+  );
+  const linked = new Set(
+    (Array.isArray(research?.person_evidence) ? research.person_evidence : [])
+      .filter((pe: any) => pe && (pe.person_id === parent || pe.person_id === child))
+      .map((pe: any) => pe.assertion_id),
+  );
+  const parentage = (Array.isArray(research?.assertions) ? research.assertions : []).filter(
+    (a: any) =>
+      a && sourceIds.has(a.source_id) && isRelationshipEstablishing(a.fact_type) &&
+      String(a.fact_type).trim().toLowerCase() !== "marriage",
+  );
+  const named = parentage.filter((a: any) => linked.has(a.id));
+  const ids = (named.length > 0 ? named : parentage).map((a: any) => a.id);
+  return ids.length > 0 ? ids.join(", ") : `source ${[...refs].join(", ")}`;
+}
+
+/**
+ * Competing biological parentage this write created: a child who now has two
+ * or more biological parents of one sex, where that set grew. Issue #2525.
+ *
+ * Computed from the trees, not from the gate's introduced warnings: a
+ * `tooManyFathers2` id carries no related person or facts, so a child who
+ * already held the warning (a biological and an adoptive father, say) would
+ * hide a new biological father from the introduced list. The children examined
+ * are the touched persons and every child of a touched person, so a parent's
+ * gender change is seen too.
+ *
+ * Each value names one parent with the evidence behind its edge, so
+ * conflict-resolution can fill `competing_assertion_ids` without the call that
+ * was refused.
+ */
+export function competingParentage(
+  before: SimplifiedGedcomX,
+  after: SimplifiedGedcomX,
+  touchedPersonIds: string[],
+  research: any,
+  proposed?: Map<string, string>,
+): ConflictSurfaced[] {
+  const children = new Set(touchedPersonIds);
+  for (const r of after.relationships ?? []) {
+    if (r.type === "ParentChild" && r.parent && r.child && touchedPersonIds.includes(r.parent)) {
+      children.add(r.child);
+    }
+  }
+  const people = new Map((after.persons ?? []).map((p) => [p.id, p]));
+  const out: ConflictSurfaced[] = [];
+  for (const child of children) {
+    if (!people.has(child)) continue;
+    for (const sex of ["Male", "Female"] as const) {
+      const now = biologicalParents(after, child, sex);
+      if (now.size < 2) continue;
+      const was = biologicalParents(before, child, sex);
+      if (![...now].some((p) => !was.has(p))) continue;
+      out.push({
+        personId: child,
+        factType: "ParentChild",
+        values: [...now].sort().map((p) => {
+          const person = people.get(p);
+          const name = person ? getPersonName(person) : "";
+          return `${p} ${name} (${parentEvidence(after, research, p, child, proposed)})`;
+        }),
+      });
+    }
+  }
+  return out;
 }

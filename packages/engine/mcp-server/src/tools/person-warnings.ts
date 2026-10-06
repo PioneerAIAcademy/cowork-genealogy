@@ -977,7 +977,7 @@ function hasRelationshipFactOfType(
  * `gedcomx-convert.ts`'s `uriToSubtype`: undefined, `"Biological"`,
  * `"Adoptive"`, `"Step"`, `"Foster"`, or `"Guardian"`.
  */
-function isQualifyingParentChildEdge(rel: SimplifiedRelationship): boolean {
+export function isQualifyingParentChildEdge(rel: SimplifiedRelationship): boolean {
   return (
     rel.type === "ParentChild" &&
     (rel.subtype === undefined || rel.subtype === "Biological")

@@ -329,9 +329,19 @@ committed e2e corpus set one of those fields.
   },
   filesWritten: ["tree.gedcomx.json"],
   validation: { valid: true, warnings: string[] },
+  conflicts_surfaced?: [{ personId, factType: "ParentChild", values: string[] }],
 }
 // on failure: { ok: false, errors: string[] } — nothing written
 ```
+
+`conflicts_surfaced` appears on a write that lands while giving a child two or
+more **biological** parents of one sex, where that set grew: a justified
+re-call, or a write past a `tooManyFathers2`/`tooManyMothers2` warning that
+already stood. The refusal carries it too (§7). Each value names one parent as
+`"<personId> <name> (<evidence>)"`, where the evidence is the call's
+`sourceAssertionId` for the proposed edge, else the parentage assertions on the
+edge's sources, else `source <S-id>`. It is the same `ConflictSurfaced` shape
+`materialize_facts` returns for vital facts.
 
 ### 4.3 Batch form (`ops`) — several edits in one call
 
@@ -491,6 +501,23 @@ Sequence (validate-before-persist, tree-only):
   (`SKILL.md:68–70`) and makes `place`/`standard_place` atomic. Overridable:
   pass `standard_place` explicitly, or `resolveStandardPlace: false`, to skip the
   network call.
+- **Competing parentage is surfaced by the writer, not by a new tool.** A second biological parent of one sex trips the warning gate
+  (`tooManyFathers2`/`tooManyMothers2`), so the refusal is the detector: it
+  carries `conflicts_surfaced` and tells the caller to send the disagreement to
+  `conflict-resolution` as an identity question, not to justify it, and not to
+  write the edge until it is resolved. The disputed edge stays out of the tree
+  meanwhile; the entry names each parent's assertion so the conflict can be
+  recorded without it. *Rejected:* surfacing only on a successful write (it
+  would fire only after the conflict had been justified away); making the
+  warning unjustifiable (it would block an adoptive or step parent outright);
+  routing in agent prose alone (a rule the model reads, not one the tool binds,
+  ADR-0011). **Only biological parents count** (no `subtype`, or
+  `Biological`): the warning itself ignores `subtype`, so an adoptive father
+  beside a biological one is still refused for a justification, but it is not
+  routed as disputed paternity. The entry is computed from the before and after
+  trees, not from the gate's introduced warnings, because a `tooManyFathers2`
+  id carries no related person: a child who already held the warning would hide
+  a new biological father from that list.
 - **`remove` is fact/relationship-only.** The skill permits deletion only on a
   tier downgrade (`SKILL.md:118–124`); person removal is structurally reserved to
   the merge tools, so `tree_edit` cannot delete a person.
@@ -515,7 +542,7 @@ Sequence (validate-before-persist, tree-only):
 | `resolveStandardPlace` network call fails | best-effort: set `standard_place: null`, add a warning; never fail the edit on a place-resolution miss |
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. A directory holding exactly one of the two files is a *broken* project and stays loud. Applies to `tree_correct` identically. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Resulting tree carries a **call-introduced** validation error | write nothing; return `{ ok: false, errors }`. A pre-existing error rides as a warning |
-| Write introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", message: "...", warnings: [{ warningId, issueType, severity, personId, personName, message, facts?, relatedPersonId? }] }`. Re-call with `warningJustifications: [{ warningId, justification }]` for each warning. A pre-existing warning needs no justification. |
+| Write introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", errors: [message], message: "...", warnings: [{ warningId, issueType, severity, personId, personName, message, facts?, relatedPersonId? }], conflicts_surfaced? }`. Re-call with `warningJustifications: [{ warningId, justification }]` for each warning. A pre-existing warning needs no justification. A stale `warningId` is refused the same way, with `errors` naming it. When the warning is competing biological parentage, `conflicts_surfaced` names it and `message` routes it to `conflict-resolution` instead of a justification (§6). |
 
 ---
 

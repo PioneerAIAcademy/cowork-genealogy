@@ -30,8 +30,11 @@ import {
   introducedWarnings,
   staleJustifications,
   computeTouchedPersonIds,
+  competingParentage,
+  parentChildKey,
   type WarningJustificationInput,
 } from "../validation/introduced-warnings.js";
+import type { ConflictSurfaced } from "../types/materialize-facts.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   atomicWriteJson,
@@ -151,17 +154,57 @@ export type TreeEditResult =
       ok: true;
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
+      conflicts_surfaced?: ConflictSurfaced[];
     } & PerOpResult)
   | {
       ok: true;
       results: PerOpResult[];
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
+      conflicts_surfaced?: ConflictSurfaced[];
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
   // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
-  | { ok: false; errors: string[]; reason?: "no_project" };
+  // The warning gate's refusal rides this same arm (see WarningGateRefusal).
+  | ({ ok: false; errors: string[]; reason?: "no_project" | "unjustified_warnings" } &
+      Partial<Pick<WarningGateRefusal, "message" | "warnings" | "conflicts_surfaced">>);
+
+/** One warning a gated write introduced, as the refusal reports it. */
+export interface GateWarning {
+  warningId?: string;
+  issueType?: string;
+  severity?: string;
+  personId?: string;
+  personName?: string;
+  message: string;
+  facts?: unknown;
+  relatedPersonId?: string;
+}
+
+/** The warning gate's refusal, shared by every gated writer. `errors` carries
+ *  the same text as `message`, so a caller that reads `errors` sees it. */
+export interface WarningGateRefusal {
+  ok: false;
+  reason: "unjustified_warnings";
+  errors: string[];
+  message?: string;
+  warnings: GateWarning[];
+  /** Competing biological parentage the refused write would create (#2525). */
+  conflicts_surfaced?: ConflictSurfaced[];
+}
+
+/** What the gate hands back when the write may proceed. */
+export interface WarningGatePass {
+  justificationsPersisted: boolean;
+  /** Competing parentage the write creates while passing the gate — justified,
+   *  or the warning already stood — for the writer to echo on success. */
+  conflicts_surfaced?: ConflictSurfaced[];
+}
+
+const ROUTE_PARENTAGE =
+  " A competing parent is not a warning to justify: send each conflicts_surfaced entry " +
+  "to conflict-resolution as an identity question, and do not write this edge until it is resolved.";
 
 class TreeEditError extends Error {}
 
@@ -753,9 +796,17 @@ export async function checkWarningGate(
   warningJustifications: WarningJustificationInput[] | undefined,
   toolName: string,
   collapseMap?: Map<string, string>,
-): Promise<{ ok: false; reason: string; message?: string; warnings: any[] } | { justificationsPersisted: boolean } | null> {
+  proposedAssertionIds?: Map<string, string>,
+): Promise<WarningGateRefusal | WarningGatePass | null> {
   const touchedIds = computeTouchedPersonIds(beforeTree, afterTree);
   if (touchedIds.length === 0) return null;
+
+  // materialize_facts' own conflicts_surfaced means vital facts only, and it
+  // never writes a relationship, so parentage is not surfaced through it.
+  const parentage = toolName === "materialize_facts"
+    ? []
+    : competingParentage(beforeTree, afterTree, touchedIds, research, proposedAssertionIds);
+  const surfaced = parentage.length > 0 ? { conflicts_surfaced: parentage } : {};
 
   const result = introducedWarnings(
     beforeTree,
@@ -766,11 +817,15 @@ export async function checkWarningGate(
   );
 
   if (result.unjustified.length > 0) {
+    const message = "This write introduces genealogical warnings that must be justified. " +
+      "Re-call with warningJustifications listing each warningId and a justification string." +
+      (parentage.length > 0 ? ROUTE_PARENTAGE : "");
     return {
       ok: false,
       reason: "unjustified_warnings",
-      message: "This write introduces genealogical warnings that must be justified. " +
-        "Re-call with warningJustifications listing each warningId and a justification string.",
+      errors: [message],
+      message,
+      ...surfaced,
       warnings: result.unjustified.map((w) => ({
         warningId: w.warningId,
         issueType: w.issueType,
@@ -788,12 +843,12 @@ export async function checkWarningGate(
   if (warningJustifications && warningJustifications.length > 0) {
     const stale = staleJustifications(result.allIntroduced, warningJustifications);
     if (stale.length > 0) {
+      const message = `Stale warningId(s) not matching any introduced warning: ${stale.join(", ")}. Re-call without warningJustifications to get the current warning ids.`;
       return {
         ok: false,
         reason: "unjustified_warnings",
-        warnings: [{
-          message: `Stale warningId(s) not matching any introduced warning: ${stale.join(", ")}. Re-call without warningJustifications to get the current warning ids.`,
-        }],
+        errors: [message],
+        warnings: [{ message }],
       };
     }
 
@@ -815,11 +870,23 @@ export async function checkWarningGate(
         recorded_at: now,
       }));
       research.warning_justifications = [...existing, ...newEntries];
-      return { justificationsPersisted: true };
+      return { justificationsPersisted: true, ...surfaced };
     }
   }
 
-  return null;
+  return parentage.length > 0 ? { justificationsPersisted: false, ...surfaced } : null;
+}
+
+/** Each proposed ParentChild edge's `sourceAssertionId`, keyed parent|child,
+ *  so the gate can name the claim behind an edge it refuses. */
+function proposedParentAssertions(ops: Array<Partial<TreeEditOp>> | undefined): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const op of ops ?? []) {
+    const rel = op.relationship;
+    if (op.operation !== "add_relationship" || !op.sourceAssertionId || rel?.type !== "ParentChild") continue;
+    if (rel.parent && rel.child) out.set(parentChildKey(rel.parent, rel.child), op.sourceAssertionId);
+  }
+  return out;
 }
 
 /** Shared core behind `tree_edit` and `tree_correct` — identical batched-op,
@@ -892,8 +959,9 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
       const warningGateResult = await checkWarningGate(
         beforeTree, tree, research, projectPath,
         input.warningJustifications, toolName,
+        undefined, proposedParentAssertions(input.ops),
       );
-      if (warningGateResult && "ok" in warningGateResult) return warningGateResult as any;
+      if (warningGateResult && "ok" in warningGateResult) return warningGateResult;
       const justificationsPersisted = warningGateResult?.justificationsPersisted === true;
 
       // Write tree (and research if justifications were persisted)
@@ -916,6 +984,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
           valid: true,
           warnings: [...sanitized.warnings, ...formatIssues(validation.warnings), ...opWarnings],
         },
+        ...(warningGateResult?.conflicts_surfaced ? { conflicts_surfaced: warningGateResult.conflicts_surfaced } : {}),
       };
     }
 
@@ -936,8 +1005,9 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
     const singleGateResult = await checkWarningGate(
       beforeTree, tree, research, projectPath,
       input.warningJustifications, toolName,
+      undefined, proposedParentAssertions([input]),
     );
-    if (singleGateResult && "ok" in singleGateResult) return singleGateResult as any;
+    if (singleGateResult && "ok" in singleGateResult) return singleGateResult;
     const singleJustificationsPersisted = singleGateResult?.justificationsPersisted === true;
 
     // Write tree (and research if justifications were persisted)
@@ -963,6 +1033,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
       },
     };
     if (Object.keys(assignedIds).length > 0) result.assignedIds = assignedIds;
+    if (singleGateResult?.conflicts_surfaced) result.conflicts_surfaced = singleGateResult.conflicts_surfaced;
     return result;
   } catch (e) {
     if (e instanceof NoProjectError) return noProjectResult();

@@ -148,4 +148,34 @@ describe("merge_tree_persons", () => {
     expect(result.errors.join(" ")).toMatch(/I999 not found in target/);
     expect(await exists("research.json.bak")).toBe(false);
   });
+
+  // Issue #2525: merging two records of one child, each with its own father,
+  // gives the survivor two biological fathers. The refusal surfaces it.
+  it("refuses a merge that joins two fathers onto one child, with conflicts_surfaced", async () => {
+    const p = (id: string, given: string, birth: string) => ({
+      id,
+      gender: "Male",
+      names: [{ id: `N${id}`, given, surname: "Flynn" }],
+      facts: [{ id: `F${id}`, type: "Birth", date: birth, primary: true }],
+    });
+    const tree = {
+      persons: [p("I1", "Patrick", "1845"), p("I2", "Patrick", "1845"), p("I3", "Thomas", "1815"), p("I4", "John", "1818")],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I3", child: "I1", sources: [{ ref: "S1" }] },
+        { id: "R2", type: "ParentChild", parent: "I4", child: "I2", sources: [{ ref: "S1" }] },
+      ],
+      sources: [{ id: "S1", title: "1850 census" }],
+    };
+    await writeProject(tree, baseResearch());
+
+    const result = await mergeTreePersons({ projectPath: dir, merges: [["I1", "I2"]] });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toBe("unjustified_warnings");
+    expect(result.errors).toHaveLength(1);
+    expect(result.conflicts_surfaced?.map((c) => [c.personId, c.factType, c.values.length])).toEqual([
+      ["I1", "ParentChild", 2],
+    ]);
+  });
 });

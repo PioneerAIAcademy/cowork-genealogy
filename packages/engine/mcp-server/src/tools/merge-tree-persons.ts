@@ -89,7 +89,7 @@ export async function mergeTreePersons(
       input.warningJustifications, "merge_tree_persons",
       collapseMap,
     );
-    if (mergeGateResult && "ok" in mergeGateResult) return mergeGateResult as any;
+    if (mergeGateResult && "ok" in mergeGateResult) return mergeGateResult;
 
     // 6. Derive the compact summary.
     const pairs = derivePairSummaries(merges, preSurvivors, preCollapsed, merged);
@@ -111,6 +111,7 @@ export async function mergeTreePersons(
         valid: true,
         warnings: [...treeSanitized.warnings, ...formatIssues(validation.warnings)],
       },
+      ...(mergeGateResult?.conflicts_surfaced ? { conflicts_surfaced: mergeGateResult.conflicts_surfaced } : {}),
     };
   } catch (e) {
     if (e instanceof NoProjectError) return noProjectResult();
