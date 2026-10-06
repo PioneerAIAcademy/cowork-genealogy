@@ -6,15 +6,15 @@ description: >-
   calendar," asks what a Quaker numbered-month date means in modern terms,
   wonders if an unusual historical date is valid under the period's calendar
   system, or wants to know if same-date records from different countries
-  actually describe the same day. Handles Julian-to-Gregorian arithmetic, Old
-  Style/New Style year-start corrections, Quaker numbered months, and
-  double-dated years (e.g. "1749/50"). Country-specific transitions - Catholic
-  Europe, the German states, the Dutch provinces, England and its colonies,
-  Scotland, Sweden, Russia. Do NOT use for cosmetic reformatting without
-  conversion (no agent needed), date schema validation (use validate-schema),
-  source conflicts where both records used the same calendar (use
-  conflict-resolution), or explanations of why a calendar convention existed
-  (use historical-context).
+  actually describe the same day. Handles Julian-to-Gregorian arithmetic,
+  French Republican dates (Brumaire an VIII), Old Style/New Style year-start
+  corrections, Quaker numbered months, and double-dated years (e.g.
+  "1749/50"). Country-specific transitions - Catholic Europe, the German
+  states, the Dutch provinces, England and its colonies, Scotland, Sweden,
+  Russia. Do NOT use for cosmetic reformatting without conversion (no agent
+  needed), date schema validation (use validate-schema), source conflicts
+  where both records used the same calendar (use conflict-resolution), or
+  explanations of why a calendar convention existed (use historical-context).
 model: claude-sonnet-4-6
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
@@ -114,6 +114,7 @@ convert_calendar({
     osNsYear?: true,                         // Jan 1–Mar 24 → year + 1
     quakerMonth?: { era: "pre_1752" | "post_1752" }, // month is the Quaker ordinal
     julianToGregorianDay?: true,             // apply the era day offset
+    frenchRepublican?: true,                 // French Republican → Gregorian (exclusive)
   },
 })
 ```
@@ -184,11 +185,14 @@ Quaker registers number their months rather than naming them, and the
 numbering shifts at the year-start reform. Request `quakerMonth` with the era
 when the source is a Friends record; the tool holds the mapping.
 
-### French Republican calendar
+### French Republican calendar → `frenchRepublican: true`
 
-`convert_calendar` cannot convert French Republican dates (Vendémiaire,
-Brumaire, an II). Say so and leave the date as recorded — do not guess an
-equivalent.
+Every French civil record from 1793 to 1805 is dated in the Republican
+calendar. Pass `corrections: { frenchRepublican: true }` with the year as a
+number or Roman numeral (or `"an VIII"`, `"l'an VII"`), the month as a number
+or name (Vendémiaire–Fructidor, or a complementary-day alias for month 13),
+and the day. The tool converts to Gregorian. This correction is exclusive —
+do not combine it with any other correction.
 
 ## Rules
 

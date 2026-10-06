@@ -37,6 +37,7 @@ def _load(name: str):
 layout = _load("layout")
 build = _load("build")
 verify = _load("verify")
+smoke = _load("smoke")
 
 
 # ── source selection ─────────────────────────────────────────────────────────────
@@ -195,6 +196,30 @@ def test_verifier_states_the_same_contract_as_layout():
     assert verify.BUILD_VERSION_RE.pattern == js
 
 
+def test_verifier_states_the_same_dev_variables_as_layout():
+    assert verify.DEV_PREFIXES == layout.DEV_PREFIXES
+    assert verify.DEV_VARIABLES == layout.DEV_VARIABLES
+    assert verify.DEV_VARIABLES_BY_TIER == layout.DEV_VARIABLES_BY_TIER
+    assert verify.DEV_VALUES == layout.DEV_VALUES
+
+
+def test_smoke_stands_in_for_each_worker_start_refusal_and_never_for_a_dev_variable():
+    """U11: the worker refuses to start without these, and must start without DEV_PATHS."""
+    for tier, env in smoke.API_LEVEL_STANDINS.items():
+        dev = [k for k in env if k.startswith(layout.DEV_PREFIXES) or k in layout.DEV_VARIABLES
+               or k in layout.DEV_VARIABLES_BY_TIER[tier]]
+        assert not dev, f"{tier}: the smoke stands in a dev-only variable: {dev}"
+    worker = smoke.API_LEVEL_STANDINS["worker"]
+    assert set(worker) == {"QUEUE_URL", "TOOL_SERVER_URL", "FS_TOKEN_ENC_KEY", "MODEL_PROVIDER", "GATEWAY_BASE_URL"}
+    assert worker["MODEL_PROVIDER"] == "gateway" and worker["GATEWAY_BASE_URL"]
+    from proto import grants
+
+    assert len(worker["FS_TOKEN_ENC_KEY"]) >= 32 and worker["FS_TOKEN_ENC_KEY"] != grants.DEV_FS_TOKEN_ENC_KEY
+    for tier in ("web", "worker"):
+        url = smoke.API_LEVEL_STANDINS[tier]["QUEUE_URL"]
+        assert re.fullmatch(r"https://sqs\.[a-z0-9-]+\.amazonaws\.com/\d{12}/\w+", url), url
+
+
 def test_makefile_pyyaml_pin_is_the_locked_version():
     make = (REPO / "Makefile").read_text(encoding="utf-8")
     lock = (REPO / "apps" / "server" / "uv.lock").read_text(encoding="utf-8")
@@ -225,7 +250,9 @@ def good(tier: str) -> dict[str, tuple[bytes, int]]:
                 ".ebextensions/01-web.config": (_config({"PORT": "8000", "PGSSLROOTCERT": CA}), f),
                 "requirements.txt": (REQS, f), "wheels/foo-1.0-py3-none-any.whl": (b"x", f),
                 "web/app.py": (b"", f), "web/auth.py": (b"", f), "web/spa.py": (b"", f),
-                "enqueue.py": (b"", f), "sql/001_schema.sql": (b"", f), "config/familysearch.json": (b"{}", f),
+                "enqueue.py": (b"", f), "grants.py": (b"", f), "migrate.py": (b"", f),
+                "sql/001_schema.sql": (b"", f),
+                "config/familysearch.json": (b"{}", f),
                 "web-dist/index.html": (b"<html>", f),
                 "web-dist/assets/index-abc.js": (b"const s=new EventSource(u);", f)}
     if tier == "worker":
@@ -237,7 +264,8 @@ def good(tier: str) -> dict[str, tuple[bytes, int]]:
                 ".platform/hooks/predeploy/01-worker-layout.sh": (b"#!/bin/bash\n", 0o755),
                 "requirements.txt": (REQS, f), "wheels/foo-1.0-py3-none-any.whl": (b"x", f),
                 "app/__init__.py": (b"", f), "app/agent/__init__.py": (b"", f), "app/agent/real_agent.py": (b"", f),
-                "proto/enqueue.py": (b"", f), "proto/sql/001_schema.sql": (b"", f),
+                "proto/enqueue.py": (b"", f), "proto/grants.py": (b"", f), "proto/migrate.py": (b"", f),
+                "proto/sql/001_schema.sql": (b"", f),
                 "proto/worker/worker.py": (b"", f), "proto/worker/options.py": (b"", f),
                 "plugin/.claude-plugin/plugin.json": (b"{}", f), "plugin/hooks/hooks.json": (b"{}", f),
                 "plugin/agents/citation.md": (b"", f), "plugin/skills/research/SKILL.md": (b"", f)}
@@ -288,6 +316,10 @@ LEGITIMATE = {
         "node_modules/somepkg/README.md": b""}),
     "a dirty build stamp": ("tools", {"build/build-info.json": json.dumps(
         {"version": "0.1.0+2026-10-02.abc12345.dirty"}).encode()}),
+    "the web tier's nudge cap": ("web", {".ebextensions/01-web.config": _config(
+        {"PORT": "8000", "PGSSLROOTCERT": CA, "AUTONOMOUS_MAX_NUDGES": "60"})}),
+    "the worker's slot users": ("worker", {".ebextensions/02-worker.config": _config(
+        {"PORT": "8000", "PGSSLROOTCERT": CA, "WORKER_TURN_USERS": "genealogy-turn-0 genealogy-turn-1"})}),
 }
 
 
@@ -368,6 +400,8 @@ REJECTED = {
         ".platform/hooks/predeploy/01-worker-layout.sh": (b"#!/bin/bash\n", 0)}), "has no exec bit"),
     "no predeploy hook": ("worker", lambda: _drop("worker", ".platform/hooks/predeploy/01-worker-layout.sh"),
                           "missing .platform/hooks/predeploy/"),
+    "no migrate.py in web": ("web", lambda: _drop("web", "migrate.py"), "missing migrate.py"),
+    "no migrate.py in worker": ("worker", lambda: _drop("worker", "proto/migrate.py"), "missing proto/migrate.py"),
     "the WebSocket SPA": ("web", lambda: _add("web", **{"web-dist/assets/index-abc.js": b"x=new WebSocket(u)"}),
                           "opens a WebSocket"),
     "a SPA with no SSE": ("web", lambda: _add("web", **{"web-dist/assets/index-abc.js": b"x=1"}),
@@ -383,6 +417,25 @@ REJECTED = {
     "no wheels": ("web", lambda: _drop("web", "wheels/foo-1.0-py3-none-any.whl"), "missing wheels/"),
     "an unparseable template": ("web", lambda: _add("web", **{".ebextensions/02-bad.config": b"a: [\n"}),
                                 "does not parse"),
+    "DEV_PATHS in the worker template": ("worker", lambda: _add("worker", **{
+        ".ebextensions/02-worker.config": _config({"PORT": "8000", "PGSSLROOTCERT": CA, "DEV_PATHS": "true"})}),
+        "sets DEV_PATHS, a dev-only variable"),
+    "a debug hold in a list-form tools template": ("tools", lambda: _add("tools", **{
+        ".ebextensions/03-debug.config": (
+            b"option_settings:\n  - namespace: aws:elasticbeanstalk:application:environment\n"
+            b"    option_name: GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS\n    value: '30000'\n", 0o644)}),
+        "sets GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS, a dev-only variable"),
+    "BLOCKED_TOOLS in the web template": ("web", lambda: _add("web", **{
+        ".ebextensions/01-web.config": _config({"PORT": "8000", "PGSSLROOTCERT": CA, "BLOCKED_TOOLS": "person_read"})}),
+        "sets BLOCKED_TOOLS"),
+    "the nudge cap in the worker template": ("worker", lambda: _add("worker", **{
+        ".ebextensions/02-worker.config": _config({"PORT": "8000", "PGSSLROOTCERT": CA,
+                                                   "AUTONOMOUS_MAX_NUDGES": "60"})}),
+        "sets AUTONOMOUS_MAX_NUDGES"),
+    "no slot users in the worker template": ("worker", lambda: _add("worker", **{
+        ".ebextensions/02-worker.config": _config({"PORT": "8000", "PGSSLROOTCERT": CA,
+                                                   "WORKER_TURN_USERS": "none"})}),
+        "a dev-only value"),
 }
 
 
