@@ -18,23 +18,22 @@ decay.
 
 ## Restored activation tests (issue #3119)
 
-`ut_research_001`, `012`, `013`, `014` and `015` were deleted on 2026-10-01
-(issue #2984) and are restored without their `xfail` markers. The first four
-were `xfail` for one defect: `research` and `project-status` both matched a
+`ut_research_001`, `004`, `012`, `013`, `014` and `015` were deleted on
+2026-10-01 (issue #2984) and are restored without their `xfail` markers. The
+first five were `xfail` for one defect: `research` and `project-status` both matched a
 "drive the workflow forward" request, so the orchestrator was skipped about half
 the time (issue #2927). `project-status`'s description now tells it not to drive
 the research workflow forward (#3092). `015`'s marker named a router shortcut
 instead; see "Paired rows". Each restored test was measured three times, on a
 branch rebased onto main, before it came back (#3119), and `015` needed one more
-change to pass.
+change to pass. `004` (`investigate-person.json`) missed on one of its first
+three runs, when the main thread asked the user two `AskUserQuestion` questions
+instead of starting `research`; measured again on the final branch it activated
+`research` three times of three, which is what its marker named as the condition
+for removing it.
 
 Not restored:
 
-- `ut_research_004` (`investigate-person.json`) activated `research` on two of
-  its three runs. On the third, the main thread asked the user two
-  `AskUserQuestion` questions and no skill ran. Its committed history shows the
-  same miss in other forms: `project-status` or a sub-skill taking the request.
-  The per-run data is on #3119.
 - `ut_research_002` (`slash-research-question.json`), which issue #3116 owns.
 - `ut_research_003` (`find-relative.json`), which is not part of #2927's removal
   condition.
