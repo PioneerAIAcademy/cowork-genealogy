@@ -1,6 +1,6 @@
 {
   "tool": "wiki_read",
-  "description": "research-plan's Step 3 pre-work fetch for a male Norwegian subject of a parentage question (issue #2251). Used by ut_research_plan_r3d. States that 1700s-1800s military records give the father's name, and that Norway's military records are not indexed; it does not describe levy rolls enrolling boys from birth. Content recorded verbatim from the live corpus 2026-10-02 (17,823 chars); the navigation chrome above the first section heading is dropped, nothing retained is edited.",
+  "description": "research-plan's Step 3 pre-work fetch for a male Norwegian subject of a parentage question (issue #2251). Written for ut_research_plan_r3d, deleted 2026-10-06 (lead ruling) until the plan-sequencing work restores it; kept so that restore is one test file. States that 1700s-1800s military records give the father's name, and that Norway's military records are not indexed; it does not describe levy rolls enrolling boys from birth. Content recorded verbatim from the live corpus 2026-10-02 (17,823 chars); the navigation chrome above the first section heading is dropped, nothing retained is edited.",
   "args": {
     "url": "~Norway_Military_Records"
   },

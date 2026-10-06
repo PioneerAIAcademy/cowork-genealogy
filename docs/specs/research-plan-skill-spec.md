@@ -116,15 +116,14 @@ that would replace it (probed 2026-10-02, §5):
   record may be planned freely. The caution applies to what is written down: no
   rationale calls it her maiden name, and a companion item must test it.
 
-**Regression risk to watch:** `ut_research_plan_r3d` has failed in every
-committed research-plan run, because its plan puts the Trysil death record ahead of the Kongsberg baptism the
-objective asks for. The death-route rule fires only "when no baptism can be
-expected", which does not hold for r3d, and Step 4 item 7 still puts the
-objective's target first. The same-day run of the unchanged skill ordered it the
-same way, so the death route is not the cause. Its xfail marker was removed
-under rule 10 (`check_runlogs.py`: a PR touching a skill retires that skill's
-xfail markers); whether r3d stays, or is deleted until the sequencing
-precondition restores it as that work's acceptance test, is the lead's call.
+**r3d deleted (lead, 2026-10-06).** `ut_research_plan_r3d` failed in every
+committed research-plan run, including a same-day run of the unchanged skill:
+its plan puts the Trysil death record ahead of the Kongsberg baptism the
+objective asks for. Rule 10 (`check_runlogs.py`) removed its xfail marker, and
+Dallan ruled to delete the test in this change and have the sequencing
+precondition work restore it from git as its acceptance test. Its scenario
+(`hansen-kongsberg-baptism`) and MCP fixtures stay, so the restore is the one
+test file. Until then `test_objective_target_leads_the_plan` has no tagged test.
 
 ## 4. What `references/` holds
 
@@ -184,8 +183,7 @@ change; keep no local copy.
 
 - `test_wiki_prework_fetches_triggered_pages`: every `wiki-prework` test is
   served each page its subject triggers. A 404 slug, a sibling wiki tool or a
-  skipped fetch fails it. Map: ut_015 (Denmark military and naming), r3d
-  (Norway military and naming), `ut_research_plan_dth` (Sweden naming),
+  skipped fetch fails it. Map: ut_015 (Denmark military and naming), `ut_research_plan_dth` (Sweden naming),
   `ut_research_plan_csn` (Spain naming).
 - `test_pre_register_birth_plans_death_route`: on `pre-register-birth` tests, an
   item targets the subject's own death or burial entry, dated after the birth

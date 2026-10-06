@@ -1011,10 +1011,6 @@ _WIKI_FIXTURES_BY_TEST_ID = {
         "wiki-read-denmark-military-records",
         "wiki-read-denmark-naming-customs",
     ),
-    "ut_research_plan_r3d": (
-        "wiki-read-norway-military-records",
-        "wiki-read-norway-naming-customs",
-    ),
     "ut_research_plan_dth": ("wiki-read-sweden-naming-customs",),
     "ut_research_plan_csn": ("wiki-read-spain-naming-customs",),
 }
