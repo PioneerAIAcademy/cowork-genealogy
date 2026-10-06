@@ -104,9 +104,10 @@ Otherwise proceed.
    project already extracted still shows as a hint. Extracted is not linked:
    whether the record is this person is a separate `person_evidence` decision.
    Once, before the hints: `research_query({ projectPath, section:
-   "person_evidence" })`, paging with `offset` while `truncated`. Then for each
-   hint, `research_query({ projectPath, section: "assertions", recordId:
-   "ark:/61903/1:1:<pid>" })`.
+   "person_evidence" })`, paging with `offset` while `truncated`, never filtered
+   by `personId` — it holds the project's tree id, not the FamilySearch id.
+   Then for each hint, `research_query({ projectPath, section: "assertions",
+   recordId: "ark:/61903/1:1:<pid>" })`.
    - **Already in the project** — a `person_evidence` entry with `superseded_by`
      null cites one of those assertion ids. Its line reads `already in the
      project`, never a recommendation: name its source and the person it links,
@@ -149,10 +150,10 @@ Otherwise proceed.
 
 ## Record
 
-1. **A hint whose record the project already extracted** (step 2's check): an
-   `accept` logs nothing — its source already carries the evidence. Already in
-   the project: report it so. Extracted, not linked: hand it back to
-   `person-evidence` to link. A `reject` is logged as below; when it is already
+1. **A hint whose record the project already extracted** (triage step 2's two
+   queries, run again exactly as written there): an `accept` logs nothing — its
+   source already carries the evidence. Already in the project: report it so.
+   Extracted, not linked: hand it back to `person-evidence` to link. A `reject` is logged as below; when it is already
    in the project, also hand it back to `person-evidence`, whose link rests on a
    record the researcher says is not this person.
 2. One `research_log_append` per other decided hint:
