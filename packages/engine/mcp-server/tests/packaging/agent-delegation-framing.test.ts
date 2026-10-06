@@ -559,8 +559,7 @@ function discoverEdges(): string[] {
  * emphasis so it survives bold becoming italic with no word changed. Applied to
  * BOTH the pin and the haystack, so it cannot make a pin match text that says
  * something else. Same treatment as `corpus-figures.test.ts` (which strips
- * ``[*`_]`` before searching spec prose) and `slugifyHeading` in
- * `repo-paths.ts`.
+ * ``[*`_]`` before searching spec prose).
  */
 function normalize(text: string): string {
   return text
