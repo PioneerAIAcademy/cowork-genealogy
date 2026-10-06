@@ -14,7 +14,9 @@
       "plan-item-status",
       "issue-2207",
       "direct-arm"
-    ]
+    ],
+    "expected_outcome": "xfail",
+    "xfail_reason": "Agent-body defect, owned by issue #3185: the agent mis-copies the URL build_external_search_url returned into its reply, so the URL shown is not the URL logged — the same copy-error as ut_search_external_sites_009. Measured on the agent 2026-10-06: 3 of 3 with --runs-per-test 3, then failed in the committed suite run on test_the_url_logged_is_the_url_presented. Removal condition: issue #3185's fix, then a --runs-per-test 3 run of this test passes 3 of 3."
   },
   "input": {
     "delegation": "Work plan item pli_001 — the 1855 Massachusetts State Census for Josiah Barnes on MyHeritage. I have the results page up here, this is what it shows:\n\n1855 Massachusetts State Census — 4 results for \"Josiah Barnes\"\n\n1. Josiah Barnes — age 37, born abt 1818, Massachusetts. Concord, Middlesex, Massachusetts. Household: Mary Barnes 34; Josiah Barnes Jr. 11; Ellen Barnes 8; Charles Barnes 5.\n2. Josiah H. Barnes — age 22, born abt 1833, Massachusetts. Lowell, Middlesex, Massachusetts. Household: Sarah Barnes 21.\n3. Josiah Barns — age 39, born abt 1816, Maine. New Bedford, Bristol, Massachusetts. Household: Lucy Barns 36; Henry Barns 14.\n4. J. Barnes — age 36, born abt 1819, Massachusetts. Springfield, Hampden, Massachusetts. Household not shown.\n\nuserPresent: yes\nplanItemId: pli_001\nprojectPath: <workspace>",
