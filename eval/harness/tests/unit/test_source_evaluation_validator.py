@@ -709,6 +709,7 @@ def test_a_detach_sentence_naming_another_record_passes():
         "belongs to another man and must be detached.",
         "belongs to another man and so should be detached.",
         "is another man's record and is to be detached.",
+        "documents another family and needs to be detached.",
         "should be detached.",
     ):
         _no_detach(
@@ -756,6 +757,11 @@ def test_a_detach_sentence_that_names_no_record_still_fails():
                 "meaning the entry should be detached.",
                 "and his index entry should be detached.",
                 "and Death Index entry should be detached.",
+                "because the entry should be detached.",
+                "unless the entry should be detached.",
+                "or the entry should be detached.",
+                "(the entry should be detached).",
+                "— the entry should be detached.",
             )
         ),
         _X6B_PARAGRAPH + " Detach it as well.",
