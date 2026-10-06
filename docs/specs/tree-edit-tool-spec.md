@@ -507,8 +507,9 @@ Sequence (validate-before-persist, tree-only):
   (`SKILL.md:68–70`) and makes `place`/`standard_place` atomic. Overridable:
   pass `standard_place` explicitly, or `resolveStandardPlace: false`, to skip the
   network call.
-- **Competing parentage is surfaced by the writer, not by a new tool.** A second biological parent of one sex trips the warning gate
-  (`tooManyFathers2`/`tooManyMothers2`), so the refusal is the detector: it
+- **Competing parentage is surfaced by the writer, not by a new tool.** A
+  second biological parent of one sex is refused by the warning gate under a
+  `competingParentage` id, so the refusal is the detector: it
   carries `conflicts_surfaced` and tells the caller to send the disagreement to
   `conflict-resolution` as an identity question, not to justify it, and not to
   write the edge until it is resolved. The disputed edge stays out of the tree

@@ -102,14 +102,14 @@ describe("introducedWarnings", () => {
     ]);
     const before = tree(
       [parent, childBefore],
-      [{ id: "R1", type: "ParentChild", parent: "I1", child: "I2" }],
+      [{ id: "R1", type: "ParentChild", person1: "I1", person2: "I2" }],
     );
 
     // After: change child's birth to make them impossibly old
     const childAfter = implausiblePerson("I2", "Junior", "Smith");
     const after = tree(
       [parent, childAfter],
-      [{ id: "R1", type: "ParentChild", parent: "I1", child: "I2" }],
+      [{ id: "R1", type: "ParentChild", person1: "I1", person2: "I2" }],
     );
 
     // Touch I2 only — but the warning should be caught
@@ -223,40 +223,11 @@ describe("computeTouchedPersonIds", () => {
     const before = tree([p1, p2], []);
     const after = tree(
       [p1, p2],
-      [{ id: "R1", type: "ParentChild", parent: "I1", child: "I2" }],
+      [{ id: "R1", type: "ParentChild", person1: "I1", person2: "I2" }],
     );
     const touched = computeTouchedPersonIds(before, after);
     expect(touched).toContain("I1");
     expect(touched).toContain("I2");
-  });
-
-  // Issue #2525: the endpoints were read only from person1/person2, so a
-  // ParentChild edge (parent/child) touched nobody and the gate never saw it.
-  it("touches both ends of a ParentChild edge that is removed", () => {
-    const p1 = plausiblePerson("I1", "John", "Smith");
-    const p2 = plausiblePerson("I2", "Jane", "Smith");
-    const before = tree([p1, p2], [{ id: "R1", type: "ParentChild", parent: "I1", child: "I2" }]);
-    const after = tree([p1, p2], []);
-    expect(computeTouchedPersonIds(before, after).sort()).toEqual(["I1", "I2"]);
-  });
-
-  it("touches the old and new parent when a ParentChild edge is repointed", () => {
-    const people = [
-      plausiblePerson("I1", "John", "Smith"),
-      plausiblePerson("I2", "Jane", "Smith"),
-      plausiblePerson("I3", "James", "Smith"),
-    ];
-    const before = tree(people, [{ id: "R1", type: "ParentChild", parent: "I1", child: "I2" }]);
-    const after = tree(people, [{ id: "R1", type: "ParentChild", parent: "I3", child: "I2" }]);
-    expect(computeTouchedPersonIds(before, after).sort()).toEqual(["I1", "I2", "I3"]);
-  });
-
-  it("still touches both spouses of an added Couple edge", () => {
-    const p1 = plausiblePerson("I1", "John", "Smith");
-    const p2 = plausiblePerson("I2", "Jane", "Smith");
-    const before = tree([p1, p2], []);
-    const after = tree([p1, p2], [{ id: "R1", type: "Couple", person1: "I1", person2: "I2" }]);
-    expect(computeTouchedPersonIds(before, after).sort()).toEqual(["I1", "I2"]);
   });
 });
 

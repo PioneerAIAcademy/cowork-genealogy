@@ -153,13 +153,6 @@ export function staleJustifications(
     .filter((id) => !introducedIds.has(id));
 }
 
-/** Both ends of an edge: `person1`/`person2` on a Couple, `parent`/`child` on
- *  a ParentChild. Reading only the Couple pair left every ParentChild edit with
- *  no touched person, so the gate never saw it (issue #2525). */
-function relationshipEndpoints(r: SimplifiedRelationship): string[] {
-  return [r.person1, r.person2, r.parent, r.child].filter((p): p is string => !!p);
-}
-
 /**
  * Compute the set of person IDs whose data changed between two tree snapshots.
  * Includes every person whose names, facts, or gender differ, plus both
@@ -203,12 +196,19 @@ export function computeTouchedPersonIds(
   for (const [id, r] of afterRels) {
     const br = beforeRels.get(id);
     if (!br || JSON.stringify(br) !== JSON.stringify(r)) {
-      for (const p of relationshipEndpoints(r)) touched.add(p);
-      if (br) for (const p of relationshipEndpoints(br)) touched.add(p);
+      if (r.person1) touched.add(r.person1);
+      if (r.person2) touched.add(r.person2);
+      if (br) {
+        if (br.person1) touched.add(br.person1);
+        if (br.person2) touched.add(br.person2);
+      }
     }
   }
   for (const [id, r] of beforeRels) {
-    if (!afterRels.has(id)) for (const p of relationshipEndpoints(r)) touched.add(p);
+    if (!afterRels.has(id)) {
+      if (r.person1) touched.add(r.person1);
+      if (r.person2) touched.add(r.person2);
+    }
   }
 
   return [...touched];

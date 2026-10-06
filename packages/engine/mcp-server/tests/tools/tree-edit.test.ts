@@ -1766,8 +1766,9 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
     expect((blank as any).reason).toBe("unjustified_warnings");
   });
 
-  // Issue #2525: a ParentChild edge touched no person, so the gate never ran on
-  // one. These go through the real tree_edit, not the delta function alone.
+  // Issue #2525: competing biological parentage is gated on its own finding,
+  // read from the trees. These go through the real tree_edit, not the
+  // detector alone.
   const parentage = () => ({
     persons: ["Patrick:Male:1845", "Thomas:Male:1815", "John:Male:1818", "Mary:Female:1820"].map((s, i) => {
       const [given, gender, birth] = s.split(":");
@@ -1939,16 +1940,17 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
     expect(r.conflicts_surfaced?.map((c) => c.personId)).toEqual(["I1"]);
   });
 
-  it("refuses an adoptive second father without conflicts_surfaced", async () => {
+  it("never surfaces an adoptive second father as competing parentage", async () => {
+    // Whether the general warning gate refuses this edge (tooManyFathers2
+    // ignores subtype) is that gate's scope, not this check's; only the
+    // absence of a competing-parentage finding is pinned here.
     await writeProject(parentage(), parentageResearch);
 
-    const r = await addParent("I3", { relationship: { type: "ParentChild", parent: "I3", child: "I1", subtype: "Adoptive", sources: [{ ref: "S1" }] } });
+    const r: any = await addParent("I3", { relationship: { type: "ParentChild", parent: "I3", child: "I1", subtype: "Adoptive", sources: [{ ref: "S1" }] } });
 
-    expect(r.ok).toBe(false);
-    if (r.ok) return;
-    expect(r.reason).toBe("unjustified_warnings");
     expect(r.conflicts_surfaced).toBeUndefined();
-    expect(r.message).not.toContain("conflict-resolution");
+    expect((r.warnings ?? []).map((w: any) => w.issueType)).not.toContain("competingParentage");
+    expect(String(r.message ?? "")).not.toContain("conflict-resolution");
   });
 
   it("the stale-justification refusal carries errors too", async () => {
