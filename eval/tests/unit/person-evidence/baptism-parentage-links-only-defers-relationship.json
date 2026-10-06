@@ -14,9 +14,7 @@
       "ownership",
       "a_001",
       "jens-nielsen-grayzone"
-    ],
-    "expected_outcome": "xfail",
-    "xfail_reason": "Owned by issue #2537 (calibration at the identity decision). The agent's first research_append asks for `confident` on links whose core identifier is contradicted: the 1858 christening against the tree's 1845 birth for Patrick, a 13-year gap the rubric caps at `speculative`. The tool refuses it every time (research_append's core-identifier date check), so nothing wrong is persisted. Genealogist ruling, 2026-09-29: the refused `confident` attempt is still a real calibration error, so a run that then holds the links for the user without settling a tier fails Confidence calibration, while one that retries at `speculative` passes. Measured 2026-09-29 at --runs-per-test 3 after this test's judge_context was clarified: pass, fail, pass (flaky); two of the three runs first asked for `confident`. The defect this marker used to name, creating the ParentChild edge via materialize_facts, did not occur in 6 runs. Remove this marker when this test comes back flaky: false and non-failing on --runs-per-test 3."
+    ]
   },
   "input": {
     "delegation": "person-evidence: assertion a_001 is Patrick Flynn's (I1) Kilrush baptism, which names his mother as Bridget Doyle (source src_001 / tree source S2). Bridget Doyle is not yet in the tree. Link this baptism's parentage assertion to the right persons.\n\nprojectPath: <workspace>",

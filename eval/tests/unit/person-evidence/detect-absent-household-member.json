@@ -13,9 +13,7 @@
       "multi-person",
       "check-warnings-required",
       "stub-creation"
-    ],
-    "expected_outcome": "xfail",
-    "xfail_reason": "Owned by issue #2475 (a writer-tool precondition that can join two objects). The agent builds the household skeleton correctly but does not derive and flag that Catherine (I2), George's wife by the Couple relationship R1 with no death fact, is absent from the 1860 household. The test's own judge_context calls this 'DERIVATION, NOT ECHO: the absence is stated nowhere the skill is handed', which makes it a reasoning capability rather than a rule that can be written down: there is no sentence to add to the body, because the agent is not failing to follow an instruction, it is failing to notice something. It failed 15 of 20 committed runs, and on 2026-09-29 at --runs-per-test 3 it came back fail, partial, fail (flaky), with Catherine unmentioned in every run. The instrument is a tool-side household-absence check: a tree person joined to the record's subject by a Couple or ParentChild edge, carrying no death fact, absent from every persona on a household record, is derivable from the project documents alone and belongs at the tool boundary per ADR-0011's first question. That join of the tree's edges to the record's personas is the cross-object precondition issue #2475 describes. Remove this marker when that check exists and this test comes back flaky: false and non-failing on --runs-per-test 3."
+    ]
   },
   "input": {
     "delegation": "person-evidence: I've extracted George Ackerman's 1860 census household into research.json (assertions a_001-a_007). George is already in the tree (I1). Link these assertions to persons and build out this household skeleton in the tree.\n\nprojectPath: <workspace>",

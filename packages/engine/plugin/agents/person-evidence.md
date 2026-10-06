@@ -39,6 +39,7 @@ tools:
   - mcp__genealogy__place_search
   - mcp__genealogy__place_distance
   - mcp__genealogy__wiki_read
+  - mcp__genealogy__project_context
   - mcp__remote-devices__Genealogy_Research__research_append
   - mcp__remote-devices__Genealogy_Research__research_query
   - mcp__remote-devices__Genealogy_Research__tree_edit
@@ -51,6 +52,7 @@ tools:
   - mcp__remote-devices__Genealogy_Research__place_search
   - mcp__remote-devices__Genealogy_Research__place_distance
   - mcp__remote-devices__Genealogy_Research__wiki_read
+  - mcp__remote-devices__Genealogy_Research__project_context
   - mcp__Genealogy_Research__research_append
   - mcp__Genealogy_Research__research_query
   - mcp__Genealogy_Research__tree_edit
@@ -63,6 +65,7 @@ tools:
   - mcp__Genealogy_Research__place_search
   - mcp__Genealogy_Research__place_distance
   - mcp__Genealogy_Research__wiki_read
+  - mcp__Genealogy_Research__project_context
 ---
 
 
@@ -659,6 +662,12 @@ than retrying blindly.
   tree-edit once identity is concluded. The `pe_` entries are the
   complete deliverable here.
 
+Before any write, write one line in your reply: "Edges: [record type] —
+household record, write / non-household record, defer to proof-conclusion."
+Only a census or other co-enumerated listing is a household record; a
+baptism, marriage register, will or death record never is, however many
+parents it names.
+
 **Materialize each linked persona onto its person.** Once the `pe_` links
 land, write the persona's assertions onto the tree person as sourced facts and
 names via `materialize_facts({ personId, recordId, recordRole })` — for a
@@ -815,7 +824,12 @@ hands a merge set to proof-conclusion to fold. For a household record:
    who is **expected** in the household (e.g. a known spouse or child
    from the tree) is **absent from the record**, flag that absence as an
    identity question — it may indicate a death, separation, enumeration
-   elsewhere, or a different person entirely. The
+   elsewhere, or a different person entirely. On a household record only
+   (the "Edges:" line says write), call `project_context` and read the
+   head's `spouseIds` and `childIds` and each one's `died`. Then, before any
+   write, write one line in your reply: "Household check: [each spouse and
+   child of the head with `died` false] — present as [role] / absent." Every "absent" is raised as that identity
+   question. The
    `matchRelatives` triples from step 2.3 give the persona→tree-person
    pairings; a new member (no tree match) pairs to a fresh id you mint in
    step 3.

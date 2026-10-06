@@ -77,6 +77,10 @@ repo's identifier-casing rule):
     name: string | null,                 // preferred names entry, "Given Surname"
     gender: string | null,
     sourceRefs: string[],                // distinct S ids cited anywhere on the person
+    spouseIds: string[],                 // I ids joined by a Couple edge
+    parentIds: string[],                 // I ids that are this person's ParentChild parent
+    childIds: string[],                  // I ids that are this person's ParentChild child
+    died: boolean,                       // carries a Death or Burial fact
   }],
   sources: [{
     id: string,                          // src_*
@@ -116,6 +120,15 @@ Projection rules:
   person has no names). `sourceRefs` collects the distinct `ref` values of
   every source reference on the person — person-level `sources`, each
   fact's `sources`, and each name's `sources` — in first-seen order.
+  `spouseIds`, `parentIds` and `childIds` are the person's one-hop family
+  from `tree.relationships`: a `Couple` edge lists each side as the other's
+  spouse, a `ParentChild` edge lists the parent and child on each other. The
+  type matches on its last segment, so the bare name and the
+  `http://gedcomx.org/` URI both count; an edge missing either end is
+  skipped; ids are distinct, in edge order. `died` is true when the person
+  carries a `Death` or `Burial` fact. They exist so person-evidence can name
+  a known spouse or child missing from a household record: no other tool
+  it holds reads the tree's edges.
 - **`sources`** — every `research.sources[]` entry, in array order.
   `recordIds` are the distinct `record_id` values (verbatim, first-seen
   order) across `research.assertions[]` entries whose `source_id` is this

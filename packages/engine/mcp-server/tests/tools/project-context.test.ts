@@ -80,10 +80,11 @@ describe("project_context", () => {
       { id: "q_003", question: "Where was he in 1880?" },
       { id: "q_004", question: "Declared exhaustive" },
     ]);
+    const noFamily = { spouseIds: [], parentIds: [], childIds: [] };
     expect(r.persons).toEqual([
-      { id: "I1", name: "William Bottermiller", gender: "Male", sourceRefs: ["S1", "S2"] },
-      { id: "I2", name: "Mary Bottermiller", gender: "Female", sourceRefs: [] },
-      { id: "I3", name: null, gender: "Male", sourceRefs: [] },
+      { id: "I1", name: "William Bottermiller", gender: "Male", sourceRefs: ["S1", "S2"], ...noFamily, died: true },
+      { id: "I2", name: "Mary Bottermiller", gender: "Female", sourceRefs: [], ...noFamily, died: false },
+      { id: "I3", name: null, gender: "Male", sourceRefs: [], ...noFamily, died: false },
     ]);
     expect(r.sources).toEqual([
       {
@@ -102,6 +103,40 @@ describe("project_context", () => {
       },
       { id: "src_003", repository: "NARA", gedcomxSourceDescriptionId: "S2", recordIds: [], assertionCount: 0 },
     ]);
+  });
+
+  it("gives each person its one-hop family and whether it died, from the tree's edges (#2537)", async () => {
+    await writeProject(
+      { project: { id: "rp_001", objective: "x", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
+      {
+        persons: [
+          { id: "I1", gender: "Male" },
+          { id: "I2", gender: "Female", facts: [{ id: "F1", type: "http://gedcomx.org/Burial", date: "1858" }] },
+          { id: "I3", gender: "Male" },
+          { id: "I4", gender: "Female" },
+          { id: "I5", gender: "Male", facts: [{ id: "F2", type: "Birth", date: "1850" }] },
+        ],
+        relationships: [
+          { id: "R1", type: "Couple", person1: "I1", person2: "I2" },
+          { id: "R2", type: "http://gedcomx.org/ParentChild", parent: "I1", child: "I3" },
+          { id: "R3", type: "ParentChild", parent: "I2", child: "I3" },
+          { id: "R4", type: "ParentChild", parent: "I1", child: "I3" }, // duplicate edge -> listed once
+          { id: "R5", type: "Couple", person1: "I1", person2: "I4" },
+          { id: "R6", type: "ParentChild", parent: "I9" }, // no child -> ignored
+          { id: "R7", type: "Unknown", person1: "I1", person2: "I5" }, // not a family edge
+        ],
+        sources: [],
+      },
+    );
+    const r = await projectContext({ projectPath: dir });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const byId = Object.fromEntries(r.persons.map((p) => [p.id, p]));
+    expect(byId.I1).toMatchObject({ spouseIds: ["I2", "I4"], parentIds: [], childIds: ["I3"], died: false });
+    expect(byId.I2).toMatchObject({ spouseIds: ["I1"], parentIds: [], childIds: ["I3"], died: true });
+    expect(byId.I3).toMatchObject({ spouseIds: [], parentIds: ["I1", "I2"], childIds: [], died: false });
+    expect(byId.I4).toMatchObject({ spouseIds: ["I1"], died: false });
+    expect(byId.I5).toMatchObject({ spouseIds: [], parentIds: [], childIds: [], died: false });
   });
 
   it("returns the objective verbatim and untruncated, and null when absent (#3026)", async () => {

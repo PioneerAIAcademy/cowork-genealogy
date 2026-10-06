@@ -11,9 +11,7 @@
       "new-person",
       "a_005",
       "check-warnings-required"
-    ],
-    "expected_outcome": "xfail",
-    "xfail_reason": "Owned by issue #2943 (a record-derived person with no source reference is the provenance gap that lets circular corroboration through). The skill sometimes mints James via tree_edit add_person instead of materialize_facts, which creates him with no source ref and fails test_stub_person_created_and_linked; the per-test context requires the persona form with a sourced name (a_005 -> src_004 -> S4). That route is also the one place research_append's circular-corroboration walk cannot see, because the walk needs a source ref; 274 of 711 run-added corpus persons are ref-less. Measured 2026-09-29 at --runs-per-test 3: fail, partial, fail (flaky), both fails minting James through tree_edit with a whole person object. Ask first whether tree_edit can refuse that mint and point the caller at materialize_facts (CLAUDE.md Lane 4). The defect this marker originally named, a match_score copied from another pairing, is fixed: research_append's step-3 refusal (issue #1731) closed it, and dev/probe-014.ts stages both mint routes to prove it. Remove this marker when the test comes back flaky: false and non-failing on --runs-per-test 3."
+    ]
   },
   "input": {
     "delegation": "Link assertion a_005 — the will of Thomas Flynn naming 'my son James Flynn' — to the correct person in the tree.\n\nprojectPath: <workspace>",

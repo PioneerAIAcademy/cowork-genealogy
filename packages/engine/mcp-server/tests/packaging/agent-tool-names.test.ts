@@ -520,14 +520,15 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // the check-warnings SKILL — a route an agent does not have. Widened
   // deliberately (lead review, 2026-09-02) because the warnings pass cannot sit
   // in the routing skill: `/research` may spawn this agent directly, so no
-  // plane guarantees the router runs at all. Still no `Read` and no
-  // `project_context` — the body reaches project state through research_query
-  // and never named either. `place_search`, `place_distance` and `wiki_read`
+  // plane guarantees the router runs at all. Still no `Read`: the body reaches
+  // research.json through research_query. `place_search`, `place_distance` and `wiki_read`
   // were added for #2537: the identity decision measures a move outside the
   // residence cluster and reads the destination's migration page and the
   // country's naming page (ADR-0012), so those facts left the body.
   // `place_distance` alone would be a dead grant — it takes the `standardPlace`
-  // only `place_search` returns.
+  // only `place_search` returns. `project_context` was added for the same issue:
+  // it is the only tool that lists a person's tree spouses and children, which
+  // the Household check needs to name an absent spouse (ut_person_evidence_026).
   "person-evidence.md": {
     tools: [
       "materialize_facts",
@@ -536,6 +537,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "person_warnings",
       "place_distance",
       "place_search",
+      "project_context",
       "record_read",
       "research_append",
       "research_query",

@@ -29,6 +29,10 @@ export interface ProjectContextPerson {
   name: string | null;
   gender: string | null;
   sourceRefs: string[];
+  spouseIds: string[];
+  parentIds: string[];
+  childIds: string[];
+  died: boolean;
 }
 
 export interface ProjectContextSource {
@@ -185,14 +189,20 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
     openQuestions.push({ id: q.id, question: truncateQuestion(typeof q.question === "string" ? q.question : "") });
   }
 
+  const family = familyIndex(tree);
   const persons: ProjectContextPerson[] = [];
   for (const p of Array.isArray(tree?.persons) ? tree.persons : []) {
     if (!p || typeof p !== "object" || typeof p.id !== "string") continue;
+    const f = family.get(p.id);
     persons.push({
       id: p.id,
       name: preferredDisplayName(p),
       gender: typeof p.gender === "string" ? p.gender : null,
       sourceRefs: collectSourceRefs(p),
+      spouseIds: f ? [...f.spouseIds] : [],
+      parentIds: f ? [...f.parentIds] : [],
+      childIds: f ? [...f.childIds] : [],
+      died: hasDeathFact(p),
     });
   }
 
@@ -292,6 +302,46 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
 
+/** Each tree person's one-hop family from `tree.relationships`: Couple edges
+ *  give spouses, ParentChild edges give parents and children. The type is
+ *  matched on its last segment, so the bare `Couple` and the
+ *  `http://gedcomx.org/Couple` URI both count. Ids are distinct, in edge order. */
+function familyIndex(tree: any): Map<string, { spouseIds: string[]; parentIds: string[]; childIds: string[] }> {
+  const index = new Map<string, { spouseIds: string[]; parentIds: string[]; childIds: string[] }>();
+  const entry = (id: string) => {
+    let e = index.get(id);
+    if (!e) {
+      e = { spouseIds: [], parentIds: [], childIds: [] };
+      index.set(id, e);
+    }
+    return e;
+  };
+  const add = (list: string[], id: unknown) => {
+    if (typeof id === "string" && id !== "" && !list.includes(id)) list.push(id);
+  };
+  for (const r of Array.isArray(tree?.relationships) ? tree.relationships : []) {
+    if (!r || typeof r !== "object" || typeof r.type !== "string") continue;
+    const kind = r.type.split("/").pop();
+    if (kind === "Couple" && typeof r.person1 === "string" && typeof r.person2 === "string") {
+      add(entry(r.person1).spouseIds, r.person2);
+      add(entry(r.person2).spouseIds, r.person1);
+    } else if (kind === "ParentChild" && typeof r.parent === "string" && typeof r.child === "string") {
+      add(entry(r.parent).childIds, r.child);
+      add(entry(r.child).parentIds, r.parent);
+    }
+  }
+  return index;
+}
+
+/** True when the person carries a Death or Burial fact, the signal that they
+ *  may not appear in a later household. */
+function hasDeathFact(p: any): boolean {
+  return (Array.isArray(p?.facts) ? p.facts : []).some((f: any) => {
+    const kind = typeof f?.type === "string" ? f.type.split("/").pop() : "";
+    return kind === "Death" || kind === "Burial";
+  });
+}
+
 export const projectContextSchema = {
   name: "project_context",
   description:
@@ -300,8 +350,10 @@ export const projectContextSchema = {
     "objective (research.project.objective verbatim, including any stated doubt " +
     "about its premise); " +
     "openQuestions [{id, question}] (unresolved only, text truncated); persons " +
-    "[{id, name, gender, sourceRefs}] — every tree person with the distinct S ids " +
-    "it already cites; and sources [{id, repository, " +
+    "[{id, name, gender, sourceRefs, spouseIds, parentIds, childIds, died}] — every " +
+    "tree person with the distinct S ids it already cites, its one-hop family from " +
+    "the tree's Couple and ParentChild edges, and whether it carries a Death or " +
+    "Burial fact; and sources [{id, repository, " +
     "gedcomxSourceDescriptionId, recordIds, assertionCount}] — every research " +
     "source with the record ids its assertions cover; and localities [{id, place, " +
     "forPlace, timePeriod, jurisdictions, collections, quirks, pagesRead}] — the " +
