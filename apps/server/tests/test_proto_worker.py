@@ -942,7 +942,7 @@ def test_registration_problems_compares_against_the_constants_not_the_loaded_set
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
     assert worker.registration_problems(_info(AGENTS, 10)) == []
-    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 11, ("genealogy-research:gps-mentor",)))
+    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 10, ("genealogy-research:gps-mentor",)))
     assert problems == ["agents not registered under their bare names: ['gps-mentor']"]
     assert worker.registration_problems(_info(AGENTS, 9)) == ["9 genealogy-research:* commands registered, expected 10"]
     import inspect
