@@ -1876,9 +1876,10 @@ commands the tool sends, never that AWS accepts them. The option names in the
 `aws:elasticbeanstalk:sqsd`, `aws:elbv2:*` and `environmentsecrets` namespaces come from AWS
 documentation: `describe-configuration-options` lists them only for an existing
 environment's tier. The first live `up` is the first real check, and no CI job runs one.
-The D9 leak check (`rehearse.py leak-check`) runs only where `.local/` exists, so CI skips
-it. In CI, D9 is enforced only by the 12-digit account-id scan in
-`apps/server/tests/test_proto_rehearsal.py`.
+The account-id leak check (`rehearse.py leak-check`) runs only where `.local/` exists, so
+CI skips it. In CI, that rule is enforced only by the 12-digit account-id scan in
+`apps/server/tests/test_proto_rehearsal.py`, over the paths in its `SCAN_PATHS`; each of those
+outside `apps/server/` needs a line in `server-tests.yml`'s `PATTERNS`, which a test pins.
 
 ---
 
