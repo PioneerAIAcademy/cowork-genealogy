@@ -711,8 +711,8 @@ On a direct test the harness:
 **`text_response` is the MAIN THREAD's text, and on this arm the main thread is
 a dispatcher relaying someone else's work.** It paraphrases, and the paraphrase
 is not the subject under test, so any reply-shape rule read off it grades the
-dispatcher. Measured on
-`eval/runlogs/unit/search-wikipedia/v1_2026-09-28_09-49-04`: six of ten tests
+dispatcher. Measured on search-wikipedia run `v1_2026-09-28_09-49-04` (a
+local run, never committed): six of ten tests
 failed on reply shape while **every** deterministic validator passed 10/10, and
 two replies opened "The subagent has completed the task" / "The subagent has
 looked up …" — wording no agent body produces about itself. A live capture of
@@ -1148,7 +1148,7 @@ For each confusable pair, create tests from both directions: a test in skill A's
 
 **A negative test whose `user_message` is a near-verbatim quote of a sentence in the skill under test's `SKILL.md` cannot distinguish learned routing from recall.** If the skill body says "e.g. 'one census says Ireland, the death cert says County Cork — flag that mismatch'" and the fixture's `user_message` is "One census says he was born in Ireland, the death cert says County Cork — flag that mismatch", the model may route correctly simply because it recognises the sentence it read one turn earlier in its own instructions — not because it has learned the routing rule. A pass on such a fixture proves nothing.
 
-The fix is to use a concrete example that is **not** quoted from the skill body. For a routing-boundary test, the example should be drawn from the same category as the one in `SKILL.md` but must be a different instance (e.g. if the body uses one pair of county names, the fixture uses a different pair). Leave a comment in the test's `description` naming this constraint when the example was deliberately chosen to differ from the body's. This rule was added after `ut_check_warnings_011` was found to quote `SKILL.md:43` verbatim.
+The fix is to use a concrete example that is **not** quoted from the skill body. For a routing-boundary test, the example should be drawn from the same category as the one in `SKILL.md` but must be a different instance (e.g. if the body uses one pair of county names, the fixture uses a different pair). Leave a comment in the test's `description` naming this constraint when the example was deliberately chosen to differ from the body's. This rule was added after `ut_check_warnings_011` was found to quote a sentence of the check-warnings `SKILL.md` verbatim.
 
 ### Activation: the `activated` field
 
@@ -1664,17 +1664,18 @@ The CRUD UI ([`eval-crud-ui-spec.md`](eval-crud-ui-spec.md)) surfaces non-runnab
 When the harness executes a unit test, it writes a run log to:
 
 ```
-eval/runlogs/unit/<skill-name>/<model-version>/YYYY-MM-DDTHH-MM-SSZ.json
+eval/runlogs/unit/<skill-name>/v{N}_YYYY-MM-DD_HH-MM-SS.json   # candidate (full skill run)
+eval/runlogs/unit/<skill-name>/v{N}.json                        # released
 ```
 
 The timestamp is UTC second-resolution, filename-safe (no colons). Same-second collisions raise `RunlogCollisionError` rather than overwriting the prior log; v1 serial execution makes collisions rare, so the operator simply waits a second and re-runs.
 
-Including the model version in the path makes it easy to compare runs across model versions.
+The scheme (released, candidate, and gitignored `scratch_` runs) is in `eval/harness/harness/versioning.py`.
 
 **Annotations** use the per-PR convention defined in `docs/per-pr-review-workflow.md` §2.3 and the schema at [`docs/specs/schemas/ann.schema.json`](schemas/ann.schema.json):
 
 ```
-YYYY-MM-DDTHH-MM-SSZ.ann.json    # team's corrected grades for this run
+<run log name>.ann.json    # team's corrected grades for this run, e.g. v1_2026-09-29_08-50-54.ann.json
 ```
 
 One `.ann` file per run log per PR, written by the team submitting the PR. Senior feedback flows through GitHub PR comments — there is no separate `.adj` adjudication file.
@@ -2167,9 +2168,8 @@ Unit tests and e2e tests are complementary (see `e2e-test-spec.md`):
 |-----------|-----------|-----------|
 | ID prefix | `ut_` | `e2e_` |
 | Location | `eval/tests/unit/` | `eval/tests/e2e/` |
-| Run logs | `eval/runlogs/unit/<skill>/<model>/<timestamp>.json` | `eval/runlogs/e2e/<slug>/<model>/<timestamp>.json` |
-| Annotations | `.ann.<username>.json` | `.ann.<username>.json` |
-| Adjudications | `.adj.<username>.json` | `.adj.<username>.json` |
+| Run logs | `eval/runlogs/unit/<skill>/v1_<timestamp>.json` | `eval/runlogs/e2e/<slug>/run-<timestamp>.json` |
+| Annotations | `<run log name>.ann.json` | `run-<timestamp>.ann.json` |
 | MCP data | Mocked via fixtures | Live API calls |
 | Grading layers | Deterministic + LLM judge + human | Deterministic + LLM judge + human |
 
@@ -2461,7 +2461,7 @@ After the skill executes and output is captured:
    Inputs: scenario README, user message, text output, diffs, tool calls, rubric, judge_context
    Output: score + rationale per dimension
      ↓
-3. Write run log to eval/runlogs/unit/<skill>/<model>/<timestamp>.json
+3. Write run log to eval/runlogs/unit/<skill>/v1_<timestamp>.json
    Contains: all three outputs + validator results + judge scores
 ```
 
