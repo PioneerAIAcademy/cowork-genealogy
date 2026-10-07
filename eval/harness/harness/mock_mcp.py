@@ -734,6 +734,52 @@ def _unlogged_staged_handles(workspace: Path) -> list[dict[str, Any]]:
         return []
 
 
+#: Fixture-backed tools that read a staged/finalized sidecar by ref in
+#: production, and the argument that carries the ref.
+STAGED_REF_READERS: dict[str, str] = {
+    "record_read": "resultsRef",
+    "rank_search_matches": "stagedResultsRef",
+}
+
+
+def _staged_ref_error(workspace: Path, tool: str, args: dict[str, Any]) -> str | None:
+    """Production's refusal of a staged ref the workspace does not hold, or None.
+
+    A fixture answers `record_read` and `rank_search_matches` whatever ref they
+    carry, so a mis-copied ref used to read as a success here and a refusal in
+    production (one silent slip in `search-records` v2, among 104 unchecked
+    calls). The ref is checked by the COMPILED `readStagedResults` -- the same
+    read, near-copy resolution and refusal production runs -- so the rule has
+    one definition. None when the call carries no ref, or when node or the
+    build is unavailable: a harness fault must not read as a bad ref.
+    """
+    field = STAGED_REF_READERS.get(tool)
+    ref = args.get(field) if field else None
+    if not isinstance(ref, str) or not ref.strip():
+        return None
+    staging_js = _MCP_BUILD / "utils" / "results-staging.js"
+    if not staging_js.exists():
+        return None
+    posix = str(staging_js).replace("\\", "/").replace("'", "\\'")
+    url = ("file:///" + posix) if sys.platform == "win32" else posix
+    script = (
+        f"import {{ readStagedResults }} from '{url}';"
+        " import { readFileSync } from 'node:fs';"
+        " const { projectPath, ref } = JSON.parse(readFileSync(0, 'utf-8'));"
+        " try { await readStagedResults(projectPath, ref); process.stdout.write(JSON.stringify({ ok: true })); }"
+        " catch (e) { process.stdout.write(JSON.stringify({ ok: false, message: String(e?.message ?? e) })); }"
+    )
+    payload = {"projectPath": str(workspace).replace("\\", "/"), "ref": ref}
+    try:
+        proc = _run_node_eval(script, json.dumps(payload), timeout=NODE_EVAL_TIMEOUT_LONG)
+        out = json.loads(proc.stdout.strip()) if proc.stdout.strip() else None
+    except Exception:
+        return None
+    if not isinstance(out, dict) or out.get("ok") is not False:
+        return None
+    return str(out.get("message") or f"{field} could not be read")
+
+
 def _stage_person_read(
     workspace: Path, args: dict[str, Any], response: dict[str, Any]
 ) -> dict[str, Any]:
@@ -887,7 +933,13 @@ def create_mock_server(
 
             response: dict[str, Any] | None = None
             source_name: str | None = None
-            for i, (predicate, resp, src) in enumerate(_predicated):
+            ref_error = (
+                _staged_ref_error(_workspace, _name, args) if _workspace is not None else None
+            )
+            if ref_error is not None:
+                entry["matched"] = {"kind": "staged_ref_refused", "index": None}
+                response = {"error": "staged_ref_not_found", "tool": _name, "message": ref_error}
+            for i, (predicate, resp, src) in enumerate(_predicated if ref_error is None else []):
                 if matches(predicate, args):
                     entry["matched"] = {"kind": "predicate", "index": i}
                     entry["expected_args"] = dict(predicate)
