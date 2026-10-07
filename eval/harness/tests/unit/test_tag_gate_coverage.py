@@ -2,7 +2,9 @@
 
 A validator gated on a test tag (``harness.runnability.tag_gated_validator_tags``)
 stops running once no test carries the tag -- after a rename, a typo, or the
-last tagged test being deleted -- and nothing fails. This lint closes that hole.
+last tagged test being deleted -- and nothing fails. This lint catches a gate tag
+that no test carries. A rename onto another tag the same suite already carries, or
+onto a ``DORMANT`` tag, still passes.
 
 For every ``eval/harness/validators/test_*.py``, each gate tag must be carried in
 ``test.tags`` by a unit test whose ``test.skill`` selects that file, or be listed in
@@ -12,8 +14,10 @@ count: a rename that lands on a tag used elsewhere is exactly the hole.
 
 Gate tags come from ``tag_gated_validator_tags`` itself, so this lint and the
 runnability gate cannot disagree about what a gate is. That function sees only the
-literal ``"<tag>" not in tags`` form, so a prefix gate (``scope-excludes-*``) or a gate
-inside a helper (``topical-fixture-required``) is not checked here. Suites are matched the way
+literal ``"<tag>" not in tags`` form, so no other gate shape is checked here: a prefix
+match (``scope-excludes-*``, ``routes-to:``), a set intersection (survey-surname's
+``statewide``/``threshold``), or a gate inside a helper
+(``validators_lib.assert_topical_fixture_used``). Suites are matched the way
 the harness picks a validator file: ``test.skill`` with ``-`` replaced by ``_``.
 """
 
@@ -29,7 +33,7 @@ UNIT_TESTS_DIR = Path(__file__).resolve().parents[3] / "tests" / "unit"
 UNIVERSAL = "universal"
 
 # Gate tags no test carries, each with the reason. An entry fails the lint once a
-# test in its suite carries the tag, or once no validator gates on it.
+# test carries the tag in every suite that gates it, or once no validator gates on it.
 DORMANT: dict[str, str] = {
     "hypothesis-open-blocks-tier": (
         "its only test, ut_proof_conclusion_021 (a routing negative), was deleted "
@@ -37,6 +41,10 @@ DORMANT: dict[str, str] = {
         "test carries the tag yet"
     ),
     "no-shortcut": "claimed by PR #3165 (ut_research_015); delete this entry when it lands",
+    "objective-target": (
+        "its only test, ut_research_plan_r3d (an xfail), was deleted by PR #3124; "
+        "the validator was kept and no test carries the tag yet"
+    ),
 }
 
 
@@ -112,7 +120,8 @@ def test_every_gate_tag_is_carried_or_dormant():
     carried = carried_tags(UNIT_TESTS_DIR)
     assert len(gates) >= 20, f"found only {len(gates)} gated validator files"
     assert len(carried) >= 20, f"found only {len(carried)} unit-test suites"
-    assert problems(gates, carried, DORMANT) == []
+    found = problems(gates, carried, DORMANT)
+    assert not found, "\n".join(found)
 
 
 # --- The lint against synthetic corpora, through the real readers ---------------
