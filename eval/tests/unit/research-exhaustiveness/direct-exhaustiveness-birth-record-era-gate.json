@@ -17,7 +17,7 @@
     ]
   },
   "input": {
-    "delegation": "Write the search_stop for question q_001. Every plan item is complete, so the search is finished. Appropriate outcome: `stopped_because: "question_answered"`.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "delegation": "Write the search_stop for question q_001. Every plan item is complete, so the search is finished. Appropriate outcome: `stopped_because: \"question_answered\"`.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "ma-birth-record-unsearched"
   },
   "judge_context": [

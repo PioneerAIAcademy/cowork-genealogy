@@ -12,7 +12,7 @@
     ]
   },
   "input": {
-    "user_message": "All planned searches for q_001 are complete. Three independent sources confirm Thomas Flynn as father: 1850 census co-enumeration, 1860 census co-enumeration, and the death certificate naming Thomas directly. The probate search returned negative (log_006). The birthplace conflict (c_001) is resolved. Overturn risk is low — no unsearched record type is likely to name a different father. Please update research.json: set q_001's search_stop to stopped_because: "question_answered", set the status to exhaustive_declared, fill in all seven stop_criteria assessments, and validate the schema.",
+    "user_message": "All planned searches for q_001 are complete. Three independent sources confirm Thomas Flynn as father: 1850 census co-enumeration, 1860 census co-enumeration, and the death certificate naming Thomas directly. The probate search returned negative (log_006). The birthplace conflict (c_001) is resolved. Overturn risk is low — no unsearched record type is likely to name a different father. Please update research.json: set q_001's search_stop to stopped_because: \"question_answered\", set the status to exhaustive_declared, fill in all seven stop_criteria assessments, and validate the schema.",
     "scenario": "flynn-exhaustive-ready"
   },
   "mcp_fixtures": [

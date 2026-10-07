@@ -16,7 +16,7 @@
     ]
   },
   "input": {
-    "delegation": "Declare question q_001 exhaustive and record the declaration. The plan is finished and the two census records are sufficient. Appropriate outcome: `stopped_because: "question_answered"`.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "delegation": "Declare question q_001 exhaustive and record the declaration. The plan is finished and the two census records are sufficient. Appropriate outcome: `stopped_because: \"question_answered\"`.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "flynn-plan-in-progress"
   },
   "mcp_fixtures": [

@@ -20,7 +20,7 @@
     ]
   },
   "input": {
-    "delegation": "Declare question q_001 exhaustive and record the outcome. All planned searches are complete and the open conflict is collateral — it does not touch this question. Appropriate outcome: `stopped_because: "question_answered"`.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "delegation": "Declare question q_001 exhaustive and record the outcome. All planned searches are complete and the open conflict is collateral — it does not touch this question. Appropriate outcome: `stopped_because: \"question_answered\"`.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "flynn-unresolved-conflict"
   },
   "mcp_fixtures": [
