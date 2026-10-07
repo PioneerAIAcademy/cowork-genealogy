@@ -1305,6 +1305,91 @@ describe("rank_search_matches", () => {
       expect(await rankFlag(city())).toBeUndefined();
     });
 
+    it.each([
+      ["structured_value.date", { id: "a_001", fact_type: "birth", value: "x", structured_value: { date: "1871-03" }, date_certainty: "approximate" }],
+      ["a prose date", { id: "a_001", fact_type: "birth", value: "born 4 Dec 1917", date_certainty: "approximate" }],
+    ])("qualifies %s with date_certainty when reading the thinness flag", async (_label, a) => {
+      await linked([a]);
+      expect(await rankFlag(city())).toBe(true);
+    });
+
+    it("qualifies enriched facts with date_certainty before the thinness check reads them", async () => {
+      await writeResearch({
+        person_evidence: [{ id: "pe_0", person_id: "I1", assertion_id: "a_001" }],
+        assertions: [
+          { id: "a_001", fact_type: "birth", value: "x", structured_value: { date: "1917-03", place: "Milan" }, date_certainty: "approximate" },
+        ],
+      });
+      expect(await rankFlag(solo([]))).toBe(true);
+    });
+
+    it.each([
+      ["a parent's death date", "son of Mario (d. 4 Dec 1890)"],
+      ["a spouse's marriage date", "wife of John; m. 3 Mar 1920"],
+    ])("ignores %s in a relationship assertion's prose — it describes a kin, not the subject", async (_label, value) => {
+      await linked([{ id: "a_001", fact_type: "relationship", value, structured_value: { relationship_type: "son" } }]);
+      expect(await rankFlag(city())).toBe(true);
+    });
+
+    it.each([
+      ["son of Jan 1850"],
+      ["living with June, 1880"],
+      ["aged 4, March 1850"],
+    ])("still flags the prose fragment %j — not a date in context", async (value) => {
+      await prose(value);
+      expect(await rankFlag(city())).toBe(true);
+    });
+
+    it.each([
+      ["'Mrs. Ugo' (title + subject's own given)", { given: "Mrs. Ugo", surname: "Rossi" }],
+      ["'[Unknown]'", { given: "[Unknown]", surname: "Rossi" }],
+      ["'Unnamed'", { given: "Unnamed", surname: "Rossi" }],
+      ["'Ignoto'", { given: "Ignoto", surname: "Rossi" }],
+      ["'Ignota'", { given: "Ignota", surname: "Rossi" }],
+    ])("still flags a subject whose only relative is a %s", async (_label, name) => {
+      const tree = {
+        persons: [
+          { id: "I1", names: [UGO] },
+          { id: "I2", names: [name] },
+        ],
+        relationships: [{ type: "Couple", person1: "I1", person2: "I2" }],
+        sources: [],
+      };
+      expect(await rankFlag(tree)).toBe(true);
+    });
+
+    it.each([
+      ["child of [Unknown] Rossi (bracketed given)", "[Unknown] Rossi"],
+      ["father key '[Unknown] Rossi'", null],
+    ])("still flags evidence that names a bracketed placeholder in %s", async (_label, name) => {
+      const a = name
+        ? { id: "a_001", fact_type: "relationship", value: `child of ${name}`, structured_value: { relationship_type: "child" } }
+        : { id: "a_001", fact_type: "relationship", value: "x", structured_value: { relationship_type: "child", father: "[Unknown] Rossi" } };
+      await linked([a]);
+      expect(await rankFlag(city())).toBe(true);
+    });
+
+    it.each([
+      ["Junior", "Ugo Stella Junior"],
+      ["Jr.", "Ugo Stella Jr."],
+      ["Sr", "Ugo Stella Sr"],
+      ["III", "Ugo Stella III"],
+    ])("does not count the subject's own name with a %s suffix as a relative", async (_label, name) => {
+      await linked([{ id: "a_001", fact_type: "relationship", value: `child of ${name}`, structured_value: { relationship_type: "child" } }]);
+      expect(await rankFlag(city())).toBe(true);
+    });
+
+    it.each([
+      ["ParentChild", { relationship_type: "ParentChild", related_person_name: "Anna Rossi" }],
+      ["parent_child", { relationship_type: "parent_child", related_person_name: "Anna Rossi" }],
+      ["couple", { relationship_type: "couple", related_person_name: "Anna Rossi" }],
+      ["widow", { relationship_type: "widow", related_person_name: "Anna Rossi" }],
+      ["step_father", { relationship_type: "step_father", related_person_name: "Anna Rossi" }],
+    ])("counts %s as a near relationship type", async (_label, structured_value) => {
+      await linked([{ id: "a_001", fact_type: "relationship", value: "x", structured_value }]);
+      expect(await rankFlag(city())).toBeUndefined();
+    });
+
     it("one malformed assertion does not hide a later narrow date", async () => {
       await writeResearch({
         person_evidence: [

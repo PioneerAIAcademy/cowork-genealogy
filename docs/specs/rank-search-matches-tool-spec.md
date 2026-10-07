@@ -334,28 +334,30 @@ evidence linked to the subject — i.e. nothing that separates this person from
 any same-named individual. Omitted otherwise; never `false`. It is computed from
 the subject, not the pool, so it is set on an empty staged set as well.
 
-**A sibling does not count: no search parameter accepts one, so it cannot narrow
-the query.** `record_search` takes `fatherGivenName`, `motherGivenName` and
-`spouseGivenName`, with no sibling field. A child counts for the opposite
-reason — a named child yields a second search in the other direction (the
-child's own records, with the subject as father or mother), while a named
-sibling only reaches the subject through parents, who already count on their
-own.
+**A sibling does not count: it only narrows the query through the parents it
+shares, who already count on their own.** `record_search` does take an
+`otherGivenName` / `otherSurname` pair that could carry a sibling, but a named
+sibling only reaches the subject through parents — any discriminating value a
+sibling adds is already picked up by naming the parents instead. A child, by
+contrast, counts for a reason sibling cannot borrow: a named child yields a
+second search in the other direction (the child's own records, with the
+subject as father or mother).
 
 **Place is not a discriminator here: it is already in the query, so it cannot
 separate same-named people within the same place.** The namesake problem is two
 people of the same name in the *same* place, and only a date or a named
-relative cuts between them. This is the asymmetry with the local
-`noDatedOrPlacedFact` a few lines up, which drives the withholding branch
-instead: that branch fires when the subject carries no signal at all, so place
-is read as a signal there.
+relative cuts between them. This is the asymmetry with the withholding branch
+in `record-search-tool-spec-v2.md` ("`rankingSkipped`"): that branch fires when
+the subject carries no dated OR placed fact — nothing at all — so place is read
+as a signal there, and neither test strictly contains the other.
 
 - **Narrow date.** A date counts when its day span, measured with
   `getDayRange` (`src/utils/date-helpers.ts`) after `stdDate`, is shorter than
   a bare year's. So a month, quarter or day counts, while "1829", "Abt 1829",
   "Bef 1855", "Bet 1917 and 1918", "1829-1830" and an unparseable date do not.
-  "Abt 4 Dec 1917" and "Est 4 Dec 1917" do not count either (both widen by a
-  year each side); "Cal 4 Dec 1917" does. GedcomX formal ranges are restated
+  "Abt 4 Dec 1917" and "Est 4 Dec 1917" do not count either — `getDayRange`
+  widens `Abt` by a year each side and `Est` by about ten years each side, so
+  both span more than a bare year's 364 days; "Cal 4 Dec 1917" does. GedcomX formal ranges are restated
   first: open on one side (`/+1917-12-04`, `+1917-12-04/`) as `Bef`/`Aft`, so
   they do not count; closed (`+1917-12-04/+1917-12-10`) as `Bet A and B`, so a
   narrow one counts. An alternative ("Dec 1917 or Jan 1918") spans both sides.

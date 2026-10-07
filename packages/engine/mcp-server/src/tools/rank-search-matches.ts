@@ -4,6 +4,7 @@ import { scorePair } from "../utils/match-engine.js";
 import { mapWithConcurrency, withRetry } from "../utils/place-resolver.js";
 import { assertInsideProject, isInsideProject } from "../utils/project-io.js";
 import { readStagedResults } from "../utils/results-staging.js";
+import { relationshipCategory } from "../utils/relationship-category.js";
 import { sourceAttachmentsTool } from "./source-attachments.js";
 import { getDayRange } from "../utils/date-helpers.js";
 import { stdDate } from "../utils/date-standardize.js";
@@ -257,9 +258,12 @@ function discriminatingFactCount(person: { facts?: any[] }): number {
  *  whose span is shorter carries a month, quarter or day. */
 const BARE_YEAR_SPAN_DAYS = 364;
 
-/** Month words that are also common names or words ("May", "Gen", "Mars"):
- *  read as a month in prose only when a day number sits beside them. */
-const AMBIGUOUS_MONTHS = new Set(["may", "mai", "mei", "mag", "gen", "mars"]);
+/** Month words that are also common names or words ("May", "Gen", "Mars",
+ *  "Jan", "June"): read as a month in prose only when a day number sits beside
+ *  them. */
+const AMBIGUOUS_MONTHS = new Set([
+  "may", "mai", "mei", "mag", "gen", "mars", "jan", "june",
+]);
 
 /** `MODIFIERS` words that in prose usually mean something else: "Int." before
  *  a burial date is "interred", not "interpreted". */
@@ -284,7 +288,19 @@ const monthToken = (t: string | undefined) =>
  *  "4 Dec or 5 Dec 1917") is dropped, since its bounds are not recoverable. */
 function datesInText(text: unknown): string[] {
   if (typeof text !== "string") return [];
-  const tokens = normalizeAccents(text).toLowerCase().match(/[\p{L}\p{N}~<>&]+/gu) ?? [];
+  const norm = normalizeAccents(text).toLowerCase();
+  const re = /[\p{L}\p{N}~<>&]+/gu;
+  const tokens: string[] = [];
+  // A comma or semicolon between two adjacent tokens is a clause boundary:
+  // "aged 4, March 1850" is "age 4; the month March 1850", not a day-month-year.
+  const commaBefore: boolean[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(norm)) !== null) {
+    tokens.push(m[0]);
+    commaBefore.push(/[,;]/.test(norm.slice(last, m.index)));
+    last = m.index + m[0].length;
+  }
   const out: string[] = [];
   const isDatePart = (t: string | undefined) =>
     t !== undefined && (/^\d/.test(t) || MONTHS.has(t));
@@ -292,17 +308,22 @@ function datesInText(text: unknown): string[] {
     let date: string | undefined;
     let end = i;
     const [t0, t1, t2] = [tokens[i], tokens[i + 1], tokens[i + 2]];
-    if (dayToken(t0) && monthToken(t1) && yearToken(t2)) {
+    // A comma in the day-month gap or month-year gap breaks a Day-Month-Year
+    // or Month-Year date. A comma between day and year in Month-Day-Year is
+    // the US convention ("March 3, 1850") and does not break the date.
+    const comma01 = commaBefore[i + 1];
+    const comma12 = commaBefore[i + 2];
+    if (!comma01 && !comma12 && dayToken(t0) && monthToken(t1) && yearToken(t2)) {
       date = `${dayToken(t0)} ${monthToken(t1)} ${t2}`;
       end = i + 2;
-    } else if (monthToken(t0) && dayToken(t1) && yearToken(t2)) {
+    } else if (!comma01 && monthToken(t0) && dayToken(t1) && yearToken(t2)) {
       date = `${dayToken(t1)} ${monthToken(t0)} ${t2}`;
       end = i + 2;
-    } else if (yearToken(t0) && /^\d{1,2}$/.test(t1 ?? "") && /^\d{1,2}$/.test(t2 ?? "")
+    } else if (!comma01 && !comma12 && yearToken(t0) && /^\d{1,2}$/.test(t1 ?? "") && /^\d{1,2}$/.test(t2 ?? "")
         && Number(t1) >= 1 && Number(t1) <= 12) {
       date = `+${t0}-${t1!.padStart(2, "0")}-${t2!.padStart(2, "0")}`;
       end = i + 2;
-    } else if (monthToken(t0) && !AMBIGUOUS_MONTHS.has(t0) && yearToken(t1)
+    } else if (!comma01 && monthToken(t0) && !AMBIGUOUS_MONTHS.has(t0) && yearToken(t1)
         && !dayToken(tokens[i - 1])) {
       date = `${monthToken(t0)} ${t1}`;
       end = i + 1;
@@ -371,45 +392,67 @@ const CERTAINTY_MODIFIER: Record<string, string> = {
   before: "Bef", after: "Aft", between: "Bet",
 };
 
-/** An assertion's top-level `date`, qualified by its `date_certainty`. */
-function certainDate(a: any): unknown {
-  const date = a?.date;
+/** A date string prefixed with its assertion's `date_certainty` qualifier.
+ *  Applied to EVERY date read off an assertion — the top-level `date`,
+ *  `structured_value.date`, and each prose date — so a weakly-dated assertion
+ *  does not clear the thinness flag through its back door. */
+function qualifyDate(date: unknown, cert: unknown): unknown {
   if (typeof date !== "string") return date;
-  const mod = Object.hasOwn(CERTAINTY_MODIFIER, a?.date_certainty)
-    ? CERTAINTY_MODIFIER[a.date_certainty]
+  const mod = typeof cert === "string" && Object.hasOwn(CERTAINTY_MODIFIER, cert)
+    ? CERTAINTY_MODIFIER[cert]
     : undefined;
   return mod ? `${mod} ${date}` : date;
 }
 
+/** An assertion's top-level `date`, qualified by its `date_certainty`. */
+function certainDate(a: any): unknown {
+  return qualifyDate(a?.date, a?.date_certainty);
+}
+
 /** Given-name words that record a missing name rather than a name, compared
- *  after lower-casing and dropping dots ("N. N." → "nn"). */
+ *  after lower-casing and dropping dots ("N. N." → "nn"). "Unnamed" is the
+ *  tree-edit convention here; "ignoto"/"ignota" are the Italian form. */
 const PLACEHOLDER_GIVEN = new Set([
   "unknown", "unk", "unkn", "nn", "fnu", "lnu", "living", "private",
   "mr", "mrs", "miss", "ms", "infant", "baby", "child", "stillborn",
   "son", "daughter", "wife", "husband", "boy", "girl", "male", "female",
+  "unnamed", "ignoto", "ignota",
 ]);
 
-/** A given name is real when, with dots dropped, neither the whole name
- *  ("N. N.") nor every word of it ("Infant Son") is a placeholder. */
-function isRealGivenName(given: unknown): boolean {
+/** A given name is real when, with dots and brackets dropped, neither the whole
+ *  name ("N. N.", "[Unknown]") nor every word of it ("Infant Son") is a
+ *  placeholder — AND, when `selfGiven` is passed, what remains after dropping
+ *  placeholder words is not the subject's own given name ("Mrs. Ugo" is a
+ *  spouse placeholder when the subject is Ugo). */
+function isRealGivenName(given: unknown, selfGiven?: Set<string>): boolean {
   if (typeof given !== "string") return false;
-  const words = given.toLowerCase().replace(/\./g, " ").split(/\s+/).filter(Boolean);
+  const words = given.toLowerCase().replace(/[.[\]]/g, " ").split(/\s+/).filter(Boolean);
   if (PLACEHOLDER_GIVEN.has(words.join(""))) return false;
-  return words.some((w) => /\p{L}/u.test(w) && !PLACEHOLDER_GIVEN.has(w));
+  const realWords = words.filter((w) => /\p{L}/u.test(w) && !PLACEHOLDER_GIVEN.has(w));
+  if (realWords.length === 0) return false;
+  if (selfGiven && selfGiven.has(realWords.join(" "))) return false;
+  return true;
 }
 
 /** A full name's given part is every word before the last, so "Blyeberg"
- *  alone is a surname-only stub with no given name. */
-function fullNameHasRealGiven(name: unknown): boolean {
+ *  alone is a surname-only stub with no given name. A trailing generational
+ *  suffix is NOT the surname — "Junior" in "Ugo Stella Junior" — so it is
+ *  stripped first; otherwise "Junior" would masquerade as the surname and
+ *  "Ugo Stella" would read as a real given name regardless of the subject. */
+function fullNameHasRealGiven(name: unknown, selfGiven?: Set<string>): boolean {
   if (typeof name !== "string") return false;
-  return isRealGivenName(name.trim().split(/\s+/).slice(0, -1).join(" "));
+  const words = name.trim().split(/\s+/);
+  while (words.length > 1 && GENERATIONAL_SUFFIXES.has(words[words.length - 1].toLowerCase().replace(/\./g, ""))) {
+    words.pop();
+  }
+  return isRealGivenName(words.slice(0, -1).join(" "), selfGiven);
 }
 
 /** A relative separates namesakes only through a real given name: a
  *  surname-only stub repeats what the subject's own name already says. */
-function hasRealGivenName(person: SimplifiedPerson): boolean {
+function hasRealGivenName(person: SimplifiedPerson, selfGiven?: Set<string>): boolean {
   const names = Array.isArray(person?.names) ? person.names : [];
-  return names.some((n) => isRealGivenName((n as any)?.given));
+  return names.some((n) => isRealGivenName((n as any)?.given, selfGiven));
 }
 
 /** True when the tree records a spouse, parent or child of `subjectId` with a
@@ -417,17 +460,37 @@ function hasRealGivenName(person: SimplifiedPerson): boolean {
 function hasNamedRelative(
   tree: SimplifiedGedcomX,
   subjectId: string,
+  selfGiven: Set<string>,
 ): boolean {
   const { parent, spouse, child } = gatherRelatives(tree, subjectId);
-  return [...parent, ...spouse, ...child].some(hasRealGivenName);
+  return [...parent, ...spouse, ...child].some((p) => hasRealGivenName(p, selfGiven));
 }
 
-/** Relationship types (the subject's own role) that name a spouse, parent or
- *  child — not a sibling, uncle or godparent. */
-const NEAR_RELATIONSHIP_TYPES = new Set([
-  "parent", "father", "mother", "child", "son", "daughter",
-  "spouse", "wife", "husband",
+/** Generational suffixes that attach to a full name without identifying a
+ *  separate person — "Ugo Stella Junior" is the subject Ugo Stella, not a son
+ *  of his, so the subject-own check must see through them. */
+const GENERATIONAL_SUFFIXES = new Set([
+  "jr", "junior", "sr", "senior", "ii", "iii", "iv",
 ]);
+
+/** Named-relative relationship types reach the subject through a parent,
+ *  spouse or child — not a sibling, uncle or godparent. Not a hand-list:
+ *  `research-append.ts` already maps every role word to a category, and the
+ *  types that are not role words (`parent_child`/`ParentChild`, `couple`,
+ *  `step_*`) are added here. */
+const EXTRA_NEAR_TYPES = new Set([
+  "parent_child", "parentchild", "couple",
+  "step_parent", "step_mother", "step_father",
+  "step_son", "step_daughter", "step_child",
+]);
+
+function isNearRelationshipType(rel: unknown): boolean {
+  if (typeof rel !== "string") return false;
+  const t = rel.toLowerCase().trim().replace(/_inferred$/, "");
+  if (EXTRA_NEAR_TYPES.has(t)) return true;
+  const cat = relationshipCategory(t);
+  return cat === "parent" || cat === "child" || cat === "spouse";
+}
 
 /** Structured-value keys that carry a relative's full name. */
 const RELATIVE_NAME_KEYS = ["related_person_name", "father", "mother", "spouse"];
@@ -461,10 +524,24 @@ function subjectNames(names: unknown): SubjectNames {
   return out;
 }
 
+/** The full-name key with any trailing generational suffix tokens removed, so
+ *  "Ugo Stella Junior" compares equal to the subject's own "Ugo Stella". */
+function stripGenerationalSuffix(key: string): string {
+  const words = key.split(" ").filter(Boolean);
+  while (words.length > 0 && GENERATIONAL_SUFFIXES.has(words[words.length - 1])) {
+    words.pop();
+  }
+  return words.join(" ");
+}
+
 /** True when a full name ("Given … Surname") names someone other than the
  *  subject with a real given name. */
 function namesOther(name: unknown, self: SubjectNames): boolean {
-  return fullNameHasRealGiven(name) && !self.full.has(nameKey(name));
+  if (!fullNameHasRealGiven(name, self.given)) return false;
+  const key = nameKey(name);
+  if (self.full.has(key)) return false;
+  if (self.full.has(stripGenerationalSuffix(key))) return false;
+  return true;
 }
 
 /** True when a research.json assertion linked to the subject names a spouse,
@@ -478,13 +555,12 @@ function assertionNamesRelative(a: any, self: SubjectNames): boolean {
   if (typeof sv !== "object" || sv === null) return false;
   if (a?.fact_type === "marriage") {
     return (
-      (isRealGivenName(sv.spouse_given) && !self.given.has(nameKey(sv.spouse_given))) ||
+      (isRealGivenName(sv.spouse_given, self.given) && !self.given.has(nameKey(sv.spouse_given))) ||
       namesOther(sv.spouse, self)
     );
   }
   if (a?.fact_type !== "relationship") return false;
-  const type = String(sv.relationship_type ?? "").toLowerCase().replace(/_inferred$/, "");
-  if (!NEAR_RELATIONSHIP_TYPES.has(type)) return false;
+  if (!isNearRelationshipType(sv.relationship_type)) return false;
   if (RELATIVE_NAME_KEYS.some((k) => namesOther(sv[k], self))) return true;
   const m = typeof a?.value === "string" ? a.value.match(OF_NAME) : null;
   return m !== null && namesOther(m[1], self);
@@ -520,7 +596,16 @@ function linkedEvidence(
   const self = subjectNames(names);
   for (const a of liveLinkedAssertions(research, subjectId)) {
     try {
-      const dates = [certainDate(a), a?.structured_value?.date, ...datesInText(a?.value)];
+      const cert = a?.date_certainty;
+      // A relationship value routinely carries another person's date
+      // ("son of Mario (d. 4 Dec 1890)") — it is not the subject's, so prose
+      // dates on a relationship assertion say nothing about the subject.
+      const prose = a?.fact_type === "relationship" ? [] : datesInText(a?.value);
+      const dates = [
+        certainDate(a),
+        qualifyDate(a?.structured_value?.date, cert),
+        ...prose.map((d) => qualifyDate(d, cert)),
+      ];
       if (dates.some(isDateNarrowerThanYear)) out.narrowDate = true;
       if (assertionNamesRelative(a, self)) out.namedRelative = true;
     } catch {
@@ -675,7 +760,11 @@ export async function buildSubjectDoc(
         : undefined;
       if (!treeType) continue;
 
-      const date = sv.date ?? sv.year ?? yearFromText(a?.value);
+      const rawDate = sv.date ?? sv.year ?? yearFromText(a?.value);
+      // The subject's enriched facts flow back into the thinness check, so an
+      // "Abt 1871-03" assertion must materialize qualified — not as a bare
+      // day-precise fact that would clear the flag through its back door.
+      const date = qualifyDate(rawDate, a?.date_certainty);
       const place = sv.place ?? undefined;
       if (!date && !place) continue; // nothing that discriminates — skip
 
@@ -700,6 +789,7 @@ export async function buildSubjectDoc(
   let tooThin: boolean;
   try {
     const safeTree = wellFormedTree(tree);
+    const self = subjectNames(enriched.names);
     const evidence = linkedEvidence(research, subjectId, enriched.names);
     tooThin =
       !hasDateNarrowerThanYear([
@@ -708,7 +798,7 @@ export async function buildSubjectDoc(
       ]) &&
       !evidence.narrowDate &&
       !evidence.namedRelative &&
-      !hasNamedRelative(safeTree, subjectId);
+      !hasNamedRelative(safeTree, subjectId, self.given);
   } catch {
     // An advisory flag never fails the ranking; unflagged is the prior behavior.
     tooThin = false;
