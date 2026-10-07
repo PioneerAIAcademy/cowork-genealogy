@@ -25,7 +25,7 @@
       "search_stop": {
         "stopped_because": "question_answered",
         "justification": "The 1889 Dubuque County marriage certificate was located and examined; the bride's given name is legible but her maiden surname is illegible in the register image. Declared exhaustive on the basis that the certificate is the record of the event.",
-        "log_entry_ids": "log_001",
+        "log_entry_ids": ["log_001"],
         "stop_criteria": {
           "goal_alignment": "Partial — the marriage event is documented, but the bride's maiden surname (the question's target) remains unresolved.",
           "repository_breadth": "Only FamilySearch searched, for the marriage record only.",

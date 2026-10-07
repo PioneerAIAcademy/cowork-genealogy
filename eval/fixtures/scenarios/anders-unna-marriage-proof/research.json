@@ -25,7 +25,7 @@
       "search_stop": {
         "stopped_because": "question_answered",
         "justification": "The primary indexed collection (FamilySearch Norway, Marriages, 1660-1926) was searched and a direct marriage record was found and confirmed: Hamre prestegjeld church book entry, 25 Jun 1786, groom Anders Monsen, bride indexed as 'Urna Halsteinsdr' (Unna Halsteinsdatter). For 1786 Norwegian marriages, the church book is the sole contemporaneous record type -- no civil registration existed until 1875 -- so the single-source limitation reflects the historical record landscape, not an unsearched gap.",
-        "log_entry_ids": "log_001",
+        "log_entry_ids": ["log_001"],
         "stop_criteria": {
           "goal_alignment": "Yes. The Hamre prestegjeld church book entry (25 Jun 1786, Hamre, Hordaland, Norway) directly answers date, place, and record content.",
           "repository_breadth": "FamilySearch Norway, Marriages, 1660-1926 (collection 1468080) -- the principal indexed source for 18th-century Norwegian church marriages -- was searched and the record found.",
