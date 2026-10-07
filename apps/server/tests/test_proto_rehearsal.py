@@ -1318,6 +1318,19 @@ def test_status_reads_options_as_beanstalk_reports_them(stack):
     assert sum("drift" in line for line in lines) == 2
 
 
+def test_probe_reports_an_update_beanstalk_rejected_and_still_restores(stack):
+    """Live 2026-10-07: env_4096's update was refused (EnvironmentVariables over 4,096 bytes),
+    the environment ended Ready on its old configuration, and the probe exited 0."""
+    env, fake, _ = stack
+    fake.reset()
+    fake.elasticbeanstalk_describe_events = lambda rest: {"Events": [
+        {"Severity": "ERROR", "Message": "Failed to deploy configuration."}]} if "ERROR" in rest else {"Events": []}
+    rc, lines = run(env, fake, "probe", "--billed", "--case", "env_4096", "--hold-s", "0")
+    assert rc == 3, lines[-5:]
+    assert any(line.startswith("apply REJECTED: genealogy-u13-web: Failed to deploy") for line in lines)
+    assert len(fake.calls_to("elasticbeanstalk", "update-environment")) == 2, "the restore still ran"
+
+
 # ── dry-run ───────────────────────────────────────────────────────────────────────────
 
 

@@ -1387,8 +1387,19 @@ U13PY
                 call += ["--option-settings", self.file(f"case-{name}-{tier}.json", sets)]
             if removes:
                 call += ["--options-to-remove", self.file(f"case-{name}-{tier}-remove.json", removes)]
+            since = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
             self.aws(*call)
             self.wait_env(env_name)
+            self.note_rejections(env_name, since)
+
+    def note_rejections(self, env_name: str, since: str) -> None:
+        """An update Beanstalk refused still ends Ready, on the old configuration (a 4,096-byte
+        environment was refused this way, U13 2026-10-07); its ERROR events are the result."""
+        events = self.aws("elasticbeanstalk", "describe-events", "--environment-name", env_name,
+                          "--start-time", since, "--severity", "ERROR", placeholder={"Events": []})
+        for e in (events or {}).get("Events", []):
+            self.rejected.append(f"{env_name}: {e.get('Message')}")
+            self.out(f"apply REJECTED: {env_name}: {e.get('Message')}")
 
     def wait_param_in_sync(self) -> None:
         def in_sync():
@@ -1442,6 +1453,7 @@ U13PY
         self.require_billed()
         self.guard()
         undo: list = []
+        self.rejected: list[str] = []
         try:
             for name in names:
                 self.out(f"== probe --case {name} ({CASES[name]['measures']})")
@@ -1457,7 +1469,7 @@ U13PY
         finally:
             self.out("== restore")
             self.restore(undo)
-        return 0
+        return 3 if self.rejected else 0
 
     # ── status ───────────────────────────────────────────────────────────────────────
 
