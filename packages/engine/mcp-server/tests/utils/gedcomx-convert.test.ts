@@ -1564,3 +1564,60 @@ describe("gedcomx-convert — person principal field", () => {
     expect(simplified.persons?.[1]?.principal).toBeUndefined();
   });
 });
+
+// `simplifySourceRef` prefers `descriptionId` over `description`. It was measured only on
+// TREE person refs, but this converter is shared — record_read, record_search,
+// person_search and the merge tools all run through it — so the precedence is pinned here
+// rather than inferred from the one caller that needed it.
+describe("source-reference id precedence", () => {
+  it("prefers descriptionId over a full-URL description", () => {
+    // The case the preference exists for: a relative's ref is a full URL to a description
+    // the body does not contain. A URL never equals the bare id a fetched description
+    // carries, so a consumer matching refs against `sources[]` ids by string equality
+    // would drop every one of them.
+    const out = toSimplified({
+      persons: [
+        {
+          id: "P1",
+          sources: [
+            {
+              description: "https://api.familysearch.org/platform/sources/descriptions/ZZZZ-999",
+              descriptionId: "ZZZZ-999",
+            },
+          ],
+        },
+      ],
+    } as never);
+    expect(out.persons?.[0].sources).toEqual([{ ref: "ZZZZ-999" }]);
+  });
+
+  it("still strips a leading # when only description is present", () => {
+    // The subject's own refs are `#<id>` fragments and carry no `descriptionId`. They
+    // produced a bare id before this change and must still.
+    const out = toSimplified({
+      persons: [{ id: "P1", sources: [{ description: "#OWN-1" }] }],
+    } as never);
+    expect(out.persons?.[0].sources).toEqual([{ ref: "OWN-1" }]);
+  });
+
+  it("keeps page and quality qualifiers alongside the preferred id", () => {
+    const out = toSimplified({
+      persons: [
+        {
+          id: "P1",
+          sources: [
+            {
+              description: "https://api.familysearch.org/platform/sources/descriptions/A-1",
+              descriptionId: "A-1",
+              qualifiers: [
+                { name: "http://gedcomx.org/CitationDetail", value: "p. 7" },
+                { name: "fsmcp:quality", value: "3" },
+              ],
+            },
+          ],
+        },
+      ],
+    } as never);
+    expect(out.persons?.[0].sources).toEqual([{ ref: "A-1", page: "p. 7", quality: 3 }]);
+  });
+})
