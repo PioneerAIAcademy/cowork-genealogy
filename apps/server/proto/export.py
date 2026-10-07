@@ -47,7 +47,7 @@ def resolve_project(dsn: str, session_id: str) -> str | None:
 
 
 def export(project_id: str, *, out_dir: Path, pg_dsn: str, s3_endpoint: str) -> int:
-    env = {**os.environ, "PROTO_PG_DSN": pg_dsn, "PROTO_S3_ENDPOINT": s3_endpoint}
+    env = {**os.environ, "PROTO_PG_DSN": os.environ.get("PROTO_NODE_PG_DSN") or pg_dsn, "PROTO_S3_ENDPOINT": s3_endpoint}
     proc = subprocess.run(
         ["npx", "tsx", "dev/export-project.ts"], cwd=ENGINE_DIR, input=json.dumps(manifest(project_id, out_dir)),
         text=True, encoding="utf-8", env=env, capture_output=True,
