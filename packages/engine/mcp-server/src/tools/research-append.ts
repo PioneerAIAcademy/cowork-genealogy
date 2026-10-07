@@ -4408,6 +4408,17 @@ async function prepareOps(
     return results;
   };
 
+  // The other places each record's assertions name in this batch: a bare place
+  // ("Shenandoah") is resolved against them, not against the whole world.
+  const placesByRecord = new Map<string, string[]>();
+  for (const op of ops) {
+    const e = op.section === "assertions" && op.op === "append" ? (op.entry as any) : null;
+    const place = e ? factText(e.place) : undefined;
+    if (!place) continue;
+    const key = String(e.record_id ?? "");
+    placesByRecord.set(key, [...(placesByRecord.get(key) ?? []), place]);
+  }
+
   for (let i = 0; i < ops.length; i++) {
     const op = ops[i];
     if (op.section !== "assertions" || op.op !== "append") continue;
@@ -4595,7 +4606,9 @@ async function prepareOps(
         // a miss and a failure look the same here — both warrant the warning
         // (a silently unresolved place is part of the wrong-geocode theme).
         try {
-          sp = (await resolveStandardPlace(entry.place)) ?? null;
+          const contextPlaces = (placesByRecord.get(String(entry.record_id ?? "")) ?? [])
+            .filter((p) => p !== entry.place);
+          sp = (await resolveStandardPlace(entry.place, { contextPlaces })) ?? null;
         } catch {
           sp = null;
         }

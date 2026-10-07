@@ -6300,6 +6300,30 @@ describe("research_append (composite persist + enforcement)", () => {
     expect((await readResearch()).assertions[1].standard_place).toBe("Schuylkill, Pennsylvania, United States");
   });
 
+  it("resolves a bare place against the other places of its own record only", async () => {
+    // Genealogist ruling 2026-10-06, option C: the will's bare "Shenandoah" went
+    // to New Zealand with no context. Context is per record, never the batch.
+    await writeProject();
+    const a = (record_id: string, place: string) => ({
+      section: "assertions" as const,
+      op: "append" as const,
+      entry: { ...noId(validAssertion("x", "src_001")), record_id, place },
+    });
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        a("rec-A", "Shenandoah"),
+        a("rec-A", "Borough of Shenandoah, County of Schuylkill"),
+        a("rec-B", "Dublin, Ireland"),
+      ],
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Shenandoah", {
+      contextPlaces: ["Borough of Shenandoah, County of Schuylkill"],
+    });
+    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Dublin, Ireland", { contextPlaces: [] });
+  });
+
   it("copies the sidecar's resolved standard_place for the same place string instead of geocoding", async () => {
     await writeProject(sidecarResearch());
     await writeSidecar();

@@ -528,7 +528,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["init-project -> question-selection", ""],
   ["research-exhaustiveness -> question-selection", ""],
   ["research-plan -> question-selection", ""],
-  ["search-full-text -> question-selection", ""],
   ["timeline -> question-selection", ""],
   // locality-guide (issue #2117): every one is a bare-name boundary or
   // provenance mention ("use locality-guide", "comes from `locality-guide`"),
@@ -542,6 +541,12 @@ const PROSE_MENTIONS = new Map<string, string>([
   // `@plugin:hypothesis-tracking`.
   ["conflict-resolution -> hypothesis-tracking", ""],
   ["timeline -> hypothesis-tracking", ""],
+  // search-full-text entered agentOnly when issue #2120 deleted its skill
+  // directory. All mentions below are bare-name boundary prose ("use
+  // search-full-text", "search-full-text skill") — none spells
+  // `@plugin:search-full-text`.
+  ["record-extraction -> search-full-text", ""],
+  ["search-records -> search-full-text", ""],
   // source-evaluation entered agentOnly when issue #2796 deleted its skill. The
   // one mention is init-project's boundary prose ("Auditing the sources already
   // attached ... is source-evaluation's; name it, never audit them here"), not
@@ -742,6 +747,8 @@ describe("agent delegation framing", () => {
     "search-familysearch-wiki",
     // ARRIVED with issue #2029, a new agent that never had a skill.
     "search-hints",
+    // ARRIVED when issue #2120 deleted skills/search-full-text/.
+    "search-full-text",
     "search-images",
     "search-wikipedia",
     // ARRIVED when issue #2796 deleted skills/source-evaluation/.
