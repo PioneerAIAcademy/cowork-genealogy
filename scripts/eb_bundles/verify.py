@@ -220,6 +220,8 @@ def _check_names(tier: str, names: list[str], findings: list[str]) -> None:
     for n in names:
         if FORBIDDEN_ANYWHERE.search(n):
             findings.append(f"forbidden {n}")
+        if re.fullmatch(r"\.ebextensions/[^/]+", n) and not n.endswith(".config"):
+            findings.append(f"{n} is not a .config file; Beanstalk silently ignores it (U13, 2026-10-07)")
         elif not n.startswith("node_modules/") and FORBIDDEN_OUTSIDE_NODE_MODULES.search(n):
             findings.append(f"forbidden {n}")
         elif not n.startswith(CODE_EXEMPT) and FORBIDDEN_IN_CODE.search(n):
