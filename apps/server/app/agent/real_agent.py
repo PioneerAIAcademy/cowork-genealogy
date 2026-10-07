@@ -188,6 +188,21 @@ DEVICE_WRITE_TOOLS = ("device_commit_files",)
 # shipped security guard inert with the suite green.
 _EXFIL_GUARD_TOOLS = ("Bash",)
 
+# The credential-read arm's directory marker, the tools it inspects, and the
+# tuple the matcher unpacks. A path that has `.familysearch-mcp` as a SEGMENT
+# (not a substring) is a credential read — `~/.familysearch-mcp/tokens.json`,
+# `~/.familysearch-mcp/config.json`, etc. No `os`/`posixpath`/`re` inside the
+# predicate: the parity test's `_load` lifts only literal assignments and
+# `_`-prefixed functions with no imports, so a call to `os.path.realpath`
+# would raise `NameError` there.
+_CREDENTIAL_DIR = ".familysearch-mcp"
+_CREDENTIAL_READ_TOOLS = {
+    "Read": ("file_path",),
+    "Grep": ("path", "glob"),
+    "Glob": ("path", "pattern"),
+}
+_CREDENTIAL_READ_GUARD_TOOLS = ("Read", "Grep", "Glob")
+
 # The PreToolUse matcher, DERIVED from the deny arms above rather than restated.
 # `matcher=None` fired the hook for EVERY tool, which is how one unanswered hook
 # callback took down `ToolSearch` — a purely local call with nothing to deny
@@ -238,9 +253,9 @@ _EXFIL_GUARD_TOOLS = ("Bash",)
 _PRETOOL_MATCHER = "|".join(
     (
         # Anchored, so a search cannot bind a tool that merely CONTAINS one of
-        # these names. FOUR constants: DELEGATION_TOOLS joined with the foreground arm.
+        # these names. FIVE constants: DELEGATION_TOOLS joined with the four deny arms.
         "^("
-        + "|".join((*_FILE_WRITE_TOOLS, *_EXFIL_GUARD_TOOLS, *sorted(DELEGATION_TOOLS)))
+        + "|".join((*_FILE_WRITE_TOOLS, *_EXFIL_GUARD_TOOLS, *_CREDENTIAL_READ_GUARD_TOOLS, *sorted(DELEGATION_TOOLS)))
         + ")$",
         # Trailing `$`: the tail is compared WHOLE. Without it the pattern also
         # bound `*device_commit_files_v2` spellings, which this hook can deny
@@ -373,9 +388,34 @@ def _bash_secrets_exfil(command: str) -> bool:
     return has_secret and has_net
 
 
+def credential_read_denied(tool_name: str, tool_input) -> str | None:
+    """The tool name if a read targets the credentials directory, else None.
+
+    Inspects Read.file_path, Grep.path, Grep.glob, Glob.path, Glob.pattern.
+    Denies when any path argument, with backslashes folded to forward slashes
+    and lowercased, has a path segment equal to `.familysearch-mcp`.
+
+    Never raises: a non-string or missing argument means allow.
+    No os/posixpath/re — the parity test's _load runs no imports.
+    """
+    keys = _CREDENTIAL_READ_TOOLS.get(tool_name)
+    if keys is None:
+        return None
+    input_dict = tool_input if isinstance(tool_input, dict) else {}
+    for key in keys:
+        value = input_dict.get(key)
+        if not isinstance(value, str):
+            continue
+        segments = value.replace("\\", "/").lower().split("/")
+        if _CREDENTIAL_DIR in segments:
+            return tool_name
+    return None
+
+
 async def _pretool_hook(input_data, _tool_use_id, _ctx):
-    """PreToolUse: deny raw writes to the two project files, and block Bash
-    commands that combine credential access with network egress.
+    """PreToolUse: deny raw writes to the two project files, deny reads of the
+    credentials directory, and block Bash commands that combine credential access
+    with network egress.
 
     A hook binds under `bypassPermissions` — the unit harness has run exactly
     this combination since the per-context policy landed
@@ -404,6 +444,21 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
                     "together; to add to an existing one use research_append, "
                     "research_log_append, tree_edit or tree_correct. These validate "
                     "before persisting. Direct file writes never validate."
+                ),
+            },
+        }
+
+    cred_denied = credential_read_denied(tool_name, tool_input)
+    if cred_denied:
+        _log(f"[agent] denied {tool_name} on credentials directory")
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": (
+                    f"{tool_name} on the credentials directory is not permitted. "
+                    "FamilySearch auth goes through the login flow, and a missing "
+                    "OpenRouter key is reported by image_transcribe itself."
                 ),
             },
         }

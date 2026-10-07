@@ -333,3 +333,191 @@ def test_no_unregistered_copy_of_the_lockdown_exists():
     assert not missing, (
         f"IMPLEMENTATIONS names files that no longer define the constant: {missing}"
     )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Credential-read lockdown parity (issue #2485)
+#
+# Two copies — hosted and e2e. No plugin copy: the VM has no
+# ~/.familysearch-mcp to read, so the guard is pointless there.
+# ══════════════════════════════════════════════════════════════════════════════
+
+CREDENTIAL_READ_IMPLEMENTATIONS: list[tuple[str, Path, str]] = [
+    (
+        "hosted-sdk-hook",
+        REPO / "apps/server/app/agent/real_agent.py",
+        "credential_read_denied",
+    ),
+    (
+        "e2e-harness",
+        REPO / "eval/harness/e2e/orchestrator.py",
+        "credential_read_denied",
+    ),
+]
+
+
+def _load_credential(path: Path, func_name: str):
+    """``(predicate, _CREDENTIAL_DIR, _CREDENTIAL_READ_TOOLS)`` lifted from *path*.
+
+    Same AST extraction as ``_load``: parse, lift literal assignments and
+    ``_``-prefixed functions, exec in an empty namespace. Validates the two
+    constants the predicate closes over.
+    """
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+
+    def is_literal(node: ast.expr) -> bool:
+        try:
+            ast.literal_eval(node)
+        except (ValueError, TypeError, SyntaxError, MemoryError):
+            return False
+        return True
+
+    wanted: list[ast.stmt] = []
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and is_literal(node.value):
+            wanted.append(node)
+        elif isinstance(node, ast.FunctionDef) and (
+            node.name == func_name or node.name.startswith("_")
+        ):
+            wanted.append(node)
+
+    ns: dict = {}
+    exec(  # noqa: S102 - executing repo source under test, by design
+        compile(ast.Module(body=wanted, type_ignores=[]), str(path), "exec"), ns
+    )
+    if func_name not in ns:
+        raise AssertionError(
+            f"{path.relative_to(REPO)} has no top-level `{func_name}`. "
+            f"Update CREDENTIAL_READ_IMPLEMENTATIONS."
+        )
+    if "_CREDENTIAL_DIR" not in ns:
+        raise AssertionError(
+            f"{path.relative_to(REPO)} has no _CREDENTIAL_DIR."
+        )
+    if "_CREDENTIAL_READ_TOOLS" not in ns:
+        raise AssertionError(
+            f"{path.relative_to(REPO)} has no _CREDENTIAL_READ_TOOLS."
+        )
+    return ns[func_name], ns["_CREDENTIAL_DIR"], ns["_CREDENTIAL_READ_TOOLS"]
+
+
+CREDENTIAL_LOADED = [
+    (label, *_load_credential(path, name))
+    for label, path, name in CREDENTIAL_READ_IMPLEMENTATIONS
+]
+
+# (tool_name, tool_input, expected tool_name or None)
+CREDENTIAL_VECTORS: list[tuple[str, dict | None, str | None]] = [
+    # --- the deny set ---
+    ("Read", {"file_path": "/home/user/.familysearch-mcp/tokens.json"}, "Read"),
+    ("Read", {"file_path": "~/.familysearch-mcp/config.json"}, "Read"),
+    ("Read", {"file_path": r"C:\Users\gen\.familysearch-mcp\tokens.json"}, "Read"),
+    ("Glob", {"pattern": "/home/user/.familysearch-mcp/*"}, "Glob"),
+    ("Glob", {"path": "/home/user/.familysearch-mcp", "pattern": "*.json"}, "Glob"),
+    ("Grep", {"pattern": "token", "path": "/home/user/.familysearch-mcp"}, "Grep"),
+    ("Grep", {"pattern": "x", "glob": "**/.familysearch-mcp/**"}, "Grep"),
+    # Case insensitive
+    ("Read", {"file_path": "/home/user/.FamilySearch-MCP/tokens.json"}, "Read"),
+    # --- no opinion: not a credential path ---
+    ("Read", {"file_path": "/home/user/project/research.json"}, None),
+    ("Read", {"file_path": "/home/user/.claude/projects/abc/tool-results/x.txt"}, None),
+    ("Grep", {"pattern": "token"}, None),
+    ("Glob", {"pattern": "**/*.json"}, None),
+    # Lookalikes: segment match, not substring
+    ("Read", {"file_path": "/project/familysearch-mcp-notes.md"}, None),
+    ("Read", {"file_path": "/home/user/.familysearch-mcp-old/tokens.json"}, None),
+    # --- no opinion: not a monitored tool ---
+    ("Bash", {"command": "cat ~/.familysearch-mcp/tokens.json"}, None),
+    ("Write", {"file_path": "~/.familysearch-mcp/tokens.json"}, None),
+    # --- degenerate input: must return None, never raise ---
+    ("Read", {}, None),
+    ("Read", None, None),
+    ("Read", {"file_path": ""}, None),
+    ("Read", {"file_path": None}, None),
+    ("Read", {"file_path": 42}, None),
+    ("Grep", {"path": 42}, None),
+    ("", {"file_path": "/home/user/.familysearch-mcp/tokens.json"}, None),
+]
+
+
+@pytest.mark.parametrize(
+    "label,predicate,cred_dir,cred_tools",
+    CREDENTIAL_LOADED,
+    ids=[label for label, *_ in CREDENTIAL_LOADED],
+)
+def test_each_credential_read_implementation_was_actually_loaded(
+    label, predicate, cred_dir, cred_tools
+):
+    """Guards the loader: an empty namespace would make every test below pass."""
+    assert callable(predicate), f"{label}: predicate did not load"
+    assert cred_dir == ".familysearch-mcp", f"{label}: _CREDENTIAL_DIR is wrong"
+    assert cred_tools, f"{label}: _CREDENTIAL_READ_TOOLS is empty"
+
+
+def test_all_credential_read_implementations_agree_on_constants():
+    dirs = {label: cred_dir for label, _, cred_dir, _ in CREDENTIAL_LOADED}
+    assert len(set(dirs.values())) == 1, f"_CREDENTIAL_DIR has diverged: {dirs}"
+    tools = {
+        label: frozenset((k, v) for k, v in cred_tools.items())
+        for label, _, _, cred_tools in CREDENTIAL_LOADED
+    }
+    distinct = set(tools.values())
+    assert len(distinct) == 1, f"_CREDENTIAL_READ_TOOLS has diverged: {tools}"
+
+
+@pytest.mark.parametrize("tool_name,tool_input,expected", CREDENTIAL_VECTORS)
+def test_every_credential_read_implementation_agrees_on_this_vector(
+    tool_name, tool_input, expected
+):
+    """The parity gate: one vector, both copies, same answer."""
+    answers = {}
+    for label, predicate, _, _ in CREDENTIAL_LOADED:
+        try:
+            answers[label] = predicate(tool_name, tool_input)
+        except Exception as exc:  # noqa: BLE001 - a raise here IS the failure
+            pytest.fail(
+                f"{label} raised on ({tool_name!r}, {tool_input!r}): {exc!r}. "
+                "These predicates run in front of every tool call and must "
+                "never raise."
+            )
+    disagreeing = {k: v for k, v in answers.items() if v != expected}
+    assert not disagreeing, (
+        f"({tool_name!r}, {tool_input!r}) should give {expected!r}; "
+        f"these disagree: {disagreeing}"
+    )
+
+
+def test_no_unregistered_copy_of_credential_read_exists():
+    """A third copy that skips CREDENTIAL_READ_IMPLEMENTATIONS is drift."""
+    found = subprocess.run(
+        [
+            "git",
+            "grep",
+            "-lE",
+            "--untracked",
+            r"_CREDENTIAL_DIR[[:space:]]*[:=]",
+            "--",
+            "*.py",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+    files = {
+        (REPO / line).resolve()
+        for line in found.stdout.splitlines()
+        if line and not line.endswith(Path(__file__).name)
+    }
+    registered = {path.resolve() for _, path, _ in CREDENTIAL_READ_IMPLEMENTATIONS}
+    unregistered = sorted(str(p.relative_to(REPO)) for p in files - registered)
+    assert not unregistered, (
+        "these files define _CREDENTIAL_DIR but are not in "
+        f"CREDENTIAL_READ_IMPLEMENTATIONS: {unregistered}"
+    )
+    missing = sorted(str(p.relative_to(REPO)) for p in registered - files)
+    assert not missing, (
+        f"CREDENTIAL_READ_IMPLEMENTATIONS names files that no longer define "
+        f"the constant: {missing}"
+    )

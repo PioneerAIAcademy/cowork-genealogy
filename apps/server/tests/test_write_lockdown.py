@@ -136,6 +136,54 @@ async def test_hook_allows_bash_without_combined_secrets_and_network(command):
     assert out == {}
 
 
+# ── credential read guard ────────────────────────────────────────
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "tool_name, tool_input",
+    [
+        ("Read", {"file_path": "/home/user/.familysearch-mcp/tokens.json"}),
+        ("Read", {"file_path": "~/.familysearch-mcp/config.json"}),
+        ("Read", {"file_path": r"C:\Users\gen\.familysearch-mcp\tokens.json"}),
+        ("Glob", {"pattern": "/home/user/.familysearch-mcp/*"}),
+        ("Glob", {"path": "/home/user/.familysearch-mcp", "pattern": "*.json"}),
+        ("Grep", {"pattern": "token", "path": "/home/user/.familysearch-mcp"}),
+        ("Grep", {"pattern": "x", "glob": "**/.familysearch-mcp/**"}),
+    ],
+)
+async def test_hook_denies_credential_read(tool_name, tool_input):
+    out = await real_agent._pretool_hook(
+        {"tool_name": tool_name, "tool_input": tool_input}, None, None
+    )
+    hook = out["hookSpecificOutput"]
+    assert hook["permissionDecision"] == "deny"
+    assert "credentials directory" in hook["permissionDecisionReason"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "tool_name, tool_input",
+    [
+        ("Read", {"file_path": "/home/user/project/research.json"}),
+        ("Read", {"file_path": "/home/user/.claude/projects/abc/tool-results/x.txt"}),
+        ("Grep", {"pattern": "token"}),
+        ("Glob", {"pattern": "**/*.json"}),
+        ("Read", {"file_path": "/project/familysearch-mcp-notes.md"}),
+        ("Read", {"file_path": "/home/user/.familysearch-mcp-old/tokens.json"}),
+        ("Read", {"file_path": None}),
+        ("Read", {}),
+        ("Read", None),
+        ("Read", {"file_path": ""}),
+        ("Grep", {"path": 42}),
+    ],
+)
+async def test_hook_allows_non_credential_reads(tool_name, tool_input):
+    out = await real_agent._pretool_hook(
+        {"tool_name": tool_name, "tool_input": tool_input}, None, None
+    )
+    assert out == {}
+
+
 # ── the wiring ───────────────────────────────────────────────────
 
 def test_build_options_registers_the_pretool_hook(tmp_path, monkeypatch):
@@ -193,21 +241,20 @@ def test_the_matcher_tracks_the_deny_arm_constants(tmp_path, monkeypatch):
 
     exfil_tools = real_agent._EXFIL_GUARD_TOOLS
     assert exfil_tools, "_EXFIL_GUARD_TOOLS is empty — the Bash exfiltration arm would go inert"
-    # THREE constants, not two. The earlier form of this join omitted
-    # _EXFIL_GUARD_TOOLS, and the spec still described a two-constant derivation
-    # after the Bash arm landed.
-    #
-    # FOUR constants now. DELEGATION_TOOLS joined when the foreground arm landed
-    # (issue #2813): that arm is an ALLOW-with-rewrite rather than a deny, but it
-    # needs the matcher just as much -- an arm the matcher does not reach is inert
-    # with the suite green, which is this test's whole subject. Sorted because the
-    # source is a frozenset and an unsorted join would make the matcher differ
-    # between runs.
+
+    credential_tools = real_agent._CREDENTIAL_READ_GUARD_TOOLS
+    assert credential_tools, "_CREDENTIAL_READ_GUARD_TOOLS is empty — the credential-read arm would go inert"
+
+    # FIVE constants now. The derivation started at two, gained a third with the
+    # Bash exfiltration arm, a fourth with the foreground-delegation arm
+    # (issue #2813), and a fifth with the credential-read arm (issue #2485).
+    # Sorted because the source is a frozenset and an unsorted join would make
+    # the matcher differ between runs.
     delegation_tools = real_agent.DELEGATION_TOOLS
     assert delegation_tools, "DELEGATION_TOOLS is empty — the foreground arm would go inert"
     expected = "|".join(
         (
-            "^(" + "|".join((*file_tools, *exfil_tools, *sorted(delegation_tools))) + ")$",
+            "^(" + "|".join((*file_tools, *exfil_tools, *credential_tools, *sorted(delegation_tools))) + ")$",
             *(f".*{t}$" for t in device_tools),
         )
     )
@@ -218,7 +265,7 @@ def test_the_matcher_tracks_the_deny_arm_constants(tmp_path, monkeypatch):
     # The bare names are ANCHORED. Unanchored, the CLI's regex branch is a
     # search, so `Write` also bound `TodoWrite` — a tool this hook can deny
     # nothing about, which is the class of call the narrowing exists to spare.
-    for t in (*file_tools, *exfil_tools, *delegation_tools):
+    for t in (*file_tools, *exfil_tools, *credential_tools, *delegation_tools):
         assert re.fullmatch(real_agent._PRETOOL_MATCHER, t), f"{t} no longer binds"
         assert not re.search(real_agent._PRETOOL_MATCHER, f"Todo{t}Suffix"), (
             f"{t} is unanchored in the matcher, so it binds names that merely "
@@ -408,6 +455,10 @@ def test_the_matcher_binds_every_tool_name_the_hook_compares_against():
         "the walk no longer reaches direct_project_file_write, so it is not seeing "
         "the raw-write arms at all. Re-point it at however the hook now dispatches."
     )
+    assert "credential_read_denied" in functions, (
+        "the walk no longer reaches credential_read_denied, so it is not seeing "
+        "the credential-read arm at all."
+    )
 
     pattern = real_agent._PRETOOL_MATCHER
     unbound = sorted(
@@ -438,10 +489,13 @@ async def test_the_matcher_covers_every_tool_the_hook_can_deny():
     """
     pattern = real_agent._PRETOOL_MATCHER
     payload = {
-        "file_path": "research.json",
+        "file_path": "/home/user/.familysearch-mcp/tokens.json",
         "files": [{"path": "research.json"}],
         "command": "cat > research.json",
         "ops": [],
+        "path": "/home/user/.familysearch-mcp/",
+        "pattern": "/home/user/.familysearch-mcp/*",
+        "glob": "**/.familysearch-mcp/**",
     }
     unbound_but_denied = []
     for tool_name in (
@@ -545,7 +599,8 @@ def test_the_matcher_stays_in_the_clis_regex_branch():
 
 @pytest.mark.parametrize(
     "tool_name",
-    ["Write", "Edit", "NotebookEdit", "Bash", "device_commit_files",
+    ["Write", "Edit", "NotebookEdit", "Bash", "Read", "Grep", "Glob",
+     "device_commit_files",
      "mcp__remote-devices__device_commit_files",
      "mcp__remote-devices__Genealogy_Research__device_commit_files"],
 )

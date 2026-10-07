@@ -336,6 +336,18 @@ PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.
 # sees the bridge; the parity test holds them to one vector set.
 DEVICE_WRITE_TOOLS = ("device_commit_files",)
 
+# The credential-read arm's directory marker and the tools it inspects.
+# A path that has `.familysearch-mcp` as a SEGMENT (not a substring) is a
+# credential read. No `os`/`posixpath`/`re` inside the predicate: the parity
+# test's `_load` lifts only literal assignments and `_`-prefixed functions
+# with no imports.
+_CREDENTIAL_DIR = ".familysearch-mcp"
+_CREDENTIAL_READ_TOOLS = {
+    "Read": ("file_path",),
+    "Grep": ("path", "glob"),
+    "Glob": ("path", "pattern"),
+}
+
 # A path has no newline and is no longer than the platform allows. Both bounds
 # keep the payload walk below off file CONTENT travelling alongside the paths,
 # though only the newline bound does real work there. 4096 = Linux PATH_MAX; it
@@ -409,6 +421,30 @@ def direct_project_file_write(tool_name: str, tool_input: dict) -> str | None:
     file_path = str((tool_input or {}).get("file_path") or "")
     name = file_path.replace("\\", "/").rsplit("/", 1)[-1]
     return name if name in PROTECTED_PROJECT_FILES else None
+
+
+def credential_read_denied(tool_name: str, tool_input) -> str | None:
+    """The tool name if a read targets the credentials directory, else None.
+
+    Inspects Read.file_path, Grep.path, Grep.glob, Glob.path, Glob.pattern.
+    Denies when any path argument, with backslashes folded to forward slashes
+    and lowercased, has a path segment equal to `.familysearch-mcp`.
+
+    Never raises: a non-string or missing argument means allow.
+    No os/posixpath/re — the parity test's _load runs no imports.
+    """
+    keys = _CREDENTIAL_READ_TOOLS.get(tool_name)
+    if keys is None:
+        return None
+    input_dict = tool_input if isinstance(tool_input, dict) else {}
+    for key in keys:
+        value = input_dict.get(key)
+        if not isinstance(value, str):
+            continue
+        segments = value.replace("\\", "/").lower().split("/")
+        if _CREDENTIAL_DIR in segments:
+            return tool_name
+    return None
 
 
 # --- P2: the two opt-in filesystem denials (--deny-shell, --deny-project-reads)
@@ -2014,6 +2050,21 @@ async def _run_agent(
                     ),
                 },
             }
+
+        # Credential-read lockdown (unconditional). Deny Read/Grep/Glob on
+        # ~/.familysearch-mcp/ — the agent must not read FamilySearch tokens
+        # or the OpenRouter key. Auth goes through the login tool; a missing
+        # key is reported by image_transcribe itself. After the write lockdown
+        # and OUTSIDE the opt-in filesystem denials below, because the
+        # PR #2990 leak was a default run.
+        cred_denied = credential_read_denied(tool_name, input_data.get("tool_input") or {})
+        if cred_denied:
+            _emit(f"[blocked credential read] {tool_name}")
+            return _pretool_deny(
+                f"{tool_name} on the credentials directory is not permitted. "
+                "FamilySearch auth goes through the login flow, and a missing "
+                "OpenRouter key is reported by image_transcribe itself."
+            )
 
         # P2 — the two opt-in filesystem denials (--deny-shell,
         # --deny-project-reads). After the write lockdown, which is
