@@ -9,6 +9,7 @@
       "facts": [
         { "id": "F1", "type": "Birth", "primary": true, "date": "1814", "place": "Ireland" },
         { "id": "F2", "type": "Marriage", "date": "1849-06-09", "place": "Sherbrooke, Canada East" },
+        { "id": "F7", "type": "Residence", "date": "1851", "place": "Sherbrooke, Canada East" },
         { "id": "F3", "type": "Residence", "date": "1861", "place": "Sherbrooke, Canada East" },
         { "id": "F4", "type": "Burial", "place": "St. Patrick's Cemetery, Sherbrooke, Quebec, Canada" }
       ]

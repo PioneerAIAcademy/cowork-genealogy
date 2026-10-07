@@ -1468,7 +1468,7 @@ async function sectionC(): Promise<void> {
   } else {
     console.log(
       `  -> the target does NOT rank first in both (fuzzy rank ${fz}, exact rank ${ex}).` +
-        ` Fix the sentence in place-date-mechanics.md / search-strategy-levers.md / the spec.`
+        ` Fix the sentence in search-strategy-levers.md / record-search.ts / the spec.`
     );
   }
   console.log(
@@ -2230,7 +2230,7 @@ async function sectionG(): Promise<void> {
  *   2. Does `.exact=on` harden it? -> does that out-of-range population go to
  *      zero, and does the total narrow?
  *   3. What happens to records carrying NO indexed year? This is the claim the
- *      branch deleted from place-date-mechanics.md ("Records with no indexed
+ *      branch deleted from the since-removed place-date-mechanics.md ("Records with no indexed
  *      year are excluded") with no evidence in either direction. A record that
  *      is silent about the year cannot contradict the range, so section F's
  *      logic predicts it is KEPT; the deleted sentence predicts it is dropped.

@@ -86,12 +86,17 @@ from e2e.mcp_health import (
     tool_search_miss_streak,
     unavailable_message,
 )
-from e2e.result import E2eResult, timestamp_slug, write_result_files
+from e2e.result import (
+    E2eResult,
+    result_message_covers_last_query_only,
+    timestamp_slug,
+    write_result_files,
+)
 from e2e.stop_checker import (
     COUNTED_TERMINAL_REASONS,
     classify_hand_back,
     derive_stop_reason,
-    hand_back_outcome,
+    hand_back_key,
     project_completed,
     read_research_json,
     read_tree_json,
@@ -1551,7 +1556,7 @@ def merge_whole_run_usage(
     residual (total minus main) rather than a measurement. Appendix A3 item 4 of
     that plan is a published claim that was nothing but this gap restated.
 
-    Four rules, each returning `None` rather than a plausible-but-wrong number,
+    Five rules, each returning `None` rather than a plausible-but-wrong number,
     because a wrong figure here gets compared against real costs from clean runs:
 
     1. **No main-thread token block** -> `(None, None)`. Nothing to add to.
@@ -1566,10 +1571,17 @@ def merge_whole_run_usage(
        summing `subagents[].turns[]`: those are one entry per content *block*, each
        repeating its message's totals, so the sum overstates cache reads by ~2x.
        Unknown is unknown.
-    4. **No subagents at all** -> main's four fields, copied. A run with no
-       delegation, and a run whose capture failed (`subagent_capture_status`
-       non-ok, which yields an empty list), both land here and both are correct:
-       the merged figure equals the main-thread one and nothing errors.
+    4. **No subagents at all** -> main's four fields, copied. A one-query run
+       with no delegation, and a run whose capture failed
+       (`subagent_capture_status` non-ok, which yields an empty list), both land
+       here and both are correct: the merged figure equals the main-thread one
+       and nothing errors. A multi-query run returns at rule 5 first.
+    5. **More than one query** (`result_message_covers_last_query_only`) ->
+       `(None, None)`. The ResultMessage counted the last query only, so the main
+       block is a fraction of the run's and adding the subagents to it would give
+       a figure that looks complete and is not (#3128). Summing each query's
+       ResultMessage would recover almost none of the corpus: a query cut off by a
+       stall never emits one.
 
     The returned dict is always a fresh object carrying exactly
     `pricing.PRICED_FIELDS`, never the caller's inner block and never its extra
@@ -1579,6 +1591,8 @@ def merge_whole_run_usage(
     if not isinstance(usage, dict):
         return None, None
     if usage.get("usage_source") == "streamed_fallback":
+        return None, None
+    if result_message_covers_last_query_only(usage):
         return None, None
     inner = usage.get("usage")
     if not isinstance(inner, dict):
@@ -1930,14 +1944,17 @@ async def _run_agent(
     MAX_RESUME = 2
 
     # Streamed usage accumulator. The SDK's ResultMessage carries the
-    # authoritative duration/turns/cost, but it only arrives on a CLEAN end —
-    # a wall-clock timeout, an inactivity abort or a no-progress stall cuts the
-    # stream before it, so `usage` stayed {} and the run landed in the runlog
-    # with no turns, no duration and no tokens at all. That silently blinded
-    # every `timeout` run (9 of 9 in the corpus as of 2026-07-20) — exactly the
-    # runs whose cost and turn count you most want to see. Accumulating per
-    # AssistantMessage gives a fallback that is always available. See
-    # _fallback_usage below for what is and isn't recoverable this way.
+    # authoritative duration/turns/cost (on a run with more than one query its
+    # duration and turns cover the last query and its cost the last CLI
+    # process, see `result_message_covers_last_query_only`), but it only
+    # arrives on a CLEAN end — a wall-clock timeout, an inactivity abort or a
+    # no-progress stall cuts the stream before it, so `usage` stayed {} and the
+    # run landed in the runlog with no turns, no duration and no tokens at all.
+    # That silently blinded every `timeout` run (9 of 9 in the corpus as of
+    # 2026-07-20) — exactly the runs whose cost and turn count you most want to
+    # see. Accumulating per AssistantMessage gives a fallback that is always
+    # available. See _fallback_usage below for what is and isn't recoverable this
+    # way.
     streamed: dict[str, dict[str, int]] = {}
     # Thread tag per accumulated message, keyed the same way `streamed` is.
     # Declared HERE, beside `streamed` — not inside `_consume` or its
@@ -2358,11 +2375,12 @@ async def _run_agent(
         research = read_research_json(workspace)
 
         # Classify the hand-back BEFORE the gate, so the stop that actually ENDS a run
-        # is not invisible — it returns {} below and used to be counted nowhere.
+        # is not invisible — it returns {} below and used to be counted nowhere. The
+        # class is telemetry only; the reply below never depends on it (U17).
         # Only the agent's last words count, and only when no tool call landed after
         # them: 2 of the 71 committed narration nudges have tool calls between the last
-        # TextBlock and the nudge, and post-#2292 a hand-back narrated before a batch of
-        # calls would otherwise read as `step` on a turn that ended silently.
+        # TextBlock and the nudge, and a hand-back narrated before a batch of calls
+        # would otherwise read as `step` on a turn that ended silently.
         last_text = None
         for entry in reversed(narration):
             # `blocked` is a hook-deny message, not the agent's words — and a
@@ -2395,14 +2413,14 @@ async def _run_agent(
                 mcp_unavailable=mcp_state["unavailable"],
             )
             if reason in COUNTED_TERMINAL_REASONS:
-                key, _ = hand_back_outcome(hand_back, project_is_completed=completed_now)
+                key = hand_back_key(hand_back, project_is_completed=completed_now)
                 hand_back_classes[key] = hand_back_classes.get(key, 0) + 1
             else:
                 key = f"terminal_{reason}"
                 hand_back_classes[key] = hand_back_classes.get(key, 0) + 1
             return {}
 
-        counter_key, reply = hand_back_outcome(hand_back, project_is_completed=completed_now)
+        counter_key = hand_back_key(hand_back, project_is_completed=completed_now)
         hand_back_classes[counter_key] = hand_back_classes.get(counter_key, 0) + 1
         continue_nudges["n"] += 1
         last_nudge_activity_count["n"] = activity_count["n"]
@@ -2423,18 +2441,12 @@ async def _run_agent(
             f"{fixture.caps.max_continue_nudges}] agent yielded "
             f"({counter_key}); resuming"
         )
-        # A well-formed hand-back is the skill doing what #2292 asks of it, and in an
-        # e2e run the harness IS the user — so it gets the researcher's answer, "Yes.",
-        # not a scolding. `reply` is None for a silent stop, which keeps the existing
-        # block-reason semantics below.
-        #
-        # This wording deliberately does NOT tell the agent to emit
-        # "Next: <step>. Continue?": research/SKILL.md:53-55 calls that a failure in
-        # autonomous mode, so instructing it here would recreate the harness-vs-skill
-        # contradiction this card's sequencing exists to prevent, with the sides
-        # swapped. #2292 flips this wording when it lands the prose.
-        if reply is not None:
-            return {"decision": "block", "reason": reply}
+        # One reply for every vetoed stop, whatever its class: the worker's
+        # CONTINUE_REASON (apps/server/app/agent/continue_policy.py), verbatim. A
+        # `Next: <step>. Continue?` is the agent asking the patron, which the worker
+        # vetoes with these words too; answering it "Yes." here gave the e2e grade a
+        # Stop policy the prototype does not run (U17). This tree cannot import the
+        # constant, so `test_continue_policy_parity.py` pins the copy.
         return {
             "decision": "block",
             "reason": (
@@ -3053,12 +3065,15 @@ async def _run_agent(
             f" (was: {error})"
         )
 
-    # A ResultMessage populates `usage` with the SDK's authoritative numbers.
-    # Every abort path (wall-clock timeout, inactivity silence, no-progress
-    # stall) cuts the stream before it, leaving `usage` empty — so fall back to
-    # what the stream already told us. `usage_source` marks which one you're
-    # reading: a fallback block has exact token counts but a null cost, and
-    # must not be compared against a clean run's `total_cost_usd`.
+    # A ResultMessage populates `usage` with the SDK's authoritative numbers,
+    # except on a run with more than one query, where its tokens, turns and
+    # duration cover the last query and its cost and API time the last CLI
+    # process (`result_message_covers_last_query_only`). Every abort path (wall-clock
+    # timeout, inactivity silence, no-progress stall) cuts the stream before it,
+    # leaving `usage` empty — so fall back to what the stream already told us.
+    # `usage_source` marks which one you're reading: a fallback block has exact
+    # token counts but a null cost, and must not be compared against a clean run's
+    # `total_cost_usd`.
     result_message_seen = "num_turns" in usage
     if not result_message_seen:
         usage = _fallback_usage(

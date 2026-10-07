@@ -8,11 +8,11 @@ the web image copies only ``enqueue.py``, ``sql/``, ``web/`` and the client conf
 pass every test (the suite runs from the repo root) and fail only in the container.
 ``test_proto_auth.py`` pins that with an AST check.
 
-What is deliberately NOT here: token refresh and any refresh lock. U3 makes this tier
-the only refresher, under a per-patron database lock; the alpha's in-process per-user
-lock (issue #2887) is the thing U3 exists to replace. Until U3 the worker
-still runs every turn on the operator's token (``worker/options.py``), so the grant
-stored here is written and never read.
+The refresh is here too (U3): ``refresh_tokens`` is the one FamilySearch refresh call,
+and this tier is the grant's only refresher (``app.grant_refresh_loop`` drives it under
+``proto/grants.py``'s per-patron database locks, replacing the alpha's in-process lock of
+issue #2887). The worker reads the current grant at the start of every attempt; the
+Fernet derivation both tiers decrypt with lives in ``grants.py``, which both images copy.
 
 Settings are read from the environment at call time, so a test can set them per case:
 
@@ -26,6 +26,8 @@ Settings are read from the environment at call time, so a test can set them per 
                              value); the FamilySearch sign-in gate
   FAMILYSEARCH_WEB_ENABLED   true to offer FamilySearch sign-in (needs the client config)
   FAMILYSEARCH_CONFIG        path to the engine's familysearch.json
+  DEV_LOGIN                  true to offer dev-login (compose sets it; U11's packaging
+                             guard keeps every DEV_ variable out of the templates)
 """
 
 from __future__ import annotations
@@ -36,15 +38,22 @@ import json
 import os
 import re
 import secrets
+import sys
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from cryptography.fernet import Fernet, InvalidToken
+from cryptography.fernet import Fernet
 from itsdangerous import BadSignature, URLSafeTimedSerializer
 
 PROTO_DIR = Path(__file__).resolve().parent.parent
+# grants.py is a sibling of web/ in the repo (proto/) and in the image (/app), imported as
+# a top-level module the way app.py imports enqueue.
+if str(PROTO_DIR) not in sys.path:
+    sys.path.insert(0, str(PROTO_DIR))
+
+import grants  # noqa: E402  (the grant custody both tiers share)
 
 
 def client_config_candidates(proto_dir: Path) -> tuple[Path, ...]:
@@ -65,7 +74,7 @@ CLIENT_CONFIG_CANDIDATES = client_config_candidates(PROTO_DIR)
 # The alpha's development defaults, kept identical so ciphertext the alpha wrote under
 # its default key decrypts here too. ``preflight`` refuses both on an https PUBLIC_URL.
 DEV_SESSION_SECRET = "dev-insecure-secret-change-me"
-DEV_FS_TOKEN_ENC_KEY = "dev-insecure-fs-token-key-change-me"
+DEV_FS_TOKEN_ENC_KEY = grants.DEV_FS_TOKEN_ENC_KEY
 DEFAULT_PUBLIC_URL = "http://127.0.0.1:8085"
 
 COOKIE_NAME = "wb_session"
@@ -120,7 +129,7 @@ def session_secret() -> str:
 
 
 def fs_token_enc_key() -> str:
-    return _env("FS_TOKEN_ENC_KEY", DEV_FS_TOKEN_ENC_KEY)
+    return grants.enc_key(os.environ)
 
 
 def allowed_emails() -> set[str]:
@@ -168,10 +177,11 @@ def familysearch_configured() -> bool:
 
 
 def dev_login_enabled() -> bool:
-    """A local convenience only: offered when FamilySearch is off AND the tier is not on
-    an https host, so a deploy that forgot to configure FamilySearch cannot expose an
-    allowlist-free sign-in."""
-    return not familysearch_enabled() and not is_https()
+    """A local convenience only: offered when ``DEV_LOGIN=true`` AND FamilySearch is off
+    AND the tier is not on an https host. Opt-in, so a deploy that forgot both FamilySearch
+    and PUBLIC_URL (http by default) cannot expose an allowlist-free sign-in."""
+    dev = (os.environ.get("DEV_LOGIN") or "").strip().lower() == "true"
+    return dev and not familysearch_enabled() and not is_https()
 
 
 def preflight() -> None:
@@ -264,25 +274,19 @@ def revoked(iat: Any, sessions_revoked_at: datetime | None) -> bool:
 
 
 def _fernet() -> Fernet:
-    """The alpha's derivation (apps/server/app/crypto.py): SHA-256 of the configured
-    string, urlsafe-base64 -- so any strong random value works as the key."""
-    raw = fs_token_enc_key().encode("utf-8")
-    return Fernet(base64.urlsafe_b64encode(hashlib.sha256(raw).digest()))
+    """The alpha's derivation, now ``grants.fernet`` -- so the worker decrypts what this tier
+    writes, and a grant the alpha wrote reads here."""
+    return grants.fernet(fs_token_enc_key())
 
 
 def encrypt(value: str) -> str:
-    return _fernet().encrypt(value.encode("utf-8")).decode("ascii")
+    return grants.encrypt(value, fs_token_enc_key())
 
 
 def decrypt(value: str | None) -> str | None:
     """Soft-fails to None on a value written under another key or not ciphertext at all;
     callers treat None as "no grant". Never use an undecryptable value as plaintext."""
-    if value is None:
-        return None
-    try:
-        return _fernet().decrypt(value.encode("ascii")).decode("utf-8")
-    except (InvalidToken, UnicodeError):
-        return None
+    return grants.decrypt(value, fs_token_enc_key())
 
 
 # ── the FamilySearch round-trip ──────────────────────────────────────────────────
@@ -336,6 +340,46 @@ async def exchange_code(code: str, verifier: str) -> dict[str, Any] | None:
         return None
     body = resp.json()
     return body if isinstance(body, dict) and body.get("access_token") else None
+
+
+async def refresh_tokens(refresh_token: str, *, transport: Any = None) -> grants.RefreshResult:
+    """One ``grant_type=refresh_token`` POST, classified (``grants.classify_response``).
+    No retries inside: the refresh loop is the retry.
+
+    The whole call -- client construction included -- runs under ONE total deadline,
+    ``grants.REFRESH_HTTP_TIMEOUT_S``. httpx's own ``timeout=`` is per phase, and its read
+    timer restarts on every chunk, so a slow drip would otherwise hold the refresher's
+    locks without bound. The deadline cannot tell whether FamilySearch processed the
+    request, so it is ``ambiguous``; a refused connection never reached it (``not_sent``).
+    ``transport`` is for tests."""
+    import asyncio
+
+    import httpx
+
+    try:
+        cid = client_id()
+    except ClientConfigError:
+        return grants.RefreshResult("not_sent", reason="client_config")
+    extra: dict[str, Any] = {"transport": transport} if transport is not None else {}
+    try:
+        async with asyncio.timeout(grants.REFRESH_HTTP_TIMEOUT_S):
+            async with httpx.AsyncClient(timeout=grants.REFRESH_HTTP_TIMEOUT_S, **extra) as client:
+                resp = await client.post(
+                    FS_TOKEN_URL,
+                    data={"grant_type": "refresh_token", "refresh_token": refresh_token, "client_id": cid},
+                    headers={"Accept": "application/json"},
+                )
+                try:
+                    body = resp.json()
+                except ValueError:
+                    body = None
+    except TimeoutError:
+        return grants.RefreshResult("ambiguous", reason="deadline")
+    except (httpx.ConnectError, httpx.ConnectTimeout) as exc:
+        return grants.RefreshResult("not_sent", reason=type(exc).__name__)
+    except httpx.HTTPError as exc:
+        return grants.RefreshResult("ambiguous", reason=type(exc).__name__)
+    return grants.classify_response(resp.status_code, body)
 
 
 async def fetch_identity(access_token: str) -> dict[str, Any] | None:

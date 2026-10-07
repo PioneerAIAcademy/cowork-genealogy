@@ -22,7 +22,10 @@ topology exists to make, so a well-meaning edit cannot quietly undo one:
   state is in Postgres/S3, bound per request from X-Genealogy-Project-Id), publishes on
   loopback only, waits on postgres and minio being healthy, reads the Postgres the worker
   reads under the worker's anchor, and is waited on by proto-up but never by
-  proto-up-core (the D3 smoke must not gate on the engine image).
+  proto-up-core (the D3 smoke must not gate on the engine image);
+- U11: the base worker, and no other service in any compose file, sets DEV_PATHS=true,
+  and it names its tool server as a literal;
+- U13: the base web tier, and no other service in any compose file, sets DEV_LOGIN=true.
 
 No Docker needed: the compose files parse as YAML; the HOCON conf and the SQL are
 read as text with their comments stripped first, so a comment that *mentions*
@@ -31,13 +34,16 @@ deadLettersQueue or committed_batches is not an offence.
 
 from __future__ import annotations
 
+import ast
 import contextlib
+import importlib.util
 import json
 import os
 import re
 import shutil
 import subprocess
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 import yaml
@@ -276,6 +282,46 @@ def test_tools_and_worker_read_one_store():
     }, "the five store variables plus the anchor, and no GENEALOGY_PROJECT_ID: the id is per request"
 
 
+def test_compose_runs_the_worker_with_dev_paths_and_names_its_tool_server():
+    """U11: the worker's dev-only paths (the D3 smoke's stub turns among them) answer only
+    with DEV_PATHS=true, and TOOL_SERVER_URL has no default. Literals, so no host variable
+    at `up` time switches either."""
+    compose = _load(COMPOSE)
+    worker = _env(_service(compose, "worker"))
+    assert worker.get("DEV_PATHS") == "true"
+    url = urlparse(worker.get("TOOL_SERVER_URL", ""))
+    assert (url.scheme, url.hostname, url.path) == ("http", "tools", "/mcp"), worker.get("TOOL_SERVER_URL")
+    assert str(url.port) in {p.rsplit(":", 1)[-1] for p in _ports(_service(compose, "tools"))}
+
+
+def test_no_other_compose_service_sets_dev_paths():
+    """The web tier never reads DEV_PATHS, and no overlay changes the worker's."""
+    files = sorted(PROTO.glob("docker-compose*.yml"))
+    assert COMPOSE in files and SQSD_OVERLAY in files and len(files) >= 4
+    for path in files:
+        for name, service in (_load(path).get("services") or {}).items():
+            if (path, name) == (COMPOSE, "worker"):
+                continue
+            env = _env(service or {})
+            assert "DEV_PATHS" not in env, f"{path.name}: {name} sets DEV_PATHS"
+            if name == "worker":
+                assert "TOOL_SERVER_URL" not in env, f"{path.name} overrides the worker's TOOL_SERVER_URL"
+
+
+
+def test_compose_opts_the_web_tier_into_dev_login_and_nothing_else():
+    """U13: dev-login is opt-in (web/auth.py dev_login_enabled). Compose's web tier opts in
+    with a literal, so no host variable at `up` time switches it; no other service or
+    overlay sets it."""
+    files = sorted(PROTO.glob("docker-compose*.yml"))
+    assert COMPOSE in files and len(files) >= 4
+    assert _env(_service(_load(COMPOSE), "web")).get("DEV_LOGIN") == "true"
+    for path in files:
+        for name, service in (_load(path).get("services") or {}).items():
+            if (path, name) != (COMPOSE, "web"):
+                assert "DEV_LOGIN" not in _env(service or {}), f"{path.name}: {name} sets DEV_LOGIN"
+
+
 def _wait_services(line: str) -> list[str]:
     """The service names after `--wait` on one logical recipe line, a trailing comment stripped."""
     return line.split("#", 1)[0].split("--wait", 1)[1].split()
@@ -467,6 +513,42 @@ def test_max_nudges_reads_the_environment_and_never_silently_disables_itself(env
     would ship the stop-every-step behaviour the plan exists to remove, and it would look
     exactly like the feature not working. An explicit 0 is honoured -- proto-demo needs it."""
     assert app.max_nudges(env) == expected
+
+
+SPEND_PY = ROOT / "apps" / "server" / "app" / "agent" / "spend.py"
+
+
+def _spend_env_reads() -> dict[str, float]:
+    """Every ``_spend_env("NAME", default)`` in spend.py, by AST so a reflow still reads."""
+    tree = ast.parse(SPEND_PY.read_text(encoding="utf-8"))
+    return {
+        node.args[0].value: float(node.args[1].value)
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "_spend_env"
+        and len(node.args) == 2 and all(isinstance(a, ast.Constant) for a in node.args)
+    }
+
+
+def test_the_worker_passes_every_spend_variable_through_at_its_default():
+    """U23: the cap and the price vector reach the worker container, each overridable at
+    `up` time and defaulting to spend.py's own value -- so a compose run caps where an
+    image run would, and `SESSION_SPEND_CAP_USD=1` is how a live cap case lowers it. An
+    operator knob, so packaging must not refuse it as a dev variable."""
+    reads = _spend_env_reads()
+    assert set(reads) == {"SESSION_SPEND_CAP_USD", "PRICE_INPUT_PER_MTOK", "PRICE_CACHE_WRITE_PER_MTOK",
+                          "PRICE_CACHE_READ_PER_MTOK", "PRICE_OUTPUT_PER_MTOK"}, reads
+    worker = _env(_service(_load(COMPOSE), "worker"))
+    for name, default in reads.items():
+        assert name in worker, f"compose does not pass {name} to the worker"
+        var, value = _compose_default(worker[name])
+        assert var == name, f"{name} must be the caller's value, else a default: {worker[name]!r}"
+        assert float(value) == default, f"{name} defaults to {value}, spend.py to {default}"
+    spec = importlib.util.spec_from_file_location("eb_bundles_verify", ROOT / "scripts" / "eb_bundles" / "verify.py")
+    verify = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(verify)
+    findings: list[str] = []
+    verify._check_dev_env("worker", {name: "1" for name in reads}, findings)
+    assert findings == [], findings
 
 
 def test_elasticmq_has_no_redrive_policy():
@@ -719,8 +801,8 @@ def _statements(path: Path) -> list[str]:
 
 
 def test_008_is_idempotent_and_owner_is_nullable():
-    """Every start re-applies sql/*.sql (web tier, worker, initdb), so 008 must be a no-op
-    the second time. And projects.owner_id must stay NULLABLE: the engine creates projects
+    """An unledgered database re-runs every sql/*.sql once (migrate.py's baseline, U9), so
+    008 must be a no-op the second time. And projects.owner_id must stay NULLABLE: the engine creates projects
     with the id alone (PgS3ProjectStore.touchProject), so NOT NULL fails every engine
     write, and nothing but a real engine write on the compose stack would show it."""
     statements = _statements(SQL_DIR / "008_auth_owner.sql")
@@ -734,6 +816,88 @@ def test_008_is_idempotent_and_owner_is_nullable():
     [tokens] = [s for s in statements if re.search(r"CREATE TABLE IF NOT EXISTS familysearch_tokens\b", s, re.I)]
     assert re.search(r"\buser_id text PRIMARY KEY\b", tokens), "one grant row per patron: U3 locks it"
     assert re.search(r"\bgranted_at timestamptz NOT NULL\b", tokens), "the sign-in time"
+
+
+# U9: a shipped file runs once and is never edited, so a later file may only add. Read off the
+# comment-stripped statements, dollar-quoted bodies included (an EXECUTE string is still DDL).
+_CONTRACTING = (
+    ("DROP", re.compile(r"\bDROP\b", re.I)),
+    ("RENAME", re.compile(r"\bRENAME\b", re.I)),
+    ("SET NOT NULL", re.compile(r"\bSET\s+NOT\s+NULL\b", re.I)),
+    ("ALTER COLUMN ... TYPE", re.compile(r"\bALTER\s+(?:COLUMN\s+)?\"?\w+\"?\s+(?:SET\s+DATA\s+)?TYPE\b", re.I)),
+)
+
+
+def _contracting(statements: list[str]) -> list[tuple[str, str]]:
+    return [(label, stmt) for stmt in statements for label, rx in _CONTRACTING if rx.search(stmt)]
+
+
+def test_migrations_are_expand_only():
+    """migrate.py runs each file once, before the new code ships, while the old code is still
+    serving: a file that drops, renames, sets NOT NULL or retypes a column breaks the build
+    still running. Those four shapes only; other tightenings (a new NOT NULL column with no
+    default, a constraint) are the author's to see. Contraction needs its own design (two
+    deploys), not a 010."""
+    files = sorted(SQL_DIR.glob("*.sql"))
+    assert len(files) >= 9, files
+    offences = [(f.name, label, stmt) for f in files for label, stmt in _contracting(_statements(f))]
+    assert not offences, f"not expand-only: {offences}"
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("ALTER TABLE turns DROP COLUMN nudges;", ["DROP"]),
+    ("DROP INDEX IF EXISTS turns_open_project_idx;", ["DROP"]),
+    ("ALTER TABLE turns RENAME TO turn;", ["RENAME"]),
+    ("ALTER TABLE turns RENAME COLUMN nudges TO n;", ["RENAME"]),
+    ("ALTER TABLE projects ALTER COLUMN owner_id SET NOT NULL;", ["SET NOT NULL"]),
+    ("ALTER TABLE turns ALTER COLUMN nudges TYPE bigint;", ["ALTER COLUMN ... TYPE"]),
+    ("ALTER TABLE turns ALTER nudges SET DATA TYPE bigint;", ["ALTER COLUMN ... TYPE"]),
+    ("DO $$ BEGIN\n  EXECUTE 'ALTER TABLE x DROP COLUMN y';\nEND $$;", ["DROP"]),
+    ("-- DROP the old shape, RENAME it, SET NOT NULL\nALTER TABLE turns ADD COLUMN IF NOT EXISTS u9 int;", []),
+    ("ALTER TABLE turns ADD COLUMN IF NOT EXISTS dropped_at timestamptz NOT NULL DEFAULT now();", []),
+    ("CREATE TYPE mood AS ENUM ('a'); ALTER TYPE mood ADD VALUE IF NOT EXISTS 'b';", []),
+])
+def test_the_expand_only_reader_sees_each_shape(tmp_path, text, expected):
+    sql = tmp_path / "010_x.sql"
+    sql.write_text(text, encoding="utf-8")
+    assert [label for label, _ in _contracting(_statements(sql))] == expected
+
+
+def _depends_on(service: dict) -> dict[str, dict]:
+    """Compose accepts `depends_on` as a list (each `service_started`) or a mapping."""
+    raw = service.get("depends_on") or {}
+    if isinstance(raw, list):
+        return {str(name): {"condition": "service_started"} for name in raw}
+    return {str(k): dict(v or {}) for k, v in raw.items()}
+
+
+def test_migrate_is_the_only_schema_applier():
+    """U9: the `migrate` one-shot is the stack's one schema applier and nothing that runs DDL
+    at start remains. Postgres's initdb would be a second applier with no ledger, and a tier
+    that started before the one-shot exited would report `schema: unmigrated` until it did.
+    MIGRATE_PG_DSN is the owner's DSN: on any other service it is a DDL credential nothing
+    there needs."""
+    files = sorted(PROTO.glob("docker-compose*.yml"))
+    assert COMPOSE in files and SQSD_OVERLAY in files, files
+    for path in files:
+        for name, service in (_load(path).get("services") or {}).items():
+            initdb = [v for v in _volumes(service) if ":/docker-entrypoint-initdb.d" in v]
+            assert not initdb, f"{path.name}: {name} mounts {initdb}; migrate.py is the one applier"
+            if name != "migrate" or path != COMPOSE:
+                assert "MIGRATE_PG_DSN" not in _env(service), f"{path.name}: {name} carries MIGRATE_PG_DSN"
+    compose = _load(COMPOSE)
+    migrate, worker = _service(compose, "migrate"), _service(compose, "worker")
+    assert migrate.get("restart") == "no", "a one-shot: a restart would re-run it on every exit"
+    assert migrate.get("command") == ["python3", "proto/migrate.py"], migrate.get("command")
+    assert migrate.get("build") == worker.get("build") and migrate.get("build"), \
+        "migrate builds the worker's image (migrate.py, sql/ and psycopg at WORKDIR /opt/genealogy/server)"
+    assert "image" not in migrate and "image" not in worker, \
+        "an `image:` on migrate alone is pulled by an `up` naming tools; one shared by both fails the parallel build"
+    assert _env(migrate).get("MIGRATE_PG_DSN", "").startswith("postgresql://"), _env(migrate)
+    assert _depends_on(migrate).get("postgres", {}).get("condition") == "service_healthy"
+    for name in ("worker", "web", "tools"):
+        condition = _depends_on(_service(compose, name)).get("migrate", {}).get("condition")
+        assert condition == "service_completed_successfully", f"{name} must wait for the migration, not {condition}"
 
 
 REQUIREMENTS = {"web": PROTO / "web" / "requirements.txt", "worker": PROTO / "worker" / "requirements.txt"}
@@ -851,6 +1015,8 @@ def test_committed_requirements_are_the_uv_export(tier):
         ("worker", "claude-agent-sdk", "0.2.128"),
         ("worker", "psycopg-binary", None),
         ("worker", "botocore", None),
+        # U3: grants.py decrypts what web/auth.py encrypts, at the one locked version.
+        ("worker", "cryptography", None),
     ],
 )
 def test_requirements_carry_what_the_tiers_import_at_the_locked_version(tier, package, pinned):
@@ -913,72 +1079,189 @@ def test_the_grading_recipes_run_the_harness_module_in_the_harness_venv():
     assert "cwd=HARNESS_DIR" in source
 
 
-def test_proto_test_runs_the_d18_tests():
-    assert any(
-        "tests/test_proto_d18.py" in line for line in _recipe("proto-test")
-    ), "make proto-test must run the D18 tests, or they run nowhere"
+def test_proto_test_runs_every_test_proto_file():
+    """The shared guard: every tests/test_proto_*.py is in make proto-test's list, or it runs
+    nowhere a prototype change is checked (the real-Postgres one skips there without a DSN;
+    proto-grants-test and CI run it for real)."""
+    body = "\n".join(_recipe("proto-test"))
+    files = sorted(p.name for p in (PROTO.parent / "tests").glob("test_proto_*.py"))
+    assert files and "test_proto_grants_pg.py" in files
+    missing = [name for name in files if not re.search(rf"\btests/{re.escape(name)}\b", body)]
+    assert not missing, f"make proto-test does not run {missing}"
 
 
-def test_the_worker_can_actually_reach_a_familysearch_token():
-    """`bearer_token()` has three sources -- the message, FS_ACCESS_TOKEN_FILE, then the
-    worker env's FS_ACCESS_TOKEN -- and compose supplied only the middle one. That one is
-    a host file at mode 600 owned by whoever ran make, bind-mounted into a container that
-    runs as uid 1001, so the read fails with EPERM whenever those uids differ. They ALWAYS
-    differ under rootless docker, where the container uid is mapped through the caller's
-    subuid range.
-
-    `bearer_token` catches the OSError and returns "" -- and an empty token makes
-    `getValidToken` throw HOSTED_REAUTH_INSTRUCTION, whose text is "Your FamilySearch
-    session has expired". So a perfectly valid token is reported as an expired session,
-    and every FamilySearch call in the run fails with a message that sends you to
-    re-authenticate instead of to the mount. Three billed `proto-demo-auto` runs were lost
-    to it; all three tokens were still live when tested afterwards.
-
-    Both paths must be present: the file is what `make proto-token` refreshes under a
-    running worker, and the env var is what works when the uids do not line up."""
-    compose = (PROTO / "docker-compose.yml").read_text(encoding="utf-8")
-    # A real service boundary: `^  <name>:` at exactly two spaces. Splitting on "\n  "
-    # matches every 4-space key inside the block too and yields an empty string, which
-    # makes every assertion below vacuously... fail, but for the wrong reason.
-    blocks = re.split(r"^  (?=\w[\w-]*:)", compose, flags=re.M)
-    worker = next(b for b in blocks if b.startswith("worker:"))
-    assert "FS_ACCESS_TOKEN_FILE:" in worker, "the per-turn refresh path"
-    assert "FS_ACCESS_TOKEN:" in worker, (
-        "the worker service does not pass FS_ACCESS_TOKEN, so bearer_token's documented "
-        "env fallback is always empty and a failed file read has nowhere to fall back to"
-    )
-    # And it must be a passthrough from the caller's environment, not a literal.
-    line = next(ln for ln in worker.splitlines() if ln.strip().startswith("FS_ACCESS_TOKEN:"))
-    assert "${FS_ACCESS_TOKEN" in line, f"must inherit the caller's token, not hardcode one: {line.strip()!r}"
+def test_no_recipe_mints_or_mounts_an_operator_token():
+    """U3: the worker bears the patron's grant, so nothing mints, refreshes or mounts an
+    operator token. `make proto-grant` stores the dev patron's grant instead."""
+    text = MAKEFILE.read_text(encoding="utf-8")
+    assert not re.search(r"^proto-token\s*:", text, re.M), "the operator-token recipe is gone"
+    for target in ("proto-up", "proto-up-core", "proto-turn"):
+        assert not any(".fs-token" in line or "fs-token.ts" in line for line in _recipe(target)), target
+    grant = _recipe("proto-grant")
+    assert any("proto/grant.py" in line and "--pg-dsn" in line for line in grant), grant
+    assert (PROTO / "grant.py").is_file()
+    assert not (REPO / "packages" / "engine" / "mcp-server" / "dev" / "fs-token.ts").exists()
 
 
-def test_bearer_token_falls_back_when_the_file_cannot_be_read(tmp_path):
-    """The behaviour the compose entry above depends on: an unreadable file must fall
-    through to the env var rather than returning empty. A permission error is an OSError,
-    which is what the except clause has to cover -- FileNotFoundError alone would not."""
-    from proto.worker.options import bearer_token
+# ── U3: grants ───────────────────────────────────────────────────────────────────
 
-    # A PERMISSION error, not a missing file. That distinction is the whole test: the
-    # production failure is EPERM on a mode-600 mount the container's uid cannot read,
-    # and `except FileNotFoundError` would sail straight past it while still passing a
-    # test written against a nonexistent path. Verified by break test: narrowing the
-    # except clause to FileNotFoundError leaves a missing-path version of this green.
-    unreadable = tmp_path / "fs-token"
-    unreadable.write_text("p0-in-the-file", encoding="utf-8")
-    unreadable.chmod(0o000)
-    if os.access(unreadable, os.R_OK):  # running as root: the mode is not enforced
-        pytest.skip("root can read a 0000 file, so EPERM cannot be reproduced here")
 
-    env = {"FS_ACCESS_TOKEN_FILE": str(unreadable), "FS_ACCESS_TOKEN": "p0-fallback"}
-    assert bearer_token(env, None) == "p0-fallback", (
-        "an unreadable token file must fall through to the env var; this is exactly the "
-        "path that was returning empty and reporting a live token as an expired session"
-    )
-    # The message still wins over both.
-    assert bearer_token(env, "p0-from-message") == "p0-from-message"
-    # And with neither, empty -- the state that produced the misleading "expired" error.
-    assert bearer_token({"FS_ACCESS_TOKEN_FILE": str(unreadable)}, None) == ""
-    # A missing file behaves the same way, but on its own it does NOT prove the clause is
-    # wide enough -- see the comment above.
-    assert bearer_token({"FS_ACCESS_TOKEN_FILE": str(tmp_path / "gone"),
-                         "FS_ACCESS_TOKEN": "p0-fallback"}, None) == "p0-fallback"
+def test_009_is_idempotent_and_backfills_from_granted_at():
+    """An unledgered database re-runs every sql/*.sql once (migrate.py's baseline, U9), so
+    each statement must be a no-op the second time:
+    an added column, an index, or a backfill guarded on the column still being NULL. The
+    backfill is exact because before 009 only a sign-in wrote a row."""
+    statements = _statements(SQL_DIR / "009_grant_session.sql")
+    assert statements, "009_grant_session.sql has no statements"
+    for stmt in statements:
+        assert re.match(r"(ALTER TABLE familysearch_tokens ADD COLUMN IF NOT EXISTS \w+ \w+$"
+                        r"|CREATE INDEX IF NOT EXISTS \w+ ON \w+ "
+                        r"|UPDATE \w+ SET (\w+) = \w+ WHERE \2 IS NULL$)", stmt), f"not idempotent: {stmt}"
+    added = {re.match(r"ALTER TABLE \w+ ADD COLUMN IF NOT EXISTS (\w+)", s).group(1)
+             for s in statements if s.startswith("ALTER")}
+    assert added == {"session_started_at", "refresh_started_at", "refresh_refused_at", "refresh_refused_reason"}
+    assert "UPDATE familysearch_tokens SET session_started_at = granted_at WHERE session_started_at IS NULL" in statements
+    assert any("ON turns (project_id) WHERE completed_at IS NULL" in s for s in statements), \
+        "the refresher's open-turn EXISTS needs its index"
+
+
+def _proto_imports(source: str, *, packaged: bool) -> set[str]:
+    """The proto/<name>.py modules a source imports. ``packaged`` (the worker's layout):
+    ``from proto import X``, ``from proto.X import ...`` and ``import proto.X``; otherwise
+    (the web image's flat /app): ``import X`` and ``from X import ...``."""
+    names: set[str] = set()
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                parts = alias.name.split(".")
+                if packaged and parts[0] == "proto" and len(parts) > 1:
+                    names.add(parts[1])
+                elif not packaged:
+                    names.add(parts[0])
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            parts = node.module.split(".")
+            if packaged and parts[0] == "proto":
+                names.update(parts[1:2] or [a.name for a in node.names])
+            elif not packaged:
+                names.add(parts[0])
+    return {n for n in names if (PROTO / f"{n}.py").is_file()}
+
+
+def _copied(dockerfile: Path) -> set[str]:
+    """The repo paths a Dockerfile COPYs (continuation lines joined, flags skipped)."""
+    text = dockerfile.read_text(encoding="utf-8").replace("\\\n", " ")
+    sources: set[str] = set()
+    for line in text.splitlines():
+        parts = line.split("#", 1)[0].split()
+        if parts and parts[0] == "COPY":
+            args = [a for a in parts[1:] if not a.startswith("--")]
+            sources.update(a.rstrip("/") for a in args[:-1])
+    return sources
+
+
+def _bundle_sources(tier: str) -> set[str]:
+    """The repo paths the Beanstalk bundle builder ships for ``tier`` (scripts/eb_bundles)."""
+    import importlib.util
+    import sys
+
+    scripts = REPO / "scripts" / "eb_bundles"
+    sys.path.insert(0, str(scripts))  # build.py does `import layout`
+    try:
+        spec = importlib.util.spec_from_file_location("eb_bundles_build_for_proto_config", scripts / "build.py")
+        build = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = build  # the dataclass decorator looks its module up
+        spec.loader.exec_module(build)
+    finally:
+        sys.path.remove(str(scripts))
+    return {rule.src for rule in build.RULES[tier]}
+
+
+def test_images_and_bundles_carry_every_proto_module_they_import():
+    """Both images and both Beanstalk bundles copy proto/ SELECTIVELY, so a module not
+    shipped is simply not there -- and every test passes, because the suite has the whole
+    tree on its path. The worker's held-message release swallowed exactly that ImportError
+    once (enqueue.py), without grants.py neither tier can read a grant at all, and without
+    migrate.py (U9) neither can read the ledger it reports `schema` from."""
+    for image, packaged in (("web", False), ("worker", True)):
+        needed: set[str] = set()
+        for source in sorted((PROTO / image).glob("*.py")):
+            needed |= _proto_imports(source.read_text(encoding="utf-8"), packaged=packaged)
+        assert {"enqueue", "grants", "migrate"} <= needed, f"{image}: the guard no longer sees the imports ({needed})"
+        for kind, shipped in (("image", _copied(PROTO / image / "Dockerfile")), ("bundle", _bundle_sources(image))):
+            missing = sorted(n for n in needed if f"apps/server/proto/{n}.py" not in shipped)
+            assert not missing, f"the {image} {kind} imports proto/{missing} but never ships it"
+
+
+@pytest.mark.parametrize("source, packaged, expected", [
+    ("import grants", False, {"grants"}),
+    ("def f():\n    import enqueue\n", False, {"enqueue"}),
+    ("from grants import Ready", False, {"grants"}),
+    ("import os, json", False, set()),
+    ("from proto import grants, enqueue", True, {"grants", "enqueue"}),
+    ("from proto.grants import Ready", True, {"grants"}),
+    ("import proto.grants as g", True, {"grants"}),
+    ("from proto.worker.options import x", True, set()),
+    ("import grants", True, set()),
+])
+def test_the_image_import_reader_sees_each_shape(source, packaged, expected):
+    assert _proto_imports(source, packaged=packaged) == expected
+
+
+def test_the_copy_reader_joins_a_reflowed_copy(tmp_path):
+    dockerfile = tmp_path / "Dockerfile"
+    dockerfile.write_text("FROM x\nCOPY --chown=1:1 \\\n    apps/server/proto/grants.py \\\n    /opt/x/\n"
+                          "# COPY apps/server/proto/enqueue.py /opt/\n", encoding="utf-8")
+    assert _copied(dockerfile) == {"apps/server/proto/grants.py"}
+
+
+def _shim_kill_default() -> bool:
+    m = re.search(r'^KILL_ON_READ_TIMEOUT = _env_bool\("KILL_ON_READ_TIMEOUT", (True|False)\)',
+                  (PROTO / "shim" / "shim.py").read_text(encoding="utf-8"), re.M)
+    assert m, "shim.py's KILL_ON_READ_TIMEOUT default moved"
+    return m.group(1) == "True"
+
+
+def _profiles() -> list[tuple[str, dict[str, str], dict[str, str], dict[str, str]]]:
+    """(name, worker env, shim env, the overlay's own worker env) per compose profile."""
+    base = _load(COMPOSE)
+    out = [("base", _env(_service(base, "worker")), _env(_service(base, "shim")), {})]
+    overlay = _load(SQSD_OVERLAY)["services"]
+    over_worker = _env(overlay.get("worker") or {})
+    out.append(("base+sqsd", {**out[0][1], **over_worker}, {**out[0][2], **_env(overlay.get("shim") or {})},
+                over_worker))
+    return out
+
+
+def test_grant_start_age_leaves_an_attempt_of_session_life():
+    """D4: where the shim KILLS an attempt at its read timeout, an attempt that starts at the
+    maximum session age still ends 600 s before the session's guaranteed 8 h. Where it does
+    not (docker-compose.sqsd.yml: sqsd abandons, never kills), nothing bounds an attempt
+    until U26, so no start age is a guarantee there and the profile must not set one."""
+    for name, worker_env, shim_env, own in _profiles():
+        raw_kill = shim_env.get("KILL_ON_READ_TIMEOUT")
+        kills = _shim_kill_default() if raw_kill is None else \
+            _compose_default(raw_kill)[1].strip().lower() in {"1", "true", "yes", "on"}
+        if kills:
+            start_age = float(_compose_default(worker_env["FS_GRANT_MAX_START_AGE_S"])[1])
+            read_timeout = float(_compose_default(shim_env["READ_TIMEOUT_S"])[1])
+            assert start_age + read_timeout + 600 <= 8 * 3600, (
+                f"{name}: an attempt starting at age {start_age} s can run {read_timeout} s, past the "
+                "session's guaranteed 8 h")
+        else:
+            assert "FS_GRANT_MAX_START_AGE_S" not in own, (
+                f"{name}: the shim never kills an attempt here, so a start age would read as a guarantee "
+                "nothing enforces (U26)")
+    from proto import grants
+
+    base = _compose_default(_env(_service(_load(COMPOSE), "worker"))["FS_GRANT_MAX_START_AGE_S"])[1]
+    assert float(base) == grants.DEFAULT_MAX_START_AGE_S, "one value everywhere: compose and the worker's default"
+
+
+def test_grant_wait_is_below_the_shim_ceiling():
+    """The wait for the refresher happens inside the POST, so it must end before the shim's
+    1,800 s kill turns it into a redelivery that waits again."""
+    from proto import grants
+
+    wait = float(_compose_default(_env(_service(_load(COMPOSE), "worker"))["FS_GRANT_WAIT_S"])[1])
+    ceiling = float(_compose_default(_env(_service(_load(COMPOSE), "shim"))["READ_TIMEOUT_S"])[1])
+    assert wait == grants.DEFAULT_WAIT_S < ceiling == STEP_CEILING_S

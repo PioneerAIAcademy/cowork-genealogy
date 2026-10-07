@@ -28,6 +28,9 @@
     "wiki-read-any",
     "wiki-search-any"
   ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "judge_context": [
     "Should REQUIRE the two surnames as a co-occurrence — `+Naveda +Somarriba` (both terms required, in any position). This is the correct decomposition of the compound surname 'Naveda Somarriba' for finding the parents, because in the FATHER's own records he is named with the paternal surname (Naveda) and the mother with the maternal surname (Somarriba), so those two words sit on different people and are not adjacent. Do NOT penalise a run for saying the surnames can appear adjacent — they can: a married woman is routinely written with her own surnames plus her husband's (\"María Somarriba de Naveda\"). The co-occurrence is still the right query because it matches that case too, and the phrase does not match the non-adjacent one.",
     "Should NOT search the adjacent phrase `+\"Naveda Somarriba\"` as the parent-finding query. The phrase (even with one-word slop) matches only where the child's own compound name is written out contiguously — it returns the Mexican godfather record, which names no parents, and misses the Limpias parish acts entirely. A run that relies on the phrase form and concludes the parents are unfindable has made the exact mistake this test targets.",
