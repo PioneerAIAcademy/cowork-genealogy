@@ -396,8 +396,9 @@ const SRC_ROOT = resolve(__dirname, "../../src");
 function localImports(absPath: string): string[] {
   const src = readFileSync(absPath, "utf-8");
   const out: string[] = [];
-  // Match `from "..."` and `from '...'` — static imports only.
-  for (const m of src.matchAll(/\bfrom\s+["'](\.[^"']+)["']/g)) {
+  // Match value imports/re-exports only — skip `import type` and `export type`
+  // which are erased at compile time and create no runtime dependency.
+  for (const m of src.matchAll(/^(?!.*\b(?:import|export)\s+type\b).*\bfrom\s+["'](\.[^"']+)["']/gm)) {
     const specifier = m[1].replace(/\.js$/, "");
     const resolved = resolve(dirname(absPath), specifier);
     // Stay within src/.
@@ -441,18 +442,18 @@ function buildToolFileMap(): Map<string, string> {
     }
   }
   const toolToFile = new Map<string, string>();
-  const uniqueFiles = new Set(importMap.values());
+  // Cache each file's content once rather than re-reading per schema.
+  const fileContents = new Map<string, string>();
+  for (const file of new Set(importMap.values())) {
+    try { fileContents.set(file, readFileSync(file, "utf-8")); } catch { /* skip */ }
+  }
   for (const schema of allToolSchemas) {
     const name = (schema as any).name as string;
-    for (const file of uniqueFiles) {
-      try {
-        const content = readFileSync(file, "utf-8");
-        // Look for `name: "tool_name"` in the file.
-        if (content.includes(`name: "${name}"`)) {
-          toolToFile.set(name, file);
-          break;
-        }
-      } catch { /* file doesn't exist */ }
+    for (const [file, content] of fileContents) {
+      if (content.includes(`name: "${name}"`)) {
+        toolToFile.set(name, file);
+        break;
+      }
     }
   }
   return toolToFile;
