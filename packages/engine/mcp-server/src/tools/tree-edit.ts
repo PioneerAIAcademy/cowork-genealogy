@@ -374,10 +374,19 @@ async function applyOperation(
 
   // Resolve a fact's standard_place in place when it has a place and no explicit
   // standard_place; best-effort — never fail the edit on a resolution miss.
-  const maybeResolvePlace = async (fact: SimplifiedFact, explicitStandardPlace: boolean): Promise<void> => {
+  // `siblings` are the other facts on the same holder: a bare place
+  // ("Shenandoah") is resolved against their places, not the whole world.
+  const maybeResolvePlace = async (
+    fact: SimplifiedFact,
+    explicitStandardPlace: boolean,
+    siblings: SimplifiedFact[] = [],
+  ): Promise<void> => {
     if (wantResolve && fact.place && !explicitStandardPlace) {
+      const contextPlaces = siblings
+        .map((f) => f.place)
+        .filter((p): p is string => typeof p === "string" && p !== fact.place);
       try {
-        fact.standard_place = (await resolveStandardPlace(fact.place)) ?? undefined;
+        fact.standard_place = (await resolveStandardPlace(fact.place, { contextPlaces })) ?? undefined;
         if (fact.standard_place === undefined) delete fact.standard_place;
       } catch {
         delete fact.standard_place;
@@ -413,7 +422,7 @@ async function applyOperation(
       const fact: SimplifiedFact = { ...input.fact, id: nextId(tree, "F") };
       stripClearedPrimary(fact);
       assertNodeHasRef(fact, "the added fact", "add_fact");
-      await maybeResolvePlace(fact, input.fact.standard_place !== undefined);
+      await maybeResolvePlace(fact, input.fact.standard_place !== undefined, holder.facts ?? []);
       if (fact.primary === true) clearPrimaryOfType(holder, fact.type, fact.id);
       holder.facts = [...(holder.facts ?? []), fact];
       assignedIds.fact = fact.id;
@@ -463,7 +472,9 @@ async function applyOperation(
             "whole fact (tree_correct remove) instead of nulling its ref.",
         );
       }
-      if (input.fact.place !== undefined) await maybeResolvePlace(existing, input.fact.standard_place !== undefined);
+      if (input.fact.place !== undefined) {
+        await maybeResolvePlace(existing, input.fact.standard_place !== undefined, holder.facts ?? []);
+      }
       // A human CHANGING any of the fact's own string fields detaches it from
       // the assertion it was minted from (#2472) — the same reading the spec
       // already applies to `add_fact`: a researcher's own conclusion carries no
@@ -582,7 +593,7 @@ async function applyOperation(
           stripClearedPrimary(f);
           assertNodeHasRef(f, "each inline fact", "add_person");
           f.id = nextId(tree, "F");
-          await maybeResolvePlace(f, f.standard_place !== undefined);
+          await maybeResolvePlace(f, f.standard_place !== undefined, person.facts);
           factIds.push(f.id);
         }
         assignedIds.facts = factIds;
@@ -666,7 +677,7 @@ async function applyOperation(
           }
           assertNodeHasRef(f, "each Couple fact", "add_relationship");
           f.id = nextId(tree, "F");
-          await maybeResolvePlace(f, f.standard_place !== undefined);
+          await maybeResolvePlace(f, f.standard_place !== undefined, rel.facts);
           factIds.push(f.id);
         }
         assignedIds.facts = factIds;

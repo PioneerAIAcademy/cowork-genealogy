@@ -36,7 +36,7 @@ is `eval/JUNIOR-WALKTHROUGH.md` (first PR) and `eval/SENIOR-WALKTHROUGH.md`
 | Give an agent a new tool · Restrain something · Change `PROTECTED_PROJECT_FILES` · Add a hook | [§5](#if-youre-asked-to-2) |
 | Add a field to `research.json` · Add an enum value · Add a tree field | [§6](#if-youre-asked-to-3) |
 | Add a viewer feature · Change what the sandbox runs · Add a control-plane endpoint | [§7](#if-youre-asked-to-4) |
-| Change hosted agent config | [§8](#if-youre-asked-to-5) |
+| Change hosted agent config · Deploy or rehearse the prototype on Beanstalk | [§8](#if-youre-asked-to-5) |
 | Verify a change · Debug a failing e2e run · Add a unit eval test · Write a spec · **Write a rule that behaves differently when no user is present** | [§9](#if-youre-asked-to-6) |
 
 > **Before you trust a green CI run, read [§9.4 — What nothing checks](#94-what-nothing-checks).**
@@ -221,12 +221,12 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **11** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **22** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **10** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **23** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The twenty-two agents are `gps-mentor`, `record-extractor`, `image-reader`,
+The twenty-three agents are `gps-mentor`, `record-extractor`, `image-reader`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
-`search-images`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
+`search-full-text`, `search-images`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
 `search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
 `hypothesis-tracking`, `locality-guide`, `historical-context`, `project-status`,
 `source-evaluation` and `survey-surname`.
@@ -353,7 +353,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-8 of the 11 skills carry a `references/` folder, loaded on demand, in-session,
+7 of the 10 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -670,8 +670,9 @@ Architecturally:
   return `noProjectResult()` (`"read"` for a read or a preview), so a user who
   is not in a research project gets an answer rather than `research.json not
   found in projectPath`. Then add the tool to `CALLS` in
-  `tests/tools/no-project.test.ts` — that list is hand-maintained and nothing
-  derives it, so a tool left out is uncovered. Read and write through the
+  `tests/tools/no-project.test.ts` — that list is backed by a derivation test
+  that traces each tool's imports transitively and flags any project-reading tool
+  absent from both `CALLS` and `OPTIONAL_PROJECT_TOOLS`. Read and write through the
   `project-io` / `results-staging` / `image-store` helpers or `getProjectStore()`
   (`src/store/`), with project-relative refs — never `fs` and never an absolute
   path. A tool that imports `fs` fails `tests/packaging/no-fs-outside-store.test.ts`,
@@ -1486,8 +1487,8 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-All 11 skills carry a `**Narration:**` line (`init-project` spells it
-`**Narration**`, without the colon) — 10 of them as the first line of the body,
+All 10 skills carry a `**Narration:**` line (`init-project` spells it
+`**Narration**`, without the colon) — 9 of them as the first line of the body,
 the other one further down — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. `init-project` writes the profile from two
@@ -1849,6 +1850,37 @@ a missing key fails loudly here while the same test still skips under a plain
 *binds*, run `make probe-agent-binding`; for whether the plugin's `PreToolUse`
 hook binds, `make hook-smoke`. `agent-smoke` reads the init handshake, which
 carries no hook state at all, so it cannot see a hook either way.
+
+**Deploy or rehearse the prototype on Beanstalk.** Use
+`apps/server/proto/eb-rehearsal/rehearse.py`. Its README is the runbook, and it implements
+the deployment guide in `docs/plan/familysearch-handoff.md` (section 3) for one AWS
+account. `plan --dry-run` prints every command and calls nothing. The sites a change
+touches:
+
+- **A tier variable.** Pass it through `check_options`. The dev-only names come from
+  `scripts/eb_bundles/layout.py`. The environment-value set and the secret-name pattern are
+  copies of `apps/server/tests/test_proto_bundles.py`'s, and a test pins them equal. A
+  secret goes in `TIER_SECRETS` as an `environmentsecrets` ARN, never as a value.
+- **sqsd values.** `up --phase worker` sets both namespaces of
+  `apps/server/proto/eb-worker/.ebextensions/01-sqsd.config` at API level, and API-level
+  settings override the bundle's. A re-size in that file reaches a running worker only on
+  the next `up --phase worker`. `status` reports drift against the work dir's option-settings
+  file, not against the template.
+- **A probe case.** Add it to the closed `CASES` table. A case that touches `MaxRetries`,
+  `VisibilityTimeout` or `RetentionPeriod` sets its `SQSD_*` mirror too, and a test fails
+  otherwise.
+- **A resource kind.** It needs an entry in `KINDS`, a `down` step and a `prove-empty`
+  check. The test's own kind-to-call maps fail until all three exist.
+
+**What nothing checks here.** The tests run against a fake `aws`, so they prove the
+commands the tool sends, never that AWS accepts them. The option names in the
+`aws:elasticbeanstalk:sqsd`, `aws:elbv2:*` and `environmentsecrets` namespaces come from AWS
+documentation: `describe-configuration-options` lists them only for an existing
+environment's tier. The first live `up` is the first real check, and no CI job runs one.
+The account-id leak check (`rehearse.py leak-check`) runs only where `.local/` exists, so
+CI skips it. In CI, that rule is enforced only by the 12-digit account-id scan in
+`apps/server/tests/test_proto_rehearsal.py`, over the paths in its `SCAN_PATHS`; each of those
+outside `apps/server/` needs a line in `server-tests.yml`'s `PATTERNS`, which a test pins.
 
 ---
 
