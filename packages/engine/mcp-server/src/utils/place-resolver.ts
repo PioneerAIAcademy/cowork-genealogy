@@ -601,7 +601,7 @@ async function resolveBareName(name: string, opts: ResolveOpts): Promise<string 
 
   const fuller = siblings.find((segs) => {
     const first = normalizeKey(segs[0]);
-    return first === bare || first.endsWith(` ${bare}`);
+    return first === bare || first.replace(ADMIN_PREFIX_RE, "") === bare;
   });
   if (fuller) return resolveStandardPlace(fuller.join(", "), { date: opts.date });
 
@@ -620,6 +620,10 @@ async function resolveBareName(name: string, opts: ResolveOpts): Promise<string 
   const best = pickBest(entries);
   return best && isJurisdiction(best.type) ? best.fullName : null;
 }
+
+/** "Borough of Shenandoah" spells out "Shenandoah"; "New York" does not spell out
+ *  "York", nor "Port Elizabeth" "Elizabeth". Only an administrative prefix counts. */
+const ADMIN_PREFIX_RE = /^(?:borough|town|city|township|village|parish|county|district|municipality|hundred) of /;
 
 /** A FamilySearch place type names a jurisdiction. The live API qualifies some
  *  types ("County (Top level)"), so the bracketed qualifier is dropped. */

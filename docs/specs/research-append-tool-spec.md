@@ -593,7 +593,9 @@ append op (deliberately simple):
      it: the places the call's other assertions with the same `record_id` name.
      A bare single-segment place ("Shenandoah") has no context of its own, so
      the resolver uses that record context: a sibling place whose first segment
-     ends in the name is resolved instead, else only a candidate inside the
+     is the name, or the name after an administrative prefix ("Borough of",
+     "Town of", "City of", "Township of", …), is resolved instead — "New York" is
+     not the fuller form of "York", else only a candidate inside the
      jurisdiction the siblings share counts, else the name resolves only to
      itself at the top of the hierarchy (a country, or a state under one) and is
      otherwise left unset (genealogist ruling 2026-10-06, option C). Measured on

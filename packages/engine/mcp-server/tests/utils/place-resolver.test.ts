@@ -817,6 +817,18 @@ describe("resolveStandardPlace — a bare single-segment name", () => {
     expect(await resolveStandardPlace("Logan", { contextPlaces: ["Loganville, Walton, Georgia"] })).toBeNull();
   });
 
+  it("does not take 'New York' as the fuller form of 'York'", async () => {
+    byName({
+      York: [entry({ placeRepId: "y", fullName: "York, England, United Kingdom", type: "County", score: 0.9 })],
+      "New York, New York, United States": [
+        entry({ placeRepId: "ny", fullName: "New York, New York, United States", score: 1 }),
+      ],
+    });
+    expect(
+      await resolveStandardPlace("York", { contextPlaces: ["New York, New York, United States"] }),
+    ).toBe("York, England, United Kingdom");
+  });
+
   it("confines the search to the jurisdiction the siblings share", async () => {
     byName({ "Logan LDS Temple": [
       entry({ placeRepId: "fr", fullName: "Logan, Haute-Saône, Bourgogne-Franche-Comté, France", score: 0.9 }),
