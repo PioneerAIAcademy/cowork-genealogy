@@ -156,7 +156,11 @@ Read `research.json`:
 - Find all `person_evidence` entries for the target person(s) where
   `superseded_by` is null
 - Collect the `assertion_id` from each
-- Read the full assertion objects
+- Fetch the full `assertions` section **once**, with no `assertionId` filter —
+  that section's supported filters are `recordId`, `recordRole`, `sourceId`, and
+  `questionId`, not `assertionId` (a filter that exists for other sections, e.g.
+  `conflicts` and `person_evidence`, but not this one). Look up each needed id
+  from the returned list rather than one `research_query` call per assertion.
 
 Filter to assertions with date or place information — assertions without
 temporal or geographic data (e.g., name-only assertions) don't contribute to
