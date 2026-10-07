@@ -33,8 +33,21 @@ def _state(log=None, assertions=None):
     return {"research_json": {"log": list(log or []), "assertions": list(assertions or [])}}
 
 
-def _entry(eid="log_1", outcome="positive", query="1880 census Cornelius Driscoll"):
-    return {"id": eid, "outcome": outcome, "query": query, "plan_item_id": "pi_1"}
+# SCHEMA-SHAPED. `query` is a required OBJECT (research.schema.json
+# $defs.log_entry) and every one of the 330 committed log entries is a dict. An
+# earlier version of this file used a string here, which let the validator pass
+# its own tests while being unable to match anything in production.
+def _entry(eid="log_1", outcome="positive", query=None):
+    return {
+        "id": eid,
+        "outcome": outcome,
+        "query": query if query is not None else {
+            "surname": "Driscoll",
+            "given": "Cornelius",
+            "collection": "1880 Census",
+        },
+        "plan_item_id": "pi_1",
+    }
 
 
 def test_naming_the_record_passes():
@@ -122,11 +135,73 @@ def test_the_section_is_log_not_research_log():
     "reply",
     [
         "I found the 1880 Census Cornelius Driscoll record but could not save it.",
-        "Found: 1880 census cornelius driscoll — not yet attached to his profile.",
-        "The search turned up a match (1880 census Cornelius Driscoll); the\n"
-        "extraction step did not run, so nothing was saved for him yet.",
-        "Unsaved: log_1 — the 1880 census hit for Cornelius.",
+        "Found: 1880 census cornelius driscoll, not yet attached to his profile.",
+        "The search turned up a match for Driscoll; the extraction step did not\n"
+        "run, so nothing was saved for him yet.",
+        "Unsaved: log_1 - the 1880 census hit for Cornelius.",
+        "Found an 1880 census hit for Cornelius Driscoll; not attached yet.",
     ],
 )
 def test_legitimate_phrasings_are_accepted(reply):
     validator(TAGGED, _state(), _state(log=[_entry()]), reply)
+
+
+def test_a_dict_query_is_matched_on_its_person_values_not_its_repr():
+    """The regression that shipped once: str(dict) can never substring-match a
+    natural reply, so the validator silently rejected every legitimate one."""
+    entry = _entry(query={"surname": "Brady", "given": "Cornelius",
+                          "collection": "Catholic Parish Registers, King's County, Ireland"})
+    # Names the person, paraphrases the record -- the normal, correct shape.
+    validator(TAGGED, _state(), _state(log=[entry]),
+              "I found an 1880 census record for Cornelius Brady but the extraction "
+              "did not finish, so nothing was saved to his profile yet.")
+    # Names neither.
+    with pytest.raises(AssertionError):
+        validator(TAGGED, _state(), _state(log=[entry]),
+                  "An extraction did not finish. Shall I try again?")
+
+
+def test_drives_a_real_committed_fixture_entry():
+    """Guards against the fixture and production diverging again: the query here
+    is read out of a committed scenario, not written by hand."""
+    import json as _json
+    # Walk up rather than index a fixed depth: parents[3] lands on eval/, not the
+    # repo root, and a hardcoded index silently finds nothing if the tree moves.
+    here = Path(__file__).resolve()
+    root = next(
+        (q for q in here.parents if (q / "eval/fixtures/scenarios").is_dir()), None
+    )
+    assert root is not None, "could not locate eval/fixtures/scenarios from this file"
+    entry = None
+    for f in sorted((root / "eval/fixtures/scenarios").glob("*/research.json")):
+        for e in (_json.loads(f.read_text(encoding="utf-8")).get("log") or []):
+            q = e.get("query")
+            if isinstance(q, dict) and q.get("surname"):
+                entry = dict(e, outcome="positive")
+                break
+        if entry:
+            break
+    assert entry is not None, "no committed log entry with a surname -- fixture drift"
+    surname = entry["query"]["surname"]
+    validator(TAGGED, _state(), _state(log=[entry]),
+              f"Found a record for {surname}; it was not saved.")
+    with pytest.raises(AssertionError):
+        validator(TAGGED, _state(), _state(log=[entry]), "An extraction did not finish.")
+
+
+def test_a_reply_that_claims_it_was_saved_fails():
+    """Clause 4 is "named AS UNSAVED". Mentioning the record while claiming it was
+    saved is the overclaim search-records/SKILL.md:684 forbids, and it used to pass."""
+    with pytest.raises(AssertionError):
+        validator(TAGGED, _state(), _state(log=[_entry()]),
+                  "Saved to Cornelius Driscoll: 1880 census household. All done!")
+
+
+def test_a_different_saved_records_id_does_not_exonerate_this_one():
+    """`"log_1" in "log_10"` used to pass. Real ids run log_001..log_010+."""
+    with pytest.raises(AssertionError):
+        # The reply DOES carry an unsaved marker, so the only thing that can make
+        # this pass is the id match. Without that isolation the test passed under
+        # both implementations and discriminated nothing.
+        validator(TAGGED, _state(), _state(log=[_entry(eid="log_1", query={})]),
+                  "Record log_10 was not saved.")

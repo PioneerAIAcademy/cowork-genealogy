@@ -1,6 +1,6 @@
 # Issue #2813 item 5: an interrupted extraction is named as unsaved
 
-**Status:** PENDING — building. **Rewritten twice.** Round one returned 4 blocking findings and
+**Status:** LANDED on `2813-item5-unsaved-extraction`. **Rewritten twice.** Round one returned 4 blocking findings and
 the first killed the original premise. Round two returned 2 more; its finding 2 (the unit harness
 cannot manufacture an in-turn extraction failure) is correct, and checking it turned up something
 worse that neither round stated — see §"What the second rewrite changes".
@@ -157,3 +157,42 @@ made to pass, which needs issue #2173 — and Rule 6, on a suite whose six commi
 
 One `research` run, owed anyway: #3077 changed `person-read-driscoll-attached-sources.json`,
 which `research/v8.json` embeds. The validator half costs nothing.
+
+
+## Review findings folded in (blind battery + drift-critic)
+
+Three independent reviews ran after the code was written. What they changed:
+
+- **BLOCKING, found twice independently.** `log_entry.query` is a required **object**
+  (`research.schema.json`), and all 330 committed log entries are dicts. The first validator did
+  `str(entry["query"])`, which compares a Python dict repr against prose and can never match — so
+  the only working needle was the internal log id, and the check would have **rejected essentially
+  every correct reply**. Its own unit tests passed only because my fixture used a `query` string,
+  a shape the schema forbids. Fixed: needles come from the query object's person values; the
+  fixture is schema-shaped; and one test is now driven from a real committed scenario so the
+  fixture and production cannot diverge again.
+- **Code reuse.** The delta was hand-rolled 390 lines below `from validators_lib import
+  new_log_entries`, already imported in the same file and used twice in it. Now calls it.
+- **`"log_1" in "log_10"`.** A different, saved record's id exonerated the unsaved one; real ids
+  run `log_001`+. Now matched on a word boundary.
+- **The predicate tested the opposite of the clause.** Clause 4 is "named **as unsaved**", but the
+  check was "mentioned", so a reply naming the record while falsely claiming it was saved passed.
+  Now requires an unsaved marker.
+
+### Declared limits, not oversights
+
+- **The record half is not mechanically checked**, only the person. A reply paraphrases ("the 1880
+  census hit") where the entry stores a catalogue title ("Catholic Parish Registers, King's County,
+  Ireland"); requiring that to match would reject correct replies, and wrongly blocking legitimate
+  work is the costlier failure direction.
+- **Prose and validator scopes differ.** The rule sits in the bounded-turn paragraph; the validator
+  fires on any tagged test. Widening the prose means editing `SKILL.md` again, which restales v9
+  and buys a second paid run for a dormant check. Left as-is deliberately.
+- **`search-records/SKILL.md:684` already states clause 4's substance more sharply**, in the skill
+  that actually writes the log entries. The router-level sentence is the weaker of the two and is
+  additive, not a replacement.
+- **v9 proves the rule did not regress the ten routing tests — nothing more.** All ten runs record
+  `test_an_unsaved_find_is_named` as `skipped: not an unsaved-extraction test`.
+- **A `None` id in `before_state` masks later entries** — a flaw inside the shared
+  `new_section_entries`, affecting four other validators equally. Not fixed here; fixing it changes
+  their behaviour and belongs in its own change.
