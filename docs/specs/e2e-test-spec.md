@@ -2003,7 +2003,8 @@ Two sibling fields now carry the whole-run figure:
 | field | what |
 |---|---|
 | `usage.whole_run_usage` | The four priced token fields, `usage.usage` plus the sum of every `subagents[].usage`. Carries exactly those four keys — the unsummable siblings (`server_tool_use`, `service_tier`, `cache_creation`, `iterations`) are dropped. |
-| `usage.whole_run_cost_usd_estimated` | `pricing.estimate_cost_usd` over that block. **Corpus basis** — a flat Sonnet table with cache writes at the 1-hour rate. The production (5-minute) basis is about 8% lower. State the basis next to any figure lifted from it. |
+| `usage.whole_run_cost_usd_estimated` | `pricing.estimate_cost_usd` over that block. **Corpus basis** — a flat Sonnet table with cache writes at the 1-hour rate. The production (5-minute) basis is about 8% lower. State the basis next to any figure lifted from it. Flat by design, so the committed corpus is never re-based; per-model figures are computed at report time from tokens and `models`, never persisted. |
+| `usage.model_usage` | The SDK's own per-model ledger (`ResultMessage.model_usage`), helpers included, keyed by model id. Present only when the `ResultMessage` carried it — absent on every abort path, never null or `{}`. Like `usage.usage` it comes from the last `ResultMessage`, so on a multi-query run it covers the last query only. Its `costUSD` is the CLI's own arithmetic (CLI 2.1.139 prices every cache write at the 5-minute rate and does not know every model), so it is a reconciliation source, not the price of record. |
 
 **`usage.usage` is deliberately left alone.** It is what `corpus_report`'s spend
 tally and the cost calibration read, so widening it in place would have moved every
@@ -2052,8 +2053,13 @@ spawn with no `usage` object as uncovered rather than as zero, and prints no tab
 at all when nothing in the corpus is priced. It also reports, per agent, the models
 seen, the max and median `peak_window_tokens`, and how many measured spawns
 compacted; a spawn with no `peak_window_tokens` predates the field and is left out
-of those columns, never counted as a 0 peak. The price column is one flat Sonnet
-rate regardless of `models`.
+of those columns, never counted as a 0 peak. The price column is per model
+(`agent_spend_report.price_helper`, T1.11): a spawn recording exactly one model is
+priced at that model's rate (`pricing.MODEL_RATES`, cache writes at the 1-hour
+rate); a spawn recording no model predates the field and keeps the flat Sonnet
+table, labelled; a spawn on a model the table does not know, or on more than one
+model, is listed as unpriced with its reason — never as $0 and never at the Sonnet
+rate. An agent that ran on more than one model gets a sub-row per model.
 
 #### 8.1.2 `usage` when the `ResultMessage` never arrived
 

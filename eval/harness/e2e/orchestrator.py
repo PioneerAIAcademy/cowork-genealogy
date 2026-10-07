@@ -3049,6 +3049,11 @@ async def _run_agent(
                         "total_cost_usd": message.total_cost_usd,
                         "usage": message.usage,
                     }
+                    # The SDK's own per-model ledger, helpers included (T1.11):
+                    # the reconciliation source for per-model pricing. Only
+                    # written when the SDK supplied it — absent, never null or {}.
+                    if isinstance(getattr(message, "model_usage", None), dict):
+                        usage["model_usage"] = message.model_usage
                     if message.is_error and aborted_reason is None:
                         detail = message.result or message.stop_reason or ""
                         # The SDK surfaces a turn-cap hit as an *error result*

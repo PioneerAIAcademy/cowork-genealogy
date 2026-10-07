@@ -9,7 +9,12 @@ run blind (spec §7.4), and this file sits in the folder they grade from.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
+
+import pytest
+
+from e2e import pricing
 
 from e2e.agent_spend_report import collect
 from e2e.run_report import (
@@ -150,7 +155,7 @@ def test_a_real_committed_run_shows_helper_time_and_who_spent_what():
     assert len(agent_call_durations(log)) == 20
     text = render(log, REAL.name, graded=False, per_agent=collect([REAL])[0])
     summary = text.split("SUMMARY")[1]
-    assert "main $7.70 (45%) · helpers $9.35 (55%)   of the $17.06 whole-run flat estimate" in summary
+    assert "main $7.70 (45%) · helpers $9.35 (55%)   of the $17.06 whole-run per-model estimate" in summary
     assert "57.4 min summed over 20 launch(es)" in summary
     assert "busiest moment   165,460 tokens (main researcher)" in summary
     assert "squeezes         main 3 · helpers 0" in summary
@@ -216,3 +221,65 @@ def test_a_scratch_run_gets_no_report(tmp_path: Path):
     written, _, _ = write_reports([crashed])
     assert written == []
     assert not (fixture / "reports").exists()
+
+
+# --- per-model pricing (T1.11) -------------------------------------------------
+
+
+def _helper(model, **over):
+    sub = dict(_SUB, models=[model])
+    sub.update(over)
+    return sub
+
+
+def _priced_log(*subs, **usage_over):
+    usage = dict(_log()["usage"], whole_run_cost_usd_estimated=9.0, agent_model="claude-sonnet-4-6")
+    usage.update(usage_over)
+    return _log(usage=usage, subagents=list(subs), subagent_capture_status="captured")
+
+
+def _helper_costs(text):
+    rows = [line.split() for line in text.splitlines() if line.strip()[:1].isdigit() and "$" in line]
+    return [float(r[3].lstrip("$")) for r in rows]
+
+
+def test_a_helper_on_haiku_costs_a_third_of_one_on_sonnet():
+    text = render(_priced_log(_helper("claude-sonnet-4-6"), _helper("claude-haiku-4-5-20251001")),
+                  "r.json", graded=False)
+    sonnet, haiku = _helper_costs(text)
+    assert haiku == pytest.approx(sonnet / 3, abs=0.01)
+
+
+def test_an_opus_main_thread_is_priced_at_opus_in_both_places():
+    """The main line and an aborted run's cost line must not print two figures
+    for the same tokens."""
+    usage = dict(_log()["usage"], agent_model="claude-opus-4-8", total_cost_usd=None)
+    text = render(_log(usage=usage), "r.json", graded=False)
+    opus = pricing.estimate_cost_for_model(usage["usage"], "claude-opus-4-8")
+    assert f"${opus:.2f}   (claude-opus-4-8 rate)" in text
+    assert f"run cost         ${opus:.2f}   (ESTIMATE, main thread only at the claude-opus-4-8 rate" in text
+
+
+def test_who_spent_it_adds_to_100_percent_with_a_cheaper_helper():
+    text = render(_priced_log(_helper("claude-haiku-4-5")), "r.json", graded=False)
+    line = next(line for line in text.splitlines() if "who spent it" in line)
+    shares = [int(x) for x in re.findall(r"\((\d+)%\)", line)]
+    assert len(shares) == 2 and 99 <= sum(shares) <= 101
+
+
+def test_who_spent_it_keeps_its_gate_on_a_streamed_fallback_run():
+    """cruz-corona and spriggs 10-05 are this shape: captured helpers that carry
+    usage, but no whole-run figure because the main block already holds helper
+    messages. A split there would double-count."""
+    log = _priced_log(_helper("claude-sonnet-4-6"), whole_run_cost_usd_estimated=None,
+                      usage_source="streamed_fallback")
+    assert "who spent it     not recorded" in render(log, "r.json", graded=False)
+
+
+def test_an_unpriced_helper_blocks_the_percentages_and_says_why():
+    text = render(_priced_log(_helper("claude-sonnet-4-6"), _helper("claude-unknown-9")),
+                  "r.json", graded=False)
+    line = next(line for line in text.splitlines() if "who spent it" in line)
+    assert "%" not in line
+    assert "1 helper(s) unpriced: 1 no rate for claude-unknown-9" in line
+    assert "unpriced: no rate for claude-unknown-9" in text  # flagged on its own row too

@@ -25,12 +25,16 @@ traced:
 
 - *cost* is `usage.total_cost_usd`, the SDK's own figure; an aborted run has
   none by design (spec §8.1.2), so it falls back to `total_cost_usd_estimated`,
-  then to the flat table over the main thread's tokens, each labelled as an
-  estimate;
-  *whole-run estimate* is `usage.whole_run_cost_usd_estimated`, main thread plus
-  every helper on the repo's flat Sonnet table (`e2e/pricing.py`, 1-hour cache
-  write). Each helper's *cost* is that same flat table over its own `usage`, so
-  a helper on a cheaper model is over-priced here until per-model pricing lands.
+  then to the main thread's tokens at `usage.agent_model`'s rate, each labelled
+  as an estimate;
+  the main researcher's *cost* is its tokens at `usage.agent_model`'s rate (the
+  flat Sonnet table when no model is recorded), and each helper's *cost* is its
+  own `usage` at its own model's rate (`agent_spend_report.price_helper`, T1.11;
+  cache writes at the 1-hour rate). *who spent it* divides those per-model figures
+  by their sum, and is printed only when `usage.whole_run_cost_usd_estimated`
+  exists — that field is null exactly when the orchestrator refused to merge the
+  threads (a streamed-fallback or multi-query run, whose main block already holds
+  helper messages), so its absence is the guard against a double-counted split.
 - *wall* is `usage.wall_clock_seconds` (active time, sleep excluded).
 - the main researcher's *busiest moment* is
   `usage.thread_windows.main.peak_window_tokens`; its *squeezes* count the
@@ -53,7 +57,7 @@ from pathlib import Path
 from typing import Any
 
 from e2e import pricing
-from e2e.agent_spend_report import collect
+from e2e.agent_spend_report import NO_TOKENS, NOT_RECORDED, collect, price_helper
 from e2e.result import axes_from_runlog
 from e2e.runlog_selection import all_result_jsons
 
@@ -86,18 +90,36 @@ def _minutes(seconds: Any) -> str:
     return f"{seconds / 60:.1f} min" if _is_num(seconds) else _NOT_RECORDED
 
 
+def main_thread_cost(usage: dict[str, Any]) -> tuple[float | None, str]:
+    """`(dollars, rule)` for the main thread at `usage.agent_model`'s rate.
+
+    No model recorded: the flat Sonnet table, labelled. A model the price table
+    does not know: None with the reason — never the Sonnet figure.
+    """
+    tokens = usage.get("usage")
+    if not isinstance(tokens, dict) or not tokens:
+        return None, ""
+    model = usage.get("agent_model")
+    if not isinstance(model, str) or not model:
+        return pricing.estimate_cost_usd(tokens), "flat Sonnet table — model not recorded"
+    cost = pricing.estimate_cost_for_model(tokens, model)
+    if cost is None and pricing.estimate_cost_usd(tokens) is not None:
+        return None, f"no rate for {model}"
+    return cost, f"{pricing.canonical_model(model)} rate"
+
+
 def run_cost(usage: dict[str, Any]) -> tuple[float | None, str]:
     """`(dollars, basis)` for a run: recorded, else the abort-path estimate,
-    else the flat table over the main thread's tokens. Never blended."""
+    else the main thread's tokens at its own model's rate. Never blended."""
     recorded = usage.get("total_cost_usd")
     if _is_num(recorded):
         return float(recorded), "the SDK's own figure"
     estimated = usage.get("total_cost_usd_estimated")
     if _is_num(estimated):
         return float(estimated), "ESTIMATE — no recorded cost on an aborted run"
-    main = pricing.estimate_cost_usd(usage.get("usage"))
+    main, rule = main_thread_cost(usage)
     if main is not None:
-        return main, "ESTIMATE, main thread only — no recorded cost on an aborted run"
+        return main, f"ESTIMATE, main thread only at the {rule} — no recorded cost on an aborted run"
     return None, ""
 
 
@@ -117,9 +139,11 @@ def _main_squeezes(usage: dict[str, Any]) -> int | None:
     )
 
 
-def _helper_cost(sub: dict[str, Any]) -> float | None:
-    usage = sub.get("usage")
-    return pricing.estimate_cost_usd(usage) if isinstance(usage, dict) else None
+def _helper_cost(sub: dict[str, Any]) -> tuple[float | None, str]:
+    """The helper's cost at its own model's rate, and why it is unpriced if so."""
+    if not isinstance(sub.get("usage"), dict):
+        return None, NO_TOKENS
+    return price_helper(sub)
 
 
 def _models(block: dict[str, Any]) -> str:
@@ -224,7 +248,7 @@ def render(
     windows = usage.get("thread_windows") if isinstance(usage.get("thread_windows"), dict) else {}
     main_window = windows.get("main") if isinstance(windows.get("main"), dict) else {}
     squeezes = _main_squeezes(usage)
-    main_cost = pricing.estimate_cost_usd(main_tokens) if main_tokens else None
+    main_cost, main_rule = main_thread_cost(usage)
     out += [
         "",
         "MAIN RESEARCHER",
@@ -232,7 +256,8 @@ def render(
         f" · re-read {_num(main_tokens.get('cache_read_input_tokens'))}"
         f" · cached {_num(main_tokens.get('cache_creation_input_tokens'))}"
         f" · wrote {_num(main_tokens.get('output_tokens'))}",
-        f"  cost             {_money(main_cost) if main_cost is not None else _NOT_RECORDED}   (flat Sonnet table)",
+        f"  cost             {_money(main_cost) if main_cost is not None else _NOT_RECORDED}"
+        f"{'   (' + main_rule + ')' if main_rule else ''}",
         f"  turns            {_num(usage.get('num_turns'))}"
         f"   · tool calls {len(log['tool_calls']) if isinstance(log.get('tool_calls'), list) else _NOT_RECORDED}",
         f"  busiest moment   {_tokens(main_window.get('peak_window_tokens'))}"
@@ -244,6 +269,7 @@ def render(
     durations = agent_call_durations(log)
     out += ["", "HELPERS (in launch order)"]
     helper_costs: list[float] = []
+    unpriced: dict[str, int] = {}
     helper_times: list[float] = []
     tallest: tuple[int, str] | None = None
     helper_squeezes = 0
@@ -256,7 +282,7 @@ def render(
         )
         for i, sub in enumerate(subs):
             kind = sub.get("agent_type") or "unnamed helper"
-            cost = _helper_cost(sub)
+            cost, how = _helper_cost(sub)
             seconds = helper_seconds(sub, durations)
             peak = sub.get("peak_window_tokens")
             compactions = sub.get("compactions")
@@ -264,6 +290,9 @@ def render(
             flags = [f for f in ("runaway_thinking", "hit_output_cap") if sub.get(f)]
             if cost is not None:
                 helper_costs.append(cost)
+            elif how != NO_TOKENS:
+                unpriced[how] = unpriced.get(how, 0) + 1
+                flags.append(f"unpriced: {how}")
             if seconds is not None:
                 helper_times.append(seconds)
             if isinstance(peak, int) and (tallest is None or peak > tallest[0]):
@@ -288,12 +317,19 @@ def render(
     out.append(f"  wall clock       {_minutes(usage.get('wall_clock_seconds'))}"
                f"   (slept {_minutes(usage.get('slept_seconds'))}, judge {_minutes(usage.get('judge_seconds'))})")
     whole = usage.get("whole_run_cost_usd_estimated")
-    if _is_num(whole) and main_cost is not None and status == "captured" and helper_costs:
+    if _is_num(whole) and main_cost is not None and status == "captured" and helper_costs and unpriced:
+        # A share of a partial total would overstate everyone left in it.
+        reasons = "; ".join(f"{n} {how}" for how, n in sorted(unpriced.items()))
+        out.append(f"  who spent it     {_NOT_RECORDED} ({sum(unpriced.values())} helper(s) unpriced: {reasons})")
+    elif _is_num(whole) and main_cost is not None and status == "captured" and helper_costs:
+        # The gate stays `whole_run_cost_usd_estimated`; only the denominator is
+        # the per-model sum, so the two shares add to 100%.
         helpers_total = sum(helper_costs)
+        both = main_cost + helpers_total
         out.append(
-            f"  who spent it     main {_money(main_cost)} ({100 * main_cost / whole:.0f}%)"
-            f" · helpers {_money(helpers_total)} ({100 * helpers_total / whole:.0f}%)"
-            f"   of the {_money(whole)} whole-run flat estimate"
+            f"  who spent it     main {_money(main_cost)} ({100 * main_cost / both:.0f}%)"
+            f" · helpers {_money(helpers_total)} ({100 * helpers_total / both:.0f}%)"
+            f"   of the {_money(both)} whole-run per-model estimate"
         )
     elif status == "matched_no_transcripts" and not subs:
         out.append("  who spent it     main 100% — no helper ran")
@@ -322,7 +358,7 @@ def render(
     if per_agent:
         seconds_by_type = per_type_seconds(log)
         out.append("")
-        out.append(f"  {'by helper type':<26} {'launches':>8} {'cost (flat)':>12} {'time':>10}")
+        out.append(f"  {'by helper type':<26} {'launches':>8} {'cost':>12} {'time':>10}")
         for kind, b in sorted(per_agent.items(), key=lambda kv: -sum(kv[1]["costs"])):
             cost = _money(sum(b["costs"])) if b["costs"] else "--"
             secs = seconds_by_type.get(kind)

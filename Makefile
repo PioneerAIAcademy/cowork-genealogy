@@ -1265,7 +1265,10 @@ e2e-agent-spend: ## What each subagent costs, from subagents[].usage (#2582): ma
 	# trouble, and its busiest moment (peak window) and compaction count --
 	# which is what Wave 4 of docs/plan/cost-latency-10x.md needs to decide
 	# which agent gets which model rung. A spawn from before a field existed
-	# is counted as not measured for that column, never as zero.
+	# is counted as not measured for that column, never as zero. Cost is per
+	# model (T1.11): each spawn at its recorded model's rate; a spawn with no
+	# model recorded at the flat Sonnet table, labelled; a model with no rate
+	# is listed as unpriced, never $0. Corpus basis (1-hour cache writes).
 	#
 	# Runs committed before #2582 carry no subagents[].usage. They are counted
 	# as UNCOVERED, never as zero: a $0.00 row would read as "this agent is

@@ -721,3 +721,39 @@ def test_project_status_narration_is_field_scoped_not_out_of_lane(tmp_path, monk
     assert "status" in text, text
     assert "proof-conclusion" in text, text
     assert "outside this agent's lane" not in text, text
+
+
+# ── the SDK's per-model ledger (T1.11) ──
+
+
+def _usage_after(tmp_path, monkeypatch, result_message):
+    from harness.auth import AuthConfig
+
+    monkeypatch.setattr(
+        orchestrator,
+        "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        messages = [SystemMessage(subtype="init", data={"session_id": "S1"}), result_message]
+        return _HookDrivingAgent(hook, [], messages, {})
+
+    monkeypatch.setattr(orchestrator, "query", fake_query)
+    result = asyncio.run(
+        _run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy"))
+    )
+    return result[2]
+
+
+def test_the_sdks_per_model_ledger_is_kept_on_the_result_path(tmp_path, monkeypatch):
+    ledger = {"claude-sonnet-4-6": {"inputTokens": 5, "costUSD": 1.0},
+              "claude-haiku-4-5-20251001": {"inputTokens": 2, "costUSD": 0.01}}
+    message = _result()
+    message.model_usage = ledger
+    assert _usage_after(tmp_path, monkeypatch, message)["model_usage"] == ledger
+
+
+def test_no_ledger_means_the_key_is_absent_not_null(tmp_path, monkeypatch):
+    assert "model_usage" not in _usage_after(tmp_path, monkeypatch, _result())

@@ -94,3 +94,39 @@ def test_main_writes_the_next_numbered_file_and_prints_it(tmp_path, capsys):
     saved = tmp_path / "fx" / "comparison" / "01_comparison.txt"
     assert saved.exists()
     assert "$5.00 -> $4.00" in capsys.readouterr().out
+
+
+_TOKENS = {"input_tokens": 10, "output_tokens": 1_000, "cache_read_input_tokens": 50_000,
+           "cache_creation_input_tokens": 2_000}
+
+
+def _with_helper(model):
+    return _log(5.0, subagents=[{"agent_type": "record-extractor", "usage": dict(_TOKENS),
+                                 "models": [model]}],
+                subagent_capture_status="captured")
+
+
+def test_a_helper_moved_from_sonnet_to_haiku_shows_its_saving(tmp_path):
+    """T1.11: identical tokens, Sonnet 4.6 -> Haiku — the helper cost falls by two thirds."""
+    before, after = _with_helper("claude-sonnet-4-6"), _with_helper("claude-haiku-4-5-20251001")
+    b, a = _pair(tmp_path, before, after)
+    text = compare(before, b, after, a)
+    line = next(line for line in text.splitlines() if line.strip().startswith("helper cost"))
+    assert "$0.04 -> $0.01" in line and "-67%" in line
+
+
+def test_a_helper_moved_to_an_unpriced_model_is_not_a_saving(tmp_path):
+    """Before: two Sonnet helpers. After: one stays, one moves to a model with no
+    rate. Summing only the priced one would read $0.08 -> $0.04, a fake halving."""
+    before = _with_helper("claude-sonnet-4-6")
+    before["subagents"].append({"agent_type": "gps-mentor", "usage": dict(_TOKENS),
+                                "models": ["claude-sonnet-4-6"]})
+    after = _with_helper("claude-unknown-9")
+    after["subagents"].append({"agent_type": "gps-mentor", "usage": dict(_TOKENS),
+                               "models": ["claude-sonnet-4-6"]})
+    b, a = _pair(tmp_path, before, after)
+    text = compare(before, b, after, a)
+    line = next(line for line in text.splitlines() if line.strip().startswith("helper cost"))
+    assert "$0.08 -> --" in line
+    row = next(line for line in text.splitlines() if line.strip().startswith("record-extractor"))
+    assert "$0.04 -> --" in row

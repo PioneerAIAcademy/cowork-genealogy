@@ -12,8 +12,8 @@ the report shows (T1.3) the models each agent ran on, its busiest moment —
 `peak_window_tokens`, the tallest single read, a max not a sum — and how many of
 its spawns were compacted. Spend and peak answer different questions: ten 30k
 reads and two 150k reads cost the same and sit at opposite distances from the
-compaction line. The price column still uses one flat Sonnet rate whatever the
-model column says; per-model pricing is separate work.
+compaction line. Each spawn is priced at the model it ran on (T1.11, `price_helper`),
+so a helper moved to a cheaper model shows a cheaper row.
 
 The four-box rule this serves, in the owner's own words:
 
@@ -31,11 +31,13 @@ them by **rule**, not by agent, and only some rule names happen to coincide with
 an agent's name. They are reported in a separate column that says so, because a
 name match presented as attribution is how a confident wrong number gets quoted.
 
-**Price basis: corpus.** Costs come from `pricing.estimate_cost_usd`, a flat
-Sonnet table with cache writes at the 1-hour rate — the basis that calibrates
-recorded cost to ~0.86x (`make e2e-corpus SINCE=all CALIBRATE=1` prints the
-current figure and its run count). The production (5-minute) basis is ~8%
-lower. State the basis next to any figure lifted out of here.
+**Price basis: corpus, per model.** A spawn that records exactly one model is
+priced at that model's rate (`pricing.MODEL_RATES`, cache writes at the 1-hour
+rate). A spawn recording no model predates the field and keeps the flat Sonnet
+table (`pricing.estimate_cost_usd`), labelled so. A spawn on a model the table
+does not know, or on more than one model, is counted as unpriced with its reason
+— never as $0 and never at the Sonnet rate. The production (5-minute) basis is
+~8% lower; state the basis next to any figure lifted out of here.
 
 **Runs written before #2582 carry no `subagents[].usage`** and are counted as
 uncovered rather than as zero, and the coverage line says how many. A zero
@@ -68,12 +70,40 @@ def _load(path: Path) -> dict[str, Any] | None:
     return doc if isinstance(doc, dict) else None
 
 
+NOT_RECORDED = "not recorded"
+NO_TOKENS = "no token counts"
+
+
+def price_helper(sub: dict[str, Any]) -> tuple[float | None, str]:
+    """One spawn's cost and the rule that priced it — the one rule every report uses.
+
+    Returns `(cost, how)`. `how` is the model id, `NOT_RECORDED` (flat Sonnet
+    table, the spawn predates `models`), or a reason the spawn is unpriced. Tokens
+    are not split per model inside one spawn, so a multi-model spawn is unpriced
+    rather than guessed (none is recorded yet).
+    """
+    usage = sub.get("usage")
+    if pricing.estimate_cost_usd(usage) is None:
+        return None, NO_TOKENS
+    models = sub.get("models")
+    names = [m for m in models if isinstance(m, str)] if isinstance(models, list) else []
+    if not names:
+        return pricing.estimate_cost_usd(usage), NOT_RECORDED
+    if len(set(names)) > 1:
+        return None, "mixed models, not split"
+    cost = pricing.estimate_cost_for_model(usage, names[0])
+    if cost is None:
+        return None, f"no rate for {names[0]}"
+    return cost, names[0]
+
+
 def collect(paths: list[Path]) -> tuple[dict[str, dict[str, Any]], dict[str, int]]:
     """`(per_agent, counters)` over every run log that can be read."""
     per_agent: dict[str, dict[str, Any]] = defaultdict(
         lambda: {"spawns": 0, "costs": [], "turns": [], "runaway": 0, "capped": 0,
                  "tokens": dict.fromkeys(USAGE_FIELDS, 0), "runs": set(),
-                 "models": {}, "no_model": 0, "peaks": [], "squeezed": 0}
+                 "models": {}, "no_model": 0, "peaks": [], "squeezed": 0,
+                 "costs_by_key": {}, "unpriced": {}}
     )
     counters = {"runs": 0, "unreadable": 0, "runs_with_subagents": 0,
                 "subagents_seen": 0, "subagents_with_usage": 0,
@@ -128,9 +158,14 @@ def collect(paths: list[Path]) -> tuple[dict[str, dict[str, Any]], dict[str, int
             for field in USAGE_FIELDS:
                 value = usage.get(field)
                 bucket["tokens"][field] += value if isinstance(value, int) else 0
-            cost = pricing.estimate_cost_usd(usage)
-            if cost is not None:
-                bucket["costs"].append(cost)
+            cost, how = price_helper(sub)
+            if cost is None:
+                if how != NO_TOKENS:
+                    bucket["unpriced"][how] = bucket["unpriced"].get(how, 0) + 1
+                continue
+            bucket["costs"].append(cost)
+            key = pricing.canonical_model(how) if how != NOT_RECORDED else how
+            bucket["costs_by_key"].setdefault(key, []).append(cost)
     return per_agent, counters
 
 
@@ -173,7 +208,8 @@ def format_report(per_agent: dict[str, dict[str, Any]], counters: dict[str, int]
     total = sum(sum(b["costs"]) for _, b in rows) or 1.0
 
     out.append("")
-    out.append("Spend per agent (corpus basis — flat sonnet table, 1h cache write):")
+    out.append("Spend per agent (corpus basis — each spawn at its own model's rate, 1h cache")
+    out.append("write; a spawn with no model recorded at the flat Sonnet table):")
     out.append("")
     head = f"  {'agent':<26} {'spawns':>6} {'$/spawn':>9} {'$ total':>9} {'share':>6} {'turns':>6}"
     out.append(head + "   models")
@@ -190,9 +226,20 @@ def format_report(per_agent: dict[str, dict[str, Any]], counters: dict[str, int]
             f"  {name:<26} {b['spawns']:>6} {med:>9.3f} {tot:>9.2f}"
             f" {100 * tot / total:>5.0f}% {turns:>6.0f}   {_models_cell(b)}"
         )
-    out.append("")
-    out.append("  The price column uses ONE flat Sonnet rate whatever the model column")
-    out.append("  says, so a helper moved to a cheaper model shows no saving here yet.")
+        # One agent on more than one model (a Wave-4 A/B, or old flat-priced
+        # spawns beside new per-model ones): a sub-row per model, so a cheaper
+        # rung reads as a cheaper row rather than vanishing into one median.
+        if len(b["costs_by_key"]) > 1:
+            for key, costs in sorted(b["costs_by_key"].items()):
+                label = f"  {key}" if key != NOT_RECORDED else "  (model not recorded, flat)"
+                out.append(f"    {label:<24} {len(costs):>6} {statistics.median(costs):>9.3f}"
+                           f" {sum(costs):>9.2f}")
+    unpriced = [(name, how, n) for name, b in rows for how, n in sorted(b["unpriced"].items())]
+    if unpriced:
+        out.append("")
+        out.append("  UNPRICED (left out of every figure above, never counted as $0):")
+        for name, how, n in unpriced:
+            out.append(f"    {name:<26} {n:>4} spawn(s) — {how}")
 
     out.append("")
     measured = counters["subagents_with_peak"]
@@ -240,9 +287,11 @@ def format_report(per_agent: dict[str, dict[str, Any]], counters: dict[str, int]
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--test", help="one fixture slug, else the whole corpus")
+    parser.add_argument("--log", action="append", type=Path, default=[],
+                        help="read this run log instead of the committed corpus (repeatable)")
     args = parser.parse_args()
 
-    paths = all_result_jsons()
+    paths = args.log or all_result_jsons()
     if args.test:
         paths = [p for p in paths if p.parent.name == args.test]
         if not paths:

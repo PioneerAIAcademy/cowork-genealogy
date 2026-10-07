@@ -98,7 +98,14 @@ def _facts(log: dict[str, Any], path: Path) -> dict[str, Any]:
             if timeline else None
         ),
         "launches": sum(b["spawns"] for b in per_agent.values()) or (0 if none_ran else None),
-        "helper_cost": helper_cost if any(b["costs"] for b in per_agent.values()) else None,
+        # A helper on a model with no rate is left out of `costs`; summing what is
+        # left would read as a saving. Any unpriced spawn makes the total unknown.
+        "helper_cost": (
+            helper_cost
+            if any(b["costs"] for b in per_agent.values())
+            and not any(b["unpriced"] for b in per_agent.values())
+            else None
+        ),
         "helper_time": helper_time if seconds else None,
         "per_agent": per_agent,
         "graded": (path.parent / f"{path.stem}.ann.json").exists(),
@@ -150,12 +157,12 @@ def compare(before: dict[str, Any], b_path: Path, after: dict[str, Any], a_path:
     out.append(_row("main busiest moment", fb["main_peak"], fa["main_peak"]))
     out.append(_row("main squeezes", fb["main_squeezes"], fa["main_squeezes"]))
     out.append(_row("helper launches", fb["launches"], fa["launches"]))
-    out.append(_row("helper cost (flat)", fb["helper_cost"], fa["helper_cost"], "$"))
+    out.append(_row("helper cost", fb["helper_cost"], fa["helper_cost"], "$"))
     out.append(_row("helper time (summed)", fb["helper_time"], fa["helper_time"], "min"))
     out.append("")
 
     out.append("BY HELPER TYPE")
-    out.append(f"  {'helper':<24} {'launches':>9}   {'cost (flat)':>17}   {'time':>17}   {'busiest':>19}")
+    out.append(f"  {'helper':<24} {'launches':>9}   {'cost':>17}   {'time':>17}   {'busiest':>19}")
     kinds = sorted(set(fb["per_agent"]) | set(fa["per_agent"]))
     if not kinds:
         out.append("  no helper data in either run")
@@ -163,6 +170,8 @@ def compare(before: dict[str, Any], b_path: Path, after: dict[str, Any], a_path:
         b, a = fb["per_agent"].get(kind), fa["per_agent"].get(kind)
 
         def _v(bucket, key, agg):
+            if key == "costs" and bucket and bucket["unpriced"]:
+                return None  # partly unpriced: a sum of the rest is not this type's cost
             return agg(bucket[key]) if bucket and bucket[key] else None
 
         out.append(
