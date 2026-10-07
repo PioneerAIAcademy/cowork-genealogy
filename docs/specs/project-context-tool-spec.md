@@ -71,6 +71,15 @@ repo's identifier-casing rule):
     storedStatus: string | null,         // questions[].status verbatim; null when
                                          //   absent or not a string. DERIVED vs
                                          //   REPORTED — see §2.2.
+    unregisteredDisagreements: [{        // linked vital-fact assertions that
+      personId: string,                  //   disagree with no conflict naming
+      fact: string,                      //   the pair — see §2.2.
+      assertionIds: string[],
+    }],
+    competingParentSets: [{              // in-scope tree persons with >2 parents
+      personId: string,                  //   and <2 hypotheses on the question
+      parentIds: string[],
+    }],
   }],
   persons: [{
     id: string,                          // I id (or FS id)
@@ -148,8 +157,33 @@ artifact is what every downstream check joins on.
 | `concluded` | a proof summary carries `question_id` = this question |
 | `critiqued` | every such summary has a live `proof-critique` evaluation |
 
-`nextStep` orders by what blocks what: an unresolved conflict outranks a missing
-critique, which outranks a missing resolve, which outranks a missing summary. A
+`nextStep` orders by what blocks what: an unresolved conflict outranks an
+unregistered disagreement, which outranks competing parent sets, which outrank a
+missing critique, which outranks a missing resolve, which outranks a missing
+summary.
+
+**A conflict the evidence shows counts even when nobody registered it.** A
+`conflicts` entry is what `conflict-resolution` *produces*, so an empty
+`conflicts[]` cannot be the signal that routes there. `unregisteredDisagreements`
+reads the evidence instead: two assertions linked by `person_evidence` to the same
+person, about the same birth or death (`birth`/`birthplace`, `death`/`deathplace`),
+whose places disagree or whose years differ by more than two, with no conflict of
+any status listing both ids. At least one of the pair must be extracted for this
+question. Places agree when every component of the less specific one prefix-matches
+a component of the other, comparing the raw and standardized spellings separately
+and accepting any agreeing pair, so "England" agrees with "Rochdale, Lancashire,
+England" and a standardization rename ("Forfarshire" → "Angus") is not a conflict.
+On the committed corpus (2026-10-07: 391 question entries across the scenarios and
+206 e2e final states) it fires on 12 e2e question-runs, all spot-checked as real
+disagreements (one borderline: a village against its municipality), and on no
+scenario except the two mined to need it.
+
+`competingParentSets` is the identity counterpart and needs `tree.gedcomx.json`:
+a person in scope — the project's `subject_person_ids` plus every person this
+question's assertions are linked to — who is the child of more than two
+`ParentChild` relationships, while fewer than two hypotheses list this question in
+`related_question_ids`. Its step is `hypothesis-tracking`. Both fields stay
+advisory: nothing refuses a write because of them. A
 superseded verdict does not count — a replacement is itself present and satisfies
 the join; if nothing replaced it, the critique no longer stands.
 

@@ -272,7 +272,7 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
   // question is waiting on, computed from the document rather than from
   // session history (the only durable state this system has). The gates in
   // research_append compute their own preconditions independently.
-  const questionStatuses = questionStates(research);
+  const questionStatuses = questionStates(research, tree);
 
   const awaitingUser = awaitingUserHandOffs(research?.log);
 
@@ -307,7 +307,8 @@ export const projectContextSchema = {
     "forPlace, timePeriod, jurisdictions, collections, quirks, pagesRead}] — the " +
     "place/locale research knowledge (from locality-guide) that research-plan uses " +
     "to stage searches (guide_markdown prose is omitted here); and questionStatuses " +
-    "[{id, state, nextStep, openConflictIds, storedStatus}] — per question, how far it " +
+    "[{id, state, nextStep, openConflictIds, storedStatus, unregisteredDisagreements, " +
+    "competingParentSets}] — per question, how far it " +
     "has got (framed / planned / searching / evidence-gathered / concluded / critiqued), " +
     "what it is waiting on, and storedStatus, the question's own questions[].status " +
     "verbatim (null when absent or not a string). state is DERIVED from the documents " +

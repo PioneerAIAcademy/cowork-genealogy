@@ -213,3 +213,178 @@ describe("questionStates", () => {
     expect(s.storedStatus).toBe("resolved");
   });
 });
+
+describe("questionStatus — unregistered disagreements route to conflict-resolution", () => {
+  const birthplace = (id: string, place: string, extra: Record<string, unknown> = {}) => ({
+    id, fact_type: "birthplace", place, extracted_for_question_ids: [Q], ...extra,
+  });
+  const linked = (...ids: string[]) => ids.map((id) => ({ assertion_id: id, person_id: "I2" }));
+
+  it("two linked birthplaces that disagree, with conflicts[] empty, are the next step", () => {
+    const d = doc({
+      assertions: [birthplace("a_1", "England"), birthplace("a_2", "Alabama"), birthplace("a_3", "Alabama")],
+      person_evidence: linked("a_1", "a_2", "a_3"),
+    });
+    const s = questionStatus(d, question());
+    expect(s.unregisteredDisagreements).toEqual([
+      { personId: "I2", fact: "birth place", assertionIds: ["a_1", "a_2", "a_3"] },
+    ]);
+    expect(s.nextStep).toMatch(/^conflict-resolution — unregistered disagreement: I2 birth place/);
+  });
+
+  it("a birth's place and a birthplace assertion compare as one fact", () => {
+    const d = doc({
+      assertions: [
+        { id: "a_1", fact_type: "birth", place: "Ireland", date: "~1845", extracted_for_question_ids: [Q] },
+        birthplace("a_2", "Pennsylvania"),
+      ],
+      person_evidence: linked("a_1", "a_2"),
+    });
+    expect(questionStatus(d, question()).unregisteredDisagreements[0]?.fact).toBe("birth place");
+  });
+
+  it("a conflict of any status naming the pair covers it", () => {
+    for (const status of ["unresolved", "resolved", "moot"]) {
+      const d = doc({
+        assertions: [birthplace("a_1", "England"), birthplace("a_2", "Alabama")],
+        person_evidence: linked("a_1", "a_2"),
+        conflicts: [{ id: "c_1", status, competing_assertion_ids: ["a_1", "a_2"] }],
+      });
+      expect(questionStatus(d, question()).unregisteredDisagreements).toEqual([]);
+    }
+  });
+
+  it("a conflict naming only one side of the pair does not cover it", () => {
+    const d = doc({
+      assertions: [birthplace("a_1", "England"), birthplace("a_2", "Alabama")],
+      person_evidence: linked("a_1", "a_2"),
+      conflicts: [{ id: "c_1", status: "resolved", competing_assertion_ids: ["a_1", "a_9"] }],
+    });
+    expect(questionStatus(d, question()).unregisteredDisagreements).toHaveLength(1);
+  });
+
+  it("a less specific place that the other contains is agreement, not a conflict", () => {
+    const d = doc({
+      assertions: [
+        birthplace("a_1", "England"),
+        birthplace("a_2", "x", { standard_place: "England, United Kingdom" }),
+        birthplace("a_3", "Mississippi, United States"),
+        birthplace("a_4", "Jasper, Mississippi, United States"),
+      ],
+      person_evidence: [
+        ...linked("a_1", "a_2"),
+        { assertion_id: "a_3", person_id: "I4" },
+        { assertion_id: "a_4", person_id: "I4" },
+      ],
+    });
+    expect(questionStatus(d, question()).unregisteredDisagreements).toEqual([]);
+  });
+
+  it("standardization renames and omitted countries are not disagreements", () => {
+    const d = doc({
+      assertions: [
+        birthplace("a_1", "Dundee, Forfarshire, Scotland", { standard_place: "Dundee, Forfarshire, Scotland, United Kingdom" }),
+        birthplace("a_2", "Forfarshire, Scotland", { standard_place: "Angus, Scotland, United Kingdom" }),
+        birthplace("a_3", "Russia", { standard_place: "Russia" }),
+        birthplace("a_4", "Selz, near Odessa, Russia (now Ukraine)", { standard_place: "Selz, Odessa, Kherson, Russian Empire" }),
+      ],
+      person_evidence: [
+        ...linked("a_1", "a_2"),
+        { assertion_id: "a_3", person_id: "I5" },
+        { assertion_id: "a_4", person_id: "I5" },
+      ],
+    });
+    expect(questionStatus(d, question()).unregisteredDisagreements).toEqual([]);
+  });
+
+  it("birth years within the census tolerance agree; beyond it they disagree", () => {
+    const birth = (id: string, date: string) => ({ id, fact_type: "birth", date, extracted_for_question_ids: [Q] });
+    const near = doc({
+      assertions: [birth("a_1", "1819"), birth("a_2", "1821"), birth("a_3", "about 1820")],
+      person_evidence: linked("a_1", "a_2", "a_3"),
+    });
+    expect(questionStatus(near, question()).unregisteredDisagreements).toEqual([]);
+    const far = doc({
+      assertions: [birth("a_1", "1819"), birth("a_2", "1811")],
+      person_evidence: linked("a_1", "a_2"),
+    });
+    expect(questionStatus(far, question()).unregisteredDisagreements).toEqual([
+      { personId: "I2", fact: "birth year", assertionIds: ["a_1", "a_2"] },
+    ]);
+  });
+
+  it("assertions linked to different persons, or not vital facts, never disagree", () => {
+    const d = doc({
+      assertions: [
+        birthplace("a_1", "England"),
+        birthplace("a_2", "Alabama"),
+        { id: "a_3", fact_type: "residence", place: "Jasper", extracted_for_question_ids: [Q] },
+        { id: "a_4", fact_type: "residence", place: "Smith", extracted_for_question_ids: [Q] },
+      ],
+      person_evidence: [
+        { assertion_id: "a_1", person_id: "I2" },
+        { assertion_id: "a_2", person_id: "I3" },
+        { assertion_id: "a_3", person_id: "I1" },
+        { assertion_id: "a_4", person_id: "I1" },
+      ],
+    });
+    expect(questionStatus(d, question()).unregisteredDisagreements).toEqual([]);
+  });
+
+  it("a disagreement wholly within another question's assertions does not route this one", () => {
+    const d = doc({
+      assertions: [
+        birthplace("a_1", "England", { extracted_for_question_ids: ["q_999"] }),
+        birthplace("a_2", "Alabama", { extracted_for_question_ids: ["q_999"] }),
+      ],
+      person_evidence: linked("a_1", "a_2"),
+    });
+    expect(questionStatus(d, question()).unregisteredDisagreements).toEqual([]);
+  });
+
+  it("a registered unresolved conflict still outranks an unregistered one", () => {
+    const d = doc({
+      assertions: [birthplace("a_1", "England"), birthplace("a_2", "Alabama")],
+      person_evidence: linked("a_1", "a_2"),
+      conflicts: [{ id: "c_9", status: "unresolved", blocks_question_ids: [Q] }],
+    });
+    expect(questionStatus(d, question()).nextStep).toMatch(/unresolved c_9/);
+  });
+});
+
+describe("questionStatus — competing parent sets route to hypothesis-tracking", () => {
+  const tree = {
+    persons: [],
+    relationships: ["I2", "I3", "I4", "I5"].map((p) => ({ type: "ParentChild", parent: p, child: "I1" })),
+  };
+  const withSubject = (extra: Record<string, unknown> = {}) =>
+    doc({ project: { subject_person_ids: ["I1"] }, assertions: [{ id: "a_1", extracted_for_question_ids: [Q] }], ...extra });
+
+  it("a subject with four parents and no hypotheses is the next step", () => {
+    const s = questionStatus(withSubject(), question(), tree);
+    expect(s.competingParentSets).toEqual([{ personId: "I1", parentIds: ["I2", "I3", "I4", "I5"] }]);
+    expect(s.nextStep).toMatch(/^hypothesis-tracking — competing parent sets: I1/);
+  });
+
+  it("two hypotheses related to the question clear it", () => {
+    const hyps = [
+      { id: "h_1", related_question_ids: [Q] },
+      { id: "h_2", related_question_ids: [Q] },
+    ];
+    expect(questionStatus(withSubject({ hypotheses: hyps }), question(), tree).competingParentSets).toEqual([]);
+  });
+
+  it("one parent couple is not competing", () => {
+    const t = { relationships: tree.relationships.slice(0, 2) };
+    expect(questionStatus(withSubject(), question(), t).competingParentSets).toEqual([]);
+  });
+
+  it("a person outside the question's scope is not reported", () => {
+    const d = doc({ assertions: [{ id: "a_1", extracted_for_question_ids: [Q] }] });
+    expect(questionStatus(d, question(), tree).competingParentSets).toEqual([]);
+  });
+
+  it("without a tree it reports nothing", () => {
+    expect(questionStatus(withSubject(), question()).competingParentSets).toEqual([]);
+  });
+});

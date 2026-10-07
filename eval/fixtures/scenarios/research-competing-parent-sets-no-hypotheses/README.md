@@ -16,7 +16,7 @@ The real project was messier when proof-conclusion ran. It had 10 positive log e
 - The remaining plan items were set to `completed`.
 - Samuel's tree death fact (1802) was removed. It contradicts the 1810 census assertion, which would make `conflict-resolution` an equally correct first route, and this test asserts only one route.
 
-- The source run used an install that predates the 2026-09-18 `evidence_type` → `record_basis` rename. The assertions were migrated with the engine's own back-compat mapping (`src/utils/record-basis.ts`: direct → stated, indirect → inferred).
+- The source run used an install that predates the 2026-09-18 rename of the assertion evidence field to `record_basis`. The assertions were migrated with the engine's own back-compat mapping (`src/utils/record-basis.ts`: direct → stated, indirect → inferred).
 
 Verify the carve before relying on the test.
 
