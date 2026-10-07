@@ -1,0 +1,20 @@
+{
+  "tool": "place_search_all",
+  "description": "place_search_all for Baiersbronn: one standard place over the period (Württemberg until 1952, the same town since).",
+  "args": {
+    "placeName": "~"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Baiersbronn, Freudenstadt, Baden-Württemberg, Germany",
+        "type": "Town",
+        "dateRange": "",
+        "latitude": 48.5,
+        "longitude": 8.37,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Baiersbronn",
+        "representations": []
+      }
+    ]
+  }
+}
