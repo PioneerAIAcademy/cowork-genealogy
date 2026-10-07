@@ -93,6 +93,9 @@ repo's identifier-casing rule):
     planItemId: string | null,
     performed: string | null,
   }],
+  externalCollections?: {                // stored curated collections, counts only — §2.4
+    [place: string]: { total: number, byRecordType: { [recordType: string]: number } },
+  },
 }
 // on failure: { ok: false, errors: string[], buildId }   — buildId on EVERY branch
 ```
@@ -252,6 +255,24 @@ itself when given a `projectPath` (`build-external-search-url-tool-spec.md`
 §6). A hand-off that did not come from the builder — an image link on a
 FamilySearch record, the shape that session hit — is logged in the same shape
 by the `search-external-sites` agent itself.
+
+### 2.4 `externalCollections` — counts of the stored curated collections
+
+Present only when the project holds `external-collections.json` (written by
+`external_links_search`; `external-links-search-tool-spec.md`, "Stored list"):
+
+```typescript
+externalCollections?: {
+  [place: string]: { total: number, byRecordType: { [recordType: string]: number } }
+}
+```
+
+Counts only, never rows — the lists run to hundreds of rows per state, and the
+rows are read with `research_query({section: "external_collections", place,
+recordType})`. `byRecordType` counts a row once per record type it carries, so
+its values can sum past `total`. Places and record types are sorted. The field is
+absent when no list is stored, and also when the file cannot be read: a broken
+cache file must never fail the whole projection.
 
 ## 3. Decisions recorded
 

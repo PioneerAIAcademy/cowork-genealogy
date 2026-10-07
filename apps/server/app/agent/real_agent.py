@@ -151,7 +151,7 @@ def stage_plugin_agents(project_dir: Path) -> list[str]:
 # from eval/ or from the control-plane package (see the module docstring).
 # starting-tree.gedcomx.json is the write-once baseline the tree-encoding gate
 # diffs against (issue #1490); overwriting it would defeat that gate.
-PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 
 # Tools that write a file directly, by `file_path`. Bash is deliberately NOT
 # here: the skills run their stdlib-only scripts through it, and the only way to
@@ -403,7 +403,8 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
                     "To CREATE a new project use project_create, which writes both files "
                     "together; to add to an existing one use research_append, "
                     "research_log_append, tree_edit or tree_correct. These validate "
-                    "before persisting. Direct file writes never validate."
+                    "before persisting. Direct file writes never validate. "
+                    "external-collections.json is written only by external_links_search given a projectPath."
                 ),
             },
         }

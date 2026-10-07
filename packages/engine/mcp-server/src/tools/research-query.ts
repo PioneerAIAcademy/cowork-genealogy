@@ -24,6 +24,7 @@
 // support is a clear error, not a silent no-op.
 
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
+import { readExternalCollections } from "../utils/external-collections-store.js";
 
 const MAX_ITEMS = 50;
 
@@ -40,7 +41,15 @@ export const RESEARCH_QUERY_SECTIONS = [
   "proof_summaries",
   "evaluations",
   "localities",
+  "external_collections",
 ] as const;
+
+/** Served from `external-collections.json`, not `research.json`: the curated
+ *  external collections `external_links_search` keeps per place. Deliberately NOT
+ *  a schema section (see external-links-search-tool-spec.md, "Stored list"), so it
+ *  is not in RESEARCH_QUERY_OPTIONAL_SECTIONS either. Its items are the stored rows,
+ *  each carrying its own `place`. */
+export const EXTERNAL_COLLECTIONS_SECTION = "external_collections";
 
 export type ResearchQuerySection = (typeof RESEARCH_QUERY_SECTIONS)[number];
 
@@ -91,6 +100,10 @@ export interface ResearchQueryInput {
   status?: string;
   targetId?: string;
   focus?: string;
+  /** external_collections: the place and every enclosing jurisdiction. */
+  place?: string;
+  /** external_collections: case-insensitive substring of a row's record type. */
+  recordType?: string;
   /** Pagination, not a filter: skip the first `offset` matches, then return up
    *  to MAX_ITEMS. Applies to every section; absent ⇒ 0 (the whole first page). */
   offset?: number;
@@ -138,7 +151,9 @@ type FilterKey =
   | "planItemId"
   | "status"
   | "targetId"
-  | "focus";
+  | "focus"
+  | "place"
+  | "recordType";
 
 /** One filter's match rule: `field` (or the first-matching of `fields`) on
  *  each item, compared by `mode` — `exact` equality, or `contains` /
@@ -147,7 +162,7 @@ type FilterKey =
 interface FilterRule {
   field?: string;
   fields?: string[];
-  mode: "exact" | "contains" | "contains-any";
+  mode: "exact" | "contains" | "contains-any" | "place-or-enclosing" | "contains-substring-ci";
 }
 
 /** Per-section allow-list of supported filter keys — the whole point of not
@@ -223,6 +238,10 @@ const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<FilterKey, Fi
   // fits inside a single 50-item page. The empty object routes to the
   // "(this section takes no filters)" branch below.
   localities: {},
+  external_collections: {
+    place: { field: "place", mode: "place-or-enclosing" },
+    recordType: { field: "record_types", mode: "contains-substring-ci" },
+  },
 };
 
 const FILTER_KEYS: FilterKey[] = [
@@ -236,12 +255,29 @@ const FILTER_KEYS: FilterKey[] = [
   "status",
   "targetId",
   "focus",
+  "place",
+  "recordType",
 ];
+
+/** "Venango, Pennsylvania, United States" -> itself, "Pennsylvania, United States",
+ *  "United States": a county's lookup also reaches its state's rows. */
+function placeAndEnclosing(place: string): string[] {
+  const parts = place.split(",").map((p) => p.trim()).filter((p) => p !== "");
+  return parts.map((_, i) => parts.slice(i).join(", "));
+}
 
 function matches(item: any, rule: FilterRule, value: string): boolean {
   const fields = rule.fields ?? (rule.field ? [rule.field] : []);
   if (rule.mode === "exact") {
     return item && item[fields[0]] === value;
+  }
+  if (rule.mode === "place-or-enclosing") {
+    return typeof item?.[fields[0]] === "string" && placeAndEnclosing(value).includes(item[fields[0]]);
+  }
+  if (rule.mode === "contains-substring-ci") {
+    const arr = item?.[fields[0]];
+    const needle = value.toLowerCase();
+    return Array.isArray(arr) && arr.some((v) => typeof v === "string" && v.toLowerCase().includes(needle));
   }
   if (rule.mode === "contains") {
     const arr = item?.[fields[0]];
@@ -309,6 +345,34 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
         );
       }
       activeFilters.push({ key, rule, value });
+    }
+
+    if (section === EXTERNAL_COLLECTIONS_SECTION) {
+      let doc;
+      try {
+        doc = await readExternalCollections(projectPath);
+      } catch (e) {
+        if (e instanceof NoProjectError) throw e;
+        throw new ResearchQueryError(e instanceof Error ? e.message : String(e));
+      }
+      // Place-key then row-key order, sorted here rather than read from the file:
+      // a jsonb-backed store does not keep the written key order.
+      const rows = doc
+        ? Object.keys(doc.places)
+            .sort()
+            .flatMap((place) =>
+              (Array.isArray(doc.places[place]?.rows) ? [...doc.places[place].rows] : []).sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)),
+            )
+        : [];
+      const hits = rows.filter((item) => activeFilters.every(({ rule, value }) => matches(item, rule, value)));
+      const from = input.offset ?? 0;
+      return {
+        ok: true,
+        section,
+        count: hits.length,
+        items: hits.slice(from, from + MAX_ITEMS),
+        truncated: hits.length > from + MAX_ITEMS,
+      };
     }
 
     const research = await readJson(projectPath, "research.json");
@@ -382,7 +446,8 @@ export const researchQuerySchema = {
     "related_question_ids, assertionId — matches supporting/contradicting_assertion_ids, " +
     "status), `timelines` (personId — matches person_ids), `proof_summaries` " +
     "(questionId, assertionId — matches supporting_assertion_ids), `evaluations` " +
-    "(targetId, focus), `localities` (no filters). Note for `evaluations`: there is no filter for " +
+    "(targetId, focus), `localities` (no filters), `external_collections` (place — also " +
+    "its enclosing places, recordType). Note for `evaluations`: there is no filter for " +
     "`superseded_by` — narrow with targetId/focus, then pick the entry whose " +
     "`superseded_by` is null yourself.\n" +
     "\n" +
@@ -402,7 +467,9 @@ export const researchQuerySchema = {
       section: {
         type: "string",
         enum: [...RESEARCH_QUERY_SECTIONS],
-        description: "Which research.json array section to query.",
+        description:
+          "Which research.json array section to query. `external_collections`: the curated " +
+          "collections external_links_search stored per place.",
       },
       recordId: { type: "string", description: "assertions: matches record_id." },
       recordRole: { type: "string", description: "assertions: matches record_role." },
@@ -441,6 +508,14 @@ export const researchQuerySchema = {
       focus: {
         type: "string",
         description: "evaluations: matches focus (e.g. 'proof-critique', 'on-demand').",
+      },
+      place: {
+        type: "string",
+        description: "external_collections: a standard place; also matches its enclosing places.",
+      },
+      recordType: {
+        type: "string",
+        description: "external_collections: record-type substring, case-insensitive.",
       },
       offset: {
         type: "number",

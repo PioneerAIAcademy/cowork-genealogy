@@ -83,10 +83,13 @@ Examples:
 | Field | Type | Description |
 |-------|------|-------------|
 | `query` | object | Echo of the input: `{ standardPlace, startYear?, endYear? }`. Only includes the years that were actually provided. |
-| `totalForPlace` | number | Total curated resources FS knows about for the resolved place, **before** the date filter. The only non-derivable count. |
+| `totalForPlace` | number | Distinct curated resources for the fetch (after dedupe, below), **before** the date filter. The only non-derivable count. |
 | `unloggedSearches` | string \| undefined | Present **only** when this project holds staged search responses with no `research.json` log entry. Advisory; serialized before `results`. Contract and rationale: `record-search-tool-spec-v2.md`. |
 | `nilSearchNeedsLog` | string \| undefined | Present **only** when `projectPath` was supplied and the **pre-filter** link set was empty. Keyed on the pre-filter set deliberately: `results` below is host-filtered and capped, so a `host:` search whose links all sit on other hosts returns an empty `results` with a non-null `staged` — claiming a nil there would order a negative finding for a place that has records. |
-| `results` | `{ url, linkText }[]` | URLs FS curates for this place, year-filtered when years are given. **`results.length` IS the matched count** — there is no separate count field. |
+| `results` | `{ url, linkText }[]` | URLs FS curates for this place, deduplicated, year-filtered when years are given, host-filtered when `host` is given, and capped at 200. |
+| `inlineCapped` | `true` \| undefined | Present when the 200 cap cut `results`. The stored list and the staged sidecar hold the full set. |
+| `stored` | `{ file, places }` \| undefined | Present when `projectPath` names a project: `external-collections.json` and the places whose entries this fetch wrote. See "Stored list". |
+| `collectionsError` | string \| undefined | Why the stored list was not written — a write failure, or a `projectPath` that is not a project folder. The search itself succeeded. |
 
 Each `results[]` item:
 
@@ -100,7 +103,7 @@ Example:
 ```json
 {
   "query": { "standardPlace": "France", "startYear": 1880, "endYear": 1950 },
-  "totalForPlace": 221,
+  "totalForPlace": 138,
   "results": [
     {
       "url": "https://www.findmypast.com/search/results?...",
@@ -122,11 +125,30 @@ totalForPlace: 12` reads as "resources exist here, just not in your
 years"). The matched count is simply `results.length` — there is no
 separate field for it, and there is no `totalResults` field.
 
-Pass-through behavior: the output preserves whatever order FS returned
-and does **not** deduplicate. FS itself returns the same URL multiple
-times across categories (e.g. "Search Your French Ancestors" appears
-~11 times for France). Whether to dedupe is a future product decision;
-default is to preserve API truth.
+**Dedupe.** FS returns the same collection many times, once per category,
+with link text, cost and years that disagree between copies and in a different
+order on every call (2026-10-07: 84 of Pennsylvania's 350 distinct URLs come
+back as several disagreeing rows). The tool collapses them to one row per
+(link `place`, collection key):
+
+- **Key.** An Ancestry `/search/collections/<id>` (with or without a trailing
+  slash) or `?dbid=<id>` URL keys on `ancestry:<id>`; a MyHeritage
+  `collection-<id>` URL keys on the URL without its query string (tracking
+  parameters); any other URL keys on itself.
+- **Merge, order-independent.** Candidates are sorted by their whole field tuple
+  (url, link text, cost, content type, years, record type), compared by code
+  unit. Link text, cost and content type come from the first. `record_types` is
+  every candidate's type, sorted. Years: when any candidate is undated the merged
+  row is undated; otherwise it spans the hull of every candidate's range (a
+  one-sided candidate counts as that single year). Either way the year filter
+  includes the merged row whenever it would have included one of its copies. A
+  URL whose query scopes the site's search to the place (`?arrival=_pennsylvania-usa_41`)
+  is kept over one without; tracking and id parameters (`utm_*`, `tr_*`, `s`,
+  `h`, `dbid`, `fbclid`, `gclid`, `ref`) do not count as scoping.
+- **Order.** Stored rows sort by place, then key. The inline copy puts the most
+  specific place first (more comma segments), stable over that order, so a
+  county's own rows lead and the 200 cap falls on the end of its state's list;
+  `inlineCapped` says when it cut.
 
 ---
 
@@ -202,19 +224,23 @@ The `USER_AGENT` constant is duplicated between `collections.ts` and
 when a third tool follows the same pattern (or any other shared FS
 constant emerges), factor into a shared module.
 
-**Pagination (observed via curl, not documented):**
+**One request, never paging.** The tool asks for `offset=0&count=1000`.
+`count=1000` returns a place's whole list (measured 2026-10-07: Pennsylvania
+510/510, Schuylkill 512/512, Venango 510/510, England 753/753; New York 795/795
+earlier); `count=1001` is HTTP 400. Offset paging is wrong here, not merely slow:
+the endpoint's order changes on every call, so pages repeat and skip rows (six
+paged fetches of Venango's 510 gave 337–365 distinct rows).
 
-| Field | Behavior |
-|-------|----------|
-| `count` query param | Page size; `count=100` is honored. |
-| `offset` query param | Returns the next slice. |
-| `totalResults` response field | Total available items for this placeId (the FS API's own field name; surfaced to the caller as `totalForPlace`). |
+**A partial list is an error, never an answer**, and nothing is stored:
 
-The tool is **not paginated at the caller boundary**: there is no
-`pageToken`/`nextPageToken` in the input or output. Internally the
-handler loops fetching pages (using `offset`/`count`) until the place's
-full set is retrieved, then returns the complete client-filtered set in
-one response. For typical places this is 1–5 internal calls.
+| Response | Result |
+|----------|--------|
+| no numeric `totalResults` | error: completeness cannot be told |
+| `totalResults` > 1000 | error naming a smaller scope — a state or county, not a whole country (the United States has 1,998) |
+| `totalResults` > rows returned | error: the list is partial |
+
+A place with no curated links answers `{"totalResults": 0, "collections": []}`,
+which is a complete, empty list.
 
 **Response shape (observed via curl):**
 
@@ -240,8 +266,60 @@ one response. For typical places this is 1–5 internal calls.
 }
 ```
 
-The implementation only reads `url`, `linkText`, `place`, `startYear`,
-`endYear`. The other fields are ignored to keep the output minimal.
+The implementation reads `url`, `linkText`, `place`, `startYear`, `endYear`,
+`record_type`, `cost` and `content_type`; it drops `recordTypeId` and
+`source_url`.
+
+---
+
+## Stored list (`external-collections.json`)
+
+**Decided (lead, 2026-10-05 and 2026-10-06):** with `projectPath`, the tool keeps
+every link it fetched in one host-written file at the project root, beside
+`research.json`, so later steps read real collection ids instead of recalling
+them.
+
+```json
+{ "places": { "<place>": { "rows": [ { "key", "url", "link_text", "record_types",
+  "place", "cost", "content_type", "start_year", "end_year" } ] } } }
+```
+
+- **Keyed by each link's own `place`.** A county lookup returns its state's whole
+  list plus the county's own links, so the rows are split by `place`: the state
+  entry is written once however many of its counties are fetched, and the county
+  entry holds only its own rows. The queried place always gets an entry, `rows:
+  []` when no row carries it, so "fetched, nothing specific to this place" differs
+  from "never fetched". The queried place is the caller's `standardPlace` as
+  given; a bare `"England"` therefore gets an empty entry beside the 753 rows
+  tagged `England, United Kingdom`, and `research_query({place: "England"})`
+  reaches none of them — pass `place_search`'s full name.
+- **The full list, always.** Every row, every year, every host: `startYear`,
+  `endYear` and `host` narrow only the inline copy.
+- **Same bytes for the same data.** Places and rows are sorted, nothing is
+  time-stamped, and the dedupe above is order-independent, so fetching a place
+  again rewrites an identical file (on the file store; a jsonb store keeps values,
+  not bytes). It is pretty-printed through `ProjectStore.writeJson`, because a
+  researcher reads it.
+- **Host-written only.** Written by `src/utils/external-collections-store.ts`
+  under `withProjectLock`, only when `classifyProjectPath` says the folder is a
+  project — never created elsewhere; a `projectPath` that is not a project is
+  reported as `collectionsError`, not skipped silently. A raw model write is
+  denied by the plugin hook and its two copies (`PROTECTED_PROJECT_FILES`). A
+  write failure never fails the search; it is reported as `collectionsError`. A
+  stored file that is not valid JSON, or not this shape, is rebuilt from the
+  fetch; any other read failure fails the write, so it cannot wipe the other
+  places' lists.
+- **Read back** by `research_query({section: "external_collections", place,
+  recordType})` and as per-place counts in `project_context`'s
+  `externalCollections`.
+- **Not validated.** It is API data, not a `research.json` section: no schema,
+  validator, `ownership.json` or `packages/schema` entry.
+
+**Rejected alternatives.** A `research.json` section: the hosted viewer re-sends
+the whole of `research.json` on every write, and the lists are about 136–211 KB
+per state. A hidden `results/.collections/<slug>.json`, and one file per place:
+the researcher should see the list, and per-link `place` keys already dedupe
+overlapping fetches inside one file.
 
 ---
 
@@ -307,11 +385,16 @@ input type `ExternalLinksSearchInput`.
 
 - `externalLinksSearchToolSchema` — MCP tool schema (hand-rolled JSON Schema,
   matching the existing tools' style).
-- `externalLinksSearchTool(input)` — main handler: validate, fetch all pages,
-  filter by overlap, map to `{ url, linkText }`.
-- `fetchPage(placeId, offset)` — one HTTP call with model-actionable
-  error mapping.
-- Internal helpers: `parseYear`, `overlapsRange`.
+- `externalLinksSearchTool(input)` — main handler: validate, fetch once, refuse a
+  partial list, dedupe, store, filter by overlap, map to `{ url, linkText }`.
+- `fetchAll(placeId)` — the one HTTP call (`offset=0&count=1000`) with
+  model-actionable error mapping.
+
+### `packages/engine/mcp-server/src/utils/external-collections-store.ts`
+
+`collectionKey`, `dedupeCollections`, `readExternalCollections`,
+`recordExternalCollections` — the stored list (see "Stored list").
+- Internal helpers: `parseYear`, `includeCollection` (the overlap rule), `includeRow`.
 
 ### `packages/engine/mcp-server/src/index.ts`
 
@@ -320,9 +403,12 @@ CallTool).
 
 ### `packages/engine/mcp-server/tests/tools/external-links-search.test.ts`
 
-12 vitest cases covering happy path, multi-page fetching, error modes, and
-handler-level guards. All use a stubbed global `fetch` — no real
-network.
+Vitest cases covering the happy path, the one-request fetch, the partial-list
+and oversize errors, the inline cap, error modes and handler-level guards. All use
+a stubbed global `fetch` — no real network. `tests/tools/external-links-search-store.test.ts`
+covers the dedupe and the stored list on a real temp project: byte-identical
+re-fetch, county/state split, one state copy across counties, the `research_query`
+section and `project_context` counts.
 
 ### `packages/engine/mcp-server/dev/try-external-links-search.ts`
 
@@ -334,14 +420,14 @@ API. Bypasses the MCP harness for fast debugging. Modeled on
 
 ## Testing
 
-### `tests/tools/external-links-search.test.ts` (15 cases)
+### `tests/tools/external-links-search.test.ts`
 
 | # | Test case | What it verifies |
 |---|-----------|------------------|
 | 1 | Returns matching collections with url + linkText only | Happy path + field stripping |
 | 2 | Includes collections with empty start/end years | Permissive empty-year inclusion (always) |
-| 3 | Fetches every page until totalForPlace is exhausted | Multi-page internal fetch loop |
-| 4 | Stops looping when an empty page is returned | Defensive bail on bad API state |
+| 3 | Fetches the whole list in ONE request (offset=0, count=1000) — never pages | One request; inline cap 200 + `inlineCapped` |
+| 4 | Refuses a response with no totalResults / a partial list / a place over 1,000 | The three completeness errors; nothing stored (`external-links-search-store.test.ts`) |
 | 5 | Returns empty results cleanly for a place that resolves but has no collections | Empty-data path (`results: []`, `totalForPlace: 0`) |
 | 6 | Throws an instructional error on 403 | Rate-limit / WAF error wording |
 | 7 | Throws an instructional error on 429 | Rate-limit error wording |
@@ -380,8 +466,8 @@ cd packages/engine/mcp-server
 npx @modelcontextprotocol/inspector node build/index.js
 ```
 
-- Call `external_links_search({ standardPlace: "France", startYear: 1880, endYear: 1950 })` → `~178` results plus `totalForPlace: 221`.
-- Call with `startYear: 1700, endYear: 1750` → far fewer results (proves the filter works); `totalForPlace` unchanged at `221`.
+- Call `external_links_search({ standardPlace: "France", startYear: 1880, endYear: 1950 })` → 125 deduplicated results plus `totalForPlace: 138` (measured 2026-10-07; the API's raw `totalResults` is larger, since it repeats links).
+- Call with `startYear: 1700, endYear: 1750` → far fewer results (proves the filter works); `totalForPlace` unchanged.
 - Call with `external_links_search({ standardPlace: "France" })` (no years) → all resources for the place; `query` echoes only `{ standardPlace: "France" }`.
 - Call with `startYear: 1950, endYear: 1880` → handler error mentioning `endYear must be greater than or equal to startYear`.
 - Call with `standardPlace: "Nowhere"` → resolution error mentioning `Could not resolve "Nowhere"`.
