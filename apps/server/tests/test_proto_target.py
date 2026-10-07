@@ -281,3 +281,89 @@ def test_aws_recipes_refuse_a_password_in_a_dsn_and_a_missing_variable(bad):
 def test_proto_bounds_aws_runs_bounds_on_the_deployed_target():
     out = make_n("proto-bounds-aws", "PROFILE=fts-int").stdout
     assert "proto/bounds.py --target deployed" in out and "--profile 'fts-int'" in out
+
+
+# ── the deployed-only bounds cases ─────────────────────────────────────────────────────
+
+
+class RecordingTarget:
+    name = "deployed"
+
+    def __init__(self, order: list[str]):
+        self.order = order
+
+    def run(self, tier: str, *commands: str, comment: str = "") -> str:
+        self.order.extend(f"run {tier}: {c}" for c in commands)
+        return ""
+
+    def signal(self, tier: str, action: str) -> None:
+        self.order.append(f"signal {tier} {action}")
+
+    def events(self, tier: str) -> list[dict]:
+        return []
+
+
+def _case_stack(monkeypatch, order: list[str]):
+    monkeypatch.setattr(bounds, "TARGET", RecordingTarget(order))
+    monkeypatch.setattr(bounds, "fresh_session", lambda ctx, client, rep: setattr(rep, "session_id", "sess_1") or "sess_1")
+    monkeypatch.setattr(bounds, "post", lambda ctx, client, rep, text: rep.turn_ids.append("t1") or {"turn_id": "t1"})
+    monkeypatch.setattr(bounds, "reach", lambda ctx, rep, tid, subagent: ("row",))
+    monkeypatch.setattr(bounds, "done", lambda *a, **k: True)
+    monkeypatch.setattr(bounds, "snapshot", lambda ctx, s, t: bounds.TurnSnap(turn_id=t, row=(2, "now", "completed", 1.0)))
+    monkeypatch.setattr(bounds.turn, "one", lambda dsn, sql, params: 1)
+
+
+def _ctx():
+    return bounds.Ctx(base="b", dsn="d", email="e", s3_endpoint="s", fixture="f", session=None, deadline_s=5.0,
+                      kill_after_s=10.0, pause_s=1.0, cap_usd=35.0, price_output=15.0, target="deployed")
+
+
+def test_keepalive_drop_arms_the_deadman_first_drops_both_ways_and_undrops_in_finally(monkeypatch):
+    order: list[str] = []
+    _case_stack(monkeypatch, order)
+
+    def lock_poll(ctx, *a, **k):
+        order.append("poll")
+        raise RuntimeError("driver lost")
+
+    monkeypatch.setattr(bounds, "wait_lock_gone", lock_poll)
+    rep = bounds.Report(case="keepalive_drop")
+    with pytest.raises(RuntimeError, match="driver lost"):
+        bounds.case_keepalive_drop(_ctx(), None, rep)
+    runs = [o for o in order if o.startswith("run worker:")]
+    assert "systemd-run" in runs[0] and f"--on-active={bounds.DEADMAN_S}" in runs[0], "the dead-man is armed first"
+    assert any("out tcp dport 5432 drop" in r for r in runs) and any("in tcp sport 5432 drop" in r for r in runs), runs
+    assert order[-2:] == [f"run worker: {bounds.NFT_UNDROP[0]}", f"run worker: {bounds.NFT_UNDROP[1]}"], \
+        "the drop is removed even when the case dies mid-poll"
+
+
+def test_the_lock_poll_reads_the_attempt_lock_namespace():
+    from proto import grants
+
+    assert bounds.ATTEMPT_LOCK_NS == grants.ATTEMPT_LOCK_NS
+    assert "l.locktype = 'advisory'" in bounds.ATTEMPT_LOCK_SQL and "l.classid = %s" in bounds.ATTEMPT_LOCK_SQL
+
+
+def test_wait_lock_gone_reports_seconds_to_disappearance(monkeypatch):
+    counts = iter([1, 1, 0])
+    monkeypatch.setattr(bounds.turn, "one", lambda dsn, sql, params: next(counts))
+    monkeypatch.setattr(bounds.time, "sleep", lambda s: None)
+    assert bounds.wait_lock_gone(_ctx(), deadline_s=60, every_s=5) is not None
+
+
+def test_sigterm_real_signals_term_over_the_target(monkeypatch):
+    order: list[str] = []
+    _case_stack(monkeypatch, order)
+    monkeypatch.setattr(bounds, "worker_events", lambda: [{"ev": "shutdown", "answered": ["t1"]}])
+    monkeypatch.setattr(bounds, "sdk_of", lambda ctx, s: "sdk")
+    monkeypatch.setattr(bounds, "max_entry", lambda ctx, sdk: 1)
+    rep = bounds.Report(case="sigterm_real")
+    bounds.case_sigterm_real(_ctx(), None, rep)
+    assert "signal worker term" in order
+    assert ("sigterm_real: ev=shutdown names the turn", True, "") in rep.checks
+
+
+def test_deployed_only_cases_refuse_compose():
+    args = bounds.build_parser().parse_args(["--case", "keepalive_drop"])
+    with pytest.raises(ValueError, match="--target deployed"):
+        bounds.make_ctx(args, None)
