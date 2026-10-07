@@ -716,8 +716,8 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // `tools:` is exact-match restrictive, so copying that one-entry list would
   // have spawned an agent that cannot read project state — and, because one
   // entry resolves, the runtime's zero-tools refusal would NOT have fired.
-  // `Read` is required by the narration line, which reads
-  // researcher_profile.narration_guidance out of research.json directly.
+  // `Read` is required for tree.gedcomx.json (persons' dates, places and
+  // sources); the body forbids reading research.json with it.
   "question-selection.md": {
     tools: ["Read", "project_context", "research_append", "research_query"],
     denies: [],

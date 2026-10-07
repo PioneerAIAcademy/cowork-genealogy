@@ -325,7 +325,7 @@ something you wait for — their answer arrives as the next message.
    that are easy to consider "settled" once a later, more interesting
    search captures your attention. They are not settled until each has
    a linked assertion or an explicit reason it needs none. New evidence may reveal new
-   questions — return to `question-selection`. Resolved conflicts may
+   questions — return to `@plugin:question-selection`. Resolved conflicts may
    unblock `proof-conclusion`. Do not assume the chain is linear; the
    same sub-skill may be invoked multiple times across the run. Do not
    stop after invoking just one sub-skill — that's the start of the
