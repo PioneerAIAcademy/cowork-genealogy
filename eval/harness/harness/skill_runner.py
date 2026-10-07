@@ -1078,6 +1078,36 @@ async def run_skill(
                 if skill_name in _stub_skills:
                     return stub_denial(skill_name, _stub_skills[skill_name])
         elif (
+            tool_name in SPAWN_TOOL_NAMES
+            and not input_data.get("agent_id")
+            and (_spawned := (input_data.get("tool_input") or {}).get("subagent_type"))
+            in _short_circuit
+        ):
+            # Negative-test routing short-circuit, agent form. The Skill branch
+            # above is the original; this is its twin for a callee that has since
+            # been CONVERTED to an agent. Without it such a negative can never
+            # resolve -- `skills_invoked` records Skill calls only, so the run ends
+            # with an empty list and the routing verdict reads as "went nowhere".
+            # That is how `ut_init_project_009` broke: project-status became an
+            # agent in #3092 (2026-10-03) and the next init-project run was three
+            # days later. The stub path already had this twin (issue #2825); the
+            # routing path did not.
+            skills_invoked.append(_spawned)
+            routing_resolved["v"] = True
+            routing_resolved["tool_use_id"] = tool_use_id
+            return {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "deny",
+                    "permissionDecisionReason": (
+                        f"negative-test routing to agent {_spawned!r} "
+                        f"observed; verdict decided, stopping"
+                    ),
+                },
+                "continue_": False,
+                "stopReason": "routing_resolved",
+            }
+        elif (
             stop_at_stub
             and tool_name in SPAWN_TOOL_NAMES
             and not input_data.get("agent_id")
@@ -1409,6 +1439,11 @@ async def run_skill(
                         if (
                             block.name == "Skill"
                             and read_skill_tool_input(dict(block.input or {}))[0]
+                            in _short_circuit
+                        ) or (
+                            # the agent twin of the line above, for a converted callee
+                            block.name in SPAWN_TOOL_NAMES
+                            and (dict(block.input or {})).get("subagent_type")
                             in _short_circuit
                         ) or (
                             routing_resolved["tool_use_id"] is not None

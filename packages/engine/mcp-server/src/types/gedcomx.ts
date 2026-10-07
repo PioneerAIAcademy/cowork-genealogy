@@ -70,6 +70,17 @@ export interface GedcomXNote {
 
 export interface GedcomXSourceReference {
   description?: string;
+  /**
+   * The bare id of the description this ref points at.
+   *
+   * FamilySearch sends it alongside `description` on person-level refs, and it is
+   * what makes a relative's ref usable: `description` there is a full URL to a
+   * description the tree-read body does not contain, while this is the id that
+   * description carries once fetched. Measured 2026-09-30 on two real subjects —
+   * present on 102/102 and 77/77 URL-form refs, and equal to the URL's last
+   * segment in every one (`dev/probe-relative-sources.json`).
+   */
+  descriptionId?: string;
   qualifiers?: GedcomXQualifier[];
 }
 
