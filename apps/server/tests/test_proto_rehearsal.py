@@ -1331,6 +1331,48 @@ def test_probe_reports_an_update_beanstalk_rejected_and_still_restores(stack):
     assert len(fake.calls_to("elasticbeanstalk", "update-environment")) == 2, "the restore still ran"
 
 
+def test_pause_scales_the_tiers_first_then_stops_rds_and_the_bastion(stack):
+    env, fake, _ = stack
+    fake.reset()
+    rc, lines = run(env, fake, "pause", "--billed")
+    assert rc == 0, lines[-5:]
+    ops = fake.ops()
+    scaled = [a for a in fake.calls_to("elasticbeanstalk", "update-environment")]
+    assert len(scaled) == 3
+    for call in scaled:
+        opts = {(o["Namespace"], o["OptionName"]): o["Value"] for o in fake.file_of(call, "--option-settings")}
+        assert opts == {(rh.ASG_NS, "MinSize"): "0", (rh.ASG_NS, "MaxSize"): "0"}, opts
+    assert ops.index(("rds", "stop-db-instance")) > max(i for i, o in enumerate(ops) if o == ("elasticbeanstalk", "update-environment"))
+    assert ("ec2", "stop-instances") in ops
+
+
+def test_a_paused_stack_shows_no_asg_drift_but_still_shows_other_drift(stack):
+    env, fake, _ = stack
+    run(env, fake, "pause", "--billed")
+    for settings in fake.env_settings.values():
+        if (rh.ASG_NS, "MinSize") in settings:
+            settings[(rh.ASG_NS, "MinSize")] = settings[(rh.ASG_NS, "MaxSize")] = "0"
+    rc, lines = run(env, fake, "status")
+    assert rc == 0, [line for line in lines if "drift" in line]
+    fake.env_settings["genealogy-u13-worker"][(rh.SQSD_NS, "MaxRetries")] = "1"
+    rc, lines = run(env, fake, "status")
+    assert rc == 1 and any("MaxRetries" in line for line in lines)
+
+
+def test_resume_starts_rds_before_the_bastion_and_the_tiers(stack):
+    env, fake, _ = stack
+    run(env, fake, "pause", "--billed")
+    fake.reset()
+    rc, lines = run(env, fake, "resume", "--billed")
+    assert rc == 0, lines[-5:]
+    ops = fake.ops()
+    first_scale = ops.index(("elasticbeanstalk", "update-environment"))
+    assert ops.index(("rds", "start-db-instance")) < ops.index(("ec2", "start-instances")) < first_scale
+    for call in fake.calls_to("elasticbeanstalk", "update-environment"):
+        opts = {(o["Namespace"], o["OptionName"]): o["Value"] for o in fake.file_of(call, "--option-settings")}
+        assert opts == {(rh.ASG_NS, "MinSize"): "1", (rh.ASG_NS, "MaxSize"): "1"}
+
+
 # ── dry-run ───────────────────────────────────────────────────────────────────────────
 
 
