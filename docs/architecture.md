@@ -670,8 +670,9 @@ Architecturally:
   return `noProjectResult()` (`"read"` for a read or a preview), so a user who
   is not in a research project gets an answer rather than `research.json not
   found in projectPath`. Then add the tool to `CALLS` in
-  `tests/tools/no-project.test.ts` — that list is hand-maintained and nothing
-  derives it, so a tool left out is uncovered. Read and write through the
+  `tests/tools/no-project.test.ts` — that list is backed by a derivation test
+  that traces each tool's imports transitively and flags any project-reading tool
+  absent from both `CALLS` and `OPTIONAL_PROJECT_TOOLS`. Read and write through the
   `project-io` / `results-staging` / `image-store` helpers or `getProjectStore()`
   (`src/store/`), with project-relative refs — never `fs` and never an absolute
   path. A tool that imports `fs` fails `tests/packaging/no-fs-outside-store.test.ts`,
