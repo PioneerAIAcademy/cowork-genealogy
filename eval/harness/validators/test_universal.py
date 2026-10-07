@@ -1954,6 +1954,8 @@ def report_no_gps_jargon_in_response(text_response, test):
 # only test_universal.py and test_<skill>.py. A validator in test_research.py can
 # run in the `research` suite and nowhere else, and the population for this clause
 # (a turn that extracts) is not in that suite at all.
+from validators_lib import clauses, names_in, new_log_entries
+
 _PERSON_KEYS = ("surname", "given", "givenName")
 # Used only when the query names no person: fulltext (`keywords`), record_read
 # (`recordId`), image tools, and father-only or spouse-only searches. 12 of the
@@ -1993,8 +1995,6 @@ def _unsaved_finds(before_state, after_state):
     scenarios, because "found, not yet extracted" is the ordinary mid-research
     state the router picks up on the NEXT job turn.
     """
-    from validators_lib import new_log_entries
-
     after = ((after_state or {}).get("research_json") or {}) or {}
     referenced = {
         a.get("log_entry_id")
@@ -2024,8 +2024,6 @@ def test_an_unsaved_find_is_named(test, before_state, after_state, text_response
     Cornelius Driscoll: 1880 census. I have not yet looked for his wife" carries
     "not yet" in a different sentence about a different thing.
     """
-    from validators_lib import clauses, names_in
-
     if "unsaved-extraction" not in (test.get("tags") or []):
         pytest.skip("not an unsaved-extraction test")
 

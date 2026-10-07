@@ -279,3 +279,42 @@ def test_a_query_with_no_person_key_can_still_be_named(query, reply):
 )
 def test_names_are_matched_after_folding(surname, reply):
     validator(TAGGED, _state(), _state(log=[_entry(query={"surname": surname})]), reply)
+
+
+def test_the_validator_loads_the_way_the_runner_loads_it():
+    """Regression: validator_runner._import_validator_module puts the validators
+    dir on sys.path only for the duration of the import and removes it in a
+    `finally`. A deferred `from validators_lib import ...` inside a validator
+    therefore raises ModuleNotFoundError at CALL time, not import time, which is
+    invisible to a direct pytest run that already has the dir on sys.path.
+
+    This shipped once and failed ut_research_016 in a paid run.
+    """
+    import sys
+    from harness.validator_runner import _import_validator_module
+
+    root = next(
+        q for q in Path(__file__).resolve().parents
+        if (q / "eval/harness/validators").is_dir()
+    )
+    vdir = root / "eval/harness/validators"
+    saved = [p for p in sys.path if p == str(vdir)]
+    for p in saved:
+        sys.path.remove(p)
+    # sys.modules too, or the deferred import is served from cache and this test
+    # passes WITH the bug in place. It did, on the first attempt.
+    cached = {k: sys.modules.pop(k) for k in ("validators_lib",) if k in sys.modules}
+    try:
+        mod = _import_validator_module(vdir / "test_universal.py", "probe_universal")
+        assert str(vdir) not in sys.path, "runner left the dir on sys.path"
+        with pytest.raises(pytest.skip.Exception):
+            mod.test_an_unsaved_find_is_named(
+                {"tags": []}, _state(), _state(log=[_entry()]), "x"
+            )
+        mod.test_an_unsaved_find_is_named(
+            TAGGED, _state(), _state(log=[_entry()]),
+            "The Cornelius Driscoll find was not saved.",
+        )
+    finally:
+        sys.path.extend(saved)
+        sys.modules.update(cached)
