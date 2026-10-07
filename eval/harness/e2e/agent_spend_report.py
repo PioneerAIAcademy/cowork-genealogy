@@ -33,7 +33,8 @@ name match presented as attribution is how a confident wrong number gets quoted.
 
 **Price basis: corpus.** Costs come from `pricing.estimate_cost_usd`, a flat
 Sonnet table with cache writes at the 1-hour rate — the basis that calibrates
-recorded cost to ~0.86x over 169 runs. The production (5-minute) basis is ~8%
+recorded cost to ~0.86x (`make e2e-corpus SINCE=all CALIBRATE=1` prints the
+current figure and its run count). The production (5-minute) basis is ~8%
 lower. State the basis next to any figure lifted out of here.
 
 **Runs written before #2582 carry no `subagents[].usage`** and are counted as

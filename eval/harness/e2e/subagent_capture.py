@@ -76,6 +76,24 @@ def _bare_tool_name(name: str) -> str:
     return name.split("__")[-1] if name.startswith("mcp__") else name
 
 
+def transcript_agent_id(jsonl_path: Path) -> str | None:
+    """`.../agent-<id>.jsonl` -> `<id>`; None when the name is not that shape.
+
+    `<id>` is the SDK's subagent id, which is exactly the `agent_id` the parent's
+    PreToolUse hook records for a streamed subagent call (`input_data["agent_id"]`
+    in `orchestrator.pretool_hook`). Verified across the committed corpus: every
+    `subagents[].transcript` id matches a `tool_calls[].agent_id` and none
+    coincide by accident. That equality is the only key shared by a transcript
+    and the run log's `tool_calls`, and it is what lets the backfill tell a
+    synchronous agent — already in `tool_calls` under this id — from a background
+    one that is not.
+    """
+    stem = jsonl_path.stem  # agent-<id>, with the `.jsonl` suffix already removed
+    if not stem.startswith("agent-"):
+        return None
+    return stem[len("agent-") :] or None
+
+
 def _block_label(block: dict[str, Any]) -> str:
     """One short label per content block, e.g. `thinking`, `tool_use:record_read`."""
     btype = block.get("type", "?")
@@ -167,6 +185,69 @@ def parse_jsonl(path: Path, errors: str = "strict") -> list[dict[str, Any]]:
         if isinstance(rec, dict):
             records.append(rec)
     return records
+
+
+def pair_tool_calls(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Pair each `tool_use` block with its `tool_result` within ONE subagent transcript.
+
+    A background subagent's tool calls never reach the e2e run log's `tool_calls`:
+    that list is built from the PARENT query's message stream
+    (`orchestrator._consume`), and a background agent's messages flow through its
+    own sub-session, not the parent's. This recovers them from the transcript the
+    agent did leave behind — the same `agent-<id>.jsonl` `collect_subagents`
+    already reads for `subagents[].turns`. Source is the transcript, not the
+    stream.
+
+    Returns one dict per `tool_use`, in transcript order:
+    `{tool, args, tool_use_id, content, is_error}` — RAW and un-summarized, so the
+    caller (`orchestrator.backfill_background_tool_calls`) can apply the SAME
+    `_summarize_tool_response` / `_raw_result_chars` helpers the main stream uses
+    and build a byte-identical entry. `tool` is the FULL name
+    (`mcp__genealogy__record_read`), never bare-ified, and `args` comes from the
+    block's `input` key — both to match the synchronous entry exactly.
+
+    A `tool_use` whose result never arrived (a run killed mid-call) keeps
+    `content=None` and `is_error=False`, mirroring a main-stream entry whose
+    `ToolResultBlock` never came. Never raises — a malformed record is skipped.
+    """
+    by_id: dict[str, dict[str, Any]] = {}
+    ordered: list[dict[str, Any]] = []
+    for rec in records:
+        if not isinstance(rec, dict):
+            continue
+        message = rec.get("message")
+        if not isinstance(message, dict):
+            continue
+        content = message.get("content")
+        if not isinstance(content, list):
+            continue
+        for block in content:
+            if not isinstance(block, dict):
+                continue
+            btype = block.get("type")
+            if btype == "tool_use":
+                name = block.get("name")
+                if not isinstance(name, str):
+                    continue
+                args = block.get("input")
+                entry = {
+                    "tool": name,
+                    "args": args if isinstance(args, dict) else {},
+                    "tool_use_id": block.get("id"),
+                    "content": None,
+                    "is_error": False,
+                }
+                ordered.append(entry)
+                tuid = block.get("id")
+                if isinstance(tuid, str):
+                    by_id[tuid] = entry
+            elif btype == "tool_result":
+                tuid = block.get("tool_use_id")
+                entry = by_id.get(tuid) if isinstance(tuid, str) else None
+                if entry is not None:
+                    entry["content"] = block.get("content")
+                    entry["is_error"] = block.get("is_error") is True
+    return ordered
 
 
 def _as_int(value: Any) -> int:

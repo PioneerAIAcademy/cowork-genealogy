@@ -86,19 +86,32 @@ from e2e.mcp_health import (
     tool_search_miss_streak,
     unavailable_message,
 )
-from e2e.result import E2eResult, timestamp_slug, write_result_files
+from e2e.result import (
+    E2eResult,
+    result_message_covers_last_query_only,
+    timestamp_slug,
+    write_result_files,
+)
 from e2e.stop_checker import (
     COUNTED_TERMINAL_REASONS,
     classify_hand_back,
     derive_stop_reason,
-    hand_back_outcome,
+    hand_back_key,
     project_completed,
     read_research_json,
     read_tree_json,
     should_continue_run,
     terminal_reason,
 )
-from e2e.subagent_capture import collect_subagents, find_session_transcript
+from e2e.subagent_capture import (
+    collect_subagents,
+    find_session_transcript,
+    find_subagent_transcripts,
+    pair_tool_calls,
+    parse_jsonl,
+    sdk_cache_dir,
+    transcript_agent_id,
+)
 from e2e import judge as judge_module
 
 
@@ -1388,6 +1401,101 @@ def apply_tool_result(entry: dict[str, Any], block: ToolResultBlock, summary: st
     entry["result_chars"] = _raw_result_chars(block.content)
 
 
+# The spawn announcement an `Agent`/`Task` result carries for a background
+# subagent: "Async agent launched … agentId: <id>". This is the canonical way to
+# identify a background agent — the same signal issue #3045's measurement recipe
+# uses — and the only one that distinguishes it from a synchronous agent whose
+# stream entries happen to carry no `agent_id`.
+_ASYNC_AGENT_ID = re.compile(r"Async agent launched.*?agentId:\s*([A-Za-z0-9]+)", re.S)
+
+
+def backfill_background_tool_calls(
+    workspace: Path, tool_calls: list[dict[str, Any]]
+) -> None:
+    """Append a background subagent's tool calls to `tool_calls`, from its transcript.
+
+    A synchronous subagent's calls are recorded by `_consume` from the parent
+    message stream (with `agent_id`/`agent_type` joined from
+    `caller_by_tool_use_id`). A BACKGROUND subagent ("Async agent launched") runs
+    in its own sub-session whose messages never flow through that stream, so its
+    calls were missing from `tool_calls` while its turns still showed up in
+    `subagents[].turns` — the run log contradicted itself (#3045).
+
+    Source is the transcript, not the stream (`subagent_capture.pair_tool_calls`),
+    so these entries are appended AFTER the main-stream entries and `tool_calls`
+    is therefore NOT chronological across agents. Mutating in place is safe only
+    here: every consumer that reads `tool_calls` by order, index or length —
+    `narration`'s `tool_calls_before`, the guardrail shadow-window scanners
+    (`find_unguarded_protected_writes`, `recently_succeeded`) and
+    `same_person_scored_ids` — has already run by this call site. These entries
+    are therefore RECORDED, not re-scored; they were invisible to those scanners
+    before this existed and remain so.
+
+    Only agents the log ANNOUNCED as background are backfilled — those with an
+    `Agent`/`Task` result reading "Async agent launched … agentId: <id>". A
+    synchronous agent is therefore never backfilled, even when its stream entries
+    carry no `agent_id` (an entry whose result never arrived at a cap/timeout, or
+    a call to a nonexistent tool refused before the hook runs, both leave
+    `agent_id` unset — so an "already in `existing`" test alone would re-add them).
+    A transcript already present in `existing` is skipped too, before parsing,
+    which keeps the large synchronous transcripts from being re-read. If a
+    background announcement is ever absent, that agent stays missing, which is the
+    behaviour today.
+
+    Backfilled entries carry `agent_id` (from the filename) and `agent_type` (from
+    `meta.json`) even when the call's result never arrived — unlike the sync
+    "result never came" entry, which carries neither; `docs/specs/e2e-test-spec.md`
+    §8.1.1 records that difference.
+
+    Best-effort — never raises, matching `collect_subagents`: a missing or
+    unparseable transcript leaves `tool_calls` exactly as it was.
+    """
+    try:
+        background = {
+            m.group(1)
+            for tc in tool_calls
+            if tc.get("tool") in ("Agent", "Task")
+            for m in _ASYNC_AGENT_ID.finditer(str(tc.get("response_summary") or ""))
+        }
+        existing = {tc["agent_id"] for tc in tool_calls if tc.get("agent_id")}
+        for jsonl, meta_path in find_subagent_transcripts(workspace):
+            agent_id = transcript_agent_id(jsonl)
+            if agent_id not in background or agent_id in existing:
+                continue
+            records = parse_jsonl(jsonl, errors="replace")
+            if not records:
+                continue
+            agent_type: str | None = None
+            if meta_path is not None:
+                try:
+                    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+                    meta = None
+                if isinstance(meta, dict):
+                    agent_type = meta.get("agentType")
+            for raw in pair_tool_calls(records):
+                content = raw.get("content")
+                tool_calls.append(
+                    {
+                        "tool": raw["tool"],
+                        "args": raw["args"],
+                        "response_summary": (
+                            _summarize_tool_response(content, tool_name=raw["tool"])
+                            if content is not None
+                            else None
+                        ),
+                        "is_error": raw["is_error"],
+                        "result_chars": (
+                            _raw_result_chars(content) if content is not None else 0
+                        ),
+                        "agent_id": agent_id,
+                        "agent_type": agent_type,
+                    }
+                )
+    except Exception:  # noqa: BLE001 — capture must never fail an otherwise-loggable run
+        return
+
+
 def _timeline_tool_label(tool: str, args: dict | None) -> str:
     """Human-legible label for a `timeline` entry's tool-names list.
 
@@ -1551,7 +1659,7 @@ def merge_whole_run_usage(
     residual (total minus main) rather than a measurement. Appendix A3 item 4 of
     that plan is a published claim that was nothing but this gap restated.
 
-    Four rules, each returning `None` rather than a plausible-but-wrong number,
+    Five rules, each returning `None` rather than a plausible-but-wrong number,
     because a wrong figure here gets compared against real costs from clean runs:
 
     1. **No main-thread token block** -> `(None, None)`. Nothing to add to.
@@ -1566,10 +1674,17 @@ def merge_whole_run_usage(
        summing `subagents[].turns[]`: those are one entry per content *block*, each
        repeating its message's totals, so the sum overstates cache reads by ~2x.
        Unknown is unknown.
-    4. **No subagents at all** -> main's four fields, copied. A run with no
-       delegation, and a run whose capture failed (`subagent_capture_status`
-       non-ok, which yields an empty list), both land here and both are correct:
-       the merged figure equals the main-thread one and nothing errors.
+    4. **No subagents at all** -> main's four fields, copied. A one-query run
+       with no delegation, and a run whose capture failed
+       (`subagent_capture_status` non-ok, which yields an empty list), both land
+       here and both are correct: the merged figure equals the main-thread one
+       and nothing errors. A multi-query run returns at rule 5 first.
+    5. **More than one query** (`result_message_covers_last_query_only`) ->
+       `(None, None)`. The ResultMessage counted the last query only, so the main
+       block is a fraction of the run's and adding the subagents to it would give
+       a figure that looks complete and is not (#3128). Summing each query's
+       ResultMessage would recover almost none of the corpus: a query cut off by a
+       stall never emits one.
 
     The returned dict is always a fresh object carrying exactly
     `pricing.PRICED_FIELDS`, never the caller's inner block and never its extra
@@ -1579,6 +1694,8 @@ def merge_whole_run_usage(
     if not isinstance(usage, dict):
         return None, None
     if usage.get("usage_source") == "streamed_fallback":
+        return None, None
+    if result_message_covers_last_query_only(usage):
         return None, None
     inner = usage.get("usage")
     if not isinstance(inner, dict):
@@ -1930,14 +2047,17 @@ async def _run_agent(
     MAX_RESUME = 2
 
     # Streamed usage accumulator. The SDK's ResultMessage carries the
-    # authoritative duration/turns/cost, but it only arrives on a CLEAN end —
-    # a wall-clock timeout, an inactivity abort or a no-progress stall cuts the
-    # stream before it, so `usage` stayed {} and the run landed in the runlog
-    # with no turns, no duration and no tokens at all. That silently blinded
-    # every `timeout` run (9 of 9 in the corpus as of 2026-07-20) — exactly the
-    # runs whose cost and turn count you most want to see. Accumulating per
-    # AssistantMessage gives a fallback that is always available. See
-    # _fallback_usage below for what is and isn't recoverable this way.
+    # authoritative duration/turns/cost (on a run with more than one query its
+    # duration and turns cover the last query and its cost the last CLI
+    # process, see `result_message_covers_last_query_only`), but it only
+    # arrives on a CLEAN end — a wall-clock timeout, an inactivity abort or a
+    # no-progress stall cuts the stream before it, so `usage` stayed {} and the
+    # run landed in the runlog with no turns, no duration and no tokens at all.
+    # That silently blinded every `timeout` run (9 of 9 in the corpus as of
+    # 2026-07-20) — exactly the runs whose cost and turn count you most want to
+    # see. Accumulating per AssistantMessage gives a fallback that is always
+    # available. See _fallback_usage below for what is and isn't recoverable this
+    # way.
     streamed: dict[str, dict[str, int]] = {}
     # Thread tag per accumulated message, keyed the same way `streamed` is.
     # Declared HERE, beside `streamed` — not inside `_consume` or its
@@ -2358,11 +2478,12 @@ async def _run_agent(
         research = read_research_json(workspace)
 
         # Classify the hand-back BEFORE the gate, so the stop that actually ENDS a run
-        # is not invisible — it returns {} below and used to be counted nowhere.
+        # is not invisible — it returns {} below and used to be counted nowhere. The
+        # class is telemetry only; the reply below never depends on it (U17).
         # Only the agent's last words count, and only when no tool call landed after
         # them: 2 of the 71 committed narration nudges have tool calls between the last
-        # TextBlock and the nudge, and post-#2292 a hand-back narrated before a batch of
-        # calls would otherwise read as `step` on a turn that ended silently.
+        # TextBlock and the nudge, and a hand-back narrated before a batch of calls
+        # would otherwise read as `step` on a turn that ended silently.
         last_text = None
         for entry in reversed(narration):
             # `blocked` is a hook-deny message, not the agent's words — and a
@@ -2395,14 +2516,14 @@ async def _run_agent(
                 mcp_unavailable=mcp_state["unavailable"],
             )
             if reason in COUNTED_TERMINAL_REASONS:
-                key, _ = hand_back_outcome(hand_back, project_is_completed=completed_now)
+                key = hand_back_key(hand_back, project_is_completed=completed_now)
                 hand_back_classes[key] = hand_back_classes.get(key, 0) + 1
             else:
                 key = f"terminal_{reason}"
                 hand_back_classes[key] = hand_back_classes.get(key, 0) + 1
             return {}
 
-        counter_key, reply = hand_back_outcome(hand_back, project_is_completed=completed_now)
+        counter_key = hand_back_key(hand_back, project_is_completed=completed_now)
         hand_back_classes[counter_key] = hand_back_classes.get(counter_key, 0) + 1
         continue_nudges["n"] += 1
         last_nudge_activity_count["n"] = activity_count["n"]
@@ -2423,18 +2544,12 @@ async def _run_agent(
             f"{fixture.caps.max_continue_nudges}] agent yielded "
             f"({counter_key}); resuming"
         )
-        # A well-formed hand-back is the skill doing what #2292 asks of it, and in an
-        # e2e run the harness IS the user — so it gets the researcher's answer, "Yes.",
-        # not a scolding. `reply` is None for a silent stop, which keeps the existing
-        # block-reason semantics below.
-        #
-        # This wording deliberately does NOT tell the agent to emit
-        # "Next: <step>. Continue?": research/SKILL.md:53-55 calls that a failure in
-        # autonomous mode, so instructing it here would recreate the harness-vs-skill
-        # contradiction this card's sequencing exists to prevent, with the sides
-        # swapped. #2292 flips this wording when it lands the prose.
-        if reply is not None:
-            return {"decision": "block", "reason": reply}
+        # One reply for every vetoed stop, whatever its class: the worker's
+        # CONTINUE_REASON (apps/server/app/agent/continue_policy.py), verbatim. A
+        # `Next: <step>. Continue?` is the agent asking the patron, which the worker
+        # vetoes with these words too; answering it "Yes." here gave the e2e grade a
+        # Stop policy the prototype does not run (U17). This tree cannot import the
+        # constant, so `test_continue_policy_parity.py` pins the copy.
         return {
             "decision": "block",
             "reason": (
@@ -3053,12 +3168,15 @@ async def _run_agent(
             f" (was: {error})"
         )
 
-    # A ResultMessage populates `usage` with the SDK's authoritative numbers.
-    # Every abort path (wall-clock timeout, inactivity silence, no-progress
-    # stall) cuts the stream before it, leaving `usage` empty — so fall back to
-    # what the stream already told us. `usage_source` marks which one you're
-    # reading: a fallback block has exact token counts but a null cost, and
-    # must not be compared against a clean run's `total_cost_usd`.
+    # A ResultMessage populates `usage` with the SDK's authoritative numbers,
+    # except on a run with more than one query, where its tokens, turns and
+    # duration cover the last query and its cost and API time the last CLI
+    # process (`result_message_covers_last_query_only`). Every abort path (wall-clock
+    # timeout, inactivity silence, no-progress stall) cuts the stream before it,
+    # leaving `usage` empty — so fall back to what the stream already told us.
+    # `usage_source` marks which one you're reading: a fallback block has exact
+    # token counts but a null cost, and must not be compared against a clean run's
+    # `total_cost_usd`.
     result_message_seen = "num_turns" in usage
     if not result_message_seen:
         usage = _fallback_usage(
@@ -3576,6 +3694,11 @@ async def run_e2e_test(
         # surfaces a runaway-thinking subagent freeze directly in the committed
         # runlog, which tool_calls alone can't show. See subagent_capture.py.
         subagents, subagent_capture_status = collect_subagents(workspace)
+        # #3045 — a background ("Async agent launched") subagent's tool calls never
+        # reach the message stream `_consume` builds `tool_calls` from, so recover
+        # them here from the same transcripts `collect_subagents` reads and append
+        # them (out of chronological order; see backfill_background_tool_calls).
+        backfill_background_tool_calls(workspace, tool_calls)
 
         # The whole-run figure (#2582). `usage["usage"]` is main-thread only, so
         # until this merge every cost figure over this corpus was main plus a
