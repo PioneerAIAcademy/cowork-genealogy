@@ -627,8 +627,8 @@ Narrate from the tool's summary ("logged as log_006; retained 3 results"); do no
 **Do this now, in the same turn as Step 5 — before Step 7 or presenting anything.** A logged search with no matching plan-item status update is an incomplete step, not a deferred one: if you executed a search against a plan item, this call happens before you do anything else with the results.
 
 Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `entryId`, and `fields: { status: "..." }`:
-- `in_progress`: Search executed — work continues downstream in record-extraction. Use whenever records were found to pass on, OR the search was exhausted with nil results and re-planning may be needed.
-- `skipped`: The search was determined to be unnecessary.
+- `in_progress`: Search executed — work continues downstream in record-extraction. Use whenever records were found to pass on, OR the search was exhausted with nil results and re-planning may be needed. **A nil result that escalates to external sites (Step 7) stays `in_progress` until the external capture is reviewed — never `skipped` or `completed`, which would falsely claim the paywalled search already happened.**
+- `skipped`: The search was determined to be unnecessary **and never run**. Only for a search you chose not to execute — never for one you ran, including one that returned nil.
 
 **Do not** set status to `completed` from this skill — that is set by record-extraction once assertions have been created.
 

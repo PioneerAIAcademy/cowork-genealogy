@@ -9418,6 +9418,126 @@ describe("research_append — person_evidence requires a recorded score", () => 
 });
 
 
+describe("research_append — capture-pending plan item not terminal (#1226, #2484)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-capture-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const ANCESTRY_URL =
+    "https://www.ancestry.com/search/collections/1850usfedcen/?name=Patrick_Flynn";
+
+  /** A project whose single plan item's latest log entry is an external-site
+   *  handoff. `captureReceived` toggles whether that handoff's capture arrived;
+   *  `extraLog` appends later entries (a FamilySearch hit, or a capture arrival
+   *  under a null plan_item_id). */
+  function captureResearch(itemStatus: string, captureReceived: boolean, extraLog: any[] = []) {
+    const r = baseResearch();
+    r.questions = [validQuestion("q_001")];
+    r.plans = [
+      validPlan("pl_001", "q_001", "active", [{ ...seededPlanItem("pli_001"), status: itemStatus }]),
+    ];
+    r.log = [
+      {
+        id: "log_001",
+        plan_item_id: "pli_001",
+        performed: "2026-05-01T10:15:00Z",
+        tool: "external_site",
+        query: { surname: "Flynn" },
+        outcome: "negative",
+        results_examined: 0,
+        results_ref: null,
+        external_site: { site: "ancestry", url_generated: ANCESTRY_URL, capture_received: captureReceived },
+      },
+      ...extraLog,
+    ];
+    return r;
+  }
+  async function writeProject(research: any) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  }
+  const setStatus = (status: string) => ({
+    projectPath: dir,
+    section: "plan_items" as const,
+    op: "update" as const,
+    planId: "pl_001",
+    entryId: "pli_001",
+    fields: { status },
+  });
+
+  it("refuses 'skipped' while the latest external-site search awaits a capture", async () => {
+    await writeProject(captureResearch("in_progress", false));
+    const errs = failure(await researchAppend(setStatus("skipped") as any)).errors.join(" ");
+    expect(errs).toMatch(/pli_001/);
+    expect(errs).toMatch(/awaiting a capture/);
+    expect(errs).toMatch(/#1226/);
+  });
+
+  it("refuses 'completed' in the same state", async () => {
+    await writeProject(captureResearch("in_progress", false));
+    expect((await researchAppend(setStatus("completed") as any)).ok).toBe(false);
+  });
+
+  it("allows 'in_progress' — the correct state while the capture is outstanding", async () => {
+    await writeProject(captureResearch("planned", false));
+    expect(singleOk(await researchAppend(setStatus("in_progress") as any))).toBeTruthy();
+  });
+
+  it("allows 'skipped' once the handoff's own capture has arrived", async () => {
+    await writeProject(captureResearch("in_progress", true));
+    expect(singleOk(await researchAppend(setStatus("skipped") as any))).toBeTruthy();
+  });
+
+  it("allows 'skipped' when a later arrival (same site+url, null plan_item_id) carries the capture", async () => {
+    await writeProject(
+      captureResearch("in_progress", false, [
+        {
+          id: "log_002",
+          plan_item_id: null,
+          performed: "2026-05-02T10:15:00Z",
+          tool: "external_site",
+          query: { surname: "Flynn" },
+          outcome: "positive",
+          results_examined: 1,
+          results_ref: null,
+          external_site: { site: "ancestry", url_generated: ANCESTRY_URL, capture_received: true },
+        },
+      ]),
+    );
+    expect(singleOk(await researchAppend(setStatus("skipped") as any))).toBeTruthy();
+  });
+
+  it("allows terminal when a later FamilySearch hit, not the handoff, is the item's latest entry", async () => {
+    await writeProject(
+      captureResearch("in_progress", false, [
+        {
+          id: "log_002",
+          plan_item_id: "pli_001",
+          performed: "2026-05-03T10:15:00Z",
+          tool: "record_search",
+          query: { surname: "Flynn" },
+          outcome: "positive",
+          results_examined: 1,
+          results_ref: null,
+          external_site: null,
+        },
+      ]),
+    );
+    expect(singleOk(await researchAppend(setStatus("completed") as any))).toBeTruthy();
+  });
+
+  it("does not fire on a no-op restatement of an already-terminal status (no status change this op)", async () => {
+    await writeProject(captureResearch("skipped", false));
+    const r: any = await researchAppend(setStatus("skipped") as any);
+    expect(JSON.stringify(r.errors ?? [])).not.toContain("awaiting a capture");
+  });
+});
+
+
 describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", () => {
   let dir: string;
   beforeEach(async () => {

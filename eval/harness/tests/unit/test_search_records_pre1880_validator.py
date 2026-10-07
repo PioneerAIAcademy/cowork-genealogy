@@ -379,6 +379,24 @@ def test_a_nil_search_has_no_household_to_qualify():
     check(EMPTY_BEFORE, after(nil), TAGGED)
 
 
+def test_a_procedural_household_read_is_not_a_structure_claim():
+    """ut_search_records_h4k, run v3_2026-10-06_09-38-31, log_003. An
+    audit-trail re-run note that uses "household" procedurally ("...for full
+    household read") asserts no family structure, so it must not be asked to
+    hedge. The bare-"household" substring flagged it before
+    `_HOUSEHOLD_DESCRIPTION_PATTERNS` scoped the word to compositional uses
+    (issue #2484); "household of X and Y" (OFFENDER_BARE_LISTING) still fails."""
+    check(
+        EMPTY_BEFORE,
+        after(entry(
+            "Re-run with subjectId to re-confirm staged sidecar for full "
+            "household read. Same result: ark:/61903/1:1:A1WF-DOS. Logged for "
+            "audit trail completeness."
+        )),
+        TAGGED,
+    )
+
+
 def test_a_note_that_describes_no_household_passes():
     """The requirement fires on describing the household, not on the test
     carrying the tag - a note about the focus person alone asserts no
