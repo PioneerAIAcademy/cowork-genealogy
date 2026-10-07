@@ -367,3 +367,15 @@ def test_deployed_only_cases_refuse_compose():
     args = bounds.build_parser().parse_args(["--case", "keepalive_drop"])
     with pytest.raises(ValueError, match="--target deployed"):
         bounds.make_ctx(args, None)
+
+
+def test_the_tls_probe_dsn_verifies_the_name_and_connects_to_the_forward():
+    """dev/probe_tls_hostaddr.py's live run is the proof (PR body); this pins its DSN shape."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("probe_tls_hostaddr", SERVER / "dev" / "probe_tls_hostaddr.py")
+    probe = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(probe)
+    dsn = probe.psycopg_dsn("rds.invalid.test", 15432, hostaddr="127.0.0.1", ca=Path("/ca.crt"))
+    assert "host=rds.invalid.test hostaddr=127.0.0.1" in dsn and "sslmode=verify-full" in dsn
+    assert "hostaddr" not in probe.psycopg_dsn("127.0.0.1", 15432, hostaddr=None, ca=Path("/ca.crt"))
