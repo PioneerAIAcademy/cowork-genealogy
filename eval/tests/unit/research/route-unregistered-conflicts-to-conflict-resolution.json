@@ -1,0 +1,81 @@
+{
+  "test": {
+    "id": "ut_research_h22",
+    "skill": "research",
+    "name": "Routes to conflict-resolution when extracted census assertions disagree on birthplaces and conflicts[] is empty",
+    "type": "positive",
+    "description": "Mined from a Cowork project (Family Tree MHGK-WT7). Three extracted and linked censuses disagree on the wife's birthplace (England vs Alabama) and a daughter's birthplace (Alabama vs Mississippi), and a person_evidence rationale already defers that to conflict-resolution, but conflicts[] is empty. In Cowork the router went on to research-exhaustiveness and proof-conclusion: the exhaustive declaration called the discrepancies 'flagged for conflict-resolution', and none was ever registered. The routing table's 'Evidence conflicts present' row requires conflict-resolution before exhaustiveness or any proof.",
+    "tags": [
+      "routing",
+      "routes-to:conflict-resolution",
+      "from-cowork",
+      "research-unregistered-census-conflicts"
+    ]
+  },
+  "input": {
+    "user_message": "/research Keep going on Jonathan Barker (MHGK-WT7). I think we've found him in the 1850 census, so let's wrap up that question and write the conclusion.",
+    "scenario": "research-unregistered-census-conflicts"
+  },
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-images",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-extraction",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "conflict-resolution",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "hypothesis-tracking",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test. The first hand-off is asserted deterministically by test_routes_to_expected_skill from the PreToolUse hook records; do not grade which callee was reached, or in what order, from the transcript.",
+    "The project state: q_001 is open and not declared exhaustive; every positive log entry is extracted and every assertion is linked to a person; conflicts, hypotheses and proof_summaries are empty. The extracted assertions disagree on at least one fact for the same linked person (a birthplace recorded differently in two censuses), and a person_evidence rationale names the disagreement as unresolved. Assertions that disagree on a fact, with no conflicts entry for them, are evidence conflicts the router must hand off before exhaustiveness or a proof.",
+    "The patron asks to wrap up and write the conclusion. That names a destination, not a shortcut. Fail the router's own work if it treats the request as permission to skip the unresolved conflicts, or if it narrates that the discrepancies are 'minor', 'flagged for later' or 'do not affect the question' instead of delegating that judgement.",
+    "Fail the router's own work if it weighs the conflicting records itself, for example by picking one birthplace as more reliable, explaining a discrepancy away as an enumerator error, or calling the conflict immaterial to the question. Deciding whether a conflict matters to the question is conflict-resolution's analysis, not the router's.",
+    "Every callee is stubbed and returns a denial telling the router to stop. Do not penalize it for not completing the research cycle. Grade only the router's state derivation, its honesty about what it delegated and did not do, and whether it kept its narration free of a conflict verdict."
+  ],
+  "judge_reads_files": true
+}

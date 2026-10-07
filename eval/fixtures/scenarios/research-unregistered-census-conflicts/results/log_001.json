@@ -1,0 +1,248 @@
+{
+ "log_id": "log_001",
+ "tool": "record_search",
+ "retrieved": "2026-10-07T11:11:06.585Z",
+ "returned_count": 1,
+ "payload": {
+  "query": {
+   "birthYearFrom": 1814,
+   "birthYearTo": 1824,
+   "count": 50,
+   "givenName": "Jonathan",
+   "recordType": "census",
+   "residencePlace": "Mississippi, United States",
+   "residenceYearFrom": 1850,
+   "residenceYearTo": 1850,
+   "surname": "Barker"
+  },
+  "totalMatches": 8,
+  "paginationCappedAt": 4999,
+  "returned": 1,
+  "offset": 0,
+  "hasMore": false,
+  "results": [
+   {
+    "recordId": "ark:/61903/1:1:M4L8-3ST",
+    "events": [
+     {
+      "type": "Race",
+      "value": "White"
+     },
+     {
+      "type": "Census",
+      "date": "1850",
+      "place": "Jasper, Mississippi, United States"
+     }
+    ],
+    "treeMatches": [],
+    "personName": "Jonathan Barker",
+    "score": 5.9236,
+    "confidence": 3,
+    "sex": "Male",
+    "birthDate": "1820",
+    "birthPlace": "England, United Kingdom",
+    "collectionId": "1401638",
+    "collectionTitle": "United States, Census, 1850",
+    "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1401638",
+    "recordTitle": "Household of Jonathan Barker, \"United States, Census, 1850\"",
+    "recordArk": "ark:/61903/1:2:MWV4-3FX",
+    "gedcomx": {
+     "persons": [
+      {
+       "id": "p_187409786",
+       "ark": "ark:/61903/1:1:M4L8-3ST",
+       "gender": "Male",
+       "names": [
+        {
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "Jonathan"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Race",
+         "value": "White"
+        },
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1850",
+         "standard_date": "1850",
+         "place": "Jasper, Mississippi, United States",
+         "standard_place": "Jasper, Mississippi, United States"
+        },
+        {
+         "type": "Birth",
+         "date": "1820",
+         "standard_date": "1820",
+         "place": "England",
+         "standard_place": "England, United Kingdom"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_187409787",
+       "ark": "ark:/61903/1:1:M4L8-3SY",
+       "gender": "Female",
+       "names": [
+        {
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "Elizabeth"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Birth",
+         "date": "1823",
+         "standard_date": "1823",
+         "place": "England",
+         "standard_place": "England, United Kingdom"
+        },
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1850",
+         "standard_date": "1850",
+         "place": "Jasper, Mississippi, United States",
+         "standard_place": "Jasper, Mississippi, United States"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_187409788",
+       "ark": "ark:/61903/1:1:M4L8-3SB",
+       "gender": "Female",
+       "names": [
+        {
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "Sarah Martha"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Birth",
+         "date": "1846",
+         "standard_date": "1846",
+         "place": "Alabama",
+         "standard_place": "Alabama, United States"
+        },
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1850",
+         "standard_date": "1850",
+         "place": "Jasper, Mississippi, United States",
+         "standard_place": "Jasper, Mississippi, United States"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_187409789",
+       "ark": "ark:/61903/1:1:M4L8-3S1",
+       "gender": "Female",
+       "names": [
+        {
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "Amanda P"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Birth",
+         "date": "1848",
+         "standard_date": "1848",
+         "place": "Mississippi",
+         "standard_place": "Mississippi, United States"
+        },
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1850",
+         "standard_date": "1850",
+         "place": "Jasper, Mississippi, United States",
+         "standard_place": "Jasper, Mississippi, United States"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      }
+     ],
+     "sources": [
+      {
+       "id": "src_r_160572164",
+       "title": "Household of Jonathan Barker, \"United States, Census, 1850\"",
+       "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M4L8-3ST : Mon Oct 20 21:52:29 UTC 2025), Entry for Jonathan Barker and Elizabeth Barker, 1850.",
+       "url": "https://www.familysearch.org/ark:/61903/1:2:MWV4-3FX"
+      },
+      {
+       "id": "sd_c_1401638",
+       "title": "United States, Census, 1850",
+       "url": "https://www.familysearch.org/service/cds/recapi/collections/1401638"
+      },
+      {
+       "id": "sd_da1",
+       "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-DC1S-623"
+      },
+      {
+       "id": "sd_auto_M9JT-92D",
+       "title": "United States, Residences, Census, from 1400 to 2021"
+      },
+      {
+       "id": "src_p_p_187409786",
+       "url": "#p_187409786"
+      }
+     ],
+     "places": [
+      {
+       "id": "267",
+       "name": "England, United Kingdom",
+       "latitude": 52.4379,
+       "longitude": -1.6496
+      },
+      {
+       "id": "351",
+       "name": "Alabama, United States",
+       "latitude": 32.75,
+       "longitude": -86.75
+      },
+      {
+       "id": "369",
+       "name": "Mississippi, United States",
+       "latitude": 32.7503,
+       "longitude": -89.7503
+      },
+      {
+       "id": "395880",
+       "name": "Jasper, Mississippi, United States",
+       "latitude": 31.97306,
+       "longitude": -89.12667
+      }
+     ]
+    },
+    "primaryId": "p_187409786"
+   }
+  ]
+ }
+}

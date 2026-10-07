@@ -1,0 +1,411 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Jonathan",
+          "surname": "Barker",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "1819",
+          "place": "London, England, United Kingdom",
+          "standard_place": "London, England, United Kingdom",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Jasper county, Jasper, Mississippi, United States",
+          "standard_place": "Jasper, Mississippi, United States",
+          "sources": [
+            {
+              "quality": 1,
+              "ref": "S1"
+            },
+            {
+              "quality": 3,
+              "ref": "S2"
+            }
+          ]
+        },
+        {
+          "id": "F4",
+          "type": "Residence",
+          "date": "1860",
+          "place": "Smith, Mississippi, United States",
+          "standard_place": "Smith, Mississippi, United States",
+          "sources": [
+            {
+              "quality": 1,
+              "ref": "S1"
+            },
+            {
+              "quality": 3,
+              "ref": "S3"
+            }
+          ]
+        },
+        {
+          "id": "F5",
+          "type": "Residence",
+          "date": "1870",
+          "place": "Smith, Mississippi, United States",
+          "standard_place": "Smith, Mississippi, United States",
+          "value": "Census",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F6",
+          "type": "Residence",
+          "date": "1880",
+          "place": "Beat 1 Raleigh, Smith, Mississippi, United States",
+          "standard_place": "Raleigh, Smith, Mississippi, United States",
+          "sources": [
+            {
+              "quality": 1,
+              "ref": "S1"
+            },
+            {
+              "quality": 3,
+              "ref": "S4"
+            }
+          ]
+        },
+        {
+          "date": "1845",
+          "place": "Smith, Mississippi, United States",
+          "sources": [
+            {
+              "quality": 3,
+              "ref": "S5"
+            }
+          ],
+          "type": "Residence",
+          "id": "F7",
+          "standard_place": "Smith, New South Wales, Australia"
+        },
+        {
+          "date": "1866",
+          "place": "Smith, Mississippi, United States",
+          "sources": [
+            {
+              "quality": 3,
+              "ref": "S6"
+            }
+          ],
+          "type": "Residence",
+          "id": "F8",
+          "standard_place": "Smith, New South Wales, Australia"
+        },
+        {
+          "date": "1880",
+          "sources": [
+            {
+              "quality": 2,
+              "ref": "S4"
+            }
+          ],
+          "type": "Occupation",
+          "value": "Farmer",
+          "id": "F9"
+        },
+        {
+          "date": "1880",
+          "place": "Raleigh, Smith, Mississippi, United States",
+          "sources": [
+            {
+              "quality": 1,
+              "ref": "S4"
+            }
+          ],
+          "type": "Residence",
+          "value": "Father and mother both born in England (1880 census)",
+          "id": "F19",
+          "standard_place": "Raleigh, Newfoundland and Labrador, Canada"
+        }
+      ]
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Elizabeth",
+          "preferred": true,
+          "surname": "Barker",
+          "type": "MarriedName",
+          "id": "N2"
+        }
+      ],
+      "id": "I2",
+      "facts": [
+        {
+          "date": "~1824",
+          "primary": true,
+          "sources": [
+            {
+              "quality": 2,
+              "ref": "S2"
+            },
+            {
+              "quality": 2,
+              "ref": "S3"
+            },
+            {
+              "quality": 2,
+              "ref": "S4"
+            }
+          ],
+          "type": "Birth",
+          "id": "F10"
+        }
+      ]
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Sarah Martha",
+          "preferred": true,
+          "surname": "Barker",
+          "type": "BirthName",
+          "id": "N3"
+        },
+        {
+          "given": "Martha S.",
+          "surname": "Lovett",
+          "type": "MarriedName",
+          "id": "N9"
+        }
+      ],
+      "id": "I3",
+      "facts": [
+        {
+          "date": "~1846",
+          "primary": true,
+          "sources": [
+            {
+              "quality": 2,
+              "ref": "S2"
+            },
+            {
+              "quality": 2,
+              "ref": "S3"
+            }
+          ],
+          "type": "Birth",
+          "id": "F11"
+        }
+      ]
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Amanda P",
+          "preferred": true,
+          "surname": "Barker",
+          "type": "BirthName",
+          "id": "N4"
+        }
+      ],
+      "id": "I4",
+      "facts": [
+        {
+          "date": "~1848",
+          "place": "Mississippi, United States",
+          "primary": true,
+          "sources": [
+            {
+              "quality": 2,
+              "ref": "S2"
+            },
+            {
+              "quality": 2,
+              "ref": "S3"
+            }
+          ],
+          "type": "Birth",
+          "id": "F12",
+          "standard_place": "Mississippi, United States"
+        }
+      ]
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Pernesia A J",
+          "preferred": true,
+          "surname": "Barker",
+          "type": "BirthName",
+          "id": "N5"
+        },
+        {
+          "given": "Pernecie Ann",
+          "surname": "Ainsworth",
+          "type": "MarriedName",
+          "id": "N10"
+        }
+      ],
+      "id": "I5",
+      "facts": [
+        {
+          "date": "~1855",
+          "place": "Mississippi, United States",
+          "primary": true,
+          "sources": [
+            {
+              "quality": 2,
+              "ref": "S3"
+            }
+          ],
+          "type": "Birth",
+          "id": "F13",
+          "standard_place": "Mississippi, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "person1": "I1",
+      "person2": "I2",
+      "sources": [
+        {
+          "quality": 2,
+          "ref": "S2"
+        },
+        {
+          "quality": 2,
+          "ref": "S3"
+        },
+        {
+          "quality": 3,
+          "ref": "S4"
+        }
+      ],
+      "type": "Couple",
+      "id": "R1"
+    },
+    {
+      "child": "I3",
+      "parent": "I1",
+      "sources": [
+        {
+          "quality": 2,
+          "ref": "S2"
+        },
+        {
+          "quality": 2,
+          "ref": "S3"
+        }
+      ],
+      "type": "ParentChild",
+      "id": "R2"
+    },
+    {
+      "child": "I4",
+      "parent": "I1",
+      "sources": [
+        {
+          "quality": 2,
+          "ref": "S2"
+        },
+        {
+          "quality": 2,
+          "ref": "S3"
+        }
+      ],
+      "type": "ParentChild",
+      "id": "R3"
+    },
+    {
+      "child": "I5",
+      "parent": "I1",
+      "sources": [
+        {
+          "quality": 2,
+          "ref": "S3"
+        }
+      ],
+      "type": "ParentChild",
+      "id": "R4"
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "FamilySearch Family Tree, Jonathan Barker (MHGK-WT7)",
+      "author": "FamilySearch Family Tree contributors",
+      "url": "https://www.familysearch.org/tree/person/details/MHGK-WT7"
+    },
+    {
+      "author": "U.S. Census Office",
+      "title": "1850 U.S. Federal Census, Jasper County, Mississippi, population schedule",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MWV4-3FX",
+      "id": "S2",
+      "citation": "1850 U.S. census, Jasper County, Mississippi, population schedule, household of Jonathan Barker; imaged, \"United States, Census, 1850,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M4L8-3ST : accessed 7 October 2026); citing NARA microfilm publication M432."
+    },
+    {
+      "author": "U.S. Census Office",
+      "title": "1860 U.S. Federal Census, Smith County, Mississippi, population schedule",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MHFZ-3NQ",
+      "id": "S3",
+      "citation": "1860 U.S. census, Smith County, Mississippi, population schedule, household of Jonathan Barker; imaged, \"United States, Census, 1860,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5 : accessed 7 October 2026); citing NARA microfilm publication M653."
+    },
+    {
+      "author": "U.S. Census Office",
+      "title": "1880 U.S. Federal Census, Raleigh, Smith County, Mississippi, population schedule",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MWVG-ZT6",
+      "id": "S4",
+      "citation": "1880 U.S. census, Smith County, Mississippi, population schedule, Raleigh (Beat 1), household of John Barker; imaged, \"United States, Census, 1880,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M4P3-83T : accessed 7 October 2026); citing NARA microfilm publication T9."
+    },
+    {
+      "author": "State of Mississippi",
+      "title": "Mississippi state census, 1845, Smith County",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:7RX2-KL3Z",
+      "id": "S5"
+    },
+    {
+      "author": "State of Mississippi",
+      "title": "Mississippi state census, 1866, Smith County",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:7RZY-982M",
+      "id": "S6"
+    }
+  ]
+}
