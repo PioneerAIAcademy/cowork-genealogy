@@ -250,8 +250,8 @@ already holds, and would pull `research-plan` into the change.
 Written by `build_external_search_url`, which appends the in-flight entry
 itself when given a `projectPath` (`build-external-search-url-tool-spec.md`
 §6). A hand-off that did not come from the builder — an image link on a
-FamilySearch record, the shape that session hit — is to be logged in the same
-shape by the `search-external-sites` agent once the skill is converted.
+FamilySearch record, the shape that session hit — is logged in the same shape
+by the `search-external-sites` agent itself.
 
 ## 3. Decisions recorded
 

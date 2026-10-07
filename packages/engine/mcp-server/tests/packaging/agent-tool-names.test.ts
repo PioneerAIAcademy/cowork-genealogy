@@ -723,6 +723,25 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // The folded search-external-sites skill (issue #2802): its seven tools plus
+  // `project_context`, which is how a triage invocation finds the open hand-off
+  // in `awaitingUser`. `Read` opens an uploaded capture. No wiki tools: the
+  // parish page arrives in the delegation as `baseUrl`.
+  "search-external-sites.md": {
+    tools: [
+      "Read",
+      "build_external_search_url",
+      "collections_search",
+      "external_links_search",
+      "place_search",
+      "project_context",
+      "research_append",
+      "research_log_append",
+      "research_query",
+    ],
+    denies: [],
+  },
+
   // survey-surname (issue #2065) holds three MCP tools and Write. place_search
   // resolves the state/county. record_search with projectPath stages results.
   // research_log_append logs each search page. Write saves the markdown table.
