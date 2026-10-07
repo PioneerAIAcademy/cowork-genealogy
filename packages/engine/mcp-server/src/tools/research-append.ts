@@ -3862,12 +3862,14 @@ function applyOne(
         ? []
         : coreIdentifierContradictionInvariants(resultEntry, research, tree, personLinks, batchAssertions)),
     );
-    // An update re-checks the move only when it sets the tier or the bridge, so a
+    // An update re-checks the move only when it sets the tier or the bridge, or
+    // re-points the link (a new pairing, as the score gate below reads it), so a
     // rationale edit on a link written before this rule stays possible.
     const touchesMove =
       op.op !== "update" ||
-      Object.prototype.hasOwnProperty.call(op.fields ?? {}, "confidence") ||
-      Object.prototype.hasOwnProperty.call(op.fields ?? {}, "move_bridge");
+      ["confidence", "move_bridge", "assertion_id", "person_id"].some((f) =>
+        Object.prototype.hasOwnProperty.call(op.fields ?? {}, f),
+      );
     invariantErrors.push(
       ...((op.op === "update" && resultEntry.superseded_by) || !touchesMove
         ? []

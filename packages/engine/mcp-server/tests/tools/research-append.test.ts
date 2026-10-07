@@ -10497,3 +10497,85 @@ describe("mintedFromThisRecord counts person-level refs (#2696)", () => {
     expect(mintedFromThisRecord("I9", "REC-A", research, tree([{ ref: "S1" }, { ref: "S2" }]))).toBe(false);
   });
 });
+
+// ─── An unexplained move: the update path (#2537) ───────────────────────────
+//
+// `research-append-unexplained-move.test.ts` calls the invariant directly; these
+// go through `researchAppend`, which decides whether an update re-checks the
+// move at all. Re-pointing a link is a new pairing: without the re-check, a
+// confident link on a record inside the cluster could be moved onto one across
+// the ocean in a second call.
+
+describe("research_append — unexplained move, update path", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-move-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  /** I1 lived in Sussex; rec_ENG places him there, rec_TN in Tennessee. I2 has no residence. */
+  async function write() {
+    const r = baseResearch();
+    const a = (id: string, recordId: string, factType: string, extra: Record<string, unknown>) => ({
+      ...validAssertion(id), record_id: recordId, fact_type: factType, ...extra,
+    });
+    r.assertions = [
+      ...r.assertions,
+      a("a_020", "rec_ENG", "name", { value: "William Weller" }),
+      a("a_021", "rec_ENG", "residence", { value: "Horsham", place: "Horsham, Sussex, England" }),
+      a("a_030", "rec_TN", "name", { value: "William Weller" }),
+      a("a_031", "rec_TN", "residence", { value: "Maury", place: "Maury, Tennessee, United States" }),
+    ] as any;
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    const tree = JSON.parse(JSON.stringify(baseTree));
+    tree.persons[0].facts = [{ id: "F1", type: "Residence", date: "1851", place: "Horsham, Sussex, England" }];
+    tree.persons.push({ id: "I2", gender: "Male", names: [{ id: "N2", given: "William", surname: "Weller" }] });
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+    await attestEveryAssertion(dir, "I1");
+    await attestEveryAssertion(dir, "I2");
+  }
+  const appendConfident = (assertionId: string, personId: string) =>
+    researchAppend({
+      projectPath: dir,
+      section: "person_evidence",
+      op: "append",
+      entry: {
+        assertion_id: assertionId, person_id: personId, confidence: "confident",
+        rationale: "Name and household agree.", match_score: null,
+        created: "2026-10-07", superseded_by: null,
+      },
+    });
+  const update = (entryId: string, fields: Record<string, unknown>) =>
+    researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId, fields });
+
+  it("refuses re-pointing a confident link's assertion onto a record across the move", async () => {
+    await write();
+    const appended = await appendConfident("a_020", "I1");
+    expect(appended.ok).toBe(true);
+    const r = await update(singleOk(appended).entryId, { assertion_id: "a_030" });
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/move_bridge/);
+  });
+
+  it("refuses re-pointing a confident link's person onto one the move does not fit", async () => {
+    await write();
+    const appended = await appendConfident("a_030", "I2");
+    expect(appended.ok).toBe(true);
+    const r = await update(singleOk(appended).entryId, { person_id: "I1" });
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/move_bridge/);
+  });
+
+  it("still allows a rationale-only edit on a confident link across the move", async () => {
+    await write();
+    const appended = await appendConfident("a_030", "I2");
+    const id = singleOk(appended).entryId;
+    // Make it a pre-rule link across the move: point it at I1 behind the tool's back.
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    research.person_evidence.find((e: any) => e.id === id).person_id = "I1";
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    expect((await update(id, { rationale: "Name, household and occupation agree." })).ok).toBe(true);
+  });
+});
