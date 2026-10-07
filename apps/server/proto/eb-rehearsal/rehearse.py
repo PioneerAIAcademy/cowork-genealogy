@@ -1533,7 +1533,7 @@ U13PY
     def scale(self, size: int) -> None:
         for tier in ("web", "worker", "tools"):
             name = ENV_NAMES[tier]
-            if self.describe_env(name) is None:
+            if not self.dry and self.describe_env(name) is None:
                 continue
             settings = self.file(f"scale-{tier}-{size}.json", [opt(ASG_NS, "MinSize", size), opt(ASG_NS, "MaxSize", size)])
             self.aws("elasticbeanstalk", "update-environment", "--environment-name", name, "--option-settings", settings)
