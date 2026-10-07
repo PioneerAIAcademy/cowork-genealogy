@@ -854,6 +854,16 @@ describe("resolveStandardPlace — a bare single-segment name", () => {
     ).toBe("Lexington, Kent, England, United Kingdom");
   });
 
+  it("does not take a variant-name hit inside the shared jurisdiction", async () => {
+    byName({ Lexington: [
+      entry({ placeRepId: "va", fullName: "Lexington, Virginia, United States", score: 0.9 }),
+      entry({ placeRepId: "lx", fullName: "Laxton, Nottinghamshire, England, United Kingdom", score: 0.3 }),
+    ] });
+    expect(
+      await resolveStandardPlace("Lexington", { contextPlaces: ["Dover, Kent, England", "Canterbury, Kent, England"] }),
+    ).toBeNull();
+  });
+
   it("confines the search to the jurisdiction the siblings share", async () => {
     byName({ "Logan LDS Temple": [
       entry({ placeRepId: "fr", fullName: "Logan, Haute-Saône, Bourgogne-Franche-Comté, France", score: 0.9 }),

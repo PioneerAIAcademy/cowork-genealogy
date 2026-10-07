@@ -618,8 +618,10 @@ async function resolveBareName(name: string, opts: ResolveOpts): Promise<string 
   const best = pickBest(entries);
   if (best && isTopLevel(best.type)) return best.fullName;
 
+  const word = firstWord(bare);
+  const named = entries.filter((e) => firstWord(normalizeKey(placeSegments(e.fullName)[0] ?? "")) === word);
   for (const level of sharedJurisdiction(siblings)) {
-    const inside = entries.filter((e) => placeSegments(e.fullName).map(normalizeKey).includes(level));
+    const inside = named.filter((e) => placeSegments(e.fullName).map(normalizeKey).includes(level));
     if (inside.length > 0) return pickBest(inside)!.fullName;
   }
 
@@ -628,6 +630,12 @@ async function resolveBareName(name: string, opts: ResolveOpts): Promise<string 
 
 /** "Borough of Shenandoah" spells out "Shenandoah"; "New York" does not spell out
  *  "York", nor "Port Elizabeth" "Elizabeth". Only an administrative prefix counts. */
+/** A place name's first word, after any administrative prefix: a FamilySearch
+ *  variant-name hit ("Laxton" for "Lexington") does not share it. */
+function firstWord(key: string): string {
+  return key.replace(ADMIN_PREFIX_RE, "").split(" ")[0];
+}
+
 const ADMIN_PREFIX_RE = /^(?:borough|town|city|township|village|parish|county|district|municipality|hundred) of /;
 
 /** A FamilySearch place type names a jurisdiction. The live API qualifies some
