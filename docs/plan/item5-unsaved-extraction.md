@@ -210,3 +210,16 @@ would gate the change anyway because that suite has never had a zero fail run (1
 remove it "once #2173's record-extractor.md doctrine fix lands and this test passes reliably", and
 that fix landed over a month ago, so removing it is unclaimed work needing one `record-extraction`
 run to confirm. Out of scope here, but it is work, not a blocker.
+
+
+## Correction: "all ten are routing or boundary tests" is withdrawn
+
+A claim audit contradicted it. `ut_research_022` (`candidates-not-verdicts`) is reply graded and
+carries neither tag; its judge context says "Grade the REPLY, not the routing". Eight of ten are
+plainly routing or boundary, `ut_research_021` is mixed, and `ut_research_022` is neither.
+
+The dormancy argument does not depend on that characterisation and stands on the premise that was
+confirmed: **no turn in this suite writes project state.** The skill declares four read tools and
+no writer, and across all ten v9 runs the only tool calls are `person_read`, `research_query`,
+`project_context` and `record_search`, with zero writer calls. A before/after delta can never be
+non-empty there, whatever a given test grades.
