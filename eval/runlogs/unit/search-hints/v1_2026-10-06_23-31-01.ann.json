@@ -1,0 +1,246 @@
+{
+  "run_log": "v1_2026-10-06_23-31-01.json",
+  "annotator": "mercybocumy2000@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_hints_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Hint scope",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Recommendation soundness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict recording",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict recording",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Recommendation soundness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Hint scope",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Hint scope",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Recommendation soundness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict recording",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The facts on all three hints were right but the agent told the researcher to hand the death certificate back to person-evidence instead of making the identity call itself."
+    },
+    {
+      "test_id": "ut_search_hints_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Hint scope",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Recommendation soundness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The accept recommendation for the death certificate was correct but the agent framed it as person-evidence's job to decide rather than owning that judgment itself."
+    },
+    {
+      "test_id": "ut_search_hints_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict recording",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI listed the already-linked death certificate as a hint entry rather than simply noting it is resolved and needs no recommendation"
+    },
+    {
+      "test_id": "ut_search_hints_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Hint scope",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The death certificate was formatted like a live hint with a verdict rather than being clearly set aside as already resolved, which blurs what the researcher needs to act on."
+    },
+    {
+      "test_id": "ut_search_hints_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Recommendation soundness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict recording",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    }
+  ]
+}
