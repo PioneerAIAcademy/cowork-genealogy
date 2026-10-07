@@ -3,11 +3,13 @@ patron turn per message through the Claude Agent SDK (plan: D9-10, D11-12, D15).
 
 ``POST /turn`` answers 400 before anything is claimed unless ``turn_id``, ``session_id``
 and ``project_id`` are each a non-empty string; otherwise it claims the turn in Postgres
-(upserts ``sessions``/``turns``; a redelivered ``turn_id`` is granted immediately -- that
-IS the resume path) and then:
+(a redelivered ``turn_id`` is granted immediately -- that IS the resume path) and then:
 
 - a message carrying ``text`` -- the web tier's ``{turn_id, session_id, project_id,
-  text, enqueued_at}`` -- runs the real turn (``run_turn``). A turn whose
+  text, enqueued_at}`` -- runs the real turn (``run_turn``). The claim (U4) stamps the
+  ``turns`` row the web tier wrote before sending, matched on all three ids, and the turn
+  runs that row's ``message``, never the body; no such row answers 400 and writes
+  nothing, so a message forged onto the queue cannot pick whose grant it runs on. A turn whose
   ``turns.completed_at`` is already set answers 200 without running anything: the shim's
   error-path requeue can redeliver a completed turn.
 - otherwise the D3 stub arms, kept so ``make proto-smoke`` still drives every shim
@@ -270,6 +272,7 @@ EXPECTED_AGENTS = frozenset({
     "record-extractor",
     "research-exhaustiveness",
     "search-familysearch-wiki",
+    "search-full-text",
     "search-images",
     "search-wikipedia",
     "source-evaluation",
@@ -279,9 +282,9 @@ EXPECTED_AGENTS = frozenset({
     "validate-schema",
 })
 # The other half of the same precondition, a literal for the same reason: a count of
-# the directory the SDK loads the plugin from shrinks with it -- an image shipping 11
-# skills registers 11 and passes. test_proto_worker pins this against the repo.
-EXPECTED_SKILLS = 11
+# the directory the SDK loads the plugin from shrinks with it -- an image shipping 10
+# skills registers 10 and passes. test_proto_worker pins this against the repo.
+EXPECTED_SKILLS = 10
 
 _stdout_lock = threading.Lock()
 
@@ -479,8 +482,32 @@ TURN_CONN_KWARGS: dict[str, Any] = {
 # -- rows ----------------------------------------------------------------------
 
 
-def claim(conn: psycopg.Connection, turn: dict, receive_count: int) -> None:
-    """Record the claim: sessions/turns upsert; a redelivery just bumps receive_count.
+# U4: a real turn's row is the web tier's, written before its message was sent, so the claim
+# only stamps it -- and only when the message names that row's session and that session's
+# project. The fields are the upsert's below, minus the insert.
+CLAIM_TURN_SQL = (
+    "UPDATE turns SET claimed_at = now(), receive_count = %s, "
+    "entries_seq_before = COALESCE(turns.entries_seq_before, "
+    "(SELECT COALESCE(max(seq), 0) FROM session_entries)), "
+    "outcome = CASE WHEN turns.outcome = %s AND turns.completed_at IS NULL THEN NULL "
+    "ELSE turns.outcome END "
+    "FROM sessions WHERE turns.turn_id = %s AND turns.session_id = %s AND turns.project_id = %s "
+    "AND sessions.session_id = turns.session_id AND sessions.project_id = turns.project_id "
+    "RETURNING turns.message"
+)
+UNKNOWN_TURN_ERROR = "no turn row matches this turn_id, session_id and project_id"
+
+
+def claim(conn: psycopg.Connection, turn: dict, receive_count: int) -> dict | None:
+    """Record the claim and return the message to run, or None to refuse the delivery.
+
+    A real turn (U4) claims only the row the web tier wrote, matched on turn, session and
+    the session's project, and returns that row's ``message`` -- never the queue body,
+    which anyone with ``sqs:SendMessage`` on the queue can write and whose ``project_id``
+    would pick the grant the turn runs on. No matching row is None, and nothing is written.
+    A stub turn, which the dev tooling enqueues with no row, upserts ``sessions``/``turns``
+    from the body and returns it -- only with ``DEV_PATHS``; without, it claims as a real
+    turn does. Either way a redelivery just bumps receive_count.
     ``entries_seq_before`` -- the ``session_entries`` high-water mark -- is taken on the
     FIRST claim only, so the token sum in ``complete`` spans every attempt of the turn.
 
@@ -489,6 +516,13 @@ def claim(conn: psycopg.Connection, turn: dict, receive_count: int) -> None:
     put-back that comes AFTER this claim matches nothing: ``hold_queued_turn``). Left
     held, TURN_ACTIVE_SQL would not see the running turn and either tier would start a
     second one beside it, or claim and enqueue this one again."""
+    if is_real_turn(turn["message"]) or not dev_paths(os.environ):
+        with conn.cursor() as cur:
+            cur.execute(CLAIM_TURN_SQL, (receive_count, QUEUED_OUTCOME, turn["turn_id"],
+                                         turn["session_id"], turn["project_id"]))
+            row = cur.fetchone()
+        conn.commit()
+        return row[0] if row else None
     with conn.cursor() as cur:
         cur.execute(
             "INSERT INTO sessions (session_id, project_id, created_at) VALUES (%s, %s, now()) "
@@ -516,6 +550,15 @@ def claim(conn: psycopg.Connection, turn: dict, receive_count: int) -> None:
             ),
         )
     conn.commit()
+    return turn["message"]
+
+
+def refuse_unknown_turn(turn: dict, receive_count: int) -> tuple[int, dict]:
+    """``claim`` found no row for this message: 400, so it is never run and, after sqsd's
+    retries, lands in the DLQ. The body's ids are logged as sent -- they are the evidence."""
+    log(ev="turn", turn_id=turn["turn_id"], session_id=turn["session_id"], project_id=turn["project_id"],
+        receive_count=receive_count, status=400, error=UNKNOWN_TURN_ERROR)
+    return 400, {"ok": False, "turn_id": turn["turn_id"], "error": UNKNOWN_TURN_ERROR}
 
 
 def turn_completed(conn: psycopg.Connection, turn_id: str) -> bool:
@@ -2532,7 +2575,10 @@ def serve_after_shutdown(turn: dict, receive_count: int, *, connect) -> tuple[in
         return 503, _shutdown_body(turn_id)
     try:
         with connect(PG_DSN) as conn:
-            claim(conn, turn, receive_count)
+            message = claim(conn, turn, receive_count)
+            if message is None:
+                return refuse_unknown_turn(turn, receive_count)
+            turn = {**turn, "message": message}
             done = turn_completed(conn, turn_id)
             sdk_session_id = None if done else session_sdk_id(conn, turn["session_id"])
     except psycopg.Error as exc:
@@ -2564,7 +2610,10 @@ def serve_real_turn(
         return serve_after_shutdown(turn, receive_count, connect=connect)
     try:
         with connect(PG_DSN) as conn:
-            claim(conn, turn, receive_count)
+            message = claim(conn, turn, receive_count)
+            if message is None:
+                return refuse_unknown_turn(turn, receive_count)
+            turn = {**turn, "message": message}
             done = turn_completed(conn, turn_id)
             sdk_session_id = None if done else choose_sdk_session_id(conn, turn["session_id"], str(uuid.uuid4()))
             if done:
@@ -2652,7 +2701,8 @@ def serve_stub_turn(
         return serve_after_shutdown(turn, receive_count, connect=connect)
     try:
         with connect(PG_DSN) as conn:
-            claim(conn, turn, receive_count)
+            if claim(conn, turn, receive_count) is None:
+                return refuse_unknown_turn(turn, receive_count)
     except psycopg.Error as exc:
         error = f"{type(exc).__name__}: {exc}"
         log(ev="turn", turn_id=turn_id, behaviour=behaviour, receive_count=receive_count, status=500, error=error)

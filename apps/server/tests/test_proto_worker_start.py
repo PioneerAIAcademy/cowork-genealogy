@@ -176,7 +176,7 @@ def test_start_reports_the_spend_cap_and_prices_and_a_typo_is_logged(tmp_path, c
     finally:
         _stop(proc)
     assert start["spend_cap_usd"] == expected
-    assert start["prices"] == {"input": 2.5, "cache_write": 6.0, "cache_read": 0.3, "output": 15.0}
+    assert start["prices"] == {"input": 2.5, "cache_write": 3.75, "cache_read": 0.3, "output": 15.0}
     bad_env = [line for line in seen if line.get("ev") == "bad_env"]
     if bad:
         assert bad_env == [{"ev": "bad_env", "name": "SESSION_SPEND_CAP_USD", "value": cap, "using": 35.0}]
