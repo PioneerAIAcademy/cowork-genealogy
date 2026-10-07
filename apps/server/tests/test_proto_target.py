@@ -331,7 +331,8 @@ def test_keepalive_drop_arms_the_deadman_first_drops_both_ways_and_undrops_in_fi
     with pytest.raises(RuntimeError, match="driver lost"):
         bounds.case_keepalive_drop(_ctx(), None, rep)
     runs = [o for o in order if o.startswith("run worker:")]
-    assert "systemd-run" in runs[0] and f"--on-active={bounds.DEADMAN_S}" in runs[0], "the dead-man is armed first"
+    assert runs[0] == f"run worker: {bounds.NFT_INSTALL}", "nftables is installed first: AL2023 lacks it"
+    assert "systemd-run" in runs[1] and f"--on-active={bounds.DEADMAN_S}" in runs[1], "the dead-man is armed before any drop"
     assert any("out tcp dport 5432 drop" in r for r in runs) and any("in tcp sport 5432 drop" in r for r in runs), runs
     assert order[-2:] == [f"run worker: {bounds.NFT_UNDROP[0]}", f"run worker: {bounds.NFT_UNDROP[1]}"], \
         "the drop is removed even when the case dies mid-poll"

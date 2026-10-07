@@ -1096,10 +1096,15 @@ SPILL_CALL_SQL = ("SELECT id, duration_ms FROM tool_calls WHERE turn_id = %s AND
                   "AND duration_ms IS NOT NULL ORDER BY id LIMIT 1")
 
 
+NFT_INSTALL = "command -v nft >/dev/null || dnf -y -q install nftables"
+
+
 def nft_drop_commands(port: int = 5432) -> list[str]:
     """The worker's Postgres traffic dropped both ways, behind a dead-man that removes the
-    table after DEADMAN_S even if this driver never comes back. The dead-man first."""
+    table after DEADMAN_S even if this driver never comes back. The dead-man first, after
+    nftables itself: the AL2023 Beanstalk worker ships neither nft nor iptables (U13, 2026-10-07)."""
     return [
+        NFT_INSTALL,
         f"systemd-run --unit {NFT_TABLE}-deadman --on-active={DEADMAN_S} /usr/sbin/nft delete table inet {NFT_TABLE}",
         f"nft add table inet {NFT_TABLE}",
         f"nft add chain inet {NFT_TABLE} out '{{ type filter hook output priority 0 ; }}'",
