@@ -29,14 +29,6 @@
     {
       "test_id": "ut_research_005",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "he judge's reasons are wrong: both hand-offs happened (Agent → gps-mentor, then proof-conclusion, both stubbed), and the reply says only that it \"delegated\" them, which is accurate. Agent spawns never appear in the MCP call list. The ground for 2 is the genealogy: it sends proof-conclusion to \"finalize question status and close the project\" while pli_006 (Thomas Flynn's probate) is still in progress, after its own conclusion says the probate and later censuses weren't searched and could raise the tier to Proved. Same as v8 and v9."
-    },
-    {
-      "test_id": "ut_research_005",
-      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
@@ -121,6 +113,14 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": "One valid project_context call before routing; the hand-off used the question-selection agent spawn."
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The judge's reasons are wrong: both hand-offs happened (Agent → gps-mentor, then proof-conclusion, both stubbed), and the reply says only that it \"delegated\" them, which is accurate. Agent spawns never appear in the MCP call list. The ground for 2 is the genealogy: it sends proof-conclusion to \"finalize question status and close the project\" while pli_006 (Thomas Flynn's probate) is still in progress, after its own conclusion says the probate and later censuses weren't searched and could raise the tier to Proved. Same as v8 and v9.\n"
     }
   ]
 }
