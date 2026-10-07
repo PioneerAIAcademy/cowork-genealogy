@@ -794,6 +794,16 @@ def test_rds_is_private_and_reached_only_from_tier_groups(stack):
     assert all("--cidr" not in a for a in fake.calls_to("ec2", "authorize-security-group-ingress"))
 
 
+def test_rds_class_defaults_and_can_be_overridden(env):
+    """us-east-1 has refused db.t4g.micro gp3 in every zone (InsufficientDBInstanceCapacity)."""
+    for extra, want in (((), "db.t4g.micro"), (("--rds-class", "db.t3.micro"), "db.t3.micro")):
+        fake = FakeAws()
+        rc, lines = run(env, fake, "up", "--billed", "--phase", "net", "--phase", "stores", *extra)
+        assert rc == 0, lines[-5:]
+        db = fake.calls_to("rds", "create-db-instance")[0]
+        assert db[db.index("--db-instance-class") + 1] == want
+
+
 def test_data_bucket_blocks_public_access(stack):
     _, fake, _ = stack
     block = fake.calls_to("s3api", "put-public-access-block")[0]
