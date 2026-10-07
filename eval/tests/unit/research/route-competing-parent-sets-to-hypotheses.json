@@ -7,6 +7,7 @@
     "description": "Mined from issue #3177 puzzle 1 (GHLT-TFG). The subject is linked to two different parent couples in the imported tree, every positive search is extracted and linked, the plan is complete, and research.json holds no hypotheses, conflicts or proof. In Cowork the router went on to proof-conclusion and the proof narrative eliminated one parent set inline. The routing table's identity-uncertainty row and the conflict/hypothesis contract require spawning @plugin:hypothesis-tracking first, so each candidate parent set is persisted as its own hypothesis before any conclusion.",
     "tags": [
       "routing",
+      "grade:trigger",
       "routes-to:hypothesis-tracking",
       "from-cowork",
       "research-competing-parent-sets-no-hypotheses"

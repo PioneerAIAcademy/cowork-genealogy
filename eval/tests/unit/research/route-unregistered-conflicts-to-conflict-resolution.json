@@ -7,6 +7,7 @@
     "description": "Mined from a Cowork project (Family Tree MHGK-WT7). Three extracted and linked censuses disagree on the wife's birthplace (England vs Alabama) and a daughter's birthplace (Alabama vs Mississippi), and a person_evidence rationale already defers that to conflict-resolution, but conflicts[] is empty. In Cowork the router went on to research-exhaustiveness and proof-conclusion: the exhaustive declaration called the discrepancies 'flagged for conflict-resolution', and none was ever registered. The routing table's 'Evidence conflicts present' row requires conflict-resolution before exhaustiveness or any proof.",
     "tags": [
       "routing",
+      "grade:trigger",
       "routes-to:conflict-resolution",
       "from-cowork",
       "research-unregistered-census-conflicts"
