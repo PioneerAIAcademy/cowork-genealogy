@@ -5,10 +5,10 @@
     "name": "Census born-minus-living names a deceased child that is a research target",
     "type": "positive",
     "description": "From a tree import plus 1900/1910 US census fertility counts, init-project must find TWO missing children: a child born and died before the June 1900 enumeration (children-born minus children-living), and a living child born between the two censuses. The failure this guards: reading living-count parity with the tree (5 living in 1900 == 5 tree children) as 'accounted for' and never making the pre-1900 deceased child a research target.",
-    "tags": ["from-cowork", "census-deceased-child", "re-invoke-safe"]
+    "tags": ["from-cowork", "census-deceased-child", "re-invoke-safe", "direct-arm"]
   },
   "input": {
-    "user_message": "Start a new research project. The subject is my great-grandmother Margaret Mercer, FamilySearch ID MRCR-MOM. Two census records describe her children: the 1900 US census records 6 children born and 5 still living, and the 1910 US census records 8 children born and 7 still living. I want to find the children of hers who are not already in the tree.",
+    "delegation": "Start a new research project. The subject is my great-grandmother Margaret Mercer, FamilySearch ID MRCR-MOM. Two census records describe her children: the 1900 US census records 6 children born and 5 still living, and the 1910 US census records 8 children born and 7 still living. I want to find the children of hers who are not already in the tree.\n\nprojectPath: <workspace>",
     "scenario": null
   },
   "execution": {

@@ -11,11 +11,12 @@
       "rederive",
       "no-hand-omit",
       "handoff",
-      "familysearch"
+      "familysearch",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Set up a new research project for Patrick Flynn, FamilySearch ID LZNY-BRF, so I can run a forget-and-rederive exercise on his death — I want to test whether you can re-derive his death details from records. Get the project set up the right way for that exercise.",
+    "delegation": "Set up a new research project for Patrick Flynn, FamilySearch ID LZNY-BRF, so I can run a forget-and-rederive exercise on his death — I want to test whether you can re-derive his death details from records. Get the project set up the right way for that exercise.\n\nprojectPath: <workspace>",
     "scenario": null
   },
   "mcp_fixtures": [

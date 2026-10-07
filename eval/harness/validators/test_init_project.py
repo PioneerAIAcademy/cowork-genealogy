@@ -44,6 +44,43 @@ def test_both_project_files_created(before_state, after_state, test):
         assert False, "init-project did not create tree.gedcomx.json"
 
 
+# --- check-warnings is handed back, not spawned (issue #2122) -----------
+
+_HANDBACK_CHECK_WARNINGS = re.compile(r"Hand-back:\s*check-warnings\b(.*)", re.I)
+
+
+def test_check_warnings_handed_back_for_every_imported_person(
+    after_state, test, agent_returns=None, text_response=None,
+):
+    """Tag-gated on `check-warnings`. init-project is an agent and holds no
+    Agent tool, so it cannot spawn check-warnings (lead ruling 2026-09-23); its
+    body ends the caller-facing lines with `Hand-back: check-warnings <ids>`,
+    naming the subject and every imported relative by tree `I` id, and keeps
+    that line out of the researcher paragraph after the final `---`.
+
+    "Imported" is read off the written tree: every person carrying an `ark`.
+    The reply is the agent's own return (`subject_reply_text`), never the
+    dispatcher's relay, so a silent agent fails however the relay is worded."""
+    if "check-warnings" not in test.get("tags", []):
+        pytest.skip("not a check-warnings hand-back test")
+    tree = _written_tree(after_state)
+    imported = sorted(p.get("id") for p in tree.get("persons") or [] if p.get("ark"))
+    if not imported:
+        pytest.skip("no imported persons in the written tree")
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, "init-project", test)
+    tails = [m.group(1) for m in _HANDBACK_CHECK_WARNINGS.finditer(reply)]
+    assert tails, "the reply never hands back to check-warnings (`Hand-back: check-warnings <ids>`)"
+    named = set(re.findall(r"\bI\d+\b", " ".join(tails)))
+    missing = [i for i in imported if i not in named]
+    assert not missing, f"the check-warnings hand-back leaves out imported persons {missing}"
+    researcher = reply.rsplit("\n---\n", 1)[1] if "\n---\n" in reply else ""
+    assert "hand-back" not in researcher.lower(), (
+        "the Hand-back line reached the researcher paragraph after the final `---`"
+    )
+
+
 _INIT_TOOLS = ("person_read", "person_search", "project_create")
 
 

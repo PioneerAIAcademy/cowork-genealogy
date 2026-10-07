@@ -8,11 +8,12 @@
     "tags": [
       "from-review",
       "census-living-cumulative",
-      "re-invoke-safe"
+      "re-invoke-safe",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Start a new research project. The subject is my great-grandmother Ellen Brannon, FamilySearch ID BRNN-MOM. Two census records describe her children: the 1900 US census records 3 children born and 3 still living, and the 1910 US census records 4 children born and 4 still living. I want to find any of her children who are not already in the tree.",
+    "delegation": "Start a new research project. The subject is my great-grandmother Ellen Brannon, FamilySearch ID BRNN-MOM. Two census records describe her children: the 1900 US census records 3 children born and 3 still living, and the 1910 US census records 4 children born and 4 still living. I want to find any of her children who are not already in the tree.\n\nprojectPath: <workspace>",
     "scenario": null
   },
   "execution": {

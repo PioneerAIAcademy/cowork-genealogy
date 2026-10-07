@@ -10,11 +10,12 @@
       "opening-turn",
       "single-turn-decomposition",
       "issue-1510",
-      "fixed-profile"
+      "fixed-profile",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "init-project: Start a new project for FamilySearch ID LZNY-BRF. I want to identify his parents. About me: I'm experienced.",
+    "delegation": "init-project: Start a new project for FamilySearch ID LZNY-BRF. I want to identify his parents. About me: I'm experienced.\n\nprojectPath: <workspace>",
     "scenario": null
   },
   "mcp_fixtures": [

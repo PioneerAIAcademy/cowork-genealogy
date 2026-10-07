@@ -4,7 +4,7 @@ Grading dimensions for init-project unit tests. Evaluated by the LLM judge
 alongside the base rubric (Correctness, Completeness, Tool Arguments).
 
 > **DRAFT — pending genealogist review.** Expanded from the original
-> single "Stub person quality" dimension to cover all five jobs the skill
+> single "Stub person quality" dimension to cover all five jobs the agent
 > performs (define problem, survey tree, survey holdings, fixed
 > profile, write + validate files). Genealogist to confirm thresholds
 > and wording before release. Not every dimension applies to every test —
@@ -18,9 +18,9 @@ fabrication? Stub persons carry whatever facts are known (name, gender if
 known, approximate dates/places); unknown fields are omitted, not guessed.
 FamilySearch-derived facts are sourced to a tree source (`S1`) at
 `quality: 1` (questionable), and local `I` person IDs are used throughout.
-When the skill passes `person_read`'s `staged.resultsRef` as `personReadRef`,
+When the agent passes `person_read`'s `staged.resultsRef` as `personReadRef`,
 `project_create` builds all of that from the read: grade the written tree as
-usual, and grade the skill on what it supplies itself (the stubs its statements
+usual, and grade the agent on what it supplies itself (the stubs its statements
 imply) and on passing the ref rather than re-typing the read into `tree`.
 
 - **pass:** Subject and all known relatives have known fields populated and
@@ -39,10 +39,10 @@ imply) and on passing the ref rather than re-typing the read into `tree`.
 Is `research.json` initialized with the correct shape — `project` block
 filled (id, objective, subject_person_ids, status, created/updated, title),
 and every other section present as an empty array (or populated where the
-skill is meant to populate it)? Does the written file conform to the
+agent is meant to populate it)? Does the written file conform to the
 schema on inspection?
 
-Grade on the **content the skill actually wrote** (the written files /
+Grade on the **content the agent actually wrote** (the written files /
 file diff), not on whether the chat summary re-displays every field. A
 concise 3–6 word title like "Patrick Flynn's parents" or "Mary Sullivan's
 origins" is exactly right — do NOT dock it as "sentence-like." Objective
@@ -68,8 +68,8 @@ objective copied into the title field) is a weakness.
 The profile is fixed and never asked (lead ruling 2026-09-18): `experience_level`
 is `novice` and `narration_guidance` is the house-style string, stored verbatim,
 on every project. A level the user volunteers is not persisted. The research
-objective is the one opening-turn question, non-blocking (issue #1510): when
-unanswered, does the skill ask it, proceed in the same pass, and store the
+objective is the one question it asks, non-blocking (issue #1510): when
+unanswered, does the agent ask it in its return, proceed in the same pass, and store the
 generic default rather than a hallucinated specific direction?
 
 Site access is never asked. `subscriptions` should be **absent** from the
@@ -81,7 +81,7 @@ access statement may still be recorded.
   house-style string verbatim, whatever the user said about themselves;
   `subscriptions` absent (or, if the user volunteered access unprompted,
   recording it is equally correct). Objective defaulting:
-  when no objective is stated, the agent asks in the opening turn, does not
+  when no objective is stated, the agent asks in its return, does not
   block, and writes the stated generic default — never a hallucinated specific
   direction — in the same single pass as the profile default.
 - **partial:** Level correct but `narration_guidance` paraphrased rather than
@@ -110,7 +110,7 @@ deliberately rather than inherit as a side effect of a wording fix.
 `place_search` on it is the correct behavior and must never be penalized
 as a "missed opportunity," even if the place is only country-level (e.g.
 "Ireland"). Init-project does not refine or enrich tree-supplied places.
-"Kept as-is" means the value the tool returned, not a string the skill
+"Kept as-is" means the value the tool returned, not a string the agent
 re-derived from the fact's free-text `place` — the fixtures return
 standardized names that differ from `place` (FamilySearch drops
 "County"), so the two are distinguishable in the written tree.
