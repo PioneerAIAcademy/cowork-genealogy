@@ -295,6 +295,30 @@ def harness_tokens(usage: dict[str, Any], subagents: list[dict[str, Any]]) -> tu
     return values, HARNESS_ALL_THREADS.format(n=len(subagents))
 
 
+#: Appended when the committed run had more than one query: a stall-resume or a
+#: background subagent's ``task_notification`` starts one. Its ResultMessage then
+#: reports duration, SDK turns and the main thread's tokens for the last query only, and
+#: cost for the last CLI process (#3128).
+HARNESS_LAST_QUERY = (
+    "  (harness: a multi-query run -- duration, SDK turns and the main thread's tokens "
+    "cover its last query, cost its last CLI process)"
+)
+
+
+def covers_last_query_only(usage: dict[str, Any]) -> bool:
+    """A ResultMessage block (``num_turns`` set) over more than one ``system:init`` row:
+    the rule ``result_message_covers_last_query_only`` applies in
+    ``eval/harness/e2e/result.py`` (duplicated, not imported: the harness is a separate
+    environment). A streamed fallback (``num_turns`` None) spans every query."""
+    timeline = usage.get("timeline")
+    if usage.get("num_turns") is None or not isinstance(timeline, list):
+        return False
+    inits = sum(
+        1 for row in timeline if isinstance(row, list) and len(row) > 1 and row[1] == "system:init"
+    )
+    return inits > 1
+
+
 def harness_record(data: dict[str, Any]) -> str:
     """Cost, wall clock, tool calls and tokens, off a committed run log's own usage
     block; the tokens as ``harness_tokens`` reads them, tagged with what they cover."""
@@ -305,6 +329,7 @@ def harness_record(data: dict[str, Any]) -> str:
         f"{len(data.get('tool_calls') or [])} tool calls  "
         f"{usage.get('num_turns', '?')} SDK turns  {usage.get('continue_nudges', '?')} nudges  "
         f"{_tokens(tokens)}{covers}"
+        f"{HARNESS_LAST_QUERY if covers_last_query_only(usage) else ''}"
     )
 
 

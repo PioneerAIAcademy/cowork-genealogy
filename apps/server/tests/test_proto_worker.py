@@ -104,7 +104,7 @@ PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
-AGENTS = {"check-warnings", "citation", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "locality-guide", "person-evidence", "project-status", "proof-conclusion", "question-selection", "record-extractor", "research-exhaustiveness", "search-familysearch-wiki", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "translation", "tree-edit", "validate-schema"}
+AGENTS = {"check-warnings", "citation", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "locality-guide", "person-evidence", "project-status", "proof-conclusion", "question-selection", "record-extractor", "research-exhaustiveness", "search-familysearch-wiki", "search-full-text", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "translation", "tree-edit", "validate-schema"}
 
 
 # ── fakes ─────────────────────────────────────────────────────────────────────────
@@ -158,6 +158,12 @@ class FakeCursor:
         if "RETURNING zero_progress_attempts" in sql:
             self.conn.zero_progress_attempts += 1
             return (self.conn.zero_progress_attempts,)
+        if "RETURNING turns.message" in sql:  # U4: the claim of the web tier's row
+            if self.conn.turn_row is None:
+                return None
+            _, _, turn_id, session_id, project_id = params
+            return ({"turn_id": turn_id, "session_id": session_id, "project_id": project_id,
+                     **self.conn.turn_row},)
         if "RETURNING message" in sql:  # the 1b claim
             return (self.conn.queued_body, self.conn.claimed_at) if self.conn.queued_body is not None else None
         if "AND outcome IS DISTINCT FROM %s) AS active" in sql:  # TURN_ACTIVE_SQL
@@ -184,8 +190,12 @@ class FakeConn:
     def __init__(
         self, *, completed_at: Any = None, sdk_session_id: str | None = None,
         usage: tuple = (None, None, None, None), zero_progress_attempts: int = 0,
-        queued_body: dict | None = None,
+        queued_body: dict | None = None, turn_row: dict | None = ...,
     ) -> None:
+        # The turns row the web tier wrote, as the claim's RETURNING reads it back: its
+        # message fields beyond the three ids, or None for "no row matches" (U4).
+        self.turn_row = {"text": "hello", "enqueued_at": "2026-09-18T12:00:00+00:00"} \
+            if turn_row is ... else turn_row
         # The held message `take_queued_turn`'s claim returns, or None for "nothing held",
         # and the claimed_at it stamps (what the put-back matches; a worker's claim moves it).
         self.queued_body = queued_body
@@ -239,32 +249,103 @@ TURN = {
 # ── claim / complete / idempotent completion ─────────────────────────────────────
 
 
-def test_claim_upserts_sessions_and_turns_with_the_receive_count():
+def test_a_real_claim_stamps_the_web_tier_s_row_and_inserts_nothing():
+    """U4: the web tier wrote the sessions and turns rows before it sent the message, so
+    the claim is one UPDATE matched on the turn, its session and that session's project."""
     conn = FakeConn()
-    worker.claim(conn, TURN, 3)
-    sqls = [s for s, _ in conn.executed]
-    assert sqls[0].startswith("INSERT INTO sessions") and "ON CONFLICT (session_id) DO NOTHING" in sqls[0]
-    assert sqls[1].startswith("INSERT INTO turns") and "receive_count = EXCLUDED.receive_count" in sqls[1]
-    assert conn.executed[1][1][-2:] == (3, "queued")
+    assert worker.claim(conn, TURN, 3) == TURN["message"]
+    [(sql, params)] = conn.executed
+    assert sql.startswith("UPDATE turns SET claimed_at = now(), receive_count = %s")
+    assert ("FROM sessions WHERE turns.turn_id = %s AND turns.session_id = %s AND turns.project_id = %s "
+            "AND sessions.session_id = turns.session_id AND sessions.project_id = turns.project_id") in sql
+    assert sql.endswith("RETURNING turns.message")
+    assert params == (3, "queued", "turn-1", "sess-1", "proj-1")
     assert conn.commits == 1
 
 
-def test_the_claim_unmarks_a_held_row_that_is_running():
+def test_a_real_claim_with_no_matching_row_is_refused():
+    conn = FakeConn(turn_row=None)
+    assert worker.claim(conn, TURN, 1) is None
+    assert not any(s.startswith("INSERT") for s, _ in conn.executed), "a forged message writes no row"
+
+
+def test_a_real_claim_runs_the_row_s_message_not_the_body():
+    """The body is whatever the sender wrote; the row is what the patron posted."""
+    conn = FakeConn(turn_row={"text": "what the patron typed"})
+    forged = {**TURN, "message": {**TURN["message"], "text": "something else"}}
+    assert worker.claim(conn, forged, 1)["text"] == "what the patron typed"
+
+
+@pytest.mark.parametrize("dev", [True, False], ids=["dev-paths", "no-dev-paths"])
+def test_only_a_stub_under_dev_paths_upserts_its_rows(monkeypatch, dev):
+    """The dev tooling (``make proto-send``, ``make proto-smoke``) enqueues stubs with no
+    row. Without DEV_PATHS -- unreachable through the Handler, which refuses the stub
+    first -- the claim is the real turn's."""
+    if not dev:
+        monkeypatch.delenv("DEV_PATHS")
+    conn = FakeConn(turn_row=None)
+    stub = {**TURN, "message": {"behaviour": "ok"}}
+    assert worker.claim(conn, stub, 3) == ({"behaviour": "ok"} if dev else None)
+    sqls = [s for s, _ in conn.executed]
+    if dev:
+        assert sqls[0].startswith("INSERT INTO sessions") and "ON CONFLICT (session_id) DO NOTHING" in sqls[0]
+        assert sqls[1].startswith("INSERT INTO turns") and "receive_count = EXCLUDED.receive_count" in sqls[1]
+        assert conn.executed[1][1][-2:] == (3, "queued")
+    else:
+        assert [s.split(" ", 2)[:2] for s in sqls] == [["UPDATE", "turns"]]
+
+
+@pytest.mark.parametrize("message", [TURN["message"], {"behaviour": "ok"}], ids=["real", "stub"])
+def test_the_claim_unmarks_a_held_row_that_is_running(message):
     """U23 D10: a message delivered after a put-back whose send had landed runs on a row
     still marked held, invisible to TURN_ACTIVE_SQL. test_proto_queue_pg.py runs it."""
     conn = FakeConn()
-    worker.claim(conn, TURN, 1)
+    worker.claim(conn, {**TURN, "message": message}, 1)
     assert ("outcome = CASE WHEN turns.outcome = %s AND turns.completed_at IS NULL THEN NULL "
-            "ELSE turns.outcome END") in conn.executed[1][0]
+            "ELSE turns.outcome END") in conn.executed[-1][0]
 
 
 def test_claim_takes_the_entries_high_water_mark_on_the_first_claim_only():
     conn = FakeConn()
     worker.claim(conn, TURN, 1)
+    sql = conn.executed[0][0]
+    assert "entries_seq_before = COALESCE(turns.entries_seq_before, " \
+           "(SELECT COALESCE(max(seq), 0) FROM session_entries))" in sql, \
+        "a redelivery must not move the mark past the killed attempt's entries"
+    conn = FakeConn()
+    worker.claim(conn, {**TURN, "message": {"behaviour": "ok"}}, 1)
     sql = conn.executed[1][0]
     assert "entries_seq_before" in sql and "(SELECT COALESCE(max(seq), 0) FROM session_entries)" in sql
-    assert "entries_seq_before = COALESCE(turns.entries_seq_before, EXCLUDED.entries_seq_before)" in sql, \
-        "a redelivery must not move the mark past the killed attempt's entries"
+    assert "entries_seq_before = COALESCE(turns.entries_seq_before, EXCLUDED.entries_seq_before)" in sql
+
+
+def test_a_message_naming_no_row_is_400_and_runs_nothing():
+    """U4: a body with a real turn's ids and another patron's project_id -- or a turn the
+    web tier never wrote -- is refused before the grant is read or a session id minted."""
+    conn = FakeConn(turn_row=None)
+    status, body = worker.serve_real_turn(
+        {**TURN, "project_id": "someone-elses"}, 1, connect=lambda dsn: conn, run=lambda *a: pytest.fail("ran"))
+    assert (status, body) == (400, {"ok": False, "turn_id": "turn-1", "error": worker.UNKNOWN_TURN_ERROR})
+    assert [s.split(" ", 2)[:2] for s, _ in conn.executed] == [["UPDATE", "turns"]], "nothing past the claim"
+
+
+def test_the_run_gets_the_row_s_message():
+    conn = FakeConn(turn_row={"text": "what the patron typed"})
+    seen: list[str] = []
+    worker.serve_real_turn({**TURN, "message": {**TURN["message"], "text": "something else"}}, 1,
+                           connect=lambda dsn: conn, run=lambda turn, rc, sid: seen.append(turn["message"]["text"]) or {})
+    assert seen == ["what the patron typed"]
+
+
+def test_a_last_receive_after_shutdown_naming_no_row_closes_nothing(monkeypatch):
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 2)
+    released = _released(monkeypatch)
+    worker.SHUTDOWN.set()
+    conn = FakeConn(turn_row=None)
+    status, _ = worker.serve_real_turn(TURN, 2, connect=lambda dsn: conn, run=lambda *a: pytest.fail("ran"))
+    assert status == 400
+    assert [s.split(" ", 2)[:2] for s, _ in conn.executed] == [["UPDATE", "turns"]], "no close, no turn_done"
+    assert released == [] and worker.deferred_sessions() == []
 
 
 TOKENS = (10, 18498, 142229, 1881)
@@ -332,7 +413,7 @@ def test_a_redelivered_completed_turn_answers_200_without_running(monkeypatch):
     )
     assert status == 200 and body["already_completed"] is True and body["ok"] is True
     assert ran == [], "a finished turn must not be run again"
-    assert any(s.startswith("INSERT INTO turns") for s, _ in conn.executed), "the claim is still recorded"
+    assert any(s.startswith("UPDATE turns SET claimed_at") for s, _ in conn.executed), "the claim is still recorded"
     assert not any("RETURNING sdk_session_id" in s for s, _ in conn.executed), "no session id is minted for it"
 
 
@@ -815,14 +896,14 @@ def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
     assert options.check_registration(None, expected_agents=AGENTS, expected_skills=11)
 
 
-def test_the_plugin_ships_twenty_two_agents_and_eleven_skills():
+def test_the_plugin_ships_twenty_three_agents_and_ten_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
-    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 11
+    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 10
     # A literal in the source, not an expression over the plugin dir (the mutation the
     # review named: both sides of the check shrinking together).
-    assert "\nEXPECTED_SKILLS = 11\n" in Path(worker.__file__).read_text(encoding="utf-8")
+    assert "\nEXPECTED_SKILLS = 10\n" in Path(worker.__file__).read_text(encoding="utf-8")
 
 
 def test_expected_agents_is_the_shipped_set():
@@ -857,24 +938,24 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
 
 
 def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
-    # Twenty-two agents and 11 skills registered: clean. Twenty-one, or 10: the miss, whatever loaded --
+    # Twenty-three agents and 10 skills registered: clean. Twenty-two, or 9: the miss, whatever loaded --
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
-    assert worker.registration_problems(_info(AGENTS, 11)) == []
-    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 11, ("genealogy-research:gps-mentor",)))
+    assert worker.registration_problems(_info(AGENTS, 10)) == []
+    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 10, ("genealogy-research:gps-mentor",)))
     assert problems == ["agents not registered under their bare names: ['gps-mentor']"]
-    assert worker.registration_problems(_info(AGENTS, 10)) == ["10 genealogy-research:* commands registered, expected 11"]
+    assert worker.registration_problems(_info(AGENTS, 9)) == ["9 genealogy-research:* commands registered, expected 10"]
     import inspect
 
     assert list(inspect.signature(worker.registration_problems).parameters) == ["info"]
     # The mutation the first build let through: a plugin copy short one skill folder
-    # registers 10, and a count of that same copy would have expected 10.
+    # registers 9, and a count of that same copy would have expected 9.
     copy = tmp_path / "plugin"
     shutil.copytree(PLUGIN_DIR / "skills", copy / "skills")
     shutil.rmtree(next(d for d in sorted((copy / "skills").iterdir()) if (d / "SKILL.md").is_file()))
-    assert worker.count_skills(str(copy)) == 10
+    assert worker.count_skills(str(copy)) == 9
     assert worker.registration_problems(_info(AGENTS, worker.count_skills(str(copy)))) == [
-        "10 genealogy-research:* commands registered, expected 11"
+        "9 genealogy-research:* commands registered, expected 10"
     ]
 
 
@@ -2524,16 +2605,27 @@ def test_the_price_vector_tracks_the_costs_the_corpus_actually_recorded():
     subagent transcripts.
 
     The band is what makes this fail: a price change, or a model swap, moves the median
-    out of it and this goes red rather than the cap quietly firing at the wrong dollar."""
+    out of it and this goes red rather than the cap quietly firing at the wrong dollar.
+
+    The corpus ran on a subscription, where the CLI writes 1-HOUR cache entries, so its
+    cache writes are priced here at the 1-hour rate (2x input), not the worker's 5-minute
+    one: this calibrates the three rates the two share, and the 1-hour write. The worker's
+    5-minute write is pinned to input by
+    `test_the_two_price_tables_share_three_rates_and_differ_by_cache_ttl`."""
     rows = _corpus_costs()
     assert len(rows) >= 100, f"only {len(rows)} runs readable; the calibration needs the corpus"
-    ratios = sorted(worker.price_usd(tok) / cost for tok, cost in rows)
+    rates = dict(worker.PRICE_PER_MTOK, cache_write=2 * worker.PRICE_PER_MTOK["input"])
+
+    def corpus_usd(tok):
+        return sum((t or 0) / 1_000_000 * rates[name] for name, t in zip(("input", "cache_write", "cache_read", "output"), tok))
+
+    ratios = sorted(corpus_usd(tok) / cost for tok, cost in rows)
     median = ratios[len(ratios) // 2]
     # The band is sized to catch a wrong price on ANY of the four token classes, measured
     # against this corpus on 2026-09-23: output 15 -> 30 lands at 1.089 and 15 -> 7.5 at
-    # 0.750; cache write 6 -> 3.75 at 0.746; cache read 0.30 -> 0.60 at 1.172. A looser
-    # band passes a vector that would fire the cap at the wrong dollar, which is the whole
-    # thing this protects.
+    # 0.750; a 1-hour cache write of 3.75 instead of 6 at 0.746; cache read 0.30 -> 0.60
+    # at 1.172. A looser band passes a vector that would fire the cap at the wrong dollar,
+    # which is the whole thing this protects.
     assert 0.80 <= median <= 0.95, (
         f"the price vector predicts a median {median:.3f}x of recorded cost; it was 0.866x "
         f"on 2026-09-23 over {len(rows)} runs. A price change, a model swap or a grown "
@@ -2551,7 +2643,7 @@ def test_the_price_vector_tracks_the_costs_the_corpus_actually_recorded():
     )
 
 
-def test_the_two_price_tables_are_the_same_four_rates():
+def test_the_two_price_tables_share_three_rates_and_differ_by_cache_ttl():
     """There are TWO copies of this rate table and there have to be: the worker image does
     not copy `eval/` (a test in test_continue_policy_parity.py asserts the two trees never
     import each other), and `pricing.py` is deliberately stdlib-only so `corpus_report`
@@ -2562,7 +2654,13 @@ def test_the_two_price_tables_are_the_same_four_rates():
     `--calibrate-cost` and moves a rate; the worker's copy does not move; and the LIVE
     SPEND CAP silently starts cutting runs off at a different dollar figure than the one
     the corpus reports. Nothing else compares them -- the field names differ, so no grep
-    finds the pair."""
+    finds the pair.
+
+    Input, cache read and output are the same rates. Cache WRITES are not, because the two
+    write different entries: the harness runs on a subscription, where the CLI writes
+    1-hour entries (2x input), and the worker on an API key or the gateway, where every
+    entry is 5-minute (1.25x input; spend.py says why). Each write rate is pinned to the
+    shared input rate by its own multiplier, so a model swap that moves input moves both."""
     import importlib.util
 
     path = pathlib.Path(__file__).resolve().parents[3] / "eval/harness/e2e/pricing.py"
@@ -2570,28 +2668,38 @@ def test_the_two_price_tables_are_the_same_four_rates():
     pricing = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(pricing)
 
-    # The names differ by tree; the RATES must not.
-    same = {
+    names = {
         "input": "input_tokens",
         "cache_write": "cache_creation_input_tokens",
         "cache_read": "cache_read_input_tokens",
         "output": "output_tokens",
     }
-    assert set(same.values()) == set(pricing._PER_MTOK), \
+    assert set(names.values()) == set(pricing._PER_MTOK), \
         "the harness table gained or lost a token class; the worker's cap prices the old set"
-    for mine, theirs in same.items():
+    for mine in ("input", "cache_read", "output"):
+        theirs = names[mine]
         assert worker.PRICE_PER_MTOK[mine] == pricing._PER_MTOK[theirs], (
             f"{mine} is ${worker.PRICE_PER_MTOK[mine]}/MTok in the worker and "
             f"${pricing._PER_MTOK[theirs]}/MTok in the harness: the live spend cap and the "
             f"corpus report now disagree about what a run costs"
         )
-    # And the same tokens must come to the same dollars through both estimators.
+    base = worker.PRICE_PER_MTOK["input"]
+    assert worker.PRICE_PER_MTOK["cache_write"] == pytest.approx(1.25 * base), (
+        f"the worker's cache write is ${worker.PRICE_PER_MTOK['cache_write']}/MTok, not the "
+        f"5-minute 1.25 x ${base}: every write the worker meters is 5-minute"
+    )
+    assert pricing._PER_MTOK["cache_creation_input_tokens"] == pytest.approx(2 * base), (
+        f"the harness's cache write is ${pricing._PER_MTOK['cache_creation_input_tokens']}/MTok, "
+        f"not the 1-hour 2 x ${base} its corpus calibrates to"
+    )
+    # The same tokens come to the same dollars through both estimators, but for the
+    # write-rate difference.
     tokens = (1_234_567, 89_012, 3_456_789, 45_678)
     theirs = pricing.estimate_cost_usd(dict(zip(
         ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens"),
         tokens,
     )))
-    assert worker.price_usd(tokens) == pytest.approx(theirs)
+    assert worker.price_usd(tokens) == pytest.approx(theirs - tokens[1] / 1_000_000 * 0.75 * base)
 
 
 def test_price_usd_is_linear_and_reads_the_four_token_classes_in_order():
@@ -3026,13 +3134,10 @@ def test_the_stop_hook_blocks_a_vetoable_stop_with_the_harness_reason_verbatim()
     hook = _stop(state, nudged=nudged)
     assert _call(hook, {"stop_hook_active": False}) == {"decision": "block", "reason": options.CONTINUE_REASON}
     assert nudged == [1]
-    # The reason is the orchestrator's, read off its source: among the dict literals
-    # whose "decision" is "block", the one whose "reason" is a literal string is the
-    # silent-stop fallback the worker mirrors. Since 2026-09-20 a second such dict
-    # carries the "Yes." reply to a well-formed hand-back, whose reason is a NAME
-    # (`reply`) rather than a constant, so it is skipped here by shape and named in
-    # CONTINUE_REASON's comment — if that branch ever spells a literal too, this
-    # collects two and fails, which is the re-sync this test exists to force.
+    # The reason is the orchestrator's, read off its source: every dict literal whose
+    # "decision" is "block" must carry this one literal reason. A second reply, or one
+    # computed rather than spelled, is a Stop policy the worker does not run (U17);
+    # test_continue_policy_parity.py pins the computed case.
     tree = ast.parse(ORCHESTRATOR.read_text(encoding="utf-8"))
     blocks = [
         node for node in ast.walk(tree)
@@ -3050,7 +3155,7 @@ def test_the_stop_hook_blocks_a_vetoable_stop_with_the_harness_reason_verbatim()
         if isinstance(k, ast.Constant) and k.value == "reason" and isinstance(v, ast.Constant)
     ]
     assert reasons == [options.CONTINUE_REASON], \
-        "the worker's reason text must stay the harness's silent-stop fallback, verbatim"
+        "the worker's reason text must stay the harness's veto text, verbatim"
 
 
 def test_the_stop_hook_counts_nudges_and_allows_once_the_cap_is_spent():
@@ -3621,7 +3726,7 @@ def test_post_after_shutdown_on_last_receive_closes(monkeypatch):
     conn = FakeConn(sdk_session_id=SID)
     status, body = worker.serve_real_turn(TURN, 2, connect=lambda dsn: conn, run=lambda *a: pytest.fail("ran"))
     assert status == 200 and body["outcome"] == "retries_exhausted" and body["cause"] == "shutdown"
-    assert any(s.startswith("INSERT INTO turns") for s, _ in conn.executed), "the receive is recorded"
+    assert any(s.startswith("UPDATE turns SET claimed_at") for s, _ in conn.executed), "the receive is recorded"
     assert [p["cause"] for p in _turn_done_payloads(conn)] == ["shutdown"]
     assert released == [] and worker.deferred_sessions() == ["sess-1"], "the release waits for the shutdown thread"
 
@@ -4591,7 +4696,10 @@ def test_the_delivery_summary_reaches_a_human():
          "tool_input": {"summary": "the Mogan marriage record, 1874"}},
         "u1", None,
     ))
-    assert "the Mogan marriage record, 1874" in out["stopReason"], (
+    # startswith, not `in`: containment passes even when the summary is appended
+    # AFTER the reason, which is the ordering the chip cut makes load-bearing.
+    # With `in`, a reorder in the shared helper failed the alpha only.
+    assert out["stopReason"].startswith("Delivered: the Mogan marriage record, 1874"), (
         "the summary must survive into the text the model is handed"
     )
     delivered = [e for e in events if e.get("ev") == "delivered"]
@@ -4975,7 +5083,8 @@ def post_env(monkeypatch):
     """The real Handler with every road past the gate recorded: ``claim`` and ``_exit``
     (which raises, so no process dies), and the two serve functions when replaced."""
     calls: dict[str, list] = {"claim": [], "exit": [], "real": [], "stub": []}
-    monkeypatch.setattr(worker, "claim", lambda conn, turn, rc, **kw: calls["claim"].append(turn["turn_id"]))
+    monkeypatch.setattr(worker, "claim",
+                        lambda conn, turn, rc, **kw: calls["claim"].append(turn["turn_id"]) or turn["message"])
     monkeypatch.setattr(worker.psycopg, "connect", lambda *a, **k: FakeConn())
 
     def _exit(code):
@@ -5091,6 +5200,18 @@ def test_the_ids_are_the_message_s_own(monkeypatch, post_env):
     [turn] = post_env["real"]
     assert {k: turn[k] for k in IDS} == IDS, "msgid is a log field, never the turn id"
 
+
+
+def test_a_real_turn_naming_no_row_is_400_through_the_handler(monkeypatch):
+    """U4 end to end: the message is well-formed, so only the claim can refuse it."""
+    logged: list[dict] = []
+    monkeypatch.setattr(worker.psycopg, "connect", lambda *a, **k: FakeConn(turn_row=None))
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    with _serving() as port:
+        reply = _post_turn(port, {**IDS, "text": "hello"})
+    assert reply == (400, {"ok": False, "turn_id": "turn-u11", "error": worker.UNKNOWN_TURN_ERROR})
+    [line] = [f for f in logged if f.get("ev") == "turn"]
+    assert line["project_id"] == "proj-u11" and line["status"] == 400, "the forged ids are the evidence"
 
 # U11 start refusals: one ev=prepare line, exit 2, before the hook interpreter (and so
 # before setup_turn_users and queue_startup_fields).
