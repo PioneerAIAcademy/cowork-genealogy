@@ -702,8 +702,14 @@ _INDEXED_RE = re.compile(r"\b(?:fully\s+)?indexed\b", re.I)
 # ut_research_plan_q7m, v1_2026-09-25_08-29-32, pli_003: "not name-indexed"
 # "not fully indexed" is a PARTIAL-indexing claim (personCount > 0), not a
 # browse-only claim — exclude it with a negative lookahead on "fully".
+# An article may sit before the adjective: ut_research_plan_007,
+# v3_2026-10-07_16-40-45, pli_014: "…returned personCount 0, confirming this is
+# an image browse … not a name-indexed search" was charged with calling
+# 1999196 "indexed" because the one optional word was spent on "a".
 _UNINDEXED_RE = re.compile(
-    r"\b(?:un-?indexed|not\s+(?!fully\s)(?:\w+[\s-])?indexed|no\s+indexed)\b", re.I
+    r"\b(?:un-?indexed|not\s+(?:(?:a|an|the)\s+)?(?!fully\s)(?:\w+[\s-])?indexed"
+    r"|no\s+indexed)\b",
+    re.I,
 )
 _BROWSE_ONLY_RE = re.compile(r"\b(?:browse|image)[\s-]?only\b", re.I)
 # A browse/unindexed adjective sitting directly on a non-collection noun ("the

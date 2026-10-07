@@ -334,6 +334,40 @@ _UT016_PLI007 = (
 )
 
 
+# ut_research_plan_007, v3_2026-10-07_16-40-45, pli_014, verbatim: an article
+# before the adjective ("not a name-indexed search") used up the one optional
+# word, so the negation was missed and a correct browse claim failed the run.
+_UT007_PLI014 = (
+    "Pennsylvania Probate Records, 1683-1994 (collection 1999196) returned "
+    "personCount 0 at collections_search, confirming this is an image browse of "
+    "Schuylkill County Register of Wills volumes — not a name-indexed search."
+)
+
+
+def test_v5_reads_not_a_name_indexed_as_a_browse_claim():
+    before, after = _states([_item("pli_014", rationale=_UT007_PLI014)])
+    check_v5(before, after, _SERVED)
+
+
+@pytest.mark.parametrize("phrase", [
+    "not an indexed search", "not the indexed index", "not a record-indexed search",
+])
+def test_v5_accepts_negation_with_an_article(phrase):
+    before, after = _states([_item("pli_014", rationale=f"Collection 1999196 is {phrase}.")])
+    check_v5(before, after, _SERVED)
+
+
+@pytest.mark.parametrize("phrase", [
+    "a name-indexed search",              # no negation at all
+    "not a fully indexed collection",     # partial indexing claim, needs personCount > 0
+    "indexed, not a browse",              # negation attached to "browse", not to "indexed"
+])
+def test_v5_still_fires_on_an_indexed_claim_against_zero(phrase):
+    before, after = _states([_item("pli_014", rationale=f"Collection 1999196 is {phrase}.")])
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(before, after, _SERVED)
+
+
 def test_v5_ignores_browse_only_on_a_volume():
     before, after = _states([_item("pli_007", rationale=_UT016_PLI007)])
     check_v5(before, after, _SERVED_KY)
