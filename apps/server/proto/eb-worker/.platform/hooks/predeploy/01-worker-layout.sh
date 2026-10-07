@@ -12,8 +12,10 @@
 #   (e) U3: the slot users each turn's CLI runs as (WORKER_TURN_USERS in
 #       02-worker.config), sharing one primary group;
 #   (f) U3: web.service runs as root, so the worker can launch each CLI as its slot user
-#       (the platform runs it as webapp). A configuration-only update loses the drop-in
-#       (U13, 2026-10-07), so both postdeploy/01-worker-root.sh hooks write it again.
+#       (the platform runs it as webapp). The drop-in lives under /usr/lib: every deploy,
+#       app or configuration, deregisters web and deletes /etc/systemd/system/web.service.d
+#       after this hook and before the restart (U13, 2026-10-07), which left the worker
+#       starting as webapp; /usr/lib/systemd/system/web.service.d survived both.
 set -euo pipefail
 
 PLUGIN_DEST=/opt/genealogy/plugin
@@ -78,8 +80,8 @@ for user in $TURN_USERS; do
 done
 
 # (f) The reload only where systemd runs: the offline smoke's container has none.
-install -d -m 0755 -o root -g root /etc/systemd/system/web.service.d
-printf '[Service]\nUser=root\nGroup=root\n' > /etc/systemd/system/web.service.d/10-genealogy-root.conf
+install -d -m 0755 -o root -g root /usr/lib/systemd/system/web.service.d
+printf '[Service]\nUser=root\nGroup=root\n' > /usr/lib/systemd/system/web.service.d/10-genealogy-root.conf
 if [ -d /run/systemd/system ]; then
   systemctl daemon-reload
 fi

@@ -48,13 +48,15 @@ files, and the hook carries `set -euo pipefail` and the git exec bit.
   `genealogy-turn`; `WORKER_TURN_USERS` in `02-worker.config` names the same two) and a
   `web.service` drop-in that runs the worker as root, so it can launch each turn's CLI as
   its own slot user. The kernel then keeps one patron's turn out of another's files and the
-  worker's `/proc`. The drop-in does not survive a configuration-only update (U13, 2026-10-07,
-  n=1): the platform rewrote `web.service`, the drop-in was gone, no `.platform/hooks/` ran,
-  and the worker restarted as `webapp` and exited at `step=turn_users`. Re-created by hand,
-  it ran as root and `/healthz` answered 200. So `postdeploy/01-worker-root.sh`, identical
-  under `.platform/hooks/` and `.platform/confighooks/`, writes it after every deploy and
-  restarts the worker if its running process is not root. That a slot user cannot read
-  `/opt/elasticbeanstalk/deployment/env` is a U13 measurement. Whether Beanstalk re-chowns it after predeploy is a U13 measurement.
+  worker's `/proc`. The drop-in is written under `/usr/lib/systemd/system/web.service.d/`:
+  every deploy, app or configuration, deregisters `web` and deletes
+  `/etc/systemd/system/web.service.d` after predeploy and before the restart, so a drop-in
+  there left the worker starting as `webapp`, exiting at `step=turn_users`, and the next
+  deploy failing on a root-owned `/var/pids/web.pid` (U13, 2026-10-07, n=1 each). The
+  `/usr/lib` one governed the restart of two app deploys and two configuration updates. A
+  slot user cannot read `/opt/elasticbeanstalk/deployment/env` (U13, 2026-10-07). Beanstalk
+  re-chowns `/var/app/current` to `webapp:webapp` after predeploy (U13, 2026-10-07); no file in
+  it is group- or other-writable and nothing runs as `webapp`, so no turn can write it.
 
 `../eb-worker-probe/` is the 2026-09-11 measurement and stays as it was; its
 `deploy.sh` overrides its own `.ebextensions` with experiment values.

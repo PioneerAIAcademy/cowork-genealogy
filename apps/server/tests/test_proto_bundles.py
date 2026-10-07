@@ -307,27 +307,18 @@ def test_web_dist_dir_is_the_layout_directory():
     assert _env("web").get("WEB_DIST_DIR") == layout.WEB_DIST_DIR
 
 
-ROOT_HOOKS = [PROTO / "eb-worker" / ".platform" / d / "postdeploy" / "01-worker-root.sh"
-              for d in ("hooks", "confighooks")]
-
-
-def test_root_drop_in_is_reasserted_after_app_and_config_deploys():
-    """U13 (2026-10-07): a configuration-only update rewrote web.service without the predeploy
-    hook's drop-in and ran no .platform/hooks/, so the worker came back as webapp and refused
-    to start. Both postdeploy hooks re-write the same drop-in, identically."""
-    texts = [p.read_text(encoding="utf-8") for p in ROOT_HOOKS]
-    assert texts[0] == texts[1], "the app-deploy and config-deploy hooks differ"
-    for path in ROOT_HOOKS:
-        rel = path.relative_to(REPO).as_posix()
-        staged = subprocess.run(["git", "ls-files", "-s", "--", rel], cwd=REPO, capture_output=True,
-                                text=True, encoding="utf-8", check=True).stdout.split()
-        assert staged and staged[0] == "100755", f"{rel} is not tracked as executable"
-    dropin = re.compile(r"printf '\[Service\]\\nUser=root\\nGroup=root\\n' > [^\n]*10-genealogy-root\.conf")
-    assert dropin.search(texts[0]), "the postdeploy hook writes another drop-in"
-    assert dropin.search(WORKER_HOOK.read_text(encoding="utf-8")), "predeploy and postdeploy drop-ins differ"
-    assert "set -euo pipefail" in texts[0].splitlines()
-    assert re.search(r"if \[ -d /run/systemd/system \]; then\n\s+systemctl daemon-reload", texts[0])
-    assert "ps -o user= -p" in texts[0], "a reloaded unit already reports root; check the running process"
+def test_root_drop_in_lives_where_a_deploy_does_not_delete_it():
+    """U13 (2026-10-07): every deploy, app or configuration, deregisters web and deletes
+    /etc/systemd/system/web.service.d after predeploy and before the restart, so a drop-in
+    there never governs the deploy's own start; the worker came up as webapp. One under
+    /usr/lib/systemd/system/web.service.d survived both kinds of deploy."""
+    text = WORKER_HOOK.read_text(encoding="utf-8")
+    live = [ln for ln in text.splitlines() if not ln.lstrip().startswith("#")]
+    assert any(re.fullmatch(r"printf '\[Service\]\\nUser=root\\nGroup=root\\n' > "
+                            r"/usr/lib/systemd/system/web\.service\.d/10-genealogy-root\.conf", ln)
+               for ln in live), "the hook writes no root drop-in under /usr/lib"
+    assert not any("/etc/systemd/system/web.service.d" in ln for ln in live), \
+        "a drop-in under /etc is deleted by every deploy"
 
 
 def test_worker_hook_is_executable_in_git_and_strict():
