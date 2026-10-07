@@ -65,6 +65,8 @@ def _fmt(value: Any, kind: str) -> str:
         return f"{value / 60:.1f} min"
     if kind == "s":
         return f"{value:.0f} s"
+    if kind == "f":
+        return f"{value:.2f}"
     return f"{value:,}" if isinstance(value, int) else f"{value:,.0f}"
 
 

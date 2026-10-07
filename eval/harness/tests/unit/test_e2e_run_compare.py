@@ -11,7 +11,7 @@ from pathlib import Path
 
 from e2e.run_compare import compare, keep_newest_comparisons, main, next_comparison_path
 
-REAL_DIR = Path(__file__).resolve().parents[3] / "runlogs" / "e2e" / "catharina-gosner-daughter"
+REAL_DIR = Path(__file__).resolve().parents[3] / "runlogs" / "e2e" / "anders-monsen-ancestry"
 
 
 def _log(cost, **over):
@@ -61,14 +61,16 @@ def test_settings_that_moved_are_named(tmp_path):
     assert "$5.00 -> $4.00" in text and "-20%" in text
 
 
-def test_the_real_catharina_comparison_shows_helper_time():
-    runs = sorted(REAL_DIR.glob("run-*.json"))
-    runs = [p for p in runs if p.name.count(".") == 1][-2:]
-    text = compare(json.loads(runs[0].read_text(encoding="utf-8")), runs[0],
-                   json.loads(runs[1].read_text(encoding="utf-8")), runs[1])
-    assert "22.4 min -> 32.2 min" in text
-    assert "$6.34 -> $8.02" in text
-    assert "verdict" not in text  # neither run graded
+def test_a_real_committed_comparison_shows_helper_time_and_both_grades():
+    before = REAL_DIR / "run-2026-09-30_07-29-52.json"
+    after = REAL_DIR / "run-2026-10-05_16-07-18.json"
+    text = compare(json.loads(before.read_text(encoding="utf-8")), before,
+                   json.loads(after.read_text(encoding="utf-8")), after)
+    assert "29.1 min -> 57.4 min" in text
+    assert "$14.58 -> $15.66" in text
+    assert "partial -> pass" in text  # both runs graded, so the grade shows
+    # A fraction keeps its decimals: 0.75 -> 1.0 printed as "1 -> 1 +33%" once.
+    assert "0.75 -> 1.00" in text
 
 
 def test_files_are_numbered_and_only_five_kept(tmp_path):

@@ -22,7 +22,7 @@ from e2e.run_report import (
     write_reports,
 )
 
-REAL = Path(__file__).resolve().parents[3] / "runlogs" / "e2e" / "catharina-gosner-daughter" / "run-2026-10-05_14-47-42.json"
+REAL = Path(__file__).resolve().parents[3] / "runlogs" / "e2e" / "anders-monsen-ancestry" / "run-2026-10-05_16-07-18.json"
 
 
 def _log(**over):
@@ -64,14 +64,13 @@ def test_a_graded_report_shows_the_grade_and_findings():
     assert GRADE_HIDDEN not in text
 
 
-def test_the_real_catharina_run_renders_its_measured_figures_and_no_grade():
+def test_a_real_committed_run_renders_its_measured_figures_and_no_grade():
     log = json.loads(REAL.read_text(encoding="utf-8"))
     text = render(log, REAL.name, graded=False)
-    assert "$8.02   (the SDK's own figure)" in text
-    assert "53.8 min" in text
-    assert "165,043 tokens   · squeezed 1" in text
-    assert text.count("claude-sonnet-5") == 2  # the two gps-mentor launches
-    assert "  16  proof-conclusion" in text
+    assert "$15.66   (the SDK's own figure)" in text
+    assert "107.1 min" in text
+    assert "165,460 tokens   · squeezed 3" in text
+    assert "  20  gps-mentor" in text
     for word in _VERDICT_WORDS:
         assert word not in text, word
 
@@ -144,18 +143,30 @@ def test_orphan_reports_are_removed(tmp_path: Path):
     assert txt_path_for(path).exists()
 
 
-def test_the_real_catharina_run_shows_helper_time_and_who_spent_what():
+def test_a_real_committed_run_shows_helper_time_and_who_spent_what():
     """Its helpers were captured before `duration_seconds` existed, so their
     time comes from each Agent call's own `duration_ms` trailer."""
     log = json.loads(REAL.read_text(encoding="utf-8"))
-    assert len(agent_call_durations(log)) == 16
+    assert len(agent_call_durations(log)) == 20
     text = render(log, REAL.name, graded=False, per_agent=collect([REAL])[0])
     summary = text.split("SUMMARY")[1]
-    assert "main $3.48 (39%) · helpers $5.45 (61%)   of the $8.93 whole-run flat estimate" in summary
-    assert "32.2 min summed over 16 launch(es)" in summary
-    assert "busiest moment   165,043 tokens (main researcher)" in summary
-    assert "squeezes         main 1 · helpers 0" in summary
-    assert "  1  question-selection            12    $0.16      42 s" in text
+    assert "main $7.70 (45%) · helpers $9.35 (55%)   of the $17.06 whole-run flat estimate" in summary
+    assert "57.4 min summed over 20 launch(es)" in summary
+    assert "busiest moment   165,460 tokens (main researcher)" in summary
+    assert "squeezes         main 3 · helpers 0" in summary
+    assert "  1  question-selection            11    $0.15      33 s" in text
+
+
+def test_a_helpers_own_meters_fill_its_row():
+    """No committed run carries helper meters yet (they postdate the corpus), so
+    the busiest / squeezed / model columns are pinned on a built log."""
+    sub = dict(_SUB, peak_window_tokens=148_200, compactions=[{"trigger": "auto"}],
+               models=["claude-sonnet-5"])
+    log = _log(subagents=[sub], subagent_capture_status="captured")
+    row = next(line for line in render(log, "r.json", graded=False).splitlines()
+               if line.startswith("    1  record-extractor"))
+    assert "148,200" in row and "claude-sonnet-5" in row
+    assert row.split()[-2] == "1"  # squeezed once
 
 
 _SUB = {"agent_type": "record-extractor", "num_assistant_turns": 6,
