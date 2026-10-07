@@ -709,7 +709,11 @@ paragraphs of plain prose with **no label, heading or field name**:
    sure it is in plain words rather than by naming a tier. No identifiers,
    file names, tool names or field names; a person is a name, a record is
    what it is ("the 1885 county estate file").
-2. One sentence: what happens next, in plain language.
+2. One sentence: what happens next. When the question's
+   `search_stop.not_reached` list is non-empty, weave what was left on the
+   table into that same sentence in plain language — no field names or
+   identifiers ("digitized vital records for that county are not yet
+   online").
 
 The caller prints everything after that `---` verbatim and nothing above it.
 No closing essay.

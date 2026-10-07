@@ -190,10 +190,7 @@ named in `justification`.
     e.g. a recent vital record still inside its statutory embargo and
     released before then only to the registrant or a direct heir; nil across
     `record_search` / `fulltext_search` / `image_search` / external sites
-    after the bounded search-records attempts; or a negative result from
-    `record_search` / `fulltext_search` for a record type **not indexed in
-    that repository** — confirmed by the collection's coverage, e.g. South
-    Dakota vital records pre-1940 not on FamilySearch) is
+    after the bounded search-records attempts) is
     *pursued-and-unavailable*, not an unsearched gap. A privacy-sealed record must **not** be counted as
     an outstanding gap in the stop criteria, nor recommended as a next
     step to obtain. **Only** when the **accessible** evidence already supports a
