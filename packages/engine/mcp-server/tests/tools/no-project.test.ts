@@ -46,6 +46,7 @@ import { mergeTreePersons } from "../../src/tools/merge-tree-persons.js";
 import { mergeWarnings } from "../../src/tools/merge-warnings.js";
 import { personWarningsTool } from "../../src/tools/person-warnings.js";
 import { buildExternalSearchUrlTool } from "../../src/tools/build-external-search-url.js";
+import { validateResearchSchema } from "../../src/tools/validate-research-schema.js";
 import {
   NO_PROJECT_MESSAGE_READ,
   NO_PROJECT_MESSAGE_WRITE,
@@ -54,7 +55,7 @@ import {
 /** The five tools that are not writers. Telling someone who asked "where are
  *  we?" in a non-project folder that their work was not saved is both wrong and
  *  alarming, so these carry the read sentence. */
-const READERS = new Set(["research_query", "project_context", "person_warnings", "merge_warnings", "sidecar_read", "image_transcribe"]);
+const READERS = new Set(["research_query", "project_context", "person_warnings", "merge_warnings", "sidecar_read", "image_transcribe", "validate_research_schema"]);
 
 /** Tools that signal the two loud path states by THROWING rather than
  *  returning `{ ok: false, errors }` — the dispatch arm's catch turns the throw
@@ -63,7 +64,7 @@ const READERS = new Set(["research_query", "project_context", "person_warnings",
  *  error to flatten into a result and mirrors the thrown messages instead. */
 // `image_transcribe` joined both sets with its `file` input (#2048): it classifies
 // the directory itself, throws the two loud states, and RETURNS the no-project answer.
-const THROWERS = new Set(["person_warnings", "sidecar_read", "image_transcribe"]);
+const THROWERS = new Set(["person_warnings", "sidecar_read", "image_transcribe", "validate_research_schema"]);
 
 const minimalResearch = {
   project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
@@ -160,6 +161,10 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
   {
     tool: "person_warnings",
     call: (projectPath) => personWarningsTool({ projectPath, personId: "I1" } as any),
+  },
+  {
+    tool: "validate_research_schema",
+    call: (projectPath) => validateResearchSchema({ projectPath }),
   },
 ];
 
@@ -364,8 +369,6 @@ const PROJECT_MODULES = new Set([
  * - `rank_search_matches`: reads project context optionally for scoring.
  * - `person_quality`: reads tree optionally for quality scoring.
  * - `image_read`: saves source image optionally when inside a project.
- * - `validate_research_schema`: its entire purpose is reading project files,
- *   but it throws rather than returning `noProjectResult`.
  * - `project_create`: writes project files, but it creates them rather than
  *   reading existing ones.
  * - `volume_bisect`: imports browse-budget which classifies the project path
@@ -384,7 +387,6 @@ const OPTIONAL_PROJECT_TOOLS = new Set([
   "rank_search_matches",
   "person_quality",
   "image_read",
-  "validate_research_schema",
   "project_create",
   "volume_bisect",
   "wiki_place_page",
