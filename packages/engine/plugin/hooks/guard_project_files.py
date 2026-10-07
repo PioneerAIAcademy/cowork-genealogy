@@ -174,6 +174,11 @@ AGENT_WRITABLE_SECTIONS = {
     # search-images updates the status of the plan item a browse executed. Its
     # browse log goes through research_log_append, which carries no `section`.
     "search-images": frozenset({"plan_items"}),
+    # search-full-text updates the status of the plan item a search executed.
+    # Its search log goes through research_log_append, which carries no `section`.
+    # This is a repo CI requirement, not a runtime gate (the guard does not fire
+    # for agents outside the listed sections).
+    "search-full-text": frozenset({"plan_items"}),
     # citation refines `citation` / `citation_detail` on source entries that
     # already exist, and writes nothing else in research.json.
     "citation": frozenset({"sources"}),

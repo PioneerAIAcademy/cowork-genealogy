@@ -103,7 +103,14 @@ from e2e.stop_checker import (
     should_continue_run,
     terminal_reason,
 )
-from e2e.subagent_capture import collect_subagents, sdk_cache_dir
+from e2e.subagent_capture import (
+    collect_subagents,
+    find_subagent_transcripts,
+    pair_tool_calls,
+    parse_jsonl,
+    sdk_cache_dir,
+    transcript_agent_id,
+)
 from e2e import judge as judge_module
 
 
@@ -1391,6 +1398,101 @@ def apply_tool_result(entry: dict[str, Any], block: ToolResultBlock, summary: st
     # The untruncated length, which `response_summary` cannot carry past
     # `_RUNLOG_MAX_CHARS`. See `_raw_result_chars`.
     entry["result_chars"] = _raw_result_chars(block.content)
+
+
+# The spawn announcement an `Agent`/`Task` result carries for a background
+# subagent: "Async agent launched … agentId: <id>". This is the canonical way to
+# identify a background agent — the same signal issue #3045's measurement recipe
+# uses — and the only one that distinguishes it from a synchronous agent whose
+# stream entries happen to carry no `agent_id`.
+_ASYNC_AGENT_ID = re.compile(r"Async agent launched.*?agentId:\s*([A-Za-z0-9]+)", re.S)
+
+
+def backfill_background_tool_calls(
+    workspace: Path, tool_calls: list[dict[str, Any]]
+) -> None:
+    """Append a background subagent's tool calls to `tool_calls`, from its transcript.
+
+    A synchronous subagent's calls are recorded by `_consume` from the parent
+    message stream (with `agent_id`/`agent_type` joined from
+    `caller_by_tool_use_id`). A BACKGROUND subagent ("Async agent launched") runs
+    in its own sub-session whose messages never flow through that stream, so its
+    calls were missing from `tool_calls` while its turns still showed up in
+    `subagents[].turns` — the run log contradicted itself (#3045).
+
+    Source is the transcript, not the stream (`subagent_capture.pair_tool_calls`),
+    so these entries are appended AFTER the main-stream entries and `tool_calls`
+    is therefore NOT chronological across agents. Mutating in place is safe only
+    here: every consumer that reads `tool_calls` by order, index or length —
+    `narration`'s `tool_calls_before`, the guardrail shadow-window scanners
+    (`find_unguarded_protected_writes`, `recently_succeeded`) and
+    `same_person_scored_ids` — has already run by this call site. These entries
+    are therefore RECORDED, not re-scored; they were invisible to those scanners
+    before this existed and remain so.
+
+    Only agents the log ANNOUNCED as background are backfilled — those with an
+    `Agent`/`Task` result reading "Async agent launched … agentId: <id>". A
+    synchronous agent is therefore never backfilled, even when its stream entries
+    carry no `agent_id` (an entry whose result never arrived at a cap/timeout, or
+    a call to a nonexistent tool refused before the hook runs, both leave
+    `agent_id` unset — so an "already in `existing`" test alone would re-add them).
+    A transcript already present in `existing` is skipped too, before parsing,
+    which keeps the large synchronous transcripts from being re-read. If a
+    background announcement is ever absent, that agent stays missing, which is the
+    behaviour today.
+
+    Backfilled entries carry `agent_id` (from the filename) and `agent_type` (from
+    `meta.json`) even when the call's result never arrived — unlike the sync
+    "result never came" entry, which carries neither; `docs/specs/e2e-test-spec.md`
+    §8.1.1 records that difference.
+
+    Best-effort — never raises, matching `collect_subagents`: a missing or
+    unparseable transcript leaves `tool_calls` exactly as it was.
+    """
+    try:
+        background = {
+            m.group(1)
+            for tc in tool_calls
+            if tc.get("tool") in ("Agent", "Task")
+            for m in _ASYNC_AGENT_ID.finditer(str(tc.get("response_summary") or ""))
+        }
+        existing = {tc["agent_id"] for tc in tool_calls if tc.get("agent_id")}
+        for jsonl, meta_path in find_subagent_transcripts(workspace):
+            agent_id = transcript_agent_id(jsonl)
+            if agent_id not in background or agent_id in existing:
+                continue
+            records = parse_jsonl(jsonl, errors="replace")
+            if not records:
+                continue
+            agent_type: str | None = None
+            if meta_path is not None:
+                try:
+                    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+                    meta = None
+                if isinstance(meta, dict):
+                    agent_type = meta.get("agentType")
+            for raw in pair_tool_calls(records):
+                content = raw.get("content")
+                tool_calls.append(
+                    {
+                        "tool": raw["tool"],
+                        "args": raw["args"],
+                        "response_summary": (
+                            _summarize_tool_response(content, tool_name=raw["tool"])
+                            if content is not None
+                            else None
+                        ),
+                        "is_error": raw["is_error"],
+                        "result_chars": (
+                            _raw_result_chars(content) if content is not None else 0
+                        ),
+                        "agent_id": agent_id,
+                        "agent_type": agent_type,
+                    }
+                )
+    except Exception:  # noqa: BLE001 — capture must never fail an otherwise-loggable run
+        return
 
 
 def _timeline_tool_label(tool: str, args: dict | None) -> str:
@@ -3577,6 +3679,11 @@ async def run_e2e_test(
         # surfaces a runaway-thinking subagent freeze directly in the committed
         # runlog, which tool_calls alone can't show. See subagent_capture.py.
         subagents, subagent_capture_status = collect_subagents(workspace)
+        # #3045 — a background ("Async agent launched") subagent's tool calls never
+        # reach the message stream `_consume` builds `tool_calls` from, so recover
+        # them here from the same transcripts `collect_subagents` reads and append
+        # them (out of chronological order; see backfill_background_tool_calls).
+        backfill_background_tool_calls(workspace, tool_calls)
 
         # The whole-run figure (#2582). `usage["usage"]` is main-thread only, so
         # until this merge every cost figure over this corpus was main plus a
