@@ -4826,6 +4826,13 @@ describe("research_append (batch ops)", () => {
   it("(in-flight) refuses an unrelated question", async () => {
     await refusedFor(running(), { depends_on: [], unblocks: [] });
   });
+  it("(in-flight) tells a same-batch resolve-and-append to split into two calls", async () => {
+    await writeProject(running());
+    const r = await researchAppend(newQ());
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/as it stood before the call/);
+    expect(msg).toMatch(/write the resolution in its own call and append the new question in the next one/);
+  });
   it("(in-flight) refuses when unblocks names the question but no conflict blocks it", async () => {
     await refusedFor(running(), { unblocks: ["q_001"] });
   });
