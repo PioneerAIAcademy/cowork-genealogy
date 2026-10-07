@@ -147,6 +147,35 @@ const DELEGATION_EDGES: Record<string, Edge> = {
   // The router that held two caller-side pins here was deleted with the skill
   // (issue #2115), so the orchestrator is now the only caller and the agent
   // carries the whole defence. The history below is why that pin is agent-side.
+  // Added with the "Bounded request or job" section (#2813 item 1): a bounded
+  // transcription goes straight to the agent that owns it instead of walking the
+  // routing table. The caller side is exempt because the whole delegation is one
+  // clause naming a destination -- it forwards no expected answer for the agent
+  // to slant toward, which is the pressure the sibling record-extraction edge
+  // pins against. If the router ever gains a sentence telling this agent what to
+  // look for, that sentence is a caller pin and this exemption must go.
+  "research -> image-reader": {
+    pins: [
+      {
+        side: "agent",
+        excerpt:
+          "Never\ntailor, trim, or slant the transcription toward an expected answer.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The router states the destination and nothing about the content: it " +
+        "passes no looking_for, no expected answer, and no framing of what the " +
+        "page should say. Deciding whether the page holds what was wanted is " +
+        "the caller's job on return, which the agent-side pin already states.",
+      mitigation: {
+        side: "caller",
+        excerpt: "transcription to `@plugin:image-reader`",
+      },
+    },
+  },
+
   "research -> question-selection": {
     pins: [
       // Added after the first direct-arm run (issue #2115). The exemption this
@@ -329,7 +358,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       mitigation: {
         side: "caller",
         excerpt:
-          "naming the subject and every\nimported relative by their LOCAL tree id from Step 3",
+          "naming the subject and every\nimported relative by their tree `I` id from `idMap`",
       },
     },
   },

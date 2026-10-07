@@ -97,7 +97,13 @@ jobs:
           # test_refusal_reaches_stderr_under_the_deploy_entrypoint parses
           # deploy/Dockerfile's CMD and starts the app with it, so a Dockerfile-only
           # diff would otherwise report success without running that test.
-          PATTERNS: '^apps/server/|^packages/engine/plugin/agents/|^packages/engine/plugin/skills/|^docs/specs/schemas/|^\.gitignore$|^deploy/|^scripts/eb_bundles/|^scripts/build-stamp\.mjs$|^Makefile$|^\.github/workflows/server-tests\.yml$'
+          #
+          # `^docs/architecture\.md$`, `^docs/plan/familysearch-handoff\.md$` and
+          # `^docs/search-agent-prototype-report\.md$` (U13):
+          # tests/test_proto_rehearsal.py's 12-digit account-id scan reads them, and it
+          # is CI's only guard against a pasted AWS account id. A docs-only diff would
+          # otherwise report success having scanned nothing.
+          PATTERNS: '^apps/server/|^packages/engine/plugin/agents/|^packages/engine/plugin/skills/|^docs/specs/schemas/|^\.gitignore$|^deploy/|^scripts/eb_bundles/|^scripts/build-stamp\.mjs$|^Makefile$|^\.github/workflows/server-tests\.yml$|^docs/architecture\.md$|^docs/plan/familysearch-handoff\.md$|^docs/search-agent-prototype-report\.md$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \

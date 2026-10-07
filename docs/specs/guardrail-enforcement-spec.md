@@ -1677,17 +1677,21 @@ stalled, that loop is also what answers hook callbacks, so every PreToolUse
 callback went unanswered and the CLI timed each one out — and because the matcher
 was `None`, that killed calls with nothing to deny, including a purely local
 `ToolSearch`. A live session on 2026-08-25 lost 4 of 8 extractions this way. The
-matcher is now `_PRETOOL_MATCHER`, **derived** from the **three** constants the
-predicate reads — `_FILE_WRITE_TOOLS`, `_EXFIL_GUARD_TOOLS` and
-`DEVICE_WRITE_TOOLS` — so the divergence above cannot recur by restatement. It
+matcher is now `_PRETOOL_MATCHER`, **derived** from the **four** constants the
+predicate reads — `_FILE_WRITE_TOOLS`, `_EXFIL_GUARD_TOOLS`, `DEVICE_WRITE_TOOLS`
+and `DELEGATION_TOOLS` — so the divergence above cannot recur by restatement. It
 comes out as:
 
-    ^(Write|Edit|NotebookEdit|Bash)$|.*device_commit_files$
+    ^(Write|Edit|NotebookEdit|Bash|Agent|Task)$|.*device_commit_files$
 
 Two corrections to what this paragraph said before review, both worth stating
 because the wrong version is the sort a reader would trust: the derivation named
 **two** constants, and it acquired a third when the `Bash` exfiltration arm
-landed; and it is **not** "the plugin's minus `.*research_append`" — it is that
+landed, and a **fourth** when the foreground-delegation arm did. That arm is the
+one entry here that is NOT a deny: it allows the call and rewrites
+`run_in_background` to `False`, and it needs the matcher exactly as much as a
+deny does, because an arm the matcher cannot reach is inert with the suite green.
+And it is **not** "the plugin's minus `.*research_append`" — it is that
 minus `.*research_append` **plus `Bash`**. The plugin's is
 `Write|Edit|NotebookEdit|.*device_commit_files|.*research_append`. `research_append`
 is absent here because this hook returns `{}` for it, so binding it would only
