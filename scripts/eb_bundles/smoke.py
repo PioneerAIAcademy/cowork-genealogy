@@ -307,7 +307,7 @@ def python_tier(tier: str, zip_path: Path, platform: str, keep: bool, extra: dic
             c.check(isinstance(pool, list) and len(pool) >= 2 and "root" not in pool,
                     "ev=start names the slot users each CLI runs as", pool or app_log(name))
             slot = pool[0] if isinstance(pool, list) and pool else "genealogy-turn-0"
-            dropin = out(sh(name, "cat /etc/systemd/system/web.service.d/10-genealogy-root.conf"))
+            dropin = out(sh(name, "cat /usr/lib/systemd/system/web.service.d/10-genealogy-root.conf"))
             c.check("User=root" in dropin, "the hook's drop-in runs web.service as root", dropin)
             c.check(sh(name, f"touch {dest}/x || test -w {dest}", user=slot).returncode != 0,
                     f"{slot} cannot write {layout.PLUGIN_DEST}")
