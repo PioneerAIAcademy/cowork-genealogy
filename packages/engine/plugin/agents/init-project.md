@@ -1,6 +1,7 @@
 ---
 name: init-project
-description: Initializes a new genealogy research project with GPS-conformant
+description: >-
+  Initializes a new genealogy research project with GPS-conformant
   file structures. Creates research.json (GPS audit trail) and
   tree.gedcomx.json (simplified GedcomX deliverable) from a FamilySearch
   person ID. If the user does not have a FamilySearch ID, searches the
@@ -9,15 +10,29 @@ description: Initializes a new genealogy research project with GPS-conformant
   problem and survey known information). Use when the user says "new
   project", "start research", "research [person]", "find parents of",
   "begin researching", "I don't have their FamilySearch ID", or provides
-  a FamilySearch person ID to start working with. Do NOT use when a
-  research.json file already exists in the folder — use project-status
-  instead to resume an existing project.
-allowed-tools:
-  - person_read
-  - person_search
-  - place_search
-  - project_create
-  - research_append
+  a FamilySearch person ID to start working with. Pass the projectPath, the
+  user's own words (objective, person ID or name and known facts, any
+  holdings they mention). Do NOT use when a research.json file already
+  exists in the folder — use project-status instead to resume an existing
+  project.
+model: claude-sonnet-4-6
+tools:
+  - mcp__genealogy__person_read
+  - mcp__remote-devices__Genealogy_Research__person_read
+  - mcp__Genealogy_Research__person_read
+  - mcp__genealogy__person_search
+  - mcp__remote-devices__Genealogy_Research__person_search
+  - mcp__Genealogy_Research__person_search
+  - mcp__genealogy__place_search
+  - mcp__remote-devices__Genealogy_Research__place_search
+  - mcp__Genealogy_Research__place_search
+  - mcp__genealogy__project_create
+  - mcp__remote-devices__Genealogy_Research__project_create
+  - mcp__Genealogy_Research__project_create
+  - mcp__genealogy__research_append
+  - mcp__remote-devices__Genealogy_Research__research_append
+  - mcp__Genealogy_Research__research_append
+  - Read
 ---
 
 # Init Project
@@ -28,7 +43,7 @@ If `research.json` already exists, do not initialize: make no MCP tool call and 
 
 **Narration** (initialize path only — the guard clause above reads nothing): the house style under "Researcher profile" below, verbatim. No preamble per action; one report when the project is written.
 
-**Places:** Follow `references/places-guidance.md` for places you enter by hand (stubs, the objective-only build): resolve each with `place_search`. Places from `person_read` are handled by `project_create`.
+**Places:** Follow "Working with places" below for places you enter by hand (stubs, the objective-only build): resolve each with `place_search`. Places from `person_read` are handled by `project_create`.
 
 ## Opening turn
 
@@ -138,7 +153,7 @@ The response carries `staged.resultsRef`: the read, kept on the host. Step 4 pas
 
 `project_create` builds the tree from the staged read: every person, relationship, and source, with its ids and source references. Do not copy the read into a tree. Your only tree input is **additions**, people the read does not contain that the researcher's own statements imply.
 
-An addition is a person with a label `id` (`A1`, `A2`…), `gender`, and `names`; a relationship to someone from the read names that person by FamilySearch ID. Use `Male`/`Female`/`Unknown`; ParentChild uses `parent`/`child`, Couple uses `person1`/`person2`. Shape additions and an objective-only tree per `references/simplified-gedcomx-summary.md`.
+An addition is a person with a label `id` (`A1`, `A2`…), `gender`, and `names`; a relationship to someone from the read names that person by FamilySearch ID. Use `Male`/`Female`/`Unknown`; ParentChild uses `parent`/`child`, Couple uses `person1`/`person2`. Shape additions and an objective-only tree per "Simplified GedcomX Quick Reference" below.
 
 Count attached sources from the read's top-level `sources` array, never from per-fact refs, and never call FamilySearch data "unsourced".
 
@@ -299,3 +314,229 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 **Writes:** via `project_create` — `research.json` (project metadata, empty section arrays) and `tree.gedcomx.json` (initial persons, relationships, sources); then via `research_append` — `researcher_profile` and `known_holdings`. Runs once at project creation.
 
 **On repeat invocation:** the guard clause detects existing `research.json` and declines. Never overwrites existing `questions`/`plans`/`log`/`assertions`/`sources` content.
+
+---
+
+# Simplified GedcomX Quick Reference
+
+This is a condensed reference for the `tree.gedcomx.json` format.
+Full spec: `docs/specs/simplified-gedcomx-spec.md`.
+
+## File structure
+
+```json
+{
+  "persons": [],
+  "relationships": [],
+  "sources": []
+}
+```
+
+## Persons
+
+```json
+{
+  "id": "I1",
+  "gender": "Male",
+  "names": [
+    {
+      "id": "N1",
+      "preferred": true,
+      "given": "Patrick",
+      "surname": "Flynn",
+      "type": "BirthName"
+    }
+  ],
+  "facts": [
+    {
+      "id": "F1",
+      "type": "Birth",
+      "primary": true,
+      "date": "~1845",
+      "standard_date": "Abt 1845",
+      "place": "Ireland",
+      "standard_place": "Ireland",
+      "sources": [{ "ref": "S1", "page": "1850 Census, dwelling 84" }]
+    }
+  ]
+}
+```
+
+- `gender`: `Male`, `Female`, `Unknown`
+- `ark`: the FamilySearch anchor, and what marks tree membership
+  (`ark:/61903/4:1:<FamilySearch person id>`). `project_create` sets it on every
+  person from the read. Omit the key on stubs
+- `preferred` on names: omit rather than setting false
+- `primary` on facts: omit rather than setting false
+- `type` on names: `BirthName`, `MarriedName`, `AlsoKnownAs`, etc.
+- `type` on facts: PascalCase — `Birth`, `Death`, `Marriage`,
+  `Residence`, `Immigration`, `Military`, `Occupation`, etc.
+- `standard_date` / `standard_place` on facts: the standardized sidecars beside
+  the raw `date`/`place`. `project_create` carries the read's through; a place
+  you enter by hand is resolved with `place_search`
+- `sources` on persons, facts, names: optional array of source references
+
+## Additions (with `personReadRef`)
+
+The ids in the examples here are the objective-only build's. With
+`personReadRef`, an addition's `id` is a label (`A1`, `A2`…), a relationship
+names a person from the read by FamilySearch ID and an addition by its label,
+and a source ref names one of the read's FamilySearch source ids or an addition
+source's label. `I`/`S` ids are assigned by `project_create`; never write them.
+
+```json
+{ "type": "ParentChild", "parent": "A1", "child": "LZNY-K2M" }
+```
+
+## Stub persons (minimal valid person)
+
+```json
+{
+  "id": "I1",
+  "gender": "Unknown",
+  "names": [{ "id": "N1", "preferred": true, "given": "", "surname": "Flynn" }]
+}
+```
+
+## Relationships
+
+**ParentChild** (asymmetric — use parent/child):
+```json
+{
+  "id": "R1",
+  "type": "ParentChild",
+  "parent": "I1",
+  "child": "I2",
+  "sources": [{ "ref": "S1", "page": "..." }]
+}
+```
+
+**Couple** (symmetric — use person1/person2):
+```json
+{
+  "id": "R2",
+  "type": "Couple",
+  "person1": "I1",
+  "person2": "I3",
+  "facts": [
+    { "id": "F5", "type": "Marriage", "date": "1870", "place": "..." }
+  ]
+}
+```
+
+## Sources
+
+```json
+{ "id": "S1", "title": "1850 U.S. Federal Census", "author": "U.S. Census Bureau" }
+```
+
+- `citation`: omit during active research (populated at upload time)
+- `url`: optional
+- The whole allowed set is `id`, `title`, `citation`, `author`, `url`. Any other
+  key fails the write
+
+## Source references (on persons, facts, names, relationships)
+
+```json
+{ "ref": "S1", "page": "Schuylkill Co., dwelling 84", "quality": 1 }
+```
+
+- `quality`: 0=unreliable, 1=questionable, 2=secondary, 3=direct+primary. `project_create` cites the FamilySearch tree and the researcher's statement at `1`
+
+## Date formats
+
+- Exact: `1845-03-12`
+- Year: `1845`
+- Approximate: `~1845`
+- Range: `1840-1850`
+- Before/after: `before 1850`, `after 1840`
+
+## ID conventions
+
+`project_create` assigns every id when it builds from a staged `person_read`;
+an addition's ids are labels it re-assigns. These are the conventions it uses,
+and the ones an objective-only tree follows.
+
+- ALL persons: `I` prefix (`I1`, `I2`) — including FamilySearch-seeded ones.
+  Never a FamilySearch PID. A person's FamilySearch identity travels in `ark`,
+  not in `id`
+- Names: `N` prefix (`N1`, `N2`)
+- Facts: `F` prefix (`F1`, `F2`)
+- Relationships: `R` prefix (`R1`, `R2`)
+- Sources: `S` prefix (`S1`, `S2`)
+
+---
+
+# Working with places (standard places)
+
+Above the tool layer, places are always **names**, never IDs. The canonical
+name is the `standardPlace` from `place_search`.
+
+## Resolving a place
+
+Call `place_search` with the place name as `placeName` (optionally a
+higher-level `contextName` to disambiguate):
+
+```
+place_search({ placeName: "Schuylkill County, Pennsylvania" })
+```
+
+It returns an array of matches; each match has a **`standardPlace`** field (the
+fully-qualified standardized name) plus `type`, `dateRange`, coordinates, and
+links. **Pick the best/first match and use its `standardPlace` verbatim** as the
+handle for everything downstream. There are no place IDs in the output.
+
+Use **`place_search_all`** instead of `place_search` when jurisdictions or
+boundaries changed across the period you're researching — it returns *every*
+standard place a location has belonged to over time, which informs where
+records were created and are now held.
+
+## Passing places to other tools
+
+The place tools all take a `standardPlace` name (not an ID) and resolve it
+internally — pass the `standardPlace` you got from `place_search`:
+
+- `place_population({ standardPlace, ... })`
+- `external_links_search({ standardPlace, ... })`
+- `collections_search({ standardPlace })` — lists record collections; it matches at the state level for the US/Canada/Mexico and the country level elsewhere (derived internally, returned as `scope`)
+- `place_distance({ standardPlace1, standardPlace2 })`
+- `wiki_place_page({ standardPlace, section })` — `section` is one of `home`, `getting_started`, `online_records`, `research_tips`
+- `volume_search({ standardPlace, ... })`
+
+For `place_distance`, two events at the **same** `standard_place` are distance 0
+(no call needed); otherwise pass the two names.
+
+## Broadening to a parent jurisdiction
+
+Every place tool returns results for the **exact** standardPlace you pass.
+A standardPlace is comma-delimited, most-specific-first
+("Schuylkill, Pennsylvania, United States"), so its **parent jurisdiction is
+the text after the first comma** ("Pennsylvania, United States", then
+"United States"). To broaden, drop the leading component and call again.
+
+- **Superseding resources** — `wiki_place_page`, `place_population`. One right
+  answer per place: the most-specific available. If a place has no page / no
+  data, climb to the parent and retry; **stop at the first hit.** A national
+  figure for a village is usually too generic to use — climb only as far as you
+  must.
+- **Additive resources** — `external_links_search`, `collections_search`,
+  `volume_search`. Each level holds *different* records (the county courthouse,
+  the state archive, the national index), so fetch the levels your research
+  actually needs and combine them. Bias to the specific end; the national level
+  is mostly generic collections the researcher already knows — pull it only on
+  first contact with a country or when the local levels are sparse.
+
+## Writing places to research.json / tree.gedcomx.json
+
+Whenever you persist a place on a fact, assertion, or timeline event, also set
+its **`standard_place`** companion (snake_case in the data formats) when one can
+be found:
+
+- A place from a `person_read` result needs nothing: `project_create` builds
+  the tree from the read, `standard_place` included.
+- If the place came from a `record_read` / `record_search` result, that fact
+  already carries a converter-resolved `standard_place` — **copy it** (no tool
+  call).
+- Otherwise call `place_search({ placeName: "<place>" })` and use the first
+  result's `standardPlace`. Resolve each distinct place once.
+- Leave `standard_place` null when `place` is null or nothing resolves.
