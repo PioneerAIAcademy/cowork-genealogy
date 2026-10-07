@@ -332,7 +332,7 @@ describe("build_external_search_url with projectPath", () => {
 // any tool that transitively reaches project-io / results-staging /
 // image-store / project-store but is absent from CALLS.
 
-import { readFileSync, readdirSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { resolve, relative, dirname } from "path";
 import { allToolSchemas } from "../../src/tool-schemas.js";
 
@@ -404,7 +404,7 @@ function localImports(absPath: string): string[] {
     if (!resolved.startsWith(SRC_ROOT)) continue;
     // Try .ts extension.
     const tsPath = resolved + ".ts";
-    try { readFileSync(tsPath); out.push(tsPath); } catch { /* skip */ }
+    if (existsSync(tsPath)) out.push(tsPath);
   }
   return out;
 }
@@ -440,21 +440,7 @@ function buildToolFileMap(): Map<string, string> {
       if (n) importMap.set(n, absPath);
     }
   }
-  // Now match each allToolSchemas entry variable to a tool name.
-  // The allToolSchemas array lists variable names; each schema has a `name` property.
   const toolToFile = new Map<string, string>();
-  for (const schema of allToolSchemas) {
-    const name = (schema as any).name as string;
-    // Find which import provided this schema by searching importMap for the
-    // variable name that matches. The variable is the schema export name
-    // which we can find by looking at the schema source file.
-    // Simpler: each schema has `name`, and we can read the source file of each
-    // tool dir entry and grep for that name.
-    // Even simpler: iterate importMap entries and read each file to find the
-    // `name:` for this tool.
-  }
-  // Actually, the simplest correct approach: for each tool name from allToolSchemas,
-  // read each unique source file from importMap and check which declares this name.
   const uniqueFiles = new Set(importMap.values());
   for (const schema of allToolSchemas) {
     const name = (schema as any).name as string;
