@@ -196,3 +196,17 @@ Three independent reviews ran after the code was written. What they changed:
 - **A `None` id in `before_state` masks later entries** — a flaw inside the shared
   `new_section_entries`, affecting four other validators equally. Not fixed here; fixing it changes
   their behaviour and belongs in its own change.
+
+
+## Correction: the #2173 premise was stale
+
+Every earlier section of this plan justifies leaving `record-extraction` alone partly as "Rule 10
+blocks on `ut_record_extraction_g4k`'s xfail, which needs issue #2173". A stale-pointer check on
+the PR body caught that **#2173 was closed on 2026-09-03**.
+
+What is still true: the marker is present, so Rule 10 does fire on touching the skill, and Rule 6
+would gate the change anyway because that suite has never had a zero fail run (1, 4, 5, 5, 18,
+19). What is no longer true: that this waits on an open dependency. The marker's own text says to
+remove it "once #2173's record-extractor.md doctrine fix lands and this test passes reliably", and
+that fix landed over a month ago, so removing it is unclaimed work needing one `record-extraction`
+run to confirm. Out of scope here, but it is work, not a blocker.
