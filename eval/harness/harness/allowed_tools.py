@@ -197,8 +197,8 @@ def compute_allowed_tools(
     # before its callee may really run": the declaration is this field.
     #
     # ONE HOP ONLY. search-records is currently the sole skill that delegates
-    # via Skill(), and none of its four callees (project-status,
-    # record-extraction, research-plan, search-external-sites) delegate
+    # via Skill(), and none of its three skill callees (project-status,
+    # record-extraction, research-plan) delegate
     # further, so the graph is one level deep and cannot cycle. If a callee
     # ever starts delegating, make this recursive AND add a visited-set cycle
     # guard — do not just add a second hop, which pushes the same bug one

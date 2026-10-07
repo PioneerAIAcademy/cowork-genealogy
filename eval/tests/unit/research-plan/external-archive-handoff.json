@@ -1,0 +1,43 @@
+{
+  "test": {
+    "id": "ut_research_plan_arc",
+    "skill": "research-plan",
+    "name": "A plan item that ends at Archion carries the full hand-off",
+    "type": "positive",
+    "description": "Issue #2802 (the research-plan half of the hand-off rule, from alpha feedback of 2026-09-22/23): the only source for Katharina Seeger's parents is the Baiersbronn parish register on Archion, a paid site the researcher must open themselves. research-plan's reply must give the parish link (from loc_001, never just the site name), what the register would settle, what to look for, and an offer to walk the researcher through capture and upload. The search-external-sites agent is stubbed: this test grades research-plan's own text.",
+    "tags": [
+      "planning",
+      "external-archive",
+      "archion",
+      "handoff-rule"
+    ]
+  },
+  "input": {
+    "user_message": "Make the research plan for q_001 - where would Katharina Seeger's parents be recorded? Tell me what I need to do.",
+    "scenario": "archion-baiersbronn-unplanned"
+  },
+  "mcp_fixtures": [
+    "place-search-baiersbronn",
+    "place-search-all-baiersbronn",
+    "collections-search-baiersbronn",
+    "external-links-search-baiersbronn",
+    "volume-search-baiersbronn"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300,
+    "max_turns": 30,
+    "stub_skills": [
+      {
+        "skill": "search-external-sites",
+        "response": "Handed over the Archion parish page for Baiersbronn and logged it as an in-flight external_site entry; the plan item stays in_progress until the capture comes back."
+      }
+    ]
+  },
+  "judge_context": [
+    "loc_001 records that the Baiersbronn Protestant registers are on Archion and gives the parish page URL. The plan should target that register.",
+    "Because the researcher must open Archion themselves, the reply must carry the hand-off: (1) the parish link itself — the Archion URL from loc_001, not just 'Archion' or the site's home page; (2) what the register would settle — Katharina's parents, from her 1843 baptism entry or the family register; (3) what to look for — the baptism register or Familienregister covering 1843, and the entry for Katharina Seeger; (4) an offer to walk the researcher through capturing the page and uploading it. Bare directions to a site with no link, or no offer, is a fail.",
+    "Archion needs a paid pass to view; saying so is correct, not a hedge.",
+    "Do not grade whether search-external-sites was spawned: it is stubbed, and planning without executing is a legitimate ending here."
+  ]
+}

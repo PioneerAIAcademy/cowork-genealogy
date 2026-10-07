@@ -903,6 +903,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
 
     const items = Array.isArray(pl.items) ? pl.items : [];
+    const planItemIds = new Set(
+      items.map((it: any) => (it && typeof it === "object" ? it.id : undefined)),
+    );
     for (let j = 0; j < items.length; j++) {
       const item = items[j];
       const ip = `${pp}/items[${j}]`;
@@ -918,6 +921,27 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       }
       if ("status" in item) {
         checkEnum(item.status, "plan_item_status", ip, report);
+      }
+      // `fallback_for` is `^pli_` or null in the JSON Schema, the same drift as
+      // the log's `plan_item_id` below. It must also name an item of this same
+      // plan: a fallback is tried when a sibling comes back empty, so an id from
+      // another plan (or a superseded one) can never be acted on.
+      if (item.fallback_for !== null && item.fallback_for !== undefined) {
+        const fb = item.fallback_for;
+        if (typeof fb !== "string" || !fb.startsWith(ID_PREFIXES.plan_items)) {
+          addError(
+            report,
+            ip,
+            `fallback_for '${String(fb)}' must be a '${ID_PREFIXES.plan_items}' id of an item in this plan, or null`,
+          );
+        } else if (!planItemIds.has(fb)) {
+          addError(
+            report,
+            ip,
+            `fallback_for '${fb}' is not an item in this plan (${pl.id ?? "?"}); ` +
+              "name a sibling item of the same plan, or null",
+          );
+        }
       }
     }
   }

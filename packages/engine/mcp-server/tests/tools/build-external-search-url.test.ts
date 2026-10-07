@@ -1902,6 +1902,22 @@ describe("build_external_search_url", () => {
       });
     });
 
+    it("returns a handoffLine carrying exactly the URL it logged", async () => {
+      await writeProject();
+      const r = await buildExternalSearchUrlTool({
+        site: "myheritage",
+        attributes: { givenName: "Patrick", surname: "Flynn", marriagePlace: "Pennsylvania" },
+        projectPath: dir,
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const log = await readLog();
+      expect(r.handoffLine).toBe(`Open this search:\n${log[0].external_site.url_generated}`);
+      expect(r.handoffLine.split("\n")[1]).toBe(r.url);
+      const plain = buildExternalSearchUrl({ site: "findagrave", attributes: { surname: "Flynn" } });
+      expect(plain.ok && plain.handoffLine).toBe(plain.ok && `Open this search:\n${plain.url}`);
+    });
+
     it("records a browse site's baseUrl in notes", async () => {
       await writeProject();
       const baseUrl = "https://www.archion.de/de/alle-archive/baden-wuerttemberg/x/baiersbronn";
