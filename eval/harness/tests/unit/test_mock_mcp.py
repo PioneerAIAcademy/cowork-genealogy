@@ -974,6 +974,28 @@ def test_live_writer_handler_uses_long_node_timeout(tmp_path, monkeypatch):
 
 
 @pytest.mark.skipif(
+    not (BUILD_TOOLS / "person-warnings.js").exists(),
+    reason="engine build required for the live person_warnings handler",
+)
+def test_person_warnings_runs_with_place_lookups_disabled(tmp_path, monkeypatch):
+    """The live person_warnings call passes a resolver that resolves nothing, so
+    its birthplace-distance check never reaches the Places API (issue #1962)."""
+    scripts: list[str] = []
+    spy = _NodeEvalSpy(stdout='{"warnings": []}')
+
+    def _recording(script, input_str=None, timeout=mock_mcp.NODE_EVAL_TIMEOUT_DEFAULT):
+        scripts.append(script)
+        return spy(script, input_str, timeout)
+
+    monkeypatch.setattr(mock_mcp, "_run_node_eval", _recording)
+    _server, _log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
+    scripts.clear()
+    _invoke(tools_by_name, "person_warnings", {"projectPath": str(tmp_path), "personId": "I1"})
+    assert len(scripts) == 1
+    assert "personWarningsTool(input, { placeCoords: async () => null })" in scripts[0]
+
+
+@pytest.mark.skipif(
     not BUILD_SCHEMAS_JS.exists(),
     reason="engine build required for the catalog probe",
 )

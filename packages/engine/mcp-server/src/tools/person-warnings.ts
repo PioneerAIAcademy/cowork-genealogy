@@ -43,6 +43,7 @@ import {
   factDaysDiffLatestLatest,
   factYearsDiffEarliestEarliest,
   factYearsDiffEarliestLatest,
+  getStandardDate,
   isPerfectStandardDate,
   latestDayOfPersonFacts,
   latestDayOfSelfFacts,
@@ -52,7 +53,14 @@ import {
   perfectDaysOfSelfFacts,
 } from "../utils/fact-helpers.js";
 import { nameSimilarity, normalizeString } from "../utils/string-similarity.js";
-import { countryConsistency, placeSegments } from "../utils/place-resolver.js";
+import {
+  countryConsistency,
+  mapWithConcurrency,
+  placeSegments,
+  standardPlaceToCoords,
+} from "../utils/place-resolver.js";
+import { earliestIsUnbounded, earliestYear, latestIsUnbounded, latestYear } from "../utils/date-helpers.js";
+import { haversineDistance } from "./distance.js";
 import { preferredName } from "../utils/name-helpers.js";
 import { getSimilarNamePairs } from "../utils/name-pairs.js";
 import {
@@ -122,8 +130,9 @@ export const personWarningsToolSchema = {
   description:
     "Check a person for impossible or unlikely genealogical data (e.g., death " +
     "before birth, parent too young, event after death). Reads " +
-    "tree.gedcomx.json from the local project — no authentication or network " +
-    "access required. personId is the anchor person; warnings are evaluated " +
+    "tree.gedcomx.json from the local project — no authentication required; " +
+    "may look up place coordinates online, and skips that check when the " +
+    "lookup fails. personId is the anchor person; warnings are evaluated " +
     "over that person and their one-hop relatives.",
   inputSchema: {
     type: "object" as const,
@@ -273,6 +282,7 @@ const DELAYED_BURIAL_DAYS = 365;
 
 // Project rule — NOT a FamilySearch Java MobWarnings port.
 const HAS_EVENT_IN_OTHER_COUNTRY = "hasEventInOtherCountry";
+const HAS_BIRTH_FAR_FROM_PARENTS_RESIDENCE = "hasBirthFarFromParentsResidence";
 
 // Fact types excluded from the "event in other country" check: migration-like,
 // residence-like, inherently mobile/paperwork types, and the anchor facts
@@ -3368,6 +3378,7 @@ export const ALL_WARNING_TAGS = [
   RELATIVES_HAS_CHILD_DEATH_AFTER_PARENT_BIRTH_200,
   MALE_RELATIVES_HAS_DIFF_SURNAME,
   HAS_EVENT_IN_OTHER_COUNTRY,
+  HAS_BIRTH_FAR_FROM_PARENTS_RESIDENCE,
   HAS_SAME_CENSUS,
   HAS_EVENTS_OUTSIDE_LIFESPAN_FAR,
   HAS_EVENTS_OUTSIDE_LIFESPAN_NEAR,
@@ -4117,12 +4128,170 @@ export function calculateWarnings(
   return warnings;
 }
 
+// ─── Birthplace far from the parents' residence (project rule) ──────────────
+// Issue #1962 item 3; thresholds ruled by the lead 2026-08-31, look-up-at-check-
+// time 2026-09-27. Emitted only by the person_warnings tool: it needs place
+// coordinates, a network lookup, and calculateWarnings stays synchronous and
+// offline for the write gate and merge_warnings.
+
+export type PlaceCoordsResolver = (
+  standardPlace: string,
+) => Promise<{ latitude: number; longitude: number } | null>;
+
+export interface PersonWarningsOptions {
+  /** Coordinates for a standard place name; null when unknown. Default: Places lookup. */
+  placeCoords?: PlaceCoordsResolver;
+  /** Cap on the whole lookup step; past it the check is skipped. */
+  lookupBudgetMs?: number;
+}
+
+export const PLACE_LOOKUP_BUDGET_MS = 30_000;
+const PLACE_LOOKUP_CONCURRENCY = 4;
+const BIRTH_RESIDENCE_WINDOW_YEARS = 20;
+const BIRTH_ANCHOR_TYPES = ["Birth", "Christening", "Baptism"] as const;
+
+interface DatedPlaceFact {
+  fact: SimplifiedFact;
+  place: string;
+  minYear: number;
+  maxYear: number;
+}
+
+export interface BirthResidencePair {
+  birth: DatedPlaceFact;
+  parent: SimplifiedPerson;
+  residence: DatedPlaceFact;
+  thresholdMiles: number;
+}
+
+/** Year bounds of a standard date, or null when absent or open-ended (Bef/Aft). */
+function boundedYears(fact: SimplifiedFact): { minYear: number; maxYear: number } | null {
+  const std = getStandardDate(fact);
+  if (!std || earliestIsUnbounded(std) || latestIsUnbounded(std)) return null;
+  const minYear = earliestYear(std);
+  const maxYear = latestYear(std);
+  return minYear === null || maxYear === null ? null : { minYear, maxYear };
+}
+
+/** The era threshold; a range touching more than one era gets the most generous. */
+function birthThresholdMiles(minYear: number, maxYear: number): number {
+  let miles = 0;
+  if (minYear < 1850) miles = Math.max(miles, 25);
+  if (minYear <= 1949 && maxYear >= 1850) miles = Math.max(miles, 250);
+  if (maxYear >= 1950) miles = Math.max(miles, 500);
+  return miles;
+}
+
+/**
+ * The anchor's birth place paired with each parent residence dated within 20
+ * years of the birth under every reading. Pure: no lookups. Empty when the birth
+ * has no placed anchor or no bounded date, or when no residence qualifies.
+ */
+export function birthResidencePairs(mob: Mob): BirthResidencePair[] {
+  const facts = mob.getPerson().facts ?? [];
+  const placed = (type: string) => facts.find((f) => f.type === type && f.standard_place);
+  const anchorFact = BIRTH_ANCHOR_TYPES.map(placed).find((f) => f !== undefined);
+  if (!anchorFact?.standard_place) return [];
+  const years =
+    boundedYears(anchorFact) ??
+    facts
+      .filter((f) => f.type !== undefined && BIRTHLIKE_FACT_TYPES.has(f.type))
+      .map(boundedYears)
+      .filter((y): y is { minYear: number; maxYear: number } => y !== null)
+      .sort((a, b) => a.minYear - b.minYear)[0];
+  if (!years) return [];
+  const birth: DatedPlaceFact = { fact: anchorFact, place: anchorFact.standard_place, ...years };
+  const thresholdMiles = birthThresholdMiles(years.minYear, years.maxYear);
+
+  const pairs: BirthResidencePair[] = [];
+  for (const parent of mob.getParents()) {
+    for (const fact of parent.facts ?? []) {
+      if (!fact.type || !RESIDENCELIKE_FACT_TYPES.has(fact.type) || !fact.standard_place) continue;
+      const r = boundedYears(fact);
+      if (!r) continue;
+      if (r.maxYear - birth.minYear > BIRTH_RESIDENCE_WINDOW_YEARS) continue;
+      if (birth.maxYear - r.minYear > BIRTH_RESIDENCE_WINDOW_YEARS) continue;
+      pairs.push({ birth, parent, residence: { fact, place: fact.standard_place, ...r }, thresholdMiles });
+    }
+  }
+  return pairs;
+}
+
+/** Look up every distinct place once; a name not resolved within the budget stays null. */
+export async function lookupPlaceCoords(
+  names: string[],
+  resolver: PlaceCoordsResolver,
+  budgetMs: number,
+): Promise<Map<string, { latitude: number; longitude: number } | null>> {
+  const coords = new Map<string, { latitude: number; longitude: number } | null>();
+  const distinct = [...new Set(names)];
+  for (const name of distinct) coords.set(name, null);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let expired = false;
+  const lookups = mapWithConcurrency(distinct, PLACE_LOOKUP_CONCURRENCY, async (name) => {
+    if (expired) return;
+    let found: { latitude: number; longitude: number } | null = null;
+    try {
+      found = await resolver(name);
+    } catch {
+      found = null;
+    }
+    if (!expired) coords.set(name, found);
+  });
+  const cap = new Promise<void>((resolve) => {
+    timer = setTimeout(() => {
+      expired = true;
+      resolve();
+    }, budgetMs);
+  });
+  try {
+    await Promise.race([lookups, cap]);
+  } finally {
+    clearTimeout(timer);
+  }
+  return coords;
+}
+
+/** The first pair farther apart than its era allows, as a warning; pairs with an unknown place are skipped. */
+export function checkBirthFarFromParentsResidence(
+  mob: Mob,
+  pairs: BirthResidencePair[],
+  coords: Map<string, { latitude: number; longitude: number } | null>,
+): PersonWarning | null {
+  for (const pair of pairs) {
+    const a = coords.get(pair.birth.place);
+    const b = coords.get(pair.residence.place);
+    if (!a || !b) continue;
+    const { miles } = haversineDistance(a.latitude, a.longitude, b.latitude, b.longitude);
+    if (miles <= pair.thresholdMiles) continue;
+    const factOf = (f: SimplifiedFact): WarningFact[] =>
+      f.id ? [{ id: f.id, type: f.type ?? "", date: f.date ?? f.standard_date ?? null }] : [];
+    const warning: PersonWarning = {
+      scoreType: COHERENCE,
+      issueType: HAS_BIRTH_FAR_FROM_PARENTS_RESIDENCE,
+      severity: "implausible",
+      personId: mob.anchorId,
+      personName: getPersonName(mob.getPerson()),
+      facts: [...factOf(pair.birth.fact), ...factOf(pair.residence.fact)],
+      message:
+        `${pair.birth.fact.type} in ${pair.birth.place} is ${miles} miles from ` +
+        `${getPersonName(pair.parent)}'s ${pair.residence.fact.type} in ${pair.residence.place} ` +
+        `(${pair.residence.fact.standard_date ?? pair.residence.fact.date}), more than the ` +
+        `${pair.thresholdMiles}-mile limit for a birth in that era.`,
+    };
+    if (pair.parent.id) warning.relatedPersonId = pair.parent.id;
+    return warning;
+  }
+  return null;
+}
+
 // ─── MCP tool entry point ───────────────────────────────────────────────────
 // Single-person mode: read tree.gedcomx.json, build a Mob anchored on the
 // requested person, then call calculateWarnings with `isFinalWarnings=true`.
 
 export async function personWarningsTool(
   input: PersonWarningsInput,
+  opts: PersonWarningsOptions = {},
 ): Promise<PersonWarningsResult> {
   if (!input?.personId || typeof input.personId !== "string") {
     throw new Error("personId is required");
@@ -4155,5 +4324,16 @@ export async function personWarningsTool(
   // and the marriage-guarded checks self-suppress in this configuration.
   const mob = new Mob(tree, anchor.id);
   const warnings = calculateWarnings(mob, mob, mob, /* isFinalWarnings */ true);
+
+  const pairs = birthResidencePairs(mob);
+  if (pairs.length > 0) {
+    const coords = await lookupPlaceCoords(
+      pairs.flatMap((p) => [p.birth.place, p.residence.place]),
+      opts.placeCoords ?? ((name) => standardPlaceToCoords(name)),
+      opts.lookupBudgetMs ?? PLACE_LOOKUP_BUDGET_MS,
+    );
+    const far = checkBirthFarFromParentsResidence(mob, pairs, coords);
+    if (far) warnings.push(far);
+  }
   return { warningCount: warnings.length, warnings };
 }
