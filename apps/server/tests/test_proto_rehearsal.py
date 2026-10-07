@@ -208,8 +208,18 @@ class FakeAws:
     def ec2_describe_vpcs(self, rest):
         return {"Vpcs": [{"VpcId": "vpc-fake"}]}
 
+    SUBNET_AZS = {"subnet-a": "us-east-1a", "subnet-b": "us-east-1b"}
+    NO_T3_AZ = "us-east-1e"
+
     def ec2_describe_subnets(self, rest):
-        return {"Subnets": [{"SubnetId": "subnet-b"}, {"SubnetId": "subnet-a"}]}
+        ids = rest[rest.index("--subnet-ids") + 1:] if "--subnet-ids" in rest else sorted(self.SUBNET_AZS)[::-1]
+        return {"Subnets": [{"SubnetId": i, "AvailabilityZone": self.SUBNET_AZS[i]} for i in ids]}
+
+    def ec2_describe_instance_type_offerings(self, rest):
+        azs = set(self.SUBNET_AZS.values()) | {"us-east-1e"}
+        if "Name=instance-type,Values=t3." in " ".join(rest):
+            azs.discard(self.NO_T3_AZ)
+        return {"InstanceTypeOfferings": [{"Location": az} for az in sorted(azs)]}
 
     def ec2_describe_security_groups(self, rest):
         if "--group-ids" in rest:
@@ -802,6 +812,22 @@ def test_rds_class_defaults_and_can_be_overridden(env):
         assert rc == 0, lines[-5:]
         db = fake.calls_to("rds", "create-db-instance")[0]
         assert db[db.index("--db-instance-class") + 1] == want
+
+
+def test_eb_subnets_skip_a_zone_without_the_instance_type(env):
+    """us-east-1e offers no t3 (2026-10-07): an environment whose Subnets include it is refused."""
+    fake = FakeAws()
+    fake.SUBNET_AZS = {"subnet-a": "us-east-1a", "subnet-b": "us-east-1b", "subnet-e": "us-east-1e"}
+    rc, lines = up_all(env, fake)
+    assert rc == 0, lines[-5:]
+    for name in ("genealogy-u13-web", "genealogy-u13-worker", "genealogy-u13-tools"):
+        create = [a for a in fake.calls_to("elasticbeanstalk", "create-environment") if name in a][0]
+        opts = {(o["Namespace"], o["OptionName"]): o["Value"] for o in fake.file_of(create, "--option-settings")}
+        assert opts[("aws:ec2:vpc", "Subnets")] == "subnet-a,subnet-b", name
+        if ("aws:ec2:vpc", "ELBSubnets") in opts:
+            assert opts[("aws:ec2:vpc", "ELBSubnets")] == "subnet-a,subnet-b", name
+    db = fake.calls_to("rds", "create-db-subnet-group")[0]
+    assert "subnet-e" in db, "RDS keeps every default subnet"
 
 
 def test_data_bucket_blocks_public_access(stack):
