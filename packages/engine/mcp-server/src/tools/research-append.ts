@@ -45,7 +45,7 @@ import {
 } from "../utils/match-scores.js";
 import { compatiblePlace } from "../utils/date-comparison.js";
 import { getDayRange, isABeforeB } from "../utils/date-helpers.js";
-import { placeSegments } from "../utils/place-resolver.js";
+import { placeSegments, canonicalCountry } from "../utils/place-resolver.js";
 import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
@@ -998,66 +998,42 @@ const US_STATE_CODES: ReadonlySet<string> = new Set([
   "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "vt", "va", "wa",
   "wv", "wi", "wy",
 ]);
-/** Recognized country names, endonyms included, folded to one canonical name.
- *  A place whose last segment is not here reads as no country at all, and the
- *  move check stays silent: an unrecognized name is far likelier to be a region
- *  or a spelling than a move (147 false refusals over the committed corpus when
- *  every last segment was taken as a country, 2026-10-06). */
-const COUNTRIES: ReadonlyMap<string, string> = new Map(
-  ([
-    ["united states", ["united states", "united states of america", "usa", "u.s.a.", "us", "u.s."]],
-    ["united kingdom", ["united kingdom", "uk", "great britain", "england", "scotland", "wales", "northern ireland"]],
-    ["ireland", ["ireland", "éire", "eire", "irish free state"]],
-    ["canada", ["canada"]],
-    ["mexico", ["mexico", "méxico"]],
-    ["norway", ["norway", "norge", "noreg"]],
-    ["sweden", ["sweden", "sverige"]],
-    ["denmark", ["denmark", "danmark"]],
-    ["finland", ["finland", "suomi"]],
-    ["iceland", ["iceland", "ísland"]],
-    ["germany", ["germany", "deutschland", "prussia", "preußen", "preussen", "bavaria", "bayern", "württemberg", "wurttemberg", "baden", "hesse", "hessen", "saxony", "sachsen", "hanover", "hannover"]],
-    ["netherlands", ["netherlands", "nederland", "holland"]],
-    ["belgium", ["belgium", "belgique", "belgië"]],
-    ["france", ["france"]],
-    ["switzerland", ["switzerland", "schweiz", "suisse", "svizzera"]],
-    ["austria", ["austria", "österreich", "osterreich"]],
-    ["italy", ["italy", "italia"]],
-    ["spain", ["spain", "españa", "espana"]],
-    ["portugal", ["portugal"]],
-    ["poland", ["poland", "polska"]],
-    ["czech republic", ["czech republic", "czechia", "bohemia", "česko"]],
-    ["hungary", ["hungary", "magyarország"]],
-    ["russia", ["russia", "russian empire"]],
-    ["australia", ["australia"]],
-    ["new zealand", ["new zealand"]],
-    ["south africa", ["south africa"]],
-    ["philippines", ["philippines", "filipinas"]],
-    ["brazil", ["brazil", "brasil"]],
-    ["argentina", ["argentina"]],
-    ["chile", ["chile"]],
-    ["peru", ["peru", "perú"]],
-    ["cuba", ["cuba"]],
-    ["puerto rico", ["puerto rico"]],
-    ["china", ["china"]],
-    ["japan", ["japan"]],
-    ["india", ["india"]],
-  ] as Array<[string, string[]]>).flatMap(([canon, names]) => names.map((n) => [n, canon] as [string, string])),
-);
+/** Countries whose borders moved across the years genealogy records cover, so a
+ *  place named under one and a later record under another can be the same
+ *  village. A move inside one group is never read as a move between countries:
+ *  Ireland was in the United Kingdom until 1922, Prussian Posen is Polish
+ *  Poznań, and Norway shared a crown with Denmark and then Sweden. */
+const COUNTRY_GROUPS: ReadonlyMap<string, string> = new Map([
+  ...["united kingdom", "england", "scotland", "wales", "northern ireland", "ireland"].map(
+    (c) => [c, "british isles"] as [string, string],
+  ),
+  ...["germany", "poland", "austria", "hungary", "russia", "switzerland"].map(
+    (c) => [c, "central europe"] as [string, string],
+  ),
+  ...["norway", "sweden", "denmark"].map((c) => [c, "scandinavia"] as [string, string]),
+]);
 
-/** The country a free-text place names, or null when its last comma segment is
- *  not a recognized country (or a US state or state code, read as the United
- *  States). Country, never state: a state line is crossed by a short move as
- *  often as a long one, and the tool cannot tell which (#2537). */
+/** The country group a free-text place names, or null when its last comma
+ *  segment is not a country `canonicalCountry` recognizes (or a US state or
+ *  state code, read as the United States). Country, never state: a state line
+ *  is crossed by a short move as often as a long one, and the tool cannot tell
+ *  which (#2537). */
 export function placeCountry(place: unknown): string | null {
   if (typeof place !== "string") return null;
-  const segments = place.split(",").map((p) => p.trim().toLowerCase()).filter((p) => p !== "");
+  const segments = placeSegments(place);
   const last = segments[segments.length - 1];
   if (!last) return null;
-  if (US_STATES.has(last) || US_STATE_CODES.has(last)) return "united states";
-  return COUNTRIES.get(last) ?? null;
+  const lower = last.toLowerCase();
+  if (US_STATES.has(lower) || US_STATE_CODES.has(lower)) return "united states";
+  const country = canonicalCountry(last);
+  if (!country) return null;
+  return COUNTRY_GROUPS.get(country) ?? country;
 }
 
+const HEAD_ROLES: ReadonlySet<string> = new Set(["head", "principal", "self"]);
+
 const RESIDENCE_FACT_TYPES: ReadonlySet<string> = new Set(["residence", "census"]);
+const TREE_RESIDENCE_FACT_TYPES: ReadonlySet<string> = new Set(["residence", "census"]);
 
 /** A `confident` link across an unexplained move between countries is refused.
  *
@@ -1089,16 +1065,32 @@ export function unexplainedMoveInvariants(
   const recordId = linked.record_id ?? linked.source_id ?? null;
   if (recordId == null) return [];
 
-  const recordCountries = new Set<string>();
-  let recordPlace: string | null = null;
-  for (const a of assertionById.values()) {
-    if ((a.record_id ?? a.source_id ?? null) !== recordId) continue;
-    if (!RESIDENCE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase())) continue;
-    const c = placeCountry(a.place);
-    if (c) {
-      recordCountries.add(c);
-      recordPlace ??= a.place;
+  // The linked party's own residence; failing that, the household head's (a
+  // census lists the residence once, on the head). Never another party's: an
+  // informant living elsewhere says nothing about where the subject lived.
+  const residenceOf = (pick: (a: any) => boolean) => {
+    const countries = new Set<string>();
+    let place: string | null = null;
+    for (const a of assertionById.values()) {
+      if ((a.record_id ?? a.source_id ?? null) !== recordId) continue;
+      if (!RESIDENCE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase())) continue;
+      if (!pick(a)) continue;
+      const c = placeCountry(a.place);
+      if (c) {
+        countries.add(c);
+        place ??= a.place;
+      }
     }
+    return { countries, place };
+  };
+  const linkedParty = partyKey(linked);
+  let { countries: recordCountries, place: recordPlace } = residenceOf(
+    (a) => linkedParty !== null && partyKey(a) === linkedParty,
+  );
+  if (recordCountries.size === 0) {
+    ({ countries: recordCountries, place: recordPlace } = residenceOf((a) =>
+      HEAD_ROLES.has(String(a.record_role ?? "").toLowerCase()),
+    ));
   }
   if (recordCountries.size === 0) return [];
 
@@ -1116,7 +1108,9 @@ export function unexplainedMoveInvariants(
   const linkedBelowConfident = new Set<string>();
   const linkedConfident = new Set<string>();
   for (const pe of (research?.person_evidence ?? []) as any[]) {
-    if (!pe || pe.person_id !== entry.person_id || pe.superseded_by) continue;
+    // The entry under write is already in the array; it must not vouch for itself.
+    if (!pe || pe === entry || (entry.id && pe.id === entry.id)) continue;
+    if (pe.person_id !== entry.person_id || pe.superseded_by) continue;
     const a = assertionById.get(pe.assertion_id);
     if (!a || typeof a.source_id !== "string") continue;
     (pe.confidence === "confident" ? linkedConfident : linkedBelowConfident).add(a.source_id);
@@ -1126,15 +1120,22 @@ export function unexplainedMoveInvariants(
   let residencePlace: string | null = null;
   for (const f of (person.facts ?? []) as any[]) {
     const kind = typeof f?.type === "string" ? f.type.split("/").pop()!.toLowerCase() : "";
-    if (kind !== "residence") continue;
+    if (!TREE_RESIDENCE_FACT_TYPES.has(kind)) continue;
     const c = placeCountry(f.place);
     if (!c) continue;
-    const refs = ((f.sources ?? []) as any[]).map((r: any) => researchSourceByTreeRef.get(r?.ref)).filter(Boolean) as string[];
-    const onlyWeak =
-      refs.length > 0 &&
-      refs.length === ((f.sources ?? []) as any[]).length &&
-      refs.every((id) => linkedBelowConfident.has(id) && !linkedConfident.has(id));
-    if (onlyWeak) continue;
+    // A Residence fact vouches only through a source other than the record being
+    // judged, and not one this person is linked to only below confident. An
+    // unmapped ref (a tree source with no research entry) is pre-existing
+    // evidence and vouches; so does a fact with no sources at all.
+    const refs = ((f.sources ?? []) as any[]).map((r: any) => researchSourceByTreeRef.get(r?.ref) ?? null);
+    const vouches =
+      refs.length === 0 ||
+      refs.some(
+        (id) =>
+          id === null ||
+          (id !== linked.source_id && !(linkedBelowConfident.has(id) && !linkedConfident.has(id))),
+      );
+    if (!vouches) continue;
     residenceCountries.add(c);
     residencePlace ??= f.place;
   }
@@ -3861,8 +3862,14 @@ function applyOne(
         ? []
         : coreIdentifierContradictionInvariants(resultEntry, research, tree, personLinks, batchAssertions)),
     );
+    // An update re-checks the move only when it sets the tier or the bridge, so a
+    // rationale edit on a link written before this rule stays possible.
+    const touchesMove =
+      op.op !== "update" ||
+      Object.prototype.hasOwnProperty.call(op.fields ?? {}, "confidence") ||
+      Object.prototype.hasOwnProperty.call(op.fields ?? {}, "move_bridge");
     invariantErrors.push(
-      ...(op.op === "update" && resultEntry.superseded_by
+      ...((op.op === "update" && resultEntry.superseded_by) || !touchesMove
         ? []
         : unexplainedMoveInvariants(resultEntry, research, tree, batchAssertions)),
     );

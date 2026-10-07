@@ -395,7 +395,7 @@ const COUNTRY_ALIASES: Record<string, string> = {
 
 const UK_CONSTITUENTS = new Set(["england", "scotland", "wales", "northern ireland"]);
 
-function canonicalCountry(segment: string): string | null {
+export function canonicalCountry(segment: string): string | null {
   // Fold diacritics before the lookup: "México" and "Mexico" are the same
   // country, and without this the guard silently switched itself off on the
   // accented spelling while checking the unaccented one.

@@ -1585,3 +1585,17 @@ def test_chrono_does_not_treat_the_assertions_own_role_as_a_second_party():
     calls = [{"tool": "mcp__genealogy__same_person", "args": {"projectPath": "/p", "assertionId": "a_020", "treePersonId": "I1", "recordRole": "son"}}]
     with pytest.raises(AssertionError, match="pe_002"):
         check_chrono(b, a, calls)
+
+
+def test_chrono_role_comparison_ignores_case():
+    b, a = _son_of_states()
+    calls = [{"tool": "mcp__genealogy__same_person", "args": {"projectPath": "/p", "assertionId": "a_020", "treePersonId": "I1", "recordRole": "Son"}}]
+    with pytest.raises(AssertionError, match="pe_002"):
+        check_chrono(b, a, calls)
+
+
+def test_unexplained_fires_on_an_existing_link_raised_to_confident():
+    before = {"project": {"subject_person_ids": ["I1"]}, "person_evidence": [_pe(1, "I1", "probable")]}
+    after = {"project": before["project"], "person_evidence": [_pe(1, "I1", "confident")]}
+    with pytest.raises(AssertionError, match="probable"):
+        check_unexplained(_state(before, _tree("I1")), _state(after, _tree("I1")), _CAP)

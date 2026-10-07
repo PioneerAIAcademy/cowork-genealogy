@@ -69,12 +69,43 @@ describe("unexplainedMoveInvariants (#2537)", () => {
     expect(unexplainedMoveInvariants(link(), research, tree)).toEqual([]);
   });
 
-  it("folds endonyms and UK constituents, and reads an unknown last segment as no country", () => {
-    expect(placeCountry("Manger, Hordaland, Norge")).toBe("norway");
-    expect(placeCountry("Horsham, Sussex, England")).toBe("united kingdom");
-    expect(placeCountry("Horsham, Sussex, England, United Kingdom")).toBe("united kingdom");
+  it("folds endonyms and border-shifting countries into groups, and reads an unknown last segment as no country", () => {
+    expect(placeCountry("Manger, Hordaland, Norge")).toBe("scandinavia");
+    expect(placeCountry("Horsham, Sussex, England")).toBe("british isles");
+    expect(placeCountry("Horsham, Sussex, England, United Kingdom")).toBe("british isles");
+    expect(placeCountry("Belfast, Antrim, Ireland")).toBe(placeCountry("Belfast, Antrim, Northern Ireland"));
+    expect(placeCountry("Posen, Preußen")).toBe(placeCountry("Poznań, Polska"));
     expect(placeCountry("Nueva Italia, Michoacán, México")).toBe("mexico");
+    expect(placeCountry("East Orange, NJ")).toBe("united states");
     expect(placeCountry("Rogaland")).toBeNull();
     expect(placeCountry(null)).toBeNull();
+  });
+
+  it("does not let the link under write vouch for itself once it sits in person_evidence", () => {
+    const { research, tree } = project({ treeResidence: "Horsham, Sussex, England" });
+    // a Tennessee Residence fact sourced from the very record being linked
+    tree.persons[0].facts.push({ id: "F9", type: "Residence", date: "1870", place: "Maury, Tennessee, United States", sources: [{ ref: "S10" }] });
+    const entry = link();
+    research.person_evidence.push(entry); // research_append adds the entry before the invariants run
+    expect(unexplainedMoveInvariants(entry, research, tree)).toHaveLength(1);
+  });
+
+  it("reads only the linked party's residence, falling back to the head's, never another party's", () => {
+    const { research, tree } = project({ treeResidence: "Horsham, Sussex, England" });
+    research.assertions = [
+      { id: "a_001", source_id: "src_001", record_id: "ark:D1", record_role: "deceased", fact_type: "death", place: "Horsham, Sussex, England" },
+      { id: "a_002", source_id: "src_001", record_id: "ark:D1", record_role: "informant", fact_type: "residence", place: "Chicago, Illinois" },
+    ];
+    expect(unexplainedMoveInvariants(link(), research, tree)).toEqual([]);
+    // a household member with no residence of their own takes the head's
+    const hh = project({ treeResidence: "Horsham, Sussex, England" });
+    hh.research.assertions.push({ id: "a_005", source_id: "src_001", record_id: "ark:TN70", record_role: "wife", fact_type: "name", value: "Mary Weller" });
+    expect(unexplainedMoveInvariants(link({ assertion_id: "a_005" }), hh.research, hh.tree)).toHaveLength(1);
+  });
+
+  it("counts a tree Census fact as an attested residence", () => {
+    const { research, tree } = project({ treeResidence: "Horsham, Sussex, England" });
+    tree.persons[0].facts.push({ id: "F8", type: "Census", date: "1860", place: "Knox, Tennessee, United States" });
+    expect(unexplainedMoveInvariants(link(), research, tree)).toEqual([]);
   });
 });

@@ -1331,7 +1331,11 @@ def report_chronological_contradiction_not_speculative(
         args = as_mapping(tc.get("args"))
         named = args.get("recordPersonaId") or args.get("recordRole")
         own = _own.get(args.get("assertionId") or "") or {}
-        if named and named not in (own.get("record_persona_id"), own.get("record_role")):
+        own_keys = {str(k).lower() for k in (own.get("record_persona_id"), own.get("record_role")) if k}
+        # Only a call naming a DIFFERENT party than the assertion's own is a
+        # second-party call. An assertion with no role of its own gives nothing
+        # to differ from, so a named role there is its own party, not a second one.
+        if named and own_keys and str(named).lower() not in own_keys:
             second_party.add((args.get("assertionId"), args.get("treePersonId")))
         p1, p2 = args.get("primaryId1"), args.get("primaryId2")
         if not (p1 and p2):
@@ -1525,9 +1529,13 @@ def test_unexplained_move_not_confident(before_state, after_state, test):
     if before is None or after is None:
         pytest.skip("Missing research.json for diff")
     existing = _tree_person_ids(before_state.get("tree_gedcomx_json"))
+    # New links, and existing ones the run raised to confident.
+    was_confident = {e.get("id") for e in (before.get("person_evidence") or []) if e.get("confidence") == "confident"}
     confident = [
-        e for e in _new_person_evidence(before, after)
-        if e.get("confidence") == "confident" and e.get("person_id") in existing
+        e for e in (after.get("person_evidence") or [])
+        if e.get("confidence") == "confident"
+        and e.get("id") not in was_confident
+        and e.get("person_id") in existing
     ]
     assert not confident, (
         "an unexplained move outside the attested residence cluster caps the "
