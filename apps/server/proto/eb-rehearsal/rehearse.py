@@ -81,6 +81,7 @@ SECRETS_NS = "aws:elasticbeanstalk:application:environmentsecrets"
 SQSD_NS = "aws:elasticbeanstalk:sqsd"
 LC_NS = "aws:autoscaling:launchconfiguration"
 ASG_NS = "aws:autoscaling:asg"
+RDS_STATE = re.compile(r"InvalidDBInstanceState")
 INSTANCES_NS = "aws:ec2:instances"
 VPC_NS = "aws:ec2:vpc"
 EBENV_NS = "aws:elasticbeanstalk:environment"
@@ -210,6 +211,20 @@ def template_env(tier: str) -> dict[str, str]:
 
 def opt(namespace: str, name: str, value) -> dict:
     return {"Namespace": namespace, "OptionName": name, "Value": str(value)}
+
+
+def same_option(ns: str, name: str, live: str | None, want: str) -> bool:
+    """Whether a live option matches what up set, as Beanstalk reports it back: it adds its
+    own security group, names the instance profile instead of its ARN, and reorders lists."""
+    if live is None:
+        return False
+    if (ns, name) == (LC_NS, "SecurityGroups"):
+        return set(want.split(",")) <= set(live.split(","))
+    if (ns, name) == (LC_NS, "IamInstanceProfile"):
+        return live == want or want.endswith("/" + live)
+    if ns == VPC_NS and name in ("Subnets", "ELBSubnets"):
+        return set(live.split(",")) == set(want.split(","))
+    return live == want
 
 
 def options_map(options: list[dict]) -> dict[tuple[str, str], str]:
@@ -583,6 +598,10 @@ class Rehearsal:
     def role_arn(self, name: str) -> str:
         return f"arn:aws:iam::{self.account}:role{IAM_PATH}{PREFIX}-{name}"
 
+    @property
+    def rds_class(self) -> str:
+        return getattr(self.args, "rds_class", None) or RDS_CLASS
+
     def profile_arn(self, name: str) -> str:
         return f"arn:aws:iam::{self.account}:instance-profile{IAM_PATH}{PREFIX}-{name}"
 
@@ -694,6 +713,31 @@ class Rehearsal:
                          {"Effect": "Allow", "Action": "s3:ListBucket", "Resource": bucket}),
         }
 
+    def eb_subnets(self, instance_type: str) -> list[str]:
+        """The default subnets in zones that offer ``instance_type``: Beanstalk refuses an
+        environment whose ``Subnets`` include a zone without it (us-east-1e has no t3)."""
+        _, subnets = self.network()
+        azs = self.state.get("subnet_azs")
+        if not azs or set(azs) != set(subnets):
+            got = self.aws("ec2", "describe-subnets", "--subnet-ids", *subnets, placeholder={
+                "Subnets": [{"SubnetId": s, "AvailabilityZone": "<az>"} for s in subnets]})
+            azs = {x["SubnetId"]: x["AvailabilityZone"] for x in got.get("Subnets", [])}
+            self.state["subnet_azs"] = azs
+            self.save()
+        offered = self.state.setdefault("az_offerings", {})
+        if instance_type not in offered:
+            got = self.aws("ec2", "describe-instance-type-offerings", "--location-type", "availability-zone",
+                           "--filters", f"Name=instance-type,Values={instance_type}", placeholder={
+                               "InstanceTypeOfferings": [{"Location": "<az>"}]})
+            offered[instance_type] = sorted({o["Location"] for o in got.get("InstanceTypeOfferings", [])})
+            self.save()
+        if self.dry:
+            return subnets
+        ids = [s for s in subnets if azs.get(s) in offered[instance_type]]
+        if len(ids) < 2:
+            raise Die(f"{instance_type} is offered in fewer than two of the default subnets' zones")
+        return ids
+
     def network(self) -> tuple[str, list[str]]:
         if "vpc_id" not in self.state:
             vpcs = self.aws("ec2", "describe-vpcs", "--filters", "Name=is-default,Values=true",
@@ -751,7 +795,7 @@ class Rehearsal:
         self.record("db-param-group", RDS_PARAM_GROUP)
         if self.aws("rds", "describe-db-instances", "--db-instance-identifier", RDS_ID, ok=NOT_FOUND) is None:
             self.aws("rds", "create-db-instance", "--db-instance-identifier", RDS_ID,
-                     "--db-instance-class", RDS_CLASS, "--engine", "postgres", "--engine-version",
+                     "--db-instance-class", self.rds_class, "--engine", "postgres", "--engine-version",
                      RDS_ENGINE_VERSION, "--allocated-storage", "20", "--storage-type", "gp3",
                      "--storage-encrypted", "--master-username", DB_OWNER, "--manage-master-user-password",
                      "--db-name", DB_NAME, "--vpc-security-group-ids", self.sg_id("rds"),
@@ -930,7 +974,8 @@ class Rehearsal:
     # tier option settings
 
     def common_options(self, tier: str, *, instance_type: str | None = None) -> list[dict]:
-        vpc, subnets = self.network()
+        vpc, _ = self.network()
+        subnets = self.eb_subnets(instance_type or INSTANCE_TYPES[tier])
         sg = {"web": "web", "worker": "worker", "tools": "tools"}[tier]
         out = [
             opt(LC_NS, "SecurityGroups", self.sg_id(sg)),
@@ -947,8 +992,8 @@ class Rehearsal:
             out.append(opt(SECRETS_NS, var, self.state.get("secrets", {}).get(key) or self.secret_arn(key)))
         return out
 
-    def load_balanced(self, *, internal: bool) -> list[dict]:
-        _, subnets = self.network()
+    def load_balanced(self, tier: str, *, internal: bool) -> list[dict]:
+        subnets = self.eb_subnets(INSTANCE_TYPES[tier])
         out = [opt(EBENV_NS, "EnvironmentType", "LoadBalanced"), opt(EBENV_NS, "LoadBalancerType", "application"),
                opt(VPC_NS, "ELBSubnets", ",".join(subnets))]
         if internal:
@@ -972,11 +1017,11 @@ class Rehearsal:
         if variant == "tools_single":
             out.append(opt(EBENV_NS, "EnvironmentType", "SingleInstance"))
         elif variant == "tools_classic":
-            _, subnets = self.network()
+            subnets = self.eb_subnets(INSTANCE_TYPES["tools"])
             out += [opt(EBENV_NS, "EnvironmentType", "LoadBalanced"), opt(VPC_NS, "ELBScheme", "internal"),
                     opt(VPC_NS, "ELBSubnets", ",".join(subnets))]
         else:
-            out += self.load_balanced(internal=True)
+            out += self.load_balanced("tools", internal=True)
         out += [opt(ENV_NS, "GENEALOGY_S3_BUCKET", self.data_bucket), opt(ENV_NS, "GENEALOGY_S3_REGION", REGION)]
         return out + self.extra_env("tools")
 
@@ -993,7 +1038,7 @@ class Rehearsal:
         return out + self.extra_env("worker")
 
     def web_options(self) -> list[dict]:
-        out = self.common_options("web") + self.load_balanced(internal=False)
+        out = self.common_options("web") + self.load_balanced("web", internal=False)
         out.append(opt(ENV_NS, "QUEUE_URL", self.state.get("queue_url") or "<queue-url>"))
         return out + self.signin_options() + self.extra_env("web")
 
@@ -1343,8 +1388,19 @@ U13PY
                 call += ["--option-settings", self.file(f"case-{name}-{tier}.json", sets)]
             if removes:
                 call += ["--options-to-remove", self.file(f"case-{name}-{tier}-remove.json", removes)]
+            since = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
             self.aws(*call)
             self.wait_env(env_name)
+            self.note_rejections(env_name, since)
+
+    def note_rejections(self, env_name: str, since: str) -> None:
+        """An update Beanstalk refused still ends Ready, on the old configuration (a 4,096-byte
+        environment was refused this way, U13 2026-10-07); its ERROR events are the result."""
+        events = self.aws("elasticbeanstalk", "describe-events", "--environment-name", env_name,
+                          "--start-time", since, "--severity", "ERROR", placeholder={"Events": []})
+        for e in (events or {}).get("Events", []):
+            self.rejected.append(f"{env_name}: {e.get('Message')}")
+            self.out(f"apply REJECTED: {env_name}: {e.get('Message')}")
 
     def wait_param_in_sync(self) -> None:
         def in_sync():
@@ -1398,6 +1454,7 @@ U13PY
         self.require_billed()
         self.guard()
         undo: list = []
+        self.rejected: list[str] = []
         try:
             for name in names:
                 self.out(f"== probe --case {name} ({CASES[name]['measures']})")
@@ -1413,7 +1470,7 @@ U13PY
         finally:
             self.out("== restore")
             self.restore(undo)
-        return 0
+        return 3 if self.rejected else 0
 
     # ── status ───────────────────────────────────────────────────────────────────────
 
@@ -1462,12 +1519,58 @@ U13PY
                        "--environment-name", env_name, placeholder={"ConfigurationSettings": [{"OptionSettings": []}]})
         live = {(o["Namespace"], o["OptionName"]): o.get("Value")
                 for o in got["ConfigurationSettings"][0].get("OptionSettings", [])}
+        paused = self.state.get("paused")
         out = [f"{ns} {n}: {live.get((ns, n))!r}, expected {v!r}"
-               for (ns, n), v in options_map(self.snapshot(env_name)).items() if live.get((ns, n)) != v]
+               for (ns, n), v in options_map(self.snapshot(env_name)).items()
+               if not same_option(ns, n, live.get((ns, n)), v) and not (paused and ns == ASG_NS)]
         out += [f"{n} is set ({ns}); no case is running" for (ns, n) in live
                 if ns == ENV_NS and (n.startswith(("U13_PROBE_",) + tuple(layout.DEV_PREFIXES))
                                      or n in layout.DEV_VARIABLES)]
         return out
+
+    # ── pause / resume ───────────────────────────────────────────────────────────────
+
+    def scale(self, size: int) -> None:
+        for tier in ("web", "worker", "tools"):
+            name = ENV_NAMES[tier]
+            if not self.dry and self.describe_env(name) is None:
+                continue
+            settings = self.file(f"scale-{tier}-{size}.json", [opt(ASG_NS, "MinSize", size), opt(ASG_NS, "MaxSize", size)])
+            self.aws("elasticbeanstalk", "update-environment", "--environment-name", name, "--option-settings", settings)
+            self.wait_env(name)
+
+    def pause(self) -> int:
+        """Between sessions: the tiers to 0/0, then RDS and the bastion stopped (AWS restarts a
+        stopped RDS instance after seven days). The tiers go first, so nothing is left calling RDS."""
+        self.require_billed()
+        self.guard()
+        self.out("== pause: tiers to 0/0")
+        self.state["paused"] = True
+        self.save()
+        self.scale(0)
+        self.out("== pause: RDS")
+        self.aws("rds", "stop-db-instance", "--db-instance-identifier", RDS_ID, ok=RDS_STATE)
+        if self.state.get("bastion"):
+            self.out("== pause: bastion")
+            self.aws("ec2", "stop-instances", "--instance-ids", self.state["bastion"])
+        self.note("paused; `resume` brings RDS, the bastion and the tiers back")
+        return 0
+
+    def resume(self) -> int:
+        self.require_billed()
+        self.guard()
+        self.out("== resume: RDS")
+        self.aws("rds", "start-db-instance", "--db-instance-identifier", RDS_ID, ok=RDS_STATE)
+        self.aws("rds", "wait", "db-instance-available", "--db-instance-identifier", RDS_ID)
+        if self.state.get("bastion"):
+            self.out("== resume: bastion")
+            self.aws("ec2", "start-instances", "--instance-ids", self.state["bastion"])
+            self.aws("ec2", "wait", "instance-running", "--instance-ids", self.state["bastion"])
+        self.out("== resume: tiers to 1/1")
+        self.scale(1)
+        self.state["paused"] = False
+        self.save()
+        return 0
 
     # ── down ─────────────────────────────────────────────────────────────────────────
 
@@ -1784,7 +1887,7 @@ U13PY
                  f"{TAG_REHEARSAL[0]}={TAG_REHEARSAL[1]} and {TAG_RUN}=<run id>")
         self.out(f"phases (up --phase all): {' '.join(PHASES)}; optional: {' '.join(OPTIONAL_PHASES)}")
         self.out(f"environments: {', '.join(ENV_NAMES.values())}; throwaways {THROWAWAY_PREFIX}*")
-        self.out(f"instance types: {INSTANCE_TYPES}; RDS {RDS_CLASS} PostgreSQL {RDS_ENGINE_VERSION}")
+        self.out(f"instance types: {INSTANCE_TYPES}; RDS {self.rds_class} PostgreSQL {RDS_ENGINE_VERSION}")
         self.out(f"probe cases: {', '.join(CASES)}")
         self.out("no AWS call is made; the commands `up --phase all` would run follow")
         for phase in PHASES:
@@ -1796,15 +1899,18 @@ U13PY
 # ── leak check ───────────────────────────────────────────────────────────────────────────
 
 
+LEAK_FILES = ("account", "zone", "host")
+
+
 def leak_values(local_dir: Path) -> list[str]:
     values = []
-    for path in sorted(p for p in local_dir.iterdir() if p.is_file()):
+    for path in sorted(p for p in local_dir.iterdir() if p.is_file() and p.name in LEAK_FILES):
         tokens = [t for t in re.split(r"[\s,]+", path.read_text(encoding="utf-8")) if t]
         if not tokens:
             raise Die(f"leak-check: {path.name} is empty or whitespace; an empty pattern matches every line")
         values.extend(tokens)
     if not values:
-        raise Die("leak-check: .local/ holds no value")
+        raise Die(f"leak-check: .local/ holds none of {', '.join(LEAK_FILES)}")
     return values
 
 
@@ -1888,6 +1994,7 @@ def build_parser() -> argparse.ArgumentParser:
     up.add_argument("--allowed-emails", help="signin: patrons, space- or comma-separated (else .local/allowed-emails)")
     up.add_argument("--mode", choices=("loopback", "https", "off"), help="signin's mode (default loopback)")
     up.add_argument("--env", action="append", help="<tier>:NAME=VALUE, a non-secret operator override")
+    up.add_argument("--rds-class", default=RDS_CLASS, help=f"RDS instance class (default {RDS_CLASS}); another one when AWS reports InsufficientDBInstanceCapacity")
     up.add_argument("--env-file", help=f"where ANTHROPIC_API_KEY is read (default {EVAL_ENV.relative_to(REPO)})")
     sub.add_parser("status", parents=[common], help="daily cost, budget, environment health and drift")
     probe = sub.add_parser("probe", parents=[common, billed], help="apply probe cases, hold, restore")
@@ -1895,6 +2002,8 @@ def build_parser() -> argparse.ArgumentParser:
     probe.add_argument("--hold-s", type=float, help="restore after this many seconds instead of on Enter")
     probe.add_argument("--bundles-dir", help="ebext_naming copies eb-tools.zip from here")
     sub.add_parser("down", parents=[common, billed], help="tear everything down, in order")
+    sub.add_parser("pause", parents=[common, billed], help="between sessions: tiers to 0/0, RDS and the bastion stopped")
+    sub.add_parser("resume", parents=[common, billed], help="undo pause: RDS, the bastion, then the tiers to 1/1")
     proof = sub.add_parser("prove-empty", parents=[common], help="exit 1 if anything of the rehearsal remains")
     proof.add_argument("--repoll-s", type=float, default=600)
     leak = sub.add_parser("leak-check", help="no .local/ value in the tree, a PR body, or <base>..HEAD's messages and diffs")
@@ -1916,7 +2025,7 @@ def main(argv: list[str] | None = None, *, runner=None, sleep=time.sleep, out=No
             return leak_check(args, local_dir=local_dir, repo=repo, out=printer)
         r = Rehearsal(args, runner=runner, sleep=sleep, out=printer, local_dir=local_dir, repo=repo)
         return {"plan": r.plan, "up": r.up, "status": r.status, "probe": r.probe, "down": r.down,
-                "prove-empty": r.prove_empty}[args.cmd]()
+                "pause": r.pause, "resume": r.resume, "prove-empty": r.prove_empty}[args.cmd]()
     except Die as exc:
         print(f"rehearse.py: {exc}", file=sys.stderr)
         return exc.rc
