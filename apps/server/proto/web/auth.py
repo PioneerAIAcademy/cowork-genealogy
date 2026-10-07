@@ -26,6 +26,8 @@ Settings are read from the environment at call time, so a test can set them per 
                              value); the FamilySearch sign-in gate
   FAMILYSEARCH_WEB_ENABLED   true to offer FamilySearch sign-in (needs the client config)
   FAMILYSEARCH_CONFIG        path to the engine's familysearch.json
+  DEV_LOGIN                  true to offer dev-login (compose sets it; U11's packaging
+                             guard keeps every DEV_ variable out of the templates)
 """
 
 from __future__ import annotations
@@ -175,10 +177,11 @@ def familysearch_configured() -> bool:
 
 
 def dev_login_enabled() -> bool:
-    """A local convenience only: offered when FamilySearch is off AND the tier is not on
-    an https host, so a deploy that forgot to configure FamilySearch cannot expose an
-    allowlist-free sign-in."""
-    return not familysearch_enabled() and not is_https()
+    """A local convenience only: offered when ``DEV_LOGIN=true`` AND FamilySearch is off
+    AND the tier is not on an https host. Opt-in, so a deploy that forgot both FamilySearch
+    and PUBLIC_URL (http by default) cannot expose an allowlist-free sign-in."""
+    dev = (os.environ.get("DEV_LOGIN") or "").strip().lower() == "true"
+    return dev and not familysearch_enabled() and not is_https()
 
 
 def preflight() -> None:

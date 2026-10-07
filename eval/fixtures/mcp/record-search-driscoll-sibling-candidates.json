@@ -1,0 +1,106 @@
+{
+  "tool": "record_search",
+  "description": "Two same-surname, same-parish Driscoll baptisms for ut_research_022. Authored so the candidates-not-verdicts rule is EXERCISABLE: with no search result the only reachable reply is 'I found none', which the judge context passes vacuously, so the two clauses that carry item 6 (give each candidate with how strong the match is; never declare the question answered on a name match) could never be graded. Both hits are deliberately UNDERDETERMINED -- same surname and parish, plausible dates, and NO parent names on either record -- so the only correct reply offers them as candidates with their weakness stated. A reply naming either as Cornelius's sibling is the failure.",
+  "args": {
+    "surname": "~Driscoll"
+  },
+  "response": {
+    "query": {
+      "surname": "Driscoll",
+      "birthPlace": "Skibbereen, Cork, Ireland"
+    },
+    "totalMatches": 2,
+    "paginationCappedAt": null,
+    "returned": 2,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "GQ11-AAA",
+        "recordId": "GQ11-AAA",
+        "personName": "Mary Driscoll",
+        "score": 0.62,
+        "sex": "Female",
+        "birthDate": "1817",
+        "birthPlace": "Skibbereen, Cork, Ireland",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:GQ11-AAA",
+        "collectionId": "1473014",
+        "collectionTitle": "Ireland, Catholic Parish Registers, 1655-1915",
+        "recordTitle": "Mary Driscoll, baptism, Skibbereen",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Mary",
+                  "surname": "Driscoll",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "1817",
+                  "place": "Skibbereen, Cork, Ireland"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        },
+        "_authoring_note": "Same surname, same parish, plausible sibling spacing to Cornelius (b. 1814). No parent named, so nothing ties her to his parents: a NAME MATCH, which is exactly what item 6 forbids reporting as an answer."
+      },
+      {
+        "personId": "GQ11-BBB",
+        "recordId": "GQ11-BBB",
+        "personName": "Johanna Driscoll",
+        "score": 0.58,
+        "sex": "Female",
+        "birthDate": "1820",
+        "birthPlace": "Skibbereen, Cork, Ireland",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:GQ11-BBB",
+        "collectionId": "1473014",
+        "collectionTitle": "Ireland, Catholic Parish Registers, 1655-1915",
+        "recordTitle": "Johanna Driscoll, baptism, Skibbereen",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Johanna",
+                  "surname": "Driscoll",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "1820",
+                  "place": "Skibbereen, Cork, Ireland"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        },
+        "_authoring_note": "Second same-surname candidate in the same parish, equally unattached. Two of them is the point: a reply that picks one and calls it settled has declared the question answered on a name match."
+      }
+    ]
+  }
+}
