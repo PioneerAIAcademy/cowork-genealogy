@@ -82,9 +82,9 @@ describe("project_context", () => {
     ]);
     const noFamily = { spouseIds: [], parentIds: [], childIds: [] };
     expect(r.persons).toEqual([
-      { id: "I1", name: "William Bottermiller", gender: "Male", sourceRefs: ["S1", "S2"], ...noFamily, died: true },
-      { id: "I2", name: "Mary Bottermiller", gender: "Female", sourceRefs: [], ...noFamily, died: false },
-      { id: "I3", name: null, gender: "Male", sourceRefs: [], ...noFamily, died: false },
+      { id: "I1", name: "William Bottermiller", gender: "Male", sourceRefs: ["S1", "S2"], ...noFamily, diedByYear: 1929 },
+      { id: "I2", name: "Mary Bottermiller", gender: "Female", sourceRefs: [], ...noFamily, diedByYear: null },
+      { id: "I3", name: null, gender: "Male", sourceRefs: [], ...noFamily, diedByYear: null },
     ]);
     expect(r.sources).toEqual([
       {
@@ -105,7 +105,7 @@ describe("project_context", () => {
     ]);
   });
 
-  it("gives each person its one-hop family and whether it died, from the tree's edges (#2537)", async () => {
+  it("gives each person its one-hop family from the tree's edges (#2537)", async () => {
     await writeProject(
       { project: { id: "rp_001", objective: "x", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
       {
@@ -132,11 +132,41 @@ describe("project_context", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     const byId = Object.fromEntries(r.persons.map((p) => [p.id, p]));
-    expect(byId.I1).toMatchObject({ spouseIds: ["I2", "I4"], parentIds: [], childIds: ["I3"], died: false });
-    expect(byId.I2).toMatchObject({ spouseIds: ["I1"], parentIds: [], childIds: ["I3"], died: true });
-    expect(byId.I3).toMatchObject({ spouseIds: [], parentIds: ["I1", "I2"], childIds: [], died: false });
-    expect(byId.I4).toMatchObject({ spouseIds: ["I1"], died: false });
-    expect(byId.I5).toMatchObject({ spouseIds: [], parentIds: [], childIds: [], died: false });
+    expect(byId.I1).toMatchObject({ spouseIds: ["I2", "I4"], parentIds: [], childIds: ["I3"], diedByYear: null });
+    expect(byId.I2).toMatchObject({ spouseIds: ["I1"], parentIds: [], childIds: ["I3"], diedByYear: 1858 });
+    expect(byId.I3).toMatchObject({ spouseIds: [], parentIds: ["I1", "I2"], childIds: [], diedByYear: null });
+    expect(byId.I4).toMatchObject({ spouseIds: ["I1"], diedByYear: null });
+    expect(byId.I5).toMatchObject({ spouseIds: [], parentIds: [], childIds: [], diedByYear: null });
+  });
+
+  it("reads diedByYear as the year a person was certainly dead by (#2537)", async () => {
+    const person = (id: string, facts: any[]) => ({ id, gender: "Female", facts });
+    await writeProject(
+      { project: { id: "rp_001", objective: "x", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
+      {
+        persons: [
+          person("I1", [{ id: "F1", type: "Death", date: "Abt 1890" }]),
+          person("I2", [{ id: "F2", type: "Death", date: "Bef 1870" }]),
+          // the earlier of two dated facts wins; an undated one is no evidence
+          person("I3", [
+            { id: "F3", type: "Burial", date: "1875" },
+            { id: "F4", type: "Death", date: "12 Mar 1874" },
+            { id: "F5", type: "Death" },
+          ]),
+          person("I4", [{ id: "F6", type: "http://gedcomx.org/Death", date: "not a date" }]),
+          person("I5", [{ id: "F7", type: "Birth", date: "1850" }]),
+        ],
+        relationships: [],
+        sources: [],
+      },
+    );
+    const r = await projectContext({ projectPath: dir });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const byId = Object.fromEntries(r.persons.map((p) => [p.id, p.diedByYear]));
+    // the latest possible year, never the earliest: a death "Abt 1890" is not before 1891,
+    // and one "Bef 1870" can fall in 1869, after an 1865 household
+    expect(byId).toEqual({ I1: 1891, I2: 1870, I3: 1874, I4: null, I5: null });
   });
 
   it("returns the objective verbatim and untruncated, and null when absent (#3026)", async () => {

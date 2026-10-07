@@ -12,6 +12,8 @@ import { questionStates, type QuestionStatus } from "../utils/question-state.js"
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
 import { readBuildInfo } from "../utils/build-info.js";
 import { preferredName } from "../utils/name-helpers.js";
+import { getStandardDate } from "../utils/fact-helpers.js";
+import { latestYear } from "../utils/date-helpers.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
@@ -32,7 +34,7 @@ export interface ProjectContextPerson {
   spouseIds: string[];
   parentIds: string[];
   childIds: string[];
-  died: boolean;
+  diedByYear: number | null;
 }
 
 export interface ProjectContextSource {
@@ -202,7 +204,7 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
       spouseIds: f ? [...f.spouseIds] : [],
       parentIds: f ? [...f.parentIds] : [],
       childIds: f ? [...f.childIds] : [],
-      died: hasDeathFact(p),
+      diedByYear: diedByYear(p),
     });
   }
 
@@ -333,13 +335,20 @@ function familyIndex(tree: any): Map<string, { spouseIds: string[]; parentIds: s
   return index;
 }
 
-/** True when the person carries a Death or Burial fact, the signal that they
- *  may not appear in a later household. */
-function hasDeathFact(p: any): boolean {
-  return (Array.isArray(p?.facts) ? p.facts : []).some((f: any) => {
+/** The year the person was certainly dead by: the earliest of the latest
+ *  possible years of their dated Death and Burial facts, or null when none is
+ *  dated. The latest year, not the earliest, so a death "Bef 1870" or "Abt 1861"
+ *  never reads as before an 1865 or 1860 household the person may still be in. */
+function diedByYear(p: any): number | null {
+  let by: number | null = null;
+  for (const f of Array.isArray(p?.facts) ? p.facts : []) {
     const kind = typeof f?.type === "string" ? f.type.split("/").pop() : "";
-    return kind === "Death" || kind === "Burial";
-  });
+    if (kind !== "Death" && kind !== "Burial") continue;
+    const std = getStandardDate(f);
+    const y = std === null ? null : latestYear(std);
+    if (y !== null && (by === null || y < by)) by = y;
+  }
+  return by;
 }
 
 export const projectContextSchema = {
@@ -350,10 +359,10 @@ export const projectContextSchema = {
     "objective (research.project.objective verbatim, including any stated doubt " +
     "about its premise); " +
     "openQuestions [{id, question}] (unresolved only, text truncated); persons " +
-    "[{id, name, gender, sourceRefs, spouseIds, parentIds, childIds, died}] — every " +
+    "[{id, name, gender, sourceRefs, spouseIds, parentIds, childIds, diedByYear}] — every " +
     "tree person with the distinct S ids it already cites, its one-hop family from " +
-    "the tree's Couple and ParentChild edges, and whether it carries a Death or " +
-    "Burial fact; and sources [{id, repository, " +
+    "the tree's Couple and ParentChild edges, and the year it was certainly dead " +
+    "by from its dated Death or Burial facts (null if none); and sources [{id, repository, " +
     "gedcomxSourceDescriptionId, recordIds, assertionCount}] — every research " +
     "source with the record ids its assertions cover; and localities [{id, place, " +
     "forPlace, timePeriod, jurisdictions, collections, quirks, pagesRead}] — the " +

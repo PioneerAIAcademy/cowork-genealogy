@@ -80,7 +80,7 @@ repo's identifier-casing rule):
     spouseIds: string[],                 // I ids joined by a Couple edge
     parentIds: string[],                 // I ids that are this person's ParentChild parent
     childIds: string[],                  // I ids that are this person's ParentChild child
-    died: boolean,                       // carries a Death or Burial fact
+    diedByYear: number | null,           // year certainly dead by, from dated Death/Burial facts
   }],
   sources: [{
     id: string,                          // src_*
@@ -125,8 +125,12 @@ Projection rules:
   spouse, a `ParentChild` edge lists the parent and child on each other. The
   type matches on its last segment, so the bare name and the
   `http://gedcomx.org/` URI both count; an edge missing either end is
-  skipped; ids are distinct, in edge order. `died` is true when the person
-  carries a `Death` or `Burial` fact. They exist so person-evidence can name
+  skipped; ids are distinct, in edge order. `diedByYear` is the earliest of
+  the latest possible years of the person's dated `Death` and `Burial` facts
+  (`Abt 1890` gives 1891, `Bef 1870` gives 1870), or null when none is dated.
+  The latest year, so a person is read as dead before a record only when they
+  certainly were: a wife who died after an 1860 census is still expected in
+  it. They exist so person-evidence can name
   a known spouse or child missing from a household record: no other tool
   it holds reads the tree's edges.
 - **`sources`** — every `research.sources[]` entry, in array order.

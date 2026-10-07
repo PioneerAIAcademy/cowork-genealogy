@@ -831,9 +831,9 @@ hands a merge set to proof-conclusion to fold. For a household record:
    identity question — it may indicate a death, separation, enumeration
    elsewhere, or a different person entirely. On a household record only
    (the "Edges:" line says write), call `project_context` and read the
-   head's `spouseIds` and `childIds` and each one's `died`. Then, before any
+   head's `spouseIds` and `childIds` and each one's `diedByYear`. Then, before any
    write, write one line in your reply: "Household check: [each spouse and
-   child of the head with `died` false] — present as [role] / absent." Every "absent" is raised as that identity
+   child of the head with no `diedByYear` before the record's year] — present as [role] / absent." Every "absent" is raised as that identity
    question, and also named as its own question in `summary_for_user`. Name
    the possibilities: they died before the record, were enumerated
    elsewhere, separated, or this household is a different family. "Not
