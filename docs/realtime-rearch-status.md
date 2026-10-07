@@ -62,7 +62,7 @@ without it (`config.assert_production_config`, issue #1123).
 > both gates app access via the email allowlist *and* persists the data token
 > every sandbox-create injects. There is **no Google sign-in** and **no
 > per-session "Connect FamilySearch" step** — both are gone, along with
-> `GOOGLE_CLIENT_ID`/`SECRET`. There is also no `make web-oauth` target; the
+> `GOOGLE_CLIENT_ID`/`SECRET`. There is also no `web-oauth` make target; the
 > FamilySearch path is `make web` (`:1837`). With `FAMILYSEARCH_WEB_ENABLED` off,
 > a **dev-login** (allowlisted email, no round-trip) stands in and the agent runs
 > in mock mode — pair that with `make server-dev` / `make server-mock` on `:8000`

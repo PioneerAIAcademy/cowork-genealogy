@@ -19,7 +19,7 @@
 // sections, the phase-3 sections, and the `project` singleton).
 
 import { getProjectStore } from "../store/project-store.js";
-import { VALIDATOR_ENUMS } from "../validation/validator.js";
+import { SETTLED_CONFLICT_STATUSES, VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
@@ -1467,6 +1467,136 @@ function disputedSourceIds(research: any): Map<string, string[]> {
   return bySource;
 }
 
+// ─── A conflict resolved in prose must reach conflicts[] ─────────────────────
+//
+// A port of `find_unpersisted_conflict_resolutions` (eval/harness/harness/
+// skill_invocation.py). The two must agree on every case in the shared case file,
+// tests/guard-cases/unpersisted-conflict-resolution.json, which both planes replay
+// (ADR-0011, "The bar is inspection, not a rate"). Keep the vocabulary below in
+// step with the Python copy: the case file is what catches a divergence.
+
+/** A stop-criterion carrying one of these says there was no conflict to persist. */
+const NO_CONFLICT_SUBSTRINGS = [
+  "no conflict",
+  "no material conflict",
+  "no remaining conflict",
+  "no unresolved conflict",
+  "no discrepanc",
+  "without conflict",
+  "no resolution",
+];
+/** Whole-field values (trimmed, lowercased) meaning the same, matched exactly. */
+const NO_CONFLICT_EXACT = new Set(["", "none", "n/a", "na", "not applicable"]);
+/** Positive resolution language. `\b` keeps `resolved` from matching inside `unresolved`. */
+const RESOLUTION_MARKER_RE =
+  /\b(resolv(?:ed|es|ing)|resolution|reconcil(?:ed|es|ing)|outweigh(?:s|ed|ing)?|adjudicated|preferred assertion)\b/i;
+/** A stop-criterion opening by negating a resolution ("UNRESOLVED.", "Not met —"). */
+const NON_RESOLUTION_OPENER_RE = /^[ \t\n\r\f\v]*(unresolved|not met|partial|partially met|n\/?a\b|not applicable|none)/i;
+/** The one whitespace set both planes trim: JavaScript's `trim()` and Python's
+ *  `strip()` remove different Unicode characters, and the planes must agree. */
+const ASCII_EDGE_WHITESPACE_RE = /^[ \t\n\r\f\v]+|[ \t\n\r\f\v]+$/g;
+
+/** The stop-criterion text when it claims a conflict was resolved, else null. */
+function claimedConflictResolution(question: any): string | null {
+  const cr = question?.exhaustive_declaration?.stop_criteria?.conflict_resolution;
+  if (typeof cr !== "string") return null;
+  const crl = cr.replace(ASCII_EDGE_WHITESPACE_RE, "").toLowerCase();
+  if (NO_CONFLICT_EXACT.has(crl)) return null;
+  if (NO_CONFLICT_SUBSTRINGS.some((s) => crl.includes(s))) return null;
+  if (NON_RESOLUTION_OPENER_RE.test(crl)) return null;
+  if (!RESOLUTION_MARKER_RE.test(crl)) return null;
+  return cr;
+}
+
+const conflictKey = (value: unknown): string | null =>
+  typeof value === "string" && value !== "" ? value.toLowerCase() : null;
+
+/** A `proof_summaries` write whose question's
+ *  `exhaustive_declaration.stop_criteria.conflict_resolution` claims a conflict
+ *  was resolved, while `conflicts[]` holds no record of it — the resolution lives
+ *  only in prose, the viewer's Conflicts section is blank, and every conflict
+ *  gate here passes vacuously because each one iterates the array that was never
+ *  written. research-append-tool-spec.md §5.
+ *
+ *  Backed, and allowed, when: a settled (`resolved`/`moot`) conflict is cited on
+ *  this summary's `resolved_conflict_ids` or names this question in its
+ *  `blocks_question_ids`; a `c_` id the stop-criterion names exists in
+ *  `conflicts[]` at any status; or the prose names no id and `conflicts[]` holds
+ *  any entry. The question is "was it persisted", not "was it resolved": a
+ *  recorded but open conflict is not this miss, and `proof-conclusion` is told to
+ *  write a `not_proved` summary in exactly that state. Ids compare
+ *  case-insensitively.
+ *
+ *  Scoped to the entry being written and its own question, never every summary
+ *  in the document, so one violating summary does not refuse every later write.
+ *  Reads the LIVE document for both halves: the requirement is that the record
+ *  is PRESENT, and a pre-call snapshot would refuse the very call that supplies
+ *  a same-batch `questions` update. Not tier-gated: most violations stand at
+ *  `probable`/`possible`, so a `proved`-only gate would reach almost none.
+ *
+ *  What it knowingly lets through (ADR-0011 limit 1). The reliance signal is a
+ *  text heuristic over one prose field: a stop-criterion containing "no
+ *  conflicts remain" is read as "there was no conflict", even beside a
+ *  resolution sentence. The same makes rewording the stop-criterion a way to
+ *  launder the refusal, which is why the message never suggests it. When the
+ *  prose names no `c_` id, ANY `conflicts[]` entry backs it — an open conflict,
+ *  or one about another question — so in a multi-question project one recorded
+ *  conflict turns this off for every id-less resolution claim; the harness rule
+ *  before graduation required a resolved one. And a
+ *  resolution-claiming stop-criterion written AFTER the summary is not caught,
+ *  because the `questions` write is not gated here; in every committed run that
+ *  fires, the declaration was written first. */
+export function unpersistedConflictResolutionInvariants(entry: any, research: any): string[] {
+  if (!entry || typeof entry !== "object") return [];
+  const qid = entry.question_id;
+  if (qid === undefined || qid === null || qid === "") return [];
+  const questions = Array.isArray(research?.questions) ? research.questions : [];
+  const question = questions.find((q: any) => q && typeof q === "object" && q.id && q.id === qid);
+  if (!question) return [];
+  const claimed = claimedConflictResolution(question);
+  if (claimed === null) return [];
+
+  const conflicts = Array.isArray(research?.conflicts) ? research.conflicts : [];
+  const recorded = new Set<string>();
+  const settled = new Set<string>();
+  const settledBlocked = new Set<unknown>();
+  for (const c of conflicts) {
+    if (!c || typeof c !== "object") continue;
+    const key = conflictKey(c.id);
+    if (key) recorded.add(key);
+    if (SETTLED_CONFLICT_STATUSES.has(c.status)) {
+      if (key) settled.add(key);
+      for (const q of Array.isArray(c.blocks_question_ids) ? c.blocks_question_ids : []) settledBlocked.add(q);
+    }
+  }
+  const cited = Array.isArray(entry.resolved_conflict_ids) ? entry.resolved_conflict_ids : [];
+  const named = new Set([...claimed.matchAll(/\bc_\d+\b/gi)].map((m) => m[0].toLowerCase()));
+  const backed =
+    cited.some((rc: unknown) => {
+      const key = conflictKey(rc);
+      return key !== null && settled.has(key);
+    }) ||
+    settledBlocked.has(qid) ||
+    [...named].some((id) => recorded.has(id)) ||
+    (named.size === 0 && recorded.size > 0);
+  if (backed) return [];
+
+  const quote = claimed.length > 300 ? `${claimed.slice(0, 300)}…` : claimed;
+  const missing =
+    named.size > 0
+      ? `it names ${[...named].join(", ")}, which conflicts[] does not hold`
+      : "conflicts[] is empty";
+  return [
+    `proof_summaries ${entry.id ?? "(new entry)"}: question ${qid}'s ` +
+      `exhaustive_declaration.stop_criteria.conflict_resolution says a conflict was resolved — ` +
+      `"${quote}" — but conflicts[] holds no record of it (${missing}). A resolution that lives ` +
+      `only in prose never reaches the Conflicts section, and no conflict gate can see it. ` +
+      `Record the conflict and its resolution with conflict-resolution, the only writer of ` +
+      `conflicts[] (from an agent, hand back to the main thread and name it), then cite the ` +
+      `settled c_ id on this summary's resolved_conflict_ids and send this write again.`,
+  ];
+}
+
 /** A conclusion may not out-tier the reliability of the sources it rests on.
  *
  *  **Correlation presupposes identity** (lead ruling, 2026-08-19). When an
@@ -1634,9 +1764,32 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
   if (entry?.exhaustive_declaration?.declared !== true) return [];
   const qid = entry?.id;
   if (typeof qid !== "string" || qid === "") return [];
-  const inFlight: string[] = [];
-  for (const plan of Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []) {
-    if (!plan || plan.question_id !== qid) continue;
+  const inFlight = activePlanInProgressItems(preCallResearch, (plan) => plan.question_id === qid).map(
+    (item) => item.itemId,
+  );
+  if (inFlight.length === 0) return [];
+  const ids = inFlight.sort().join(", ");
+  return [
+    `question '${qid}' cannot be declared exhaustive while ${ids} ` +
+      `${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
+      "search has not finished, so the declaration would rest on work still running. " +
+      `Report ${inFlight.length === 1 ? "this item" : "these items"} as the blocker and let ` +
+      "the search finish; declaring is available on the next call once the plan reflects it. " +
+      "Items still at `planned` do not block — consulting the stop criteria before draining " +
+      "the plan is the sanctioned path.",
+  ];
+}
+
+/** Every `in_progress` item on an ACTIVE plan the predicate accepts, read from
+ *  the given snapshot. Shared by the two in-flight gates so which plans and
+ *  items count as in flight is decided once. */
+function activePlanInProgressItems(
+  research: any,
+  includePlan: (plan: any) => boolean,
+): { itemId: string; questionId: unknown }[] {
+  const inFlight: { itemId: string; questionId: unknown }[] = [];
+  for (const plan of Array.isArray(research?.plans) ? research.plans : []) {
+    if (!plan || !includePlan(plan)) continue;
     // ONLY the active plan blocks, and this is what keeps the gate escapable.
     // `research-plan` supersedes a plan by flipping `plans.status` alone — its
     // items keep whatever status they held — and then forbids touching it ever
@@ -1650,20 +1803,12 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
     // is not the plan the question is being worked from.
     if (plan.status !== "active") continue;
     for (const item of Array.isArray(plan.items) ? plan.items : []) {
-      if (item?.status === "in_progress" && typeof item?.id === "string") inFlight.push(item.id);
+      if (item?.status === "in_progress" && typeof item?.id === "string") {
+        inFlight.push({ itemId: item.id, questionId: plan.question_id });
+      }
     }
   }
-  if (inFlight.length === 0) return [];
-  const ids = inFlight.sort().join(", ");
-  return [
-    `question '${qid}' cannot be declared exhaustive while ${ids} ` +
-      `${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
-      "search has not finished, so the declaration would rest on work still running. " +
-      `Report ${inFlight.length === 1 ? "this item" : "these items"} as the blocker and let ` +
-      "the search finish; declaring is available on the next call once the plan reflects it. " +
-      "Items still at `planned` do not block — consulting the stop criteria before draining " +
-      "the plan is the sanctioned path.",
-  ];
+  return inFlight;
 }
 
 /** A new question may not be created while any unresolved question has an
@@ -1697,25 +1842,23 @@ function newQuestionWhileSearchInFlightInvariants(entry: any, preCallResearch: a
     if (c?.status !== "unresolved" || !Array.isArray(c.blocks_question_ids)) continue;
     for (const q of c.blocks_question_ids) if (typeof q === "string") conflictBlocked.add(q);
   }
-  const refused: string[] = [];
-  for (const plan of Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []) {
-    if (!plan || plan.status !== "active" || !unresolvedQuestions.has(plan.question_id)) continue;
-    const excepted = conflictBlocked.has(plan.question_id) && unblocks.has(plan.question_id);
-    if (excepted) continue;
-    for (const item of Array.isArray(plan.items) ? plan.items : []) {
-      if (item?.status === "in_progress" && typeof item?.id === "string") {
-        refused.push(`${item.id} (on ${plan.question_id})`);
-      }
-    }
-  }
+  const refused = activePlanInProgressItems(
+    preCallResearch,
+    (plan) =>
+      unresolvedQuestions.has(plan.question_id) &&
+      !(conflictBlocked.has(plan.question_id) && unblocks.has(plan.question_id)),
+  ).map((item) => `${item.itemId} (on ${item.questionId})`);
   if (refused.length === 0) return [];
   const ids = refused.sort().join(", ");
   return [
     `a new question cannot be opened while research is still running: ${ids} ` +
       `${refused.length === 1 ? "is" : "are"} still 'in_progress'. The plan says that search ` +
       "has not finished, whatever the request that reached you says. Write no question now: " +
-      "report the in-flight item as the reason. The one exception is a question that resolves " +
-      "an unresolved conflict blocking that question — set its `unblocks` to name it.",
+      "report the in-flight item as the reason. Two exceptions: (1) a question that resolves " +
+      "an unresolved conflict whose `blocks_question_ids` lists that question, with the new " +
+      "question's `unblocks` naming it; (2) if this same call also resolves that question — " +
+      "this check reads the project as it stood before the call, so write the resolution in " +
+      "its own call and append the new question in the next one.",
   ];
 }
 
@@ -2818,77 +2961,17 @@ function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
 // skip-never-refuse contract this rule documents. Fixed here rather than
 // at each index site so a third one cannot reintroduce it, and so the
 // lookup means what the Python mirror's `dict.get()` already meant.
-// Exported only so the cross-language drift test can pin it against the
-// Python copy; nothing else outside this module reads it.
-export const RELATION_CATEGORY: Record<string, string> = Object.assign(
-  Object.create(null) as Record<string, string>,
-  {
-    father: "parent", mother: "parent", parent: "parent",
-    son: "child", daughter: "child", child: "child",
-    wife: "spouse", husband: "spouse", spouse: "spouse",
-    widow: "spouse", widower: "spouse",
-    brother: "sibling", sister: "sibling", sibling: "sibling",
-  },
-);
-const RELATION_WORDS = Object.keys(RELATION_CATEGORY).join("|");
-// A value LABELS the other party in two shapes that need different patterns.
-// An earlier single pattern spanning `[^,]*?` was wrong both ways: a stray
-// `[KEY:` colon suppressed real sibling refusals, and one comma in `Father of
-// the groom, named as X` made it miss and wrongly refuse a correct assertion.
-//
-// Only ONE label guard is needed. A label with no ` of ` -- `father: Jan
-// Roelfs`, `father named as Casper` -- never reaches here, because
-// STATES_SUBJECT_ROLE requires ` of `. A second guard for those was
-// written, measured against the corpus, found to change nothing, and
-// deleted; do not add it back.
-//
-// By role: `Father of groom named as Tellef`. The party being named is
-// identified by ROLE -- a bare lowercase word -- so it is the other party. A
-// CAPITALISED token there is a name, so the value states the subject's own tie
-// and must not be skipped.
-const LABELS_BY_ROLE = new RegExp(
-  `^\\s*(?:the\\s+)?(?:${RELATION_WORDS})\\s+of\\s+(?:the\\s+)?(\\w+)[\\s,]*(?::|\\s+named\\b)`,
-  "i",
-);
-const STATES_SUBJECT_ROLE = new RegExp(
-  `^\\s*(?:the\\s+)?(${RELATION_WORDS})\\s+of\\s+`,
-  "i",
-);
-
-/** Exported only so the cross-language drift test can pin it against the
- *  Python `_relationship_category`: the table alone does not cover the
- *  `_inferred` strip or the trim, and `String.replace` with a string
- *  pattern replaces the FIRST occurrence here while Python's replaces
- *  every one. */
-export function relationshipCategory(value: unknown): string | undefined {
-  if (typeof value !== "string") return undefined;
-  // Anchored, and one suffix only. A bare `.replace("_inferred", "")`
-  // strips the FIRST occurrence here and EVERY occurrence in the Python
-  // mirror, so `child_inferred_inferred` was unknown to this side and
-  // `child` to that one.
-  return RELATION_CATEGORY[value.toLowerCase().trim().replace(/_inferred$/, "")];
-}
-
-/** The category the VALUE claims for the record subject, or undefined when it
- *  does not speak to the subject's own role. Exported so the cross-language
- *  drift test can pin it against the Python copy in
- *  `eval/harness/validators/test_record_extraction.py`: the rule exists twice
- *  because the harness and the engine share no runtime, and nothing else keeps
- *  the two in step. */
-export function subjectRoleInValue(value: string): string | undefined {
-  const byRole = LABELS_BY_ROLE.exec(value);
-  // A lowercase ASCII token is a role word, not a name. Must stay an
-  // explicit class, never a case test: `=== toLowerCase()` is true for a
-  // token with no case (`2`) where the Python mirror's .islower() is
-  // false, so the two disagreed in both directions before this. The
-  // capture stays `\w+` although that is ASCII here and Unicode
-  // there: with this guard both spellings reach the same verdict either
-  // way, and widening it to `\S+?` was reverted as unobservable.
-  if (byRole && /^[a-z]+$/.test(byRole[1])) return undefined;
-  const m = STATES_SUBJECT_ROLE.exec(value);
-  if (!m) return undefined;
-  return RELATION_CATEGORY[m[1].toLowerCase()];
-}
+// The relation-word tables lifted to `src/utils/relationship-category.ts` so
+// rank-search-matches can reuse `relationshipCategory` without the packaging
+// writer-tool check flagging the importer. Re-exported here for the
+// cross-language drift lint (`tests/packaging/relationship-direction-drift.test.ts`),
+// which asserts the pin against the Python copy and reads them from this file.
+import {
+  RELATION_CATEGORY,
+  relationshipCategory,
+  subjectRoleInValue,
+} from "../utils/relationship-category.js";
+export { RELATION_CATEGORY, relationshipCategory, subjectRoleInValue };
 
 function validateRelationshipDirection(entry: Record<string, unknown>): void {
   // `fact_type: relationship` only, which is what the refusal-table row and
@@ -3632,6 +3715,10 @@ function applyOne(
     // source is invalid whether or not this call put it there. Lowering the
     // tier in the same update satisfies it, so the deny stays satisfiable.
     invariantErrors.push(...conflictedSourceInvariants(resultEntry, preCallResearch));
+    // Also NOT tier-gated, and reads LIVE research: a conflict resolved only in
+    // prose must reach conflicts[] before any summary relies on it. See
+    // `unpersistedConflictResolutionInvariants` for scope and what it lets through.
+    invariantErrors.push(...unpersistedConflictResolutionInvariants(resultEntry, research));
     // Reads LIVE research, not the pre-call snapshot: two appends inside one
     // batch must collide with each other, not just with what was already there.
     //
@@ -3966,6 +4053,11 @@ function recordIdsForPersonEvidence(research: any, ops: ResearchAppendOp[]): Set
   return out;
 }
 
+/** Pre-processes a batch before commit: §3.4.1 source-reuse auto-detection
+ *  (including updates-only batches), §3.4.2 verdict sidecar, §3.4.3 re-extraction
+ *  guard, sourceDescription → tree S entry, auto-stamp source_id, D2 persona
+ *  matrix, place levers, and match-score gates. Returns the prepared state or
+ *  collected errors. */
 async function prepareOps(
   input: ResearchAppendInput,
   ops: ResearchAppendOp[],
@@ -4017,12 +4109,17 @@ async function prepareOps(
   // append with NO explicit S reference (a caller-supplied
   // gedcomx_source_description_id keeps the verified-reuse semantics and is
   // never second-guessed), plus at least one assertions append carrying a
-  // record_id. Record ids compare canonicalized (arkToBareId), repositories
-  // by normalized exact match (trim + casefold).
+  // record_id — OR, when the batch has zero assertion appends, at least one
+  // assertions update op whose pre-call target carries a record_id (and
+  // whose fields do not set source_id). Record ids compare canonicalized
+  // (arkToBareId), repositories by normalized exact match (trim + casefold).
   let reuseSkipsSourceDescription = false;
   let detectionEngaged = false;
   const assertionAppends = ops.filter(
     (op) => op.section === "assertions" && op.op === "append" && op.entry && typeof op.entry === "object",
+  );
+  const assertionUpdates = ops.filter(
+    (op) => op.section === "assertions" && op.op === "update" && typeof op.entryId === "string",
   );
   if (sourcesAppendIdx.length === 1) {
     const srcOp = ops[sourcesAppendIdx[0]];
@@ -4033,6 +4130,24 @@ async function prepareOps(
         .filter((v: unknown): v is string => factText(v) !== undefined)
         .map((v: string) => arkToBareId(v)),
     );
+    // When the batch has zero assertion appends, derive record keys from
+    // update targets in the pre-call research.assertions (§3.4.1 updates-only).
+    // Never mixed with append-derived keys: a mixed batch that extracts new
+    // record X and corrects old record Y would fold X's source onto Y's.
+    if (assertionAppends.length === 0 && assertionUpdates.length > 0) {
+      const existingAssertions: any[] = Array.isArray(research.assertions) ? research.assertions : [];
+      for (const uop of assertionUpdates) {
+        // Skip any update op whose fields set source_id — it is re-pointing
+        // the assertion, and a fold would leave it naming a source the batch
+        // no longer creates.
+        if (uop.fields && typeof uop.fields === "object" && Object.prototype.hasOwnProperty.call(uop.fields, "source_id")) continue;
+        const target = existingAssertions.find((a: any) => a && a.id === uop.entryId);
+        if (target && typeof target.record_id === "string") {
+          const bare = arkToBareId(target.record_id);
+          if (bare !== "") batchRecordKeys.add(bare);
+        }
+      }
+    }
     if (
       srcEntry &&
       typeof srcEntry === "object" &&
@@ -4242,6 +4357,17 @@ async function prepareOps(
     return results;
   };
 
+  // The other places each record's assertions name in this batch: a bare place
+  // ("Shenandoah") is resolved against them, not against the whole world.
+  const placesByRecord = new Map<string, string[]>();
+  for (const op of ops) {
+    const e = op.section === "assertions" && op.op === "append" ? (op.entry as any) : null;
+    const place = e ? factText(e.place) : undefined;
+    if (!place) continue;
+    const key = String(e.record_id ?? "");
+    placesByRecord.set(key, [...(placesByRecord.get(key) ?? []), place]);
+  }
+
   for (let i = 0; i < ops.length; i++) {
     const op = ops[i];
     if (op.section !== "assertions" || op.op !== "append") continue;
@@ -4429,7 +4555,9 @@ async function prepareOps(
         // a miss and a failure look the same here — both warrant the warning
         // (a silently unresolved place is part of the wrong-geocode theme).
         try {
-          sp = (await resolveStandardPlace(entry.place)) ?? null;
+          const contextPlaces = (placesByRecord.get(String(entry.record_id ?? "")) ?? [])
+            .filter((p) => p !== entry.place);
+          sp = (await resolveStandardPlace(entry.place, { contextPlaces })) ?? null;
         } catch {
           sp = null;
         }

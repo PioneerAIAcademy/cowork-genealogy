@@ -483,13 +483,15 @@ up while the body ran on the main thread, and each cost a run to find.
    "Return contract" is the worked form, and
    `packages/engine/mcp-server/tests/packaging/agent-return-contract.test.ts`
    refuses an agent body without the heading once its name leaves that test's
-   pending list. Two agents are EXCLUDED from the contract rather than pending:
-   `image-reader`, which by spec returns a transcription and nothing else, and
-   `project-status` (lead ruling "PS return: A", 2026-09-24, issue #2793), whose
-   two summaries and id-bearing integrity warnings ARE its whole output —
-   conforming would push the detailed summary and the warnings below the
-   caller's print line. Exclusion silences the lint in both directions, so a
-   green run says nothing about an excluded body; read it.
+   pending list. Three agents are EXCLUDED from the contract rather than
+   pending: `image-reader`, which by spec returns a transcription and nothing
+   else, and, under lead ruling "PS return: A" (2026-09-24, issue #2793),
+   `project-status` and `source-evaluation` (issue #2796), which write nothing,
+   so their id-bearing reports ARE their whole output — conforming would push
+   them below the caller's print line, where a production relay drops them.
+   Each goes in that test's `EXCLUDED` with its reason and carries no `---`
+   section. Exclusion silences the lint in both directions, so a green run
+   says nothing about an excluded body; read it.
    **A request that belongs to another agent is handed back, never spawned**
    (lead ruling 2026-09-23): the agent does none of that work, names the
    owning agent in its caller-facing lines, and the main thread spawns it. The
@@ -508,13 +510,10 @@ up while the body ran on the main thread, and each cost a run to find.
    verdict, and read a disagreement with its routed original by cause: a rule the
    router holds and the agent does not is a rule in the wrong file — move it into
    the agent before you run; a step the agent's own body names and the run skips
-   is an agent-body defect, which belongs to the pair's eval slot rather than the
-   conversion PR, so mark the twin `expected_outcome: "xfail"` with the cause, a
-   dated measurement, and the removal condition — never a live rate, since
-   `xfail_reason` is snapshot-tracked and a rate is falsified by the run log that
-   ships beside it (`ut_research_exhaustiveness_d3c` is the worked example, and
-   `docs/specs/unit-test-spec.md` §5.2.1 carries the rule). Read neither off one
-   run: settling the first five twins took ten, and both of the two that moved
+   is an agent-body defect: fix it in the agent body in this PR, one thing per
+   run (steps 9–10), until the twin passes. Never mark it
+   `expected_outcome: "xfail"`: the marker is retired, and `check_runlogs.py`
+   rule 10 blocks it. A failure whose fix belongs to another open issue is deleted, and that issue's done-when restores it. Read neither off one run: settling the first five twins took ten, and both of the two that moved
    reversed on a later run.
 9. Run once, unchanged. Compare against step 1.
 10. Fix one thing per run.

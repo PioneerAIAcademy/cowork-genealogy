@@ -1,0 +1,92 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of Katharina Seeger, born about 1843 in Baiersbronn, Württemberg.",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-08-10",
+    "updated": "2026-08-10"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [
+      "MyHeritage"
+    ],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Katharina Seeger (b. c. 1843, Baiersbronn)?",
+      "rationale": "The 1855 Massachusetts State Census is one of the two surviving state schedules and should place the subject's household mid-decade, between the 1850 and 1860 federal censuses.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-08-10",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-08-10",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Baiersbronn, Freudenstadt, Baden-Württemberg, Germany",
+          "date_range": "1843",
+          "repository": "Archion",
+          "rationale": "Baiersbronn's Protestant baptism and family registers are digitised on Archion, not FamilySearch; the family register names both parents.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Baiersbronn, Freudenstadt, Baden-Württemberg, Germany",
+      "for_place": "Baiersbronn, Freudenstadt, Baden-Württemberg, Germany",
+      "time_period": "1800-1900",
+      "jurisdictions": [
+        {
+          "name": "Evangelische Kirche Baiersbronn (Dekanat Freudenstadt)",
+          "date_range": "historical"
+        }
+      ],
+      "collections": [],
+      "quirks": [
+        "The Protestant parish registers of Baiersbronn (baptisms, marriages, burials and the Familienregister) are digitised on Archion, a paid site, not on FamilySearch. Parish page: https://www.archion.de/de/alle-archive/baden-wuerttemberg/evangelisches-archiv-baden-und-wuerttemberg-wuerttemberg/dekanat-freudenstadt/baiersbronn"
+      ],
+      "pages_read": [],
+      "guide_markdown": "## Baiersbronn, Württemberg - 1800s\n\nChurch books are on Archion (parish page above).",
+      "source": "locality-guide",
+      "created": "2026-09-22"
+    }
+  ]
+}

@@ -13,7 +13,8 @@
       "maiden-name",
       "multiple-marriages",
       "plan-execution",
-      "pre-1880-census-household"
+      "pre-1880-census-household",
+      "topical-fixture-required"
     ]
   },
   "input": {
@@ -24,6 +25,7 @@
     "max_wall_clock_seconds": 600
   },
   "mcp_fixtures": [
+    "wiki-read-united-states-census",
     "record-search-1860-census-mullen-sarah",
     "record-search-price-no-results",
     "record-search-mielke-no-results",
@@ -39,8 +41,9 @@
     "CRITICAL for Search strategy scoring: score 3 only if the response states, in its own words, why it chose that surname for a search targeting 1860 — quote the sentence you are crediting in your rationale. Do not credit reasoning the response does not contain. Score 2 if it uses Mullen without saying why. Score 1 if it uses a married name as the primary surname.",
     "The maiden-name record_search should be called with projectPath AND subjectId (I1), which ranks the staged pool host-side and returns the ranking inline as `ranked` — NOT per-result same_person, NOT a separate source_attachments call, and NOT a separate rank_search_matches call. The Price and Mielke searches return zero results, so they stage nothing and are not ranked; only the Mullen result set is.",
     "The triage output should surface attachment status from the returned match: the 1860 census record is unattached (attachedToSubject: false, attachedToOther: false), so it is new evidence confirming Sarah's birth surname and should be prioritized for extraction / record_read — not deprioritized as already in the tree.",
-    "Tool Arguments: score 3 if record_search was called with projectPath AND subjectId (subjectId is what triggers host-side ranking) plus appropriate search parameters. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if record_search had clearly wrong arguments, or omitted subjectId when the research subject is known. Do NOT expect a separate rank_search_matches call — ranking is part of record_search now.",
-    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
+    "Tool Arguments: score 3 if record_search was called with projectPath AND subjectId (subjectId is what triggers host-side ranking) plus appropriate search parameters. A validate_research_schema call with a project path after writing is acceptable if made — do not penalize it, and do not reward it. Only score 2 if record_search had clearly wrong arguments, or omitted subjectId when the research subject is known. Do NOT expect a separate rank_search_matches call — ranking is part of record_search now.",
+    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run.",
+    "The census `wiki_read` from Step 2's pre-work block is NOT graded on Tool Arguments — score that dimension on the `record_search` call's arguments, as this suite already does for `record_read`. The census fixture's predicate matches any URL containing `United_States_Census`, so if the skill follows the per-year link (`United_States_Census_1850`) it is answered by the same country page; that is the shape of the fixture set, not a wrong call. Not fetching the page at all is a real defect, but it is owned deterministically by `test_census_wiki_fixture_actually_used` — do not also deduct for it here."
   ],
   "judge_reads_files": true
 }

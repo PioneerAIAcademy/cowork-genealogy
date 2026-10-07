@@ -52,6 +52,18 @@ pytestmark = pytest.mark.skipif(
     reason="setup-feedback-case.sh is bash; no bash interpreter found",
 )
 
+# Tests that run the full script and expect exit 0 require real symlinks.
+# On Windows, `ln -s` copies instead of linking and the script now fails by
+# design (issue #2480), directing the user to `setup-feedback-case.bat`.
+# Early-failure tests and the ln-shim test are unaffected.
+_needs_symlinks = pytest.mark.skipif(
+    os.name == "nt",
+    reason=(
+        "setup-feedback-case.sh now exits non-zero when ln -s copies instead "
+        "of symlinking (issue #2480). On Windows, use setup-feedback-case.bat."
+    ),
+)
+
 
 _OMIT = object()
 _DROP_KEY = object()
@@ -148,6 +160,7 @@ def _run_script(
     )
 
 
+@_needs_symlinks
 def test_imports_zip_into_default_dest(tmp_path, monkeypatch):
     slug = "feedback-2026-05-25T18-22-31"
     zip_path = tmp_path / f"{slug}.zip"
@@ -166,6 +179,7 @@ def test_imports_zip_into_default_dest(tmp_path, monkeypatch):
     assert (dest / "_feedback" / "feedback.json").is_file()
 
 
+@_needs_symlinks
 def test_writes_feedback_repo_root_marker(tmp_path, monkeypatch):
     slug = "feedback-2026-05-25T18-22-31"
     zip_path = tmp_path / f"{slug}.zip"
@@ -184,6 +198,7 @@ def test_writes_feedback_repo_root_marker(tmp_path, monkeypatch):
     assert Path(marker.read_text(encoding="utf-8").strip()) == REPO_ROOT
 
 
+@_needs_symlinks
 def test_initial_git_commit_titled_imported(tmp_path, monkeypatch):
     slug = "feedback-test"
     zip_path = tmp_path / f"{slug}.zip"
@@ -204,6 +219,7 @@ def test_initial_git_commit_titled_imported(tmp_path, monkeypatch):
     assert "imported" in log.stdout
 
 
+@_needs_symlinks
 def test_gitignore_appended_when_zip_has_one(tmp_path, monkeypatch):
     """If the zip's project already has a .gitignore, we append `.claude/`
     rather than clobbering it."""
@@ -240,6 +256,7 @@ def test_gitignore_appended_when_zip_has_one(tmp_path, monkeypatch):
     assert ".claude/" in gitignore, ".claude/ appended"
 
 
+@_needs_symlinks
 def test_gitignore_created_when_absent(tmp_path, monkeypatch):
     slug = "feedback-no-gitignore"
     zip_path = tmp_path / f"{slug}.zip"
@@ -289,6 +306,7 @@ def test_claude_skills_dir_is_real_with_symlinks(tmp_path, monkeypatch):
         assert link.resolve() == (plugin_skills_src / name).resolve()
 
 
+@_needs_symlinks
 def test_refuses_overwrite_without_force(tmp_path, monkeypatch):
     slug = "feedback-overwrite"
     zip_path = tmp_path / f"{slug}.zip"
@@ -305,6 +323,7 @@ def test_refuses_overwrite_without_force(tmp_path, monkeypatch):
     assert "exists" in second.stderr or "Pass --force" in second.stderr
 
 
+@_needs_symlinks
 def test_force_overwrites_existing(tmp_path, monkeypatch):
     slug = "feedback-force"
     zip_path = tmp_path / f"{slug}.zip"
@@ -323,6 +342,7 @@ def test_force_overwrites_existing(tmp_path, monkeypatch):
     assert not (dest / "stale-marker").exists()
 
 
+@_needs_symlinks
 def test_prints_user_prompt_in_next_steps(tmp_path, monkeypatch):
     slug = "feedback-prompt"
     zip_path = tmp_path / f"{slug}.zip"
@@ -395,6 +415,7 @@ def _build_windows_separator_zip(zip_path: Path, slug: str) -> None:
         z.writestr("_feedback/feedback.json", json.dumps(feedback, indent=2))
 
 
+@_needs_symlinks
 def test_windows_backslash_zip_completes_setup(tmp_path, monkeypatch):
     """A win32-submitted zip must import fully, not abort mid-setup.
 
@@ -504,6 +525,7 @@ def test_incomplete_extraction_is_rejected_not_committed(tmp_path, monkeypatch):
     assert not (dest / ".feedback-repo-root").is_file(), "marker written for a partial case"
 
 
+@_needs_symlinks
 def test_injected_config_is_stripped_and_claude_md_renamed(tmp_path, monkeypatch):
     slug = "feedback-injected-config"
     zip_path = tmp_path / f"{slug}.zip"
@@ -534,6 +556,7 @@ def test_injected_config_is_stripped_and_claude_md_renamed(tmp_path, monkeypatch
 
 # --- #2878: the baseline commit needs no global git identity ----------
 
+@_needs_symlinks
 def test_imported_commit_works_with_no_git_identity(tmp_path, monkeypatch):
     """The script must not need a global git identity to make its baseline.
 
@@ -601,6 +624,7 @@ def _import_and_read_stdout(tmp_path, monkeypatch, user_prompt, env_overrides=No
     return result.stdout
 
 
+@_needs_symlinks
 def test_blank_user_prompt_is_reported_as_blank(tmp_path, monkeypatch):
     """An empty prompt is legitimate — the submission dialog does not require
     the box. Pointing the triager at the empty field tells them nothing."""
@@ -609,6 +633,7 @@ def test_blank_user_prompt_is_reported_as_blank(tmp_path, monkeypatch):
     assert _SEE_FIELD not in out, out
 
 
+@_needs_symlinks
 def test_null_user_prompt_reads_as_blank_and_never_prints_None(tmp_path, monkeypatch):
     """`.get('user_prompt', '')` returns None for an explicit JSON null, and
     `print(None)` emits the literal string `None` — which a triager would paste
@@ -619,6 +644,7 @@ def test_null_user_prompt_reads_as_blank_and_never_prints_None(tmp_path, monkeyp
     assert "None" not in out, out
 
 
+@_needs_symlinks
 def test_missing_user_prompt_key_reads_as_blank(tmp_path, monkeypatch):
     """A missing key counts as blank, the same as "" — the feedback-json spec
     says the field is always present, so its absence is not a failed read."""
@@ -627,6 +653,7 @@ def test_missing_user_prompt_key_reads_as_blank(tmp_path, monkeypatch):
     assert _SEE_FIELD not in out, out
 
 
+@_needs_symlinks
 @pytest.mark.parametrize("body", ["NOT JSON AT ALL", "", "null", '"a string"'])
 def test_unreadable_feedback_json_still_points_at_the_field(tmp_path, monkeypatch, body):
     """The other direction. Without this, a script that prints "left blank" for
@@ -647,6 +674,7 @@ def test_unreadable_feedback_json_still_points_at_the_field(tmp_path, monkeypatc
     assert _LEFT_BLANK not in result.stdout, result.stdout
 
 
+@_needs_symlinks
 def test_blank_prompt_is_read_correctly_without_jq(tmp_path, monkeypatch):
     """The path the Windows team actually runs.
 
@@ -698,4 +726,50 @@ def test_blank_prompt_is_read_correctly_without_jq(tmp_path, monkeypatch):
     assert marker.is_file(), (
         "the jq shim never ran, so this test exercised the jq path instead of "
         "the python fallback it exists to cover"
+    )
+
+
+# --- #2480: ln -s that copies instead of symlinking must be detected ------
+
+def test_ln_copy_instead_of_symlink_detected(tmp_path, monkeypatch):
+    """On Git Bash for Windows, `ln -s` exits 0 but copies instead of linking.
+
+    The script must detect this via `[ -L ... ]` and tell the user to run the
+    .bat. Uses a PATH shim that makes `ln` do `cp -R` — the exact behavior
+    Git Bash produces when symlinks are not available.
+    """
+    slug = "feedback-ln-shim"
+    zip_path = tmp_path / f"{slug}.zip"
+    _build_minimal_zip(zip_path, slug)
+
+    # Build a shim `ln` that copies instead of linking.
+    shim_dir = tmp_path / "shim"
+    shim_dir.mkdir()
+    marker = tmp_path / "ln-shim-ran"
+    (shim_dir / "ln").write_text(
+        '#!/bin/sh\n'
+        '# Shim: mimic Git Bash ln -s that copies instead of symlinking.\n'
+        '# Drop the -s flag, pass the rest to cp -R.\n'
+        'shift  # drop -s\n'
+        f'echo x >> "{marker}"\n'
+        'cp -R "$@"\n',
+        encoding="utf-8",
+    )
+    (shim_dir / "ln").chmod(0o755)
+
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    overrides = {"PATH": f"{shim_dir}{os.pathsep}{os.environ['PATH']}"}
+
+    result = _run_script(str(zip_path), env_overrides=overrides)
+
+    assert marker.is_file(), (
+        "the ln shim never ran — the test exercised the real ln, not the shim"
+    )
+    assert result.returncode != 0, (
+        "script should fail when ln -s copies instead of symlinking;\n"
+        f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+    )
+    assert ".bat" in result.stderr, (
+        "error message must mention the .bat alternative;\n"
+        f"stderr:\n{result.stderr}"
     )

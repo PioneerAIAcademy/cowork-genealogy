@@ -456,13 +456,12 @@ probe-gateway-path: $(ENGINE_BUILD) ## P3b probe: the CLI behind a non-anthropic
 # exits 0 (Compose v5.1.4) and abandons the wait before the worker is healthy.
 PROTO_COMPOSE := docker compose -f apps/server/proto/docker-compose.yml
 
-# apps/server/proto/env.sh, sourced first, exports ANTHROPIC_API_KEY (the caller's, else
-# eval/.env) for the worker's environment and writes the FamilySearch token -- refreshed
-# from the desktop login through dev/fs-token.ts -- to apps/server/proto/.fs-token, which
-# the worker reads per turn. Neither value is ever echoed. A changed key recreates the
-# worker; a changed token does not.
+# apps/server/proto/env.sh, sourced first, exports the model keys only (ANTHROPIC_API_KEY
+# and OPENROUTER_API_KEY: the caller's, else eval/.env), never echoed; a changed key
+# recreates the worker. The FamilySearch grant is the dev-login patron's: `make
+# proto-grant` once per stack (U3), after which the web tier keeps it fresh.
 .PHONY: proto-up
-proto-up: $(ENGINE_DEPS) ## Prototype stack: build + start postgres/minio/elasticmq/worker/shim/web/tools with the model key and the FS token, and wait for health
+proto-up: $(ENGINE_DEPS) ## Prototype stack: build + start postgres/minio/elasticmq/worker/shim/web/tools with the model keys, and wait for health (then `make proto-grant` once per stack)
 	. apps/server/proto/env.sh && $(PROTO_COMPOSE) up -d --build && \
 	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools
 
@@ -470,13 +469,20 @@ proto-up: $(ENGINE_DEPS) ## Prototype stack: build + start postgres/minio/elasti
 # on the web image building (a network pip install) or its healthcheck.
 .PHONY: proto-up-core
 proto-up-core: ## Prototype stack without the web tier: postgres/minio/elasticmq/worker/shim
-	@[ -f apps/server/proto/.fs-token ] || { rmdir apps/server/proto/.fs-token 2>/dev/null; : > apps/server/proto/.fs-token; }
 	$(PROTO_COMPOSE) up -d --build postgres minio minio-init elasticmq worker shim
 	$(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim
 
 .PHONY: proto-down
-proto-down: ## D3 prototype: stop the stack and drop its volumes (the schema re-applies on the next up)
+proto-down: ## D3 prototype: stop the stack and drop its volumes (the next up's migrate one-shot re-applies the schema)
 	$(PROTO_COMPOSE) down -v
+
+# U9: proto/migrate.py, the schema's one applier, from the host venv against the compose
+# postgres -- what the stack's `migrate` one-shot runs at every up. ARGS=--status reports
+# the ledger's level and runs no DDL (exit 3 when it is not current).
+.PHONY: proto-migrate
+proto-migrate: ## U9: apply the pending apps/server/proto/sql/*.sql to the compose postgres (ARGS=--status: report only, no DDL)
+	$(PROTO_COMPOSE) up -d --wait postgres
+	cd apps/server && MIGRATE_PG_DSN=$(PROTO_PG_DSN) uv run python proto/migrate.py $(ARGS)
 
 .PHONY: proto-logs
 proto-logs: ## D3 prototype: follow the stack's logs (SERVICE=shim to narrow)
@@ -496,7 +502,26 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_rehearsal.py
+
+# U3: the grant-lock tests against real Postgres -- the lock semantics are the point, and no
+# fake can prove pg_try_advisory_lock. U9's migration runner the same way: its lock, its
+# ledger and its races. U23's held-message claim the same way: the worker's release against
+# admit_message on one session. A fresh database per test or module, dropped at teardown.
+# CI runs the same files against a postgres:16 container (server-tests.yml).
+.PHONY: proto-grants-test
+proto-grants-test: ## U3 + U9 + U23: the grant-lock interleavings, the migration runner and the held-message claim against the compose postgres (real advisory locks)
+	$(PROTO_COMPOSE) up -d --wait postgres
+	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py
+
+# U3: store an encrypted FamilySearch grant for the dev-login patron (EMAIL, default
+# dev@localhost, who owns every seeded project): a PKCE sign-in on the dev key through a
+# loopback listener on 127.0.0.1:1837, the dev key's only registered redirect. A second
+# sign-in, so it does not revoke the desktop login. Prints no token. After `make proto-up`
+# (its migrate one-shot applies 009), and again after a `proto-down -v`.
+.PHONY: proto-grant
+proto-grant: ## U3: sign in on the dev key and store the dev-login patron's grant (EMAIL=…); once per stack, after proto-up
+	cd apps/server && uv run python proto/grant.py $(if $(EMAIL),--email '$(EMAIL)',) --pg-dsn $(PROTO_PG_DSN)
 
 # D9–10 acceptance, billed (two short Sonnet turns). Same `up` as proto-up (env.sh);
 # refuses to run without a model key. The Stop hook is off (AUTONOMOUS_MAX_NUDGES=0,
@@ -512,17 +537,6 @@ proto-turn: $(ENGINE_DEPS) ## D9–10 acceptance: two real turns through web tie
 	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools && \
 	  cd apps/server && uv run python proto/turn.py $(ARGS)
 
-# The worker reads the FamilySearch token per turn from apps/server/proto/.fs-token;
-# run this between turns of a long run, never during one -- a FamilySearch refresh
-# revokes the previous access token, so the in-flight attempt's calls would 401. It FORCES a refresh when under 35 minutes are left (PROTO_TOKEN_MIN_LIFE, default
-# 30 -- the READ_TIMEOUT_S step ceiling in minutes, so the token outlives a full-length
-# turn -- plus the auth module's 5-minute expiry buffer); getValidToken hands back a token
-# that has not yet expired, so the same call at minute 52 was a no-op. Start the session
-# with `make e2e-login`: nothing here can renew a dead refresh token.
-.PHONY: proto-token
-proto-token: $(ENGINE_DEPS) ## Refresh the FamilySearch token the running worker reads per turn (forced when under 35 min of life is left)
-	@. apps/server/proto/env.sh
-
 # D14 kill-resume on a real turn: the worker container is killed as the turn's first
 # place_search call starts, started again, and the shim's redelivery resumes the SDK
 # session. SESSION=<id> runs it on a seeded session (proto-seed). ARGS reaches turn.py:
@@ -533,26 +547,38 @@ proto-token: $(ENGINE_DEPS) ## Refresh the FamilySearch token the running worker
 proto-kill: ## D14: one real turn killed at its first place_search call (docker kill + start), redelivered and resumed; SESSION=<id> to use a seeded session, ARGS="--kill-on <tool> --kill-after-s <n> --text-file <path>" to time it inside a delegation
 	AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-0}" $(MAKE) proto-turn ARGS="--kill $(if $(SESSION),--session $(SESSION),) $(ARGS)"
 
-# PR #2870 item 0a: the resume probe the guard was gated on. The 2026-09-20 run that
-# produced the synthetic result had been killed during a BACKGROUND delegation, and
-# `--kill-on Agent` alone lands on a foreground one, which resumes cleanly -- so this
-# selects on the call's INPUT (`run_in_background: true`), read out of session_entries
-# because tool_calls has no input column. Three things have to line up or it kills
-# nothing: the selector, a message that provokes two concurrent extractions
-# (proto/probes/background-delegation.txt), and AUTONOMOUS_MAX_NUDGES > 0, which
-# proto-kill otherwise leaves at 0 so the run ends before a delegation is reached.
-#
-# `run_in_background` is MODEL-CHOSEN -- 19 of 714 committed runs, none of the eight
-# bagley-father-1884 runs -- so this may simply not fire. Billed, roughly an hour a try.
-# Do not spend more than two attempts on it: the plan's accepted fallback is the unit
-# test `test_the_named_fallback_*` in apps/server/tests/test_proto_worker.py, which is
-# already green.
+# PR #2870 item 0a: the resume probe the guard was gated on, now proto-bounds' probe_resume
+# case (U23). The worker foregrounds every delegation, so a selector on the model's
+# `run_in_background` input can no longer pick a background one; the case kills the worker
+# KILL_AFTER_S (5-20, default 10) after the turn's first SUBAGENT tool_calls row
+# (agent_id IS NOT NULL) and records whether session_entries still holds the model's
+# original Agent input. It needs a delegation, so a seeded project (proto-seed first), the
+# message that provokes two (proto/probes/background-delegation.txt, named in bounds.py)
+# and AUTONOMOUS_MAX_NUDGES > 0 -- passed here as 40, which proto-bounds keeps over its 3.
+# Billed, roughly an hour a try.
 .PHONY: proto-probe-resume
-proto-probe-resume: ## 0a probe: kill a real turn inside a BACKGROUND delegation and watch the resume — SESSION=<id> (proto-seed first); billed, ~1 h
+proto-probe-resume: ## 0a probe: kill a real turn inside a delegation and watch the resume (proto-bounds CASE=probe_resume) — SESSION=<id> (proto-seed first); billed, ~1 h
 	@test -n "$(SESSION)" || { echo "proto-probe-resume: SESSION=<id> is required (make proto-seed FIXTURE=... first)" >&2; exit 2; }
-	AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-40}" $(MAKE) proto-kill SESSION="$(SESSION)" \
-	  ARGS="--kill-on Agent --kill-on-input run_in_background=true --kill-after-s $${KILL_AFTER_S-20} \
-	        --text-file proto/probes/background-delegation.txt --deadline-s $${DEADLINE_S-2400} $(ARGS)"
+	AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-40}" $(MAKE) proto-bounds CASE=probe_resume SESSION="$(SESSION)" \
+	  ARGS="--kill-after-s $${KILL_AFTER_S-10} --deadline-s $${DEADLINE_S-2400} $(ARGS)"
+
+# U23: one live bound on compose per run -- Stop, the held-message release, the spend cap,
+# each mid-delegation and under a store outage, and the resume probe; the case list is
+# proto/bounds.py's docstring. Same `up` as proto-turn; refuses without a model key or a
+# CASE. The Stop hook is ON at 3 nudges (`:-3`), so SDK Q1 -- does a halt still dispatch
+# Stop? -- is observable without an hour-long run. SESSION_SPEND_CAP_USD reaches the
+# worker through compose (`:-35`, its default; CASE=cap_main_real wants it lowered, e.g.
+# 1). Every case POSTs /interrupt before it gives up on a turn. Billed, except CASE=precli.
+.PHONY: proto-bounds
+proto-bounds: $(ENGINE_DEPS) ## U23: record one live bound on compose — CASE=<case> [SESSION=<id>] [ARGS=…]; billed except CASE=precli (cases: proto/bounds.py)
+	@test -n "$(CASE)" || { echo "proto-bounds: CASE=<case> is required (cases: apps/server/proto/bounds.py)" >&2; exit 2; }
+	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-3}"; \
+	  export SESSION_SPEND_CAP_USD="$${SESSION_SPEND_CAP_USD:-35}"; \
+	  . apps/server/proto/env.sh && \
+	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-bounds: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
+	  $(PROTO_COMPOSE) up -d --build && \
+	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools && \
+	  cd apps/server && PROTO_COMPOSE="$(PROTO_COMPOSE)" uv run python proto/bounds.py --case '$(CASE)' $(if $(SESSION),--session '$(SESSION)',) $(ARGS)
 
 # D17 prep: a fixture's research.json / tree / sidecars into the Postgres+S3 store
 # through PgS3ProjectStore, and a web-tier session on that project. Prints the
@@ -651,8 +677,8 @@ proto-compare: $(ENGINE_DEPS) ## D18: one table — FIXTURE=<slug> SESSION=<id> 
 PROTO_PG_DSN ?= postgresql://postgres:proto@localhost:5434/proto
 
 .PHONY: proto-web
-proto-web: ## D11–12 web tier from the venv on :8085, against the compose postgres + elasticmq
-	cd apps/server && PG_DSN=$(PROTO_PG_DSN) QUEUE_URL=http://localhost:9324/000000000000/turns \
+proto-web: ## D11–12 web tier from the venv on :8085, against the compose postgres + elasticmq (a migrated database: make proto-migrate)
+	cd apps/server && PG_DSN=$(PROTO_PG_DSN) QUEUE_URL=http://localhost:9324/000000000000/turns DEV_LOGIN=true \
 	  $(PROTO_SQS_ENV) uv run python proto/web/app.py
 
 .PHONY: proto-drive
@@ -668,11 +694,13 @@ web-proto: $(JS_DEPS) ## Web client on the SSE transport against the prototype w
 # bucket one-shot — no worker, shim, queue or web tier. Same two-call shape as
 # proto-up-core: `--wait` on the one-shot exits 1 the moment it finishes, so the wait
 # names the two long-running services; the suite creates the bucket itself if the
-# one-shot has not finished by the time it starts.
+# one-shot has not finished by the time it starts. The schema (U9: no initdb) comes from
+# migrate.py run from the host venv, so the worker image is never built for it.
 .PHONY: proto-up-store
-proto-up-store: ## D6–8 store: start postgres + minio (+ the bucket one-shot) and wait for health
+proto-up-store: ## D6–8 store: start postgres + minio (+ the bucket one-shot), wait for health, and migrate the schema
 	$(PROTO_COMPOSE) up -d postgres minio minio-init
 	$(PROTO_COMPOSE) up -d --wait postgres minio
+	cd apps/server && MIGRATE_PG_DSN=$(PROTO_PG_DSN) uv run python proto/migrate.py
 
 # Two arms. Static: the MinIO keys as GENEALOGY_S3_* (via PROTO_S3_*), with any exported
 # AWS_* keys unset so they cannot mask it. Keyless (U8): PROTO_S3_KEYLESS=1, the MinIO keys
@@ -905,7 +933,8 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	# entry point and reimplements this rather than shelling out to make.
 	# $(ENGINE_BUILD) rebuilds the MCP server only when stale. The run hits
 	# live FamilySearch (needs `login` first) and the judge needs an
-	# ANTHROPIC_API_KEY (shell or eval/.env). Expensive: ~20-60 min, $3-10.
+	# ANTHROPIC_API_KEY (shell or eval/.env). Expensive: about an hour and
+	# single-digit dollars, with a long tail.
 	# Keep the machine awake for the whole run — see eval/README.md "Keep the
 	# machine awake" (a sleep inflates real-clock time; the harness flags it).
 	# Stall recovery is ON by default; disable with RESUME_ON_STALL=0.
@@ -1000,7 +1029,8 @@ e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: mak
 	# RECOMPUTE=1 also re-derives violations from tool_calls + committed sidecars
 	# (the stored field is a floor; pre-detector runs record none) and prints a
 	# spend line (recorded / estimated / unrecoverable, never blended). CALIBRATE=1
-	# reports the estimate's measured accuracy over runs carrying both (issue #1484).
+	# reports the estimate's measured accuracy over runs carrying both, less the
+	# multi-query runs, whose tokens cover their last query only (#1484, #3128).
 	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),) $(if $(RECOMPUTE),--recompute,) $(if $(CALIBRATE),--calibrate-cost,)
 
 .PHONY: e2e-panel
@@ -1057,6 +1087,17 @@ e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over commit
 	# binding probe. Windowed to 14 days like every reader; SINCE=all for the
 	# whole corpus. A report, not a gate (see its own "Limits" footer).
 	cd eval/harness && uv run python -m e2e.agent_tool_usage_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-rule-adherence
+e2e-rule-adherence: ## Per-instruction adherence over committed e2e runs (issue #2483): make e2e-rule-adherence | RULE=<id> | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis over committed run JSONs — no live run, no API.
+	#
+	# For each registered rule (an instruction in a shipped agent body), how
+	# many episodes obeyed it? Reports counts with denominators, never a rate.
+	# Seeded with two gps-mentor rules (project_context open, no research.json
+	# Read). Windowed to 14 days like every reader; SINCE=all for the whole
+	# corpus. A report, not a gate.
+	cd eval/harness && uv run python -m e2e.rule_adherence_report $(if $(RULE),--rule $(RULE),) $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-writer-attribution
 e2e-writer-attribution: ## Which subagent wrote a project document, and whether an ownership row says it may (issue #2575): make e2e-writer-attribution | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
@@ -1123,13 +1164,11 @@ e2e-nudges: ## How /research hands back at a step boundary, over committed e2e r
 	# continue-nudge with the seam it sits on and its hand-back class --
 	# step / silent / completion_claim, per classify_hand_back.
 	#
-	# A yield is NOT a defect: /research is meant to yield at every step
-	# boundary and in an e2e run the harness is the user, so a well-formed
-	# hand-back gets answered "Yes." A silent stop and a false completion claim
-	# are the defects. `step` reads 0 until a skill ends a turn on the hand-back
-	# line -- init-project and question-selection emit it since PR #2649,
-	# research/SKILL.md will with issue #2292 -- a zero is the correct result,
-	# not a broken classifier.
+	# Every yield before project.status == completed is vetoed with the
+	# worker's continue text (handoff U17), so every class is a stall. `step`
+	# is the hand-back line issue #2292 retired (PR #2870, 2026-09-27): runs
+	# since then should read 0, and earlier runs carry it from init-project
+	# and question-selection (PR #2649).
 	# `narration` replaced transcripts in #1238; committed .transcript.md files
 	# were removed in PR #2204 (zombie re-lands from stale-base merges).
 	# The transcript fallback code path is retained for local copies only.

@@ -221,6 +221,7 @@ Sorted by `matchScore` descending; no gedcomx.
   "returnedCount": 10,        // min(top, scoredCount)
   "scoringErrors": 0,         // pairs whose FS call kept failing (kept, matchScore null)
   "scoreLogError": null,      // present only if the calibration append failed
+  "subjectTooThin": true,     // only when the subject lacks a narrow date AND a named relative
   "matches": [
     {
       "matchRank": 1,
@@ -324,6 +325,103 @@ Absence carries no information: most records trace to no batch, and a collection
 routinely returns hits both with and without one. See
 `record-search-tool-spec-v2.md` § `batchNumber` for where it is read from and why
 it is matched on `labelId`.
+
+### `subjectTooThin` — namesake gate flag
+
+Present and `true` when the subject has **no date narrower than a year** **AND**
+no named spouse, parent or child — in the tree or in the `research.json`
+evidence linked to the subject — i.e. nothing that separates this person from
+any same-named individual. Omitted otherwise; never `false`. It is computed from
+the subject, not the pool, so it is set on an empty staged set as well.
+
+**A sibling does not count: it only narrows the query through the parents it
+shares, who already count on their own.** `record_search` does take an
+`otherGivenName` / `otherSurname` pair that could carry a sibling, but a named
+sibling only reaches the subject through parents — any discriminating value a
+sibling adds is already picked up by naming the parents instead. A child, by
+contrast, counts for a reason sibling cannot borrow: a named child yields a
+second search in the other direction (the child's own records, with the
+subject as father or mother).
+
+**Place is not a discriminator here: it is already in the query, so it cannot
+separate same-named people within the same place.** The namesake problem is two
+people of the same name in the *same* place, and only a date or a named
+relative cuts between them. This is the asymmetry with the withholding branch
+in `record-search-tool-spec-v2.md` ("`rankingSkipped`"): that branch fires when
+the subject carries no dated OR placed fact — nothing at all — so place is read
+as a signal there, and neither test strictly contains the other.
+
+- **Narrow date.** A date counts when its day span, measured with
+  `getDayRange` (`src/utils/date-helpers.ts`) after `stdDate`, is shorter than
+  a bare year's. So a month, quarter or day counts, while "1829", "Abt 1829",
+  "Bef 1855", "Bet 1917 and 1918", "1829-1830" and an unparseable date do not.
+  "Abt 4 Dec 1917" and "Est 4 Dec 1917" do not count either — `getDayRange`
+  widens `Abt` by a year each side and `Est` by about ten years each side, so
+  both span more than a bare year's 364 days; "Cal 4 Dec 1917" does. GedcomX formal ranges are restated
+  first: open on one side (`/+1917-12-04`, `+1917-12-04/`) as `Bef`/`Aft`, so
+  they do not count; closed (`+1917-12-04/+1917-12-10`) as `Bet A and B`, so a
+  narrow one counts. An alternative ("Dec 1917 or Jan 1918") spans both sides.
+- **Dates read.** A fact's `standard_date` and its `date`, each on its own, on
+  the subject (after `research.json` enrichment) and on any Couple or
+  ParentChild relationship the subject is in (a marriage date counts even when
+  the spouse is unnamed). Plus every assertion linked to the subject through a
+  live `person_evidence` row, whatever its `fact_type`: its `date` qualified by
+  its `date_certainty` (`approximate` → Abt, `estimated` → Est, `calculated` →
+  Cal, `before` → Bef, `after` → Aft, `between` → Bet), its
+  `structured_value.date`, and any date written in its `value`. A prose date is
+  "4 Dec 1917", "December 4th, 1917", "Dec 1917" or "1917-12-04", in any month
+  vocabulary `date-constants.ts` knows, measured with the qualifier written
+  before it ("abt.", "before", "c."; "Int." is read as "interred", not as a
+  qualifier). One inside a written range ("between …",
+  "… or 5 Jan 1919") is dropped. A month word that is also a name or word
+  ("May", "Mai", "Gen") is read only beside a day number, so "Mary May 1850" is
+  no date.
+- **Named relative.** A parent, spouse or child resolved through
+  `gatherRelatives` (`src/utils/relatives.ts`) that has at least one name with a
+  real given name. A surname-only stub does not count, since it repeats what the
+  subject's own name says. Nor does a placeholder: a given name is a placeholder
+  when, dots removed, the whole of it ("N. N.") or every word of it ("Infant
+  Son", "Baby Girl", "Unknown Male") is one of "Unknown", "NN", "Mrs.",
+  "Living", "Infant", "Wife", "Stillborn", …. A relationship whose other end is
+  missing from `persons[]` does not count.
+- **Named relative in evidence.** A linked assertion counts too: a `marriage`
+  whose `structured_value.spouse_given` is a real given name or whose `spouse`
+  is a full name with one; or a `relationship` whose `relationship_type`
+  (`_inferred` stripped) is a parent, spouse or child role — not a sibling,
+  uncle or godparent — and whose `related_person_name`, `father`, `mother` or
+  `spouse`, or whose `value` in the extraction house form "<role> of <Given>
+  <Surname>" ("child of Dorothea [Gajdosch]"), is a full name with a real given
+  name. A full name's given part is every word before the last, so "child of
+  Blyeberg" and "child of N. N. Blyeberg" do not count. The name must not be
+  one of the subject's own (given and surname, accents, dots and brackets
+  ignored; for `spouse_given`, the given name alone): one relationship
+  assertion is linked to both parties, so "child of Thomas Flynn" is also
+  evidence for Thomas and names no relative of his.
+- **Live evidence only.** A `person_evidence` row with `superseded_by` set and
+  negative evidence (`record_basis: "absent"`) are skipped: none says anything about this person. Scoring
+  enrichment, which folds the same linked assertions into the subject document
+  before scoring, applies the same filter.
+- **Never fails the call.** Malformed tree entries are skipped, each assertion
+  is read on its own so one malformed entry cannot hide the rest, and if the
+  test itself throws, the flag is omitted. Consumers read the flag as a
+  two-value signal — "thin" vs "not thin" — and treat a missing flag as "not
+  thin"; an aborted computation looks identical to a well-identified subject,
+  which is the correct direction to fail (ranks everyone, never silently gates
+  them).
+
+Independent of the withholding branch (`subjectResolvable: false` +
+`matches: []`), which fires on zero dated/placed facts. A subject with a
+city-only residence has a placed fact (withholding does not fire) but may still
+be `subjectTooThin` (no narrow date, no relative). Both can be true
+simultaneously — the desired semantics for the namesake gate in search-records,
+which will read the flag regardless of whether matches were returned. That gate
+is not built yet, so nothing reads the flag today.
+
+The **stricter form** — ignore facts the query already filtered on, since every
+result shares those by construction — is not built: the base rule shipped alone
+by a review-ready decision of 2026-09-30. It is buildable when wanted, since the
+staged envelope carries the producing tool's echoed `query`
+(`readStagedEnvelopeQuery` in `src/utils/results-staging.ts`).
 
 ## Tool schema
 

@@ -11,8 +11,8 @@ Two things stand in for the worker until D9-10 lands. In the default ``--seed`` 
 thread inserts the rows the worker will write -- ~40 ``session_events`` through
 ``next_session_seq``, a few ``session_activity`` updates, one ``documents`` upsert, a
 ``turn_done`` -- pausing past the ping interval once so a ``: ping`` is observable.
-``--embedded-pg`` starts a pip-installed PostgreSQL (pgserver), applies ``sql/*.sql`` and
-runs the web tier in-process with no queue, so the acceptance runs on a machine with
+``--embedded-pg`` starts a pip-installed PostgreSQL (pgserver), migrates it (``migrate.py``) and
+runs the web tier in-process on a ``NullQueue``, so the acceptance runs on a machine with
 neither Docker nor Postgres. ``--worker`` runs no seeder and stops on the worker's
 ``turn_done`` for our ``turn_id``.
 
@@ -49,6 +49,7 @@ import sys
 import tempfile
 import threading
 import time
+import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -76,6 +77,7 @@ def _load_worker_complete():
 
     spec = importlib.util.spec_from_file_location("proto_worker", HERE / "worker" / "worker.py")
     module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module  # the dataclass decorator looks its module up (U3's HeldGrant)
     spec.loader.exec_module(module)
     return module.complete
 
@@ -225,6 +227,15 @@ def free_port() -> int:
         return s.getsockname()[1]
 
 
+class NullQueue:
+    """The embedded tier's queue: the turn is recorded (turns row + user_msg event) and never
+    enqueued, so the seeder's rows are the only ones. The web tier itself refuses to start
+    without a QUEUE_URL; this goes in through ``create_app``."""
+
+    async def send(self, body: dict[str, Any]) -> str:
+        return "null-" + uuid.uuid4().hex[:12]
+
+
 class Embedded:
     """pgserver + the web tier in-process on a free port, NullQueue."""
 
@@ -237,18 +248,22 @@ class Embedded:
         self.pg = pgserver.get_server(self.pgdata)
         self.dsn = self.pg.get_uri()
         os.environ["PG_DSN"] = self.dsn
-        os.environ.pop("QUEUE_URL", None)
-        # U2: the driver signs in through dev-login, which an https PUBLIC_URL or
-        # FamilySearch sign-in would turn off.
+        # U2: the driver signs in through dev-login, which is opt-in and which an https
+        # PUBLIC_URL or FamilySearch sign-in would turn off.
+        os.environ["DEV_LOGIN"] = "true"
         os.environ.pop("PUBLIC_URL", None)
         os.environ.pop("FAMILYSEARCH_WEB_ENABLED", None)
+        import migrate  # proto/ is on sys.path (HERE, above)
         import uvicorn
 
         from web.app import create_app
 
+        # U9: the web tier only verifies the schema; the runner is what applies it.
+        migrate.migrate(self.dsn)
+
         port = free_port()
         self.base = f"http://127.0.0.1:{port}"
-        self.server = uvicorn.Server(uvicorn.Config(create_app(), host="127.0.0.1", port=port, log_level="warning", loop="none"))
+        self.server = uvicorn.Server(uvicorn.Config(create_app(queue=NullQueue()), host="127.0.0.1", port=port, log_level="warning", loop="none"))
 
         def _serve() -> None:
             # uvicorn picks ProactorEventLoop on Windows and psycopg3 async refuses it;
@@ -445,6 +460,15 @@ def main(argv: list[str] | None = None) -> int:
             print(f"the tier at {base} has a live queue ({queue}); a worker will race the seeder. "
                   "Use --worker on a stack with a worker, or --allow-live-queue to seed anyway.", file=sys.stderr)
             return 2
+        if mode == "worker":
+            # U3: a real worker bears the patron's grant; without one the turn only closes
+            # signin_required, which reads here as a stream that ended early.
+            from turn import require_grant
+
+            problem = require_grant(dsn, args.email) if dsn else "--worker needs --pg-dsn to check the patron's grant"
+            if problem:
+                print(problem, file=sys.stderr)
+                return 2
         print(f"== drive {mode} against {base} (queue: {queue})", flush=True)
         checks = run(base, dsn, mode, args.text, deadline_s=args.deadline_s, email=args.email)
     finally:
