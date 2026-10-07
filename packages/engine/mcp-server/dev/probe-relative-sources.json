@@ -1,0 +1,157 @@
+{
+  "captured_at": "2026-09-30",
+  "probes": [
+    {
+      "subject": "LVJK-9TQ",
+      "treeRead": {
+        "bytes": 367256,
+        "ms": 564,
+        "persons": 17,
+        "descriptions": 36
+      },
+      "refShape": {
+        "urlForm": 102,
+        "fragForm": 0,
+        "otherForm": 0,
+        "resolvesToday": 0
+      },
+      "descriptionId": {
+        "present": 102,
+        "lastSegMatches": 102,
+        "lastSegDiffers": 0
+      },
+      "sharedAcrossRelatives": 0,
+      "relativesTotal": 16,
+      "resolveByUrl": [
+        {
+          "url": "https://api.familysearch.org/platform/sources/descriptions/3KFC-WJT",
+          "ok": true,
+          "status": 200,
+          "id": "3KFC-WJT",
+          "ms": 134
+        },
+        {
+          "url": "https://api.familysearch.org/platform/sources/descriptions/3KFC-WQB",
+          "ok": true,
+          "status": 200,
+          "id": "3KFC-WQB",
+          "ms": 91
+        },
+        {
+          "url": "https://api.familysearch.org/platform/sources/descriptions/SG5K-4KQ",
+          "ok": true,
+          "status": 200,
+          "id": "SG5K-4KQ",
+          "ms": 93
+        }
+      ],
+      "resolveByPerson": [
+        {
+          "personId": "G719-RTW",
+          "ok": true,
+          "status": 200,
+          "count": 3,
+          "ms": 95
+        },
+        {
+          "personId": "9715-FYS",
+          "ok": true,
+          "status": 200,
+          "count": 18,
+          "ms": 108
+        },
+        {
+          "personId": "LVT6-6X8",
+          "ok": true,
+          "status": 200,
+          "count": 20,
+          "ms": 107
+        }
+      ],
+      "sizeGrowth": {
+        "medianConvertedDescriptionBytes": 298,
+        "relativeRefs": 102,
+        "addedBytes": 30396,
+        "addedKB": 30
+      },
+      "projectedPerPersonMs": 1712,
+      "projectedPerUrlMs": 9486
+    },
+    {
+      "subject": "KNDX-MKG",
+      "treeRead": {
+        "bytes": 470191,
+        "ms": 211,
+        "persons": 8,
+        "descriptions": 34
+      },
+      "refShape": {
+        "urlForm": 77,
+        "fragForm": 2,
+        "otherForm": 0,
+        "resolvesToday": 2
+      },
+      "descriptionId": {
+        "present": 77,
+        "lastSegMatches": 77,
+        "lastSegDiffers": 0
+      },
+      "sharedAcrossRelatives": 1,
+      "relativesTotal": 7,
+      "resolveByUrl": [
+        {
+          "url": "https://api.familysearch.org/platform/sources/descriptions/S974-H52",
+          "ok": true,
+          "status": 200,
+          "id": "S974-H52",
+          "ms": 101
+        },
+        {
+          "url": "https://api.familysearch.org/platform/sources/descriptions/S97W-GYD",
+          "ok": true,
+          "status": 200,
+          "id": "S97W-GYD",
+          "ms": 107
+        },
+        {
+          "url": "https://api.familysearch.org/platform/sources/descriptions/9KLS-N37",
+          "ok": true,
+          "status": 200,
+          "id": "9KLS-N37",
+          "ms": 127
+        }
+      ],
+      "resolveByPerson": [
+        {
+          "personId": "L8S6-24S",
+          "ok": true,
+          "status": 200,
+          "count": 3,
+          "ms": 132
+        },
+        {
+          "personId": "LZN2-GDW",
+          "ok": true,
+          "status": 200,
+          "count": 1,
+          "ms": 115
+        },
+        {
+          "personId": "L84W-SFK",
+          "ok": true,
+          "status": 200,
+          "count": 3,
+          "ms": 99
+        }
+      ],
+      "sizeGrowth": {
+        "medianConvertedDescriptionBytes": 322,
+        "relativeRefs": 77,
+        "addedBytes": 24794,
+        "addedKB": 24
+      },
+      "projectedPerPersonMs": 805,
+      "projectedPerUrlMs": 8239
+    }
+  ]
+}

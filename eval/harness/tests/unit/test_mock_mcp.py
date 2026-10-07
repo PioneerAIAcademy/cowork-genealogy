@@ -1376,10 +1376,25 @@ def test_person_read_staging_degrades_on_node_failure(tmp_path, monkeypatch, fai
 
     monkeypatch.setattr(mock_mcp, "_run_node_eval", _counted)
     response = {"persons": [{"id": "LZNY-BRF"}], "relationships": [], "sources": []}
-    out = mock_mcp._stage_person_read(
-        tmp_path, {**_PERSON_READ_ARGS, "projectPath": str(tmp_path)}, response
-    )
+    # A harness failure must say so: init-project stops when there is no ref.
+    with pytest.warns(UserWarning, match="could not be staged"):
+        out = mock_mcp._stage_person_read(
+            tmp_path, {**_PERSON_READ_ARGS, "projectPath": str(tmp_path)}, response
+        )
     assert calls, "the node call was never reached"
+    assert out == response
+
+
+def test_person_read_staging_warns_when_the_engine_build_is_missing(tmp_path, monkeypatch):
+    """The commonest harness cause, and the one that used to be silent."""
+    from harness import mock_mcp
+
+    monkeypatch.setattr(mock_mcp, "_MCP_BUILD", tmp_path / "no-build")
+    response = {"persons": [{"id": "LZNY-BRF"}], "relationships": [], "sources": []}
+    with pytest.warns(UserWarning, match="no engine build"):
+        out = mock_mcp._stage_person_read(
+            tmp_path, {**_PERSON_READ_ARGS, "projectPath": str(tmp_path)}, response
+        )
     assert out == response
 
 

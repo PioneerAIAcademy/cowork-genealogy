@@ -1,7 +1,7 @@
 /**
  * The carrier for "I delivered what this message asked for".
  *
- * On the PROTOTYPE worker a `PreToolUse` hook matches this tool's NAME and ends the turn
+ * On BOTH hosted planes a `PreToolUse` hook matches this tool's NAME and ends the turn
  * before the tool executes, so this body never runs there. It is a signal, not an
  * action: it writes no project state.
  *

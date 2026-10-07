@@ -109,8 +109,9 @@ whatever their id looks like.
 
 Which kind a given document uses is the writer's call, made once per
 document: `person_read` snapshots (e.g. e2e fixture trees) preserve FS PIDs;
-project trees built by `init-project` deliberately synthesize `I` ids for
-**all** persons, FS-seeded ones included (see `init-project/SKILL.md`). Both
+project trees deliberately synthesize `I` ids for **all** persons, FS-seeded
+ones included; `project_create` assigns them when it builds the starting tree
+from a staged `person_read` (`project-create-tool-spec.md` §4). Both
 are valid documents under this spec.
 
 ---

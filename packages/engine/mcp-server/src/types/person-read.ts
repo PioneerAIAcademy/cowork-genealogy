@@ -113,7 +113,8 @@ export interface TreeSource {
    * `{id, title, citation, author, url}` and `project_create` validates with
    * `validateParsed` WITHOUT sanitizing, so one stray key aborts the whole
    * project write -- the `notes` defect PR #1800 fixed (finding F7, validator
-   * V6). `init-project`'s SKILL.md carries the matching exclusion.
+   * V6). `project_create`'s host build drops it (`utils/person-read-tree.ts`
+   * keeps only `TREE_SOURCE_FIELDS`).
    */
   text?: string;
   /**
