@@ -1871,12 +1871,24 @@ touches:
   otherwise.
 - **A resource kind.** It needs an entry in `KINDS`, a `down` step and a `prove-empty`
   check. The test's own kind-to-call maps fail until all three exist.
+- **A systemd setting on a tier** (the worker's root drop-in). Write it under
+  `/usr/lib/systemd/system/web.service.d/`. Every deploy, app or configuration, deregisters
+  `web` and deletes `/etc/systemd/system/web.service.d` after predeploy and before the
+  restart, and a configuration deploy runs no `.platform/hooks/`. A test pins the path.
+- **A `.ebextensions` file.** Name it `*.config`. Beanstalk ignores any other name without an
+  error; `scripts/eb_bundles/verify.py` refuses one.
+- **Between sessions,** `pause` scales the tiers to 0/0 and stops RDS and the bastion;
+  `resume` reverses it. AWS restarts a stopped RDS instance after seven days.
 
 **What nothing checks here.** The tests run against a fake `aws`, so they prove the
 commands the tool sends, never that AWS accepts them. The option names in the
 `aws:elasticbeanstalk:sqsd`, `aws:elbv2:*` and `environmentsecrets` namespaces come from AWS
 documentation: `describe-configuration-options` lists them only for an existing
-environment's tier. The first live `up` is the first real check, and no CI job runs one.
+environment's tier. Only a live run checks them: the first (fts-int, 2026-10-07) found four
+faults the fake could not (RDS capacity, a zone without the instance type, drift as
+Beanstalk reports options back, a rejected update read as success), and no CI job runs one.
+Beanstalk itself reports a deploy successful while the app exits at once, so environment
+health is the only signal that a tier refused to start.
 The account-id leak check (`rehearse.py leak-check`) runs only where `.local/` exists, so
 CI skips it. In CI, that rule is enforced only by the 12-digit account-id scan in
 `apps/server/tests/test_proto_rehearsal.py`, over the paths in its `SCAN_PATHS`; each of those
