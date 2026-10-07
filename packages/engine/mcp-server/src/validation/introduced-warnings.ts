@@ -27,6 +27,30 @@ export function warningId(w: PersonWarning): string {
   return `${w.issueType}|${w.personId}|${w.relatedPersonId ?? ""}|${factIds.join(",")}`;
 }
 
+/**
+ * Rewrite a before-tree warning's person references collapsed→survivor so it
+ * can be matched against the after-tree warning it became.
+ *
+ * BOTH id fields, because `warningId` keys on both. Remapping only `personId`
+ * leaves a pre-existing warning that merely NAMES a collapsed person — every
+ * `relatives*` tag, and anything carrying a `relatedPersonId` — with a before
+ * key the after side can never equal, so the subtraction misses it and the
+ * merge is refused for a warning it did not introduce.
+ */
+function remapWarning(
+  w: PersonWarning,
+  collapseMap?: Map<string, string>,
+): PersonWarning {
+  if (!collapseMap) return w;
+  const personId = collapseMap.get(w.personId) ?? w.personId;
+  const relatedPersonId =
+    w.relatedPersonId === undefined
+      ? undefined
+      : (collapseMap.get(w.relatedPersonId) ?? w.relatedPersonId);
+  if (personId === w.personId && relatedPersonId === w.relatedPersonId) return w;
+  return { ...w, personId, relatedPersonId };
+}
+
 // Warning types exempt from the gate.
 //
 // THE LINE IS THE CLASS, NOT THE FREQUENCY. A tag is exempt when it reports a
@@ -40,6 +64,9 @@ export function warningId(w: PersonWarning): string {
 // A relative/gendered form is exempt iff its self form is. They are the same
 // predicate at the same severity evaluated from a different anchor, so
 // splitting them means one write refuses and an identical one does not.
+// Enforced by `person-warnings-spec-drift.test.ts`, which derives the pairs
+// from ALL_WARNING_TAGS rather than listing them: stated as prose the rule
+// was silently broken by four pairs.
 //
 // Measured over the committed e2e final trees with
 // dev/measure-parentage-gate-rate.ts; re-derive before changing this, and do
@@ -48,7 +75,9 @@ export const GATE_EXEMPT_TYPES: ReadonlySet<string> = new Set([
   // Import and stub artefacts -- predate the gate seeing parentage edges.
   "missingFactsAndRelatives",     // stub detection — every one-fact person trips it on remove
   "tooManyBirthDates2",           // duplicate birth facts in imported records
+  "relativesTooManyBirthDates2",
   "hasEventBeforeBirth365_2",     // fires when adding a second birth-like fact
+  "relativesHasEventBeforeBirth365_2",
   "hasDiffSurnameMale",           // two names with different surnames — common in merges and imports
   "hasBlankName",                 // a name node with empty given/surname — named-party materializations
 
@@ -57,18 +86,27 @@ export const GATE_EXEMPT_TYPES: ReadonlySet<string> = new Set([
   "similarChildren",
   "similarChildrenConflictingDates",
 
-  // Soft demographic and naming priors on a relative — heuristics, not
-  // impossibilities.
+  // Date-precision artefacts: an imprecise or duplicated date, not a claim.
   "relativesHasEventBeforeChristening365_3",
+  "hasEventBeforeChristening365_3",
   "relativesDeathRangeGreaterThan2",
+  "deathRangeGreaterThan2",       // a death recorded as a multi-year range
   "maleRelativesHasDiffSurname",               // self form `hasDiffSurnameMale` exempt above
 
   // Child-bearing age and marriage-interval priors. Each appears in a self, a
   // gendered and a relative form; all forms travel together.
+  //
+  // `earliestChildBirthToBirth12` and `relativesEarliestChildBirthToBirth12`
+  // are the deliberate hole in that pairing, and are NOT exempt. At cutoff 12
+  // the tag stops being an age prior: it is the only check that fires when a
+  // child is born BEFORE their parent, an impossibility rather than an
+  // implausibility, and exempting it let every gated writer accept one. The
+  // gendered forms at cutoff 14 stay exempt -- 13 and 14 are young, not
+  // impossible. What makes un-exempting 12 safe is that the predicate now
+  // reads the child's LATEST date bound, so an imprecise date no longer
+  // fires it; before that change this entry was buying real false refusals.
   "femaleRelativesLatestChildBirthToBirth45",
   "latestChildBirthToBirthFemale45",
-  "relativesEarliestChildBirthToBirth12",
-  "earliestChildBirthToBirth12",
   "femaleRelativesEarliestChildBirthToBirth14",
   "earliestChildBirthToBirthFemale14",
   "maleRelativesEarliestChildBirthToBirth14",
@@ -93,6 +131,31 @@ function warningsForPerson(
   } catch {
     return [];
   }
+}
+
+/**
+ * Every person one relationship hop out from `seed` in either tree, excluding
+ * the seed itself.
+ *
+ * Deliberately NOT transitive: one hop is what `calculateWarnings` reaches
+ * when it anchors a `relatives*` warning, so one hop is what the before side
+ * has to be able to see. A full walk would compute warnings for the whole
+ * connected component on every write.
+ */
+function oneHopNeighbours(
+  beforeTree: SimplifiedGedcomX,
+  afterTree: SimplifiedGedcomX,
+  seed: ReadonlySet<string>,
+): string[] {
+  const out = new Set<string>();
+  for (const tree of [beforeTree, afterTree]) {
+    for (const r of tree.relationships ?? []) {
+      const ends = relationshipEndpoints(r);
+      if (!ends.some((e) => seed.has(e))) continue;
+      for (const e of ends) if (!seed.has(e)) out.add(e);
+    }
+  }
+  return [...out];
 }
 
 export interface WarningJustificationInput {
@@ -124,11 +187,37 @@ export function introducedWarnings(
    *  rate script can re-derive what the exempt list is actually buying rather
    *  than quoting a number nobody can reproduce. No shipped caller passes it. */
   applyExemptions = true,
+  /** Measurement-only. `false` skips the one-hop widening below, so the rate
+   *  script can re-derive the false refusals the widening removes. No shipped
+   *  caller passes it. */
+  widenOneHop = true,
 ): IntroducedWarningsResult {
   // Dedupe touched ids and, for merges, remap collapsed→survivor
   const uniqueIds = new Set<string>();
   for (const id of touchedPersonIds) {
     uniqueIds.add(collapseMap?.get(id) ?? id);
+  }
+  // Then widen by one relationship hop, across BOTH trees. `calculateWarnings`
+  // reports warnings anchored on an anchor's relatives, not just the anchor,
+  // so the after side sees a neighbour's warning while the before side cannot
+  // reach that neighbour at all when the path is the edge being added. The
+  // warning is then pre-existing but invisible to the subtraction, and the
+  // write is refused for it. Same defect as the collapsed-id remap above,
+  // reached by a different route.
+  //
+  // Both trees, because an edge REMOVAL strands the neighbour on the other
+  // side: widening only on `afterTree` would miss it symmetrically.
+  //
+  // Measured over the committed e2e final trees with
+  // `dev/measure-parentage-gate-rate.ts --widen-hop`: 18 of 83 refused
+  // parentage edges were refused for a warning they did not introduce, all of
+  // them `relativesEarliestChildBirthToBirth12`, and the widened run finds the
+  // same 37 distinct warnings. It subtracts false refusals without losing a
+  // single true one.
+  if (widenOneHop) {
+    for (const id of oneHopNeighbours(beforeTree, afterTree, uniqueIds)) {
+      uniqueIds.add(id);
+    }
   }
 
   // Collect before and after warnings for every touched person
@@ -147,10 +236,7 @@ export function introducedWarnings(
 
     for (const bid of beforeIds) {
       for (const w of warningsForPerson(beforeTree, bid)) {
-        // Remap warning personId collapsed→survivor for matching
-        const remapped: PersonWarning = collapseMap?.has(w.personId)
-          ? { ...w, personId: collapseMap.get(w.personId)! }
-          : w;
+        const remapped = remapWarning(w, collapseMap);
         beforeWarnings.set(warningId(remapped), remapped);
       }
     }

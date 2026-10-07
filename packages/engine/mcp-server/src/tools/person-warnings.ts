@@ -313,15 +313,36 @@ export function hasEventBeforeBirth(mob: Mob, days: number): boolean {
  * Java MobWarnings.earliestChildBirthToBirth (warnings.java:1723).
  *
  * Returns true when `earliestChildBirthYear − earliestSelfBirthYear <= cutoff`
- * for the anchor's birth-like facts and any child's birth-like facts. Per the
- * 2026-06-02 meeting, the spec's "conservative range" principle is overridden
- * by this earliest-to-earliest bound. Used at cutoff = 14 (male anchor) under
- * tag `earliestChildBirthToBirthMale14`, and at cutoff = 12 (any gender) under
- * tag `earliestChildBirthToBirth12` (gender-neutral — implemented at
- * `earliestChildBirthToBirth` and registered in the check list below).
+ * for the anchor's birth-like facts and any child's birth-like facts. Used at
+ * cutoff = 14 (male anchor) under tag `earliestChildBirthToBirthMale14`, and at
+ * cutoff = 12 (any gender) under tag `earliestChildBirthToBirth12`
+ * (gender-neutral — implemented at `earliestChildBirthToBirth` and registered
+ * in the check list below).
+ *
+ * The child side reads each date's LATEST bound, so the check fires on a
+ * certainty rather than a possibility: a child dated `Bef 1880` (1870..1880)
+ * under a parent born 1860 could have been born at the parent's age 10 or 20,
+ * and only the second reading refuses to call that a warning. The self side
+ * stays on the earliest bound, which is the same direction — both choices
+ * maximise the computed age.
+ *
+ * THIS REVERSES A RECORDED CALL. The 2026-06-02 meeting overrode the spec's
+ * "conservative range" principle here in favour of an earliest-to-earliest
+ * bound. That call was made when `person_warnings` only REPORTED, where
+ * over-firing costs a glance; #2840 made the same predicate refuse writes,
+ * where over-firing blocks legitimate work, and `earliestChildBirthToBirth12`
+ * is the tag standing between the gate and a child born before their parent.
+ * No test pinned the earliest-to-earliest reading — all five used exact years,
+ * where the bounds coincide. Flagged for the lead on the PR rather than
+ * decided silently.
  */
 export function earliestChildBirthToBirth(mob: Mob, cutoff: number): boolean {
-  const earliestChildBirth = earliestYearOfChildFacts(mob, BIRTHLIKE_FACT_TYPES);
+  const earliestChildBirth = earliestYearOfChildFacts(
+    mob,
+    BIRTHLIKE_FACT_TYPES,
+    null,
+    "latest",
+  );
   const earliestBirth = earliestYearOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES);
   if (earliestChildBirth === null || earliestBirth === null) return false;
   return earliestChildBirth - earliestBirth <= cutoff;
@@ -470,21 +491,57 @@ export function tooManyChildren(mob: Mob, cutoff: number): boolean {
   return mob.getChildren().length >= cutoff;
 }
 
+/** `parent_subtype` values that are NOT a claim of biological parentage.
+ *  The full enum is `Biological | Adoptive | Step | Foster | Guardian`
+ *  (`simplified-gedcomx-spec.md`); an ABSENT subtype is biological, which is
+ *  FamilySearch's own data-model default, so only these four are excluded. */
+const NON_BIOLOGICAL_PARENT_SUBTYPES: ReadonlySet<string> = new Set([
+  "Adoptive",
+  "Step",
+  "Foster",
+  "Guardian",
+]);
+
+/** Ids of the anchor's parents by a relationship that claims biological
+ *  parentage — every ParentChild edge except the four subtypes above. */
+function biologicalParentIds(mob: Mob): Set<string> {
+  const out = new Set<string>();
+  for (const r of mob.tree.relationships ?? []) {
+    if (r.type !== "ParentChild" || r.child !== mob.anchorId) continue;
+    const sub = (r as { subtype?: string }).subtype;
+    if (typeof sub === "string" && NON_BIOLOGICAL_PARENT_SUBTYPES.has(sub)) continue;
+    if (r.parent) out.add(r.parent);
+  }
+  return out;
+}
+
 /**
  * Java MobWarnings.tooManyFathers (warnings.java:2178). Returns true when
  * the anchor has at least 2 male parents — each person has at most one
  * biological father, so 2+ is a structural problem. Tag: `tooManyFathers2`.
+ *
+ * Counts only parents whose edge CLAIMS biological parentage. An adoptive or
+ * step father beside a biological one is the ordinary way an adoption is
+ * recorded, not a structural problem, and the warning's own message says
+ * "biological father". #2840 made this tag refuse tree writes rather than
+ * merely report, so counting an Adoptive edge here blocks the write that
+ * records the adoption. No instance exists in the committed corpus — 839
+ * `Biological` edges, 1814 with no subtype, none of the other four — so this
+ * changes no measured refusal; it is the shape, not a rate.
  */
 export function tooManyFathers(mob: Mob): boolean {
-  return mob.getFathers().length >= 2;
+  const biological = biologicalParentIds(mob);
+  return mob.getFathers().filter((p) => p.id && biological.has(p.id)).length >= 2;
 }
 
 /**
  * Java MobWarnings.tooManyMothers (warnings.java:2182). Mirror of
- * tooManyFathers for the female-parent side. Tag: `tooManyMothers2`.
+ * tooManyFathers for the female-parent side, including the subtype rule.
+ * Tag: `tooManyMothers2`.
  */
 export function tooManyMothers(mob: Mob): boolean {
-  return mob.getMothers().length >= 2;
+  const biological = biologicalParentIds(mob);
+  return mob.getMothers().filter((p) => p.id && biological.has(p.id)).length >= 2;
 }
 
 /**

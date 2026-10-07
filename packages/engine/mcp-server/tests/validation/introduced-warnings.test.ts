@@ -179,6 +179,115 @@ describe("introducedWarnings", () => {
     expect(result.allIntroduced).toHaveLength(0);
   });
 
+  it("(e3) merge: a pre-existing warning NAMING the collapsed person needs no justification", () => {
+    // The other half of (e), and the half that was broken. (e) covers a
+    // warning whose `personId` is the collapsed person; this one covers a
+    // warning on an untouched third party whose `relatedPersonId` is.
+    //
+    // `warningId` keys on BOTH id fields, and the before-side remap rewrote
+    // only `personId`. So I3's pre-existing `relativesHasAgeRangeGreaterThan120`
+    // keyed `...|I3|I2|...` before and `...|I3|I1|...` after, never matched,
+    // and the merge was refused for a warning it did not introduce — the one
+    // thing this module exists to prevent.
+    const implausible = (id: string) => [
+      { id: `${id}-f1`, type: "Birth", date: "1800", standard_date: "1800" },
+      { id: `${id}-f2`, type: "Death", date: "2000", standard_date: "2000" },
+    ];
+    // I2 (to be collapsed) has the implausible lifespan; I3 is its child, so
+    // I3 carries the RELATIVE form of the warning, pointing back at I2.
+    const before = tree(
+      [
+        person("I1", "John", "Smith"),
+        person("I2", "Jon", "Smith", implausible("I2")),
+        person("I3", "Child", "Smith"),
+      ],
+      [{ id: "R1", type: "ParentChild", parent: "I2", child: "I3" }],
+    );
+    // After: I2 collapsed into I1, carrying its facts and its edge to I3.
+    const after = tree(
+      [
+        person("I1", "John", "Smith", implausible("I2")),
+        person("I3", "Child", "Smith"),
+      ],
+      [{ id: "R1", type: "ParentChild", parent: "I1", child: "I3" }],
+    );
+
+    const collapseMap = new Map([["I2", "I1"]]);
+
+    // The fixture really does produce that warning, keyed on the collapsed
+    // id — without this the test passes whenever NOTHING fires, which is
+    // exactly how it would look if the fixture drifted. Computed by diffing
+    // the before-tree against an empty one, so everything in it is reported.
+    const seeded = introducedWarnings(tree([]), before, ["I3"]).allIntroduced
+      .filter((w) => w.issueType === "relativesHasAgeRangeGreaterThan120");
+    expect(seeded.map((w) => `${w.personId}->${w.relatedPersonId}`)).toContain(
+      "I3->I2",
+    );
+
+    const result = introducedWarnings(
+      before, after, ["I1", "I2", "I3"], undefined, collapseMap,
+    );
+
+    const tags = result.unjustified.map((w) => `${w.issueType}@${w.personId}`);
+    expect(tags).not.toContain("relativesHasAgeRangeGreaterThan120@I3");
+    expect(result.unjustified).toHaveLength(0);
+  });
+
+  it("(g) a pre-existing warning reachable only through the NEW edge is not introduced", () => {
+    // Modelled on a real case in the committed corpus
+    // (elisabetha-sugecz-parents/run-2026-08-02_12-17-10, edge
+    // G4C9-Y6C→LKL8-4VC), reduced to three people.
+    //
+    // `checkRelativesEarliestChildBirthToBirth12` keys its warning on the
+    // RELATIVE that has the problem, and emits it from every anchor that
+    // relative is a relative OF. So "P had S at age 5" is surfaced by
+    // anchoring on any child of P — never by anchoring on P.
+    //
+    // Add a second child N to P. Touched is {P, N}: before the write N is
+    // connected to nothing, so the before side reaches no anchor that can
+    // surface the warning, while after the write anchoring on N surfaces it.
+    // A warning P has carried all along then reads as introduced, and the
+    // write is refused for it. Widening by one hop puts S — P's other child —
+    // in the computed set, where the before side finds it and subtracts it.
+    //
+    // 18 of 83 refused parentage edges across the committed corpus were this;
+    // re-derive with `dev/measure-parentage-gate-rate.ts --no-widen-hop`.
+    const born = (id: string, year: string) => ({
+      id,
+      gender: "Male",
+      names: [{ id: `${id}-n`, given: id, surname: "X" }],
+      facts: [{ id: `${id}-f1`, type: "Birth", date: year, standard_date: year }],
+    });
+    const people = [born("P", "1850"), born("S", "1855"), born("N", "1890")];
+    const existing = [{ id: "R1", type: "ParentChild", parent: "P", child: "S" }];
+    const before = tree(people, existing);
+    const after = tree(people, [
+      ...existing,
+      { id: "R2", type: "ParentChild", parent: "P", child: "N" },
+    ]);
+
+    // The warning really is there beforehand, or this passes for the wrong
+    // reason — and it is NOT visible from either touched person.
+    const seeded = introducedWarnings(tree([]), before, ["S"]).allIntroduced;
+    expect(seeded.map((w) => `${w.issueType}|${w.personId}|${w.relatedPersonId}`))
+      .toContain("relativesEarliestChildBirthToBirth12|P|S");
+    // ...and it is invisible from the two touched persons alone. This is the
+    // whole defect in one line: with the widening off the write is refused,
+    // with it on the same write lands.
+    const narrow = introducedWarnings(
+      before, after, ["P", "N"], undefined, undefined, true, /* widenOneHop */ false,
+    );
+    expect(
+      narrow.allIntroduced.map((w) => `${w.issueType}|${w.personId}`),
+    ).toContain("relativesEarliestChildBirthToBirth12|P");
+
+    const result = introducedWarnings(before, after, ["P", "N"]);
+    expect(
+      result.allIntroduced.map((w) => `${w.issueType}|${w.personId}`),
+    ).not.toContain("relativesEarliestChildBirthToBirth12|P");
+    expect(result.unjustified).toHaveLength(0);
+  });
+
   it("(f) justification with stale id is detected", () => {
     const before = tree([plausiblePerson("I1", "John", "Smith")]);
     const after = tree([implausiblePerson("I1", "John", "Smith")]);

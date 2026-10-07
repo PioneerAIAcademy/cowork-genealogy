@@ -1777,6 +1777,78 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
     expect(rels).toHaveLength(2);
   });
 
+  // A parent born 30 years AFTER their child. `earliestChildBirthToBirth12` is
+  // the only check that fires on this, and it was on the exempt list, so every
+  // gated writer accepted it. Exempting it was reading the tag as a
+  // child-bearing-age prior like its cutoff-14 gendered siblings; at cutoff 12
+  // it is also the sole guard against an outright impossibility.
+  const invertedGenerationsTree = () => ({
+    persons: [
+      {
+        id: "I1",
+        gender: "Female",
+        names: [{ id: "N1", given: "Mary", surname: "Smith", preferred: true }],
+        facts: [{ id: "F1", type: "Birth", date: "1900", primary: true }],
+      },
+      {
+        id: "I2",
+        gender: "Male",
+        names: [{ id: "N2", given: "John", surname: "Smith", preferred: true }],
+        facts: [{ id: "F2", type: "Birth", date: "1930", primary: true }],
+      },
+    ],
+    relationships: [],
+    sources: [{ id: "S1", title: "Parish Register" }],
+  });
+
+  it("refuses a parent born after their own child", async () => {
+    await writeProject(invertedGenerationsTree());
+    const treeBefore = await readTree();
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "ParentChild",
+        parent: "I2",
+        child: "I1",
+        sources: [{ ref: "S1" }],
+      },
+    } as any);
+
+    expect(r.ok).toBe(false);
+    expect((r as any).reason).toBe("unjustified_warnings");
+    expect(JSON.stringify((r as any).warnings)).toMatch(
+      /earliestChildBirthToBirth12/,
+    );
+    expect(await readTree()).toEqual(treeBefore);
+  });
+
+  it("accepts an ordinary parentage edge — un-exempting the tag did not refuse every parent", async () => {
+    // The other direction. Same two people, same operation, generations the
+    // right way round: a guard that refuses this is worse than no guard.
+    const tree = invertedGenerationsTree();
+    tree.persons[1].facts[0].date = "1870";
+    await writeProject(tree);
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "ParentChild",
+        parent: "I2",
+        child: "I1",
+        sources: [{ ref: "S1" }],
+      },
+    } as any);
+
+    expect(r.ok).toBe(true);
+    const rels = (await readTree()).relationships.filter(
+      (x: any) => x.type === "ParentChild",
+    );
+    expect(rels).toHaveLength(1);
+  });
+
   it("refuses a write that introduces a >120-year-lifespan warning, tree unchanged", async () => {
     await writeProject(longLifeTree());
     const treeBefore = await readTree();

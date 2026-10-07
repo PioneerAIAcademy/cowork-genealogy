@@ -210,19 +210,32 @@ export function latestYearOfSelfFacts(
  * Earliest possible year across all matching facts on every CHILD of the
  * anchor. Equivalent to Java's
  *   getEarliest(getChildEventYears(mob, factTypes))
+ *
+ * `bound` selects which end of each fact's date range is read before taking
+ * the minimum across children. `"earliest"` (the default, and Java's
+ * behaviour) answers "how early COULD the first child have been born"; with
+ * `"latest"` it answers "by what year was the first child CERTAINLY born".
+ *
+ * The distinction only matters for an imprecise date, where the two bounds
+ * differ — `Bef 1880` spans 1870..1880 — and it is the difference between a
+ * check that fires on a possibility and one that fires on a certainty. A
+ * caller whose check REFUSES work on the result wants `"latest"`; see
+ * `earliestChildBirthToBirth`.
  */
 export function earliestYearOfChildFacts(
   mob: Mob,
   factTypes: ReadonlySet<string> | null,
   antiFactTypes: ReadonlySet<string> | null = null,
+  bound: "earliest" | "latest" = "earliest",
 ): number | null {
+  const yearOf = bound === "latest" ? latestYear : earliestYear;
   let earliest: number | null = null;
   for (const child of mob.getChildren()) {
     for (const f of child.facts ?? []) {
       if (!matchesFactSelection(f, factTypes, antiFactTypes)) continue;
       const std = getStandardDate(f);
       if (std === null) continue;
-      const y = earliestYear(std);
+      const y = yearOf(std);
       if (y === null) continue;
       if (earliest === null || y < earliest) earliest = y;
     }

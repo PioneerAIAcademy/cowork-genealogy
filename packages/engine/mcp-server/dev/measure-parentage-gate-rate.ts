@@ -14,10 +14,19 @@
  *
  *   npx tsx dev/measure-parentage-gate-rate.ts            # current exempt list
  *   npx tsx dev/measure-parentage-gate-rate.ts --all      # ignore exemptions
+ *   npx tsx dev/measure-parentage-gate-rate.ts --no-widen-hop  # see below
  *
  * Method: for each ParentChild edge in each committed e2e final tree, treat the
  * edge as the write — `before` is the tree without it, `after` is the tree —
  * and ask `introducedWarnings` with the edge's two ends as the touched persons.
+ *
+ * `--no-widen-hop` turns OFF the gate's one-hop widening, which is on in
+ * shipped code. The widening exists because `calculateWarnings` anchors a
+ * `relatives*` warning on a relative, so the after side sees a neighbour's
+ * warning that the before side cannot reach when the path IS the edge being
+ * added -- a pre-existing warning the write is then refused for. The
+ * difference between the two runs is that false-refusal count, and the flag
+ * has to exist for the figure to be evidence rather than an assertion.
  */
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
@@ -32,6 +41,7 @@ import type { SimplifiedGedcomX } from "../src/types/gedcomx.js";
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..");
 const E2E = join(REPO, "eval", "runlogs", "e2e");
 const IGNORE_EXEMPTIONS = process.argv.includes("--all");
+const NO_WIDEN_HOP = process.argv.includes("--no-widen-hop");
 
 function finalTrees(): Array<{ slug: string; file: string; tree: SimplifiedGedcomX }> {
   const out: Array<{ slug: string; file: string; tree: SimplifiedGedcomX }> = [];
@@ -85,7 +95,9 @@ for (const { slug, file, tree } of corpus) {
     // endpoint fix would leave this script's output byte-identical -- committed
     // evidence that does not exercise the thing it is evidence for.
     const touched = computeTouchedPersonIds(before, tree);
-    const res = introducedWarnings(before, tree, touched, undefined, undefined, !IGNORE_EXEMPTIONS);
+    const res = introducedWarnings(
+      before, tree, touched, undefined, undefined, !IGNORE_EXEMPTIONS, !NO_WIDEN_HOP,
+    );
     const found = res.allIntroduced;
     if (found.length === 0) continue;
     refusedEdges++;
@@ -109,6 +121,7 @@ console.log(
 );
 console.log(`warning instances         : ${instances}`);
 console.log(IGNORE_EXEMPTIONS ? "exemptions IGNORED (--all)" : `exemptions applied (${GATE_EXEMPT_TYPES.size} types)`);
+if (NO_WIDEN_HOP) console.log("one-hop widening DISABLED (--no-widen-hop)");
 const distinct = new Set<string>();
 for (const ids of idsByType.values()) for (const id of ids) distinct.add(id);
 console.log(`distinct warnings         : ${distinct.size}`);

@@ -386,6 +386,65 @@ describe("earliestChildBirthToBirth predicate", () => {
       earliestChildBirthToBirth(new Mob(christeningOnly, "P"), 14),
     ).toBe(true);
   });
+
+  // The child side reads each date's LATEST bound, so the check fires on a
+  // certainty rather than a possibility. Every test above uses exact years,
+  // where the two bounds coincide and the distinction is invisible — these
+  // are the cases that tell them apart, and the reason #2840 could stop
+  // exempting `earliestChildBirthToBirth12` from the write gate.
+  const parentThen = (childDate: string): SimplifiedGedcomX => ({
+    persons: [
+      {
+        id: "P",
+        gender: "Male",
+        names: [{ id: "N1", given: "The", surname: "Parent" }],
+        facts: [
+          { id: "F1", type: "Birth", date: "1860", standard_date: "1860" },
+        ],
+      },
+      {
+        id: "C",
+        gender: "Female",
+        names: [{ id: "N2", given: "The", surname: "Child" }],
+        facts: [
+          { id: "F2", type: "Birth", date: childDate, standard_date: childDate },
+        ],
+      },
+    ],
+    relationships: [{ id: "R", type: "ParentChild", parent: "P", child: "C" }],
+  });
+
+  it("does not fire on an imprecise child date whose LATEST bound clears the cutoff", () => {
+    // `Bef 1880` spans 1870..1880. Read at its earliest bound the gap is
+    // 1870 − 1860 = 10 ≤ 12 and this fired; the child may equally have been
+    // born in 1880, at the parent's age 20. Firing on that is firing on a
+    // possibility, and the gate refuses writes on the result.
+    expect(
+      earliestChildBirthToBirth(new Mob(parentThen("Bef 1880"), "P"), 12),
+    ).toBe(false);
+  });
+
+  it("still fires when the child is born BEFORE the parent", () => {
+    // The impossibility this tag is the only check for, and the one the
+    // write gate stopped exempting. −10 ≤ 12.
+    expect(
+      earliestChildBirthToBirth(new Mob(parentThen("1850"), "P"), 12),
+    ).toBe(true);
+  });
+
+  it("still fires on a precise date inside the cutoff", () => {
+    // Guards the other direction: the latest-bound read must not stop the
+    // check firing where it always did. Parent aged 8.
+    expect(
+      earliestChildBirthToBirth(new Mob(parentThen("1868"), "P"), 12),
+    ).toBe(true);
+  });
+
+  it("does not fire on a precise date outside the cutoff", () => {
+    expect(
+      earliestChildBirthToBirth(new Mob(parentThen("1890"), "P"), 12),
+    ).toBe(false);
+  });
 });
 
 // ────────────────────────────────────────────────────────────────────
@@ -981,6 +1040,50 @@ describe("structural counters", () => {
       children: 0,
     });
     expect(tooManyFathers(new Mob(tree, "I1"))).toBe(false);
+  });
+
+  // Only parents whose edge CLAIMS biological parentage count. #2840 made
+  // these two tags refuse tree writes, so counting an Adoptive edge refuses
+  // the write that records the adoption.
+  const withParentSubtype = (sub: string | undefined, gender: string) => {
+    const tree = makeTreeWithRelatives({
+      parents: [{ gender: "Male" }, { gender }],
+      children: 0,
+    });
+    // Second parent edge only; the first stays an unqualified (biological) one.
+    const second = tree.relationships!.filter((r) => r.type === "ParentChild")[1];
+    if (sub) (second as { subtype?: string }).subtype = sub;
+    return tree;
+  };
+
+  for (const sub of ["Adoptive", "Step", "Foster", "Guardian"]) {
+    it(`tooManyFathers does not fire for a ${sub} father beside a biological one`, () => {
+      expect(tooManyFathers(new Mob(withParentSubtype(sub, "Male"), "I1"))).toBe(
+        false,
+      );
+    });
+  }
+
+  it("tooManyMothers does not fire for an Adoptive mother beside a biological one", () => {
+    expect(
+      tooManyMothers(new Mob(withParentSubtype("Adoptive", "Female"), "I1")),
+    ).toBe(false);
+  });
+
+  // The other direction, twice: an explicit `Biological` subtype and an absent
+  // one must both still count, or the subtype filter has quietly disarmed the
+  // check. Absent is biological by FamilySearch's data model, and 1814 of the
+  // 2653 committed parent edges carry no subtype at all.
+  it("tooManyFathers still fires for two explicitly Biological fathers", () => {
+    expect(
+      tooManyFathers(new Mob(withParentSubtype("Biological", "Male"), "I1")),
+    ).toBe(true);
+  });
+
+  it("tooManyFathers still fires when neither edge carries a subtype", () => {
+    expect(
+      tooManyFathers(new Mob(withParentSubtype(undefined, "Male"), "I1")),
+    ).toBe(true);
   });
 });
 

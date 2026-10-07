@@ -131,13 +131,97 @@ describe("person-warnings spec catalogue and the shipped tags agree", () => {
   // type is `string`, the two drift arms above walk the code/spec pair and
   // never look at the exempt set, and an exemption that does nothing is
   // invisible until someone re-measures the fire rate. The set grew from 5 to
-  // 20 when the gate began seeing parentage edges, which is when a silent
+  // 22 when the gate began seeing parentage edges, which is when a silent
   // no-op started costing real refusals.
   it("exempts only tags the tool actually emits", () => {
     const unknown = [...GATE_EXEMPT_TYPES].filter((t) => !shipped.has(t)).sort();
     expect(
       unknown,
       "these GATE_EXEMPT_TYPES entries match no tag the tool emits, so they exempt nothing",
+    ).toEqual([]);
+  });
+
+  // (4) A relative/gendered form is exempt iff its self form is.
+  //
+  // The rule GATE_EXEMPT_TYPES states about itself. A relative form is the
+  // same predicate at the same severity evaluated from a different anchor, so
+  // a split pair means one write refuses and an identical one does not,
+  // depending only on which end of the edge the agent happened to anchor on.
+  // The rule was prose in a comment, and prose does not fail CI: four pairs
+  // were split (`deathRangeGreaterThan2`, `hasEventBeforeChristening365_3`,
+  // `relativesHasEventBeforeBirth365_2`, `relativesTooManyBirthDates2`), one
+  // of them refusing a write in a released run log. Derived from
+  // ALL_WARNING_TAGS rather than listed, so a new tag pair is covered the day
+  // it lands.
+  //
+  // Deliberate exception: `earliestChildBirthToBirth12` and its relative form
+  // travel together but are both GATING, unlike their cutoff-14 siblings —
+  // at cutoff 12 the tag is the only check that fires when a child is born
+  // before their parent. That is a pair agreeing, so the rule still holds.
+  const GENDERS = ["male", "female"] as const;
+
+  /** The self form of a relative-form tag, or null if there is no such tag. */
+  function selfFormOf(relTag: string, byLower: Map<string, string>): string | null {
+    const m = relTag.match(/^(male|female)?[Rr]elatives(.+)$/);
+    if (!m) return null;
+    const gender = m[1] ?? "";
+    const rest = m[2];
+    const Cap = gender ? gender[0].toUpperCase() + gender.slice(1) : "";
+    // The self spelling puts the gender in one of three places, and all three
+    // are in use: `earliestChildBirthToBirthMale14` (before the number),
+    // `hasDiffSurnameMale` (at the end), `femaleRelatives…` → none.
+    const candidates = [rest, gender + rest, rest + Cap];
+    const num = rest.match(/^(.*?)(\d+(?:_\d+)?)$/);
+    if (num && gender) candidates.push(num[1] + Cap + num[2]);
+    for (const c of candidates) {
+      const hit = byLower.get(c.toLowerCase());
+      if (hit) return hit;
+    }
+    return null;
+  }
+
+  function relativePairs(): Array<[string, string]> {
+    const byLower = new Map([...shipped].map((t) => [t.toLowerCase(), t]));
+    const out: Array<[string, string]> = [];
+    for (const t of shipped) {
+      if (!/^(?:male|female)?[Rr]elatives/.test(t)) continue;
+      const self = selfFormOf(t, byLower);
+      if (self && self !== t) out.push([t, self]);
+    }
+    return out;
+  }
+
+  it("finds the relative/self pairs to compare", () => {
+    // Same reason as the parse guards above: an empty pair list passes (4)
+    // vacuously. 28 of the 29 tags matching /relatives/i pair up;
+    // `missingFactsAndRelatives` is a self-form tag that merely contains the
+    // word, and correctly finds no partner.
+    const pairs = relativePairs();
+    expect(pairs.length, "no relative/self tag pairs derived").toBe(28);
+    expect(pairs.map(([r]) => r)).not.toContain("missingFactsAndRelatives");
+    // The derivation handles all three gender placements, not just the plain
+    // `relativesX` case — the two irregular spellings must be found.
+    expect(pairs).toEqual(
+      expect.arrayContaining([
+        ["maleRelativesHasDiffSurname", "hasDiffSurnameMale"],
+        ["femaleRelativesEarliestChildBirthToBirth14", "earliestChildBirthToBirthFemale14"],
+      ]),
+    );
+    expect(GENDERS.length).toBe(2);
+  });
+
+  it("exempts a relative form iff it exempts the self form", () => {
+    const split = relativePairs()
+      .filter(([r, s]) => GATE_EXEMPT_TYPES.has(r) !== GATE_EXEMPT_TYPES.has(s))
+      .map(([r, s]) =>
+        `${r} (${GATE_EXEMPT_TYPES.has(r) ? "exempt" : "gating"}) vs ` +
+        `${s} (${GATE_EXEMPT_TYPES.has(s) ? "exempt" : "gating"})`,
+      )
+      .sort();
+    expect(
+      split,
+      "these pairs are the same predicate from a different anchor, so one " +
+        "write refuses and an identical one lands. Exempt both or neither",
     ).toEqual([]);
   });
 });
