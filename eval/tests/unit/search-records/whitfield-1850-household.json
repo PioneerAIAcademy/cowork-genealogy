@@ -26,6 +26,7 @@
   "mcp_fixtures": [
     "wiki-read-united-states-census",
     "record-search-whitfield-1850-household",
+    "record-read-whitfield-1850-a1wf-dos",
     "catalog-search-empty",
     "catalog-search-empty-keywords"
   ],
