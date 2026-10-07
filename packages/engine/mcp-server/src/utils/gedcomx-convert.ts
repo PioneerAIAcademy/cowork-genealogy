@@ -756,9 +756,7 @@ export async function standardizePlaces(
     async (group) => {
       let standard: string | null = null;
       try {
-        standard = await resolveStandardPlace(group.original, {
-          contextPlaces: distinct.map((g) => g.original).filter((o) => o !== group.original),
-        });
+        standard = await resolveStandardPlace(group.original);
       } catch {
         standard = null; // resolver is best-effort; never fail the conversion
       }

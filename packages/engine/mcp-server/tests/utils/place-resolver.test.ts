@@ -829,6 +829,31 @@ describe("resolveStandardPlace — a bare single-segment name", () => {
     ).toBe("York, England, United Kingdom");
   });
 
+  it("keeps a bare country or state as itself beside a same-named place in the record's area", async () => {
+    byName({
+      Germany: [
+        entry({ placeRepId: "de", fullName: "Germany", type: "Country", score: 0.9 }),
+        entry({ placeRepId: "gt", fullName: "Germany Township, Adams, Pennsylvania, United States", score: 0.8 }),
+      ],
+      Ohio: [
+        entry({ placeRepId: "oh", fullName: "Ohio, United States", type: "State", score: 0.9 }),
+        entry({ placeRepId: "ot", fullName: "Ohio Township, Allegheny, Pennsylvania, United States", score: 0.8 }),
+      ],
+    });
+    expect(await resolveStandardPlace("Germany", { contextPlaces: ["Gettysburg, Adams, Pennsylvania"] })).toBe("Germany");
+    expect(await resolveStandardPlace("Ohio", { contextPlaces: ["Beaver, Beaver, Pennsylvania"] })).toBe("Ohio, United States");
+  });
+
+  it("matches a shared jurisdiction as a whole segment, not a substring", async () => {
+    byName({ Lexington: [
+      entry({ placeRepId: "ky", fullName: "Lexington, Fayette, Kentucky, United States", score: 0.9 }),
+      entry({ placeRepId: "kt", fullName: "Lexington, Kent, England, United Kingdom", score: 0.5 }),
+    ] });
+    expect(
+      await resolveStandardPlace("Lexington", { contextPlaces: ["Maidstone, Kent", "Dover, Kent"] }),
+    ).toBe("Lexington, Kent, England, United Kingdom");
+  });
+
   it("confines the search to the jurisdiction the siblings share", async () => {
     byName({ "Logan LDS Temple": [
       entry({ placeRepId: "fr", fullName: "Logan, Haute-Saône, Bourgogne-Franche-Comté, France", score: 0.9 }),

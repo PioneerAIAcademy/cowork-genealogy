@@ -582,8 +582,9 @@ export async function resolveStandardPlace(
  * country. Measured on PR #3007's trials: "Shenandoah" beside "Borough of
  * Shenandoah, County of Schuylkill" in the same will resolved to New Zealand.
  *
- * In order: a sibling place from the same source that ends in this name is
- * resolved instead; else the search is confined to the jurisdiction the
+ * In order: a sibling place from the same source that is this name (or this
+ * name after "Borough of" and the like) is resolved instead; else a best hit
+ * that is a country or state is kept; else the search is confined to the jurisdiction the
  * siblings share, most specific first, and only a candidate inside it counts;
  * else the best match is kept only when it is a jurisdiction (a country, state,
  * territory or county: "Gloucestershire", "Ky" -> Kentucky, "USA"), never a
@@ -612,12 +613,16 @@ async function resolveBareName(name: string, opts: ResolveOpts): Promise<string 
     return null;
   }
 
+  // A bare country or state is itself, whatever the record's own area holds:
+  // "Germany" beside Gettysburg is not Germany Township, Adams, Pennsylvania.
+  const best = pickBest(entries);
+  if (best && isTopLevel(best.type)) return best.fullName;
+
   for (const level of sharedJurisdiction(siblings)) {
-    const inside = entries.filter((e) => normalizeKey(e.fullName).includes(normalizeKey(level)));
+    const inside = entries.filter((e) => placeSegments(e.fullName).map(normalizeKey).includes(level));
     if (inside.length > 0) return pickBest(inside)!.fullName;
   }
 
-  const best = pickBest(entries);
   return best && isJurisdiction(best.type) ? best.fullName : null;
 }
 
@@ -630,6 +635,14 @@ const ADMIN_PREFIX_RE = /^(?:borough|town|city|township|village|parish|county|di
 function isJurisdiction(type: string | undefined): boolean {
   return JURISDICTION_TYPES.has(normalizeKey((type ?? "").replace(/\s*\(.*\)\s*$/, "")));
 }
+
+/** A place type at the top of the hierarchy: a name that is one of these is
+ *  already as specific as a bare name can be. */
+function isTopLevel(type: string | undefined): boolean {
+  return TOP_LEVEL_TYPES.has(normalizeKey((type ?? "").replace(/\s*\(.*\)\s*$/, "")));
+}
+
+const TOP_LEVEL_TYPES = new Set(["continent", "country", "state", "province"]);
 
 const JURISDICTION_TYPES = new Set([
   "continent",

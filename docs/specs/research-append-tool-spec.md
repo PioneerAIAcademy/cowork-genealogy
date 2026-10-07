@@ -595,7 +595,9 @@ append op (deliberately simple):
      the resolver uses that record context: a sibling place whose first segment
      is the name, or the name after an administrative prefix ("Borough of",
      "Town of", "City of", "Township of", …), is resolved instead — "New York" is
-     not the fuller form of "York", else only a candidate inside the
+     not the fuller form of "York", else a best match typed continent, country,
+     state or province is kept as it is (a bare "Germany" beside Gettysburg is not
+     Germany Township), else only a candidate with a segment equal to a
      jurisdiction the siblings share counts, else the best match is kept only
      when FamilySearch types it a jurisdiction (continent, country, state,
      province, territory, county, district, region, or first/second-level admin
