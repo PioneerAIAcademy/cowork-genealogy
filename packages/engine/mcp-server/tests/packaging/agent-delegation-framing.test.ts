@@ -147,6 +147,35 @@ const DELEGATION_EDGES: Record<string, Edge> = {
   // The router that held two caller-side pins here was deleted with the skill
   // (issue #2115), so the orchestrator is now the only caller and the agent
   // carries the whole defence. The history below is why that pin is agent-side.
+  // Added with the "Bounded request or job" section (#2813 item 1): a bounded
+  // transcription goes straight to the agent that owns it instead of walking the
+  // routing table. The caller side is exempt because the whole delegation is one
+  // clause naming a destination -- it forwards no expected answer for the agent
+  // to slant toward, which is the pressure the sibling record-extraction edge
+  // pins against. If the router ever gains a sentence telling this agent what to
+  // look for, that sentence is a caller pin and this exemption must go.
+  "research -> image-reader": {
+    pins: [
+      {
+        side: "agent",
+        excerpt:
+          "Never\ntailor, trim, or slant the transcription toward an expected answer.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The router states the destination and nothing about the content: it " +
+        "passes no looking_for, no expected answer, and no framing of what the " +
+        "page should say. Deciding whether the page holds what was wanted is " +
+        "the caller's job on return, which the agent-side pin already states.",
+      mitigation: {
+        side: "caller",
+        excerpt: "transcription to `@plugin:image-reader`",
+      },
+    },
+  },
+
   "research -> question-selection": {
     pins: [
       // Added after the first direct-arm run (issue #2115). The exemption this
@@ -374,7 +403,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       mitigation: {
         side: "caller",
         excerpt:
-          "naming the subject and every\nimported relative by their LOCAL tree id from Step 3",
+          "naming the subject and every\nimported relative by their tree `I` id from `idMap`",
       },
     },
   },
@@ -452,7 +481,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["record-extraction -> citation", ""],
   ["research -> citation", ""],
   ["search-records -> citation", ""],
-  ["source-evaluation -> citation", ""],
   // Six "use proof-conclusion" prohibitions in DO NOT clauses, visible to the
   // prose arm only since issue #2822 deleted the routing skill and made the
   // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
@@ -505,7 +533,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // issue #2805 deleted its skill.
   ["conflict-resolution -> check-warnings", ""],
   ["search-records -> check-warnings", ""],
-  ["source-evaluation -> check-warnings", ""],
   ["timeline -> check-warnings", ""],
   // tree-edit entered agentOnly when issue #2805 deleted its skill. The one
   // mention is a DO NOT clause ("Merging is ... a data operation (tree-edit)"),
@@ -543,6 +570,11 @@ const PROSE_MENTIONS = new Map<string, string>([
   // external-site search ("use search-external-sites"), neither a delegation.
   ["record-extraction -> search-external-sites", ""],
   ["search-full-text -> search-external-sites", ""],
+  // source-evaluation entered agentOnly when issue #2796 deleted its skill. The
+  // one mention is init-project's boundary prose ("Auditing the sources already
+  // attached ... is source-evaluation's; name it, never audit them here"), not
+  // a delegation; it does not spell `@plugin:source-evaluation`.
+  ["init-project -> source-evaluation", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -740,6 +772,8 @@ describe("agent delegation framing", () => {
     "search-familysearch-wiki",
     "search-images",
     "search-wikipedia",
+    // ARRIVED when issue #2796 deleted skills/source-evaluation/.
+    "source-evaluation",
     "survey-surname",
     "translation",
     "tree-edit",
