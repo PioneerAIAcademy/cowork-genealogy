@@ -2605,16 +2605,27 @@ def test_the_price_vector_tracks_the_costs_the_corpus_actually_recorded():
     subagent transcripts.
 
     The band is what makes this fail: a price change, or a model swap, moves the median
-    out of it and this goes red rather than the cap quietly firing at the wrong dollar."""
+    out of it and this goes red rather than the cap quietly firing at the wrong dollar.
+
+    The corpus ran on a subscription, where the CLI writes 1-HOUR cache entries, so its
+    cache writes are priced here at the 1-hour rate (2x input), not the worker's 5-minute
+    one: this calibrates the three rates the two share, and the 1-hour write. The worker's
+    5-minute write is pinned to input by
+    `test_the_two_price_tables_share_three_rates_and_differ_by_cache_ttl`."""
     rows = _corpus_costs()
     assert len(rows) >= 100, f"only {len(rows)} runs readable; the calibration needs the corpus"
-    ratios = sorted(worker.price_usd(tok) / cost for tok, cost in rows)
+    rates = dict(worker.PRICE_PER_MTOK, cache_write=2 * worker.PRICE_PER_MTOK["input"])
+
+    def corpus_usd(tok):
+        return sum((t or 0) / 1_000_000 * rates[name] for name, t in zip(("input", "cache_write", "cache_read", "output"), tok))
+
+    ratios = sorted(corpus_usd(tok) / cost for tok, cost in rows)
     median = ratios[len(ratios) // 2]
     # The band is sized to catch a wrong price on ANY of the four token classes, measured
     # against this corpus on 2026-09-23: output 15 -> 30 lands at 1.089 and 15 -> 7.5 at
-    # 0.750; cache write 6 -> 3.75 at 0.746; cache read 0.30 -> 0.60 at 1.172. A looser
-    # band passes a vector that would fire the cap at the wrong dollar, which is the whole
-    # thing this protects.
+    # 0.750; a 1-hour cache write of 3.75 instead of 6 at 0.746; cache read 0.30 -> 0.60
+    # at 1.172. A looser band passes a vector that would fire the cap at the wrong dollar,
+    # which is the whole thing this protects.
     assert 0.80 <= median <= 0.95, (
         f"the price vector predicts a median {median:.3f}x of recorded cost; it was 0.866x "
         f"on 2026-09-23 over {len(rows)} runs. A price change, a model swap or a grown "
@@ -2632,7 +2643,7 @@ def test_the_price_vector_tracks_the_costs_the_corpus_actually_recorded():
     )
 
 
-def test_the_two_price_tables_are_the_same_four_rates():
+def test_the_two_price_tables_share_three_rates_and_differ_by_cache_ttl():
     """There are TWO copies of this rate table and there have to be: the worker image does
     not copy `eval/` (a test in test_continue_policy_parity.py asserts the two trees never
     import each other), and `pricing.py` is deliberately stdlib-only so `corpus_report`
@@ -2643,7 +2654,13 @@ def test_the_two_price_tables_are_the_same_four_rates():
     `--calibrate-cost` and moves a rate; the worker's copy does not move; and the LIVE
     SPEND CAP silently starts cutting runs off at a different dollar figure than the one
     the corpus reports. Nothing else compares them -- the field names differ, so no grep
-    finds the pair."""
+    finds the pair.
+
+    Input, cache read and output are the same rates. Cache WRITES are not, because the two
+    write different entries: the harness runs on a subscription, where the CLI writes
+    1-hour entries (2x input), and the worker on an API key or the gateway, where every
+    entry is 5-minute (1.25x input; spend.py says why). Each write rate is pinned to the
+    shared input rate by its own multiplier, so a model swap that moves input moves both."""
     import importlib.util
 
     path = pathlib.Path(__file__).resolve().parents[3] / "eval/harness/e2e/pricing.py"
@@ -2651,28 +2668,38 @@ def test_the_two_price_tables_are_the_same_four_rates():
     pricing = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(pricing)
 
-    # The names differ by tree; the RATES must not.
-    same = {
+    names = {
         "input": "input_tokens",
         "cache_write": "cache_creation_input_tokens",
         "cache_read": "cache_read_input_tokens",
         "output": "output_tokens",
     }
-    assert set(same.values()) == set(pricing._PER_MTOK), \
+    assert set(names.values()) == set(pricing._PER_MTOK), \
         "the harness table gained or lost a token class; the worker's cap prices the old set"
-    for mine, theirs in same.items():
+    for mine in ("input", "cache_read", "output"):
+        theirs = names[mine]
         assert worker.PRICE_PER_MTOK[mine] == pricing._PER_MTOK[theirs], (
             f"{mine} is ${worker.PRICE_PER_MTOK[mine]}/MTok in the worker and "
             f"${pricing._PER_MTOK[theirs]}/MTok in the harness: the live spend cap and the "
             f"corpus report now disagree about what a run costs"
         )
-    # And the same tokens must come to the same dollars through both estimators.
+    base = worker.PRICE_PER_MTOK["input"]
+    assert worker.PRICE_PER_MTOK["cache_write"] == pytest.approx(1.25 * base), (
+        f"the worker's cache write is ${worker.PRICE_PER_MTOK['cache_write']}/MTok, not the "
+        f"5-minute 1.25 x ${base}: every write the worker meters is 5-minute"
+    )
+    assert pricing._PER_MTOK["cache_creation_input_tokens"] == pytest.approx(2 * base), (
+        f"the harness's cache write is ${pricing._PER_MTOK['cache_creation_input_tokens']}/MTok, "
+        f"not the 1-hour 2 x ${base} its corpus calibrates to"
+    )
+    # The same tokens come to the same dollars through both estimators, but for the
+    # write-rate difference.
     tokens = (1_234_567, 89_012, 3_456_789, 45_678)
     theirs = pricing.estimate_cost_usd(dict(zip(
         ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens"),
         tokens,
     )))
-    assert worker.price_usd(tokens) == pytest.approx(theirs)
+    assert worker.price_usd(tokens) == pytest.approx(theirs - tokens[1] / 1_000_000 * 0.75 * base)
 
 
 def test_price_usd_is_linear_and_reads_the_four_token_classes_in_order():

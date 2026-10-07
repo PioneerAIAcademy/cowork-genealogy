@@ -190,7 +190,7 @@ services:
       # needs the container recreated (`up -d` does), not restarted.
       SESSION_SPEND_CAP_USD: ${SESSION_SPEND_CAP_USD:-35}
       PRICE_INPUT_PER_MTOK: ${PRICE_INPUT_PER_MTOK:-3.0}
-      PRICE_CACHE_WRITE_PER_MTOK: ${PRICE_CACHE_WRITE_PER_MTOK:-6.0}
+      PRICE_CACHE_WRITE_PER_MTOK: ${PRICE_CACHE_WRITE_PER_MTOK:-3.75}
       PRICE_CACHE_READ_PER_MTOK: ${PRICE_CACHE_READ_PER_MTOK:-0.30}
       PRICE_OUTPUT_PER_MTOK: ${PRICE_OUTPUT_PER_MTOK:-15.0}
       # 1b: where a message held during a turn is released to when that turn ends. The
@@ -257,7 +257,8 @@ services:
       POLL_S: "1"
       SSE_PING_S: "15"
       # U2 sign-in (web/auth.py). The defaults are dev-only; web/auth.py refuses to start
-      # on an https PUBLIC_URL with a default secret. FamilySearch sign-in stays off here
+      # with a default secret on an https PUBLIC_URL or with FamilySearch sign-in on, and
+      # the overlay requires both secrets. FamilySearch sign-in stays off here
       # (dev-login only) -- docker-compose.fs-signin.yml turns it on, which turns dev-login
       # off. DEV_LOGIN is the opt-in no template may set (U11); a literal, so no host
       # variable at `up` time switches it.

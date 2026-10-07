@@ -36,7 +36,7 @@ is `eval/JUNIOR-WALKTHROUGH.md` (first PR) and `eval/SENIOR-WALKTHROUGH.md`
 | Give an agent a new tool · Restrain something · Change `PROTECTED_PROJECT_FILES` · Add a hook | [§5](#if-youre-asked-to-2) |
 | Add a field to `research.json` · Add an enum value · Add a tree field | [§6](#if-youre-asked-to-3) |
 | Add a viewer feature · Change what the sandbox runs · Add a control-plane endpoint | [§7](#if-youre-asked-to-4) |
-| Change hosted agent config | [§8](#if-youre-asked-to-5) |
+| Change hosted agent config · Deploy or rehearse the prototype on Beanstalk | [§8](#if-youre-asked-to-5) |
 | Verify a change · Debug a failing e2e run · Add a unit eval test · Write a spec · **Write a rule that behaves differently when no user is present** | [§9](#if-youre-asked-to-6) |
 
 > **Before you trust a green CI run, read [§9.4 — What nothing checks](#94-what-nothing-checks).**
@@ -1549,7 +1549,7 @@ only `$ref`s it). Edit `enums.schema.json` in **both** schema trees,
 
 **Do not hand-edit the TypeScript union.** `packages/schema/src/enums.generated.ts`
 is emitted from that package's own `schemas/enums.schema.json` by
-`scripts/gen-enums.mjs`, chained into `build`, `typecheck` and each app's `dev`
+`packages/schema/scripts/gen-enums.mjs`, chained into `build`, `typecheck` and each app's `dev`
 (ADR-0008 tier 2), and gitignored. `src/index.ts` re-exports it. Every closed enum
 in `enums.schema.json` is generated, with no exceptions. Regeneration is automatic
 and typing a union by hand creates a sixth copy — `gen-enums.mjs` throws rather
@@ -1850,6 +1850,37 @@ a missing key fails loudly here while the same test still skips under a plain
 hook binds, `make hook-smoke`. `agent-smoke` reads the init handshake, which
 carries no hook state at all, so it cannot see a hook either way.
 
+**Deploy or rehearse the prototype on Beanstalk.** Use
+`apps/server/proto/eb-rehearsal/rehearse.py`. Its README is the runbook, and it implements
+the deployment guide in `docs/plan/familysearch-handoff.md` (section 3) for one AWS
+account. `plan --dry-run` prints every command and calls nothing. The sites a change
+touches:
+
+- **A tier variable.** Pass it through `check_options`. The dev-only names come from
+  `scripts/eb_bundles/layout.py`. The environment-value set and the secret-name pattern are
+  copies of `apps/server/tests/test_proto_bundles.py`'s, and a test pins them equal. A
+  secret goes in `TIER_SECRETS` as an `environmentsecrets` ARN, never as a value.
+- **sqsd values.** `up --phase worker` sets both namespaces of
+  `apps/server/proto/eb-worker/.ebextensions/01-sqsd.config` at API level, and API-level
+  settings override the bundle's. A re-size in that file reaches a running worker only on
+  the next `up --phase worker`. `status` reports drift against the work dir's option-settings
+  file, not against the template.
+- **A probe case.** Add it to the closed `CASES` table. A case that touches `MaxRetries`,
+  `VisibilityTimeout` or `RetentionPeriod` sets its `SQSD_*` mirror too, and a test fails
+  otherwise.
+- **A resource kind.** It needs an entry in `KINDS`, a `down` step and a `prove-empty`
+  check. The test's own kind-to-call maps fail until all three exist.
+
+**What nothing checks here.** The tests run against a fake `aws`, so they prove the
+commands the tool sends, never that AWS accepts them. The option names in the
+`aws:elasticbeanstalk:sqsd`, `aws:elbv2:*` and `environmentsecrets` namespaces come from AWS
+documentation: `describe-configuration-options` lists them only for an existing
+environment's tier. The first live `up` is the first real check, and no CI job runs one.
+The account-id leak check (`rehearse.py leak-check`) runs only where `.local/` exists, so
+CI skips it. In CI, that rule is enforced only by the 12-digit account-id scan in
+`apps/server/tests/test_proto_rehearsal.py`, over the paths in its `SCAN_PATHS`; each of those
+outside `apps/server/` needs a line in `server-tests.yml`'s `PATTERNS`, which a test pins.
+
 ---
 
 ## 9. Verification — how you know you didn't break it
@@ -1892,7 +1923,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `gps-mentor-craft-doctrine.test.ts` | the four clauses of `gps-mentor`'s craft mode whose silent deletion would be invisible until a user hit it — the required scope sentence, the refusal row, advisory severity, and the `craft: true` marker (`gps-mentor-agent-spec.md` §6.4) |
 | `gps-terminology.test.ts` | no plugin prose collapses the two evidence axes into "primary/secondary source" or "primary/secondary evidence", with an allow-list keyed to (file, line) for the `citation` agent, which must quote the wrong phrasing back to correct it |
 | `adr-links.test.ts` | ADR required fields; every repo path cited in an ADR's **live** `Applies to` / `Enforcement` still resolves. `doc-links.test.ts` now also checks every section of every ADR, so this path check is a subset of that one |
-| `doc-links.test.ts` | every repo path, markdown link, `make` target and **slash command** cited by `docs/task-lifecycle.md`, `CLAUDE.md`, `docs/skill-to-agent-pair-conversion.md` and by **`.claude/{agents,commands,skills}`** still resolves; the same minus slash commands for every `.md` under **`docs/specs/` and `docs/adrs/`**. A path named because it was retired or is gitignored is a named `KNOWN_ABSENT` entry with its reason. Also bans `:NNN` line cites to `.ts`/`.py`/`.mjs`/`.md` files anywhere under `docs/` except `docs/plan/` and `docs/deep-dives/`. Shares its extraction rules with `adr-links.test.ts` via `repo-paths.ts` |
+| `doc-links.test.ts` | every repo path, markdown link, `make` target and **slash command** cited by `docs/task-lifecycle.md`, `CLAUDE.md`, `docs/skill-to-agent-pair-conversion.md` and by **`.claude/{agents,commands,skills}`** still resolves; the same minus slash commands for every `.md` under **`docs/`** except `docs/plan/` and `docs/deep-dives/`. A path absent on purpose — retired, gitignored, cited in a dated record as it stood then, or named as a file still to create — is a named `KNOWN_ABSENT` entry with its reason. Also bans `:NNN` line cites to `.ts`/`.py`/`.mjs`/`.md` files anywhere under `docs/` except `docs/plan/` and `docs/deep-dives/`. Shares its extraction rules with `adr-links.test.ts` via `repo-paths.ts` |
 | `prompt-budget.test.ts` | the report is warn-only; the baseline file must be current. `prompt-sizes.json` records byte sizes for every `SKILL.md`, agent body and `CLAUDE.md`, and character sizes for every MCP tool description (`description.length + JSON.stringify(inputSchema).length`). The staleness test fails when the file disagrees with the sizes computed at HEAD; the delta report stays warn-only — no ceiling, no threshold. Regenerate: `UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts` |
 
 Plus, from `.github/workflows/check-runlogs.yml`:
