@@ -14,8 +14,6 @@ what is / is not covered.
 
 from __future__ import annotations
 
-import re
-
 import pytest
 
 from validators_lib import new_log_entries as _new_log_entries
@@ -383,35 +381,3 @@ def test_reads_attachments_before_searching(
         "Handing off to a search step re-finds an already-attached record just as an "
         f"inline search call would. Hand-offs: {handed}"
     )
-
-
-def _unsaved_finds(before_state, after_state):
-    """Log entries this turn ADDED that nothing saved.
-
-    A `log` entry (the section is `log`; `research_log` does not exist) whose
-    outcome is positive/partial and which no assertion's `log_entry_id`
-    references. Both a missing key and an explicit `null` count as
-    not-referencing: `log_entry_id` is optional AND nullable on `assertion`.
-
-    The before/after DELTA is load-bearing, not a refinement. The static form of
-    this predicate — "after_state carries such an entry" — fires on 11 of the
-    committed scenarios (`flynn-parentage-found`, `mid-research-flynn-1880-found`,
-    `flynn-fan-pivot`, ...), because "found, not yet extracted" is the ordinary
-    mid-research state that `research/SKILL.md:190` exists to pick up on the NEXT
-    job turn. Only an entry this turn created can be something this turn must
-    name.
-    """
-    after = ((after_state or {}).get("research_json") or {}) or {}
-    referenced = {
-        a.get("log_entry_id")
-        for a in (after.get("assertions") or [])
-        if isinstance(a, dict) and a.get("log_entry_id")
-    }
-    return [
-        e
-        for e in _new_log_entries(before_state, after_state)
-        if isinstance(e, dict)
-        and e.get("outcome") in ("positive", "partial")
-        and e.get("id") not in referenced
-    ]
-
