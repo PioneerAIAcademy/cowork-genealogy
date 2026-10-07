@@ -1386,6 +1386,18 @@ def test_leak_check_history_passes_placeholder_edits(leak_repo):
     assert rc == 0, lines
 
 
+def test_leak_check_scans_only_the_account_zone_and_host(leak_repo):
+    """The emails in .local/ are not D9 values: one already in a tracked file is no leak."""
+    (leak_repo["local"] / "alert-email").write_text("op@example.invalid\n", encoding="utf-8")
+    (leak_repo["local"] / "allowed-emails").write_text("a@example.invalid b@example.invalid\n", encoding="utf-8")
+    (leak_repo["repo"] / "CONTACT.md").write_text("op@example.invalid a@example.invalid\n", encoding="utf-8")
+    _git(leak_repo["repo"], "add", "CONTACT.md")
+    _git(leak_repo["repo"], "commit", "-q", "-m", "contacts")
+    rc, lines = _leak(leak_repo)
+    assert rc == 0, lines
+    assert lines[-1].endswith("for 2 value(s) from .local/")
+
+
 def test_leak_check_refuses_an_empty_value(leak_repo):
     (leak_repo["local"] / "host").write_text("  \n", encoding="utf-8")
     rc, _ = _leak(leak_repo)

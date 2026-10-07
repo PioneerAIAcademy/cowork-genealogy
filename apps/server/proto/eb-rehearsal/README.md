@@ -179,7 +179,7 @@ the budget, the Resolver config and both log-group prefixes.
 python apps/server/proto/eb-rehearsal/rehearse.py leak-check --work-dir <dir> --body <pr-body.md>
 ```
 
-It reads every value in `.local/` and refuses an empty file, since an empty pattern
+It reads the values in `.local/account`, `zone` and `host` (the emails are not D9 values) and refuses an empty one, since an empty pattern
 matches every line. It writes the patterns to `<work-dir>/leak-patterns` and runs
 `git grep -F --untracked` over the repo (ignored files stay excluded). It then scans each
 `--body` file, the commit messages in `<base>..HEAD` (`--base`, default `main`), and every
