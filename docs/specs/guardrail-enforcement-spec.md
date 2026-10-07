@@ -1686,7 +1686,7 @@ the divergence above cannot recur by restatement. It comes out as:
 
 The derivation named **two** constants originally, gained a third with the `Bash`
 exfiltration arm, a **fourth** with the foreground-delegation arm, and a **fifth**
-with the credential-read arm (issue #2485). The foreground arm is the one entry
+with the credential-read arm. The foreground arm is the one entry
 here that is NOT a deny: it allows the call and rewrites `run_in_background` to
 `False`, and it needs the matcher exactly as much as a deny does, because an arm
 the matcher cannot reach is inert with the suite green. And it is **not** "the
@@ -1698,7 +1698,7 @@ binding it would only widen the blast radius of a starved callback; `Bash` is
 present because this hook carries the credential-exfiltration arm; `Read`, `Grep`
 and `Glob` are present because this hook carries the credential-read arm.
 
-**Credential-read arm (issue #2485).** `credential_read_denied` denies
+**Credential-read arm.** `credential_read_denied` denies
 `Read`/`Grep`/`Glob` when any path argument, with backslashes folded to forward
 slashes and lowercased, has a path segment equal to `.familysearch-mcp`. Enforcing
 on hosted (in `real_agent.py`'s `_pretool_hook`) and e2e (in `orchestrator.py`'s
@@ -1724,7 +1724,7 @@ Parity-tested by `test_write_lockdown_parity.py` under its own registration list
 `_PRETOOL_MATCHER` means every call to these three tools now waits for the hook
 callback, bounded by `_PRETOOL_TIMEOUT_S` (10 s). The callback is in-process and
 bounded (no I/O, no awaits), so the cost is callback dispatch latency per call.
-A starved callback now fails reads too — the issue #1915 failure class.
+A starved callback now fails reads too — the same starved-callback failure class.
 
 **The bare names are anchored, and that is load-bearing.** The bundled CLI
 (2.1.220) applies a matcher that fits neither of its two charsets as

@@ -138,7 +138,6 @@ async def test_hook_allows_bash_without_combined_secrets_and_network(command):
 
 # ── credential read guard ────────────────────────────────────────
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "tool_name, tool_input",
     [
@@ -160,7 +159,6 @@ async def test_hook_denies_credential_read(tool_name, tool_input):
     assert "credentials directory" in hook["permissionDecisionReason"]
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "tool_name, tool_input",
     [
