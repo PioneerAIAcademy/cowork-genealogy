@@ -169,10 +169,20 @@ shopt -s nullglob
 for d in "$REPO_ROOT"/packages/engine/plugin/skills/*/; do
   name="$(basename "$d")"
   ln -s "$d" ".claude/skills/$name"
+  if [ ! -L ".claude/skills/$name" ]; then
+    echo "ERROR: ln -s for skill '$name' created a copy, not a symlink." >&2
+    echo "This platform does not support symlinks. Run scripts\\setup-feedback-case.bat instead." >&2
+    exit 1
+  fi
 done
 for d in "$REPO_ROOT"/.claude/skills/*/; do
   name="$(basename "$d")"
   ln -s "$d" ".claude/skills/$name"
+  if [ ! -L ".claude/skills/$name" ]; then
+    echo "ERROR: ln -s for skill '$name' created a copy, not a symlink." >&2
+    echo "This platform does not support symlinks. Run scripts\\setup-feedback-case.bat instead." >&2
+    exit 1
+  fi
 done
 shopt -u nullglob
 
@@ -186,7 +196,13 @@ USER_PROMPT=""
 # required member and the bundle check above exits when it is absent.
 PROMPT_READ_OK=0
 FB_JSON="$DEST_DIR/_feedback/feedback.json"
-if [[ -f "$FB_JSON" ]]; then
+# An EMPTY (or whitespace-only) report must never reach a reader. `jq -er` EXITS 0
+# on empty input -- it reads no JSON value, prints nothing, and succeeds -- so the
+# reader below would set PROMPT_READ_OK=1 and the script would tell the triager
+# "the tester left blank" about a report it never read. The two cases need opposite
+# advice: "they left it blank" means look in the session log, "it could not be read"
+# means open the file. Gate on there being a non-whitespace document at all.
+if [[ -f "$FB_JSON" ]] && [[ -n "$(tr -d '[:space:]' < "$FB_JSON" 2>/dev/null)" ]]; then
   if command -v jq >/dev/null 2>&1; then
     # Inside the `if` rather than with a trailing `|| true`: that forces the
     # substitution's status to 0, so jq's exit code becomes unreadable — and
