@@ -397,4 +397,4 @@ query shape.
 
 1. **Smoke test**: `npx tsx dev/try-fulltext-search.ts "+Patrick +Flynn"`
 2. **MCP Inspector**: Verify tool registers, test with sample queries
-3. **Cowork**: Trigger via the `search-full-text` skill
+3. **Cowork**: Trigger via the `search-full-text` agent
