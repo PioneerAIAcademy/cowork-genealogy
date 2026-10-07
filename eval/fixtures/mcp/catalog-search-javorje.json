@@ -1,0 +1,15 @@
+{
+  "tool": "catalog_search",
+  "description": "catalog_search for Javorje nad Škofjo Loko, Slovenia — 0 hits. Place resolves but nothing is catalogued at village level. Measured live 2026-10-07 with catalogSearchTool({ standardPlace: 'Javorje nad Škofjo Loko, Slovenia' }).",
+  "args": {
+    "standardPlace": "~Javorje"
+  },
+  "response": {
+    "totalHits": 0,
+    "returned": 0,
+    "placeResolved": true,
+    "hydrationTimedOut": false,
+    "hydrateRequested": 4,
+    "hits": []
+  }
+}

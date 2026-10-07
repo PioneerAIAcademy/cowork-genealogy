@@ -39,6 +39,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 from test_locality_guide import (  # noqa: E402
     test_persisted_localities_entry_shape as check_shape,
     test_survey_run_calls_both_collections_and_volume_search as check_both_searches,
+    test_catalog_search_called_and_broadened as check_catalog_broadening,
 )
 
 from harness.mock_mcp import create_mock_server  # noqa: E402
@@ -260,3 +261,49 @@ def test_vr4_survey_tests_register_both_step3_searches():
         "with no mcp_fixtures both searches must be absent — if they are now "
         f"live-registered this pin is obsolete; got {sorted(unarmed)}"
     )
+
+
+# --- VR5: test_catalog_search_called_and_broadened (issue #3107) ----------
+
+
+_UT028_TEST = {"id": "ut_locality_guide_028"}
+
+
+def test_catalog_broadening_fires_when_no_catalog_call():
+    """VR5 must fire when no catalog_search call was made at all."""
+    with pytest.raises(AssertionError) as exc:
+        check_catalog_broadening(
+            [_call("collections_search"), _call("volume_search")],
+            _UT028_TEST,
+        )
+    assert "catalog_search" in str(exc.value)
+
+
+def test_catalog_broadening_fires_when_only_one_call():
+    """VR5 must fire when catalog_search was called once (no broadening)."""
+    with pytest.raises(AssertionError) as exc:
+        check_catalog_broadening(
+            [_call("catalog_search", standardPlace="Javorje, Škofja Loka, Slovenia")],
+            _UT028_TEST,
+        )
+    assert "at least 2 calls" in str(exc.value)
+
+
+def test_catalog_broadening_passes_when_called_twice():
+    """VR5 must accept when catalog_search was called twice (initial + broadened)."""
+    check_catalog_broadening(
+        [
+            _call("catalog_search", standardPlace="Javorje, Škofja Loka, Slovenia"),
+            _call("catalog_search", standardPlace="Škofja Loka, Slovenia"),
+        ],
+        _UT028_TEST,
+    )
+
+
+def test_catalog_broadening_skips_for_other_tests():
+    """VR5 must stand down for any test that is not ut_locality_guide_028."""
+    with pytest.raises(pytest.skip.Exception):
+        check_catalog_broadening(
+            [_call("catalog_search", standardPlace="Pennsylvania, United States")],
+            {"id": "ut_locality_guide_004"},
+        )

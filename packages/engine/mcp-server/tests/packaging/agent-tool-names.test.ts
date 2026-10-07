@@ -638,12 +638,14 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
-  // locality-guide (issue #2117) holds exactly the eleven tools the skill it
-  // replaced declared, plus `Read`: Step 6 persists only when research.json
-  // exists at the project path, and the narration line reads it.
+  // locality-guide (issue #2117) holds exactly the twelve MCP tools the skill
+  // it replaced declared plus `catalog_search` (issue #3107), plus `Read`:
+  // Step 6 persists only when research.json exists at the project path, and
+  // the narration line reads it.
   "locality-guide.md": {
     tools: [
       "Read",
+      "catalog_search",
       "collections_search",
       "external_links_search",
       "place_population",

@@ -48,6 +48,9 @@ tools:
   - mcp__genealogy__volume_search
   - mcp__remote-devices__Genealogy_Research__volume_search
   - mcp__Genealogy_Research__volume_search
+  - mcp__genealogy__catalog_search
+  - mcp__remote-devices__Genealogy_Research__catalog_search
+  - mcp__Genealogy_Research__catalog_search
   - mcp__genealogy__research_append
   - mcp__remote-devices__Genealogy_Research__research_append
   - mcp__Genealogy_Research__research_append
@@ -97,7 +100,7 @@ actually pins the specific place to one side.
 
 ### 3. Survey available records and repositories
 
-Once `place_search` (step 2) has returned the `standardPlace`, issue the survey calls in a SINGLE turn as PARALLEL tool calls — `place_population`, `collections_search`, `volume_search`, `external_links_search`, `wiki_search`, all four `wiki_place_page` sections (home / getting_started / online_records / research_tips), and the constructed-URL `wiki_read` fetches below are independent and must NOT be run one-per-turn. Batch them together. Do not drop any call — parallelize, don't prune.
+Once `place_search` (step 2) has returned the `standardPlace`, issue the survey calls in a SINGLE turn as PARALLEL tool calls — `place_population`, `collections_search`, `volume_search`, `catalog_search`, `external_links_search`, `wiki_search`, all four `wiki_place_page` sections (home / getting_started / online_records / research_tips), and the constructed-URL `wiki_read` fetches below are independent and must NOT be run one-per-turn. Batch them together. Do not drop any call — parallelize, don't prune.
 
 **Fetch the jurisdiction's own wiki pages by constructed URL — never restate their contents from memory.** A `{Jurisdiction}_{Topic}` page needs no `wiki_search` first, so these join the batch above:
 
@@ -119,6 +122,7 @@ wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "resear
 collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
 external_links_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
 volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
+catalog_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
 wiki_read({ url: "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records" })
 wiki_read({ url: "https://www.familysearch.org/en/wiki/Schuylkill_County,_Pennsylvania_Genealogy" })
 # then, once wiki_search returns a page URL:
@@ -128,6 +132,8 @@ wiki_read({ url: "<relevant FamilySearch Wiki page URL>" })
 `collections_search` derives the jurisdiction itself from the full `standardPlace` — no need to hand it the enclosing state separately. To widen, drop the leading component and call again (the comma-strip pattern).
 
 `volume_search` finds digitized volumes that may not appear in `collections_search`, which only surfaces indexed collections. For each volume, read `recordSearchablePercent` (name-indexed, reachable via `record_search`) and `fulltextSearchable` (reachable via `fulltext_search`). Low/false on both = browse-only. Results paginate. One page is usually enough for a survey, but it is never the whole picture on its own: check `totalResults` and `nextPageToken` against the volumes you actually detail, and when the token is present (or `totalResults` exceeds that count) say so in the guide with both numbers — "31 digitized volumes match; the 4 detailed below are the first page." Fetch further pages only if the researcher asks. When it returns volumes for the same locality filed under different place names across a boundary change (e.g., a territorial-era volume and a later county volume), connect them explicitly as one continuous research trail — tell the researcher to work both together despite the differing place names, not as unrelated sources.
+
+`catalog_search` searches the FamilySearch Catalog — microfilm, books, manuscripts, and finding aids that may not appear in `collections_search` (which surfaces only indexed record collections). A hit's `repositoryCalls` tells where originals are held ("Online", "FamilySearch Library", a named archive). `filmNotes` carry the microfilm/DGS numbers. `totalHits: 0` is a cataloguing gap — report it plainly, never evidence that the records do not exist. Keep the default `hydrate` (10).
 
 `external_links_search` returns a flat list of FS-curated third-party URLs (Ancestry, MyHeritage, FindMyPast, FindAGrave, national archives, FamilySearch Wiki pages) filtered to the requested time window. The list is not deduplicated — collapse duplicate URLs before listing repositories. **Compare `totalForPlace` and `results.length`:** if `totalForPlace > 0` but `results` is empty, FS has resources for this place outside your time window — note the gap rather than reporting "no online resources." If `totalForPlace === 0`, FS has no curated external links for this place at all.
 
@@ -283,11 +289,14 @@ the text after the first comma** ("Pennsylvania, United States", then
   figure for a village is usually too generic to use — climb only as far as you
   must.
 - **Additive resources** — `external_links_search`, `collections_search`,
-  `volume_search`. Each level holds *different* records (the county courthouse,
-  the state archive, the national index), so fetch the levels your research
-  actually needs and combine them. Bias to the specific end; the national level
-  is mostly generic collections the researcher already knows — pull it only on
-  first contact with a country or when the local levels are sparse.
+  `volume_search`, `catalog_search`. Each level holds *different* records (the
+  county courthouse, the state archive, the national index), so fetch the levels
+  your research actually needs and combine them. Bias to the specific end; the
+  national level is mostly generic collections the researcher already knows —
+  pull it only on first contact with a country or when the local levels are
+  sparse. `catalog_search` **includes subordinate places by default** (`exactPlace`
+  is false). So on 0 hits, climb one jurisdiction level and **stop at the first
+  level with hits** — do not call every level.
 
 ### Writing places to research.json / tree.gedcomx.json
 
@@ -743,8 +752,8 @@ abbreviation guides for specific record types.
 | What migration routes led to this area? | Historical route maps, migration pattern studies |
 | What churches were present in this area? | Local history publications, FamilySearch Wiki, denominational archives |
 | What does this term/abbreviation mean? | Specialized dictionaries, glossaries |
-| What has been published about this locality? | Bibliographies, library catalogs (WorldCat, FamilySearch Catalog) |
-| Where are the original records held? | FamilySearch Catalog (search by place), state archive guides |
+| What has been published about this locality? | Bibliographies, library catalogs (WorldCat, `catalog_search`) |
+| Where are the original records held? | `catalog_search({ standardPlace: … })` — a hit's `repositoryCalls` names the archive; state archive guides |
 
 ## Broad Context Factors for Locality Research
 

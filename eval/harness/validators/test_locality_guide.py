@@ -198,3 +198,32 @@ def test_survey_run_calls_both_collections_and_volume_search(tool_calls):
         f"records survey called {sorted(tools & {'collections_search', 'volume_search'})} "
         f"but not {missing} — both are required Step-3 calls (agents/locality-guide.md Step 3)"
     )
+
+
+def test_catalog_search_called_and_broadened(tool_calls, test):
+    """VR5 (issue #3107) — scoped to ut_locality_guide_028: the agent must call
+    catalog_search, and when it gets 0 hits, broaden by calling catalog_search
+    again on a wider standardPlace.
+
+    Grades call PRESENCE and COUNT, not the result content: the skill *making*
+    the initial call and then broadening is the behaviour under test. Skips for
+    all other tests — catalog_search is not registered in their fixtures, so they
+    cannot call it.
+    """
+    if (test.get("id") or "") != "ut_locality_guide_028":
+        pytest.skip("not the catalog-search broadening test")
+    calls = [
+        tc for tc in (tool_calls or [])
+        if bare_tool_name(tc.get("tool")) == "catalog_search"
+    ]
+    assert calls, (
+        "ut_locality_guide_028 must call catalog_search at least once"
+    )
+    places = [
+        (tc.get("args") or {}).get("standardPlace", "")
+        for tc in calls
+    ]
+    assert len(places) >= 2, (
+        f"catalog_search was called {len(places)} time(s) with places {places}; "
+        "expected at least 2 calls (initial + broadened) after a 0-hit result"
+    )
