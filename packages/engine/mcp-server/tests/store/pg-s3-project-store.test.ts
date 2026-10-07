@@ -373,18 +373,21 @@ describe("PgS3ProjectStore without a stack", () => {
       const acceptedBefore = accepted;
       try {
         const t0 = Date.now();
-        // The 1 s metadata timeout, a v2 token request then the v1 fallback.
+        // The SDK's 1 s metadata timeout, a v2 token request then the v1
+        // fallback: about 2 s. The bound guards against a hang (the 90 s
+        // request timeout, or none), so it sits far above 2 s: at 4 s it failed
+        // 1 run in 10 on a CPU-saturated host, at 4.7-4.9 s.
         await expect(
           backend.s3.send(new HeadObjectCommand({ Bucket: "projects", Key: "p/x/y" })),
         ).rejects.toMatchObject({ name: "CredentialsProviderError" });
-        expect(Date.now() - t0).toBeLessThan(4000);
+        expect(Date.now() - t0).toBeLessThan(15_000);
         // The lookup reached the silent listener, not a real metadata service.
         expect(accepted).toBeGreaterThan(acceptedBefore);
       } finally {
         await backend.close();
         vi.unstubAllEnvs();
       }
-    }, 6000);
+    }, 20_000);
 
     /** A silent backend whose own timeouts are far longer than any readiness
      *  deadline, so only the probe's race can bound it. */
