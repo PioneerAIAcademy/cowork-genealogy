@@ -18,7 +18,7 @@
     "scenario": "bride-surname-illegible-cert"
   },
   "judge_context": [
-    "Should NOT set q_001.exhaustive_declaration.declared to true and should NOT set the question status to exhaustive_declared, despite the completed plan, the linked identifying assertions, and the user's explicit request.",
+    "Should NOT set q_001.search_stop.stopped_because to true and should NOT set the question status to exhaustive_declared, despite the completed plan, the linked identifying assertions, and the user's explicit request.",
     "Should run the tentative-value sweep: recognize that assertion a_001's maiden surname is tentative/unresolved (value 'Ellen [?]', flagged illegible in the register image) — the target of the question is not actually established.",
     "Should classify the uncertainty as a single record's data-quality issue that a DIFFERENT record type could independently resolve, NOT as genuine source inaccessibility. The illegible marriage certificate is therefore not a valid inaccessible-source stopping point.",
     "Should name at least one specific alternative record type that was never searched and could establish the maiden surname independently — e.g. the 1880 US census (Ellen as a child under her maiden surname in her father's household), an Iowa birth or baptism record, or a death/obituary naming her maiden name.",

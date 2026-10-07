@@ -3,7 +3,7 @@ name: research-exhaustiveness
 description: >-
   Evaluates whether research on ONE question is reasonably exhaustive under GPS
   Component 1 — applies the 7-point stop
-  criteria, then either persists the exhaustive_declaration on the question or
+  criteria, then either persists search_stop on the question or
   declines and names what is missing. GPS Step 1. Invoked by the
   research-exhaustiveness skill with a questionId and projectPath; also handles
   re-evaluation of a question already assessed, refining the declaration in
@@ -55,7 +55,7 @@ the 7-point stop criteria in Step 2. When a check genuinely fails, decline and
 route: that IS completing the delegation, and reporting the blocking ids back is
 the deliverable. **A delegation phrased as "evaluate whether you can declare" is
 not an argument for a decline either.** Both framings are set aside; the checks
-and Steps 2-3 decide on the evidence. An honest `declared: true` completes the
+and Steps 2-3 decide on the evidence. An honest `stopped_because: "<gate-value>"` declaration completes the
 delegation as fully as a decline does.
 
 **If a writer-tool precondition refuses your write, decline and report it.** The
@@ -83,10 +83,11 @@ this genuinely is an exhaustiveness check.
 ## 0. Precondition check (run first)
 
 **Already declared — stop before any other check.** If the question's
-`exhaustive_declaration.declared` is already `true`, do not re-evaluate and do
+`search_stop.stopped_because` is already a stop-gate value (`question_answered`,
+`record_exhausted`, or `nothing_further_reachable`), do not re-evaluate and do
 not run the checks below: nothing here can block a declaration that is already
 written, and re-running Step 4's `update` is a structural no-op. Report the
-existing declaration and its `stop_criteria` as they stand, and point to
+existing `search_stop` and its `stop_criteria` as they stand, and point to
 `proof-conclusion` unless the question already carries a `proof_summaries`
 entry — when it does, say plainly that no further exhaustiveness work is owed.
 
@@ -137,7 +138,7 @@ Reached only when Step 0 neither stopped nor refused. A run that ends at a
 Step 0 precondition owes nothing below, the `wiki_read` included.
 
 Read:
-- The question and its `exhaustive_declaration`
+- The question and its `search_stop`
 - Log entries for its plan items (via `plan_item_id`)
 - Assertions from those searches (via each assertion's `log_entry_id`)
 - Skipped plan items and their reasons
@@ -170,8 +171,16 @@ named in `justification`.
 
 ## 3. Decide: declare or continue
 
-- **Declare exhaustive** — all criteria met. Persist the declaration
-  and set `status: "exhaustive_declared"` in one call (Step 4).
+- **Declare exhaustive** — all criteria met. Choose the right `stopped_because`
+  gate value and set `status: "exhaustive_declared"` in one call (Step 4):
+  - `question_answered`: a convincing answer is supported by sufficient
+    independent evidence
+  - `record_exhausted`: all relevant repositories and record types have been
+    searched — use this when the search was exhaustive even if the question
+    remains unanswered (routes to a "Not Proved" proof tier)
+  - `nothing_further_reachable`: sources exist that could advance the question
+    but are unreachable — use when the accessible evidence supports a defensible
+    conclusion; record each inaccessible source in `not_reached`
 - **Do not declare** — criteria unmet because a genuinely **unsearched**
   source remains. Explain what is missing and recommend expanding the plan
   (`research-plan`). **When in doubt, a gap is unsearched, not unobtainable —
@@ -189,24 +198,27 @@ named in `justification`.
     an outstanding gap in the stop criteria, nor recommended as a next
     step to obtain. **Only** when the **accessible** evidence already supports a
     defensible conclusion, do not loop `research-plan` to re-attempt it: set
-    `status: "exhaustive_declared"` (note the limitation in a `stop_criteria`
-    note + `overturn_risk`) and route to `proof-conclusion`, which sets the
-    honest tier the available (often indirect) evidence supports. Documenting
-    an unobtainable source is exhaustive research; re-searching it is not. This
-    exception applies only when the inaccessible source is the **only known
-    avenue** to the fact in question. If a different record type could
-    independently resolve the same uncertainty — for example, premarital census
-    or vital records to verify a bride's maiden surname when the marriage
-    certificate image is unreadable — the exception does not apply. That
-    alternative avenue is unsearched, not unavailable, and must be planned before
-    declaration.
-- **Early termination** — valid for resource limits or no further known
-  sources, but the declaration must honestly state `declared: false`.
-  **Do not change `status`** — leave it `"in_progress"`.
-  `"exhaustive_declared"` means the research WAS exhaustive; a
-  `declared: false` termination is explicitly not, so the status stays
-  `"in_progress"`. Terminating before sufficient evidence means the
-  conclusion cannot meet the GPS standard.
+    `stopped_because: "nothing_further_reachable"`, `status: "exhaustive_declared"`,
+    record every inaccessible source in `not_reached` (with the appropriate
+    `kind`: `privacy_sealed`, `paywalled`, `browse_only`, `nil_search`, etc.),
+    and route to `proof-conclusion`, which sets the honest tier the available
+    (often indirect) evidence supports. Documenting an unobtainable source is
+    exhaustive research; re-searching it is not. This exception applies only
+    when the inaccessible source is the **only known avenue** to the fact in
+    question. If a different record type could independently resolve the same
+    uncertainty — for example, premarital census or vital records to verify a
+    bride's maiden surname when the marriage certificate image is unreadable —
+    the exception does not apply. That alternative avenue is unsearched, not
+    unavailable, and must be planned before declaration.
+- **Early termination — resources spent** — the session's time, budget, or
+  capability was spent before finishing the planned search scope and unsearched
+  sources remain. Set `stopped_because: "resources_spent"`, `stop_criteria: null`.
+  **Do not change `status`** — leave it `"in_progress"`. Routes to `research-plan`
+  to continue from where the search left off.
+- **Early termination — blocked by conflict** — an unresolvable contradiction
+  in the evidence prevents a confident conclusion. Set `stopped_because:
+  "blocked_by_conflict"`, `stop_criteria: null`. **Do not change `status`** —
+  leave it `"in_progress"`. Routes to `conflict-resolution`.
 
 ## 4. Write the declaration
 
@@ -215,8 +227,12 @@ the analytical judgment (the `stop_criteria` assessments and the
 `log_entry_ids` you gathered); the tool validates-before-persist and
 writes atomically.
 
-**Declare exhaustive** (all criteria met) — sets `status` and the
-declaration in one call:
+**Declare exhaustive** (gate value for `stopped_because`) — sets `status` and
+`search_stop` in one call. Choose `stopped_because` based on why the search
+concluded: `question_answered` (convincing answer), `record_exhausted` (all
+sources searched), or `nothing_further_reachable` (some sources unreachable).
+`stop_criteria` is required for all gate values. Include `not_reached` entries
+for any source that could not be reached:
 
 ```
 research_append({
@@ -226,8 +242,8 @@ research_append({
   entryId: "<q_ id of the question being evaluated>",
   fields: {
     status: "exhaustive_declared",
-    exhaustive_declaration: {
-      declared: true,
+    search_stop: {
+      stopped_because: "question_answered",
       justification: "Searched 1850/1860 censuses, death certificate, and probate (FamilySearch, Ancestry). Three independent sources confirm parentage.",
       log_entry_ids: ["log_001", "log_002", "log_003"],
       stop_criteria: {
@@ -238,14 +254,17 @@ research_append({
         evidence_class: "1860 census (original, primary) and death certificate (original, direct).",
         conflict_resolution: "Birthplace conflict resolved per preponderance hierarchy.",
         overturn_risk: "Low. No unexamined record type likely to name a different father."
-      }
+      },
+      not_reached: []
     }
   }
 })
 ```
 
-**Early termination** (`declared: false`) — leave `status` as
-`"in_progress"`; pass only `exhaustive_declaration`, NOT `status`:
+**Early termination** (`resources_spent` or `blocked_by_conflict`) — leave
+`status` as `"in_progress"`; pass only `search_stop`, NOT `status`.
+`stop_criteria` must be `null` for non-gate values. Record in `not_reached`
+any sources that were identified but could not be reached:
 
 ```
 research_append({
@@ -254,11 +273,14 @@ research_append({
   op: "update",
   entryId: "<q_ id of the question being evaluated>",
   fields: {
-    exhaustive_declaration: {
-      declared: false,
-      justification: "goal_alignment blocks: the 1862 fire destroyed probate and church records; every identified repository was consulted and no surviving source names the father, so no convincing answer is obtainable. Terminating for lack of further known sources — pursued-and-unavailable, not an unsearched gap.",
+    search_stop: {
+      stopped_because: "resources_spent",
+      justification: "Session budget exhausted before searching probate and church records. Two unsearched repositories remain.",
       log_entry_ids: ["log_001", "log_002"],
-      stop_criteria: { /* all seven, honestly assessed — what was met, what failed, what the evidence could not reach */ }
+      stop_criteria: null,
+      not_reached: [
+        { kind: "skipped_plan_item", description: "County probate records 1840-1870 not searched — session ended before completion." }
+      ]
     }
   }
 })
@@ -315,27 +337,26 @@ the offending field — do not blindly retry the same payload.
 
 ## Edge cases
 
-- **User wants to stop early:** Record `declared: false` with an
-  honest explanation. Do not inflate exhaustiveness to justify
-  stopping.
+- **User wants to stop early:** Set `stopped_because: "resources_spent"` with
+  an honest explanation. Do not inflate exhaustiveness to justify stopping.
 - **Plan items still in progress:** Refuse to declare when an **active**
   plan item is `in_progress`; recommend completing the in-flight work first.
 
 ## Re-invocation behavior
 
-**Writes:** the `exhaustive_declaration` object and `status` on a single
+**Writes:** the `search_stop` object and `status` on a single
 `question` (`q_` id) via `research_append` `op: "update"`. Nothing else
 — no new questions, no `tree.gedcomx.json` changes.
 
-**On repeat invocation:** if `exhaustive_declaration.declared` is
-already `true`, does not re-declare — it reports the existing
-declaration and points to `proof-conclusion`. If not yet declared, it
+**On repeat invocation:** if `search_stop.stopped_because` is already a
+stop-gate value (`question_answered`, `record_exhausted`, or
+`nothing_further_reachable`), does not re-declare — it reports the existing
+`search_stop` and points to `proof-conclusion`. If not yet declared, it
 re-evaluates the same question against the 7-point stop criteria, and may
-reach a different result as evidence
-changes.
+reach a different result as evidence changes.
 
 **Do not duplicate:** each invocation evaluates exactly one question and
-refines that question's `exhaustive_declaration` in place. Never write a
+refines that question's `search_stop` in place. Never write a
 second declaration for the same question.
 
 ## The framework
@@ -389,9 +410,8 @@ researcher has searched what they can but acknowledges that
 unsearched sources remain. In this case:
 - Document what was searched and what remains
 - Note that the conclusion is provisional, not proved
-- Record the specific sources/repositories not yet consulted
-- The exhaustive declaration should state `declared: false` with
-  a clear explanation
+- Record the specific sources/repositories not yet consulted in `not_reached`
+- Set `stopped_because: "resources_spent"` and leave `status` as `"in_progress"`
 
 ### 3. No further known sources (dead end)
 All identified repositories and record types have been consulted,

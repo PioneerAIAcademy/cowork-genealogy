@@ -2,7 +2,7 @@
 name: research-exhaustiveness
 description: Evaluates whether research on a question is reasonably
   exhaustive — applies the 7-point stop criteria, then either writes
-  the exhaustive_declaration on the
+  search_stop on the
   question or explains what's missing. GPS Step 1 — Reasonably
   Exhaustive Research. Use when the user says "is this research
   exhaustive?", "are we done?", "have we searched enough?", "can we
@@ -31,13 +31,13 @@ If the text matches no question, or matches more than one, ask which before proc
 
 ## 2. Delegate the evaluation
 
-Invoke `@plugin:research-exhaustiveness` with a delegation message carrying `questionId` and `projectPath`, and asking it to **assess whether the question is reasonably exhaustive and record the outcome** — declaring if the criteria are met, and recording an honest `declared: false` termination if they are not.
+Invoke `@plugin:research-exhaustiveness` with a delegation message carrying `questionId` and `projectPath`, and asking it to **assess whether the question is reasonably exhaustive and record the outcome** — declaring if the criteria are met, and recording an honest non-gate `stopped_because` value if they are not.
 
 **Do not ask it to "declare the question exhaustive."** An instruction to declare overrides the agent's own preconditions, and it will write past a block it would otherwise have stopped on. Equally, do not ask it merely to "evaluate whether you can declare" — that invites a decline on evidence that in fact supports a declaration. Ask for the assessment and let the body decide.
 
-The agent owns every step from there: the preconditions, the 7-point stop criteria assessed as a gate, the tier of the outcome, and the `exhaustive_declaration` write.
+The agent owns every step from there: the preconditions, the 7-point stop criteria assessed as a gate, the tier of the outcome, and the `search_stop` write.
 
-**Do not write `exhaustive_declaration` yourself.** Declaring a question exhaustive is routed to the agent and a direct `research_append` setting `declared: true` is denied. If the delegation fails, report the failure and stop — do not write the declaration inline.
+**Do not write `search_stop` yourself.** Declaring a question exhaustive is routed to the agent and a direct `research_append` setting a stop-gate `stopped_because` value is denied. If the delegation fails, report the failure and stop — do not write the declaration inline.
 
 One invocation per question.
 
@@ -49,15 +49,15 @@ Then recommend the next step: declared exhaustive → proof-conclusion; not decl
 
 ## Re-invocation behavior
 
-**Writes:** nothing directly. Every write is made by the `research-exhaustiveness` agent this skill delegates to — the `exhaustive_declaration` object and `status` on a single question in `research.json`. Nothing else, and no `tree.gedcomx.json` changes.
+**Writes:** nothing directly. Every write is made by the `research-exhaustiveness` agent this skill delegates to — the `search_stop` object and `status` on a single question in `research.json`. Nothing else, and no `tree.gedcomx.json` changes.
 
-**On repeat invocation for the same question:** delegate again, unchanged. The agent finds an existing declaration and refines it in place rather than writing a second one; if it is already `declared: true` it reports that and points at proof-conclusion.
+**On repeat invocation for the same question:** delegate again, unchanged. The agent finds an existing `search_stop` and refines it in place rather than writing a second one; if `stopped_because` is already a stop-gate value it reports that and points at proof-conclusion.
 
 **Safe to re-invoke.** A repeat run re-evaluates the same question; it never duplicates a declaration.
 
 ## Never
 
-- Never write `research.json` yourself — not the declaration, not the question's `status`.
+- Never write `research.json` yourself — not `search_stop`, not the question's `status`.
 - Never decide, on the agent's behalf, that a precondition does not apply. If the agent declines and names a blocker, relay that — it is the correct outcome, not a failure to work around.
 - Never clear a blocker the agent reports. A plan item still `in_progress` is finished by the search skill that owns it, an unclassified assertion by record-extraction; flipping a status to unblock a declaration falsifies the record.
 - Never evaluate more than one question per invocation.

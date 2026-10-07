@@ -2,12 +2,13 @@
   "project": {
     "id": "rp_001",
     "objective": "Confirm that Sarah Mullen Price (death cert 1921) is the same person as Sarah Ann Mullen who married James Price in 1872, by finding pre-marriage records under her birth name",
-    "subject_person_ids": ["I1"],
+    "subject_person_ids": [
+      "I1"
+    ],
     "status": "active",
     "created": "2026-06-01",
     "updated": "2026-06-01"
   },
-
   "questions": [
     {
       "id": "q_001",
@@ -21,15 +22,15 @@
       "created": "2026-06-01",
       "resolved": null,
       "resolution_assertion_ids": [],
-      "exhaustive_declaration": {
-        "declared": false,
+      "search_stop": {
+        "stopped_because": null,
         "justification": null,
         "log_entry_ids": [],
-        "stop_criteria": null
+        "stop_criteria": null,
+        "not_reached": []
       }
     }
   ],
-
   "plans": [
     {
       "id": "pl_001",
@@ -62,14 +63,17 @@
       ]
     }
   ],
-
   "log": [
     {
       "id": "log_001",
       "plan_item_id": null,
       "performed": "2026-06-01T09:00:00Z",
       "tool": "record_search",
-      "query": { "surname": "Price", "given": "Sarah Mullen", "collection": "Wisconsin Death Index" },
+      "query": {
+        "surname": "Price",
+        "given": "Sarah Mullen",
+        "collection": "Wisconsin Death Index"
+      },
       "outcome": "positive",
       "results_examined": 1,
       "results_ref": "results/log_001.json",
@@ -78,7 +82,6 @@
       "external_site": null
     }
   ],
-
   "sources": [
     {
       "id": "src_001",
@@ -102,7 +105,6 @@
       "log_entry_id": "log_001"
     }
   ],
-
   "assertions": [
     {
       "id": "a_001",
@@ -112,16 +114,20 @@
       "record_persona_id": "DP1",
       "fact_type": "name",
       "value": "Sarah Mullen Price",
-      "structured_value": { "given": "Sarah Mullen", "surname": "Price" },
+      "structured_value": {
+        "given": "Sarah Mullen",
+        "surname": "Price"
+      },
       "information_quality": "secondary",
       "informant": "Informant (likely family member) reporting to registrar",
       "informant_proximity": "family_not_present",
       "record_basis": "stated",
       "log_entry_id": "log_001",
-      "extracted_for_question_ids": ["q_001"]
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     }
   ],
-
   "person_evidence": [],
   "conflicts": [],
   "hypotheses": [],

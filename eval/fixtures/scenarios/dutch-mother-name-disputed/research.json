@@ -26,11 +26,12 @@
       "created": "2026-06-01",
       "resolved": null,
       "resolution_assertion_ids": [],
-      "exhaustive_declaration": {
-        "declared": false,
+      "search_stop": {
+        "stopped_because": null,
         "justification": null,
         "log_entry_ids": [],
-        "stop_criteria": null
+        "stop_criteria": null,
+        "not_reached": []
       }
     }
   ],
@@ -150,7 +151,9 @@
       "informant": "father",
       "informant_proximity": "household_member",
       "record_basis": "stated",
-      "extracted_for_question_ids": ["q_001"]
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     },
     {
       "id": "a_002",
@@ -164,7 +167,9 @@
       "informant_proximity": "household_member",
       "record_basis": "stated",
       "informant_bias_notes": "The first letter is unclear in the handwritten act; OCR read it as J but the user sees T. The groom's mother on the same act was also read as Jannetje.",
-      "extracted_for_question_ids": ["q_001"]
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     },
     {
       "id": "a_003",
@@ -177,7 +182,9 @@
       "informant": "clerk",
       "informant_proximity": "official_duty",
       "record_basis": "stated",
-      "extracted_for_question_ids": ["q_001"]
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     }
   ],
   "person_evidence": [
@@ -219,13 +226,18 @@
       "description": "Mother's name: 'Jannetje [?] van Noord' (birth act OCR, first letter uncertain) vs. 'Fannetje van Noord' (ten-year marriage index). The user reads the birth act as 'Tannetje'.",
       "disputed_attribute": "name",
       "identity_question": null,
-      "competing_assertion_ids": ["a_002", "a_003"],
+      "competing_assertion_ids": [
+        "a_002",
+        "a_003"
+      ],
       "independence_analysis": null,
       "weighing_analysis": null,
       "preferred_assertion_id": null,
       "resolution_rationale": null,
       "status": "unresolved",
-      "blocks_question_ids": ["q_001"]
+      "blocks_question_ids": [
+        "q_001"
+      ]
     }
   ],
   "hypotheses": [],

@@ -2,7 +2,7 @@
 
 research-exhaustiveness evaluates whether research on an existing
 question is reasonably exhaustive and either writes the
-`exhaustive_declaration` on the question or declines and names what's
+`search_stop` on the question or declines and names what's
 missing. The skill modifies only existing questions — it never creates
 them (that's question-selection).
 
@@ -39,14 +39,15 @@ REQUIRED_STOP_CRITERIA_KEYS = {
     "overturn_risk",
 }
 
+_STOP_GATE_VALUES = frozenset({"question_answered", "record_exhausted", "nothing_further_reachable"})
+
 
 def _questions_by_id(state: dict) -> dict[str, dict]:
     return {q.get("id"): q for q in (state or {}).get("questions") or [] if q.get("id")}
 
 
 def _questions_with_changed_declaration(before: dict, after: dict) -> list[dict]:
-    """Return after-state question dicts whose exhaustive_declaration
-    or status changed."""
+    """Return after-state question dicts whose search_stop or status changed."""
     before_by_id = _questions_by_id(before)
     changed: list[dict] = []
     for q in (after.get("questions") or []):
@@ -54,16 +55,22 @@ def _questions_with_changed_declaration(before: dict, after: dict) -> list[dict]
         if not qid or qid not in before_by_id:
             continue
         prev = before_by_id[qid]
-        if (q.get("exhaustive_declaration") != prev.get("exhaustive_declaration")
+        if (q.get("search_stop") != prev.get("search_stop")
                 or q.get("status") != prev.get("status")):
             changed.append(q)
     return changed
 
 
+def _is_gate_value(q: dict) -> bool:
+    """Return True when search_stop.stopped_because is a stop-gate value."""
+    ss = q.get("search_stop") or {}
+    return ss.get("stopped_because") in _STOP_GATE_VALUES
+
+
 # --- Never create new questions ---------------------------------------
 
 def test_no_new_questions(before_state, after_state):
-    """research-exhaustiveness modifies the `exhaustive_declaration` /
+    """research-exhaustiveness modifies `search_stop` /
     `status` on existing questions. Creating a new question is
     question-selection's job; doing it here would violate single-writer
     semantics on the question creation event."""
@@ -86,9 +93,9 @@ def test_no_new_questions(before_state, after_state):
 # --- Declaration / status consistency ---------------------------------
 
 def test_declared_implies_exhaustive_declared_status(before_state, after_state):
-    """When `exhaustive_declaration.declared` flips to true, the
+    """When search_stop.stopped_because is a stop-gate value, the
     question's `status` must be `exhaustive_declared` (not still
-    `in_progress` or `open`). Out-of-sync declared/status leaves a
+    `in_progress` or `open`). Out-of-sync stopped_because/status leaves a
     question that looks declared in the data but still appears unfinished
     to downstream skills."""
     before = before_state.get("research_json")
@@ -97,44 +104,44 @@ def test_declared_implies_exhaustive_declared_status(before_state, after_state):
         pytest.skip("missing research.json for diff")
     bad: list[str] = []
     for q in _questions_with_changed_declaration(before, after):
-        decl = (q.get("exhaustive_declaration") or {}).get("declared")
         status = q.get("status")
-        if decl is True and status != "exhaustive_declared":
-            bad.append(f"{q.get('id')}: declared=true but status={status!r}")
+        if _is_gate_value(q) and status != "exhaustive_declared":
+            sb = (q.get("search_stop") or {}).get("stopped_because")
+            bad.append(f"{q.get('id')}: stopped_because={sb!r} but status={status!r}")
     assert not bad, "Declared/status inconsistency:\n  - " + "\n  - ".join(bad)
 
 
 def test_declared_has_log_entry_ids(before_state, after_state):
-    """When `declared` is true, `log_entry_ids` must be non-empty — the
-    declaration is unfalsifiable without the log entries it claims to
-    rest on (research-schema-spec §6 `exhaustive_declaration`)."""
+    """When stopped_because is a stop-gate value, `log_entry_ids` must be
+    non-empty — the declaration is unfalsifiable without the log entries it
+    claims to rest on (research-schema-spec §6 `search_stop`)."""
     before = before_state.get("research_json")
     after = after_state.get("research_json")
     if before is None or after is None:
         pytest.skip("missing research.json for diff")
     bad: list[str] = []
     for q in _questions_with_changed_declaration(before, after):
-        ed = q.get("exhaustive_declaration") or {}
-        if ed.get("declared") is True and not ed.get("log_entry_ids"):
-            bad.append(f"{q.get('id')}: declared=true with empty log_entry_ids")
+        ss = q.get("search_stop") or {}
+        if _is_gate_value(q) and not ss.get("log_entry_ids"):
+            bad.append(f"{q.get('id')}: stopped_because={ss.get('stopped_because')!r} with empty log_entry_ids")
     assert not bad, "Declared without log entries:\n  - " + "\n  - ".join(bad)
 
 
 def test_declared_has_full_stop_criteria(before_state, after_state):
-    """When `declared` is true, `stop_criteria` must include all seven
-    keys from GPS Step 1's 7-Point Stop Criteria. Missing keys leak
-    through universal schema validation if the schema marks them
-    optional, but the skill contract requires all seven."""
+    """When stopped_because is a stop-gate value, `stop_criteria` must
+    include all seven keys from GPS Step 1's 7-Point Stop Criteria.
+    Missing keys leak through universal schema validation if the schema
+    marks them optional, but the skill contract requires all seven."""
     before = before_state.get("research_json")
     after = after_state.get("research_json")
     if before is None or after is None:
         pytest.skip("missing research.json for diff")
     bad: list[str] = []
     for q in _questions_with_changed_declaration(before, after):
-        ed = q.get("exhaustive_declaration") or {}
-        if ed.get("declared") is not True:
+        if not _is_gate_value(q):
             continue
-        sc = ed.get("stop_criteria") or {}
+        ss = q.get("search_stop") or {}
+        sc = ss.get("stop_criteria") or {}
         missing = REQUIRED_STOP_CRITERIA_KEYS - set(sc.keys())
         if missing:
             bad.append(f"{q.get('id')}: missing stop_criteria keys {sorted(missing)}")
@@ -146,8 +153,8 @@ def test_declared_has_full_stop_criteria(before_state, after_state):
 def test_no_exhaustive_declaration(before_state, after_state, test):
     """Tag-gated: when the test expects the skill to decline (e.g.,
     record types unsearched, plan items still in progress), no question
-    should transition to `exhaustive_declared` or flip `declared` to
-    true."""
+    should transition to `exhaustive_declared` or set a stop-gate
+    stopped_because value."""
     if "no-exhaustive-declaration" not in test.get("tags", []):
         pytest.skip("not a no-exhaustive-declaration scenario")
     before = before_state.get("research_json")
@@ -159,10 +166,11 @@ def test_no_exhaustive_declaration(before_state, after_state, test):
     for q in (after.get("questions") or []):
         qid = q.get("id")
         prev = before_by_id.get(qid, {})
-        prev_decl = (prev.get("exhaustive_declaration") or {}).get("declared")
-        new_decl = (q.get("exhaustive_declaration") or {}).get("declared")
-        if prev_decl is not True and new_decl is True:
-            bad.append(f"{qid}: flipped declared false→true when decline expected")
+        prev_gate = (prev.get("search_stop") or {}).get("stopped_because") in _STOP_GATE_VALUES
+        new_gate = _is_gate_value(q)
+        if not prev_gate and new_gate:
+            sb = (q.get("search_stop") or {}).get("stopped_because")
+            bad.append(f"{qid}: set stop-gate stopped_because={sb!r} when decline expected")
         if prev.get("status") != "exhaustive_declared" and q.get("status") == "exhaustive_declared":
             bad.append(f"{qid}: status set to exhaustive_declared when decline expected")
     assert not bad, "Unexpected declaration:\n  - " + "\n  - ".join(bad)

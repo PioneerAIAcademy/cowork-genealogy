@@ -21,11 +21,11 @@ export * from './enums.generated.js'
 import type {
   ConflictStatus, ConflictType, DateCertainty, RecordBasis, HoldingConfidence,
   HoldingType, HypothesisStatus, InformantProximity, InformationQuality,
-  LogOutcome, PersonEvidenceConfidence, PlanItemStatus, PlanStatus, Priority,
+  LogOutcome, NotReachedKind, PersonEvidenceConfidence, PlanItemStatus, PlanStatus, Priority,
   ProjectStatus, ProofShortfall, ProofTier, ProofVehicle, QuestionStatus, SelectionBasis,
   SourceClassification, Severity, ExternalSite, DateCertaintyTimeline,
   EvaluationFocus, EvaluationTargetType, EvaluationVerdict, ExperienceLevel,
-  Subscription, LocalityPageSection,
+  StoppedBecause, Subscription, LocalityPageSection,
 } from './enums.generated.js'
 
 // ============================================================
@@ -64,11 +64,19 @@ export interface StopCriteria {
   overturn_risk: string
 }
 
-export interface ExhaustiveDeclaration {
-  declared: boolean
+export interface NotReachedEntry {
+  kind: NotReachedKind
+  description: string
+  log_entry_id: string | null
+  wiki_title: string | null
+}
+
+export interface SearchStop {
+  stopped_because: StoppedBecause | null
   justification?: string | null
   log_entry_ids: string[]
   stop_criteria: StopCriteria | null
+  not_reached: NotReachedEntry[]
 }
 
 export interface Question {
@@ -83,7 +91,7 @@ export interface Question {
   created: string
   resolved: string | null
   resolution_assertion_ids: string[]
-  exhaustive_declaration: ExhaustiveDeclaration
+  search_stop: SearchStop
 }
 
 export interface PlanItem {

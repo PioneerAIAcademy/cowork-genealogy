@@ -218,7 +218,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       mitigation: {
         side: "caller",
         excerpt:
-          "declaring if the criteria are met, and recording an honest `declared: false` termination if they are not",
+          "declaring if the criteria are met, and recording an honest non-gate `stopped_because` value if they are not",
       },
     },
   },

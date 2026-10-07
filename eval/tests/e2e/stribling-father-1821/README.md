@@ -427,7 +427,7 @@ Read these before attributing a failed headless run.
   result.** `stop_reason: completed`; 78.7 min, $10.32 — above the guide's 20–60 min /
   $3–10 envelope, which is the depth warning landing. Blind grade: **f1 `true`, f2 `true`,
   f3 `true`, f4 `false`** — 3 of 4, so `partial`. Compliance **FAIL** on nine guardrail
-  bypasses: an `exhaustive_declaration` written without `research-exhaustiveness`, a
+  bypasses: an `search_stop` written without `research-exhaustiveness`, a
   conflict carrying `conflict-resolution`'s analytical product without that skill running,
   and six new persons carrying `person_evidence` links with `same_person` never called, so
   every identity was asserted rather than scored. Per spec §14 compliance does not bear on

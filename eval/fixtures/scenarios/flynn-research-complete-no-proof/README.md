@@ -9,7 +9,7 @@ Differs from `flynn-resolved` in these ways:
 - **Added a contemporaneous family Bible (1845):** `src_006` is a family Bible birth entry recorded by the father, Thomas Flynn — a **second** independent original source with *primary* information on the parent-child relationship, alongside the baptism. This is the key to a defensible `proved`: the skill's own tier table defines `proved` as "2+ independent original sources with primary information," so a single primary source (baptism alone) correctly tier-downs to `probable` (see the senior-review note below). With the baptism **and** the family Bible, the scenario genuinely clears the `proved` bar, corroborated by the indirect census co-residence and the direct-but-secondary death certificate.
 - **`q_001` rescoped to the father only:** Original wording asked about "parents" (plural). The fixture's existing evidence (1850/1860 census and 1908 death cert) only names Thomas. When the baptism was added, it also named the mother (Mary Brennan) as Catholic baptismal records always do — and a careful LLM correctly tier-downed the whole question because the mother's identification had only one corroborating source. Rescoping the question to "Who was the father?" matches the actual evidence scope and aligns with the test's intent (verifying `proved`-tier for paternal identification). Maternal identification would be a separate downstream question.
 
-Everything else (project.status, q_001.exhaustive_declaration shape, plans, log entries 1–6 including negative probate log_006, conflict c_001, etc.) matches `flynn-resolved`. The exhaustive_declaration text references five sources, two of them with primary information on the relationship.
+Everything else (project.status, q_001.search_stop shape, plans, log entries 1–6 including negative probate log_006, conflict c_001, etc.) matches `flynn-resolved`. The search_stop text references five sources, two of them with primary information on the relationship.
 
 ## Items added vs. flynn-resolved
 
@@ -22,17 +22,17 @@ Everything else (project.status, q_001.exhaustive_declaration shape, plans, log 
 - `person_evidence[pe_007, pe_008]` — links a_014 to I1 (Patrick) and I2 (Thomas)
 - `person_evidence[pe_009, pe_010]` — links a_015 to I1 (Patrick) and I2 (Thomas)
 - `questions[q_001].resolution_assertion_ids` — appends `a_014`, `a_015`
-- `questions[q_001].exhaustive_declaration` — log_entry_ids appends `log_007`, `log_008`; justification/stop_criteria text updated for the five-source, two-primary picture
+- `questions[q_001].search_stop` — log_entry_ids appends `log_007`, `log_008`; justification/stop_criteria text updated for the five-source, two-primary picture
 - `tree.gedcomx.json.sources[S5, S6]` — NLI catalog entry and the family Bible
 - `tree.gedcomx.json.relationships` — **empty** (no pre-loaded `R1`): unlike `flynn-resolved`, the concluded ParentChild link is NOT staged in the pre-state — proof-conclusion must write it (the `tree-write-expected` found-but-lost guard verifies absent → present). `S5`/`S6` are added as top-level tree sources, ready for the skill to cite on the relationship.
 
 ## Used by
 
-- `proof-conclusion` positive test for the `proved` tier — the skill must write a new `proof_summaries` entry with `tier: "proved"`, justifying exhaustiveness from the populated `q_001.exhaustive_declaration` and reasoning across all five sources, anchored by the two primary-information sources (1845 baptism and family Bible) and including the negative probate result (`log_006`).
+- `proof-conclusion` positive test for the `proved` tier — the skill must write a new `proof_summaries` entry with `tier: "proved"`, justifying exhaustiveness from the populated `q_001.search_stop` and reasoning across all five sources, anchored by the two primary-information sources (1845 baptism and family Bible) and including the negative probate result (`log_006`).
 
 ## Note on the probate negative result
 
-The negative probate (`log_006`) doesn't contradict the parentage conclusion. It does affect what "reasonably exhaustive" looks like: with no estate proceedings to consult, the conclusion rests on four other independent sources. The `exhaustive_declaration.stop_criteria` reflects this explicitly.
+The negative probate (`log_006`) doesn't contradict the parentage conclusion. It does affect what "reasonably exhaustive" looks like: with no estate proceedings to consult, the conclusion rests on four other independent sources. The `search_stop.stop_criteria` reflects this explicitly.
 
 ## Note on the `proved` bar (resolved here)
 

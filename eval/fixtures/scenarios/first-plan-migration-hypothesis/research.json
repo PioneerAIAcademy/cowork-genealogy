@@ -2,7 +2,9 @@
   "project": {
     "id": "rp_001",
     "objective": "Determine why Michael Sheahan relocated to Schuylkill County, Pennsylvania around 1882",
-    "subject_person_ids": ["I1"],
+    "subject_person_ids": [
+      "I1"
+    ],
     "status": "active",
     "created": "2026-06-01",
     "updated": "2026-06-01"
@@ -19,13 +21,14 @@
       "unblocks": [],
       "resolved": null,
       "resolution_assertion_ids": [],
-      "exhaustive_declaration": {
-        "declared": false,
+      "created": "2026-06-01",
+      "search_stop": {
+        "stopped_because": null,
         "justification": null,
         "log_entry_ids": [],
-        "stop_criteria": null
-      },
-      "created": "2026-06-01"
+        "stop_criteria": null,
+        "not_reached": []
+      }
     }
   ],
   "plans": [],
@@ -82,7 +85,9 @@
       "ruled_out": false,
       "ruled_out_reason": null,
       "notes": "Supported only by the occupation/location change visible across log_001 (1870, farmer, elsewhere) and log_002 (1882, miner, Schuylkill County). No direct record of the move's cause -- no land transaction, employment record, letter, or newspaper item -- has been found yet.",
-      "related_question_ids": ["q_001"]
+      "related_question_ids": [
+        "q_001"
+      ]
     }
   ],
   "timelines": [],
@@ -114,10 +119,26 @@
       ],
       "guide_markdown": "## Schuylkill County, Pennsylvania - 1870-1882\n\nSchuylkill County (formed 1811 from Berks and Northampton) lies in Pennsylvania's anthracite coal region. Deed/land records are held by the county Recorder of Deeds from 1811; much coal-region land was leased from mining companies rather than purchased outright. Catholic parishes moved from the Diocese of Philadelphia to the Diocese of Scranton in 1868. Statewide civil vital registration began only in 1906 -- pre-1906 events are recorded in church, cemetery, and probate records instead. Some coal-region naturalization and church films are browse-only. County tax and exoneration lists for this period are reachable via curated external links.",
       "pages_read": [
-        { "section": "home", "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Genealogy", "found": true },
-        { "section": "getting_started", "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Getting_Started", "found": true },
-        { "section": "online_records", "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Online_Genealogy_Records", "found": true },
-        { "section": "research_tips", "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Research_Tips", "found": true }
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Research_Tips",
+          "found": true
+        }
       ],
       "source": "locality-guide",
       "created": "2026-06-01"

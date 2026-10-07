@@ -1221,7 +1221,7 @@ _FEEDBACK_WINDOW = 40  # == GUARDRAIL_SHADOW_WINDOW; count barely moves 10..150.
 _AGENT_SPLIT_DATES = {
     # bare agent name -> (ISO date the skill/agent split merged, what it owns)
     "proof-conclusion": ("2026-08-21", "proof_summaries"),  # 73b3d98e (#1819)
-    "research-exhaustiveness": ("2026-08-23", "questions.exhaustive_declaration"),  # c78efb0b (#1847)
+    "research-exhaustiveness": ("2026-08-23", "questions.search_stop"),  # c78efb0b (#1847); renamed from exhaustive_declaration (#2539)
 }
 
 

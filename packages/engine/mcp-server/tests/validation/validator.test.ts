@@ -253,10 +253,11 @@ describe("Project Validator", () => {
             created: "2026-01-01",
             resolved: null,
             resolution_assertion_ids: [],
-            exhaustive_declaration: {
-              declared: false,
+            search_stop: {
+              stopped_because: null,
               log_entry_ids: [],
               stop_criteria: null,
+              not_reached: [],
             },
           },
         ],
@@ -485,10 +486,11 @@ describe("Project Validator", () => {
       created: "2026-01-01",
       resolved: null,
       resolution_assertion_ids: [],
-      exhaustive_declaration: {
-        declared: false,
+      search_stop: {
+        stopped_because: null,
         log_entry_ids: [],
         stop_criteria: null,
+        not_reached: [],
       },
     });
     const isoSource = () => ({
@@ -2192,10 +2194,11 @@ describe("Project Validator", () => {
             created: "2026-01-01",
             resolved: null,
             resolution_assertion_ids: [],
-            exhaustive_declaration: {
-              declared: false,
+            search_stop: {
+              stopped_because: null,
               log_entry_ids: [],
               stop_criteria: null,
+              not_reached: [],
             },
           },
         ],
@@ -2502,9 +2505,9 @@ describe("Research closed shapes", () => {
           created: "2026-01-01",
           resolved: null,
           resolution_assertion_ids: [],
-          exhaustive_declaration: {
-            declared: false,
-            log_entry_ids: [],
+          search_stop: {
+            stopped_because: "question_answered",
+            log_entry_ids: ["log_001"],
             stop_criteria: {
               goal_alignment: "aligned",
               repository_breadth: "three repositories",
@@ -2515,6 +2518,7 @@ describe("Research closed shapes", () => {
               overturn_risk: "low",
             },
             justification: null,
+            not_reached: [],
           },
         },
       ],
@@ -2849,12 +2853,12 @@ describe("Research closed shapes", () => {
     { site: "known_holdings entries", plant: (r) => (r.known_holdings[0].zz_extra = true) },
     { site: "questions", plant: (r) => (r.questions[0].zz_extra = true) },
     {
-      site: "exhaustive_declaration objects",
-      plant: (r) => (r.questions[0].exhaustive_declaration.zz_extra = true),
+      site: "search_stop objects",
+      plant: (r) => (r.questions[0].search_stop.zz_extra = true),
     },
     {
       site: "stop_criteria objects",
-      plant: (r) => (r.questions[0].exhaustive_declaration.stop_criteria.zz_extra = true),
+      plant: (r) => (r.questions[0].search_stop.stop_criteria.zz_extra = true),
     },
     { site: "plans", plant: (r) => (r.plans[0].zz_extra = true) },
     { site: "plan items", plant: (r) => (r.plans[0].items[0].zz_extra = true) },
@@ -3158,7 +3162,8 @@ describe("Research closed shapes", () => {
       researcher_profile: schema.$defs.researcher_profile,
       known_holding: schema.$defs.known_holding,
       question: schema.$defs.question,
-      exhaustive_declaration: schema.$defs.exhaustive_declaration,
+      search_stop: schema.$defs.search_stop,
+      not_reached_entry: schema.$defs.not_reached_entry,
       stop_criteria: schema.$defs.stop_criteria,
       plan: schema.$defs.plan,
       plan_item: schema.$defs.plan_item,
@@ -3296,7 +3301,7 @@ describe("a malformed element is reported, never thrown", () => {
         id: "q_001", question: "Q?", rationale: "r", selection_basis: "timeline_gap", priority: "high",
         status: "open", depends_on: [], unblocks: [], created: "2026-01-01", resolved: null,
         resolution_assertion_ids: [],
-        exhaustive_declaration: { declared: false, log_entry_ids: [], justification: null, stop_criteria: null },
+        search_stop: { stopped_because: null, log_entry_ids: [], justification: null, stop_criteria: null, not_reached: [] },
       },
     ],
     plans: [], log: [], sources: [], assertions: [], person_evidence: [],
@@ -3374,12 +3379,12 @@ describe("a malformed element is reported, never thrown", () => {
     // error. The helper's docstring excludes null and undefined to avoid
     // doubling; arrays needed the same treatment.
     const research = doc();
-    research.questions[0].exhaustive_declaration = [];
+    research.questions[0].search_stop = [];
     const result = await validateParsed(research, bareTree);
     expect(result.valid).toBe(false);
-    const own = result.errors.filter((e) => e.path.includes("exhaustive_declaration"));
+    const own = result.errors.filter((e) => e.path.includes("search_stop"));
     expect(own.map((e) => e.message)).toEqual([
-      "exhaustive_declaration must be an object — got array",
+      "search_stop must be an object — got array",
     ]);
   });
 
@@ -3401,14 +3406,14 @@ describe("a malformed element is reported, never thrown", () => {
     // The other half: `if (typeof X === "object" && X !== null)` skipped the
     // whole block for a primitive, so this validated clean.
     const research = doc();
-    research.questions[0].exhaustive_declaration = "yes";
+    research.questions[0].search_stop = "yes";
     const result = await validateParsed(research, bareTree);
     expect(result.valid).toBe(false);
     expect(
       result.errors.some(
         (e) =>
-          e.path === "research.json/questions[0]/exhaustive_declaration" &&
-          e.message === "exhaustive_declaration must be an object — got string",
+          e.path === "research.json/questions[0]/search_stop" &&
+          e.message === "search_stop must be an object — got string",
       ),
     ).toBe(true);
   });
@@ -3416,9 +3421,9 @@ describe("a malformed element is reported, never thrown", () => {
   it("does NOT double-report an absent or null object field", async () => {
     // checkRequired owns those; re-reporting would double every message.
     const research = doc();
-    research.questions[0].exhaustive_declaration = null;
+    research.questions[0].search_stop = null;
     const result = await validateParsed(research, bareTree);
-    const own = result.errors.filter((e) => e.path.includes("exhaustive_declaration"));
+    const own = result.errors.filter((e) => e.path.includes("search_stop"));
     expect(own.filter((e) => e.message.includes("must be an object"))).toEqual([]);
   });
 });
@@ -3454,11 +3459,12 @@ describe("a plan carries at least one item", () => {
           created: "2026-01-01",
           resolved: null,
           resolution_assertion_ids: [],
-          exhaustive_declaration: {
-            declared: false,
+          search_stop: {
+            stopped_because: null,
             log_entry_ids: [],
             justification: null,
             stop_criteria: null,
+            not_reached: [],
           },
         },
       ],
@@ -3573,11 +3579,12 @@ describe("stop_criteria type guard (#1834)", () => {
           created: "2026-01-01",
           resolved: null,
           resolution_assertion_ids: [],
-          exhaustive_declaration: {
-            declared: false,
+          search_stop: {
+            stopped_because: null,
             log_entry_ids: [],
             justification: null,
             stop_criteria: stopCriteria,
+            not_reached: [],
           },
         },
       ],

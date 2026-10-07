@@ -1630,7 +1630,7 @@ checks over the final project state and the run's tool-call log
 1. **`find_effects_without_invocation`** — a guardrail skill's documented
    effect is present in `research.json` or `tree.gedcomx.json` (a
    `proof_summaries` entry, `person_evidence` link, resolved `conflicts`
-   entry, `exhaustive_declaration.declared`, or a tree write one of them
+   entry, `search_stop.stopped_because`, or a tree write one of them
    owns) with no successful `Skill` call for it anywhere in the run.
 2. **`find_missing_mentor_verdicts`** — a resolved question's
    `proof_summaries` entry has no matching `proof-critique` entry in
@@ -1735,7 +1735,7 @@ legitimately-not-yet-uploaded evidence only a genealogist can price.
 relies on a resolved conflict that was never persisted.**
 `find_unpersisted_conflict_resolutions` (in `harness/skill_invocation.py`) reads
 the final `research.json` and, for each written `proof_summaries` conclusion,
-flags a question whose `exhaustive_declaration.stop_criteria.conflict_resolution`
+flags a question whose `search_stop.stop_criteria.conflict_resolution`
 asserts a resolution (positive resolution language, not merely the absence of "no
 conflict" wording — a required field that is always populated would otherwise
 default to firing) while `conflicts[]` holds no record of it: the array is empty,

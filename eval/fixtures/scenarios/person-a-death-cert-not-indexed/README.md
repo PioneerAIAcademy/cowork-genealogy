@@ -15,7 +15,7 @@ accessible FamilySearch-indexed records, yet **indirect evidence** supports the 
   constrains the death to a window within 1935 (`a_003`, indirect).
 - The SD vital records archive and unindexed FamilySearch microfilm may hold the original
   certificate; these have not been searched.
-- Research declared exhaustive (`exhaustive_declaration.declared: true`) over the
+- Research declared exhaustive (`search_stop.stopped_because: "question_answered"`) over the
   accessible FamilySearch-indexed collections.
 
 The correct conclusion explicitly states: (1) **no death certificate was found** in

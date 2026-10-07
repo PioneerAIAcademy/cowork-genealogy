@@ -1444,7 +1444,7 @@ const validQuestion = (id: string) => ({
   created: "2026-01-01",
   resolved: null,
   resolution_assertion_ids: [],
-  exhaustive_declaration: { declared: false, log_entry_ids: [] },
+  search_stop: { stopped_because: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
 });
 /** `items` defaults to EMPTY, which is only legal while something else in the
  *  same call fills it (a `plan_items` op) — the validator refuses a plan that
@@ -2029,9 +2029,13 @@ describe("research_append (Phase 2)", () => {
   });
 
   it("treats re-declaring an already-declared question as a no-op", async () => {
+    const sc = {
+      goal_alignment: "Yes.", repository_breadth: "All searched.", original_substitution: "Originals.",
+      independent_verification: "Three sources.", evidence_class: "Census.", conflict_resolution: "None.", overturn_risk: "Low.",
+    };
     const research = phase2Research();
     research.questions = [
-      { ...validQuestion("q_001"), status: "exhaustive_declared", exhaustive_declaration: { declared: true, log_entry_ids: ["log_001"], stop_criteria: {} } },
+      { ...validQuestion("q_001"), status: "exhaustive_declared", search_stop: { stopped_because: "question_answered", justification: "Done.", log_entry_ids: ["log_001"], stop_criteria: sc, not_reached: [] } },
     ];
     research.log = [
       { id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "record_search", query: {}, outcome: "negative", results_examined: 0, external_site: null, results_ref: null },
@@ -2043,7 +2047,7 @@ describe("research_append (Phase 2)", () => {
       section: "questions",
       op: "update",
       entryId: "q_001",
-      fields: { exhaustive_declaration: { declared: true, log_entry_ids: ["log_001", "log_002"], stop_criteria: {} } },
+      fields: { search_stop: { stopped_because: "question_answered", justification: "Done.", log_entry_ids: ["log_001", "log_002"], stop_criteria: sc, not_reached: [] } },
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
@@ -2053,12 +2057,12 @@ describe("research_append (Phase 2)", () => {
 
   it("does NOT no-op a bundled update that re-declares AND changes another field", async () => {
     const sc = {
-      goal_alignment: true, repository_breadth: true, original_substitution: true,
-      independent_verification: true, evidence_class: true, conflict_resolution: true, overturn_risk: true,
+      goal_alignment: "Yes.", repository_breadth: "All searched.", original_substitution: "Originals.",
+      independent_verification: "Three sources.", evidence_class: "Census.", conflict_resolution: "None.", overturn_risk: "Low.",
     };
     const research = phase2Research();
     research.questions = [
-      { ...validQuestion("q_001"), status: "exhaustive_declared", priority: "high", exhaustive_declaration: { declared: true, log_entry_ids: ["log_001"], stop_criteria: sc } },
+      { ...validQuestion("q_001"), status: "exhaustive_declared", priority: "high", search_stop: { stopped_because: "question_answered", justification: "Done.", log_entry_ids: ["log_001"], stop_criteria: sc, not_reached: [] } },
     ];
     research.log = [
       { id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "record_search", query: {}, outcome: "negative", results_examined: 0, external_site: null, results_ref: null },
@@ -2069,7 +2073,7 @@ describe("research_append (Phase 2)", () => {
       section: "questions",
       op: "update",
       entryId: "q_001",
-      fields: { priority: "low", exhaustive_declaration: { declared: true, log_entry_ids: ["log_001"], stop_criteria: sc } },
+      fields: { priority: "low", search_stop: { stopped_because: "question_answered", justification: "Done.", log_entry_ids: ["log_001"], stop_criteria: sc, not_reached: [] } },
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
@@ -2157,14 +2161,20 @@ describe("research_append (Phase 3)", () => {
         // setup these refuse for the other reason and prove nothing about
         // shortfall.
         const research = baseResearch();
+        const sc2 = {
+          goal_alignment: "Yes.", repository_breadth: "All searched.", original_substitution: "Originals.",
+          independent_verification: "Three sources.", evidence_class: "Census.", conflict_resolution: "None.", overturn_risk: "Low.",
+        };
         research.questions = [
           {
             ...validQuestion("q_001"),
             status: "exhaustive_declared",
-            exhaustive_declaration: {
-              declared: true,
+            search_stop: {
+              stopped_because: "question_answered",
+              justification: "Done.",
               log_entry_ids: ["log_001"],
-              stop_criteria: {},
+              stop_criteria: sc2,
+              not_reached: [],
             },
           },
         ];
@@ -2203,12 +2213,20 @@ describe("research_append (Phase 3)", () => {
       // Must be a CONCLUSIVE tier: on a lower one neither arm reaches the
       // comparison, so the loosened guard is indistinguishable there.
       const research = baseResearch();
+      const sc3 = {
+        goal_alignment: "Yes.", repository_breadth: "All searched.", original_substitution: "Originals.",
+        independent_verification: "Three sources.", evidence_class: "Census.", conflict_resolution: "None.", overturn_risk: "Low.",
+      };
       research.questions = [
         {
           ...validQuestion("q_001"),
           status: "exhaustive_declared",
-          exhaustive_declaration: {
-            declared: true, log_entry_ids: ["log_001"], stop_criteria: {},
+          search_stop: {
+            stopped_because: "question_answered",
+            justification: "Done.",
+            log_entry_ids: ["log_001"],
+            stop_criteria: sc3,
+            not_reached: [],
           },
         },
       ];
@@ -3107,8 +3125,8 @@ describe("research_append (Phase 3)", () => {
   });
 
   // docs/specs/guardrail-enforcement-spec.md §5 — tier/exhaustiveness cross-field guardrail.
-  it("rejects tier 'proved' when the question's exhaustive_declaration.declared is false", async () => {
-    await writeProject(); // phase3Research(): q_001 defaults to exhaustive_declaration.declared: false
+  it("rejects tier 'proved' when the question's stop gate is not satisfied", async () => {
+    await writeProject(); // phase3Research(): q_001 defaults to search_stop.stopped_because: null
     const before = await readFile(join(dir, "research.json"), "utf-8");
     const r = await researchAppend({
       projectPath: dir,
@@ -3127,7 +3145,7 @@ describe("research_append (Phase 3)", () => {
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors.join(" ")).toMatch(/exhaustive_declaration\.declared === true/);
+    expect(r.errors.join(" ")).toMatch(/search_stop\.stopped_because/);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
@@ -3142,7 +3160,7 @@ describe("research_append (Phase 3)", () => {
           op: "update",
           entryId: "q_001",
           fields: {
-            exhaustive_declaration: { declared: true, log_entry_ids: ["log_001"], stop_criteria: {} },
+            search_stop: { stopped_because: "question_answered", justification: "Done.", log_entry_ids: ["log_001"], stop_criteria: fullStopCriteria(), not_reached: [] },
           },
         },
         {
@@ -3163,19 +3181,19 @@ describe("research_append (Phase 3)", () => {
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors.join(" ")).toMatch(/exhaustive_declaration\.declared === true/);
+    expect(r.errors.join(" ")).toMatch(/search_stop\.stopped_because/);
     // All-or-nothing: neither op landed, including the exhaustiveness declaration.
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
   const fullStopCriteria = () => ({
-    goal_alignment: true,
-    repository_breadth: true,
-    original_substitution: true,
-    independent_verification: true,
-    evidence_class: true,
-    conflict_resolution: true,
-    overturn_risk: true,
+    goal_alignment: "Yes.",
+    repository_breadth: "All searched.",
+    original_substitution: "Originals accessed.",
+    independent_verification: "Three independent sources.",
+    evidence_class: "1860 census, original/primary.",
+    conflict_resolution: "No conflicts identified.",
+    overturn_risk: "Low.",
   });
   const declaredExhaustiveLog = () => [
     {
@@ -3191,13 +3209,13 @@ describe("research_append (Phase 3)", () => {
     },
   ];
 
-  it("allows tier 'proved' when exhaustive_declaration.declared was already true from an earlier, separate call", async () => {
+  it("allows tier 'proved' when the stop gate was satisfied from an earlier, separate call", async () => {
     const r0 = phase3Research();
     r0.questions = [
       {
         ...validQuestion("q_001"),
         status: "exhaustive_declared",
-        exhaustive_declaration: { declared: true, log_entry_ids: ["log_001"], stop_criteria: fullStopCriteria() },
+        search_stop: { stopped_because: "question_answered", justification: "Done.", log_entry_ids: ["log_001"], stop_criteria: fullStopCriteria(), not_reached: [] },
       },
     ];
     r0.log = declaredExhaustiveLog();
@@ -3226,7 +3244,7 @@ describe("research_append (Phase 3)", () => {
       {
         ...validQuestion("q_001"),
         status: "exhaustive_declared",
-        exhaustive_declaration: { declared: true, log_entry_ids: ["log_001"], stop_criteria: fullStopCriteria() },
+        search_stop: { stopped_because: "question_answered", justification: "Done.", log_entry_ids: ["log_001"], stop_criteria: fullStopCriteria(), not_reached: [] },
       },
     ];
     r0.log = declaredExhaustiveLog();
@@ -3689,7 +3707,7 @@ describe("research_append (project singleton section)", () => {
     created: "2026-01-01",
     resolved: "2026-01-02",
     resolution_assertion_ids: ["a_001"],
-    exhaustive_declaration: { declared: false, log_entry_ids: [], stop_criteria: {} },
+    search_stop: { stopped_because: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
   });
   const summary = (id = "ps_001", questionId = "q_001") => ({
     id,
@@ -5037,7 +5055,7 @@ describe("research_append (batch ops)", () => {
     // question's exhaustive declaration, and `planned` would repeat the search.
     const msg = (errorsOf(r) ?? []).join("\n");
     expect(msg).toMatch(/plan_items\[pli_002\]: an appended item cannot arrive 'completed'/);
-    expect(msg).toMatch(/exhaustive_declaration\.log_entry_ids/);
+    expect(msg).toMatch(/search_stop\.log_entry_ids/);
     expect(msg).not.toMatch(/leave this item 'in_progress'/);
   });
 
@@ -7655,7 +7673,7 @@ describe("research_append — worked examples are themselves valid", () => {
         created: "2026-07-18",
         resolved: null,
         resolution_assertion_ids: [],
-        exhaustive_declaration: { declared: false, justification: null, log_entry_ids: [], stop_criteria: null },
+        search_stop: { stopped_because: null, justification: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
       },
       {
         id: "q_003",
@@ -7669,7 +7687,7 @@ describe("research_append — worked examples are themselves valid", () => {
         created: "2026-07-18",
         resolved: null,
         resolution_assertion_ids: [],
-        exhaustive_declaration: { declared: false, justification: null, log_entry_ids: [], stop_criteria: null },
+        search_stop: { stopped_because: null, justification: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
       },
     ];
     r.plans = [
@@ -7888,7 +7906,7 @@ describe("research_append — evaluations verdict composite", () => {
         created: "2026-07-18",
         resolved: null,
         resolution_assertion_ids: [],
-        exhaustive_declaration: { declared: false, justification: null, log_entry_ids: [], stop_criteria: null },
+        search_stop: { stopped_because: null, justification: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
       },
     ];
     await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
@@ -9464,8 +9482,8 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
     await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
   }
-  const DECLARATION = {
-    declared: true,
+  const STOP_DECISION = {
+    stopped_because: "question_answered",
     justification: "Census, vital and probate all searched; three independent sources agree.",
     log_entry_ids: ["log_001"],
     stop_criteria: {
@@ -9477,6 +9495,7 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       conflict_resolution: "No conflicts identified.",
       overturn_risk: "Low.",
     },
+    not_reached: [],
   };
 
   // --- G2: the plan-completeness gate ------------------------------------
@@ -9488,7 +9507,7 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       section: "questions",
       op: "update",
       entryId: "q_001",
-      fields: { exhaustive_declaration: DECLARATION },
+      fields: { search_stop: STOP_DECISION },
     });
     const errs = failure(r).errors.join(" ");
     expect(errs).toMatch(/pli_002/);
@@ -9512,7 +9531,7 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       ops: [
         { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields: { status: "completed" } },
         { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_002", fields: { status: "skipped" } },
-        { section: "questions", op: "update", entryId: "q_001", fields: { exhaustive_declaration: DECLARATION } },
+        { section: "questions", op: "update", entryId: "q_001", fields: { search_stop: STOP_DECISION } },
       ],
     } as any);
     const errs2 = failure(r).errors.join(" ");
@@ -9531,7 +9550,7 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       section: "questions",
       op: "update",
       entryId: "q_001",
-      fields: { exhaustive_declaration: DECLARATION },
+      fields: { search_stop: STOP_DECISION },
     });
     expect(singleOk(r).ok).toBe(true);
   });
@@ -9546,7 +9565,7 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       section: "questions",
       op: "update",
       entryId: "q_001",
-      fields: { exhaustive_declaration: DECLARATION },
+      fields: { search_stop: STOP_DECISION },
     });
     expect(singleOk(r).ok).toBe(true);
   });
@@ -9561,7 +9580,7 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       section: "questions",
       op: "update",
       entryId: "q_001",
-      fields: { exhaustive_declaration: DECLARATION },
+      fields: { search_stop: STOP_DECISION },
     });
     expect(singleOk(r).ok).toBe(true);
   });
@@ -9579,7 +9598,7 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       section: "questions",
       op: "update",
       entryId: "q_001",
-      fields: { exhaustive_declaration: DECLARATION },
+      fields: { search_stop: STOP_DECISION },
     })).errors.join(" ");
     expect(errs).not.toMatch(/mark .{0,20}(completed|skipped)/i);
     expect(errs).not.toMatch(/updat\w* (its|the item's) status/i);
@@ -9588,11 +9607,11 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
 
   // --- G1: the declaration/status agreement gate ---------------------------
 
-  it("refuses status exhaustive_declared when the declaration does not carry it", async () => {
+  it("refuses status exhaustive_declared when the stop decision does not carry a gate value", async () => {
     // Synthetic — zero corpus instances across the 125 ops that set this
-    // status. The shape is reachable: exhaustive_declaration is a required
+    // status. The shape is reachable: search_stop is a required
     // question property so it is always present, and 219 corpus writes set
-    // declared:false.
+    // stopped_because:null.
     await writeProject(exhResearch(["completed"]));
     const errs = failure(await researchAppend({
       projectPath: dir,
@@ -9601,10 +9620,10 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       entryId: "q_001",
       fields: { status: "exhaustive_declared" },
     })).errors.join(" ");
-    expect(errs).toMatch(/exhaustive_declaration\.declared/);
+    expect(errs).toMatch(/search_stop\.stopped_because/);
   });
 
-  it("allows the status and the declaration set in the SAME op", async () => {
+  it("allows the status and the stop decision set in the SAME op", async () => {
     // 123 of 125 corpus ops take this shape. A pre-call snapshot here would
     // refuse every one of them, which is why G1 reads the merged entry.
     await writeProject(exhResearch(["completed"]));
@@ -9613,7 +9632,7 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       section: "questions",
       op: "update",
       entryId: "q_001",
-      fields: { status: "exhaustive_declared", exhaustive_declaration: DECLARATION },
+      fields: { status: "exhaustive_declared", search_stop: STOP_DECISION },
     });
     expect(singleOk(r).ok).toBe(true);
   });
@@ -9637,7 +9656,7 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       section: "questions",
       op: "update",
       entryId: "q_001",
-      fields: { exhaustive_declaration: DECLARATION },
+      fields: { search_stop: STOP_DECISION },
     });
     expect(singleOk(r).ok).toBe(true);
   });
@@ -9653,17 +9672,17 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       section: "questions",
       op: "update",
       entryId: "q_001",
-      fields: { exhaustive_declaration: DECLARATION },
+      fields: { search_stop: STOP_DECISION },
     })).ok).toBe(true);
   });
 
-  it("refuses lowering `declared` to false while the status still claims exhaustive", async () => {
+  it("refuses clearing stopped_because while the status still claims exhaustive", async () => {
     // The mirror image of the status-side vector, and the one a status-only
     // gate misses. It is the agent's own documented re-invocation path: write
-    // `declared: false`, leave `status` alone — which on an already-declared
+    // stopped_because:null, leave `status` alone — which on an already-declared
     // question leaves `exhaustive_declared` standing over nothing.
     const research = exhResearch(["completed"]);
-    (research.questions[0] as any).exhaustive_declaration = DECLARATION;
+    (research.questions[0] as any).search_stop = STOP_DECISION;
     (research.questions[0] as any).status = "exhaustive_declared";
     await writeProject(research);
     const errs = failure(await researchAppend({
@@ -9672,23 +9691,24 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       op: "update",
       entryId: "q_001",
       fields: {
-        exhaustive_declaration: {
-          declared: false,
+        search_stop: {
+          stopped_because: null,
           justification: "Terminating: probate destroyed in an 1862 fire.",
           log_entry_ids: ["log_001"],
           stop_criteria: null,
+          not_reached: [],
         },
       },
     })).errors.join(" ");
-    expect(errs).toMatch(/exhaustive_declaration\.declared/);
+    expect(errs).toMatch(/search_stop\.stopped_because/);
   });
 
-  it("allows the status when the declaration landed in an EARLIER call", async () => {
+  it("allows the status when the stop decision landed in an EARLIER call", async () => {
     // The hannah-earnest-children / jens-nielsen shape: declare at one call,
     // flip the status at the next. Both were misread as violations while the
     // replay engine was dropping stripped updates.
     const research = exhResearch(["completed"]);
-    (research.questions[0] as any).exhaustive_declaration = DECLARATION;
+    (research.questions[0] as any).search_stop = STOP_DECISION;
     await writeProject(research);
     const r = await researchAppend({
       projectPath: dir,
@@ -9707,9 +9727,9 @@ describe("research_append — the declaring worked example is aimed, not blanket
   // caller refused on, say, a `resolved` write a full `declared: true` payload
   // — which on the main thread is the one shape the plugin hook denies. A hint
   // that teaches the next refusal is worse than no hint.
-  it("teaches the seven keys when the failing op named exhaustive_declaration", () => {
+  it("teaches the seven keys when the failing op named search_stop", () => {
     const hints = exampleHints([
-      { section: "questions", op: "update", fields: ["exhaustive_declaration"] },
+      { section: "questions", op: "update", fields: ["search_stop"] },
     ]);
     expect(hints.join("\n")).toContain("overturn_risk");
     expect(hints.join("\n")).toContain("goal_alignment");
@@ -9720,7 +9740,7 @@ describe("research_append — the declaring worked example is aimed, not blanket
       { section: "questions", op: "update", fields: ["status", "resolved"] },
     ]);
     expect(hints.join("\n")).not.toContain("overturn_risk");
-    expect(hints.join("\n")).not.toContain("declared: true");
+    expect(hints.join("\n")).not.toContain("stopped_because");
     expect(hints.join("\n")).toContain("only the fields you are changing");
   });
 
@@ -10274,8 +10294,8 @@ describe("research_append — a conflict resolved in prose must reach conflicts[
     "the enumerator's rendering of Hendricks. No formal conflicts are registered. No unresolved " +
     "discrepancy blocks the conclusion.";
 
-  const declaration = (conflict_resolution: string) => ({
-    declared: true,
+  const stopDecision = (conflict_resolution: string) => ({
+    stopped_because: "question_answered",
     justification: "Census and vital records searched; the household is consistent.",
     log_entry_ids: ["log_001"],
     stop_criteria: {
@@ -10287,13 +10307,14 @@ describe("research_append — a conflict resolved in prose must reach conflicts[
       conflict_resolution,
       overturn_risk: "Low.",
     },
+    not_reached: [],
   });
 
   const state = (cr = TESTER_CR) => ({
     project: { objective: "x" },
     questions: [
-      { id: "q_001", question: "Who were Peter's parents?", status: "exhaustive_declared", exhaustive_declaration: declaration(cr) },
-      { id: "q_002", question: "Where was Peter born?", status: "open" },
+      { id: "q_001", question: "Who were Peter's parents?", status: "exhaustive_declared", search_stop: stopDecision(cr), depends_on: [], unblocks: [], created: "2026-01-01", resolved: null, resolution_assertion_ids: [] },
+      { id: "q_002", question: "Where was Peter born?", status: "open", search_stop: { stopped_because: null, log_entry_ids: [], stop_criteria: null, not_reached: [] }, depends_on: [], unblocks: [], created: "2026-01-01", resolved: null, resolution_assertion_ids: [] },
     ],
     log: [
       {
@@ -10408,7 +10429,7 @@ describe("research_append — a conflict resolved in prose must reach conflicts[
           section: "questions",
           op: "update",
           entryId: "q_002",
-          fields: { status: "exhaustive_declared", exhaustive_declaration: declaration(TESTER_CR) },
+          fields: { status: "exhaustive_declared", search_stop: stopDecision(TESTER_CR) },
         },
         { section: "proof_summaries", op: "append", entry: summary("q_002") },
       ],

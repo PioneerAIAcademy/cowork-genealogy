@@ -321,7 +321,7 @@ class E2eResult:
 
     # docs/specs/guardrail-enforcement-spec.md §7 — SHADOW MODE ONLY:
     # protected writes (a proof_summaries/person_evidence/conflicts/
-    # exhaustive_declaration write, or a tree_edit/tree_correct/
+    # search_stop write, or a tree_edit/tree_correct/
     # materialize_facts write one of the four GPS guardrail skills owns) with
     # no matching successful `Skill` invocation in a trailing window. Logged,
     # never denied, at this stage — the point is to measure the false-positive

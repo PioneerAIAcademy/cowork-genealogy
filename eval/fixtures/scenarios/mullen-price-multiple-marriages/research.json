@@ -2,12 +2,13 @@
   "project": {
     "id": "rp_001",
     "objective": "Confirm Sarah Ann Mullen's parentage and trace her through two marriages (Price, then Mielke) in Dodge and Fond du Lac Counties, Wisconsin",
-    "subject_person_ids": ["I1"],
+    "subject_person_ids": [
+      "I1"
+    ],
     "status": "active",
     "created": "2026-06-01",
     "updated": "2026-06-01"
   },
-
   "questions": [
     {
       "id": "q_001",
@@ -21,15 +22,15 @@
       "created": "2026-06-01",
       "resolved": null,
       "resolution_assertion_ids": [],
-      "exhaustive_declaration": {
-        "declared": false,
+      "search_stop": {
+        "stopped_because": null,
         "justification": null,
         "log_entry_ids": [],
-        "stop_criteria": null
+        "stop_criteria": null,
+        "not_reached": []
       }
     }
   ],
-
   "plans": [
     {
       "id": "pl_001",
@@ -73,14 +74,17 @@
       ]
     }
   ],
-
   "log": [
     {
       "id": "log_001",
       "plan_item_id": "pli_001",
       "performed": "2026-06-01T10:00:00Z",
       "tool": "record_search",
-      "query": { "surname": "Price", "given": "Sarah", "collection": "1880 Census" },
+      "query": {
+        "surname": "Price",
+        "given": "Sarah",
+        "collection": "1880 Census"
+      },
       "outcome": "positive",
       "results_examined": 1,
       "results_ref": "results/log_001.json",
@@ -89,7 +93,6 @@
       "external_site": null
     }
   ],
-
   "sources": [
     {
       "id": "src_001",
@@ -113,7 +116,6 @@
       "log_entry_id": "log_001"
     }
   ],
-
   "assertions": [
     {
       "id": "a_001",
@@ -123,16 +125,20 @@
       "record_persona_id": "P1",
       "fact_type": "name",
       "value": "Sarah A. Price",
-      "structured_value": { "given": "Sarah A.", "surname": "Price" },
+      "structured_value": {
+        "given": "Sarah A.",
+        "surname": "Price"
+      },
       "information_quality": "indeterminate",
       "informant": "Unknown informant reporting to the census enumerator",
       "informant_proximity": "unknown",
       "record_basis": "stated",
       "log_entry_id": "log_001",
-      "extracted_for_question_ids": ["q_001"]
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     }
   ],
-
   "person_evidence": [],
   "conflicts": [],
   "hypotheses": [],

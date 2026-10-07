@@ -20,81 +20,137 @@
   ],
   "additionalProperties": false,
   "properties": {
-    "project": { "$ref": "#/$defs/project" },
-    "researcher_profile": { "$ref": "#/$defs/researcher_profile" },
+    "project": {
+      "$ref": "#/$defs/project"
+    },
+    "researcher_profile": {
+      "$ref": "#/$defs/researcher_profile"
+    },
     "known_holdings": {
       "type": "array",
-      "items": { "$ref": "#/$defs/known_holding" }
+      "items": {
+        "$ref": "#/$defs/known_holding"
+      }
     },
     "questions": {
       "type": "array",
-      "items": { "$ref": "#/$defs/question" }
+      "items": {
+        "$ref": "#/$defs/question"
+      }
     },
     "plans": {
       "type": "array",
-      "items": { "$ref": "#/$defs/plan" }
+      "items": {
+        "$ref": "#/$defs/plan"
+      }
     },
     "log": {
       "type": "array",
-      "items": { "$ref": "#/$defs/log_entry" }
+      "items": {
+        "$ref": "#/$defs/log_entry"
+      }
     },
     "sources": {
       "type": "array",
-      "items": { "$ref": "#/$defs/source" }
+      "items": {
+        "$ref": "#/$defs/source"
+      }
     },
     "assertions": {
       "type": "array",
-      "items": { "$ref": "#/$defs/assertion" }
+      "items": {
+        "$ref": "#/$defs/assertion"
+      }
     },
     "person_evidence": {
       "type": "array",
-      "items": { "$ref": "#/$defs/person_evidence_entry" }
+      "items": {
+        "$ref": "#/$defs/person_evidence_entry"
+      }
     },
     "conflicts": {
       "type": "array",
-      "items": { "$ref": "#/$defs/conflict" }
+      "items": {
+        "$ref": "#/$defs/conflict"
+      }
     },
     "hypotheses": {
       "type": "array",
-      "items": { "$ref": "#/$defs/hypothesis" }
+      "items": {
+        "$ref": "#/$defs/hypothesis"
+      }
     },
     "timelines": {
       "type": "array",
-      "items": { "$ref": "#/$defs/timeline" }
+      "items": {
+        "$ref": "#/$defs/timeline"
+      }
     },
     "proof_summaries": {
       "type": "array",
-      "items": { "$ref": "#/$defs/proof_summary" }
+      "items": {
+        "$ref": "#/$defs/proof_summary"
+      }
     },
     "evaluations": {
       "type": "array",
-      "items": { "$ref": "#/$defs/evaluation_entry" }
+      "items": {
+        "$ref": "#/$defs/evaluation_entry"
+      }
     },
     "localities": {
       "type": "array",
-      "items": { "$ref": "#/$defs/locality" }
+      "items": {
+        "$ref": "#/$defs/locality"
+      }
     },
     "warning_justifications": {
       "type": "array",
-      "items": { "$ref": "#/$defs/warning_justification" }
+      "items": {
+        "$ref": "#/$defs/warning_justification"
+      }
     }
   },
   "$defs": {
     "project": {
       "type": "object",
-      "required": ["id", "objective", "status", "created", "updated"],
+      "required": [
+        "id",
+        "objective",
+        "status",
+        "created",
+        "updated"
+      ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^rp_" },
-        "objective": { "type": "string" },
-        "subject_person_ids": {
-          "type": ["array", "null"],
-          "items": { "type": "string" }
+        "id": {
+          "type": "string",
+          "pattern": "^rp_"
         },
-        "status": { "$ref": "enums.schema.json#/$defs/project_status" },
-        "created": { "$ref": "enums.schema.json#/$defs/iso_date" },
-        "updated": { "$ref": "enums.schema.json#/$defs/iso_date" },
-        "title": { "type": "string" }
+        "objective": {
+          "type": "string"
+        },
+        "subject_person_ids": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "$ref": "enums.schema.json#/$defs/project_status"
+        },
+        "created": {
+          "$ref": "enums.schema.json#/$defs/iso_date"
+        },
+        "updated": {
+          "$ref": "enums.schema.json#/$defs/iso_date"
+        },
+        "title": {
+          "type": "string"
+        }
       }
     },
     "researcher_profile": {
@@ -102,14 +158,26 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "experience_level": { "$ref": "enums.schema.json#/$defs/experience_level" },
+        "experience_level": {
+          "$ref": "enums.schema.json#/$defs/experience_level"
+        },
         "subscriptions": {
           "type": "array",
-          "items": { "$ref": "enums.schema.json#/$defs/subscription" }
+          "items": {
+            "$ref": "enums.schema.json#/$defs/subscription"
+          }
         },
-        "narration_guidance": { "type": ["string", "null"] },
+        "narration_guidance": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "intended_audience": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "Free text naming who the finished write-ups are for (e.g. \"my cousins, none of them researchers\"; \"submission to NGSQ\"). Read by gps-mentor's narrative-craft checks (gps-mentor-agent-spec.md §6.4) so audience calibration is judged against a stated audience rather than guessed from the prose. Not written by init-project — set by hand, or leave absent and the mentor infers the audience and states which one it assumed."
         }
       }
@@ -117,20 +185,47 @@
     "known_holding": {
       "description": "One item the researcher already has on hand (document, prior research, living-relative knowledge), surveyed by init-project before new research begins. Lightweight by design — not a source or assertion. Promoted into proper sources/assertions by record-extraction/citation, which set 'promoted' to true; the entry is never deleted.",
       "type": "object",
-      "required": ["id", "holding_type", "description", "confidence", "promoted", "created"],
+      "required": [
+        "id",
+        "holding_type",
+        "description",
+        "confidence",
+        "promoted",
+        "created"
+      ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^kh_" },
-        "holding_type": { "$ref": "enums.schema.json#/$defs/holding_type" },
-        "description": { "type": "string" },
-        "relevant_facts": { "type": ["string", "null"] },
+        "id": {
+          "type": "string",
+          "pattern": "^kh_"
+        },
+        "holding_type": {
+          "$ref": "enums.schema.json#/$defs/holding_type"
+        },
+        "description": {
+          "type": "string"
+        },
+        "relevant_facts": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "relates_to_person_ids": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
-        "confidence": { "$ref": "enums.schema.json#/$defs/holding_confidence" },
-        "promoted": { "type": "boolean" },
-        "created": { "$ref": "enums.schema.json#/$defs/iso_date" }
+        "confidence": {
+          "$ref": "enums.schema.json#/$defs/holding_confidence"
+        },
+        "promoted": {
+          "type": "boolean"
+        },
+        "created": {
+          "$ref": "enums.schema.json#/$defs/iso_date"
+        }
       }
     },
     "question": {
@@ -147,65 +242,173 @@
         "created",
         "resolved",
         "resolution_assertion_ids",
-        "exhaustive_declaration"
+        "search_stop"
       ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^q_" },
-        "question": { "type": "string" },
-        "rationale": { "type": "string" },
-        "selection_basis": { "$ref": "enums.schema.json#/$defs/selection_basis" },
-        "priority": { "$ref": "enums.schema.json#/$defs/priority" },
-        "status": { "$ref": "enums.schema.json#/$defs/question_status" },
+        "id": {
+          "type": "string",
+          "pattern": "^q_"
+        },
+        "question": {
+          "type": "string"
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "selection_basis": {
+          "$ref": "enums.schema.json#/$defs/selection_basis"
+        },
+        "priority": {
+          "$ref": "enums.schema.json#/$defs/priority"
+        },
+        "status": {
+          "$ref": "enums.schema.json#/$defs/question_status"
+        },
         "depends_on": {
           "type": "array",
-          "items": { "type": "string", "pattern": "^q_" }
+          "items": {
+            "type": "string",
+            "pattern": "^q_"
+          }
         },
         "unblocks": {
           "type": "array",
-          "items": { "type": "string", "pattern": "^q_" }
+          "items": {
+            "type": "string",
+            "pattern": "^q_"
+          }
         },
-        "created": { "$ref": "enums.schema.json#/$defs/iso_date" },
+        "created": {
+          "$ref": "enums.schema.json#/$defs/iso_date"
+        },
         "resolved": {
           "anyOf": [
-            { "$ref": "enums.schema.json#/$defs/iso_date" },
-            { "type": "null" }
+            {
+              "$ref": "enums.schema.json#/$defs/iso_date"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "resolution_assertion_ids": {
           "type": "array",
-          "items": { "type": "string", "pattern": "^a_" }
+          "items": {
+            "type": "string",
+            "pattern": "^a_"
+          }
         },
-        "exhaustive_declaration": { "$ref": "#/$defs/exhaustive_declaration" }
+        "search_stop": {
+          "$ref": "#/$defs/search_stop"
+        }
       }
     },
-    "exhaustive_declaration": {
+    "search_stop": {
+      "description": "Why searching stopped on this question and what could not be reached. `stopped_because` is null on a newly created question (no stop decision yet). The three stop-gate values (`question_answered`, `record_exhausted`, `nothing_further_reachable`) permit status `exhaustive_declared` and a proof tier; the two non-gate values keep status `in_progress`. Renamed from `exhaustive_declaration` (issue #2539, 2026-10-07).",
       "type": "object",
-      "required": ["declared", "log_entry_ids", "stop_criteria"],
+      "required": [
+        "stopped_because",
+        "log_entry_ids",
+        "stop_criteria",
+        "not_reached"
+      ],
       "additionalProperties": false,
       "properties": {
-        "declared": { "type": "boolean" },
-        "justification": { "type": ["string", "null"] },
+        "stopped_because": {
+          "anyOf": [
+            {
+              "$ref": "enums.schema.json#/$defs/stopped_because"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "justification": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "log_entry_ids": {
           "type": "array",
-          "items": { "type": "string", "pattern": "^log_" }
+          "items": {
+            "type": "string",
+            "pattern": "^log_"
+          }
         },
         "stop_criteria": {
           "anyOf": [
-            { "$ref": "#/$defs/stop_criteria" },
-            { "type": "null" }
+            {
+              "$ref": "#/$defs/stop_criteria"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "not_reached": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/not_reached_entry"
+          }
+        }
+      }
+    },
+    "not_reached_entry": {
+      "description": "One source, collection, or record type that could not be reached. Built from things the agent already produces: nil searches, browse-only collections, over-cap images, paywalled hits, handed-to-user items, privacy-sealed records, skipped plan items, and wiki-named record types never touched.",
+      "type": "object",
+      "required": [
+        "kind",
+        "description",
+        "log_entry_id",
+        "wiki_title"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "$ref": "enums.schema.json#/$defs/not_reached_kind"
+        },
+        "description": {
+          "type": "string"
+        },
+        "log_entry_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^log_"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "wiki_title": {
+          "type": [
+            "string",
+            "null"
           ]
         }
       },
       "allOf": [
         {
-          "if": { "properties": { "declared": { "const": true } } },
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "wiki_named_untouched"
+              }
+            }
+          },
           "then": {
             "properties": {
-              "log_entry_ids": { "minItems": 1 },
-              "stop_criteria": { "$ref": "#/$defs/stop_criteria" }
+              "wiki_title": {
+                "type": "string"
+              }
             },
-            "required": ["log_entry_ids", "stop_criteria"]
+            "required": [
+              "wiki_title"
+            ]
           }
         }
       ]
@@ -223,28 +426,60 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "goal_alignment": { "type": "string" },
-        "repository_breadth": { "type": "string" },
-        "original_substitution": { "type": "string" },
-        "independent_verification": { "type": "string" },
-        "evidence_class": { "type": "string" },
-        "conflict_resolution": { "type": "string" },
-        "overturn_risk": { "type": "string" }
+        "goal_alignment": {
+          "type": "string"
+        },
+        "repository_breadth": {
+          "type": "string"
+        },
+        "original_substitution": {
+          "type": "string"
+        },
+        "independent_verification": {
+          "type": "string"
+        },
+        "evidence_class": {
+          "type": "string"
+        },
+        "conflict_resolution": {
+          "type": "string"
+        },
+        "overturn_risk": {
+          "type": "string"
+        }
       }
     },
     "plan": {
       "type": "object",
-      "required": ["id", "question_id", "status", "created", "items"],
+      "required": [
+        "id",
+        "question_id",
+        "status",
+        "created",
+        "items"
+      ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^pl_" },
-        "question_id": { "type": "string", "pattern": "^q_" },
-        "status": { "$ref": "enums.schema.json#/$defs/plan_status" },
-        "created": { "$ref": "enums.schema.json#/$defs/iso_date" },
+        "id": {
+          "type": "string",
+          "pattern": "^pl_"
+        },
+        "question_id": {
+          "type": "string",
+          "pattern": "^q_"
+        },
+        "status": {
+          "$ref": "enums.schema.json#/$defs/plan_status"
+        },
+        "created": {
+          "$ref": "enums.schema.json#/$defs/iso_date"
+        },
         "items": {
           "type": "array",
           "minItems": 1,
-          "items": { "$ref": "#/$defs/plan_item" }
+          "items": {
+            "$ref": "#/$defs/plan_item"
+          }
         }
       }
     },
@@ -263,20 +498,43 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^pli_" },
-        "sequence": { "type": "integer", "minimum": 1 },
-        "record_type": { "$ref": "enums.schema.json#/$defs/record_type_recommended" },
-        "jurisdiction": { "type": "string" },
-        "date_range": { "type": "string" },
-        "repository": { "$ref": "enums.schema.json#/$defs/repository_recommended" },
-        "rationale": { "type": "string" },
+        "id": {
+          "type": "string",
+          "pattern": "^pli_"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "record_type": {
+          "$ref": "enums.schema.json#/$defs/record_type_recommended"
+        },
+        "jurisdiction": {
+          "type": "string"
+        },
+        "date_range": {
+          "type": "string"
+        },
+        "repository": {
+          "$ref": "enums.schema.json#/$defs/repository_recommended"
+        },
+        "rationale": {
+          "type": "string"
+        },
         "fallback_for": {
           "anyOf": [
-            { "type": "string", "pattern": "^pli_" },
-            { "type": "null" }
+            {
+              "type": "string",
+              "pattern": "^pli_"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
-        "status": { "$ref": "enums.schema.json#/$defs/plan_item_status" }
+        "status": {
+          "$ref": "enums.schema.json#/$defs/plan_item_status"
+        }
       }
     },
     "log_entry": {
@@ -293,39 +551,85 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^log_" },
+        "id": {
+          "type": "string",
+          "pattern": "^log_"
+        },
         "plan_item_id": {
           "anyOf": [
-            { "type": "string", "pattern": "^pli_" },
-            { "type": "null" }
+            {
+              "type": "string",
+              "pattern": "^pli_"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
-        "performed": { "$ref": "enums.schema.json#/$defs/iso_datetime" },
-        "tool": { "type": "string" },
-        "query": { "type": "object" },
-        "outcome": { "$ref": "enums.schema.json#/$defs/log_outcome" },
-        "results_examined": { "type": "integer", "minimum": 0 },
-        "results_ref": { "type": ["string", "null"] },
+        "performed": {
+          "$ref": "enums.schema.json#/$defs/iso_datetime"
+        },
+        "tool": {
+          "type": "string"
+        },
+        "query": {
+          "type": "object"
+        },
+        "outcome": {
+          "$ref": "enums.schema.json#/$defs/log_outcome"
+        },
+        "results_examined": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "results_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "results_available": {
           "anyOf": [
-            { "type": "integer", "minimum": 0 },
-            { "type": "null" }
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
           ]
         },
-        "notes": { "type": ["string", "null"] },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "external_site": {
           "anyOf": [
-            { "$ref": "#/$defs/external_site_detail" },
-            { "type": "null" }
+            {
+              "$ref": "#/$defs/external_site_detail"
+            },
+            {
+              "type": "null"
+            }
           ]
         }
       },
       "allOf": [
         {
-          "if": { "properties": { "tool": { "const": "external_site" } } },
+          "if": {
+            "properties": {
+              "tool": {
+                "const": "external_site"
+              }
+            }
+          },
           "then": {
             "properties": {
-              "external_site": { "$ref": "#/$defs/external_site_detail" }
+              "external_site": {
+                "$ref": "#/$defs/external_site_detail"
+              }
             }
           }
         }
@@ -333,13 +637,28 @@
     },
     "external_site_detail": {
       "type": "object",
-      "required": ["site", "url_generated", "capture_received"],
+      "required": [
+        "site",
+        "url_generated",
+        "capture_received"
+      ],
       "additionalProperties": false,
       "properties": {
-        "site": { "$ref": "enums.schema.json#/$defs/external_site" },
-        "url_generated": { "type": "string" },
-        "capture_received": { "type": "boolean" },
-        "capture_filename": { "type": ["string", "null"] }
+        "site": {
+          "$ref": "enums.schema.json#/$defs/external_site"
+        },
+        "url_generated": {
+          "type": "string"
+        },
+        "capture_received": {
+          "type": "boolean"
+        },
+        "capture_filename": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       }
     },
     "source": {
@@ -355,46 +674,125 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^src_" },
-        "gedcomx_source_description_id": { "type": "string" },
-        "citation": { "type": "string" },
-        "citation_detail": { "$ref": "#/$defs/citation_detail" },
-        "source_classification": { "$ref": "enums.schema.json#/$defs/source_classification" },
-        "repository": { "type": "string" },
-        "access_date": { "$ref": "enums.schema.json#/$defs/iso_date" },
-        "url": { "type": ["string", "null"] },
-        "url_archived": { "type": ["string", "null"] },
-        "notes": { "type": ["string", "null"] },
-        "transcription": { "type": ["string", "null"] },
-        "transcription_truncated": { "const": true },
-        "image_filename": { "type": ["string", "null"] },
+        "id": {
+          "type": "string",
+          "pattern": "^src_"
+        },
+        "gedcomx_source_description_id": {
+          "type": "string"
+        },
+        "citation": {
+          "type": "string"
+        },
+        "citation_detail": {
+          "$ref": "#/$defs/citation_detail"
+        },
+        "source_classification": {
+          "$ref": "enums.schema.json#/$defs/source_classification"
+        },
+        "repository": {
+          "type": "string"
+        },
+        "access_date": {
+          "$ref": "enums.schema.json#/$defs/iso_date"
+        },
+        "url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "url_archived": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "transcription": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "transcription_truncated": {
+          "const": true
+        },
+        "image_filename": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "log_entry_id": {
           "anyOf": [
-            { "type": "string", "pattern": "^log_" },
-            { "type": "null" }
+            {
+              "type": "string",
+              "pattern": "^log_"
+            },
+            {
+              "type": "null"
+            }
           ]
         }
       },
       "if": {
-        "properties": { "transcription_truncated": { "const": true } },
-        "required": ["transcription_truncated"]
+        "properties": {
+          "transcription_truncated": {
+            "const": true
+          }
+        },
+        "required": [
+          "transcription_truncated"
+        ]
       },
       "then": {
-        "properties": { "transcription": { "type": "string", "pattern": "\\S" } },
-        "required": ["transcription"]
+        "properties": {
+          "transcription": {
+            "type": "string",
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "transcription"
+        ]
       }
     },
     "citation_detail": {
       "type": "object",
-      "required": ["who", "what", "when_created", "when_accessed", "where", "where_within"],
+      "required": [
+        "who",
+        "what",
+        "when_created",
+        "when_accessed",
+        "where",
+        "where_within"
+      ],
       "additionalProperties": false,
       "properties": {
-        "who": { "type": "string" },
-        "what": { "type": "string" },
-        "when_created": { "type": "string" },
-        "when_accessed": { "type": "string" },
-        "where": { "type": "string" },
-        "where_within": { "type": "string" }
+        "who": {
+          "type": "string"
+        },
+        "what": {
+          "type": "string"
+        },
+        "when_created": {
+          "type": "string"
+        },
+        "when_accessed": {
+          "type": "string"
+        },
+        "where": {
+          "type": "string"
+        },
+        "where_within": {
+          "type": "string"
+        }
       }
     },
     "assertion": {
@@ -414,50 +812,124 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^a_" },
-        "source_id": { "type": "string", "pattern": "^src_" },
-        "record_id": { "type": "string" },
-        "record_role": { "$ref": "enums.schema.json#/$defs/record_role_recommended" },
-        "record_persona_id": { "type": ["string", "null"] },
-        "fact_type": { "$ref": "enums.schema.json#/$defs/fact_type_recommended" },
-        "value": { "type": "string" },
-        "structured_value": { "type": ["object", "null"] },
-        "date": { "type": ["string", "null"] },
-        "date_certainty": {
-          "anyOf": [
-            { "$ref": "enums.schema.json#/$defs/date_certainty" },
-            { "type": "null" }
+        "id": {
+          "type": "string",
+          "pattern": "^a_"
+        },
+        "source_id": {
+          "type": "string",
+          "pattern": "^src_"
+        },
+        "record_id": {
+          "type": "string"
+        },
+        "record_role": {
+          "$ref": "enums.schema.json#/$defs/record_role_recommended"
+        },
+        "record_persona_id": {
+          "type": [
+            "string",
+            "null"
           ]
         },
-        "place": { "type": ["string", "null"] },
-        "standard_place": { "type": ["string", "null"] },
-        "information_quality": { "$ref": "enums.schema.json#/$defs/information_quality" },
-        "informant": { "type": "string" },
-        "informant_proximity": { "$ref": "enums.schema.json#/$defs/informant_proximity" },
-        "informant_bias_notes": { "type": ["string", "null"] },
-        "record_basis": { "$ref": "enums.schema.json#/$defs/record_basis" },
+        "fact_type": {
+          "$ref": "enums.schema.json#/$defs/fact_type_recommended"
+        },
+        "value": {
+          "type": "string"
+        },
+        "structured_value": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "date": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "date_certainty": {
+          "anyOf": [
+            {
+              "$ref": "enums.schema.json#/$defs/date_certainty"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "place": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "standard_place": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "information_quality": {
+          "$ref": "enums.schema.json#/$defs/information_quality"
+        },
+        "informant": {
+          "type": "string"
+        },
+        "informant_proximity": {
+          "$ref": "enums.schema.json#/$defs/informant_proximity"
+        },
+        "informant_bias_notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "record_basis": {
+          "$ref": "enums.schema.json#/$defs/record_basis"
+        },
         "log_entry_id": {
           "anyOf": [
-            { "type": "string", "pattern": "^log_" },
-            { "type": "null" }
+            {
+              "type": "string",
+              "pattern": "^log_"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "extracted_for_question_ids": {
           "type": "array",
-          "items": { "type": "string", "pattern": "^q_" }
+          "items": {
+            "type": "string",
+            "pattern": "^q_"
+          }
         }
       },
       "allOf": [
         {
           "$comment": "TWO DIFFERENT FIELDS SHARE THE VALUE 'absent' HERE — read the field name on every line below. `record_basis: \"absent\"` says the record lacked the value; `record_role: \"absent\"` says the person held no role in it because they were not there. This rule couples them: negative evidence is the researcher's own conclusion that a person expected in a record is missing from it, so `record_role` is the literal 'absent' and `informant_proximity` is 'researcher' — no record informant reported an absence, whatever the record type. Forward direction only: the converse (`record_role: \"absent\"` implies `record_basis: \"absent\"`) is an unexercised branch and is left to research_append's own precondition. `informant` is not constrained; it is free text. The `required` below is load-bearing: without it an assertion missing `record_basis` matches the `if` vacuously and collects a spurious second error. (This field was renamed 2026-09-18 — see the retired-identifier registry in enums.schema.json; the coupling PR #2601 landed is unchanged in meaning.)",
           "if": {
-            "required": ["record_basis"],
-            "properties": { "record_basis": { "const": "absent" } }
+            "required": [
+              "record_basis"
+            ],
+            "properties": {
+              "record_basis": {
+                "const": "absent"
+              }
+            }
           },
           "then": {
             "properties": {
-              "record_role": { "const": "absent" },
-              "informant_proximity": { "const": "researcher" }
+              "record_role": {
+                "const": "absent"
+              },
+              "informant_proximity": {
+                "const": "researcher"
+              }
             }
           }
         }
@@ -465,28 +937,68 @@
     },
     "person_evidence_entry": {
       "type": "object",
-      "required": ["id", "assertion_id", "person_id", "confidence", "rationale", "created"],
+      "required": [
+        "id",
+        "assertion_id",
+        "person_id",
+        "confidence",
+        "rationale",
+        "created"
+      ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^pe_" },
-        "assertion_id": { "type": "string", "pattern": "^a_" },
-        "person_id": { "type": "string" },
-        "confidence": { "$ref": "enums.schema.json#/$defs/person_evidence_confidence" },
-        "rationale": { "type": "string" },
+        "id": {
+          "type": "string",
+          "pattern": "^pe_"
+        },
+        "assertion_id": {
+          "type": "string",
+          "pattern": "^a_"
+        },
+        "person_id": {
+          "type": "string"
+        },
+        "confidence": {
+          "$ref": "enums.schema.json#/$defs/person_evidence_confidence"
+        },
+        "rationale": {
+          "type": "string"
+        },
         "core_identifier_conflict": {
-          "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "match_score": {
           "anyOf": [
-            { "type": "number", "minimum": 0, "maximum": 1 },
-            { "type": "null" }
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "type": "null"
+            }
           ]
         },
-        "created": { "$ref": "enums.schema.json#/$defs/iso_date" },
+        "created": {
+          "$ref": "enums.schema.json#/$defs/iso_date"
+        },
         "superseded_by": {
           "anyOf": [
-            { "type": "string", "pattern": "^pe_" },
-            { "type": "null" }
+            {
+              "type": "string",
+              "pattern": "^pe_"
+            },
+            {
+              "type": "null"
+            }
           ]
         }
       }
@@ -503,48 +1015,117 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^c_" },
-        "conflict_type": { "$ref": "enums.schema.json#/$defs/conflict_type" },
-        "description": { "type": "string" },
-        "disputed_attribute": { "type": ["string", "null"] },
-        "identity_question": { "type": ["string", "null"] },
-        "competing_assertion_ids": {
-          "type": "array",
-          "items": { "type": "string", "pattern": "^a_" }
+        "id": {
+          "type": "string",
+          "pattern": "^c_"
         },
-        "independence_analysis": { "type": ["string", "null"] },
-        "weighing_analysis": { "type": ["string", "null"] },
-        "preferred_assertion_id": {
-          "anyOf": [
-            { "type": "string", "pattern": "^a_" },
-            { "type": "null" }
+        "conflict_type": {
+          "$ref": "enums.schema.json#/$defs/conflict_type"
+        },
+        "description": {
+          "type": "string"
+        },
+        "disputed_attribute": {
+          "type": [
+            "string",
+            "null"
           ]
         },
-        "resolution_rationale": { "type": ["string", "null"] },
-        "status": { "$ref": "enums.schema.json#/$defs/conflict_status" },
+        "identity_question": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "competing_assertion_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^a_"
+          }
+        },
+        "independence_analysis": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "weighing_analysis": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "preferred_assertion_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^a_"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "resolution_rationale": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "$ref": "enums.schema.json#/$defs/conflict_status"
+        },
         "blocks_question_ids": {
           "type": "array",
-          "items": { "type": "string", "pattern": "^q_" }
+          "items": {
+            "type": "string",
+            "pattern": "^q_"
+          }
         }
       },
       "allOf": [
         {
-          "if": { "properties": { "conflict_type": { "const": "fact" } } },
-          "then": {
-            "required": ["disputed_attribute"],
+          "if": {
             "properties": {
-              "disputed_attribute": { "type": "string" },
-              "competing_assertion_ids": { "minItems": 2 }
+              "conflict_type": {
+                "const": "fact"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "disputed_attribute"
+            ],
+            "properties": {
+              "disputed_attribute": {
+                "type": "string"
+              },
+              "competing_assertion_ids": {
+                "minItems": 2
+              }
             }
           }
         },
         {
-          "if": { "properties": { "conflict_type": { "const": "identity" } } },
-          "then": {
-            "required": ["identity_question"],
+          "if": {
             "properties": {
-              "identity_question": { "type": "string" },
-              "competing_assertion_ids": { "minItems": 1 }
+              "conflict_type": {
+                "const": "identity"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "identity_question"
+            ],
+            "properties": {
+              "identity_question": {
+                "type": "string"
+              },
+              "competing_assertion_ids": {
+                "minItems": 1
+              }
             }
           }
         }
@@ -563,99 +1144,225 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^h_" },
-        "claim": { "type": "string" },
-        "status": { "$ref": "enums.schema.json#/$defs/hypothesis_status" },
+        "id": {
+          "type": "string",
+          "pattern": "^h_"
+        },
+        "claim": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "enums.schema.json#/$defs/hypothesis_status"
+        },
         "supporting_assertion_ids": {
           "type": "array",
-          "items": { "type": "string", "pattern": "^a_" }
+          "items": {
+            "type": "string",
+            "pattern": "^a_"
+          }
         },
         "contradicting_assertion_ids": {
           "type": "array",
-          "items": { "type": "string", "pattern": "^a_" }
+          "items": {
+            "type": "string",
+            "pattern": "^a_"
+          }
         },
-        "ruled_out": { "type": "boolean" },
-        "ruled_out_reason": { "type": ["string", "null"] },
-        "notes": { "type": ["string", "null"] },
+        "ruled_out": {
+          "type": "boolean"
+        },
+        "ruled_out_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "related_question_ids": {
           "type": "array",
-          "items": { "type": "string", "pattern": "^q_" }
+          "items": {
+            "type": "string",
+            "pattern": "^q_"
+          }
         }
       },
       "allOf": [
         {
-          "if": { "properties": { "ruled_out": { "const": true } } },
+          "if": {
+            "properties": {
+              "ruled_out": {
+                "const": true
+              }
+            }
+          },
           "then": {
-            "required": ["ruled_out_reason"],
-            "properties": { "ruled_out_reason": { "type": "string" } }
+            "required": [
+              "ruled_out_reason"
+            ],
+            "properties": {
+              "ruled_out_reason": {
+                "type": "string"
+              }
+            }
           }
         }
       ]
     },
     "timeline": {
       "type": "object",
-      "required": ["id", "label", "person_ids", "generated", "events", "gaps"],
+      "required": [
+        "id",
+        "label",
+        "person_ids",
+        "generated",
+        "events",
+        "gaps"
+      ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^t_" },
-        "label": { "type": "string" },
+        "id": {
+          "type": "string",
+          "pattern": "^t_"
+        },
+        "label": {
+          "type": "string"
+        },
         "hypothesis_id": {
           "anyOf": [
-            { "type": "string", "pattern": "^h_" },
-            { "type": "null" }
+            {
+              "type": "string",
+              "pattern": "^h_"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "person_ids": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
-        "generated": { "$ref": "enums.schema.json#/$defs/iso_datetime" },
+        "generated": {
+          "$ref": "enums.schema.json#/$defs/iso_datetime"
+        },
         "events": {
           "type": "array",
-          "items": { "$ref": "#/$defs/timeline_event" }
+          "items": {
+            "$ref": "#/$defs/timeline_event"
+          }
         },
         "gaps": {
           "type": "array",
-          "items": { "$ref": "#/$defs/timeline_gap" }
+          "items": {
+            "$ref": "#/$defs/timeline_gap"
+          }
         }
       }
     },
     "timeline_event": {
       "type": "object",
-      "required": ["date", "date_certainty", "event_type", "description", "assertion_ids"],
+      "required": [
+        "date",
+        "date_certainty",
+        "event_type",
+        "description",
+        "assertion_ids"
+      ],
       "additionalProperties": false,
       "properties": {
-        "date": { "type": "string" },
-        "date_certainty": { "$ref": "enums.schema.json#/$defs/date_certainty_timeline" },
-        "event_type": { "$ref": "enums.schema.json#/$defs/event_type_recommended" },
-        "place": { "type": ["string", "null"] },
-        "standard_place": { "type": ["string", "null"] },
-        "description": { "type": "string" },
+        "date": {
+          "type": "string"
+        },
+        "date_certainty": {
+          "$ref": "enums.schema.json#/$defs/date_certainty_timeline"
+        },
+        "event_type": {
+          "$ref": "enums.schema.json#/$defs/event_type_recommended"
+        },
+        "place": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "standard_place": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
         "assertion_ids": {
           "type": "array",
-          "items": { "type": "string", "pattern": "^a_" }
+          "items": {
+            "type": "string",
+            "pattern": "^a_"
+          }
         },
-        "distance_from_previous_km": { "type": ["number", "null"] },
+        "distance_from_previous_km": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
         "conflict_ids": {
-          "type": ["array", "null"],
-          "items": { "type": "string", "pattern": "^c_" }
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string",
+            "pattern": "^c_"
+          }
         },
-        "conflict_note": { "type": ["string", "null"] }
+        "conflict_note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       }
     },
     "timeline_gap": {
       "type": "object",
-      "required": ["start", "end", "expected_events", "severity"],
+      "required": [
+        "start",
+        "end",
+        "expected_events",
+        "severity"
+      ],
       "additionalProperties": false,
       "properties": {
-        "start": { "type": "string" },
-        "end": { "type": "string" },
+        "start": {
+          "type": "string"
+        },
+        "end": {
+          "type": "string"
+        },
         "expected_events": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
-        "severity": { "$ref": "enums.schema.json#/$defs/severity" },
-        "notes": { "type": ["string", "null"] }
+        "severity": {
+          "$ref": "enums.schema.json#/$defs/severity"
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       }
     },
     "proof_summary": {
@@ -673,52 +1380,102 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^ps_" },
-        "question_id": { "type": "string", "pattern": "^q_" },
-        "tier": { "$ref": "enums.schema.json#/$defs/proof_tier" },
-        "vehicle": { "$ref": "enums.schema.json#/$defs/proof_vehicle" },
-        "shortfall": { "$ref": "enums.schema.json#/$defs/proof_shortfall" },
+        "id": {
+          "type": "string",
+          "pattern": "^ps_"
+        },
+        "question_id": {
+          "type": "string",
+          "pattern": "^q_"
+        },
+        "tier": {
+          "$ref": "enums.schema.json#/$defs/proof_tier"
+        },
+        "vehicle": {
+          "$ref": "enums.schema.json#/$defs/proof_vehicle"
+        },
+        "shortfall": {
+          "$ref": "enums.schema.json#/$defs/proof_shortfall"
+        },
         "supporting_assertion_ids": {
           "type": "array",
-          "items": { "type": "string", "pattern": "^a_" }
+          "items": {
+            "type": "string",
+            "pattern": "^a_"
+          }
         },
         "resolved_conflict_ids": {
           "type": "array",
-          "items": { "type": "string", "pattern": "^c_" }
+          "items": {
+            "type": "string",
+            "pattern": "^c_"
+          }
         },
-        "exhaustive_search_summary": { "type": "string" },
-        "narrative_markdown": { "type": "string" },
+        "exhaustive_search_summary": {
+          "type": "string"
+        },
+        "narrative_markdown": {
+          "type": "string"
+        },
         "claims": {
           "type": "array",
-          "items": { "$ref": "#/$defs/proof_claim" }
+          "items": {
+            "$ref": "#/$defs/proof_claim"
+          }
         }
       }
     },
     "proof_claim": {
       "description": "One claim within a multi-claim question (e.g. paternity or maternity within a single parentage question), tiered independently of the proof_summary's scalar `tier`. Optional and additive — omit entirely for the default, single-conclusion case. `tier` on the parent proof_summary carries the stronger of the per-claim tiers; the tree-encoding gate reads each claim's own `proof_tier` to decide whether that claim's `relationship` is written, independent of the scalar.",
       "type": "object",
-      "required": ["claim", "proof_tier", "supporting_assertion_ids", "relationship"],
+      "required": [
+        "claim",
+        "proof_tier",
+        "supporting_assertion_ids",
+        "relationship"
+      ],
       "additionalProperties": false,
       "properties": {
-        "claim": { "type": "string" },
-        "proof_tier": { "$ref": "enums.schema.json#/$defs/proof_tier" },
-        "shortfall": { "$ref": "enums.schema.json#/$defs/proof_shortfall" },
+        "claim": {
+          "type": "string"
+        },
+        "proof_tier": {
+          "$ref": "enums.schema.json#/$defs/proof_tier"
+        },
+        "shortfall": {
+          "$ref": "enums.schema.json#/$defs/proof_shortfall"
+        },
         "supporting_assertion_ids": {
           "type": "array",
-          "items": { "type": "string", "pattern": "^a_" }
+          "items": {
+            "type": "string",
+            "pattern": "^a_"
+          }
         },
-        "relationship": { "$ref": "#/$defs/proof_claim_relationship" }
+        "relationship": {
+          "$ref": "#/$defs/proof_claim_relationship"
+        }
       }
     },
     "proof_claim_relationship": {
       "description": "The tree endpoint a proof_claim concludes — a ParentChild relationship in tree.gedcomx.json, named so the tree-encoding gate has something to bind to mechanically rather than a prose label. Scoped to ParentChild only (paternity/maternity); a Couple (marriage) claim split can be added later if a second concrete need for it arises.",
       "type": "object",
-      "required": ["type", "parent", "child"],
+      "required": [
+        "type",
+        "parent",
+        "child"
+      ],
       "additionalProperties": false,
       "properties": {
-        "type": { "const": "ParentChild" },
-        "parent": { "type": "string" },
-        "child": { "type": "string" }
+        "type": {
+          "const": "ParentChild"
+        },
+        "parent": {
+          "type": "string"
+        },
+        "child": {
+          "type": "string"
+        }
       }
     },
     "evaluation_entry": {
@@ -735,39 +1492,90 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^ev_[0-9]+$" },
-        "focus": { "$ref": "enums.schema.json#/$defs/evaluation_focus" },
-        "target_id": { "type": "string" },
-        "target_type": { "$ref": "enums.schema.json#/$defs/evaluation_target_type" },
-        "verdict": { "$ref": "enums.schema.json#/$defs/evaluation_verdict" },
-        "file_path": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" },
+        "id": {
+          "type": "string",
+          "pattern": "^ev_[0-9]+$"
+        },
+        "focus": {
+          "$ref": "enums.schema.json#/$defs/evaluation_focus"
+        },
+        "target_id": {
+          "type": "string"
+        },
+        "target_type": {
+          "$ref": "enums.schema.json#/$defs/evaluation_target_type"
+        },
+        "verdict": {
+          "$ref": "enums.schema.json#/$defs/evaluation_verdict"
+        },
+        "file_path": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
         "superseded_by": {
           "anyOf": [
-            { "type": "string", "pattern": "^ev_[0-9]+$" },
-            { "type": "null" }
+            {
+              "type": "string",
+              "pattern": "^ev_[0-9]+$"
+            },
+            {
+              "type": "null"
+            }
           ]
         }
       }
     },
     "locality": {
       "type": "object",
-      "required": ["id", "place", "pages_read", "source", "created"],
+      "required": [
+        "id",
+        "place",
+        "pages_read",
+        "source",
+        "created"
+      ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^loc_" },
-        "place": { "type": "string" },
-        "for_place": { "type": ["string", "null"] },
-        "time_period": { "type": ["string", "null"] },
+        "id": {
+          "type": "string",
+          "pattern": "^loc_"
+        },
+        "place": {
+          "type": "string"
+        },
+        "for_place": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "time_period": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "jurisdictions": {
           "type": "array",
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["name"],
+            "required": [
+              "name"
+            ],
             "properties": {
-              "name": { "type": "string" },
-              "date_range": { "type": ["string", "null"] }
+              "name": {
+                "type": "string"
+              },
+              "date_range": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
             }
           }
         },
@@ -776,50 +1584,103 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["id", "title"],
+            "required": [
+              "id",
+              "title"
+            ],
             "properties": {
-              "id": { "type": "string" },
-              "title": { "type": "string" },
-              "date_range": { "type": ["string", "null"] }
+              "id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "date_range": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
             }
           }
         },
         "quirks": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
-        "guide_markdown": { "type": ["string", "null"] },
+        "guide_markdown": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "pages_read": {
           "type": "array",
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["section", "found"],
+            "required": [
+              "section",
+              "found"
+            ],
             "properties": {
-              "section": { "$ref": "enums.schema.json#/$defs/locality_page_section" },
-              "url": { "type": ["string", "null"] },
-              "found": { "type": "boolean" }
+              "section": {
+                "$ref": "enums.schema.json#/$defs/locality_page_section"
+              },
+              "url": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "found": {
+                "type": "boolean"
+              }
             }
           }
         },
-        "source": { "type": "string" },
-        "created": { "$ref": "enums.schema.json#/$defs/iso_date" },
-        "updated": { "$ref": "enums.schema.json#/$defs/iso_date" }
+        "source": {
+          "type": "string"
+        },
+        "created": {
+          "$ref": "enums.schema.json#/$defs/iso_date"
+        },
+        "updated": {
+          "$ref": "enums.schema.json#/$defs/iso_date"
+        }
       }
     },
     "warning_justification": {
       "type": "object",
-      "required": ["warning_id", "justification", "person_ids", "tool", "recorded_at"],
+      "required": [
+        "warning_id",
+        "justification",
+        "person_ids",
+        "tool",
+        "recorded_at"
+      ],
       "additionalProperties": false,
       "properties": {
-        "warning_id": { "type": "string" },
-        "justification": { "type": "string" },
+        "warning_id": {
+          "type": "string"
+        },
+        "justification": {
+          "type": "string"
+        },
         "person_ids": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
-        "tool": { "type": "string" },
-        "recorded_at": { "$ref": "enums.schema.json#/$defs/iso_date" }
+        "tool": {
+          "type": "string"
+        },
+        "recorded_at": {
+          "$ref": "enums.schema.json#/$defs/iso_date"
+        }
       }
     }
   }

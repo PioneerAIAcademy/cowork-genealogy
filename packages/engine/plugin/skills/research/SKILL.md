@@ -174,7 +174,7 @@ something you wait for — their answer arrives as the next message.
    every other entry is a `Skill` call.**
    Writing "proceed to research-exhaustiveness" or "proceed directly
    to proof-conclusion" and then hand-authoring the fields that skill
-   would have written (an `exhaustive_declaration`, a `proof_summaries`
+   would have written (a `search_stop`, a `proof_summaries`
    entry, the concluded tree relationship/fact) is not invoking it — it
    is skipping it while leaving state that looks like it ran. See the
    **Exhaustiveness/proof-conclusion contract** below.
@@ -233,7 +233,7 @@ something you wait for — their answer arrives as the next message.
    citation and tier checks for proof-conclusion), and a hand-authored
    `research_append` reproducing their expected output fields skips that
    analysis while still passing schema validation. Concretely: never write
-   `exhaustive_declaration` on a question, a `proof_summaries` entry, or the
+   `search_stop` on a question, a `proof_summaries` entry, or the
    tree relationship/fact a proof concludes, except as the direct result of
    spawning `@plugin:research-exhaustiveness` or `@plugin:proof-conclusion`
    in this same run. If you catch yourself narrating "proceed to

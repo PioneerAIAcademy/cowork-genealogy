@@ -1,7 +1,7 @@
 # flynn-exhaustive-ready
 
 Patrick Flynn parentage research with all planned searches completed and
-research genuinely exhaustive, but the `exhaustive_declaration` has not
+research genuinely exhaustive, but the `search_stop` has not
 yet been written. This is the state immediately before the
 research-exhaustiveness skill fires to declare.
 
@@ -16,7 +16,7 @@ Differs from `flynn-resolved` in these ways:
 - **`questions[q_001].status`:** `in_progress` (was `resolved`).
 - **`questions[q_001].resolved`:** `null` (was `"2026-05-04"`).
 - **`questions[q_001].resolution_assertion_ids`:** `[]` (was populated).
-- **`questions[q_001].exhaustive_declaration`:** `declared: false` with
+- **`questions[q_001].search_stop`:** `stopped_because: null` with
   empty fields (was `declared: true` with full `stop_criteria`).
 - **`proof_summaries[ps_001].tier`:** `probable` (was `proved`).
   The proof summary was written pre-declaration and reflects the

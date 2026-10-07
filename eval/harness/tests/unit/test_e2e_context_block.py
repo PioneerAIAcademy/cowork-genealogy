@@ -403,13 +403,13 @@ def test_owned_sections_is_the_shipped_hooks_map_not_a_copy():
 
 # ── the declaration arm: field-scoped routing (issue #1335, Phase 4) ──
 #
-# `exhaustive_declaration` is a REQUIRED property of every question, so
+# `search_stop` is a REQUIRED property of every question, so
 # question-selection writes it on every creation from the main thread. Routing
 # the SECTION, or the field's mere presence, denies all 197 of those in the
-# corpus. The rule keys on the CLAIM — `declared: true` — and these vectors are
-# what pin that apart.
+# corpus. The rule keys on the CLAIM — a stop-gate `stopped_because` value —
+# and these vectors are what pin that apart.
 
-_DECLARE = {"declared": True, "log_entry_ids": ["log_001"]}
+_DECLARE = {"stopped_because": "question_answered", "log_entry_ids": ["log_001"], "stop_criteria": None, "not_reached": []}
 _EXH_OWNER = "genealogy-research:research-exhaustiveness"
 
 
@@ -417,7 +417,7 @@ _EXH_OWNER = "genealogy-research:research-exhaustiveness"
     "payload,label",
     [
         (
-            _owned(section="questions", fields={"exhaustive_declaration": _DECLARE}),
+            _owned(section="questions", fields={"search_stop": _DECLARE}),
             "main thread",
         ),
         (
@@ -427,7 +427,7 @@ _EXH_OWNER = "genealogy-research:research-exhaustiveness"
                     {
                         "section": "questions",
                         "op": "update",
-                        "fields": {"exhaustive_declaration": _DECLARE},
+                        "fields": {"search_stop": _DECLARE},
                     },
                 ]
             ),
@@ -436,7 +436,7 @@ _EXH_OWNER = "genealogy-research:research-exhaustiveness"
         (
             _owned(
                 section="questions",
-                fields={"exhaustive_declaration": _DECLARE},
+                fields={"search_stop": _DECLARE},
                 agent_id="a1",
                 agent_type="general-purpose",
             ),
@@ -445,7 +445,7 @@ _EXH_OWNER = "genealogy-research:research-exhaustiveness"
         (
             _owned(
                 section="questions",
-                fields={"exhaustive_declaration": _DECLARE},
+                fields={"search_stop": _DECLARE},
                 agent_id="a1",
                 agent_type="genealogy-research:proof-conclusion",
             ),
@@ -456,7 +456,7 @@ _EXH_OWNER = "genealogy-research:research-exhaustiveness"
 def test_exhaustive_declaration_claim_is_blocked(payload, label):
     denied = main_thread_owned_section(payload)
     assert denied is not None, label
-    assert denied[0] == "questions.exhaustive_declaration", label
+    assert denied[0] == "questions.search_stop", label
     assert denied[1] == "declaration", label
 
 
@@ -466,7 +466,7 @@ def test_exhaustive_declaration_claim_is_blocked(payload, label):
         (
             _owned(
                 section="questions",
-                fields={"exhaustive_declaration": _DECLARE},
+                fields={"search_stop": _DECLARE},
                 agent_id="a1",
                 agent_type=_EXH_OWNER,
             ),
@@ -475,7 +475,7 @@ def test_exhaustive_declaration_claim_is_blocked(payload, label):
         (
             _owned(
                 section="questions",
-                fields={"exhaustive_declaration": _DECLARE},
+                fields={"search_stop": _DECLARE},
                 agent_id="a1",
                 agent_type="research-exhaustiveness",
             ),
@@ -490,19 +490,19 @@ def test_exhaustive_declaration_claim_is_blocked(payload, label):
                 op="append",
                 entry={
                     "question": "Who were the parents?",
-                    "exhaustive_declaration": {"declared": False, "log_entry_ids": []},
+                    "search_stop": {"stopped_because": None, "log_entry_ids": [], "stop_criteria": None, "not_reached": []},
                 },
             ),
-            "question-selection creating a question (declared: false)",
+            "question-selection creating a question (stopped_because: null)",
         ),
         # The owning skill's own honest early-termination path. It claims
         # nothing, so it is not routed.
         (
             _owned(
                 section="questions",
-                fields={"exhaustive_declaration": {"declared": False, "log_entry_ids": ["log_001"]}},
+                fields={"search_stop": {"stopped_because": "resources_spent", "log_entry_ids": ["log_001"], "stop_criteria": None, "not_reached": []}},
             ),
-            "an honest early termination (declared: false)",
+            "an honest early termination (non-gate stopped_because)",
         ),
     ],
 )
@@ -532,11 +532,11 @@ def test_declaration_deny_uses_the_shipped_hooks_own_words():
     from harness.context_policy import owned_section_denial
 
     reason = owned_section_denial(
-        ("questions.exhaustive_declaration", "declaration", "")
+        ("questions.search_stop", "declaration", "")
     )["hookSpecificOutput"]["permissionDecisionReason"]
     assert "@plugin:research-exhaustiveness" in reason
     # It must say what is NOT routed, or a reader concludes the whole section is.
-    assert "declared: false" in reason
+    assert "stopped_because: null" in reason
 
 
 # ── the out-of-lane arm, which the harness gained on 2026-08-23 ──

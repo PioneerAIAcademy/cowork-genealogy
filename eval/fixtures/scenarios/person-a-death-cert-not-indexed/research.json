@@ -2,7 +2,9 @@
   "project": {
     "id": "rp_001",
     "objective": "Determine whether a South Dakota death certificate exists for Person A (born 1856, Germany) and establish when Person A died.",
-    "subject_person_ids": ["I1"],
+    "subject_person_ids": [
+      "I1"
+    ],
     "status": "active",
     "created": "2026-08-06",
     "updated": "2026-08-06",
@@ -10,7 +12,9 @@
   },
   "researcher_profile": {
     "experience_level": "intermediate",
-    "subscriptions": ["none"],
+    "subscriptions": [
+      "none"
+    ],
     "narration_guidance": "One-line preamble per skill invocation. Assume basic GPS vocabulary."
   },
   "known_holdings": [],
@@ -27,10 +31,15 @@
       "created": "2026-08-06",
       "resolved": null,
       "resolution_assertion_ids": [],
-      "exhaustive_declaration": {
-        "declared": true,
+      "search_stop": {
+        "stopped_because": "question_answered",
         "justification": "Searched FamilySearch-indexed South Dakota death records with two surname spelling variants (log_003, log_004); both returned negative. Find a Grave index and WPA Grave Registration records are the only accessible FamilySearch sources recording this individual's death. South Dakota vital records archives and unindexed microfilm are outside the accessible FamilySearch scope and represent the next research avenue if the certificate is needed.",
-        "log_entry_ids": ["log_001", "log_002", "log_003", "log_004"],
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004"
+        ],
         "stop_criteria": {
           "goal_alignment": "Partially. Death year 1935 is supported by indirect sources, but no death certificate was found to confirm the exact date or provide primary-information death details.",
           "repository_breadth": "All FamilySearch-indexed South Dakota death records searched with two spelling variants. State archives not searched.",
@@ -39,7 +48,8 @@
           "evidence_class": "No original source with primary death information found. Both sources carry secondary information.",
           "conflict_resolution": "No conflicts.",
           "overturn_risk": "Moderate. An indexed death certificate would provide primary information and could refine or contradict the 1935 date. Not accessible through FamilySearch indexing."
-        }
+        },
+        "not_reached": []
       }
     }
   ],
@@ -81,7 +91,9 @@
       "plan_item_id": null,
       "performed": "2026-08-06T19:35:56.775Z",
       "tool": "record_read",
-      "query": { "recordId": "ark:/61903/1:1:QVLD-NSQ7" },
+      "query": {
+        "recordId": "ark:/61903/1:1:QVLD-NSQ7"
+      },
       "outcome": "positive",
       "results_examined": 1,
       "external_site": null,
@@ -93,7 +105,9 @@
       "plan_item_id": null,
       "performed": "2026-08-06T19:35:56.776Z",
       "tool": "record_read",
-      "query": { "recordId": "ark:/61903/1:1:CYCQ-NRW2" },
+      "query": {
+        "recordId": "ark:/61903/1:1:CYCQ-NRW2"
+      },
       "outcome": "positive",
       "results_examined": 1,
       "external_site": null,
@@ -196,7 +210,9 @@
       "informant_bias_notes": null,
       "record_basis": "stated",
       "log_entry_id": "log_001",
-      "extracted_for_question_ids": ["q_001"],
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
       "source_id": "src_001",
       "standard_place": "Gregory, Gregory, South Dakota, United States"
     },
@@ -216,7 +232,9 @@
       "informant_bias_notes": null,
       "record_basis": "stated",
       "log_entry_id": "log_002",
-      "extracted_for_question_ids": ["q_001"],
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
       "source_id": "src_002",
       "standard_place": "Gregory, Gregory, South Dakota, United States"
     },
@@ -237,7 +255,9 @@
       "informant_bias_notes": "With birth year 1856, age 79 constrains death to 26 March through 31 December 1935. Indirect evidence: age at death does not state the exact date.",
       "record_basis": "inferred",
       "log_entry_id": "log_002",
-      "extracted_for_question_ids": ["q_001"],
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
       "source_id": "src_002"
     }
   ],

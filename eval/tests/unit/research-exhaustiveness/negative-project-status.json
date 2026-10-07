@@ -4,7 +4,7 @@
     "skill": "research-exhaustiveness",
     "name": "Project-status request should not trigger research-exhaustiveness",
     "type": "negative",
-    "description": "User asks for an overall project status update. That's project-status — research-exhaustiveness evaluates whether research on a specific question is reasonably exhaustive, not the project's overall state. The boundary matters because both skills sit near the 'how are things going?' decision point, but project-status reports across all questions while research-exhaustiveness writes the exhaustive_declaration for one specific question.",
+    "description": "User asks for an overall project status update. That's project-status — research-exhaustiveness evaluates whether research on a specific question is reasonably exhaustive, not the project's overall state. The boundary matters because both skills sit near the 'how are things going?' decision point, but project-status reports across all questions while research-exhaustiveness writes the search_stop for one specific question.",
     "tags": ["near-miss", "exhaustiveness-vs-project-status"]
   },
   "input": {
@@ -13,7 +13,7 @@
   },
   "negative": {
     "correct_skill": ["project-status"],
-    "explanation": "The user is asking for a project-wide status report, not an exhaustiveness evaluation of a specific question. project-status summarizes progress across all questions; research-exhaustiveness writes the exhaustive_declaration for one question. The request mentions no specific question and asks for a broad overview."
+    "explanation": "The user is asking for a project-wide status report, not an exhaustiveness evaluation of a specific question. project-status summarizes progress across all questions; research-exhaustiveness writes the search_stop for one question. The request mentions no specific question and asks for a broad overview."
   },
   "judge_context": [
     "Should route to project-status rather than evaluating exhaustiveness or writing a declaration for any specific question"

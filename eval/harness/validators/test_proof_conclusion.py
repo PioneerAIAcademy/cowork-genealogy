@@ -124,7 +124,7 @@ def test_q001_probable_tier(after_state, test):
 def test_q001_proved_tier(after_state, test):
     """For the proved-tier-with-exhaustive-search test: the proof summary
     for q_001 must have tier == 'proved'. The flynn-resolved scenario
-    has exhaustive_declaration populated with stop_criteria and the
+    has search_stop populated with stop_criteria and the
     negative-probate search completed — the search is reasonably
     exhaustive and three independent sources converge."""
     if "tier-proved-q001" not in test.get("tags", []):
@@ -631,7 +631,7 @@ def test_shortfall_matches_document_state(after_state, test):
     is whether the value is RIGHT, and a well-formed wrong value is the failure
     mode that matters: `ceiling` says *the reachable record is exhausted, a
     higher tier is not obtainable*, and asserting that over a question whose own
-    `exhaustive_declaration.declared` is false is exactly the overclaim this
+    `search_stop.stopped_because` is null is exactly the overclaim this
     field was added to expose.
 
     Three rules, each read off the document rather than off the tier alone:
@@ -646,10 +646,12 @@ def test_shortfall_matches_document_state(after_state, test):
        ``blocks_question_ids`` forces ``conflict``. Question-scoped, matching
        proof-conclusion's decision rules: a conflict open on another question
        does not bear on this conclusion.
-    3. ``ceiling`` requires ``declared is True``. Only ``ceiling`` makes the
-       finished-searching claim, so only ``ceiling`` is constrained — ``gap``
-       is always permitted, including on a declared-exhaustive question, where
-       a reachable source may still be named as unreached.
+    3. ``ceiling`` requires ``search_stop.stopped_because`` to be a stop-gate value
+       (``question_answered``, ``record_exhausted``, or ``nothing_further_reachable``).
+       Only ``ceiling`` makes the finished-searching claim, so only ``ceiling``
+       is constrained — ``gap`` is always permitted, including on a
+       declared-exhaustive question, where a reachable source may still be
+       named as unreached.
 
     Deliberately NOT checked: that ``gap`` names its outstanding source. That is
     a judgement about prose, which is the rubric's job (ADR-0011 limit 1 — a
@@ -714,15 +716,18 @@ def test_shortfall_matches_document_state(after_state, test):
             # Nothing to check the ceiling claim against; a dangling
             # question_id is a different validator's business.
             continue
-        declared = (question.get("exhaustive_declaration") or {}).get("declared")
+        _STOP_GATE_VALUES = frozenset({"question_answered", "record_exhausted", "nothing_further_reachable"})
+        ss = question.get("search_stop") or {}
+        stopped_because = ss.get("stopped_because")
+        is_gate = stopped_because in _STOP_GATE_VALUES
 
         def _check_ceiling(value, where):
             if value == "ceiling":
-                assert declared is True, (
+                assert is_gate, (
                     f"{sid}{where}: shortfall 'ceiling' claims the reachable "
                     f"record is exhausted, but {qid}'s "
-                    f"exhaustive_declaration.declared is {declared!r}. Use 'gap' "
-                    f"while a reachable source remains unsearched — 'ceiling' "
+                    f"search_stop.stopped_because is {stopped_because!r} (not a stop-gate value). "
+                    f"Use 'gap' while a reachable source remains unsearched — 'ceiling' "
                     f"is the stronger claim and the document does not support it"
                 )
 

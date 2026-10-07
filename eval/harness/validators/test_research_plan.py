@@ -93,8 +93,8 @@ def test_research_plan_no_new_plan(before_state, after_state, test):
 # --- Tag-gated: nothing is written once the search is declared exhaustive ---
 
 def test_no_plan_writes_when_resolved(before_state, after_state, test):
-    """Tag-gated: on a question whose `exhaustive_declaration.declared` is
-    already true, research-plan must add nothing and change nothing.
+    """Tag-gated: on a question whose `search_stop.stopped_because` is
+    already a stop-gate value, research-plan must add nothing and change nothing.
 
     Covers the gap the other two leave. `test_research_plan_no_new_plan`
     catches a whole new `pl_` and `test_plans_no_deletions` catches removals;
@@ -107,7 +107,7 @@ def test_no_plan_writes_when_resolved(before_state, after_state, test):
     (`grade_on_invariant`): whichever skill ends up handling the prompt, no run
     may leave a mark on `plans[]`. Its companion
     `test_resolved_question_not_reopened` guards the question's own state —
-    `status`, `exhaustive_declaration`, `project.status` — which this one does
+    `status`, `search_stop`, `project.status` — which this one does
     not look at and which is the likelier harm on that prompt. Both are gated
     on the same tag; neither is sufficient alone.
     """
@@ -203,7 +203,7 @@ def test_resolved_question_not_reopened(before_state, after_state, test):
     false-fail the legitimate routes — `question-selection` may append a
     follow-on question, which is one of this test's `correct_skill` answers.
     So this names the specific deltas that are never legitimate here: the
-    target question's `status` and `exhaustive_declaration`, and
+    target question's `status` and `search_stop`, and
     `project.status`. Same shape as
     `test_search_external_sites.py::test_no_external_search_or_log_on_routeaway_negative`.
     """
@@ -219,7 +219,7 @@ def test_resolved_question_not_reopened(before_state, after_state, test):
             q.get("id"): q
             for q in (research.get("questions") or [])
             if q.get("status") == "resolved"
-            or (q.get("exhaustive_declaration") or {}).get("declared")
+            or (q.get("search_stop") or {}).get("stopped_because") in {"question_answered", "record_exhausted", "nothing_further_reachable"}
         }
 
     before_q = _resolved(before)
@@ -233,7 +233,7 @@ def test_resolved_question_not_reopened(before_state, after_state, test):
         if now is None:
             errors.append(f"{qid}: resolved question DELETED")
             continue
-        for field in ("status", "exhaustive_declaration", "question",
+        for field in ("status", "search_stop", "question",
                       "resolution_assertion_ids", "resolved"):
             if was.get(field) != now.get(field):
                 errors.append(

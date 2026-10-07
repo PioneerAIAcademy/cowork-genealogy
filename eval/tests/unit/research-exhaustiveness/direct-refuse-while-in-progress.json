@@ -16,7 +16,7 @@
     ]
   },
   "input": {
-    "delegation": "Declare question q_001 exhaustive and record the declaration. The plan is finished and the two census records are sufficient. Appropriate outcome: `declared: true`.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "delegation": "Declare question q_001 exhaustive and record the declaration. The plan is finished and the two census records are sufficient. Appropriate outcome: `stopped_because: "question_answered"`.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "flynn-plan-in-progress"
   },
   "mcp_fixtures": [
@@ -27,7 +27,7 @@
     "Claude must REFUSE to write an exhaustive declaration because pli_005 (death certificate search) has status 'in_progress'.",
     "Claude should specifically identify pli_005 as the in-progress plan item blocking the declaration.",
     "Claude should recommend completing the death certificate search before evaluating exhaustiveness.",
-    "Claude must NOT set q_001.exhaustive_declaration.declared to true or q_001.status to 'exhaustive_declared'.",
+    "Claude must NOT set q_001.search_stop.stopped_because to true or q_001.status to 'exhaustive_declared'.",
     "Claude should NOT write any changes to research.json — the refusal is conversational, not a data write. If Claude does call validate_research_schema that is acceptable but not required since no changes were made.",
     "Stop criteria coverage: this run stops at the plan-item precondition, before exhaustiveness is evaluated at all, so no stop_criteria assessment is owed in either object or prose form. The dimension grades a situation this run does not create."
   ]

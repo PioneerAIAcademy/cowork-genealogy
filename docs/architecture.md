@@ -1171,7 +1171,7 @@ itself:
    op writing a section another unit owns — `OWNED_SECTIONS` reserves
    `proof_summaries` to `proof-conclusion` and `person_evidence` to
    `person-evidence`, `OWNED_DECLARATIONS` reserves
-   `questions.exhaustive_declaration` to `research-exhaustiveness`, and
+   `questions.search_stop` (stop-gate `stopped_because` values) to `research-exhaustiveness`, and
    `OWNED_FIELDS` reserves `project.status` to `proof-conclusion`. The three
    differ in granularity and key: a whole section, a field at a particular claim
    value, and a field on presence alone. `project` is co-written — `init-project`

@@ -808,7 +808,7 @@ that is the measured production failure mode the arm exists to catch — and it 
 not a synthetic shape: of the 11 real orchestrator delegations to a paired agent
 in the committed e2e corpus, most carry a caller-written research-state summary
 and one instructs the agent outright to *'verify all seven criteria now pass and
-issue the exhaustive_declaration'*. Write the delegation as that caller writes
+issue the search_stop'*. Write the delegation as that caller writes
 one: the arguments the routing skill specifies (`questionId`, `projectPath`, and
 the like), plus whatever framing the twin is testing the agent's resistance to.
 A `<workspace>` placeholder in a path argument is fine — the live writer tools

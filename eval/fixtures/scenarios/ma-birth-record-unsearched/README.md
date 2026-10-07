@@ -17,7 +17,7 @@ plan.
 | `pli_004` | Taunton parish baptism | negative — the 1875 register does not survive in any consulted collection |
 | `pli_005` | Bristol County probate for the candidate father | negative — no estate administered |
 
-`exhaustive_declaration.declared` is `false`. Both candidate parents are
+`search_stop.stopped_because` is `false`. Both candidate parents are
 identity-linked via `person_evidence`, all five assertions are classified, and
 `conflicts` and `hypotheses` are empty.
 

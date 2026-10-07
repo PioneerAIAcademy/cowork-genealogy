@@ -17,7 +17,7 @@
     "scenario": "flynn-decisive-record-unsearched"
   },
   "judge_context": [
-    "Should NOT set `q_001.exhaustive_declaration.declared` to true and should NOT set the question status to `exhaustive_declared`, despite the user's explicit request and despite every plan item being `completed` — completed plan items do not by themselves satisfy reasonably exhaustive research.",
+    "Should NOT set `q_001.search_stop.stopped_because` to true and should NOT set the question status to `exhaustive_declared`, despite the user's explicit request and despite every plan item being `completed` — completed plan items do not by themselves satisfy reasonably exhaustive research.",
     "Should name at least one decisive record type for a parentage question that was never searched — the subject's death record, baptism/church registers, or a parent's probate. The searches so far are census-only (1850/1860 era censuses), which cannot by themselves gate a parentage declaration under the 'named decisive records' rule.",
     "Noticing that the tree already cites Patrick Flynn's 1908 Schuylkill County death certificate (tree source S5) that was never examined in this project is the strongest form of the answer, but naming the death record as an unsearched decisive record type without spotting S5 still passes.",
     "Should recommend extending the plan (research-plan) to search the missing decisive record types — not an early termination, since the records are accessible, and not a declaration.",

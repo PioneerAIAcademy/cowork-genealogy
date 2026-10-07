@@ -120,8 +120,8 @@ facts — answer both); a **Priority 1** unresolved conflict; a **Priority 3**
 high-severity timeline gap on a question that is not yet `resolved` — a
 defensible-tier proof_summary while the question still sits `in_progress`
 does not excuse an unsearched high-severity gap; or a **Priority 6 FAN
-pivot** firing on its own condition (Step 2: `exhaustive_declaration.declared`
-is `true`) regardless of tier — a defensible-tier proof_summary is not proof
+pivot** firing on its own condition (Step 2: `search_stop.stopped_because` is a
+stop-gate value) regardless of tier — a defensible-tier proof_summary is not proof
 exhaustion, and a question that is not yet `resolved` is not "answered"
 merely because its tier is defensible. The line: any question not yet
 `resolved` → the priority ladder still applies in full (decompose,
@@ -197,15 +197,15 @@ Priority 5 signal.
 
 **Priority 6 detail:** Don't pivot to FAN just because one search returned
 nil — pivot only when all planned direct searches are complete and
-unresolved. If the primary question's `exhaustive_declaration.declared` is
-`true`, the researcher has declared direct evidence exhausted: take that as
-the FAN signal and do NOT propose additional direct-evidence paths. A FAN
-question's answer must be evidence about the objective's subject, and it
-must target the people *around* the subject — associates, neighbors,
-witnesses, co-signers — not a record type that could itself hold direct
-proof of the relationship. If a record type (a deed, a will) could still
-directly name the relationship, searching it is unexhausted direct
-evidence, not a FAN pivot, whatever `exhaustive_declaration.declared` says.
+unresolved. If the primary question's `search_stop.stopped_because` is a stop-gate value
+(`question_answered`, `record_exhausted`, or `nothing_further_reachable`), the
+researcher has declared direct evidence exhausted: take that as the FAN signal
+and do NOT propose additional direct-evidence paths. A FAN question's answer
+must be evidence about the objective's subject, and it must target the people
+*around* the subject — associates, neighbors, witnesses, co-signers — not a
+record type that could itself hold direct proof of the relationship. If a record
+type (a deed, a will) could still directly name the relationship, searching it
+is unexhausted direct evidence, not a FAN pivot, whatever `search_stop` says.
 Examples:
 "Who witnessed Thomas Flynn's land transactions in Schuylkill County?" / "Who
 were Thomas Flynn's neighbors in Schuylkill County in 1850?"
@@ -281,7 +281,7 @@ research_append({
     status: "open",
     depends_on: [], unblocks: ["q_001"],
     resolved: null, resolution_assertion_ids: [],
-    exhaustive_declaration: { declared: false, justification: null, log_entry_ids: [], stop_criteria: null }
+    search_stop: { stopped_because: null, justification: null, log_entry_ids: [], stop_criteria: null, not_reached: [] }
   }
 })
 ```
@@ -303,10 +303,10 @@ do not retry the same payload blindly.
   question; it does not depend on it.
 - When neither applies (e.g. a first question), set both explicitly to `[]`.
 
-The `exhaustive_declaration` must be unstarted at creation (as shown above:
-`declared: false`, empty `log_entry_ids`, null `stop_criteria`). Evaluating
-exhaustiveness is the `research-exhaustiveness` skill's job, run after all
-plan items complete.
+The `search_stop` must be unstarted at creation (as shown above:
+`stopped_because: null`, empty `log_entry_ids`, null `stop_criteria`, empty
+`not_reached`). Evaluating exhaustiveness is the `research-exhaustiveness`
+skill's job, run after all plan items complete.
 
 ## 5. Present
 
@@ -358,8 +358,8 @@ pursued next.
   question to resolve it — even if that means a conflict with no formal
   `conflicts[]` entry yet.
 - **All plan items for a question complete:** run the priority ladder
-  first. If direct evidence is exhausted — `exhaustive_declaration.declared`
-  is true, or all planned direct searches are complete and unresolved —
+  first. If direct evidence is exhausted — `search_stop.stopped_because` is
+  a stop-gate value, or all planned direct searches are complete and unresolved —
   **Priority 6 fires: create a `fan_pivot` question** (FAN exhaustion comes
   before declaring the project reasonably exhaustive). Recommend
   `research-exhaustiveness` instead only when no Priority 1–6 signal applies

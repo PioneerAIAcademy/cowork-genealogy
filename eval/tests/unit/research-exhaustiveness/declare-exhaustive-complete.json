@@ -4,7 +4,7 @@
     "skill": "research-exhaustiveness",
     "name": "Declare exhaustive when all plan items completed and criteria met",
     "type": "positive",
-    "description": "q_001 in flynn-exhaustive-ready asks 'Who was the father of Patrick Flynn?' and has all three plan items completed (1860 census, death certificate, probate search — all with outcomes logged), the birthplace conflict is resolved, and three independent sources confirm Thomas Flynn as the father. The skill should declare q_001 exhaustive: update research.json to set exhaustive_declaration.declared to true, status to exhaustive_declared, populate all seven stop_criteria keys with log-grounded assessments, and list the relevant log_entry_ids.",
+    "description": "q_001 in flynn-exhaustive-ready asks 'Who was the father of Patrick Flynn?' and has all three plan items completed (1860 census, death certificate, probate search — all with outcomes logged), the birthplace conflict is resolved, and three independent sources confirm Thomas Flynn as the father. The skill should declare q_001 exhaustive: update research.json to set search_stop.stopped_because to true, status to exhaustive_declared, populate all seven stop_criteria keys with log-grounded assessments, and list the relevant log_entry_ids.",
     "tags": [
       "research-exhaustiveness",
       "affirmative-declaration",
@@ -12,16 +12,16 @@
     ]
   },
   "input": {
-    "user_message": "All planned searches for q_001 are complete. Three independent sources confirm Thomas Flynn as father: 1850 census co-enumeration, 1860 census co-enumeration, and the death certificate naming Thomas directly. The probate search returned negative (log_006). The birthplace conflict (c_001) is resolved. Overturn risk is low — no unsearched record type is likely to name a different father. Please update research.json: set q_001's exhaustive_declaration to declared: true, set the status to exhaustive_declared, fill in all seven stop_criteria assessments, and validate the schema.",
+    "user_message": "All planned searches for q_001 are complete. Three independent sources confirm Thomas Flynn as father: 1850 census co-enumeration, 1860 census co-enumeration, and the death certificate naming Thomas directly. The probate search returned negative (log_006). The birthplace conflict (c_001) is resolved. Overturn risk is low — no unsearched record type is likely to name a different father. Please update research.json: set q_001's search_stop to stopped_because: "question_answered", set the status to exhaustive_declared, fill in all seven stop_criteria assessments, and validate the schema.",
     "scenario": "flynn-exhaustive-ready"
   },
   "mcp_fixtures": [
     "wiki-read-pennsylvania-vital-records"
   ],
   "judge_context": [
-    "Claude should update research.json to set q_001.exhaustive_declaration.declared to true and q_001.status to 'exhaustive_declared'. Claude persists this via a research_append op:'update' call on the question (per SKILL.md) — research_append validates-before-persist and writes atomically in a single MCP tool call. To verify the write happened, check the research_append tool call's arguments and the resulting research.json state, not a raw file_changes diff.",
-    "The exhaustive_declaration.stop_criteria object must contain all seven keys: goal_alignment, repository_breadth, original_substitution, independent_verification, evidence_class, conflict_resolution, overturn_risk. Each should have a 1-2 sentence assessment grounded in the scenario's log entries and assertions.",
-    "The exhaustive_declaration.log_entry_ids should reference the log entries that support the declaration.",
+    "Claude should update research.json to set q_001.search_stop.stopped_because to true and q_001.status to 'exhaustive_declared'. Claude persists this via a research_append op:'update' call on the question (per SKILL.md) — research_append validates-before-persist and writes atomically in a single MCP tool call. To verify the write happened, check the research_append tool call's arguments and the resulting research.json state, not a raw file_changes diff.",
+    "The search_stop.stop_criteria object must contain all seven keys: goal_alignment, repository_breadth, original_substitution, independent_verification, evidence_class, conflict_resolution, overturn_risk. Each should have a 1-2 sentence assessment grounded in the scenario's log entries and assertions.",
+    "The search_stop.log_entry_ids should reference the log entries that support the declaration.",
     "Claude does not need to call validate_research_schema — it is not in this skill's allowed-tools, and per SKILL.md, research_append validates-before-persist and writes atomically in a single call. Do NOT penalize Tool Arguments or Completeness for the absence of a separate validate_research_schema call; the research_append call alone is the complete, correct persistence step.",
     "The question is specifically about the FATHER, not both parents. The mother is out of scope. Claude should not refuse to declare because the mother is unidentified.",
     "The 1870, 1880, and 1900 censuses have not been searched, but the user has stated overturn risk is low. Claude should accept this assessment and declare.",

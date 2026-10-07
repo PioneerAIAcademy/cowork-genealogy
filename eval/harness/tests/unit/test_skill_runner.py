@@ -657,7 +657,7 @@ def test_the_declaration_arm_is_driven_through_the_real_hook(tmp_path, monkeypat
             _rule_payload(
                 "questions",
                 "proof-conclusion",
-                entry={"exhaustive_declaration": {"declared": True}},
+                entry={"search_stop": {"stopped_because": "question_answered", "log_entry_ids": ["log_001"], "stop_criteria": None, "not_reached": []}},
             )
         ],
     )
@@ -665,7 +665,7 @@ def test_the_declaration_arm_is_driven_through_the_real_hook(tmp_path, monkeypat
     assert returns[0]["hookSpecificOutput"]["permissionDecision"] == "deny"
     assert [
         (c["section"], c["rule"]) for c in result.blocked_owned_section_writes
-    ] == [("questions.exhaustive_declaration", "declaration")]
+    ] == [("questions.search_stop", "declaration")]
 
 
 # --- routing short-circuit: the hand-off message must not be dropped (#2189) ---

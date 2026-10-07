@@ -106,22 +106,30 @@ OWNED_SECTIONS = {
 }
 
 # Field-scoped routing: (section, field) -> the BARE agent name that may set it
-# truthy. Same plane and same manifest as OWNED_SECTIONS, different granularity.
+# to a gate-claiming value. Same plane and same manifest as OWNED_SECTIONS,
+# different granularity.
 #
 # `proof_summaries` is a whole section with one owner, so a section rule fits it.
-# `exhaustive_declaration` is not: it is a REQUIRED property of every question
+# `search_stop` is not: it is a REQUIRED property of every question
 # (`research.schema.json`, `$defs.question.required`), so `question-selection`
 # writes it on every question it creates, from the main thread, with no
 # `agent_id`. Measured over 159 committed e2e runs, 197 of the 392 ops carrying
 # the field are exactly those creations — a presence-keyed rule denies every one.
 #
 # So the rule keys on the CLAIM, not the field: an op setting
-# `exhaustive_declaration.declared` to true. A question being created carries
-# `declared: false` and passes; so does an honest early termination, which is the
-# same skill's own `declared: false` path and claims nothing. What is routed is
-# the assertion that GPS Component 1 is satisfied, which is the artifact 47 of
-# 131 corpus runs wrote without ever invoking the skill that owns it.
-OWNED_DECLARATIONS = {("questions", "exhaustive_declaration"): "research-exhaustiveness"}
+# `search_stop.stopped_because` to a stop-gate value. A question being created
+# carries `stopped_because: null` and passes; so does an honest early
+# termination (`resources_spent` / `blocked_by_conflict`), which claims nothing.
+# What is routed is the assertion that GPS Component 1 is satisfied.
+# Renamed from `exhaustive_declaration` 2026-10-07.
+OWNED_DECLARATIONS = {("questions", "search_stop"): "research-exhaustiveness"}
+
+# The three values that gate `status: "exhaustive_declared"` and a proof tier.
+# The two non-gate values (`resources_spent`, `blocked_by_conflict`) keep
+# `in_progress` and are not routed. Null (new question) is also not routed.
+_STOP_GATE_VALUES = frozenset({
+    "question_answered", "record_exhausted", "nothing_further_reachable",
+})
 
 # Field-scoped routing keyed on PRESENCE, not on a claim value: (section, field)
 # -> the BARE agent name that may write it at all. Third granularity, and the
@@ -181,10 +189,10 @@ AGENT_WRITABLE_SECTIONS = {
     # lane is required by tests/packaging/plugin-hooks.test.ts for every agent
     # granted research_append, so this row exists even though NO hook route
     # points at this agent -- do not read it as one. It is deliberately narrow:
-    # `questions` carries a routed claim, `exhaustive_declaration.declared:
-    # true`, which belongs to research-exhaustiveness. Creating a question
-    # writes `declared: false`, which the guard already permits, so this lane
-    # widens nothing (issue #2115).
+    # `questions` carries a routed claim, `search_stop.stopped_because` set to
+    # a gate value, which belongs to research-exhaustiveness. Creating a question
+    # writes `stopped_because: null`, which the guard already permits, so this
+    # lane widens nothing.
     "question-selection": frozenset({"questions"}),
     # locality-guide writes one `localities` entry per surveyed place, and
     # nothing else in research.json.
@@ -210,11 +218,11 @@ OWNER_REASON = (
 
 DECLARATION_REASON = (
     "Declaring a question exhaustive from here is disabled — `{field}` with "
-    "`declared: true` is owned by the {agent} agent, which applies the seven "
-    "stop criteria this claim rests on. "
+    "a stop-gate `stopped_because` value is owned by the {agent} agent, which "
+    "applies the seven stop criteria this claim rests on. "
     "Delegate it: invoke `@plugin:{agent}` and let it make the research_append "
     "call. Only the claim is routed — creating a question with "
-    "`declared: false`, and recording an honest `declared: false` termination, "
+    "`stopped_because: null`, and recording an honest non-gate termination, "
     "are both unaffected, as is everything else in `{section}`."
 )
 
@@ -417,7 +425,7 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
                 if not isinstance(payload_obj, dict):
                     continue
                 value = payload_obj.get(field)
-                if isinstance(value, dict) and value.get("declared") is True:
+                if isinstance(value, dict) and value.get("stopped_because") in _STOP_GATE_VALUES:
                     return (f"{section}.{field}", "declaration", caller)
         # A routed FIELD, reached by anyone but its owning agent. Keyed on
         # presence: unlike the declaration above there is no honest

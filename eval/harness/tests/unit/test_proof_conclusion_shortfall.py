@@ -47,7 +47,7 @@ def _after(*, tier="probable", shortfall="gap", declared=False, conflicts=None,
         "research_json": {
             "proof_summaries": [summary],
             "questions": [
-                {"id": qid, "exhaustive_declaration": {"declared": declared}}
+                {"id": qid, "search_stop": {"stopped_because": ("question_answered" if declared else None), "log_entry_ids": [], "stop_criteria": None, "not_reached": []}}
             ],
             "conflicts": conflicts or [],
         }

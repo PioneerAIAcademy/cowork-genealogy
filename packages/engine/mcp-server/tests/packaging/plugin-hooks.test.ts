@@ -733,21 +733,22 @@ describe("the guard script's decisions", () => {
     expect(JSON.parse(execGuard("not json"))).toEqual({});
   });
 
-  // ── caller-routed CLAIM: research_append + exhaustive_declaration ──
+  // ── caller-routed CLAIM: research_append + search_stop ──
   //
   // Field-scoped, not section-scoped, and the difference is the whole design.
-  // `exhaustive_declaration` is a REQUIRED property of every question, so
+  // `search_stop` is a REQUIRED property of every question, so
   // `question-selection` writes it on every question it creates from the main
-  // thread — 197 of the 392 corpus ops carrying the field are exactly those.
-  // A section rule, or a presence-keyed field rule, denies all of them.
+  // thread — with `stopped_because: null`. A section rule, or a
+  // presence-keyed field rule, denies all of those. The hook only fires when
+  // `stopped_because` is a stop-gate value.
   const EXH_OWNER = "genealogy-research:research-exhaustiveness";
-  const DECLARE = { declared: true, log_entry_ids: ["log_001"] };
+  const DECLARE = { stopped_because: "question_answered", log_entry_ids: ["log_001"], stop_criteria: null, not_reached: [] };
 
   it.each([
     ["update, no agent_id (main thread)",
-      { section: "questions", op: "update", entryId: "q_001", fields: { exhaustive_declaration: DECLARE } }, {}],
-    ["append carrying a true declaration",
-      { section: "questions", op: "append", entry: { exhaustive_declaration: DECLARE } }, {}],
+      { section: "questions", op: "update", entryId: "q_001", fields: { search_stop: DECLARE } }, {}],
+    ["append carrying a gate-value declaration",
+      { section: "questions", op: "append", entry: { search_stop: DECLARE } }, {}],
     // An append carrying BOTH keys. research_append's op schema declares
     // `entry` and `fields`, and applyOne ignores `fields` on an append — so a
     // check that read `fields` first and fell back only when it was not a dict
@@ -755,19 +756,19 @@ describe("the guard script's decisions", () => {
     // the only plane that binds in Cowork; a missing deny fails open silently.
     ["append carrying both entry and an empty fields",
       { section: "questions", op: "append",
-        entry: { exhaustive_declaration: DECLARE }, fields: {} }, {}],
+        entry: { search_stop: DECLARE }, fields: {} }, {}],
     ["batched ops form",
       { ops: [{ section: "plan_items", op: "update" },
-              { section: "questions", op: "update", entryId: "q_001", fields: { exhaustive_declaration: DECLARE } }] }, {}],
+              { section: "questions", op: "update", entryId: "q_001", fields: { search_stop: DECLARE } }] }, {}],
     // agent_type WITHOUT agent_id is the `--agent` main thread, not a subagent.
     ["agent_type present but agent_id absent",
-      { section: "questions", op: "update", fields: { exhaustive_declaration: DECLARE } }, { agent_type: EXH_OWNER }],
+      { section: "questions", op: "update", fields: { search_stop: DECLARE } }, { agent_type: EXH_OWNER }],
     // Another owning agent is still not THIS owner: proof-conclusion may write
     // `questions`, but not the exhaustiveness claim.
     ["the proof-conclusion agent",
-      { section: "questions", op: "update", fields: { exhaustive_declaration: DECLARE } },
+      { section: "questions", op: "update", fields: { search_stop: DECLARE } },
       { agent_id: "a1", agent_type: "genealogy-research:proof-conclusion" }],
-  ])("denies a true exhaustive_declaration — %s", (_label, tool_input, extra) => {
+  ])("denies a stop-gate search_stop — %s", (_label, tool_input, extra) => {
     const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
     expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:research-exhaustiveness");
@@ -780,7 +781,7 @@ describe("the guard script's decisions", () => {
   ])("permits the owner to declare — %s", (_label, extra) => {
     expect(runGuard({
       tool_name: "mcp__genealogy__research_append",
-      tool_input: { section: "questions", op: "update", entryId: "q_001", fields: { exhaustive_declaration: DECLARE } },
+      tool_input: { section: "questions", op: "update", entryId: "q_001", fields: { search_stop: DECLARE } },
       ...extra,
     })).toEqual({});
   });
@@ -788,16 +789,15 @@ describe("the guard script's decisions", () => {
   it.each([
     // The vector a SECTION-scoped route would have broken, and the one a
     // presence-keyed field rule would have broken too: question-selection
-    // creating a question. The schema makes the field required, so every
-    // creation carries it.
-    ["question-selection creating a question (declared: false)",
+    // creating a question. `stopped_because: null` is not a stop-gate value.
+    ["question-selection creating a question (stopped_because: null)",
       { section: "questions", op: "append",
-        entry: { question: "Who were the parents?", exhaustive_declaration: { declared: false, log_entry_ids: [] } } }],
-    // The owning skill's own honest early-termination path. It claims nothing,
-    // so it is not routed.
-    ["an honest early termination (declared: false)",
+        entry: { question: "Who were the parents?", search_stop: { stopped_because: null, log_entry_ids: [], stop_criteria: null, not_reached: [] } } }],
+    // The owning skill's own honest early-termination path. `resources_spent`
+    // is not a stop-gate value, so it is not routed.
+    ["an honest early termination (stopped_because: resources_spent)",
       { section: "questions", op: "update", entryId: "q_001",
-        fields: { exhaustive_declaration: { declared: false, log_entry_ids: ["log_001"] } } }],
+        fields: { search_stop: { stopped_because: "resources_spent", log_entry_ids: ["log_001"], stop_criteria: null, not_reached: [] } } }],
     // An unrelated question edit from the main thread.
     ["a status-only update",
       { section: "questions", op: "update", entryId: "q_001", fields: { status: "in_progress" } }],
