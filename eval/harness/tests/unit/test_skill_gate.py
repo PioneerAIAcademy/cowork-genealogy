@@ -226,7 +226,7 @@ def test_incumbent_baseline_populates_snapshot(tmp_path):
 def test_snapshot_drift_detected_on_non_skill_path(tmp_path):
     """When a non-skill path in the baseline snapshot differs from disk, the
     drift must be detected — this is the case that fires NEEDS YOUR EYES."""
-    from harness.snapshot import diff_snapshot_vs_disk, normalize, hash_content
+    from harness.snapshot import diff_snapshot_vs_disk
 
     skill = "citation"
     skill_md_rel = f"packages/engine/plugin/skills/{skill}/SKILL.md"
@@ -237,10 +237,13 @@ def test_snapshot_drift_detected_on_non_skill_path(tmp_path):
     fixture_abs.parent.mkdir(parents=True, exist_ok=True)
     fixture_abs.write_text("# rubric v2\n", encoding="utf-8")
 
-    # Snapshot recorded a DIFFERENT hash for the fixture.
+    # Snapshot recorded a DIFFERENT sha256 hash for the fixture.
+    # Use a real 64-char hex digest so is_hashed_snapshot() returns True
+    # and the test exercises the v3 sha256-comparison path, not the legacy
+    # content-comparison branch.
     snapshot = {
-        skill_md_rel: "irrelevant-hash",
-        fixture_rel: "stale-hash-that-does-not-match-disk",
+        skill_md_rel: "a" * 64,
+        fixture_rel: "b" * 64,
     }
 
     diffs = diff_snapshot_vs_disk(snapshot, tmp_path)
@@ -262,7 +265,7 @@ def test_snapshot_drift_excludes_gated_skill_md(tmp_path):
     skill_md_abs.parent.mkdir(parents=True, exist_ok=True)
     skill_md_abs.write_text("edited body\n", encoding="utf-8")
 
-    snapshot = {skill_md_rel: "original-hash-that-differs"}
+    snapshot = {skill_md_rel: "c" * 64}
 
     diffs = diff_snapshot_vs_disk(snapshot, tmp_path)
     # The skill's own SKILL.md IS in the diffs (it really differs).

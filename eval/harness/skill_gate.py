@@ -556,14 +556,16 @@ def main(argv: list[str] | None = None) -> int:
             "also predate the committed body; run a fresh `make eval-skill` if "
             "unsure.",
         ] + signal.reasons)
-    if snapshot_drifted and signal.verdict != "NEEDS YOUR EYES":
+    if snapshot_drifted:
         shown = snapshot_drifted[:5]
         tail = " ..." if len(snapshot_drifted) > 5 else ""
-        signal = GateSignal("NEEDS YOUR EYES", [
+        drift_reason = (
             f"baseline snapshot drifted on {len(snapshot_drifted)} path(s) "
             f"outside this skill — the comparison may be stale: "
-            + ", ".join(shown) + tail,
-        ] + signal.reasons)
+            + ", ".join(shown) + tail
+        )
+        signal = GateSignal("NEEDS YOUR EYES",
+                            [drift_reason] + signal.reasons)
     total_cost = sum(
         float((e.get("totals") or {}).get("total_cost_usd") or 0.0)
         for e in cand_entries.values()
