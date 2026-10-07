@@ -8,8 +8,8 @@ decay.
 ## Test naming
 
 - `ut_research_001` – `ut_research_010`: trigger tests (phase 1a). Positive
-  and negative tests for whether the router skill activates at all. 001, 005
-  and 008 remain.
+  and negative tests for whether the router skill activates at all. 001, 004,
+  005 and 008 remain.
 - `ut_research_011`+: routing tests (phase 2). Positive tests that assert
   which callee the router hands off to first, given a specific research.json
   state. Each uses `execution.stub_skills` so the callee is denied at the
@@ -25,12 +25,21 @@ first five were `xfail` for one defect: `research` and `project-status` both mat
 the time (issue #2927). `project-status`'s description now tells it not to drive
 the research workflow forward (#3092). `015`'s marker named a router shortcut
 instead; see "Paired rows". Each restored test was measured three times, on a
-branch rebased onto main, before it came back (#3119), and `015` needed one more
-change to pass. `004` (`investigate-person.json`) missed on one of its first
-three runs, when the main thread asked the user two `AskUserQuestion` questions
-instead of starting `research`; measured again on the final branch it activated
-`research` three times of three, which is what its marker named as the condition
-for removing it.
+branch rebased onto main, before it came back (#3119). `015` and `004` each
+needed one more change to pass.
+
+`004` (`investigate-person.json`) needed a change to `research`'s description.
+With #3092 in place it still missed, before any skill loaded: the main thread
+judged Patrick Flynn too common a name to start on and asked the user, with
+`AskUserQuestion`, for details such as his birth year, which the project already
+records. The description now says to start `research` rather than first ask the
+user about the person, since it reads what the project records. On a copy of 004
+that ends at its first hand-off, the main thread asked first on 5 of 30 runs
+before that sentence and on none of 30 after it, and 004 itself then started
+`research` on all 21 of its runs. The sentence moved nothing it should not:
+`ut_research_008`, with no project, still asks which person; init-project's own
+tests still start init-project; and `ut_init_project_009` picks init-project
+first as often as before. The runs are on #3119.
 
 Not restored:
 
