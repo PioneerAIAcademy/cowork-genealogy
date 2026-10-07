@@ -559,8 +559,8 @@ def test_elasticmq_has_no_redrive_policy():
 
 BEANSTALK_MAX_INACTIVITY_S = 36000  # the sqsd options table: InactivityTimeout "1 to 36000"
 SQS_MAX_VISIBILITY_S = 43200
-# Beanstalk's worker stop grace is unmeasured (U13); systemd's default stop timeout is
-# the bound the template is sized against until then.
+# Beanstalk's worker stop grace: the platform's web.service has TimeoutStopUSec=1min 30s,
+# KillMode=control-group, SIGTERM then SIGKILL (U13, 2026-10-07, AL2023 Python 3.12 4.13.9).
 BEANSTALK_STOP_GRACE_S = 90
 STOP_GRACE_MARGIN_S = 2  # worker stop_grace_period above SHUTDOWN_GRACE_S + RELEASE_BUDGET_S (main()'s join slack)
 CONTAINER_RESTART_S = 10  # a `docker restart` bringing proto-worker back up
