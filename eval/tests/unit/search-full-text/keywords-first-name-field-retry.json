@@ -8,7 +8,7 @@
     "tags": ["fulltext", "nil-ladder", "name-field-retry", "keywords-first"]
   },
   "input": {
-    "user_message": "I want to check whether Thomas Flynn appeared as a named beneficiary or executor in Schuylkill County probate records in the 1870s and 1880s. Please search the full-text index.",
+    "delegation": "I want to check whether Thomas Flynn appeared as a named beneficiary or executor in Schuylkill County probate records in the 1870s and 1880s. Please search the full-text index.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
@@ -21,6 +21,7 @@
     "max_wall_clock_seconds": 600
   },
   "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
     "The keywords search for Flynn returns zero results. The skill should log this nil and then retry using the Name field per SKILL.md's nil ladder. A skill that stops at the keywords nil without attempting the name-field retry scores PARTIAL on Query construction.",
     "The name-field retry finds Thomas Flynn named as a beneficiary/heir in an estate administration record (Michael Flynn's estate, 1881). The skill should log and triage this result.",
     "QUERY-CONSTRUCTION GRADING NOTE: Per SKILL.md's nil ladder, a keywords nil should be followed by a name-field retry before concluding no results exist. A skill that uses keywords AND then retries with name scores PASS. A skill that stops at the keywords nil without the name-field retry scores PARTIAL. A skill that uses only the name field (skipping keywords) is acceptable.",
