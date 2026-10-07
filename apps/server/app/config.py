@@ -192,6 +192,19 @@ class Settings(BaseSettings):
         return self.data_dir / "sandboxes"
 
 
+#: The secrets whose dev defaults block a production boot, in the order the refusal
+#: names them. Read it rather than restating it: `test_prod_preflight.py` derives both
+#: its literal-defaults guard and the stderr-legibility test from this, so adding a
+#: secret here extends every one of them. `DATABASE_URL` is deliberately absent — it is
+#: a separate branch below (unset/blank, not "equals its default"), not a member.
+_DEFAULTED_SECRET_FIELDS = (
+    "session_secret",
+    "ws_signing_key",
+    "fs_token_enc_key",
+    "anthropic_proxy_signing_key",
+)
+
+
 def assert_production_config(s: Settings) -> None:
     """Refuse to boot a production deploy that is still on development defaults.
 
@@ -243,8 +256,7 @@ def assert_production_config(s: Settings) -> None:
     # Guarded by test_prod_preflight.py::
     # test_secret_defaults_are_literals_so_the_comparison_can_work — no other
     # test catches it, because they all inject `.default` as the value.
-    for field in ("session_secret", "ws_signing_key", "fs_token_enc_key",
-                  "anthropic_proxy_signing_key"):
+    for field in _DEFAULTED_SECRET_FIELDS:
         if getattr(s, field) == Settings.model_fields[field].default:
             env = field.upper()
             problems.append(
