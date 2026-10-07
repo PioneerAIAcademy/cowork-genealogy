@@ -1,0 +1,126 @@
+{
+  "run_log": "v9.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked against the fixture: SD-DRIS-D is \"Quebec, Civil Registration Deaths, 1867-1900\", Sherbrooke district, URL 1:1:DRIS-004, quoted exactly. The related SD-DRIS-C burial and SD-DRIS-F headstone photo are also identified correctly. Nothing invented."
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Answered the bounded question (\"just that one thing\"): the death record is already attached, and which one it is. It offered further work rather than starting it, so it stayed within the request."
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One person_read call for GJ72-9WD, matching the expected args. No record_search, which is what this test checks: read what's attached before searching. Nothing written."
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The image-reader is stubbed in this test and its stub returns the transcription; the reply's table matches that return line for line (Cornelius 67, Johanna 61, Mary 24, 1881 census, Sherbrooke p.14), so nothing was invented. The stub now tells the model to describe the hand-off only as stated, which is #3160's fix, and the reply did exactly that."
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Treated as one bounded deliverable: a single image-reader hand-off, with no question-selection or research-plan, despite an objective with zero questions. test_routes_to_expected_skill passed. It stopped and offered more rather than continuing."
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made; the only call was the image-reader agent hand-off."
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the v9 run: the only call was Skill → search-records with the 1850 census request; no MCP calls, so no volume_search/image_search despite those fixtures being loaded to catch one. test_no_browse_executed_on_indexed_search passed; nothing written. The 1850 census is indexed, so a name search is the right tool, not a browse."
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A routing/invariant test, so the hand-off is the whole required outcome. The reply text is empty because the harness stops at the hand-off; \"declined and routed\" describes the routing, not a written reply."
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made; the only call was the Skill hand-off."
+    },
+    {
+      "test_id": "ut_research_019",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Project state described accurately (Patrick Flynn I1, objective to find his parents, no questions), so routing to question-selection was right, and test_routes_to_expected_skill passed. The reply describes the hand-off only as the stub stated (\"handed off and counts as complete\") and claims no write, which is the #3160 stub fix working."
+    },
+    {
+      "test_id": "ut_research_019",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The judge marked it down for stopping after routing, but the question-selection stub orders the stop: \"do not walk further down the routing table… and stop\". Obeying the stub is correct. The judge context's \"stopping early is the failure\" contradicts this test's own stubs; that's an eval defect, not a skill one. The routing it actually tests is asserted deterministically and passed."
+    },
+    {
+      "test_id": "ut_research_019",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One valid project_context call before routing; the hand-off used the question-selection agent spawn."
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Routing and state reading are right (objective present, no questions, so question-selection). Unlike v8's \"Now written\", the reply now says question-selection was invoked \"to derive and write\" the first question and \"once that question is registered…\", describing the request rather than claiming a result. That's correct for a stubbed step, and shows the #3160 stub fix working. file_changes is null."
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Read the state, routed, explained why, and gave the next steps (locality guide for Schuylkill County, then research plan, then searches)."
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One valid project_context call before routing; the hand-off used the question-selection agent spawn, not a call to the deleted skill."
+    }
+  ]
+}
