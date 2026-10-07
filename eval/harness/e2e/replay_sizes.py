@@ -314,19 +314,32 @@ def default_base() -> str:
     return _git("merge-base", "HEAD", "origin/main")
 
 
+def check_base_supported(sha: str, repo: Path = REPO_ROOT, stamp: str = STAMP_COMMIT) -> None:
+    """Refuse a base whose build writes no build-info.json. A clone too shallow
+    to hold the stamp commit cannot answer, and says so rather than "predates"."""
+    if subprocess.run(
+        ["git", "cat-file", "-e", f"{stamp}^{{commit}}"], cwd=repo, capture_output=True,
+    ).returncode != 0:
+        raise UsageError(
+            f"cannot check base {sha[:9]}: {stamp} is not in this clone's history "
+            "(a shallow clone?) — run `git fetch --unshallow` and retry"
+        )
+    if subprocess.run(
+        ["git", "merge-base", "--is-ancestor", stamp, sha], cwd=repo, capture_output=True,
+    ).returncode != 0:
+        raise UsageError(
+            f"base {sha[:9]} predates {stamp} (#2126): its build writes no "
+            "build-info.json, so it is unsupported"
+        )
+
+
 def ensure_build_at(ref: str) -> Path:
     """A built engine at `ref`, in a cached sparse worktree. Raises UsageError."""
     try:
         sha = _git("rev-parse", "--verify", f"{ref}^{{commit}}")
     except subprocess.CalledProcessError as exc:
         raise UsageError(f"base ref {ref!r} does not resolve: {exc.stderr.strip()}") from exc
-    if subprocess.run(
-        ["git", "merge-base", "--is-ancestor", STAMP_COMMIT, sha], cwd=REPO_ROOT,
-    ).returncode != 0:
-        raise UsageError(
-            f"base {sha[:9]} predates {STAMP_COMMIT} (#2126): its build writes no "
-            "build-info.json, so it is unsupported"
-        )
+    check_base_supported(sha)
     root = Path(tempfile.gettempdir()) / "genealogy-replay-builds" / sha
     engine = root / "packages" / "engine" / "mcp-server"
     build = engine / "build"
