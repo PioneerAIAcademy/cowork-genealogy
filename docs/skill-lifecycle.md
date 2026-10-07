@@ -266,6 +266,13 @@ That id is the `TEST=` value for step 6. (Older tests have numeric ids like
 > test after the fix has landed, the bug no longer reproduces on the un-edited
 > skill, the gate comes back `INCONCLUSIVE`, and nothing is proven either way.
 
+> **A mined test merges only in the PR that makes it pass.** Never ahead of
+> the fix, and never with an `expected_outcome: xfail` marker (lead,
+> 2026-10-06; `eval/CLAUDE.md` rules 6 and 10). If your task only finds the
+> failure, push the test to a branch, link it from the issue that owns the
+> fix, and leave the merge to that issue's PR, which runs steps 4–8 from this
+> test.
+
 > **First time improving this skill? You'll need hold-out tests.** Read the
 > hold-out note in step 4 now — they have to be set *before* the run you're
 > about to do, and setting them afterwards invalidates it.
