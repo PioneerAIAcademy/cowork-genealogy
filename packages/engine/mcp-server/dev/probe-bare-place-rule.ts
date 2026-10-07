@@ -4,7 +4,7 @@
  * corpus actually wrote?
  *
  * For each distinct bare name, with NO record context (the worst case — the
- * write paths pass the record's other places, which can only add resolutions):
+ * write paths pass the record's other places, which this probe does not measure):
  *   old = the best-scored hit, which is what `resolveStandardPlace` returned
  *   new = `resolveStandardPlace` now: kept only when the best hit is a
  *         jurisdiction (country, state, territory, county, region, admin div)

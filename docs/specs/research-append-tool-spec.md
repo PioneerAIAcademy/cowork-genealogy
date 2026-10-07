@@ -596,9 +596,11 @@ append op (deliberately simple):
      is the name, or the name after an administrative prefix ("Borough of",
      "Town of", "City of", "Township of", …), is resolved instead — "New York" is
      not the fuller form of "York", else only a candidate inside the
-     jurisdiction the siblings share counts, else the name resolves only to
-     itself at the top of the hierarchy (a country, or a state under one) and is
-     otherwise left unset (genealogist ruling 2026-10-06, option C). Measured on
+     jurisdiction the siblings share counts, else the best match is kept only
+     when FamilySearch types it a jurisdiction (continent, country, state,
+     province, territory, county, district, region, or first/second-level admin
+     division) and is otherwise left unset (genealogist ruling 2026-10-06, option
+     C with fallback B′). Measured on
      the record-structurer trials (2026-10-04): with no context, the will's "Shenandoah" beside "Borough
      of Shenandoah, County of Schuylkill" resolved to New Zealand and "Logan LDS
      Temple" to France, and the country guard below cannot catch either, since a
