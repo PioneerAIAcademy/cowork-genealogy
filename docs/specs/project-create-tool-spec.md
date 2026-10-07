@@ -162,7 +162,7 @@ researcher's statement as above. A `tree` that is not an object is refused.
 carries `placesFilled`, `[{place, standardPlace}]`, for each place the retry
 resolved that the read had not (absent when none), so the caller can tell the
 researcher which places it standardized without being asked.
-`personReadRef` is trimmed before it is resolved. In ref mode a refusal raised
+`personReadRef` is trimmed before it is resolved, and a near-copy of a staged ref is mapped onto the one staged file it names, reported in `validation.warnings` (`search-result-staging-spec.md` §6.0). In ref mode a refusal raised
 after the build (a forged `assertion_id`, a validation error) names which minted
 id and `persons[i]` index each addition label became, since no `idMap` comes
 back with a refusal. A relationship is described by its type and endpoints. A later

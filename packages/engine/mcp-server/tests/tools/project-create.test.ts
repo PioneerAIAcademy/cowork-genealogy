@@ -997,3 +997,33 @@ describe("project_create — the old-extension message init-project keys on (#29
     }
   });
 });
+
+describe("project_create — a mis-copied personReadRef (resolveStagedRef)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "project-create-slip-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("builds from the one staged read a near-copy names and reports the correction (init-project k8d)", async () => {
+    const { staged } = await stagePersonRead({ projectPath: dir, input: { personId: "LZNY-BRF" }, result: structuredClone(FAMILY) });
+    const good = staged!.resultsRef;
+    const bad = good.replace(/(-[0-9a-f]{4})([0-9a-f])/, "$1");
+    expect(bad).not.toBe(good);
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", personReadRef: bad });
+    expect(result.ok).toBe(true);
+    expect(result.counts.persons).toBeGreaterThan(0);
+    expect(result.validation.warnings.join(" ")).toContain(`personReadRef '${bad}' matched no staged file; used '${good}'`);
+  });
+
+  it("still refuses a ref that names no staged read", async () => {
+    await stagePersonRead({ projectPath: dir, input: { personId: "LZNY-BRF" }, result: structuredClone(FAMILY) });
+    const result: any = await projectCreate({
+      projectPath: dir, objective: "x", personReadRef: "results/.staging/00000000-0000-4000-8000-000000000000.json",
+    });
+    expect(result.ok).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/is not a staged read/);
+  });
+});

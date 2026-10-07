@@ -48,7 +48,7 @@ import {
   formatIssues,
 } from "../utils/project-io.js";
 import { validateParsed } from "../validation/validator.js";
-import { checkStagedResults } from "../utils/results-staging.js";
+import { checkStagedResults, resolveStagedRef, stagedRefCorrectionWarning } from "../utils/results-staging.js";
 import {
   TreeBuildError,
   buildFromStagedRead,
@@ -218,9 +218,10 @@ export async function projectCreate(
     let idMap: IdMap;
     let subjectPersonIds: unknown = input.subjectPersonIds;
     let fillPlaces: () => Promise<FilledPlace[]> = async () => [];
+    const refWarnings: string[] = [];
     try {
       if (input.personReadRef !== undefined) {
-        const staged = await loadStagedRead(projectPath, input.personReadRef);
+        const staged = await loadStagedRead(projectPath, input.personReadRef, refWarnings);
         const built = await buildFromStagedRead({
           staged,
           additions: given,
@@ -347,7 +348,7 @@ export async function projectCreate(
       },
       idMap,
       ...(placesFilled.length ? { placesFilled } : {}),
-      validation: { valid: true, warnings: formatIssues(validation.warnings) },
+      validation: { valid: true, warnings: [...refWarnings, ...formatIssues(validation.warnings)] },
     };
   } catch (e) {
     if (e instanceof ProjectCreateError) return { ok: false, errors: [e.message] };
@@ -361,14 +362,17 @@ export async function projectCreate(
  * `research_log_append` and `stagedResultsRef`, so they are rethrown here in
  * this tool's terms.
  */
-async function loadStagedRead(projectPath: string, rawRef: unknown) {
+async function loadStagedRead(projectPath: string, rawRef: unknown, warnings: string[]) {
   const redo =
     "call person_read again with projectPath and pass the `staged.resultsRef` it returns as " +
     "personReadRef.";
   if (typeof rawRef !== "string" || rawRef.trim() === "") {
     throw new ProjectCreateError(`personReadRef must be the staged.resultsRef person_read returned; ${redo}`);
   }
-  const ref = rawRef.trim();
+  const { ref, correctedFrom } = await resolveStagedRef(projectPath, rawRef);
+  if (correctedFrom !== undefined) {
+    warnings.push(stagedRefCorrectionWarning("personReadRef", correctedFrom, ref));
+  }
   let envelope;
   try {
     ({ envelope } = await checkStagedResults({
