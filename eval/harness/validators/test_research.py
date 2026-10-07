@@ -381,3 +381,78 @@ def test_reads_attachments_before_searching(
         "Handing off to a search step re-finds an already-attached record just as an "
         f"inline search call would. Hand-offs: {handed}"
     )
+
+
+def _unsaved_finds(before_state, after_state):
+    """Log entries this turn ADDED that nothing saved.
+
+    A `log` entry (the section is `log`; `research_log` does not exist) whose
+    outcome is positive/partial and which no assertion's `log_entry_id`
+    references. Both a missing key and an explicit `null` count as
+    not-referencing: `log_entry_id` is optional AND nullable on `assertion`.
+
+    The before/after DELTA is load-bearing, not a refinement. The static form of
+    this predicate — "after_state carries such an entry" — fires on 11 of the
+    committed scenarios (`flynn-parentage-found`, `mid-research-flynn-1880-found`,
+    `flynn-fan-pivot`, ...), because "found, not yet extracted" is the ordinary
+    mid-research state that `research/SKILL.md:190` exists to pick up on the NEXT
+    job turn. Only an entry this turn created can be something this turn must
+    name.
+    """
+    def entries(state):
+        return ((state or {}).get("research_json") or {}).get("log") or []
+
+    seen_before = {
+        e.get("id") for e in entries(before_state) if isinstance(e, dict)
+    }
+    after = ((after_state or {}).get("research_json") or {}) or {}
+    referenced = {
+        a.get("log_entry_id")
+        for a in (after.get("assertions") or [])
+        if isinstance(a, dict) and a.get("log_entry_id")
+    }
+    return [
+        e
+        for e in entries(after_state)
+        if isinstance(e, dict)
+        and e.get("id") not in seen_before
+        and e.get("outcome") in ("positive", "partial")
+        and e.get("id") not in referenced
+    ]
+
+
+def test_an_unsaved_find_is_named(test, before_state, after_state, text_response):
+    """Tag-gated (``unsaved-extraction``). Issue #2813 item 5, clause 4.
+
+    "An extraction that gets interrupted is either finished or named in the reply
+    as unsaved."
+
+    Graded on the reply because no tool sees the reply, so this cannot be a
+    writer-tool precondition (ADR-0011's first question resolves to "no").
+    """
+    if "unsaved-extraction" not in test.get("tags", []):
+        pytest.skip("not an unsaved-extraction test")
+
+    unsaved = _unsaved_finds(before_state, after_state)
+    if not unsaved:
+        pytest.skip("this turn added no unsaved find")
+
+    reply = (text_response or "").lower()
+    unnamed = []
+    for entry in unsaved:
+        # The record is named if the reply carries the query that found it or the
+        # entry's own id. Narration that only says an extraction did not finish
+        # names neither, which is exactly what the clause forbids.
+        needles = [
+            str(entry.get(k) or "").strip().lower()
+            for k in ("query", "id")
+        ]
+        if not any(n and n in reply for n in needles):
+            unnamed.append(entry.get("id"))
+
+    assert not unnamed, (
+        "This turn found record(s) and did not save them, and the reply does not "
+        "name them. A find the reply does not name is one the researcher cannot "
+        "ask about: the turn is over. Name the record and the person it was for, "
+        f"not 'an extraction did not finish'. Unnamed log entries: {unnamed}"
+    )
