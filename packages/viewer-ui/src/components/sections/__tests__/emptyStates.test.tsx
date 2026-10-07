@@ -58,14 +58,11 @@ describe('section empty states', () => {
 // table, so a section added later with a `skill:` owner is checked here without
 // an edit — the copy has to name the slug that owns the section.
 //
-// Two prose exceptions. `known_holdings` is owned by `skill:init-project` but its
-// copy says "when the project is initialized", which reads better and means the
-// same thing. `proof_summaries` (the Findings page) is owned by
+// One prose exception. `proof_summaries` (the Findings page) is owned by
 // `skill:proof-conclusion`, but "proof" is kept out of what the researcher reads,
-// so its copy names the moment instead. Listing them explicitly keeps the default
+// so its copy names the moment instead. Listing it explicitly keeps the default
 // strict: a NEW section with no alias must contain its own slug.
 const PROSE_ALIASES: Record<string, string> = {
-  known_holdings: 'project is initialized',
   proof_summaries: 'as the evidence for a question comes together',
 }
 

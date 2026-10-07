@@ -62,13 +62,17 @@ const SKILLS_WITH_SPECIALIZED_COPY: Array<{ skill: string; why: string; sha256: 
     why: "delegates place-fact fetching to locality-guide; canonical names four tools it cannot call",
     sha256: "0521723c5e9de12e2277909a23963ff1f32e691e3620b31a9351dc7151cad78d",
   },
+];
+
+// An agent that inlines a SPECIALIZED copy carries it as its trailing section,
+// from the "# Working with places (standard places)" heading to the end of the
+// body, held to a pinned hash the same way. init-project moved here from
+// SKILLS_WITH_SPECIALIZED_COPY when issue #2122 converted it to an agent.
+const AGENTS_WITH_SPECIALIZED_COPY: Array<{ agent: string; why: string; sha256: string }> = [
   {
-    skill: "init-project",
-    // Issue #2944: project_create builds the starting tree from the staged
-    // person_read, standard_place included, so the canonical "copy it from a
-    // person_read result" bullet describes a step init-project no longer takes.
+    agent: "init-project",
     why: "project_create carries person_read's standard_place; the canonical copy-it bullet names a step init-project no longer takes",
-    sha256: "8b907a20b43d3393ebf9160224b5ff60ae89a30f1ef435f90453f752baffb3fd",
+    sha256: "1967ddccb15aee12a8c8952433e80f52368dbba50a1a7078e6b353e0cc575035",
   },
 ];
 
@@ -154,6 +158,22 @@ describe("places-guidance drift lint", () => {
 
     it(`${skill} is listed in exactly one of the two lists`, () => {
       expect(SKILLS_WITH_PLACES_GUIDANCE).not.toContain(skill);
+    });
+  }
+
+  for (const { agent, why, sha256 } of AGENTS_WITH_SPECIALIZED_COPY) {
+    it(`${agent} agent inlines a specialized places-guidance section (${why})`, () => {
+      const agentPath = join(repoRoot, "plugin", "agents", `${agent}.md`);
+      expect(existsSync(agentPath), `missing agent: ${agentPath}`).toBe(true);
+      const body = readFileSync(agentPath, "utf8").replace(/\r\n/g, "\n");
+      const start = body.indexOf("# Working with places (standard places)");
+      expect(start, `${agent}.md carries no places-guidance section`).toBeGreaterThan(-1);
+      expect(
+        contentHash(body.slice(start).trim()),
+        `${agent}'s inlined places-guidance section changed. If the edit is ` +
+          `intended, update its sha256 in AGENTS_WITH_SPECIALIZED_COPY.`,
+      ).toBe(sha256);
+      expect(AGENTS_WITH_PLACES_GUIDANCE).not.toContain(agent);
     });
   }
 });

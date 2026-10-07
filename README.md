@@ -163,7 +163,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 9 skills covering the full GPS research cycle. Skills
+The plugin ships 8 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 For a plain-language account of the research method itself — the GPS
 cycle, the judgment made at each stage, and what to expect from a
@@ -173,7 +173,6 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 
 | Skill | What it does | Say this |
 |-------|-------------|----------|
-| **init-project** | Creates a new project from a FamilySearch person ID. If no ID is known, searches the Family Tree by name using `person_search` to find the right person first. Fetches the person and their relatives to seed the tree. | "Start a new project for person KWCJ-RN4" / "Start a project for Patrick Flynn, born 1845 Ireland — I don't have his ID" |
 | **research** | Drives the full GPS workflow on a research objective, invoking the right sub-skills based on `research.json` state and iterating until the question is resolved. For beginners who don't know which sub-skill to invoke when. The `--autonomous` flag exists only for end-to-end automated testing of the workflow; it is not intended as a way to let the AI do your family history for you. Genealogy requires *your* judgment on evidence, conflicts, and conclusions — see "A note on responsibility" above. | "/research find John Smith's parents" / "Research who Patrick Flynn's father was" |
 | **forget-and-rederive** | Sets up a practice run: strips information you already have out of the project tree so it has to be re-derived from records. Always dry-runs first and reports only redacted counts. Requires you to also not look the answer back up — the FamilySearch tree still has it, so the FS tree-reading tools are off-limits for those people afterward. | "Forget what you know about Patrick's parents and find them again" / "Hide his parents and see if you can re-derive them" |
 
@@ -227,13 +226,14 @@ specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships twenty-four Cowork agents. Unlike skills, an agent runs in
+The plugin ships twenty-five Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 at its mentor checkpoint, or by the skill that delegates to it — you
 don't load it explicitly.
 
 | Agent | What it does | Say this |
 |-------|-------------|----------|
+| **init-project** | Creates a new project from a FamilySearch person ID. If no ID is known, searches the Family Tree by name using `person_search` to find the right person first. Fetches the person and their relatives to seed the tree. | "Start a new project for person KWCJ-RN4" / "Start a project for Patrick Flynn, born 1845 Ireland — I don't have his ID" |
 | **translation** | Genealogy-specific translation for German, French, Spanish, Italian, Dutch, Latin, Portuguese. Period handwriting and abbreviations. | "Translate this German church record" |
 | **gps-mentor** | A Board for Certification of Genealogists (BCG)-style senior genealogist who reviews your work against GPS standards and returns a structured verdict plus a mentoring narrative. Read-only — it never edits your tree and only appends its verdict to `research.json`. `/research` calls it once per proof, after a conclusion is written; its verdict is advisory and never blocks or re-opens a resolved question. You can also ask for a review at any time. | "Review my work" / "Is this defensible?" / "Am I ready to conclude?" |
 | **record-extractor** | Extracts every assertion from **one** record — the source entry, atomic per-fact assertions, and their GPS evidence classifications — in a single validated write. The `record-extraction` skill delegates one of these per record; classifications are set here and are final. | (not invoked directly — `record-extraction` delegates) |
@@ -245,7 +245,7 @@ don't load it explicitly.
 | **search-external-sites** | Builds pre-filled search URLs for Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, the Archion and Matricula church-book sites, and the rest of `build_external_search_url`'s site list; hands each over with exactly what to look for, and triages the capture you bring back. Logs every search, nil results included. | "Search Ancestry for Thomas Flynn" |
 | **citation** | Polishes the citations on sources that already exist to Evidence Explained standards (Who/What/When/Where/Where-within), and looks up the office that created a probate record on the FamilySearch wiki rather than carrying one jurisdiction's offices in its prompt. It never creates a source entry: asked to add a record, it declines and routes to `record-extraction`. | "Fix citations" / "Cite this source" |
 | **question-selection** | Picks the highest-value next research question. | "What should I research next?" |
-| **check-warnings** | Flags genealogical impossibilities and implausible patterns in one person's own data (married before 12, died after 120, child born after parent's death), deterministically from your local tree. Writes nothing. `init-project` runs it on every imported person; the tree writers refuse a write that introduces an unjustified warning, so it is no longer a step after every edit. | "Check for warnings" / "Any problems with his dates?" |
+| **check-warnings** | Flags genealogical impossibilities and implausible patterns in one person's own data (married before 12, died after 120, child born after parent's death), deterministically from your local tree. Writes nothing. The tree writers refuse a write that introduces an unjustified warning, so it is no longer a step after every edit. | "Check for warnings" / "Any problems with his dates?" |
 | **locality-guide** | Produces a structured research guide for a place/time — what records exist and where they're held — and, inside a project, saves it so the research plan can use it. `/research` calls it when a question's place has not been surveyed yet. | "What records exist for Schuylkill County?" |
 | **historical-context** | Explains boundary changes, naming conventions, migration patterns, and cultural context affecting records. Writes nothing — it returns narrative context. Asked for a locality records survey, a record search, a translation, a date conversion, or a formal conflict resolution, it hands the request back by name. | "Why does the birthplace differ?" |
 | **project-status** | Reads the whole project and reports where the research stands — a plain-language story for the user and a detailed GPS-state summary, integrity warnings first, plus the recommended next step. Read-only: it never writes to either project file. It is the "resume project" path when you come back to existing work. | "Where are we?" / "What's next?" / "Status" |
@@ -308,7 +308,7 @@ Specs: `docs/specs/research-schema-spec.md` and
 
 ## Researcher profile
 
-When you start a new project with `init-project`, the skill asks one
+When you start a new project with `init-project`, the agent asks one
 thing in its opening turn: what you want to find out. It does not ask
 about you. Every project gets the same `researcher_profile` in
 `research.json`: `experience_level` is `novice`, and `narration_guidance`
@@ -396,7 +396,7 @@ documented paths:
 
 1. Download `genealogy-plugin.zip` from the latest release
 2. Unzip it into `~/.claude/skills/` so each skill folder
-   (`init-project/`, `record-extraction/`, …) sits directly under
+   (`research/`, `record-extraction/`, …) sits directly under
    `~/.claude/skills/`:
 
    ```bash
@@ -466,11 +466,12 @@ What's shipped:
 - **52 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
-- **9 shipped skills.** Full GPS research cycle from `init-project`
+- **8 shipped skills.** Full GPS research cycle from project creation
   through the conclusion. The three
   e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result, grade-e2e-run)
   are repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
-- **24 Cowork agents.** `translation` (genealogy-specific translation of foreign-language
+- **25 Cowork agents.** `init-project` (creates a new project from a
+  FamilySearch person), `translation` (genealogy-specific translation of foreign-language
   records), `gps-mentor` (BCG-style senior-genealogist review,
   invoked by `/research` at GPS checkpoints and on demand), `record-extractor`
   (per-record assertion extraction), `proof-conclusion` (the proof conclusion

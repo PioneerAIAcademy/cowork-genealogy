@@ -209,7 +209,7 @@ behavioral contracts are in
 `docs/specs/<tool>-tool-spec.md`, and a spec can land before the tool
 does. Implementation plans for unbuilt work are in `docs/plan/`.
 Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. The `init-project`
-skill uses `person_search` to find a person in the FamilySearch tree
+agent uses `person_search` to find a person in the FamilySearch tree
 when the user doesn't have a FamilySearch ID to provide.
 
 The host artifact is the `.mcpb` desktop extension, built from
@@ -492,7 +492,7 @@ change, with different (and easy-to-undercount) site lists:
   healer (`tree-sanitize.ts`) reads the same sets; check whether the change
   needs a heal rule for pre-change trees.
 
-The fixed profile and the objective question live in `init-project/SKILL.md`.
+The fixed profile and the objective question live in `agents/init-project.md`.
 
 ## Auth architecture (`packages/engine/mcp-server/src/auth/`)
 

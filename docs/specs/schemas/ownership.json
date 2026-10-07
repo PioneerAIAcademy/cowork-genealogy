@@ -19,9 +19,9 @@
     {
       "artifact": "research.json",
       "section": "project",
-      "owner": "skill:init-project",
+      "owner": "agent:init-project",
       "callers": [
-        "skill:init-project",
+        "agent:init-project",
         "agent:proof-conclusion"
       ],
       "agentCallers": [
@@ -57,9 +57,9 @@
     {
       "artifact": "research.json",
       "section": "researcher_profile",
-      "owner": "skill:init-project",
+      "owner": "agent:init-project",
       "callers": [
-        "skill:init-project"
+        "agent:init-project"
       ],
       "writerTools": [
         "research_append"
@@ -74,9 +74,9 @@
     {
       "artifact": "research.json",
       "section": "known_holdings",
-      "owner": "skill:init-project",
+      "owner": "agent:init-project",
       "callers": [
-        "skill:init-project"
+        "agent:init-project"
       ],
       "writerTools": [
         "research_append",
@@ -263,7 +263,8 @@
       "owner": "skill:record-extraction",
       "callers": [
         "skill:record-extraction",
-        "agent:citation"
+        "agent:citation",
+        "agent:init-project"
       ],
       "agentCallers": [
         {
@@ -274,6 +275,12 @@
         },
         {
           "agent": "agent:citation",
+          "tools": [
+            "research_append"
+          ]
+        },
+        {
+          "agent": "agent:init-project",
           "tools": [
             "research_append"
           ]
@@ -499,7 +506,7 @@
       "owner": null,
       "reason": "Four co-equal writers with disjoint jobs and no structural owner: init-project mints the starting stubs, person-evidence owns the household skeleton and mints a person the moment a persona matches nobody, tree-edit applies user-directed changes, and proof-conclusion lands the concluded value. The permitted writers are listed in `callers`. record-extraction is deliberately NOT one of them: it reaches this section only through `research_append`/`extraction_append`'s assertion-update rewrite, which is authorized by TOOL identity instead, and only for the exact delta that rewrite can produce.",
       "callers": [
-        "skill:init-project",
+        "agent:init-project",
         "agent:tree-edit",
         "agent:proof-conclusion",
         "skill:forget-and-rederive"
@@ -536,6 +543,12 @@
             "tree_correct",
             "tree_edit"
           ]
+        },
+        {
+          "agent": "agent:init-project",
+          "tools": [
+            "project_create"
+          ]
         }
       ],
       "writerTools": [
@@ -566,7 +579,7 @@
       "owner": null,
       "reason": "The same four writers as `persons`, for the same reason — a relationship edge is written by whichever of them established it, and no one of them owns the section's structure.",
       "callers": [
-        "skill:init-project",
+        "agent:init-project",
         "agent:tree-edit",
         "agent:proof-conclusion",
         "skill:forget-and-rederive"
@@ -596,6 +609,12 @@
             "tree_correct",
             "tree_edit"
           ]
+        },
+        {
+          "agent": "agent:init-project",
+          "tools": [
+            "project_create"
+          ]
         }
       ],
       "writerTools": [
@@ -618,7 +637,7 @@
       "section": "sources",
       "owner": "skill:record-extraction",
       "callers": [
-        "skill:init-project",
+        "agent:init-project",
         "agent:tree-edit",
         "agent:proof-conclusion",
         "skill:record-extraction"
@@ -654,6 +673,13 @@
           "tools": [
             "tree_correct",
             "tree_edit"
+          ]
+        },
+        {
+          "agent": "agent:init-project",
+          "tools": [
+            "project_create",
+            "research_append"
           ]
         }
       ],

@@ -93,6 +93,11 @@ WIDENED: dict[str, set[str]] = {
     #: ownership.json's `callers` so the ownership validator resolves it when the
     #: agent is the suite subject.
     "log": {"survey-surname"},
+    #: `sources` gains `init-project` (issue #2122). The skill always wrote one
+    #: `sources` entry per transcribed memory through `research_append` (its
+    #: Step 4a) with no row naming it; the agent's hook lane makes that write
+    #: explicit, so the manifest now says so. A widening cannot newly fail a test.
+    "sources": {"init-project"},
 }
 
 #: `assertions` loses `convert-dates`. The grant was dead on arrival: the skill's

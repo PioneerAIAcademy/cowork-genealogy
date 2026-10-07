@@ -181,7 +181,7 @@ correspondingly-numbered general sections below. The general spec remains the
   sandbox with an empty `/project`, starts `agent_runner`, and the client
   **prefixes the canned opener** ("Let's start a new genealogy research
   project.") onto the user's first message on the wire, so the existing
-  **`init-project`** skill runs and reads the person and objective from that one
+  **`init-project`** agent runs and reads the person and objective from that one
   turn — FamilySearch-person seeding in chat, reusing the skill as-is (no new
   onboarding UI; the researcher profile is fixed and nothing about the
   researcher is asked). The bubble shows only what the user typed. The session is
@@ -1072,7 +1072,7 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
   residency/retention/compliance out of scope for now.
 - FamilySearch token injection = **(a) file on the sandbox FS** (no MCP change).
 - Control plane hosted on **Dallan's local server, exposed via Tailscale Funnel**.
-- Onboarding = **conversational** (`init-project` skill), not a custom form.
+- Onboarding = **conversational** (`init-project` agent), not a custom form.
 - **Still to confirm (not blocking):** FamilySearch dev-key supports the web
   redirect flow + a handful of external alpha users; Funnel is enabled for the two
   sidecar endpoints.

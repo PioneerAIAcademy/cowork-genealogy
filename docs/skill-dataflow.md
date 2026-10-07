@@ -11,7 +11,7 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 9 skills and 24 agents. Besides the `research` orchestrator itself, its routing
+There are 8 skills and 25 agents. Besides the `research` orchestrator itself, its routing
 table names 13 of them, and 5 more are reached by delegation from a skill the table does
 name. The remaining 6 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
@@ -125,7 +125,7 @@ unreachable from an autonomous run.
 
 | # | Skill / agent | Gate — true before it runs | Owns | Reads | Writes |
 |---|---|---|---|---|---|
-| 0 | **`init-project`** (skill) | No `research.json` in the folder. A guard clause refuses — reading no project file at all — if one exists. Not a routing row; `/research` names it in prose. | Creating both project files, the researcher profile, and the known-holdings survey | `person_read`, `person_search`, `place_search`; the user's opening answers | `research.json` `project` + empty sections and `tree.gedcomx.json` `persons`/`relationships`/`sources` — `project_create`; then `researcher_profile` and `known_holdings` — `research_append` |
+| 0 | **`init-project`** (an AGENT since issue #2122, not a skill) | No `research.json` in the folder. A guard clause refuses — reading no project file at all — if one exists. Not a routing row; `/research` spawns it as `@plugin:init-project` from prose. | Creating both project files, the researcher profile, and the known-holdings survey | `person_read`, `person_search`, `place_search`; the user's words, as the delegation carries them | `research.json` `project` + empty sections and `tree.gedcomx.json` `persons`/`relationships`/`sources` — `project_create`; then `researcher_profile`, `known_holdings` and a `sources` entry per transcribed memory — `research_append`. Hands `check-warnings` and the first question back to the caller |
 | 1 | **`research`** (skill, orchestrator) | Entry point. `research.json` exists. | Routing only — plus the four contracts that forbid it doing the work inline (extraction, identity links, conflict/hypothesis, exhaustiveness/proof), and the two completion gates | `research_query` projections only; it explicitly bans a whole-file `Read` of `research.json` for itself | **Nothing.** The file still instructs it to write `project.status = "completed"`; that was ruled to the `proof-conclusion` agent on 2026-08-25 and the prose has not caught up — see [How the project gets closed](#how-the-project-gets-closed) |
 | 2 | **`question-selection`** (agent) | Spawned as `@plugin:question-selection`. Objective but no questions; or exhaustiveness returned gaps and the next move is a FAN pivot; or new evidence raised a new question | Minting at most one `q_` per invocation with its selection basis. Not a question's `status` after creation — all four transitions belong elsewhere | `research.json` `project.objective`, `questions`, `assertions`, `conflicts`, `hypotheses`, `timelines`, `log`, `proof_summaries` through `project_context` and `research_query` — never a whole-file `Read` of `research.json`; tree `persons` by `Read` of `tree.gedcomx.json` | `questions[]` append — `research_append`. Never `project.status` — when its step 1b stop point fires ("no further questions — objective answered") it returns a signal whose closing line still names `/research` as the writer; the 2026-08-25 ruling redirects it to a `proof-conclusion` re-invocation, and that edit has not landed — see [How the project gets closed](#how-the-project-gets-closed) |
 | 3 | **`locality-guide`** (agent) | A question has no plan **and** its target jurisdiction has no `localities` entry | The survey of what records survive for one place and period, persisted as the one `loc_` entry `research-plan` plans from | `place_search`, `place_search_all`, `place_population`, `collections_search`, `volume_search`, `external_links_search`, `wiki_search`, `wiki_read`, `wiki_place_page` — the hosted wiki API and Pop Stats | `localities` — one entry per jurisdiction, `research_append`. Nothing at all in standalone Q&A with no project |
@@ -225,7 +225,7 @@ rule prevents, is in [`specs/schemas/ownership.json`](specs/schemas/ownership.js
 | | `questions` | `question-selection` | `research-exhaustiveness`, `proof-conclusion` | `research_append` | unit + hook + tool — the only field-scoped rule: the hook keys on the claim `exhaustive_declaration.declared: true`, not on the section |
 | | `plans` / `plan_items` | `research-plan` | the four search skills and `record-extraction`, for `items[].status` only | `research_append` | unit (whole-section only — it cannot tell a status flip from a rewritten plan) |
 | | `log` | none by design — append-only, multi-writer | the four search skills, `record-extraction` and `survey-surname` | `research_log_append` | unit |
-| | `sources` | `record-extraction` | `agent:citation` (refine only, never create) | `research_append`, `extraction_append` | unit; create-vs-refine held by tool identity |
+| | `sources` | `record-extraction` | `agent:citation` (refine only, never create); `init-project` (one entry per transcribed memory, at creation) | `research_append`, `extraction_append` | unit; create-vs-refine held by tool identity |
 | | `assertions` | `record-extraction` | — | `research_append`, `extraction_append` | unit + tool preconditions |
 | | `person_evidence` | `person-evidence` | — | `research_append` | unit + tool — `extraction_append` does not accept the section, which is what holds the extraction lane off it |
 | | `conflicts` | `conflict-resolution` | — | `research_append` | unit, on two checks since 2026-09-02: `test_ownership_table` (detects, keyed on the calling skill) and `test_no_out_of_lane_section_writes` (denies, keyed on the calling agent — issue #2022). The hook also keeps both writing agents out of the section, but it cannot bind a skill — a section owned by a skill has no agent to permit |
@@ -246,7 +246,7 @@ Two consequences worth holding onto:
   and the `PreToolUse` hook. (`disallowedTools:` was deleted from every agent
   on 2026-08-30 — it only restated the `tools:` omission.)
 - **Only two skills hold `research_query`** — `research` and `search-records` — and six
-  of the twenty-four agents, `search-external-sites` among them. Everything else that needs project
+  of the twenty-five agents, `search-external-sites` among them. Everything else that needs project
   state does a whole-file `Read`, which is the thing the orchestrator forbids for itself
   because `research.json` reaches 100+ assertions by late run.
 - **The hook carries exactly four rules**, in
@@ -335,8 +335,7 @@ touch either side.
 
 No routing-table row names these, so an autonomous `/research` run never enters them:
 
-`timeline` · `forget-and-rederive` ·
-`init-project` (named in prose, not in the table)
+`timeline` · `forget-and-rederive`
 
 `citation` left this list on 2026-09-23 by ceasing to be a skill (issue #2799),
 `search-wikipedia` on 2026-09-27 (issue #2795), `convert-dates`,
