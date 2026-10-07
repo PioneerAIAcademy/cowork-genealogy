@@ -81,6 +81,7 @@ SECRETS_NS = "aws:elasticbeanstalk:application:environmentsecrets"
 SQSD_NS = "aws:elasticbeanstalk:sqsd"
 LC_NS = "aws:autoscaling:launchconfiguration"
 ASG_NS = "aws:autoscaling:asg"
+RDS_STATE = re.compile(r"InvalidDBInstanceState")
 INSTANCES_NS = "aws:ec2:instances"
 VPC_NS = "aws:ec2:vpc"
 EBENV_NS = "aws:elasticbeanstalk:environment"
@@ -1518,13 +1519,58 @@ U13PY
                        "--environment-name", env_name, placeholder={"ConfigurationSettings": [{"OptionSettings": []}]})
         live = {(o["Namespace"], o["OptionName"]): o.get("Value")
                 for o in got["ConfigurationSettings"][0].get("OptionSettings", [])}
+        paused = self.state.get("paused")
         out = [f"{ns} {n}: {live.get((ns, n))!r}, expected {v!r}"
                for (ns, n), v in options_map(self.snapshot(env_name)).items()
-               if not same_option(ns, n, live.get((ns, n)), v)]
+               if not same_option(ns, n, live.get((ns, n)), v) and not (paused and ns == ASG_NS)]
         out += [f"{n} is set ({ns}); no case is running" for (ns, n) in live
                 if ns == ENV_NS and (n.startswith(("U13_PROBE_",) + tuple(layout.DEV_PREFIXES))
                                      or n in layout.DEV_VARIABLES)]
         return out
+
+    # ── pause / resume ───────────────────────────────────────────────────────────────
+
+    def scale(self, size: int) -> None:
+        for tier in ("web", "worker", "tools"):
+            name = ENV_NAMES[tier]
+            if self.describe_env(name) is None:
+                continue
+            settings = self.file(f"scale-{tier}-{size}.json", [opt(ASG_NS, "MinSize", size), opt(ASG_NS, "MaxSize", size)])
+            self.aws("elasticbeanstalk", "update-environment", "--environment-name", name, "--option-settings", settings)
+            self.wait_env(name)
+
+    def pause(self) -> int:
+        """Between sessions: the tiers to 0/0, then RDS and the bastion stopped (AWS restarts a
+        stopped RDS instance after seven days). The tiers go first, so nothing is left calling RDS."""
+        self.require_billed()
+        self.guard()
+        self.out("== pause: tiers to 0/0")
+        self.state["paused"] = True
+        self.save()
+        self.scale(0)
+        self.out("== pause: RDS")
+        self.aws("rds", "stop-db-instance", "--db-instance-identifier", RDS_ID, ok=RDS_STATE)
+        if self.state.get("bastion"):
+            self.out("== pause: bastion")
+            self.aws("ec2", "stop-instances", "--instance-ids", self.state["bastion"])
+        self.note("paused; `resume` brings RDS, the bastion and the tiers back")
+        return 0
+
+    def resume(self) -> int:
+        self.require_billed()
+        self.guard()
+        self.out("== resume: RDS")
+        self.aws("rds", "start-db-instance", "--db-instance-identifier", RDS_ID, ok=RDS_STATE)
+        self.aws("rds", "wait", "db-instance-available", "--db-instance-identifier", RDS_ID)
+        if self.state.get("bastion"):
+            self.out("== resume: bastion")
+            self.aws("ec2", "start-instances", "--instance-ids", self.state["bastion"])
+            self.aws("ec2", "wait", "instance-running", "--instance-ids", self.state["bastion"])
+        self.out("== resume: tiers to 1/1")
+        self.scale(1)
+        self.state["paused"] = False
+        self.save()
+        return 0
 
     # ── down ─────────────────────────────────────────────────────────────────────────
 
@@ -1956,6 +2002,8 @@ def build_parser() -> argparse.ArgumentParser:
     probe.add_argument("--hold-s", type=float, help="restore after this many seconds instead of on Enter")
     probe.add_argument("--bundles-dir", help="ebext_naming copies eb-tools.zip from here")
     sub.add_parser("down", parents=[common, billed], help="tear everything down, in order")
+    sub.add_parser("pause", parents=[common, billed], help="between sessions: tiers to 0/0, RDS and the bastion stopped")
+    sub.add_parser("resume", parents=[common, billed], help="undo pause: RDS, the bastion, then the tiers to 1/1")
     proof = sub.add_parser("prove-empty", parents=[common], help="exit 1 if anything of the rehearsal remains")
     proof.add_argument("--repoll-s", type=float, default=600)
     leak = sub.add_parser("leak-check", help="no .local/ value in the tree, a PR body, or <base>..HEAD's messages and diffs")
@@ -1977,7 +2025,7 @@ def main(argv: list[str] | None = None, *, runner=None, sleep=time.sleep, out=No
             return leak_check(args, local_dir=local_dir, repo=repo, out=printer)
         r = Rehearsal(args, runner=runner, sleep=sleep, out=printer, local_dir=local_dir, repo=repo)
         return {"plan": r.plan, "up": r.up, "status": r.status, "probe": r.probe, "down": r.down,
-                "prove-empty": r.prove_empty}[args.cmd]()
+                "pause": r.pause, "resume": r.resume, "prove-empty": r.prove_empty}[args.cmd]()
     except Die as exc:
         print(f"rehearse.py: {exc}", file=sys.stderr)
         return exc.rc

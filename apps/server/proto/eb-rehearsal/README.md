@@ -65,6 +65,8 @@ they run against a fake `aws`.
 | `status` | Prints yesterday's and today's daily cost (always), the budget's actual spend, each environment's status and health, and the RDS forward command. It exits 1 on drift between an environment and the option-settings file `up` wrote, or when a dev-only or `U13_PROBE_*` variable is live. |
 | `probe --case <c>` | Applies cases (repeatable), holds, then restores in reverse order in `finally`. Enter, Ctrl-C, an exception or `--hold-s N` all lead to the restore, which first waits for the environment to leave `Launching` or `Updating`. |
 | `down` | Tears everything down in order. It is idempotent. |
+| `pause` | Between sessions: the three tiers to ASG 0/0, then RDS and the bastion stopped, and `paused` recorded so `status` does not report the ASG sizes as drift. AWS restarts a stopped RDS instance after seven days. |
+| `resume` | Undoes `pause`: RDS (waits for `available`), the bastion, then the tiers back to 1/1. |
 | `prove-empty` | Exits 1 if anything of the rehearsal remains. |
 | `leak-check [--body <file>]` | The account-id leak check. It makes no AWS call. |
 
