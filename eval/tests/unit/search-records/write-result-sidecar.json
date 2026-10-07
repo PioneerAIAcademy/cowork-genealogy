@@ -24,7 +24,9 @@
     "wiki-read-united-states-census",
     "record-search-1850-census-flynn",
     "rank-search-matches-flynn-census",
-    "record-read-patrick-flynn-mxhy-tp4"
+    "record-read-patrick-flynn-mxhy-tp4",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
   ],
   "judge_context": [
     "The new log entry must carry a non-null results_ref pointing at results/<log_id>.json, and a results/<log_id>.json sidecar must be written containing the verbatim record_search response",

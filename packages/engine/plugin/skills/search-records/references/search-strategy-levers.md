@@ -62,7 +62,7 @@ collection does not exempt a lever from this requirement.
 | Search by child | Search child as principal with parent name set to subject | Subject's own records scarce; child's are abundant |
 | Wildcard surname | `surname=Sm*th` or `surname=*tnam` | Foreign transliteration, indexing errors, married-name variants |
 | Wildcard given name | `givenName=Joh*` or `givenName=Eli?abeth` | Diminutives, abbreviations, ambiguous handwriting |
-| Use initials only | `givenName=J W`. Fuzzy returns records indexed `W J` too — usually the same person, so do not discard on order. `Exact: true` keeps only the literal initials form: it cut a US-wide pool roughly 120-fold, and returned nothing at all in every English marriage pool read in full, because those records spell given names out | Census/directory records abbreviated as initials |
+| Use initials only | `givenName=J W`. Fuzzy returns records indexed `W J` too — usually the same person, so do not discard on order. `givenNameExact: true` keeps only the literal initials form: it cut a US-wide pool roughly 120-fold, and returned nothing at all in every English marriage pool read in full, because those records spell given names out | Census/directory records abbreviated as initials |
 | Replace name with structural params | Fill `sex`, residence date+place, parent name; clear principal name, and set `recordCountry` or `batchNumber` as the anchor | Name unrecoverable (e.g., "Negro woman aged 30") |
 
 ## Place levers
@@ -82,7 +82,7 @@ collection does not exempt a lever from this requirement.
 
 | Lever | API change | When to try |
 |---|---|---|
-| Broaden range | Widen `.from`/`.to` to ±5 or ±10 years | Census age inflation/deflation; estimated dates |
+| Broaden range | Widen the `*YearFrom`/`*YearTo` pair (`birthYearFrom`/`birthYearTo`, and the same for death, marriage, residence, any) to ±5 or ±10 years | Census age inflation/deflation; estimated dates |
 | Drop date | Clear all date parameters | Date is uncertain; pre-1850 ancestors |
 | Switch event type | Move date from `birthYearFrom`/`To` → `residenceYearFrom`/`To` → `deathYearFrom`/`To` | Original event date was wrong type |
 | Use Any event | Switch to `anyYearFrom`/`anyYearTo` + `anyPlace` | Date known but event type unknown (e.g., immigration year) |
@@ -122,8 +122,11 @@ When a search returns 0 hits with reasonable inputs, try in this order:
 12. Search by neighbor or FAN-club member
 
 **Still 0 hits across all variations:** the records may be unindexed.
-Switch to image browsing, Catalog search, Full-Text Search, or
-external indexes.
+Call `catalog_search` for the place: it indexes filmed and image-only
+holdings that `collections_search` (indexed collections only) cannot see, and a
+film note's `imageGroupNumber` feeds `image_search` / `fulltext_search`. A
+small place may be catalogued under its parent; retry there on 0 hits. Then
+switch to image browsing, Full-Text Search, or external indexes.
 
 ## "Reasonably exhaustive" exit criteria
 
@@ -134,5 +137,5 @@ A reasonably exhaustive indexed Records search has been performed when:
 - Searched the immediate jurisdiction, parent jurisdiction, and one
   neighboring jurisdiction
 - Examined results from each collection that returned matching hits
-- Checked for image-only collections via the Catalog
+- Called `catalog_search` for the place to find filmed or image-only holdings
 - Documented every search attempt including zero-hit searches

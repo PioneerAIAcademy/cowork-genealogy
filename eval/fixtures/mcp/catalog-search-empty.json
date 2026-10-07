@@ -1,0 +1,15 @@
+{
+  "tool": "catalog_search",
+  "description": "Catch-all empty catalog_search for the search-records suite. The skill's 0-hit lever and exhaustive-exit checklist name catalog_search, and the unit harness registers only tools a test has fixtures for, so without this a catalog call is an unregistered-tool abort. It answers 0 hits so no test is graded on Catalog content. `~` with an empty needle matches any call that carries the key; this one covers calls with a place, its sibling catalog-search-empty-keywords covers calls with keywords.",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "totalHits": 0,
+    "returned": 0,
+    "placeResolved": true,
+    "hydrationTimedOut": false,
+    "hydrateRequested": 10,
+    "hits": []
+  }
+}
