@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import subprocess
 from collections import Counter
 from pathlib import Path
 
@@ -191,9 +192,31 @@ def test_main_refuses_a_build_without_build_info(tmp_path):
     assert rs.main(["--test", "spriggs-parents-1898", "--candidate-build", str(tmp_path)]) == 2
 
 
-def test_a_base_older_than_the_build_stamp_is_refused():
+def _repo(tmp_path):
+    """A two-commit repo: `old`, then `stamp`. Real git, independent of how deep
+    this checkout's history is (CI clones shallow)."""
+    def git(*args):
+        return subprocess.run(["git", *args], cwd=tmp_path, check=True, capture_output=True,
+                              text=True, encoding="utf-8").stdout.strip()
+    git("init", "-q")
+    shas = []
+    for name in ("old", "stamp"):
+        git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", name)
+        shas.append(git("rev-parse", "HEAD"))
+    return shas
+
+
+def test_a_base_older_than_the_build_stamp_is_refused(tmp_path):
+    old, stamp = _repo(tmp_path)
     with pytest.raises(rs.UsageError, match="predates"):
-        rs.ensure_build_at("e8607990d~1")
+        rs.check_base_supported(old, repo=tmp_path, stamp=stamp)
+    rs.check_base_supported(stamp, repo=tmp_path, stamp=stamp)  # the stamp itself is supported
+
+
+def test_a_clone_without_the_stamp_says_shallow_not_predates(tmp_path):
+    _, head = _repo(tmp_path)
+    with pytest.raises(rs.UsageError, match="shallow"):
+        rs.check_base_supported(head, repo=tmp_path, stamp="e8607990d")
 
 
 def test_zero_items_after_skips_is_a_usage_error(monkeypatch):
