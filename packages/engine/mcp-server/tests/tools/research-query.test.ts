@@ -625,4 +625,104 @@ describe("research_query — every array section is queryable or deliberately ex
     const stale = Object.keys(RESEARCH_QUERY_EXCLUDED).filter((s) => !arraySections.includes(s));
     expect(stale, `RESEARCH_QUERY_EXCLUDED names section(s) the schema no longer has`).toEqual([]);
   });
+
+});
+
+// --- log × questionId: one call replacing the per-plan-item walk (T2.1) ---
+describe("research_query — log × questionId", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-query-plan-question-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  async function writeResearch(research: any) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2), "utf-8");
+  }
+
+  const plansFixture = {
+    plans: [
+      { id: "pl_001", question_id: "q_001", status: "active",
+        items: [{ id: "pli_001" }, { id: "pli_002" }] },
+      { id: "pl_002", question_id: "q_001", status: "superseded",
+        items: [{ id: "pli_003" }] },
+      { id: "pl_003", question_id: "q_002", status: "active",
+        items: [{ id: "pli_004" }] },
+    ],
+    log: [
+      { id: "log_001", plan_item_id: "pli_001" },
+      { id: "log_002", plan_item_id: "pli_002" },
+      { id: "log_003", plan_item_id: "pli_003" },
+      { id: "log_004", plan_item_id: "pli_004" },
+      { id: "log_005", plan_item_id: null },
+      { id: "log_006", plan_item_id: "pli_001" },
+    ],
+  };
+
+  it("log × questionId returns every entry for any plan item of the question's plans", async () => {
+    await writeResearch(plansFixture);
+    const result = await researchQuery({ projectPath: dir, section: "log", questionId: "q_001" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // Includes the superseded plan's item (audit trail); excludes q_002's and the unplanned entry.
+    expect(result.items.map((i) => i.id)).toEqual(["log_001", "log_002", "log_003", "log_006"]);
+    expect(result.count).toBe(4);
+  });
+
+  it("log × questionId equals the union of the per-item planItemId walk", async () => {
+    await writeResearch(plansFixture);
+    const joined = await researchQuery({ projectPath: dir, section: "log", questionId: "q_001" });
+    const walked: string[] = [];
+    for (const planItemId of ["pli_001", "pli_002", "pli_003"]) {
+      const r = await researchQuery({ projectPath: dir, section: "log", planItemId });
+      if (r.ok) walked.push(...r.items.map((i) => i.id));
+    }
+    if (!joined.ok) throw new Error("joined call failed");
+    expect(joined.items.map((i) => i.id).sort()).toEqual(walked.sort());
+  });
+
+  it("log × questionId ANDs with planItemId like every other filter", async () => {
+    await writeResearch(plansFixture);
+    const r = await researchQuery({ projectPath: dir, section: "log", questionId: "q_001", planItemId: "pli_002" });
+    if (!r.ok) throw new Error("failed");
+    expect(r.items.map((i) => i.id)).toEqual(["log_002"]);
+    const none = await researchQuery({ projectPath: dir, section: "log", questionId: "q_002", planItemId: "pli_002" });
+    if (!none.ok) throw new Error("failed");
+    expect(none.count).toBe(0);
+  });
+
+  it("log × questionId for a question with no plans is an empty result, not an error", async () => {
+    await writeResearch(plansFixture);
+    const r = await researchQuery({ projectPath: dir, section: "log", questionId: "q_009" });
+    expect(r).toMatchObject({ ok: true, count: 0, items: [] });
+  });
+
+  it("log × questionId errors (not count:0) when plans is missing — a corrupt document", async () => {
+    await writeResearch({ log: plansFixture.log });
+    const r = await researchQuery({ projectPath: dir, section: "log", questionId: "q_001" });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(JSON.stringify(r)).toContain("'plans' is missing or not an array");
+  });
+
+  it("log × questionId pages a >50-entry result with offset", async () => {
+    const log = Array.from({ length: 60 }, (_, k) => ({ id: `log_${k}`, plan_item_id: "pli_001" }));
+    await writeResearch({ plans: plansFixture.plans, log });
+    const first = await researchQuery({ projectPath: dir, section: "log", questionId: "q_001" });
+    const second = await researchQuery({ projectPath: dir, section: "log", questionId: "q_001", offset: 50 });
+    if (!first.ok || !second.ok) throw new Error("failed");
+    expect(first).toMatchObject({ count: 60, truncated: true });
+    expect(first.items).toHaveLength(50);
+    expect(second.items).toHaveLength(10);
+    expect(second.truncated).toBe(false);
+  });
+
+  it("the unsupported-filter error for log now names questionId", async () => {
+    await writeResearch(plansFixture);
+    const r = await researchQuery({ projectPath: dir, section: "log", personId: "P1" } as never);
+    expect(r.ok).toBe(false);
+    expect(JSON.stringify(r)).toContain("supported: planItemId, questionId");
+  });
 });

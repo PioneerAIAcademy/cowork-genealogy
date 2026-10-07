@@ -5,6 +5,9 @@
 > read-side tool, not an extension of the first (see §3 for why).
 > **Updated 2026-08-03:** added `offset` pagination so items 51+ are reachable
 > (the tool half; the skill half has since landed).
+> **Updated 2026-10-06 (T2.1, `docs/plan/cost-latency-10x.md` Wave 1):** `log`
+> takes `questionId`, so one call returns every log entry for a question's plan
+> items instead of one `planItemId` call per item (§3, "A cross-section filter").
 
 ```
 research_query({ projectPath, section, ...well-known filters }) -> { count, items, truncated }
@@ -72,6 +75,7 @@ inspected; `validate_research_schema` remains the diagnosis tool.
 | `plans` | `questionId` | `question_id` | exact |
 | | `status` | `status` | exact |
 | `log` | `planItemId` | `plan_item_id` | exact |
+| | `questionId` | `plan_item_id` ∈ the item ids of every plan whose `question_id` is the value | via plan |
 | `sources` | `sourceId` | `id` | exact |
 | `assertions` | `recordId` | `record_id` | exact |
 | | `recordRole` | `record_role` | exact |
@@ -209,6 +213,22 @@ whole section, one 50-item page at a time.
   both check `truncated` and page with `offset`. A tool-only fix would not have
   cleared the reported symptom on its own.
 
+- **A cross-section filter on `log`, not a nested join (2026-10-06, T2.1).**
+  `research-exhaustiveness` reads a question's log by walking it: one
+  `log × planItemId` call per plan item, the ids handed to it by its own previous
+  read (224 of 250 cases). Over the 27 runs recording answer sizes that is 45
+  walks, 222 calls, 42 of them that agent's; one `log × questionId` call per walk
+  (two where a question passes 50 entries) replaces about 219 of them with ~50.
+  A nested `include: "log"` on `plans` was rejected: it makes the answer's shape
+  depend on the arguments, and its own overflow needs this filter anyway.
+  Assertions are deliberately not nested: no recorded call walks to them, and
+  9 of 30 questions carry more than 50. The answer is **larger** than the walk
+  (≈ +37%: it returns every entry for the question, where the walk read 3–5 of
+  ~8 items), so the gain is calls and turns, not characters. An unfiltered
+  `log` read already returns the whole log in one call and agents make it 59
+  times against 428 walk calls — the walk is a model choice, so whether this
+  filter changes it is measured, not assumed.
+
 ## 4. Errors / edge cases
 
 | Condition | Behavior |
@@ -219,6 +239,9 @@ whole section, one 50-item page at a time.
 | `research.json` missing or invalid JSON — with `tree.gedcomx.json` present, i.e. a *broken* project | `{ ok: false, errors }`, loud |
 | An **optional** section (one the schema does not list as `required` — today `localities`) is absent from a `research.json` that is otherwise a well-formed object | `{ ok: true, count: 0, items: [], truncated: false }` — a legitimate answer. `localities` postdates most projects: 90 of the 102 committed fixtures have no such key, and erroring on those is what stopped an agent re-reading locality findings it had just written. |
 | A **required** section is missing, or any section is present but not an array, or `research.json` parses to something that is not an object (`null`, an array, a string, a number) | `{ ok: false, errors }` |
+| `log` × `questionId`, `plans` missing or not an array | `{ ok: false, errors }` — `plans` is a required section, so its absence is a corrupt document, never a `count: 0` |
+| `log` × `questionId`, an entry with `plan_item_id: null` | never matches (the walk could not reach it either) |
+| `log` × `questionId`, a plan item on a non-`active` plan | included — `research-exhaustiveness` treats those as audit trail and filters itself |
 | No filters supplied | the whole section, one 50-item page (page with `offset` for the rest) |
 | No items match | `{ ok: true, count: 0, items: [] }` — a legitimate answer, not an error |
 | More than 50 matches, no `offset` | `items` is the first 50; `count` is the true total; `truncated: true` |

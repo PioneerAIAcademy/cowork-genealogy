@@ -155,6 +155,10 @@ two reader families handle it differently (`harness/since_window.py`):
   engine builds on the same fixed inputs, so mixing eras cannot corrupt it, and
   its inputs — runs carrying `tool_calls[].result_chars` — all postdate the
   2026-08-23 strip fix, so a stripped one still replays intact.
+  `make replay-collapse` is not windowed for the same reason, but it reads one
+  thing the strip removes: each walk call's recorded `count`. A stripped run's
+  walks therefore report `unverifiable` (and if every walk is, it exits 2) —
+  it fails loudly, never falsely.
 - **Per-skill reports FLAG** — `make eval-timings`, `make skill-latency`, `make judge-report` show
   the newest 1–2 run logs per skill, so there is no sample to narrow: a date
   cut would delete the *skill*, hiding that it needs a re-run. They show every
