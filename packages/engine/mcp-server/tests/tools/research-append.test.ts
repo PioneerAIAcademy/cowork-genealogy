@@ -4826,6 +4826,13 @@ describe("research_append (batch ops)", () => {
   it("(in-flight) refuses an unrelated question", async () => {
     await refusedFor(running(), { depends_on: [], unblocks: [] });
   });
+  it("(in-flight) tells a same-batch resolve-and-append to split into two calls", async () => {
+    await writeProject(running());
+    const r = await researchAppend(newQ());
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/as it stood before the call/);
+    expect(msg).toMatch(/write the resolution in its own call and append the new question in the next one/);
+  });
   it("(in-flight) refuses when unblocks names the question but no conflict blocks it", async () => {
     await refusedFor(running(), { unblocks: ["q_001"] });
   });
@@ -6298,6 +6305,30 @@ describe("research_append (composite persist + enforcement)", () => {
     ]);
     expect(r.validation.warnings.join(" ")).toMatch(/names no country/);
     expect((await readResearch()).assertions[1].standard_place).toBe("Schuylkill, Pennsylvania, United States");
+  });
+
+  it("resolves a bare place against the other places of its own record only", async () => {
+    // Genealogist ruling 2026-10-06, option C: the will's bare "Shenandoah" went
+    // to New Zealand with no context. Context is per record, never the batch.
+    await writeProject();
+    const a = (record_id: string, place: string) => ({
+      section: "assertions" as const,
+      op: "append" as const,
+      entry: { ...noId(validAssertion("x", "src_001")), record_id, place },
+    });
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        a("rec-A", "Shenandoah"),
+        a("rec-A", "Borough of Shenandoah, County of Schuylkill"),
+        a("rec-B", "Dublin, Ireland"),
+      ],
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Shenandoah", {
+      contextPlaces: ["Borough of Shenandoah, County of Schuylkill"],
+    });
+    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Dublin, Ireland", { contextPlaces: [] });
   });
 
   it("copies the sidecar's resolved standard_place for the same place string instead of geocoding", async () => {

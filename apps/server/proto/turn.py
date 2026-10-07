@@ -61,7 +61,9 @@ summaries) is 0. Run it with ``FS_GRANT_REFRESH_AGE_S=0`` on the web tier.
 
 Every real-turn arm first checks that the dev-login patron has a usable grant
 (``require_grant``) and exits 2 naming ``make proto-grant`` when not: without it a missing
-grant shows only as a ``signin_required`` turn.
+grant shows only as a ``signin_required`` turn. Every arm that gives up on a turn it posted --
+a miss, a timeout, a failed docker call or DB read, ^C before turn_done -- POSTs
+``/interrupt`` first (U23), so no billed turn is left running.
 
 Whatever the checks say, an evidence block follows ``turn_done``: the ``turns`` row, the
 ``tool_calls`` and ``session_entries`` rows written after the kill (the CLI's own words
@@ -106,8 +108,8 @@ REAUTH_ENTRY = re.compile(r"call the login tool|Reconnect FamilySearch", re.I)
 
 
 # U2: every /api/sessions route needs a signed-in patron. The scripts sign in through
-# dev-login, which the tier offers only while FamilySearch sign-in is off and PUBLIC_URL is
-# http -- the default compose stack. Distinct emails are distinct patrons.
+# dev-login, which the tier offers only with DEV_LOGIN=true, FamilySearch sign-in off and
+# PUBLIC_URL http -- the default compose stack. Distinct emails are distinct patrons.
 DEV_LOGIN_EMAIL = "dev@localhost"
 
 
@@ -124,7 +126,8 @@ def signed_in_client(
         r = login.post("/auth/dev-login", json={"email": email})
         if r.status_code == 403:
             raise RuntimeError(
-                f"dev-login is disabled at {base} (FamilySearch sign-in is on, or PUBLIC_URL is https); "
+                f"dev-login is disabled at {base} (DEV_LOGIN is not true, FamilySearch sign-in is on, "
+                "or PUBLIC_URL is https); "
                 "run the scripts against the default stack, not docker-compose.fs-signin.yml"
             )
         r.raise_for_status()
@@ -136,6 +139,17 @@ def post_message(client: httpx.Client, base: str, session_id: str, text: str) ->
     r = client.post(f"{base}/api/sessions/{session_id}/messages", json={"text": text})
     r.raise_for_status()
     return r.json()["turn_id"]
+
+
+def interrupt(client: httpx.Client, base: str, session_id: str) -> str | None:
+    """POST /interrupt (Stop) on a session, so a turn a driver gave up on does not run on
+    billed; None on the 202, else what went wrong. Never raises: it runs on paths that are
+    already failing (U23)."""
+    try:
+        r = client.post(f"{base}/api/sessions/{session_id}/interrupt")
+    except Exception as exc:  # noqa: BLE001
+        return f"{type(exc).__name__}: {exc}"
+    return None if r.status_code == 202 else f"HTTP {r.status_code}"
 
 
 def wait_turn_done(client: httpx.Client, base: str, session_id: str, turn_id: str, deadline_s: float) -> tuple[int, float]:
@@ -282,7 +296,11 @@ def run(base: str, dsn: str, deadline_s: float, email: str = DEV_LOGIN_EMAIL) ->
             turn1, seq1, wall1 = post_and_wait(client, base, session_id, TEXT_1, deadline_s)
         except Exception as exc:  # noqa: BLE001 - a timeout is a FAIL, not a crash
             checks.append(("turn 1 reached turn_done", False, f"{type(exc).__name__}: {exc}"))
+            interrupt(client, base, session_id)
             return checks, figures
+        except BaseException:  # ^C: Stop the turn, then exit
+            interrupt(client, base, session_id)
+            raise
         checks.append(("turn 1 reached turn_done", True, f"{wall1:.0f}s"))
         figures["turn1"] = {"turn_id": turn1, "wall_s": round(wall1, 1)}
 
@@ -314,7 +332,11 @@ def run(base: str, dsn: str, deadline_s: float, email: str = DEV_LOGIN_EMAIL) ->
             turn2, seq2, wall2 = post_and_wait(client, base, session_id, TEXT_2, deadline_s)
         except Exception as exc:  # noqa: BLE001
             checks.append(("turn 2 reached turn_done", False, f"{type(exc).__name__}: {exc}"))
+            interrupt(client, base, session_id)
             return checks, figures
+        except BaseException:  # ^C: Stop the turn, then exit
+            interrupt(client, base, session_id)
+            raise
         checks.append(("turn 2 reached turn_done", True, f"{wall2:.0f}s"))
         figures["turn2"] = {"turn_id": turn2, "wall_s": round(wall2, 1)}
 
@@ -698,41 +720,51 @@ def run_kill(
         project_id = one(dsn, "SELECT project_id FROM sessions WHERE session_id = %s", (session_id,))
         turn_id = post_message(client, base, session_id, spec.text)
         figures["turn_id"] = turn_id
-        if spec.kill_on_input:
-            outcome = wait_for_tool_input(dsn, session_id, turn_id, spec.kill_on, spec.kill_on_input, deadline_s)
-            missed = "the turn finished without one" if outcome == "completed" else "no matching tool_use block in time"
-        else:
-            outcome = wait_for_tool_call(dsn, turn_id, spec.kill_on, deadline_s)
-            missed = "the turn finished without one" if outcome == "completed" else "no tool_calls row in time"
-        checks.append((f"kill: the turn reached its first {spec.target} call", outcome == "seen", missed))
-        if outcome != "seen":
-            return checks, figures
-        if spec.kill_after_s > 0:
-            time.sleep(spec.kill_after_s)
-        sdk_before = one(dsn, "SELECT sdk_session_id FROM sessions WHERE session_id = %s", (session_id,))
-        entries_at_kill = one(dsn, "SELECT count(*) FROM session_entries WHERE session_id = %s", (sdk_before or "",))
-        marks = take_marks(dsn, session_id, turn_id, sdk_before, project_id)
-        grant_before = one(dsn, GRANT_START_SQL, (project_id,)) if spec.expect_grant_refresh else None
-        grant_refreshed: bool | None = None
-        t_kill = time.monotonic()
-        if spec.kill_signal == "term":
-            docker("restart", "-t", "30", spec.container)  # SIGTERM, then SIGKILL after 30 s (the compose stop grace)
-        else:
-            docker("kill", spec.container)  # counts as a manual stop: unless-stopped will not restart it
-            if spec.expect_grant_refresh:
-                # No attempt is live now, so the web tier's loop may refresh -- and revoke the
-                # token the killed attempt bore. The redelivery must bear the new one.
-                grant_refreshed = wait_grant_refresh(dsn, project_id, grant_before)
-                figures["grant_refreshed"] = grant_refreshed
-            docker("start", spec.container)
-        figures.update({"sdk_session_id": sdk_before, "entries_at_kill": entries_at_kill, "kill_on": spec.target,
-                        "kill_after_s": spec.kill_after_s, "kill_signal": spec.kill_signal})
+        # U23: whatever leaves this block before turn_done -- a failed docker call, a DB
+        # error, ^C during a wait -- Stops the turn first; the misses below do it themselves.
         try:
-            _seq, _wall = wait_turn_done(client, base, session_id, turn_id, deadline_s)
-        except Exception as exc:  # noqa: BLE001
-            checks.append(("kill: the redelivered turn reached turn_done", False, f"{type(exc).__name__}: {exc}"))
-            print(render_evidence(gather_evidence(dsn, session_id, turn_id, sdk_before, project_id, marks)))
-            return checks, figures
+            if spec.kill_on_input:
+                outcome = wait_for_tool_input(dsn, session_id, turn_id, spec.kill_on, spec.kill_on_input, deadline_s)
+                missed = "the turn finished without one" if outcome == "completed" else "no matching tool_use block in time"
+            else:
+                outcome = wait_for_tool_call(dsn, turn_id, spec.kill_on, deadline_s)
+                missed = "the turn finished without one" if outcome == "completed" else "no tool_calls row in time"
+            checks.append((f"kill: the turn reached its first {spec.target} call", outcome == "seen", missed))
+            if outcome != "seen":
+                # U23: a miss leaves the turn running billed until its own end (a probe turn
+                # under the Stop hook can run an hour); Stop it.
+                interrupt(client, base, session_id)
+                return checks, figures
+            if spec.kill_after_s > 0:
+                time.sleep(spec.kill_after_s)
+            sdk_before = one(dsn, "SELECT sdk_session_id FROM sessions WHERE session_id = %s", (session_id,))
+            entries_at_kill = one(dsn, "SELECT count(*) FROM session_entries WHERE session_id = %s", (sdk_before or "",))
+            marks = take_marks(dsn, session_id, turn_id, sdk_before, project_id)
+            grant_before = one(dsn, GRANT_START_SQL, (project_id,)) if spec.expect_grant_refresh else None
+            grant_refreshed: bool | None = None
+            t_kill = time.monotonic()
+            if spec.kill_signal == "term":
+                docker("restart", "-t", "30", spec.container)  # SIGTERM, then SIGKILL after 30 s (the compose stop grace)
+            else:
+                docker("kill", spec.container)  # counts as a manual stop: unless-stopped will not restart it
+                if spec.expect_grant_refresh:
+                    # No attempt is live now, so the web tier's loop may refresh -- and revoke the
+                    # token the killed attempt bore. The redelivery must bear the new one.
+                    grant_refreshed = wait_grant_refresh(dsn, project_id, grant_before)
+                    figures["grant_refreshed"] = grant_refreshed
+                docker("start", spec.container)
+            figures.update({"sdk_session_id": sdk_before, "entries_at_kill": entries_at_kill, "kill_on": spec.target,
+                            "kill_after_s": spec.kill_after_s, "kill_signal": spec.kill_signal})
+            try:
+                _seq, _wall = wait_turn_done(client, base, session_id, turn_id, deadline_s)
+            except Exception as exc:  # noqa: BLE001
+                checks.append(("kill: the redelivered turn reached turn_done", False, f"{type(exc).__name__}: {exc}"))
+                interrupt(client, base, session_id)
+                print(render_evidence(gather_evidence(dsn, session_id, turn_id, sdk_before, project_id, marks)))
+                return checks, figures
+        except BaseException:
+            interrupt(client, base, session_id)
+            raise
         figures["wall_after_kill_s"] = round(time.monotonic() - t_kill, 1)
         checks.append(("kill: the redelivered turn reached turn_done", True, ""))
         row = db(dsn, "SELECT receive_count, completed_at, outcome, cost_usd FROM turns WHERE turn_id = %s", (turn_id,))

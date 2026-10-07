@@ -35,7 +35,7 @@ The bridge between planning (research-plan) and analysis (record-extraction).
 
 | Condition | Action |
 |-----------|--------|
-| User names a non-FamilySearch site (Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, or any other commercial site) | `Skill("search-external-sites")` — stop |
+| User names a non-FamilySearch site (Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, or any other commercial site) | Spawn `@plugin:search-external-sites` — stop |
 | User asks what to search, which records to check, whether research is complete, how to find someone, or what to do next (any strategy question rather than executing an already-planned search) | `Skill("research-plan")` — stop |
 | User wants to analyze, extract from, or interpret a record already in hand | `Skill("record-extraction")` — stop |
 
@@ -67,7 +67,7 @@ GPS Element 1 (Reasonably Exhaustive Research) — execution layer:
 | `newspaper`, or any witness/FAN mention search | — | **Not this skill's job — report and stop.** Say full-text is needed and why, then hand back. Applies when: searching obituaries/marriage announcements, searching for a person as witness/neighbor/heir/surety/appraiser, pre-1850 US research with thin indexed coverage, Latin American notarial records, or narrative paragraph records |
 | Parish registers where the target is **unindexed** — an emigrant's origin, a compound-surname parentage, any baptism/marriage/burial reachable only by transcript text | — | **Not this skill's job — report and stop.** When indexed `record_search` on the surname has returned only noise (the person is not name-indexed), the answer is usually in the AI-transcribed page text — reachable by a full-text co-occurrence search on the surnames, not by more indexed queries |
 | `probate`, `court`, `land` (and other county-court series) in a **browse-only / barely-indexed** collection (low `recordSearchablePercent`) | `record_search` **then** — | Try `record_search` first. **If it returns nil/near-nil AND the locality survey said this collection covers the place+period, do NOT log negative as absence — the record is un-indexed, not absent.** Handle it per Step 8 item 5, then hand back. This is also the pre-1911-death path: no death certificate exists, so a county estate administration brackets the death |
-| `cemetery` | `record_search` | FamilySearch indexes some cemetery records; also consider search-external-sites for FindAGrave |
+| `cemetery` | `record_search` | FamilySearch indexes some cemetery records; also consider `@plugin:search-external-sites` for FindAGrave |
 
 Additional tools: `rank_search_matches` (the primary triage tool — host-side match-ranking of a staged result set against the subject; folds in match scoring **and** the attachment check); `same_person` / `source_attachments` (fallback for a thin/unresolvable subject, or per-record checks).
 
@@ -670,12 +670,12 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
    ❌ WRONG: "Log_001 found Patrick Flynn, so the current nil with the Flinn variant is not meaningful."
    ✅ CORRECT: "Log_001 found Patrick under 'Flynn'. The nil under 'Flinn' documents that FamilySearch does not alias Flynn→Flinn for this record — both findings stand as independent evidence."
 6. Check for fallback plan items (`fallback_for`). If none and the question remains open, suggest research-plan for re-planning.
-7. **Escalate to external sites — the final step after FamilySearch exhaustion.** FamilySearch's index-based search has no phonetic or partial-match fallback: once the indexer mis-transcribes a name (e.g. "Quass" indexed as "Ovass"), no FamilySearch variant will ever surface that record, while other sites *do* fuzzy-match (Ancestry's partial/phonetic `name_x=ps_ps`). When an **important** plan item has returned nil across 3+ FamilySearch variants and the question is still open, invoke `Skill("search-external-sites")` with the same person attributes to generate Ancestry (and, where the researcher subscribes, MyHeritage/FindMyPast) search URLs. **Do this immediately — do not ask the user first and do not wait until step 9.** This is a tool call you make in this turn, not an option you narrate for approval.
+7. **Escalate to external sites — the final step after FamilySearch exhaustion.** FamilySearch's index-based search has no phonetic or partial-match fallback: once the indexer mis-transcribes a name (e.g. "Quass" indexed as "Ovass"), no FamilySearch variant will ever surface that record, while other sites *do* fuzzy-match (Ancestry's partial/phonetic `name_x=ps_ps`). When an **important** plan item has returned nil across 3+ FamilySearch variants and the question is still open, spawn `@plugin:search-external-sites` with the same person attributes, `userPresent` (`no` only when research delegated this search as part of an autonomous run, otherwise `yes`), and the plan item — never a value you expect it to find — to generate Ancestry (and, where the researcher subscribes, MyHeritage/FindMyPast) search URLs. **Do this immediately — do not ask the user first and do not wait until step 9.** This is a tool call you make in this turn, not an option you narrate for approval.
 
    **No plan item → no escalation**, however many variants came back nil; an ad-hoc search ends when you log it (Step 1).
 
-   ❌ WRONG: Ending your response with "FamilySearch is exhausted — would you like me to check Ancestry?" without having called the skill. Offering the escalation in prose is not escalating.
-   ✅ CORRECT: Call `Skill("search-external-sites")` in this same turn, before writing your summary, and present the URLs it returns as part of your results.
+   ❌ WRONG: Ending your response with "FamilySearch is exhausted — would you like me to check Ancestry?" without having spawned the agent. Offering the escalation in prose is not escalating.
+   ✅ CORRECT: Spawn `@plugin:search-external-sites` in this same turn, before writing your summary, and present the URLs it returns as part of your results.
 
    In the nil log entry's `notes`, record that FamilySearch variants were exhausted and external sites should be checked. Do not treat the plan item as resolved on the FamilySearch nil alone — leave its status `in_progress` until the external search has been checked. Skip this only for low-value items, or when a fallback plan item already targets an external site.
 
@@ -698,7 +698,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 
 ## Searching multiple repositories
 
-Plan items targeting Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers.com go to search-external-sites. If the user says "search all repositories," execute the FamilySearch items then suggest: "The FamilySearch searches are complete. The plan also includes searches on [Ancestry/etc.] — would you like me to generate search URLs for those?" (triggering search-external-sites).
+Plan items targeting Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers.com go to `@plugin:search-external-sites`. If the user says "search all repositories," execute the FamilySearch items then suggest: "The FamilySearch searches are complete. The plan also includes searches on [Ancestry/etc.] — would you like me to generate search URLs for those?" (triggering search-external-sites).
 
 ## Important rules
 

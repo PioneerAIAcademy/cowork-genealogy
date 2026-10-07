@@ -1300,10 +1300,8 @@ def _t(test_id, outcomes, *, expected="pass"):
     }
 
 
-def _rule6(tests, closed=None, markers=None):
-    return check_runlogs.rule6_outcomes(
-        "s", {"tests": tests}, "v1.json", closed, markers
-    )
+def _rule6(tests):
+    return check_runlogs.rule6_outcomes("s", {"tests": tests}, "v1.json")
 
 
 def test_rule6_blocks_a_fail(capsys):
@@ -1332,27 +1330,15 @@ def test_rule6_uses_the_modal_aggregate_not_any_run(capsys):
     assert _rule6([_t("ut_s_1", ["pass", "fail", "pass"])]) == 0
 
 
-def test_rule6_suppressed_fail_does_not_block(capsys):
-    assert _rule6([_t("ut_s_1", ["fail"], expected="xfail")]) == 0
+def test_rule6_an_xfail_marker_no_longer_suppresses_a_fail(capsys):
+    """Lead, 2026-10-06: "We no longer allow xfail." A marked fail is red."""
+    assert _rule6([_t("ut_s_1", ["fail"], expected="xfail")]) == 1
+    assert "may not carry a red" in capsys.readouterr().out
 
 
-def test_rule6_suppressed_abort_blocks(capsys):
-    """A marker declares a known FAILURE; an abort is an ungraded run."""
-    assert _rule6([_t("ut_s_1", ["aborted"], expected="xfail")]) == 1
-    assert "but ABORTED" in capsys.readouterr().out
-
-
-def test_rule6_suppressed_pass_warns_but_does_not_block(capsys):
+def test_rule6_a_marked_test_that_passes_is_clean(capsys):
     assert _rule6([_t("ut_s_1", ["pass"], expected="xfail")]) == 0
-    assert "but PASSED" in capsys.readouterr().out
-
-
-def test_rule6_names_a_closed_owner_on_a_stale_marker(capsys):
-    """A marker whose removal condition cites a closed issue can never be met.
-    Three of the five live markers are in that state."""
-    assert _rule6([_t("ut_s_1", ["pass"], expected="xfail")],
-                  closed={2173}, markers={"ut_s_1": 2173}) == 0
-    assert "issue #2173, which is CLOSED" in capsys.readouterr().out
+    assert capsys.readouterr().out == ""
 
 
 def test_rule6_a_test_with_no_runs_blocks(capsys):
@@ -1383,11 +1369,6 @@ def test_rule6_accepts_every_value_the_schema_allows(capsys):
     """The other direction — the guard must not reject a legitimate enum member."""
     for outcome in ("pass", "partial"):
         assert _rule6([_t(f"ut_s_{outcome}", [outcome])]) == 0
-
-
-def test_rule6_an_all_suppressed_log_is_allowed(capsys):
-    assert _rule6([_t("ut_s_1", ["fail"], expected="xfail"),
-                   _t("ut_s_2", ["fail"], expected="xfail")]) == 0
 
 
 def test_rule6_an_empty_tests_array_is_allowed():
@@ -1443,37 +1424,53 @@ def test_rule9_skips_scratch_and_annotation_files(tmp_path, capsys):
 # --- marker owners, read from the committed test corpus --------------------------
 
 
-def test_marker_owners_reads_the_issue_out_of_an_xfail_reason(tmp_path):
-    d = tmp_path / "some-skill"
-    d.mkdir()
-    (d / "t.json").write_text(json.dumps({"test": {
-        "id": "ut_x_1", "expected_outcome": "xfail",
-        "xfail_reason": "Remove this marker once #2173 lands.",
-    }}), encoding="utf-8")
-    assert check_runlogs.marker_owners(tmp_path) == {"ut_x_1": 2173}
+def _write_test(dir_, name, test):
+    dir_.mkdir(parents=True, exist_ok=True)
+    (dir_ / name).write_text(json.dumps({"test": test}), encoding="utf-8")
 
 
-def test_marker_owners_ignores_unmarked_tests_and_reasonless_markers(tmp_path):
-    d = tmp_path / "some-skill"
-    d.mkdir()
-    (d / "a.json").write_text(json.dumps({"test": {
-        "id": "ut_x_1", "expected_outcome": "pass",
-        "xfail_reason": "mentions #999 but is not a marker"}}), encoding="utf-8")
-    (d / "b.json").write_text(json.dumps({"test": {
-        "id": "ut_x_2", "expected_outcome": "xfail",
-        "xfail_reason": "no issue cited, so nothing to check"}}), encoding="utf-8")
-    assert check_runlogs.marker_owners(tmp_path) == {}
+def test_rule10_blocks_a_touched_skill_that_carries_a_marker(tmp_path, capsys, monkeypatch):
+    monkeypatch.delenv("COSMETIC_SKIP_LABELS", raising=False)
+    _write_test(tmp_path, "a.json", {"id": "ut_x_1", "expected_outcome": "xfail",
+                                     "xfail_reason": "owned by #2030"})
+    _write_test(tmp_path, "b.json", {"id": "ut_x_2"})
+    assert check_runlogs.rule10_no_xfail_markers("x", tmp_path) == 1
+    out = capsys.readouterr().out
+    assert "ut_x_1" in out and "ut_x_2" not in out
 
 
-def test_marker_owners_survives_an_unreadable_file(tmp_path):
-    """It scans the whole corpus, so one bad file must not take the gate down."""
-    d = tmp_path / "some-skill"
-    d.mkdir()
-    (d / "bad.json").write_text("{ not json", encoding="utf-8")
-    (d / "good.json").write_text(json.dumps({"test": {
-        "id": "ut_x_1", "expected_outcome": "xfail",
-        "xfail_reason": "owned by #2030"}}), encoding="utf-8")
-    assert check_runlogs.marker_owners(tmp_path) == {"ut_x_1": 2030}
+def test_rule10_finds_a_marker_in_a_nested_dir(tmp_path, capsys, monkeypatch):
+    monkeypatch.delenv("COSMETIC_SKIP_LABELS", raising=False)
+    _write_test(tmp_path / "sub", "a.json", {"id": "ut_x_1", "expected_outcome": "xfail"})
+    assert check_runlogs.rule10_no_xfail_markers("x", tmp_path) == 1
+
+
+@pytest.mark.parametrize(
+    "test",
+    [{"id": "ut_x_1"}, {"id": "ut_x_1", "expected_outcome": "pass"}],
+    ids=["no-field", "explicit-pass"],
+)
+def test_rule10_accepts_an_unmarked_suite(tmp_path, test, monkeypatch):
+    monkeypatch.delenv("COSMETIC_SKIP_LABELS", raising=False)
+    _write_test(tmp_path, "a.json", test)
+    assert check_runlogs.rule10_no_xfail_markers("x", tmp_path) == 0
+
+
+def test_rule10_accepts_a_missing_suite_dir_and_unreadable_files(tmp_path, monkeypatch):
+    monkeypatch.delenv("COSMETIC_SKIP_LABELS", raising=False)
+    assert check_runlogs.rule10_no_xfail_markers("x", tmp_path / "absent") == 0
+    tmp_path.joinpath("bad.json").write_text("{not json", encoding="utf-8")
+    tmp_path.joinpath("list.json").write_text("[]", encoding="utf-8")
+    assert check_runlogs.rule10_no_xfail_markers("x", tmp_path) == 0
+
+
+def test_rule10_only_warns_under_the_skills_cosmetic_skip_label(tmp_path, capsys, monkeypatch):
+    _write_test(tmp_path, "a.json", {"id": "ut_x_1", "expected_outcome": "xfail"})
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", "eval-cosmetic-skip:x")
+    assert check_runlogs.rule10_no_xfail_markers("x", tmp_path) == 0
+    assert "::warning" in capsys.readouterr().out
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", "eval-cosmetic-skip:other")
+    assert check_runlogs.rule10_no_xfail_markers("x", tmp_path) == 1
 
 
 def _clean_log(test_id="ut_ip_1", outcome="pass"):
@@ -1607,7 +1604,7 @@ def test_rule6_ignores_an_added_ann_json_and_a_scratch_log(tmp_path, monkeypatch
 )
 def test_rule6_blocks_an_outcome_outside_the_schema_enum(runs, capsys):
     entry = {"test_id": "ut_s_1", "expected_outcome": "pass", "runs": runs}
-    assert check_runlogs.rule6_outcomes("s", {"tests": [entry]}, "v1.json", {}) == 1
+    assert check_runlogs.rule6_outcomes("s", {"tests": [entry]}, "v1.json") == 1
     assert "outside the schema's" in capsys.readouterr().out
 
 

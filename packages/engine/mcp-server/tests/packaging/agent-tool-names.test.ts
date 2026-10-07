@@ -689,6 +689,25 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     ],
     denies: [],
   },
+  // Cost- and context-motivated conversion (issue #2120), not a hook route.
+  // The grant is derived from what the folded body actually calls: step 1 reads
+  // research.json directly via Read (not project_context, which returns neither
+  // plans nor log); the narration line reads researcher_profile.narration_guidance
+  // the same way; step 5 reads staged.resultsRef via Read; and wiki_search /
+  // wiki_read are called in the pre-work block of step 3.
+  "search-full-text.md": {
+    tools: [
+      "Read",
+      "fulltext_search",
+      "get_name_variants",
+      "research_append",
+      "research_log_append",
+      "source_attachments",
+      "wiki_read",
+      "wiki_search",
+    ],
+    denies: [],
+  },
   // Cost- and context-motivated conversion (issue #2115), not a hook route.
   // The grant is derived from what the folded body actually CALLS, not from the
   // former skill's `allowed-tools`, which listed `research_append` alone: that
@@ -697,10 +716,44 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // `tools:` is exact-match restrictive, so copying that one-entry list would
   // have spawned an agent that cannot read project state — and, because one
   // entry resolves, the runtime's zero-tools refusal would NOT have fired.
-  // `Read` is required by the narration line, which reads
-  // researcher_profile.narration_guidance out of research.json directly.
+  // `Read` is required for tree.gedcomx.json (persons' dates, places and
+  // sources); the body forbids reading research.json with it.
   "question-selection.md": {
     tools: ["Read", "project_context", "research_append", "research_query"],
+    denies: [],
+  },
+
+  // The folded search-external-sites skill (issue #2802): its seven tools plus
+  // `project_context`, which is how a triage invocation finds the open hand-off
+  // in `awaitingUser`. `Read` opens an uploaded capture. No wiki tools: the
+  // parish page arrives in the delegation as `baseUrl`.
+  "search-external-sites.md": {
+    tools: [
+      "Read",
+      "build_external_search_url",
+      "collections_search",
+      "external_links_search",
+      "place_search",
+      "project_context",
+      "research_append",
+      "research_log_append",
+      "research_query",
+    ],
+    denies: [],
+  },
+
+  // survey-surname (issue #2065) holds three MCP tools and Write. place_search
+  // resolves the state/county. record_search with projectPath stages results.
+  // research_log_append logs each search page. Write saves the markdown table.
+  // No research_append: the log section is written via research_log_append,
+  // which takes no section argument. No Read: builds from inline stubs.
+  "survey-surname.md": {
+    tools: [
+      "Write",
+      "place_search",
+      "record_search",
+      "research_log_append",
+    ],
     denies: [],
   },
 
@@ -746,6 +799,22 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   },
   "search-wikipedia.md": {
     tools: ["Write", "wikipedia_search"],
+    denies: [],
+  },
+
+  // The folded source-evaluation skill (issue #2796) holds the four tools that
+  // skill declared, plus `Read` for the Narration line's read of research.json
+  // and the name match against tree.gedcomx.json. Writes nothing, so no hook
+  // route. A request belonging to conflict-resolution, check-warnings or
+  // record-extraction is handed back by name, so no spawn tool.
+  "source-evaluation.md": {
+    tools: [
+      "Read",
+      "person_read",
+      "record_read",
+      "source_attachments",
+      "person_quality",
+    ],
     denies: [],
   },
 

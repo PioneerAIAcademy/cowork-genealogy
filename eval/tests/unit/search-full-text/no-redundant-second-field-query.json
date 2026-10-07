@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_search_full_text_019",
+    "skill": "search-full-text",
+    "name": "No redundant name-field query after a keywords hit",
+    "type": "positive",
+    "description": "A keywords search for Thomas Flynn returns 1 witness record directly. The skill must log that result without then firing a redundant name-field query for the same target. The nil-ladder runs only on zero results — not on a hit. Closes #2545.",
+    "tags": ["fulltext", "nil-ladder", "anti-redundancy", "keywords-first"]
+  },
+  "input": {
+    "delegation": "Search the full-text index for Thomas Flynn appearing as a witness in Schuylkill County land records from the 1870s.\n\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "fulltext-search-flynn-witnesses",
+    "fulltext-search-flynn-witnesses-by-name",
+    "wiki-read-any",
+    "wiki-search-any"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
+    "The keywords search returns 1 result — Thomas Flynn named as a witness in a Schuylkill County deed (March 1878). Keywords found the record on the first call. The nil-ladder (name-field retry) applies only when keywords returns zero results — not when it already found the target. A skill that fires a follow-up name: field query for the same name after keywords already returned a hit scores FAIL on Query construction — the nil-ladder is for zero-result situations only.",
+    "RESULT TRIAGE: The textDocument (available at staged.resultsRef but stripped from the stub) records 'Thomas Flynn and Patrick Flynn both of Branch Township Schuylkill County as witnesses to the deed.' The stub fields (names, recordPlace, recordDate, highlightTerms) are sufficient to recognise Thomas's witness role and flag Patrick Flynn as a FAN candidate. The skill should not claim to know the role from the transcript if it did not read staged.resultsRef.",
+    "TOOL ARGUMENTS NOTE: The skill may try spelling-variant calls for Flynn — for example +Thomas +Flinn, +Thomas +Fl?n*, +Fl?nn, +Thos +Flynn, name field variants, or other wildcard forms. The fixture set covers the primary searches only. A fixture_not_found result on a structurally correct variant query (valid Lucene operators, sensible field choice, plausible alternate spelling of the target name) is NOT a Tool Arguments failure — score Tool Arguments PASS. The skill's label for the fixture_not_found result does NOT matter. Penalize Tool Arguments only when the call had a true structural defect: wrong field for the intent, invalid operator syntax, or a query unrelated to Thomas Flynn."
+  ]
+}

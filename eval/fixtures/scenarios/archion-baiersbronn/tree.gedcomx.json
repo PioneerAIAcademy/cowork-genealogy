@@ -1,0 +1,25 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "given": "Katharina",
+          "surname": "Seeger"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "about 1843",
+          "place": "Baiersbronn, Württemberg"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": []
+}

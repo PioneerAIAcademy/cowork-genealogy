@@ -3,11 +3,13 @@ patron turn per message through the Claude Agent SDK (plan: D9-10, D11-12, D15).
 
 ``POST /turn`` answers 400 before anything is claimed unless ``turn_id``, ``session_id``
 and ``project_id`` are each a non-empty string; otherwise it claims the turn in Postgres
-(upserts ``sessions``/``turns``; a redelivered ``turn_id`` is granted immediately -- that
-IS the resume path) and then:
+(a redelivered ``turn_id`` is granted immediately -- that IS the resume path) and then:
 
 - a message carrying ``text`` -- the web tier's ``{turn_id, session_id, project_id,
-  text, enqueued_at}`` -- runs the real turn (``run_turn``). A turn whose
+  text, enqueued_at}`` -- runs the real turn (``run_turn``). The claim (U4) stamps the
+  ``turns`` row the web tier wrote before sending, matched on all three ids, and the turn
+  runs that row's ``message``, never the body; no such row answers 400 and writes
+  nothing, so a message forged onto the queue cannot pick whose grant it runs on. A turn whose
   ``turns.completed_at`` is already set answers 200 without running anything: the shim's
   error-path requeue can redeliver a completed turn.
 - otherwise the D3 stub arms, kept so ``make proto-smoke`` still drives every shim
@@ -29,8 +31,8 @@ The real turn: the SDK session id is CHOSEN by the worker at claim time --
 first transcript append can never land under an id no row names -- and passed as
 ``session_id=`` on a fresh session or ``resume=`` when the session store already holds
 entries for it (a mid-turn kill on either path resumes on redelivery); the options from
-``options.py``; ``get_server_info()`` checked for the twenty bare agent names
-(``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 12
+``options.py``; ``get_server_info()`` checked for the twenty-four bare agent names
+(``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 10
 ``genealogy-research:<skill>`` commands (``EXPECTED_SKILLS``, a literal -- never a count
 of the directory the SDK loads from) BEFORE the query bills a token (D15) -- a miss
 is a 500; the CLI's ``system/init`` must arrive and declare the chosen id, or the
@@ -194,6 +196,7 @@ from proto.worker.options import (  # noqa: E402
     HANDOVER_REASON,
     SPEND_CAP_REASON,
     STOP_REASON,
+    STORE_UNAVAILABLE_REASON,
     TERMINAL_BUDGET,
     TERMINAL_DELIVERED,
     TERMINAL_QUEUED,
@@ -268,17 +271,21 @@ EXPECTED_AGENTS = frozenset({
     "question-selection",
     "record-extractor",
     "research-exhaustiveness",
+    "search-external-sites",
     "search-familysearch-wiki",
+    "search-full-text",
     "search-images",
     "search-wikipedia",
+    "source-evaluation",
+    "survey-surname",
     "translation",
     "tree-edit",
     "validate-schema",
 })
 # The other half of the same precondition, a literal for the same reason: a count of
-# the directory the SDK loads the plugin from shrinks with it -- an image shipping 12
-# skills registers 12 and passes. test_proto_worker pins this against the repo.
-EXPECTED_SKILLS = 12
+# the directory the SDK loads the plugin from shrinks with it -- an image shipping 10
+# skills registers 10 and passes. test_proto_worker pins this against the repo.
+EXPECTED_SKILLS = 9
 
 _stdout_lock = threading.Lock()
 
@@ -324,21 +331,11 @@ GRANT_LOCK_LOST_REASON = (
     "This run's FamilySearch sign-in could not be confirmed, so it is stopping here and will "
     "pick up again shortly. Findings already written to the project are kept."
 )
+# U23: a halt reason, never a turn outcome, like GRANT_LOCK_LOST. A halt clause could not
+# reach the store, so Stop, the handover and the spend cap cannot be read: the attempt
+# halts and raises StoreUnavailable before complete(), and the redelivery reads them fresh.
+STORE_UNAVAILABLE = "store_unavailable"
 
-# PR #2870 item 1e: what one SITTING may spend before the worker stops it.
-#
-# Per SESSION, not per run and not per project: a sessions row carries a project_id, so a
-# project spans many sessions and this caps one sitting, never the research. Sized against
-# the corpus -- 155 runs with cost data, median $7.84, p90 $14.75, max $25.24 -- so $35 is
-# about four median runs in one sitting and above the most expensive single run recorded.
-#
-# It exists because continuous work removes the human who used to end a run by not
-# clicking Continue, and nothing replaced them. The nudge cap does not: it is consulted
-# only at a voluntary yield, 31% of runs never yield, and it resets on every attempt.
-#
-# There is deliberately NO in-session grant flow. A session that reaches the bound stops,
-# and the way to continue is a new session on the same project -- which is what users
-# already do by default.
 def _env_float(name: str, default: float) -> float:
     """A float from the environment that cannot crash-loop the container -- the shared
     guard, with this module's structured log as its error reporter. Every one of these is
@@ -350,8 +347,8 @@ def _env_float(name: str, default: float) -> float:
     )
 
 
-# SPEND_CAP_USD and PRICE_PER_MTOK now live in `app.agent.continue_policy`, imported
-# via options.py: the alpha's cap must fire at the same dollar as this one.
+# PR #2870 item 1e's spend cap, SPEND_CAP_USD, and its price table, PRICE_PER_MTOK, live
+# in `app.agent.spend` (imported via options.py), where the sizing and the reasons are.
 
 # PR #2870 item 0a: how many CONSECUTIVE zero-progress redeliveries of one turn the
 # worker will pay for before closing it. Two, per the plan. The counter lives on
@@ -403,6 +400,12 @@ class GrantLockLost(RuntimeError):
     500, and the redelivery takes the lock again."""
 
 
+class StoreUnavailable(RuntimeError):
+    """U23: a halt clause could not reach the store, so the attempt halted rather than run
+    on unchecked. Raised after the halt, before complete(), like GrantLockLost: 500, and the
+    redelivery reads Stop, the spend cap and the held messages fresh."""
+
+
 class TranscriptLost(RuntimeError):
     """A model turn appended no transcript entries (U10 D6). Raised only AFTER the turn
     is closed ``transcript_lost``, so serve_real_turn answers 500 and the redelivery finds
@@ -429,7 +432,7 @@ SQSD_RETENTION_PERIOD_S = env_int("SQSD_RETENTION_PERIOD_S", 0)
 SWEEP_INTERVAL_S = env_int("SWEEP_INTERVAL_S", 300)
 SHUTDOWN_GRACE_S = _env_float("SHUTDOWN_GRACE_S", 20.0)
 # The deferred last-receive releases run after the grace, inside their own budget: a
-# release starts only if its connect and its SendMessage, each capped below, can finish
+# release starts only if its connect, queue-lock wait and SendMessage, each capped below, can finish
 # before ``started + SHUTDOWN_GRACE_S + RELEASE_BUDGET_S``. That sum is what compose's
 # worker ``stop_grace_period`` must cover (test_proto_config pins it). The SQS
 # credentials are resolved before the claim, inside the budget: they are pre-warmed at
@@ -440,6 +443,8 @@ RELEASE_BUDGET_S = 6.0
 RELEASE_CONNECT_TIMEOUT_S = 2
 RELEASE_CREDENTIALS_TIMEOUT_S = 0.5
 RELEASE_SQS_TIMEOUT_S = 3.0
+# The queue-lock wait, counted like the two above (its holders run a few statements).
+RELEASE_LOCK_TIMEOUT_S = 0.25
 # The fast sweep path waits this long past the last receive's visibility, so sqsd has
 # certainly given up on the message before the worker closes its turn.
 SWEEP_VISIBILITY_MARGIN_S = 60
@@ -461,15 +466,64 @@ GRANT_CONN_KWARGS: dict[str, Any] = {
                + grants.GRANT_KEEPALIVE_OPTIONS,
     "keepalives": 1, "keepalives_idle": 60, "keepalives_interval": 10, "keepalives_count": 6,
 }
+# U23: every connect the worker makes without its own timeout (pg_connect's default).
+PG_CONNECT_TIMEOUT_S = 10
+# U23: the attempt's main connection, which every halt clause reads. The keepalives and
+# tcp_user_timeout turn a vanished host or a blackholed network into an OperationalError
+# within ~30 s of a write, so halt() fails closed; a 2-3 s blip does not end the run. A
+# frozen server that still ACKs is not bounded here (U23's outage_pause measures it).
+# run_turn adds application_name=turn:<turn_id>, the backend an outage drill terminates.
+TURN_CONN_KWARGS: dict[str, Any] = {
+    "autocommit": True, "connect_timeout": PG_CONNECT_TIMEOUT_S,
+    "keepalives": 1, "keepalives_idle": 60, "keepalives_interval": 10, "keepalives_count": 6,
+    "tcp_user_timeout": 30000,
+}
 
 
 # -- rows ----------------------------------------------------------------------
 
 
-def claim(conn: psycopg.Connection, turn: dict, receive_count: int) -> None:
-    """Record the claim: sessions/turns upsert; a redelivery just bumps receive_count.
+# U4: a real turn's row is the web tier's, written before its message was sent, so the claim
+# only stamps it -- and only when the message names that row's session and that session's
+# project. The fields are the upsert's below, minus the insert.
+CLAIM_TURN_SQL = (
+    "UPDATE turns SET claimed_at = now(), receive_count = %s, "
+    "entries_seq_before = COALESCE(turns.entries_seq_before, "
+    "(SELECT COALESCE(max(seq), 0) FROM session_entries)), "
+    "outcome = CASE WHEN turns.outcome = %s AND turns.completed_at IS NULL THEN NULL "
+    "ELSE turns.outcome END "
+    "FROM sessions WHERE turns.turn_id = %s AND turns.session_id = %s AND turns.project_id = %s "
+    "AND sessions.session_id = turns.session_id AND sessions.project_id = turns.project_id "
+    "RETURNING turns.message"
+)
+UNKNOWN_TURN_ERROR = "no turn row matches this turn_id, session_id and project_id"
+
+
+def claim(conn: psycopg.Connection, turn: dict, receive_count: int) -> dict | None:
+    """Record the claim and return the message to run, or None to refuse the delivery.
+
+    A real turn (U4) claims only the row the web tier wrote, matched on turn, session and
+    the session's project, and returns that row's ``message`` -- never the queue body,
+    which anyone with ``sqs:SendMessage`` on the queue can write and whose ``project_id``
+    would pick the grant the turn runs on. No matching row is None, and nothing is written.
+    A stub turn, which the dev tooling enqueues with no row, upserts ``sessions``/``turns``
+    from the body and returns it -- only with ``DEV_PATHS``; without, it claims as a real
+    turn does. Either way a redelivery just bumps receive_count.
     ``entries_seq_before`` -- the ``session_entries`` high-water mark -- is taken on the
-    FIRST claim only, so the token sum in ``complete`` spans every attempt of the turn."""
+    FIRST claim only, so the token sum in ``complete`` spans every attempt of the turn.
+
+    U23 D10: an open row still marked held is running now -- its message reached a worker
+    after a put-back whose send had in fact landed -- so the claim clears the mark (a
+    put-back that comes AFTER this claim matches nothing: ``hold_queued_turn``). Left
+    held, TURN_ACTIVE_SQL would not see the running turn and either tier would start a
+    second one beside it, or claim and enqueue this one again."""
+    if is_real_turn(turn["message"]) or not dev_paths(os.environ):
+        with conn.cursor() as cur:
+            cur.execute(CLAIM_TURN_SQL, (receive_count, QUEUED_OUTCOME, turn["turn_id"],
+                                         turn["session_id"], turn["project_id"]))
+            row = cur.fetchone()
+        conn.commit()
+        return row[0] if row else None
     with conn.cursor() as cur:
         cur.execute(
             "INSERT INTO sessions (session_id, project_id, created_at) VALUES (%s, %s, now()) "
@@ -483,7 +537,9 @@ def claim(conn: psycopg.Connection, turn: dict, receive_count: int) -> None:
             "(SELECT COALESCE(max(seq), 0) FROM session_entries)) "
             "ON CONFLICT (turn_id) DO UPDATE "
             "SET claimed_at = now(), receive_count = EXCLUDED.receive_count, "
-            "entries_seq_before = COALESCE(turns.entries_seq_before, EXCLUDED.entries_seq_before)",
+            "entries_seq_before = COALESCE(turns.entries_seq_before, EXCLUDED.entries_seq_before), "
+            "outcome = CASE WHEN turns.outcome = %s AND turns.completed_at IS NULL THEN NULL "
+            "ELSE turns.outcome END",
             (
                 turn["turn_id"],
                 turn["session_id"],
@@ -491,9 +547,19 @@ def claim(conn: psycopg.Connection, turn: dict, receive_count: int) -> None:
                 Jsonb(turn["message"]),
                 turn["message"].get("enqueued_at"),
                 receive_count,
+                QUEUED_OUTCOME,
             ),
         )
     conn.commit()
+    return turn["message"]
+
+
+def refuse_unknown_turn(turn: dict, receive_count: int) -> tuple[int, dict]:
+    """``claim`` found no row for this message: 400, so it is never run and, after sqsd's
+    retries, lands in the DLQ. The body's ids are logged as sent -- they are the evidence."""
+    log(ev="turn", turn_id=turn["turn_id"], session_id=turn["session_id"], project_id=turn["project_id"],
+        receive_count=receive_count, status=400, error=UNKNOWN_TURN_ERROR)
+    return 400, {"ok": False, "turn_id": turn["turn_id"], "error": UNKNOWN_TURN_ERROR}
 
 
 def turn_completed(conn: psycopg.Connection, turn_id: str) -> bool:
@@ -735,23 +801,66 @@ def pending_user_message(conn: psycopg.Connection, session_id: str) -> bool:
     return bool(row and row[0])
 
 
+def bound_before_cli(
+    conn: psycopg.Connection, session_id: str, sdk_session_id: str, *, turn_id: str,
+) -> tuple[str, dict[str, Any]] | None:
+    """U23: a bound the turn has reached before any CLI exists, as ``(outcome, detail)`` --
+    the patron's Stop, then the spend cap, in halt()'s order -- else None. The store's own
+    errors raise (500, nothing billed); any other is logged and that check skipped, as in
+    halt(), which checks again at the first tool call."""
+
+    def stop() -> tuple[str, dict[str, Any]] | None:
+        return (TERMINAL_STOPPED, {}) if stop_requested(conn, session_id) else None
+
+    def spend() -> tuple[str, dict[str, Any]] | None:
+        if SPEND_CAP_USD <= 0:
+            return None
+        spent = session_spend_usd(conn, sdk_session_id)
+        if spent < SPEND_CAP_USD:
+            return None
+        return TERMINAL_BUDGET, {"limit": "spend", "spent_usd": round(spent, 4)}
+
+    for clause, check in (("stop", stop), ("spend", spend)):
+        try:
+            bound = check()
+        except (psycopg.OperationalError, psycopg.InterfaceError):
+            raise
+        except Exception as exc:  # noqa: BLE001 - a bug here must not refuse every turn
+            log(ev="bound_check_failed", turn_id=turn_id, clause=clause, error=f"{type(exc).__name__}: {exc}")
+            continue
+        if bound is not None:
+            return bound
+    return None
+
+
 # Releasing a held message IS enqueuing the session's next message, which is the exact
 # condition 006_stop_and_queue.sql names for clearing the flag. Spelled the same as the
 # web tier's CLEAR_STOP_SQL; `test_the_two_clear_stop_statements_match` pins them.
 CLEAR_STOP_SQL = "UPDATE sessions SET stop_requested_at = NULL WHERE session_id = %s"
 
 
-def take_queued_turn(conn: psycopg.Connection, session_id: str) -> dict[str, Any] | None:
-    """Claim the session's oldest held message and hand back its queue body (1b).
+def take_queued_turn(
+    conn: psycopg.Connection, session_id: str, *, lock_timeout: float = grants.QUEUE_LOCK_TIMEOUT_S,
+) -> tuple[dict[str, Any], Any] | None:
+    """Claim the session's oldest held message and hand back its queue body and the
+    ``claimed_at`` this claim stamped, which a put-back must match (1b).
 
     The UPDATE that clears the outcome IS the claim, in one statement, so two workers
     finishing turns on one session cannot both enqueue the same message. Returns None when
-    nothing is held.
+    nothing is held, or when a turn is running.
+
+    U23 D8: the running-turn check and the claim sit in one transaction under the
+    session's queue lock (``grants.QUEUE_LOCK_NS``), which the web tier's
+    ``admit_message`` takes too. Without it, a message admitted between this check and
+    the claim went straight out while this claim released another: two turns on one
+    session. The transaction commits on exit -- before the caller's send, so the claim is
+    visible before the message it names can reach a worker -- and so drops the lock.
+    The lock wait is bounded by ``lock_timeout``; past it the claim raises.
 
     AND it clears the Stop flag, because claiming IS enqueuing. 006_stop_and_queue.sql
     states the invariant -- "Cleared when the session's next message is enqueued, which is
     what makes 'a later message resumes it' true; a flag that outlived the turn would
-    wedge the session" -- and the web tier's `begin_turn` deliberately does NOT clear it
+    wedge the session" -- and the web tier's `_insert_turn` deliberately does NOT clear it
     for a HELD message (clearing it there would cancel a Stop the patron pressed while the
     turn was still winding down). That left the held message as the one path to a turn
     with nobody to clear the flag: patron types mid-turn, presses Stop, the turn halts,
@@ -766,29 +875,44 @@ def take_queued_turn(conn: psycopg.Connection, session_id: str) -> dict[str, Any
     it: the sweep's retention backstop reads ``COALESCE(claimed_at, enqueued_at)``, and a
     message held for days would otherwise look expired the moment it was released and be
     closed ``retries_exhausted`` before it ever ran. The worker's claim overwrites it."""
-    with conn.cursor() as cur:
+    # Ends any transaction the caller's statements opened on a non-autocommit connection,
+    # or the block below is a savepoint that neither commits nor drops the lock.
+    conn.commit()
+    with conn.transaction(), conn.cursor() as cur:
+        cur.execute(grants.QUEUE_LOCK_TIMEOUT_SQL, (grants.queue_lock_timeout(lock_timeout),))
+        cur.execute(grants.QUEUE_LOCK_SQL, (grants.QUEUE_LOCK_NS, session_id))
+        cur.execute(TURN_ACTIVE_SQL, (session_id, QUEUED_OUTCOME))
+        active = cur.fetchone()
+        if active and active[0]:
+            return None
         cur.execute(
             "UPDATE turns SET outcome = NULL, claimed_at = now() WHERE turn_id = ("
             "  SELECT turn_id FROM turns WHERE session_id = %s AND outcome = %s "
             "  AND completed_at IS NULL ORDER BY enqueued_at LIMIT 1 FOR UPDATE SKIP LOCKED"
-            ") RETURNING message",
+            ") RETURNING message, claimed_at",
             (session_id, QUEUED_OUTCOME),
         )
         row = cur.fetchone()
         body = row[0] if row else None
         if body is not None:
             cur.execute(CLEAR_STOP_SQL, (session_id,))
-    return body if isinstance(body, dict) else None
+    return (body, row[1]) if isinstance(body, dict) else None
 
 
-def hold_queued_turn(conn: psycopg.Connection, turn_id: str) -> None:
+def hold_queued_turn(conn: psycopg.Connection, turn_id: str, claimed_at: Any) -> bool:
     """Put a claimed message back (1b): the enqueue failed, and losing the patron's words
-    is worse than releasing it late. The next turn's completion tries again."""
+    is worse than releasing it late. The next turn's completion tries again.
+
+    Only while the row still carries THIS release's ``claimed_at`` (U23): a send that
+    timed out after it landed is delivered within a second, and the worker that claims
+    it stamps a later ``claimed_at``; marking that running turn held again would hide it
+    from TURN_ACTIVE_SQL. False when the row had moved on, so the message was sent."""
     with conn.cursor() as cur:
         cur.execute(
-            "UPDATE turns SET outcome = %s WHERE turn_id = %s AND completed_at IS NULL",
-            (QUEUED_OUTCOME, turn_id),
+            "UPDATE turns SET outcome = %s WHERE turn_id = %s AND completed_at IS NULL AND claimed_at = %s",
+            (QUEUED_OUTCOME, turn_id, claimed_at),
         )
+        return cur.rowcount == 1
 
 
 def nudges_so_far(conn: psycopg.Connection, turn_id: str) -> int:
@@ -821,18 +945,23 @@ def record_nudge(conn: psycopg.Connection, turn_id: str, cumulative: int) -> Non
 
 def release_queued_turn(
     conn: psycopg.Connection, session_id: str, *, sqs_timeout: float = 30,
-    credentials_timeout: float | None = None,
+    credentials_timeout: float | None = None, lock_timeout: float = grants.QUEUE_LOCK_TIMEOUT_S,
 ) -> str | None:
     """Enqueue the session's held message now that the turn holding it has ended (1b).
     Returns the SQS MessageId, or None when nothing was held, no queue is configured, or
-    there are no SQS credentials to sign with. ``sqs_timeout`` bounds the SendMessage and
-    ``credentials_timeout`` resolving the credentials (the shutdown release passes both).
+    there are no SQS credentials to sign with. ``sqs_timeout`` bounds the SendMessage,
+    ``credentials_timeout`` resolving the credentials and ``lock_timeout`` the queue-lock
+    wait (the shutdown release passes all three).
 
-    The credentials are resolved BEFORE the claim, so a worker that cannot sign leaves the
-    message held rather than claiming it and putting it back.
+    The credentials are resolved BEFORE the claim (and outside its lock), so a worker that
+    cannot sign leaves the message held rather than claiming it and putting it back.
 
-    Never raises: a turn that did its work must not be reported as failed because the
-    handover failed. A failed send puts the message back."""
+    Raises only from the claim, when nothing was taken. Past it, never: a turn that did
+    its work must not be reported as failed because the handover failed. A failed send
+    puts the message back; a failed put-back is ``ev=queued_release_lost`` (the row stays
+    claimed and unsent until the sweep's retention backstop), and one a worker's claim got
+    to first is ``ev=queued_release_raced`` (the send had landed). A send logs ``ev=released``
+    with the released turn and its MessageId, whichever path released it."""
     if not QUEUE_URL:
         return None
     try:
@@ -844,12 +973,11 @@ def release_queued_turn(
     if not ready:
         log(ev="sqs_credentials_unavailable", session_id=session_id, reason=reason)
         return None
-    body = take_queued_turn(conn, session_id)
-    # Committed before the send (a no-op on an autocommit connection), so the claim is
-    # visible before the message it names can reach a worker.
-    conn.commit()
-    if body is None:
+    taken = take_queued_turn(conn, session_id, lock_timeout=lock_timeout)
+    if taken is None:
         return None
+    body, claimed_at = taken
+    turn_id = str(body.get("turn_id") or "")
     try:
         parsed = urlparse(QUEUE_URL)
         doc = enqueue.sqs_call(
@@ -858,13 +986,22 @@ def release_queued_turn(
             {"QueueUrl": QUEUE_URL, "MessageBody": json.dumps(body)},
             timeout=sqs_timeout,
         )
-        return enqueue.xml_text(doc, "MessageId")
+        message_id = enqueue.xml_text(doc, "MessageId")
     except Exception as exc:  # noqa: BLE001 - the patron's words outlive one failed send
-        log(ev="queued_release_failed", session_id=session_id, turn_id=body.get("turn_id"),
+        log(ev="queued_release_failed", session_id=session_id, turn_id=turn_id,
             error=f"{type(exc).__name__}: {exc}")
-        hold_queued_turn(conn, str(body.get("turn_id") or ""))
-        conn.commit()
+        try:
+            with conn.transaction():
+                held_again = hold_queued_turn(conn, turn_id, claimed_at)
+        except Exception as put_back:  # noqa: BLE001 - never raises past the claim
+            log(ev="queued_release_lost", session_id=session_id, turn_id=turn_id,
+                error=f"{type(put_back).__name__}: {put_back}")
+            return None
+        if not held_again:
+            log(ev="queued_release_raced", session_id=session_id, turn_id=turn_id)
         return None
+    log(ev="released", session_id=session_id, turn_id=turn_id, message_id=message_id)
+    return message_id
 
 
 # A turn is RUNNING on the session: open and not a held message. Spelled the same as the
@@ -877,19 +1014,21 @@ TURN_ACTIVE_SQL = (
 
 def release_next_held(
     conn: psycopg.Connection, session_id: str, *, sqs_timeout: float = 30,
-    credentials_timeout: float | None = None,
+    credentials_timeout: float | None = None, lock_timeout: float = grants.QUEUE_LOCK_TIMEOUT_S,
 ) -> str | None:
     """The one way the worker releases a held message (U5 D3): nothing while the session
     has a running turn, else ``release_queued_turn``. The guard is what lets the
     ``already_completed`` redelivery release a stranded held row without enqueuing a
-    sibling beside a held turn that was already released and is running."""
+    sibling beside a held turn that was already released and is running. This read only
+    spares resolving credentials beside a running turn; ``take_queued_turn`` asks again
+    under the queue lock, and that answer is the one acted on (U23 D8)."""
     with conn.cursor() as cur:
         cur.execute(TURN_ACTIVE_SQL, (session_id, QUEUED_OUTCOME))
         row = cur.fetchone()
     if row and row[0]:
         return None
     return release_queued_turn(conn, session_id, sqs_timeout=sqs_timeout,
-                               credentials_timeout=credentials_timeout)
+                               credentials_timeout=credentials_timeout, lock_timeout=lock_timeout)
 
 
 def session_sdk_id(conn: psycopg.Connection, session_id: str) -> str | None:
@@ -928,14 +1067,16 @@ def close_turn(
     sdk_session_id: str | None,
     release: bool = True,
     reason: str | None = None,
+    detail: dict[str, Any] | None = None,
 ) -> int | None:
     """Close a turn the worker is giving up on (U5 D3): ``complete(only_if_open=True)``
-    with ``detail.cause`` (and ``detail.reason`` when given: U3's refusal code), then --
+    with ``detail.cause`` (and ``detail.reason`` when given: U3's refusal code; ``detail``'s
+    own keys beside them: U23's ``limit`` and ``spent_usd``), then --
     only if THIS call closed the row -- the session's next held message. ``release=False``
     leaves the release to the caller, which SIGTERM's close needs: the held turn must not
     start while the old attempt's CLI is still alive. Returns the turn_done seq, or None
     when the row was already closed."""
-    detail = {"cause": cause, **({"reason": reason} if reason is not None else {})}
+    detail = {"cause": cause, **({"reason": reason} if reason is not None else {}), **(detail or {})}
     seq = complete(conn, turn, receive_count, outcome=outcome, detail=detail,
                    sdk_session_id=sdk_session_id, only_if_open=True)
     if seq is None:
@@ -1222,7 +1363,9 @@ def registration_problems(info: Any) -> list[str]:
 
 def pg_connect(*args: Any, **kwargs: Any) -> psycopg.Connection:
     """``psycopg.connect``, looked up per call: the ``connect=`` defaults below bind this,
-    so replacing ``psycopg.connect`` (test_proto_shutdown's harness) reaches every one."""
+    so replacing ``psycopg.connect`` (test_proto_shutdown's harness) reaches every one.
+    ``connect_timeout`` defaults to ``PG_CONNECT_TIMEOUT_S``; a caller's own wins."""
+    kwargs.setdefault("connect_timeout", PG_CONNECT_TIMEOUT_S)
     return psycopg.connect(*args, **kwargs)
 
 
@@ -1590,7 +1733,7 @@ def deferred_sessions() -> list[str]:
 def run_deferred_releases(*, connect=pg_connect, deadline: float | None = None) -> None:
     """Release every deferred session whose attempts have finished; one whose attempt is
     still running stays registered for a later round. A release starts only if its capped
-    connect and send can finish by ``deadline``; past it the session is logged
+    connect, lock wait and send can finish by ``deadline``; past it the session is logged
     ``deferred_release_skipped`` and left held for the web tier's rescue."""
     with _INFLIGHT_LOCK:
         ready = [(sid, turn_id) for sid, (turn_id, waits) in _DEFERRED_RELEASES.items()
@@ -1598,14 +1741,15 @@ def run_deferred_releases(*, connect=pg_connect, deadline: float | None = None) 
         for sid, _ in ready:
             del _DEFERRED_RELEASES[sid]
     for session_id, turn_id in ready:
-        if deadline is not None and (time.monotonic() + RELEASE_CONNECT_TIMEOUT_S
-                                     + RELEASE_CREDENTIALS_TIMEOUT_S + RELEASE_SQS_TIMEOUT_S > deadline):
+        if deadline is not None and (time.monotonic() + RELEASE_CONNECT_TIMEOUT_S + RELEASE_CREDENTIALS_TIMEOUT_S
+                                     + RELEASE_LOCK_TIMEOUT_S + RELEASE_SQS_TIMEOUT_S > deadline):
             log(ev="deferred_release_skipped", session_id=session_id, turn_id=turn_id, reason="deadline")
             continue
         try:
             with connect(PG_DSN, connect_timeout=RELEASE_CONNECT_TIMEOUT_S) as conn:
                 release_next_held(conn, session_id, sqs_timeout=RELEASE_SQS_TIMEOUT_S,
-                                  credentials_timeout=RELEASE_CREDENTIALS_TIMEOUT_S)
+                                  credentials_timeout=RELEASE_CREDENTIALS_TIMEOUT_S,
+                                  lock_timeout=RELEASE_LOCK_TIMEOUT_S)
         except Exception as exc:  # noqa: BLE001 - the web tier's rescue is the fallback
             log(ev="deferred_release_failed", session_id=session_id, turn_id=turn_id,
                 error=f"{type(exc).__name__}: {exc}")
@@ -1871,14 +2015,28 @@ async def _run_turn(
     # The directory the CLI really runs in: on a resumed turn the SDK repoints it to its
     # own mkdtemp, which is where the tool-result spill then lands.
     config_root = {"path": config_dir}
-    conn = psycopg.connect(PG_DSN, autocommit=True)
+    conn = psycopg.connect(PG_DSN, **TURN_CONN_KWARGS, application_name=f"turn:{turn_id}")
     result = None
     held: HeldGrant | NoGrant | None = None
     slot: turn_users.Slot | None = None
     turn_home: str | None = None
     try:
-        # U3: the owner's CURRENT grant, locked for the whole attempt, before anything else
-        # -- no CLI exists yet, so a turn with no usable grant closes here and bills nothing.
+        # U23: a bound already reached closes the turn before the grant and the CLI, so it
+        # bills nothing -- a redelivery after Stop, a message on a session already past the
+        # spend cap, a held message released after either.
+        bound = bound_before_cli(conn, session_id, sdk_session_id, turn_id=turn_id)
+        if bound is not None:
+            outcome, detail = bound
+            seq = close_turn(conn, turn, receive_count, outcome=outcome, cause="before_cli",
+                             detail=detail, sdk_session_id=sdk_session_id, release=False)
+            released = release_next_held(conn, session_id) if seq is not None else None
+            log(ev="bound_before_cli", turn_id=turn_id, session_id=session_id, outcome=outcome,
+                **{k: v for k, v in detail.items() if k == "spent_usd"})
+            return {"seq": seq, "outcome": outcome, "cause": "before_cli", **detail,
+                    "released_turn": released, "resumed": False}
+
+        # U3: the owner's CURRENT grant, locked for the whole attempt, before any CLI -- so
+        # a turn with no usable grant closes here and bills nothing.
         held = await acquire_grant(project_id)
         if isinstance(held, NoGrant):
             seq = close_turn(conn, turn, receive_count, outcome=SIGNIN_REQUIRED_OUTCOME, cause=held.cause,
@@ -1891,23 +2049,38 @@ async def _run_turn(
         # the two mutually exclusive CLI flags carries it.
         resume = sdk_session_id if await store.has_entries(sdk_session_id) else None
 
+        # U23: set once a halt clause finds the store unreachable; from then on halt(),
+        # record() and finish() leave Postgres alone.
+        attempt = {"store_down": False, "progress_reset": False}
+
+        def store_unavailable() -> str:
+            attempt["store_down"] = True
+            terminal["reason"] = STORE_UNAVAILABLE
+            terminal["halted"] = True
+            return STORE_UNAVAILABLE_REASON
+
         def record(row: dict[str, Any]) -> None:
-            insert_tool_call(conn, row)
+            # Counted before the insert (U23), so a failed insert hides the call from
+            # neither the handover and transcript-lost guards nor attempt_did_work.
             counters["tool_calls"] += 1
-            if counters["tool_calls"] == 1 and receive_count > 1:
+            if attempt["store_down"]:
+                return
+            insert_tool_call(conn, row)
+            if receive_count > 1 and not attempt["progress_reset"]:
                 # 0a: this attempt has done work. Clear the zero-progress count HERE
                 # rather than at completion -- an attempt killed at the step ceiling, or
                 # by a crash, a deploy or SIGTERM, after real work never reaches
                 # completion, and the stale count would then terminate a healthy turn
                 # two redeliveries later.
                 reset_zero_progress(conn, turn_id)
+                attempt["progress_reset"] = True
 
         # 1c: the halt predicate, checked before EVERY tool call. The Stop hook fires at
         # a voluntary yield -- a median of once per run -- so a Stop wired to it would
-        # answer after 53 minutes. This one answers in a median of 2.6 s.
-        def halt() -> str | None:
-            # U3: first, because a clause that raises lets the call through and skips every
-            # later one. A lock connection that died (a server idle cut, an admin
+        # answer after 53 minutes. This one answers in a median of 2.6 s. Each clause is
+        # one function in halt_clauses, run in its own try by halt() below.
+        def lock_clause() -> str | None:
+            # U3: first. A lock connection that died (a server idle cut, an admin
             # terminate, a proxy) released the lock while the CLI still bears the token,
             # so the next refresh would revoke it mid-attempt: stop now and redeliver.
             if not held.held_on(conn):
@@ -1915,10 +2088,16 @@ async def _run_turn(
                 terminal["halted"] = True
                 log(ev="grant_lock_lost", turn_id=turn_id, session_id=session_id, user_id=held.user_id)
                 return GRANT_LOCK_LOST_REASON
+            return None
+
+        def stop_clause() -> str | None:
             if stop_requested(conn, session_id):
                 terminal["reason"] = TERMINAL_STOPPED
                 terminal["halted"] = True
                 return STOP_REASON
+            return None
+
+        def handover_clause() -> str | None:
             # 1b: a message the patron typed mid-turn.
             #
             # DEVIATION from the plan, stated here because it is one: the plan wires
@@ -1940,14 +2119,16 @@ async def _run_turn(
                 terminal["halted"] = True
                 log(ev="handover", turn_id=turn_id, session_id=session_id)
                 return HANDOVER_REASON
+            return None
+
+        def transcript_clause() -> str | None:
             # U10 D6: the transcript is not reaching the store (eager flush appends after
             # every frame, and the prompt's own frame is sent before the first model
             # response), so stop now rather than pay for a whole run the post-loop check
             # will close transcript_lost anyway. Keyed on ``append`` (counted on entry,
             # before any I/O), not ``entries_appended`` (counted after the commit): a
             # dropped frame never calls append, a failed one is MirrorError, and a slow
-            # one must not halt a healthy turn. Before the spend clause: a hook that
-            # raises allows the call, so nothing after a raising clause runs.
+            # one must not halt a healthy turn.
             if (counters["tool_calls"] >= TRANSCRIPT_LOST_AFTER_TOOL_CALLS
                     and store.calls["append"] == 0):
                 terminal["reason"] = TRANSCRIPT_LOST_OUTCOME
@@ -1955,6 +2136,9 @@ async def _run_turn(
                 log(ev="transcript_lost_halt", turn_id=turn_id, session_id=session_id,
                     tool_calls=counters["tool_calls"])
                 return TRANSCRIPT_LOST_REASON
+            return None
+
+        def spend_clause() -> str | None:
             # 1e: the spend bound, enforced HERE for the same reason Stop is -- this hook
             # fires every few seconds, where a yield-gated check fires about once a run.
             if SPEND_CAP_USD > 0:
@@ -1969,6 +2153,35 @@ async def _run_turn(
                     return SPEND_CAP_REASON.format(cap=SPEND_CAP_USD)
             return None
 
+        halt_clauses = (("lock", lock_clause), ("stop", stop_clause), ("handover", handover_clause),
+                        ("transcript", transcript_clause), ("spend", spend_clause))
+
+        def halt() -> str | None:
+            """U23: fail closed on a store outage. A clause that cannot reach Postgres
+            (OperationalError, InterfaceError, or a broken connection) halts the attempt
+            STORE_UNAVAILABLE, and every later call halts without asking Postgres. Any other
+            error is logged and the next clause still runs, so one bug cannot skip the spend
+            clause as the Decimal one did (price_usd)."""
+            if attempt["store_down"]:
+                return STORE_UNAVAILABLE_REASON
+            for clause, check in halt_clauses:
+                try:
+                    reason = check()
+                except Exception as exc:  # noqa: BLE001 - classified: down halts, else next clause
+                    down = (isinstance(exc, (psycopg.OperationalError, psycopg.InterfaceError))
+                            or bool(getattr(conn, "broken", False)))
+                    log(ev="halt_check_failed", turn_id=turn_id, session_id=session_id, clause=clause,
+                        error=f"{type(exc).__name__}: {exc}", store_down=down)
+                    if down:
+                        return store_unavailable()
+                    continue
+                if reason is not None:
+                    return reason
+            return None
+
+        def on_halt_failed() -> None:
+            store_unavailable()
+
         def on_delivered() -> None:
             """The agent delivered what a bounded request asked for. The turn ends
             `delivered`, not `completed`: the ask was met while the PROJECT is still
@@ -1980,11 +2193,12 @@ async def _run_turn(
         hook = make_pretool_hook(
             turn_id=turn_id, session_id=session_id, cwd=WORKER_CWD,
             config_root=lambda: config_root["path"], record=record, log=log, blocked=_BLOCKED,
-            halt=halt, on_delivered=on_delivered,
+            halt=halt, on_delivered=on_delivered, on_halt_failed=on_halt_failed,
         )
 
         def finish(tool_use_id: str) -> None:
-            finish_tool_call(conn, turn_id, tool_use_id)
+            if not attempt["store_down"]:
+                finish_tool_call(conn, turn_id, tool_use_id)
 
         posttool = make_posttool_hook(turn_id=turn_id, finish=finish, log=log)
 
@@ -2118,6 +2332,10 @@ async def _run_turn(
             for index, prompt in enumerate(attempt_prompts(text, resume)):
                 await client.query(prompt)
                 result = await receive(require_init=index == 0)
+                # U23: before anything below reads the store -- a re-query, the Stop flag,
+                # the zero-progress count, complete(). 500, as for a lost grant lock.
+                if terminal["reason"] == STORE_UNAVAILABLE:
+                    raise StoreUnavailable(f"the store was unreachable mid-attempt on turn {turn_id}")
                 if not resume_produced_no_turn(result, resume, receive_count):
                     break
                 log(ev="resume_synthetic_result", turn_id=turn_id, session_id=session_id,
@@ -2235,7 +2453,7 @@ async def _run_turn(
     # or a racing close and this one could each release one.
     released = None
     if seq is not None:
-        with psycopg.connect(PG_DSN, autocommit=True) as release_conn:
+        with pg_connect(PG_DSN, autocommit=True) as release_conn:
             released = release_next_held(release_conn, session_id)
 
     summary = {
@@ -2358,7 +2576,10 @@ def serve_after_shutdown(turn: dict, receive_count: int, *, connect) -> tuple[in
         return 503, _shutdown_body(turn_id)
     try:
         with connect(PG_DSN) as conn:
-            claim(conn, turn, receive_count)
+            message = claim(conn, turn, receive_count)
+            if message is None:
+                return refuse_unknown_turn(turn, receive_count)
+            turn = {**turn, "message": message}
             done = turn_completed(conn, turn_id)
             sdk_session_id = None if done else session_sdk_id(conn, turn["session_id"])
     except psycopg.Error as exc:
@@ -2390,7 +2611,10 @@ def serve_real_turn(
         return serve_after_shutdown(turn, receive_count, connect=connect)
     try:
         with connect(PG_DSN) as conn:
-            claim(conn, turn, receive_count)
+            message = claim(conn, turn, receive_count)
+            if message is None:
+                return refuse_unknown_turn(turn, receive_count)
+            turn = {**turn, "message": message}
             done = turn_completed(conn, turn_id)
             sdk_session_id = None if done else choose_sdk_session_id(conn, turn["session_id"], str(uuid.uuid4()))
             if done:
@@ -2478,7 +2702,8 @@ def serve_stub_turn(
         return serve_after_shutdown(turn, receive_count, connect=connect)
     try:
         with connect(PG_DSN) as conn:
-            claim(conn, turn, receive_count)
+            if claim(conn, turn, receive_count) is None:
+                return refuse_unknown_turn(turn, receive_count)
     except psycopg.Error as exc:
         error = f"{type(exc).__name__}: {exc}"
         log(ev="turn", turn_id=turn_id, behaviour=behaviour, receive_count=receive_count, status=500, error=error)
@@ -2798,7 +3023,8 @@ def main() -> None:
         tmpdir=tempfile.gettempdir(), tmpdir_free_mb=tmpdir_free_mb(), hook_python=hook_python,
         fs_token_key=grants.key_mode(os.environ), grant_max_start_age_s=FS_GRANT_MAX_START_AGE_S,
         grant_wait_s=FS_GRANT_WAIT_S, turn_users=pool_names,
-        cli_env_blanked=len(cli_env_blanks(os.environ)), **sqs)
+        cli_env_blanked=len(cli_env_blanks(os.environ)), spend_cap_usd=SPEND_CAP_USD,
+        prices=PRICE_PER_MTOK, **sqs)
     server.serve_forever()
     if _SHUTDOWN_THREAD is not None:
         # A daemon: its second wait, the releases and ev=shutdown run after

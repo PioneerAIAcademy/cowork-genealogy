@@ -20,6 +20,7 @@ import json
 import re
 
 import pytest
+from harness.skill_runner import agent_return_text
 
 from validators_lib import new_log_entries as _new_log_entries
 from validators_lib import (
@@ -445,44 +446,25 @@ def test_no_external_search_or_log_on_routeaway_negative(
     before_state, after_state, tool_calls, test
 ):
     """Tag-gated (no-search-no-write): the search-external-sites no-harm
-    invariant for any negative whose correct answer is to route away.
+    invariant for a delegation the agent must hand back.
 
-    search-external-sites executes a chosen external-site search — it
-    generates a pre-filled URL and logs the step to research.json. A request
-    that belongs to another skill must not cause a search to be EXECUTED or
-    logged. This is the deterministic gate for two grade_on_invariant
-    negatives:
+    The agent executes a chosen external-site search: it builds a pre-filled
+    URL and logs the step to research.json. A request that belongs to another
+    agent or skill (planning, a FamilySearch search, a record already in hand)
+    must not cause a search to be EXECUTED or logged. This is the deterministic
+    gate for the direct hand-back negative `ut_search_external_sites_hbk`.
 
-      - `ut_search_external_sites_011` — a planning question that belongs to
-        research-plan.
-      - `ut_search_external_sites_012` — a single record already in hand,
-        which belongs to record-extraction (issue #1519).
-
-    Both were flaky for the same reason: the decline is correct every run, but
-    its phrasing and length vary, and a longer decline that names the right
-    skill was read by the activation heuristic as substantive output. Under
-    grade_on_invariant the phrasing no longer decides the outcome; only
-    executing or logging a search does. See docs/specs/unit-test-spec.md and
-    the sibling test_search_records.py::test_no_search_or_writes_on_planning_request.
+    It previously gated the two description-routing negatives `_011` and
+    `_012`, deleted when the skill became an agent (issue #2802). On the direct
+    arm there is no router that could legitimately write a log entry of its
+    own, so the strict form applies: any new entry is the agent's.
 
     Fails iff the run:
-      - made an `external_links_search` MCP call (a search was executed), or
-      - appended a new **`external_site`** `log` entry (this skill records
-        every external-site search it runs).
+      - made an `external_links_search` or `build_external_search_url` MCP call
+        (a search was executed), or
+      - appended any new `log` entry.
 
-    **The log check narrows only for 012, via `route-away-writes-own-log`.**
-    011's accepted route is research-plan, which never writes `log` at all, so
-    ANY new entry there means a search skill ran and the strict form is the
-    real gate. 012's accepted route is record-extraction, which holds
-    `research_log_append` and may legitimately write a non-`external_site`
-    entry for the record it was handed — flagging that would fail 012 for
-    routing correctly. Narrowing both would have silently dropped 011's gate
-    (issue #1519), so the loosening is carried
-    by a tag on 012 alone rather than by the shared `no-search-no-write` gate.
-
-    Deliberately does NOT flag other research.json writes: routing to
-    research-plan legitimately writes `plans`/`questions`, and record-extraction
-    legitimately writes `sources`/`assertions`. Both are correct behavior.
+    Deliberately does NOT flag other research.json writes.
     """
     if "no-search-no-write" not in test.get("tags", []):
         pytest.skip("not a no-search-no-write scenario")
@@ -490,28 +472,78 @@ def test_no_external_search_or_log_on_routeaway_negative(
     # 1. No external-site search executed.
     searched = [
         c for c in (tool_calls or [])
-        if c.get("tool", "").split("__")[-1] == "external_links_search"
+        if c.get("tool", "").split("__")[-1] in ("external_links_search", "build_external_search_url")
     ]
     assert not searched, (
-        "a route-away request must not execute an external-site search; got "
-        f"external_links_search call(s) with args: "
-        f"{[c.get('args') for c in searched]}"
+        "a hand-back must not execute an external-site search; got "
+        f"call(s): {[(c.get('tool'), c.get('args')) for c in searched]}"
     )
 
-    # 2. No new search log entry. Which entries count depends on what the
-    #    accepted route is allowed to write, so the narrowing is opt-in per
-    #    test rather than applied to both.
+    # 2. No new log entry.
     new_entries = _new_log_entries(before_state, after_state)
-    if "route-away-writes-own-log" in test.get("tags", []):
-        offending = [e for e in new_entries if e.get("tool") == "external_site"]
-        detail = "external_site search log entry"
-    else:
-        offending = new_entries
-        detail = "search log entry"
-    assert not offending, (
-        f"a route-away request must not append a {detail}; new log ids: "
-        f"{[e.get('id') for e in offending]}"
+    assert not new_entries, (
+        f"a hand-back must not append a log entry; new log ids: "
+        f"{[e.get('id') for e in new_entries]}"
     )
+
+
+def _open_handoffs(research):
+    """`project_context`'s `awaitingUser` rule, read off a persisted research.json:
+    partial + capture_received false, with no LATER non-partial entry on its URL."""
+    log = [e for e in ((research or {}).get("log") or []) if isinstance(e, dict)]
+    out = []
+    for i, e in enumerate(log):
+        ext = e.get("external_site") or {}
+        if e.get("tool") != "external_site" or e.get("outcome") != "partial" or ext.get("capture_received") is not False:
+            continue
+        url = ext.get("url_generated")
+        if any(
+            (later.get("external_site") or {}).get("url_generated") == url and later.get("outcome") != "partial"
+            for later in log[i + 1:] if later.get("tool") == "external_site"
+        ):
+            continue
+        out.append(e)
+    return out
+
+
+def test_triage_closes_its_open_handoff(before_state, after_state, test):
+    """Tag-gated (triage-closes-handoff): a returned capture closes the hand-off
+    it answers. The closing entry must carry the open row's `url_generated`
+    exactly, or `awaitingUser` keeps listing it and the researcher is asked for
+    the same capture again (alpha feedback, the re-raise loop)."""
+    if "triage-closes-handoff" not in test.get("tags", []):
+        pytest.skip("not a triage-closes-handoff scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    opened = _open_handoffs(before)
+    assert opened, "fixture defect: the scenario holds no open hand-off to close"
+    still_open = {e.get("id") for e in _open_handoffs(after)} & {e.get("id") for e in opened}
+    assert not still_open, (
+        f"hand-off(s) {sorted(still_open)} are still open after the triage: no later "
+        f"non-partial external_site entry carries their url_generated"
+    )
+    closing = [
+        e for e in _new_log_entries(before_state, after_state)
+        if e.get("tool") == "external_site" and (e.get("external_site") or {}).get("capture_received") is True
+    ]
+    assert closing, "the triage logged no external_site entry with capture_received true"
+
+
+def test_archion_browse_handoff(tool_calls, test):
+    """Tag-gated (archion-browse): the parish page goes to the builder as
+    `baseUrl`, with `projectPath`, so the hand-off is logged by the tool once."""
+    if "archion-browse" not in test.get("tags", []):
+        pytest.skip("not an archion-browse scenario")
+    calls = [c for c in (tool_calls or []) if _bare_tool_name(c.get("tool")) == "build_external_search_url"]
+    archion = [c for c in calls if (c.get("args") or {}).get("site") == "archion"]
+    assert archion, f"no build_external_search_url call with site 'archion'; calls: {[c.get('args') for c in calls]}"
+    args = archion[0].get("args") or {}
+    assert "archion.de" in str(args.get("baseUrl") or ""), (
+        f"the archion call carried no Archion parish page as baseUrl: {args.get('baseUrl')!r}"
+    )
+    assert args.get("projectPath"), "the archion call omitted projectPath, so the hand-off was not logged by the tool"
 
 
 # --- Tag-gated site-specific checks ----------------------------------
@@ -707,7 +739,7 @@ def test_log_entries_do_not_carry_each_others_fields(before_state, after_state, 
 # is pinned where it now lives, by the writer's own unit tests.
 
 def test_the_url_logged_is_the_url_presented(
-    before_state, after_state, text_response, test
+    before_state, after_state, text_response, test, agent_returns=None
 ):
     """V4. external_site.url_generated must appear verbatim in the reply.
 
@@ -716,13 +748,17 @@ def test_the_url_logged_is_the_url_presented(
     nobody recorded - and every other validator still passes, because each half
     is individually well-formed. This is the guard that makes the other seven
     mean something.
+
+    On the direct arm the reply is the agent's own return (`agent_return_text`,
+    the text the judge grades), not the bare main thread's relay of it; a routed
+    or legacy run with no agent return falls back to `text_response`.
     """
     if test.get("type") != "positive":
         pytest.skip("only positive tests record log entries")
     if before_state.get("research_json") is None:
         pytest.skip("no research.json in scenario")
 
-    reply = text_response or ""
+    reply = agent_return_text(agent_returns, "search-external-sites") or (text_response or "")
     errors = []
     for entry in _new_external_entries(before_state, after_state, "external_site"):
         detail = entry.get("external_site") or {}
