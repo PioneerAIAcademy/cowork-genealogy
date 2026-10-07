@@ -84,7 +84,7 @@ entirely. Distinct issues (do **not** conflate):
 
 ### The insight
 
-record-extraction never wanted *pixels* — it wanted a **transcription**.
+Extraction never wanted *pixels* — it wanted a **transcription**.
 The `image-reader` subagent already exists solely to absorb the base64 in a
 throwaway context and return **text only** (spec:
 `docs/specs/image-reader-agent-spec.md`).
@@ -146,8 +146,9 @@ the constraint the pre-spike spec named is still the live one.
   (§8), not as a workflow reader.
 - Not a general document-understanding tool. It transcribes one page and
   returns text; matching the page to the research objective stays with the
-  caller (record-extraction), exactly as the `image-reader` subagent
-  contract requires today.
+  caller (the `record-structurer` agent, which reads the transcription and
+  sends it to `extraction_append` as a document), exactly as the
+  `image-reader` subagent contract requires today.
 - Not batching / multi-image in v1 (one image per call; see §10 open q.).
 
 ---
@@ -604,7 +605,7 @@ list the caller can turn into assertions.
 | Empty result **with** an output cap (`finish_reason`/`native_finish_reason` marks it) | throw too — a zero-content read has nothing to return — but the message names the cap (budget likely spent on reasoning) so the caller learns a budget bound, not an unreadable scan. Keeps the invariant that `truncated: true` never ships beside an empty `transcription` (§6.2) |
 
 The tool **never fabricates** a transcription on failure. It throws; the
-caller (record-extraction) pivots to indexed records, exactly as the
+caller pivots to indexed records, exactly as the
 `image-reader` NOT-READ path prescribes today.
 
 ### 5.7 Timeout budget
@@ -1041,8 +1042,9 @@ key a staging→finalize on, so a GC sweep replaces the finalize:
   project-relative path). Best-effort — a save failure omits `imageRef` rather
   than losing the transcription. It does **not** write `research.json`.
 - The `image-reader` subagent threads `projectPath` into that call and reports
-  the returned `imageRef`; `record-extraction` sets the retained source's
-  `sources[].image_filename` to it in the `research_append` call (pairing the
+  the returned `imageRef`; the `record-structurer` agent passes it as the
+  document's `imageFilename`, and `extraction_append` writes it to the retained
+  source's `sources[].image_filename` (pairing the
   image with the existing `transcription` field, `research-schema-spec.md`
   §5.5).
 - `research_append` runs a **best-effort, TTL-gated sweep**
@@ -1086,8 +1088,9 @@ on its own; image persistence + the Electron and hosted-web viewers followed.
 ### 8.6 Deriving `sources[].transcription_truncated` at the write boundary
 
 The truncation of a read is known **here**, at `image_transcribe` (§6.2), but the
-consumer that persists a source is not: `record-extractor` does not hold
-`image_transcribe` (only `image-reader` does), so it receives the transcription
+consumer that persists a source is not: `record-structurer`, which sends the
+source to `extraction_append`, does not hold `image_transcribe` (only
+`image-reader` does), so it receives the transcription
 *text* relayed across a subagent boundary, with the `truncated` flag gone. A
 model asked to set `transcription_truncated` from that relayed text can only
 guess from prose — and was observed to set it while saving no transcription at
@@ -1181,6 +1184,11 @@ one, because the key is `image_filename`, not imageId:
   `image_read` and `volume_bisect`.
 
 ## 10. Migration (skills + subagent)
+
+> Shipped. The `record-extraction` skill named below has since been retired;
+> a page scan now goes `image-reader` → `record-structurer` →
+> `extraction_append` (`documents`), as described in
+> `record-structurer-agent-spec.md`.
 
 - **`record-extraction/SKILL.md`**: keep delegating the **Image** input path
   to `@plugin:image-reader` (the subagent OCRs every scan with the hosted VLM). The

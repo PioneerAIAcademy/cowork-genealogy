@@ -1,0 +1,101 @@
+{
+  "test": {
+    "id": "ut_extraction_append_020",
+    "skill": "extraction-append",
+    "name": "A multi-record batch announces each record and its position before extracting it",
+    "type": "positive",
+    "description": "Converted from ut_record_extraction_032; extraction runs in code. Three records are handed over in one message. SKILL.md's per-record section requires the count stated once up front, then each record named with its position before its turn ('2 of 3: 1885 marriage'). A document costs roughly 136 seconds and most of that is silent, so the announcements are the only thing standing between a working run and a tester reading it as a hang. No test in the corpus exercised a multi-record batch at all, so the reporting validator report_a_multi_record_batch_announces_each_record_position could never fire — it needs a run with more than one record in it to have anything to check.",
+    "tags": [
+      "record-extraction",
+      "multi-record",
+      "announcement",
+      "batch",
+      "narration"
+    ]
+  },
+  "input": {
+    "user_message": "Extract these three FamilySearch records for the Flynn family: ark:/61903/1:1:MXHY-TQ2, ark:/61903/1:1:Q7KD-3LN and ark:/61903/1:1:Q7KD-9WB.",
+    "scenario": "extraction-workbench"
+  },
+  "mcp_fixtures": [
+    "record-read-flynn-1850-thomas-mary-patrick-mxhy-tq2",
+    "record-read-flynn-doyle-1855-q7kd-3ln",
+    "record-read-flynn-burial-1861-q7kd-9wb"
+  ],
+  "judge_context": [
+    "Override for Correctness and Completeness: the test chooses which record the skill extracts. Do not lower any score because the record concerns people the project objective does not name.",
+    "The skill makes one extraction_append call and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you.",
+    "All three records go in the one call, and the reply names each record's summary. A reply that relays one or two of the three is a Completeness failure."
+  ],
+  "execution": {
+    "max_turns": 12,
+    "max_wall_clock_seconds": 400
+  },
+  "expected_classifications": [
+    {
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "miner",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ireland",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "attribute": "date",
+      "record_basis": "inferred",
+      "optional": true
+    },
+    {
+      "record_role": "groom",
+      "fact_type": "name",
+      "informant_proximity": "self",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "bride",
+      "fact_type": "name",
+      "informant_proximity": "self",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "attribute": "date",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "name",
+      "informant_proximity": "unknown",
+      "information_quality": "indeterminate",
+      "record_basis": "stated"
+    }
+  ]
+}

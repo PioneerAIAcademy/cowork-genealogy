@@ -1,0 +1,110 @@
+{
+  "test": {
+    "id": "ut_record_structurer_006",
+    "skill": "record-structurer",
+    "name": "Newspaper: a wedding notice splits the event's people from the groom's life history",
+    "type": "positive",
+    "description": "A wedding notice submitted by the family (genealogist ruling 2026-09-30): the event and its people, the parents' names and residences, the officiant and the attendant included, are recent family knowledge (household_member / indeterminate); the groom's birthplace, immigration and occupation are life history (family_not_present / secondary). Each party's parents are named by side, as on an indexed marriage. Record approved by the genealogist (2026-10-03).",
+    "tags": [
+      "newspaper-announcement",
+      "wedding",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Structure this source and write it to the project.\n\nprojectPath: <workspace>\nsources:\n- recordId: capture:flynn-gallagher-wedding-1870\n  documentForm: verbatim_transcript\n  text: <record-data>\nShenandoah Herald, 20 October 1870\n\nFLYNN–GALLAGHER. At the Church of the Annunciation, Shenandoah, on Saturday, 15 October 1870, by the Rev. Daniel O'Connor, Mr. Patrick Flynn, son of Mr. and Mrs. Thomas Flynn of this place, and Miss Catherine Gallagher, daughter of Mr. James Gallagher of Mahanoy City. The bride was attended by her sister, Miss Ellen Gallagher. The groom, a native of County Mayo, Ireland, came to this country in 1862 and is employed at the Kohinoor colliery.\n</record-data>",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "The agent reads the source, makes one extraction_append call carrying one document, and returns the tool's summary verbatim. Roles and classifications are decided in code from the document; grade what the agent READ and whether the reply is the summary, not the classifications."
+  ],
+  "execution": {
+    "max_turns": 12,
+    "max_wall_clock_seconds": 400
+  },
+  "expected_classifications": [
+    {
+      "record_role": "groom",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "bride",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "record_basis": "stated",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Thomas Flynn",
+      "record_basis": "stated",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "James Gallagher",
+      "record_basis": "stated",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "father_of_bride",
+      "fact_type": "residence",
+      "value": "Mahanoy City",
+      "record_basis": "stated",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "officiant_1",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "sister_1",
+      "fact_type": "name",
+      "value": "Ellen Gallagher",
+      "record_basis": "stated",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "groom",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "County Mayo",
+      "record_basis": "stated",
+      "informant_proximity": "family_not_present",
+      "information_quality": "secondary"
+    },
+    {
+      "record_role": "groom",
+      "fact_type": "immigration",
+      "record_basis": "stated",
+      "informant_proximity": "family_not_present",
+      "information_quality": "secondary"
+    },
+    {
+      "record_role": "groom",
+      "fact_type": "occupation",
+      "record_basis": "stated",
+      "informant_proximity": "family_not_present",
+      "information_quality": "secondary"
+    }
+  ]
+}

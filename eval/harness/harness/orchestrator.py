@@ -52,6 +52,7 @@ from harness.skill_runner import (
     SkillRunResult,
     agent_return_text,
     direct_dispatch_prompt,
+    handoffs,
     judge_skills_slot,
     run_skill,
     spawn_prompts,
@@ -625,12 +626,6 @@ async def _execute_single_run(
             "expected_classifications": spec.raw.get(
                 "expected_classifications", []
             ),
-            # Also threaded in: `refinement_targets`, the assertion ids a
-            # classification-refinement test expects updated in place —
-            # deterministic ground truth for
-            # test_refinement_preserves_extraction_fields_and_avoids_duplication
-            # (issue #2021, F12; unit-test-spec.md's `refinement_targets`).
-            "refinement_targets": spec.raw.get("refinement_targets", []),
             # Also threaded in: `delegation`, the exact text a direct-agent test
             # hands the pair's agent (issue #2246). The direct-arm validators in
             # test_universal.py gate on it and assert the recorded spawn prompt
@@ -769,6 +764,7 @@ async def _execute_single_run(
         activated=activated,
         skills_invoked=result.skills_invoked,
         warnings=judge_dimension_warnings,
+        handoffs_made=routed_to(result.skills_invoked, result.builtin_tool_calls),
     )
 
     outcome = _compute_outcome(
@@ -786,6 +782,7 @@ async def _execute_single_run(
         # — the same shape `derive_activated` is fed above, and the thing
         # `_compute_outcome` keys the arm on.
         agents_spawned=agents_spawned if spec.is_direct else None,
+        handoffs_made=routed_to(result.skills_invoked, result.builtin_tool_calls),
     )
 
     skill_input, skill_cached, skill_cache_write, skill_output, per_model = (
@@ -990,6 +987,7 @@ async def _execute_skill_with_retry(
                         # Direct-agent arm: agents staged, no skills. The
                         # conversion doc's acceptance check, made literal.
                         stage_skills=not spec.is_direct,
+                        suite=spec.skill,
                     )
                     before_snapshot = snapshot_files(workspace)
                     result = await run_skill(
@@ -1290,8 +1288,18 @@ def apply_deterministic_deference(dimensions, validator_results, *, has_expected
     return dimensions
 
 
+def routed_to(skills_invoked: list[str], builtin_tool_calls: list[dict[str, Any]] | None) -> list[str]:
+    """Every main-thread hand-off, bare-named: `Skill` calls and agent spawns.
+
+    A routing negative's `correct_skill` may name a skill converted to an agent,
+    whose correct hand-off is an `Agent` spawn that never reaches
+    `skills_invoked`. Reads `handoffs`, the list the routing validators use.
+    """
+    return [name.rsplit(":", 1)[-1] for name in handoffs(skills_invoked, builtin_tool_calls or [])]
+
+
 def flag_routing_negative_judge_fail(
-    dimensions, *, spec, activated, skills_invoked, warnings=None
+    dimensions, *, spec, activated, skills_invoked, warnings=None, handoffs_made=None
 ):
     """Coerce a judge FAIL on a correctly-routed negative test to N/A (#2196).
 
@@ -1394,7 +1402,8 @@ def flag_routing_negative_judge_fail(
     # A `if not correct:` and a `spec.type != "negative"` guard were both tried
     # here; both were unreachable, and each made its own test unable to fail.
     correct = negative.get("correct_skill", [])
-    if not any(s in (skills_invoked or []) for s in correct):
+    routed = handoffs_made if handoffs_made is not None else (skills_invoked or [])
+    if not any(s in routed for s in correct):
         return dimensions
     for dd in dimensions:
         if dd.get("name") in _ROUTING_DIAGNOSTIC_DIMENSIONS and dd.get("score") == 1:
@@ -1660,6 +1669,7 @@ def _compute_outcome(
     skills_invoked: list[str],
     judge_skipped: bool = False,
     agents_spawned: list[str] | None = None,
+    handoffs_made: list[str] | None = None,
 ) -> str:
     """v1 per-run outcome per spec §7.
 
@@ -1825,7 +1835,8 @@ def _compute_outcome(
         # tests' concern, not this test's. The judge runs base-only and
         # diagnostically (see `_run_judge`); its scores must NOT flip a
         # correctly-routed test.
-        if not any(s in skills_invoked for s in correct):
+        routed = handoffs_made if handoffs_made is not None else skills_invoked
+        if not any(s in routed for s in correct):
             # Skill didn't fire, but didn't route to an acceptable
             # alternative — the correct_skill array was not satisfied.
             return "fail"

@@ -14,7 +14,7 @@ project_context({ projectPath }) -> compact projection (read-only)
 
 ## 1. Why this exists
 
-The record-extractor agent runs in a fresh context per delegation and used to
+The record-extractor agent (since retired) ran in a fresh context per delegation and used to
 open with a full read of `research.json` and `tree.gedcomx.json` — both of
 which grow monotonically over a session. On capped e2e runs (~10 extractor
 delegations per run) those fresh-context re-reads dominated cost: the
@@ -309,7 +309,8 @@ Standard MCP tool: `src/tools/project-context.ts`, schema in
 `LIVE_TOOLS`) with a real input-schema mirror — it is a deterministic
 function of workspace state, so a fixture cannot honestly answer it.
 
-Consumer: the `record-extractor` agent (one call per invocation, replacing
-its up-front file reads — its `tools:` list holds `project_context` and no
-`Read`). Future extraction-adjacent agents should reuse this projection
-rather than re-reading project files.
+Consumers: built for the `record-extractor` agent (since retired), whose one
+call per invocation replaced its up-front file reads. It is now read by the
+`citation`, `gps-mentor`, `proof-conclusion`, `question-selection` and
+`research-exhaustiveness` agents and several skills. New agents should reuse
+this projection rather than re-reading project files.

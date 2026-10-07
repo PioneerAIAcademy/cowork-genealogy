@@ -1032,8 +1032,8 @@ async function applyLogAppendOp(
   //     nothing to keep, >0 means results existed and were discarded. Failing
   //     would also reject entries whose search genuinely ran without a
   //     projectPath, turning a lossy log into no log at all.
-  //     Search producers only: record-extraction logs a `record_read` with no
-  //     `stagedResultsRef` by instruction, so warning on it would contradict the skill.
+  //     Search producers only: an acquisition is logged by `extraction_append`,
+  //     which passes the read's own staged ref, so there is nothing to nag about.
   if (
     STAGING_SEARCH_TOOLS.has(op.tool) &&
     (stagedResultsRef === undefined || stagedResultsRef === null) &&

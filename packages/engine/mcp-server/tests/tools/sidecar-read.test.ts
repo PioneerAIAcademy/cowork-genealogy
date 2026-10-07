@@ -450,3 +450,67 @@ describe("sidecar_read", () => {
     expect(calls).toEqual([["opaque-key", "uploads/x.txt"]]);
   });
 });
+
+// ─── staged transcriptions and `refs` (issue #2939, spec §2 and §3) ──────────
+
+import { stageSearchResults } from "../../src/utils/results-staging.js";
+
+describe("sidecar_read: a staged transcription, and several refs", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "sidecar-read-results-"));
+    await writeFile(join(dir, "research.json"), "{}", "utf-8");
+    await writeFile(join(dir, "tree.gedcomx.json"), "{}", "utf-8");
+    await mkdir(join(dir, "uploads"), { recursive: true });
+    await writeFile(join(dir, "uploads", "note.txt"), "a note", "utf-8");
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const stageTranscription = async (text: string) =>
+    (await stageSearchResults({
+      projectPath: dir,
+      tool: "image_transcribe",
+      response: {
+        query: { imageId: "004022578_00190" },
+        results: [{ id: "004022578_00190", source: { imageId: "004022578_00190" }, content_type: "image/jpeg", size_bytes: 1, model: "m", transcription: text }],
+      },
+    }))!.resultsRef;
+
+  it("returns a staged transcription's text, paged like any file", async () => {
+    const ref = await stageTranscription("x".repeat(45_000));
+    const r = await sidecarRead({ projectPath: dir, ref });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.totalChars).toBe(45_000);
+    expect(r.truncated).toBe(true);
+    expect(r.nextOffset).toBeGreaterThan(0);
+  });
+
+  it("still refuses a record or search sidecar, pointing at record_read", async () => {
+    const staged = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: { query: {}, results: [{ recordId: "MXHY-TP4", gedcomx: { persons: [] } }] },
+    });
+    const r = await sidecarRead({ projectPath: dir, ref: staged!.resultsRef });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.reason).toBe("invalid_ref");
+    expect(r.errors[0]).toMatch(/not a staged transcription.*record_read/);
+  });
+
+  it("reads several refs in one call, each on its own", async () => {
+    const t = await stageTranscription("Harold Dean Whitaker, 91");
+    const r = await sidecarRead({ projectPath: dir, refs: [t, "uploads/note.txt", "uploads/missing.txt"] });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.results.map((x) => (x.ok ? x.content : x.reason))).toEqual(["Harold Dean Whitaker, 91", "a note", "not_found"]);
+  });
+
+  it("refuses `ref` and `refs` together, and an empty `refs`", async () => {
+    expect((await sidecarRead({ projectPath: dir, ref: "uploads/note.txt", refs: ["uploads/note.txt"] } as any)).ok).toBe(false);
+    expect((await sidecarRead({ projectPath: dir, refs: [] })).ok).toBe(false);
+  });
+});

@@ -40,7 +40,7 @@ Susan, Bill, and Mary, merged into a tree holding John, Susan, and William.
 ## 1. Why this exists
 
 Today the record→tree flow is real but **distributed across skills with no
-single contract**: `search-records` triages, `record-extraction` extracts,
+single contract**: `search-records` triages, `extraction_append` extracts,
 `person-evidence` matches, `proof-conclusion` decides, the `merge_*` tools
 execute, and `check-warnings` runs *after* the write. Two things are missing:
 
@@ -72,7 +72,7 @@ candidate-document fold.
 - The skill updates needed to wire all of the above (§5.0).
 
 **Out of scope (referenced, not re-specified):**
-- The internal behavior of `search-records`, `record-extraction`,
+- The internal behavior of `search-records`, `extraction_append`,
   `proof-conclusion`, `tree-edit`, `materialize_facts`,
   `merge_tree_persons` — owned by their existing specs/skills.
 - Selective field-level merge tooling and `tree_edit` source-write operations
@@ -146,7 +146,7 @@ this workflow; each pair drives one per-persona `materialize_facts` write
 | `proof-conclusion` | Weigh the materialized evidence and set `primary`/`preferred` on the concluded value (§5.6). **No longer runs the coherence gate** (that moved to person-evidence) and no longer folds a candidate document. | Small |
 | `check-warnings` | Update the "does NOT cover merge-mode" caveat; document the new pre-merge capability. Remains the post-materialization *final-mode* owner. | Small |
 | `tree-edit` | Provides `add_relationship` for the household edges person-evidence writes (each carrying a source-ref). The old `merge_record_into_tree` "unpaired carry-in" note is dropped — this workflow no longer folds a candidate document. | Small |
-| `search-records`, `record-extraction`, `research` | Referenced unchanged; verify routing only. | None/minimal |
+| `search-records`, `research`, and the `extraction_append` tool | Referenced unchanged; verify routing only. | None/minimal |
 
 **Ownership call:** `person-evidence` invokes the merge-mode warnings dry-run
 directly — it assembles the household match set and owns the record→tree
@@ -161,9 +161,9 @@ Triage results with `same_person`; check `source_attachments` to detect records
 already attached; `record_read` to fetch full simplified GedcomX for the
 chosen record. Unchanged.
 
-### 5.2 record-extraction *(reference)*
+### 5.2 extraction_append *(reference)*
 
-Extract assertions for **all** personas in the record (John, Susan, Bill, Mary)
+`extraction_append` extracts assertions for **all** personas in the record (John, Susan, Bill, Mary)
 into `research.json`, **unattached** (keyed by `record_id` + `record_role`).
 Unchanged.
 

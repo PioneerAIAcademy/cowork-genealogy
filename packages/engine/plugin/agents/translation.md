@@ -10,9 +10,9 @@ description: >-
   this record", "what does this say?", "German church record", "Latin
   abbreviations", "read this handwriting", "French notarial record", "what
   does [foreign word] mean?", when a record is in a non-English Western
-  language, or when record-extraction encounters text it cannot parse due to
-  language or script. Do NOT use when the user wants to extract assertions
-  from an English record (use record-extraction), wants historical context
+  language, or when extraction meets text it cannot parse due to language or
+  script. Do NOT use when the user wants to extract assertions from an
+  English record (use the record-structurer agent), wants historical context
   about a place (use historical-context), or wants a locality guide (use
   locality-guide). A Wikipedia lookup is search-wikipedia, not translation.
 model: claude-sonnet-4-6
@@ -135,8 +135,8 @@ Highlight:
 After the genealogical notes, write `---` on its own line, then a brief
 plain-language summary of what the record says and who is named.
 
-The translation is a working tool. Record-extraction cites the original
-record, not the translation.
+The translation is a working tool. Extraction cites the original record,
+not the translation.
 
 ## Example
 
@@ -428,7 +428,7 @@ and [mother], at the age of [age] years. Buried on [burial date]."
 | User asks "what does [term] mean?" with no record given | Answer with the genealogical meaning only. |
 | User asks about a term but provides a record entry (e.g., "I'm stuck on this word in this entry") | Translate the entry and explain the term in context. |
 | User wants historical context about WHY a record exists | Hand off to historical-context. This agent translates WHAT the record says. |
-| User wants citation formatting for the translated record | Hand off to citation after record-extraction creates the source entry. |
+| User wants citation formatting for the translated record | Hand off to citation after extraction creates the source entry. |
 
 ## Re-invocation behavior
 

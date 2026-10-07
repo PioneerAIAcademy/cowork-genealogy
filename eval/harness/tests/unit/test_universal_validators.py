@@ -187,6 +187,45 @@ def test_write_then_validate_is_skipped_on_a_stubbed_run():
         )
 
 
+_EXTRACT = [{"tool": "mcp__genealogy__extraction_append", "args": {"recordIds": ["MZGS-1BH"]}}]
+
+
+def test_extraction_appends_are_authorized_by_tool_identity():
+    """The research router and search-records call extraction_append directly,
+    and neither is a caller of `log`, `sources` or `assertions`."""
+    before = research(log=entry("log_001"), sources=entry("src_001"), assertions=entry("a_001"))
+    after = research(
+        log=entry("log_001") + entry("log_002"),
+        sources=entry("src_001") + entry("src_002"),
+        assertions=entry("a_001") + entry("a_002"),
+    )
+    check_research(before, after, {"name": "research"}, POSITIVE, tool_calls=_EXTRACT)
+
+
+def test_extraction_append_does_not_license_editing_an_existing_entry():
+    before = research(assertions=[{"id": "a_001", "record_basis": "stated"}])
+    after = research(assertions=[{"id": "a_001", "record_basis": "inferred"}, {"id": "a_002"}])
+    with pytest.raises(AssertionError) as e:
+        check_research(before, after, {"name": "research"}, POSITIVE, tool_calls=_EXTRACT)
+    assert "assertions" in str(e.value)
+
+
+def test_the_same_appends_without_an_extraction_append_call_fail():
+    with pytest.raises(AssertionError) as e:
+        check_research(
+            research(), research(assertions=entry("a_001")), {"name": "research"}, POSITIVE, tool_calls=[]
+        )
+    assert "assertions" in str(e.value)
+
+
+def test_extraction_append_does_not_reach_a_section_it_does_not_write():
+    with pytest.raises(AssertionError) as e:
+        check_research(
+            research(), research(conflicts=entry("c_001")), {"name": "research"}, POSITIVE, tool_calls=_EXTRACT
+        )
+    assert "conflicts" in str(e.value)
+
+
 # ── tree.gedcomx.json ──────────────────────────────────────────────────────
 
 
@@ -194,20 +233,20 @@ def test_tree_owner_writing_persons_passes():
     check_tree(tree(), tree(persons=entry("I1")), {"name": "person-evidence"}, POSITIVE)
 
 
-def test_record_extraction_may_write_tree_sources_but_not_tree_persons():
-    """Unchanged by #2472, deliberately.
-
-    The assertion-backlink rewrite gives `extraction_append` a way to touch
-    `persons`, but record-extraction is NOT added to that row's `callers`: a
+def test_extraction_may_write_tree_sources_but_not_tree_persons():
+    """Tree `sources` is authorized by tool identity: `extraction_append` mints
+    each `S` entry, whichever skill calls it. The same call cannot add a person:
+    tree `persons` authorizes it only for its own assertion-backlink delta, and a
     skill-granular grant would also authorize adding an unsourced person and
-    setting `primary`, both of which this test refuses and both of which the
-    row's own `failure` line is about ("This file is the upload target"). The
-    rewrite is authorized by TOOL identity instead, and only for its own delta -
-    see the two cases below.
+    setting `primary`, both of which the row's own `failure` line is about.
     """
-    check_tree(tree(), tree(sources=entry("S1")), {"name": "record-extraction"}, POSITIVE)
+    call = [{"tool": "mcp__genealogy__extraction_append", "args": {"recordIds": ["MZGS-1BH"]}}]
+    check_tree(tree(), tree(sources=entry("S1")), {"name": "search-records"}, POSITIVE, tool_calls=call)
     with pytest.raises(AssertionError) as e:
-        check_tree(tree(), tree(persons=entry("I1")), {"name": "record-extraction"}, POSITIVE)
+        check_tree(tree(), tree(sources=entry("S1")), {"name": "search-records"}, POSITIVE)
+    assert "sources" in str(e.value)
+    with pytest.raises(AssertionError) as e:
+        check_tree(tree(), tree(persons=entry("I1")), {"name": "search-records"}, POSITIVE, tool_calls=call)
     assert "persons" in str(e.value)
 
 
@@ -220,7 +259,7 @@ def _person_with_fact(**fact_over):
 
 #: A real correction: the tool, the op, and the assertion id it named.
 _EXTRACTION_CALL = [{
-    "tool": "mcp__genealogy__extraction_append",
+    "tool": "mcp__genealogy__research_append",
     "args": {"section": "assertions", "op": "update", "entryId": "a_011",
              "fields": {"place": "Odessa, Saskatchewan, Canada"}},
 }]
@@ -238,11 +277,11 @@ def _tree_state(persons, research=None):
 
 
 def test_the_fact_rewrite_is_authorized_by_tool_identity():
-    """A backlinked fact's mirrored attributes may change under extraction_append."""
+    """A backlinked fact's mirrored attributes may change under research_append's correction."""
     check_tree(
         _tree_state(_person_with_fact()),
         _tree_state(_person_with_fact(place="Odessa, Saskatchewan, Canada")),
-        {"name": "record-extraction"},
+        {"name": "conflict-resolution"},
         POSITIVE,
         tool_calls=_EXTRACTION_CALL,
     )
@@ -261,7 +300,7 @@ def test_a_legacy_heal_riding_along_with_the_rewrite_is_still_authorized():
     check_tree(
         _tree_state(before),
         _tree_state(after),
-        {"name": "record-extraction"},
+        {"name": "conflict-resolution"},
         POSITIVE,
         tool_calls=_EXTRACTION_CALL,
     )
@@ -273,7 +312,7 @@ def test_the_new_value_must_match_the_corrected_assertion():
         check_tree(
             _tree_state(_person_with_fact()),
             _tree_state(_person_with_fact(place="anything at all")),
-            {"name": "record-extraction"},
+            {"name": "conflict-resolution"},
             POSITIVE,
             tool_calls=_EXTRACTION_CALL,
         )
@@ -282,14 +321,14 @@ def test_the_new_value_must_match_the_corrected_assertion():
 
 def test_the_corrected_assertion_must_be_one_the_run_named():
     """A backlink to an assertion no op touched cannot have been rewritten."""
-    other = [{"tool": "mcp__genealogy__extraction_append",
+    other = [{"tool": "mcp__genealogy__research_append",
               "args": {"section": "assertions", "op": "update", "entryId": "a_999",
                        "fields": {"place": "x"}}}]
     with pytest.raises(AssertionError) as e:
         check_tree(
             _tree_state(_person_with_fact()),
             _tree_state(_person_with_fact(place="Odessa, Saskatchewan, Canada")),
-            {"name": "record-extraction"},
+            {"name": "conflict-resolution"},
             POSITIVE,
             tool_calls=other,
         )
@@ -317,7 +356,7 @@ def test_the_tool_identity_path_authorizes_nothing_else(label, after_persons):
         check_tree(
             _tree_state(_person_with_fact()),
             _tree_state(after_persons),
-            {"name": "record-extraction"},
+            {"name": "conflict-resolution"},
             POSITIVE,
             tool_calls=_EXTRACTION_CALL,
         )
@@ -330,7 +369,7 @@ def test_the_tool_identity_path_needs_the_call():
         check_tree(
             _tree_state(_person_with_fact()),
             _tree_state(_person_with_fact(place="Odessa, Saskatchewan, Canada")),
-            {"name": "record-extraction"},
+            {"name": "conflict-resolution"},
             POSITIVE,
             tool_calls=[{"tool": "mcp__genealogy__person_read", "args": {}}],
         )
@@ -379,7 +418,7 @@ def test_a_stringified_ops_payload_is_still_authorized():
     run log records the string. Without parsing it here the authorization
     false-fails a legitimate write, which is the worse direction."""
     call = [{
-        "tool": "mcp__genealogy__extraction_append",
+        "tool": "mcp__genealogy__research_append",
         "args": {"ops": json.dumps([{
             "section": "assertions", "op": "update", "entryId": "a_011",
             "fields": {"place": "Odessa, Saskatchewan, Canada"},
@@ -388,7 +427,7 @@ def test_a_stringified_ops_payload_is_still_authorized():
     check_tree(
         _tree_state(_person_with_fact()),
         _tree_state(_person_with_fact(place="Odessa, Saskatchewan, Canada")),
-        {"name": "record-extraction"},
+        {"name": "conflict-resolution"},
         POSITIVE,
         tool_calls=call,
     )
@@ -398,7 +437,7 @@ def test_an_op_touching_no_mirrored_field_authorizes_nothing():
     """An assertions update that set only `informant` cannot have caused a
     rewrite, so it must not license one."""
     call = [{
-        "tool": "mcp__genealogy__extraction_append",
+        "tool": "mcp__genealogy__research_append",
         "args": {"section": "assertions", "op": "update", "entryId": "a_011",
                  "fields": {"informant": "official"}},
     }]
@@ -406,7 +445,7 @@ def test_an_op_touching_no_mirrored_field_authorizes_nothing():
         check_tree(
             _tree_state(_person_with_fact()),
             _tree_state(_person_with_fact(place="Odessa, Saskatchewan, Canada")),
-            {"name": "record-extraction"},
+            {"name": "conflict-resolution"},
             POSITIVE,
             tool_calls=call,
         )
@@ -422,7 +461,7 @@ def test_deleting_an_attribute_the_assertion_still_asserts_is_refused():
         check_tree(
             _tree_state(_person_with_fact()),
             _tree_state(after),
-            {"name": "record-extraction"},
+            {"name": "conflict-resolution"},
             POSITIVE,
             tool_calls=_EXTRACTION_CALL,
         )
@@ -435,7 +474,7 @@ def test_deleting_an_attribute_the_assertion_withdrew_is_authorized():
     check_tree(
         _tree_state(_person_with_fact()),
         _tree_state(after, {"assertions": [{"id": "a_011", "place": None}]}),
-        {"name": "record-extraction"},
+        {"name": "conflict-resolution"},
         POSITIVE,
         tool_calls=_EXTRACTION_CALL,
     )
@@ -450,7 +489,7 @@ def test_a_name_prefix_change_is_not_authorized():
         check_tree(
             _tree_state(_person_with_fact()),
             _tree_state(after),
-            {"name": "record-extraction"},
+            {"name": "conflict-resolution"},
             POSITIVE,
             tool_calls=_EXTRACTION_CALL,
         )

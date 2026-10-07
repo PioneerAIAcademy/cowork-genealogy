@@ -1,0 +1,127 @@
+{
+  "tool": "record_read",
+  "description": "FamilySearch record_read response for record XZR4-K7Q: the 1893 Hamilton County marriage license entry for Charles Ferber and Emma Schmidt; Jacob Lang, the minor groom's stepfather who signed consent, is carried as a persona. FamilySearch rarely indexes the consent signer, so that shape is deliberate. Shaped like a live read (a Record and a Collection source description, per-persona indexFields).",
+  "args": {
+    "recordId": "~XZR4-K7Q"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "n_1",
+            "type": "BirthName",
+            "given": "Charles",
+            "surname": "Ferber"
+          }
+        ],
+        "principal": true,
+        "facts": [
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Residence",
+            "place": "Cincinnati, Hamilton, Ohio, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      },
+      {
+        "id": "p_2",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "n_2",
+            "type": "BirthName",
+            "given": "Emma",
+            "surname": "Schmidt"
+          }
+        ],
+        "principal": true,
+        "facts": [
+          {
+            "type": "MaritalStatus",
+            "value": "Widowed"
+          },
+          {
+            "type": "Residence",
+            "place": "Cincinnati, Hamilton, Ohio, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      },
+      {
+        "id": "p_3",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "n_3",
+            "type": "BirthName",
+            "given": "Jacob",
+            "surname": "Lang"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "r_1",
+        "type": "Couple",
+        "person1": "p_1",
+        "person2": "p_2",
+        "facts": [
+          {
+            "type": "Marriage",
+            "date": "14 June 1893",
+            "place": "Hamilton, Ohio, United States"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_1",
+        "resource_type": "Record",
+        "title": "Entry for Charles Ferber and Emma Schmidt, \"Ohio, County Marriages, 1789-2016\"",
+        "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZR4-K7Q : accessed 30 September 2026), Entry for Charles Ferber and Emma Schmidt.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XZR4-K7Q"
+      },
+      {
+        "id": "sd_c_1",
+        "resource_type": "Collection",
+        "title": "Ohio, County Marriages, 1789-2016"
+      }
+    ],
+    "places": [],
+    "indexFields": {
+      "p_1": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_000",
+        "age": "20"
+      },
+      "p_2": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_001",
+        "age": "26"
+      },
+      "p_3": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_002"
+      }
+    }
+  }
+}

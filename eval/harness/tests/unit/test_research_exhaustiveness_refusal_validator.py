@@ -199,6 +199,8 @@ def _recorded_refusals():
             ):
                 continue
             for run in test.get("runs", []):
+                if run.get("outcome") != "pass":
+                    continue  # the claim is about refusals graded pass
                 # `output` is an OBJECT — text_response, activated,
                 # skills_invoked, tool_calls, files_created,
                 # builtin_tool_calls, warnings. Dumping the whole thing

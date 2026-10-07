@@ -26,8 +26,9 @@ REPO_ROOT = Path(__file__).resolve().parents[4]
 # rubric deletion (citation is pure GPS craft, see phase-2 triage).
 CITATION_RUBRIC = REPO_ROOT / "eval/tests/unit/citation/rubric.md"
 # Real rubric with the exact dimension names implicated in #1361's evidence
-# (re-cased and duplicated in historical record-extraction run logs).
-RECORD_EXTRACTION_RUBRIC = REPO_ROOT / "eval/tests/unit/record-extraction/rubric.md"
+# (re-cased and duplicated in historical record-extraction run logs). The suite
+# is retired, so its last rubric is kept here as the incidents' test data.
+RECORD_EXTRACTION_RUBRIC = Path(__file__).parent / "data/record_extraction_rubric.md"
 
 
 @pytest.fixture

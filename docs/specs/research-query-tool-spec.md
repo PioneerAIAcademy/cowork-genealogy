@@ -15,10 +15,10 @@ research_query({ projectPath, section, ...well-known filters }) -> { count, item
 ## 1. Why this exists
 
 `project_context` already exists to stop one re-read pattern (the
-record-extractor's fresh-context `Read` of the whole project on every
+record-extractor's (since retired) fresh-context `Read` of the whole project on every
 delegation). It deliberately does **not** cover per-assertion detail or any
 other section body (`project-context-tool-spec.md` §3: "no assertion bodies —
-deliberately excluded"), because its one consumer needs a stable, small,
+deliberately excluded"), because its consumers need a stable, small,
 unfiltered orientation snapshot, not a lookup.
 
 A different pattern showed up in the 2026-07-26 batching-work verification

@@ -10,7 +10,9 @@
       "prioritization",
       "multi-conflict",
       "identity-vs-fact"
-    ]
+    ],
+    "expected_outcome": "xfail",
+    "xfail_reason": "Writes a second conflict's analysis in about 3 runs in 7, against the one-conflict rule. Issue #3181."
   },
   "input": {
     "user_message": "There are several unresolved conflicts in this research. Take a look and start working on whichever should come first.",

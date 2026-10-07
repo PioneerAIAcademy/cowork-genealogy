@@ -2,7 +2,7 @@
 name: search-external-sites
 description: Generates search URLs for external genealogy sites and
   newspaper archives and walks the user through click-capture-analyze. Logs every search to research.json and triages captured PDFs
-  before handing them to record-extraction. GPS Step 1 — Reasonably
+  before handing them to the record-structurer agent. GPS Step 1 — Reasonably
   Exhaustive Research (external site execution). Use when the user names a
   genealogy site or newspaper archive to search — Ancestry, MyHeritage,
   FindMyPast, FindAGrave, Newspapers.com, Chronicling America, BillionGraves,
@@ -13,7 +13,7 @@ description: Generates search URLs for external genealogy sites and
   when the target is FamilySearch (use search-records); when they are still
   choosing what or where to search — "what should I search next?" — which
   is planning, not execution (use research-plan); or to analyze a single
-  record already in context (use record-extraction).
+  record already in context (use the record-structurer agent).
 allowed-tools:
   - research_query
   - place_search
@@ -79,7 +79,7 @@ References to load when the moment arrives:
    results`): don't ask for a PDF, and don't tell the user a capture is
    outstanding. One log entry covers it, written at step 6.
 4. **Analyze** — you read the results, triage them, and hand promising
-   records to record-extraction.
+   records to `@plugin:record-structurer`, all in one spawn.
 
 Repeat for each external-site plan item.
 
@@ -467,11 +467,12 @@ extraction. The steps below are the same either way:
    family links).
 5. **On selection, request the individual record.** "Click result #1 to
    open the full record page, then save it as a PDF and upload it." That
-   single-record PDF goes to record-extraction. If the record page's
-   content is **already present in this conversation**, hand that to
-   record-extraction directly and don't ask for a PDF.
+   single-record PDF's text goes to `@plugin:record-structurer` as a source,
+   with a `capture:<descriptive>` recordId. If the record page's content is
+   **already present in this conversation**, hand that to the agent directly
+   and don't ask for a PDF.
 
-Don't send the raw search-results PDF straight to record-extraction — the
+Don't send the raw search-results PDF straight to the agent — the
 user picks which records are worth examining.
 
 ### 6. Log results, including nil results
@@ -534,7 +535,7 @@ not mark it `completed` for handing over a URL.
 `skipped` on any other row requires the user to have asked for it — never infer
 it from an access failure alone. On `{ ok: false }`, surface the errors and fix the
 inputs — never hand-edit `research.json`. This skill writes only `log[]`
-entries and the plan-item status; record-extraction writes any
+entries and the plan-item status; the record-structurer agent writes any
 source/assertion entries when you hand it a single-record capture. Then offer
 the natural next move:
 - More plan items → "Shall I continue with the next search?"
@@ -575,8 +576,8 @@ they point to.
 
 This skill writes only to `research.json`: a new append-only `log[]` entry
 and the `status` on the matching `plans[].items[]`. It does not write
-source or assertion entries — record-extraction does that when the user
-returns a single-record capture.
+source or assertion entries — the record-structurer agent does that when the
+user returns a single-record capture.
 
 Re-running a search is itself a logged event by design (the log is the
 exhaustive-search audit trail), so always append a new `log_` entry and

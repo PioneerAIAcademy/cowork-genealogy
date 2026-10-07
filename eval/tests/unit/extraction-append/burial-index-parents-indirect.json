@@ -1,0 +1,77 @@
+{
+  "test": {
+    "id": "ut_extraction_append_002",
+    "skill": "extraction-append",
+    "name": "Extract assertions from Louise Becker's 1941 Vine Street Hill burial index entry",
+    "type": "positive",
+    "description": "Converted from ut_record_extraction_024: the record the user pasted is now served as a record_read fixture (the cemetery index entry for Louise Becker (1941), naming her father and mother), and extraction runs in code. Vine Street Hill Cemetery (Cincinnati, Hamilton County, Ohio) burial index entry for Louise Becker, buried 4 Feb 1941 (ark:/61903/1:1:CRY7-D9T2). Real record from the Ferber/Becker research (#799). Names her parents John Becker and Mary Kramer - part of the Anna/Mary Kramer name conflict. Tests that a deceased person's parents named on a burial record are indirect.",
+    "tags": [
+      "extraction",
+      "burial",
+      "cemetery",
+      "ferber-becker",
+      "named-parents"
+    ]
+  },
+  "input": {
+    "user_message": "Extract FamilySearch record ark:/61903/1:1:CRY7-D9T2.",
+    "scenario": "extraction-workbench"
+  },
+  "mcp_fixtures": [
+    "record-read-becker-burial-1941-cry7-d9t2"
+  ],
+  "judge_context": [
+    "Override for Correctness and Completeness: the test chooses which record the skill extracts. Do not lower any score because the record concerns people the project objective does not name.",
+    "The skill makes one extraction_append call with the record id and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you."
+  ],
+  "execution": {
+    "max_turns": 10,
+    "max_wall_clock_seconds": 300
+  },
+  "expected_classifications": [
+    {
+      "record_role": "deceased",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "informant_proximity": "unknown",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "death",
+      "attribute": "date",
+      "record_basis": "stated",
+      "informant_proximity": "unknown",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "attribute": "place",
+      "optional": true,
+      "record_basis": "stated",
+      "informant_proximity": "unknown",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "informant_proximity": "unknown",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "informant_proximity": "unknown",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "optional": true,
+      "record_basis": "stated"
+    }
+  ]
+}

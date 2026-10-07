@@ -209,41 +209,21 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     offline: true,
     args: (ctx) => ({
       projectPath: ctx.projectPath,
-      sourceDescription: { title: "Smoke source" },
-      resolveStandardPlace: false,
-      ops: [
+      documents: [
         {
-          section: "sources",
-          op: "append",
-          entry: {
-            citation: "Smoke source",
-            citation_detail: {
-              who: "Smoke",
-              what: "transport smoke",
-              when_created: "1850",
-              when_accessed: "2026-01-01",
-              where: "Nowhere",
-              where_within: "line 1",
-            },
-            source_classification: "original",
-            repository: "smoke",
-            access_date: "2026-01-01",
-          },
-        },
-        {
-          section: "assertions",
-          op: "append",
-          entry: {
-            record_id: "SMOKE-1",
-            record_role: "principal",
-            fact_type: "birth",
-            value: "1850",
-            date: "1850",
-            information_quality: "primary",
-            informant: "self",
-            informant_proximity: "self",
-            record_basis: "stated",
-            extracted_for_question_ids: [],
+          recordId: "capture:smoke-obituary",
+          document: {
+            recordType: "obituary",
+            documentForm: "verbatim_transcript",
+            source: { title: "Smoke obituary", repository: "smoke" },
+            persons: [
+              {
+                id: "p1",
+                principal: true,
+                names: [{ given: "Smoke", surname: "Test" }],
+                facts: [{ type: "death", date: "1 May 1990" }],
+              },
+            ],
           },
         },
       ],
@@ -256,8 +236,8 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     args: (ctx) => ({
       projectPath: ctx.projectPath,
       personId: "P1",
-      recordId: "SMOKE-1",
-      recordRole: "principal",
+      recordId: "capture:smoke-obituary",
+      recordRole: "deceased",
     }),
     expect: okTrue,
   },
@@ -270,7 +250,7 @@ export const CALL_PLAN: readonly SmokeStep[] = [
       section: "hypotheses",
       op: "append",
       entry: {
-        claim: "P1 is the SMOKE-1 principal",
+        claim: "P1 is the smoke obituary's deceased",
         status: "active",
         supporting_assertion_ids: [],
         contradicting_assertion_ids: [],

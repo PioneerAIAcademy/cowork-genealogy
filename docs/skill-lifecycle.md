@@ -409,12 +409,13 @@ held. Place every finding first:
    own `references/` directory (e.g.
    `citation/references/gps-citation-standards.md`), which the skill loads on
    demand — keeping the main body short. A *plugin agent* finding goes **inline,
-   into the table for that record type inside the agent body** (e.g. the census
-   informant table in `packages/engine/plugin/agents/record-extractor.md`):
+   into the table for that record type inside the agent body**:
    agents carry no sibling reference files, by decision, because on-demand
    `Read` was measured to skip silently (`docs/architecture.md` §3.4). Sending an
    agent finding to a `references/` file creates a file the agent will never
-   read.
+   read. An extraction gap is neither: roles and classifications are decided in
+   code (`src/utils/record-extract.ts`, `src/utils/structured-document.ts`), so it
+   is a tooling defect (lane 1).
 4. **Core doctrine** (a genuine cross-record-type behavior change) → **first
    ask whether it can be a tool rule; only then a SKILL.md edit**, gated by the
    unit suite.

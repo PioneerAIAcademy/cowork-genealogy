@@ -103,7 +103,6 @@ def test_router_stop_fails_on_a_spawn():
 # --- the two callee hand-offs inside skills that stay skills -------------------
 
 ESCALATE = {"tags": ["familysearch-exhausted"]}
-OLD_STYLE = {"tags": ["convert-dates-handoff"]}
 
 
 def test_escalation_passes_on_a_spawn_and_fails_without_one():
@@ -269,10 +268,3 @@ def test_a_stub_with_no_skill_directory_is_stubbed_at_its_spawn():
         "gps-mentor": None,
         "person-evidence": None,
     }
-
-
-def test_old_style_date_passes_on_a_spawn_and_fails_without_one():
-    mod = _validators("test_record_extraction")
-    mod.test_old_style_date_routes_to_convert_dates([], [_spawn("convert-dates")], OLD_STYLE)
-    with pytest.raises(AssertionError):
-        mod.test_old_style_date_routes_to_convert_dates([], [_spawn("record-extractor")], OLD_STYLE)

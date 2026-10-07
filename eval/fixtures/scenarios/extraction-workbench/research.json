@@ -1,0 +1,21 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Extract each record the researcher hands in, as it comes, into sources and assertions",
+    "subject_person_ids": [],
+    "status": "active",
+    "created": "2026-05-13",
+    "updated": "2026-05-13"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

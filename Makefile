@@ -378,7 +378,8 @@ probe-agent-nesting: $(ENGINE_BUILD) ## Live probe: can a plugin agent spawn ano
 	#
 	# Answered 2026-09-23 (Claude Code 2.1.220, SDK 0.2.128): yes, at depth 2, and
 	# the tool is Agent -- a Task grant resolves to it. The SDK streams no depth-2
-	# messages. A driver spawning three real record-extractors in parallel ran
+	# messages. A driver spawning three real record-extractors (since retired; the
+	# extractor arms now spawn record-structurer) in parallel ran
 	# them concurrently: 694 s wall against ~1,419 s back to back, every write
 	# landed. Re-run when the CLI or the SDK moves.
 	cd apps/server && \
@@ -893,15 +894,6 @@ e2e-login: $(ENGINE_DEPS) ## Log in to FamilySearch (opens a browser; token last
 	# client ID, so you don't have to open a Claude session to log in.
 	# Login is host-global and ~24h-lived — a once-per-day act, not per run.
 	cd $(ENGINE_DIR) && npx tsx dev/e2e-login.ts
-
-.PHONY: e2e-thinking-probe
-e2e-thinking-probe: ## Reproduce the record-extractor runaway-thinking freeze in ~1 min (needs ANTHROPIC_API_KEY)
-	# Replays the exact delegation message that froze the frederick-munson run
-	# against sonnet-5 under three thinking configs (32k / off / 4k) with a
-	# stubbed tool loop, and reports which RAN AWAY vs ACTED. A one-turn API
-	# probe instead of a 15-min e2e run — settles the thinking-vs-model question.
-	# No MCP/FamilySearch calls; the API key comes from the shell or eval/.env.
-	cd eval/harness && uv run python -m e2e.try_record_extractor_thinking $(if $(MODEL),--model $(MODEL),)
 
 .PHONY: e2e-run
 e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySearch (expensive): make e2e-run TEST=kenneth-quass-death

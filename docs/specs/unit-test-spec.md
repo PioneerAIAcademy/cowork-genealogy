@@ -30,7 +30,7 @@ The format and harness in this spec target **single-turn skill evaluation**. The
 - **`init-project`** — production workflow asks the user for the research objective. For testing, put the full objective into `user_message`: *"Create a project to identify parents of Patrick Flynn, born ~1845 PA, died 1908 Schuylkill Co."* The skill should write a valid `research.json` and `tree.gedcomx.json` without needing follow-ups. v1 tests cover *structural output* but not whether the skill asks for the objective when the message is vague; that coverage is deferred.
 - **`search-external-sites`** — production workflow is "generate URL → user pastes capture → analyze capture." Decompose into two single-turn tests:
   - *URL generation test* — positive test under `search-external-sites`. The skill generates a search URL; grade on URL correctness, log entry shape.
-  - *Capture analysis test* — positive test under `record-extraction` (the receiving skill) with the pasted capture content embedded in `user_message`. Grade as a normal extraction.
+  - *Capture analysis test* — positive test under `record-structurer` (the receiving agent) with the pasted capture content embedded in the input. Grade as a normal extraction.
   - v1 covers both phases; what's lost is the *handoff* (does the skill correctly wait, or recover if the user pastes the wrong file?).
 
 True multi-turn dialogue support (canned user replies, scripted turn arrays) is a future spec revision.
@@ -39,7 +39,7 @@ True multi-turn dialogue support (canned user replies, scripted turn arrays) is 
 
 - **MCP-endpoint-only tests.** The master testing plan calls for unit tests on MCP endpoints with three axes (tool selection, argument quality, response interpretation). All three surface through a skill that calls the tool, and the MCP server has its own Vitest suite (`packages/engine/mcp-server/tests/`) for protocol/argument correctness. Tool usage is graded as a rubric dimension on the calling skill (Section 7), not as a standalone test.
 - **Multi-turn dialogue support.** See above.
-- **Skill chains.** A single test exercises one skill in isolation. Tests that span multiple skills (e.g., `research-plan` → `search-records` → `record-extraction`) belong in the e2e framework (`docs/specs/e2e-test-spec.md`).
+- **Skill chains.** A single test exercises one skill in isolation. Tests that span multiple skills (e.g., `research-plan` → `search-records` → `extraction_append`) belong in the e2e framework (`docs/specs/e2e-test-spec.md`).
 - **Schema versioning.** Schema breakage is acceptable during build-out (per `research-schema-spec.md` §7). No migration story in v1.
 - **Skill-body length, in either direction.** A test grades a **single invocation in fresh context**, so this harness cannot see multi-hour retention — and that is where a large SKILL.md earns or wastes its tokens. A skill body enters context once, via the `Skill` tool, and nothing reloads it; successive auto-compactions evict it. Measured over one real 309-turn session, `search-records` (then 41.6 KB) was resident for **228 of 309 turns** and invoked exactly once, after which its *unanchored* rules decayed: `count: 50` held at 100% while the body was resident and fell to 45%, and "always call `rank_search_matches`" fell from 77% to 3%, leaving 114 searches hand-triaged. Every rule with a **structural anchor** — the tool rejects the violation, its output feeds a step that cannot proceed without it, or it leaves a durable trace the agent re-reads — held at 100%. Consequence for this harness: it will bless a cut that removes something only a long session needs, and equally bless an addition that earns nothing. **The variable is anchoring, not length** — so the remedy is to anchor the rule, not to shorten the body, and both rules above are now `record_search` contracts (`defaultCount` and the always-rank step). See `docs/adrs/ADR-0003-anchor-cross-turn-rules-structurally.md`. **Skill-body length is not gated in either direction**, and a length *correctness* gate was declined in 2026-08 for two reasons. First, any cap is satisfiable by moving prose into `references/`, which the size lint does not track — it matches `skills/*/SKILL.md` and `agents/*.md` only, and `search-records` already carries more bytes in `references/` than in the body being measured, so `git mv` clears any threshold while removing nothing from an invocation. Second, the thresholds that bind are the wrong ones: two of the four largest bodies are agents, which this bullet exempts, so a cap low enough to bind `person-evidence` (40,070 B) condemns both of them, while the only band that binds `search-records` (54,917 B) alone and spares `record-extractor` (53,845 B) is a ~1 KB window around a single file. Ask "what anchors this?" at review instead. Size *visibility* — warn-only, no ceiling — is the standing prompt-budget check. Shrinking for **cost** was declined in the same pass and for a separate reason: the benefit is unmeasured (the one trim that was measured never had its e2e effect confirmed) while the one controlled split made things worse. ADR-0003 carries that decision and its reopen trigger. Plugin **agents** are exempt from the decay argument entirely: they run in fresh context per invocation and cannot decay this way.
 
@@ -86,12 +86,16 @@ Developer validators live separately:
 ```
 eval/harness/validators/
   test_conflict_resolution.py
-  test_record_extraction.py
+  test_extraction_append.py
   test_search_records.py
   ...
+  extraction_validators.py
 ```
 
-One file per skill, following pytest naming conventions.
+One file per skill, following pytest naming conventions. A module without the
+`test_` prefix is shared code the runner never loads on its own:
+`extraction_validators.py` holds the checks the extraction-append and
+record-structurer suites both import.
 
 ---
 
@@ -310,7 +314,6 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
 | `mcp_fixtures` | optional (omit if skill uses no MCP tools) | optional (omit if not needed) |
 | `judge_context` | required, may be empty array | required, may be empty array |
 | `expected_classifications` | optional (see Section 5.10) | omit (a declined skill creates no assertions) |
-| `refinement_targets` | optional (see Section 5.11) | omit (a declined skill updates no assertions) |
 | `index_error_source` | optional (see Section 5.12) | omit (a declined skill produces no audit) |
 | `negative` | omit | required |
 
@@ -450,11 +453,6 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         },
         "additionalProperties": false
       }
-    },
-    "refinement_targets": {
-      "type": "array",
-      "items": { "type": "string" },
-      "description": "Optional list of a_ assertion ids a classification-refinement test expects the run to update in place. Checked mechanically by test_refinement_preserves_extraction_fields_and_avoids_duplication. See Section 5.11."
     },
     "index_error_source": {
       "type": "string",
@@ -871,7 +869,7 @@ Guidelines for writing `judge_context` notes:
   | "Should classify the source as derivative." | "Classification should distinguish the original record from any indexed or transcribed copy in the source chain." |
   | "Should identify Thomas Flynn as Patrick's father." | "Should evaluate whether the household composition and ages support a parent-child relationship, and state the basis." |
 
-  **When a conclusion IS safe.** State one only where something other than the note pins it — a deterministic validator, `expected_classifications`, or the fixture text itself. `record-extraction` states conclusions freely and is safe doing so, because `expected_classifications` checks them and the judge defers to that check, so the note never becomes the only thing holding the grade up. A conclusion no other check can reach is an answer key no matter how it is worded.
+  **When a conclusion IS safe.** State one only where something other than the note pins it — a deterministic validator, `expected_classifications`, or the fixture text itself. The `extraction-append` suite states conclusions freely and is safe doing so, because `expected_classifications` checks them and the judge defers to that check, so the note never becomes the only thing holding the grade up. A conclusion no other check can reach is an answer key no matter how it is worded.
 
   **The leak is not confined to `judge_context`** — three other channels reach the same dimension, and no rule about notes touches any of them. If the note says "score 3 if it reasons about X", nothing else may state X. Apply the neutrality test to:
   - **`input.user_message`** — handing the skill the reasoning under test lets it pass by echoing the prompt. **`input.delegation` is deliberately exempt** (§5.2.1): a direct-agent test's adversarial delegation names the artifact and pre-states the answer on purpose, because resisting exactly that is what it grades.
@@ -910,7 +908,7 @@ Optional object overriding the harness's default execution limits. All fields ar
 | `max_wall_clock_seconds` | integer | 300 | Maximum wall-clock seconds for the skill execution phase (excludes judge) |
 | `max_tool_calls` | integer | 50 | Maximum MCP tool calls. Bounds fixture consumption and accidental fan-out |
 | `max_input_tokens_per_turn` | integer | 200000 | Maximum input tokens to the model in any single turn |
-| `sdk_message_silence_seconds` | integer | 180 | Maximum seconds the harness will wait between SDK messages before aborting with `sdk_stream_silence` (retryable). Bump per-test only for skills whose model spends >180s on a single thinking/generation step before emitting its first message — open-ended conflict-resolution prompts and multi-persona record-extraction are the typical cases. Don't bump the default (60s→180s already covers the long tail) — a tighter watchdog catches real upstream stalls faster |
+| `sdk_message_silence_seconds` | integer | 180 | Maximum seconds the harness will wait between SDK messages before aborting with `sdk_stream_silence` (retryable). Bump per-test only for skills whose model spends >180s on a single thinking/generation step before emitting its first message — open-ended conflict-resolution prompts and multi-persona extraction are the typical cases. Don't bump the default (60s→180s already covers the long tail) — a tighter watchdog catches real upstream stalls faster |
 | `run_skills` | array | `[]` | **Positive tests only.** Sub-skills this test expects to EXECUTE for real — see below |
 | `stub_skills` | array | `[]` | **Positive tests only.** Sub-skills this test does not want executed — see below |
 
@@ -931,7 +929,7 @@ Two forms, and the choice turns on the **caller's** contract, not the callee's:
 
 | Form | Use when | Example |
 |---|---|---|
-| `"skill-name"` | The caller hands off and never reads the result | `["record-extraction"]` |
+| `"skill-name"` | The caller hands off and never reads the result | `["record-structurer"]` |
 | `{ "skill": …, "response": … }` | The caller's own remaining work **consumes** the callee's output, so a bare deny would strip a deliverable it is specced to produce | `[{"skill": "search-external-sites", "response": "Ancestry: https://…"}]` |
 
 `search-records` is the worked case for the second form: its Step 7 tells it to
@@ -1025,7 +1023,7 @@ Default `false` reproduces the legacy counts-only judge input **byte-for-byte fo
 
 ### 5.10 `expected_classifications`
 
-Optional array of matchers — deterministic per-fixture classification ground truth, checked mechanically by the record-extraction validator (`test_expected_classifications` in `eval/harness/validators/test_record_extraction.py`). Each matcher names a `record_role` + `fact_type` pair (exactly as the skill persists them) plus expected values for any of `record_basis`, `informant_proximity`, `information_quality`. Per matcher: at least one NEW assertion (created by the run) with that pair must exist, and every new assertion with that pair must carry each declared value. The LLM judge still grades the classification dimensions; the validator results are the mechanical reference during annotation, so classification doctrine no longer rides on judge phrasing. Only declare pairs and values the doctrine fixes deterministically — an assertion the skill may legitimately omit (e.g. an optional inferred birth year) must not get a matcher, because the existence half would fail doctrine-correct runs.
+Optional array of matchers — deterministic per-fixture classification ground truth, checked mechanically by the extraction validator (`test_expected_classifications` in `eval/harness/validators/extraction_validators.py`). Each matcher names a `record_role` + `fact_type` pair (exactly as the skill persists them) plus expected values for any of `record_basis`, `informant_proximity`, `information_quality`. Per matcher: at least one NEW assertion (created by the run) with that pair must exist, and every new assertion with that pair must carry each declared value. The LLM judge still grades the classification dimensions; the validator results are the mechanical reference during annotation, so classification doctrine no longer rides on judge phrasing. Only declare pairs and values the doctrine fixes deterministically — an assertion the skill may legitimately omit (e.g. an optional inferred birth year) must not get a matcher, because the existence half would fail doctrine-correct runs.
 
 A matcher may also pin the fact **value**, not just its classification layers:
 
@@ -1048,33 +1046,11 @@ Two matcher modifiers keep the check both precise and non-flappy:
 
 Read a `coerced_routing_negative_to_na` warning before confirming the N/A. Either the skill carried out its own task inline — a real defect the routing pass hides, and correcting the `null` back to `1` is the only route by which it gets seen — or the judge misread a clean decline. Such a test is **mandatory** in the review sample for exactly that reason (§"Layer 3"): coercion turns the diagnostic `1` into `null`, and the sample's first trigger keys on `1` or `2`.
 
-### 5.11 `refinement_targets`
+### 5.11 `refinement_targets` (retired)
 
-Optional array of `a_` assertion ids — deterministic ground truth for a
-**classification-refinement** test, where the scenario seeds an assertion
-that already exists and the run is expected to correct its classification
-in place rather than create a new one. Checked mechanically by
-`test_refinement_preserves_extraction_fields_and_avoids_duplication`
-(`eval/harness/validators/test_record_extraction.py`) — added because no
-test in the corpus exercised the classification-refinement path at all.
-For each id: the assertion must still exist under the same id in the
-after-state; its extraction fields (`source_id`, `record_id`,
-`record_role`, `fact_type`, `value`, `structured_value`, `date`,
-`date_certainty`, `place`) must be byte-identical to before (a refinement
-corrects classification, not the extracted fact); at least one field must
-actually differ from before (a no-op "update" that changes nothing is not
-a refinement); every other pre-existing assertion must be untouched
-(scope enforcement); and no new assertion may share a target's
-`(source_id, record_role, fact_type)` shape (catches "fixed" via a
-duplicate append rather than an `update` op on the original).
-
-`expected_classifications` (5.10) alone cannot check any of this — its
-matcher looks for *new* assertions (as of the widening below, new-or-
-updated) matching a role/fact pair; it has no notion of "this specific
-existing assertion, and nothing else, changed." `refinement_targets` is
-the complementary check when the scenario's starting state already
-contains the assertion under test, which `expected_classifications`
-alone was never able to express.
+Retired with the classification-refinement test (lead, 2026-09-30). Classifications are now set
+in code at extraction and are not refined per assertion, so no run updates one in place, and
+the field and its validator were removed.
 
 **Widened matching in `expected_classifications`.** To let a matcher find
 the refinement target at all, `test_expected_classifications`'s notion of
@@ -1083,7 +1059,7 @@ run* (an id absent from the before-state, or present with a changed
 value). This is additive only: the candidate pool for every existing
 test's matchers can only grow, never shrink, so a matcher that passed
 under the old "new-only" definition still passes — it cannot introduce a
-new failure on a test that declares no `refinement_targets`.
+new failure.
 
 ### 5.12 `index_error_source`
 
@@ -1114,13 +1090,12 @@ the situation, the validator asserts the rule, and neither has to decide for
 itself which finding is which.
 
 **The value must reach the validator to do anything.** Like
-`refinement_targets` (5.11) and `expected_classifications` (5.10), this is a
+`expected_classifications` (5.10), this is a
 *top-level* field, and `orchestrator.py` assembles the validator-facing
 `test` dict as an explicit whitelist rather than passing the whole test JSON.
 A field declared in the schema and read by a validator but absent from that
 literal arrives as `None` on every run.
-`test_orchestrator_threads_index_error_source_into_validators` pins it, as the
-sibling test does for `refinement_targets`.
+`test_orchestrator_threads_index_error_source_into_validators` pins it.
 
 ---
 
@@ -1134,10 +1109,9 @@ Every skill's SKILL.md has "Do NOT use when" clauses that name confusable skills
 
 | Skill tested | Confusable skill | Boundary signal |
 |-------------|-----------------|-----------------|
-| record-extraction | search-records | "search for" vs "analyze this record" |
-| search-records | record-extraction | record data in context vs not |
+| search-records | `extraction_append` / `record-structurer` (an agent) | record data in context vs not |
 | question-selection | research-plan | "what question next" vs "how to answer this question" |
-| conflict-resolution | record-extraction | conflicting facts vs classifying evidence type (classification is owned by record-extraction since the assertion-classification merge, 2026-07-11) |
+| conflict-resolution | `extraction_append` (a tool) | conflicting facts vs classifying evidence type (classification is set in code at extraction and is not refined per assertion afterward) |
 | proof-conclusion | project-status (an agent, not a skill — its side of the pair is reached by auto-delegation from its own `description`, not by a routing row) | "write the proof" vs "where are we" |
 
 For each confusable pair, create tests from both directions: a test in skill A's directory with `correct_skill: ["B"]`, and a corresponding test in skill B's directory with `correct_skill: ["A"]`.
@@ -1163,7 +1137,7 @@ For each run, the harness computes a derived boolean `output.activated` per the 
 
 **The skill under test is `activated: true` if it appears in `output.skills_invoked` AND any of the following is true:**
 
-1. **Owned-section writes.** The skill wrote to any section it owns per the ownership table in `research-schema-spec.md` Section 4. Examples: conflict-resolution wrote to `conflicts`; record-extraction wrote to `assertions` or `sources`.
+1. **Owned-section writes.** The skill wrote to any section it owns per the ownership table in `research-schema-spec.md` Section 4. Examples: conflict-resolution wrote to `conflicts`; the test-only `extraction-append` skill wrote to `assertions` or `sources` through `extraction_append`.
 2. **Files created or modified.** The skill created or modified files in `cwd` other than those it normally reads (for stateless skills, e.g., search-wikipedia writing a markdown file in the user's working folder).
 3. **Substantive response.** The skill produced a response that is either (a) at least `_SUBSTANTIVE_MIN_WORDS_LONG` (30) words long, OR (b) does not pattern-match as a routing acknowledgement — short responses must not mention any other skill name. This catches legitimate concise outputs like `convert-dates` → `"1850-03-15"` while excluding "I see you're asking about X, but Y skill handles this" pure-routing.
 
@@ -1270,7 +1244,7 @@ Base dimensions do **not** consume the 3–5 rubric budget. Skills are graded on
 **Skill rubrics** — each skill gets a `rubric.md` defining 3-5 domain-specific dimensions. Cap at 5 per skill (plus 3 base = 8 total). The cap is a noise-control heuristic on the *stable* dimensions; per-test `judge_context` notes are not dimensions and are not counted against it, but keep them concise (~0-3 notes) for the same noise-control reason. Each rubric is self-contained. Examples:
 
 - conflict-resolution: source independence analysis, evidence weighing, resolution completeness
-- record-extraction: assertion atomicity, informant identification, evidence type accuracy
+- record-structurer: faithful reading, stated relations, verbatim relay
 - citation: Evidence Explained compliance, replication test, source vs information distinction
 
 **`rubric.md` file format.** A parseable structure so the judge prompt can ingest it consistently:
@@ -1915,7 +1889,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 - **`runs[].output.activated`** — derived boolean from Section 6's `activated` definition. Positive tests pass when `activated: true`; negative tests pass when `activated: false`. Having it as a derived field keeps Section 7's outcome formulas simple and prevents drift between activation logic and grading logic.
 - **`runs[].output.skills_invoked`** — the skill(s) Claude actually invoked. Combined with `activated`, drives the wrong-skill check for positive tests and the `correct_skill` array match for negative tests (Section 6).
 - **`runs[].output.tool_calls[].matched`** — distinguishes calls that hit a fixture (`kind: "predicate"`) from unmatched calls (`kind: "none"`, which returned a `fixture_not_found` error to the skill). Any unmatched call aborts the run with `aborted_reason: unmatched_tool_call` (Section 15) — the skill ran against an error response, so the run isn't scored.
-- **`runs[].output.builtin_tool_calls`** — every non-MCP tool call the run made (`Read`, `Write`, `Grep`, `Skill`, `Task`, …), in call order. Optional and **omitted entirely when the run made none**, so historical run logs stay valid and an unchanged run writes unchanged output. MCP calls are excluded — they are already in `tool_calls` and `attempted_mcp_calls`. `agent_id` is present only when the call came from inside a Task-spawned subagent and absent on the main thread, which is what distinguishes "the record-extractor agent read the reference file" from "the router read it". Argument values are stringified and truncated to 200 characters, so a `Write` cannot carry a whole file body into the committed corpus; the truncation is silent, with no marker. Telemetry only — nothing grades, gates, or aborts on it, and it does not count toward `max_tool_calls`.
+- **`runs[].output.builtin_tool_calls`** — every non-MCP tool call the run made (`Read`, `Write`, `Grep`, `Skill`, `Task`, …), in call order. Optional and **omitted entirely when the run made none**, so historical run logs stay valid and an unchanged run writes unchanged output. MCP calls are excluded — they are already in `tool_calls` and `attempted_mcp_calls`. `agent_id` is present only when the call came from inside a Task-spawned subagent and absent on the main thread, which is what distinguishes "a subagent read the reference file" from "the router read it". Argument values are stringified and truncated to 200 characters, so a `Write` cannot carry a whole file body into the committed corpus; the truncation is silent, with no marker. Telemetry only — nothing grades, gates, or aborts on it, and it does not count toward `max_tool_calls`.
 - **`runs[].output.tool_calls[].expected_args`** — the matched fixture's `args` block (the canonical expected args), copied so the trace view and judge prompt can render expected/actual side-by-side without re-reading the fixture file. Null when no fixture matched.
 - **`runs[].output.text_response`** — Claude's full response, not truncated. If a single run's text exceeds 100 KB, the harness writes it to a sidecar file (`runs/<run_id>.text.md`) and stores a reference (`{ "ref": "runs/<run_id>.text.md" }`) in the log instead, to keep the JSON tractable.
 - **`runs[].output.file_changes.diff`** — structured diff with full before/after values for modified fields. For a modified entry, fields that didn't exist on the `before` object are emitted as `{"before": null, "after": <value>}` (added field); fields removed from the `after` object are emitted as `{"before": <value>, "after": null}` (removed field). Use literal `null`, not absent keys, so the judge always sees a uniform shape. `deleted` should always be empty (no-delete enforcement); if it's not, the validator already caught it.
@@ -1984,6 +1958,8 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
 ## 13. Worked Examples
 
 ### 13.1 Positive test: record-extraction
+
+> Written against the `record-extraction` skill, since retired (13.1 and 13.2). The live suites are `eval/tests/unit/extraction-append/` (indexed records) and `eval/tests/unit/record-structurer/` (text sources); the test format shown is unchanged.
 
 ```json
 {
@@ -2270,7 +2246,7 @@ should be updated.
 
 **The allowlist cannot express a per-*context* rule.** Because the union above makes the session set a superset of every delegated agent's set, the main session is granted every tool its subagents need — including ones only a subagent may safely call (`image_read` returns inline base64 that overflows the transport buffer if it lands in the caller's context). That policy lives in the **PreToolUse hook** instead, which can discriminate by context via `agent_id` — absent on the main thread, present inside a Task-spawned subagent.
 
-The guard fires only when all three hold: the tool is in `SUBAGENT_ONLY_TOOLS`, the call is on the main thread, and the skill did **not** declare the tool in its own `allowed-tools`. That last clause is what separates a violation from a legitimate direct call — a skill that declares a guarded tool for itself may call it directly, while `record-extraction` holds `image_read` only through `@plugin:image-reader` and must delegate. **The clause is now REACHED**, by a different tool than the one it guards: `extraction_append` was the set's second member until indexed-record extraction moved into code, and `record-extraction` now declares it and calls it on the main thread, so the tool left the set entirely. The one remaining member, `image_read`, is declared by no skill — `search-images` used to declare it directly and moved to delegating via `@plugin:image-reader` (2026-07-17). The exemption mechanism stays available for a skill that legitimately needs it; both facts are pinned by tests in `harness/tests/unit/test_context_policy.py`. `declared_skill_tools()` (above) returns the pre-union set the check needs; `compute_allowed_tools` is the wrong input because it already contains the union. See `harness/context_policy.py` and `docs/plan/image-read-context-policy.md` §4.1. The universal validator `test_no_main_thread_subagent_only_calls` fails any run that breaks it, so routing is graded deterministically rather than by the judge (§5.10's pattern, applied to routing).
+The guard fires only when all three hold: the tool is in `SUBAGENT_ONLY_TOOLS`, the call is on the main thread, and the skill did **not** declare the tool in its own `allowed-tools`. That last clause is what separates a violation from a legitimate direct call — a skill that declares a guarded tool for itself may call it directly, while a skill that reaches `image_read` only through `@plugin:image-reader` must delegate. **The clause is now REACHED**, by a different tool than the one it guards: `extraction_append` was the set's second member until indexed-record extraction moved into code, and `research` now declares it and calls it on the main thread, so the tool left the set entirely. The one remaining member, `image_read`, is declared by no skill — `search-images` used to declare it directly and moved to delegating via `@plugin:image-reader` (2026-07-17). The exemption mechanism stays available for a skill that legitimately needs it; both facts are pinned by tests in `harness/tests/unit/test_context_policy.py`. `declared_skill_tools()` (above) returns the pre-union set the check needs; `compute_allowed_tools` is the wrong input because it already contains the union. See `harness/context_policy.py` and `docs/plan/image-read-context-policy.md` §4.1. The universal validator `test_no_main_thread_subagent_only_calls` fails any run that breaks it, so routing is graded deterministically rather than by the judge (§5.10's pattern, applied to routing).
 
 ### Capturing `skills_invoked` via PreToolUse
 

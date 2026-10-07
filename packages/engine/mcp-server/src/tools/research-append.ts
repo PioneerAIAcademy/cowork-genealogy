@@ -526,11 +526,13 @@ function planActiveInvariants(entry: any, research: any): string[] {
  *  when the precondition must be satisfied by someone else. Read live when it is
  *  the same author's own prior step." Neither half is this author's own step —
  *  `ownership.json` gives `hypotheses.callers` as `["agent:hypothesis-tracking"]`
- *  while `conflicts` belongs to `skill:conflict-resolution` and `assertions` to
- *  `skill:record-extraction`. Both of those sections are `enforceableAt:
- *  ["unit"]` only (no hook arm, no tool arm), so under a live read nothing would
- *  stop a session from writing the satisfying conflict or assertion in the same
- *  batch as the promote and clearing this gate from inside the call it gates.
+ *  while `conflicts` belongs to `skill:conflict-resolution` and `assertions` is
+ *  written only by `extraction_append`. `conflicts` is `enforceableAt: ["unit"]`
+ *  only (no hook arm, no tool arm), so under a live read nothing would stop a
+ *  session from writing the satisfying conflict in the same batch as the promote
+ *  and clearing this gate from inside the call it gates. (`assertions` gained a
+ *  tool arm on 2026-10-05: a caller's assertions write is refused before this
+ *  runs, so only `extraction_append`'s own batches can carry one.)
  *
  *  Measured cost of the snapshot read: **0 refusals** across the calibration
  *  corpus — no batch appends an assertion ahead of the promote, and neither of
@@ -3116,7 +3118,7 @@ export function relationshipCategory(value: unknown): string | undefined {
 /** The category the VALUE claims for the record subject, or undefined when it
  *  does not speak to the subject's own role. Exported so the cross-language
  *  drift test can pin it against the Python copy in
- *  `eval/harness/validators/test_record_extraction.py`: the rule exists twice
+ *  `eval/harness/validators/extraction_validators.py`: the rule exists twice
  *  because the harness and the engine share no runtime, and nothing else keeps
  *  the two in step. */
 export function subjectRoleInValue(value: string): string | undefined {
@@ -4297,17 +4299,7 @@ async function prepareOps(
       detectionEngaged = true;
       // Existing sources covering any of the batch's record ids, in
       // research.sources array order (deterministic "first match").
-      const sourceIdsForRecords = new Set<string>();
-      for (const a of Array.isArray(research.assertions) ? research.assertions : []) {
-        if (
-          a &&
-          typeof a.record_id === "string" &&
-          typeof a.source_id === "string" &&
-          batchRecordKeys.has(arkToBareId(a.record_id))
-        ) {
-          sourceIdsForRecords.add(a.source_id);
-        }
-      }
+      const sourceIdsForRecords = sourceIdsForRecordIds(research, batchRecordKeys);
       const matched = (Array.isArray(research.sources) ? research.sources : []).filter(
         (s: any) => s && typeof s === "object" && sourceIdsForRecords.has(s.id),
       );
@@ -4867,6 +4859,66 @@ export interface ResearchAppendOptions {
   toolName?: string;
 }
 
+/**
+ * The ids of the existing sources that already cover any of `bareRecordIds`,
+ * read off the assertions that cite them (§3.4.1). The one derivation of
+ * "is this record already extracted", shared by source-reuse detection here and
+ * by `extraction_append`'s resend skip, so the two cannot disagree.
+ */
+export function sourceIdsForRecordIds(research: any, bareRecordIds: ReadonlySet<string>): Set<string> {
+  const out = new Set<string>();
+  for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
+    if (
+      a &&
+      typeof a.record_id === "string" &&
+      typeof a.source_id === "string" &&
+      bareRecordIds.has(arkToBareId(a.record_id))
+    ) {
+      out.add(a.source_id);
+    }
+  }
+  return out;
+}
+
+/** The one field a direct `research_append` call may change on an assertion. */
+const CALLER_ASSERTION_FIELDS = new Set(["informant_bias_notes"]);
+
+/** `research_append` as an MCP caller reaches it. Assertions are written only by
+ *  `extraction_append`, which calls `researchAppend` directly and so never meets
+ *  this check. A caller may update one existing assertion's
+ *  `informant_bias_notes`, to record a re-reading or a doubt; any other
+ *  `assertions` write is refused, whole call, before anything is read
+ *  (genealogist ruling 2026-10-05, option B). */
+export async function researchAppendFromCaller(
+  input: ResearchAppendInput,
+): Promise<ResearchAppendResult> {
+  input.ops = coerceJsonArg(input.ops) as ResearchAppendOp[] | undefined;
+  input.fields = coerceJsonArg(input.fields) as Record<string, unknown> | undefined;
+  const isBatch = input.ops !== undefined;
+  const ops = isBatch
+    ? (Array.isArray(input.ops) ? input.ops : [])
+    : [{ section: input.section, op: input.op, fields: input.fields } as ResearchAppendOp];
+  const errors: string[] = [];
+  ops.forEach((op, i) => {
+    if (!op || (op as { section?: unknown }).section !== "assertions") return;
+    const fields = (op as { fields?: unknown }).fields;
+    const keys = fields && typeof fields === "object" && !Array.isArray(fields) ? Object.keys(fields) : [];
+    const notesOnly =
+      (op as { op?: unknown }).op === "update" && keys.length > 0 && keys.every((k) => CALLER_ASSERTION_FIELDS.has(k));
+    if (notesOnly) return;
+    const msg =
+      "research_append does not write assertions: extraction_append writes them (a FamilySearch " +
+      "record by recordIds; any other source through the record-structurer agent). The one change " +
+      "allowed here is an update that sets only informant_bias_notes on an existing assertion, to " +
+      "record a re-reading or a doubt. A disputed reading belongs in a conflict, not in the assertion's value.";
+    errors.push(isBatch ? `ops[${i}]: ${msg}` : msg);
+  });
+  if (errors.length > 0) {
+    return isBatch ? { ok: false, errors, opsReceived: ops.length } : { ok: false, errors };
+  }
+  return researchAppend(input);
+}
+
 export async function researchAppend(
   input: ResearchAppendInput,
   options: ResearchAppendOptions = {},
@@ -5285,23 +5337,13 @@ export const researchAppendSchema = {
     "whole project, and writes atomically. Returns a compact summary; on any failure " +
     "nothing is written.\n" +
     "\n" +
-    "To persist a whole record in ONE call, pass an `ops` array (each op is " +
-    "`{ section, op, entry?/entryId?/fields?, planId? }`): one sources append plus one " +
-    "assertions append per fact, with the top-level `sourceDescription: { title, " +
-    "author?, url? }`. The tool then creates the tree.gedcomx.json source description " +
-    "(assigning the S id), stamps the source op's `gedcomx_source_description_id` and " +
-    "every assertion's `source_id`, auto-fills/verifies `record_persona_id` and " +
-    "canonicalizes `record_id` against the log entry's results sidecar, resolves " +
-    "`standard_place` for assertion places (copying the sidecar's resolution when " +
-    "present; resolved values are echoed in `resolvedPlaces`), validates ONCE, and " +
-    "writes tree.gedcomx.json + research.json together. Source reuse is " +
-    "auto-detected: when the batch's assertions cite a record_id an existing source " +
-    "already covers, the tool updates that source in place (same repository) or " +
-    "reuses its S entry (different repository) instead of duplicating — always " +
-    "supply `sourceDescription` and relay the echoed `sourceReuse` " +
-    "({ action: created | updated_existing | new_source_reused_s, srcId, sId }). " +
-    "To cite a specific known S entry explicitly, omit `sourceDescription` and set " +
-    "the sources op's `gedcomx_source_description_id` to that S id. Batches are " +
+    "Assertions are written by extraction_append, never here: the one assertions " +
+    "change accepted is an update that sets only `informant_bias_notes` on an existing " +
+    "assertion, to record a re-reading or a doubt. Any other assertions write is " +
+    "refused, and a disputed reading belongs in a conflict.\n" +
+    "\n" +
+    "To apply several mutations in one call, pass an `ops` array (each op is " +
+    "`{ section, op, entry?/entryId?/fields?, planId? }`). Batches are " +
     "all-or-nothing: on failure nothing is written and errors name the failing ops " +
     "(`ops[i]: <msg>`) plus `opsReceived` so you can confirm no op was dropped.",
   inputSchema: {
@@ -5323,9 +5365,7 @@ export const researchAppendSchema = {
         type: "string",
         enum: ["append", "update"],
         description:
-          "append a new entry (tool assigns the id) or update an existing one by id. " +
-          "Correcting an assertion's place/standard_place/date/value also updates the " +
-          "tree fact materialized from it — no separate tree_correct call.",
+          "append a new entry (tool assigns the id) or update an existing one by id.",
       },
       entry: {
         type: "object",
@@ -5361,8 +5401,7 @@ export const researchAppendSchema = {
               type: "string",
               enum: ["append", "update"],
               description:
-                "append (tool assigns id) or update by id. An assertions update also " +
-                "updates the tree fact materialized from that assertion.",
+                "append (tool assigns id) or update by id.",
             },
             entry: { type: "object", description: "append: the new entry in snake_case, WITHOUT an id." },
             entryId: { type: "string", description: "update: the id of the existing entry to modify." },

@@ -175,7 +175,7 @@ part of `staged`.
 - `image_transcribe` — `payload: { query: { imageId | ark | memoryArtifactUrl | file, lookingFor? },
   results: [ { id, source, content_type, size_bytes, model, transcription, truncated?, found? } ] }`,
   where `id` is the FamilySearch identifier or `capture:<basename>` for an uploaded file (the
-  record-extraction id convention). The tool also returns a `digest` beside the handle.
+  extraction id convention, as `record-structurer` uses it). The tool also returns a `digest` beside the handle.
 - `record_read` — `payload: { query: { recordId }, results: [ { recordId, gedcomx, indexFields? } ] }`:
   `record_search`'s element shape plus one field, so `record_read({ recordId, resultsRef })` still
   reads it back unchanged.
@@ -312,8 +312,8 @@ same ground truth production does.
   gedcomx from the staged/finalized sidecar — no live FS fetch — returning the
   search stage's standardized places as-is (a live read uses pure `toSimplified`,
   keeping only the record's own normalized places, never resolver-derived ones);
-  used by record-extraction /
-  search-records to avoid re-fetching a record they already searched). Both share
+  used by search-records to avoid re-fetching a record it already searched;
+  `extraction_append` does not use it — it always reads the record live). Both share
   the dual-location read helper `readStagedResults` (staged handle OR finalized
   `results/<log_id>.json`) and never unlink, so a staged handle can still be
   finalized afterward.

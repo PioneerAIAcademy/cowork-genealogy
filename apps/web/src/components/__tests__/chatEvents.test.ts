@@ -118,12 +118,12 @@ describe('foldChatEvent', () => {
   // because deltas carry no label, drops deltas while any task is live.
   it('drops a labelled text block without opening or touching a bubble', () => {
     const before: ChatMessage[] = [{ role: 'user', text: 'go', tools: [] }]
-    const after = foldChatEvent(before, 'text', { kind: 'text', text: 'agent prose', agent: 'record-extractor' })
+    const after = foldChatEvent(before, 'text', { kind: 'text', text: 'agent prose', agent: 'record-structurer' })
     expect(after).toBe(before)
   })
 
   it('drops a labelled thinking block', () => {
-    const msgs = foldChatEvent([], 'thinking', { kind: 'thinking', text: 'agent reasoning', agent: 'record-extractor' })
+    const msgs = foldChatEvent([], 'thinking', { kind: 'thinking', text: 'agent reasoning', agent: 'record-structurer' })
     expect(msgs).toHaveLength(0)
   })
 
@@ -131,7 +131,7 @@ describe('foldChatEvent', () => {
     // Deltas that slipped through before task_started was folded must not stay
     // on screen once the block they previewed turns out to be a subagent's.
     let msgs = foldChatEvent([], 'text_delta', { kind: 'text_delta', text: 'Reading the ce' })
-    msgs = foldChatEvent(msgs, 'text', { kind: 'text', text: 'Reading the census.', agent: 'record-extractor' })
+    msgs = foldChatEvent(msgs, 'text', { kind: 'text', text: 'Reading the census.', agent: 'record-structurer' })
     expect(msgs[0].streamText).toBe('')
     expect(msgs[0].text).toBe('')
   })
@@ -145,8 +145,8 @@ describe('foldChatEvent', () => {
   })
 
   it('still records a labelled tool chip — the status trail is not prose', () => {
-    const msgs = foldChatEvent([], 'tool_use', { kind: 'tool_use', tool: 'record_read', summary: 'r', agent: 'record-extractor' })
-    expect(msgs[0].tools[0]).toMatchObject({ tool: 'record_read', agent: 'record-extractor' })
+    const msgs = foldChatEvent([], 'tool_use', { kind: 'tool_use', tool: 'record_read', summary: 'r', agent: 'record-structurer' })
+    expect(msgs[0].tools[0]).toMatchObject({ tool: 'record_read', agent: 'record-structurer' })
   })
 })
 
@@ -199,7 +199,7 @@ describe('replaying a captured subagent stream through the fold', () => {
     expect(m.streamText).toBe('')
     // Tool chips keep the agent label.
     expect(m.tools).toEqual([
-      { tool: 'record_read', summary: 'recordId=X', done: false, agent: 'record-extractor' }
+      { tool: 'record_read', summary: 'recordId=X', done: false, agent: 'record-structurer' }
     ])
   })
 })

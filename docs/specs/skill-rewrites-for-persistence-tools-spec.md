@@ -100,18 +100,11 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
   the post-write validate guidance. **Recovery:** a TTL-expired `staged.resultsRef`
   → re-run the search (cheap, re-stages).
 
-### 4.3 `record-extraction` — BOTH waves (rewrite once)
-- **Wave 1 — Step 4:** route the `user_provided` log entry through
-  `research_log_append` (nil sidecar), and when the source came from a staged
-  `record_search`, pass `staged.resultsRef`.
-- **Wave 2 — Steps 1/3/5a:** `research_append({ section: "sources", op: "append" })`
-  for the `src_` entry, then one `research_append({ section: "assertions", op:
-  "append" })` per assertion (including negative assertions) — the tool assigns each
-  id and validates each, removing the "write first persona, then Edit-append the
-  rest" chunking dance.
-- **Trim:** the sidecar/log-protocol references; the by-hand "next available id"
-  guidance; the post-write validate step. **Keep:** all extraction judgment (BCG
-  objectivity, one-fact-per-assertion, classification values, source-reuse decision).
+### 4.3 `record-extraction` — retired
+The skill and its `record-extractor` agent are deleted. Extraction runs in code through
+`extraction_append` (`recordIds`, `documents` or `absences`), which writes the log entry,
+the source and the assertions itself; text sources reach it through the
+`record-structurer` agent (`record-structurer-agent-spec.md`).
 
 ### 4.4 `convert-dates` — Wave 2 (the cleanest consumer)
 - Replace the "deterministic arithmetic you perform in context" paragraph and the
@@ -211,7 +204,7 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
 
 ## 5. Cross-cutting
 
-- **Rewrite both-waves skills once.** `tree-edit`, `record-extraction`, and
+- **Rewrite both-waves skills once.** `tree-edit`, `record-extraction` (since retired), and
   `proof-conclusion` are each touched by both waves — do a single pass per file so
   the `SKILL.md` is edited once (the whole reason this spec is consolidated).
 - **Supersede-not-delete coordination.** `question-selection` / `research-plan` /
@@ -223,9 +216,10 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
   `op: "update"` — a singleton-object section (no id/append; `allowedFields:
   ["status"]`; the tool stamps `project.updated`). See
   `research-append-tool-spec.md`.
-- **Known gap — tree source descriptions.** `record-extraction` (the `S` entry)
-  and `proof-conclusion` (Step 6 "ensure every cited source has a GedcomX `S`
-  entry") write `tree.gedcomx.json` `sources[]`, but `tree_edit` has no source
+- **Known gap — tree source descriptions.** `proof-conclusion` (Step 6 "ensure
+  every cited source has a GedcomX `S` entry") writes `tree.gedcomx.json`
+  `sources[]` (extraction's `S` entry is written by `extraction_append` through
+  `research_append`'s composite persist), but `tree_edit` has no source
   operation. Those source writes stay hand-done until `tree_edit` gains
   `add_source` / `update_source` (a small follow-up to the tree-edit tool).
 - **`allowed-tools` frontmatter** updated per skill; `validate_research_schema`
@@ -240,7 +234,7 @@ Wave-2-only, single-tool skills first (lowest risk): `convert-dates`,
 `assertion-classification`, `hypothesis-tracking`, `research-exhaustiveness`,
 `question-selection`, `research-plan`, `conflict-resolution`. Then the
 `research_append`+`tree_edit` skill `person-evidence`. Then the both-waves skills
-(`tree-edit`, `record-extraction`, `proof-conclusion`). The three search skills can
+(`tree-edit`, `record-extraction` (since retired), `proof-conclusion`). The three search skills can
 go any time (wave-1 dominant). Each skill is an independent, verifiable PR.
 
 ---

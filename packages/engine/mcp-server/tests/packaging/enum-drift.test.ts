@@ -271,16 +271,6 @@ for (const { abs, rel } of allFiles) {
 // file — this prevents silent removal.
 const EXPECTED: Array<{ relPath: string; enums: string[] }> = [
   {
-    relPath: "agents/record-extractor.md",
-    enums: [
-      "source_classification",
-      "date_certainty",
-      "information_quality",
-      "informant_proximity",
-      "record_basis",
-    ],
-  },
-  {
     relPath: "skills/research/SKILL.md",
     enums: [
       "record_basis",

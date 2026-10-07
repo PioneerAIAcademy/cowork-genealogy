@@ -822,7 +822,14 @@ def test_unnamed_delegate_write_flagged():
     assert "general-purpose" in violations[0]
 
 
-def test_extraction_append_by_record_extractor_not_flagged():
+def test_extraction_append_by_record_structurer_not_flagged():
+    calls = [_extraction_call(agent_id="a1", agent_type="record-structurer")]
+    assert find_protected_writes_by_unnamed_delegate(calls) == []
+
+
+def test_extraction_append_by_the_retired_record_extractor_not_flagged():
+    """Committed runs replay through this detector; the retired agent's calls
+    keep the verdict they were graded under."""
     calls = [_extraction_call(agent_id="a1", agent_type="record-extractor")]
     assert find_protected_writes_by_unnamed_delegate(calls) == []
 
@@ -836,7 +843,7 @@ def test_extraction_append_by_unnamed_delegate_flagged():
     calls = [_extraction_call(agent_id="a1", agent_type="general-purpose")]
     violations = find_protected_writes_by_unnamed_delegate(calls)
     assert len(violations) == 1
-    assert "record-extractor" in violations[0]
+    assert "record-structurer" in violations[0]
 
 
 def test_unhashable_agent_type_flags_without_raising():
@@ -859,11 +866,11 @@ def test_extraction_append_by_unnamed_delegate_still_flagged_when_errored():
     calls = [_extraction_call(agent_id="a1", agent_type="general-purpose", is_error=True)]
     violations = find_protected_writes_by_unnamed_delegate(calls)
     assert len(violations) == 1
-    assert "record-extractor" in violations[0]
+    assert "record-structurer" in violations[0]
 
 
 def test_extraction_append_by_wrong_dedicated_agent_still_flagged():
-    """Only record-extractor is legitimate for this specific tool -- being
+    """Only record-structurer is legitimate for this specific tool -- being
     IN DEDICATED_AGENT_NAMES is not sufficient the way it is for the four
     GUARDRAIL_SKILLS writes."""
     calls = [_extraction_call(agent_id="a1", agent_type="gps-mentor")]
@@ -871,23 +878,23 @@ def test_extraction_append_by_wrong_dedicated_agent_still_flagged():
     assert len(violations) == 1
 
 
-def test_namespaced_record_extractor_treated_as_bare():
-    """Cowork logs a plugin-namespaced agent_type ("genealogy-research:record-extractor")
+def test_namespaced_record_structurer_treated_as_bare():
+    """Cowork logs a plugin-namespaced agent_type ("genealogy-research:record-structurer")
     while the harness reports bare names (#980 ruling; live probe 2026-08-15). The
     detector must strip the leading "<plugin>:" before comparing, on BOTH clauses,
     or an equality/membership test green in CI is dead against production data
     (#650/#698/#939). Bare and namespaced must behave identically."""
-    # extraction_append clause (== "record-extractor")
+    # extraction_append clause (in EXTRACTION_AGENT_NAMES)
     assert (
         find_protected_writes_by_unnamed_delegate(
-            [_extraction_call(agent_id="a1", agent_type="genealogy-research:record-extractor")]
+            [_extraction_call(agent_id="a1", agent_type="genealogy-research:record-structurer")]
         )
         == []
     )
     # owning_skills clause (in DEDICATED_AGENT_NAMES)
     assert (
         find_protected_writes_by_unnamed_delegate(
-            [_owned_write("person-evidence", agent_id="a1", agent_type="genealogy-research:record-extractor")]
+            [_owned_write("person-evidence", agent_id="a1", agent_type="genealogy-research:record-structurer")]
         )
         == []
     )
@@ -900,7 +907,7 @@ def test_namespaced_general_purpose_still_flagged():
     ext = find_protected_writes_by_unnamed_delegate(
         [_extraction_call(agent_id="a1", agent_type="genealogy-research:general-purpose")]
     )
-    assert len(ext) == 1 and "record-extractor" in ext[0]
+    assert len(ext) == 1 and "record-structurer" in ext[0]
     owned = find_protected_writes_by_unnamed_delegate(
         [_owned_write("person-evidence", agent_id="a1", agent_type="genealogy-research:general-purpose")]
     )

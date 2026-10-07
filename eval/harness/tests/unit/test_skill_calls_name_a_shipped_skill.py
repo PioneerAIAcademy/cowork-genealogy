@@ -74,3 +74,13 @@ def test_a_skill_call_to_a_deleted_skill_fails(calls):
 )
 def test_legitimate_calls_pass(calls):
     check(calls)
+
+
+def test_a_test_only_skill_passes_in_its_own_suite():
+    check([_skill("extraction-append")], test={"skill": "extraction-append"})
+
+
+@pytest.mark.parametrize("test", [None, {"skill": "record-structurer"}], ids=["no-test", "other-suite"])
+def test_a_test_only_skill_fails_outside_its_own_suite(test):
+    with pytest.raises(AssertionError, match="extraction-append"):
+        check([_skill("extraction-append")], test=test)

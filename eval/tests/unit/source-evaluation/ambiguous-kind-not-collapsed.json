@@ -28,7 +28,7 @@
     "person-quality-driscoll-detail"
   ],
   "judge_context": [
-    "Should call person_read with sourceDescriptions to enumerate what is attached, then record_read each source that carries a record ARK",
+    "Should call person_read to enumerate what is attached, then record_read each source that carries a record ARK",
     "The 1851 census entry (SD-DRIS-E) indexes a residence at Melbourne, Canada East, where the profile records Sherbrooke. That is the only field in the record that disagrees, and the record carries no birth year, no spouse and no household members. Grade whether the reply is honest about what one field on a detail-free index entry can and cannot establish -- not which of the two explanations it prefers.",
     "Both readings of that entry are supported by cues the skill's own body lists: a place keyed to the wrong jurisdiction, and a same-name individual in a neighbouring township. Grade whether the reply distinguishes what this record establishes from what it merely permits, and whether the confidence it expresses is warranted by an index entry carrying one disagreeing field and no corroborating detail. Do not grade which of the two readings it favours.",
     "The source_attachments response names no tree person other than GJ72-9WD, so there is no same-name profile available to weigh. A reply that asserts a specific other person holds this record has invented them.",

@@ -26,7 +26,7 @@
     "person-quality-hole-detail"
   ],
   "judge_context": [
-    "Should call person_read with sourceDescriptions to enumerate what is attached, then record_read each source that carries a record ARK",
+    "Should call person_read to enumerate what is attached, then record_read each source that carries a record ARK",
     "The 1885 Minnesota State Census (SD-HOLE-C) is the one source in this corpus whose record describes a different life: it gives a birth of 1852 against the profile's 1875, a residence in Otter Tail County against the profile's Polk, and a wife and children who are in none of the tool responses for this family. Whether the reply reaches the misattributed classification should be graded on whether it names which fields disagree, not on the wording it uses.",
     "source_attachments must be called before any detach is recommended -- the skill's body requires it so the recommendation can say where the record does belong rather than only that it does not belong here",
     "KD96-WX7 is named in the attachments response. Naming that person as the record's true subject is only supported after a person_read of them; the attachment alone proves attachment, not ownership. A reply that reads them and then names them is doing what the body asks; a reply that names them off the attachment alone is not.",

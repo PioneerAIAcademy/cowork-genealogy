@@ -83,7 +83,7 @@ def test_staging_refreshes_a_stale_definition(tmp_path, monkeypatch):
     # A session resumed after an engine upgrade must get the new body, not the
     # copy staged by the run that created the project.
     monkeypatch.setattr(real_agent, "_PLUGIN_DIR", str(PLUGIN_DIR))
-    stale = tmp_path / ".claude" / "agents" / "record-extractor.md"
+    stale = tmp_path / ".claude" / "agents" / "record-structurer.md"
     stale.parent.mkdir(parents=True)
     stale.write_text("stale\n", encoding="utf-8")
 

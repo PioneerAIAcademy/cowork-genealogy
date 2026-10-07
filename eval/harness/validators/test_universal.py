@@ -570,6 +570,28 @@ def _remap_collapsing(value, remap: dict[str, str]):
     return value
 
 
+def _explained_by_appends(before_section, after_section) -> bool:
+    """True when `after_section` is `before_section` plus new entries only.
+
+    What `extraction_append` does to each section it writes: it appends a
+    source, its assertions and its log entry, and changes nothing already there.
+    Keyed on entry `id`, so order does not matter; an entry with no `id`, an
+    existing entry changed or removed, or a section that is not a list fails
+    closed.
+    """
+    if not isinstance(before_section, list) or not isinstance(after_section, list):
+        return False
+    after_by_id: dict[str, dict] = {}
+    for e in after_section:
+        if not isinstance(e, dict) or not isinstance(e.get("id"), str):
+            return False
+        after_by_id[e["id"]] = e
+    for e in before_section:
+        if not isinstance(e, dict) or after_by_id.get(e.get("id")) != e:
+            return False
+    return len(after_section) > len(before_section)
+
+
 def _explained_by_merge(before_section, after_section, remap: dict[str, str]) -> bool:
     """True when the section's whole delta is the merge's id permutation.
 
@@ -605,8 +627,12 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
     `research_append` — strictly more than the merge needs, and it reopens the
     failure the `person_evidence` row names.
 
-    Scoped to research.json. `test_tree_ownership_table` does NOT take this
-    path: the tree rows already list `merge_tree_persons` among their
+    `extraction_append` is the second tool-identity path: it decides roles and
+    classifications in code, so which skill calls it does not matter, and it is
+    authorized for appends only (`_explained_by_appends`).
+
+    The merge path is scoped to research.json. `test_tree_ownership_table` does
+    NOT take it: the tree rows already list `merge_tree_persons` among their
     `writerTools` *and* name tree-edit a caller, so the clause would authorize
     nothing there that is not already authorized, while silently widening
     `materialize_facts` and `tree_forget` to callers that have never asked.
@@ -681,6 +707,12 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
             if "merge_tree_persons" in (identity_tools.get(section) or set()) and (
                 "merge_tree_persons" in called
             ) and _explained_by_merge(before.get(section), after.get(section), remap):
+                continue
+            # extraction_append: roles and classifications are set in code, so
+            # any skill may call it. Authorized only for appends.
+            if "extraction_append" in (identity_tools.get(section) or set()) and (
+                "extraction_append" in called
+            ) and _explained_by_appends(before.get(section), after.get(section)):
                 continue
             unauthorized.append(section)
 
@@ -957,6 +989,14 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
                 after_state.get("research_json"),
                 _corrected_assertion_ids(tool_calls),
             )
+        ):
+            continue
+        # extraction_append mints each `S` entry beside the `src_` it writes.
+        if (
+            section == "sources"
+            and "extraction_append" in (identity_tools.get(section) or set())
+            and "extraction_append" in called
+            and _explained_by_appends(before.get(section), after.get(section))
         ):
             continue
         unauthorized.append(section)
@@ -1412,7 +1452,7 @@ def report_direct_delegation_extra_text(test, builtin_tool_calls):
 
 # --- A Skill call must name a skill that ships ---------------------------
 
-def test_skill_calls_name_a_shipped_skill(builtin_tool_calls):
+def test_skill_calls_name_a_shipped_skill(builtin_tool_calls, test=None):
     """Every main-thread `Skill` call names a directory under plugin/skills/.
 
     A skill converted to an agent loses its directory, but a caller body left
@@ -1422,9 +1462,13 @@ def test_skill_calls_name_a_shipped_skill(builtin_tool_calls):
     (issue #2118, where three `tree-edit` sites were nearly missed). Main thread
     only: a subagent record carries `agent_id`. A call whose name cannot be read
     is skipped here; the runner already surfaces it as `unread_skill_calls`.
+    A test-only skill (`eval/skills/`) counts only in its own suite, the one
+    place the harness stages it.
     """
     from harness.skill_runner import read_skill_tool_input
-    from harness.workspace import DEFAULT_PLUGIN_SKILLS
+    from harness.workspace import DEFAULT_PLUGIN_SKILLS, TEST_ONLY_SKILLS
+
+    suite = (test or {}).get("skill")
 
     missing = []
     for call in builtin_tool_calls or []:
@@ -1434,8 +1478,11 @@ def test_skill_calls_name_a_shipped_skill(builtin_tool_calls):
         if not name:
             continue
         bare = name.rsplit(":", 1)[-1]
-        if not (DEFAULT_PLUGIN_SKILLS / bare / "SKILL.md").is_file():
-            missing.append(name)
+        if (DEFAULT_PLUGIN_SKILLS / bare / "SKILL.md").is_file():
+            continue
+        if bare == suite and (TEST_ONLY_SKILLS / bare / "SKILL.md").is_file():
+            continue
+        missing.append(name)
     assert not missing, (
         f"Skill call(s) to {sorted(set(missing))}, which ship no "
         f"plugin/skills/<name>/SKILL.md. A converted skill is an agent now: "
@@ -1459,14 +1506,16 @@ def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_return
     graded, because a routed reply may reword it. WHOSE reply is graded is
     `subject_reply_text`: on a direct test, the agent's own return and nothing
     else.
+
+    An empty `correct_skill` means the owner is not a skill (extraction is a
+    tool call and an agent; genealogist ruling 2026-09-30, option B), so the
+    reply must carry a `Hand-back:` line without a name to look for.
     """
     from harness.skill_runner import subject_reply_text
 
     if "hand-back" not in test.get("tags", []):
         pytest.skip("not a hand-back test")
     owners = (test.get("negative") or {}).get("correct_skill") or []
-    assert owners, "a hand-back test must name its owner in negative.correct_skill"
-    owner = owners[0]
 
     assert (tool_calls or []) == [], (
         "a hand-back makes no tool call; got "
@@ -1474,6 +1523,10 @@ def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_return
         + ", ".join(c.get("tool", "?") for c in (tool_calls or []))
     )
     reply = subject_reply_text(agent_returns, text_response, test.get("skill") or "", test)
+    if not owners:
+        assert "hand-back:" in reply.lower(), "the reply carries no `Hand-back:` line"
+        return
+    owner = owners[0]
     assert owner in reply.lower(), (
         f"the reply never names {owner}, so the caller cannot tell which owner "
         "to spawn"

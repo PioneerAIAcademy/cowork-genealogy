@@ -4,8 +4,8 @@
  * One-shot, against the live API. Run `dev/try-login.ts` first.
  *
  * Fetches the record through `record_read` (which stages its sidecar), reads
- * that sidecar back, and runs `extractRecord` over it — the exact path
- * `extraction_append`'s extractor mode takes. Prints the detected record type,
+ * that sidecar back, and runs `extractRecord` over it — the rule
+ * `extraction_append({ recordIds })` applies. Prints the detected record type,
  * the roles assigned, every assertion, and anything that fell to a defaulted
  * classification.
  *

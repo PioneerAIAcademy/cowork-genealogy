@@ -141,8 +141,7 @@
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
-        "agent:search-images",
-        "skill:record-extraction"
+        "agent:search-images"
       ],
       "writerTools": [
         "research_append"
@@ -150,7 +149,7 @@
       "enforceableAt": [
         "unit"
       ],
-      "requires": "research-plan owns plan and item structure. The search skills, the search-images agent, and record-extraction may update only `items[].status` after executing or extracting from an item.",
+      "requires": "research-plan owns plan and item structure. The search skills may update only `items[].status` after executing an item.",
       "failure": "A search skill rewrites the plan it was handed, and the plan stops being a record of what was intended versus what was done.",
       "remedy": "Update the item's status; route a change to the plan itself through research-plan.",
       "override": "none"
@@ -164,8 +163,7 @@
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
-        "agent:search-images",
-        "skill:record-extraction"
+        "agent:search-images"
       ],
       "agentCallers": [
         {
@@ -194,16 +192,9 @@
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
-        "agent:search-images",
-        "skill:record-extraction"
+        "agent:search-images"
       ],
       "agentCallers": [
-        {
-          "agent": "agent:record-extractor",
-          "tools": [
-            "research_log_append"
-          ]
-        },
         {
           "agent": "agent:search-images",
           "tools": [
@@ -213,6 +204,7 @@
       ],
       "writerTools": [
         "research_log_append",
+        "extraction_append",
         "build_external_search_url"
       ],
       "enforceableAt": [
@@ -223,23 +215,19 @@
       "requires": "Append only. Existing entries are never modified or deleted — checked separately by the append-only validator, which this row does not duplicate.",
       "failure": "The log is what makes a search reconstructible, including nil results. A skill that rewrites entries destroys the one record that says what was already tried.",
       "remedy": "Append a new entry. Correct a wrong one by appending the correction, never by editing in place.",
-      "override": "none"
+      "override": "none",
+      "toolAuthorized": [
+        "extraction_append"
+      ]
     },
     {
       "artifact": "research.json",
       "section": "sources",
-      "owner": "skill:record-extraction",
+      "owner": null,
       "callers": [
-        "skill:record-extraction",
         "agent:citation"
       ],
       "agentCallers": [
-        {
-          "agent": "agent:record-extractor",
-          "tools": [
-            "extraction_append"
-          ]
-        },
         {
           "agent": "agent:citation",
           "tools": [
@@ -254,39 +242,38 @@
       "enforceableAt": [
         "unit"
       ],
-      "notes": "citation is an agent (issue #2799), and it is named here because it is the subject of its own unit suite - `writer_sets` resolves an `agent:` caller only when it matches that subject, so this row authorizes citation's own refinements and nothing else. citation can refine a source but can never create one, because `research_append` mints the mirroring tree source description in the same call and citation is not a permitted writer of tree `sources`. That is intended, not a defect: citation's own description says it never creates source entries and routes a new record to record-extraction.",
-      "requires": "record-extraction creates the entry with a working citation and `source_classification`. citation updates `citation` and `citation_detail` on an entry that already exists.",
+      "notes": "citation is an agent, and it is named here because it is the subject of its own unit suite - `writer_sets` resolves an `agent:` caller only when it matches that subject, so this row authorizes citation's own refinements and nothing else. citation can refine a source but can never create one, because `research_append` mints the mirroring tree source description in the same call and citation is not a permitted writer of tree `sources`. That is intended, not a defect: citation's own description says it never creates source entries and routes a new record to extraction.",
+      "requires": "`extraction_append` creates the entry with a working citation and `source_classification`. citation updates `citation` and `citation_detail` on an entry that already exists.",
       "failure": "A second skill minting sources produces duplicate `src_` entries for one record, and every assertion's `source_id` then points at whichever copy that skill happened to make.",
-      "remedy": "Add a new record through record-extraction; refine an existing citation through the citation agent.",
-      "override": "none"
+      "remedy": "Add a new record through `extraction_append` (the record-structurer agent for a non-FamilySearch source); refine an existing citation through the citation agent.",
+      "override": "none",
+      "toolAuthorized": [
+        "extraction_append"
+      ],
+      "reason": "Written in code, by tool identity: `extraction_append` builds the entry from the record or the structured document and classifies it from the extraction table, whoever calls it. No skill or agent composes it, so none owns it. citation refines the citation fields of an entry that already exists, which is why it is the one caller."
     },
     {
       "artifact": "research.json",
       "section": "assertions",
-      "owner": "skill:record-extraction",
-      "callers": [
-        "skill:record-extraction"
-      ],
-      "agentCallers": [
-        {
-          "agent": "agent:record-extractor",
-          "tools": [
-            "extraction_append"
-          ]
-        }
-      ],
+      "owner": null,
+      "callers": [],
       "writerTools": [
         "research_append",
         "extraction_append"
       ],
       "enforceableAt": [
-        "unit"
+        "unit",
+        "tool"
       ],
-      "notes": "convert-dates held this section in the table this manifest replaced, and the grant was dead: its only tool is `convert_calendar`, it holds no writer tool, and its own body says it writes nothing. Dropped rather than recorded — a declared writer that cannot write reads as coverage in exactly the way an invented owner does. Free: none of the skill's 14 unit tests names `research_append` or `assertions`.",
-      "requires": "record-extraction writes the atomic assertions and their three-layer classifications, first and final. No later pass refines them.",
+      "notes": "convert-dates held this section in the table this manifest replaced, and the grant was dead: its only tool is `convert_calendar`, it holds no writer tool, and its own body says it writes nothing. Dropped rather than recorded — a declared writer that cannot write reads as coverage in exactly the way an invented owner does. Free: none of the skill's 14 unit tests names `research_append` or `assertions`. Tool plane since 2026-10-05 (genealogist ruling, option B): research_append, as an MCP caller reaches it (researchAppendFromCaller), refuses every assertions write except an update that sets only informant_bias_notes; extraction_append calls researchAppend directly and is unaffected.",
+      "requires": "`extraction_append` writes the atomic assertions and their three-layer classifications, first and final, from the extraction table. No later pass refines them.",
       "failure": "An assertion written outside extraction carries no source, no classification, and no persona link — and the GPS analysis layer treats it as evidence anyway.",
-      "remedy": "Extract through record-extraction, which owns classification. Reclassify by re-invoking it on the same record.",
-      "override": "none"
+      "remedy": "Extract through `extraction_append`, or the record-structurer agent for a non-FamilySearch source. A disagreement with a classification, from evidence outside the record, is weighed in conflict-resolution.",
+      "override": "none",
+      "toolAuthorized": [
+        "extraction_append"
+      ],
+      "reason": "Written in code, by tool identity: `extraction_append` builds the entry from the record or the structured document and classifies it from the extraction table, whoever calls it. No skill or agent composes it, so none owns it."
     },
     {
       "artifact": "research.json",
@@ -305,7 +292,7 @@
         "hook"
       ],
       "notes": "Enforced at the hook plane since 2026-09-01, section-scoped: the plugin PreToolUse hook denies a research_append op on this section unless the caller is the person-evidence AGENT. The section has one owner and `extraction_append` does not accept it, so a section rule fits and the field-scoped treatment `exhaustive_declaration` needed does not apply here — nothing on this section is required on every question. The unit plane resolves `agent:person-evidence` via `writer_sets(..., subject=skill_name)` when person-evidence is the suite's own subject (issue #2799 ruling, issue #2821 conversion). Known limit, stated rather than implied: `owner_denied` only inspects research_append, so `materialize_facts` with no `personId` mints a brand-new tree person and reaches this lane's work without passing the section check.",
-      "requires": "Only person-evidence links a persona to a tree person. The record-extraction lane is held off this section by tool identity: `extraction_append` does not accept it.",
+      "requires": "Only person-evidence links a persona to a tree person. Extraction is held off this section by tool identity: `extraction_append` does not accept it.",
       "failure": "A skill writing an identity link asserts a `match_score` no tool computed — the exact failure that produced the narrower extraction tool.",
       "remedy": "Route the identity link through person-evidence.",
       "override": "none",
@@ -465,7 +452,7 @@
       "artifact": "tree.gedcomx.json",
       "section": "persons",
       "owner": null,
-      "reason": "Four co-equal writers with disjoint jobs and no structural owner: init-project mints the starting stubs, person-evidence owns the household skeleton and mints a person the moment a persona matches nobody, tree-edit applies user-directed changes, and proof-conclusion lands the concluded value. The permitted writers are listed in `callers`. record-extraction is deliberately NOT one of them: it reaches this section only through `research_append`/`extraction_append`'s assertion-update rewrite, which is authorized by TOOL identity instead, and only for the exact delta that rewrite can produce.",
+      "reason": "Four co-equal writers with disjoint jobs and no structural owner: init-project mints the starting stubs, person-evidence owns the household skeleton and mints a person the moment a persona matches nobody, tree-edit applies user-directed changes, and proof-conclusion lands the concluded value. The permitted writers are listed in `callers`. Extraction is deliberately NOT one of them: it reaches this section only through `research_append`/`extraction_append`'s assertion-update rewrite, which is authorized by TOOL identity instead, and only for the exact delta that rewrite can produce.",
       "callers": [
         "skill:init-project",
         "agent:tree-edit",
@@ -476,12 +463,6 @@
         "agent:person-evidence"
       ],
       "agentCallers": [
-        {
-          "agent": "agent:record-extractor",
-          "tools": [
-            "extraction_append"
-          ]
-        },
         {
           "agent": "agent:person-evidence",
           "tools": [
@@ -576,7 +557,7 @@
       "enforceableAt": [
         "unit"
       ],
-      "requires": "Every added edge carries a non-null source ref resolved from the relationship assertion it came from. record-extraction is assertion-only here: it writes the inferred relationship-type assertion and never the edge.",
+      "requires": "Every added edge carries a non-null source ref resolved from the relationship assertion it came from. Extraction is assertion-only here: it writes the inferred relationship-type assertion and never the edge.",
       "failure": "An unsourced parent-child edge uploads a claimed relationship with nothing behind it, and the warnings chain that would have caught an impossible one never sees it.",
       "remedy": "Write the edge through person-evidence or tree-edit, carrying the source ref.",
       "override": "none"
@@ -584,20 +565,13 @@
     {
       "artifact": "tree.gedcomx.json",
       "section": "sources",
-      "owner": "skill:record-extraction",
+      "owner": null,
       "callers": [
         "skill:init-project",
         "agent:tree-edit",
-        "agent:proof-conclusion",
-        "skill:record-extraction"
+        "agent:proof-conclusion"
       ],
       "agentCallers": [
-        {
-          "agent": "agent:record-extractor",
-          "tools": [
-            "extraction_append"
-          ]
-        },
         {
           "agent": "agent:proof-conclusion",
           "tools": [
@@ -636,10 +610,14 @@
         "unit"
       ],
       "notes": "person-evidence is a permitted writer of tree `persons` and `relationships` but not of this section: `materialize_facts` attaches a source ref to a node, it does not mint a source description. The prose ownership table listed it here; the code table did not, and the code is right.",
-      "requires": "record-extraction mints each `S` entry as the mirror of a `src_` it appends to research.json, through `research_append`'s composite source description. An `S` entry means the source was consulted, not that its conclusions are final.",
+      "requires": "`extraction_append` mints each `S` entry as the mirror of a `src_` it appends to research.json. An `S` entry means the source was consulted, not that its conclusions are final.",
       "failure": "A source description minted outside extraction has no `src_` behind it, so every `gedcomx_source_description_id` reference into it dangles at upload time.",
-      "remedy": "Let record-extraction mint the entry as part of the record's write; cite an existing one by its `S` id.",
-      "override": "none"
+      "remedy": "Let extraction mint the entry as part of the record's write; cite an existing one by its `S` id.",
+      "override": "none",
+      "toolAuthorized": [
+        "extraction_append"
+      ],
+      "reason": "Each `S` entry is minted in code, by tool identity, as the mirror of a `src_` `extraction_append` writes, so no extraction caller owns it. The other writers are listed in `callers`."
     }
   ]
 }

@@ -28,7 +28,7 @@ You need three things open:
 | Its committed run logs | `eval/runlogs/unit/<skill>/v*.json` |
 | Its tests | `eval/tests/unit/<skill>/*.json` |
 
-If the skill delegates to an agent (record-extraction does), open the agent body
+If the skill delegates to an agent (research-exhaustiveness does), open the agent body
 too: `packages/engine/plugin/agents/<agent>.md`.
 
 ---

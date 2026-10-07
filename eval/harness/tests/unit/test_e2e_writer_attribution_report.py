@@ -60,28 +60,28 @@ def test_writer_tools_are_read_from_the_engine_and_non_empty():
 
 def test_listed_writers_reads_all_three_caller_fields():
     listed = listed_writers()
-    # `callers` — the five search/extraction skills on research.json#log.
-    assert "skill:record-extraction" in listed["research_log_append"]
+    # `callers` — the four search skills on research.json#log.
+    assert "skill:search-records" in listed["research_log_append"]
     # `agentCallers` — the direction #2575 added, paired with its tool.
-    assert "agent:record-extractor" in listed["research_log_append"]
+    assert "agent:search-images" in listed["research_log_append"]
     # `hookCallers` — proof-conclusion is named there on proof_summaries.
     assert "agent:proof-conclusion" in listed["research_append"]
 
 
 def test_shipped_units_carries_both_kinds():
     units = shipped_units()
-    assert "agent:record-extractor" in units
-    assert "skill:record-extraction" in units
+    assert "agent:search-images" in units
+    assert "skill:search-records" in units
     assert "agent:general-purpose" not in units
     assert "skill:general-purpose" not in units
 
 
 def test_identifier_for_strips_a_namespaced_agent_type():
     units = shipped_units()
-    assert identifier_for("record-extractor", units) == "agent:record-extractor"
+    assert identifier_for("search-images", units) == "agent:search-images"
     assert (
-        identifier_for("genealogy-research:record-extractor", units)
-        == "agent:record-extractor"
+        identifier_for("genealogy-research:search-images", units)
+        == "agent:search-images"
     )
     assert identifier_for("general-purpose", units) is None
 
@@ -91,11 +91,11 @@ def test_identifier_for_strips_a_namespaced_agent_type():
 
 def test_a_listed_caller_is_classified_listed(tmp_path: Path):
     p = _run(tmp_path, "ferber-death", "run-1.json", {
-        "subagents": [_capture("record-extractor", ["research_log_append"])],
+        "subagents": [_capture("search-images", ["research_log_append"])],
     })
     pairs = classify(scan([p]), listed_writers(), shipped_units())
     assert [(x.identifier, x.tool, x.verdict) for x in pairs] == [
-        ("agent:record-extractor", "research_log_append", "listed")
+        ("agent:search-images", "research_log_append", "listed")
     ]
     assert pairs[0].calls == 1 and pairs[0].runs == 1
 
@@ -109,12 +109,12 @@ def test_an_unlisted_caller_is_classified_unlisted(tmp_path: Path):
     `classify` is broken.
     """
     p = _run(tmp_path, "ferber-death", "run-1.json", {
-        "subagents": [_capture("record-extractor", ["research_log_append"])],
+        "subagents": [_capture("search-images", ["research_log_append"])],
     })
-    narrowed = {"research_log_append": {"skill:record-extraction"}}
+    narrowed = {"research_log_append": {"skill:search-records"}}
     pairs = classify(scan([p]), narrowed, shipped_units())
     assert [(x.identifier, x.verdict) for x in pairs] == [
-        ("agent:record-extractor", "unlisted")
+        ("agent:search-images", "unlisted")
     ]
 
 
@@ -130,7 +130,7 @@ def test_general_purpose_is_its_own_finding_not_a_manifest_gap(tmp_path: Path):
 
 def test_non_writer_tools_are_dropped(tmp_path: Path):
     p = _run(tmp_path, "ferber-death", "run-1.json", {
-        "subagents": [_capture("record-extractor", ["record_read", "place_search"])],
+        "subagents": [_capture("search-images", ["record_read", "place_search"])],
     })
     assert classify(scan([p]), listed_writers(), shipped_units()) == []
 
@@ -141,10 +141,10 @@ def test_non_writer_tools_are_dropped(tmp_path: Path):
 def test_calls_and_runs_count_separately(tmp_path: Path):
     """Two runs, three invocations — the pair is one row, not three."""
     a = _run(tmp_path, "ferber-death", "run-1.json", {
-        "subagents": [_capture("record-extractor", ["research_log_append"] * 2)],
+        "subagents": [_capture("search-images", ["research_log_append"] * 2)],
     })
     b = _run(tmp_path, "mcaloney-mother", "run-1.json", {
-        "subagents": [_capture("record-extractor", ["research_log_append"])],
+        "subagents": [_capture("search-images", ["research_log_append"])],
     })
     pairs = classify(scan([a, b]), listed_writers(), shipped_units())
     assert len(pairs) == 1
@@ -161,10 +161,10 @@ def test_two_runs_of_one_fixture_count_as_two(tmp_path: Path):
     dirs, so it passes under either meaning and cannot see this.
     """
     a = _run(tmp_path, "ferber-death", "run-2026-09-01_00-00-00.json", {
-        "subagents": [_capture("record-extractor", ["research_log_append"])],
+        "subagents": [_capture("search-images", ["research_log_append"])],
     })
     b = _run(tmp_path, "ferber-death", "run-2026-09-02_00-00-00.json", {
-        "subagents": [_capture("record-extractor", ["research_log_append"])],
+        "subagents": [_capture("search-images", ["research_log_append"])],
     })
     pairs = classify(scan([a, b]), listed_writers(), shipped_units())
     assert len(pairs) == 1
@@ -184,7 +184,7 @@ def test_a_toolcalls_only_pair_has_runs_and_no_calls(tmp_path: Path):
         "tool_calls": [
             {
                 "tool": "mcp__genealogy__research_log_append",
-                "agent_type": "record-extractor",
+                "agent_type": "search-images",
             }
         ],
     })
@@ -200,7 +200,7 @@ def test_a_toolcalls_only_pair_has_runs_and_no_calls(tmp_path: Path):
 def test_format_report_names_each_pair_and_says_when_there_are_none(tmp_path: Path):
     p = _run(tmp_path, "antonio-lucas-spouse", "run-1.json", {
         "subagents": [
-            _capture("record-extractor", ["research_log_append"]),
+            _capture("search-images", ["research_log_append"]),
             _capture("general-purpose", ["extraction_append"]),
         ],
     })
@@ -208,7 +208,7 @@ def test_format_report_names_each_pair_and_says_when_there_are_none(tmp_path: Pa
     out = format_report(classify(s, listed_writers(), shipped_units()), s)
     assert "UNLISTED" in out and "(none)" in out
     assert "general-purpose -> extraction_append" in out
-    assert "agent:record-extractor -> research_log_append" in out
+    assert "agent:search-images -> research_log_append" in out
     # The unbound note has to say it is not waivable, or the next reader files a
     # manifest row for `general-purpose` that can never resolve.
     assert "cannot be listed in any row" in out
@@ -228,7 +228,7 @@ def test_main_reads_the_whole_corpus_by_default(tmp_path: Path, monkeypatch, cap
     """
     import e2e.runlog_selection as selection
 
-    payload = {"subagents": [_capture("record-extractor", ["research_log_append"])]}
+    payload = {"subagents": [_capture("search-images", ["research_log_append"])]}
     _run(tmp_path, "old-fixture", "run-2020-01-01_00-00-00.json", payload)
     _run(tmp_path, "new-fixture", f"run-{date.today().isoformat()}_00-00-00.json", payload)
     monkeypatch.setattr(selection, "E2E_RUNLOGS", tmp_path)
@@ -241,12 +241,12 @@ def test_main_reads_the_whole_corpus_by_default(tmp_path: Path, monkeypatch, cap
 
 
 def test_an_agent_caller_counts_only_for_the_tools_its_entry_names():
-    # `agent:record-extractor` is an `agentCallers` entry on tree `persons`,
-    # whose `writerTools` lists all eight tree writers. Paired with
-    # `extraction_append` alone, it must not come out listed for the others.
+    # `agent:citation` is an `agentCallers` entry on tree `sources`, whose
+    # `writerTools` lists five tree writers. Paired with `research_append`
+    # alone, it must not come out listed for the others.
     listed = listed_writers()
-    assert "agent:record-extractor" in listed["extraction_append"]
-    assert "agent:record-extractor" not in listed["tree_forget"]
+    assert "agent:citation" in listed["research_append"]
+    assert "agent:citation" not in listed["tree_correct"]
     # `callers` still counts for every writer tool on its row.
     assert "skill:init-project" in listed["tree_forget"]
 
@@ -287,8 +287,8 @@ def test_two_spellings_of_one_agent_are_one_pair(tmp_path: Path):
     """Production reports `genealogy-research:<name>` beside the bare name."""
     p = _run(tmp_path, "ferber-death", "run-1.json", {
         "subagents": [
-            _capture("record-extractor", ["research_log_append"]),
-            _capture("genealogy-research:record-extractor", ["research_log_append"]),
+            _capture("search-images", ["research_log_append"]),
+            _capture("genealogy-research:search-images", ["research_log_append"]),
         ],
     })
     pairs = [
@@ -296,7 +296,7 @@ def test_two_spellings_of_one_agent_are_one_pair(tmp_path: Path):
         if pr.tool == "research_log_append"
     ]
     assert len(pairs) == 1
-    assert pairs[0].identifier == "agent:record-extractor"
+    assert pairs[0].identifier == "agent:search-images"
     assert pairs[0].calls == 2
     assert pairs[0].runs == 1
 
@@ -314,11 +314,11 @@ def test_writer_tools_come_from_the_engine_not_the_manifest(tmp_path: Path, monk
     monkeypatch.setattr(report, "rows", lambda: stripped)
     assert "tree_forget" in writer_tools()
     p = _run(tmp_path, "ferber-death", "run-1.json", {
-        "subagents": [_capture("record-extractor", ["tree_forget"])],
+        "subagents": [_capture("search-images", ["tree_forget"])],
     })
     pairs = classify(scan([p]), listed_writers(), shipped_units())
     assert [(pr.identifier, pr.tool, pr.verdict) for pr in pairs] == [
-        ("agent:record-extractor", "tree_forget", "unlisted")
+        ("agent:search-images", "tree_forget", "unlisted")
     ]
 
 
@@ -330,9 +330,9 @@ def test_an_agent_caller_tool_its_row_does_not_list_counts_for_nothing(monkeypat
     monkeypatch.setattr(report, "rows", lambda: [{
         "writerTools": ["research_append"],
         "callers": [],
-        "agentCallers": [{"agent": "agent:record-extractor", "tools": ["tree_forget"]}],
+        "agentCallers": [{"agent": "agent:search-images", "tools": ["tree_forget"]}],
     }])
-    assert "agent:record-extractor" not in listed_writers().get("tree_forget", set())
+    assert "agent:search-images" not in listed_writers().get("tree_forget", set())
 
 
 def test_two_spellings_of_an_unbound_name_are_one_pair(tmp_path: Path):

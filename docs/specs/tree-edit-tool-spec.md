@@ -76,7 +76,7 @@ implementation core (`src/tools/tree-edit.ts` `executeTreeOps`;
 | `tree_correct` | `update_fact`, `update_name`, `update_person`, `update_source`, `remove` — **corrections/removals only** |
 
 **Rationale:** extraction must be **structurally unable to rewrite identity**.
-The record-extractor agent holds `tree_edit` to write sibling stubs and
+The record-extractor agent (since retired) held `tree_edit` to write sibling stubs and
 alternate names, and in the ut_013 rename incident (2026-07-12 runlog) it used
 `update_name` to rename an existing tree person it judged misnamed — an
 identity-resolution act that belongs to person-evidence, hypothesis-tracking,
@@ -371,9 +371,9 @@ Semantics (decision from the e2e research-runtime speedup review, §6 Q1):
   tools/calls; an `add_person` here assigns the `I` id that a later
   `research_append` `person_evidence` op references, so a `tree_edit` batch must
   commit before a `research_append` batch that references its new ids. The one
-  exception is the record-extraction **source** flow: `research_append`'s
-  composite persist (`sourceDescription`, research-append spec §3.4) creates the
-  tree `S` entry itself via the shared write layer, so there is **no
+  exception is the extraction **source** flow: `extraction_append` writes through
+  `research_append`'s composite persist (`sourceDescription`, research-append spec
+  §3.4), which creates the tree `S` entry itself via the shared write layer, so there is **no
   tree_edit-first step for a new record's source description** — `add_source`
   here remains for ad-hoc/manual source work and proof-conclusion's own
   source-writing path, not for the extraction persist.

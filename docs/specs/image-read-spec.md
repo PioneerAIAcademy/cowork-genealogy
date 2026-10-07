@@ -242,7 +242,7 @@ crashed — no single image was near the ceiling.) Lowering the ceiling does
 The accumulation fix is the **`image-reader` subagent**
 (`packages/engine/plugin/agents/image-reader.md`, spec:
 `docs/specs/image-reader-agent-spec.md`): callers that need a scan's text
-(currently only `record-extraction`) delegate to it via `Task` instead of
+(currently the `search-records` and `search-full-text` skills) delegate to it via `Task` instead of
 calling `image_read` directly. The subagent reads the image in an isolated
 context and returns only a text transcription, so the base64 never enters —
 or accumulates in — the main transcript. `image_read` itself is unchanged; it

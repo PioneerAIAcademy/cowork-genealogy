@@ -361,3 +361,48 @@ describe('skills — readSkillMd distinguishes absent from unreadable', () => {
     await expect(listSkills()).rejects.toThrow();
   });
 });
+
+describe('skills — a test-only skill under eval/skills/ (lead, 2026-09-30)', () => {
+  let handle: FixtureTreeHandle;
+  const SKILL_MD = [
+    '---',
+    'name: extraction-append',
+    'description: TEST-ONLY. Calls extraction_append once and returns its summary.',
+    'allowed-tools:',
+    '  - extraction_append',
+    '---',
+    '',
+    'Make exactly one call.',
+    '',
+  ].join('\n');
+
+  beforeEach(async () => {
+    handle = await makeFixtureTree({
+      tests: [
+        {
+          skill: 'extraction-append',
+          filename: 'census.json',
+          body: { test: { id: 'ut_extraction_append_001', skill: 'extraction-append', name: 'n', type: 'positive', description: 'd', tags: [] }, input: { user_message: 'm' } },
+        },
+      ],
+    });
+    process.env.EVAL_DIR = handle.root;
+  });
+  afterEach(async () => {
+    delete process.env.EVAL_DIR;
+    await handle.cleanup();
+  });
+
+  it('reads its frontmatter from eval/skills/', async () => {
+    await fs.mkdir(path.join(handle.root, 'skills', 'extraction-append'), { recursive: true });
+    await fs.writeFile(path.join(handle.root, 'skills', 'extraction-append', 'SKILL.md'), SKILL_MD, 'utf8');
+    const s = (await listSkills()).find((x) => x.name === 'extraction-append')!;
+    expect(s.description).toMatch(/TEST-ONLY/);
+    expect(s.allowedTools).toEqual(['extraction_append']);
+  });
+
+  it('has no frontmatter to read when the file is absent', async () => {
+    const s = (await listSkills()).find((x) => x.name === 'extraction-append')!;
+    expect(s.description).toBeNull();
+  });
+});

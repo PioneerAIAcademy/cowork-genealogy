@@ -100,7 +100,18 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
   {
     tool: "extraction_append",
     call: (projectPath) =>
-      extractionAppend({ projectPath, section: "sources", op: "append", entry: { id: "src_001" } } as any),
+      extractionAppend({
+        projectPath,
+        documents: [{
+          recordId: "capture:no-project",
+          document: {
+            recordType: "obituary",
+            documentForm: "verbatim_transcript",
+            source: { title: "An obituary", repository: "A newspaper" },
+            persons: [{ id: "p1", principal: true, names: [{ given: "Ann", surname: "Lee" }], facts: [] }],
+          },
+        }],
+      }, LOCAL),
   },
   {
     tool: "research_log_append",

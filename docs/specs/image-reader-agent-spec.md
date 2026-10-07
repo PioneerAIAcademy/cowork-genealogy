@@ -37,8 +37,8 @@ agent (its 700 KB floor still guards any direct `image_read` consumer — see
 ## 2. Files to Create / Modify
 
 - **Create** `packages/engine/plugin/agents/image-reader.md` — the agent.
-- **Modify** `packages/engine/plugin/skills/record-extraction/SKILL.md` —
-  the only skill that reads images: remove `image_read` from
+- **Modify** `packages/engine/plugin/skills/record-extraction/SKILL.md` (since
+  retired) — then the only skill that read images: remove `image_read` from
   `allowed-tools` and change its "Image" input path to delegate via
   `@plugin:image-reader` instead of calling `image_read` directly.
   (Delegation is **not** an `allowed-tools` entry — do not add `Task`;
@@ -53,8 +53,9 @@ agent (its 700 KB floor still guards any direct `image_read` consumer — see
 ## 3. Invocation
 
 Invoked via `@plugin:image-reader` by any agent/skill that needs the text
-of a page scan — currently `record-extraction` (mirroring how `/research`
-invokes `@plugin:gps-mentor`). Delegation resolves to a subagent spawn at
+of a page scan — currently the `search-records` and `search-full-text` skills,
+which pass the text on to `@plugin:record-structurer` for extraction (mirroring
+how `/research` invokes `@plugin:gps-mentor`). Delegation resolves to a subagent spawn at
 runtime; it is not listed in the caller's `allowed-tools`. The caller
 narrows to a specific image first (`image_search` / `volume_search`) and
 hands this agent the imageId.
@@ -189,7 +190,8 @@ Two scope limits worth knowing:
 
 - **The guard is per-skill.** It applies only to a skill that does *not*
   declare `image_read` in its own `allowed-tools` — i.e. one that holds the
-  tool solely through `@plugin:image-reader`, like `record-extraction`.
+  tool solely through `@plugin:image-reader`, like `search-records` or
+  `search-full-text`.
   (`search-images` used to declare it and browse volumes directly, which was
   the original exemption case; it has since moved to delegating via
   `@plugin:image-reader` too (2026-07-17)
@@ -213,7 +215,7 @@ The landing gate is a fresh scored run in which the agent **actually reads
 at least one image successfully** — ideally **2+ scans across separate
 invocations**, to exercise the once-per-image isolation and confirm base64
 never accumulates in the caller. This is now unblocked: the ARK-accepting
-`image_read` has landed (§8), so `record-extraction`'s ARK inputs reach a
+`image_read` has landed (§8), so `record-extraction`'s (since retired) ARK inputs reach a
 successful read. Produce this real-read run (the prior `clark-parents` run
 that fabricated its read does not count) and record the passing scored run
 + `.ann.json` per the usual e2e gate.
@@ -221,7 +223,7 @@ that fabricated its read does not count) and record the passing scored run
 ## 8. Merge dependency: the ARK-accepting `image_read` (satisfied)
 
 This agent depends on an `image_read` that accepts document-image **ARKs**
-(`3:1:/3:2:`), because `record-extraction` hands the agent ARKs — the shape
+(`3:1:/3:2:`), because its callers hand the agent ARKs — the shape
 `fulltext_search` returns. That dependency is now **satisfied**: the
 ARK-accepting `image_read` landed in `main` and has been merged into
 this branch, so the ARK inputs named in the `imageId`/`ark` convention

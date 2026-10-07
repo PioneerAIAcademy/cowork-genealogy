@@ -19,9 +19,9 @@ description: >-
   research.json, or when timeline impossibilities suggest an identity
   conflict. Do NOT use to add or track candidates when no decision is asked
   for (use hypothesis-tracking), to audit existing person_evidence links or
-  review their confidence (use person-evidence), to classify evidence (use
-  record-extraction, which owns classification), build a timeline (use
-  timeline), or write a conclusion (use proof-conclusion).
+  review their confidence (use person-evidence), to extract a record (use
+  extraction_append), build a timeline (use timeline), or write a conclusion (use
+  proof-conclusion).
 ---
 
 # Conflict Resolution
@@ -75,6 +75,14 @@ fact conflicts which require at least two).
 
 ### 1. Identify conflicts
 
+**First, is this candidate bookkeeping?** A request to add a candidate
+person (a possible father, say), or to keep track of what supports and
+contradicts each candidate person, asks for no decision. Write nothing, and do not ask the user whether to proceed: spawn
+`@plugin:hypothesis-tracking` with the user's request as they gave it, adding
+no reading of your own. Candidate persons are not competing values until
+the user asks which one is right. Competing readings or values of one fact,
+a disputed name reading included, are a conflict: go on with the steps.
+
 Read the `assertions` and `person_evidence` sections with
 `research_query` — `project_context` alone does not show assertion
 values. When you find competing values, proceed through Steps 2–5 and
@@ -82,10 +90,10 @@ call `research_append` to persist the conflict and its analysis — do
 not stop after presenting findings in text.
 **Trust the existing assertion classifications** (record_basis,
 directness, informant) as recorded — do NOT re-classify inline, and do
-NOT invoke the record-extraction or check-warnings skills from here.
-If a classification looks wrong and would change the weighing, note it
-and recommend running `record-extraction` (which owns classification
-refinement) as a next step, then proceed with what is recorded.
+NOT invoke check-warnings from here. Classifications come from the
+extraction table and are not refined per assertion. If a classification
+looks wrong because of evidence outside the record, weigh that evidence here,
+as part of this conflict's analysis, and say so in the rationale.
 
 Look for:
 
@@ -539,7 +547,9 @@ Suggest next steps:
 - **Work with the assertions already in `research.json`.** When the
   user reports a disagreement, read the existing assertions and
   person_evidence first. Do not ask the user for an image or for data
-  that the project already contains. Do not ask for permission to
+  that the project already contains. A reading the user offers ("it looks
+  like Tannetje to me") is one more reading to weigh in the conflict, never
+  a correction: do not update the assertion's value. Do not ask for permission to
   proceed and do not stop after presenting findings — call
   `research_append` to create the conflict entry, then call it again
   to fill `independence_analysis`, `weighing_analysis`, and either
