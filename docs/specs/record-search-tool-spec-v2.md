@@ -386,8 +386,10 @@ reads the record.
 When a search ranks, `results` comes back **annotated in place** — each row
 carries `matchRank`, `searchRank`, `matchScore`, and where available
 `matchConfidence`, `candidateFactCount` and the `attachedTo*` flags — and the
-list is ordered **best first**. `ranked` carries metadata only; it has no row
-list of its own. There is one set of rows, never two.
+list is ordered **best first**. `ranked` carries metadata only (plus
+`subjectTooThin: true` when the subject lacks both a narrow date and a named
+relative — see `rank-search-matches-tool-spec.md` § `subjectTooThin`); it has
+no row list of its own. There is one set of rows, never two.
 
 `searchRank` is what keeps that re-ordering **auditable rather than lossy**.
 Sorting by match score discards FamilySearch's own ordering, so without the
@@ -695,8 +697,12 @@ this is the common shape, not an edge case.
 
 `subjectResolvable: false` is set by **two** branches of `rank-search-matches.ts`,
 and the hint deliberately fires on both. One is a scoreable subject against a pool
-that holds no match (a real negative). The other is a subject too thin to
-discriminate — no dated or placed fact — where the scores are noise. Those two
+that holds no match (a real negative). The other is a subject with no dated or
+placed fact, which cannot be discriminated, so the scores are noise. (That is
+not the `subjectTooThin` flag, which is a separate test: neither strictly
+contains the other — a subject with a named spouse but no facts fires the
+withholding branch without the flag, and a city-only subject gets the flag
+without firing the branch.) Those two
 need opposite responses from the caller *about the ranking*, but they want the same
 response here, and the thin-subject case may be the more valuable of the two: in
 genealogy you often cannot enrich the subject, because not knowing the missing

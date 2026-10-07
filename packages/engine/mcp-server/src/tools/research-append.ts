@@ -2948,77 +2948,17 @@ function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
 // skip-never-refuse contract this rule documents. Fixed here rather than
 // at each index site so a third one cannot reintroduce it, and so the
 // lookup means what the Python mirror's `dict.get()` already meant.
-// Exported only so the cross-language drift test can pin it against the
-// Python copy; nothing else outside this module reads it.
-export const RELATION_CATEGORY: Record<string, string> = Object.assign(
-  Object.create(null) as Record<string, string>,
-  {
-    father: "parent", mother: "parent", parent: "parent",
-    son: "child", daughter: "child", child: "child",
-    wife: "spouse", husband: "spouse", spouse: "spouse",
-    widow: "spouse", widower: "spouse",
-    brother: "sibling", sister: "sibling", sibling: "sibling",
-  },
-);
-const RELATION_WORDS = Object.keys(RELATION_CATEGORY).join("|");
-// A value LABELS the other party in two shapes that need different patterns.
-// An earlier single pattern spanning `[^,]*?` was wrong both ways: a stray
-// `[KEY:` colon suppressed real sibling refusals, and one comma in `Father of
-// the groom, named as X` made it miss and wrongly refuse a correct assertion.
-//
-// Only ONE label guard is needed. A label with no ` of ` -- `father: Jan
-// Roelfs`, `father named as Casper` -- never reaches here, because
-// STATES_SUBJECT_ROLE requires ` of `. A second guard for those was
-// written, measured against the corpus, found to change nothing, and
-// deleted; do not add it back.
-//
-// By role: `Father of groom named as Tellef`. The party being named is
-// identified by ROLE -- a bare lowercase word -- so it is the other party. A
-// CAPITALISED token there is a name, so the value states the subject's own tie
-// and must not be skipped.
-const LABELS_BY_ROLE = new RegExp(
-  `^\\s*(?:the\\s+)?(?:${RELATION_WORDS})\\s+of\\s+(?:the\\s+)?(\\w+)[\\s,]*(?::|\\s+named\\b)`,
-  "i",
-);
-const STATES_SUBJECT_ROLE = new RegExp(
-  `^\\s*(?:the\\s+)?(${RELATION_WORDS})\\s+of\\s+`,
-  "i",
-);
-
-/** Exported only so the cross-language drift test can pin it against the
- *  Python `_relationship_category`: the table alone does not cover the
- *  `_inferred` strip or the trim, and `String.replace` with a string
- *  pattern replaces the FIRST occurrence here while Python's replaces
- *  every one. */
-export function relationshipCategory(value: unknown): string | undefined {
-  if (typeof value !== "string") return undefined;
-  // Anchored, and one suffix only. A bare `.replace("_inferred", "")`
-  // strips the FIRST occurrence here and EVERY occurrence in the Python
-  // mirror, so `child_inferred_inferred` was unknown to this side and
-  // `child` to that one.
-  return RELATION_CATEGORY[value.toLowerCase().trim().replace(/_inferred$/, "")];
-}
-
-/** The category the VALUE claims for the record subject, or undefined when it
- *  does not speak to the subject's own role. Exported so the cross-language
- *  drift test can pin it against the Python copy in
- *  `eval/harness/validators/test_record_extraction.py`: the rule exists twice
- *  because the harness and the engine share no runtime, and nothing else keeps
- *  the two in step. */
-export function subjectRoleInValue(value: string): string | undefined {
-  const byRole = LABELS_BY_ROLE.exec(value);
-  // A lowercase ASCII token is a role word, not a name. Must stay an
-  // explicit class, never a case test: `=== toLowerCase()` is true for a
-  // token with no case (`2`) where the Python mirror's .islower() is
-  // false, so the two disagreed in both directions before this. The
-  // capture stays `\w+` although that is ASCII here and Unicode
-  // there: with this guard both spellings reach the same verdict either
-  // way, and widening it to `\S+?` was reverted as unobservable.
-  if (byRole && /^[a-z]+$/.test(byRole[1])) return undefined;
-  const m = STATES_SUBJECT_ROLE.exec(value);
-  if (!m) return undefined;
-  return RELATION_CATEGORY[m[1].toLowerCase()];
-}
+// The relation-word tables lifted to `src/utils/relationship-category.ts` so
+// rank-search-matches can reuse `relationshipCategory` without the packaging
+// writer-tool check flagging the importer. Re-exported here for the
+// cross-language drift lint (`tests/packaging/relationship-direction-drift.test.ts`),
+// which asserts the pin against the Python copy and reads them from this file.
+import {
+  RELATION_CATEGORY,
+  relationshipCategory,
+  subjectRoleInValue,
+} from "../utils/relationship-category.js";
+export { RELATION_CATEGORY, relationshipCategory, subjectRoleInValue };
 
 function validateRelationshipDirection(entry: Record<string, unknown>): void {
   // `fact_type: relationship` only, which is what the refusal-table row and
@@ -4100,6 +4040,11 @@ function recordIdsForPersonEvidence(research: any, ops: ResearchAppendOp[]): Set
   return out;
 }
 
+/** Pre-processes a batch before commit: §3.4.1 source-reuse auto-detection
+ *  (including updates-only batches), §3.4.2 verdict sidecar, §3.4.3 re-extraction
+ *  guard, sourceDescription → tree S entry, auto-stamp source_id, D2 persona
+ *  matrix, place levers, and match-score gates. Returns the prepared state or
+ *  collected errors. */
 async function prepareOps(
   input: ResearchAppendInput,
   ops: ResearchAppendOp[],
@@ -4151,12 +4096,17 @@ async function prepareOps(
   // append with NO explicit S reference (a caller-supplied
   // gedcomx_source_description_id keeps the verified-reuse semantics and is
   // never second-guessed), plus at least one assertions append carrying a
-  // record_id. Record ids compare canonicalized (arkToBareId), repositories
-  // by normalized exact match (trim + casefold).
+  // record_id — OR, when the batch has zero assertion appends, at least one
+  // assertions update op whose pre-call target carries a record_id (and
+  // whose fields do not set source_id). Record ids compare canonicalized
+  // (arkToBareId), repositories by normalized exact match (trim + casefold).
   let reuseSkipsSourceDescription = false;
   let detectionEngaged = false;
   const assertionAppends = ops.filter(
     (op) => op.section === "assertions" && op.op === "append" && op.entry && typeof op.entry === "object",
+  );
+  const assertionUpdates = ops.filter(
+    (op) => op.section === "assertions" && op.op === "update" && typeof op.entryId === "string",
   );
   if (sourcesAppendIdx.length === 1) {
     const srcOp = ops[sourcesAppendIdx[0]];
@@ -4167,6 +4117,24 @@ async function prepareOps(
         .filter((v: unknown): v is string => factText(v) !== undefined)
         .map((v: string) => arkToBareId(v)),
     );
+    // When the batch has zero assertion appends, derive record keys from
+    // update targets in the pre-call research.assertions (§3.4.1 updates-only).
+    // Never mixed with append-derived keys: a mixed batch that extracts new
+    // record X and corrects old record Y would fold X's source onto Y's.
+    if (assertionAppends.length === 0 && assertionUpdates.length > 0) {
+      const existingAssertions: any[] = Array.isArray(research.assertions) ? research.assertions : [];
+      for (const uop of assertionUpdates) {
+        // Skip any update op whose fields set source_id — it is re-pointing
+        // the assertion, and a fold would leave it naming a source the batch
+        // no longer creates.
+        if (uop.fields && typeof uop.fields === "object" && Object.prototype.hasOwnProperty.call(uop.fields, "source_id")) continue;
+        const target = existingAssertions.find((a: any) => a && a.id === uop.entryId);
+        if (target && typeof target.record_id === "string") {
+          const bare = arkToBareId(target.record_id);
+          if (bare !== "") batchRecordKeys.add(bare);
+        }
+      }
+    }
     if (
       srcEntry &&
       typeof srcEntry === "object" &&
@@ -4376,6 +4344,17 @@ async function prepareOps(
     return results;
   };
 
+  // The other places each record's assertions name in this batch: a bare place
+  // ("Shenandoah") is resolved against them, not against the whole world.
+  const placesByRecord = new Map<string, string[]>();
+  for (const op of ops) {
+    const e = op.section === "assertions" && op.op === "append" ? (op.entry as any) : null;
+    const place = e ? factText(e.place) : undefined;
+    if (!place) continue;
+    const key = String(e.record_id ?? "");
+    placesByRecord.set(key, [...(placesByRecord.get(key) ?? []), place]);
+  }
+
   for (let i = 0; i < ops.length; i++) {
     const op = ops[i];
     if (op.section !== "assertions" || op.op !== "append") continue;
@@ -4563,7 +4542,9 @@ async function prepareOps(
         // a miss and a failure look the same here — both warrant the warning
         // (a silently unresolved place is part of the wrong-geocode theme).
         try {
-          sp = (await resolveStandardPlace(entry.place)) ?? null;
+          const contextPlaces = (placesByRecord.get(String(entry.record_id ?? "")) ?? [])
+            .filter((p) => p !== entry.place);
+          sp = (await resolveStandardPlace(entry.place, { contextPlaces })) ?? null;
         } catch {
           sp = null;
         }
