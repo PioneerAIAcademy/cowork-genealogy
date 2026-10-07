@@ -892,9 +892,9 @@ Grep for `calculateWarnings` when sizing the blast radius.
   splitting a pair means one write refuses and an identical one does not.
 
   Measured over the committed e2e final trees: gating parentage edges
-  unexempted refuses 416 of 2240 (18.6%) — 483 instances across 73 runs,
-  measured at 0be7f897a. After
-  the exemptions it refuses 59 of 2240 (2.6%), 59 instances across 16 runs, and
+  unexempted refuses 416 of 2242 (18.6%) — 483 instances across 73 runs,
+  measured at STAMP_PLACEHOLDER. After
+  the exemptions it refuses 59 of 2242 (2.6%), 59 instances across 16 runs, and
   every tag still gating is an impossibility rather than a prior:
   `hasCloseChildBirthsIgnoreSimilarChildren` (32), `tooManyMothers2` (16),
   `tooManyFathers2` (6), `childBirthRange40` (3) and
@@ -911,7 +911,7 @@ Grep for `calculateWarnings` when sizing the blast radius.
   relationship — so a `relatives*` warning landing on a one-hop relative OF an
   endpoint (a pre-existing sibling of the child, say) is not computed. The
   shape is constructible and predates parentage edges being seen at all, since
-  it applies to `Couple` edges equally. Its measured cost is **0 of 2240**
+  it applies to `Couple` edges equally. Its measured cost is **0 of 2242**
   edges: widening the touched set by one relative hop refuses the same 59
   edges. Re-measure before widening; a cost of zero is a reason to leave it
   alone, not a reason to believe the shape cannot occur.

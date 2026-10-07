@@ -1770,7 +1770,9 @@ writers — `tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_fact
 call landed to resolve it. It keys on those tools across all server spellings.
 Like the citation-nulling check it **logs to `guardrail_shadow_violations` and
 never touches `compliance`/`outcome`**; its entries carry
-`kind: "warnings_unchecked"` for its own bucket (`make e2e-guardrail-shadow`).
+`kind: "unresolved_warning_refusal"` for its own bucket
+(`make e2e-guardrail-shadow`). Entries stored before the retarget carry the old
+`"warnings_unchecked"`, and the report reads both.
 
 **Retargeted when the gate moved to the write boundary, and the name is now
 historical.** It originally

@@ -14,8 +14,8 @@ export interface RelationshipEnds {
  * A simplified-GedcomX relationship carries its ends in one of two field pairs,
  * and which pair depends on the type: `Couple` uses `person1`/`person2`, while
  * `ParentChild` uses `parent`/`child` and carries no `person1` at all. Measured
- * over the 201 committed e2e final trees: 2240 ParentChild edges, all of them
- * `parent`/`child`, and 383 Couple edges, all of them `person1`/`person2`.
+ * over the 202 committed e2e final trees: 2242 ParentChild edges, all of them
+ * `parent`/`child`, and 385 Couple edges, all of them `person1`/`person2`.
  *
  * THIS EXISTS BECAUSE THE FOUR-FIELD READ WAS WRITTEN BY HAND AND ONE COPY GOT
  * IT WRONG. `computeTouchedPersonIds` read only the Couple pair, so every

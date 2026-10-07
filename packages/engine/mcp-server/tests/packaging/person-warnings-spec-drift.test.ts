@@ -131,7 +131,7 @@ describe("person-warnings spec catalogue and the shipped tags agree", () => {
   // type is `string`, the two drift arms above walk the code/spec pair and
   // never look at the exempt set, and an exemption that does nothing is
   // invisible until someone re-measures the fire rate. The set grew from 5 to
-  // 10 when the gate began seeing parentage edges, which is when a silent
+  // 20 when the gate began seeing parentage edges, which is when a silent
   // no-op started costing real refusals.
   it("exempts only tags the tool actually emits", () => {
     const unknown = [...GATE_EXEMPT_TYPES].filter((t) => !shipped.has(t)).sort();

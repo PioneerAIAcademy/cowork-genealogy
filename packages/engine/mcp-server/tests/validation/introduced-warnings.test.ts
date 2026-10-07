@@ -261,7 +261,7 @@ describe("computeTouchedPersonIds", () => {
       [p1, p2],
       // A ParentChild carries its ends in `parent`/`child`. The previous
       // fixture used `person1`/`person2`, the Couple pair -- a shape that
-      // occurs 0 times in the 2240 committed ParentChild edges -- so it
+      // occurs 0 times in the 2242 committed ParentChild edges -- so it
       // exercised the one field pair the function already read.
       [{ id: "R1", type: "ParentChild", parent: "I1", child: "I2" }],
     );

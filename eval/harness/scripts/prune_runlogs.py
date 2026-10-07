@@ -54,6 +54,7 @@ from harness.snapshot import (  # noqa: E402
     normalize,
 )
 from harness.versioning import DEFAULT_KEEP_CANDIDATES, prunable_candidates  # noqa: E402
+from harness.skill_invocation import STALE_JUSTIFICATION_MARKER  # noqa: E402
 
 REPO_ROOT = HARNESS_DIR.parents[1]
 RUNLOGS_UNIT = REPO_ROOT / "eval" / "runlogs" / "unit"
@@ -64,8 +65,6 @@ CURRENT_SCHEMA_VERSION = 3
 # Marks a run log the sweep has already stripped, so a re-sweep is a no-op and
 # a reader can tell "this run made no tool calls worth summarizing" apart from
 # "the summaries were reclaimed". Absent on every log written by the harness.
-from harness.skill_invocation import STALE_JUSTIFICATION_MARKER  # noqa: E402
-
 CAPTURES_STRIPPED_KEY = "captures_stripped"
 
 # The calibration triple. `e2e/calibrate_judge.py` hard-errors when the
