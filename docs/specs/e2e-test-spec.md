@@ -1917,7 +1917,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `harness_schema_version` | Which shape this log is. Branch on it; see §7.2.1. |
 | `stop_reason` | Why the run ended. §6.5. |
 | `judge_output` | `per_finding`, `recall_required`, `recall_total`, `rationale`. Empty when the judge was skipped. |
-| `tool_calls[]` | Every tool call attempted, in order — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, result_chars, is_error, agent_id, agent_type }`. See 8.1.1. |
+| `tool_calls[]` | Every tool call attempted — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, result_chars, is_error, agent_id, agent_type }`. Main-stream entries are in chronological order; a **background** subagent's calls are appended after them from its transcript, so the array is **not** chronological across agents. See 8.1.1. |
 | `blocked_tree_reads[]` | Attempts the PreToolUse hook denied, each `{ tool, args, blocked_by }` with `blocked_by` ∈ `tree` / `fixture` / `shell` / `path`; the `shell` and `path` entries (the §6.1 opt-in filesystem denials) also carry `reason`, and `path` entries the resolved `path`. The *structured* record of a denial — read `blocked_by` from here. §6.1. |
 | `blocked_context_calls[]` | Calls the per-context policy refused: a `SUBAGENT_ONLY_TOOLS` tool (`extraction_append`, `image_read` — §6.1.1), **or** an owned-section `research_append` write (§6.1.2). `blocked_by` is `"context"` for both, so only `tool` discriminates which guard fired; every entry in the committed corpus is the latter. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1, §6.1.2. |
 | `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }`, `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
@@ -1964,6 +1964,26 @@ rather than absent. At `harness_schema_version` 5 and above, the tool name
 exemptions (`_RUNLOG_EXEMPT_KEYS`) can bypass the per-string and backstop caps
 for specific (tool, response_key) pairs — `image_transcribe`'s `transcription`
 is the first exemption.
+
+**Background subagents are the one exception to that join.** A subagent spawned
+in the background ("Async agent launched") runs in its own sub-session, so its
+calls never reach the main message stream the keys above are joined from. They
+are instead recovered at run end from the subagent's transcript
+(`backfill_background_tool_calls`, the same `agent-<id>.jsonl`
+`subagent_capture.collect_subagents` reads) and **appended after** the
+main-stream entries — which is why the array is not chronological across agents
+(§8 row). Their provenance differs: `agent_id` comes from the transcript
+filename, `agent_type` from its `meta.json`, and `is_error` from the transcript's
+own `tool_result` — so a backfilled entry carries `agent_id`/`agent_type` **even
+when its result never arrived**, unlike the main-stream "result never came" case
+above. Only agents the log announced as background (an `Agent`/`Task` result
+reading "Async agent launched … agentId: `<id>`") are backfilled, so a
+synchronous subagent is never backfilled, even when its stream entries carry no
+`agent_id` — which they do not when its result never arrived or its call was
+refused before the hook ran. These entries are **recorded, not
+re-scored** — the guardrail and `same_person` scanners run before the backfill,
+so a background subagent's calls land in `tool_calls` but were (and remain)
+invisible to compliance grading.
 
 A PreToolUse **deny** does reach this array: the denied call appears with the
 deny reason as its `response_summary` and `is_error: true`. `blocked_tree_reads`
