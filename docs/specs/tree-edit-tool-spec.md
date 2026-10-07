@@ -184,7 +184,9 @@ tree_edit({
   other spelling (`"false"`, `null`, `0`) is an input error. If
   `fact.place` is set and `resolveStandardPlace !== false` and no
   `fact.standard_place` was supplied, resolve it via `resolveStandardPlace` (null
-  when nothing resolves).
+  when nothing resolves), passing the places of the holder's other facts as
+  context for a bare single-segment place (see research-append-tool-spec
+  §3.6, lever B).
 - **`update_fact`** `{ personId | relationshipId, factId, fact }` — shallow-merge
   the provided `fact` fields onto the existing fact (id immutable) on the same
   exactly-one-target contract as `add_fact`; the `factId` must live on the named

@@ -55,6 +55,14 @@ export interface ResolveOpts {
    * partially wired).
    */
   date?: string;
+  /**
+   * Other place texts from the same source (the record's other facts). Used
+   * only for a bare single-segment input, which carries no context of its own:
+   * a sibling place that spells the name out is resolved instead, else the
+   * search is confined to the jurisdiction the siblings share. See
+   * `resolveBareName`.
+   */
+  contextPlaces?: string[];
 }
 
 // ─── Caches ────────────────────────────────────────────────────────────────
@@ -492,6 +500,9 @@ export async function resolveStandardPlace(
   opts: ResolveOpts = {},
 ): Promise<string | null> {
   if (!normalizeKey(originalText)) return null;
+  if (placeSegments(originalText).length === 1 && !opts.contextName) {
+    return resolveBareName(originalText, opts);
+  }
   // Only date-qualify a place that names its own context. A bare single-segment
   // input has nothing to anchor the year against, and the qualifier then picks
   // whichever obscure same-named place happens to have coverage for it
@@ -562,6 +573,110 @@ export async function resolveStandardPlace(
 
   standardizeCache.set(key, standardPlace); // definitive (incl. null for 0 hits)
   return standardPlace;
+}
+
+/**
+ * A bare single-segment place ("Shenandoah", "Logan LDS Temple") names no
+ * parent, so the best-scored hit is whichever same-named place ranks highest
+ * anywhere, and `countryConsistency` cannot catch it: a one-token input names no
+ * country. Measured on PR #3007's trials: "Shenandoah" beside "Borough of
+ * Shenandoah, County of Schuylkill" in the same will resolved to New Zealand.
+ *
+ * In order: a sibling place from the same source that is this name (or this
+ * name after "Borough of" and the like) is resolved instead; else a best hit
+ * that is a country or state is kept; else the search is confined to the jurisdiction the
+ * siblings share, most specific first, and only a candidate inside it counts;
+ * else the best match is kept only when it is a jurisdiction (a country, state,
+ * territory or county: "Gloucestershire", "Ky" -> Kentucky, "USA"), never a
+ * settlement (a city, town, parish or farm), which is where a same-named place
+ * abroad wins. Anything else is left unresolved (genealogist ruling 2026-10-06,
+ * option C with fallback B′; B′ rather than "only itself at the top", which
+ * would have dropped ~70 correct county and abbreviation resolutions in the
+ * committed e2e corpus).
+ */
+async function resolveBareName(name: string, opts: ResolveOpts): Promise<string | null> {
+  const bare = normalizeKey(name);
+  const siblings = (opts.contextPlaces ?? [])
+    .map(placeSegments)
+    .filter((segs) => segs.length >= 2);
+
+  const fuller = siblings.find((segs) => {
+    const first = normalizeKey(segs[0]);
+    return first === bare || first.replace(ADMIN_PREFIX_RE, "") === bare;
+  });
+  if (fuller) return resolveStandardPlace(fuller.join(", "), { date: opts.date });
+
+  let entries: SearchEntry[];
+  try {
+    entries = await getSearchEntries(name);
+  } catch {
+    return null;
+  }
+
+  // A bare country or state is itself, whatever the record's own area holds:
+  // "Germany" beside Gettysburg is not Germany Township, Adams, Pennsylvania.
+  const best = pickBest(entries);
+  if (best && isTopLevel(best.type)) return best.fullName;
+
+  const word = firstWord(bare);
+  const named = entries.filter((e) => firstWord(normalizeKey(placeSegments(e.fullName)[0] ?? "")) === word);
+  for (const level of sharedJurisdiction(siblings)) {
+    const inside = named.filter((e) => placeSegments(e.fullName).map(normalizeKey).includes(level));
+    if (inside.length > 0) return pickBest(inside)!.fullName;
+  }
+
+  return best && isJurisdiction(best.type) ? best.fullName : null;
+}
+
+/** "Borough of Shenandoah" spells out "Shenandoah"; "New York" does not spell out
+ *  "York", nor "Port Elizabeth" "Elizabeth". Only an administrative prefix counts. */
+/** A place name's first word, after any administrative prefix: a FamilySearch
+ *  variant-name hit ("Laxton" for "Lexington") does not share it. */
+function firstWord(key: string): string {
+  return key.replace(ADMIN_PREFIX_RE, "").split(" ")[0];
+}
+
+const ADMIN_PREFIX_RE = /^(?:borough|town|city|township|village|parish|county|district|municipality|hundred) of /;
+
+/** A FamilySearch place type names a jurisdiction. The live API qualifies some
+ *  types ("County (Top level)"), so the bracketed qualifier is dropped. */
+function isJurisdiction(type: string | undefined): boolean {
+  return JURISDICTION_TYPES.has(normalizeKey((type ?? "").replace(/\s*\(.*\)\s*$/, "")));
+}
+
+/** A place type at the top of the hierarchy: a name that is one of these is
+ *  already as specific as a bare name can be. */
+function isTopLevel(type: string | undefined): boolean {
+  return TOP_LEVEL_TYPES.has(normalizeKey((type ?? "").replace(/\s*\(.*\)\s*$/, "")));
+}
+
+const TOP_LEVEL_TYPES = new Set(["continent", "country", "state", "province"]);
+
+const JURISDICTION_TYPES = new Set([
+  "continent",
+  "country",
+  "state",
+  "province",
+  "territory",
+  "county",
+  "district",
+  "region",
+  "first-level admin div",
+  "second-level admin div",
+]);
+
+/** The trailing jurisdictions every sibling shares (each sibling's own first
+ *  segment excluded), most specific first. One sibling shares its whole tail. */
+export function sharedJurisdiction(siblings: string[][]): string[] {
+  const tails = siblings.map((segs) => segs.slice(1).map(normalizeKey));
+  if (tails.length === 0 || tails.some((t) => t.length === 0)) return [];
+  const shared: string[] = [];
+  for (let i = 1; i <= Math.min(...tails.map((t) => t.length)); i++) {
+    const seg = tails[0][tails[0].length - i];
+    if (!tails.every((t) => t[t.length - i] === seg)) break;
+    shared.unshift(seg);
+  }
+  return shared;
 }
 
 /**

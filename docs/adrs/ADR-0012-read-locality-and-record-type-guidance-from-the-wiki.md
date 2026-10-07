@@ -14,14 +14,14 @@
 - **Status:** Accepted
 - **Decided:** 2026-08-27 (issue #1967: no record-type × country tables) and
   2026-08-31 (issue #1923: the wiki is the source of truth)
-- **Last updated:** 2026-10-05 (per-agent ruling for person-evidence's corridor fetch, issue #2537)
+- **Last updated:** 2026-10-06 (issue #2259: a small wiki-carried residue may stay inline when fetching it is out of all proportion to the residue; and 2026-10-05, the per-agent ruling for person-evidence's corridor fetch, issue #2537)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
 - **Applies to:** `packages/engine/plugin/skills`, `packages/engine/plugin/agents`, `packages/engine/mcp-server/src/tools/wiki-read.ts`, `packages/engine/mcp-server/src/tools/wiki-search.ts`, `packages/engine/mcp-server/src/tools/wiki-place-page.ts`, `docs/skill-to-agent-pair-conversion.md` — *linted; keep current*
 - **Related:** ADR-0002 (where a capability goes), ADR-0003 (prose does not
   bind), ADR-0004 (three tool spellings), ADR-0011 (write-boundary rules);
-  issues #1923, #1967, #2123, #2153, #2078, #2054, #2130, #1344, #1112
+  issues #1923, #1967, #2123, #2153, #2078, #2054, #2130, #1344, #1112, #2259
 
 ## Context
 
@@ -132,7 +132,9 @@ Concretely:
   does not carry — informant and proximity reasoning, evidence classification,
   citation form. A record-type-shaped rule may stay when it is craft; a
   jurisdiction-shaped fact may not. "Pre-1880 census" is a fact about one
-  country's schedule and is written as such or fetched.
+  country's schedule and is written as such or fetched. A small wiki-carried
+  residue may also stay inline when fetching the page would be out of all
+  proportion to the residue it would replace (issue #2259).
 - **Where the wiki is wrong or thin, fix the wiki.** The genealogist's path is
   to find the page for the country and record type and request a specific change
   to it. The plugin does not keep a corrected local copy.
