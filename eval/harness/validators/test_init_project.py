@@ -44,6 +44,44 @@ def test_both_project_files_created(before_state, after_state, test):
         assert False, "init-project did not create tree.gedcomx.json"
 
 
+# --- Census living-child window (ut_init_project_wm7) ------------------
+
+_AFTER_1900_WINDOW = re.compile(
+    r"between\s+(?:about\s+|around\s+)?19(?:0[1-9]|10)\b"
+    r"|between\s+(?:about\s+|around\s+)?18\d\d\s+and\s+(?:early\s+|about\s+)?19(?:0[1-9]|10)\b"
+    r"|born\s+(?:sometime\s+)?after\s+(?:the\s+)?1900\b",
+    re.I,
+)
+_BY_1900_WINDOW = re.compile(
+    r"before\s+(?:june\s+)?1900\b"
+    r"|\bby\s+(?:june\s+)?1900\b"
+    r"|between\s+(?:about\s+|around\s+)?18\d\d\s+and\s+(?:before\s+)?(?:june\s+|~)?(?:1900|18\d\d)\b",
+    re.I,
+)
+
+
+def test_census_missing_living_child_born_by_1900(test, agent_returns=None, text_response=None):
+    """Tag-gated on `census-living-cumulative` (ut_init_project_wm7). The tree
+    holds two children born before 1900 and one born in 1904; the census counts
+    3 born by 1900 and 4 by 1910. The one missing child is therefore born by
+    1900 -- the only birth between the censuses is already in the tree. The
+    reply must place it by 1900, and never in a window that starts after 1900
+    or runs past it.
+
+    A validator because the judge misgraded this both ways on one scratch run
+    (scratch_2026-10-07_10-00-43): a 1901-1910 answer passed and a 1896-1900
+    answer failed. Pinned on those replies and three committed ones in
+    tests/unit/test_init_project_wm7_validator.py."""
+    if "census-living-cumulative" not in test.get("tags", []):
+        pytest.skip("not the census living-child window test")
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, "init-project", test)
+    late = _AFTER_1900_WINDOW.search(reply)
+    assert not late, f"the missing child is placed after 1900: {late.group(0)!r}"
+    assert _BY_1900_WINDOW.search(reply), "the reply never places the missing child by 1900"
+
+
 # --- check-warnings is handed back, not spawned (issue #2122) -----------
 
 _HANDBACK_CHECK_WARNINGS = re.compile(r"Hand-back:\s*check-warnings\b(.*)", re.I)

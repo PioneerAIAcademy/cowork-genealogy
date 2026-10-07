@@ -72,15 +72,17 @@ objective is the one question it asks, non-blocking (issue #1510): when
 unanswered, does the agent ask it in its return, proceed in the same pass, and store the
 generic default rather than a hallucinated specific direction?
 
-Site access is never asked. `subscriptions` should be **absent** from the
-written profile — the field is left unwritten rather than defaulted, since
-`["none"]` asserts the researcher told us they have nothing. A volunteered
-access statement may still be recorded.
+Site access is never asked. `subscriptions` records only what the user's own
+words volunteered: **absent** when they named no access (or only FamilySearch),
+and the normalized values when they did. It is never defaulted — `["none"]`
+asserts the researcher told us they have nothing. When the user volunteered
+access, writing it is correct, not a defect; its exact values are checked by a
+deterministic validator, so do not grade them here.
 
 - **pass:** `experience_level` is `novice` and `narration_guidance` is the
   house-style string verbatim, whatever the user said about themselves;
-  `subscriptions` absent (or, if the user volunteered access unprompted,
-  recording it is equally correct). Objective defaulting:
+  `subscriptions` absent when no access was volunteered, and written when it
+  was. Objective defaulting:
   when no objective is stated, the agent asks in its return, does not
   block, and writes the stated generic default — never a hallucinated specific
   direction — in the same single pass as the profile default.
