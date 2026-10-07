@@ -890,35 +890,65 @@ Grep for `calculateWarnings` when sizing the blast radius.
   **A relative or gendered form is exempt iff its self form is.** They are the
   same predicate at the same severity evaluated from a different anchor, so
   splitting a pair means one write refuses and an identical one does not.
+  Stated here as prose the rule was silently broken by four pairs, one of them
+  refusing a write in a released run log, so it is now derived from
+  `ALL_WARNING_TAGS` and asserted by `person-warnings-spec-drift.test.ts`
+  rather than maintained by hand.
 
-  Measured over the committed e2e final trees: gating parentage edges
-  unexempted refuses 416 of 2242 (18.6%) — 483 instances across 73 runs,
-  measured at 14737e6f3. After
-  the exemptions it refuses 59 of 2242 (2.6%), 59 instances across 16 runs, and
-  every tag still gating is an impossibility rather than a prior:
+  **The one pair that gates: `earliestChildBirthToBirth12` and
+  `relativesEarliestChildBirthToBirth12`.** At cutoff 14 the gendered forms are
+  a child-bearing-age prior and stay exempt — 13 is young, not impossible. At
+  cutoff 12 the same check is also the ONLY one that fires when a child is born
+  BEFORE their parent, so exempting it let every gated writer accept one. The
+  pair still travels together; it travels on the gating side.
+
+  What makes that safe is the predicate reading the child's LATEST date bound
+  (`earliestYearOfChildFacts(..., "latest")`), so it fires on a certainty rather
+  than a possibility: a child dated `Bef 1880` spans 1870..1880 and under a
+  parent born 1860 could be the parent's age 10 or 20, and only the second
+  reading declines to call that a warning. **This reverses a recorded call** —
+  the 2026-06-02 meeting overrode the spec's conservative-range principle here
+  in favour of an earliest-to-earliest bound, decided when `person_warnings`
+  only reported and over-firing cost a glance rather than a refused write. No
+  test pinned it: all five used exact years, where the two bounds coincide.
+
+  Measured over the committed e2e final trees at 921714a96, 203 trees and 2266
+  ParentChild edges: gating parentage edges unexempted refuses **419 of 2266**
+  (18.5%) — 486 instances across 74 runs. After the exemptions it refuses **65 of
+  2266** (2.9%), 71 instances across 20 runs and 37 distinct warnings, and every
+  tag still gating is an impossibility rather than a prior:
   `hasCloseChildBirthsIgnoreSimilarChildren` (32), `tooManyMothers2` (16),
-  `tooManyFathers2` (6), `childBirthRange40` (3) and
+  `tooManyFathers2` (6), `earliestChildBirthToBirth12` (6),
+  `relativesEarliestChildBirthToBirth12` (6), `childBirthRange40` (3) and
   `relativesHasAgeRangeGreaterThan120` (2). The two-parents-of-one-sex tags
   account for 22 edge-level instances but only 10 distinct warnings, because
   removing either parent edge introduces the same one; the script prints both
   columns so they are not confused. A genealogist read those cases on
   2026-10-05 and reported most to be one person entered twice rather than
   competing parentage, with no adoption the warning would wrongly refuse — a
-  human judgement, attributed rather than quoted as a measurement.
+  human judgement, attributed rather than quoted as a measurement. Those two
+  tags now also ignore an `Adoptive`, `Step`, `Foster` or `Guardian` parent edge,
+  counting only edges that claim biological parentage; the corpus carries none of
+  those four, so that is a shape fixed rather than a rate moved.
 
-  **Known false allow: one relative hop.** The gate computes warnings for the
-  write's touched persons — changed persons plus both ends of every changed
-  relationship — so a `relatives*` warning landing on a one-hop relative OF an
-  endpoint (a pre-existing sibling of the child, say) is not computed. The
-  shape is constructible and predates parentage edges being seen at all, since
-  it applies to `Couple` edges equally. Its measured cost is **0 of 2242**
-  edges: widening the touched set by one relative hop refuses the same 59
-  edges. Re-measure before widening; a cost of zero is a reason to leave it
-  alone, not a reason to believe the shape cannot occur.
+  **One relative hop is computed, and what it fixes is a false REFUSAL.**
+  `calculateWarnings` anchors a `relatives*` warning on the relative that has the
+  problem, and emits it from every anchor that relative is a relative OF — so
+  when the path to such an anchor IS the edge being added, the after side
+  surfaces a warning the before side cannot reach, and a warning the tree has
+  carried all along reads as introduced. The gate therefore computes warnings one
+  relationship hop out from the touched set, across both trees (an edge REMOVAL
+  strands the neighbour on the other side). Measured cost: **18 of the 83**
+  parentage edges that would otherwise be refused were refused for a warning they
+  did not introduce, all `relativesEarliestChildBirthToBirth12`, and the widened
+  run finds the same 37 distinct warnings — it drops no true refusal. An earlier
+  reading of this shape as a false ALLOW measured 0; that measurement was taken
+  while `earliestChildBirthToBirth12` was exempt, which is why the cost was
+  invisible.
 
-  Re-derive every count above with `dev/measure-parentage-gate-rate.ts`
-  (`--all` for the unexempted figure) before changing the list; do not
-  hand-copy them.
+  Re-derive every count above with `dev/measure-parentage-gate-rate.ts` before
+  changing the list (`--all` for the unexempted figure, `--no-widen-hop` for the
+  18); do not hand-copy them.
 
 **The prose counts in this spec are not linted.** `catalogueTags()` compares the
 tag *set* only, so every sentence stating a total ("the N tags", "M of the K

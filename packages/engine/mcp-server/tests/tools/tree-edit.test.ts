@@ -1729,8 +1729,9 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
     // Returned ok: true on main. `computeTouchedPersonIds` read relationship
     // endpoints from `person1`/`person2` only -- the Couple pair -- so adding a
     // ParentChild edge, which carries `parent`/`child`, marked NOBODY as
-    // touched and the gate computed warnings for no one. Measured over the 201
-    // committed e2e final trees: 2242 ParentChild edges, 0 using person1/person2.
+    // touched and the gate computed warnings for no one. Over the committed e2e
+    // final trees every ParentChild edge uses parent/child and none uses
+    // person1/person2 (re-derive with dev/measure-parentage-gate-rate.ts).
     await writeProject(twoFathersTree());
     const treeBefore = await readTree();
 
