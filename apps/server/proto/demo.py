@@ -56,6 +56,7 @@ REAUTH = turn.REAUTH_HITS
 TRANSIENT = (httpx.HTTPError, ValueError, KeyError)
 
 Query = tuple[str, str, tuple]
+CEILING_S = 1800  # the per-attempt step ceiling a production run must outlast on one receive (U5)
 
 
 # -- pure seams -------------------------------------------------------------------------------
@@ -100,6 +101,12 @@ def acceptance_queries(turn_id: str, session_id: str, project_id: str) -> list[Q
          "WHERE turn_id = %s GROUP BY tool_name, decision ORDER BY n DESC, tool_name", (turn_id,)),
         ("tokens (D18): the turn's usage columns",
          f"SELECT {', '.join(turn.TOKEN_COLUMNS)} FROM turns WHERE turn_id = %s", (turn_id,)),
+        ("unmapped model id (P3h): delegations that ran as the general-purpose stand-in -- expect 0",
+         "SELECT count(*) AS n FROM tool_calls WHERE turn_id = %s AND agent_type = 'general-purpose'", (turn_id,)),
+        (f"U5 (a): a run past {CEILING_S} s on its first receive -- expect receive_count 1 and wall_s over {CEILING_S}",
+         "SELECT receive_count, round(extract(epoch FROM completed_at - claimed_at)) AS wall_s, "
+         f"receive_count = 1 AND completed_at - claimed_at > interval '{CEILING_S} seconds' AS passed "
+         "FROM turns WHERE turn_id = %s", (turn_id,)),
     ]
 
 
@@ -114,6 +121,13 @@ def render_query(label: str, sql: str, params: tuple, rows: list[tuple]) -> str:
     else:
         lines.append("   (no rows)")
     return "\n".join(lines)
+
+
+def turn_max_nudges(dsn: str, turn_id: str) -> str | None:
+    """The ``max_nudges`` the web tier put in the turn's message (1a's carrier): what the
+    worker ran under, read from the row, so a deployed tier's environment need not be local."""
+    got = rows(dsn, "SELECT message->>'max_nudges' FROM turns WHERE turn_id = %s", (turn_id,))
+    return got[0][0] if got else None
 
 
 def autonomous_arm(cap: str | None) -> bool:
@@ -276,7 +290,8 @@ def run(args: argparse.Namespace) -> int:
     print(reply or "   (no text events yet)")
     print()
     nudged = rows(args.pg_dsn, "SELECT nudges FROM turns WHERE turn_id = %s", (turn_id,))
-    print(nudges_line(nudged[0][0] if nudged else None, os.environ.get("AUTONOMOUS_MAX_NUDGES")))
+    cap = turn_max_nudges(args.pg_dsn, turn_id) or os.environ.get("AUTONOMOUS_MAX_NUDGES")
+    print(nudges_line(nudged[0][0] if nudged else None, cap))
     print()
 
     for label, sql, params in acceptance_queries(turn_id, session_id, project_id):
@@ -298,7 +313,7 @@ def run(args: argparse.Namespace) -> int:
         print()
 
     status = project_status(args.pg_dsn, project_id)
-    autonomous = autonomous_arm(os.environ.get("AUTONOMOUS_MAX_NUDGES"))
+    autonomous = autonomous_arm(cap)
     code = verdict(done, a.criterion_3_ok, bool(hits), autonomous=autonomous, completed=status == "completed")
     print(f"demo: {'PASS' if code == 0 else 'FAIL'}  turn_done={done} criterion_3={'PASS' if a.criterion_3_ok else 'FAIL'} "
           f"reauth_hits={len(hits)} project.status={status}"

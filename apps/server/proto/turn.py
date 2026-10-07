@@ -75,6 +75,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -111,17 +112,37 @@ REAUTH_ENTRY = re.compile(r"call the login tool|Reconnect FamilySearch", re.I)
 # dev-login, which the tier offers only with DEV_LOGIN=true, FamilySearch sign-in off and
 # PUBLIC_URL http -- the default compose stack. Distinct emails are distinct patrons.
 DEV_LOGIN_EMAIL = "dev@localhost"
+# U13: a deployed web tier has no dev-login; a driver signs in with the operator's own
+# ``wb_session`` cookie, read from this file (0600, never argv) when set.
+COOKIE_FILE_ENV = "PROTO_SESSION_COOKIE_FILE"
+SESSION_COOKIE = "wb_session"
+
+
+def read_cookie_file(path: str) -> str:
+    """The cookie value in ``path``: the bare value, or ``wb_session=<value>``."""
+    raw = Path(path).read_text(encoding="utf-8").strip()
+    value = raw.split("=", 1)[1] if raw.startswith(f"{SESSION_COOKIE}=") else raw
+    if not value or any(c.isspace() or c == ";" for c in value):
+        raise ValueError(f"{path} holds no single {SESSION_COOKIE} value")
+    return value
 
 
 def signed_in_client(
-    base: str, email: str = DEV_LOGIN_EMAIL, *, timeout: float = 30.0, transport: httpx.BaseTransport | None = None
+    base: str, email: str = DEV_LOGIN_EMAIL, *, timeout: float = 30.0, transport: httpx.BaseTransport | None = None,
+    cookie_file: str | None = None,
 ) -> httpx.Client:
     """An UNOPENED ``httpx.Client`` on ``base`` holding a dev-login session cookie, usable
     with or without ``with``. It takes absolute URLs (``f"{base}/api/..."``) and relative
     ones alike. The login goes through its own short-lived client: a client that has sent
     a request refuses ``__enter__``, so logging in on the returned one broke every
-    ``with signed_in_client(...)``. ``transport`` is for tests."""
+    ``with signed_in_client(...)``. ``transport`` is for tests. With ``cookie_file`` (or
+    ``$PROTO_SESSION_COOKIE_FILE``) it carries that session instead and never posts to
+    dev-login (U13: a deployed tier signs in only through FamilySearch)."""
     extra: dict[str, Any] = {"transport": transport} if transport is not None else {}
+    cookie_file = cookie_file or os.environ.get(COOKIE_FILE_ENV) or None
+    if cookie_file:
+        return httpx.Client(base_url=base, timeout=timeout,
+                            cookies={SESSION_COOKIE: read_cookie_file(cookie_file)}, **extra)
     with httpx.Client(base_url=base, timeout=timeout, **extra) as login:
         r = login.post("/auth/dev-login", json={"email": email})
         if r.status_code == 403:
@@ -388,6 +409,8 @@ class KillSpec:
     # U3: wait, between the kill and the start, for the web tier to refresh the grant, and
     # check the resumed attempt bore the new one (no reauth anywhere).
     expect_grant_refresh: bool = False
+    # U13: a DeployedTarget signals the worker over SSM instead of docker.
+    deployed: Any = None
 
     @property
     def target(self) -> str:
@@ -743,16 +766,24 @@ def run_kill(
             grant_before = one(dsn, GRANT_START_SQL, (project_id,)) if spec.expect_grant_refresh else None
             grant_refreshed: bool | None = None
             t_kill = time.monotonic()
-            if spec.kill_signal == "term":
+            if spec.deployed is not None and spec.kill_signal == "term":
+                spec.deployed.signal("worker", "term")  # systemd: SIGTERM, then SIGKILL after 90 s
+            elif spec.kill_signal == "term":
                 docker("restart", "-t", "30", spec.container)  # SIGTERM, then SIGKILL after 30 s (the compose stop grace)
             else:
-                docker("kill", spec.container)  # counts as a manual stop: unless-stopped will not restart it
+                if spec.deployed is not None:
+                    spec.deployed.signal("worker", "kill")
+                else:
+                    docker("kill", spec.container)  # counts as a manual stop: unless-stopped will not restart it
                 if spec.expect_grant_refresh:
                     # No attempt is live now, so the web tier's loop may refresh -- and revoke the
                     # token the killed attempt bore. The redelivery must bear the new one.
                     grant_refreshed = wait_grant_refresh(dsn, project_id, grant_before)
                     figures["grant_refreshed"] = grant_refreshed
-                docker("start", spec.container)
+                if spec.deployed is not None:
+                    spec.deployed.signal("worker", "start")
+                else:
+                    docker("start", spec.container)
             figures.update({"sdk_session_id": sdk_before, "entries_at_kill": entries_at_kill, "kill_on": spec.target,
                             "kill_after_s": spec.kill_after_s, "kill_signal": spec.kill_signal})
             try:
@@ -831,6 +862,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--kill", action="store_true", help="D14: one turn killed at its first --kill-on call, redelivered and resumed")
     p.add_argument("--session", default=None, help="with --kill: run on this session (proto/seed.py) instead of a fresh one")
     p.add_argument("--worker-container", default="proto-worker")
+    p.add_argument("--target", choices=("compose", "deployed"), default="compose",
+                   help="--kill: signal compose's worker container, or U13's Beanstalk worker over SSM")
+    p.add_argument("--profile", default=None, help="--target deployed: the aws CLI profile")
     p.add_argument("--kill-on", default=KILL_TOOL,
                    help=f"with --kill: the bare tool name whose PreToolUse row triggers the kill (default {KILL_TOOL}; "
                         "Agent lands it during a delegation)")
@@ -867,10 +901,18 @@ def kill_spec(args: argparse.Namespace) -> KillSpec:
         raise ValueError(f"--kill-after-s must be >= 0, not {args.kill_after_s}")
     if args.expect_grant_refresh and args.kill_signal == "term":
         raise ValueError("--expect-grant-refresh needs --kill-signal kill: a restart leaves no gap to refresh in")
+    deployed = None
+    if getattr(args, "target", "compose") == "deployed":
+        here = str(Path(__file__).resolve().parent)
+        if here not in sys.path:
+            sys.path.insert(0, here)
+        import target
+
+        deployed = target.DeployedTarget(profile=args.profile)
     return KillSpec(kill_on=args.kill_on, kill_after_s=args.kill_after_s, text=text,
                     kill_on_input=parse_input_selector(args.kill_on_input),
                     session_id=args.session, container=args.worker_container, kill_signal=args.kill_signal,
-                    expect_grant_refresh=args.expect_grant_refresh)
+                    expect_grant_refresh=args.expect_grant_refresh, deployed=deployed)
 
 
 def main(argv: list[str] | None = None) -> int:
