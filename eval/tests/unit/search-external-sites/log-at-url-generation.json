@@ -10,11 +10,12 @@
       "external-site",
       "log-at-generation",
       "url-generation",
-      "log-site-ancestry"
+      "log-site-ancestry",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Search Ancestry for Patrick Flynn in the 1880 census.",
+    "delegation": "Search Ancestry for Patrick Flynn in the 1880 census.\n\nuserPresent: yes\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [

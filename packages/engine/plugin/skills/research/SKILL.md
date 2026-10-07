@@ -185,7 +185,7 @@ something you wait for — their answer arrives as the next message.
    | Objective but no questions | `@plugin:question-selection`. **Even when the message already states the question**, it is not a question until question-selection WRITES it: `research-plan` may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
    | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
    | A question with no plan, and its jurisdiction **already has a `localities` entry** | `research-plan` |
-   | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `exhausted` plan, which a revision leaves behind still `planned` | `search-records` (or `search-external-sites` for non-FS sources) |
+   | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `exhausted` plan, which a revision leaves behind still `planned` | `search-records` (or `@plugin:search-external-sites` for non-FS sources) |
    | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly | `search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_read`) |
    | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | `record-extraction` (see the enforced contract below) |
    | Assertions not yet linked to persons | `@plugin:person-evidence` — **always the agent, never inline.** You (the orchestrator) never write `person_evidence` entries or add record-derived facts/relationships to tree persons yourself: person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links. Writing `pe_` links inline skips that check — it is exactly how a same-named stranger's record gets attached to the subject (a b. 1814 man was given a 1918 death, age 104, this way). The record-extractor agent deliberately cannot and does not link; its output ALWAYS flows through person-evidence next |
@@ -248,9 +248,16 @@ something you wait for — their answer arrives as the next message.
    `@plugin:proof-conclusion`, the assertion ids for
    `@plugin:person-evidence`, the `h_`/`c_`/assertion ids at issue for
    `@plugin:hypothesis-tracking`, the place and period for
-   `@plugin:locality-guide`. The agent runs in fresh context and reads the
+   `@plugin:locality-guide`, and the `planItemId` (plus the parish page as
+   `baseUrl` when one is known, `userPresent` (`no` only when you are running autonomously and will not wait for the researcher, otherwise `yes`), and for a returned capture its
+   file path or the results text) for `@plugin:search-external-sites`. The agent
+   runs in fresh context and reads the
    project itself; a delegation missing `projectPath` fails on its first tool
    call.
+
+   **Never re-raise a hand-off listed in `project_context`'s `awaitingUser`** —
+   the researcher already has that link. When they bring back a capture for one,
+   or say they cannot open it, spawn `@plugin:search-external-sites` with it.
 
    **Three rules the caller holds, because on this route the agent's own
    body never loads here.** Do not pre-judge the agent's gate — read nothing
@@ -318,7 +325,7 @@ something you wait for — their answer arrives as the next message.
    that are easy to consider "settled" once a later, more interesting
    search captures your attention. They are not settled until each has
    a linked assertion or an explicit reason it needs none. New evidence may reveal new
-   questions — return to `question-selection`. Resolved conflicts may
+   questions — return to `@plugin:question-selection`. Resolved conflicts may
    unblock `proof-conclusion`. Do not assume the chain is linear; the
    same sub-skill may be invoked multiple times across the run. Do not
    stop after invoking just one sub-skill — that's the start of the
