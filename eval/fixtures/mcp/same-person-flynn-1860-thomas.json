@@ -1,0 +1,17 @@
+{
+  "tool": "same_person",
+  "description": "same_person — the 1860-census head of household Thomas Flynn (the second party of a_010) scored against the tree's Thomas Flynn (I2). Good match, no conflict. For ut_person_evidence_025.",
+  "args": {
+    "assertionId": "~",
+    "treePersonId": "I2"
+  },
+  "response": {
+    "matched": true,
+    "confidence": 8,
+    "score": 0.84,
+    "queryArk": "https://www.familysearch.org/ark:/61903/1:1:MABC",
+    "candidateArk": "https://www.familysearch.org/ark:/61903/1:1:TTTT-TTT",
+    "apiTitle": "Matches for ark:/61903/1:1:MABC",
+    "updated": "2026-10-07T00:00:00Z"
+  }
+}

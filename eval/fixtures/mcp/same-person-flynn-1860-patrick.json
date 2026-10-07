@@ -1,0 +1,17 @@
+{
+  "tool": "same_person",
+  "description": "same_person — the 1860-census child Patrick Flynn (age 15, b. Ireland, household of Thomas) scored against the tree's Patrick Flynn (I1). Strong match, no conflict. For ut_person_evidence_025.",
+  "args": {
+    "assertionId": "~",
+    "treePersonId": "I1"
+  },
+  "response": {
+    "matched": true,
+    "confidence": 9,
+    "score": 0.9,
+    "queryArk": "https://www.familysearch.org/ark:/61903/1:1:MABC",
+    "candidateArk": "https://www.familysearch.org/ark:/61903/1:1:MMMM-MMM",
+    "apiTitle": "Matches for ark:/61903/1:1:MABC",
+    "updated": "2026-10-07T00:00:00Z"
+  }
+}
