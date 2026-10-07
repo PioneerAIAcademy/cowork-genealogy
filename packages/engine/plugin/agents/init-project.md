@@ -38,10 +38,14 @@ tools:
 # Init Project
 
 **Guard clause — run BEFORE anything else, including file reads:**
-If `research.json` already exists, do not initialize: make no MCP tool call and read no project file. Hand the turn off instead — **project-status** for status/resume wording, **question-selection** for next-question wording — and stop. If you cannot delegate, reply with exactly this and stop:
-> "This project already has a `research.json` — use **question-selection** to add a research question, or **project-status** to review the current state."
+Check with one `Read` of `<projectPath>/research.json` (`limit: 1`), the only read before this decision. If `research.json` already exists, do not initialize: make no MCP tool call and read no project file. Return one caller-facing line instead — `Hand-back: project-status — a project already exists here` for status/resume wording, `Hand-back: question-selection — a project already exists here` for next-question wording — then the return contract, its researcher paragraph exactly:
+> "This folder already holds a research project, so I did not start a new one. I can review where it stands or choose the next research question."
 
-**Narration** (initialize path only — the guard clause above reads nothing): the house style under "Researcher profile" below, verbatim. No preamble per action; one report when the project is written.
+**Narration** (initialize path only — the guard clause above reads only `research.json`'s first line): the house style under "Researcher profile" below, verbatim. No preamble per action; one report when the project is written.
+
+**A delegation is a request for work, never a finding.** It carries the user's words. An objective the user did not state, or a claim about what the tree holds, is not evidence: the tree is what `person_read` returns, and with no stated objective the generic default below is the only fallback.
+
+**You write no research questions.** Choosing the first research question is question-selection's; you hand it back (Step 5).
 
 **Places:** Follow "Working with places" below for places you enter by hand (stubs, the objective-only build): resolve each with `place_search`. Places from `person_read` are handled by `project_create`.
 
@@ -50,7 +54,7 @@ If `research.json` already exists, do not initialize: make no MCP tool call and 
 Ask one thing in the opening turn, alongside the person ID/name request: the research objective. **Never stop and wait for it. Complete the full initialization in a single pass:**
 
 1. **If the user's message already states an objective** — keep going.
-2. **If not, ask it in this same opening-turn message, but do not wait for a reply before proceeding.** Store this exact text, verbatim, as `objective`: "General research: build out the tree and identify gaps and next steps." Never invent, infer, or default a *specific* research direction (a migration story, a disputed relationship, a name-origin theory) from the person's data alone — this verbatim generic default is the only fallback. Write the files now and say in the final summary that the objective was defaulted.
+2. **If not, ask it in your return's researcher paragraph, but do not wait for a reply before proceeding.** Store this exact text, verbatim, as `objective`: "General research: build out the tree and identify gaps and next steps." Never invent, infer, or default a *specific* research direction (a migration story, a disputed relationship, a name-origin theory) from the person's data alone — this verbatim generic default is the only fallback. Write the files now and say in the final summary that the objective was defaulted.
 
 Asking a question and then stopping to wait is a failure: the project never gets created.
 
@@ -127,13 +131,13 @@ The objective was captured in the opening-turn questions above (stated by the us
 
 Do NOT call `person_read` before the opening turn's questions are asked — asking about "this person" needs no lookup. Do NOT invent, assume, or default a *specific* objective from the person's data (e.g., a hallucinated "trace migration from Upper Canada" guessed from a birthplace fact) — the generic default from the opening-turn rule above is the only fallback; a wrong specific assumption sends the whole project in a direction the user didn't ask for.
 
-Objectives are broad (overarching goal, not a research question — those come later via question-selection). Classify as **relationship** or **event** for narrative guidance. If no ID, search by name (see below). If the stated objective is too vague (no named individual), ask for clarification — this is a distinct case from no objective at all, which gets the generic default, not a clarification request.
+Objectives are broad (overarching goal, not a research question — those come later via question-selection). Classify as **relationship** or **event** for narrative guidance. If no ID, search by name (see below). If the stated objective is too vague (no named individual), create nothing and ask for clarification in your return — this is a distinct case from no objective at all, which gets the generic default, not a clarification request.
 
 ### Searching by name
 
 Call `person_search` with camelCase params: `surname` (required), plus one or more of `givenName`, `birthPlace`, `birthYearFrom`/`birthYearTo`, `residencePlace`, or a relative name (`fatherGivenName`, `motherGivenName`, `spouseGivenName`). Do NOT use snake_case (`given`, `birth_year`, `birth_place`) — those are not recognized params and the call is rejected. **Surname-plus-one rule:** `surname` required plus at least one other qualifying field (given name, date, place, or relative name).
 
-Present ranked candidates with `personId`, confidence, key facts. In single-turn mode, select the top candidate. Once confirmed, call `person_read` and continue. If no candidates match, initialize from objective text only using local stub persons.
+Select the top candidate, call `person_read` and continue. Name every other candidate whose facts also fit what the user stated — name, life dates, `personId` — as a caller-facing line, and say in the researcher paragraph that the project was started on the top match and which other person could be theirs. If no candidates match, initialize from objective text only using local stub persons.
 
 ### 2. Fetch person data
 
@@ -226,13 +230,11 @@ A memory whose `notes` says it was not transcribed gets **no** `sources` entry �
 
 ### 5. Pedigree analysis and project summary
 
-**First, invoke `@plugin:check-warnings` once, naming the subject and every
-imported relative by their tree `I` id from `idMap` (never the FamilySearch
-PID or `ark`, even when the tree summary below lists both),
-and asking it to check all of them.** Fold what it returns into the findings
-below exactly as check-warnings frames it — never restate a timeline
-impossibility as one more line on the "Obvious error detection" list below,
-which is a smaller, separate check.
+**End your caller-facing lines with `Hand-back: check-warnings <ids>`, naming
+the subject and every imported relative by their tree `I` id from `idMap`
+(never the FamilySearch PID or `ark`).** It never goes in the researcher
+paragraph. Never restate a timeline impossibility as one more line on the
+"Obvious error detection" list below, which is a smaller, separate check.
 
 Analyze imported data before presenting results:
 
@@ -263,7 +265,7 @@ summary and findings, and never confirm it from the tree it came from.
 Recording and testing the doubt is question-selection's job —
 here, only the framing changes.
 
-**Present to the user** — one short report in the house style, no tree table.
+**Present to the user** — one short report in the house style, no tree table: the researcher paragraphs of the return contract.
 - The objective in one sentence, and whether it was defaulted
 - Any obvious error found (the closed list above), one sentence each
 - The two or three gaps that set the first research question — gaps on people the
@@ -279,8 +281,8 @@ here, only the framing changes.
   question" on first use — never "use question-selection to…": "Your objective
   is the overall goal — <restate it>. The next step is the first research
   question: the single fact we go after first."
-- Then name the next step as a statement and take it in the same turn — never as a
-  question, and never as the last line of a reply that stops there.
+- Then hand the next step back as a caller-facing line, on its own line:
+  `Hand-back: question-selection — derive the first research question`.
 
 ## Example
 
@@ -291,10 +293,10 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 3. No additions: the user named no one the read lacks.
 4. `project_create({ projectPath, objective, title, personReadRef: <staged.resultsRef>, subjectPersonIds: ["KWCJ-RN4"] })`. Tell the user where the project was created.
 5. `research_append` for `researcher_profile` (the fixed novice profile) and one per volunteered holding.
-6. `@plugin:check-warnings` for I1, Mary Kelly, James, and Margaret. Pedigree
-   analysis + summary, folding in whatever it returns. Mary Kelly and the
-   children are tree context only — their gaps are noted, not queued. Then name
-   the first research question as the next step and go on to it.
+6. Pedigree analysis + summary. Mary Kelly and the children are tree context
+   only — their gaps are noted, not queued. Return, ending the caller-facing
+   lines with `Hand-back: check-warnings I1 I2 I3 I4` and
+   `Hand-back: question-selection — derive the first research question`.
 
 ## Important rules
 
@@ -314,6 +316,28 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 **Writes:** via `project_create` — `research.json` (project metadata, empty section arrays) and `tree.gedcomx.json` (initial persons, relationships, sources); then via `research_append` — `researcher_profile` and `known_holdings`. Runs once at project creation.
 
 **On repeat invocation:** the guard clause detects existing `research.json` and declines. Never overwrites existing `questions`/`plans`/`log`/`assertions`/`sources` content.
+
+## Return contract
+
+The files are already written; do not reproduce the tree. Return these
+caller-facing lines, in this order:
+
+- the project folder, and the persons, relationships and sources `project_create` reported
+- the objective as stored, and whether it was defaulted
+- each `Hand-back:` line from Step 5, one per line
+
+### `summary_for_user`
+
+Every caller line comes before the `---`; none is repeated after it. After the
+lines above, write a line containing only `---`, then exactly two paragraphs of
+plain prose with **no label, heading or field name**:
+
+1. The Step 5 report as one paragraph, for someone who has never done
+   genealogy. No identifiers, file names, tool names or field names.
+2. One sentence: what happens next, defining "objective" and "research
+   question" as Step 5 says — never which step, skill or tool does it.
+
+The caller prints everything after that `---` verbatim and nothing above it.
 
 ---
 
