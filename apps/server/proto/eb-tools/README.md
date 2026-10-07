@@ -32,9 +32,12 @@ the logs block, `asg` 1/1, and nginx at 1800 s or more.
 - **Not in the bundle:** `GENEALOGY_PG_DSN`, `GENEALOGY_S3_BUCKET` (both required, or
   `build/http.js` exits 2 before listening), the other `GENEALOGY_S3_*` variables, and the
   config overrides in `../tools/README.md`. Each is an API-level setting.
-- **No debug hold, here or at API level.** `GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS` and
-  `GENEALOGY_DEBUG_HOLD_AFTER_COMMIT_MS` are test-only (handoff step 9). The template test and
-  `make eb-bundles-verify` refuse any `GENEALOGY_DEBUG_*` variable, and a hold set at API
-  level makes `build/http.js` print `debug holds set (never in production):
-  NAME="value"` on stderr before it listens (U11).
+- **No debug hold in the bundle, and none at API level outside a rehearsal.**
+  `GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS` and `GENEALOGY_DEBUG_HOLD_AFTER_COMMIT_MS` are
+  test-only (handoff step 9). The template test and `make eb-bundles-verify` refuse any
+  `GENEALOGY_DEBUG_*` variable in the bundle. The one API-level use is acceptance step 4 on
+  U13's rehearsal host, through `../eb-rehearsal/rehearse.py probe --case debug_hold`, which
+  sets `GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS=20000` and removes it when the case ends.
+  A hold set at API level makes `build/http.js` print `debug holds set (never in production):
+  NAME="value"` on stderr before it listens (U11), so it shows in the logs.
 - **The instance count** is a default; an API-level `aws:autoscaling:asg` setting wins.
