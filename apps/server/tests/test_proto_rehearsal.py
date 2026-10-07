@@ -1295,6 +1295,29 @@ def test_status_exits_nonzero_on_drift(stack):
     assert any("drift" in line and "MaxRetries" in line for line in lines)
 
 
+def test_status_reads_options_as_beanstalk_reports_them(stack):
+    """Live 2026-10-07: Beanstalk adds its own group, names the profile, reorders subnets."""
+    env, fake, _ = stack
+    for name, settings in fake.env_settings.items():
+        lc = (rh.LC_NS, "SecurityGroups")
+        if lc in settings:
+            settings[lc] += ",sg-beanstalk-managed"
+        prof = (rh.LC_NS, "IamInstanceProfile")
+        if prof in settings:
+            settings[prof] = settings[prof].rsplit("/", 1)[1]
+        sub = (rh.VPC_NS, "Subnets")
+        if sub in settings:
+            settings[sub] = ",".join(reversed(settings[sub].split(",")))
+    rc, lines = run(env, fake, "status")
+    assert rc == 0, [line for line in lines if "drift" in line]
+    worker = fake.env_settings["genealogy-u13-worker"]
+    worker[(rh.LC_NS, "SecurityGroups")] = "sg-beanstalk-managed"
+    worker[(rh.LC_NS, "IamInstanceProfile")] = "genealogy-u13-web"
+    rc, lines = run(env, fake, "status")
+    assert rc == 1
+    assert sum("drift" in line for line in lines) == 2
+
+
 # ── dry-run ───────────────────────────────────────────────────────────────────────────
 
 

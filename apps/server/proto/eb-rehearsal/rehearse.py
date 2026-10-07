@@ -212,6 +212,20 @@ def opt(namespace: str, name: str, value) -> dict:
     return {"Namespace": namespace, "OptionName": name, "Value": str(value)}
 
 
+def same_option(ns: str, name: str, live: str | None, want: str) -> bool:
+    """Whether a live option matches what up set, as Beanstalk reports it back: it adds its
+    own security group, names the instance profile instead of its ARN, and reorders lists."""
+    if live is None:
+        return False
+    if (ns, name) == (LC_NS, "SecurityGroups"):
+        return set(want.split(",")) <= set(live.split(","))
+    if (ns, name) == (LC_NS, "IamInstanceProfile"):
+        return live == want or want.endswith("/" + live)
+    if ns == VPC_NS and name in ("Subnets", "ELBSubnets"):
+        return set(live.split(",")) == set(want.split(","))
+    return live == want
+
+
 def options_map(options: list[dict]) -> dict[tuple[str, str], str]:
     return {(o["Namespace"], o["OptionName"]): o["Value"] for o in options}
 
@@ -1493,7 +1507,8 @@ U13PY
         live = {(o["Namespace"], o["OptionName"]): o.get("Value")
                 for o in got["ConfigurationSettings"][0].get("OptionSettings", [])}
         out = [f"{ns} {n}: {live.get((ns, n))!r}, expected {v!r}"
-               for (ns, n), v in options_map(self.snapshot(env_name)).items() if live.get((ns, n)) != v]
+               for (ns, n), v in options_map(self.snapshot(env_name)).items()
+               if not same_option(ns, n, live.get((ns, n)), v)]
         out += [f"{n} is set ({ns}); no case is running" for (ns, n) in live
                 if ns == ENV_NS and (n.startswith(("U13_PROBE_",) + tuple(layout.DEV_PREFIXES))
                                      or n in layout.DEV_VARIABLES)]
