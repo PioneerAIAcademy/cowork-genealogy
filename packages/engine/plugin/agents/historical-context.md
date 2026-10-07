@@ -225,13 +225,13 @@ contents from memory.** When the question involves these topics, add the relevan
   `https://www.familysearch.org/en/wiki/Tennessee,_United_States_Genealogy`,
   `https://www.familysearch.org/en/wiki/Vermont,_United_States_Genealogy`)
 - For Ireland partition (1922): `https://www.familysearch.org/en/wiki/Ireland_Genealogy`
-- For French Republican calendar records (1793–1805): `https://www.familysearch.org/en/wiki/French_Republican_Calendar`
+- For questions about the French Republican calendar itself (1793–1805), not date conversion: `https://www.familysearch.org/en/wiki/French_Republican_Calendar`
 - For civil registration start dates: `https://www.familysearch.org/en/wiki/{Country}_Civil_Registration`
   (e.g. `https://www.familysearch.org/en/wiki/France_Civil_Registration`,
   `https://www.familysearch.org/en/wiki/England_Civil_Registration`) or
   `https://www.familysearch.org/en/wiki/{State}_Vital_Records`
   (e.g. `https://www.familysearch.org/en/wiki/Utah_Vital_Records`)
-- For US passenger manifest questions (1820 onward): `https://www.familysearch.org/en/wiki/United_States_Emigration_and_Immigration`
+- For US immigration, emigration, or passenger-manifest questions (1820 onward): `https://www.familysearch.org/en/wiki/United_States_Emigration_and_Immigration`
 - For Canadian passenger list questions (pre-1865): `https://www.familysearch.org/en/wiki/Canada_Emigration_and_Immigration`
 - For English parish and church records: `https://www.familysearch.org/en/wiki/England_Church_Records`
 - For US county formation / parent-county questions: `https://www.familysearch.org/en/wiki/{County}_County,_{State}_Genealogy`
@@ -511,6 +511,15 @@ represents a parent-child or direct-descent relationship without independent
 evidence. Look for other records (wills, deeds, church records) that explicitly
 state the relationship.
 
+#### Patronymic surnames (Scandinavian)
+
+Before fixed surnames, Scandinavian surnames were patronymic — the father's
+given name plus `-sen`/`-son` or `-datter`/`-dotter` — and changed every generation. A different
+patronymic indicates a different father: `Lars Eriksen` is Lars son of Erik,
+`Lars Pedersen` is Lars son of Peder. So two records with different patronymics
+are generally **likely different people**, not simply surname variants of one
+person; match on given name and farm/location rather than surname.
+
 #### "Cousin"
 
 In earlier centuries, "cousin" was used loosely to refer to almost any relative
@@ -780,11 +789,10 @@ Search the parent county for records predating the formation date.
 
 ### Calendar transitions
 
-France used the Republican calendar from 1793 to 1805. The month names and year
-numbering (Year I = September 22, 1792) are on the `French_Republican_Calendar`
-wiki page — fetch it live in Step 2 when French civil records from this period
-require conversion to the Gregorian calendar. For Julian/Gregorian and Quaker
-calendar conversions, hand back to the `convert-dates` agent.
+France dated civil records in the Republican calendar from 1793 to 1805. For
+questions about the calendar itself — what it was, why a record uses it — fetch
+`French_Republican_Calendar` live in Step 2. Do not convert a Republican,
+Julian/Gregorian or Quaker date yourself; hand back to the `convert-dates` agent.
 
 Applying this:
 
@@ -797,10 +805,10 @@ Applying this:
 3. **Missing records:** When records cannot be found in the expected
    jurisdiction, check whether a boundary change moved the location into a
    different jurisdiction. Search the predecessor or successor jurisdiction.
-4. **French Republican calendar records (1793–1805):** When working with French
-   civil records from this period, note that they use a different month-name
-   system. Fetch `French_Republican_Calendar` live in Step 2 for the month
-   names.
+4. **French Republican calendar records (1793–1805):** When a date uses
+   Republican month names (Vendémiaire–Fructidor) or years written "an VIII",
+   hand back to `convert-dates` for the Gregorian date. Do not give a converted
+   date yourself.
 
 ## Decision rules
 

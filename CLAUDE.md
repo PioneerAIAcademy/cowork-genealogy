@@ -685,6 +685,8 @@ When the bug is the **second** instance of a class already fixed, write one
 shared guard, not a second one-off — the `encoding="utf-8"` AST lint replaced
 per-line greps for exactly this reason.
 
+Prove the guard **emits** on a planted defect, not just that it exits non-zero — a log-line-only guard and a broken guard both produce the same empty output (lead, 2026-09-25).
+
 ### A ruling binds only while its premises hold
 
 A ruling (a `**Ruling:**` comment, a `Decided (lead, …)` line, "lead ruling <date>"

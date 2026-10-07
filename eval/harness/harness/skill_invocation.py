@@ -1126,6 +1126,11 @@ DEDICATED_AGENT_NAMES = frozenset(
         # no row. Listed because the set is asserted equal to the shipped agent
         # files.
         "validate-schema",
+        # Same shape as convert-dates (issue #2796): a converted skill with no
+        # hook route. It writes nothing at all, so `ownership.json` names it on
+        # no row. Listed because the set is asserted equal to the shipped agent
+        # files.
+        "source-evaluation",
         # Same shape as citation (issue #2117): a converted skill. The hook lanes
         # it to `localities` and routes nothing to it; `ownership.json` names
         # `agent:locality-guide` on that row.
@@ -1141,6 +1146,13 @@ DEDICATED_AGENT_NAMES = frozenset(
         # to it. Listed because the set is asserted equal to the shipped agent
         # files. `ownership.json` names `agent:survey-surname` on the `log` row.
         "survey-surname",
+        # Same shape as search-images and citation (issue #2120): a
+        # cost-motivated conversion, no hook route. It writes `log` entries via
+        # `research_log_append` and updates `plan_items` status via
+        # `research_append`. No hook routes anything to it. Listed because the
+        # set is asserted equal to the shipped agent files. `ownership.json`
+        # names `agent:search-full-text` on the `plan_items` and `log` rows.
+        "search-full-text",
     }
 )
 

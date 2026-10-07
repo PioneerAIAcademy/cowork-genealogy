@@ -288,6 +288,132 @@ describe("extraction_append (issue #695 lane enforcement)", () => {
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
+  // ─── §3.4.1 updates-only batch (issue #3159) ──────────────────────────────
+
+  it("folds a sources append when the batch carries only assertion updates on an extracted record (#3159)", async () => {
+    const research = baseResearch();
+    research.assertions = [
+      { ...validAssertion("a_001"), fact_type: "name", value: "John Smith" },
+      { ...validAssertion("a_002"), fact_type: "birth", value: "1850" },
+      { ...validAssertion("a_003"), fact_type: "death", value: "1920" },
+    ] as any;
+    await writeProject(research);
+    const { gedcomx_source_description_id: _g, ...sourceNoRef } = noId(validSource("x"));
+    const r = await extractionAppend({
+      projectPath: dir,
+      sourceDescription: { title: "1850 U.S. Census" },
+      ops: [
+        { section: "sources", op: "append", entry: sourceNoRef },
+        { section: "assertions", op: "update", entryId: "a_001", fields: { value: "John H. Smith" } },
+        { section: "assertions", op: "update", entryId: "a_002", fields: { value: "about 1850" } },
+        { section: "assertions", op: "update", entryId: "a_003", fields: { value: "about 1920" } },
+      ],
+    } as any);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.sourceReuse).toEqual(
+      expect.objectContaining({ action: "updated_existing", srcId: "src_001", sId: "SD-001" }),
+    );
+    expect(r).not.toHaveProperty("sourceDescriptionId");
+    const after = await readResearch();
+    expect(after.sources).toHaveLength(1);
+    const treeAfter = JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+    expect(treeAfter.sources).toHaveLength(1);
+  });
+
+  it("a mixed batch (appends + updates) drives detection from appends only, not updates (#3159)", async () => {
+    const research = baseResearch();
+    research.assertions = [
+      { ...validAssertion("a_001"), fact_type: "name", value: "John Smith" },
+    ] as any;
+    await writeProject(research);
+    const { gedcomx_source_description_id: _g, ...sourceNoRef } = noId(validSource("x"));
+    const { source_id: _s, ...assertionNoSrc } = noId(validAssertion("x"));
+    const r = await extractionAppend({
+      projectPath: dir,
+      sourceDescription: { title: "Marriage Record" },
+      ops: [
+        { section: "sources", op: "append", entry: { ...sourceNoRef, repository: "OTHER_REPO" } },
+        {
+          section: "assertions",
+          op: "append",
+          entry: { ...assertionNoSrc, record_id: "rec2", fact_type: "marriage", value: "1875" },
+        },
+        { section: "assertions", op: "update", entryId: "a_001", fields: { value: "John H. Smith" } },
+      ],
+    } as any);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    // Appends drive detection: rec2 has no existing source → "created"
+    expect(r.sourceReuse).toEqual(
+      expect.objectContaining({ action: "created", srcId: "src_002" }),
+    );
+    const after = await readResearch();
+    expect(after.sources).toHaveLength(2);
+    // The newly appended assertion cites the new source
+    const newAssertion = after.assertions.find((a: any) => a.record_id === "rec2");
+    expect(newAssertion).toBeDefined();
+    expect(newAssertion.source_id).toBe("src_002");
+  });
+
+  it("an update op that sets source_id bypasses updates-only detection (#3159)", async () => {
+    const research = baseResearch();
+    research.assertions = [
+      { ...validAssertion("a_001"), fact_type: "name", value: "John Smith" },
+    ] as any;
+    await writeProject(research);
+    const { gedcomx_source_description_id: _g, ...sourceNoRef } = noId(validSource("x"));
+    const r = await extractionAppend({
+      projectPath: dir,
+      sourceDescription: { title: "1850 U.S. Census" },
+      ops: [
+        { section: "sources", op: "append", entry: sourceNoRef },
+        { section: "assertions", op: "update", entryId: "a_001", fields: { value: "John H. Smith", source_id: "src_002" } },
+      ],
+    } as any);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    // Detection did not engage (the only update sets source_id), so no sourceReuse echo
+    expect(r.sourceReuse).toBeUndefined();
+    const after = await readResearch();
+    expect(after.sources).toHaveLength(2);
+    expect(after.sources[1].id).toBe("src_002");
+  });
+
+  it("a blank-record_id append does not fall through to updates-only detection (#3159)", async () => {
+    const research = baseResearch();
+    research.assertions = [
+      { ...validAssertion("a_001"), fact_type: "name", value: "John Smith" },
+    ] as any;
+    await writeProject(research);
+    const { gedcomx_source_description_id: _g, ...sourceNoRef } = noId(validSource("x"));
+    const { source_id: _s, ...assertionNoSrc } = noId(validAssertion("x"));
+    const r = await extractionAppend({
+      projectPath: dir,
+      sourceDescription: { title: "Flynn family Bible" },
+      ops: [
+        { section: "sources", op: "append", entry: { ...sourceNoRef, citation: "Flynn family Bible" } },
+        {
+          section: "assertions",
+          op: "append",
+          entry: { ...assertionNoSrc, record_id: "", fact_type: "marriage", value: "1875" },
+        },
+        { section: "assertions", op: "update", entryId: "a_001", fields: { value: "John H. Smith" } },
+      ],
+    } as any);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    // The batch has an assertion append (even though its record_id is blank),
+    // so updates-only detection must NOT engage. A new source is created.
+    const after = await readResearch();
+    expect(after.sources).toHaveLength(2);
+    expect(after.sources[1].id).toBe("src_002");
+    // The marriage assertion cites the new source, not the census one
+    const marriage = after.assertions.find((a: any) => a.fact_type === "marriage");
+    expect(marriage).toBeDefined();
+    expect(marriage.source_id).toBe("src_002");
+  });
+
   // ─── research_append is untouched ─────────────────────────────────────────
 
   it("research_append still accepts person_evidence (the lane is per-tool, not global)", async () => {

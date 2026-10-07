@@ -196,6 +196,7 @@ def test_no_dev_variable_in_a_template(tier):
 
 @pytest.mark.parametrize(("tier", "env", "dev"), [
     ("worker", {"DEV_PATHS": "true"}, True),
+    ("web", {"DEV_LOGIN": "true"}, True),
     ("tools", {"GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS": "30000"}, True),
     ("web", {"BLOCKED_TOOLS": "person_read"}, True),
     ("worker", {"AUTONOMOUS_MAX_NUDGES": "60"}, True),
@@ -248,6 +249,7 @@ def test_no_dev_variable_in_a_shipped_file_or_image(tier):
 @pytest.mark.parametrize(("tier", "text", "dev"), [
     ("worker", "set -euo pipefail\nexport DEV_PATHS=1\n", True),
     ("worker", "FROM python:3.12-slim\nENV DEV_PATHS=1\n", True),
+    ("web", "ENV DEV_LOGIN=true\n", True),
     ("worker", "export DEV_PATHS=1  # a trailing comment is not a comment line\n", True),
     ("web", 'RUN echo "${GENEALOGY_DEBUG_HOLD_AFTER_COMMIT_MS}"\n', True),
     ("tools", "ENV AUTONOMOUS_MAX_NUDGES=5\n", True),
