@@ -1,0 +1,15 @@
+{
+  "tool": "external_links_search",
+  "description": "external_links_search for Baiersbronn: FamilySearch curates no third-party link here, so no Archion URL comes from this tool. The parish page has to come from the delegation (or the locality guide), which is the archion-baiersbronn test's point.",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Baiersbronn, Freudenstadt, Baden-Württemberg, Germany"
+    },
+    "totalForPlace": 0,
+    "returned": 0,
+    "results": []
+  }
+}
