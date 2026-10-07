@@ -301,69 +301,23 @@ Typical workflow: transcribe → translate → annotate ambiguities.
 
 ## Reference: vocabulary and record structures
 
-### Common Genealogy Vocabulary
-
-| Term | Language | Meaning |
-|------|----------|---------|
-| Taufbuch / Taufregister | German | Baptismal register |
-| Trauungsbuch | German | Marriage register |
-| Sterbebuch / Totenbuch | German | Death/burial register |
-| Pate / Patin | German | Godfather / Godmother |
-| Eheleute | German | Married couple |
-| lediger Stand | German | Unmarried status |
-| acte de naissance | French | Birth certificate |
-| acte de mariage | French | Marriage certificate |
-| acte de deces | French | Death certificate |
-| temoin | French | Witness |
-| parrain / marraine | French | Godfather / Godmother |
-| partida de bautismo | Spanish | Baptismal record |
-| partida de matrimonio | Spanish | Marriage record |
-| partida de defuncion | Spanish | Death record |
-| padrino / madrina | Spanish | Godfather / Godmother |
-| obiit | Latin | He/she died |
-| natus/nata est | Latin | He/she was born |
-| baptizatus/a est | Latin | He/she was baptized |
-| matrimonium contraxerunt | Latin | They contracted marriage |
-| filius/filia legitimus/a | Latin | Legitimate son/daughter |
-| patrini | Latin | Godparents |
-| testes | Latin | Witnesses |
-
 ### Latin Abbreviations in Church Registers
 
 | Abbreviation | Full form | Meaning |
 |-------------|-----------|---------|
-| bapt. | baptizatus/a | baptized |
-| n. / nat. | natus/a | born |
-| ob. | obiit | died |
 | sep. / s. | sepultus/a | buried |
-| conj. | conjux | spouse |
-| fil. | filius/filia | son/daughter |
-| leg. | legitimus/a | legitimate |
-| illeg. | illegitimus/a | illegitimate |
-| vid. | vidua/viduus | widow/widower |
 | d.d. | de dato | dated |
 | SS. | sanctissimus/sanctorum | most holy / of the saints |
-| par. | parentes / parochia | parents / parish |
-| test. | testes | witnesses |
 | a.d. | anno domini | in the year of the Lord |
-| ej. / ejd. | ejusdem | of the same (month/year) |
-| sup. | supra | above (referring to previously mentioned) |
 
 ### German Abbreviations
 
 | Abbreviation | Full form | Meaning |
 |-------------|-----------|---------|
-| geb. | geboren | born |
 | gest. | gestorben | died |
 | get. | getauft | baptized |
-| verh. | verheiratet | married |
-| Ehefr. | Ehefrau | wife |
 | Ehem. | Ehemann | husband |
-| led. | ledig | unmarried |
-| verw. | verwitwet | widowed |
 | ev. | evangelisch | Protestant/Lutheran |
-| kath. | katholisch | Catholic |
-| d. / des | des/der | of the (genitive) |
 
 ### Record Structure Templates
 

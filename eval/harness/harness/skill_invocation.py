@@ -1152,6 +1152,13 @@ DEDICATED_AGENT_NAMES = frozenset(
         # to it. Listed because the set is asserted equal to the shipped agent
         # files. `ownership.json` names `agent:survey-surname` on the `log` row.
         "survey-surname",
+        # Same shape as search-images and citation (issue #2120): a
+        # cost-motivated conversion, no hook route. It writes `log` entries via
+        # `research_log_append` and updates `plan_items` status via
+        # `research_append`. No hook routes anything to it. Listed because the
+        # set is asserted equal to the shipped agent files. `ownership.json`
+        # names `agent:search-full-text` on the `plan_items` and `log` rows.
+        "search-full-text",
     }
 )
 
