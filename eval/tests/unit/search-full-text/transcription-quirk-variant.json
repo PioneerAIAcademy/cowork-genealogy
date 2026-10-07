@@ -13,7 +13,7 @@
     ]
   },
   "input": {
-    "user_message": "I have seen Schuylkill County 1870s land records where the AI transcript rendered the surname Flynn as 'Flunn' — the cursive 'y' misread as 'u'. Run a full-text search whose keywords field contains the literal string '+Flunn' (the misread form as a required term). Do not use a wildcard query — use the literal 'Flunn' spelling so the underlying tool matches exactly that variant. This isn't tied to a plan item — treat it as an ad-hoc search, log the result to the research log, and write the sidecar.",
+    "delegation": "I have seen Schuylkill County 1870s land records where the AI transcript rendered the surname Flynn as 'Flunn' — the cursive 'y' misread as 'u'. Run a full-text search whose keywords field contains the literal string '+Flunn' (the misread form as a required term). Do not use a wildcard query — use the literal 'Flunn' spelling so the underlying tool matches exactly that variant. This isn't tied to a plan item — treat it as an ad-hoc search, log the result to the research log, and write the sidecar.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
@@ -25,6 +25,7 @@
     "wiki-search-any"
   ],
   "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
     "Should issue at least one fulltext_search query whose keywords contain 'Flunn' explicitly (e.g. `+Flunn`, `+Patrick +Flunn`, or `+Flunn +Schuylkill`) — covering the OCR misread the prompt named",
     "Should successfully recover the fixture's 1872 Owen Boyle → Edward McNally deed, which renders the Flynn surname as 'Flunn' in the textDocument and would never surface from a canonical `+Flynn` query",
     "Should briefly explain why the misread form is needed — FTS does not phonetically or visually expand surnames, so the genealogist has to include the OCR variants in the query themselves",
