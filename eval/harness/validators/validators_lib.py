@@ -511,3 +511,61 @@ def assert_topical_fixture_used(
         f"fell through to a fallback. Fixtures actually served: {sorted(set(s for s in hit if isinstance(s, str)))}"
     )
     return expected
+
+
+# --- name matching in a reply -------------------------------------------------
+# Third inline copy of the word-boundary name match (test_conflict_resolution.py,
+# test_research_plan.py x2) lifted here per CLAUDE.md "Code reuse". Substring
+# matching is wrong in both directions and both were observed: "Ward" matches
+# "toward" and "Ann" matches "planned" (false pass), while "Ó Briain" fails to
+# match "O Briain" (false fail).
+import re as _re
+import unicodedata as _ud
+
+
+def fold(text: str) -> str:
+    """Lowercase and strip combining marks, so O'Briain matches O Briain."""
+    return "".join(
+        c for c in _ud.normalize("NFKD", str(text or "").lower())
+        if not _ud.combining(c)
+    )
+
+
+def names_in(text: str, needles) -> bool:
+    """Whether any needle appears in `text` as a whole word.
+
+    Falls back to a punctuation-stripped comparison so "Mc Carthy" matches
+    "McCarthy"; gated at 4 characters because stripping punctuation removes the
+    boundary that makes a short needle safe.
+    """
+    hay = fold(text)
+    squashed = _re.sub(r"[^a-z0-9]", "", hay)
+    for n in needles:
+        n = fold(n).strip()
+        if not n:
+            continue
+        if _re.search(rf"(?<![a-z0-9]){_re.escape(n)}(?![a-z0-9])", hay):
+            return True
+        # ONLY for needles that themselves carry punctuation or a space. This
+        # fallback exists for "Mc Carthy" vs "McCarthy"; applying it to a plain
+        # needle re-introduces the substring bug it sits beside ("Ward" would
+        # match "toward" again).
+        if _re.search(r"[^a-z0-9]", n):
+            flat = _re.sub(r"[^a-z0-9]", "", n)
+            if len(flat) >= 4 and flat in squashed:
+                return True
+    return False
+
+
+def clauses(text: str) -> list[str]:
+    """Split a reply into sentence-ish spans.
+
+    A marker anywhere in a long reply does not mean THIS find was called unsaved:
+    "Saved to Cornelius Driscoll: 1880 census. I have not yet looked for his wife"
+    carries "not yet" in a different sentence about a different thing.
+    """
+    # Sentence enders and BLANK lines only. Not ":" or ";" (they join closely
+    # related clauses: "Found a Driscoll hit; not attached yet" is one thought),
+    # and not a single newline (that is a wrapped line, mid-sentence).
+    parts = _re.split(r"(?<=[.!?])\s+|\n\s*\n", str(text or ""))
+    return [q for q in (x.strip() for x in parts) if q]

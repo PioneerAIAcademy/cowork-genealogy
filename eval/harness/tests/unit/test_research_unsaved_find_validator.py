@@ -1,15 +1,19 @@
 """Direct tests for `test_an_unsaved_find_is_named` (issue #2813 item 5, clause 4).
 
-These exist because the validator is DORMANT in every eval suite. Its population —
-a turn that saves, or fails to — lives in `record-extraction`'s suite, which no
-scenario can join while Rule 10 blocks on `ut_record_extraction_g4k`'s
-`expected_outcome: xfail` (issue #2173). The `research` suite cannot host it: all
-ten of its tests are routing/boundary tests and the skill under test is a router
-holding no writer tool, so nothing there ever writes.
+The validator lives in `validators/test_universal.py`, not in a per-skill file:
+`validator_runner.py:174-184` imports only `test_universal.py` and
+`test_<skill>.py`, so a validator in `test_research.py` could run in the
+`research` suite and nowhere else.
 
-Without these, the validator would be an unfalsifiable check that reads as
-coverage — the failure mode CLAUDE.md § "A new lint must be proven to fail" is
-about. They run free under `make harness-test`.
+It is DORMANT: no eval scenario carries the `unsaved-extraction` tag. The
+population is a turn that extracts, and no turn in the `research` suite makes a
+writer call. A scenario under `eval/tests/unit/record-extraction/` would arm
+blocking Rule 10 (`ut_record_extraction_g4k` still carries `expected_outcome:
+xfail`) and Rule 6, on a suite that has never had a zero fail run.
+
+Without these direct cases the validator would be an unfalsifiable check that
+reads as coverage, the failure mode CLAUDE.md § "A new lint must be proven to
+fail" is about. They run free under `make harness-test`.
 """
 
 from __future__ import annotations
@@ -21,7 +25,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "validators"))
 
-from test_research import (  # noqa: E402
+from test_universal import (  # noqa: E402
     _unsaved_finds,
     test_an_unsaved_find_is_named as validator,
 )
@@ -60,7 +64,7 @@ def test_naming_the_record_passes():
 
 
 def test_not_naming_the_record_fails():
-    with pytest.raises(AssertionError, match="does not name"):
+    with pytest.raises(AssertionError, match="AS UNSAVED"):
         validator(
             TAGGED,
             _state(),
@@ -205,3 +209,73 @@ def test_a_different_saved_records_id_does_not_exonerate_this_one():
         # both implementations and discriminated nothing.
         validator(TAGGED, _state(), _state(log=[_entry(eid="log_1", query={})]),
                   "Record log_10 was not saved.")
+
+
+# --- review round 2: overclaims that used to pass -----------------------------
+@pytest.mark.parametrize(
+    "reply",
+    [
+        # marker in a DIFFERENT sentence, about a different thing
+        "Saved to Cornelius Driscoll: 1880 census. I have not yet looked for his wife.",
+        # routine wording from the "candidates, not verdicts" rule
+        "Saved to Cornelius Driscoll: 1880 census. Want me to look at another candidate?",
+        "Saved to Cornelius Driscoll: 1880 census. Nothing pending.",
+        "Saved to Cornelius Driscoll: 1880 census. The save never failed to complete.",
+    ],
+)
+def test_a_marker_in_another_clause_does_not_excuse_an_overclaim(reply):
+    with pytest.raises(AssertionError):
+        validator(TAGGED, _state(), _state(log=[_entry()]), reply)
+
+
+def test_two_unsaved_finds_need_two_namings():
+    """One marker anywhere used to satisfy both entries."""
+    a = _entry(eid="log_1", query={"surname": "Driscoll", "given": "Cornelius"})
+    b = _entry(eid="log_2", query={"surname": "Flynn", "given": "Mary"})
+    with pytest.raises(AssertionError):
+        validator(TAGGED, _state(), _state(log=[a, b]),
+                  "I could not save the Cornelius Driscoll find. Mary Flynn turned up too.")
+    validator(TAGGED, _state(), _state(log=[a, b]),
+              "I could not save the Cornelius Driscoll find. "
+              "The Mary Flynn record was not saved either.")
+
+
+@pytest.mark.parametrize(
+    "needle,reply",
+    [("Ward", "We are working toward the 1880 census."),
+     ("Ann", "I planned the next step."),
+     ("Al", "Shall I continue?")],
+)
+def test_a_name_is_not_matched_as_a_substring(needle, reply):
+    with pytest.raises(AssertionError):
+        validator(TAGGED, _state(),
+                  _state(log=[_entry(query={"surname": needle})]),
+                  reply + " It was not saved.")
+
+
+def test_a_different_person_does_not_name_this_one():
+    with pytest.raises(AssertionError):
+        validator(TAGGED, _state(),
+                  _state(log=[_entry(query={"surname": "Driscoll", "given": "Mary"})]),
+                  "Saved to Cornelius Driscoll: 1880 census; nothing else was saved.")
+
+
+@pytest.mark.parametrize(
+    "query,reply",
+    [({"keywords": "Driscoll homestead claim"},
+      "The Driscoll homestead claim hit was not saved."),
+     ({"recordId": "ABCD-123"}, "Record ABCD-123 could not be saved.")],
+)
+def test_a_query_with_no_person_key_can_still_be_named(query, reply):
+    """12 of 263 positive/partial fixture entries name no person. Before this they
+    could be satisfied only by the internal log id."""
+    validator(TAGGED, _state(), _state(log=[_entry(query=query)]), reply)
+
+
+@pytest.mark.parametrize(
+    "surname,reply",
+    [("Ó Briain", "The O Briain record was not saved."),
+     ("Mc Carthy", "The McCarthy record was not saved.")],
+)
+def test_names_are_matched_after_folding(surname, reply):
+    validator(TAGGED, _state(), _state(log=[_entry(query={"surname": surname})]), reply)
