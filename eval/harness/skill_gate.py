@@ -68,6 +68,19 @@ def stale_snapshot_paths(
     return [p for p in sorted(diff_snapshot_vs_disk(snapshot, repo_root)) if p != own]
 
 
+def drift_signal(signal: "GateSignal", snapshot_drifted: list[str]) -> "GateSignal":
+    """Force NEEDS YOUR EYES when the baseline drifted outside the gated skill."""
+    if not snapshot_drifted:
+        return signal
+    shown = snapshot_drifted[:5]
+    tail = " ..." if len(snapshot_drifted) > 5 else ""
+    reason = (
+        f"baseline snapshot drifted on {len(snapshot_drifted)} path(s) outside "
+        f"this skill — the comparison may be stale: " + ", ".join(shown) + tail
+    )
+    return GateSignal("NEEDS YOUR EYES", [reason] + signal.reasons)
+
+
 # --------------------------------------------------------------------------
 # Pure comparison + signal logic (unit-tested in tests/unit/test_skill_gate.py)
 # --------------------------------------------------------------------------
@@ -562,16 +575,7 @@ def main(argv: list[str] | None = None) -> int:
             "also predate the committed body; run a fresh `make eval-skill` if "
             "unsure.",
         ] + signal.reasons)
-    if snapshot_drifted:
-        shown = snapshot_drifted[:5]
-        tail = " ..." if len(snapshot_drifted) > 5 else ""
-        drift_reason = (
-            f"baseline snapshot drifted on {len(snapshot_drifted)} path(s) "
-            f"outside this skill — the comparison may be stale: "
-            + ", ".join(shown) + tail
-        )
-        signal = GateSignal("NEEDS YOUR EYES",
-                            [drift_reason] + signal.reasons)
+    signal = drift_signal(signal, snapshot_drifted)
     total_cost = sum(
         float((e.get("totals") or {}).get("total_cost_usd") or 0.0)
         for e in cand_entries.values()

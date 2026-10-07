@@ -19,6 +19,7 @@ import skill_gate  # noqa: E402
 from skill_gate import (  # noqa: E402
     compare,
     compute_signal,
+    drift_signal,
     find_test_path_by_id,
     incumbent_baseline,
     scores_of,
@@ -265,3 +266,24 @@ def test_snapshot_drift_excludes_gated_skill_md(tmp_path):
 
     drifted = stale_snapshot_paths(snapshot, skill, tmp_path)
     assert not drifted, "the gated skill's own SKILL.md must be excluded from drift"
+
+
+# ---- drift_signal ----------------------------------------------------------
+
+
+def test_drift_signal_forces_needs_your_eyes():
+    """A non-empty drift list must force NEEDS YOUR EYES regardless of the
+    original signal, and prepend the drift reason."""
+    original = skill_gate.GateSignal("LOOKS GOOD", ["named fix landed"])
+    result = drift_signal(original, ["eval/tests/unit/citation/rubric.md"])
+    assert result.verdict == "NEEDS YOUR EYES"
+    assert any("drifted" in r for r in result.reasons)
+    # The original reasons are preserved after the drift reason.
+    assert "named fix landed" in result.reasons
+
+
+def test_drift_signal_passes_through_on_empty_list():
+    """An empty drift list must return the signal unchanged."""
+    original = skill_gate.GateSignal("LOOKS GOOD", ["named fix landed"])
+    result = drift_signal(original, [])
+    assert result is original
